@@ -79,7 +79,7 @@ class userManager(QWidget):
                 self.users = json.load(data_file)
                 print("Users = {}".format(self.users))
         else:
-            self.users={"Andrew":"password"};
+            self.users={}
 
     def saveUsers(self):
         fh = open("../resources/userList.json",'w')
@@ -134,6 +134,7 @@ class userManager(QWidget):
             self.users.update({np[0]: mlpctx.encrypt(np[1])})
             self.saveUsers()
             self.refreshUserList()
+            self.contactServerAdd()
 
     def delUser(self):
         r = self.userT.currentRow()
@@ -145,7 +146,17 @@ class userManager(QWidget):
             del self.users[usr]
             self.saveUsers()
             self.refreshUserList()
+            self.contactServerDel(usr)
 
+    def contactServerAdd(self):
+        tmp = simpleMessage("Contact server to reload users?")
+        if( tmp.exec_()==QMessageBox.Yes ):
+            print("Send message to server to reload.")
+
+    def contactServerDel(self, usr):
+        tmp = simpleMessage("Contact server to delete user {}?".format(usr))
+        if( tmp.exec_()==QMessageBox.Yes ):
+            print("Send message to server to delete {}.".format(usr))
 
 app = QApplication(sys.argv)
 iic = userManager()
