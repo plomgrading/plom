@@ -1,0 +1,44 @@
+import sys
+import os
+
+from PyQt5 import QtCore, QtGui
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+
+from pagescene import PageScene
+
+class PageView(QGraphicsView):
+    def __init__(self, parent, imgName):
+        super(PageView,self).__init__(parent)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.setBackgroundBrush(QtGui.QBrush(Qt.blue))
+        self.setRenderHint(QPainter.HighQualityAntialiasing)
+        self.scene = PageScene(self, imgName)
+        self.setScene(self.scene)
+        self.mode="pen"
+
+    def resizeEvent(self, e):
+        self.fitInView(self.scene.imageItem, Qt.KeepAspectRatio)
+        super(PageView,self).resizeEvent(e)
+
+    def setMode(self,mode):
+        self.scene.mode=mode
+        if(mode=='pan'):
+            self.setDragMode(1)
+        else:
+            self.setDragMode(0)
+
+    def makeComment(self,item):
+        self.scene.mode='comment'
+        self.scene.commentItem=item
+        self.setDragMode(0)
+
+    def undo(self):
+          self.scene.undoStack.undo()
+    def redo(self):
+          self.scene.undoStack.redo()
+
+    def save(self):
+          self.scene.save()
