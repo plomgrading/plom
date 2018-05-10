@@ -1,0 +1,50 @@
+\documentclass[12pt]{article}
+\pagestyle{empty}
+
+\usepackage{tikz}
+\usepackage{qrcode}
+\usepackage{pdfpages}
+
+\qrset{level=H}
+\newcommand{\codeitt}[3]{%
+\fbox{\begin{tabular}{c}%
+t#1 p#2 v#3 \\%
+\qrcode{t#1p#2v#3}%
+\end{tabular}}%
+}
+\newcommand{\codeitb}[3]{%
+\fbox{\begin{tabular}{c}%
+\qrcode{t#1p#2v#3} \\%
+t#1 p#2 v#3 %
+\end{tabular}}%
+}
+\newcommand{\codename}[1]{%
+\fbox{\begin{tabular}{c}%
+\qrcode{N.#1} \\%
+{#1}%
+\end{tabular}}%
+}
+
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+
+\newcommand\markItEven[4]{%
+\includepdf[pages=#2, pagecommand={%
+\begin{tikzpicture}[remember picture, overlay]
+\node[anchor=north,draw,yshift=-1.0cm, xshift=3cm] at (current page.north west){\codeitt{#1}{#2}{#3}};
+\node[anchor=north,draw,yshift=4cm, xshift=3cm] at (current page.south west){\codename{#4}};
+\node[anchor=north,draw,yshift=4cm, xshift=-3cm] at (current page.south east){\codeitb{#1}{#2}{#3}};
+\node at (current page.center){};
+\end{tikzpicture}}
+]{../sourceVersions/version#3.pdf}
+}
+
+\newcommand\markItOdd[4]{%
+\includepdf[pages=#2, pagecommand={%
+\begin{tikzpicture}[remember picture, overlay]
+\node[anchor=north,draw,yshift=-1.0cm, xshift=-3cm] at (current page.north east){\codeitt{#1}{#2}{#3}};
+\node[anchor=north,draw,yshift=4cm, xshift=3cm] at (current page.south west){\codeitb{#1}{#2}{#3}};
+\node[anchor=north,draw,yshift=4cm, xshift=-3cm] at (current page.south east){\codename{#4}};
+\node at (current page.center){};
+\end{tikzpicture}}
+]{../sourceVersions/version#3.pdf}
+}
