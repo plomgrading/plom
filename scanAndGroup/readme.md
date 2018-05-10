@@ -1,0 +1,17 @@
+## Idea and files
+* After the test has been sat and the students are sending the instructors emails expressing their gratitude the tests are ready for scanning.
+* We assume that the tests are scanned in colour to at least 200dpi. Don't skimp. You don't want to have to hunt down a test after the fact to rescan it. Kill disc space rather than instructor time.
+* We also assume that the scan comes to the manager globbed together as PDFs. At some point we should build an alternative script which handles (say) individual TIFFs or similar.
+* Put the PDF scan into the scannedExams directory
+* The script 03_scans_to_page_images splits PDFs in the scannedExams directory into individual pages. These are moved (temporarily) into the scannedExams/png directory. We then apply a gamma-shift (note imagemagick required) to each page to darken any text etc on the page. This is done (again taught by experience) because some of our students use very very light pencil. It will make them easier to grade subsequently.  After the gamma shifting, the pages are moved into the 'pageImages' directory. After they are split, the PDFs are moved into the scannedExams/alreadyProcessed directory.
+* The 04_decode_images script reads each page image (using the zbarimg library) to examine the QR codes on the page. Each page should have a single QR code on the top (which containts test number, page number, and version number information). This QR code is repeated at the bottom of the page. One more (for luck!) QR code is on the bottom of the page which encodes the name of the test. The script reads these codes, reorients the page (if it is up-side-down), and moves it into the decodedPages directory. When it is moved, the page image is renamed as tXpYvZ.png, where X=test number,Y=page number and Z=version number. It is also put into a subdirectory page_Y/version_Z.
+ * Note - as each page is identified it is compared with the data in examsProduced.json to make sure it matches.
+ * Note - the information about which pages have been successfully scanned and identified is stored in the ../resources directory as "examsScanned.json"
+
+* The 05_missing_pages script looks at the exams which have been successfully scanned for any that are missing pages. ie - no partially identified test should exist. Either all the pages of a test have been scanned or none of them have (eg if that pdf was not actually used).
+
+* 06_group_pages - this script takes the identified pages and globs them together (using imagemagick) into their appropriate page groups. eg - if pagegroup W contains pages 4,5,6, then for each test pages 4,5,6 will be arranged side-by-side into a single image and saved as tXgWvZ.png - where W is the pagegroup number. This is so that the TA can see all relevant pages for a given question. You do not have to massage problems to be a single page each. The file is moved to the readForGrading directory and into the group_W/version_Z subdirectory.
+ * Note - the only exception to this is the ID pages group which is saved as tXidg.png and stored in readyForGrading/idgroup
+ * Note - the data about which pages have been grouped for each test is saved in the ../resources directory as "examsGrouped.json" - a list of image files for each test.
+
+* cleanAll = a script to clean out all the user generated data. This is here for hacking purposes.
