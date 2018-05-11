@@ -3,12 +3,12 @@ from testspecification import TestSpecification
 
 spec = TestSpecification()
 
-spec.Name = "Test1Test"
+spec.Name = "AFunTest"
 
-spec.setNumberOfTests(6)
+spec.setNumberOfTests(20)
 
-spec.setNumberOfPages(8)
-spec.setNumberOfVersions(2)
+spec.setNumberOfPages(12)
+spec.setNumberOfVersions(4)
 
 spec.setIDPages([1,2])
 ## Always do ID Pages first.
