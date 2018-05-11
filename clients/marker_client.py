@@ -17,7 +17,7 @@ revertedColour = '#000099'
 
 webdav_user = 'hack'
 webdav_passwd = 'duhbah'
-server = 'hinge.math.ubc.ca'
+server = 'localhost'
 webdav_port=41985
 message_port=41984
 
