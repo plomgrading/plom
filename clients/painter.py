@@ -2,13 +2,13 @@ import sys
 import os
 import json
 
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap
+from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QGroupBox, QLabel, QListWidget, QListWidgetItem, QPushButton, QShortcut, QToolButton, QWidget
 
 from pageview import PageView
 
-class simpleTB(QToolButton):
+class SimpleTB(QToolButton):
     def __init__(self, txt, icon):
         super(QToolButton, self).__init__()
         self.setText(txt);
@@ -17,7 +17,7 @@ class simpleTB(QToolButton):
         self.setIconSize(QSize(24,24))
         self.setMinimumWidth(100)
 
-class commentList(QListWidget):
+class CommentList(QListWidget):
     def __init__(self, parent):
         QListWidget.__init__(self, parent)
         self.setSelectionMode(QAbstractItemView.SingleSelection);
@@ -53,11 +53,11 @@ class commentList(QListWidget):
         with open('commentList.json', 'w') as fname:
             json.dump(self.clist, fname)
 
-class commentWrapper(QWidget):
+class CommentWrapper(QWidget):
     def __init__(self,parent):
         QWidget.__init__(self,parent)
         grid = QGridLayout()
-        self.CL = commentList(self)
+        self.CL = CommentList(self)
         grid.addWidget(self.CL,1,1,2,3)
         self.addB = QPushButton('Add')
         self.addB.clicked.connect(lambda: self.addItem())
@@ -104,46 +104,46 @@ class Painter(QDialog):
         self.view = PageView(self, self.imageFile)
         grid.addWidget(self.view, 1,1,12,1)
 
-        self.penB = simpleTB("&pen", "icons/pen.svg")
+        self.penB = SimpleTB("&pen", "icons/pen.svg")
         self.penB.clicked.connect(lambda: (self.view.setMode("pen"), self.view.setCursor(QCursor(Qt.ArrowCursor))) )
 
-        self.lineB = simpleTB("&line", "icons/line.svg")
+        self.lineB = SimpleTB("&line", "icons/line.svg")
         self.lineB.clicked.connect(lambda: (self.view.setMode("line"), self.view.setCursor(QCursor(Qt.CrossCursor)) ) )
 
-        self.crossB = simpleTB("&xcross", "icons/cross.svg")
+        self.crossB = SimpleTB("&xcross", "icons/cross.svg")
         self.crossB.clicked.connect(lambda: (self.view.setMode("cross"), self.view.setCursor(QCursor(Qt.ArrowCursor))) )
 
-        self.tickB = simpleTB("&vtick", "icons/tick.svg")
+        self.tickB = SimpleTB("&vtick", "icons/tick.svg")
         self.tickB.clicked.connect(lambda: (self.view.setMode("tick"), self.view.setCursor(QCursor(Qt.ArrowCursor))) )
 
-        self.boxB = simpleTB("&box", "icons/rectangle.svg")
+        self.boxB = SimpleTB("&box", "icons/rectangle.svg")
         self.boxB.clicked.connect(lambda: ( self.view.setMode("box"), self.view.setCursor(QCursor(Qt.ArrowCursor) ) ) )
 
-        self.textB = simpleTB("&text","icons/text.svg")
+        self.textB = SimpleTB("&text","icons/text.svg")
         self.textB.clicked.connect(lambda: ( self.view.setMode("text"), self.view.setCursor(QCursor(Qt.IBeamCursor) ) ) )
 
-        self.moveB = simpleTB("&move", "icons/move.svg")
+        self.moveB = SimpleTB("&move", "icons/move.svg")
         self.moveB.clicked.connect(lambda: ( self.view.setMode("move"), self.view.setCursor(QCursor(Qt.OpenHandCursor)) ) )
 
-        self.deleteB = simpleTB("&delete", "icons/delete.svg")
+        self.deleteB = SimpleTB("&delete", "icons/delete.svg")
         self.deleteB.clicked.connect(lambda: ( self.view.setMode("delete"), self.view.setCursor(QCursor(Qt.ForbiddenCursor)) ) )
 
-        self.undoB = simpleTB("&undo", "icons/undo.svg")
+        self.undoB = SimpleTB("&undo", "icons/undo.svg")
         self.undoB.clicked.connect(lambda: self.view.undo() )
 
-        self.redoB = simpleTB("&redo", "icons/redo.svg")
+        self.redoB = SimpleTB("&redo", "icons/redo.svg")
         self.redoB.clicked.connect(lambda: self.view.redo() )
 
-        self.zoomInB = simpleTB("&in zoom", "icons/zoom_in.svg")
+        self.zoomInB = SimpleTB("&in zoom", "icons/zoom_in.svg")
         self.zoomInB.clicked.connect(lambda: self.zoomIn() )
 
-        self.zoomOutB = simpleTB("&out zoom", "icons/zoom_out.svg")
+        self.zoomOutB = SimpleTB("&out zoom", "icons/zoom_out.svg")
         self.zoomOutB.clicked.connect(lambda: self.zoomOut() )
 
-        self.zoomB = simpleTB("&zoom", "icons/zoom.svg")
+        self.zoomB = SimpleTB("&zoom", "icons/zoom.svg")
         self.zoomB.clicked.connect(lambda: ( self.view.setMode("zoom")))
 
-        self.panB = simpleTB("&pan", "icons/pan.svg")
+        self.panB = SimpleTB("&pan", "icons/pan.svg")
         self.panB.clicked.connect(lambda: ( self.view.setMode("pan"), self.view.setDragMode(1)) )
 
         self.gradeBox= QGroupBox()
@@ -193,7 +193,7 @@ class Painter(QDialog):
 
         self.gradeBox.setLayout(gradeGrid)
 
-        self.commentL=commentWrapper(self)
+        self.commentL=CommentWrapper(self)
         grid.addWidget(self.commentL,7,2,4,3)
 
 

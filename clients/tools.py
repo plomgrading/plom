@@ -1,10 +1,9 @@
 import sys
 from math import sqrt
 
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtCore import Qt, QLineF, QPointF
+from PyQt5.QtGui import QBrush, QColor, QFont, QPainterPath, QPen
+from PyQt5.QtWidgets import QGraphicsItem, QGraphicsLineItem, QGraphicsPathItem, QGraphicsRectItem, QGraphicsTextItem, QUndoCommand
 
 class CommandDel(QUndoCommand):
     def __init__(self, scene, delIt):

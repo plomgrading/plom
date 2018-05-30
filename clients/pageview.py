@@ -1,19 +1,18 @@
 import sys
 import os
 
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QBrush, QPainter
+from PyQt5.QtWidgets import QGraphicsView
 
 from pagescene import PageScene
 
 class PageView(QGraphicsView):
     def __init__(self, parent, imgName):
         super(PageView,self).__init__(parent)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-        self.setBackgroundBrush(QtGui.QBrush(Qt.blue))
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setBackgroundBrush(QBrush(Qt.blue))
         self.setRenderHint(QPainter.HighQualityAntialiasing)
         self.scene = PageScene(self, imgName)
         self.setScene(self.scene)

@@ -1,12 +1,11 @@
 import sys
 import os
 
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtCore import Qt, QLineF, QPointF, QRectF
+from PyQt5.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, QPixmap, QTransform
+from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsPathItem, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsRectItem, QGraphicsScene, QUndoStack
 
-from tools import *
+from tools import CommandArrow, CommandBox, CommandCross, CommandDel, CommandLine, CommandMoveItem, CommandMoveText, CommandPen, CommandText, CommandTick, TextItem
 
 class PageScene(QGraphicsScene):
     def __init__(self, parent, imgName):
