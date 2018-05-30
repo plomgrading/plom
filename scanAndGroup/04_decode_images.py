@@ -1,8 +1,6 @@
 import os, glob, json
 import re
 from collections import defaultdict
-import cv2
-import numpy as np
 
 from testspecification import TestSpecification
 
@@ -12,42 +10,9 @@ def decodeQRs():
     fh = open("commandlist.txt","w")
     for fname in glob.glob("*.png"):
         if( (not os.path.exists(fname+".qr")) or (os.path.getsize(fname+".qr") == 0) ):
-            fh.write("zbarimg -q {:s} | sort -u > {:s}.qr\n".format(fname,fname));
+            fh.write("python3 ../extract_qr_and_orient.py {}\n".format(fname))
     fh.close()
 
-    os.system("parallel < commandlist.txt")
-    os.system("rm commandlist.txt")
-    os.chdir("../")
-
-def check_top_and_bottom(fname):
-    template = cv2.imread("../../resources/qr_marker.png",0)
-    threshold = 0.8
-    img = cv2.imread(fname, 0)
-    h,w = img.shape
-    timg = img[0:h//3,0:w]
-    bimg = img[2*(h//3):h,0:w]
-
-    res = cv2.matchTemplate(timg,template,cv2.TM_CCOEFF_NORMED)
-    tnum = len( np.where( res >= threshold)[0] )
-
-    res = cv2.matchTemplate(bimg,template,cv2.TM_CCOEFF_NORMED)
-    bnum = len( np.where( res >= threshold)[0] )
-
-    if(tnum<bnum):
-        return(1)
-    else:
-        return(0)
-
-def orientImages():
-    os.chdir("pageImages/")
-    fh = open("commandlist.txt","w")
-    for fname in glob.glob("*.png"):
-        if( check_top_and_bottom(fname) ):
-            print( "# {:s} correct orientation".format(fname) )
-        else:
-            print( "# {:s} rotated 180".format(fname) )
-            fh.write("mogrify -rotate 180 {:s}\n".format(fname) )
-    fh.close()
     os.system("parallel < commandlist.txt")
     os.system("rm commandlist.txt")
     os.chdir("../")
@@ -67,7 +32,6 @@ def writeExamsScanned():
     es = open("../resources/examsScanned.json",'w')
     es.write( json.dumps(examsScanned, indent=2, sort_keys=True))
     es.close()
-
 
 def checkQRsValid():
     #valid lines are either
@@ -149,7 +113,6 @@ spec.readSpec()
 
 readExamsProduced()
 readExamsScanned()
-orientImages()
 decodeQRs()
 checkQRsValid()
 validateQRsAgainstProduction()
