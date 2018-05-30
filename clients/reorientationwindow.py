@@ -1,10 +1,10 @@
 import sys
 
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPainter, QPixmap
+from PyQt5.QtWidgets import QDialog, QGridLayout, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGraphicsWidget, QLabel, QPushButton, QSpinBox
 
-class examReorientWindow(QDialog):
+class ExamReorientWindow(QDialog):
     def __init__(self, fname):
         QGraphicsWidget.__init__(self)
         self.initUI(fname)

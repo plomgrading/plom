@@ -2,15 +2,14 @@ import sys, os, glob, argparse, datetime, tempfile, json
 from os import path
 import easywebdav2, asyncio, ssl
 
-from testpagegroup import *
+from testpagegroup import TestPageGroup
 from painter import Painter
-from gui_utils import *
-from reorientationwindow import *
+from gui_utils import ErrorMessage, SimpleMessage, StartUpMarkerWidget
+from reorientationwindow import ExamReorientWindow
 
-from PyQt5 import QtGui
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QPoint, QRectF, QVariant
+from PyQt5.QtGui import QBrush, QFont, QPainter, QPen, QPixmap
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QGridLayout, QLabel, QMessageBox, QPushButton, QSizePolicy, QTableView, QWidget
 
 gradedColour = '#00bb00'
 revertedColour = '#000099'
@@ -50,11 +49,11 @@ def SRMsg(msg):
         return(rmsg)
     elif( rmsg[0] == 'ERR'):
         # print("Some sort of error occurred - didnt get an ACK, instead got ", rmsg)
-        msg = errorMessage(rmsg[1])
+        msg = ErrorMessage(rmsg[1])
         msg.exec_()
         return(rmsg)
     else:
-        msg = errorMessage("Something really wrong has happened.")
+        msg = ErrorMessage("Something really wrong has happened.")
         self.Close()
 
 def getFileDav(dfn, lfn):
@@ -77,7 +76,7 @@ def putFileDav(lfn,dfn):
 
 ###
 
-class simpleTableView(QTableView):
+class SimpleTableView(QTableView):
     def __init__(self, model):
         QTableView.__init__(self)
         self.setModel(model)
@@ -93,7 +92,7 @@ class simpleTableView(QTableView):
              super(QTableView, self).keyPressEvent(event)
 ##########################
 
-class examModel(QAbstractTableModel):
+class ExamModel(QAbstractTableModel):
     def __init__(self, parent=None):
         QAbstractTableModel.__init__(self,parent)
         self.paperList=[]
@@ -177,8 +176,8 @@ class Grader(QWidget):
     def __init__(self, userName, password, pageGroup, version):
         super(Grader, self).__init__()
 
-        self.exM = examModel()
-        self.exV = simpleTableView(self.exM)
+        self.exM = ExamModel()
+        self.exV = SimpleTableView(self.exM)
 
         self.pageGroup=pageGroup
         self.version=version
@@ -196,7 +195,7 @@ class Grader(QWidget):
     def requestToken(self):
         msg = SRMsg(['AUTH', self.userName, self.password])
         if(msg[0]=='ERR'):
-            errorMessage("Password problem")
+            ErrorMessage("Password problem")
             quit()
         else:
             self.token=msg[1]
@@ -271,7 +270,7 @@ class Grader(QWidget):
         index = self.exV.selectedIndexes()
         if(self.exM.data(index[1]) in ["untouched", "reverted"]):
             return
-        msg = simpleMessage('Do you want to revert to original scan?')
+        msg = SimpleMessage('Do you want to revert to original scan?')
         if( msg.exec_() == QMessageBox.No ):
             return
         self.exM.revertPaper(index)
@@ -283,7 +282,7 @@ class Grader(QWidget):
         index = self.exV.selectedIndexes()
         if(self.exM.data(index[1]) in ["untouched", "reverted"]):
             return
-        msg = simpleMessage('Do you want to annotate further?')
+        msg = SimpleMessage('Do you want to annotate further?')
         if(msg.exec_()==QMessageBox.No):
             return
         self.annotateTest()
@@ -338,7 +337,7 @@ class Grader(QWidget):
             self.requestNext()
 
     def waitForFlipper(self, fname):
-        flipper=examReorientWindow(fname)
+        flipper=ExamReorientWindow(fname)
         if(flipper.exec_()==QDialog.Accepted):
             return(True)
         else:
@@ -353,7 +352,7 @@ class Grader(QWidget):
                self.exM.setFlipped(index, aname)
                self.updateImage(index[0].row())
         else:
-            msg = errorMessage('Can only flip original or reverted test.')
+            msg = ErrorMessage('Can only flip original or reverted test.')
             msg.exec_()
 
     def selChanged(self, selnew, selold):
@@ -447,7 +446,7 @@ directoryPath = tempDirectory.name
 
 app = QApplication(sys.argv)
 
-serverDetails = startUpMarkerWidget(); serverDetails.exec_()
+serverDetails = StartUpMarkerWidget(); serverDetails.exec_()
 userName, password, pageGroup, version, server, message_port, webdav_port = serverDetails.getValues()
 
 gr = Grader(userName, password, pageGroup, version)
