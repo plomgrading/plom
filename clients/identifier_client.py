@@ -96,7 +96,7 @@ def SRMsg(msg):
         self.Close()
 
 
-class examModel(QAbstractTableModel):
+class ExamModel(QAbstractTableModel):
     def __init__(self, parent=None):
         QAbstractTableModel.__init__(self,parent)
         self.paperList=[]
@@ -176,7 +176,7 @@ class IDClient(QWidget):
 
     self.setCompleters()
     self.paperList=[]
-    self.exM = examModel()
+    self.exM = ExamModel()
     self.exV = QTableView()
     self.exV.setModel(self.exM)
     self.unidCount=0
