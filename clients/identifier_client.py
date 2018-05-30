@@ -1,11 +1,10 @@
-from examviewwindow import examViewWindow
-from gui_utils import *
+from examviewwindow import ExamViewWindow
+from gui_utils import ErrorMessage, SimpleMessage, StartUpIDWidget
 
 import os, sys, tempfile, json
 
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QStringListModel, QVariant
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCompleter, QGridLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QTableView, QWidget
 
 import csv
 from collections import defaultdict
@@ -89,11 +88,11 @@ def SRMsg(msg):
     if( rmsg[0] == 'ACK'):
         return(rmsg)
     elif( rmsg[0] == 'ERR'):
-        msg = errorMessage(rmsg[1])
+        msg = ErrorMessage(rmsg[1])
         msg.exec_()
         return(rmsg)
     else:
-        msg = errorMessage("Something really wrong has happened.")
+        msg = ErrorMessage("Something really wrong has happened.")
         self.Close()
 
 
@@ -186,7 +185,7 @@ class IDClient(QWidget):
   def requestToken(self):
     msg = SRMsg(['AUTH', self.userName, self.password])
     if(msg[0]=='ERR'):
-        errorMessage("Password problem")
+        ErrorMessage("Password problem")
         quit()
     else:
         self.token=msg[1]
@@ -195,7 +194,7 @@ class IDClient(QWidget):
   def getClassList(self):
       msg = SRMsg(['iRCL', self.userName, self.token])
       if(msg[0]=='ERR'):
-        errorMessage("Classlist problem")
+        ErrorMessage("Classlist problem")
         quit()
       dfn = msg[1]
       fname= directoryPath+"/cl.csv"
@@ -212,7 +211,7 @@ class IDClient(QWidget):
       #acknowledge class list
       msg = SRMsg(['iGCL', self.userName, self.token, dfn])
       if(msg[0]=='ERR'):
-        errorMessage("Classlist problem")
+        ErrorMessage("Classlist problem")
         quit()
       return(True)
 
@@ -291,7 +290,7 @@ class IDClient(QWidget):
       alreadyIDd=False
 
       if( status == "identified"):
-        msg = simpleMessage('Do you want to change the ID?')
+        msg = SimpleMessage('Do you want to change the ID?')
         if( msg.exec_() == QMessageBox.No ):
             return
         else:
@@ -299,11 +298,11 @@ class IDClient(QWidget):
 
       if(self.studentID.text() in self.studentNumbersToNames ):
           self.studentName.setText(self.studentNumbersToNames[self.studentID.text()])
-          msg = simpleMessage('Student ID {:s} = {:s}. Enter and move to next?'.format(self.studentID.text(),self.studentName.text()))
+          msg = SimpleMessage('Student ID {:s} = {:s}. Enter and move to next?'.format(self.studentID.text(),self.studentName.text()))
           if( msg.exec_()==QMessageBox.No ):
             return
       else:
-        msg = simpleMessage('Student ID {:s} not in list. Do you want to enter it anyway?'.format(self.studentID.text()) )
+        msg = SimpleMessage('Student ID {:s} not in list. Do you want to enter it anyway?'.format(self.studentID.text()) )
         if( msg.exec_()==QMessageBox.No ):
             return
         self.studentName.setText("Unknown")
@@ -325,7 +324,7 @@ class IDClient(QWidget):
       alreadyIDd=False
 
       if(status=="identified"):
-        msg = simpleMessage('Do you want to change the ID?')
+        msg = SimpleMessage('Do you want to change the ID?')
         if( msg.exec_()== QMessageBox.No ):
             return
         else:
@@ -333,11 +332,11 @@ class IDClient(QWidget):
 
       if(self.studentName.text() in self.studentNamesToNumbers):
         self.studentID.setText(self.studentNamesToNumbers[self.studentName.text()])
-        msg = simpleMessage( 'Student ID {:s} = {:s}. Enter and move to next?'.format(self.studentID.text(),self.studentName.text()) )
+        msg = SimpleMessage( 'Student ID {:s} = {:s}. Enter and move to next?'.format(self.studentID.text(),self.studentName.text()) )
         if( msg.exec_() == QMessageBox.No ):
           return
       else:
-        msg = simpleMessage( 'Student ID {:s} not in list. Do you want to enter it anyway?'.format(self.studentID.text()) )
+        msg = SimpleMessage( 'Student ID {:s} not in list. Do you want to enter it anyway?'.format(self.studentID.text()) )
         if( msg.exec_() == QMessageBox.No ):
           return
         self.studentName.setText("Unknown")
@@ -377,7 +376,7 @@ class IDClient(QWidget):
       grid.addWidget(self.exV, 6, 0,2,5)
 
       ###
-      self.testImg = examViewWindow()
+      self.testImg = ExamViewWindow()
       grid.addWidget(self.testImg, 2,7,20,20)
 
 
@@ -426,7 +425,7 @@ def main():
 
     app = QApplication(sys.argv)
 
-    serverDetails = startUpIDWidget(); serverDetails.exec_()
+    serverDetails = StartUpIDWidget(); serverDetails.exec_()
     userName, password, server, message_port, webdav_port = serverDetails.getValues()
 
     TA = IDClient(userName, password)

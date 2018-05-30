@@ -1,16 +1,16 @@
 import sys
 
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtCore import Qt, QRectF
+from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPixmap
+from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QGraphicsView, QGridLayout, QPushButton, QWidget
 
-class examViewWindow(QWidget):
+class ExamViewWindow(QWidget):
     def __init__(self, fname=None):
-        QGraphicsWidget.__init__(self)
+        QWidget.__init__(self)
         self.initUI(fname)
 
     def initUI(self, fname):
-        self.view=examView(fname)
+        self.view=ExamView(fname)
         self.view.setRenderHint(QPainter.HighQualityAntialiasing)
 
         self.resetB=QPushButton('reset view')
@@ -26,13 +26,13 @@ class examViewWindow(QWidget):
     def updateImage(self,fname):
         self.view.updateImage(fname)
 
-class examView(QGraphicsView):
+class ExamView(QGraphicsView):
     def __init__(self, fname):
         QGraphicsView.__init__(self)
         self.initUI(fname)
 
     def initUI(self, fname):
-        self.scene=examScene()
+        self.scene=ExamScene()
         self.image = QPixmap(fname)
         self.imageItem = QGraphicsPixmapItem(self.image)
         self.imageItem.setTransformationMode(Qt.SmoothTransformation)
@@ -59,10 +59,10 @@ class examView(QGraphicsView):
         self.fitInView(self.imageItem, Qt.KeepAspectRatio)
 
 
-class examScene(QGraphicsScene):
+class ExamScene(QGraphicsScene):
     def __init__(self):
         QGraphicsScene.__init__(self)
-        self.ink = QPen(Qt.green,2)
+        self.ink = QPen(QColor(0,255,0),2)
         self.lightBrush = QBrush(QColor(0,255,0,16))
 
     def mousePressEvent(self, event):

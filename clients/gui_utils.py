@@ -1,25 +1,22 @@
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
 import sys
+from PyQt5.QtWidgets import QDialog, QGridLayout, QLabel, QLineEdit, QMessageBox, QSpinBox, QPushButton
 
-
-class errorMessage(QMessageBox):
+class ErrorMessage(QMessageBox):
   def __init__(self, txt):
-    super(QMessageBox, self).__init__()
+    super(ErrorMessage, self).__init__()
     self.setText(txt)
     self.setStandardButtons(QMessageBox.Ok)
 
-class simpleMessage(QMessageBox):
+class SimpleMessage(QMessageBox):
   def __init__(self, txt):
-    super(simpleMessage, self).__init__()
+    super(SimpleMessage, self).__init__()
     self.setText(txt)
     self.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
     fnt = self.font(); fnt.setPointSize( (fnt.pointSize()*3)//2 ); self.setFont( fnt )
 
-class startUpIDWidget(QDialog):
+class StartUpIDWidget(QDialog):
     def __init__(self):
-        super(startUpIDWidget, self).__init__()
+        super(StartUpIDWidget, self).__init__()
         self.server=""
         self.mport=41984
         self.wport=41985
@@ -77,9 +74,9 @@ class startUpIDWidget(QDialog):
         return(self.user, self.pwd, self.server, self.mport, self.wport)
 
 
-class startUpMarkerWidget(QDialog):
+class StartUpMarkerWidget(QDialog):
     def __init__(self):
-        super(startUpMarkerWidget, self).__init__()
+        super(StartUpMarkerWidget, self).__init__()
         self.server=""
         self.mport=41984
         self.wport=41985
