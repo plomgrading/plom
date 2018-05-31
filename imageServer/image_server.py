@@ -249,6 +249,7 @@ examsGrouped={}; readExamsGrouped()
 pageGroupsForGrading={}; findPageGroups()
 theIDDB = IDDatabase()
 theMarkDB = MarkDatabase()
+os.system("mkdir -p ./markedPapers") # make sure this directory exists
 peon = Server(theIDDB, theMarkDB, spec)
 
 # # # # # # # # # # # #
