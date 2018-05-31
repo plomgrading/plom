@@ -1,12 +1,11 @@
 import os, sys, argparse, tempfile, json
 from collections import defaultdict
 
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtSql import *
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QApplication, QComboBox,  QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QMessageBox, QProgressBar, QPushButton, QTableView, QTableWidget, QTableWidgetItem, QWidget
+from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 
-from examviewwindow import examViewWindow
+from examviewwindow import ExamViewWindow
 import ssl
 import asyncio
 
@@ -41,73 +40,20 @@ def SRMsg(msg):
         return(rmsg)
     elif( rmsg[0] == 'ERR'):
         # print("Some sort of error occurred - didnt get an ACK, instead got ", rmsg)
-        msg = errorMessage(rmsg[1])
+        msg = ErrorMessage(rmsg[1])
         msg.exec_()
         return(rmsg)
     else:
-        msg = errorMessage("Something really wrong has happened.")
+        msg = ErrorMessage("Something really wrong has happened.")
         self.Close()
 
-class errorMessage(QMessageBox):
+class ErrorMessage(QMessageBox):
   def __init__(self, txt):
     super(QMessageBox, self).__init__()
     self.setText(txt)
     self.setStandardButtons(QMessageBox.Ok)
 
-class userListDialog(QDialog):
-    def __init__(self, userList):
-        super(userListDialog, self).__init__()
-        self.uList=sorted(userList)
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle("Current Users")
-        self.userLW=QListWidget()
-        for name in self.uList:
-            self.userLW.addItem(name)
-
-        self.okB = QPushButton('Okay')
-        self.okB.clicked.connect(self.accept)
-
-        grid = QGridLayout()
-        grid.addWidget(self.userLW,1,1)
-        grid.addWidget(self.okB,2,2)
-
-        self.setLayout(grid)
-        self.show()
-
-
-class userDialog(QDialog):
-    def __init__(self):
-        super(userDialog, self).__init__()
-        self.name=""
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle("Please enter user")
-        self.userL = QLabel("User name to add:")
-
-        self.userLE = QLineEdit("")
-
-        self.okB = QPushButton('Accept')
-        self.okB.clicked.connect(self.accept)
-        self.cnB = QPushButton('Cancel')
-        self.cnB.clicked.connect(self.reject)
-
-        grid = QGridLayout()
-        grid.addWidget(self.userL,1,1)
-        grid.addWidget(self.userLE,1,2)
-        grid.addWidget(self.okB,4,3)
-        grid.addWidget(self.cnB,4,1)
-
-        self.setLayout(grid)
-        self.show()
-
-    def getName(self):
-        self.name=self.userLE.text()
-        return(self.name)
-
-class userProgress(QDialog):
+class UserProgress(QDialog):
     def __init__(self, counts):
         QDialog.__init__(self)
         self.setModal(True)
@@ -144,7 +90,7 @@ class userProgress(QDialog):
         self.setLayout(grid)
         self.show()
 
-class simpleTableView(QTableView):
+class SimpleTableView(QTableView):
     def __init__(self, model):
         QTableView.__init__(self)
         self.setModel(model)
@@ -159,13 +105,13 @@ class simpleTableView(QTableView):
          else:
              super(QTableView, self).keyPressEvent(event)
 
-class filterComboBox(QComboBox):
+class FilterComboBox(QComboBox):
     def __init__(self, txt):
         QWidget.__init__(self)
         self.title=txt
         self.addItem(txt)
 
-class examTable(QWidget):
+class ExamTable(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.db = QSqlDatabase.addDatabase("QSQLITE")
@@ -181,21 +127,21 @@ class examTable(QWidget):
         self.exM = QSqlTableModel(self,self.db)
         self.exM.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.exM.setTable("idimage")
-        self.exV = simpleTableView(self.exM)
+        self.exV = SimpleTableView(self.exM)
 
         grid.addWidget(self.exV,0,0,4,7)
 
         self.filterGo=QPushButton("Filter Now")
         self.filterGo.clicked.connect(lambda: self.filter())
         grid.addWidget(self.filterGo,5,0)
-        self.flU=filterComboBox("Marker"); grid.addWidget(self.flU,5,2)
-        self.flS=filterComboBox("Status"); grid.addWidget(self.flS,5,3)
+        self.flU=FilterComboBox("Marker"); grid.addWidget(self.flU,5,2)
+        self.flS=FilterComboBox("Status"); grid.addWidget(self.flS,5,3)
 
         self.uprogB = QPushButton("User progress")
         self.uprogB.clicked.connect(lambda: self.computeUserProgress())
         grid.addWidget(self.uprogB, 3,8)
 
-        self.pgImg = examViewWindow()
+        self.pgImg = ExamViewWindow()
         grid.addWidget(self.pgImg, 0,10,20,20)
 
         self.setLayout(grid)
@@ -213,7 +159,7 @@ class examTable(QWidget):
             ustats[ self.exM.record(r).value('user') ][0]+=1
             if(self.exM.record(r).value('status')=='Identified'):
                 ustats[ self.exM.record(r).value('user') ][1]+=1
-        tmp = userProgress(ustats)
+        tmp = UserProgress(ustats)
 
     def getUniqueFromColumn(self,col):
         lst=set()
@@ -250,35 +196,15 @@ class examTable(QWidget):
         self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
 
 
-class manager(QWidget):
+class Manager(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.initUI();
 
-    # def addUser(self):
-    #     tmp = userDialog()
-    #     if( tmp.exec_() == 1):
-    #         msg = SRMsg(['ZAU', tmp.getName()])
-    #     else:
-    #         return
-    # def listUsers(self):
-    #     msg = SRMsg(['ZLU'])
-    #     tmp = userListDialog(msg[1])
-    #     tmp.exec_()
-
     def initUI(self):
         grid = QGridLayout()
-        self.extb=examTable()
-
+        self.extb=ExamTable()
         grid.addWidget(self.extb,1,1,4,6)
-
-        # self.listB = QPushButton("list users")
-        # self.listB.clicked.connect(lambda: self.listUsers())
-        # grid.addWidget(self.listB,6,1)
-        #
-        # self.addB = QPushButton("add user")
-        # self.addB.clicked.connect(lambda: self.addUser())
-        # grid.addWidget(self.addB,6,2)
 
         self.closeB=QPushButton("close")
         self.closeB.clicked.connect(lambda: self.close())
@@ -293,6 +219,6 @@ tempDirectory = tempfile.TemporaryDirectory()
 directoryPath = tempDirectory.name
 
 app = QApplication(sys.argv)
-iic = manager()
+iic = Manager()
 app.exec_()
 loop.close()

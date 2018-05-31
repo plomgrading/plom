@@ -5,19 +5,18 @@ from passlib.hash import pbkdf2_sha256
 from passlib.context import CryptContext
 mlpctx = CryptContext( schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto" )
 
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtCore import QSize
+from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QApplication, QDialog, QGridLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem, QWidget
 
-class simpleMessage(QMessageBox):
+class SimpleMessage(QMessageBox):
   def __init__(self, txt):
-    super(simpleMessage, self).__init__()
+    super(SimpleMessage, self).__init__()
     self.setText(txt)
     self.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
 
-class userDialog(QDialog):
+class UserDialog(QDialog):
     def __init__(self):
-        super(userDialog, self).__init__()
+        super(UserDialog, self).__init__()
         self.name=""
         self.initUI()
 
@@ -128,7 +127,7 @@ class userManager(QWidget):
         self.show()
 
     def addUser(self):
-        tmp = userDialog()
+        tmp = UserDialog()
         if( tmp.exec_() == 1):
             np = tmp.getNamePassword()
             self.users.update({np[0]: mlpctx.encrypt(np[1])})
@@ -141,7 +140,7 @@ class userManager(QWidget):
         if(r==None):
             return
         usr = self.userT.item(r,0).text()
-        tmp = simpleMessage("Confirm delete user {}".format(usr))
+        tmp = SimpleMessage("Confirm delete user {}".format(usr))
         if( tmp.exec_()==QMessageBox.Yes ):
             del self.users[usr]
             self.saveUsers()
@@ -149,15 +148,19 @@ class userManager(QWidget):
             self.contactServerDel(usr)
 
     def contactServerAdd(self):
-        tmp = simpleMessage("Contact server to reload users?")
+        tmp = SimpleMessage("Contact server to reload users?")
         if( tmp.exec_()==QMessageBox.Yes ):
             print("Send message to server to reload.")
 
     def contactServerDel(self, usr):
-        tmp = simpleMessage("Contact server to delete user {}?".format(usr))
+        tmp = SimpleMessage("Contact server to delete user {}?".format(usr))
         if( tmp.exec_()==QMessageBox.Yes ):
             print("Send message to server to delete {}.".format(usr))
 
-app = QApplication(sys.argv)
-iic = userManager()
-app.exec_()
+def main():
+    app = QApplication(sys.argv)
+    iic = userManager()
+    app.exec_()
+
+if __name__ == '__main__':
+    main()

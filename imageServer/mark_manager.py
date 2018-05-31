@@ -3,10 +3,9 @@ import asyncio, ssl
 from operator import itemgetter
 from collections import defaultdict
 
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtSql import *
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QApplication, QComboBox, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QMessageBox, QProgressBar, QPushButton, QTableView, QTableWidget, QTableWidgetItem, QWidget
+from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
@@ -14,7 +13,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set() ## Sets up seaborn defaults for plots.
 
-from examviewwindow import examViewWindow
+from examviewwindow import ExamViewWindow
 
 server = 'localhost'
 webdav_port=41985
@@ -310,7 +309,7 @@ class examTable(QWidget):
         self.uhistB.clicked.connect(lambda: self.computeUserHistogram())
         grid.addWidget(self.uhistB, 3,9)
 
-        self.pgImg = examViewWindow()
+        self.pgImg = ExamViewWindow()
         grid.addWidget(self.pgImg, 0,10,20,20)
 
         self.setLayout(grid)
