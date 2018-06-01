@@ -98,7 +98,7 @@ def addCurrentScansToExamsScanned():
             else: #add to the already scanned list
                 examsScanned[ts][ps]=examsScannedNow[t][p]
                 copyme += "cp {:s} ../decodedPages/page_{:s}/version_{:s}/t{:s}p{:s}v{:s}.png\n".format(fn,str(p).zfill(2), str(v), str(t).zfill(4),str(p).zfill(2),str(v))
-                moveme += "mv {:s}* ./alreadyProcessed\n".format(fn)
+            moveme += "mv {:s}* ./alreadyProcessed\n".format(fn)
 
     os.system(copyme)
     os.system(moveme)

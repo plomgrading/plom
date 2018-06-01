@@ -33,7 +33,7 @@ def processScans():
         os.chdir("./png/")
         fh = open("./commandlist.txt","w")
         for fname in glob.glob("*.png"):
-            fh.write("mogrify -gamma 0.5 "+fname+"\n");
+            fh.write("mogrify -gamma 0.5 -quality 100 "+fname+"\n");
         fh.close()
 
         os.system("parallel <commandlist.txt")
