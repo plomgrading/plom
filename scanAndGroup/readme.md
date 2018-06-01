@@ -14,6 +14,6 @@
  * Note - the only exception to this is the ID pages group which is saved as tXidg.png and stored in readyForGrading/idgroup
  * Note - the data about which pages have been grouped for each test is saved in the ../resources directory as "examsGrouped.json" - a list of image files for each test.
 
-* extract_qr_and_orient - a small wrapper around zbarimg. It copies the image to a temp directory and then splits it into top and bottom halves (using imagemagick's "convert --crop command"). It extracts qr codes from the halves using zbarimg. The top half should only have 1 code while the bottom should have 2. If upsidedown then it uses mogrify (from imagemagick) to flip it. The qr codes in image blah are written in blah.qr
+* extract_qr_and_orient - a small wrapper around zbarimg. It copies the image to a temp directory and then splits it (vertically) into five pieces (using imagemagick's "convert --crop command"). The middle 60% is ignored (partially to speed things up) and a slight blur filter is applied to the top and bottom pieces. The qr codes and then extracted from the top and bottom pieces using zbarimg (we configure zbarimg to only look for qr codes in order to speed things up a bit). The top piece should only have 1 code while the bottom should have 2. If up-side-down then it uses mogrify (from imagemagick) to flip it. The qr codes in image blah are written in blah.qr
 
 * cleanAll = a script to clean out all the user generated data. This is here for hacking purposes.
