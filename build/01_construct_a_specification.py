@@ -5,7 +5,7 @@ spec = TestSpecification()
 
 spec.Name = "AFunTest"
 
-spec.setNumberOfTests(20)
+spec.setNumberOfTests(10)
 
 spec.setNumberOfPages(12)
 spec.setNumberOfVersions(4)
