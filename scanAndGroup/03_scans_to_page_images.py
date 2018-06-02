@@ -36,7 +36,7 @@ def processScans():
             fh.write("mogrify -gamma 0.5 -quality 100 "+fname+"\n");
         fh.close()
 
-        os.system("parallel <commandlist.txt")
+        os.system("parallel --bar <commandlist.txt")
         os.system("rm commandlist.txt")
         os.system("mv *.png ../../pageImages")
 

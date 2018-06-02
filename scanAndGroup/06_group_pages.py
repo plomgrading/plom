@@ -72,7 +72,7 @@ def checkTests():
     fh = open("commandlist.txt","w")
     fh.write(commandList)
     fh.close()
-    os.system("parallel < commandlist.txt")
+    os.system("parallel --bar < commandlist.txt")
     os.system("rm commandlist.txt")
     os.chdir("../")
 

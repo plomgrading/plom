@@ -399,6 +399,7 @@ class Grader(QWidget):
         self.exV.setSelectionMode(QAbstractItemView.SingleSelection)
         self.exV.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.exV.selectionModel().selectionChanged.connect(self.selChanged)
+        self.exV.doubleClicked.connect(lambda: self.annotateTest())
         grid.addWidget(self.exV, 7, 0,2,6)
 
         ###

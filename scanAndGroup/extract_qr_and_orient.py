@@ -8,7 +8,7 @@ imgName = sys.argv[1]
 curDir = os.getcwd()
 
 with tempfile.TemporaryDirectory() as tmpDir:
-    print("Processing file = {}".format(imgName))
+    # print("Processing file = {}".format(imgName))
     copy(imgName, tmpDir) #copy image to temp directory
     os.chdir(tmpDir) #move to temp directory
 
@@ -32,7 +32,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
         else:
             print("Zbarimg error processing file {}".format(imgName))
     both = set(up+down)
-    print([up, down])
+    # print([up, down])
     # go back to original directory
     os.chdir(curDir)
     # dump the output of zbarimg

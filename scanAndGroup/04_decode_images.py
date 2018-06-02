@@ -13,7 +13,7 @@ def decodeQRs():
             fh.write("python3 ../extract_qr_and_orient.py {}\n".format(fname))
     fh.close()
 
-    os.system("parallel < commandlist.txt")
+    os.system("parallel --bar < commandlist.txt")
     os.system("rm commandlist.txt")
     os.chdir("../")
 

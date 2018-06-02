@@ -43,7 +43,7 @@ def scriptBuild():
     for x in exams:
         fh.write("python3 merge_and_code_pages.py {} {} {} {} \"{}\"\n".format(spec.Name, spec.Length, spec.Versions, x, exams[x]))
     fh.close()
-    os.system("parallel <commandlist.txt")
+    os.system("parallel --bar <commandlist.txt")
     os.system("rm commandlist.txt")
 
 def writeExamLog():
