@@ -34,4 +34,4 @@ htmlText += "<tr><td>total</td><td>{}</td><td>{}</td><td>&middot;</td>\n".format
 htmlText += "</table>\n"
 
 cover = HTML(string=htmlText)
-cover.write_pdf("coverPages/cover_{}.pdf".format(arg[0]), stylesheets=[css])
+cover.write_pdf("coverPages/cover_{}.pdf".format(str(arg[0]).zfill(4)), stylesheets=[css])
