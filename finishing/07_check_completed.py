@@ -1,4 +1,4 @@
-import os,json
+import os,json,csv
 from testspecification import TestSpecification
 from collections import defaultdict
 
@@ -58,6 +58,34 @@ def writeExamsCompleted():
     fh.write( json.dumps(examsCompleted, indent=2, sort_keys=True))
     fh.close()
 
+def writeMarkCSV():
+    head = ['StudentID','StudentName','TestNumber']
+    for pg in range(1,spec.getNumberOfGroups()+1):
+        head.append('PageGroup{}'.format(pg))
+    head.append('Total')
+    for pg in range(1,spec.getNumberOfGroups()+1):
+        head.append('Version{}'.format(pg))
+
+    with open("testMarks.csv", 'w') as csvfile:
+        testWriter = csv.DictWriter(csvfile, fieldnames=head, delimiter='\t', quotechar="\"", quoting=csv.QUOTE_NONNUMERIC)
+        testWriter.writeheader()
+        for n in sorted(examsCompleted.keys()):
+            if(examsCompleted[n]==False):
+                continue
+            ns = str(n)
+            row=dict()
+            row['StudentID'] = examsIDed[ns][1]
+            row['StudentName'] = examsIDed[ns][2]
+            row['TestNumber'] = n
+            tot = 0
+            for pg in range(1,spec.getNumberOfGroups()+1):
+                p = str(pg)
+                tot += groupImagesMarked[ns][p][1]
+                row['PageGroup{}'.format(p)] = groupImagesMarked[ns][p][1]
+                row['Version{}'.format(p)] = groupImagesMarked[ns][p][0]
+            row['Total']=tot
+            testWriter.writerow(row)
+
 spec = TestSpecification()
 spec.readSpec()
 
@@ -68,6 +96,7 @@ readGroupImagesMarked()
 
 examsCompleted={}
 for n in sorted(examsGrouped.keys()):
-    examsCompleted[n]=checkExam(n)
+    examsCompleted[int(n)]=checkExam(n)
 
 writeExamsCompleted()
+writeMarkCSV()
