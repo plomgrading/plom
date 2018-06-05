@@ -4,7 +4,7 @@ import glob
 
 from PyQt5.QtCore import Qt, QRectF
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPixmap
-from PyQt5.QtWidgets import QApplication, QAbstractItemView, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QGraphicsView, QGridLayout, QPushButton, QTableWidget, QTableWidgetItem, QWidget
+from PyQt5.QtWidgets import QApplication, QAbstractItemView, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QWidget
 
 class PageViewWindow(QWidget):
     def __init__(self, fname=None):
@@ -81,6 +81,24 @@ class PageScene(QGraphicsScene):
     def mouseReleaseEvent(self, event):
         self.removeItem(self.boxItem)
 
+
+class IDBox(QWidget):
+    def __init__(self):
+        super(IDBox, self).__init__()
+        self.initUI()
+
+    def initUI(self):
+        grid = QGridLayout()
+        self.testL = QLabel("t:")
+        grid.addWidget(self.testL,1,1)
+        self.pageL = QLabel("p:")
+        grid.addWidget(self.pageL,2,1)
+        self.versionL = QLabel("v:")
+        grid.addWidget(self.versionL,3,1)
+        self.nameL = QLabel("name:")
+        grid.addWidget(self.nameL,4,1)
+        self.setLayout(grid)
+
 class PageIdentifier(QWidget):
     def __init__(self):
         super(PageIdentifier, self).__init__()
@@ -119,16 +137,18 @@ class PageIdentifier(QWidget):
     def selChanged(self, selnew, selold):
         self.pageImg.updateImage( self.imageList[selnew.indexes()[0].row()] )
 
-
     def initUI(self):
       grid = QGridLayout()
 
       self.imageT = QTableWidget()
       self.populateTable()
-      grid.addWidget(self.imageT,1,1,2,2)
+      grid.addWidget(self.imageT,1,1,4,2)
 
       self.pageImg = PageViewWindow()
-      grid.addWidget(self.pageImg, 1,3,20,20)
+      grid.addWidget(self.pageImg, 1,3,10,10)
+
+      self.idIt = IDBox()
+      grid.addWidget(self.idIt, 5,1)
 
       self.closeB = QPushButton("Close")
       self.closeB.clicked.connect(self.close)
