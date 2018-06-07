@@ -233,6 +233,8 @@ class Grader(QWidget):
 
     def requestNext(self):
         msg = SRMsg(['mNUM', self.userName, self.token, self.pageGroup, self.version])
+        if(msg[0]=='ERR'):
+            return
         fname = self.workingDirectory+"/"+msg[1]+".png"
         tname = msg[2]
         getFileDav(tname, fname)
