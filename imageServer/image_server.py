@@ -112,6 +112,9 @@ class Server(object):
 
     def authoriseUser(self, user, password):
         if(self.authority.authoriseUser(user,password)):
+            #On token request also make sure anything "out" with that user is reset as todo.
+            self.IDDB.resetUsersToDo(user)
+            self.MDB.resetUsersToDo(user)
             return(['ACK', self.authority.getToken(user)])
         else:
             return(['ERR', 'You are not an authorised user'])

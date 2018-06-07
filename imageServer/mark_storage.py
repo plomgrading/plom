@@ -126,3 +126,11 @@ class MarkDatabase:
       eg = open("../resources/groupImagesMarked.json",'w')
       eg.write( json.dumps(GroupImagesMarked, indent=2, sort_keys=True))
       eg.close()
+
+  def resetUsersToDo(self, username):
+      logging.info("Anything from user {} that is OutForMarking - reset it as ToDo.".format(username))
+      query = GroupImage.select().where( (GroupImage.user==username) & (GroupImage.status=="OutForMarking") )
+      for x in query:
+          x.status='ToDo'; x.user='None'; x.time=datetime.now()
+          x.save()
+          logging.info(">>> Returning GroupImage {} from {} to the ToDo pile".format(x.tgv, username))

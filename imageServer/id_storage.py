@@ -119,3 +119,11 @@ class IDDatabase:
       eg = open("../resources/examsIdentified.json",'w')
       eg.write( json.dumps(examsIdentified, indent=2, sort_keys=True))
       eg.close()
+
+  def resetUsersToDo(self, username):
+        logging.info("Anything from user {} that is OutForIDing - reset it as ToDo.".format(username))
+        query = IDImage.select().where( (IDImage.user==username) & (IDImage.status=="OutForIDing") )
+        for x in query:
+            x.status='ToDo'; x.user='None'; x.time=datetime.now()
+            x.save()
+            logging.info(">>> Returning IDImage {} from {} to the ToDo pile".format(x.tgv, username))
