@@ -50,9 +50,12 @@ class ExamView(QGraphicsView):
         self.fitInView(self.imageItem, Qt.KeepAspectRatio)
 
     def mouseReleaseEvent(self, event):
-        rec=self.scene.boxItem.rect()
-        if( rec.height()>=64 and rec.width()>=64 ):
-            self.fitInView(self.scene.boxItem,Qt.KeepAspectRatio)
+        if(event.button() == Qt.RightButton):
+            self.scale(0.8,0.8)
+        else:
+            rec=self.scene.boxItem.rect()
+            if( rec.height()>=64 and rec.width()>=64 ):
+                self.fitInView(self.scene.boxItem,Qt.KeepAspectRatio)
         self.scene.mouseReleaseEvent(event)
 
     def resetView(self):
