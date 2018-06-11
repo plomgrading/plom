@@ -249,7 +249,8 @@ class PageIdentifier(QWidget):
       self.pageImg = PageViewWindow()
       grid.addWidget(self.pageImg, 1,4,10,10)
       self.imageT.populateTable()
-      self.pageImg.updateImage(self.imageT.imageList[0])
+      if(len(self.imageT.imageList)>0):
+          self.pageImg.updateImage(self.imageT.imageList[0])
 
 
       self.closeB = QPushButton("Save Validated")
