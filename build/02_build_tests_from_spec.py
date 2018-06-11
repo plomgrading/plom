@@ -38,14 +38,6 @@ def buildDirectories():
     for x in lst:
         os.system("mkdir -p "+x)
 
-def scriptBuild():
-    fh = open("./commandlist.txt","w")
-    for x in exams:
-        fh.write("python3 merge_and_code_pages.py {} {} {} {} \"{}\"\n".format(spec.Name, spec.Length, spec.Versions, x, exams[x]))
-    fh.close()
-    os.system("parallel --bar <commandlist.txt")
-    os.system("rm commandlist.txt")
-
 def writeExamLog():
     elFH = open("../resources/examsProduced.json",'w')
     elFH.write( json.dumps(exams, indent=2, sort_keys=True))
@@ -55,5 +47,5 @@ spec = TestSpecification()
 spec.readSpec()
 buildDirectories()
 buildExamPages(spec)
-scriptBuild()
 writeExamLog()
+os.system("python3 buildTestPDFs.py")

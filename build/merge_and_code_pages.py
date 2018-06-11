@@ -23,7 +23,7 @@ for v in range(1,versions+1):
 exam = fitz.open()
 for p in range(1,length+1):
     # Very annoyingly pymupdf starts pagecounts from 0 rather than 1. So offset things.
-    exam.insertPDF(V[pageVersions[p]], from_page=p-1, to_page=p-1, start_at=-1)
+    exam.insertPDF(V[pageVersions[str(p)]], from_page=p-1, to_page=p-1, start_at=-1)
 
 #Fit the QRcodes inside boxes 112x100
 pW = exam[0].bound().width
@@ -41,7 +41,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
     pageQRs = {}
     pageFile = {}
     for p in range(1,length+1):
-        tpv = 't{}p{}v{}'.format(str(test).zfill(4), str(p).zfill(2), pageVersions[p])
+        tpv = 't{}p{}v{}'.format(str(test).zfill(4), str(p).zfill(2), pageVersions[str(p)])
         pageQRs[p] = pyqrcode.create(tpv, error='H')
         pageFile[p]=os.path.join(tmpDir,"page{}.png".format(p))
         pageQRs[p].png(pageFile[p], scale=4)
