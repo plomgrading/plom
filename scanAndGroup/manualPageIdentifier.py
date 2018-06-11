@@ -82,6 +82,13 @@ class PageView(QGraphicsView):
         self.fitInView(self.imageItem, Qt.KeepAspectRatio)
 
 
+    def keyPressEvent(self, event):
+         key = event.key()
+         if(key == Qt.Key_Return or key == Qt.Key_Enter):
+             self.parent().parent().identifyIt()
+         else:
+             super(PageView, self).keyPressEvent(event)
+
 class PageScene(QGraphicsScene):
     def __init__(self):
         QGraphicsScene.__init__(self)
@@ -116,7 +123,6 @@ class ImageTable(QTableWidget):
 
     def keyPressEvent(self, event):
          key = event.key()
-
          if(key == Qt.Key_Return or key == Qt.Key_Enter):
              self.parent().identifyIt()
          else:
@@ -217,10 +223,10 @@ class PageIDDialog(QDialog):
         else:
             print("Name valid")
 
-        # if( t in examsScanned ):
-        #     if( p in examsScanned[t] ):
-        #         print("TPV=({},{},{}) has already been scanned as file {}".format(t,p,examsScanned[t][p][0],examsScanned[t][p][1]))
-        #         return(False)
+        if( t in examsScanned ):
+            if( p in examsScanned[t] ):
+                print("TPV=({},{},{}) has already been scanned as file {}".format(t,p,examsScanned[t][p][0],examsScanned[t][p][1]))
+                return(False)
 
         return(True)
 
@@ -245,6 +251,11 @@ class PageIdentifier(QWidget):
       self.imageT.populateTable()
       self.pageImg.updateImage(self.imageT.imageList[0])
 
+
+      self.closeB = QPushButton("Save Validated")
+      self.closeB.clicked.connect(self.saveValid)
+      grid.addWidget(self.closeB,5,1)
+
       self.closeB = QPushButton("Close")
       self.closeB.clicked.connect(self.close)
       grid.addWidget(self.closeB,100,1)
@@ -253,6 +264,9 @@ class PageIdentifier(QWidget):
       self.setWindowTitle('Identify Page Images')
       self.show()
 
+    def saveValid(self):
+        pass
+
     def identifyIt(self):
         pidd = PageIDDialog()
         pidd.exec_()
@@ -260,6 +274,7 @@ class PageIdentifier(QWidget):
         p = str(pidd.pageSB.value()).zfill(2)
         v = str(pidd.versionSB.value())
         self.imageT.setTPV(t,p,v)
+        self.imageT.setFocus()
 
 def main():
     spec.readSpec()
