@@ -186,8 +186,7 @@ class Grader(QWidget):
         self.password=password
         self.requestToken()
 
-        self.tempDirectory = tempfile.TemporaryDirectory()
-        self.workingDirectory = tempDirectory.name
+        self.workingDirectory = directoryPath
 
         self.getRubric()
         self.initUI()
@@ -444,15 +443,24 @@ class Grader(QWidget):
         self.requestNextB.setFocus()
 
 loop = asyncio.get_event_loop()
-tempDirectory = tempfile.TemporaryDirectory()
-directoryPath = tempDirectory.name
+def main():
+    global server, message_port, webdav_port
+    global directoryPath
 
-app = QApplication(sys.argv)
+    tempDirectory = tempfile.TemporaryDirectory()
+    directoryPath = tempDirectory.name
 
-serverDetails = StartUpMarkerWidget(); serverDetails.exec_()
-userName, password, pageGroup, version, server, message_port, webdav_port = serverDetails.getValues()
+    app = QApplication(sys.argv)
 
-gr = Grader(userName, password, pageGroup, version)
+    serverDetails = StartUpMarkerWidget(); serverDetails.exec_()
+    userName, password, pageGroup, version, server, message_port, webdav_port = serverDetails.getValues()
 
-app.exec_()
+    gr = Grader(userName, password, pageGroup, version)
+
+    sys.exit(app.exec_())
+    loop.close()
+
+if __name__ == '__main__':
+    main()
+
 loop.close()

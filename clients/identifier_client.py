@@ -420,6 +420,8 @@ class IDClient(QWidget):
 loop = asyncio.get_event_loop()
 def main():
     global directoryPath
+    global server, message_port, webdav_port
+    
     tempDirectory = tempfile.TemporaryDirectory()
     directoryPath = tempDirectory.name
 
