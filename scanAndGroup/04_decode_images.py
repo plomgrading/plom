@@ -86,11 +86,13 @@ def addCurrentScansToExamsScanned():
     copyme=""; moveme=""
     for t in examsScannedNow.keys():
         ts=str(t) #for json keys
+        if(ts not in examsScanned):
+            examsScanned[ts]={}
+
         for p in examsScannedNow[t].keys():
             ps=str(p) #for json keys
             v=examsScannedNow[t][p][0]
             fn=examsScannedNow[t][p][1]
-
             if(ps in examsScanned[ts]): #check file matches
                 print(">> Have already scanned t{:s}p{:s}v{:d} in file {:s}".format(ts,ps,v,fn))
                 print(">> Will overwrite with new version")
