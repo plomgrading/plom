@@ -143,7 +143,10 @@ class PageScene(QGraphicsScene):
 
     def box_mouseMoveEvent(self, event):
         self.current_pos = event.scenePos()
-        self.boxItem.setRect(QRectF(self.origin_pos, self.current_pos))
+        if(self.boxItem is None):
+            self.boxItem = QGraphicsRectItem(QRectF(self.origin_pos, self.current_pos))
+        else:
+            self.boxItem.setRect(QRectF(self.origin_pos, self.current_pos))
 
     def box_mouseReleaseEvent(self, event):
         self.removeItem(self.boxItem)
