@@ -164,7 +164,7 @@ class ExamTable(QWidget):
     def getUniqueFromColumn(self,col):
         lst=set()
         query = QSqlQuery(db=self.db)
-        query.exec_("select {} from exam".format(col))
+        print( query.exec_("select {} from idimage".format(col)) )
         while(query.next()):
             lst.add( str(query.value(0)))
         return( sorted(list(lst)) )
