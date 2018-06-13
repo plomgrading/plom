@@ -308,7 +308,9 @@ class Grader(QWidget):
             if( annot.gradeCurrentScore.text() != "-1" ):
               return( [annot.gradeCurrentScore.text(), timer.elapsed()//1000] ) #number of seconds rounded down.
             else:
-              return( self.waitForPainter(fname) )
+                msg = ErrorMessage('You have to give a mark.')
+                msg.exec_()
+                return( self.waitForPainter(fname) )
         else:
             return [None, timer.elapsed()]
 
