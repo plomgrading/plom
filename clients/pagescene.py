@@ -212,7 +212,10 @@ class PageScene(QGraphicsScene):
         self.boxItem.setRect(QRectF(self.origin_pos, self.current_pos))
 
     def zoom_mouseReleaseEvent(self, event):
-        rec=self.boxItem.rect()
-        if( rec.height()>=100 and rec.width()>=100 ):
-            self.parent().fitInView(self.boxItem,Qt.KeepAspectRatio)
+        if(event.button() == Qt.RightButton):
+            self.parent().scale(0.8,0.8)
+        else:
+            rec=self.boxItem.rect()
+            if( rec.height()>=100 and rec.width()>=100 ):
+                self.parent().fitInView(self.boxItem,Qt.KeepAspectRatio)
         self.removeItem(self.boxItem)
