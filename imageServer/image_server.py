@@ -220,23 +220,23 @@ class Server(object):
         self.removeFile(tfn)
         return(['ACK'])
 
-    def MreturnMarked(self, user, token, code, mark, fname):
+    def MreturnMarked(self, user, token, code, mark, fname, mtime):
         ## move annoted file to right place with new filename
-        self.MDB.takeGroupImageFromClient(code, user, mark, fname)
-        self.recordMark(user,mark,fname)
+        self.MDB.takeGroupImageFromClient(code, user, mark, fname, mtime)
+        self.recordMark(user,mark,fname,mtime)
         self.claimFile(fname)
         return(['ACK'])
 
-    def MreturnAlreadyMarked(self, user, token, code, mark, fname):
-        ## move annoted file to right place with new filename
-        self.MDB.takeGroupImageFromClient(ret, user, mark, fname)
-        self.recordMark(user,mark,fname)
-        self.claimFile(fname)
-        return(['ACK'])
+    # def MreturnAlreadyMarked(self, user, token, code, mark, fname):
+    #     ## move annoted file to right place with new filename
+    #     self.MDB.takeGroupImageFromClient(ret, user, mark, fname)
+    #     self.recordMark(user,mark,fname)
+    #     self.claimFile(fname)
+    #     return(['ACK'])
 
-    def recordMark(self,user,mark,fname):
+    def recordMark(self,user,mark,fname,mtime):
         fh = open("./markedPapers/{}.txt".format(fname),'w')
-        fh.write("{:s}\t{:s}\t{:s}\t{:s}\n".format(fname, mark, user, datetime.datetime.now().strftime("%Y-%m-%d,%H:%M") ))
+        fh.write("{:s}\t{:s}\t{:s}\t{:s}\t{}".format(fname, mark, user, datetime.datetime.now().strftime("%Y-%m-%d,%H:%M"), mtime))
         fh.close()
 
 # # # # # # # # # # # #

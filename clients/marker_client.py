@@ -7,7 +7,7 @@ from painter import Painter
 from gui_utils import ErrorMessage, SimpleMessage, StartUpMarkerWidget
 from reorientationwindow import ExamReorientWindow
 
-from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QPoint, QRectF, QVariant
+from PyQt5.QtCore import Qt, QAbstractTableModel, QElapsedTimer, QModelIndex, QPoint, QRectF, QVariant
 from PyQt5.QtGui import QBrush, QFont, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QGridLayout, QLabel, QMessageBox, QPushButton, QSizePolicy, QTableView, QWidget
 
@@ -90,13 +90,14 @@ class SimpleTableView(QTableView):
              self.parent().annotateTest()
          else:
              super(QTableView, self).keyPressEvent(event)
+
 ##########################
 
 class ExamModel(QAbstractTableModel):
     def __init__(self, parent=None):
         QAbstractTableModel.__init__(self,parent)
         self.paperList=[]
-        self.header=['TestGroupVersion','Status','Mark']
+        self.header=['TestGroupVersion','Status','Mark','Time']
         self.uniqueValues=[]
 
     def setData(self, index, value, role=Qt.EditRole):
@@ -114,6 +115,10 @@ class ExamModel(QAbstractTableModel):
             self.paperList[index.row()].mark=value
             self.dataChanged.emit(index, index)
             return True
+        elif(index.column()==3):
+            self.paperList[index.row()].markingTime=value
+            self.dataChanged.emit(index, index)
+            return True
         return False
 
     def getPaper(self, r):
@@ -128,7 +133,10 @@ class ExamModel(QAbstractTableModel):
         self.setData(index[1],'flipped')
         self.paperList[index[0].row()].annotatedFile=aname
 
-    def markPaper(self, index, mrk, aname):
+    def markPaper(self, index, mrk, aname, mtime):
+        mt = self.data(index[3])
+        self.setData(index[3],mtime+mt) #total elapsed time.
+
         self.setData(index[1],'marked')
         self.setData(index[2],mrk)
         self.setAnnotatedFile( index[0].row(), aname )
@@ -136,6 +144,7 @@ class ExamModel(QAbstractTableModel):
     def revertPaper(self, index):
         self.setData(index[1],'reverted')
         self.setData(index[2],-1)
+        self.setData(index[3],0)
         os.system("rm -f {:s}".format( self.getAnnotatedFile(index[0].row()) ) ) #remove annotated picture
 
     def addPaper(self, rho):
@@ -148,7 +157,7 @@ class ExamModel(QAbstractTableModel):
     def rowCount(self, parent=None):
         return(len(self.paperList))
     def columnCount(self, parent=None):
-        return 3
+        return 4
 
     def data(self, index, role=Qt.DisplayRole):
         if( role != Qt.DisplayRole ):
@@ -159,6 +168,8 @@ class ExamModel(QAbstractTableModel):
             return self.paperList[index.row()].status
         elif(index.column()==2):
             return self.paperList[index.row()].mark
+        elif(index.column()==3):
+            return self.paperList[index.row()].markingTime
         else:
             return QVariant()
 
@@ -289,14 +300,17 @@ class Grader(QWidget):
         self.annotateTest()
 
     def waitForPainter(self, fname):
+        timer = QElapsedTimer()
+        timer.start()
+
         annot=Painter(fname, self.maxScore)
         if( annot.exec_() ):
             if( annot.gradeCurrentScore.text() != "-1" ):
-              return( annot.gradeCurrentScore.text() )
+              return( [annot.gradeCurrentScore.text(), timer.elapsed()//1000] ) #number of seconds rounded down.
             else:
               return( self.waitForPainter(fname) )
         else:
-            return None
+            return [None, timer.elapsed()]
 
     def writeGradeOnImage(self,fname,gr):
         img = QPixmap(fname)
@@ -322,17 +336,18 @@ class Grader(QWidget):
         if(self.exM.data(index[1]) in ['untouched', 'reverted']):
            os.system("cp {:s} {:s}".format(self.exM.getOriginalFile(index[0].row()), aname) )
 
-        gr = self.waitForPainter(aname)
+        [gr,mtime] = self.waitForPainter(aname)
         if(gr==None): #Exited annotator with 'cancel'
             return
+        print("Took {} sec to mark".format(mtime))
 
-        self.exM.markPaper(index,gr,aname)
+        self.exM.markPaper(index,gr,aname,mtime)
         self.writeGradeOnImage(aname,gr)
         os.system("ls -l {}".format(aname))
 
         dname = os.path.basename(aname)
         putFileDav(aname, dname)
-        msg = SRMsg(['mRMD', self.userName, self.token, self.exM.data(index[0]), gr, dname])
+        msg = SRMsg(['mRMD', self.userName, self.token, self.exM.data(index[0]), gr, dname, mtime])
 
         if(self.moveToNextUnmarkedTest()==False):
             self.requestNext()

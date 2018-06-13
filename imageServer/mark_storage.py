@@ -18,6 +18,7 @@ class GroupImage(Model):
     user = CharField()
     time = DateTimeField()
     mark = IntegerField()
+    markingTime = IntegerField()
 
     class Meta:
         database=markdb
@@ -50,7 +51,7 @@ class MarkDatabase:
   def printGroupImageWithCode(self, code):
     query = GroupImage.select().where(GroupImage.tgz==code).order_by(GroupImage.tgv)
     for x in query:
-        print(x.tgv, x.status, x.user, x.time, x.mark)
+        print(x.tgv, x.status, x.user, x.time, x.mark, x.markingTime)
 
 
   def printToDo(self):
@@ -66,7 +67,7 @@ class MarkDatabase:
   def printMarked(self):
     query = GroupImage.select().where(GroupImage.status=='Marked').order_by(GroupImage.tgv)
     for x in query:
-        print(x.tgv, x.status, x.user, x.time, x.mark)
+        print(x.tgv, x.status, x.user, x.time, x.mark, x.markingTime)
 
   def printAllGroupImages(self):
     self.printToDo()
@@ -77,7 +78,7 @@ class MarkDatabase:
     logging.info("Adding unmarked GroupImage {} at {} to database".format(code, fname))
     try:
         with markdb.atomic():
-            sheet = GroupImage.create(number=t, pageGroup=pg, version=v, tgv=code, originalFile=fname, annotatedFile='', status='ToDo', user='None', time=datetime.now(), mark=-1)
+            sheet = GroupImage.create(number=t, pageGroup=pg, version=v, tgv=code, originalFile=fname, annotatedFile='', status='ToDo', user='None', time=datetime.now(), mark=-1, markingTime=0)
     except IntegrityError:
         logging.info("GroupImage {} {} already exists.".format(t,code) )
 
@@ -94,7 +95,7 @@ class MarkDatabase:
         logging.info("Nothing left on To-Do pile")
         return(None,None)
 
-  def takeGroupImageFromClient(self, code, username, mark, fname):
+  def takeGroupImageFromClient(self, code, username, mark, fname, mt):
     try:
         with markdb.atomic():
           x = GroupImage.get(tgv=code,user=username)
@@ -102,6 +103,7 @@ class MarkDatabase:
           x.mark=mark
           x.annotatedFile = fname
           x.time=datetime.now()
+          x.markingTime=mt
           x.save()
           logging.info("GroupImage {} marked {} by user {} and placed at {}".format(code, mark, username, fname))
 
@@ -114,7 +116,7 @@ class MarkDatabase:
     with markdb.atomic():
         query = GroupImage.select().where( (GroupImage.user==username) & (GroupImage.tgv==code) )
         for x in query:
-            x.status='ToDo'; x.user='None'; x.time=datetime.now()
+            x.status='ToDo'; x.user='None'; x.time=datetime.now(); x.markingTime=0
             x.save()
             logging.info(">>> Returning GroupImage {:s} from user {:s}".format(x.tgv, username))
 
@@ -131,6 +133,6 @@ class MarkDatabase:
       logging.info("Anything from user {} that is OutForMarking - reset it as ToDo.".format(username))
       query = GroupImage.select().where( (GroupImage.user==username) & (GroupImage.status=="OutForMarking") )
       for x in query:
-          x.status='ToDo'; x.user='None'; x.time=datetime.now()
+          x.status='ToDo'; x.user='None'; x.time=datetime.now(); x.markingTime=0;
           x.save()
           logging.info(">>> Returning GroupImage {} from {} to the ToDo pile".format(x.tgv, username))
