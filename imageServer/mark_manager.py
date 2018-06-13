@@ -59,58 +59,6 @@ class errorMessage(QMessageBox):
     self.setText(txt)
     self.setStandardButtons(QMessageBox.Ok)
 
-# class userListDialog(QDialog):
-#     def __init__(self, userList):
-#         super(userListDialog, self).__init__()
-#         self.uList=sorted(userList)
-#         self.initUI()
-#
-#     def initUI(self):
-#         self.setWindowTitle("Current Users")
-#         self.userLW=QListWidget()
-#         for name in self.uList:
-#             self.userLW.addItem(name)
-#
-#         self.okB = QPushButton('Okay')
-#         self.okB.clicked.connect(self.accept)
-#
-#         grid = QGridLayout()
-#         grid.addWidget(self.userLW,1,1)
-#         grid.addWidget(self.okB,2,2)
-#
-#         self.setLayout(grid)
-#         self.show()
-#
-#
-# class userDialog(QDialog):
-#     def __init__(self):
-#         super(userDialog, self).__init__()
-#         self.name=""
-#         self.initUI()
-#
-#     def initUI(self):
-#         self.setWindowTitle("Please enter user")
-#         self.userL = QLabel("User name to add:")
-#
-#         self.userLE = QLineEdit("")
-#
-#         self.okB = QPushButton('Accept')
-#         self.okB.clicked.connect(self.accept)
-#         self.cnB = QPushButton('Cancel')
-#         self.cnB.clicked.connect(self.reject)
-#
-#         grid = QGridLayout()
-#         grid.addWidget(self.userL,1,1)
-#         grid.addWidget(self.userLE,1,2)
-#         grid.addWidget(self.okB,4,3)
-#         grid.addWidget(self.cnB,4,1)
-#
-#         self.setLayout(grid)
-#         self.show()
-#
-#     def getName(self):
-#         self.name=self.userLE.text()
-#         return(self.name)
 
 class userHistogram(QDialog):
     def __init__(self, counts):
@@ -172,8 +120,8 @@ class userProgress(QDialog):
         self.setModal(True)
         grid = QGridLayout()
 
-        self.ptab = QTableWidget(len(counts)+1, 3)
-        self.ptab.setHorizontalHeaderLabels(['User','Done','Progress'])
+        self.ptab = QTableWidget(len(counts)+1, 5)
+        self.ptab.setHorizontalHeaderLabels(['User','Done','Progress', 'Avg Time', 'Total Time'])
         grid.addWidget(self.ptab,1,1)
 
         gb={}
@@ -187,6 +135,12 @@ class userProgress(QDialog):
             self.ptab.setItem(r,0,QTableWidgetItem(str(k)))
             self.ptab.setItem(r,1,QTableWidgetItem(str( counts[k][0])))
             self.ptab.setCellWidget(r,2,gb[k])
+            if(counts[k][1]>0):
+                self.ptab.setItem(r,3,QTableWidgetItem(str( counts[k][2] / counts[k][1])))
+                self.ptab.setItem(r,4,QTableWidgetItem(str( counts[k][2])))
+            else:
+                self.ptab.setItem(r,3,QTableWidgetItem("."))
+                self.ptab.setItem(r,4,QTableWidgetItem("."))
             doneTotal += counts[k][0]
             r+=1
         # gb[-1] = QProgressBar(); gb[-1].setMaximum(mx); gb[-1].setValue(doneTotal)
@@ -211,8 +165,8 @@ class groupProgress(QDialog):
         self.setModal(True)
         grid = QGridLayout()
 
-        self.ptab = QTableWidget(len(counts)+1, 4)
-        self.ptab.setHorizontalHeaderLabels([txt,'Total','Done','Progress'])
+        self.ptab = QTableWidget(len(counts)+1, 6)
+        self.ptab.setHorizontalHeaderLabels([txt,'Total','Done','Progress', 'Avg Time', 'Total Time'])
         grid.addWidget(self.ptab,1,1)
 
         gb={}
@@ -223,6 +177,13 @@ class groupProgress(QDialog):
             self.ptab.setItem(r,1,QTableWidgetItem(str( counts[k][0])))
             self.ptab.setItem(r,2,QTableWidgetItem(str( counts[k][1])))
             self.ptab.setCellWidget(r,3,gb[k])
+            if(counts[k][1]>0):
+                self.ptab.setItem(r,4,QTableWidgetItem(str( counts[k][2] / counts[k][1])))
+                self.ptab.setItem(r,5,QTableWidgetItem(str( counts[k][2])))
+            else:
+                self.ptab.setItem(r,4,QTableWidgetItem("."))
+                self.ptab.setItem(r,5,QTableWidgetItem("."))
+
             total += counts[k][0]; doneTotal += counts[k][1]
             r+=1
         gb[-1] = QProgressBar(); gb[-1].setMaximum(total); gb[-1].setValue(doneTotal)
@@ -340,29 +301,32 @@ class examTable(QWidget):
 
 
     def computePageGroupProgress(self):
-        pgstats = defaultdict(lambda: [0,0])
+        pgstats = defaultdict(lambda: [0,0,0])
         for r in range( self.exM.rowCount() ):
             pgstats[ self.exM.record(r).value('pageGroup') ][0]+=1
             if(self.exM.record(r).value('status')=='Marked'):
                 pgstats[ self.exM.record(r).value('pageGroup') ][1]+=1
+                pgstats[ self.exM.record(r).value('pageGroup') ][2]+=self.exM.record(r).value('markingTime')
         tmp = groupProgress("PageGroup", pgstats)
 
     def computeVersionProgress(self):
-        vstats = defaultdict(lambda: [0,0])
+        vstats = defaultdict(lambda: [0,0,0])
         for r in range( self.exM.rowCount() ):
             vstats[ self.exM.record(r).value('version') ][0]+=1
             if(self.exM.record(r).value('status')=='Marked'):
                 vstats[ self.exM.record(r).value('version') ][1]+=1
+                vstats[ self.exM.record(r).value('version') ][2]+=self.exM.record(r).value('markingTime')
         tmp = groupProgress("Version", vstats)
 
     def computeUserProgress(self):
-        ustats = defaultdict(lambda: [0,0])
+        ustats = defaultdict(lambda: [0,0,0])
         for r in range( self.exM.rowCount() ):
             if( self.exM.record(r).value('user') == 'None' ):
                 continue
             ustats[ self.exM.record(r).value('user') ][0]+=1
             if(self.exM.record(r).value('status')=='Marked'):
                 ustats[ self.exM.record(r).value('user') ][1]+=1
+                ustats[ self.exM.record(r).value('user') ][2]+=self.exM.record(r).value('markingTime')
         tmp = userProgress(ustats)
 
     def getUniqueFromColumn(self,col):
