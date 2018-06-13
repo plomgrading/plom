@@ -208,6 +208,7 @@ class Painter(QDialog):
         sender=self.sender()
         self.gradeCurrentScore.setText( sender.text().replace('&','') )
         self.gradeCurrentScore.repaint()
+        self.closeB.setFocus()
 
     def zoomIn(self):
         self.view.scale(1.25,1.25)
