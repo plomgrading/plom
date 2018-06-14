@@ -96,37 +96,55 @@ class Painter(QDialog):
         if not event.key() == Qt.Key_Escape:
             super(Painter, self).keyPressEvent(event)
 
+    def setMode(self, newMode, newCursor):
+        if( self.previousButton is None):
+            pass
+        else:
+            self.previousButton.setStyleSheet("")
+        self.previousButton=self.sender()
+        self.previousButton.setStyleSheet("background-color: #008888;")
+
+        self.view.setMode(newMode)
+        self.view.setCursor(newCursor)
+
     def initUI(self, fname):
         grid = QGridLayout()
-
         self.imageFile = fname
 
         self.view = PageView(self, self.imageFile)
         grid.addWidget(self.view, 1,1,12,1)
 
         self.penB = SimpleTB("&pen", "icons/pen.svg")
-        self.penB.clicked.connect(lambda: (self.view.setMode("pen"), self.view.setCursor(QCursor(Qt.ArrowCursor))) )
+        self.penB.setStyleSheet("background-color: #008888;") #start in pen mode.
+        self.previousButton=self.penB #start in pen mode.
+        self.penB.clicked.connect(lambda: self.setMode("pen", QCursor(Qt.ArrowCursor)))
 
         self.lineB = SimpleTB("&line", "icons/line.svg")
-        self.lineB.clicked.connect(lambda: (self.view.setMode("line"), self.view.setCursor(QCursor(Qt.CrossCursor)) ) )
+        self.lineB.clicked.connect(lambda: self.setMode("line",QCursor(Qt.CrossCursor)))
 
         self.crossB = SimpleTB("&xcross", "icons/cross.svg")
-        self.crossB.clicked.connect(lambda: (self.view.setMode("cross"), self.view.setCursor(QCursor(Qt.ArrowCursor))) )
+        self.crossB.clicked.connect(lambda: self.setMode("cross", QCursor(Qt.ArrowCursor)))
 
         self.tickB = SimpleTB("&vtick", "icons/tick.svg")
-        self.tickB.clicked.connect(lambda: (self.view.setMode("tick"), self.view.setCursor(QCursor(Qt.ArrowCursor))) )
+        self.tickB.clicked.connect(lambda: self.setMode("tick", QCursor(Qt.ArrowCursor)))
 
         self.boxB = SimpleTB("&box", "icons/rectangle.svg")
-        self.boxB.clicked.connect(lambda: ( self.view.setMode("box"), self.view.setCursor(QCursor(Qt.ArrowCursor) ) ) )
+        self.boxB.clicked.connect(lambda: self.setMode("box", QCursor(Qt.ArrowCursor)))
 
         self.textB = SimpleTB("&text","icons/text.svg")
-        self.textB.clicked.connect(lambda: ( self.view.setMode("text"), self.view.setCursor(QCursor(Qt.IBeamCursor) ) ) )
+        self.textB.clicked.connect(lambda: self.setMode("text", QCursor(Qt.IBeamCursor)))
 
         self.moveB = SimpleTB("&move", "icons/move.svg")
-        self.moveB.clicked.connect(lambda: ( self.view.setMode("move"), self.view.setCursor(QCursor(Qt.OpenHandCursor)) ) )
+        self.moveB.clicked.connect(lambda: self.setMode("move", QCursor(Qt.OpenHandCursor)))
 
         self.deleteB = SimpleTB("&delete", "icons/delete.svg")
-        self.deleteB.clicked.connect(lambda: ( self.view.setMode("delete"), self.view.setCursor(QCursor(Qt.ForbiddenCursor)) ) )
+        self.deleteB.clicked.connect(lambda: self.setMode("delete", QCursor(Qt.ForbiddenCursor)))
+
+        self.zoomB = SimpleTB("&zoom", "icons/zoom.svg")
+        self.zoomB.clicked.connect(lambda: self.setMode("zoom", QCursor(Qt.SizeFDiagCursor)))
+
+        self.panB = SimpleTB("&pan", "icons/pan.svg")
+        self.panB.clicked.connect(lambda: ( self.setMode("pan", QCursor(Qt.OpenHandCursor)), self.view.setDragMode(1)) )
 
         self.undoB = SimpleTB("&undo", "icons/undo.svg")
         self.undoB.clicked.connect(lambda: self.view.undo() )
@@ -140,11 +158,6 @@ class Painter(QDialog):
         self.zoomOutB = SimpleTB("&out zoom", "icons/zoom_out.svg")
         self.zoomOutB.clicked.connect(lambda: self.zoomOut() )
 
-        self.zoomB = SimpleTB("&zoom", "icons/zoom.svg")
-        self.zoomB.clicked.connect(lambda: ( self.view.setMode("zoom")))
-
-        self.panB = SimpleTB("&pan", "icons/pan.svg")
-        self.panB.clicked.connect(lambda: ( self.view.setMode("pan"), self.view.setDragMode(1)) )
 
         self.gradeBox= QGroupBox()
 
