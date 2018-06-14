@@ -161,7 +161,7 @@ class Painter(QDialog):
 
         self.gradeBox= QGroupBox()
 
-        self.closeB= QPushButton("finished")
+        self.closeB= QPushButton("&finished")
         self.closeB.clicked.connect(lambda:( self.commentL.saveComments(), self.closeEvent() ))
 
         self.cancelB= QPushButton("cancel")

@@ -2,7 +2,7 @@ import sys
 from math import sqrt
 
 from PyQt5.QtCore import Qt, QLineF, QPointF
-from PyQt5.QtGui import QBrush, QColor, QFont, QPainterPath, QPen
+from PyQt5.QtGui import QBrush, QColor, QFont, QPainterPath, QPen, QTextCursor
 from PyQt5.QtWidgets import QGraphicsItem, QGraphicsLineItem, QGraphicsPathItem, QGraphicsRectItem, QGraphicsTextItem, QUndoCommand
 
 class CommandDel(QUndoCommand):
@@ -299,6 +299,9 @@ class TextItem(QGraphicsTextItem):
         super(TextItem,self).focusInEvent(event)
 
     def focusOutEvent(self,event):
+        tc = self.textCursor()
+        tc.clearSelection()
+        self.setTextCursor(tc)
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         super(TextItem,self).focusOutEvent(event)
 

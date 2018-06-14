@@ -11,6 +11,14 @@ from PyQt5.QtCore import Qt, QAbstractTableModel, QElapsedTimer, QModelIndex, QP
 from PyQt5.QtGui import QBrush, QFont, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QGridLayout, QLabel, QMessageBox, QPushButton, QSizePolicy, QTableView, QWidget
 
+## in order to get shortcuts under OSX this needs to set this.... but only osx.
+## To test platform
+import platform
+if(platform.system()=='Darwin'):
+    from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
+    qt_set_sequence_auto_mnemonic(True)
+
+
 gradedColour = '#00bb00'
 revertedColour = '#000099'
 
@@ -407,7 +415,7 @@ class Grader(QWidget):
         self.flipB.clicked.connect(lambda:self.flipIt())
         grid.addWidget(self.flipB,99,12)
         ###
-        self.closeB = QPushButton("Close")
+        self.closeB = QPushButton("&Close")
         self.closeB.clicked.connect(lambda:self.shutDown())
         grid.addWidget(self.closeB,100,1)
 
