@@ -102,7 +102,7 @@ class Painter(QDialog):
         else:
             self.previousButton.setStyleSheet("")
         self.previousButton=self.sender()
-        self.previousButton.setStyleSheet("background-color: #008888;")
+        self.previousButton.setStyleSheet("background-color: #008888; border: 2px solid #00bbbb;")
 
         self.view.setMode(newMode)
         self.view.setCursor(newCursor)
@@ -115,7 +115,7 @@ class Painter(QDialog):
         grid.addWidget(self.view, 1,1,12,1)
 
         self.penB = SimpleTB("&pen", "icons/pen.svg")
-        self.penB.setStyleSheet("background-color: #008888;") #start in pen mode.
+        self.penB.setStyleSheet("background-color: #008888; border: 2px solid #00bbbb;") #start in pen mode.
         self.previousButton=self.penB #start in pen mode.
         self.penB.clicked.connect(lambda: self.setMode("pen", QCursor(Qt.ArrowCursor)))
 
@@ -199,6 +199,7 @@ class Painter(QDialog):
         gradeGrid.addWidget(self.gradeCurrentLabel,1,1)
         gradeGrid.addWidget(self.gradeCurrentScore,1,2)
         self.gradeButtons = {}
+        self.previousGradeButton = None
         for k in range(0, self.maxMark+1):
             self.gradeButtons[k] = QPushButton("{:d}".format(k) )
             self.gradeButtons[k].clicked.connect( lambda:self.gradeSet() )
@@ -218,6 +219,13 @@ class Painter(QDialog):
 
 
     def gradeSet(self):
+        if( self.previousGradeButton is None):
+            pass
+        else:
+            self.previousGradeButton.setStyleSheet("")
+        self.previousGradeButton=self.sender()
+        self.previousGradeButton.setStyleSheet("background-color: #ff0000; border: 2px solid #ff8888;")
+
         sender=self.sender()
         self.gradeCurrentScore.setText( sender.text().replace('&','') )
         self.gradeCurrentScore.repaint()
