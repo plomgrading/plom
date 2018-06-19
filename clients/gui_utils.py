@@ -12,6 +12,7 @@ class SimpleMessage(QMessageBox):
     super(SimpleMessage, self).__init__()
     self.setText(txt)
     self.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
+    self.setDefaultButton(QMessageBox.Yes)
     fnt = self.font(); fnt.setPointSize( (fnt.pointSize()*3)//2 ); self.setFont( fnt )
 
 class StartUpIDWidget(QDialog):

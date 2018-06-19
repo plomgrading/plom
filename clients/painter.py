@@ -90,6 +90,7 @@ class Painter(QDialog):
     def __init__(self, fname, maxMark, parent=None):
         super(Painter, self).__init__(parent)
         self.maxMark=maxMark
+        self.currentBackground = "border: 2px solid #008888; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00bbbb, stop: 1 #008888); "
         self.initUI(fname)
 
     def keyPressEvent(self, event):
@@ -102,7 +103,8 @@ class Painter(QDialog):
         else:
             self.previousButton.setStyleSheet("")
         self.previousButton=self.sender()
-        self.previousButton.setStyleSheet("background-color: #008888; border: 2px solid #00bbbb;")
+        # self.previousButton.setStyleSheet("background-color: #008888; border: 2px solid #00bbbb;")
+        self.previousButton.setStyleSheet(self.currentBackground)
 
         self.view.setMode(newMode)
         self.view.setCursor(newCursor)
@@ -115,7 +117,7 @@ class Painter(QDialog):
         grid.addWidget(self.view, 1,1,12,1)
 
         self.penB = SimpleTB("&pen", "icons/pen.svg")
-        self.penB.setStyleSheet("background-color: #008888; border: 2px solid #00bbbb;") #start in pen mode.
+        self.penB.setStyleSheet(self.currentBackground) #start in pen mode.
         self.previousButton=self.penB #start in pen mode.
         self.penB.clicked.connect(lambda: self.setMode("pen", QCursor(Qt.ArrowCursor)))
 
@@ -143,7 +145,7 @@ class Painter(QDialog):
         self.zoomB = SimpleTB("&zoom", "icons/zoom.svg")
         self.zoomB.clicked.connect(lambda: self.setMode("zoom", QCursor(Qt.SizeFDiagCursor)))
 
-        self.panB = SimpleTB("&pan", "icons/pan.svg")
+        self.panB = SimpleTB("p&an", "icons/pan.svg")
         self.panB.clicked.connect(lambda: ( self.setMode("pan", QCursor(Qt.OpenHandCursor)), self.view.setDragMode(1)) )
 
         self.undoB = SimpleTB("&undo", "icons/undo.svg")
@@ -157,7 +159,6 @@ class Painter(QDialog):
 
         self.zoomOutB = SimpleTB("&out zoom", "icons/zoom_out.svg")
         self.zoomOutB.clicked.connect(lambda: self.zoomOut() )
-
 
         self.gradeBox= QGroupBox()
 
@@ -224,7 +225,7 @@ class Painter(QDialog):
         else:
             self.previousGradeButton.setStyleSheet("")
         self.previousGradeButton=self.sender()
-        self.previousGradeButton.setStyleSheet("background-color: #ff0000; border: 2px solid #ff8888;")
+        self.previousGradeButton.setStyleSheet("border: 2px solid #ff0000; background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, stop: 0.3 #ffaaaa);")
 
         sender=self.sender()
         self.gradeCurrentScore.setText( sender.text().replace('&','') )
