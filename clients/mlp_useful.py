@@ -45,9 +45,10 @@ class SimpleToolButton(QToolButton):
         self.setIconSize(QSize(24, 24))
         self.setMinimumWidth(100)
 
-class CommentList(QListWidget):
+class SimpleCommentList(QListWidget):
+    commentSignal = pyqtSignal(['QListWidgetItem']) #This is picked up by the annotator
     def __init__(self, parent):
-        super(CommentList, self).__init__(self, parent)
+        super(SimpleCommentList, self).__init__()
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setDragEnabled(True)
         self.setDragDropMode(QAbstractItemView.InternalMove)
@@ -62,8 +63,7 @@ class CommentList(QListWidget):
             self.addItem(it)
 
     def handleClick(self):
-        self.parent().parent().view.setCursor(QCursor(Qt.IBeamCursor))
-        self.parent().parent().view.makeComment(self.currentItem())
+        self.commentSignal.emit(self.currentItem())
 
     def loadCommentList(self):
         if os.path.exists('commentList.json'):
@@ -79,11 +79,11 @@ class CommentList(QListWidget):
         with open('commentList.json', 'w') as fname:
             json.dump(self.clist, fname)
 
-class CommentWrapper(QWidget):
-    def __init__(self,parent):
-        QWidget.__init__(self,parent)
+class CommentWidget(QWidget):
+    def __init__(self,parent=None):
+        super(CommentWidget,self).__init__()
         grid = QGridLayout()
-        self.CL = CommentList(self)
+        self.CL = SimpleCommentList(self)
         grid.addWidget(self.CL, 1, 1, 2, 3)
         self.addB = QPushButton('Add')
         self.addB.clicked.connect(self.addItem)

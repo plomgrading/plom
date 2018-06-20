@@ -12,7 +12,6 @@ import time
 
 ###
 from uiFiles.ui_identify import Ui_IdentifyWindow
-from uiFiles.ui_chooser import Ui_Chooser
 import mlp_messenger
 
 tempDirectory = tempfile.TemporaryDirectory()

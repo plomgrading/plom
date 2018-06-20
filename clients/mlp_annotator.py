@@ -1,167 +1,118 @@
-import sys
-import os
-import json
-
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap
-from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QGroupBox, QLabel, QListWidget, QListWidgetItem, QPushButton, QShortcut, QToolButton, QWidget
+from PyQt5.QtWidgets import QDialog, QPushButton, QShortcut, QSizePolicy
 
 from pageview import PageView
-
-
-
+from mlp_useful import CommentWidget
+from uiFiles.ui_annotator import Ui_annotator
 
 class Annotator(QDialog):
     def __init__(self, fname, maxMark, parent=None):
         super(Annotator, self).__init__(parent)
-        self.maxMark=maxMark
+        self.imageFile = fname
+        self.maxMark = maxMark
+        self.score = -1
         self.currentBackground = "border: 2px solid #008888; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00bbbb, stop: 1 #008888); "
-        self.initUI(fname)
+        self.previousButton = None
+
+        self.ui = Ui_annotator()
+        self.ui.setupUi(self)
+        self.setView()
+
+        self.commentW = CommentWidget()
+        self.ui.commentGrid.addWidget(self.commentW,1,1)
+
+        self.setIcons()
+        self.setButtons()
+
+        self.markButtons = {}
+        self.previousMarkButton = None
+        self.setMarkButtons()
+
+    def setView(self):
+        self.view = PageView(self, self.imageFile)
+        self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
+        self.showMaximized()
+        self.view.fitInView(self.view.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
+        self.view.centerOn(0, 0)
 
     def keyPressEvent(self, event):
         if not event.key() == Qt.Key_Escape:
-            super(Painter, self).keyPressEvent(event)
+            super(Annotator, self).keyPressEvent(event)
 
     def setMode(self, newMode, newCursor):
-        if( self.previousButton is None):
+        if self.previousButton is None:
             pass
         else:
             self.previousButton.setStyleSheet("")
-        self.previousButton=self.sender()
-        # self.previousButton.setStyleSheet("background-color: #008888; border: 2px solid #00bbbb;")
+        self.previousButton = self.sender()
         self.previousButton.setStyleSheet(self.currentBackground)
-
         self.view.setMode(newMode)
         self.view.setCursor(newCursor)
+        self.repaint()
 
-    def initUI(self, fname):
-        grid = QGridLayout()
-        self.imageFile = fname
-
-        self.view = PageView(self, self.imageFile)
-        grid.addWidget(self.view, 1,1,12,1)
-
-        self.penB = SimpleTB("&pen", "icons/pen.svg")
-        self.penB.setStyleSheet(self.currentBackground) #start in pen mode.
-        self.previousButton=self.penB #start in pen mode.
-        self.penB.clicked.connect(lambda: self.setMode("pen", QCursor(Qt.ArrowCursor)))
-
-        self.lineB = SimpleTB("&line", "icons/line.svg")
-        self.lineB.clicked.connect(lambda: self.setMode("line",QCursor(Qt.CrossCursor)))
-
-        self.crossB = SimpleTB("&xcross", "icons/cross.svg")
-        self.crossB.clicked.connect(lambda: self.setMode("cross", QCursor(Qt.ArrowCursor)))
-
-        self.tickB = SimpleTB("&vtick", "icons/tick.svg")
-        self.tickB.clicked.connect(lambda: self.setMode("tick", QCursor(Qt.ArrowCursor)))
-
-        self.boxB = SimpleTB("&box", "icons/rectangle.svg")
-        self.boxB.clicked.connect(lambda: self.setMode("box", QCursor(Qt.ArrowCursor)))
-
-        self.textB = SimpleTB("&text","icons/text.svg")
-        self.textB.clicked.connect(lambda: self.setMode("text", QCursor(Qt.IBeamCursor)))
-
-        self.moveB = SimpleTB("&move", "icons/move.svg")
-        self.moveB.clicked.connect(lambda: self.setMode("move", QCursor(Qt.OpenHandCursor)))
-
-        self.deleteB = SimpleTB("&delete", "icons/delete.svg")
-        self.deleteB.clicked.connect(lambda: self.setMode("delete", QCursor(Qt.ForbiddenCursor)))
-
-        self.zoomB = SimpleTB("&zoom", "icons/zoom.svg")
-        self.zoomB.clicked.connect(lambda: self.setMode("zoom", QCursor(Qt.SizeFDiagCursor)))
-
-        self.panB = SimpleTB("p&an", "icons/pan.svg")
-        self.panB.clicked.connect(lambda: ( self.setMode("pan", QCursor(Qt.OpenHandCursor)), self.view.setDragMode(1)) )
-
-        self.undoB = SimpleTB("&undo", "icons/undo.svg")
-        self.undoB.clicked.connect(lambda: self.view.undo() )
-
-        self.redoB = SimpleTB("&redo", "icons/redo.svg")
-        self.redoB.clicked.connect(lambda: self.view.redo() )
-
-        self.zoomInB = SimpleTB("&in zoom", "icons/zoom_in.svg")
-        self.zoomInB.clicked.connect(lambda: self.zoomIn() )
-
-        self.zoomOutB = SimpleTB("&out zoom", "icons/zoom_out.svg")
-        self.zoomOutB.clicked.connect(lambda: self.zoomOut() )
-
-        self.gradeBox= QGroupBox()
-
-        self.closeB= QPushButton("&finished")
-        self.closeB.clicked.connect(lambda:( self.commentL.saveComments(), self.closeEvent() ))
-
-        self.cancelB= QPushButton("cancel")
-        self.cancelB.clicked.connect( lambda: self.reject() )
-
-        grid.addWidget(self.penB,1,2)
-        grid.addWidget(self.lineB,1,3)
-        grid.addWidget(self.boxB,1,4)
-        grid.addWidget(self.textB,2,2)
-        grid.addWidget(self.crossB,2,3)
-        grid.addWidget(self.tickB,2,4)
-
-        grid.addWidget(self.deleteB,3,2)
-        grid.addWidget(self.moveB,3,3)
-        grid.addWidget(self.panB,3,4)
-
-        grid.addWidget(self.zoomB,4,2)
-        grid.addWidget(self.zoomInB,4,3)
-        grid.addWidget(self.zoomOutB,4,4)
-
-        grid.addWidget(self.undoB,5,2)
-        grid.addWidget(self.redoB,5,3)
-
-        grid.addWidget(self.closeB,12,2)
-        grid.addWidget(self.cancelB,12,4)
-
+    def setIcons(self):
+        self.setIcon(self.ui.penButton, "&pen", "icons/pen.svg")
+        self.setIcon(self.ui.lineButton, "&line", "icons/line.svg")
+        self.setIcon(self.ui.boxButton, "&box", "icons/rectangle.svg")
+        self.setIcon(self.ui.textButton, "&text", "icons/text.svg")
+        self.setIcon(self.ui.tickButton, "&vtick", "icons/tick.svg")
+        self.setIcon(self.ui.crossButton, "&xcross", "icons/cross.svg")
+        self.setIcon(self.ui.deleteButton, "&delete", "icons/delete.svg")
+        self.setIcon(self.ui.moveButton, "&move", "icons/move.svg")
+        self.setIcon(self.ui.zoomButton, "&zoom", "icons/zoom.svg")
+        self.setIcon(self.ui.panButton, "p&an", "icons/pan.svg")
+        self.setIcon(self.ui.undoButton, "&undo", "icons/undo.svg")
+        self.setIcon(self.ui.redoButton, "&redo", "icons/redo.svg")
         QShortcut(QKeySequence("Ctrl+Z"), self.view, self.view.undo, context=Qt.WidgetShortcut)
         QShortcut(QKeySequence("Ctrl+Shift+z"), self.view, self.view.redo, context=Qt.WidgetShortcut)
 
-        grid.addWidget(self.gradeBox,6,2,1,3)
+    def setIcon(self, tb, txt, iconFile):
+        tb.setText(txt)
+        tb.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        tb.setIcon(QIcon(QPixmap(iconFile)))
+        tb.setIconSize(QSize(24, 24))
+        tb.setMinimumWidth(60)
 
-        gradeGrid=QGridLayout()
-        self.gradeCurrentLabel=QLabel("Grade:")
-        self.gradeCurrentScore=QLabel("-1")
-        gradeGrid.addWidget(self.gradeCurrentLabel,1,1)
-        gradeGrid.addWidget(self.gradeCurrentScore,1,2)
-        self.gradeButtons = {}
-        self.previousGradeButton = None
+    def setButtons(self):
+        self.ui.penButton.clicked.connect(lambda: self.setMode("pen", QCursor(Qt.ArrowCursor)))
+        self.ui.lineButton.clicked.connect(lambda: self.setMode("line", QCursor(Qt.CrossCursor)))
+        self.ui.boxButton.clicked.connect(lambda: self.setMode("box", QCursor(Qt.ArrowCursor)))
+        self.ui.textButton.clicked.connect(lambda: self.setMode("text", QCursor(Qt.IBeamCursor)))
+        self.ui.crossButton.clicked.connect(lambda: self.setMode("cross", QCursor(Qt.ArrowCursor)))
+        self.ui.tickButton.clicked.connect(lambda: self.setMode("tick", QCursor(Qt.ArrowCursor)))
+        self.ui.moveButton.clicked.connect(lambda: self.setMode("move", QCursor(Qt.OpenHandCursor)))
+        self.ui.deleteButton.clicked.connect(lambda: self.setMode("delete", QCursor(Qt.ForbiddenCursor)))
+        self.ui.zoomButton.clicked.connect(lambda: self.setMode("zoom", QCursor(Qt.SizeFDiagCursor)))
+        self.ui.panButton.clicked.connect(lambda: (self.setMode("pan", QCursor(Qt.OpenHandCursor)), self.view.setDragMode(1)))
+        self.ui.undoButton.clicked.connect(self.view.undo)
+        self.ui.redoButton.clicked.connect(self.view.redo)
+        self.ui.finishedButton.clicked.connect(lambda:(self.commentW.saveComments(), self.closeEvent()))
+        self.ui.cancelButton.clicked.connect(self.reject)
+
+        self.commentW.CL.commentSignal.connect(self.handleComment)
+
+    def handleComment(self, txt):
+        self.setMode("text", QCursor(Qt.IBeamCursor))
+        self.view.makeComment(txt)
+
+    def setMarkButtons(self):
         for k in range(0, self.maxMark+1):
-            self.gradeButtons[k] = QPushButton("{:d}".format(k) )
-            self.gradeButtons[k].clicked.connect( lambda:self.gradeSet() )
-            gradeGrid.addWidget(self.gradeButtons[k], 2+k//3, k%3)
+            self.markButtons[k] = QPushButton("{:d}".format(k))
+            self.markButtons[k].setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
+            self.markButtons[k].clicked.connect(self.markSet)
+            self.ui.markGrid.addWidget(self.markButtons[k], k//3, k%3)
 
-        self.gradeBox.setLayout(gradeGrid)
-
-        self.commentL=CommentWrapper(self)
-        grid.addWidget(self.commentL,7,2,4,3)
-
-
-        self.setWindowTitle('Annotate Me')
-        self.setLayout(grid)
-        self.showMaximized()
-        self.view.fitInView( self.view.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
-        self.view.centerOn(0,0)
-
-
-    def gradeSet(self):
-        if( self.previousGradeButton is None):
+    def markSet(self):
+        if self.previousMarkButton is None:
             pass
         else:
-            self.previousGradeButton.setStyleSheet("")
-        self.previousGradeButton=self.sender()
-        self.previousGradeButton.setStyleSheet("border: 2px solid #ff0000; background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, stop: 0.3 #ffaaaa);")
+            self.previousMarkButton.setStyleSheet("")
+        self.previousMarkButton=self.sender()
+        self.previousMarkButton.setStyleSheet("border: 2px solid #ff0000; background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, stop: 0.3 #ffaaaa);")
 
-        sender=self.sender()
-        self.gradeCurrentScore.setText( sender.text().replace('&','') )
-        self.gradeCurrentScore.repaint()
-        self.closeB.setFocus()
-
-    def zoomIn(self):
-        self.view.scale(1.25,1.25)
-
-    def zoomOut(self):
-        self.view.scale(0.8,0.8)
+        self.score = self.sender().text().replace('&','')
+        self.ui.finishedButton.setFocus()
 
     def closeEvent(self):
         self.view.save()
