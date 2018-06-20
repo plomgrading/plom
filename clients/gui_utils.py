@@ -1,19 +1,38 @@
 import sys
-from PyQt5.QtWidgets import QDialog, QGridLayout, QLabel, QLineEdit, QMessageBox, QSpinBox, QPushButton
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QLabel, QLineEdit, QMessageBox, QSpinBox, QPushButton, QTableView
 
 class ErrorMessage(QMessageBox):
-  def __init__(self, txt):
-    super(ErrorMessage, self).__init__()
-    self.setText(txt)
-    self.setStandardButtons(QMessageBox.Ok)
+    def __init__(self, txt):
+        super(ErrorMessage, self).__init__()
+        self.setText(txt)
+        self.setStandardButtons(QMessageBox.Ok)
 
 class SimpleMessage(QMessageBox):
-  def __init__(self, txt):
-    super(SimpleMessage, self).__init__()
-    self.setText(txt)
-    self.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
-    self.setDefaultButton(QMessageBox.Yes)
-    fnt = self.font(); fnt.setPointSize( (fnt.pointSize()*3)//2 ); self.setFont( fnt )
+    def __init__(self, txt):
+        super(SimpleMessage, self).__init__()
+        self.setText(txt)
+        self.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
+        self.setDefaultButton(QMessageBox.Yes)
+        fnt = self.font()
+        fnt.setPointSize((fnt.pointSize()*3)//2)
+        self.setFont(fnt)
+
+class SimpleTableView(QTableView):
+    annotateSignal = pyqtSignal() #This is picked up by the marker, lets it know to annotate
+    def __init__(self, parent=None):
+        QTableView.__init__(self)
+        self.setSortingEnabled(True)
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key == Qt.Key_Return or key == Qt.Key_Enter:
+            self.annotateSignal.emit()
+        else:
+            super(SimpleTableView, self).keyPressEvent(event)
+
 
 class StartUpIDWidget(QDialog):
     def __init__(self):

@@ -9,7 +9,7 @@ from tools import CommandArrow, CommandBox, CommandCross, CommandDel, CommandLin
 
 class PageScene(QGraphicsScene):
     def __init__(self, parent, imgName):
-        super(PageScene,self).__init__(parent)
+        super(PageScene, self).__init__(parent)
         self.imageName = imgName
         self.image = QPixmap(imgName)
         self.imageItem = QGraphicsPixmapItem(self.image)
@@ -19,17 +19,19 @@ class PageScene(QGraphicsScene):
         self.addItem(self.imageItem)
         self.undoStack = QUndoStack()
 
-        self.mode="pen"
-        self.ink = QPen(Qt.red,2)
+        self.mode = "pen"
+        self.ink = QPen(Qt.red, 2)
         self.brush = QBrush(self.ink.color())
-        self.lightBrush = QBrush(QColor(255,255,0,16))
-        self.textLock=False
+        self.lightBrush = QBrush(QColor(255, 255, 0, 16))
+        self.textLock = False
+        self.arrowFlag = 0
 
-        self.zoomInk = QPen(Qt.green,2)
-        self.zoomBrush = QBrush(QColor(0,255,0,16))
+        self.zoomInk = QPen(Qt.green, 2)
+        self.zoomBrush = QBrush(QColor(0, 255, 0, 16))
 
-        self.current_pos=None
-        self.last_pos=None
+        self.originPos = None
+        self.currentPos = None
+        self.lastPos = None
         self.path = None
         self.boxItem = None
         self.lineItem = None
@@ -37,43 +39,44 @@ class PageScene(QGraphicsScene):
         self.commentItem = None
 
     def save(self):
-        w = self.image.width(); h=self.image.height()
-        oimg = QPixmap(w,h)
+        w = self.image.width()
+        h = self.image.height()
+        oimg = QPixmap(w, h)
         exporter = QPainter(oimg)
         self.render(exporter)
         exporter.end()
         oimg.save(self.imageName)
 
     def keyReleaseEvent(self,event):
-        if(event.key() == Qt.Key_Escape):
+        if event.key() == Qt.Key_Escape:
             self.clearFocus()
         else:
-          super(PageScene,self).keyPressEvent(event)
+            super(PageScene, self).keyPressEvent(event)
 
     def mousePressEvent(self, event):
-        fn = getattr(self, "%s_mousePressEvent" % self.mode, None)
+        fn = getattr(self, "%s_mousePressEvent"%self.mode, None)
         if fn:
             return fn(event)
         else:
-            super(PageScene,self).mousePressEvent(event)
+            super(PageScene, self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        fn = getattr(self, "%s_mouseMoveEvent" % self.mode, None)
+        fn = getattr(self, "%s_mouseMoveEvent"%self.mode, None)
         if fn:
             return fn(event)
         else:
-            super(PageScene,self).mouseMoveEvent(event)
+            super(PageScene, self).mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
-        fn = getattr(self, "%s_mouseReleaseEvent" % self.mode, None)
+        fn = getattr(self, "%s_mouseReleaseEvent"%self.mode, None)
         if fn:
             return fn(event)
         else:
-            super(PageScene,self).mouseReleaseEvent(event)
+            super(PageScene, self).mouseReleaseEvent(event)
 
     def cross_mousePressEvent(self, event):
         pt = event.scenePos()
-        if(event.button()==Qt.LeftButton):
+        if event.button() == Qt.LeftButton:
             command = CommandCross(self, pt)
         else:
             command = CommandTick(self, pt)
@@ -81,90 +84,91 @@ class PageScene(QGraphicsScene):
 
     def tick_mousePressEvent(self, event):
         pt = event.scenePos()
-        if(event.button()==Qt.LeftButton):
+        if event.button() == Qt.LeftButton:
             command = CommandTick(self, pt)
         else:
             command = CommandCross(self, pt)
         self.undoStack.push(command)
 
     def comment_mousePressEvent(self, event):
-        self.origin_pos = event.scenePos() + QPointF(0,-24)
+        self.originPos = event.scenePos() + QPointF(0, -24)
         self.blurb = TextItem(self)
-        self.blurb.setPos(self.origin_pos)
+        self.blurb.setPos(self.originPos)
         self.blurb.setPlainText(self.commentItem.text())
 
         command = CommandText(self, self.blurb, self.ink)
         self.undoStack.push(command)
 
     def text_mousePressEvent(self, event):
-        under = self.itemAt(event.scenePos(), QTransform() )
-        if( isinstance( under, TextItem ) and self.mode!='move'):
+        under = self.itemAt(event.scenePos(), QTransform())
+        if isinstance(under, TextItem) and self.mode != 'move':
             under.setTextInteractionFlags(Qt.TextEditorInteraction)
             self.setFocusItem(under, Qt.MouseFocusReason)
             return
 
-        self.origin_pos = event.scenePos() + QPointF(0,-12)
+        self.originPos = event.scenePos() + QPointF(0, -12)
         self.blurb = TextItem(self)
-        self.blurb.setPos(self.origin_pos)
+        self.blurb.setPos(self.originPos)
         self.blurb.setFocus()
         command = CommandText(self, self.blurb, self.ink)
         self.undoStack.push(command)
 
     def line_mousePressEvent(self, event):
-        if(event.button()==Qt.LeftButton):
-            self.arrowFlag=0
+        if event.button() == Qt.LeftButton:
+            self.arrowFlag = 0
         else:
-            self.arrowFlag=1
+            self.arrowFlag = 1
 
-        self.origin_pos = event.scenePos()
-        self.current_pos = self.origin_pos
-        self.lineItem = QGraphicsLineItem(QLineF(self.origin_pos, self.current_pos))
+        self.originPos = event.scenePos()
+        self.currentPos = self.originPos
+        self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
         self.lineItem.setPen(self.ink)
         self.addItem(self.lineItem)
 
     def line_mouseMoveEvent(self, event):
-        self.current_pos = event.scenePos()
-        self.lineItem.setLine(QLineF(self.origin_pos, self.current_pos))
+        self.currentPos = event.scenePos()
+        self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
 
     def line_mouseReleaseEvent(self, event):
         self.removeItem(self.lineItem)
-        if(self.arrowFlag==0):
-            command = CommandLine(self, self.origin_pos, self.current_pos)
+        if self.arrowFlag == 0:
+            command = CommandLine(self, self.originPos, self.currentPos)
         else:
-            command = CommandArrow(self, self.origin_pos, self.current_pos)
+            command = CommandArrow(self, self.originPos, self.currentPos)
         self.undoStack.push(command)
 
     def box_mousePressEvent(self, event):
-        self.origin_pos = event.scenePos()
-        self.current_pos = self.origin_pos
-        self.boxItem = QGraphicsRectItem(QRectF(self.origin_pos, self.current_pos))
-        self.boxItem.setPen(self.ink); self.boxItem.setBrush(self.lightBrush)
+        self.originPos = event.scenePos()
+        self.currentPos = self.originPos
+        self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.boxItem.setPen(self.ink)
+        self.boxItem.setBrush(self.lightBrush)
         self.addItem(self.boxItem)
 
     def box_mouseMoveEvent(self, event):
-        self.current_pos = event.scenePos()
-        if(self.boxItem is None):
-            self.boxItem = QGraphicsRectItem(QRectF(self.origin_pos, self.current_pos))
+        self.currentPos = event.scenePos()
+        if self.boxItem is None:
+            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
         else:
-            self.boxItem.setRect(QRectF(self.origin_pos, self.current_pos))
+            self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def box_mouseReleaseEvent(self, event):
         self.removeItem(self.boxItem)
-        command = CommandBox(self, QRectF(self.origin_pos, self.current_pos) )
+        command = CommandBox(self, QRectF(self.originPos, self.currentPos))
         self.undoStack.push(command)
 
     def pen_mousePressEvent(self, event):
-        self.origin_pos = event.scenePos()
-        self.current_pos = self.origin_pos
+        self.originPos = event.scenePos()
+        self.currentPos = self.originPos
         self.path = QPainterPath()
-        self.path.moveTo(self.origin_pos); self.path.lineTo(self.current_pos)
+        self.path.moveTo(self.originPos); self.path.lineTo(self.currentPos)
         self.pathItem = QGraphicsPathItem(self.path)
         self.pathItem.setPen(self.ink)
         self.addItem(self.pathItem)
 
     def pen_mouseMoveEvent(self, event):
-        self.current_pos = event.scenePos()
-        self.path.lineTo(self.current_pos)
+        self.currentPos = event.scenePos()
+        self.path.lineTo(self.currentPos)
         self.pathItem.setPath(self.path)
 
     def pen_mouseReleaseEvent(self, event):
@@ -173,10 +177,10 @@ class PageScene(QGraphicsScene):
         self.undoStack.push(command)
 
     def delete_mousePressEvent(self,event):
-        self.origin_pos = event.scenePos()
-        self.delIt = self.itemAt(self.origin_pos, QTransform())
-        if(self.delIt == self.imageItem):
-            self.delIt=None
+        self.originPos = event.scenePos()
+        self.delIt = self.itemAt(self.originPos, QTransform())
+        if self.delIt == self.imageItem:
+            self.delIt = None
             return
 
         command = CommandDel(self, self.delIt)
@@ -184,11 +188,11 @@ class PageScene(QGraphicsScene):
 
     def move_mousePressEvent(self,event):
         self.parent().setCursor(Qt.ClosedHandCursor)
-        super(PageScene,self).mousePressEvent(event)
+        super(PageScene, self).mousePressEvent(event)
 
     def move_mouseReleaseEvent(self,event):
         self.parent().setCursor(Qt.OpenHandCursor)
-        super(PageScene,self).mouseReleaseEvent(event)
+        super(PageScene, self).mouseReleaseEvent(event)
 
 
     def pan_mousePressEvent(self, event):
@@ -201,21 +205,22 @@ class PageScene(QGraphicsScene):
         pass
 
     def zoom_mousePressEvent(self, event):
-        self.origin_pos = event.scenePos()
-        self.current_pos = self.origin_pos
-        self.boxItem = QGraphicsRectItem(QRectF(self.origin_pos, self.current_pos))
-        self.boxItem.setPen(self.zoomInk); self.boxItem.setBrush(self.zoomBrush)
+        self.originPos = event.scenePos()
+        self.currentPos = self.originPos
+        self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.boxItem.setPen(self.zoomInk)
+        self.boxItem.setBrush(self.zoomBrush)
         self.addItem(self.boxItem)
 
     def zoom_mouseMoveEvent(self, event):
-        self.current_pos = event.scenePos()
-        self.boxItem.setRect(QRectF(self.origin_pos, self.current_pos))
+        self.currentPos = event.scenePos()
+        self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def zoom_mouseReleaseEvent(self, event):
-        if(event.button() == Qt.RightButton):
-            self.parent().scale(0.8,0.8)
+        if event.button() == Qt.RightButton:
+            self.parent().scale(0.8, 0.8)
         else:
-            rec=self.boxItem.rect()
-            if( rec.height()>=100 and rec.width()>=100 ):
-                self.parent().fitInView(self.boxItem,Qt.KeepAspectRatio)
+            rec = self.boxItem.rect()
+            if rec.height() >= 100 and rec.width() >= 100:
+                self.parent().fitInView(self.boxItem, Qt.KeepAspectRatio)
         self.removeItem(self.boxItem)

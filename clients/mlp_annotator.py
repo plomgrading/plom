@@ -8,87 +8,12 @@ from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QGroupBox, 
 
 from pageview import PageView
 
-class SimpleTB(QToolButton):
-    def __init__(self, txt, icon):
-        super(QToolButton, self).__init__()
-        self.setText(txt);
-        self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon);
-        self.setIcon(QIcon(QPixmap(icon)));
-        self.setIconSize(QSize(24,24))
-        self.setMinimumWidth(100)
-
-class CommentList(QListWidget):
-    def __init__(self, parent):
-        QListWidget.__init__(self, parent)
-        self.setSelectionMode(QAbstractItemView.SingleSelection);
-        self.setDragEnabled(True)
-        self.setDragDropMode(QAbstractItemView.InternalMove)
-        self.viewport().setAcceptDrops(True)
-        self.setDropIndicatorShown(True);
-
-        self.itemClicked.connect(lambda: self.handleClick())
-
-        self.loadCommentList()
-
-        for txt in self.clist:
-            it = QListWidgetItem(txt)
-            it.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsDragEnabled)
-            self.addItem(it)
-
-    def handleClick(self):
-        self.parent().parent().view.setCursor(QCursor(Qt.IBeamCursor))
-        self.parent().parent().view.makeComment(self.currentItem())
-
-    def loadCommentList(self):
-        if(os.path.exists('commentList.json')):
-            self.clist = json.load(open('commentList.json'))
-        else:
-            self.clist = ['algebra', 'arithmetic', 'be careful', 'very nice']
-
-    def saveCommentList(self):
-        self.clist=[]
-        for r in range(self.count()):
-            self.clist.append( self.item(r).text() )
-
-        with open('commentList.json', 'w') as fname:
-            json.dump(self.clist, fname)
-
-class CommentWrapper(QWidget):
-    def __init__(self,parent):
-        QWidget.__init__(self,parent)
-        grid = QGridLayout()
-        self.CL = CommentList(self)
-        grid.addWidget(self.CL, 1, 1, 2, 3)
-        self.addB = QPushButton('Add')
-        self.addB.clicked.connect(lambda: self.addItem())
-
-        self.delB = QPushButton('Delete')
-        self.delB.clicked.connect(lambda: self.deleteItem())
-
-        grid.addWidget(self.addB,3,1)
-        grid.addWidget(self.delB,3,3)
-        self.setLayout(grid)
-
-    def saveComments(self):
-        self.CL.saveCommentList()
-
-    def addItem(self):
-        self.CL.setFocus()
-        it = QListWidgetItem('EDIT ME')
-        it.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsDragEnabled)
-        self.CL.addItem(it)
-        self.CL.setCurrentItem(it)
-        self.CL.editItem(self.CL.currentItem())
-
-    def deleteItem(self):
-        self.CL.setFocus()
-        self.CL.takeItem(self.CL.currentRow())
 
 
 
-class Painter(QDialog):
+class Annotator(QDialog):
     def __init__(self, fname, maxMark, parent=None):
-        super(Painter, self).__init__(parent)
+        super(Annotator, self).__init__(parent)
         self.maxMark=maxMark
         self.currentBackground = "border: 2px solid #008888; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00bbbb, stop: 1 #008888); "
         self.initUI(fname)
