@@ -32,11 +32,11 @@ class PageScene(QGraphicsScene):
         self.originPos = None
         self.currentPos = None
         self.lastPos = None
-        self.path = None
-        self.boxItem = None
-        self.lineItem = None
+        self.path = QPainterPath()
+        self.boxItem = QGraphicsRectItem()
+        self.lineItem = QGraphicsLineItem()
         self.delIt = None
-        self.commentItem = None
+        self.commentItem = ""
 
     def save(self):
         w = self.image.width()

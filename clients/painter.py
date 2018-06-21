@@ -37,7 +37,7 @@ class CommentList(QListWidget):
 
     def handleClick(self):
         self.parent().parent().view.setCursor(QCursor(Qt.IBeamCursor))
-        self.parent().parent().view.makeComment(self.currentItem())
+        self.parent().parent().view.makeComment(self.currentItem().text())
 
     def loadCommentList(self):
         if(os.path.exists('commentList.json')):

@@ -123,21 +123,14 @@
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="1" column="1">
-          <widget class="QPushButton" name="revertButton">
-           <property name="text">
-            <string>Revert</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
+         <item row="0" column="0">
           <widget class="QPushButton" name="getNextButton">
            <property name="text">
             <string>Get next</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="0">
+         <item row="1" column="0" colspan="2">
           <widget class="QPushButton" name="annButton">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -147,6 +140,13 @@
            </property>
            <property name="text">
             <string>Annotate &amp;&amp; get next</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="revertButton">
+           <property name="text">
+            <string>Revert</string>
            </property>
           </widget>
          </item>
@@ -165,7 +165,7 @@
          <string>Paper list</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
-         <item row="0" column="0" colspan="2">
+         <item row="0" column="0" colspan="3">
           <widget class="SimpleTableView" name="tableView">
            <property name="editTriggers">
             <set>QAbstractItemView::NoEditTriggers</set>
@@ -178,7 +178,7 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
+         <item row="1" column="2">
           <widget class="QPushButton" name="nextButton">
            <property name="text">
             <string>Next</string>
@@ -191,6 +191,22 @@
             <string>Previous</string>
            </property>
           </widget>
+         </item>
+         <item row="1" column="1">
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::MinimumExpanding</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </widget>
@@ -259,6 +275,16 @@
    <header>mlp_useful.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>getNextButton</tabstop>
+  <tabstop>annButton</tabstop>
+  <tabstop>revertButton</tabstop>
+  <tabstop>tableView</tabstop>
+  <tabstop>prevButton</tabstop>
+  <tabstop>nextButton</tabstop>
+  <tabstop>flipButton</tabstop>
+  <tabstop>closeButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
