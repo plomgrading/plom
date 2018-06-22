@@ -1,13 +1,14 @@
 import sys
 import os
 
-from PyQt5.QtCore import Qt, QLineF, QPointF, QRectF
+from PyQt5.QtCore import Qt, QLineF, QPointF, QRectF, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, QPixmap, QTransform
 from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsPathItem, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsRectItem, QGraphicsScene, QUndoStack
 
-from tools import CommandArrow, CommandBox, CommandCross, CommandDel, CommandLine, CommandMoveItem, CommandMoveText, CommandPen, CommandText, CommandTick, TextItem
+from tools import CommandArrow, CommandBox, CommandCross, CommandDel, CommandDelta, CommandLine, CommandMoveItem, CommandMoveText, CommandPen, CommandText, CommandTick, TextItem
 
 class PageScene(QGraphicsScene):
+    markChangedSignal = pyqtSignal(int)
     def __init__(self, parent, imgName):
         super(PageScene, self).__init__(parent)
         self.imageName = imgName
@@ -29,13 +30,14 @@ class PageScene(QGraphicsScene):
         self.zoomInk = QPen(Qt.green, 2)
         self.zoomBrush = QBrush(QColor(0, 255, 0, 16))
 
-        self.originPos = None
+        self.originPos = QPointF(0,0)
         self.currentPos = None
         self.lastPos = None
         self.path = QPainterPath()
         self.boxItem = QGraphicsRectItem()
         self.lineItem = QGraphicsLineItem()
         self.delIt = None
+        self.markDelta = 0
         self.commentItem = ""
 
     def save(self):
@@ -224,3 +226,8 @@ class PageScene(QGraphicsScene):
             if rec.height() >= 100 and rec.width() >= 100:
                 self.parent().fitInView(self.boxItem, Qt.KeepAspectRatio)
         self.removeItem(self.boxItem)
+
+    def delta_mousePressEvent(self, event):
+        pt = event.scenePos()
+        command = CommandDelta(self, pt, self.markDelta)
+        self.undoStack.push(command)

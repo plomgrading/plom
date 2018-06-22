@@ -255,8 +255,8 @@ class MarkerClient(QWidget):
 
         annotator = Annotator(fname, self.maxScore)
         if annotator.exec_():
-            if annotator.score != "-1":
-                return [annotator.score, timer.elapsed()//1000] #number of seconds rounded down.
+            if annotator.score >= 0:
+                return [str(annotator.score), timer.elapsed()//1000] #number of seconds rounded down.
             else:
                 msg = ErrorMessage('You have to give a mark.')
                 msg.exec_()

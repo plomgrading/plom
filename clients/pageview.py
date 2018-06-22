@@ -34,6 +34,12 @@ class PageView(QGraphicsView):
         self.scene.commentItem = item
         self.setDragMode(0)
 
+    def markDelta(self, delta):
+        self.scene.mode = 'delta'
+        self.scene.markDelta = delta
+        self.setDragMode(0)
+
+
     def undo(self):
         self.scene.undoStack.undo()
     def redo(self):

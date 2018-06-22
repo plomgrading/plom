@@ -2,6 +2,7 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap
 from PyQt5.QtWidgets import QDialog, QPushButton, QShortcut, QSizePolicy
 
+from mlp_markentry import MarkEntry
 from pageview import PageView
 from mlp_useful import CommentWidget
 from uiFiles.ui_annotator import Ui_annotator
@@ -11,7 +12,7 @@ class Annotator(QDialog):
         super(Annotator, self).__init__(parent)
         self.imageFile = fname
         self.maxMark = maxMark
-        self.score = -1
+        self.score = 0
         self.currentBackground = "border: 2px solid #008888; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00bbbb, stop: 1 #008888); "
         self.previousButton = None
 
@@ -24,10 +25,7 @@ class Annotator(QDialog):
 
         self.setIcons()
         self.setButtons()
-
-        self.markButtons = {}
-        self.previousMarkButton = None
-        self.setMarkButtons()
+        self.setMarkEntry()
 
     def setView(self):
         self.view = PageView(self, self.imageFile)
@@ -94,25 +92,28 @@ class Annotator(QDialog):
 
     def handleComment(self, txt):
         self.setMode("text", QCursor(Qt.IBeamCursor))
+        print("Type = {}".format(type(txt)))
         self.view.makeComment(txt)
 
-    def setMarkButtons(self):
-        for k in range(0, self.maxMark+1):
-            self.markButtons[k] = QPushButton("{:d}".format(k))
-            self.markButtons[k].setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
-            self.markButtons[k].clicked.connect(self.markSet)
-            self.ui.markGrid.addWidget(self.markButtons[k], k//3, k%3)
+    def setMarkEntry(self):
+        self.markEntry = MarkEntry(self.maxMark)
+        self.ui.markGrid.addWidget(self.markEntry,1,1)
+        self.markEntry.markSetSignal.connect(self.totalMarkSet)
+        self.markEntry.deltaSetSignal.connect(self.deltaMarkSet)
+        self.view.scene.markChangedSignal.connect(self.changeMark)
 
-    def markSet(self):
-        if self.previousMarkButton is None:
-            pass
-        else:
-            self.previousMarkButton.setStyleSheet("")
-        self.previousMarkButton=self.sender()
-        self.previousMarkButton.setStyleSheet("border: 2px solid #ff0000; background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, stop: 0.3 #ffaaaa);")
-
-        self.score = self.sender().text().replace('&','')
+    def totalMarkSet(self, tm):
+        self.score = tm
         self.ui.finishedButton.setFocus()
+
+    def deltaMarkSet(self, dm):
+        self.setMode("delta", QCursor(Qt.ArrowCursor))
+        self.view.markDelta(dm)
+
+    def changeMark(self, dm):
+        self.score += dm
+        self.markEntry.setMark(self.score)
+        self.markEntry.repaint()
 
     def closeEvent(self):
         self.view.save()
