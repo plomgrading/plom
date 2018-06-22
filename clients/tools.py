@@ -351,6 +351,7 @@ class DeltaItem(QGraphicsTextItem):
         self.font.setPointSize(30)
         self.setFont(self.font)
         self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setPos(pt)
 
     def paint(self, painter, option, widget):
