@@ -5,20 +5,20 @@ from PyQt5.QtCore import Qt, QLineF, QPointF
 from PyQt5.QtGui import QBrush, QColor, QFont, QPainterPath, QPen, QTextCursor
 from PyQt5.QtWidgets import QGraphicsItem, QGraphicsItemGroup, QGraphicsLineItem, QGraphicsPathItem, QGraphicsRectItem, QGraphicsTextItem, QUndoCommand
 
-class CommandDel(QUndoCommand):
-    def __init__(self, scene, delIt):
-        super(CommandDel, self).__init__()
+class CommandDelete(QUndoCommand):
+    def __init__(self, scene, deleteItem):
+        super(CommandDelete, self).__init__()
         self.scene = scene
-        self.delIt = delIt
+        self.deleteItem = deleteItem
 
     def redo(self):
-        if isinstance(self.delIt, DeltaItem):
-            self.scene.markChangedSignal.emit(-self.delIt.delta)
-        self.scene.removeItem(self.delIt)
+        if isinstance(self.deleteItem, DeltaItem):
+            self.scene.markChangedSignal.emit(-self.deleteItem.delta)
+        self.scene.removeItem(self.deleteItem)
 
     def undo(self):
-        self.scene.markChangedSignal.emit(self.delIt.delta)
-        self.scene.addItem(self.delIt)
+        self.scene.markChangedSignal.emit(self.deleteItem.delta)
+        self.scene.addItem(self.deleteItem)
 
 class CommandMoveItem(QUndoCommand):
     def __init__(self, xitem, delta):
@@ -287,7 +287,6 @@ class CommandText(QUndoCommand):
     def undo(self):
         self.scene.removeItem(self.blurb)
 
-
 class TextItem(QGraphicsTextItem):
     def __init__(self, parent):
         super(TextItem, self).__init__()
@@ -305,10 +304,10 @@ class TextItem(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.TextEditorInteraction)
         self.setFocus()
 
-    def focusInEvent(self,event):
+    def focusInEvent(self, event):
         super(TextItem, self).focusInEvent(event)
 
-    def focusOutEvent(self,event):
+    def focusOutEvent(self, event):
         tc = self.textCursor()
         tc.clearSelection()
         self.setTextCursor(tc)
@@ -316,12 +315,11 @@ class TextItem(QGraphicsTextItem):
         super(TextItem, self).focusOutEvent(event)
 
     def itemChange(self, change, value):
+        print("TextChanging!")
         if change == QGraphicsTextItem.ItemPositionChange and self.scene():
             command = CommandMoveText(self, value)  #Notice that the value here is the new position, not the delta.
             self.scene().undoStack.push(command)
         return QGraphicsTextItem.itemChange(self, change, value)
-
-
 
 class CommandDelta(QUndoCommand):
     def __init__(self, scene, pt, delta):
@@ -341,9 +339,9 @@ class CommandDelta(QUndoCommand):
 class DeltaItem(QGraphicsTextItem):
     def __init__(self, pt, delta):
         super(DeltaItem, self).__init__()
-        self.delta=delta
+        self.delta = delta
         self.setDefaultTextColor(Qt.red)
-        if(self.delta>0):
+        if self.delta>0:
             self.setPlainText(" +{} ".format(self.delta))
         else:
             self.setPlainText(" {} ".format(self.delta))
@@ -352,17 +350,18 @@ class DeltaItem(QGraphicsTextItem):
         self.setFont(self.font)
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.setPos(pt)
 
     def paint(self, painter, option, widget):
+        # paint the background
         painter.setPen(QPen(Qt.red, 2))
         painter.drawRoundedRect(option.rect, 10, 10)
-        super(DeltaItem, self).paint(painter, option, widget)
-        # paint the background
         # paint the normal TextItem with the default 'paint' method
+        super(DeltaItem, self).paint(painter, option, widget)
 
-    def itemChange(self,change,value):
+    def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
-            command = CommandMoveItem(self, value)
+            command = CommandMoveText(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsTextItem.itemChange(self, change, value)

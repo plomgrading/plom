@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt, QLineF, QPointF, QRectF, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, QPixmap, QTransform
 from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsPathItem, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsRectItem, QGraphicsScene, QUndoStack
 
-from tools import CommandArrow, CommandBox, CommandCross, CommandDel, CommandDelta, CommandLine, CommandMoveItem, CommandMoveText, CommandPen, CommandText, CommandTick, TextItem
+from tools import CommandArrow, CommandBox, CommandCross, CommandDelete, CommandDelta, CommandLine, CommandMoveItem, CommandMoveText, CommandPen, CommandText, CommandTick, TextItem
 
 class PageScene(QGraphicsScene):
     markChangedSignal = pyqtSignal(int)
@@ -185,7 +185,7 @@ class PageScene(QGraphicsScene):
             self.delIt = None
             return
 
-        command = CommandDel(self, self.delIt)
+        command = CommandDelete(self, self.delIt)
         self.undoStack.push(command)
 
     def move_mousePressEvent(self,event):

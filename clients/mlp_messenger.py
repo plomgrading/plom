@@ -4,6 +4,8 @@ import easywebdav2, asyncio, ssl
 
 from gui_utils import ErrorMessage
 
+from PyQt5.QtCore import QElapsedTimer
+
 
 webdav_user = 'hack'
 webdav_passwd = 'duhbah'

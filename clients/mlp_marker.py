@@ -267,7 +267,7 @@ class MarkerClient(QWidget):
     def writeGradeOnImage(self,fname,gr):
         img = QPixmap(fname)
         font = QFont("Helvetica")
-        font.setPointSize(24)
+        font.setPointSize(30)
         text = " {} out of {} ".format(str(gr).zfill(2), self.maxScore)
         painter = QPainter()
         painter.begin(img)
@@ -276,8 +276,8 @@ class MarkerClient(QWidget):
         painter.setPen(QPen(Qt.red, 2))
         painter.setBrush(QBrush(Qt.white))
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.drawRoundedRect(QRectF(4, 4, brect.width()+24, brect.height()+24), 4, 4)
-        painter.drawText(QPoint(16-brect.left(), 16-brect.top()), text)
+        painter.drawRoundedRect(QRectF(5, 5, brect.width()+30, brect.height()+30), 5, 5)
+        painter.drawText(QPoint(20-brect.left(), 24-brect.top()), text)
         painter.end()
         img.save(fname)
 
@@ -304,10 +304,12 @@ class MarkerClient(QWidget):
 
         dname = os.path.basename(aname)
         mlp_messenger.putFileDav(aname, dname)
+
         msg = mlp_messenger.SRMsg(['mRMD', self.userName, self.token, self.exM.data(index[0]), gr, dname, mtime])
 
         if self.moveToNextUnmarkedTest() == False:
             self.requestNext()
+
 
     def waitForFlipper(self, fname):
         flipper = ExamReorientWindow(fname)

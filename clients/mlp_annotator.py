@@ -43,8 +43,12 @@ class Annotator(QDialog):
             pass
         else:
             self.previousButton.setStyleSheet("")
-        self.previousButton = self.sender()
-        self.previousButton.setStyleSheet(self.currentBackground)
+
+        if self.sender() == self.markEntry:
+            self.previousButton=None
+        else:
+            self.previousButton = self.sender()
+            self.previousButton.setStyleSheet(self.currentBackground)
         self.view.setMode(newMode)
         self.view.setCursor(newCursor)
         self.repaint()
@@ -107,6 +111,10 @@ class Annotator(QDialog):
         self.ui.finishedButton.setFocus()
 
     def deltaMarkSet(self, dm):
+        lookingAhead = self.score+dm
+        if lookingAhead < 0 or lookingAhead > self.maxMark:
+            self.ui.panButton.animateClick()
+            return
         self.setMode("delta", QCursor(Qt.ArrowCursor))
         self.view.markDelta(dm)
 
@@ -114,6 +122,9 @@ class Annotator(QDialog):
         self.score += dm
         self.markEntry.setMark(self.score)
         self.markEntry.repaint()
+        lookingAhead = self.score+dm
+        if lookingAhead < 0 or lookingAhead > self.maxMark:
+            self.ui.panButton.animateClick()
 
     def closeEvent(self):
         self.view.save()
