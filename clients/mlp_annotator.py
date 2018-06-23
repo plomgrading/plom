@@ -1,3 +1,6 @@
+import sys
+import os
+
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap
 from PyQt5.QtWidgets import QDialog, QPushButton, QShortcut, QSizePolicy
@@ -54,18 +57,26 @@ class Annotator(QDialog):
         self.repaint()
 
     def setIcons(self):
-        self.setIcon(self.ui.penButton, "&pen", "icons/pen.svg")
-        self.setIcon(self.ui.lineButton, "&line", "icons/line.svg")
-        self.setIcon(self.ui.boxButton, "&box", "icons/rectangle.svg")
-        self.setIcon(self.ui.textButton, "&text", "icons/text.svg")
-        self.setIcon(self.ui.tickButton, "&vtick", "icons/tick.svg")
-        self.setIcon(self.ui.crossButton, "&xcross", "icons/cross.svg")
-        self.setIcon(self.ui.deleteButton, "&delete", "icons/delete.svg")
-        self.setIcon(self.ui.moveButton, "&move", "icons/move.svg")
-        self.setIcon(self.ui.zoomButton, "&zoom", "icons/zoom.svg")
-        self.setIcon(self.ui.panButton, "p&an", "icons/pan.svg")
-        self.setIcon(self.ui.undoButton, "&undo", "icons/undo.svg")
-        self.setIcon(self.ui.redoButton, "&redo", "icons/redo.svg")
+        ## pyinstaller creates a temp folder and stores path in _MEIPASS
+        try:
+            base_path = sys._MEIPASS
+            print("")
+        except Exception:
+            base_path = "./icons"
+
+        #tweak path for loading the icons for use with pyinstaller one-file.
+        self.setIcon(self.ui.penButton, "&pen", "{}/pen.svg".format(base_path))
+        self.setIcon(self.ui.lineButton, "&line", "{}/line.svg".format(base_path))
+        self.setIcon(self.ui.boxButton, "&box", "{}/rectangle.svg".format(base_path))
+        self.setIcon(self.ui.textButton, "&text", "{}/text.svg".format(base_path))
+        self.setIcon(self.ui.tickButton, "&vtick", "{}/tick.svg".format(base_path))
+        self.setIcon(self.ui.crossButton, "&xcross", "{}/cross.svg".format(base_path))
+        self.setIcon(self.ui.deleteButton, "&delete", "{}/delete.svg".format(base_path))
+        self.setIcon(self.ui.moveButton, "&move", "{}/move.svg".format(base_path))
+        self.setIcon(self.ui.zoomButton, "&zoom", "{}/zoom.svg".format(base_path))
+        self.setIcon(self.ui.panButton, "p&an", "{}/pan.svg".format(base_path))
+        self.setIcon(self.ui.undoButton, "&undo", "{}/undo.svg".format(base_path))
+        self.setIcon(self.ui.redoButton, "&redo", "{}/redo.svg".format(base_path))
         QShortcut(QKeySequence("Ctrl+Z"), self.view, self.view.undo, context=Qt.WidgetShortcut)
         QShortcut(QKeySequence("Ctrl+Shift+z"), self.view, self.view.redo, context=Qt.WidgetShortcut)
 

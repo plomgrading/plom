@@ -7,7 +7,7 @@ global tempDirectory, directoryPath
 import mlp_marker
 import mlp_identifier
 
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory
 from uiFiles.ui_chooser import Ui_Chooser
 
 lastTime = {}
@@ -114,6 +114,8 @@ class Chooser(QWidget):
         self.close()
 
 app = QApplication(sys.argv)
+app.setStyle(QStyleFactory.create("Fusion"))
+
 window = Chooser()
 window.show()
 rv = app.exec_()
