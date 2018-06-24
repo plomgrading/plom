@@ -1,22 +1,20 @@
 import sys
 import os
+import shutil
 import locale
 from PyQt5.QtWidgets import QApplication, QDialog, QErrorMessage, QFileDialog, QGridLayout, QMessageBox, QPushButton, QTreeWidget, QTreeWidgetItem, QWidget
 from ui_launcher import Ui_Launcher
 
-files = ['build', 'finishing', 'imageServer', 'resources', 'scanAndGroup']
+directories = ['build', 'finishing', 'imageServer', 'resources', 'scanAndGroup']
+directories += ['build/examsToPrint', 'build/sourceVersions']
+directories += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/', 'scanAndGroup/readyForGrading', 'scanAndGroup/scannedExams']
+directories += ['imageServer/markedPapers']
+directories += ['finishing/frontPages', 'finishing/reassembled/']
 
-files += ['build/examsToPrint', 'build/sourceVersions']
-files += ['build/01_construct_a_specification.py', 'build/cleanAll.py', 'build/02_build_tests_from_spec.py', 'build/merge_and_code_pages.py', 'build/buildTestPDFs.py', 'build/testspecification.py']
-
-files += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/', 'scanAndGroup/readyForGrading', 'scanAndGroup/scannedExams']
+files = ['build/01_construct_a_specification.py', 'build/cleanAll.py', 'build/02_build_tests_from_spec.py', 'build/merge_and_code_pages.py', 'build/buildTestPDFs.py', 'build/testspecification.py']
 files += [
 'scanAndGroup/03_scans_to_page_images.py', 'scanAndGroup/cleanAll.py', 'scanAndGroup/04_decode_images.py', 'scanAndGroup/extract_qr_and_orient.py', 'scanAndGroup/05_missing_pages.py', 'scanAndGroup/manualPageIdentifier.py', 'scanAndGroup/06_group_pages.py', 'scanAndGroup/testspecification.py']
-
-files += ['imageServer/markedPapers']
 files += ['imageServer/authenticate.py', 'imageServer/mark_manager.py', 'imageServer/examviewwindow.py', 'imageServer/mark_storage.py', 'imageServer/id_storage.py', 'imageServer/testspecification.py', 'imageServer/identify_manager.py', 'imageServer/userManager.py', 'imageServer/image_server.py']
-
-files += ['finishing/frontPages', 'finishing/reassembled/']
 files += [
 'finishing/07_check_completed.py', 'finishing/coverPageBuilder.py', 'finishing/08_build_cover_pages.py', 'finishing/testReassembler.py', 'finishing/09_reassemble.py', 'finishing/testspecification.py'
 ]
@@ -71,12 +69,19 @@ class LeftToDo(QDialog):
         self.setLayout(grid)
 
 
-def buildTar():
-    flist = " ".join(files)
-    os.system("tar -cnf mlp.tar {}".format(flist))
+def buildDirs(projPath):
+    for dir in directories:
+        try:
+            os.mkdir(projPath+"/"+dir)
+        except:
+            pass
 
-def unTar(projPath):
-    os.system("tar -xf mlp.tar --directory {}".format(projPath))
+def copyFiles(projPath):
+    for fname in files:
+        try:
+            shutil.copyfile(fname, projPath+'/'+fname)
+        except:
+            pass
 
 def buildKey(projPath):
     print("Building new ssl key/certificate for server")
@@ -98,8 +103,8 @@ def doThings(projPath):
 
     msg = ErrorMessage('Building directories and moving scripts')
     msg.exec_()
-    buildTar()
-    unTar(projPath)
+    buildDirs(projPath)
+    copyFiles(projPath)
 
     msg = ErrorMessage('Building new ssl key for image server')
     msg.exec_()
