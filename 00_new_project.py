@@ -7,7 +7,7 @@ from resources.uiFiles.ui_launcher import Ui_Launcher
 
 directories = ['build', 'finishing', 'imageServer', 'resources', 'scanAndGroup']
 directories += ['build/examsToPrint', 'build/sourceVersions']
-directories += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/', 'scanAndGroup/readyForGrading', 'scanAndGroup/scannedExams']
+directories += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/', 'scanAndGroup/readyForMarking', 'scanAndGroup/scannedExams']
 directories += ['imageServer/markedPapers']
 directories += ['clients']
 directories += ['finishing/frontPages', 'finishing/reassembled/']
@@ -15,7 +15,7 @@ directories += ['finishing/frontPages', 'finishing/reassembled/']
 files = ['resources/testspecification.py']
 files += ['build/01_construct_a_specification.py', 'build/cleanAll.py', 'build/02_build_tests_from_spec.py', 'build/mergeAndCodePages.py', 'build/buildTestPDFs.py', 'build/testspecification.py']
 files += [
-'scanAndGroup/03_scans_to_page_images.py', 'scanAndGroup/cleanAll.py', 'scanAndGroup/04_decode_images.py', 'scanAndGroup/extract_qr_and_orient.py', 'scanAndGroup/05_missing_pages.py', 'scanAndGroup/manualPageIdentifier.py', 'scanAndGroup/06_group_pages.py', 'scanAndGroup/testspecification.py']
+'scanAndGroup/03_scans_to_page_images.py', 'scanAndGroup/cleanAll.py', 'scanAndGroup/04_decode_images.py', 'scanAndGroup/extractQRAndOrient.py', 'scanAndGroup/05_missing_pages.py', 'scanAndGroup/manualPageIdentifier.py', 'scanAndGroup/06_group_pages.py', 'scanAndGroup/testspecification.py']
 files += ['imageServer/authenticate.py', 'imageServer/mark_manager.py', 'imageServer/examviewwindow.py', 'imageServer/mark_storage.py', 'imageServer/id_storage.py', 'imageServer/testspecification.py', 'imageServer/identify_manager.py', 'imageServer/userManager.py', 'imageServer/image_server.py']
 files += [
 'finishing/07_check_completed.py', 'finishing/coverPageBuilder.py', 'finishing/08_build_cover_pages.py', 'finishing/testReassembler.py', 'finishing/09_reassemble.py', 'finishing/testspecification.py'
