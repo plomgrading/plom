@@ -3,7 +3,7 @@ import os
 import shutil
 import locale
 from PyQt5.QtWidgets import QApplication, QDialog, QErrorMessage, QFileDialog, QGridLayout, QMessageBox, QPushButton, QTreeWidget, QTreeWidgetItem, QWidget
-from ui_launcher import Ui_Launcher
+from resources.uiFiles.ui_launcher import Ui_Launcher
 
 directories = ['build', 'finishing', 'imageServer', 'resources', 'scanAndGroup']
 directories += ['build/examsToPrint', 'build/sourceVersions']
@@ -12,7 +12,7 @@ directories += ['imageServer/markedPapers']
 directories += ['clients']
 directories += ['finishing/frontPages', 'finishing/reassembled/']
 
-# file = ['resources/testspecification.py']
+files = ['resources/testspecification.py']
 files += ['build/01_construct_a_specification.py', 'build/cleanAll.py', 'build/02_build_tests_from_spec.py', 'build/merge_and_code_pages.py', 'build/buildTestPDFs.py', 'build/testspecification.py']
 files += [
 'scanAndGroup/03_scans_to_page_images.py', 'scanAndGroup/cleanAll.py', 'scanAndGroup/04_decode_images.py', 'scanAndGroup/extract_qr_and_orient.py', 'scanAndGroup/05_missing_pages.py', 'scanAndGroup/manualPageIdentifier.py', 'scanAndGroup/06_group_pages.py', 'scanAndGroup/testspecification.py']

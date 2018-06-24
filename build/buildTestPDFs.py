@@ -1,6 +1,9 @@
-from testspecification import TestSpecification
 import json
 import os
+import sys
+sys.path.append('..') #this allows us to import from ../resources
+from resources.testspecification import TestSpecification
+
 
 def readExams():
     global exams
@@ -8,15 +11,15 @@ def readExams():
         exams = json.load(data_file)
 
 def scriptBuild():
-    fh = open("./commandlist.txt","w")
+    fh = open("./commandlist.txt", "w")
     for x in exams:
-        fh.write("python3 merge_and_code_pages.py {} {} {} {} \"{}\"\n".format(spec.Name, spec.Length, spec.Versions, x, exams[x]))
+        fh.write("python3 mergeAndCodePages.py {} {} {} {} \"{}\"\n".format(spec.Name, spec.Length, spec.Versions, x, exams[x]))
     fh.close()
     os.system("parallel --bar <commandlist.txt")
     # os.system("rm commandlist.txt")
 
 spec = TestSpecification()
 spec.readSpec()
-exams={}
+exams = {}
 readExams()
 scriptBuild()

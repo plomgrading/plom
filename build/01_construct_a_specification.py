@@ -1,5 +1,6 @@
 import sys
-from testspecification import TestSpecification
+sys.path.append('..') #this allows us to import from ../resources
+from resources.testspecification import TestSpecification
 
 spec = TestSpecification()
 
