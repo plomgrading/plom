@@ -56,4 +56,4 @@ with tempfile.TemporaryDirectory() as tmpDir:
             exam[p].insertImage(rSW, pixmap=qrPage, overlay=True)
             exam[p].insertImage(rSE, pixmap=qrName, overlay=True)
 
-exam.save("examsToPrint/test_{}.pdf".format(str(test).zfill(4)))
+exam.save("examsToPrint/exam_{}.pdf".format(str(test).zfill(4)))
