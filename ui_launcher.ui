@@ -14,7 +14,24 @@
    <string>Start a new project</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="1" column="1" colspan="2">
+    <widget class="QLineEdit" name="directoryLE"/>
+   </item>
+   <item row="2" column="2">
+    <widget class="QPushButton" name="cancelButton">
+     <property name="text">
+      <string>Cancel</string>
+     </property>
+    </widget>
+   </item>
    <item row="1" column="0">
+    <widget class="QPushButton" name="setLocButton">
+     <property name="text">
+      <string>Set location</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
     <widget class="QPushButton" name="createButton">
      <property name="text">
       <string>Create</string>
@@ -22,21 +39,14 @@
     </widget>
    </item>
    <item row="0" column="0">
-    <widget class="QPushButton" name="setLocButton">
+    <widget class="QLabel" name="nameLabel">
      <property name="text">
-      <string>Set location</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="2">
-    <widget class="QPushButton" name="cancelButton">
-     <property name="text">
-      <string>Cancel</string>
+      <string>Project name</string>
      </property>
     </widget>
    </item>
    <item row="0" column="1" colspan="2">
-    <widget class="QLineEdit" name="directoryLE"/>
+    <widget class="QLineEdit" name="nameLE"/>
    </item>
   </layout>
  </widget>

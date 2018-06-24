@@ -14,6 +14,50 @@ class SimpleMessage(QMessageBox):
     self.setText(txt)
     self.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
 
+
+class ManagerDialog(QDialog):
+    def __init__(self):
+        super(ManagerDialog, self).__init__()
+        self.name = "Manager"
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Please enter manager password")
+        self.pwL = QLabel("Password:")
+        self.pwL2 = QLabel("and again:")
+
+        self.pwLE = QLineEdit("")
+        self.pwLE.setEchoMode(QLineEdit.Password)
+        self.pwLE2 = QLineEdit("")
+        self.pwLE2.setEchoMode(QLineEdit.Password)
+
+        self.okB = QPushButton('Accept')
+        self.okB.clicked.connect(self.validate)
+        self.cnB = QPushButton('Cancel')
+        self.cnB.clicked.connect(self.reject)
+
+        grid = QGridLayout()
+        grid.addWidget(self.pwL,2,1)
+        grid.addWidget(self.pwLE,2,2)
+        grid.addWidget(self.pwL2,3,1)
+        grid.addWidget(self.pwLE2,3,2)
+        grid.addWidget(self.okB,4,3)
+        grid.addWidget(self.cnB,4,1)
+
+        self.setLayout(grid)
+        self.show()
+
+    def validate(self):
+        if((len(self.pwLE.text())<4) or (self.pwLE.text()!=self.pwLE2.text()) ):
+            self.pwLE.clear()
+            self.pwLE2.clear()
+            return
+        self.accept()
+
+    def getNamePassword(self):
+        self.pwd=self.pwLE.text()
+        return(['Manager', self.pwd])
+
 class UserDialog(QDialog):
     def __init__(self):
         super(UserDialog, self).__init__()
@@ -110,21 +154,35 @@ class userManager(QWidget):
         self.userT.horizontalHeader().setStretchLastSection(True);
         grid.addWidget(self.userT,1,1,4,4)
 
+        self.addB = QPushButton("manager setup")
+        self.addB.clicked.connect(lambda: self.setManager())
+        grid.addWidget(self.addB,6,2)
+
         self.addB = QPushButton("add user")
         self.addB.clicked.connect(lambda: self.addUser())
-        grid.addWidget(self.addB,6,2)
+        grid.addWidget(self.addB,7,2)
 
         self.delB = QPushButton("delete user")
         self.delB.clicked.connect(lambda: self.delUser())
-        grid.addWidget(self.delB,6,3)
+        grid.addWidget(self.delB,7,3)
 
         self.closeB=QPushButton("close")
         self.closeB.clicked.connect(lambda: self.close())
-        grid.addWidget(self.closeB,6,99)
+        grid.addWidget(self.closeB,7,99)
 
         self.setLayout(grid)
         self.setWindowTitle('User list')
         self.show()
+
+
+    def setManager(self):
+        tmp = ManagerDialog()
+        if( tmp.exec_() == 1):
+            np = tmp.getNamePassword()
+            self.users.update({np[0]: mlpctx.encrypt(np[1])})
+            self.saveUsers()
+            self.refreshUserList()
+            self.contactServerAdd()
 
     def addUser(self):
         tmp = UserDialog()
