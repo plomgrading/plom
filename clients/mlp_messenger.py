@@ -2,10 +2,14 @@ import sys, os, json
 from os import path
 import easywebdav2, asyncio, ssl
 
-from gui_utils import ErrorMessage
-
 from PyQt5.QtCore import QElapsedTimer
+from PyQt5.QtWidgets import QMessageBox
 
+class ErrorMessage(QMessageBox):
+    def __init__(self, txt):
+        super(ErrorMessage, self).__init__()
+        self.setText(txt)
+        self.setStandardButtons(QMessageBox.Ok)
 
 webdav_user = 'hack'
 webdav_passwd = 'duhbah'
