@@ -117,9 +117,12 @@ def doThings(projPath):
     buildDirs(projPath)
     copyFiles(projPath)
 
-    msg = ErrorMessage('Building new ssl key for image server')
-    msg.exec_()
-    buildKey(projPath)
+    msg = SimpleMessage('Build new ssl-keys (recommended if you have openssl installed). Otherwise copy ones from repository (not-recommended)')
+    if msg.exec_() == QMessageBox.Yes:
+        buildKey(projPath)
+    else:
+        shutil.copyfile('./resources/mlp.key', projPath+'/resources/mlp.key')
+        shutil.copyfile('./resources/mlp-selfsigned.crt', projPath+'/resources/mlp-selfsigned.crt')
 
     msg = ErrorMessage('Set manager password')
     msg.exec_()
