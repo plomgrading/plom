@@ -50,6 +50,13 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>nameLE</tabstop>
+  <tabstop>setLocButton</tabstop>
+  <tabstop>directoryLE</tabstop>
+  <tabstop>createButton</tabstop>
+  <tabstop>cancelButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -7,6 +7,7 @@ import os
 import shlex
 import ssl
 import subprocess
+import sys
 import tempfile
 
 from id_storage import *
@@ -15,6 +16,7 @@ from authenticate import *
 
 sys.path.append('..') #this allows us to import from ../resources
 from resources.testspecification import TestSpecification
+
 
 # # # # # # # # # # # #
 
@@ -27,7 +29,7 @@ message_port=41984
 
 # # # # # # # # # # # #
 
-pathScanDirectory="../scanAndGroup/readyForMarking/"
+pathScanDirectory = "../scanAndGroup/readyForMarking/"
 
 # # # # # # # # # # # #
 
@@ -237,10 +239,11 @@ class Server(object):
         self.claimFile(fname)
         return ['ACK']
 
-    def recordMark(self,user,mark,fname,mtime):
+    def recordMark(self, user, mark, fname, mtime):
         fh = open("./markedPapers/{}.txt".format(fname), 'w')
-        fh.write("{:s}\t{:s}\t{:s}\t{:s}\t{}".format(fname, mark, user, datetime.datetime.now().strftime("%Y-%m-%d,%H:%M"), mtime))
+        fh.write("{}\t{}\t{}\t{}\t{}".format(fname, mark, user, datetime.now().strftime("%Y-%m-%d,%H:%M"), mtime))
         fh.close()
+
 
 # # # # # # # # # # # #
 # # # # # # # # # # # #s

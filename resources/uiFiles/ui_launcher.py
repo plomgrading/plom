@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui_launcher.ui'
+# Form implementation generated from reading ui file './ui_launcher.ui'
 #
 # Created by: PyQt5 UI code generator 5.10.1
 #
@@ -35,6 +35,10 @@ class Ui_Launcher(object):
 
         self.retranslateUi(Launcher)
         QtCore.QMetaObject.connectSlotsByName(Launcher)
+        Launcher.setTabOrder(self.nameLE, self.setLocButton)
+        Launcher.setTabOrder(self.setLocButton, self.directoryLE)
+        Launcher.setTabOrder(self.directoryLE, self.createButton)
+        Launcher.setTabOrder(self.createButton, self.cancelButton)
 
     def retranslateUi(self, Launcher):
         _translate = QtCore.QCoreApplication.translate
