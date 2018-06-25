@@ -9,14 +9,22 @@ directories = ['build', 'finishing', 'imageServer', 'resources', 'scanAndGroup']
 directories += ['build/examsToPrint', 'build/sourceVersions']
 directories += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/', 'scanAndGroup/readyForMarking', 'scanAndGroup/scannedExams']
 directories += ['imageServer/markedPapers']
-directories += ['clients']
+directories += ['clients', 'clients/uiFiles', 'clients/icons']
 directories += ['finishing/frontPages', 'finishing/reassembled/']
 
 files = ['resources/testspecification.py']
 files += ['build/01_construct_a_specification.py', 'build/cleanAll.py', 'build/02_build_tests_from_spec.py', 'build/mergeAndCodePages.py', 'build/buildTestPDFs.py', 'build/testspecification.py']
 files += [
 'scanAndGroup/03_scans_to_page_images.py', 'scanAndGroup/cleanAll.py', 'scanAndGroup/04_decode_images.py', 'scanAndGroup/extractQRAndOrient.py', 'scanAndGroup/05_missing_pages.py', 'scanAndGroup/manualPageIdentifier.py', 'scanAndGroup/06_group_pages.py', 'scanAndGroup/testspecification.py']
-files += ['imageServer/authenticate.py', 'imageServer/davconf.conf', 'imageServer/mark_manager.py', 'imageServer/examviewwindow.py', 'imageServer/mark_storage.py', 'imageServer/id_storage.py', 'imageServer/testspecification.py', 'imageServer/identify_manager.py', 'imageServer/userManager.py', 'imageServer/image_server.py']
+
+files += ['imageServer/authenticate.py', 'imageServer/davconf.conf', 'imageServer/mark_manager.py', 'imageServer/examviewwindow.py', 'imageServer/mark_storage.py', 'imageServer/id_storage.py',  'imageServer/identify_manager.py', 'imageServer/userManager.py', 'imageServer/image_server.py']
+
+files += ['clients/mlp_client.py', 'clients/mlp_marker.py', 'clients/mlp_identifier.py', 'clients/mlp_annotator.py', 'clients/mlp_messenger.py', 'clients/mlp_useful.py', 'clients/mlp_markentry.py', 'clients/pageview.py', 'clients/pagescene.py', 'clients/tools.py', 'clients/examviewwindow.py', 'clients/reorientationwindow.py']
+
+files += ['clients/uiFiles/ui_annotator.py', 'clients/uiFiles/ui_chooser.py', 'clients/uiFiles/ui_identify.py', 'clients/uiFiles/ui_marker.py']
+
+files += ['clients/icons/cross.svg', 'clients/icons/pan.svg', 'clients/icons/text.svg', 'clients/icons/delete.svg', 'clients/icons/pen.svg', 'clients/icons/tick.svg', 'clients/icons/line.svg', 'clients/icons/rectangle.svg', 'clients/icons/undo.svg', 'clients/icons/move.svg', 'clients/icons/redo.svg', 'clients/icons/zoom.svg']
+
 files += [
 'finishing/07_check_completed.py', 'finishing/coverPageBuilder.py', 'finishing/08_build_cover_pages.py', 'finishing/testReassembler.py', 'finishing/09_reassemble.py', 'finishing/testspecification.py'
 ]
