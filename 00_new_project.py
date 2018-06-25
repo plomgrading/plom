@@ -19,7 +19,7 @@ files += [
 
 files += ['imageServer/authenticate.py', 'imageServer/davconf.conf', 'imageServer/mark_manager.py', 'imageServer/examviewwindow.py', 'imageServer/mark_storage.py', 'imageServer/id_storage.py',  'imageServer/identify_manager.py', 'imageServer/userManager.py', 'imageServer/image_server.py']
 
-files += ['clients/mlp_client.py', 'clients/mlp_marker.py', 'clients/mlp_identifier.py', 'clients/mlp_annotator.py', 'clients/mlp_messenger.py', 'clients/mlp_useful.py', 'clients/mlp_markentry.py', 'clients/pageview.py', 'clients/pagescene.py', 'clients/tools.py', 'clients/examviewwindow.py', 'clients/reorientationwindow.py']
+files += ['clients/mlp_client.py', 'clients/mlp_marker.py', 'clients/mlp_identifier.py', 'clients/mlp_annotator.py', 'clients/mlp_messenger.py', 'clients/mlp_useful.py', 'clients/mlp_markentry.py', 'clients/pageview.py', 'clients/pagescene.py', 'clients/tools.py', 'clients/examviewwindow.py', 'clients/reorientationwindow.py', 'clients/mlp_client.spec']
 
 files += ['clients/uiFiles/ui_annotator.py', 'clients/uiFiles/ui_chooser.py', 'clients/uiFiles/ui_identify.py', 'clients/uiFiles/ui_marker.py']
 
@@ -50,6 +50,7 @@ class LeftToDo(QDialog):
         tasks['Build'] = ['Name test', 'Set number of source tests', 'Copy source tests into place', 'Set up page grouping', 'Set up version choices for page groups', 'Set total number of tests to produce']
         tasks['Run the test'] = ['Print tests', 'Run test', 'Make students happy', 'Scan tests']
         tasks['Scan and Group'] = ['Copy test scans to scannedExams', 'Convert scans to page images', 'Decode page images', 'Check for missing pages', 'Group page images into page-groups']
+        tasks['Resources'] = ['Copy csv of your class list here']
         tasks['Image server'] = ['Make sure you have access to two ports', 'Set up users', 'Run the image server', 'Check progress with ID-manager', 'Check progress with Marking-manager']
         tasks['Clients'] = ['Give markers client apps']
         tasks['Finishing'] = ['Check tests are completed', 'Build cover pages', 'Reassemble papers']
