@@ -254,12 +254,16 @@ class MarkerClient(QWidget):
         self.ui.tableView.resizeColumnsToContents()
 
     def moveToNextTest(self):
+        if self.exM.rowCount() == 0:
+            return
         r = self.ui.tableView.selectedIndexes()[0].row()+1
         if r > self.exM.rowCount():
             r = 0
         self.ui.tableView.selectRow(r)
 
     def moveToPrevTest(self):
+        if self.exM.rowCount() == 0:
+            return
         r = self.ui.tableView.selectedIndexes()[0].row()-1
         if r < 0:
             r = self.exM.rowCount()
