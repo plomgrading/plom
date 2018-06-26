@@ -74,6 +74,33 @@ def putFileDav(lfn,dfn):
         message = template.format(type(ex).__name__, ex.args)
         print( message)
 
+
+
+async def handle_ping_test():
+    try:
+        reader, writer = await asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
+    except:
+        msg = ErrorMessage("Server does not return ping. Please double check details and try again.")
+        msg.exec_()
+        return False
+    jm = json.dumps(['PING'])
+    writer.write(jm.encode())
+    # SSL does not support EOF, so send a null byte to indicate the end of the message.
+    writer.write(b'\x00')
+    await writer.drain()
+
+    data = await reader.read(100)
+    terminate = data.endswith(b'\x00')
+    data = data.rstrip(b'\x00')
+    rmesg = json.loads(data.decode()) # message should be a list [cmd, user, arg1, arg2, etc]
+    writer.close()
+    return True
+
+def pingTest():
+    rmsg = loop.run_until_complete(handle_ping_test())
+    return(rmsg)
+
+
 def startMessenger():
     global loop
     print("Starting asyncio loop")

@@ -124,6 +124,11 @@ class IDClient(QWidget):
 
         mlp_messenger.setServerDetails(server, message_port, web_port)
         mlp_messenger.startMessenger()
+
+        if not mlp_messenger.pingTest():
+            self.deleteLater()
+            return
+
         self.ui = Ui_IdentifyWindow()
 
         self.userName = userName

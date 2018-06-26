@@ -169,6 +169,11 @@ class MarkerClient(QWidget):
         super(MarkerClient, self).__init__()
         mlp_messenger.setServerDetails(server, message_port, web_port)
         mlp_messenger.startMessenger()
+
+        if not mlp_messenger.pingTest():
+            self.deleteLater()
+            return
+
         self.ui = Ui_MarkerWindow()
 
         self.userName = userName

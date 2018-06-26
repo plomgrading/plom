@@ -106,7 +106,11 @@ class Server(object):
 
     def proc_cmd(self, message):
         cmd = servCmd.get(message[0], 'msgError')
-        if message[0] == 'AUTH':
+
+        if message[0] == 'PING':
+            # Return an ack if a ping is sent.
+            return(['ACK'])
+        elif message[0] == 'AUTH':
             # message should be ['AUTH', user, password]
             return self.authoriseUser(*message[1:])
         else:
