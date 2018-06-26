@@ -17,7 +17,8 @@ class CommandDelete(QUndoCommand):
         self.scene.removeItem(self.deleteItem)
 
     def undo(self):
-        self.scene.markChangedSignal.emit(self.deleteItem.delta)
+        if isinstance(self.deleteItem, DeltaItem):
+            self.scene.markChangedSignal.emit(self.deleteItem.delta)
         self.scene.addItem(self.deleteItem)
 
 class CommandMoveItem(QUndoCommand):
@@ -315,7 +316,6 @@ class TextItem(QGraphicsTextItem):
         super(TextItem, self).focusOutEvent(event)
 
     def itemChange(self, change, value):
-        print("TextChanging!")
         if change == QGraphicsTextItem.ItemPositionChange and self.scene():
             command = CommandMoveText(self, value)  #Notice that the value here is the new position, not the delta.
             self.scene().undoStack.push(command)

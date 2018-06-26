@@ -30,10 +30,11 @@ class PageScene(QGraphicsScene):
         self.zoomInk = QPen(Qt.green, 2)
         self.zoomBrush = QBrush(QColor(0, 255, 0, 16))
 
-        self.originPos = QPointF(0,0)
-        self.currentPos = QPointF(0,0)
-        self.lastPos = QPointF(0,0)
+        self.originPos = QPointF(0, 0)
+        self.currentPos = QPointF(0, 0)
+        self.lastPos = QPointF(0, 0)
         self.path = QPainterPath()
+        self.pathItem = QGraphicsPathItem()
         self.boxItem = QGraphicsRectItem()
         self.lineItem = QGraphicsLineItem()
         self.blurb = TextItem(self)
@@ -133,6 +134,7 @@ class PageScene(QGraphicsScene):
         self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
 
     def line_mouseReleaseEvent(self, event):
+        print("Line release ", type(self.lineItem))
         self.removeItem(self.lineItem)
         if self.arrowFlag == 0:
             command = CommandLine(self, self.originPos, self.currentPos)
@@ -156,6 +158,7 @@ class PageScene(QGraphicsScene):
             self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def box_mouseReleaseEvent(self, event):
+        print("Box release ", type(self.boxItem))
         self.removeItem(self.boxItem)
         command = CommandBox(self, QRectF(self.originPos, self.currentPos))
         self.undoStack.push(command)
@@ -164,7 +167,8 @@ class PageScene(QGraphicsScene):
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
         self.path = QPainterPath()
-        self.path.moveTo(self.originPos); self.path.lineTo(self.currentPos)
+        self.path.moveTo(self.originPos)
+        self.path.lineTo(self.currentPos)
         self.pathItem = QGraphicsPathItem(self.path)
         self.pathItem.setPen(self.ink)
         self.addItem(self.pathItem)
@@ -175,6 +179,7 @@ class PageScene(QGraphicsScene):
         self.pathItem.setPath(self.path)
 
     def pen_mouseReleaseEvent(self, event):
+        print("Pen release ", type(self.pathItem))
         self.removeItem(self.pathItem)
         command = CommandPen(self, self.path)
         self.undoStack.push(command)
@@ -226,6 +231,7 @@ class PageScene(QGraphicsScene):
             rec = self.boxItem.rect()
             if rec.height() >= 100 and rec.width() >= 100:
                 self.parent().fitInView(self.boxItem, Qt.KeepAspectRatio)
+        print("Zoom release ", type(self.boxItem))
         self.removeItem(self.boxItem)
 
     def delta_mousePressEvent(self, event):
