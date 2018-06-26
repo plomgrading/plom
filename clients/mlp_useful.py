@@ -63,7 +63,6 @@ class SimpleCommentList(QListWidget):
             self.addItem(it)
 
     def handleClick(self):
-        print("Sending signal = {}".format(self.currentItem().text()))
         self.commentSignal.emit(self.currentItem().text())
 
     def loadCommentList(self):
