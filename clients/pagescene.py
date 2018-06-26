@@ -31,14 +31,15 @@ class PageScene(QGraphicsScene):
         self.zoomBrush = QBrush(QColor(0, 255, 0, 16))
 
         self.originPos = QPointF(0,0)
-        self.currentPos = None
-        self.lastPos = None
+        self.currentPos = QPointF(0,0)
+        self.lastPos = QPointF(0,0)
         self.path = QPainterPath()
         self.boxItem = QGraphicsRectItem()
         self.lineItem = QGraphicsLineItem()
-        self.delIt = None
+        self.blurb = TextItem(self)
+        self.deleteItem = None
         self.markDelta = 0
-        self.commentItem = ""
+        self.commentText = ""
 
     def save(self):
         w = self.image.width()
@@ -96,7 +97,7 @@ class PageScene(QGraphicsScene):
         self.originPos = event.scenePos() + QPointF(0, -24)
         self.blurb = TextItem(self)
         self.blurb.setPos(self.originPos)
-        self.blurb.setPlainText(self.commentItem.text())
+        self.blurb.setPlainText(self.commentText)
 
         command = CommandText(self, self.blurb, self.ink)
         self.undoStack.push(command)
@@ -180,12 +181,12 @@ class PageScene(QGraphicsScene):
 
     def delete_mousePressEvent(self,event):
         self.originPos = event.scenePos()
-        self.delIt = self.itemAt(self.originPos, QTransform())
-        if self.delIt == self.imageItem:
-            self.delIt = None
+        self.deleteItem = self.itemAt(self.originPos, QTransform())
+        if self.deleteItem == self.imageItem:
+            self.deleteItem = None
             return
 
-        command = CommandDelete(self, self.delIt)
+        command = CommandDelete(self, self.deleteItem)
         self.undoStack.push(command)
 
     def move_mousePressEvent(self,event):

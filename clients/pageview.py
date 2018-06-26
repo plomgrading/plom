@@ -29,9 +29,9 @@ class PageView(QGraphicsView):
         else:
             self.setDragMode(0)
 
-    def makeComment(self, item):
+    def makeComment(self, text):
         self.scene.mode = 'comment'
-        self.scene.commentItem = item
+        self.scene.commentText = text
         self.setDragMode(0)
 
     def markDelta(self, delta):

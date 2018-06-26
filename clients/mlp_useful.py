@@ -46,7 +46,7 @@ class SimpleToolButton(QToolButton):
         self.setMinimumWidth(100)
 
 class SimpleCommentList(QListWidget):
-    commentSignal = pyqtSignal(['QListWidgetItem']) #This is picked up by the annotator
+    commentSignal = pyqtSignal(['QString']) #This is picked up by the annotator
     def __init__(self, parent):
         super(SimpleCommentList, self).__init__()
         self.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -63,7 +63,8 @@ class SimpleCommentList(QListWidget):
             self.addItem(it)
 
     def handleClick(self):
-        self.commentSignal.emit(self.currentItem())
+        print("Sending signal = {}".format(self.currentItem().text()))
+        self.commentSignal.emit(self.currentItem().text())
 
     def loadCommentList(self):
         if os.path.exists('commentList.json'):

@@ -106,8 +106,8 @@ class Annotator(QDialog):
         self.commentW.CL.commentSignal.connect(self.handleComment)
 
     def handleComment(self, txt):
+        print("Got signal = {} type {}".format(txt, type(txt)))
         self.setMode("text", QCursor(Qt.IBeamCursor))
-        print("Type = {}".format(type(txt)))
         self.view.makeComment(txt)
 
     def setMarkEntry(self):
