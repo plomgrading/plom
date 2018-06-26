@@ -46,14 +46,14 @@ class LeftToDo(QDialog):
     def __init__(self):
         super(LeftToDo, self).__init__()
         tasks = {}
-        tasks['Right now'] = ['Go to project']
-        tasks['Build'] = ['Name test', 'Set number of source tests', 'Copy source tests into place', 'Set up page grouping', 'Set up version choices for page groups', 'Set total number of tests to produce']
-        tasks['Run the test'] = ['Print tests', 'Run test', 'Make students happy', 'Scan tests']
-        tasks['Scan and Group'] = ['Copy test scans to scannedExams', 'Convert scans to page images', 'Decode page images', 'Check for missing pages', 'Group page images into page-groups']
-        tasks['Resources'] = ['Copy csv of your class list here']
-        tasks['Image server'] = ['Make sure you have access to two ports', 'Set up users', 'Run the image server', 'Check progress with ID-manager', 'Check progress with Marking-manager']
-        tasks['Clients'] = ['Give markers client apps']
-        tasks['Finishing'] = ['Check tests are completed', 'Build cover pages', 'Reassemble papers']
+        tasks['0: Right now'] = ['Go to project']
+        tasks['1: Build'] = ['Name test', 'Set number of source tests', 'Copy source tests into place', 'Set up page grouping', 'Set up version choices for page groups', 'Set total number of tests to produce']
+        tasks['2: Run the test'] = ['Print tests', 'Run test', 'Make students happy', 'Scan tests']
+        tasks['3: Scan and Group'] = ['Copy test scans to scannedExams', 'Convert scans to page images', 'Decode page images', 'Check for missing pages', 'Group page images into page-groups']
+        tasks['4: Resources'] = ['Copy csv of your class list here']
+        tasks['5: Image server'] = ['Make sure you have access to two ports', 'Set up users', 'Run the image server', 'Check progress with ID-manager', 'Check progress with Marking-manager']
+        tasks['6: Clients'] = ['Give markers client apps']
+        tasks['7: Finishing'] = ['Check tests are completed', 'Build cover pages', 'Reassemble papers']
 
         self.setWindowTitle("What to do next")
         self.setModal(True)
