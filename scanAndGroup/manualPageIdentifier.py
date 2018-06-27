@@ -5,7 +5,7 @@ import sys
 
 from PyQt5.QtCore import Qt, QRectF
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPixmap
-from PyQt5.QtWidgets import QApplication, QAbstractItemView, QDialog, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLineEdit, QPushButton, QSpinBox, QTableWidget, QTableWidgetItem, QWidget
+from PyQt5.QtWidgets import QApplication, QAbstractItemView, QDialog, QErrorMessage, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLineEdit, QPushButton, QSpinBox, QTableWidget, QTableWidgetItem, QWidget
 
 sys.path.append('..') #this allows us to import from ../resources
 from resources.testspecification import TestSpecification
@@ -24,6 +24,11 @@ def readExamsScanned():
     if os.path.exists("../resources/examsScanned.json"):
         with open('../resources/examsScanned.json') as data_file:
             examsScanned = json.load(data_file)
+
+def writeExamsScanned():
+    es = open("../resources/examsScanned.json", 'w')
+    es.write(json.dumps(examsScanned, indent=2, sort_keys=True))
+    es.close()
 
 class PageViewWindow(QWidget):
     def __init__(self, fname=None):
@@ -162,6 +167,19 @@ class ImageTable(QTableWidget):
         self.item(r, 4).setText("Valid")
         self.resizeColumnsToContents()
 
+    def saveValid(self):
+        for r in range(self.rowCount()):
+            if self.item(r, 4).text() == 'Valid':
+                t = self.item(r, 1).text()
+                p = self.item(r, 2).text()
+                v = int(self.item(r, 3).text())
+                fname = self.item(r, 0).text()
+                examsScanned[str(int(t))][str(int(p))] = [v, fname]
+                print("Assigning file {} to t{}p{}v{}".format(fname, t,p,v))
+                os.system("cp pageImages/problemImages/{} ./decodedPages/page_{}/version_{}/t{}p{}v{}.png\n".format(fname, str(p).zfill(2), str(v), str(t).zfill(4), str(p).zfill(2), str(v)))
+                os.system("mv pageImages/problemImages/{}* ./pageImages/alreadyProcessed/".format(fname))
+
+
 class PageIDDialog(QDialog):
     def __init__(self):
         super(PageIDDialog, self).__init__()
@@ -205,6 +223,8 @@ class PageIDDialog(QDialog):
     def validate(self):
         if self.checkIsValid():
             self.accept()
+        else:
+            self.reject()
 
     def checkIsValid(self):
         t = str(self.testSB.value())
@@ -212,20 +232,26 @@ class PageIDDialog(QDialog):
         v = self.versionSB.value()
 
         if examsProduced[t][p] != v:
-            print("TPV should be ({},{},{})".format(t, p, examsProduced[t][p]))
+            msg = QErrorMessage(self)
+            msg.showMessage("TPV should be ({},{},{})".format(t, p, examsProduced[t][p]))
+            msg.exec_()
+
+            self.versionSB.setValue(0)
             return False
-        else:
-            print("TPV code is valid.")
+
 
         if self.nameLE.text() != spec.Name:
-            print("Name should be \"{}\"".format(spec.Name))
+            msg = QErrorMessage(self)
+            msg.showMessage("Name should be \"{}\"".format(spec.Name))
+            msg.exec_()
             return False
-        else:
-            print("Name valid")
 
         if t in examsScanned:
             if p in examsScanned[t]:
-                print("TPV=({},{},{}) has already been scanned as file {}".format(t, p, examsScanned[t][p][0], examsScanned[t][p][1]))
+                msg = QErrorMessage(self)
+                msg.showMessage("TPV=({},{},{}) has already been scanned as file {}".format(t, p, examsScanned[t][p][0], examsScanned[t][p][1]))
+                msg.exec_()
+                self.versionSB.setValue(0)
                 return False
 
         return True
@@ -252,7 +278,7 @@ class PageIdentifier(QWidget):
         if self.imageT.imageList:
             self.pageImg.updateImage(self.imageT.imageList[0])
 
-        self.closeB = QPushButton("Save Validated")
+        self.closeB = QPushButton("Save && Close")
         self.closeB.clicked.connect(self.saveValid)
         grid.addWidget(self.closeB,5,1)
 
@@ -265,16 +291,18 @@ class PageIdentifier(QWidget):
         self.show()
 
     def saveValid(self):
-        print("MORE WORK HERE!!")
+        self.imageT.saveValid()
+        writeExamsScanned()
+        self.close()
 
     def identifyIt(self):
         pidd = PageIDDialog()
-        pidd.exec_()
-        t = str(pidd.testSB.value()).zfill(4)
-        p = str(pidd.pageSB.value()).zfill(2)
-        v = str(pidd.versionSB.value())
-        self.imageT.setTPV(t, p, v)
-        self.imageT.setFocus()
+        if pidd.exec_() == QDialog.Accepted:
+            t = str(pidd.testSB.value()).zfill(4)
+            p = str(pidd.pageSB.value()).zfill(2)
+            v = str(pidd.versionSB.value())
+            self.imageT.setTPV(t, p, v)
+            self.imageT.setFocus()
 
 def main():
     spec.readSpec()
