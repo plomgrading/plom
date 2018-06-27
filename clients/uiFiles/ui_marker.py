@@ -160,7 +160,7 @@ class Ui_MarkerWindow(object):
         self.label_5.setText(_translate("MarkerWindow", "Max score"))
         self.scoreLabel.setText(_translate("MarkerWindow", "NUMBER"))
         self.getNextButton.setText(_translate("MarkerWindow", "Get next"))
-        self.annButton.setText(_translate("MarkerWindow", "Annotate && get next"))
+        self.annButton.setText(_translate("MarkerWindow", "Annotate && mark"))
         self.revertButton.setText(_translate("MarkerWindow", "Revert"))
         self.tableBox.setTitle(_translate("MarkerWindow", "Paper list"))
         self.nextButton.setText(_translate("MarkerWindow", "Next"))

@@ -139,7 +139,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Annotate &amp;&amp; get next</string>
+            <string>Annotate &amp;&amp; mark</string>
            </property>
           </widget>
          </item>

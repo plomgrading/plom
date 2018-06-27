@@ -13,7 +13,8 @@ class PageView(QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setBackgroundBrush(QBrush(Qt.blue))
-        self.setRenderHint(QPainter.HighQualityAntialiasing)
+        self.setRenderHint(QPainter.Antialiasing, True)
+        self.setRenderHint(QPainter.SmoothPixmapTransform, True)
         self.scene = PageScene(self, imgName)
         self.setScene(self.scene)
         self.mode = "pen"

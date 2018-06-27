@@ -243,7 +243,7 @@ class MarkerClient(QWidget):
             testpix = QPixmap(self.exM.getAnnotatedFile(r))
         else:
             testpix = QPixmap(self.exM.getOriginalFile(r))
-        self.ui.pageImage.setPixmap(testpix.scaledToWidth(1200))
+        self.ui.pageImage.setPixmap(testpix.scaledToWidth(1200, mode=Qt.SmoothTransformation))
         self.ui.tableView.setFocus()
 
     def requestNext(self):
