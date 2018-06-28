@@ -254,8 +254,9 @@ class Server(object):
 
 tempDirectory = tempfile.TemporaryDirectory()
 davDirectory = tempDirectory.name
+os.system("chmod o-r {}".format(davDirectory))
 print("Dav = {}".format(davDirectory))
-cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c davconf.conf".format(server, webdav_port, davDirectory)
+cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.conf".format(server, webdav_port, davDirectory)
 davproc = subprocess.Popen(shlex.split(cmd))
 spec = TestSpecification()
 spec.readSpec()

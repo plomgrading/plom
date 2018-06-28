@@ -73,6 +73,7 @@ class MarkEntry(QStackedWidget):
 
         self.pageM.setLayout(grid)
         self.setCurrentWidget(self.pageM)
+        self.markSetSignal.emit(self.currentScore)
 
     def setMarkingTotal(self):
         grid = QGridLayout()
@@ -86,6 +87,7 @@ class MarkEntry(QStackedWidget):
 
         self.pageM.setLayout(grid)
         self.setCurrentWidget(self.pageM)
+        self.markSetSignal.emit(self.currentScore)
 
     def setDeltaMark(self):
         self.pdmb.setStyleSheet("")

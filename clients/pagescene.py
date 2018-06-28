@@ -2,10 +2,37 @@ import sys
 import os
 
 from PyQt5.QtCore import Qt, QLineF, QPointF, QRectF, pyqtSignal
-from PyQt5.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, QPixmap, QTransform
-from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsPathItem, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsRectItem, QGraphicsScene, QUndoStack
+from PyQt5.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, QPixmap, QTransform, QFont
+from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsPathItem, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsRectItem, QGraphicsScene, QUndoStack, QGraphicsItemGroup, QGraphicsTextItem
 
 from tools import CommandArrow, CommandBox, CommandCross, CommandDelete, CommandDelta, CommandLine, CommandMoveItem, CommandMoveText, CommandPen, CommandText, CommandTick, TextItem
+
+class ScoreBox(QGraphicsTextItem):
+    def __init__(self):
+        super(ScoreBox, self).__init__()
+        self.score = 0
+        self.maxScore = 0
+        self.setDefaultTextColor(Qt.red)
+        self.font = QFont("Helvetica")
+        self.font.setPointSize(36)
+        self.setFont(self.font)
+        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setPos(4, 4)
+        self.changeScore(0)
+
+    def changeScore(self, x):
+        self.score = x
+        self.setPlainText("{} out of {}".format(str(x).zfill(2), str(self.maxScore).zfill(2)))
+
+    def changeMax(self, x):
+        self.maxScore = x
+        self.setPlainText("{} out of {}".format(str(x).zfill(2), str(self.maxScore).zfill(2)))
+
+    def paint(self, painter, option, widget):
+        painter.setPen(QPen(Qt.red, 2))
+        painter.setBrush(QBrush(Qt.white))
+        painter.drawRoundedRect(option.rect, 10, 10)
+        super(ScoreBox, self).paint(painter, option, widget)
 
 class PageScene(QGraphicsScene):
     markChangedSignal = pyqtSignal(int)
@@ -41,6 +68,10 @@ class PageScene(QGraphicsScene):
         self.deleteItem = None
         self.markDelta = 0
         self.commentText = ""
+
+        self.scoreBox = ScoreBox()
+        self.scoreBox.setZValue(10)
+        self.addItem(self.scoreBox)
 
     def save(self):
         w = self.image.width()
@@ -134,7 +165,7 @@ class PageScene(QGraphicsScene):
         self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
 
     def line_mouseReleaseEvent(self, event):
-        print("Line release ", type(self.lineItem))
+        # print("Line release ", type(self.lineItem))
         self.removeItem(self.lineItem)
         if self.arrowFlag == 0:
             command = CommandLine(self, self.originPos, self.currentPos)
@@ -158,7 +189,7 @@ class PageScene(QGraphicsScene):
             self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def box_mouseReleaseEvent(self, event):
-        print("Box release ", type(self.boxItem))
+        # print("Box release ", type(self.boxItem))
         self.removeItem(self.boxItem)
         command = CommandBox(self, QRectF(self.originPos, self.currentPos))
         self.undoStack.push(command)
@@ -179,7 +210,7 @@ class PageScene(QGraphicsScene):
         self.pathItem.setPath(self.path)
 
     def pen_mouseReleaseEvent(self, event):
-        print("Pen release ", type(self.pathItem))
+        # print("Pen release ", type(self.pathItem))
         self.removeItem(self.pathItem)
         command = CommandPen(self, self.path)
         self.undoStack.push(command)
@@ -231,7 +262,7 @@ class PageScene(QGraphicsScene):
             rec = self.boxItem.rect()
             if rec.height() >= 100 and rec.width() >= 100:
                 self.parent().fitInView(self.boxItem, Qt.KeepAspectRatio)
-        print("Zoom release ", type(self.boxItem))
+        # print("Zoom release ", type(self.boxItem))
         self.removeItem(self.boxItem)
 
     def delta_mousePressEvent(self, event):
