@@ -243,27 +243,29 @@ class PageScene(QGraphicsScene):
     def pan_mouseReleaseEvent(self, event):
         pass
 
-    def zoom_mousePressEvent(self, event):
-        self.originPos = event.scenePos()
-        self.currentPos = self.originPos
-        self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-        self.boxItem.setPen(self.zoomInk)
-        self.boxItem.setBrush(self.zoomBrush)
-        self.addItem(self.boxItem)
-
-    def zoom_mouseMoveEvent(self, event):
-        self.currentPos = event.scenePos()
-        self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+    # def zoom_mousePressEvent(self, event):
+    #     self.originPos = event.scenePos()
+    #     self.currentPos = self.originPos
+    #     self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+    #     self.boxItem.setPen(self.zoomInk)
+    #     self.boxItem.setBrush(self.zoomBrush)
+    #     self.addItem(self.boxItem)
+    #
+    # def zoom_mouseMoveEvent(self, event):
+    #     self.currentPos = event.scenePos()
+    #     self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def zoom_mouseReleaseEvent(self, event):
         if event.button() == Qt.RightButton:
             self.parent().scale(0.8, 0.8)
         else:
-            rec = self.boxItem.rect()
-            if rec.height() >= 100 and rec.width() >= 100:
-                self.parent().fitInView(self.boxItem, Qt.KeepAspectRatio)
-        # print("Zoom release ", type(self.boxItem))
-        self.removeItem(self.boxItem)
+            self.parent().scale(1.25, 1.25)
+        self.parent().centerOn(event.scenePos())
+        #     rec = self.boxItem.rect()
+        #     if rec.height() >= 100 and rec.width() >= 100:
+        #         self.parent().fitInView(self.boxItem, Qt.KeepAspectRatio)
+        # # print("Zoom release ", type(self.boxItem))
+        # self.removeItem(self.boxItem)
 
     def delta_mousePressEvent(self, event):
         pt = event.scenePos()
