@@ -14,6 +14,29 @@ class SimpleMessage(QMessageBox):
     self.setText(txt)
     self.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
 
+sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+sslContext.check_hostname = False
+
+loop = asyncio.get_event_loop()
+
+async def handle_user_reload(server, message_port, password):
+    reader, writer = await asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
+    jm = json.dumps(['RUSR', password])
+    writer.write(jm.encode())
+    writer.write(b'\x00')
+    await writer.drain()
+
+    data = await reader.read(100)
+    terminate = data.endswith(b'\x00')
+    data = data.rstrip(b'\x00')
+    rmesg = json.loads(data.decode()) # message should be a list [cmd, user, arg1, arg2, etc]
+    writer.close()
+    return rmesg
+
+def requestUserReload(server, message_port, password):
+    rmsg = loop.run_until_complete(handle_user_reload(server, message_port, password))
+    return(rmsg)
+
 
 class ManagerDialog(QDialog):
     def __init__(self):
@@ -170,6 +193,10 @@ class userManager(QWidget):
         self.closeB.clicked.connect(lambda: self.close())
         grid.addWidget(self.closeB,7,99)
 
+        self.urB = QPushButton("RequestReload")
+        self.urB.clicked.connect(self.contactServerAdd)
+        grid.addWidget(self.urB,7,4)
+
         self.setLayout(grid)
         self.setWindowTitle('User list')
         self.show()
@@ -209,6 +236,7 @@ class userManager(QWidget):
         tmp = SimpleMessage("Contact server to reload users?")
         if( tmp.exec_()==QMessageBox.Yes ):
             print("Send message to server to reload.")
+            requestUserReload("localhost", 41984, "catonmat")
 
     def contactServerDel(self, usr):
         tmp = SimpleMessage("Contact server to delete user {}?".format(usr))

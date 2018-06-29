@@ -5,14 +5,17 @@ import easywebdav2, asyncio, ssl
 from PyQt5.QtCore import QElapsedTimer
 from PyQt5.QtWidgets import QMessageBox
 
+
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+## If we use unverified ssl certificates we get lots of warnings, so put in the above to hide them.
+
 class ErrorMessage(QMessageBox):
     def __init__(self, txt):
         super(ErrorMessage, self).__init__()
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Ok)
 
-webdav_user = 'hack'
-webdav_passwd = 'duhbah'
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 
@@ -57,7 +60,7 @@ def SRMsg(msg):
         self.close()
 
 def getFileDav(dfn, lfn):
-    webdav = easywebdav2.connect(server, port=webdav_port, username=webdav_user, password=webdav_passwd)
+    webdav = easywebdav2.connect(server, port=webdav_port, protocol='https', verify_ssl=False)
     try:
         argh = webdav.download(dfn, lfn)
     except Exception as ex:
@@ -66,15 +69,13 @@ def getFileDav(dfn, lfn):
         print(message)
 
 def putFileDav(lfn,dfn):
-    webdav = easywebdav2.connect(server, port=webdav_port, username=webdav_user, password=webdav_passwd)
+    webdav = easywebdav2.connect(server, port=webdav_port, protocol='https', verify_ssl=False)
     try:
         argh = webdav.upload(lfn, dfn)
     except Exception as ex:
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
         message = template.format(type(ex).__name__, ex.args)
-        print( message)
-
-
+        print(message)
 
 async def handle_ping_test():
     try:
@@ -85,7 +86,6 @@ async def handle_ping_test():
         return False
     jm = json.dumps(['PING'])
     writer.write(jm.encode())
-    # SSL does not support EOF, so send a null byte to indicate the end of the message.
     writer.write(b'\x00')
     await writer.drain()
 

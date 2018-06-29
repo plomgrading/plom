@@ -104,6 +104,26 @@ class Server(object):
             print("Where is user/password file?")
             quit()
 
+    def reloadUsers(self, password):
+        if not self.authority.authoriseUser('Manager', password):
+            return(['ERR'])
+        if os.path.exists("../resources/userList.json"):
+            with open('../resources/userList.json') as data_file:
+                newUserList = json.load(data_file)
+                for u in newUserList:
+                    if u not in self.userList:
+                        self.userList[u] = newUserList[u]
+                        self.authority.addUser(u, newUserList[u])
+                        print("New user = {}".format(u))
+                for u in self.userList:
+                    if u not in newUserList:
+                        print("Removing user = {}".format(u))
+                        self.IDDB.resetUsersToDo(u)
+                        self.MDB.resetUsersToDo(u)
+                        self.authority.detoken(u)
+
+        return(['ACK'])
+
     def proc_cmd(self, message):
         cmd = servCmd.get(message[0], 'msgError')
 
@@ -113,6 +133,10 @@ class Server(object):
         elif message[0] == 'AUTH':
             # message should be ['AUTH', user, password]
             return self.authoriseUser(*message[1:])
+        elif message[0] == 'RUSR':
+            # message should be ['RUSR', managerpwd]
+            rv = self.reloadUsers(*message[1:])
+            return rv
         else:
             # should be ['CMD', user, token, arg1, arg2,...]
             if self.validate(message[1],message[2]):
@@ -254,8 +278,9 @@ class Server(object):
 
 tempDirectory = tempfile.TemporaryDirectory()
 davDirectory = tempDirectory.name
+os.system("chmod o-r {}".format(davDirectory))
 print("Dav = {}".format(davDirectory))
-cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c davconf.conf".format(server, webdav_port, davDirectory)
+cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.conf".format(server, webdav_port, davDirectory)
 davproc = subprocess.Popen(shlex.split(cmd))
 spec = TestSpecification()
 spec.readSpec()

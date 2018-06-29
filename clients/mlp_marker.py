@@ -348,7 +348,7 @@ class MarkerClient(QWidget):
             return
 
         self.exM.markPaper(index, gr, aname, mtime)
-        self.writeGradeOnImage(aname, gr)
+        # self.writeGradeOnImage(aname, gr)
 
         dname = os.path.basename(aname)
         mlp_messenger.putFileDav(aname, dname)

@@ -29,6 +29,8 @@ class Annotator(QDialog):
         self.setIcons()
         self.setButtons()
         self.setMarkEntry()
+        self.view.scene.scoreBox.changeMax(self.maxMark)
+        self.view.scene.scoreBox.changeScore(self.score)
 
     def setView(self):
         self.view = PageView(self, self.imageFile)
@@ -60,7 +62,7 @@ class Annotator(QDialog):
         ## pyinstaller creates a temp folder and stores path in _MEIPASS
         try:
             base_path = sys._MEIPASS
-            print("")
+            # print("")
         except Exception:
             base_path = "./icons"
 
@@ -119,6 +121,7 @@ class Annotator(QDialog):
     def totalMarkSet(self, tm):
         self.score = tm
         self.ui.finishedButton.setFocus()
+        self.view.scene.scoreBox.changeScore(self.score)
 
     def deltaMarkSet(self, dm):
         lookingAhead = self.score+dm
@@ -132,6 +135,7 @@ class Annotator(QDialog):
         self.score += dm
         self.markEntry.setMark(self.score)
         self.markEntry.repaint()
+        self.view.scene.scoreBox.changeScore(self.score)
         lookingAhead = self.score+dm
         if lookingAhead < 0 or lookingAhead > self.maxMark:
             self.ui.panButton.animateClick()
