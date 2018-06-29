@@ -63,7 +63,7 @@ class LeftToDo(QDialog):
         self.taskTW.setColumnCount(1)
         self.taskTW.setHeaderLabel('Tasks')
         grid.addWidget(self.taskTW, 1, 1, 3, 2)
-        for t in tasks:
+        for t in sorted(tasks.keys()):
             tmp = QTreeWidgetItem(self.taskTW)
             tmp.setText(0, t)
             self.taskTW.addTopLevelItem(tmp)
