@@ -79,7 +79,7 @@
       <item row="2" column="0">
        <widget class="QPushButton" name="nextButton">
         <property name="text">
-         <string>Get next</string>
+         <string>&amp;Get next</string>
         </property>
        </widget>
       </item>
@@ -151,7 +151,7 @@
      <item>
       <widget class="QPushButton" name="closeButton">
        <property name="text">
-        <string>Close</string>
+        <string>&amp;Close</string>
        </property>
       </widget>
      </item>

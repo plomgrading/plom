@@ -11,7 +11,7 @@ from mlp_useful import CommentWidget
 from uiFiles.ui_annotator import Ui_annotator
 
 class Annotator(QDialog):
-    def __init__(self, fname, maxMark, parent=None):
+    def __init__(self, fname, maxMark, markStyle, parent=None):
         super(Annotator, self).__init__(parent)
         self.imageFile = fname
         self.maxMark = maxMark
@@ -28,7 +28,8 @@ class Annotator(QDialog):
 
         self.setIcons()
         self.setButtons()
-        self.setMarkEntry()
+        # pass the marking style to the mark entry widget.
+        self.setMarkEntry(markStyle)
         self.view.scene.scoreBox.changeMax(self.maxMark)
         self.view.scene.scoreBox.changeScore(self.score)
 
@@ -111,12 +112,13 @@ class Annotator(QDialog):
         self.setMode("text", QCursor(Qt.IBeamCursor))
         self.view.makeComment(txt)
 
-    def setMarkEntry(self):
+    def setMarkEntry(self, markStyle):
         self.markEntry = MarkEntry(self.maxMark)
         self.ui.markGrid.addWidget(self.markEntry,1,1)
         self.markEntry.markSetSignal.connect(self.totalMarkSet)
         self.markEntry.deltaSetSignal.connect(self.deltaMarkSet)
         self.view.scene.markChangedSignal.connect(self.changeMark)
+        self.markEntry.setStyle(markStyle)
 
     def totalMarkSet(self, tm):
         self.score = tm
