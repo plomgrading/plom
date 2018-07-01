@@ -1,5 +1,4 @@
 import asyncio
-from collections import defaultdict
 import datetime
 import glob
 import json
@@ -14,18 +13,15 @@ from id_storage import *
 from mark_storage import *
 from authenticate import *
 
-sys.path.append('..') #this allows us to import from ../resources
+sys.path.append('..') # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
 
 
 # # # # # # # # # # # #
 
-webdav_user = 'hack'
-webdav_passwd = 'duhbah'
-## Note the above is actually set in davconf.conf
-server = 'localhost'
-webdav_port=41985
-message_port=41984
+# default values.
+
+serverInfo = {'server': '127.0.0.1', 'mport': 41984, 'wport': 41985}
 
 # # # # # # # # # # # #
 
@@ -38,7 +34,7 @@ sslContext.check_hostname = False
 sslContext.load_cert_chain('../resources/mlp-selfsigned.crt', '../resources/mlp.key')
 
 # # # # # # # # # # # #
-## These functions need improving - read from the JSON files
+# These functions need improving - read from the JSON files
 def readExamsGrouped():
     global examsGrouped
     if os.path.exists("../resources/examsGrouped.json"):
@@ -53,6 +49,12 @@ def findPageGroups():
         for fname in glob.glob("{}/group_{}/*/*.png".format(pathScanDirectory,  str(pg).zfill(2))):
             print("Adding pageimage from {}".format(fname))
             pageGroupsForGrading[os.path.basename(fname)[:-4]] = fname
+
+def getServerInfo(self):
+    if os.path.isfile("../resources/serverDetails.json"):
+        with open('../resources/serverDetails.json') as data_file:
+            self.info = json.load(data_file)
+
 
 # # # # # # # # # # # #
 
@@ -280,7 +282,7 @@ tempDirectory = tempfile.TemporaryDirectory()
 davDirectory = tempDirectory.name
 os.system("chmod o-r {}".format(davDirectory))
 print("Dav = {}".format(davDirectory))
-cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.conf".format(server, webdav_port, davDirectory)
+cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.conf".format(serverInfo['server'], serverInfo['wport'], davDirectory)
 davproc = subprocess.Popen(shlex.split(cmd))
 spec = TestSpecification()
 spec.readSpec()
@@ -296,7 +298,7 @@ peon = Server(theIDDB, theMarkDB, spec)
 # # # # # # # # # # # #
 
 loop = asyncio.get_event_loop()
-coro = asyncio.start_server(handle_messaging, server, message_port, loop=loop, ssl=sslContext)
+coro = asyncio.start_server(handle_messaging, serverInfo['server'], serverInfo['mport'], loop=loop, ssl=sslContext)
 server = loop.run_until_complete(coro)
 
 print('Serving messages on {}'.format(server.sockets[0].getsockname()))
