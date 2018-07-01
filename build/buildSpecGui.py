@@ -1,15 +1,10 @@
-# -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file 'Third_GUI.ui'
-#
-# Created by: PyQt5 UI code generator 5.10.1
-#
-# WARNING! All changes made in this file will be lost!
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
-from testspecification import TestSpecification
 from PyQt5.QtWidgets import *
+
+
+sys.path.append('..') #this allows us to import from ../resources
+from resources.testspecification import TestSpecification
 
 global spec
 spec = TestSpecification()
@@ -340,6 +335,7 @@ class Ui_Dialog(object):
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
+    app.setStyle(QStyleFactory.create("Fusion"))
     Dialog = QtWidgets.QDialog()
     ui = Ui_Dialog()
     ui.setupUi(Dialog)
