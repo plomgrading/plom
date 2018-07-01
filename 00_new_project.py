@@ -17,7 +17,7 @@ files += ['build/01_construct_a_specification.py', 'build/cleanAll.py', 'build/0
 files += [
 'scanAndGroup/03_scans_to_page_images.py', 'scanAndGroup/cleanAll.py', 'scanAndGroup/04_decode_images.py', 'scanAndGroup/extractQRAndOrient.py', 'scanAndGroup/05_missing_pages.py', 'scanAndGroup/manualPageIdentifier.py', 'scanAndGroup/06_group_pages.py', 'scanAndGroup/testspecification.py']
 
-files += ['imageServer/authenticate.py', 'imageServer/mark_manager.py', 'imageServer/examviewwindow.py', 'imageServer/mark_storage.py', 'imageServer/id_storage.py',  'imageServer/identify_manager.py', 'imageServer/userManager.py', 'imageServer/image_server.py']
+files += ['imageServer/authenticate.py', 'imageServer/mark_manager.py', 'imageServer/examviewwindow.py', 'imageServer/mark_storage.py', 'imageServer/id_storage.py',  'imageServer/identify_manager.py', 'imageServer/userManager.py', 'imageServer/image_server.py', 'imageServer/ui_server_setup.py', 'imageServer/serverSetup.py']
 
 files += ['clients/mlp_client.py', 'clients/mlp_marker.py', 'clients/mlp_identifier.py', 'clients/mlp_annotator.py', 'clients/mlp_messenger.py', 'clients/mlp_useful.py', 'clients/mlp_markentry.py', 'clients/pageview.py', 'clients/pagescene.py', 'clients/tools.py', 'clients/examviewwindow.py', 'clients/reorientationwindow.py', 'clients/mlp_client.spec']
 
