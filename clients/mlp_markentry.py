@@ -10,7 +10,6 @@ class MarkEntry(QStackedWidget):
         self.currentScore = 0
         self.numButtons = 5
         self.markButtons = {}
-        # self.redStyle = "border: 2px solid #ff0000; background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, stop: 0.3 #ffaaaa);"
         self.redStyle = "border: 2px solid #ff0000; background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, stop: 0.3 #ffcccc, stop: 0.7 #ffcccc, stop: 1 #ff0000);"
 
         self.pageC = QWidget()
@@ -18,8 +17,16 @@ class MarkEntry(QStackedWidget):
 
         self.addWidget(self.pageC)
         self.addWidget(self.pageM)
-
         self.setupC()
+
+    def setStyle(self, markStyle):
+        # if passed a marking style, then set up accordingly.
+        if markStyle == 1:
+            self.mtotalB.animateClick()
+        elif markStyle == 2:
+            self.mupB.animateClick()
+        elif markStyle == 3:
+            self.mdownB.animateClick()
 
     def setupC(self):
         grid = QGridLayout()

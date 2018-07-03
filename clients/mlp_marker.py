@@ -193,7 +193,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.setModel(self.exM)
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
-        self.ui.tableView.annotateSignal.connect( self.annotateTest )
+        self.ui.tableView.annotateSignal.connect(self.annotateTest)
 
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.getNextButton.clicked.connect(self.requestNext)
@@ -202,6 +202,11 @@ class MarkerClient(QWidget):
         self.ui.prevButton.clicked.connect(self.moveToPrevTest)
         self.ui.nextButton.clicked.connect(self.moveToNextTest)
         self.ui.flipButton.clicked.connect(self.flipIt)
+
+        self.ui.markStyleGroup.setId(self.ui.markLaterRB, 0)
+        self.ui.markStyleGroup.setId(self.ui.markTotalRB, 1)
+        self.ui.markStyleGroup.setId(self.ui.markUpRB, 2)
+        self.ui.markStyleGroup.setId(self.ui.markDownRB, 3)
 
         self.requestToken()
 
@@ -279,9 +284,9 @@ class MarkerClient(QWidget):
         if rt == 0:
             return
         rstart = self.ui.tableView.selectedIndexes()[0].row()
-        r = (rstart+1) %  rt
-        while self.exM.data(self.exM.index(r, 1)) == "marked" and  r != rstart:
-            r = (r+1) %  rt
+        r = (rstart+1) % rt
+        while self.exM.data(self.exM.index(r, 1)) == "marked" and r != rstart:
+            r = (r+1) % rt
             self.ui.tableView.selectRow(r)
         if r == rstart:
             return False
@@ -300,8 +305,9 @@ class MarkerClient(QWidget):
     def waitForAnnotator(self, fname):
         timer = QElapsedTimer()
         timer.start()
+        self.markStyle = self.ui.markStyleGroup.checkedId()
 
-        annotator = Annotator(fname, self.maxScore)
+        annotator = Annotator(fname, self.maxScore, self.markStyle)
         if annotator.exec_():
             if annotator.score >= 0:
                 return [str(annotator.score), timer.elapsed()//1000] #number of seconds rounded down.

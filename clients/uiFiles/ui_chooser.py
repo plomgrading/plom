@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui_chooser.ui'
+# Form implementation generated from reading ui file '../qtCreatorFiles/ui_chooser.ui'
 #
 # Created by: PyQt5 UI code generator 5.10.1
 #
@@ -35,7 +35,7 @@ class Ui_Chooser(object):
         self.userGBox.setGeometry(QtCore.QRect(10, 90, 391, 101))
         self.userGBox.setObjectName("userGBox")
         self.layoutWidget1 = QtWidgets.QWidget(self.userGBox)
-        self.layoutWidget1.setGeometry(QtCore.QRect(10, 30, 371, 54))
+        self.layoutWidget1.setGeometry(QtCore.QRect(10, 30, 371, 72))
         self.layoutWidget1.setObjectName("layoutWidget1")
         self.formLayout = QtWidgets.QFormLayout(self.layoutWidget1)
         self.formLayout.setContentsMargins(0, 0, 0, 0)
@@ -60,7 +60,7 @@ class Ui_Chooser(object):
         self.serverGBox.setGeometry(QtCore.QRect(10, 190, 391, 101))
         self.serverGBox.setObjectName("serverGBox")
         self.layoutWidget2 = QtWidgets.QWidget(self.serverGBox)
-        self.layoutWidget2.setGeometry(QtCore.QRect(10, 30, 371, 57))
+        self.layoutWidget2.setGeometry(QtCore.QRect(10, 30, 371, 72))
         self.layoutWidget2.setObjectName("layoutWidget2")
         self.gridLayout = QtWidgets.QGridLayout(self.layoutWidget2)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -95,7 +95,7 @@ class Ui_Chooser(object):
         self.markGBox.setGeometry(QtCore.QRect(10, 290, 391, 71))
         self.markGBox.setObjectName("markGBox")
         self.layoutWidget3 = QtWidgets.QWidget(self.markGBox)
-        self.layoutWidget3.setGeometry(QtCore.QRect(10, 30, 371, 26))
+        self.layoutWidget3.setGeometry(QtCore.QRect(10, 30, 371, 34))
         self.layoutWidget3.setObjectName("layoutWidget3")
         self.gridLayout_2 = QtWidgets.QGridLayout(self.layoutWidget3)
         self.gridLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -138,9 +138,9 @@ class Ui_Chooser(object):
         _translate = QtCore.QCoreApplication.translate
         Chooser.setWindowTitle(_translate("Chooser", "Choose your task"))
         self.taskGBox.setTitle(_translate("Chooser", "Choose task"))
-        self.markButton.setText(_translate("Chooser", "Mark"))
-        self.identifyButton.setText(_translate("Chooser", "Identify"))
-        self.closeButton.setText(_translate("Chooser", "Run Away"))
+        self.markButton.setText(_translate("Chooser", "&Mark"))
+        self.identifyButton.setText(_translate("Chooser", "&Identify"))
+        self.closeButton.setText(_translate("Chooser", "&Run Away"))
         self.userGBox.setTitle(_translate("Chooser", "User Information"))
         self.label.setText(_translate("Chooser", "Username"))
         self.label_2.setText(_translate("Chooser", "Password"))
@@ -152,5 +152,5 @@ class Ui_Chooser(object):
         self.markGBox.setTitle(_translate("Chooser", "Marking information"))
         self.pgLabel.setText(_translate("Chooser", "Page group"))
         self.vlabel.setText(_translate("Chooser", "Version"))
-        self.startButton.setText(_translate("Chooser", "Start"))
+        self.startButton.setText(_translate("Chooser", "&Start"))
 

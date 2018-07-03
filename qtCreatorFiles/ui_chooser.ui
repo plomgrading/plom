@@ -38,21 +38,21 @@
      <item>
       <widget class="QPushButton" name="markButton">
        <property name="text">
-        <string>Mark</string>
+        <string>&amp;Mark</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="identifyButton">
        <property name="text">
-        <string>Identify</string>
+        <string>&amp;Identify</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="closeButton">
        <property name="text">
-        <string>Run Away</string>
+        <string>&amp;Run Away</string>
        </property>
       </widget>
      </item>
@@ -80,7 +80,7 @@
       <x>10</x>
       <y>30</y>
       <width>371</width>
-      <height>54</height>
+      <height>72</height>
      </rect>
     </property>
     <layout class="QFormLayout" name="formLayout">
@@ -138,7 +138,7 @@
       <x>10</x>
       <y>30</y>
       <width>371</width>
-      <height>57</height>
+      <height>72</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
@@ -223,7 +223,7 @@
       <x>10</x>
       <y>30</y>
       <width>371</width>
-      <height>26</height>
+      <height>34</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout_2">
@@ -277,7 +277,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Start</string>
+    <string>&amp;Start</string>
    </property>
   </widget>
  </widget>

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './ui_identify.ui'
+# Form implementation generated from reading ui file '../qtCreatorFiles/ui_identify.ui'
 #
 # Created by: PyQt5 UI code generator 5.10.1
 #
@@ -115,10 +115,10 @@ class Ui_IdentifyWindow(object):
         self.studentBox.setTitle(_translate("IdentifyWindow", "Enter student details"))
         self.idLabel.setText(_translate("IdentifyWindow", "Student ID"))
         self.nameLabel.setText(_translate("IdentifyWindow", "Student Name"))
-        self.nextButton.setText(_translate("IdentifyWindow", "Get next"))
+        self.nextButton.setText(_translate("IdentifyWindow", "&Get next"))
         self.userBox.setTitle(_translate("IdentifyWindow", "User"))
         self.userLabel.setText(_translate("IdentifyWindow", "Username"))
         self.tableBox.setTitle(_translate("IdentifyWindow", "Table of papers"))
-        self.closeButton.setText(_translate("IdentifyWindow", "Close"))
+        self.closeButton.setText(_translate("IdentifyWindow", "&Close"))
         self.paperBox.setTitle(_translate("IdentifyWindow", "Current paper"))
 

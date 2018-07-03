@@ -79,7 +79,7 @@ class Chooser(QWidget):
 
         self.ui.startButton.clicked.disconnect(self.validate)
         self.ui.startButton.clicked.connect(self.closeWindow)
-        self.ui.startButton.setText("Finished Task")
+        self.ui.startButton.setText("&Finished Task")
         return
 
     def runMarker(self):
