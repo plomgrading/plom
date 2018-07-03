@@ -351,6 +351,16 @@ class SpecBuilder(QWidget):
 
             self.ui.nameVersionGB.setEnabled(False)
             self.ui.pageGroupGB.setEnabled(True)
+            self.addFirstRow()
+
+    def addFirstRow(self):
+        self.ui.pgTable.setVerticalHeaderItem(0, QTableWidgetItem('ID page(s)'))
+        self.ui.pgTable.setItem(0,0, QTableWidgetItem('1'))
+        newSpin = QSpinBox(self)
+        newSpin.setRange(1, self.ui.pagesSB.value())
+        self.ui.pgTable.setCellWidget(0, 1, newSpin)
+        self.ui.pgTable.setItem(0,2,QTableWidgetItem('not applicable'))
+        self.ui.pgTable.setItem(0,3,QTableWidgetItem('0'))
 
     def addRow(self):
         pass
