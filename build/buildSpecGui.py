@@ -1,6 +1,6 @@
 import sys
-from PyQt5.QtCore import Qt, QMetaObject
-from PyQt5.QtWidgets import QApplication, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QSpinBox, QStyleFactory, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QSpinBox, QStyleFactory, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 sys.path.append('..') #this allows us to import from ../resources
 from resources.testspecification import TestSpecification
@@ -354,22 +354,20 @@ class SpecBuilder(QWidget):
             self.addFirstRow()
 
     def addFirstRow(self):
-        self.ui.pgTable.setVerticalHeaderItem(0, QTableWidgetItem('ID page(s)'))
+        # self.ui.pgTable.setVerticalHeaderItem(0, QTableWidgetItem('ID page(s)'))
+        self.ui.pgTable.setVerticalHeaderLabels(['ID page(s)'])
         self.ui.pgTable.setItem(0,0, QTableWidgetItem('1'))
-        newSpin = QSpinBox(self)
+        newSpin = QSpinBox(parent=self.ui.pgTable)
         newSpin.setRange(1, self.ui.pagesSB.value())
         self.ui.pgTable.setCellWidget(0, 1, newSpin)
         self.ui.pgTable.setItem(0,2,QTableWidgetItem('not applicable'))
         self.ui.pgTable.setItem(0,3,QTableWidgetItem('0'))
 
     def addRow(self):
-        pass
-        # boo = self.validate()
-        # print(boo)
-        # if(boo == True):
-        #     rows = self.increaseRowCount()
-        #     self.disableChanges(rows)
-        #     self.fillNewRow(rows)
+        if self.validate():
+            rows = self.increaseRowCount()
+            self.disableChanges(rows)
+            self.fillNewRow(rows)
 
     def deleteRow(self):
         pass
@@ -377,31 +375,88 @@ class SpecBuilder(QWidget):
     def buildSpec(self):
         pass
 
+    def validate(self):
+        rows = self.ui.pgTable.rowCount()
+        bO = False
+        # check if versions and pages are all set up
+        if self.ui.nameVersionGB.isEnabled():
+            self.errorManager(1)
+        # checking for errors:
+        elif self.ui.pgTable.item(rows-1, 0) is None or \
+            self.ui.pgTable.cellWidget(rows-1, 1) is None or \
+            self.ui.pgTable.item(rows-1, 3) is None:
+            self.errorManager(2)
+        # Type Check: first two has to be integers and the last,
+        elif not (self.ui.pgTable.item(rows-1, 0).text().isdigit() and \
+            self.ui.pgTable.item(rows-1, 3).text().isdigit()):
+            self.errorManager(3)
+        # "To" must be larger than "From"
+        elif int(self.ui.pgTable.item(rows-1, 0).text()) > \
+            int(self.ui.pgTable.cellWidget(rows-1, 1).value()):
+            self.errorManager(4)
+        # the last "page to" has to be smaller than the number of pages
+        elif int(self.ui.pgTable.cellWidget(rows-1, 1).value()) >= self.ui.pagesSB.value():
+            self.errorManager(5)
+        else:
+            bO = True
+        return bO
 
-    def errorManager(self,num):
+    def increaseRowCount(self):
+        rows = self.ui.pgTable.rowCount()
+        self.ui.pgTable.setRowCount(rows+1)
+        self.ui.pgTable.setVerticalHeaderItem(rows, QTableWidgetItem('page group '+str(rows)))
+        self.rotation = QComboBox()
+        self.rotation.setObjectName("rotation")
+        self.rotation.addItem("fixed")
+        self.rotation.addItem("cycled")
+        self.rotation.addItem("random")
+        self.ui.pgTable.setCellWidget(rows, 2, self.rotation)
+        return rows
+
+    def disableChanges(self, rows):
+        self.ui.pgTable.item(rows-1, 0).setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+        self.ui.pgTable.cellWidget(rows-1, 1).setEnabled(False)
+        self.ui.pgTable.item(rows-1, 3).setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+        if self.ui.pgTable.cellWidget(rows-1, 2) is not None:
+            self.ui.pgTable.cellWidget(rows-1, 2).setEnabled(False)
+
+    def fillNewRow(self, rows):
+        previousTo = self.ui.pgTable.cellWidget(rows-1, 1).value()
+        thisFrom = previousTo+1
+        thisTo = thisFrom
+        thisFrom = str(thisFrom)
+        thisFrom = QTableWidgetItem(thisFrom)
+        thisFrom.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+        self.ui.pgTable.setItem(rows, 0, thisFrom)
+        thisToWid = QSpinBox()
+        thisToWid.setRange(thisTo, self.ui.pagesSB.value())
+        self.ui.pgTable.setCellWidget(rows, 1, thisToWid)
+        self.ui.pgTable.setItem(rows,3,QTableWidgetItem('.'))
+
+
+    def errorManager(self, num):
         print("here")
         switcher = {
-        1: "Please fill up the number of pages and the number of versions and click confirm before continue",
-        2: "Please fill up the current row before continue",
-        3: "Marks have to be positive integers",
-        4: "'page to' must be greater or equal to 'page from'",
-        5: "you have exceeded the maximum number of pages you set",
-        6: "Number of versions and number of pages cannot be zero",
-        7: "Cannot remove ID pages",
-        8: "Please make sure every page is assigned to a pageGroup",
-        9: "Please print something",
-        10:"Congrats! You have done setting up",
-        11:"Name has to be alphanumeric and there is at least one character, and no space"
+            1: "Please fill up the number of pages and the number of versions and click confirm before continue",
+            2: "Please fill up the current row before continue",
+            3: "Marks have to be positive integers",
+            4: "'page to' must be greater or equal to 'page from'",
+            5: "you have exceeded the maximum number of pages you set",
+            6: "Number of versions and number of pages cannot be zero",
+            7: "Cannot remove ID pages",
+            8: "Please make sure every page is assigned to a pageGroup",
+            9: "Please print something",
+            10:"Congrats! You have done setting up",
+            11:"Name has to be alphanumeric and there is at least one character, and no space"
         }
         errormsg = switcher.get(num, "Invalid")
         error = errorMessage(errormsg)
         error.exec_()
 
-
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
-    app.setStyle(QStyleFactory.create("Fusion"))
+    # app.setStyle(QStyleFactory.create("Fusion"))
     builder = SpecBuilder()
     builder.show()
     sys.exit(app.exec_())
