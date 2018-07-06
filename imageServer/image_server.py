@@ -100,7 +100,7 @@ class Server(object):
         if os.path.exists("../resources/userList.json"):
             with open('../resources/userList.json') as data_file:
                 self.userList = json.load(data_file)
-                self.authority=Authority(self.userList)
+                self.authority = Authority(self.userList)
                 print("Users = {}".format(list(self.userList.keys())))
         else:
             print("Where is user/password file?")
@@ -123,7 +123,7 @@ class Server(object):
                         self.IDDB.resetUsersToDo(u)
                         self.MDB.resetUsersToDo(u)
                         self.authority.detoken(u)
-
+        print("Current user list = {}".format(list(self.userList.keys())))
         return(['ACK'])
 
     def proc_cmd(self, message):

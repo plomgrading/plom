@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 mlpctx = CryptContext( schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto" )
 
 from PyQt5.QtCore import QSize
-from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QApplication, QDialog, QGridLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem, QWidget
+from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QApplication, QDialog, QGridLayout, QInputDialog, QLabel, QLineEdit, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem, QWidget
 
 class SimpleMessage(QMessageBox):
   def __init__(self, txt):
@@ -194,7 +194,7 @@ class userManager(QWidget):
         grid.addWidget(self.closeB,7,99)
 
         self.urB = QPushButton("RequestReload")
-        self.urB.clicked.connect(self.contactServerAdd)
+        self.urB.clicked.connect(self.contactServerReload)
         grid.addWidget(self.urB,7,4)
 
         self.setLayout(grid)
@@ -209,39 +209,40 @@ class userManager(QWidget):
             self.users.update({np[0]: mlpctx.encrypt(np[1])})
             self.saveUsers()
             self.refreshUserList()
-            self.contactServerAdd()
+            # self.contactServerReload()
 
     def addUser(self):
         tmp = UserDialog()
-        if( tmp.exec_() == 1):
+        if tmp.exec_() == 1:
             np = tmp.getNamePassword()
             self.users.update({np[0]: mlpctx.encrypt(np[1])})
             self.saveUsers()
             self.refreshUserList()
-            self.contactServerAdd()
+            self.contactServerReload()
 
     def delUser(self):
         r = self.userT.currentRow()
-        if(r==None):
+        if r is None:
             return
         usr = self.userT.item(r,0).text()
         tmp = SimpleMessage("Confirm delete user {}".format(usr))
-        if( tmp.exec_()==QMessageBox.Yes ):
+        if tmp.exec_() == QMessageBox.Yes:
             del self.users[usr]
             self.saveUsers()
             self.refreshUserList()
-            self.contactServerDel(usr)
+            self.contactServerReload()
 
-    def contactServerAdd(self):
+    def contactServerReload(self):
         tmp = SimpleMessage("Contact server to reload users?")
-        if( tmp.exec_()==QMessageBox.Yes ):
-            print("Send message to server to reload.")
-            requestUserReload("localhost", 41984, "catonmat")
+        if tmp.exec_() == QMessageBox.Yes:
+            pwd, ok = QInputDialog.getText(self, "Authenticate", "Enter manager password", QLineEdit.Password)
+            if ok:
+                requestUserReload("localhost", 41984, pwd)
 
-    def contactServerDel(self, usr):
-        tmp = SimpleMessage("Contact server to delete user {}?".format(usr))
-        if( tmp.exec_()==QMessageBox.Yes ):
-            print("Send message to server to delete {}.".format(usr))
+    # def contactServerDel(self, usr):
+    #     tmp = SimpleMessage("Contact server to delete user {}?".format(usr))
+    #     if tmp.exec_() == QMessageBox.Yes:
+    #         print("Send message to server to delete {}.".format(usr))
 
 def main():
     app = QApplication(sys.argv)
