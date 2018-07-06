@@ -4,7 +4,7 @@ import tempfile
 
 
 from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QStringListModel, QVariant
-from PyQt5.QtWidgets import QCompleter, QDialog, QMessageBox, QWidget
+from PyQt5.QtWidgets import QCompleter, QDialog, QInputDialog, QMessageBox, QWidget
 
 import csv
 from collections import defaultdict
@@ -297,7 +297,11 @@ class IDClient(QWidget):
             msg = SimpleMessage('Student ID {:s} not in list. Do you want to enter it anyway?'.format(self.ui.idEdit.text()))
             if msg.exec_() == QMessageBox.No:
                 return
-            self.ui.nameEdit.setText("Unknown")
+            name, ok = QInputDialog.getText(self, 'Enter name', 'Enter student name:')
+            if ok:
+                self.ui.nameEdit.setText(str(name))
+            else:
+                self.ui.nameEdit.setText("Unknown")
 
         if self.identifyStudent(index, alreadyIDd):
             if alreadyIDd == False and self.unidCount == 0:
@@ -325,14 +329,20 @@ class IDClient(QWidget):
 
         if self.ui.nameEdit.text() in self.studentNamesToNumbers:
             self.ui.idEdit.setText(self.studentNamesToNumbers[self.ui.nameEdit.text()])
-            msg = SimpleMessage( 'Student ID {:s} = {:s}. Enter and move to next?'.format(self.ui.idEdit.text(),self.ui.nameEdit.text()))
+            msg = SimpleMessage('Student ID {:s} = {:s}. Enter and move to next?'.format(self.ui.idEdit.text(), self.ui.nameEdit.text()))
             if msg.exec_() == QMessageBox.No:
                 return
         else:
-            msg = SimpleMessage('Student ID {:s} not in list. Do you want to enter it anyway?'.format(self.ui.idEdit.text()))
+            msg = SimpleMessage('Student name {:s} not in list. Do you want to enter it anyway?'.format(self.ui.nameEdit.text()))
             if msg.exec_() == QMessageBox.No:
                 return
-            self.ui.nameEdit.setText("Unknown")
+            num, ok = QInputDialog.getText(self, 'Enter number', 'Enter student number:')
+            if ok:
+                self.ui.idEdit.setText(str(num))
+            else:
+                msg = ErrorMessage("Cannot enter without a student number.")
+                msg.exec_()
+                return
 
         if self.identifyStudent(index, alreadyIDd):
             if alreadyIDd == False and self.unidCount == 0:
