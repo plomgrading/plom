@@ -8,16 +8,27 @@ mlpctx = CryptContext( schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto" )
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QApplication, QDialog, QGridLayout, QInputDialog, QLabel, QLineEdit, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem, QWidget
 
+
+serverInfo = {'server': '127.0.0.1', 'mport': 41984, 'wport': 41985}
+
+def getServerInfo():
+    global serverInfo
+    if os.path.isfile("../resources/serverDetails.json"):
+        with open('../resources/serverDetails.json') as data_file:
+            serverInfo = json.load(data_file)
+
 class SimpleMessage(QMessageBox):
   def __init__(self, txt):
     super(SimpleMessage, self).__init__()
     self.setText(txt)
     self.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
 
+
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 
 loop = asyncio.get_event_loop()
+
 
 async def handle_user_reload(server, message_port, password):
     reader, writer = await asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
@@ -233,18 +244,16 @@ class userManager(QWidget):
             self.contactServerReload()
 
     def contactServerReload(self):
+        global serverInfo
         tmp = SimpleMessage("Contact server to reload users?")
         if tmp.exec_() == QMessageBox.Yes:
             pwd, ok = QInputDialog.getText(self, "Authenticate", "Enter manager password", QLineEdit.Password)
             if ok:
-                requestUserReload("localhost", 41984, pwd)
+                requestUserReload(serverInfo['server'], serverInfo['mport'], pwd)
 
-    # def contactServerDel(self, usr):
-    #     tmp = SimpleMessage("Contact server to delete user {}?".format(usr))
-    #     if tmp.exec_() == QMessageBox.Yes:
-    #         print("Send message to server to delete {}.".format(usr))
 
 def main():
+    getServerInfo()
     app = QApplication(sys.argv)
     iic = userManager()
     app.exec_()

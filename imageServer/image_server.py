@@ -106,9 +106,18 @@ class Server(object):
             print("Where is user/password file?")
             quit()
 
+    def reloadImages(self, password):
+        if not self.authority.authoriseUser('Manager', password):
+            return(['ERR', 'You are not authorised to reload images'])
+
+        readExamsGrouped()
+        findPageGroups()
+        self.loadPapers()
+        return(['ACK'])
+
     def reloadUsers(self, password):
         if not self.authority.authoriseUser('Manager', password):
-            return(['ERR'])
+            return(['ERR', 'You are not authorised to reload users'])
         if os.path.exists("../resources/userList.json"):
             with open('../resources/userList.json') as data_file:
                 newUserList = json.load(data_file)
@@ -139,6 +148,10 @@ class Server(object):
             # message should be ['RUSR', managerpwd]
             rv = self.reloadUsers(*message[1:])
             return rv
+        elif message[0] == 'RIMR':
+            # message should be ['RIMR', managerpwd]
+            rv = self.reloadImages(*message[1:])
+            return rv
         else:
             # should be ['CMD', user, token, arg1, arg2,...]
             if self.validate(message[1],message[2]):
@@ -164,8 +177,11 @@ class Server(object):
 
     def loadPapers(self):
         #Needs improvement
+        print("Adding IDgroups {}".format(sorted(examsGrouped.keys())))
         for t in sorted(examsGrouped.keys()):
             self.IDDB.addUnIDdExam(int(t), "t{:s}idg".format(t.zfill(4)))
+
+        print("Adding TGVs {}".format(sorted(pageGroupsForGrading.keys())))
         for tgv in sorted(pageGroupsForGrading.keys()):
             t, pg, v = splitTGV(tgv)
             self.MDB.addUnmarkedGroupImage(t, pg, v, tgv, pageGroupsForGrading[tgv])

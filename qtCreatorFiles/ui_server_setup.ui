@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>486</width>
-    <height>318</height>
+    <width>490</width>
+    <height>437</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -169,6 +169,19 @@
      </property>
      <property name="text">
       <string>Manage users</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="classListButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>1</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Get class list</string>
      </property>
     </widget>
    </item>

@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_ServerInfo(object):
     def setupUi(self, ServerInfo):
         ServerInfo.setObjectName("ServerInfo")
-        ServerInfo.resize(486, 318)
+        ServerInfo.resize(490, 437)
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(ServerInfo)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.serverGBox = QtWidgets.QGroupBox(ServerInfo)
@@ -109,6 +109,14 @@ class Ui_ServerInfo(object):
         self.manageUsersButton.setSizePolicy(sizePolicy)
         self.manageUsersButton.setObjectName("manageUsersButton")
         self.verticalLayout_2.addWidget(self.manageUsersButton)
+        self.classListButton = QtWidgets.QPushButton(ServerInfo)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(1)
+        sizePolicy.setHeightForWidth(self.classListButton.sizePolicy().hasHeightForWidth())
+        self.classListButton.setSizePolicy(sizePolicy)
+        self.classListButton.setObjectName("classListButton")
+        self.verticalLayout_2.addWidget(self.classListButton)
         self.saveCloseButton = QtWidgets.QPushButton(ServerInfo)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
         sizePolicy.setHorizontalStretch(0)
@@ -140,6 +148,7 @@ class Ui_ServerInfo(object):
         self.wportLabel.setText(_translate("ServerInfo", "Webdav port"))
         self.serverLE.setText(_translate("ServerInfo", "127.0.0.1"))
         self.manageUsersButton.setText(_translate("ServerInfo", "Manage users"))
+        self.classListButton.setText(_translate("ServerInfo", "Get class list"))
         self.saveCloseButton.setText(_translate("ServerInfo", "Save && Close"))
         self.closeButton.setText(_translate("ServerInfo", "Close"))
 
