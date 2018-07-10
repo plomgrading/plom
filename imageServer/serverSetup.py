@@ -49,17 +49,18 @@ class SetUp(QWidget):
     def getClassList(self):
         QMessageBox.question(self, "Class list format", "Class list must be a CSV with column headers \"id\", \"surname\", \"name\" and optionally \"code\".", QMessageBox.Ok)
         fname = QFileDialog.getOpenFileName(self,  'Choose class list csv', './', 'CSV files (*.csv)')[0]
-        with open(fname) as csvfile:
-            reader = csv.DictReader(csvfile, skipinitialspace=True)
-            print("Class list headers = {}".format(reader.fieldnames))
+        if fname:
+            with open(fname) as csvfile:
+                reader = csv.DictReader(csvfile, skipinitialspace=True)
+                print("Class list headers = {}".format(reader.fieldnames))
 
-            for hd in ['id', 'surname', 'name']:
-                if hd in reader.fieldnames:
-                    print("{} is present".format(hd))
-                else:
-                    QMessageBox.question(self, "Class list header error", "The field \"{}\" is not present in the csv file.".format(hd), QMessageBox.Ok)
-                    return
-        os.system("cp {} ../resources/classlist.csv".format(fname))
+                for hd in ['id', 'surname', 'name']:
+                    if hd in reader.fieldnames:
+                        print("{} is present".format(hd))
+                    else:
+                        QMessageBox.question(self, "Class list header error", "The field \"{}\" is not present in the csv file.".format(hd), QMessageBox.Ok)
+                        return
+            os.system("cp {} ../resources/classlist.csv".format(fname))
 
 
 app = QApplication(sys.argv)
