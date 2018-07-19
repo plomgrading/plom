@@ -46,15 +46,13 @@ def processScans():
 
 
 counter = 0
-os.chdir("./scannedExams/")
 
-for fname in os.listdir('.'):
+for fname in os.listdir('./scannedExams'):
     if fname.endswith('.pdf'):
         counter = counter + 1
 
 if not counter == 0:
-    os.chdir("../../resources")
-    
+
     spec = TestSpecification()
     spec.readSpec()
     buildDirectories()
