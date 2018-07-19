@@ -45,7 +45,7 @@ def buildCoverPage(n):
     return("python3 coverPageBuilder.py \"{}\"\n".format(arg))
 
 os.system('mkdir -p reassembled')
-os.system('mkdir -p frontPages')
+os.system('mkdir -p coverPages')
 
 spec = TestSpecification()
 spec.readSpec()
@@ -59,9 +59,17 @@ readGroupImagesMarked()
 
 fh = open("./commandlist.txt","w")
 for n in sorted(examsCompleted.keys()):
+    s = "" + n
     if(examsCompleted[n]==True):
-        extractMarks(n)
-        fh.write( buildCoverPage(n) )
+        nLength = len(n)
+        diff = 4 - nLength
+        for d in range(0, diff):
+            s = "0" + s
+
+        if not os.path.isfile("./coverPages/cover_{}.pdf".format(s)):
+            extractMarks(n)
+            fh.write( buildCoverPage(n) )
+            fh.write( buildCoverPage(n) )
 fh.close()
 os.system("parallel --bar <commandlist.txt")
 os.system("rm commandlist.txt")
