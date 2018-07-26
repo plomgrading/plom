@@ -1,7 +1,8 @@
 import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QComboBox, QDialog, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QSpinBox, QStyleFactory, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
-
+from PyQt5 import QtWidgets
+from version_selector_qlist import Ui_MainWindow
 sys.path.append('..') #this allows us to import from ../resources
 from resources.testspecification import TestSpecification
 
@@ -40,6 +41,7 @@ class SpecBuilder(QWidget):
         self.ui.pgTable.itemChanged.connect(self.setTotal)
 
     def basicSetup(self):
+        global numVersions
         numVersions = self.ui.versionSB.value()
         numPages = self.ui.pageSB.value()
         nameTest = self.ui.testNameLE.text()
@@ -53,10 +55,19 @@ class SpecBuilder(QWidget):
             spec.setNumberOfVersions(numVersions)
             spec.Name = nameTest
 
+            self.openUpVersionSelector(numVersions)
+
             self.ui.nameVersionGB.setEnabled(False)
             self.ui.pageGroupGB.setEnabled(True)
             self.ui.numberGB.setEnabled(True)
             self.addFirstRow()
+
+    def openUpVersionSelector(self,numVersions):
+        self.window = QtWidgets.QMainWindow()
+        self.newui = Ui_MainWindow()
+        self.newui.verNum = numVersions
+        self.newui.setupUi(self.window)
+        self.window.show()
 
     def addFirstRow(self):
         self.ui.pgTable.setVerticalHeaderItem(0, QTableWidgetItem('ID page(s)'))

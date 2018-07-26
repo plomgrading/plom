@@ -154,6 +154,8 @@ class IDClient(QWidget):
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.nextButton.clicked.connect(self.requestNext)
 
+        self.showMaximized()
+
     def duh(self):
         self.enterID()
         self.ui.paperBox.setFocus()

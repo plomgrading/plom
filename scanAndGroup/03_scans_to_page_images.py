@@ -45,7 +45,18 @@ def processScans():
         os.system("mv *.png ../../pageImages")
 
 
-spec = TestSpecification()
-spec.readSpec()
-buildDirectories()
-processScans()
+counter = 0
+
+for fname in os.listdir('./scannedExams'):
+    if fname.endswith('.pdf'):
+        counter = counter + 1
+
+if not counter == 0:
+
+    spec = TestSpecification()
+    spec.readSpec()
+    buildDirectories()
+    processScans()
+    print("successful scanned to page")
+else:
+    print("warning: please put scanned exams in scannedExams directory")
