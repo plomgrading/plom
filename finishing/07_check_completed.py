@@ -1,6 +1,36 @@
 import os,json,csv
 from testspecification import TestSpecification
 from collections import defaultdict
+from peewee import *
+import sys
+
+sys.path.append("../imageServer")
+from id_storage import IDImage
+from mark_storage import GroupImage
+
+iddb = SqliteDatabase('../resources/identity.db')
+markdb = SqliteDatabase('../resources/test_marks.db')
+
+def checkMark(n):
+        print("using my checkMark")
+        CorrPerson = GroupImage.get(GroupImage.id == n)
+        if CorrPerson.status == 'ToDo':
+            print("not all pages are marked")
+            return(False)
+        else:
+            print("all pages are marked")
+            return(True)
+
+def checkID(n):
+        print("using my checkID")
+        CorrPerson = IDImage.get(IDImage.id == n)
+        if CorrPerson.status == 'ToDo':
+            print("not all pages are IDed")
+            return(False)
+        else:
+            print("all pages are Ided")
+            return(True)
+
 
 def readExamsGrouped():
     global examsGrouped
@@ -20,34 +50,34 @@ def readGroupImagesMarked():
         with open('../resources/groupImagesMarked.json') as data_file:
             groupImagesMarked = json.load(data_file)
 
-def checkMarked(n):
-    if(n not in groupImagesMarked):
-        print("\tTotally unmarked")
-        return(False)
-    flag=True
-    for pg in range(1,spec.getNumberOfGroups()+1):
-        pgs = str(pg)
-        if( pgs not in groupImagesMarked[n] ):
-            flag=False
-
-    if(flag==False):
-        print("\tPartially marked")
-    return(flag)
-
-def checkIDed(n):
-    print("\tID image {}".format(examsGrouped[n][0]), end='')
-    if(n not in examsIDed):
-        print("\tNo ID")
-        return(False)
-    else:
-        print("\tID = ", examsIDed[n][1:3])
-        return(True)
+# def checkMarked(n):
+#     if(n not in groupImagesMarked):
+#         print("\tTotally unmarked")
+#         return(False)
+#     flag=True
+#     for pg in range(1,spec.getNumberOfGroups()+1):
+#         pgs = str(pg)
+#         if( pgs not in groupImagesMarked[n] ):
+#             flag=False
+#
+#     if(flag==False):
+#         print("\tPartially marked")
+#     return(flag)
+#
+# def checkIDed(n):
+#     print("\tID image {}".format(examsGrouped[n][0]), end='')
+#     if(n not in examsIDed):
+#         print("\tNo ID")
+#         return(False)
+#     else:
+#         print("\tID = ", examsIDed[n][1:3])
+#         return(True)
 
 def checkExam(n):
     global examsIDed
     global groupImagesMarked
     print("##################\nExam {}".format(n))
-    if( checkIDed(n) and checkMarked(n) ):
+    if( checkMark(n) and checkID(n) ):
         print("\tComplete - build front page and reassemble.")
         return(True)
     else:
