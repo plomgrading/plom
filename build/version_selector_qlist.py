@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFil
 from PyQt5.QtGui import QIcon
 import sys
 import os
+import shutil
 # from testspecification import TestSpecification
 
 
@@ -134,6 +135,11 @@ class Ui_MainWindow(object):
             newText = oldText + ": " + fname
             self.listWidget.currentItem().setText(newText)
 
+            if(self.listWidget.currentRow() < self.verNum):
+                newRow = self.listWidget.currentRow()+1
+                self.listWidget.setCurrentRow(newRow)
+
+
 
 
     def errorManager(self,num):
@@ -161,7 +167,11 @@ class Ui_MainWindow(object):
                 #### now rename the file ###
                 newFileName = "version" + str(i+1) + ".pdf"
                 newPathName = os.path.join("sourceVersions", newFileName)
-                os.rename(this_old_name_loc, newPathName)
+                try:
+                    shutil.copy2(this_old_name_loc, newPathName)
+                except shutil.SameFileError:
+                    pass
+
 
 
 
