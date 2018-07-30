@@ -13,7 +13,7 @@ directories += ['clients', 'clients/uiFiles', 'clients/icons']
 directories += ['finishing/frontPages', 'finishing/reassembled/']
 
 files = ['resources/testspecification.py', 'resources/davconf.conf']
-files += ['build/01_build_specification_gui.py', 'build/cleanAll.py', 'build/editMeToBuildASpec.py', 'build/02_build_tests_from_spec.py', 'build/mergeAndCodePages.py', 'build/buildTestPDFs.py', 'build/ui_builder.py']
+files += ['build/01_build_specification_gui.py', 'build/cleanAll.py', 'build/editMeToBuildASpec.py', 'build/02_build_tests_from_spec.py', 'build/mergeAndCodePages.py', 'build/buildTestPDFs.py', 'build/ui_builder.py', 'build/version_selector_qlist.py']
 files += [
 'scanAndGroup/03_scans_to_page_images.py', 'scanAndGroup/cleanAll.py', 'scanAndGroup/04_decode_images.py', 'scanAndGroup/extractQRAndOrient.py', 'scanAndGroup/05_missing_pages.py', 'scanAndGroup/manualPageIdentifier.py', 'scanAndGroup/06_group_pages.py', 'scanAndGroup/testspecification.py']
 

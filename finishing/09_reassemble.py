@@ -22,7 +22,7 @@ def readExamsIDed():
 
 def imageList(n):
     imgl = ["coverPages/cover_{}.pdf".format(n.zfill(4))]
-    imgl.append( "../scanAndGroup/readyForGrading/idgroup/{}.png".format(examsGrouped[n][0]) )
+    imgl.append( "../scanAndGroup/readyForMarking/idgroup/{}.png".format(examsGrouped[n][0]) )
     for pg in range(spec.getNumberOfGroups()):
         imgl.append( "../imageServer/markedPapers/G{}.png".format(examsGrouped[n][pg+1][1:]) )
     return(imgl)

@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFil
 from PyQt5.QtGui import QIcon
 import sys
 import os
+import shutil
 # from testspecification import TestSpecification
 
 
@@ -111,7 +112,7 @@ class Ui_MainWindow(object):
 
         #functionalities
         self.pushButton.clicked.connect(self.openFileBrowser)
-        self.pushButton_2.clicked.connect(self.confirm)
+        self.pushButton_2.clicked.connect(lambda : self.confirm(MainWindow))
 
 
 
@@ -134,6 +135,11 @@ class Ui_MainWindow(object):
             newText = oldText + ": " + fname
             self.listWidget.currentItem().setText(newText)
 
+            if(self.listWidget.currentRow() < self.verNum):
+                newRow = self.listWidget.currentRow()+1
+                self.listWidget.setCurrentRow(newRow)
+
+
 
 
     def errorManager(self,num):
@@ -150,7 +156,7 @@ class Ui_MainWindow(object):
 
 
 
-    def confirm(self):
+    def confirm(self, MainWindow):
         if len(versions) != self.verNum:
             self.errorManager(2)
         else:
@@ -161,16 +167,23 @@ class Ui_MainWindow(object):
                 #### now rename the file ###
                 newFileName = "version" + str(i+1) + ".pdf"
                 newPathName = os.path.join("sourceVersions", newFileName)
-                os.rename(this_old_name_loc, newPathName)
+                try:
+                    shutil.copy2(this_old_name_loc, newPathName)
+                except shutil.SameFileError:
+                    pass
+            MainWindow.close()
 
 
+class Chooser(QWidget):
+    def __init__(self):
+        super(Chooser, self).__init__()
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
 
 
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    window = Chooser()
+    window.show()
     sys.exit(app.exec_())
