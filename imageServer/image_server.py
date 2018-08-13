@@ -1,9 +1,11 @@
 import asyncio
 import datetime
+import errno
 import glob
 import json
 import os
 import shlex
+import socket
 import ssl
 import subprocess
 import sys
@@ -50,10 +52,14 @@ def findPageGroups():
             print("Adding pageimage from {}".format(fname))
             pageGroupsForGrading[os.path.basename(fname)[:-4]] = fname
 
-def getServerInfo(self):
+def getServerInfo():
+    global serverInfo
     if os.path.isfile("../resources/serverDetails.json"):
         with open('../resources/serverDetails.json') as data_file:
-            self.info = json.load(data_file)
+            serverInfo = json.load(data_file)
+            print("Server details loaded: ", serverInfo)
+    else:
+        print("Cannot find server details.")
 
 
 # # # # # # # # # # # #
@@ -292,7 +298,36 @@ class Server(object):
 
 
 # # # # # # # # # # # #
-# # # # # # # # # # # #s
+# # # # # # # # # # # #
+
+def checkPortFree(ip, port):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        sock.bind((ip, port))
+    except socket.error as err:
+            if err.errno == errno.EADDRINUSE:
+                return False
+            else:
+                print("There is some sort of ip/port error. Number = {}".format(err.errno))
+                return False
+    return True
+
+
+def checkPorts():
+    if checkPortFree(serverInfo['server'], serverInfo['mport']):
+        print("Messaging port is free and working.")
+    else:
+        print("Problem with messaging port {} on server {}. Please check and try again.".format(serverInfo['mport'], serverInfo['server']))
+        exit()
+
+    if checkPortFree(serverInfo['server'], serverInfo['wport']):
+        print("Webdav port is free and working.")
+    else:
+        print("Problem with webdav port {} on server {}. Please check and try again.".format(serverInfo['wport'], serverInfo['server']))
+        exit()
+
+getServerInfo()
+checkPorts()
 
 tempDirectory = tempfile.TemporaryDirectory()
 davDirectory = tempDirectory.name
@@ -300,12 +335,14 @@ os.system("chmod o-r {}".format(davDirectory))
 print("Dav = {}".format(davDirectory))
 cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.conf".format(serverInfo['server'], serverInfo['wport'], davDirectory)
 davproc = subprocess.Popen(shlex.split(cmd))
+
 spec = TestSpecification()
 spec.readSpec()
 examsGrouped={}
 readExamsGrouped()
 pageGroupsForGrading={}
 findPageGroups()
+
 theIDDB = IDDatabase()
 theMarkDB = MarkDatabase()
 os.system("mkdir -p ./markedPapers") # make sure this directory exists
@@ -315,7 +352,13 @@ peon = Server(theIDDB, theMarkDB, spec)
 
 loop = asyncio.get_event_loop()
 coro = asyncio.start_server(handle_messaging, serverInfo['server'], serverInfo['mport'], loop=loop, ssl=sslContext)
-server = loop.run_until_complete(coro)
+try:
+    server = loop.run_until_complete(coro)
+except OSError:
+    print("There is a problem running the socket-listening loop. Check if port {} is free and try again.".format(serverInfo['mport']))
+    subprocess.Popen.kill(davproc)
+    loop.close()
+    exit()
 
 print('Serving messages on {}'.format(server.sockets[0].getsockname()))
 try:
