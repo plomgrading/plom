@@ -1,46 +1,39 @@
 import os,json,csv
 from testspecification import TestSpecification
 from collections import defaultdict
-from peewee import *
-from playhouse.sqlite_ext import SqliteExtDatabase
 import sys
 import sqlite3
 
 sys.path.append("../imageServer")
-# from id_storage import IDImage
-# from mark_storage import GroupImage
-#
-# iddb = SqliteExtDatabase('../resources/identity.db', pragmas = {'query_only': True})
-# markdb = SqliteExtDatabase('../resources/test_marks.db',pragmas = {'query_only': True})
-#
-# markdb.pragma('query_only', True, permanent=True)
 
 markdb = sqlite3.connect('file:../resources/test_marks.db?mode=ro', uri=True)
 curMark = markdb.cursor()
 
 iddb = sqlite3.connect('file:../resources/identity.db?mode=ro', uri=True)
-idMark = iddb.cursor()
+curID = iddb.cursor()
 
+groupImagesMarked=defaultdict(lambda: defaultdict(list))
+examsIDed = {}
 
 def checkMarked(n):
-    ToDo = 0
-    for row in curMark.execute("SELECT * FROM groupimage WHERE status='ToDo'"):
-        ToDo = ToDo + 1
-    print(ToDo)
-    if ToDo > 0:
-        return False
-    else:
-        return True
+    global groupImagesMarked
+    for row in curMark.execute("SELECT * FROM groupimage WHERE number='{}'".format(n)):
+        if row[7] != 'Marked':
+            print("Not yet marked {}".format(row[3]))
+            return False
+        else:
+            groupImagesMarked[n][row[4]] = [row[5], row[10]]
+    return True
 
 def checkIDed(n):
-    ToDo = 0
-    for row in idMark.execute("SELECT * FROM idimage WHERE status = 'ToDo'"):
-        ToDo = ToDo + 1
-    print(ToDo)
-    if ToDo > 0:
-        return False
-    else:
-        return True
+    global examsIDed
+    for row in curID.execute("SELECT * FROM idimage WHERE number = '{}'".format(n)):
+        if row[3] != 'Identified':
+            print("Not yet id'd {}".row[1])
+            return False
+        else:
+            examsIDed[n] = [row[6], row[7]] #store SID and SName
+    return True
 
 
 def readExamsGrouped():
@@ -49,22 +42,7 @@ def readExamsGrouped():
         with open('../resources/examsGrouped.json') as data_file:
             examsGrouped = json.load(data_file)
 
-def readExamsIDed():
-    global examsIDed
-    if(os.path.exists("../resources/examsIdentified.json")):
-        with open('../resources/examsIdentified.json') as data_file:
-            examsIDed = json.load(data_file)
-
-def readGroupImagesMarked():
-    global groupImagesMarked
-    if(os.path.exists("../resources/groupImagesMarked.json")):
-        with open('../resources/groupImagesMarked.json') as data_file:
-            groupImagesMarked = json.load(data_file)
-
-
 def checkExam(n):
-    global examsIDed
-    global groupImagesMarked
     print("##################\nExam {}".format(n))
     if(checkMarked(n) and checkIDed(n) ):
         print("\tComplete - build front page and reassemble.")
@@ -80,10 +58,10 @@ def writeExamsCompleted():
 def writeMarkCSV():
     head = ['StudentID','StudentName','TestNumber']
     for pg in range(1,spec.getNumberOfGroups()+1):
-        head.append('PageGroup{}'.format(pg))
+        head.append('PageGroup{} Mark'.format(pg))
     head.append('Total')
     for pg in range(1,spec.getNumberOfGroups()+1):
-        head.append('Version{}'.format(pg))
+        head.append('PageGroup{} Version'.format(pg))
 
     with open("testMarks.csv", 'w') as csvfile:
         testWriter = csv.DictWriter(csvfile, fieldnames=head, delimiter='\t', quotechar="\"", quoting=csv.QUOTE_NONNUMERIC)
@@ -93,15 +71,14 @@ def writeMarkCSV():
                 continue
             ns = str(n)
             row=dict()
-            row['StudentID'] = examsIDed[ns][1]
-            row['StudentName'] = examsIDed[ns][2]
+            row['StudentID'] = examsIDed[ns][0]
+            row['StudentName'] = examsIDed[ns][1]
             row['TestNumber'] = n
             tot = 0
             for pg in range(1,spec.getNumberOfGroups()+1):
-                p = str(pg)
-                tot += groupImagesMarked[ns][p][1]
-                row['PageGroup{}'.format(p)] = groupImagesMarked[ns][p][1]
-                row['Version{}'.format(p)] = groupImagesMarked[ns][p][0]
+                tot += groupImagesMarked[ns][pg][1]
+                row['PageGroup{} Mark'.format(pg)] = groupImagesMarked[ns][pg][1]
+                row['PageGroup{} Version'.format(pg)] = groupImagesMarked[ns][pg][0]
             row['Total']=tot
             testWriter.writerow(row)
 
@@ -109,9 +86,6 @@ spec = TestSpecification()
 spec.readSpec()
 
 readExamsGrouped()
-readExamsIDed()
-examScores=defaultdict(list)
-readGroupImagesMarked()
 
 examsCompleted={}
 for n in sorted(examsGrouped.keys()):
@@ -119,3 +93,6 @@ for n in sorted(examsGrouped.keys()):
 
 writeExamsCompleted()
 writeMarkCSV()
+
+markdb.close()
+iddb.close()
