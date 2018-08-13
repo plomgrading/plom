@@ -2,34 +2,45 @@ import os,json,csv
 from testspecification import TestSpecification
 from collections import defaultdict
 from peewee import *
+from playhouse.sqlite_ext import SqliteExtDatabase
 import sys
+import sqlite3
 
 sys.path.append("../imageServer")
-from id_storage import IDImage
-from mark_storage import GroupImage
+# from id_storage import IDImage
+# from mark_storage import GroupImage
+#
+# iddb = SqliteExtDatabase('../resources/identity.db', pragmas = {'query_only': True})
+# markdb = SqliteExtDatabase('../resources/test_marks.db',pragmas = {'query_only': True})
+#
+# markdb.pragma('query_only', True, permanent=True)
 
-iddb = SqliteDatabase('../resources/identity.db')
-markdb = SqliteDatabase('../resources/test_marks.db')
+markdb = sqlite3.connect('file:../resources/test_marks.db?mode=ro', uri=True)
+curMark = markdb.cursor()
 
-def checkMark(n):
-        print("using my checkMark")
-        CorrPerson = GroupImage.get(GroupImage.id == n)
-        if CorrPerson.status == 'ToDo':
-            print("not all pages are marked")
-            return(False)
-        else:
-            print("all pages are marked")
-            return(True)
+iddb = sqlite3.connect('file:../resources/identity.db?mode=ro', uri=True)
+idMark = iddb.cursor()
 
-def checkID(n):
-        print("using my checkID")
-        CorrPerson = IDImage.get(IDImage.id == n)
-        if CorrPerson.status == 'ToDo':
-            print("not all pages are IDed")
-            return(False)
-        else:
-            print("all pages are Ided")
-            return(True)
+
+def checkMarked(n):
+    ToDo = 0
+    for row in curMark.execute("SELECT * FROM groupimage WHERE status='ToDo'"):
+        ToDo = ToDo + 1
+    print(ToDo)
+    if ToDo > 0:
+        return False
+    else:
+        return True
+
+def checkIDed(n):
+    ToDo = 0
+    for row in idMark.execute("SELECT * FROM idimage WHERE status = 'ToDo'"):
+        ToDo = ToDo + 1
+    print(ToDo)
+    if ToDo > 0:
+        return False
+    else:
+        return True
 
 
 def readExamsGrouped():
@@ -50,34 +61,12 @@ def readGroupImagesMarked():
         with open('../resources/groupImagesMarked.json') as data_file:
             groupImagesMarked = json.load(data_file)
 
-# def checkMarked(n):
-#     if(n not in groupImagesMarked):
-#         print("\tTotally unmarked")
-#         return(False)
-#     flag=True
-#     for pg in range(1,spec.getNumberOfGroups()+1):
-#         pgs = str(pg)
-#         if( pgs not in groupImagesMarked[n] ):
-#             flag=False
-#
-#     if(flag==False):
-#         print("\tPartially marked")
-#     return(flag)
-#
-# def checkIDed(n):
-#     print("\tID image {}".format(examsGrouped[n][0]), end='')
-#     if(n not in examsIDed):
-#         print("\tNo ID")
-#         return(False)
-#     else:
-#         print("\tID = ", examsIDed[n][1:3])
-#         return(True)
 
 def checkExam(n):
     global examsIDed
     global groupImagesMarked
     print("##################\nExam {}".format(n))
-    if( checkMark(n) and checkID(n) ):
+    if(checkMarked(n) and checkIDed(n) ):
         print("\tComplete - build front page and reassemble.")
         return(True)
     else:
