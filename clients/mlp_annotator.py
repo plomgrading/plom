@@ -82,6 +82,7 @@ class Annotator(QDialog):
         self.setIcon(self.ui.redoButton, "&redo", "{}/redo.svg".format(base_path))
         QShortcut(QKeySequence("Ctrl+Z"), self.view, self.view.undo, context=Qt.WidgetShortcut)
         QShortcut(QKeySequence("Ctrl+Shift+z"), self.view, self.view.redo, context=Qt.WidgetShortcut)
+        QShortcut(QKeySequence("Alt+f"), self.view,(lambda:(self.commentW.saveComments(), self.closeEvent())), context=Qt.WidgetShortcut)
 
     def setIcon(self, tb, txt, iconFile):
         tb.setText(txt)
@@ -107,6 +108,7 @@ class Annotator(QDialog):
         self.ui.cancelButton.clicked.connect(self.reject)
 
         self.commentW.CL.commentSignal.connect(self.handleComment)
+
 
     def handleComment(self, txt):
         self.setMode("text", QCursor(Qt.IBeamCursor))
