@@ -209,9 +209,9 @@ class MarkerClient(QWidget):
         self.ui.markStyleGroup.setId(self.ui.markDownRB, 3)
 
         self.requestToken()
-
         self.getRubric()
         self.ui.scoreLabel.setText(str(self.maxScore))
+
 
     def requestToken(self):
         msg = mlp_messenger.SRMsg(['AUTH', self.userName, self.password])
@@ -235,7 +235,7 @@ class MarkerClient(QWidget):
     def getRubric(self):
         msg = mlp_messenger.SRMsg(['mGMX', self.userName, self.token, self.pageGroup, self.version])
         if msg[0] == 'ERR':
-            self.shutDown()
+            quit()
         self.maxScore = msg[1]
 
     def addTGVToList(self, paper):
