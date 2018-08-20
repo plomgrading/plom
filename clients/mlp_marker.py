@@ -321,6 +321,8 @@ class MarkerClient(QWidget):
                 msg.exec_()
                 return( self.waitForAnnotator(fname) )
         else:
+            msg = ErrorMessage("mark not recorded")
+            msg.exec_()
             return [None, timer.elapsed()]
 
     def writeGradeOnImage(self,fname,gr):

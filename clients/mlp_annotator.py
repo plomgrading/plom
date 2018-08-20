@@ -2,7 +2,7 @@ import sys
 import os
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap
+from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap, QCloseEvent
 from PyQt5.QtWidgets import QDialog, QPushButton, QShortcut, QSizePolicy
 
 from mlp_markentry import MarkEntry
@@ -144,6 +144,9 @@ class Annotator(QDialog):
         if lookingAhead < 0 or lookingAhead > self.maxMark:
             self.ui.panButton.animateClick()
 
-    def closeEvent(self):
-        self.view.save()
-        self.accept()
+    def closeEvent(self,tmp = "blah"):
+        if type(tmp) == QCloseEvent:
+            self.reject()
+        else:
+            self.view.save()
+            self.accept()
