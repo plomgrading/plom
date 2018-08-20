@@ -81,8 +81,8 @@ class Annotator(QDialog):
         self.setIcon(self.ui.undoButton, "&undo", "{}/undo.svg".format(base_path))
         self.setIcon(self.ui.redoButton, "&redo", "{}/redo.svg".format(base_path))
         QShortcut(QKeySequence("Ctrl+Z"), self.view, self.view.undo, context=Qt.WidgetShortcut)
-        QShortcut(QKeySequence("Ctrl+Shift+z"), self.view, self.view.redo, context=Qt.WidgetShortcut)
-        QShortcut(QKeySequence("Alt+f"), self.view,(lambda:(self.commentW.saveComments(), self.closeEvent())), context=Qt.WidgetShortcut)
+        QShortcut(QKeySequence("Ctrl+Y"), self.view, self.view.redo, context=Qt.WidgetShortcut)
+        QShortcut(QKeySequence("Alt+Return"), self.view,(lambda:(self.commentW.saveComments(), self.closeEvent())), context=Qt.WidgetShortcut)
 
     def setIcon(self, tb, txt, iconFile):
         tb.setText(txt)
