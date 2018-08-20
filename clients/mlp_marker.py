@@ -209,9 +209,9 @@ class MarkerClient(QWidget):
         self.ui.markStyleGroup.setId(self.ui.markDownRB, 3)
 
         self.requestToken()
-
         self.getRubric()
         self.ui.scoreLabel.setText(str(self.maxScore))
+
 
     def requestToken(self):
         msg = mlp_messenger.SRMsg(['AUTH', self.userName, self.password])
@@ -235,7 +235,7 @@ class MarkerClient(QWidget):
     def getRubric(self):
         msg = mlp_messenger.SRMsg(['mGMX', self.userName, self.token, self.pageGroup, self.version])
         if msg[0] == 'ERR':
-            self.shutDown()
+            quit()
         self.maxScore = msg[1]
 
     def addTGVToList(self, paper):
@@ -248,8 +248,13 @@ class MarkerClient(QWidget):
             testpix = QPixmap(self.exM.getAnnotatedFile(r))
         else:
             testpix = QPixmap(self.exM.getOriginalFile(r))
-        self.ui.pageImage.setPixmap(testpix.scaledToWidth(1200, mode=Qt.SmoothTransformation))
+
+        if testpix.width()<testpix.height():
+            self.ui.pageImage.setPixmap(testpix.scaledToHeight(800, mode=Qt.SmoothTransformation))
+        else:
+            self.ui.pageImage.setPixmap(testpix.scaledToWidth(1200, mode=Qt.SmoothTransformation))
         self.ui.tableView.setFocus()
+
 
     def requestNext(self):
         msg = mlp_messenger.SRMsg(['mNUM', self.userName, self.token, self.pageGroup, self.version])
@@ -316,6 +321,8 @@ class MarkerClient(QWidget):
                 msg.exec_()
                 return( self.waitForAnnotator(fname) )
         else:
+            msg = ErrorMessage("mark not recorded")
+            msg.exec_()
             return [None, timer.elapsed()]
 
     def writeGradeOnImage(self,fname,gr):
