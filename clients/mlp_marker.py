@@ -248,8 +248,13 @@ class MarkerClient(QWidget):
             testpix = QPixmap(self.exM.getAnnotatedFile(r))
         else:
             testpix = QPixmap(self.exM.getOriginalFile(r))
-        self.ui.pageImage.setPixmap(testpix.scaledToWidth(1200, mode=Qt.SmoothTransformation))
+
+        if testpix.width()<testpix.height():
+            self.ui.pageImage.setPixmap(testpix.scaledToHeight(800, mode=Qt.SmoothTransformation))
+        else:
+            self.ui.pageImage.setPixmap(testpix.scaledToWidth(1200, mode=Qt.SmoothTransformation))
         self.ui.tableView.setFocus()
+
 
     def requestNext(self):
         msg = mlp_messenger.SRMsg(['mNUM', self.userName, self.token, self.pageGroup, self.version])
