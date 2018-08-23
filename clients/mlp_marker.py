@@ -260,7 +260,7 @@ class MarkerClient(QWidget):
         msg = mlp_messenger.SRMsg(['mNUM', self.userName, self.token, self.pageGroup, self.version])
         if msg[0] == 'ERR':
             return
-        fname = self.workingDirectory+"/"+msg[1]+".png"
+        fname = os.path.join(self.workingDirectory, msg[1]+".png")
         tname = msg[2]
         mlp_messenger.getFileDav(tname, fname)
         self.addTGVToList(TestPageGroup(msg[1], fname))
@@ -352,7 +352,7 @@ class MarkerClient(QWidget):
             if msg.exec_() == QMessageBox.No:
                 return
 
-        aname = self.workingDirectory + "/G" + self.exM.data(index[0])[1:] + ".png"
+        aname = os.path.join(self.workingDirectory, "G" + self.exM.data(index[0])[1:] + ".png")
         if self.exM.data(index[1]) in ['untouched', 'reverted']:
             os.system("cp {:s} {:s}".format(self.exM.getOriginalFile(index[0].row()), aname))
 
@@ -381,7 +381,7 @@ class MarkerClient(QWidget):
 
     def flipIt(self):
         index = self.ui.tableView.selectedIndexes()
-        aname = self.workingDirectory + "/G" + self.exM.data(index[0])[1:] + ".png"
+        aname = os.path.join(self.workingDirectory, "G" + self.exM.data(index[0])[1:] + ".png")
         if(self.exM.data(index[1]) in ['untouched', 'reverted']):
             os.system("cp {:s} {:s}".format(self.exM.getOriginalFile(index[0].row()), aname) )
             if self.waitForFlipper(aname) == True:

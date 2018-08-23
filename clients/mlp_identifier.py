@@ -1,7 +1,7 @@
 from examviewwindow import ExamViewWindow
 from mlp_useful import ErrorMessage, SimpleMessage
 import tempfile
-
+import os
 
 from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QStringListModel, QVariant
 from PyQt5.QtWidgets import QCompleter, QDialog, QInputDialog, QMessageBox, QWidget
@@ -175,7 +175,7 @@ class IDClient(QWidget):
             ErrorMessage("Classlist problem")
             quit()
         dfn = msg[1]
-        fname = self.workingDirectory + "/cl.csv"
+        fname = os.path.join(self.workingDirectory, "cl.csv") #for windows/linux compatibility
         mlp_messenger.getFileDav(dfn, fname)
         # read classlist into dictionaries
         self.studentNamesToNumbers = defaultdict(int)
@@ -240,7 +240,7 @@ class IDClient(QWidget):
             return
         test = msg[1]
         fname = msg[2]
-        iname = self.workingDirectory+"/"+test+".png"
+        iname = os.path.join(self.workingDirectory, test+".png") #windows/linux compatibility
         mlp_messenger.getFileDav(fname, iname)
         self.addPaperToList(Paper(test, iname))
         #acknowledge got test  >>>   server.gotTest(self.userName, test, fname)
