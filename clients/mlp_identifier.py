@@ -204,6 +204,7 @@ class IDClient(QWidget):
         self.sidcompleter.setModel(self.sidlist)
         self.snamecompleter = QCompleter()
         self.snamecompleter.setModel(self.snamelist)
+        self.snamecompleter.setCaseSensitivity(Qt.CaseInsensitive)
 
         self.ui.idEdit.setCompleter(self.sidcompleter)
         self.ui.nameEdit.setCompleter(self.snamecompleter)
