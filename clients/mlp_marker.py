@@ -1,4 +1,5 @@
 import os
+from shutil import copyfile
 import tempfile
 
 from mlp_annotator import Annotator
@@ -125,8 +126,8 @@ class ExamModel(QAbstractTableModel):
         self.setData(index[2], -1)
         self.setData(index[3], 0)
         #remove annotated picture
-        # perhaps change this to unlink?
-        os.system("rm -f {:s}".format(self.getAnnotatedFile(index[0].row())))
+        # changed to remove for windows compatibility.
+        os.remove("{:s}".format(self.getAnnotatedFile(index[0].row())))
 
     def addPaper(self, rho):
         r = self.rowCount()
@@ -354,7 +355,7 @@ class MarkerClient(QWidget):
 
         aname = os.path.join(self.workingDirectory, "G" + self.exM.data(index[0])[1:] + ".png")
         if self.exM.data(index[1]) in ['untouched', 'reverted']:
-            os.system("cp {:s} {:s}".format(self.exM.getOriginalFile(index[0].row()), aname))
+            copyfile("{:s}".format(self.exM.getOriginalFile(index[0].row())), aname)
 
         [gr, mtime] = self.waitForAnnotator(aname)
         if gr is None: #Exited annotator with 'cancel'
@@ -383,7 +384,8 @@ class MarkerClient(QWidget):
         index = self.ui.tableView.selectedIndexes()
         aname = os.path.join(self.workingDirectory, "G" + self.exM.data(index[0])[1:] + ".png")
         if(self.exM.data(index[1]) in ['untouched', 'reverted']):
-            os.system("cp {:s} {:s}".format(self.exM.getOriginalFile(index[0].row()), aname) )
+            copyfile("{:s}".format(self.exM.getOriginalFile(index[0].row())), aname)
+
             if self.waitForFlipper(aname) == True:
                 self.exM.setFlipped(index, aname)
                 self.updateImage(index[0].row())
