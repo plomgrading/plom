@@ -77,24 +77,24 @@ def putFileDav(lfn,dfn):
         message = template.format(type(ex).__name__, ex.args)
         print(message)
 
-def handle_ping_test():
+async def handle_ping_test():
     ptest = asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
     try:
-        # Wait for 3 seconds, then raise TimeoutError
-        reader, writer = yield from asyncio.wait_for(ptest, timeout=2)
+        # Wait for 2 seconds, then raise TimeoutError
+        reader, writer = await asyncio.wait_for(ptest, timeout=2)
         jm = json.dumps(['PING'])
         writer.write(jm.encode())
         writer.write(b'\x00')
-        writer.drain()
+        await writer.drain()
 
-        data = reader.read(100)
+        data = await reader.read(100)
         terminate = data.endswith(b'\x00')
         data = data.rstrip(b'\x00')
         rmesg = json.loads(data.decode()) # message should be a list [cmd, user, arg1, arg2, etc]
         writer.close()
         return True
-    except Exception as ex:
-        msg = ErrorMessage("Server does not return ping. Please double check details and try again. Error = {}".format(type(ex).__name__))
+    except (asyncio.TimeoutError, ConnectionRefusedError):
+        msg = ErrorMessage("Server does not return ping. Please double check details and try again.")
         msg.exec_()
         return False
 
