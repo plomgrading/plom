@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt, QLineF, QPointF, QRectF, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, QPixmap, QTransform, QFont
 from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsPathItem, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsRectItem, QGraphicsScene, QUndoStack, QGraphicsItemGroup, QGraphicsTextItem
 
-from tools import CommandArrow, CommandBox, CommandCross, CommandDelete, CommandDelta, CommandLine, CommandMoveItem, CommandMoveText, CommandPen, CommandText, CommandTick, TextItem
+from tools import CommandArrow, CommandBox, CommandCross, CommandDelete, CommandDelta, CommandHighlight, CommandLine, CommandMoveItem, CommandMoveText, CommandPen, CommandText, CommandTick, TextItem
 
 class ScoreBox(QGraphicsTextItem):
     def __init__(self):
@@ -49,10 +49,12 @@ class PageScene(QGraphicsScene):
 
         self.mode = "pen"
         self.ink = QPen(Qt.red, 2)
+        self.highlight = QPen(QColor(255, 255, 0, 64), 50)
         self.brush = QBrush(self.ink.color())
         self.lightBrush = QBrush(QColor(255, 255, 0, 16))
         self.textLock = False
         self.arrowFlag = 0
+        self.highlightFlag = 0
 
         self.zoomInk = QPen(Qt.green, 2)
         self.zoomBrush = QBrush(QColor(0, 255, 0, 16))
@@ -171,6 +173,7 @@ class PageScene(QGraphicsScene):
             command = CommandLine(self, self.originPos, self.currentPos)
         else:
             command = CommandArrow(self, self.originPos, self.currentPos)
+        self.arrowFlag = 0
         self.undoStack.push(command)
 
     def box_mousePressEvent(self, event):
@@ -201,7 +204,14 @@ class PageScene(QGraphicsScene):
         self.path.moveTo(self.originPos)
         self.path.lineTo(self.currentPos)
         self.pathItem = QGraphicsPathItem(self.path)
-        self.pathItem.setPen(self.ink)
+
+        if event.button() == Qt.LeftButton:
+            self.pathItem.setPen(self.ink)
+            self.highlightFlag = 0
+        else:
+            self.pathItem.setPen(self.highlight)
+            self.highlightFlag = 1
+
         self.addItem(self.pathItem)
 
     def pen_mouseMoveEvent(self, event):
@@ -210,9 +220,12 @@ class PageScene(QGraphicsScene):
         self.pathItem.setPath(self.path)
 
     def pen_mouseReleaseEvent(self, event):
-        # print("Pen release ", type(self.pathItem))
         self.removeItem(self.pathItem)
-        command = CommandPen(self, self.path)
+        if self.highlightFlag == 0:
+            command = CommandPen(self, self.path)
+        else:
+            command = CommandHighlight(self, self.path)
+        self.highlightFlag = 0
         self.undoStack.push(command)
 
     def delete_mousePressEvent(self,event):

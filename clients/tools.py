@@ -246,6 +246,34 @@ class PathItem(QGraphicsPathItem):
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
 
+class CommandHighlight(QUndoCommand):
+    def __init__(self, scene, path):
+        super(CommandHighlight, self).__init__()
+        self.scene = scene
+        self.path = path
+        self.pathItem = HighLightItem(self.path)
+
+    def redo(self):
+        self.scene.addItem(self.pathItem)
+
+    def undo(self):
+        self.scene.removeItem(self.pathItem)
+
+class HighLightItem(QGraphicsPathItem):
+    def __init__(self, path):
+        super(HighLightItem, self).__init__()
+        self.path = path
+        self.setPath(self.path)
+        self.setPen(QPen(QColor(255, 255, 0, 64), 50))
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def itemChange(self,change,value):
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            command = CommandMoveItem(self, value)
+            self.scene().undoStack.push(command)
+        return QGraphicsPathItem.itemChange(self, change, value)
+
 class CommandBox(QUndoCommand):
     def __init__(self, scene, rect):
         super(CommandBox, self).__init__()
