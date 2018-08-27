@@ -300,6 +300,9 @@ class MarkerClient(QWidget):
 
     def revertTest(self):
         index = self.ui.tableView.selectedIndexes()
+        if len(index)==0:
+            return #fixes a crash found by Patrick
+            
         if(self.exM.data(index[1]) in ["untouched", "reverted"]):
             return
         msg = SimpleMessage('Do you want to revert to original scan?')
