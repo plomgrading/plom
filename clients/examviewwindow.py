@@ -1,6 +1,4 @@
-import sys
-
-from PyQt5.QtCore import Qt, QRectF
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QGraphicsView, QGridLayout, QPushButton, QWidget
 
@@ -10,20 +8,20 @@ class ExamViewWindow(QWidget):
         self.initUI(fname)
 
     def initUI(self, fname):
-        self.view=ExamView(fname)
+        self.view = ExamView(fname)
         self.view.setRenderHint(QPainter.HighQualityAntialiasing)
 
-        self.resetB=QPushButton('reset view')
-        self.resetB.clicked.connect(lambda: self.view.resetView() )
+        self.resetB = QPushButton('reset view')
+        self.resetB.clicked.connect(lambda: self.view.resetView())
 
         grid = QGridLayout()
-        grid.addWidget(self.view,1,1,10,4)
-        grid.addWidget(self.resetB,20,1)
+        grid.addWidget(self.view, 1, 1, 10, 4)
+        grid.addWidget(self.resetB, 20, 1)
 
         self.setLayout(grid)
         self.show()
 
-    def updateImage(self,fname):
+    def updateImage(self, fname):
         self.view.updateImage(fname)
 
 class ExamView(QGraphicsView):
@@ -32,11 +30,11 @@ class ExamView(QGraphicsView):
         self.initUI(fname)
 
     def initUI(self, fname):
-        self.scene=ExamScene()
+        self.scene = QGraphicsScene()
         self.image = QPixmap(fname)
         self.imageItem = QGraphicsPixmapItem(self.image)
         self.imageItem.setTransformationMode(Qt.SmoothTransformation)
-        self.scene.setSceneRect(0, 0, max(1000,self.image.width()), max(1000,self.image.height()))
+        self.scene.setSceneRect(0, 0, max(1000, self.image.width()), max(1000, self.image.height()))
 
         self.scene.addItem(self.imageItem)
 
@@ -51,33 +49,10 @@ class ExamView(QGraphicsView):
 
     def mouseReleaseEvent(self, event):
         if(event.button() == Qt.RightButton):
-            self.scale(0.8,0.8)
+            self.scale(0.8, 0.8)
         else:
-            rec=self.scene.boxItem.rect()
-            if( rec.height()>=64 and rec.width()>=64 ):
-                self.fitInView(self.scene.boxItem,Qt.KeepAspectRatio)
+            self.scale(1.25, 1.25)
         self.scene.mouseReleaseEvent(event)
 
     def resetView(self):
         self.fitInView(self.imageItem, Qt.KeepAspectRatio)
-
-
-class ExamScene(QGraphicsScene):
-    def __init__(self):
-        QGraphicsScene.__init__(self)
-        self.ink = QPen(QColor(0,255,0),2)
-        self.lightBrush = QBrush(QColor(0,255,0,16))
-
-    def mousePressEvent(self, event):
-        self.origin_pos = event.scenePos()
-        self.current_pos = self.origin_pos
-        self.boxItem = QGraphicsRectItem(QRectF(self.origin_pos, self.current_pos))
-        self.boxItem.setPen(self.ink); self.boxItem.setBrush(self.lightBrush)
-        self.addItem(self.boxItem)
-
-    def mouseMoveEvent(self, event):
-        self.current_pos = event.scenePos()
-        self.boxItem.setRect(QRectF(self.origin_pos, self.current_pos))
-
-    def mouseReleaseEvent(self, event):
-        self.removeItem(self.boxItem)
