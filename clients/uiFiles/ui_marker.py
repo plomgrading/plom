@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../qtCreatorFiles/ui_marker.ui'
+# Form implementation generated from reading ui file '../../qtCreatorFiles/ui_marker.ui'
 #
 # Created by: PyQt5 UI code generator 5.10.1
 #
@@ -145,10 +145,6 @@ class Ui_MarkerWindow(object):
         self.paperBox.setObjectName("paperBox")
         self.gridLayout_6 = QtWidgets.QGridLayout(self.paperBox)
         self.gridLayout_6.setObjectName("gridLayout_6")
-        self.pageImage = QtWidgets.QLabel(self.paperBox)
-        self.pageImage.setText("")
-        self.pageImage.setObjectName("pageImage")
-        self.gridLayout_6.addWidget(self.pageImage, 0, 1, 1, 1)
         self.gridLayout_4.addWidget(self.paperBox, 0, 0, 1, 1)
         self.gridLayout_3.addWidget(self.widget_2, 0, 1, 1, 1)
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()

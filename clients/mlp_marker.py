@@ -2,6 +2,7 @@ import os
 from shutil import copyfile
 import tempfile
 
+from examviewwindow import ExamViewWindow
 from mlp_annotator import Annotator
 from mlp_useful import ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
@@ -196,6 +197,9 @@ class MarkerClient(QWidget):
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
 
+        self.testImg = ExamViewWindow()
+        self.ui.gridLayout_6.addWidget(self.testImg, 0, 0)
+
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
@@ -246,14 +250,9 @@ class MarkerClient(QWidget):
 
     def updateImage(self, r=0):
         if self.exM.data(self.exM.index(r,1)) in ['marked', 'flipped']:
-            testpix = QPixmap(self.exM.getAnnotatedFile(r))
+            self.testImg.updateImage(self.exM.getAnnotatedFile(r))
         else:
-            testpix = QPixmap(self.exM.getOriginalFile(r))
-
-        if testpix.width()<testpix.height():
-            self.ui.pageImage.setPixmap(testpix.scaledToHeight(800, mode=Qt.SmoothTransformation))
-        else:
-            self.ui.pageImage.setPixmap(testpix.scaledToWidth(1200, mode=Qt.SmoothTransformation))
+            self.testImg.updateImage(self.exM.getOriginalFile(r))
         self.ui.tableView.setFocus()
 
 
@@ -302,7 +301,7 @@ class MarkerClient(QWidget):
         index = self.ui.tableView.selectedIndexes()
         if len(index)==0:
             return #fixes a crash found by Patrick
-            
+
         if(self.exM.data(index[1]) in ["untouched", "reverted"]):
             return
         msg = SimpleMessage('Do you want to revert to original scan?')
