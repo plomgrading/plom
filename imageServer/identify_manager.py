@@ -149,7 +149,7 @@ class ExamTable(QWidget):
 
     def requestPageImage(self, index):
         rec = self.exM.record( index.row() )
-        self.pgImg.updateImage("../scanAndGroup/readyForGrading/idgroup/{}.png".format(rec.value('tgv')))
+        self.pgImg.updateImage("../scanAndGroup/readyForMarking/idgroup/{}.png".format(rec.value('tgv')))
 
     def computeUserProgress(self):
         ustats = defaultdict(lambda: [0,0])

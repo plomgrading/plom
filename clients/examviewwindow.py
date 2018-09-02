@@ -52,7 +52,6 @@ class ExamView(QGraphicsView):
             self.scale(0.8, 0.8)
         else:
             self.scale(1.25, 1.25)
-        self.scene.mouseReleaseEvent(event)
 
     def resetView(self):
         self.fitInView(self.imageItem, Qt.KeepAspectRatio)
