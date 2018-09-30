@@ -4,6 +4,10 @@ from weasyprint import HTML, CSS
 arg = eval(sys.argv[1])
 
 css = CSS(string='''
+@page {
+  size: Letter; /* Change from the default size of A4 */
+  margin: 2.5cm; /* Set margin on each page */
+}
 body {
     font-family: sans serif;
 }
