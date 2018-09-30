@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../../qtCreatorFiles/ui_marker.ui'
+# Form implementation generated from reading ui file './ui_marker.ui'
 #
 # Created by: PyQt5 UI code generator 5.10.1
 #
@@ -168,7 +168,7 @@ class Ui_MarkerWindow(object):
 
     def retranslateUi(self, MarkerWindow):
         _translate = QtCore.QCoreApplication.translate
-        MarkerWindow.setWindowTitle(_translate("MarkerWindow", "Form"))
+        MarkerWindow.setWindowTitle(_translate("MarkerWindow", "Mark papers"))
         self.closeButton.setText(_translate("MarkerWindow", "&Close"))
         self.userBox.setTitle(_translate("MarkerWindow", "User"))
         self.userLabel.setText(_translate("MarkerWindow", "Username"))
