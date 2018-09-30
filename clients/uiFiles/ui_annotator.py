@@ -120,9 +120,9 @@ class Ui_annotator(object):
 
     def retranslateUi(self, annotator):
         _translate = QtCore.QCoreApplication.translate
-        annotator.setWindowTitle(_translate("annotator", "Form"))
+        annotator.setWindowTitle(_translate("annotator", "Annotate paper"))
         self.cancelButton.setText(_translate("annotator", "Cancel"))
-        self.finishedButton.setText(_translate("annotator", "&Finished"))
+        self.finishedButton.setText(_translate("annotator", "Finished"))
         self.groupBox.setTitle(_translate("annotator", "Tools"))
         self.lineButton.setText(_translate("annotator", "..."))
         self.penButton.setText(_translate("annotator", "..."))
@@ -138,3 +138,4 @@ class Ui_annotator(object):
         self.undoButton.setText(_translate("annotator", "..."))
         self.markBox.setTitle(_translate("annotator", "Enter Mark"))
         self.groupBox_3.setTitle(_translate("annotator", "Comment list"))
+
