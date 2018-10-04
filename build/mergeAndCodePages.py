@@ -27,6 +27,9 @@ for p in range(1, length+1):
 # Fit the QRcodes inside boxes 112x100 or in 92x80 boxes
 pW = exam[0].bound().width
 pH = exam[0].bound().height
+rTC = fitz.Rect(pW//2-50, 10, pW//2+50, 30) #a box for test number
+rDNW = fitz.Rect(10, 10, 110, 40) #leave top-left of pages blank so that marks don't overwrite student work
+
 if smallQR:
     rNW = fitz.Rect(10, 10, 102, 90)
     rNE = fitz.Rect(pW-102, 10, pW-10, 90)
@@ -42,9 +45,13 @@ with tempfile.TemporaryDirectory() as tmpDir:
     nameQR = pyqrcode.create('N.{}'.format(name), error='H')
     nameFile = os.path.join(tmpDir, "name.png")
     dnwFile = os.path.join(tmpDir, "dnw.png")
+    testnumberFile = os.path.join(tmpDir, "testnumber.png")
+
     nameQR.png(nameFile, scale=4)
     os.system("mogrify {} \"{}\" {} {}".format(mogOpA, name, mogOpB, nameFile))
-    os.system("convert -border 1 -bordercolor black -size 112x100 xc:white -strokewidth 2 -stroke black -draw \"line 5,5 107,95\" -draw \"line 5,95 107,5\" {}".format(dnwFile) )
+
+    os.system("convert -size 100x30 xc:grey -bordercolor black -border 1 {}".format(dnwFile))
+    os.system("convert -pointsize 36 -size 200x42 caption:'{}' -trim -gravity Center -extent 200x42 -bordercolor black -border 1 {}".format( str(test).zfill(4), testnumberFile) )
 
     pageQRs = {}
     pageFile = {}
@@ -57,15 +64,16 @@ with tempfile.TemporaryDirectory() as tmpDir:
 
     qrName = fitz.Pixmap(nameFile)
     dnw = fitz.Pixmap(dnwFile)
+    testnumber = fitz.Pixmap(testnumberFile)
+    exam[0].insertImage(rTC, pixmap=testnumber, overlay=True) #put testnumber at centre top of firstpage
     for p in range(length):
         qrPage = fitz.Pixmap(pageFile[p+1])
         if p % 2 == 0:
             exam[p].insertImage(rNE, pixmap=qrPage, overlay=True)
-            exam[p].insertImage(rNW, pixmap=dnw, overlay=True)
+            exam[p].insertImage(rDNW, pixmap=dnw, overlay=True)
             exam[p].insertImage(rSE, pixmap=qrPage, overlay=True)
             exam[p].insertImage(rSW, pixmap=qrName, overlay=True)
         else:
-            exam[p].insertImage(rNE, pixmap=dnw, overlay=True)
             exam[p].insertImage(rNW, pixmap=qrPage, overlay=True)
             exam[p].insertImage(rSW, pixmap=qrPage, overlay=True)
             exam[p].insertImage(rSE, pixmap=qrName, overlay=True)
