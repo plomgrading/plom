@@ -29,7 +29,7 @@ def checkIDed(n):
     global examsIDed
     for row in curID.execute("SELECT * FROM idimage WHERE number = '{}'".format(n)):
         if row[3] != 'Identified':
-            print("Not yet id'd {}".row[1])
+            print("Not yet id'd {}".format(row[1]))
             return False
         else:
             examsIDed[n] = [row[6], row[7]] #store SID and SName
