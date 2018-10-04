@@ -21,7 +21,7 @@ for v in range(1, versions+1):
 
 exam = fitz.open()
 for p in range(1, length+1):
-    # Very annoyingly pymupdf starts pagecounts from 0 rather than 1. So offset things.
+    # Pymupdf starts pagecounts from 0 rather than 1. So offset things.
     exam.insertPDF(V[pageVersions[str(p)]], from_page=p-1, to_page=p-1, start_at=-1)
 
 # Fit the QRcodes inside boxes 112x100 or in 92x80 boxes
@@ -41,8 +41,11 @@ else:
 with tempfile.TemporaryDirectory() as tmpDir:
     nameQR = pyqrcode.create('N.{}'.format(name), error='H')
     nameFile = os.path.join(tmpDir, "name.png")
+    dnwFile = os.path.join(tmpDir, "dnw.png")
     nameQR.png(nameFile, scale=4)
     os.system("mogrify {} \"{}\" {} {}".format(mogOpA, name, mogOpB, nameFile))
+    os.system("convert -border 1 -bordercolor black -size 112x100 xc:white -strokewidth 2 -stroke black -draw \"line 5,5 107,95\" -draw \"line 5,95 107,5\" {}".format(dnwFile) )
+
     pageQRs = {}
     pageFile = {}
     for p in range(1, length+1):
@@ -53,14 +56,17 @@ with tempfile.TemporaryDirectory() as tmpDir:
         os.system("mogrify {} \"{}\" {} {}".format(mogOpA, tpv, mogOpB, pageFile[p]))
 
     qrName = fitz.Pixmap(nameFile)
+    dnw = fitz.Pixmap(dnwFile)
     for p in range(length):
         qrPage = fitz.Pixmap(pageFile[p+1])
         if p % 2 == 0:
-            exam[p].insertImage(rNE, pixmap=qrPage, overlay=False)
+            exam[p].insertImage(rNE, pixmap=qrPage, overlay=True)
+            exam[p].insertImage(rNW, pixmap=dnw, overlay=True)
             exam[p].insertImage(rSE, pixmap=qrPage, overlay=True)
             exam[p].insertImage(rSW, pixmap=qrName, overlay=True)
         else:
-            exam[p].insertImage(rNW, pixmap=qrPage, overlay=False)
+            exam[p].insertImage(rNE, pixmap=dnw, overlay=True)
+            exam[p].insertImage(rNW, pixmap=qrPage, overlay=True)
             exam[p].insertImage(rSW, pixmap=qrPage, overlay=True)
             exam[p].insertImage(rSE, pixmap=qrName, overlay=True)
 
