@@ -149,16 +149,16 @@ class IDClient(QWidget):
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
 
         self.setCompleters()
-        self.ui.idEdit.returnPressed.connect(self.duh)
+        self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nameEdit.returnPressed.connect(self.enterName)
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.nextButton.clicked.connect(self.requestNext)
 
         self.showMaximized()
 
-    def duh(self):
-        self.enterID()
-        self.ui.paperBox.setFocus()
+    # def duh(self):
+        # self.enterID()
+        # self.ui.paperBox.setFocus()
 
     def requestToken(self):
         msg = mlp_messenger.SRMsg(['AUTH', self.userName, self.password])
@@ -247,6 +247,8 @@ class IDClient(QWidget):
         #acknowledge got test  >>>   server.gotTest(self.userName, test, fname)
         msg = mlp_messenger.SRMsg(['iGTP', self.userName, self.token, test, fname])
         self.ui.tableView.resizeColumnsToContents()
+        self.ui.idEdit.setFocus()
+
 
     def identifyStudent(self, index, alreadyIDd=False):
         self.exM.identifyStudent(index, self.ui.idEdit.text(),self.ui.nameEdit.text())
