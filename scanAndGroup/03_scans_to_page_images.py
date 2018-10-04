@@ -21,7 +21,7 @@ def buildDirectories():
 
 def processFileToPng(fname):
     scan, fext = os.path.splitext(fname)
-    commandstring = "gs -dNumRenderingThreads=4 -dNOPAUSE -sDEVICE=png256  -o ./png/" +scan+"-%d.png -r200 "+fname
+    commandstring = "gs -dNumRenderingThreads=4 -dNOPAUSE -sDEVICE=png256  -o ./png/" +scan+"-%.6d.png -r200 "+fname
     os.system(commandstring)
 
 def processScans():
