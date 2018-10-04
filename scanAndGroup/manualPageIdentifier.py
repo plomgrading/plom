@@ -1,3 +1,4 @@
+from collections import defaultdict
 import glob
 import json
 import os
@@ -11,8 +12,8 @@ sys.path.append('..') #this allows us to import from ../resources
 from resources.testspecification import TestSpecification
 
 spec = TestSpecification()
-examsProduced = {};
-examsScanned = {};
+examsProduced = {}
+examsScanned = {}
 
 def readExamsProduced():
     global examsProduced
@@ -79,10 +80,10 @@ class PageView(QGraphicsView):
         if event.button() == Qt.RightButton:
             self.scale(0.8,0.8)
         else:
-            rec = self.scene.boxItem.rect()
-            if rec.height() >= 64 and rec.width() >= 64:
-                self.fitInView(self.scene.boxItem, Qt.KeepAspectRatio)
-        self.scene.mouseReleaseEvent(event)
+            self.scale(1.25,1.25)
+
+        self.centerOn(event.pos())
+        # self.scene.mouseReleaseEvent(event)
 
     def resetView(self):
         self.fitInView(self.imageItem, Qt.KeepAspectRatio)
@@ -101,19 +102,20 @@ class PageScene(QGraphicsScene):
         self.lightBrush = QBrush(QColor(0, 255, 0, 16))
         self.boxItem = QGraphicsRectItem()
 
-    def mousePressEvent(self, event):
-        self.origin_pos = event.scenePos()
-        self.current_pos = self.origin_pos
-        self.boxItem = QGraphicsRectItem(QRectF(self.origin_pos, self.current_pos))
-        self.boxItem.setPen(self.ink); self.boxItem.setBrush(self.lightBrush)
-        self.addItem(self.boxItem)
+    # def mousePressEvent(self, event):
+    #     self.origin_pos = event.scenePos()
+    #     self.current_pos = self.origin_pos
+    #     self.boxItem = QGraphicsRectItem(QRectF(self.origin_pos, self.current_pos))
+    #     self.boxItem.setPen(self.ink); self.boxItem.setBrush(self.lightBrush)
+    #     self.addItem(self.boxItem)
+    #
+    # def mouseMoveEvent(self, event):
+    #     self.current_pos = event.scenePos()
+    #     self.boxItem.setRect(QRectF(self.origin_pos, self.current_pos))
 
-    def mouseMoveEvent(self, event):
-        self.current_pos = event.scenePos()
-        self.boxItem.setRect(QRectF(self.origin_pos, self.current_pos))
-
-    def mouseReleaseEvent(self, event):
-        self.removeItem(self.boxItem)
+    # def mouseReleaseEvent(self, event):
+    #     # self.removeItem(self.boxItem)
+    #     self.parent().centerOn(event.scenePos())
 
 class ImageTable(QTableWidget):
     def __init__(self):
@@ -174,7 +176,14 @@ class ImageTable(QTableWidget):
                 p = self.item(r, 2).text()
                 v = int(self.item(r, 3).text())
                 fname = self.item(r, 0).text()
-                examsScanned[str(int(t))][str(int(p))] = [v, fname]
+                tsi = str(int(t))
+                psi = str(int(p))
+                if tsi not in examsScanned.keys():
+                    examsScanned.update({tsi:{}})
+                if psi not in examsScanned[tsi].keys():
+                    examsScanned[tsi].update({psi:[v,fname]})
+                else:
+                    examsScanned[tsi][psi] = [v, fname]
                 print("Assigning file {} to t{}p{}v{}".format(fname, t,p,v))
                 os.system("cp pageImages/problemImages/{} ./decodedPages/page_{}/version_{}/t{}p{}v{}.png\n".format(fname, str(p).zfill(2), str(v), str(t).zfill(4), str(p).zfill(2), str(v)))
                 os.system("mv pageImages/problemImages/{}* ./pageImages/alreadyProcessed/".format(fname))

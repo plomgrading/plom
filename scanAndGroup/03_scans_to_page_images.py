@@ -43,6 +43,7 @@ def processScans():
         os.system("parallel --bar <commandlist.txt")
         os.system("rm commandlist.txt")
         os.system("mv *.png ../../pageImages")
+        os.chdir("../")
 
 
 counter = 0
