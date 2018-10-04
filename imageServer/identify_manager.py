@@ -117,6 +117,7 @@ class ExamTable(QWidget):
         self.db = QSqlDatabase.addDatabase("QSQLITE")
         self.db.setDatabaseName('../resources/identity.db')
         self.db.setHostName("Andrew")
+        self.db.setConnectOptions("QSQLITE_OPEN_READONLY")
         self.db.open()
         self.initUI();
         self.loadData()

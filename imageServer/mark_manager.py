@@ -230,6 +230,7 @@ class examTable(QWidget):
         self.db = QSqlDatabase.addDatabase("QSQLITE")
         self.db.setDatabaseName('../resources/test_marks.db')
         self.db.setHostName("Andrew")
+        self.db.setConnectOptions("QSQLITE_OPEN_READONLY")
         self.db.open()
         self.initUI();
         self.loadData()
