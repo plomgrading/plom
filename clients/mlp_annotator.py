@@ -36,8 +36,8 @@ class Annotator(QDialog):
     def setView(self):
         self.view = PageView(self, self.imageFile)
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
-        self.showMaximized()
         self.setWindowFlags(self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint)
+        self.showMaximized()
         self.view.fitInView(self.view.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
         self.view.centerOn(0, 0)
 
