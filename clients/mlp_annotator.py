@@ -70,6 +70,13 @@ class Annotator(QDialog):
             elif event.key() == Qt.Key_R or event.key() == Qt.Key_P:
                 self.ui.panButton.animateClick()
 
+            elif event.key() == Qt.Key_Plus:
+                if self.windowState() != Qt.WindowMaximized:
+                    self.setWindowState(Qt.WindowMaximized)
+                else:
+                    self.setWindowState(Qt.WindowNoState)
+                # self.ui.panButton.animateClick()
+
             super(Annotator, self).keyPressEvent(event)
 
     def setMode(self, newMode, newCursor):
