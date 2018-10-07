@@ -51,6 +51,9 @@ class Annotator(QDialog):
                 self.ui.boxButton.animateClick()
             elif event.key() == Qt.Key_F or event.key() == Qt.Key_Semicolon:
                 self.ui.textButton.animateClick()
+            elif event.key() == Qt.Key_G or event.key() == Qt.Key_H:
+                self.commentW.currentItem()
+                self.commentW.CL.handleClick()
 
             elif event.key() == Qt.Key_Z or event.key() == Qt.Key_M:
                 self.ui.undoButton.animateClick()
@@ -60,6 +63,9 @@ class Annotator(QDialog):
                 self.ui.deleteButton.animateClick()
             elif event.key() == Qt.Key_V or event.key() == Qt.Key_Slash:
                 self.ui.moveButton.animateClick()
+            elif event.key() == Qt.Key_B or event.key() == Qt.Key_N:
+                self.commentW.nextItem()
+                self.commentW.CL.handleClick()
 
             elif event.key() == Qt.Key_Q or event.key() == Qt.Key_U:
                 self.ui.redoButton.animateClick()
@@ -69,6 +75,9 @@ class Annotator(QDialog):
                 self.ui.zoomButton.animateClick()
             elif event.key() == Qt.Key_R or event.key() == Qt.Key_P:
                 self.ui.panButton.animateClick()
+            elif event.key() == Qt.Key_T or event.key() == Qt.Key_Y:
+                self.commentW.previousItem()
+                self.commentW.CL.handleClick()
 
             elif event.key() == Qt.Key_Plus:
                 if self.windowState() != Qt.WindowMaximized:

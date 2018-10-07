@@ -109,3 +109,15 @@ class CommentWidget(QWidget):
     def deleteItem(self):
         self.CL.setFocus()
         self.CL.takeItem(self.CL.currentRow())
+
+    def currentItem(self):
+        if self.CL.currentRow() >= 0:
+            self.CL.setCurrentRow(self.CL.currentRow())
+        else:
+            self.CL.setCurrentRow(0)
+
+    def nextItem(self):
+        self.CL.setCurrentRow((self.CL.currentRow()+1) % self.CL.count())
+
+    def previousItem(self):
+        self.CL.setCurrentRow((self.CL.currentRow()-1) % self.CL.count())
