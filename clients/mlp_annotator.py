@@ -3,11 +3,11 @@ import os
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap, QCloseEvent
-from PyQt5.QtWidgets import QDialog, QPushButton, QShortcut, QSizePolicy
+from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton, QShortcut, QSizePolicy
 
 from mlp_markentry import MarkEntry
 from pageview import PageView
-from mlp_useful import CommentWidget
+from mlp_useful import CommentWidget, SimpleMessage
 from uiFiles.ui_annotator import Ui_annotator
 
 class Annotator(QDialog):
@@ -149,5 +149,16 @@ class Annotator(QDialog):
         if type(tmp) == QCloseEvent:
             self.reject()
         else:
+            # if marking total or up, be careful of giving 0-marks
+            if self.score == 0 and self.markEntry.style != 'Down':
+                msg = SimpleMessage('You have given 0 - please confirm')
+                if msg.exec_() == QMessageBox.No:
+                    return
+            # if marking down, be careful of giving max-marks
+            if self.score == self.maxMark  and self.markEntry.style == 'Down':
+                msg = SimpleMessage('You have given {} - please confirm'.format(self.maxMark))
+                if msg.exec_() == QMessageBox.No:
+                    return
+
             self.view.save()
             self.accept()

@@ -18,6 +18,7 @@ class MarkEntry(QStackedWidget):
         self.addWidget(self.pageC)
         self.addWidget(self.pageM)
         self.setupC()
+        self.style = "None"
 
     def setStyle(self, markStyle):
         # if passed a marking style, then set up accordingly.
@@ -65,6 +66,7 @@ class MarkEntry(QStackedWidget):
 
         self.pageM.setLayout(grid)
         self.setCurrentWidget(self.pageM)
+        self.style = "Up"
 
     def setMarkingDown(self):
         self.setMark(self.maxScore)
@@ -81,6 +83,7 @@ class MarkEntry(QStackedWidget):
         self.pageM.setLayout(grid)
         self.setCurrentWidget(self.pageM)
         self.markSetSignal.emit(self.currentScore)
+        self.style = "Down"
 
     def setMarkingTotal(self):
         grid = QGridLayout()
@@ -95,6 +98,7 @@ class MarkEntry(QStackedWidget):
         self.pageM.setLayout(grid)
         self.setCurrentWidget(self.pageM)
         self.markSetSignal.emit(self.currentScore)
+        self.style = "Total"
 
     def setDeltaMark(self):
         self.pdmb.setStyleSheet("")
