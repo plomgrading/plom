@@ -216,7 +216,7 @@ class ArrowItem(QGraphicsPathItem):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsLineItem.itemChange(self, change, value)
+        return QGraphicsPathItem.itemChange(self, change, value)
 
 class CommandPen(QUndoCommand):
     def __init__(self, scene, path):
