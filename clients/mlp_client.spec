@@ -3,7 +3,7 @@
 block_cipher = None
 
 a = Analysis(['mlp_client.py'],
-             pathex=['/Users/andrew/Documents/MLP/clients'],
+             # pathex=['/Users/andrew/Projects/MLP/clients'],
              binaries=[],
              datas=[],
              hiddenimports=[],
