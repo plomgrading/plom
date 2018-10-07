@@ -43,6 +43,17 @@ class Annotator(QDialog):
 
     def keyPressEvent(self, event):
         if not event.key() == Qt.Key_Escape:
+            if event.key() == Qt.Key_Z:
+                self.view.undo()
+            elif event.key() == Qt.Key_X:
+                self.ui.crossButton.animateClick()
+            elif event.key() == Qt.Key_C:
+                self.ui.tickButton.animateClick()
+            elif event.key() == Qt.Key_B:
+                self.ui.boxButton.animateClick()
+            elif event.key() == Qt.Key_T:
+                self.ui.textButton.animateClick()
+
             super(Annotator, self).keyPressEvent(event)
 
     def setMode(self, newMode, newCursor):
