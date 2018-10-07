@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator.ui'
+# Form implementation generated from reading ui file './ui_annotator.ui'
 #
 # Created by: PyQt5 UI code generator 5.10.1
 #
@@ -127,28 +127,28 @@ class Ui_annotator(object):
         self.markBox.setTitle(_translate("annotator", "Enter Mark"))
         self.groupBox_3.setTitle(_translate("annotator", "Comment list"))
         self.groupBox.setTitle(_translate("annotator", "Tools"))
-        self.boxButton.setToolTip(_translate("annotator", "press d"))
+        self.boxButton.setToolTip(_translate("annotator", "press d or l"))
         self.boxButton.setText(_translate("annotator", "..."))
-        self.crossButton.setToolTip(_translate("annotator", "press s"))
+        self.crossButton.setToolTip(_translate("annotator", "press s or k"))
         self.crossButton.setText(_translate("annotator", "..."))
-        self.tickButton.setToolTip(_translate("annotator", "press a"))
+        self.tickButton.setToolTip(_translate("annotator", "press a or j"))
         self.tickButton.setText(_translate("annotator", "..."))
-        self.textButton.setToolTip(_translate("annotator", "press f"))
+        self.textButton.setToolTip(_translate("annotator", "press f or semi-colon"))
         self.textButton.setText(_translate("annotator", "..."))
-        self.redoButton.setToolTip(_translate("annotator", "press q"))
+        self.redoButton.setToolTip(_translate("annotator", "press q or u"))
         self.redoButton.setText(_translate("annotator", "..."))
-        self.penButton.setToolTip(_translate("annotator", "press w"))
+        self.penButton.setToolTip(_translate("annotator", "press w or i"))
         self.penButton.setText(_translate("annotator", "..."))
-        self.zoomButton.setToolTip(_translate("annotator", "press e"))
+        self.zoomButton.setToolTip(_translate("annotator", "press e or o"))
         self.zoomButton.setText(_translate("annotator", "..."))
-        self.panButton.setToolTip(_translate("annotator", "press r"))
+        self.panButton.setToolTip(_translate("annotator", "press r or p"))
         self.panButton.setText(_translate("annotator", "..."))
-        self.moveButton.setToolTip(_translate("annotator", "press v"))
+        self.moveButton.setToolTip(_translate("annotator", "press v or /"))
         self.moveButton.setText(_translate("annotator", "..."))
-        self.deleteButton.setToolTip(_translate("annotator", "press c"))
+        self.deleteButton.setToolTip(_translate("annotator", "press c or period"))
         self.deleteButton.setText(_translate("annotator", "..."))
-        self.lineButton.setToolTip(_translate("annotator", "press x"))
+        self.lineButton.setToolTip(_translate("annotator", "press x or comma"))
         self.lineButton.setText(_translate("annotator", "..."))
-        self.undoButton.setToolTip(_translate("annotator", "press z"))
+        self.undoButton.setToolTip(_translate("annotator", "press z or m"))
         self.undoButton.setText(_translate("annotator", "..."))
 

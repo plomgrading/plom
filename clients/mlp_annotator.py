@@ -43,31 +43,31 @@ class Annotator(QDialog):
 
     def keyPressEvent(self, event):
         if not event.key() == Qt.Key_Escape:
-            if event.key() == Qt.Key_A:
+            if event.key() == Qt.Key_A or event.key() == Qt.Key_J:
                 self.ui.tickButton.animateClick()
-            elif event.key() == Qt.Key_S:
+            elif event.key() == Qt.Key_S or event.key() == Qt.Key_K:
                 self.ui.crossButton.animateClick()
-            elif event.key() == Qt.Key_D:
+            elif event.key() == Qt.Key_D or event.key() == Qt.Key_L:
                 self.ui.boxButton.animateClick()
-            elif event.key() == Qt.Key_F:
+            elif event.key() == Qt.Key_F or event.key() == Qt.Key_Semicolon:
                 self.ui.textButton.animateClick()
 
-            elif event.key() == Qt.Key_Z:
+            elif event.key() == Qt.Key_Z or event.key() == Qt.Key_M:
                 self.ui.undoButton.animateClick()
-            elif event.key() == Qt.Key_X:
+            elif event.key() == Qt.Key_X or event.key() == Qt.Key_Comma:
                 self.ui.lineButton.animateClick()
-            elif event.key() == Qt.Key_C:
+            elif event.key() == Qt.Key_C or event.key() == Qt.Key_Period:
                 self.ui.deleteButton.animateClick()
-            elif event.key() == Qt.Key_V:
+            elif event.key() == Qt.Key_V or event.key() == Qt.Key_Slash:
                 self.ui.moveButton.animateClick()
 
-            elif event.key() == Qt.Key_Q:
+            elif event.key() == Qt.Key_Q or event.key() == Qt.Key_U:
                 self.ui.redoButton.animateClick()
-            elif event.key() == Qt.Key_W:
+            elif event.key() == Qt.Key_W or event.key() == Qt.Key_I:
                 self.ui.penButton.animateClick()
-            elif event.key() == Qt.Key_E:
+            elif event.key() == Qt.Key_E or event.key() == Qt.Key_O:
                 self.ui.zoomButton.animateClick()
-            elif event.key() == Qt.Key_R:
+            elif event.key() == Qt.Key_R or event.key() == Qt.Key_P:
                 self.ui.panButton.animateClick()
 
             super(Annotator, self).keyPressEvent(event)
