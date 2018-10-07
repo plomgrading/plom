@@ -14,12 +14,12 @@ curID = iddb.cursor()
 
 groupImagesMarked=defaultdict(lambda: defaultdict(list))
 examsIDed = {}
+completedTests=defaultdict(lambda: defaultdict(list))
 
 def checkMarked(n):
     global groupImagesMarked
     for row in curMark.execute("SELECT * FROM groupimage WHERE number='{}'".format(n)):
         if row[7] != 'Marked':
-            print("Not yet marked {}".format(row[3]))
             return False
         else:
             groupImagesMarked[n][row[4]] = [row[5], row[10]]
@@ -29,7 +29,6 @@ def checkIDed(n):
     global examsIDed
     for row in curID.execute("SELECT * FROM idimage WHERE number = '{}'".format(n)):
         if row[3] != 'Identified':
-            print("Not yet id'd {}".format(row[1]))
             return False
         else:
             examsIDed[n] = [row[6], row[7]] #store SID and SName
@@ -43,11 +42,15 @@ def readExamsGrouped():
             examsGrouped = json.load(data_file)
 
 def checkExam(n):
-    print("##################\nExam {}".format(n))
+    print("Exam {}".format(n), end="")
     if(checkMarked(n) and checkIDed(n) ):
         print("\tComplete - build front page and reassemble.")
         return(True)
     else:
+        if checkMarked(n):
+            print("\tMarked but not ID'd")
+        if checkIDed(n):
+            print("\tID'd but not marked")
         return(False)
 
 def writeExamsCompleted():
@@ -82,17 +85,47 @@ def writeMarkCSV():
             row['Total']=tot
             testWriter.writerow(row)
 
+def writeExamsIdentified():
+    exid = {}
+    for row in curID.execute("SELECT * FROM idimage"):
+        if row[3] == 'Identified':
+            exid[row[1]] = [row[2], row[6], row[7], row[4]]
+    eg = open("../resources/examsIdentified.json",'w')
+    eg.write(json.dumps(exid, indent=2, sort_keys=True))
+    eg.close()
+
+def writeExamsMarked():
+    exid = {}
+    for row in curID.execute("SELECT * FROM idimage"):
+        if row[3] == 'Identified':
+            exid[row[1]] = [row[2], row[6], row[7], row[4]]
+    eg = open("../resources/examsIdentified.json",'w')
+    eg.write(json.dumps(exid, indent=2, sort_keys=True))
+    eg.close()
+
+def writeExamsMarked():
+    exmarked=defaultdict(lambda: defaultdict(list))
+    for row in curMark.execute("SELECT * FROM groupimage"):
+        if row[7] == 'Marked':
+            exmarked[row[3]][row[4]]=[row[5], row[10], row[8]]
+    eg = open("../resources/groupImagesMarked.json",'w')
+    eg.write( json.dumps(exmarked, indent=2, sort_keys=True))
+    eg.close()
+
 spec = TestSpecification()
 spec.readSpec()
 
 readExamsGrouped()
 
 examsCompleted={}
-for n in sorted(examsGrouped.keys()):
+for n in sorted(examsGrouped.keys(), key=int):
     examsCompleted[int(n)]=checkExam(n)
 
 writeExamsCompleted()
 writeMarkCSV()
+
+writeExamsIdentified()
+writeExamsMarked()
 
 markdb.close()
 iddb.close()
