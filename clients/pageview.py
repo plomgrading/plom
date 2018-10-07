@@ -47,3 +47,9 @@ class PageView(QGraphicsView):
 
     def save(self):
         self.scene.save()
+
+    def zoomIn(self):
+        self.scale(1.25, 1.25)
+
+    def zoomOut(self):
+        self.scale(0.8,0.8)

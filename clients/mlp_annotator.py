@@ -73,6 +73,8 @@ class Annotator(QDialog):
 
             # Then maximize and mark buttons
             Qt.Key_Plus: lambda: self.swapMaxNorm(),
+            Qt.Key_Minus: lambda: self.view.zoomOut(),
+            Qt.Key_Equal: lambda: self.view.zoomIn(),
             Qt.Key_1: lambda: self.keyToChangeMark('m1'),
             Qt.Key_2: lambda: self.keyToChangeMark('m2'),
             Qt.Key_3: lambda: self.keyToChangeMark('m3'),

@@ -56,9 +56,6 @@ class PageScene(QGraphicsScene):
         self.arrowFlag = 0
         self.highlightFlag = 0
 
-        self.zoomInk = QPen(Qt.green, 2)
-        self.zoomBrush = QBrush(QColor(0, 255, 0, 16))
-
         self.originPos = QPointF(0, 0)
         self.currentPos = QPointF(0, 0)
         self.lastPos = QPointF(0, 0)
@@ -255,18 +252,6 @@ class PageScene(QGraphicsScene):
 
     def pan_mouseReleaseEvent(self, event):
         pass
-
-    # def zoom_mousePressEvent(self, event):
-    #     self.originPos = event.scenePos()
-    #     self.currentPos = self.originPos
-    #     self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-    #     self.boxItem.setPen(self.zoomInk)
-    #     self.boxItem.setBrush(self.zoomBrush)
-    #     self.addItem(self.boxItem)
-    #
-    # def zoom_mouseMoveEvent(self, event):
-    #     self.currentPos = event.scenePos()
-    #     self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def zoom_mouseReleaseEvent(self, event):
         if event.button() == Qt.RightButton:
