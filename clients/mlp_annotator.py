@@ -33,6 +33,53 @@ class Annotator(QDialog):
         self.view.scene.scoreBox.changeMax(self.maxMark)
         self.view.scene.scoreBox.changeScore(self.score)
 
+        ## Hot-key presses for various functions.
+        self.keycodes = {
+            # home-row
+            Qt.Key_A: lambda: self.ui.tickButton.animateClick(),
+            Qt.Key_S: lambda: self.ui.crossButton.animateClick(),
+            Qt.Key_D: lambda: self.ui.boxButton.animateClick(),
+            Qt.Key_F: lambda: self.ui.textButton.animateClick(),
+            Qt.Key_G: lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()),
+            # lower-row
+            Qt.Key_Z: lambda: self.ui.undoButton.animateClick(),
+            Qt.Key_X: lambda: self.ui.lineButton.animateClick(),
+            Qt.Key_C: lambda: self.ui.deleteButton.animateClick(),
+            Qt.Key_V: lambda: self.ui.moveButton.animateClick(),
+            Qt.Key_B: lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()),
+            # upper-row
+            Qt.Key_Q: lambda: self.ui.redoButton.animateClick(),
+            Qt.Key_W: lambda: self.ui.penButton.animateClick(),
+            Qt.Key_E: lambda: self.ui.zoomButton.animateClick(),
+            Qt.Key_R: lambda: self.ui.panButton.animateClick(),
+            Qt.Key_T: lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()),
+
+            # and then the same but for the left-handed
+            Qt.Key_J: lambda: self.ui.tickButton.animateClick(),
+            Qt.Key_K: lambda: self.ui.crossButton.animateClick(),
+            Qt.Key_L: lambda: self.ui.boxButton.animateClick(),
+            Qt.Key_Semicolon: lambda: self.ui.textButton.animateClick(),
+            Qt.Key_H: lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()),
+            Qt.Key_M: lambda: self.ui.undoButton.animateClick(),
+            Qt.Key_Comma: lambda: self.ui.lineButton.animateClick(),
+            Qt.Key_Period: lambda: self.ui.deleteButton.animateClick(),
+            Qt.Key_Slash: lambda: self.ui.moveButton.animateClick(),
+            Qt.Key_N: lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()),
+            Qt.Key_U: lambda: self.ui.redoButton.animateClick(),
+            Qt.Key_I: lambda: self.ui.penButton.animateClick(),
+            Qt.Key_O: lambda: self.ui.zoomButton.animateClick(),
+            Qt.Key_P: lambda: self.ui.panButton.animateClick(),
+            Qt.Key_Y: lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()),
+
+            # Then maximize and mark buttons
+            Qt.Key_Plus: lambda: self.swapMaxNorm(),
+            Qt.Key_1: lambda: self.keyToChangeMark('m1'),
+            Qt.Key_2: lambda: self.keyToChangeMark('m2'),
+            Qt.Key_3: lambda: self.keyToChangeMark('m3'),
+            Qt.Key_4: lambda: self.keyToChangeMark('m4'),
+            Qt.Key_5: lambda: self.keyToChangeMark('m5')
+        }
+
     def setView(self):
         self.view = PageView(self, self.imageFile)
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
@@ -41,51 +88,20 @@ class Annotator(QDialog):
         self.view.fitInView(self.view.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
         self.view.centerOn(0, 0)
 
+    def swapMaxNorm(self):
+        if self.windowState() != Qt.WindowMaximized:
+            self.setWindowState(Qt.WindowMaximized)
+        else:
+            self.setWindowState(Qt.WindowNoState)
+
+    def keyToChangeMark(self, buttonName):
+        if self.markEntry.style == 'Up' or self.markEntry.style == 'Down':
+            self.markEntry.markButtons[buttonName].animateClick()
+
     def keyPressEvent(self, event):
-        if not event.key() == Qt.Key_Escape:
-            if event.key() == Qt.Key_A or event.key() == Qt.Key_J:
-                self.ui.tickButton.animateClick()
-            elif event.key() == Qt.Key_S or event.key() == Qt.Key_K:
-                self.ui.crossButton.animateClick()
-            elif event.key() == Qt.Key_D or event.key() == Qt.Key_L:
-                self.ui.boxButton.animateClick()
-            elif event.key() == Qt.Key_F or event.key() == Qt.Key_Semicolon:
-                self.ui.textButton.animateClick()
-            elif event.key() == Qt.Key_G or event.key() == Qt.Key_H:
-                self.commentW.currentItem()
-                self.commentW.CL.handleClick()
+        self.keycodes.get(event.key(), lambda *args: None)()
 
-            elif event.key() == Qt.Key_Z or event.key() == Qt.Key_M:
-                self.ui.undoButton.animateClick()
-            elif event.key() == Qt.Key_X or event.key() == Qt.Key_Comma:
-                self.ui.lineButton.animateClick()
-            elif event.key() == Qt.Key_C or event.key() == Qt.Key_Period:
-                self.ui.deleteButton.animateClick()
-            elif event.key() == Qt.Key_V or event.key() == Qt.Key_Slash:
-                self.ui.moveButton.animateClick()
-            elif event.key() == Qt.Key_B or event.key() == Qt.Key_N:
-                self.commentW.nextItem()
-                self.commentW.CL.handleClick()
-
-            elif event.key() == Qt.Key_Q or event.key() == Qt.Key_U:
-                self.ui.redoButton.animateClick()
-            elif event.key() == Qt.Key_W or event.key() == Qt.Key_I:
-                self.ui.penButton.animateClick()
-            elif event.key() == Qt.Key_E or event.key() == Qt.Key_O:
-                self.ui.zoomButton.animateClick()
-            elif event.key() == Qt.Key_R or event.key() == Qt.Key_P:
-                self.ui.panButton.animateClick()
-            elif event.key() == Qt.Key_T or event.key() == Qt.Key_Y:
-                self.commentW.previousItem()
-                self.commentW.CL.handleClick()
-
-            elif event.key() == Qt.Key_Plus:
-                if self.windowState() != Qt.WindowMaximized:
-                    self.setWindowState(Qt.WindowMaximized)
-                else:
-                    self.setWindowState(Qt.WindowNoState)
-                # self.ui.panButton.animateClick()
-
+        if event.key() != Qt.Key_Escape:
             super(Annotator, self).keyPressEvent(event)
 
     def setMode(self, newMode, newCursor):
