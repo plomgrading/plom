@@ -43,16 +43,32 @@ class Annotator(QDialog):
 
     def keyPressEvent(self, event):
         if not event.key() == Qt.Key_Escape:
-            if event.key() == Qt.Key_Z:
-                self.view.undo()
-            elif event.key() == Qt.Key_X:
-                self.ui.crossButton.animateClick()
-            elif event.key() == Qt.Key_C:
+            if event.key() == Qt.Key_A:
                 self.ui.tickButton.animateClick()
-            elif event.key() == Qt.Key_B:
+            elif event.key() == Qt.Key_S:
+                self.ui.crossButton.animateClick()
+            elif event.key() == Qt.Key_D:
                 self.ui.boxButton.animateClick()
-            elif event.key() == Qt.Key_T:
+            elif event.key() == Qt.Key_F:
                 self.ui.textButton.animateClick()
+
+            elif event.key() == Qt.Key_Z:
+                self.ui.undoButton.animateClick()
+            elif event.key() == Qt.Key_X:
+                self.ui.lineButton.animateClick()
+            elif event.key() == Qt.Key_C:
+                self.ui.deleteButton.animateClick()
+            elif event.key() == Qt.Key_V:
+                self.ui.moveButton.animateClick()
+
+            elif event.key() == Qt.Key_Q:
+                self.ui.redoButton.animateClick()
+            elif event.key() == Qt.Key_W:
+                self.ui.penButton.animateClick()
+            elif event.key() == Qt.Key_E:
+                self.ui.zoomButton.animateClick()
+            elif event.key() == Qt.Key_R:
+                self.ui.panButton.animateClick()
 
             super(Annotator, self).keyPressEvent(event)
 
