@@ -298,6 +298,22 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>tickButton</tabstop>
+  <tabstop>crossButton</tabstop>
+  <tabstop>boxButton</tabstop>
+  <tabstop>textButton</tabstop>
+  <tabstop>undoButton</tabstop>
+  <tabstop>lineButton</tabstop>
+  <tabstop>deleteButton</tabstop>
+  <tabstop>moveButton</tabstop>
+  <tabstop>redoButton</tabstop>
+  <tabstop>penButton</tabstop>
+  <tabstop>zoomButton</tabstop>
+  <tabstop>panButton</tabstop>
+  <tabstop>finishedButton</tabstop>
+  <tabstop>cancelButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

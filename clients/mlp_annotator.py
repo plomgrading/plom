@@ -190,7 +190,7 @@ class Annotator(QDialog):
     def deltaMarkSet(self, dm):
         lookingAhead = self.score+dm
         if lookingAhead < 0 or lookingAhead > self.maxMark:
-            self.ui.panButton.animateClick()
+            self.ui.moveButton.animateClick()
             return
         self.setMode("delta", QCursor(Qt.ArrowCursor))
         self.view.markDelta(dm)
@@ -202,7 +202,7 @@ class Annotator(QDialog):
         self.view.scene.scoreBox.changeScore(self.score)
         lookingAhead = self.score+dm
         if lookingAhead < 0 or lookingAhead > self.maxMark:
-            self.ui.panButton.animateClick()
+            self.ui.moveButton.animateClick()
 
     def closeEvent(self,tmp = "blah"):
         if type(tmp) == QCloseEvent:

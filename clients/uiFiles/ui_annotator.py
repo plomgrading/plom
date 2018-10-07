@@ -118,6 +118,19 @@ class Ui_annotator(object):
 
         self.retranslateUi(annotator)
         QtCore.QMetaObject.connectSlotsByName(annotator)
+        annotator.setTabOrder(self.tickButton, self.crossButton)
+        annotator.setTabOrder(self.crossButton, self.boxButton)
+        annotator.setTabOrder(self.boxButton, self.textButton)
+        annotator.setTabOrder(self.textButton, self.undoButton)
+        annotator.setTabOrder(self.undoButton, self.lineButton)
+        annotator.setTabOrder(self.lineButton, self.deleteButton)
+        annotator.setTabOrder(self.deleteButton, self.moveButton)
+        annotator.setTabOrder(self.moveButton, self.redoButton)
+        annotator.setTabOrder(self.redoButton, self.penButton)
+        annotator.setTabOrder(self.penButton, self.zoomButton)
+        annotator.setTabOrder(self.zoomButton, self.panButton)
+        annotator.setTabOrder(self.panButton, self.finishedButton)
+        annotator.setTabOrder(self.finishedButton, self.cancelButton)
 
     def retranslateUi(self, annotator):
         _translate = QtCore.QCoreApplication.translate

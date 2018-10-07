@@ -222,6 +222,9 @@
            <property name="text">
             <string>&amp;Mark down</string>
            </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
            <attribute name="buttonGroup">
             <string notr="true">markStyleGroup</string>
            </attribute>
@@ -243,7 +246,7 @@
             <string>Choose later</string>
            </property>
            <property name="checked">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
            <attribute name="buttonGroup">
             <string notr="true">markStyleGroup</string>
@@ -254,6 +257,9 @@
           <widget class="QRadioButton" name="markUpRB">
            <property name="text">
             <string>Mark &amp;up</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
            <attribute name="buttonGroup">
             <string notr="true">markStyleGroup</string>
