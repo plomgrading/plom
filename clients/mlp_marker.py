@@ -213,6 +213,9 @@ class MarkerClient(QWidget):
         self.ui.markStyleGroup.setId(self.ui.markUpRB, 2)
         self.ui.markStyleGroup.setId(self.ui.markDownRB, 3)
 
+        self.ui.mouseHandGroup.setId(self.ui.rightMouseRB, 0)
+        self.ui.mouseHandGroup.setId(self.ui.leftMouseRB, 1)
+
         self.requestToken()
         self.getRubric()
         self.ui.scoreLabel.setText(str(self.maxScore))
@@ -314,15 +317,16 @@ class MarkerClient(QWidget):
         timer = QElapsedTimer()
         timer.start()
         self.markStyle = self.ui.markStyleGroup.checkedId()
+        self.mouseHand = self.ui.mouseHandGroup.checkedId()
 
-        annotator = Annotator(fname, self.maxScore, self.markStyle)
+        annotator = Annotator(fname, self.maxScore, self.markStyle, self.mouseHand)
         if annotator.exec_():
             if annotator.score >= 0:
                 return [str(annotator.score), timer.elapsed()//1000] #number of seconds rounded down.
             else:
                 msg = ErrorMessage('You have to give a mark.')
                 msg.exec_()
-                return( self.waitForAnnotator(fname) )
+                return self.waitForAnnotator(fname)
         else:
             msg = ErrorMessage("mark not recorded")
             msg.exec_()

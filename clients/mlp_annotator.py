@@ -8,10 +8,11 @@ from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton, QShortcut, QSizeP
 from mlp_markentry import MarkEntry
 from pageview import PageView
 from mlp_useful import CommentWidget, SimpleMessage
-from uiFiles.ui_annotator import Ui_annotator
+from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
+from uiFiles.ui_annotator_rhm import Ui_annotator_rhm
 
 class Annotator(QDialog):
-    def __init__(self, fname, maxMark, markStyle, parent=None):
+    def __init__(self, fname, maxMark, markStyle, mouseHand, parent=None):
         super(Annotator, self).__init__(parent)
         self.imageFile = fname
         self.maxMark = maxMark
@@ -19,7 +20,12 @@ class Annotator(QDialog):
         self.currentBackground = "border: 2px solid #008888; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00bbbb, stop: 1 #008888); "
         self.previousButton = None
 
-        self.ui = Ui_annotator()
+        # right-hand mouse = 0, left-hand mouse = 1
+        if mouseHand == 0:
+            self.ui = Ui_annotator_rhm()
+        else:
+            self.ui = Ui_annotator_lhm()
+
         self.ui.setupUi(self)
         self.setView()
 
@@ -36,40 +42,42 @@ class Annotator(QDialog):
         ## Hot-key presses for various functions.
         self.keycodes = {
             # home-row
-            Qt.Key_A: lambda: self.ui.tickButton.animateClick(),
-            Qt.Key_S: lambda: self.ui.crossButton.animateClick(),
-            Qt.Key_D: lambda: self.ui.boxButton.animateClick(),
-            Qt.Key_F: lambda: self.ui.textButton.animateClick(),
+            Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
+            Qt.Key_S: lambda: self.ui.undoButton.animateClick(),
+            Qt.Key_D: lambda: self.ui.textButton.animateClick(),
+            Qt.Key_F: lambda: self.ui.tickButton.animateClick(),
             Qt.Key_G: lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()),
             # lower-row
-            Qt.Key_Z: lambda: self.ui.undoButton.animateClick(),
-            Qt.Key_X: lambda: self.ui.lineButton.animateClick(),
-            Qt.Key_C: lambda: self.ui.deleteButton.animateClick(),
-            Qt.Key_V: lambda: self.ui.moveButton.animateClick(),
+            Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
+            Qt.Key_X: lambda: self.ui.deleteButton.animateClick(),
+            Qt.Key_C: lambda: self.ui.lineButton.animateClick(),
+            Qt.Key_V: lambda: self.ui.boxButton.animateClick(),
             Qt.Key_B: lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()),
             # upper-row
-            Qt.Key_Q: lambda: self.ui.redoButton.animateClick(),
-            Qt.Key_W: lambda: self.ui.penButton.animateClick(),
-            Qt.Key_E: lambda: self.ui.zoomButton.animateClick(),
-            Qt.Key_R: lambda: self.ui.panButton.animateClick(),
+            Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
+            Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
+            Qt.Key_E: lambda: self.ui.penButton.animateClick(),
+            Qt.Key_R: lambda: self.ui.crossButton.animateClick(),
             Qt.Key_T: lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()),
 
             # and then the same but for the left-handed
-            Qt.Key_J: lambda: self.ui.tickButton.animateClick(),
-            Qt.Key_K: lambda: self.ui.crossButton.animateClick(),
-            Qt.Key_L: lambda: self.ui.boxButton.animateClick(),
-            Qt.Key_Semicolon: lambda: self.ui.textButton.animateClick(),
             Qt.Key_H: lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()),
-            Qt.Key_M: lambda: self.ui.undoButton.animateClick(),
+            Qt.Key_J: lambda: self.ui.tickButton.animateClick(),
+            Qt.Key_K: lambda: self.ui.textButton.animateClick(),
+            Qt.Key_L: lambda: self.ui.undoButton.animateClick(),
+            Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
+
+            Qt.Key_N: lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()),
+            Qt.Key_M: lambda: self.ui.boxButton.animateClick(),
             Qt.Key_Comma: lambda: self.ui.lineButton.animateClick(),
             Qt.Key_Period: lambda: self.ui.deleteButton.animateClick(),
             Qt.Key_Slash: lambda: self.ui.moveButton.animateClick(),
-            Qt.Key_N: lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()),
-            Qt.Key_U: lambda: self.ui.redoButton.animateClick(),
-            Qt.Key_I: lambda: self.ui.penButton.animateClick(),
-            Qt.Key_O: lambda: self.ui.zoomButton.animateClick(),
-            Qt.Key_P: lambda: self.ui.panButton.animateClick(),
+
             Qt.Key_Y: lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()),
+            Qt.Key_U: lambda: self.ui.crossButton.animateClick(),
+            Qt.Key_I: lambda: self.ui.penButton.animateClick(),
+            Qt.Key_O: lambda: self.ui.redoButton.animateClick(),
+            Qt.Key_P: lambda: self.ui.panButton.animateClick(),
 
             # Then maximize and mark buttons
             Qt.Key_Plus: lambda: self.swapMaxNorm(),
@@ -132,20 +140,23 @@ class Annotator(QDialog):
             base_path = "./icons"
 
         #tweak path for loading the icons for use with pyinstaller one-file.
-        self.setIcon(self.ui.penButton, "&pen", "{}/pen.svg".format(base_path))
-        self.setIcon(self.ui.lineButton, "&line", "{}/line.svg".format(base_path))
-        self.setIcon(self.ui.boxButton, "&box", "{}/rectangle.svg".format(base_path))
-        self.setIcon(self.ui.textButton, "&text", "{}/text.svg".format(base_path))
-        self.setIcon(self.ui.tickButton, "&vtick", "{}/tick.svg".format(base_path))
-        self.setIcon(self.ui.crossButton, "&xcross", "{}/cross.svg".format(base_path))
-        self.setIcon(self.ui.deleteButton, "&delete", "{}/delete.svg".format(base_path))
-        self.setIcon(self.ui.moveButton, "&move", "{}/move.svg".format(base_path))
-        self.setIcon(self.ui.zoomButton, "&zoom", "{}/zoom.svg".format(base_path))
-        self.setIcon(self.ui.panButton, "p&an", "{}/pan.svg".format(base_path))
-        self.setIcon(self.ui.undoButton, "&undo", "{}/undo.svg".format(base_path))
-        self.setIcon(self.ui.redoButton, "&redo", "{}/redo.svg".format(base_path))
-        QShortcut(QKeySequence("Ctrl+Z"), self.view, self.view.undo, context=Qt.WidgetShortcut)
-        QShortcut(QKeySequence("Ctrl+Y"), self.view, self.view.redo, context=Qt.WidgetShortcut)
+        self.setIcon(self.ui.penButton, "pen", "{}/pen.svg".format(base_path))
+        self.setIcon(self.ui.lineButton, "line", "{}/line.svg".format(base_path))
+        self.setIcon(self.ui.boxButton, "box", "{}/rectangle.svg".format(base_path))
+        self.setIcon(self.ui.textButton, "text", "{}/text.svg".format(base_path))
+        self.setIcon(self.ui.tickButton, "tick", "{}/tick.svg".format(base_path))
+        self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
+        self.setIcon(self.ui.deleteButton, "delete", "{}/delete.svg".format(base_path))
+        self.setIcon(self.ui.moveButton, "move", "{}/move.svg".format(base_path))
+        self.setIcon(self.ui.zoomButton, "zoom", "{}/zoom.svg".format(base_path))
+        self.setIcon(self.ui.panButton, "pan", "{}/pan.svg".format(base_path))
+        self.setIcon(self.ui.undoButton, "undo", "{}/undo.svg".format(base_path))
+        self.setIcon(self.ui.redoButton, "redo", "{}/redo.svg".format(base_path))
+        self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
+        self.setIcon(self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path))
+        self.setIcon(self.ui.commentDownButton, "com dn", "{}/comment_down.svg".format(base_path))
+        # QShortcut(QKeySequence("Ctrl+Z"), self.view, self.view.undo, context=Qt.WidgetShortcut)
+        # QShortcut(QKeySequence("Ctrl+Y"), self.view, self.view.redo, context=Qt.WidgetShortcut)
         QShortcut(QKeySequence("Alt+Return"), self.view,(lambda:(self.commentW.saveComments(), self.closeEvent())), context=Qt.WidgetShortcut)
 
     def setIcon(self, tb, txt, iconFile):
@@ -168,6 +179,12 @@ class Annotator(QDialog):
         self.ui.panButton.clicked.connect(lambda: (self.setMode("pan", QCursor(Qt.OpenHandCursor)), self.view.setDragMode(1)))
         self.ui.undoButton.clicked.connect(self.view.undo)
         self.ui.redoButton.clicked.connect(self.view.redo)
+
+        self.ui.commentButton.clicked.connect(lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()))
+        self.ui.commentUpButton.clicked.connect(lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()))
+        self.ui.commentDownButton.clicked.connect(lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()))
+
+
         self.ui.finishedButton.clicked.connect(lambda:(self.commentW.saveComments(), self.closeEvent()))
         self.ui.cancelButton.clicked.connect(self.reject)
 
