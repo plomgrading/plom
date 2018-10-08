@@ -75,11 +75,11 @@ class Annotator(QDialog):
             Qt.Key_Plus: lambda: self.swapMaxNorm(),
             Qt.Key_Minus: lambda: self.view.zoomOut(),
             Qt.Key_Equal: lambda: self.view.zoomIn(),
-            Qt.Key_1: lambda: self.keyToChangeMark('m1'),
-            Qt.Key_2: lambda: self.keyToChangeMark('m2'),
-            Qt.Key_3: lambda: self.keyToChangeMark('m3'),
-            Qt.Key_4: lambda: self.keyToChangeMark('m4'),
-            Qt.Key_5: lambda: self.keyToChangeMark('m5')
+            Qt.Key_1: lambda: self.keyToChangeMark(1),
+            Qt.Key_2: lambda: self.keyToChangeMark(2),
+            Qt.Key_3: lambda: self.keyToChangeMark(3),
+            Qt.Key_4: lambda: self.keyToChangeMark(4),
+            Qt.Key_5: lambda: self.keyToChangeMark(5)
         }
 
     def setView(self):
@@ -96,9 +96,11 @@ class Annotator(QDialog):
         else:
             self.setWindowState(Qt.WindowNoState)
 
-    def keyToChangeMark(self, buttonName):
-        if self.markEntry.style == 'Up' or self.markEntry.style == 'Down':
-            self.markEntry.markButtons[buttonName].animateClick()
+    def keyToChangeMark(self, buttonNumber):
+        if self.markEntry.style == 'Up':
+            self.markEntry.markButtons['p{}'.format(buttonNumber)].animateClick()
+        elif self.markEntry.style == 'Down':
+            self.markEntry.markButtons['m{}'.format(buttonNumber)].animateClick()
 
     def keyPressEvent(self, event):
         self.keycodes.get(event.key(), lambda *args: None)()
