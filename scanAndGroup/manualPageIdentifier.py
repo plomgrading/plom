@@ -81,9 +81,7 @@ class PageView(QGraphicsView):
             self.scale(0.8,0.8)
         else:
             self.scale(1.25,1.25)
-
         self.centerOn(event.pos())
-        # self.scene.mouseReleaseEvent(event)
 
     def resetView(self):
         self.fitInView(self.imageItem, Qt.KeepAspectRatio)
@@ -101,21 +99,6 @@ class PageScene(QGraphicsScene):
         self.ink = QPen(QColor(0, 255, 0), 2)
         self.lightBrush = QBrush(QColor(0, 255, 0, 16))
         self.boxItem = QGraphicsRectItem()
-
-    # def mousePressEvent(self, event):
-    #     self.origin_pos = event.scenePos()
-    #     self.current_pos = self.origin_pos
-    #     self.boxItem = QGraphicsRectItem(QRectF(self.origin_pos, self.current_pos))
-    #     self.boxItem.setPen(self.ink); self.boxItem.setBrush(self.lightBrush)
-    #     self.addItem(self.boxItem)
-    #
-    # def mouseMoveEvent(self, event):
-    #     self.current_pos = event.scenePos()
-    #     self.boxItem.setRect(QRectF(self.origin_pos, self.current_pos))
-
-    # def mouseReleaseEvent(self, event):
-    #     # self.removeItem(self.boxItem)
-    #     self.parent().centerOn(event.scenePos())
 
 class ImageTable(QTableWidget):
     def __init__(self):
@@ -168,6 +151,12 @@ class ImageTable(QTableWidget):
         self.item(r, 3).setText(v)
         self.item(r, 4).setText("Valid")
         self.resizeColumnsToContents()
+
+    def flipCurrent(self):
+        r = self.currentRow();
+        if r is not None:
+            os.system("mogrify -rotate 180 -compress lossless pageImages/problemImages/{}".format(self.item(r,0).text()))
+        return(r)
 
     def saveValid(self):
         for r in range(self.rowCount()):
@@ -287,9 +276,13 @@ class PageIdentifier(QWidget):
         if self.imageT.imageList:
             self.pageImg.updateImage(self.imageT.imageList[0])
 
+        self.flippitB = QPushButton("Flip image")
+        self.flippitB.clicked.connect(self.flipCurrent)
+        grid.addWidget(self.flippitB,5,1)
+
         self.closeB = QPushButton("Save && Close")
         self.closeB.clicked.connect(self.saveValid)
-        grid.addWidget(self.closeB,5,1)
+        grid.addWidget(self.closeB,8,1,2,2)
 
         self.closeB = QPushButton("Close")
         self.closeB.clicked.connect(self.close)
@@ -303,6 +296,11 @@ class PageIdentifier(QWidget):
         self.imageT.saveValid()
         writeExamsScanned()
         self.close()
+
+    def flipCurrent(self):
+        r = self.imageT.flipCurrent()
+        if r is not None:
+            self.pageImg.updateImage(self.imageT.imageList[r])
 
     def identifyIt(self):
         pidd = PageIDDialog()
