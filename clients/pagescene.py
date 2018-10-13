@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt, QLineF, QPointF, QRectF, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, QPixmap, QTransform, QFont
 from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsPathItem, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsRectItem, QGraphicsScene, QUndoStack, QGraphicsItemGroup, QGraphicsTextItem
 
-from tools import CommandArrow, CommandBox, CommandCross, CommandDelete, CommandDelta, CommandHighlight, CommandLine, CommandMoveItem, CommandMoveText, CommandPen, CommandText, CommandTick, TextItem
+from tools import CommandArrow, CommandBox, CommandCross, CommandDelete, CommandDelta, CommandHighlight, CommandLine, CommandMoveItem, CommandMoveText, CommandPen, CommandText, CommandTick, TextItem, CommandWhiteBox
 
 class ScoreBox(QGraphicsTextItem):
     def __init__(self):
@@ -55,6 +55,7 @@ class PageScene(QGraphicsScene):
         self.textLock = False
         self.arrowFlag = 0
         self.highlightFlag = 0
+        self.whiteFlag = 0
 
         self.originPos = QPointF(0, 0)
         self.currentPos = QPointF(0, 0)
@@ -174,6 +175,11 @@ class PageScene(QGraphicsScene):
         self.undoStack.push(command)
 
     def box_mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.whiteFlag = 0
+        else:
+            self.whiteFlag = 1
+
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
         self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
@@ -189,9 +195,12 @@ class PageScene(QGraphicsScene):
             self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def box_mouseReleaseEvent(self, event):
-        # print("Box release ", type(self.boxItem))
         self.removeItem(self.boxItem)
-        command = CommandBox(self, QRectF(self.originPos, self.currentPos))
+        if self.whiteFlag == 0:
+            command = CommandBox(self, QRectF(self.originPos, self.currentPos))
+        else:
+            command = CommandWhiteBox(self, QRectF(self.originPos, self.currentPos))
+        self.whiteFlag = 0
         self.undoStack.push(command)
 
     def pen_mousePressEvent(self, event):

@@ -155,73 +155,17 @@
       <string>Tools</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="0" column="0">
-       <widget class="QToolButton" name="commentUpButton">
+      <item row="1" column="5">
+       <widget class="QToolButton" name="zoomButton">
         <property name="toolTip">
-         <string>press a or j</string>
-        </property>
-        <property name="toolTipDuration">
-         <number>-1</number>
+         <string>press e or o</string>
         </property>
         <property name="text">
          <string>...</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QToolButton" name="crossButton">
-        <property name="toolTip">
-         <string>press s or k</string>
-        </property>
-        <property name="text">
-         <string>...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QToolButton" name="penButton">
-        <property name="toolTip">
-         <string>press w or i</string>
-        </property>
-        <property name="text">
-         <string>...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QToolButton" name="redoButton">
-        <property name="toolTip">
-         <string>press q or u</string>
-        </property>
-        <property name="text">
-         <string>...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="4">
-       <widget class="QToolButton" name="panButton">
-        <property name="toolTip">
-         <string>press r or p</string>
-        </property>
-        <property name="text">
-         <string>...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QToolButton" name="commentButton">
-        <property name="toolTip">
-         <string>press a or j</string>
-        </property>
-        <property name="toolTipDuration">
-         <number>-1</number>
-        </property>
-        <property name="text">
-         <string>...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
+      <item row="1" column="2">
        <widget class="QToolButton" name="tickButton">
         <property name="toolTip">
          <string>press a or j</string>
@@ -234,37 +178,47 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
-       <widget class="QToolButton" name="textButton">
+      <item row="0" column="4">
+       <widget class="QToolButton" name="redoButton">
         <property name="toolTip">
-         <string>press f or semi-colon</string>
+         <string>press q or u</string>
         </property>
         <property name="text">
          <string>...</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="3">
-       <widget class="QToolButton" name="undoButton">
+      <item row="2" column="5">
+       <widget class="QToolButton" name="moveButton">
         <property name="toolTip">
-         <string>press z or m</string>
+         <string>press v or /</string>
         </property>
         <property name="text">
          <string>...</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="4">
-       <widget class="QToolButton" name="zoomButton">
+      <item row="0" column="5">
+       <widget class="QToolButton" name="panButton">
         <property name="toolTip">
-         <string>press e or o</string>
+         <string>press r or p</string>
         </property>
         <property name="text">
          <string>...</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="0" column="2">
+       <widget class="QToolButton" name="crossButton">
+        <property name="toolTip">
+         <string>press s or k</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
        <widget class="QToolButton" name="commentDownButton">
         <property name="toolTip">
          <string>press a or j</string>
@@ -277,27 +231,7 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QToolButton" name="boxButton">
-        <property name="toolTip">
-         <string>press d or l</string>
-        </property>
-        <property name="text">
-         <string>...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QToolButton" name="lineButton">
-        <property name="toolTip">
-         <string>press x or comma</string>
-        </property>
-        <property name="text">
-         <string>...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
+      <item row="2" column="4">
        <widget class="QToolButton" name="deleteButton">
         <property name="toolTip">
          <string>press c or period</string>
@@ -307,10 +241,76 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="4">
-       <widget class="QToolButton" name="moveButton">
+      <item row="1" column="4">
+       <widget class="QToolButton" name="undoButton">
         <property name="toolTip">
-         <string>press v or /</string>
+         <string>press z or m</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QToolButton" name="commentButton">
+        <property name="toolTip">
+         <string>press a or j</string>
+        </property>
+        <property name="toolTipDuration">
+         <number>-1</number>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QToolButton" name="boxButton">
+        <property name="toolTip">
+         <string>press d or l</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QToolButton" name="commentUpButton">
+        <property name="toolTip">
+         <string>press a or j</string>
+        </property>
+        <property name="toolTipDuration">
+         <number>-1</number>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QToolButton" name="penButton">
+        <property name="toolTip">
+         <string>press w or i</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QToolButton" name="textButton">
+        <property name="toolTip">
+         <string>press f or semi-colon</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QToolButton" name="lineButton">
+        <property name="toolTip">
+         <string>press x or comma</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -323,7 +323,6 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>textButton</tabstop>
   <tabstop>finishedButton</tabstop>
   <tabstop>cancelButton</tabstop>
  </tabstops>

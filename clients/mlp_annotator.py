@@ -45,38 +45,38 @@ class Annotator(QDialog):
             # home-row
             Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
             Qt.Key_S: lambda: self.ui.undoButton.animateClick(),
-            Qt.Key_D: lambda: self.ui.textButton.animateClick(),
-            Qt.Key_F: lambda: self.ui.tickButton.animateClick(),
-            Qt.Key_G: lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()),
+            Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
+            Qt.Key_F: lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()),
+            Qt.Key_G: lambda: self.ui.textButton.animateClick(),
             # lower-row
             Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
             Qt.Key_X: lambda: self.ui.deleteButton.animateClick(),
-            Qt.Key_C: lambda: self.ui.lineButton.animateClick(),
-            Qt.Key_V: lambda: self.ui.boxButton.animateClick(),
-            Qt.Key_B: lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()),
+            Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
+            Qt.Key_V: lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()),
+            Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
             # upper-row
             Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
             Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
-            Qt.Key_E: lambda: self.ui.penButton.animateClick(),
-            Qt.Key_R: lambda: self.ui.crossButton.animateClick(),
-            Qt.Key_T: lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()),
+            Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
+            Qt.Key_R: lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()),
+            Qt.Key_T: lambda: self.ui.penButton.animateClick(),
 
             # and then the same but for the left-handed
-            Qt.Key_H: lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()),
-            Qt.Key_J: lambda: self.ui.tickButton.animateClick(),
-            Qt.Key_K: lambda: self.ui.textButton.animateClick(),
+            Qt.Key_H: lambda: self.ui.textButton.animateClick(),
+            Qt.Key_J: lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()),
+            Qt.Key_K: lambda: self.ui.tickButton.animateClick(),
             Qt.Key_L: lambda: self.ui.undoButton.animateClick(),
             Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
 
-            Qt.Key_N: lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()),
-            Qt.Key_M: lambda: self.ui.boxButton.animateClick(),
-            Qt.Key_Comma: lambda: self.ui.lineButton.animateClick(),
+            Qt.Key_N: lambda: self.ui.lineButton.animateClick(),
+            Qt.Key_M: lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()),
+            Qt.Key_Comma: lambda: self.ui.boxButton.animateClick(),
             Qt.Key_Period: lambda: self.ui.deleteButton.animateClick(),
             Qt.Key_Slash: lambda: self.ui.moveButton.animateClick(),
 
-            Qt.Key_Y: lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()),
-            Qt.Key_U: lambda: self.ui.crossButton.animateClick(),
-            Qt.Key_I: lambda: self.ui.penButton.animateClick(),
+            Qt.Key_Y: lambda: self.ui.penButton.animateClick(),
+            Qt.Key_U: lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()),
+            Qt.Key_I: lambda: self.ui.crossButton.animateClick(),
             Qt.Key_O: lambda: self.ui.redoButton.animateClick(),
             Qt.Key_P: lambda: self.ui.panButton.animateClick(),
 
@@ -98,7 +98,15 @@ class Annotator(QDialog):
         }
 
     def keyPopUp(self):
-        keylist = {'a':'Zoom', 's':'Undo', 'd':'Text', 'f':'Tick/Cross', 'g':'Current Comment', 'z':'Move', 'x':'Delete', 'c':'Line/Arrow', 'v':'Box', 'b':'Next Comment', 'q':'Pan', 'w':'Redo', 'e':'Pen/Highlighter', 'r':'Cross/Tick', 't':'Previous Comment', '+':'Maximize Window', '\\':'Maximize Window', '-':'Zoom Out', '=':'Zoom In', '`':'Set Mark 0', '0': 'Set Mark 0', '1': 'Set Mark 1', '2': 'Set Mark 2', '3': 'Set Mark 3', '4': 'Set Mark 4', '5': 'Set Mark 5', '?':'Key Help',';':'Zoom', 'l':'Undo', 'k':'Text', 'j':'Tick/Cross', 'h':'Current Comment', '/':'Move', '.':'Delete', ',':'Line/Arrow', 'm':'Box', 'n':'Next Comment', 'p':'Pan', 'o':'Redo', 'i':'Pen/Highlighter', 'u':'Cross/Tick', 'y':'Previous Comment'}
+        keylist = {'a': 'Zoom', 's': 'Undo', 'd': 'Tick/Cross', 'f': 'Current Comment', 'g': 'Text',
+                   'z': 'Move', 'x': 'Delete', 'c': 'Box', 'v': 'Next Comment', 'b': 'Line/Arrow', 'q': 'Pan',  'w': 'Redo',  'e': 'Cross/Tick', 'r': 'Previous Comment', 't': 'Pen/Highlighter',
+                   '+': 'Maximize Window', '\\': 'Maximize Window', '-': 'Zoom Out', '=': 'Zoom In',
+                   '`': 'Set Mark 0', '0': 'Set Mark 0', '1': 'Set Mark 1', '2': 'Set Mark 2',
+                   '3': 'Set Mark 3', '4': 'Set Mark 4', '5': 'Set Mark 5',
+                    ';': 'Zoom', 'l': 'Undo', 'k': 'Tick/Cross', 'j': 'Current Comment', 'h': 'Text',
+                    '/': 'Move', '.': 'Delete', ',':'Box', 'm':'Next Comment', 'n':'Line/Arrow',
+                    'p': 'Pan', 'o': 'Redo', 'i': 'Cross/Tick', 'u': 'Previous Comment', 'y': 'Pen/Highlighter',
+                    '?': 'Key Help'}
 
         kp = QDialog()
         grid = QGridLayout()

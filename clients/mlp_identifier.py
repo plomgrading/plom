@@ -156,10 +156,6 @@ class IDClient(QWidget):
 
         self.showMaximized()
 
-    # def duh(self):
-        # self.enterID()
-        # self.ui.paperBox.setFocus()
-
     def requestToken(self):
         msg = mlp_messenger.SRMsg(['AUTH', self.userName, self.password])
         if msg[0] == 'ERR':
@@ -309,7 +305,7 @@ class IDClient(QWidget):
                 self.ui.nameEdit.setText("Unknown")
 
         if self.identifyStudent(index, alreadyIDd):
-            if alreadyIDd == False and self.unidCount == 0:
+            if alreadyIDd is False and self.unidCount == 0:
                 self.requestNext()
             else:
                 self.moveToNextUnID()

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './ui_annotator_righthandmouse.ui'
+# Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator_righthandmouse.ui'
 #
 # Created by: PyQt5 UI code generator 5.10.1
 #
@@ -82,9 +82,6 @@ class Ui_annotator_rhm(object):
         self.commentUpButton.setToolTipDuration(-1)
         self.commentUpButton.setObjectName("commentUpButton")
         self.gridLayout_3.addWidget(self.commentUpButton, 0, 5, 1, 1)
-        self.textButton = QtWidgets.QToolButton(self.groupBox)
-        self.textButton.setObjectName("textButton")
-        self.gridLayout_3.addWidget(self.textButton, 1, 3, 1, 1)
         self.tickButton = QtWidgets.QToolButton(self.groupBox)
         self.tickButton.setToolTipDuration(-1)
         self.tickButton.setObjectName("tickButton")
@@ -106,12 +103,6 @@ class Ui_annotator_rhm(object):
         self.deleteButton = QtWidgets.QToolButton(self.groupBox)
         self.deleteButton.setObjectName("deleteButton")
         self.gridLayout_3.addWidget(self.deleteButton, 2, 2, 1, 1)
-        self.lineButton = QtWidgets.QToolButton(self.groupBox)
-        self.lineButton.setObjectName("lineButton")
-        self.gridLayout_3.addWidget(self.lineButton, 2, 3, 1, 1)
-        self.penButton = QtWidgets.QToolButton(self.groupBox)
-        self.penButton.setObjectName("penButton")
-        self.gridLayout_3.addWidget(self.penButton, 0, 3, 1, 1)
         self.undoButton = QtWidgets.QToolButton(self.groupBox)
         self.undoButton.setObjectName("undoButton")
         self.gridLayout_3.addWidget(self.undoButton, 1, 2, 1, 1)
@@ -124,11 +115,19 @@ class Ui_annotator_rhm(object):
         self.moveButton = QtWidgets.QToolButton(self.groupBox)
         self.moveButton.setObjectName("moveButton")
         self.gridLayout_3.addWidget(self.moveButton, 2, 1, 1, 1)
+        self.penButton = QtWidgets.QToolButton(self.groupBox)
+        self.penButton.setObjectName("penButton")
+        self.gridLayout_3.addWidget(self.penButton, 0, 6, 1, 1)
+        self.textButton = QtWidgets.QToolButton(self.groupBox)
+        self.textButton.setObjectName("textButton")
+        self.gridLayout_3.addWidget(self.textButton, 1, 6, 1, 1)
+        self.lineButton = QtWidgets.QToolButton(self.groupBox)
+        self.lineButton.setObjectName("lineButton")
+        self.gridLayout_3.addWidget(self.lineButton, 2, 6, 1, 1)
         self.gridLayout.addWidget(self.groupBox, 0, 0, 1, 1)
 
         self.retranslateUi(annotator_rhm)
         QtCore.QMetaObject.connectSlotsByName(annotator_rhm)
-        annotator_rhm.setTabOrder(self.textButton, self.finishedButton)
         annotator_rhm.setTabOrder(self.finishedButton, self.cancelButton)
 
     def retranslateUi(self, annotator_rhm):
@@ -143,8 +142,6 @@ class Ui_annotator_rhm(object):
         self.crossButton.setText(_translate("annotator_rhm", "..."))
         self.commentUpButton.setToolTip(_translate("annotator_rhm", "press a or j"))
         self.commentUpButton.setText(_translate("annotator_rhm", "..."))
-        self.textButton.setToolTip(_translate("annotator_rhm", "press f or semi-colon"))
-        self.textButton.setText(_translate("annotator_rhm", "..."))
         self.tickButton.setToolTip(_translate("annotator_rhm", "press a or j"))
         self.tickButton.setText(_translate("annotator_rhm", "..."))
         self.commentButton.setToolTip(_translate("annotator_rhm", "press a or j"))
@@ -157,10 +154,6 @@ class Ui_annotator_rhm(object):
         self.zoomButton.setText(_translate("annotator_rhm", "..."))
         self.deleteButton.setToolTip(_translate("annotator_rhm", "press c or period"))
         self.deleteButton.setText(_translate("annotator_rhm", "..."))
-        self.lineButton.setToolTip(_translate("annotator_rhm", "press x or comma"))
-        self.lineButton.setText(_translate("annotator_rhm", "..."))
-        self.penButton.setToolTip(_translate("annotator_rhm", "press w or i"))
-        self.penButton.setText(_translate("annotator_rhm", "..."))
         self.undoButton.setToolTip(_translate("annotator_rhm", "press z or m"))
         self.undoButton.setText(_translate("annotator_rhm", "..."))
         self.panButton.setToolTip(_translate("annotator_rhm", "press r or p"))
@@ -169,4 +162,10 @@ class Ui_annotator_rhm(object):
         self.redoButton.setText(_translate("annotator_rhm", "..."))
         self.moveButton.setToolTip(_translate("annotator_rhm", "press v or /"))
         self.moveButton.setText(_translate("annotator_rhm", "..."))
+        self.penButton.setToolTip(_translate("annotator_rhm", "press w or i"))
+        self.penButton.setText(_translate("annotator_rhm", "..."))
+        self.textButton.setToolTip(_translate("annotator_rhm", "press f or semi-colon"))
+        self.textButton.setText(_translate("annotator_rhm", "..."))
+        self.lineButton.setToolTip(_translate("annotator_rhm", "press x or comma"))
+        self.lineButton.setText(_translate("annotator_rhm", "..."))
 

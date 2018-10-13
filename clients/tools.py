@@ -97,7 +97,7 @@ class CrossItem(QGraphicsPathItem):
         self.path.moveTo(pt.x()-12, pt.y()+12)
         self.path.lineTo(pt.x()+12, pt.y()-12)
         self.setPath(self.path)
-        self.setPen(QPen(Qt.red, 2))
+        self.setPen(QPen(Qt.red, 3))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
@@ -129,7 +129,7 @@ class TickItem(QGraphicsPathItem):
         self.path.lineTo(pt.x(), pt.y())
         self.path.lineTo(pt.x()+20, pt.y()-20)
         self.setPath(self.path)
-        self.setPen(QPen(Qt.red, 2))
+        self.setPen(QPen(Qt.red, 3))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
@@ -294,6 +294,35 @@ class BoxItem(QGraphicsRectItem):
         self.setRect(self.rect)
         self.setPen(QPen(Qt.red, 2))
         self.setBrush(QBrush(QColor(255, 255, 0, 16)))
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def itemChange(self,change,value):
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            command = CommandMoveItem(self, value)
+            self.scene().undoStack.push(command)
+        return QGraphicsRectItem.itemChange(self, change, value)
+
+class CommandWhiteBox(QUndoCommand):
+    def __init__(self, scene, rect):
+        super(CommandWhiteBox, self).__init__()
+        self.scene = scene
+        self.rect = rect
+        self.whiteBoxItem = WhiteBoxItem(self.rect)
+
+    def redo(self):
+        self.scene.addItem(self.whiteBoxItem)
+
+    def undo(self):
+        self.scene.removeItem(self.whiteBoxItem)
+
+class WhiteBoxItem(QGraphicsRectItem):
+    def __init__(self, rect):
+        super(WhiteBoxItem, self).__init__()
+        self.rect=rect
+        self.setRect(self.rect)
+        self.setPen(QPen(Qt.red, 2))
+        self.setBrush(QBrush(QColor(255, 255, 255)))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
