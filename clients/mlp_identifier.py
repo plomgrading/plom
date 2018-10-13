@@ -205,6 +205,9 @@ class IDClient(QWidget):
         self.ui.idEdit.setCompleter(self.sidcompleter)
         self.ui.nameEdit.setCompleter(self.snamecompleter)
 
+        self.ui.idEdit.textChanged.connect(self.sidcompleter.setCompletionPrefix)
+        self.ui.nameEdit.textChanged.connect(self.snamecompleter.setCompletionPrefix)
+
     def shutDown(self):
         self.DNF()
         msg = mlp_messenger.SRMsg(['UCL', self.userName, self.token])
@@ -250,7 +253,7 @@ class IDClient(QWidget):
         self.exM.identifyStudent(index, self.ui.idEdit.text(),self.ui.nameEdit.text())
         code = self.exM.data(index[0])
         if alreadyIDd:
-            msg = mlp_messenger.SRMsg(['iRAD', self.userName, self.token, code, self.ui.idEdit.text(), self.nameEdit.text()])
+            msg = mlp_messenger.SRMsg(['iRAD', self.userName, self.token, code, self.ui.idEdit.text(), self.ui.nameEdit.text()])
         else:
             msg = mlp_messenger.SRMsg(['iRID', self.userName, self.token, code, self.ui.idEdit.text(), self.ui.nameEdit.text()])
         if msg[0] == 'ERR':
