@@ -136,7 +136,7 @@ class Ui_annotator_lhm(object):
         annotator_lhm.setWindowTitle(_translate("annotator_lhm", "Annotate paper"))
         self.markBox.setTitle(_translate("annotator_lhm", "Enter Mark"))
         self.groupBox_3.setTitle(_translate("annotator_lhm", "Comment list"))
-        self.cancelButton.setText(_translate("annotator_lhm", "Cancel"))
+        self.cancelButton.setText(_translate("annotator_lhm", "&Cancel"))
         self.finishedButton.setText(_translate("annotator_lhm", "Finished"))
         self.groupBox.setTitle(_translate("annotator_lhm", "Tools"))
         self.commentUpButton.setToolTip(_translate("annotator_lhm", "press a or j"))

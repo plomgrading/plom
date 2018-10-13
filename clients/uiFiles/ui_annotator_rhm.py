@@ -135,7 +135,7 @@ class Ui_annotator_rhm(object):
         _translate = QtCore.QCoreApplication.translate
         annotator_rhm.setWindowTitle(_translate("annotator_rhm", "Annotate paper"))
         self.markBox.setTitle(_translate("annotator_rhm", "Enter Mark"))
-        self.cancelButton.setText(_translate("annotator_rhm", "Cancel"))
+        self.cancelButton.setText(_translate("annotator_rhm", "&Cancel"))
         self.finishedButton.setText(_translate("annotator_rhm", "Finished"))
         self.groupBox_3.setTitle(_translate("annotator_rhm", "Comment list"))
         self.groupBox.setTitle(_translate("annotator_rhm", "Tools"))
