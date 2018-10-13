@@ -219,7 +219,7 @@ class MarkerClient(QWidget):
         self.requestToken()
         self.getRubric()
         self.ui.scoreLabel.setText(str(self.maxScore))
-
+        self.requestNext()
 
     def requestToken(self):
         msg = mlp_messenger.SRMsg(['AUTH', self.userName, self.password])

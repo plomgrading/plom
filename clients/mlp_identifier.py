@@ -155,6 +155,7 @@ class IDClient(QWidget):
         self.ui.nextButton.clicked.connect(self.requestNext)
 
         self.showMaximized()
+        self.requestNext()
 
     def requestToken(self):
         msg = mlp_messenger.SRMsg(['AUTH', self.userName, self.password])
