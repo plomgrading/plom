@@ -258,10 +258,12 @@ class IDClient(QWidget):
             msg = mlp_messenger.SRMsg(['iRID', self.userName, self.token, code, self.ui.idEdit.text(), self.ui.nameEdit.text()])
         if msg[0] == 'ERR':
             self.exM.revertStudent(index)
-            self.ui.idEdit.setText("")
-            self.ui.nameEdit.setText("")
+            self.ui.idEdit.clear()
+            self.ui.nameEdit.clear()
             return False
         else:
+            self.ui.idEdit.clear()
+            self.ui.nameEdit.clear()
             self.unidCount -= 1
             return True
 
