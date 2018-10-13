@@ -3,7 +3,7 @@ import os
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap, QCloseEvent
-from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton, QShortcut, QSizePolicy
+from PyQt5.QtWidgets import QAbstractItemView, QDialog, QMessageBox, QPushButton, QShortcut, QSizePolicy, QTableWidget, QTableWidgetItem, QGridLayout
 
 from mlp_markentry import MarkEntry
 from pageview import PageView
@@ -38,6 +38,7 @@ class Annotator(QDialog):
         self.setMarkEntry(markStyle)
         self.view.scene.scoreBox.changeMax(self.maxMark)
         self.view.scene.scoreBox.changeScore(self.score)
+        self.showMaximized()
 
         ## Hot-key presses for various functions.
         self.keycodes = {
@@ -81,20 +82,50 @@ class Annotator(QDialog):
 
             # Then maximize and mark buttons
             Qt.Key_Plus: lambda: self.swapMaxNorm(),
+            Qt.Key_Backslash: lambda: self.swapMaxNorm(),
             Qt.Key_Minus: lambda: self.view.zoomOut(),
             Qt.Key_Equal: lambda: self.view.zoomIn(),
+            Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
+            Qt.Key_0: lambda: self.keyToChangeMark(0),
             Qt.Key_1: lambda: self.keyToChangeMark(1),
             Qt.Key_2: lambda: self.keyToChangeMark(2),
             Qt.Key_3: lambda: self.keyToChangeMark(3),
             Qt.Key_4: lambda: self.keyToChangeMark(4),
-            Qt.Key_5: lambda: self.keyToChangeMark(5)
+            Qt.Key_5: lambda: self.keyToChangeMark(5),
+
+            # Then list keys
+            Qt.Key_Question: lambda: self.keyPopUp()
         }
+
+    def keyPopUp(self):
+        keylist = {'a':'Zoom', 's':'Undo', 'd':'Text', 'f':'Tick/Cross', 'g':'Current Comment', 'z':'Move', 'x':'Delete', 'c':'Line/Arrow', 'v':'Box', 'b':'Next Comment', 'q':'Pan', 'w':'Redo', 'e':'Pen/Highlighter', 'r':'Cross/Tick', 't':'Previous Comment', '+':'Maximize Window', '\\':'Maximize Window', '-':'Zoom Out', '=':'Zoom In', '`':'Set Mark 0', '0': 'Set Mark 0', '1': 'Set Mark 1', '2': 'Set Mark 2', '3': 'Set Mark 3', '4': 'Set Mark 4', '5': 'Set Mark 5', '?':'Key Help',';':'Zoom', 'l':'Undo', 'k':'Text', 'j':'Tick/Cross', 'h':'Current Comment', '/':'Move', '.':'Delete', ',':'Line/Arrow', 'm':'Box', 'n':'Next Comment', 'p':'Pan', 'o':'Redo', 'i':'Pen/Highlighter', 'u':'Cross/Tick', 'y':'Previous Comment'}
+
+        kp = QDialog()
+        grid = QGridLayout()
+        kt = QTableWidget()
+        kt.setColumnCount(2)
+        kt.setSortingEnabled(True)
+        for a in keylist.keys():
+            r = kt.rowCount()
+            kt.setRowCount(r+1)
+            kt.setItem(r,0,QTableWidgetItem(a))
+            kt.setItem(r,1,QTableWidgetItem("{}".format(keylist[a])))
+
+        kt.setHorizontalHeaderLabels(['key','function'])
+        kt.verticalHeader().hide()
+        kt.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        cb = QPushButton("&close")
+        cb.clicked.connect(kp.accept)
+        grid.addWidget(kt,1,1,3,3)
+        grid.addWidget(cb,4,3)
+        kp.setLayout(grid)
+        kp.exec_()
 
     def setView(self):
         self.view = PageView(self, self.imageFile)
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
         self.setWindowFlags(self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint)
-        self.showMaximized()
         self.view.fitInView(self.view.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
         self.view.centerOn(0, 0)
 
@@ -107,7 +138,7 @@ class Annotator(QDialog):
     def keyToChangeMark(self, buttonNumber):
         if self.markEntry.style == 'Up':
             self.markEntry.markButtons['p{}'.format(buttonNumber)].animateClick()
-        elif self.markEntry.style == 'Down':
+        elif self.markEntry.style == 'Down' and buttonNumber>0:
             self.markEntry.markButtons['m{}'.format(buttonNumber)].animateClick()
 
     def keyPressEvent(self, event):
@@ -183,7 +214,6 @@ class Annotator(QDialog):
         self.ui.commentButton.clicked.connect(lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()))
         self.ui.commentUpButton.clicked.connect(lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()))
         self.ui.commentDownButton.clicked.connect(lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()))
-
 
         self.ui.finishedButton.clicked.connect(lambda:(self.commentW.saveComments(), self.closeEvent()))
         self.ui.cancelButton.clicked.connect(self.reject)
