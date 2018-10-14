@@ -3,7 +3,7 @@ from mlp_useful import ErrorMessage, SimpleMessage
 import tempfile
 import os
 
-from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QStringListModel, QVariant
+from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QStringListModel, QTimer, QVariant
 from PyQt5.QtWidgets import QCompleter, QDialog, QInputDialog, QMessageBox, QWidget
 
 import csv
@@ -206,8 +206,8 @@ class IDClient(QWidget):
         self.ui.idEdit.setCompleter(self.sidcompleter)
         self.ui.nameEdit.setCompleter(self.snamecompleter)
 
-        self.ui.idEdit.textChanged.connect(self.sidcompleter.setCompletionPrefix)
-        self.ui.nameEdit.textChanged.connect(self.snamecompleter.setCompletionPrefix)
+        self.ui.idEdit.setClearButtonEnabled(True)
+        self.ui.nameEdit.setClearButtonEnabled(True)
 
     def shutDown(self):
         self.DNF()
@@ -259,12 +259,13 @@ class IDClient(QWidget):
             msg = mlp_messenger.SRMsg(['iRID', self.userName, self.token, code, self.ui.idEdit.text(), self.ui.nameEdit.text()])
         if msg[0] == 'ERR':
             self.exM.revertStudent(index)
-            self.ui.idEdit.clear()
-            self.ui.nameEdit.clear()
+            QTimer.singleShot(0, self.ui.idEdit.clear)
+            QTimer.singleShot(0, self.ui.nameEdit.clear)
             return False
         else:
-            self.ui.idEdit.clear()
-            self.ui.nameEdit.clear()
+            QTimer.singleShot(0, self.ui.idEdit.clear)
+            QTimer.singleShot(0, self.ui.nameEdit.clear)
+
             self.unidCount -= 1
             return True
 
