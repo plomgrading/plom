@@ -89,9 +89,9 @@ def validateQRsAgainstProduction():
 
 def addCurrentScansToExamsScanned():
     os.chdir("./pageImages")
-    copyme = ""
-    moveme = ""
     for t in examsScannedNow.keys():
+        copyme = ""
+        moveme = ""
         ts = str(t) #for json keys
         if ts not in examsScanned:
             examsScanned[ts] = {}
@@ -109,8 +109,8 @@ def addCurrentScansToExamsScanned():
                 copyme += "cp {:s} ../decodedPages/page_{:s}/version_{:s}/t{:s}p{:s}v{:s}.png\n".format(fn, str(p).zfill(2),  str(v), str(t).zfill(4), str(p).zfill(2), str(v))
             moveme += "mv {:s}* ./alreadyProcessed\n".format(fn)
 
-    os.system(copyme)
-    os.system(moveme)
+        os.system(copyme)
+        os.system(moveme)
     os.chdir("../")
 
 examsProduced = {}
