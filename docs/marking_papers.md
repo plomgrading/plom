@@ -71,6 +71,7 @@
 * Perhaps the easiest way to assign marks is to use either the *mark up* or *mark down* methods.
 * In mark-up you can assign 0,+1,+2,+3,+4 or +5 marks. Clicking on the appropriate button or pressing 0,1,2,3,4 or 5 (and also the single-quote key to get 0), and then left-clicking on the page will stamp that onto the page (with a little box around it).
 * In mark-down you assign -1,-2,-3,-4 or -5 marks. Again the button or pressing 1,2,3,4 or 5 and then left-clicking on the page stamps the page.
+* To all the left-handers out there - sorry I am not sure which keys I should assign these to. I am very happy to get feedback and I'll get it into the system.
 * In both cases the mark (stamped in the top-left of the page) is updated. These also work correctly with the undo/redo and delete tools.
 * In mark-total, the user simply clicks the appropriate button for the total-mark and the mark is updated accordingly.
 
