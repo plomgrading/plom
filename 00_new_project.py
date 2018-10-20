@@ -23,7 +23,7 @@ files += ['clients/mlp_client.py', 'clients/mlp_marker.py', 'clients/mlp_identif
 
 files += ['clients/uiFiles/ui_annotator_lhm.py', 'clients/uiFiles/ui_annotator_rhm.py', 'clients/uiFiles/ui_chooser.py', 'clients/uiFiles/ui_identify.py', 'clients/uiFiles/ui_marker.py']
 
-files += ['clients/icons/cross.svg', 'clients/icons/pan.svg', 'clients/icons/text.svg', 'clients/icons/delete.svg', 'clients/icons/pen.svg', 'clients/icons/tick.svg', 'clients/icons/line.svg', 'clients/icons/rectangle.svg', 'clients/icons/undo.svg', 'clients/icons/move.svg', 'clients/icons/redo.svg', 'clients/icons/zoom.svg']
+files += ['clients/icons/comment.svg', 'clients/icons/comment_up.svg ', 'clients/icons/comment_down.svg ', 'clients/icons/cross.svg', 'clients/icons/pan.svg', 'clients/icons/text.svg', 'clients/icons/delete.svg', 'clients/icons/pen.svg', 'clients/icons/tick.svg', 'clients/icons/line.svg', 'clients/icons/rectangle.svg', 'clients/icons/undo.svg', 'clients/icons/move.svg', 'clients/icons/redo.svg', 'clients/icons/zoom.svg']
 
 files += [
 'finishing/07_check_completed.py', 'finishing/coverPageBuilder.py', 'finishing/08_build_cover_pages.py', 'finishing/testReassembler.py', 'finishing/09_reassemble.py', 'finishing/testspecification.py', '10_reassembled_ided_but_unmarked.py', 'testReassembler_only_ided.py'
