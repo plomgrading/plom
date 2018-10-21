@@ -139,6 +139,43 @@ class TickItem(QGraphicsPathItem):
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
 
+
+class CommandQMark(QUndoCommand):
+    def __init__(self, scene, pt):
+        super(CommandQMark, self).__init__()
+        self.scene = scene
+        self.pt = pt
+        self.pathItem = QMarkItem(self.pt)
+
+    def redo(self):
+        self.scene.addItem(self.pathItem)
+
+    def undo(self):
+        self.scene.removeItem(self.pathItem)
+
+class QMarkItem(QGraphicsTextItem):
+    def __init__(self, pt):
+        super(QMarkItem, self).__init__()
+        self.setDefaultTextColor(Qt.red)
+        self.setPlainText("?")
+        self.font = QFont("Helvetica")
+        self.font.setPointSize(30)
+        self.setFont(self.font)
+        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setPos(pt.x()-15, pt.y()-50)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            command = CommandMoveText(self, value)
+            self.scene().undoStack.push(command)
+        return QGraphicsTextItem.itemChange(self, change, value)
+
+
+
+
+
 class CommandLine(QUndoCommand):
     def __init__(self, scene, pti, ptf):
         super(CommandLine, self).__init__()

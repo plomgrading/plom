@@ -158,7 +158,7 @@
       <item row="0" column="4">
        <widget class="QToolButton" name="crossButton">
         <property name="toolTip">
-         <string>press s or k</string>
+         <string>press e</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -168,7 +168,7 @@
       <item row="0" column="5">
        <widget class="QToolButton" name="commentUpButton">
         <property name="toolTip">
-         <string>press a or j</string>
+         <string>press r</string>
         </property>
         <property name="toolTipDuration">
          <number>-1</number>
@@ -181,7 +181,7 @@
       <item row="1" column="4">
        <widget class="QToolButton" name="tickButton">
         <property name="toolTip">
-         <string>press a or j</string>
+         <string>press d</string>
         </property>
         <property name="toolTipDuration">
          <number>-1</number>
@@ -194,7 +194,7 @@
       <item row="1" column="5">
        <widget class="QToolButton" name="commentButton">
         <property name="toolTip">
-         <string>press a or j</string>
+         <string>press f</string>
         </property>
         <property name="toolTipDuration">
          <number>-1</number>
@@ -207,7 +207,7 @@
       <item row="2" column="4">
        <widget class="QToolButton" name="boxButton">
         <property name="toolTip">
-         <string>press d or l</string>
+         <string>press c</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -217,7 +217,7 @@
       <item row="2" column="5">
        <widget class="QToolButton" name="commentDownButton">
         <property name="toolTip">
-         <string>press a or j</string>
+         <string>press v</string>
         </property>
         <property name="toolTipDuration">
          <number>-1</number>
@@ -230,7 +230,7 @@
       <item row="1" column="1">
        <widget class="QToolButton" name="zoomButton">
         <property name="toolTip">
-         <string>press e or o</string>
+         <string>press a</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -240,7 +240,7 @@
       <item row="2" column="2">
        <widget class="QToolButton" name="deleteButton">
         <property name="toolTip">
-         <string>press c or period</string>
+         <string>press x</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -250,7 +250,7 @@
       <item row="1" column="2">
        <widget class="QToolButton" name="undoButton">
         <property name="toolTip">
-         <string>press z or m</string>
+         <string>press s</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -260,7 +260,7 @@
       <item row="0" column="1">
        <widget class="QToolButton" name="panButton">
         <property name="toolTip">
-         <string>press r or p</string>
+         <string>press q</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -270,7 +270,7 @@
       <item row="0" column="2">
        <widget class="QToolButton" name="redoButton">
         <property name="toolTip">
-         <string>press q or u</string>
+         <string>press w</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -280,7 +280,7 @@
       <item row="2" column="1">
        <widget class="QToolButton" name="moveButton">
         <property name="toolTip">
-         <string>press v or /</string>
+         <string>press z</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -290,7 +290,7 @@
       <item row="0" column="6">
        <widget class="QToolButton" name="penButton">
         <property name="toolTip">
-         <string>press w or i</string>
+         <string>press t</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -300,7 +300,7 @@
       <item row="1" column="6">
        <widget class="QToolButton" name="textButton">
         <property name="toolTip">
-         <string>press f or semi-colon</string>
+         <string>press g</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -310,7 +310,7 @@
       <item row="2" column="6">
        <widget class="QToolButton" name="lineButton">
         <property name="toolTip">
-         <string>press x or comma</string>
+         <string>press b</string>
         </property>
         <property name="text">
          <string>...</string>

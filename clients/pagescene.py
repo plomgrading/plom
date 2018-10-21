@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt, QLineF, QPointF, QRectF, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, QPixmap, QTransform, QFont
 from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsPathItem, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsRectItem, QGraphicsScene, QUndoStack, QGraphicsItemGroup, QGraphicsTextItem
 
-from tools import CommandArrow, CommandBox, CommandCross, CommandDelete, CommandDelta, CommandHighlight, CommandLine, CommandMoveItem, CommandMoveText, CommandPen, CommandText, CommandTick, TextItem, CommandWhiteBox
+from tools import CommandArrow, CommandBox, CommandCross, CommandDelete, CommandDelta, CommandHighlight, CommandLine, CommandMoveItem, CommandMoveText, CommandPen, CommandQMark, CommandText, CommandTick, TextItem, CommandWhiteBox
 
 class ScoreBox(QGraphicsTextItem):
     def __init__(self):
@@ -111,18 +111,22 @@ class PageScene(QGraphicsScene):
 
     def cross_mousePressEvent(self, event):
         pt = event.scenePos()
-        if event.button() == Qt.LeftButton:
-            command = CommandCross(self, pt)
-        else:
+        if event.button() == Qt.RightButton:
             command = CommandTick(self, pt)
+        elif event.button() == Qt.MiddleButton:
+            command = CommandQMark(self, pt)
+        else:
+            command = CommandCross(self, pt)
         self.undoStack.push(command)
 
     def tick_mousePressEvent(self, event):
         pt = event.scenePos()
-        if event.button() == Qt.LeftButton:
-            command = CommandTick(self, pt)
-        else:
+        if event.button() == Qt.RightButton:
             command = CommandCross(self, pt)
+        elif event.button() == Qt.MiddleButton:
+            command = CommandQMark(self, pt)
+        else:
+            command = CommandTick(self, pt)
         self.undoStack.push(command)
 
     def comment_mousePressEvent(self, event):

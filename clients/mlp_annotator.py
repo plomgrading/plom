@@ -98,14 +98,14 @@ class Annotator(QDialog):
         }
 
     def keyPopUp(self):
-        keylist = {'a': 'Zoom', 's': 'Undo', 'd': 'Tick/Cross', 'f': 'Current Comment', 'g': 'Text',
-                   'z': 'Move', 'x': 'Delete', 'c': 'Box/Whitebox', 'v': 'Next Comment', 'b': 'Line/Arrow', 'q': 'Pan',  'w': 'Redo',  'e': 'Cross/Tick', 'r': 'Previous Comment', 't': 'Pen/Highlighter',
+        keylist = {'a': 'Zoom', 's': 'Undo', 'd': 'Tick/QMark/Cross', 'f': 'Current Comment', 'g': 'Text',
+                   'z': 'Move', 'x': 'Delete', 'c': 'Box/Whitebox', 'v': 'Next Comment', 'b': 'Line/Arrow', 'q': 'Pan',  'w': 'Redo',  'e': 'Cross/QMark/Tick', 'r': 'Previous Comment', 't': 'Pen/Highlighter',
                    '+': 'Maximize Window', '\\': 'Maximize Window', '-': 'Zoom Out', '=': 'Zoom In',
                    '`': 'Set Mark 0', '0': 'Set Mark 0', '1': 'Set Mark 1', '2': 'Set Mark 2',
                    '3': 'Set Mark 3', '4': 'Set Mark 4', '5': 'Set Mark 5',
-                    ';': 'Zoom', 'l': 'Undo', 'k': 'Tick/Cross', 'j': 'Current Comment', 'h': 'Text',
+                    ';': 'Zoom', 'l': 'Undo', 'k': 'Tick/QMark/Cross', 'j': 'Current Comment', 'h': 'Text',
                     '/': 'Move', '.': 'Delete', ',': 'Box/Whitebox', 'm':'Next Comment', 'n':'Line/Arrow',
-                    'p': 'Pan', 'o': 'Redo', 'i': 'Cross/Tick', 'u': 'Previous Comment', 'y': 'Pen/Highlighter',
+                    'p': 'Pan', 'o': 'Redo', 'i': 'Cross/QMark/Tick', 'u': 'Previous Comment', 'y': 'Pen/Highlighter',
                     '?': 'Key Help'}
 
         kp = QDialog()
