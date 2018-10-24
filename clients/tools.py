@@ -1,9 +1,9 @@
 import sys
 from math import sqrt
 
-from PyQt5.QtCore import Qt, QLineF, QPointF
+from PyQt5.QtCore import Qt, QLineF, QPointF,  pyqtProperty, QPropertyAnimation, QTimer
 from PyQt5.QtGui import QBrush, QColor, QFont, QPainterPath, QPen, QTextCursor
-from PyQt5.QtWidgets import QGraphicsItem, QGraphicsItemGroup, QGraphicsLineItem, QGraphicsPathItem, QGraphicsRectItem, QGraphicsTextItem, QUndoCommand
+from PyQt5.QtWidgets import QGraphicsItem, QGraphicsItemGroup, QGraphicsLineItem, QGraphicsPathItem, QGraphicsRectItem, QGraphicsObject, QGraphicsTextItem, QUndoCommand
 
 class CommandDelete(QUndoCommand):
     def __init__(self, scene, deleteItem):
@@ -81,31 +81,57 @@ class CommandCross(QUndoCommand):
         self.pathItem = CrossItem(self.pt)
 
     def redo(self):
-        self.scene.addItem(self.pathItem)
+        self.pathItem.flash_redo()
+        self.scene.addItem(self.pathItem.pi)
 
     def undo(self):
-        self.scene.removeItem(self.pathItem)
+        self.pathItem.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.pathItem.pi))
 
 
-class CrossItem(QGraphicsPathItem):
+class CrossItem(QGraphicsObject):
     def __init__(self, pt):
         super(CrossItem, self).__init__()
+        self.pi = QGraphicsPathItem()
         self.pt = pt
         self.path = QPainterPath()
         self.path.moveTo(pt.x()-12, pt.y()-12)
         self.path.lineTo(pt.x()+12, pt.y()+12)
         self.path.moveTo(pt.x()-12, pt.y()+12)
         self.path.lineTo(pt.x()+12, pt.y()-12)
-        self.setPath(self.path)
-        self.setPen(QPen(Qt.red, 3))
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.pi.setPath(self.path)
+        self.pi.setPen(QPen(Qt.red, 3))
+        self.pi.setFlag(QGraphicsItem.ItemIsMovable)
+        self.pi.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.anim = QPropertyAnimation(self, b"thickness")
+        self.anim.setDuration(500)
 
-    def itemChange(self,change,value):
+    def itemChange(self,change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsPathItem.itemChange(self,change,value)
+        return QGraphicsPathItem.itemChange(self, change, value)
+
+    def flash_undo(self):
+        self.anim.setStartValue(3)
+        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        self.anim.setStartValue(3)
+        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setEndValue(3)
+        self.anim.start()
+
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.pi.pen().width()
+
+    @thickness.setter
+    def thickness(self, value):
+        self.pi.setPen(QPen(Qt.red,value))
+
 
 class CommandTick(QUndoCommand):
     def __init__(self, scene, pt):
@@ -115,23 +141,28 @@ class CommandTick(QUndoCommand):
         self.pathItem = TickItem(self.pt)
 
     def redo(self):
-        self.scene.addItem(self.pathItem)
+        self.pathItem.flash_redo()
+        self.scene.addItem(self.pathItem.pi)
 
     def undo(self):
-        self.scene.removeItem(self.pathItem)
+        self.pathItem.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.pathItem.pi))
 
-class TickItem(QGraphicsPathItem):
+class TickItem(QGraphicsObject):
     def __init__(self, pt):
         super(TickItem, self).__init__()
+        self.pi = QGraphicsPathItem()
         self.pt = pt
         self.path = QPainterPath()
         self.path.moveTo(pt.x()-10, pt.y()-10)
         self.path.lineTo(pt.x(), pt.y())
         self.path.lineTo(pt.x()+20, pt.y()-20)
-        self.setPath(self.path)
-        self.setPen(QPen(Qt.red, 3))
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.pi.setPath(self.path)
+        self.pi.setPen(QPen(Qt.red, 3))
+        self.pi.setFlag(QGraphicsItem.ItemIsMovable)
+        self.pi.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.anim = QPropertyAnimation(self, b"thickness")
+        self.anim.setDuration(500)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
@@ -139,41 +170,88 @@ class TickItem(QGraphicsPathItem):
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
 
+    def flash_undo(self):
+        self.anim.setStartValue(3)
+        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        self.anim.setStartValue(3)
+        self.anim.setKeyValueAt(0.5,8)
+        self.anim.setEndValue(3)
+        self.anim.start()
+
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.pi.pen().width()
+
+    @thickness.setter
+    def thickness(self, value):
+        self.pi.setPen(QPen(Qt.red,value))
 
 class CommandQMark(QUndoCommand):
     def __init__(self, scene, pt):
         super(CommandQMark, self).__init__()
         self.scene = scene
         self.pt = pt
-        self.pathItem = QMarkItem(self.pt)
+        self.qm = QMarkItem(self.pt)
 
     def redo(self):
-        self.scene.addItem(self.pathItem)
+        self.qm.flash_redo()
+        self.scene.addItem(self.qm.pi)
 
     def undo(self):
-        self.scene.removeItem(self.pathItem)
+        self.qm.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.qm.pi))
 
-class QMarkItem(QGraphicsTextItem):
+class QMarkItem(QGraphicsObject):
     def __init__(self, pt):
         super(QMarkItem, self).__init__()
-        self.setDefaultTextColor(Qt.red)
-        self.setPlainText("?")
-        self.font = QFont("Helvetica")
-        self.font.setPointSize(30)
-        self.setFont(self.font)
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-        self.setPos(pt.x()-15, pt.y()-50)
+        self.pi = QGraphicsPathItem()
+        self.pt = pt
+        self.path = QPainterPath()
+        self.path.moveTo(pt.x()-6, pt.y()-20)
+        self.path.quadTo(pt.x()-6, pt.y()-25, pt.x(), pt.y()-25)
+        self.path.quadTo(pt.x()+6, pt.y()-25, pt.x()+6, pt.y()-20)
+        self.path.cubicTo(pt.x()+6, pt.y()-11, pt.x(), pt.y()-17, pt.x(), pt.y()-8)
+
+        self.path.moveTo(pt.x(), pt.y()+2)
+        self.path.lineTo(pt.x(), pt.y())
+
+        self.pi.setPath(self.path)
+        self.pi.setPen(QPen(Qt.red, 3))
+        self.pi.setFlag(QGraphicsItem.ItemIsMovable)
+        self.pi.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+        self.anim = QPropertyAnimation(self, b"thickness")
+        self.anim.setDuration(500)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
-            command = CommandMoveText(self, value)
+            command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsTextItem.itemChange(self, change, value)
+        return QGraphicsPathItem.itemChange(self, change, value)
 
+    def flash_undo(self):
+        self.anim.setStartValue(3)
+        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setEndValue(0)
+        self.anim.start()
 
+    def flash_redo(self):
+        self.anim.setStartValue(3)
+        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setEndValue(3)
+        self.anim.start()
 
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.pi.pen().width()
+
+    @thickness.setter
+    def thickness(self, value):
+        self.pi.setPen(QPen(Qt.red, value))
 
 
 class CommandLine(QUndoCommand):
