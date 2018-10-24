@@ -531,6 +531,8 @@ class DeltaItem(QGraphicsTextItem):
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.setPos(pt)
         self.anim = QPropertyAnimation(self, b"thickness")
+        cr = self.boundingRect()
+        self.moveBy( -(cr.right()+cr.left())/2, -(cr.top()+cr.bottom())/2 )
 
     def paint(self, painter, option, widget):
         # paint the background
