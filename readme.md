@@ -114,6 +114,7 @@ System to generate tests from a small number of similar source versions
 * This stage of the code requires more polishing, but does work.
 
 * Run the 07 script to check which tests have been completely graded and identified.
+  * It also outputs "testMarks.csv" for processing in a spreadsheet, and eventually uploading to Canvas.
 
 * The 08 script then builds coverpages for those tests which include the student's information, their scores on the various page-groups, and which version of each pagegroup they did. These coverpages are placed in the "frontPages" subdirectory
 
