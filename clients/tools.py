@@ -104,7 +104,6 @@ class CrossItem(QGraphicsObject):
         self.pi.setFlag(QGraphicsItem.ItemIsMovable)
         self.pi.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.anim = QPropertyAnimation(self, b"thickness")
-        self.anim.setDuration(500)
 
     def itemChange(self,change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
@@ -113,14 +112,16 @@ class CrossItem(QGraphicsObject):
         return QGraphicsPathItem.itemChange(self, change, value)
 
     def flash_undo(self):
+        self.anim.setDuration(500)
         self.anim.setStartValue(3)
         self.anim.setKeyValueAt(0.5, 8)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
+        self.anim.setDuration(250)
         self.anim.setStartValue(3)
-        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setKeyValueAt(0.5, 6)
         self.anim.setEndValue(3)
         self.anim.start()
 
@@ -154,15 +155,14 @@ class TickItem(QGraphicsObject):
         self.pi = QGraphicsPathItem()
         self.pt = pt
         self.path = QPainterPath()
-        self.path.moveTo(pt.x()-10, pt.y()-10)
-        self.path.lineTo(pt.x(), pt.y())
-        self.path.lineTo(pt.x()+20, pt.y()-20)
+        self.path.moveTo(pt.x()-10, pt.y())
+        self.path.lineTo(pt.x(), pt.y()+10)
+        self.path.lineTo(pt.x()+20, pt.y()-10)
         self.pi.setPath(self.path)
         self.pi.setPen(QPen(Qt.red, 3))
         self.pi.setFlag(QGraphicsItem.ItemIsMovable)
         self.pi.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.anim = QPropertyAnimation(self, b"thickness")
-        self.anim.setDuration(500)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
@@ -171,14 +171,16 @@ class TickItem(QGraphicsObject):
         return QGraphicsPathItem.itemChange(self, change, value)
 
     def flash_undo(self):
+        self.anim.setDuration(500)
         self.anim.setStartValue(3)
         self.anim.setKeyValueAt(0.5, 8)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
+        self.anim.setDuration(250)
         self.anim.setStartValue(3)
-        self.anim.setKeyValueAt(0.5,8)
+        self.anim.setKeyValueAt(0.5,6)
         self.anim.setEndValue(3)
         self.anim.start()
 
@@ -211,13 +213,13 @@ class QMarkItem(QGraphicsObject):
         self.pi = QGraphicsPathItem()
         self.pt = pt
         self.path = QPainterPath()
-        self.path.moveTo(pt.x()-6, pt.y()-20)
-        self.path.quadTo(pt.x()-6, pt.y()-25, pt.x(), pt.y()-25)
-        self.path.quadTo(pt.x()+6, pt.y()-25, pt.x()+6, pt.y()-20)
-        self.path.cubicTo(pt.x()+6, pt.y()-11, pt.x(), pt.y()-17, pt.x(), pt.y()-8)
+        self.path.moveTo(pt.x()-6, pt.y()-10)
+        self.path.quadTo(pt.x()-6, pt.y()-15, pt.x(), pt.y()-15)
+        self.path.quadTo(pt.x()+6, pt.y()-15, pt.x()+6, pt.y()-10)
+        self.path.cubicTo(pt.x()+6, pt.y()-1, pt.x(), pt.y()-7, pt.x(), pt.y()+2)
 
-        self.path.moveTo(pt.x(), pt.y()+2)
-        self.path.lineTo(pt.x(), pt.y())
+        self.path.moveTo(pt.x(), pt.y()+12)
+        self.path.lineTo(pt.x(), pt.y()+10)
 
         self.pi.setPath(self.path)
         self.pi.setPen(QPen(Qt.red, 3))
@@ -225,7 +227,6 @@ class QMarkItem(QGraphicsObject):
         self.pi.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
         self.anim = QPropertyAnimation(self, b"thickness")
-        self.anim.setDuration(500)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
@@ -234,14 +235,16 @@ class QMarkItem(QGraphicsObject):
         return QGraphicsPathItem.itemChange(self, change, value)
 
     def flash_undo(self):
+        self.anim.setDuration(500)
         self.anim.setStartValue(3)
         self.anim.setKeyValueAt(0.5, 8)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
+        self.anim.setDuration(250)
         self.anim.setStartValue(3)
-        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setKeyValueAt(0.5, 6)
         self.anim.setEndValue(3)
         self.anim.start()
 
@@ -501,16 +504,19 @@ class CommandDelta(QUndoCommand):
         self.delItem = DeltaItem(pt, self.delta)
 
     def redo(self):
+        self.delItem.flash_redo()
         self.scene.addItem(self.delItem)
         self.scene.markChangedSignal.emit(self.delta)
 
     def undo(self):
-        self.scene.removeItem(self.delItem)
+        self.delItem.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.delItem))
         self.scene.markChangedSignal.emit(-self.delta)
 
 class DeltaItem(QGraphicsTextItem):
     def __init__(self, pt, delta):
         super(DeltaItem, self).__init__()
+        self.thick=2
         self.delta = delta
         self.setDefaultTextColor(Qt.red)
         if self.delta>0:
@@ -524,10 +530,11 @@ class DeltaItem(QGraphicsTextItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.setPos(pt)
+        self.anim = QPropertyAnimation(self, b"thickness")
 
     def paint(self, painter, option, widget):
         # paint the background
-        painter.setPen(QPen(Qt.red, 2))
+        painter.setPen(QPen(Qt.red, self.thick))
         painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
         super(DeltaItem, self).paint(painter, option, widget)
@@ -537,3 +544,26 @@ class DeltaItem(QGraphicsTextItem):
             command = CommandMoveText(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsTextItem.itemChange(self, change, value)
+
+    def flash_undo(self):
+        self.anim.setDuration(500)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        self.anim.setDuration(250)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 4)
+        self.anim.setEndValue(2)
+        self.anim.start()
+
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.thick
+
+    @thickness.setter
+    def thickness(self, value):
+        self.thick=value
+        self.update()
