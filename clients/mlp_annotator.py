@@ -219,6 +219,9 @@ class Annotator(QDialog):
         self.ui.undoButton.clicked.connect(self.view.undo)
         self.ui.redoButton.clicked.connect(self.view.redo)
 
+        self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
+
+
         self.ui.commentButton.clicked.connect(lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()))
         self.ui.commentUpButton.clicked.connect(lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()))
         self.ui.commentDownButton.clicked.connect(lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()))
