@@ -266,26 +266,52 @@ class CommandLine(QUndoCommand):
         self.lineItem = LineItem(self.pti, self.ptf)
 
     def redo(self):
-        self.scene.addItem(self.lineItem)
+        self.lineItem.flash_redo()
+        self.scene.addItem(self.lineItem.li)
 
     def undo(self):
-        self.scene.removeItem(self.lineItem)
+        self.lineItem.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.lineItem.li))
 
-class LineItem(QGraphicsLineItem):
+class LineItem(QGraphicsObject):
     def __init__(self, pti, ptf):
         super(LineItem, self).__init__()
         self.pti = pti
         self.ptf = ptf
-        self.setLine(QLineF(self.pti, self.ptf))
-        self.setPen(QPen(Qt.red, 2))
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.li = QGraphicsLineItem()
+        self.li.setLine(QLineF(self.pti, self.ptf))
+        self.li.setPen(QPen(Qt.red, 2))
+        self.li.setFlag(QGraphicsItem.ItemIsMovable)
+        self.li.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.anim = QPropertyAnimation(self, b"thickness")
 
     def itemChange(self,change,value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsLineItem.itemChange(self, change, value)
+
+    def flash_undo(self):
+        self.anim.setDuration(500)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 6)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        self.anim.setDuration(250)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 4)
+        self.anim.setEndValue(2)
+        self.anim.start()
+
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.li.pen().width()
+
+    @thickness.setter
+    def thickness(self, value):
+        self.li.setPen(QPen(Qt.red, value))
 
 class CommandArrow(QUndoCommand):
     def __init__(self, scene, pti, ptf):
@@ -296,16 +322,20 @@ class CommandArrow(QUndoCommand):
         self.arrowItem = ArrowItem(self.pti, self.ptf)
 
     def redo(self):
-        self.scene.addItem(self.arrowItem)
+        self.arrowItem.flash_redo()
+        self.scene.addItem(self.arrowItem.pi)
 
     def undo(self):
-        self.scene.removeItem(self.arrowItem)
+        self.arrowItem.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.arrowItem.pi))
 
-class ArrowItem(QGraphicsPathItem):
+class ArrowItem(QGraphicsObject):
     def __init__(self, pti, ptf):
         super(ArrowItem, self).__init__()
         self.pti = pti
         self.ptf = ptf
+        self.pi = QGraphicsPathItem()
+
         delta = ptf-pti
         el = sqrt(delta.x()**2 + delta.y()**2)
         ndelta = delta/el
@@ -324,17 +354,42 @@ class ArrowItem(QGraphicsPathItem):
         self.path.lineTo(self.arRight)
         self.path.lineTo(self.ptf)
 
-        self.setPath(self.path)
-        self.setPen(QPen(Qt.red, 2, cap=Qt.RoundCap, join=Qt.RoundJoin))
-        self.setBrush(QBrush(Qt.red))
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.pi.setPath(self.path)
+        self.pi.setPen(QPen(Qt.red, 2, cap=Qt.RoundCap, join=Qt.RoundJoin))
+        self.pi.setBrush(QBrush(Qt.red))
+        self.pi.setFlag(QGraphicsItem.ItemIsMovable)
+        self.pi.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+        self.anim = QPropertyAnimation(self, b"thickness")
 
     def itemChange(self,change,value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
+
+    def flash_undo(self):
+        self.anim.setDuration(500)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 6)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        self.anim.setDuration(250)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 4)
+        self.anim.setEndValue(2)
+        self.anim.start()
+
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.pi.pen().width()
+
+    @thickness.setter
+    def thickness(self, value):
+        self.pi.setPen(QPen(Qt.red, value))
+
 
 class CommandPen(QUndoCommand):
     def __init__(self, scene, path):
@@ -344,25 +399,51 @@ class CommandPen(QUndoCommand):
         self.pathItem = PathItem(self.path)
 
     def redo(self):
-        self.scene.addItem(self.pathItem)
+        self.pathItem.flash_redo()
+        self.scene.addItem(self.pathItem.pi)
 
     def undo(self):
-        self.scene.removeItem(self.pathItem)
+        self.pathItem.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.pathItem.pi))
 
-class PathItem(QGraphicsPathItem):
+class PathItem(QGraphicsObject):
     def __init__(self, path):
         super(PathItem, self).__init__()
+        self.pi = QGraphicsPathItem()
         self.path = path
-        self.setPath(self.path)
-        self.setPen(QPen(Qt.red, 2))
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.pi.setPath(self.path)
+        self.pi.setPen(QPen(Qt.red, 2))
+        self.pi.setFlag(QGraphicsItem.ItemIsMovable)
+        self.pi.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.anim = QPropertyAnimation(self, b"thickness")
 
     def itemChange(self,change,value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
+
+    def flash_undo(self):
+        self.anim.setDuration(500)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 6)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        self.anim.setDuration(250)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 4)
+        self.anim.setEndValue(2)
+        self.anim.start()
+
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.pi.pen().width()
+
+    @thickness.setter
+    def thickness(self, value):
+        self.pi.setPen(QPen(Qt.red, value))
 
 class CommandHighlight(QUndoCommand):
     def __init__(self, scene, path):
@@ -372,25 +453,52 @@ class CommandHighlight(QUndoCommand):
         self.pathItem = HighLightItem(self.path)
 
     def redo(self):
-        self.scene.addItem(self.pathItem)
+        self.pathItem.flash_redo()
+        self.scene.addItem(self.pathItem.pi)
 
     def undo(self):
-        self.scene.removeItem(self.pathItem)
+        self.pathItem.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.pathItem.pi))
 
-class HighLightItem(QGraphicsPathItem):
+class HighLightItem(QGraphicsObject):
     def __init__(self, path):
         super(HighLightItem, self).__init__()
+        self.pi = QGraphicsPathItem()
         self.path = path
-        self.setPath(self.path)
-        self.setPen(QPen(QColor(255, 255, 0, 64), 50))
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.pi.setPath(self.path)
+        self.pi.setPen(QPen(QColor(255, 255, 0, 64), 50))
+        self.pi.setFlag(QGraphicsItem.ItemIsMovable)
+        self.pi.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.anim = QPropertyAnimation(self, b"opacity")
 
     def itemChange(self,change,value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
+
+    def flash_undo(self):
+        self.anim.setDuration(500)
+        self.anim.setStartValue(64)
+        self.anim.setKeyValueAt(0.5, 192)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        self.anim.setDuration(250)
+        self.anim.setStartValue(64)
+        self.anim.setKeyValueAt(0.5, 96)
+        self.anim.setEndValue(64)
+        self.anim.start()
+
+    @pyqtProperty(int)
+    def opacity(self):
+        return self.pi.pen().color().alpha()
+
+    @opacity.setter
+    def opacity(self, value):
+        self.pi.setPen(QPen(QColor(255, 255, 0, value), 50))
+
 
 class CommandBox(QUndoCommand):
     def __init__(self, scene, rect):
@@ -400,26 +508,53 @@ class CommandBox(QUndoCommand):
         self.boxItem = BoxItem(self.rect)
 
     def redo(self):
-        self.scene.addItem(self.boxItem)
+        self.boxItem.flash_redo()
+        self.scene.addItem(self.boxItem.bi)
 
     def undo(self):
-        self.scene.removeItem(self.boxItem)
+        self.boxItem.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.boxItem.bi))
 
-class BoxItem(QGraphicsRectItem):
+class BoxItem(QGraphicsObject):
     def __init__(self, rect):
         super(BoxItem, self).__init__()
+        self.bi = QGraphicsRectItem()
         self.rect=rect
-        self.setRect(self.rect)
-        self.setPen(QPen(Qt.red, 2))
-        self.setBrush(QBrush(QColor(255, 255, 0, 16)))
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.bi.setRect(self.rect)
+        self.bi.setPen(QPen(Qt.red, 2))
+        self.bi.setBrush(QBrush(QColor(255, 255, 0, 16)))
+        self.bi.setFlag(QGraphicsItem.ItemIsMovable)
+        self.bi.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.anim = QPropertyAnimation(self, b"opacity")
 
-    def itemChange(self,change,value):
+    def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsRectItem.itemChange(self, change, value)
+
+    def flash_undo(self):
+        self.anim.setDuration(500)
+        self.anim.setStartValue(16)
+        self.anim.setKeyValueAt(0.5, 192)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        self.anim.setDuration(250)
+        self.anim.setStartValue(16)
+        self.anim.setKeyValueAt(0.5, 64)
+        self.anim.setEndValue(16)
+        self.anim.start()
+
+    @pyqtProperty(int)
+    def opacity(self):
+        return self.bi.brush().color().alpha()
+
+    @opacity.setter
+    def opacity(self, value):
+        self.bi.setBrush(QBrush(QColor(255, 255, 0, value)))
+
 
 class CommandWhiteBox(QUndoCommand):
     def __init__(self, scene, rect):
@@ -429,26 +564,52 @@ class CommandWhiteBox(QUndoCommand):
         self.whiteBoxItem = WhiteBoxItem(self.rect)
 
     def redo(self):
-        self.scene.addItem(self.whiteBoxItem)
+        self.whiteBoxItem.flash_redo()
+        self.scene.addItem(self.whiteBoxItem.bi)
 
     def undo(self):
-        self.scene.removeItem(self.whiteBoxItem)
+        self.whiteBoxItem.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.whiteBoxItem.bi))
 
-class WhiteBoxItem(QGraphicsRectItem):
+class WhiteBoxItem(QGraphicsObject):
     def __init__(self, rect):
         super(WhiteBoxItem, self).__init__()
-        self.rect=rect
-        self.setRect(self.rect)
-        self.setPen(QPen(Qt.red, 2))
-        self.setBrush(QBrush(QColor(255, 255, 255)))
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.bi = QGraphicsRectItem()
+        self.rect = rect
+        self.bi.setRect(self.rect)
+        self.bi.setPen(QPen(Qt.red, 2))
+        self.bi.setBrush(QBrush(QColor(255, 255, 255)))
+        self.bi.setFlag(QGraphicsItem.ItemIsMovable)
+        self.bi.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.anim = QPropertyAnimation(self, b"thickness")
 
     def itemChange(self,change,value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsRectItem.itemChange(self, change, value)
+
+    def flash_undo(self):
+        self.anim.setDuration(500)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        self.anim.setDuration(250)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 6)
+        self.anim.setEndValue(2)
+        self.anim.start()
+
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.bi.pen().width()
+
+    @thickness.setter
+    def thickness(self, value):
+        self.bi.setPen(QPen(Qt.red, value))
 
 
 class CommandText(QUndoCommand):
@@ -458,14 +619,17 @@ class CommandText(QUndoCommand):
         self.blurb = blurb
 
     def redo(self):
+        self.blurb.flash_redo()
         self.scene.addItem(self.blurb)
 
     def undo(self):
-        self.scene.removeItem(self.blurb)
+        self.blurb.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.blurb))
 
 class TextItem(QGraphicsTextItem):
     def __init__(self, parent):
         super(TextItem, self).__init__()
+        self.thick = 0
         self.setDefaultTextColor(Qt.red)
         self.setPlainText("")
         self.font = QFont("Helvetica")
@@ -475,6 +639,7 @@ class TextItem(QGraphicsTextItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.setTextInteractionFlags(Qt.TextEditorInteraction)
+        self.anim = QPropertyAnimation(self, b"thickness")
 
     def mouseDoubleClickEvent(self, event):
         self.setTextInteractionFlags(Qt.TextEditorInteraction)
@@ -490,11 +655,43 @@ class TextItem(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         super(TextItem, self).focusOutEvent(event)
 
+    def paint(self, painter, option, widget):
+        # paint the background
+        if self.thick > 0:
+            painter.setPen(QPen(Qt.red, self.thick))
+            painter.drawRoundedRect(option.rect, 10, 10)
+        # paint the normal TextItem with the default 'paint' method
+        super(TextItem, self).paint(painter, option, widget)
+
     def itemChange(self, change, value):
         if change == QGraphicsTextItem.ItemPositionChange and self.scene():
             command = CommandMoveText(self, value)  #Notice that the value here is the new position, not the delta.
             self.scene().undoStack.push(command)
         return QGraphicsTextItem.itemChange(self, change, value)
+
+    def flash_undo(self):
+        self.anim.setDuration(500)
+        self.anim.setStartValue(0)
+        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        self.anim.setDuration(250)
+        self.anim.setStartValue(0)
+        self.anim.setKeyValueAt(0.5, 4)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.thick
+
+    @thickness.setter
+    def thickness(self, value):
+        self.thick=value
+        self.update()
+
 
 class CommandDelta(QUndoCommand):
     def __init__(self, scene, pt, delta):
@@ -516,10 +713,10 @@ class CommandDelta(QUndoCommand):
 class DeltaItem(QGraphicsTextItem):
     def __init__(self, pt, delta):
         super(DeltaItem, self).__init__()
-        self.thick=2
+        self.thick = 2
         self.delta = delta
         self.setDefaultTextColor(Qt.red)
-        if self.delta>0:
+        if self.delta > 0:
             self.setPlainText(" +{} ".format(self.delta))
         else:
             self.setPlainText(" {} ".format(self.delta))
