@@ -31,26 +31,27 @@ async def handle_messaging(msg):
     rmesg = json.loads(data.decode())
     # message should be a list [cmd, user, arg1, arg2, etc]
     writer.close()
-    return(rmesg)
+    return rmesg
 
 def SRMsg(msg):
     # print("Sending message {}",format(msg))
     rmsg = loop.run_until_complete(handle_messaging(msg))
     if rmsg[0] == 'ACK':
-        return(rmsg)
+        return rmsg
     elif rmsg[0] == 'ERR':
         # print("Some sort of error occurred - didnt get an ACK, instead got ", rmsg)
         msg = ErrorMessage(rmsg[1])
         msg.exec_()
-        return(rmsg)
+        return rmsg
     else:
         msg = ErrorMessage("Something really wrong has happened.")
         self.Close()
+        return rmsg
 
 
 class ErrorMessage(QMessageBox):
     def __init__(self, txt):
-        super(QMessageBox, self).__init__()
+        super(ErrorMessage, self).__init__()
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Ok)
 
@@ -92,7 +93,7 @@ class UserProgress(QDialog):
         self.ptab.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         self.closeB = QPushButton("close")
-        self.closeB.clicked.connect(lambda: self.close())
+        self.closeB.clicked.connect(self.close)
         grid.addWidget(self.closeB, 99, 99)
         self.setLayout(grid)
         self.show()
@@ -111,7 +112,7 @@ class SimpleTableView(QTableView):
         if key == Qt.Key_Return or key == Qt.Key_Enter:
             self.parent().requestPageImage(self.selectedIndexes()[0])
         else:
-            super(QTableView, self).keyPressEvent(event)
+            super(SimpleTableView, self).keyPressEvent(event)
 
 
 class FilterComboBox(QComboBox):
@@ -143,7 +144,7 @@ class ExamTable(QWidget):
         grid.addWidget(self.exV, 0, 0, 4, 7)
 
         self.filterGo = QPushButton("Filter Now")
-        self.filterGo.clicked.connect(lambda: self.filter())
+        self.filterGo.clicked.connect(self.filter)
         grid.addWidget(self.filterGo, 5, 0)
         self.flU = FilterComboBox("Marker")
         grid.addWidget(self.flU, 5, 2)
@@ -151,7 +152,7 @@ class ExamTable(QWidget):
         grid.addWidget(self.flS, 5, 3)
 
         self.uprogB = QPushButton("User progress")
-        self.uprogB.clicked.connect(lambda: self.computeUserProgress())
+        self.uprogB.clicked.connect(self.computeUserProgress)
         grid.addWidget(self.uprogB, 3, 8)
 
         self.pgImg = ExamViewWindow()
@@ -178,7 +179,7 @@ class ExamTable(QWidget):
         lst = set()
         query = QSqlQuery(db=self.db)
         print(query.exec_("select {} from idimage".format(col)))
-        while(query.next()):
+        while query.next():
             lst.add(str(query.value(0)))
         return sorted(list(lst))
 
@@ -219,7 +220,7 @@ class Manager(QWidget):
         grid.addWidget(self.extb, 1, 1, 4, 6)
 
         self.closeB = QPushButton("close")
-        self.closeB.clicked.connect(lambda: self.close())
+        self.closeB.clicked.connect(self.close)
         grid.addWidget(self.closeB, 6, 99)
 
         self.setLayout(grid)
