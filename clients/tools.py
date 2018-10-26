@@ -713,6 +713,14 @@ class TextItem(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         super(TextItem, self).focusOutEvent(event)
 
+    def keyPressEvent(self, event):
+        if event.modifiers() == Qt.ShiftModifier and event.key() == Qt.Key_Return:
+            tc = self.textCursor()
+            tc.clearSelection()
+            self.setTextCursor(tc)
+            self.setTextInteractionFlags(Qt.NoTextInteraction)
+        super(TextItem, self).keyPressEvent(event)
+
     def paint(self, painter, option, widget):
         # paint the background
         if self.thick > 0:
