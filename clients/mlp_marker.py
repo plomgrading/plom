@@ -204,8 +204,8 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.revertButton.clicked.connect(self.revertTest)
-        self.ui.prevButton.clicked.connect(self.moveToPrevTest)
-        self.ui.nextButton.clicked.connect(self.moveToNextTest)
+        # self.ui.prevButton.clicked.connect(self.moveToPrevTest)
+        # self.ui.nextButton.clicked.connect(self.moveToNextTest)
         self.ui.flipButton.clicked.connect(self.flipIt)
 
         self.ui.markStyleGroup.setId(self.ui.markLaterRB, 0)
@@ -270,6 +270,12 @@ class MarkerClient(QWidget):
         # Ack that test received.
         msg = mlp_messenger.SRMsg(['mGTP', self.userName, self.token, tname])
         self.ui.tableView.resizeColumnsToContents()
+        # ask server for id-count update
+        msg = mlp_messenger.SRMsg(['mPRC', self.userName, self.token, self.pageGroup, self.version]) #returns [ACK, #id'd, #total]
+        if msg[0] == 'ACK':
+            self.ui.mProgressBar.setValue(msg[1])
+            self.ui.mProgressBar.setMaximum(msg[2])
+
 
     def moveToNextTest(self):
         if self.exM.rowCount() == 0:

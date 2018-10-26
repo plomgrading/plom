@@ -62,6 +62,18 @@ class IDDatabase:
     self.printOutForIDing()
     self.printIdentified()
 
+  def countAll(self):
+    try:
+        return IDImage.select().count()
+    except IDImage.DoesNotExist:
+        return 0
+
+  def countIdentified(self):
+    try:
+        return IDImage.select().where(IDImage.status == 'Identified').count()
+    except IDImage.DoesNotExist:
+        return 0
+
   def addUnIDdExam(self, t, code):
     logging.info("Adding unid'd IDImage {} to database".format(t))
     try:

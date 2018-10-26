@@ -64,7 +64,7 @@ def getServerInfo():
 
 # # # # # # # # # # # #
 
-servCmd = {'AUTH': 'authoriseUser', 'UCL': 'userClosing', 'iDNF': 'IDdidntFinish', 'iNID': 'IDnextUnIDd', 'iGTP': 'IDgotTest', 'iRID' : 'IDreturnIDd', 'iRAD' : 'IDreturnAlreadyIDd', 'iRCL' : 'IDrequestClassList', 'iGCL' : 'IDgotClassList', 'mDNF': 'MdidntFinish', 'mNUM': 'MnextUnmarked', 'mGTP': 'MgotTest', 'mRMD' : 'MreturnMarked', 'mRAM' : 'MreturnAlreadyMarked', 'mGMX': 'MgetPageGroupMax'}
+servCmd = {'AUTH': 'authoriseUser', 'UCL': 'userClosing', 'iDNF': 'IDdidntFinish', 'iNID': 'IDnextUnIDd', 'iGTP': 'IDgotTest', 'iPRC' : 'IDProgressCount', 'iRID' : 'IDreturnIDd', 'iRAD' : 'IDreturnAlreadyIDd', 'iRCL' : 'IDrequestClassList', 'iGCL' : 'IDgotClassList', 'mDNF': 'MdidntFinish', 'mNUM': 'MnextUnmarked', 'mGTP': 'MgotTest', 'mPRC' : 'MProgressCount', 'mRMD' : 'MreturnMarked', 'mRAM' : 'MreturnAlreadyMarked', 'mGMX': 'MgetPageGroupMax'}
 
 async def handle_messaging(reader, writer):
     data = await reader.read(128)
@@ -259,6 +259,9 @@ class Server(object):
         else:
             return ['ACK', give, self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give))]
 
+    def IDProgressCount(self, user, token):
+        return['ACK', self.IDDB.countIdentified(), self.IDDB.countAll()]
+
     def IDgotTest(self, user, token, test, tfn):
         self.removeFile(tfn)
         return ['ACK']
@@ -279,6 +282,9 @@ class Server(object):
             return ['ACK', give, self.provideFile(fname)]
         else:
             return ['ERR', 'Nothing left on todo pile']
+
+    def MProgressCount(self, user, token, pg, v):
+        return['ACK', self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
     def MgotTest(self, user, token, tfn):
         self.removeFile(tfn)

@@ -248,6 +248,12 @@ class IDClient(QWidget):
         msg = mlp_messenger.SRMsg(['iGTP', self.userName, self.token, test, fname])
         self.ui.tableView.resizeColumnsToContents()
         self.ui.idEdit.setFocus()
+        # ask server for id-count update
+        msg = mlp_messenger.SRMsg(['iPRC', self.userName, self.token]) #returns [ACK, #id'd, #total]
+        if msg[0] == 'ACK':
+            self.ui.idProgressBar.setValue(msg[1])
+            self.ui.idProgressBar.setMaximum(msg[2])
+
 
 
     def identifyStudent(self, index, alreadyIDd=False):

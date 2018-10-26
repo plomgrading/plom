@@ -74,6 +74,18 @@ class MarkDatabase:
     self.printOutForMarking()
     self.printMarked()
 
+  def countAll(self, pg, v):
+    try:
+        return GroupImage.select().where(GroupImage.pageGroup==pg, GroupImage.version==v).count()
+    except GroupImage.DoesNotExist:
+            return 0
+
+  def countMarked(self, pg, v):
+    try:
+        return GroupImage.select().where(GroupImage.pageGroup==pg, GroupImage.version==v, GroupImage.status=='Marked').count()
+    except GroupImage.DoesNotExist:
+        return 0
+
   def addUnmarkedGroupImage(self, t, pg, v, code, fname):
     logging.info("Adding unmarked GroupImage {} at {} to database".format(code, fname))
     try:

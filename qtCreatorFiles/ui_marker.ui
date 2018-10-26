@@ -14,7 +14,7 @@
    <string>Mark papers</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
-   <item row="1" column="0">
+   <item row="2" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <spacer name="horizontalSpacer">
@@ -126,7 +126,7 @@
          <string>Paper list</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
-         <item row="0" column="0" colspan="3">
+         <item row="0" column="0" colspan="2">
           <widget class="SimpleTableView" name="tableView">
            <property name="editTriggers">
             <set>QAbstractItemView::NoEditTriggers</set>
@@ -138,36 +138,6 @@
             <enum>QAbstractItemView::SelectRows</enum>
            </property>
           </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QPushButton" name="nextButton">
-           <property name="text">
-            <string>Next</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QPushButton" name="prevButton">
-           <property name="text">
-            <string>Previous</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <spacer name="horizontalSpacer_3">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::MinimumExpanding</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
          </item>
         </layout>
        </widget>
@@ -304,27 +274,7 @@
      </layout>
     </widget>
    </item>
-   <item row="0" column="1">
-    <widget class="QWidget" name="widget_2" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-       <horstretch>4</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_4">
-      <item row="0" column="0">
-       <widget class="QGroupBox" name="paperBox">
-        <property name="title">
-         <string>Current paper</string>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_6"/>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="1" column="1">
+   <item row="2" column="1">
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <spacer name="horizontalSpacer_2">
@@ -348,6 +298,45 @@
      </item>
     </layout>
    </item>
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Progress</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QProgressBar" name="mProgressBar">
+        <property name="value">
+         <number>1</number>
+        </property>
+        <property name="format">
+         <string>%v of %m</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="0" column="1" rowspan="2">
+    <widget class="QWidget" name="widget_2" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>4</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="0" column="0">
+       <widget class="QGroupBox" name="paperBox">
+        <property name="title">
+         <string>Current paper</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_6"/>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
   </layout>
  </widget>
  <customwidgets>
@@ -362,15 +351,13 @@
   <tabstop>annButton</tabstop>
   <tabstop>revertButton</tabstop>
   <tabstop>tableView</tabstop>
-  <tabstop>prevButton</tabstop>
-  <tabstop>nextButton</tabstop>
   <tabstop>flipButton</tabstop>
   <tabstop>closeButton</tabstop>
  </tabstops>
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="mouseHandGroup"/>
   <buttongroup name="markStyleGroup"/>
+  <buttongroup name="mouseHandGroup"/>
  </buttongroups>
 </ui>
