@@ -1,6 +1,6 @@
-from passlib.hash import pbkdf2_sha256
 from passlib.context import CryptContext
 import uuid
+
 
 class Authority:
     def __init__(self, userList):
@@ -10,7 +10,7 @@ class Authority:
 
     def addUser(self, user, password):
         if user not in self.tokenList:
-            self.userList[user]=password
+            self.userList[user] = password
 
     def checkPassword(self, user, password):
         if user not in self.userList:

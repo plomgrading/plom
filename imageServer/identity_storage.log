@@ -1,40 +1,4 @@
-05/09/2018 04:35:39 PM Initialised 
-05/09/2018 04:35:39 PM Creating database tables
-05/09/2018 04:35:39 PM Initialised 
-05/09/2018 04:35:39 PM Creating database tables
-05/09/2018 04:35:39 PM Adding unid'd IDImage 1 to database
-05/09/2018 04:35:39 PM IDImage 1 t0001idg already exists.
-05/09/2018 04:35:39 PM Adding unid'd IDImage 2 to database
-05/09/2018 04:35:39 PM IDImage 2 t0002idg already exists.
-05/09/2018 04:35:39 PM Adding unid'd IDImage 3 to database
-05/09/2018 04:35:39 PM IDImage 3 t0003idg already exists.
-05/09/2018 04:35:39 PM Adding unid'd IDImage 4 to database
-05/09/2018 04:35:39 PM IDImage 4 t0004idg already exists.
-05/09/2018 04:35:39 PM Adding unid'd IDImage 5 to database
-05/09/2018 04:35:39 PM IDImage 5 t0005idg already exists.
-05/09/2018 04:35:39 PM Adding unid'd IDImage 6 to database
-05/09/2018 04:35:39 PM IDImage 6 t0006idg already exists.
-05/09/2018 04:35:39 PM Adding unmarked GroupImage t0001g01v1 at ../scanAndGroup/readyForGrading//group_01/version_1/t0001g01v1.png to database
-05/09/2018 04:35:39 PM GroupImage 1 t0001g01v1 already exists.
-05/09/2018 04:35:39 PM Adding unmarked GroupImage t0001g02v1 at ../scanAndGroup/readyForGrading//group_02/version_1/t0001g02v1.png to database
-05/09/2018 04:35:39 PM GroupImage 1 t0001g02v1 already exists.
-05/09/2018 04:35:39 PM Adding unmarked GroupImage t0002g01v1 at ../scanAndGroup/readyForGrading//group_01/version_1/t0002g01v1.png to database
-05/09/2018 04:35:39 PM GroupImage 2 t0002g01v1 already exists.
-05/09/2018 04:35:39 PM Adding unmarked GroupImage t0002g02v2 at ../scanAndGroup/readyForGrading//group_02/version_2/t0002g02v2.png to database
-05/09/2018 04:35:39 PM GroupImage 2 t0002g02v2 already exists.
-05/09/2018 04:35:39 PM Adding unmarked GroupImage t0003g01v1 at ../scanAndGroup/readyForGrading//group_01/version_1/t0003g01v1.png to database
-05/09/2018 04:35:39 PM GroupImage 3 t0003g01v1 already exists.
-05/09/2018 04:35:39 PM Adding unmarked GroupImage t0003g02v1 at ../scanAndGroup/readyForGrading//group_02/version_1/t0003g02v1.png to database
-05/09/2018 04:35:39 PM GroupImage 3 t0003g02v1 already exists.
-05/09/2018 04:35:39 PM Adding unmarked GroupImage t0004g01v1 at ../scanAndGroup/readyForGrading//group_01/version_1/t0004g01v1.png to database
-05/09/2018 04:35:39 PM GroupImage 4 t0004g01v1 already exists.
-05/09/2018 04:35:39 PM Adding unmarked GroupImage t0004g02v2 at ../scanAndGroup/readyForGrading//group_02/version_2/t0004g02v2.png to database
-05/09/2018 04:35:39 PM GroupImage 4 t0004g02v2 already exists.
-05/09/2018 04:35:39 PM Adding unmarked GroupImage t0005g01v1 at ../scanAndGroup/readyForGrading//group_01/version_1/t0005g01v1.png to database
-05/09/2018 04:35:39 PM GroupImage 5 t0005g01v1 already exists.
-05/09/2018 04:35:39 PM Adding unmarked GroupImage t0005g02v1 at ../scanAndGroup/readyForGrading//group_02/version_1/t0005g02v1.png to database
-05/09/2018 04:35:39 PM GroupImage 5 t0005g02v1 already exists.
-05/09/2018 04:35:39 PM Adding unmarked GroupImage t0006g01v1 at ../scanAndGroup/readyForGrading//group_01/version_1/t0006g01v1.png to database
-05/09/2018 04:35:39 PM GroupImage 6 t0006g01v1 already exists.
-05/09/2018 04:35:39 PM Adding unmarked GroupImage t0006g02v2 at ../scanAndGroup/readyForGrading//group_02/version_2/t0006g02v2.png to database
-05/09/2018 04:35:39 PM GroupImage 6 t0006g02v2 already exists.
+10/25/2018 08:03:04 PM Initialised 
+10/25/2018 08:03:04 PM Creating database tables
+10/25/2018 08:03:04 PM Initialised 
+10/25/2018 08:03:04 PM Creating database tables

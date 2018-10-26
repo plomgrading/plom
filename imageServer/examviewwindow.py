@@ -1,6 +1,7 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPixmap
-from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QGraphicsView, QGridLayout, QPushButton, QWidget
+from PyQt5.QtGui import QPainter, QPixmap
+from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QPushButton, QWidget
+
 
 class ExamViewWindow(QWidget):
     def __init__(self, fname=None):
@@ -24,6 +25,7 @@ class ExamViewWindow(QWidget):
     def updateImage(self, fname):
         self.view.updateImage(fname)
 
+
 class ExamView(QGraphicsView):
     def __init__(self, fname):
         QGraphicsView.__init__(self)
@@ -35,13 +37,11 @@ class ExamView(QGraphicsView):
         self.imageItem = QGraphicsPixmapItem(self.image)
         self.imageItem.setTransformationMode(Qt.SmoothTransformation)
         self.scene.setSceneRect(0, 0, max(1000, self.image.width()), max(1000, self.image.height()))
-
         self.scene.addItem(self.imageItem)
-
         self.setScene(self.scene)
         self.fitInView(self.imageItem, Qt.KeepAspectRatio)
 
-    def updateImage(self,fname):
+    def updateImage(self, fname):
         self.image = QPixmap(fname)
         self.imageItem.setPixmap(self.image)
         self.scene.setSceneRect(0, 0, self.image.width(), self.image.height())
