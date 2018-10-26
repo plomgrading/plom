@@ -63,7 +63,7 @@
     * You can also edit existing comments by double clicking on them.
     * You can reorder the comments by click-dragging up and down the list.
   * *Pen* - dragging with left mouse-button creates a free-hand red path, while the right mouse-button creates a thick yellow highlight-path.
-  * *Text* - a simple text tool. To exit the text tool you press escape (not return or enter), or double-clicking will start a new text object under your click. You can also go back an edit previous text by clicking on it.
+  * *Text* - a simple text tool. To exit the text tool you press escape or shift-return. Double-clicking will start a new text object under your click. You can also go back an edit previous text by clicking on it.
   * *Line* - dragging with left mouse-button creates a straight-line, while the right mouse-button creates a similar arrow.
 
 ### Assigning marks
