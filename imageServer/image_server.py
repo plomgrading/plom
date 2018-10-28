@@ -15,7 +15,7 @@ from id_storage import *
 from mark_storage import *
 from authenticate import *
 
-sys.path.append('..') # this allows us to import from ../resources
+sys.path.append('..')  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
 
 
@@ -35,6 +35,7 @@ sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 sslContext.load_cert_chain('../resources/mlp-selfsigned.crt', '../resources/mlp.key')
 
+
 # # # # # # # # # # # #
 # These functions need improving - read from the JSON files
 def readExamsGrouped():
@@ -45,12 +46,14 @@ def readExamsGrouped():
             for n in examsGrouped.keys():
                 print("Adding id group {}".format(examsGrouped[n][0]))
 
+
 def findPageGroups():
     global pageGroupsForGrading
     for pg in range(1, spec.getNumberOfGroups()+1):
         for fname in glob.glob("{}/group_{}/*/*.png".format(pathScanDirectory, str(pg).zfill(2))):
             print("Adding pageimage from {}".format(fname))
             pageGroupsForGrading[os.path.basename(fname)[:-4]] = fname
+
 
 def getServerInfo():
     global serverInfo
@@ -64,16 +67,17 @@ def getServerInfo():
 
 # # # # # # # # # # # #
 
-servCmd = {'AUTH': 'authoriseUser', 'UCL': 'userClosing', 'iDNF': 'IDdidntFinish', 'iNID': 'IDnextUnIDd', 'iGTP': 'IDgotTest', 'iPRC' : 'IDProgressCount', 'iRID' : 'IDreturnIDd', 'iRAD' : 'IDreturnAlreadyIDd', 'iRCL' : 'IDrequestClassList', 'iGCL' : 'IDgotClassList', 'mDNF': 'MdidntFinish', 'mNUM': 'MnextUnmarked', 'mGTP': 'MgotTest', 'mPRC' : 'MProgressCount', 'mRMD' : 'MreturnMarked', 'mRAM' : 'MreturnAlreadyMarked', 'mGMX': 'MgetPageGroupMax'}
+servCmd = {'AUTH': 'authoriseUser', 'UCL': 'userClosing', 'iDNF': 'IDdidntFinish', 'iNID': 'IDnextUnIDd', 'iGTP': 'IDgotTest', 'iPRC': 'IDProgressCount', 'iRID': 'IDreturnIDd', 'iRAD': 'IDreturnAlreadyIDd', 'iRCL': 'IDrequestClassList', 'iGCL': 'IDgotClassList', 'mDNF': 'MdidntFinish', 'mNUM': 'MnextUnmarked', 'mGTP': 'MgotTest', 'mPRC': 'MProgressCount', 'mRMD': 'MreturnMarked', 'mRAM': 'MreturnAlreadyMarked', 'mGMX': 'MgetPageGroupMax'}
+
 
 async def handle_messaging(reader, writer):
     data = await reader.read(128)
     terminate = data.endswith(b'\x00')
     data = data.rstrip(b'\x00')
-    message = json.loads(data.decode()) # message should be a list [cmd, user, password, arg1, arg2, etc]
+    message = json.loads(data.decode())  # message should be a list [cmd, user, password, arg1, arg2, etc]
     print("Got message {}".format(message))
 
-    if type(message) != type([1, 2, 3]):
+    if not isinstance(message, list):
         print("Some sort of message error here - didn't receive a list.")
     else:
         rmesg = peon.proc_cmd(message)
@@ -88,10 +92,12 @@ async def handle_messaging(reader, writer):
     await writer.drain()
     writer.close()
 
+
 # # # # # # # # # # # #
 # # # # # # # # # # # #
-def splitTGV(tgv): #t1234p67v9
+def splitTGV(tgv):  # t1234g67v9
     return(int(tgv[1:5]), int(tgv[6:8]), int(tgv[9]))
+
 
 class Server(object):
     def __init__(self, id_db, mark_db, tspec):
@@ -168,7 +174,7 @@ class Server(object):
 
     def authoriseUser(self, user, password):
         if self.authority.authoriseUser(user, password):
-            #On token request also make sure anything "out" with that user is reset as todo.
+            # On token request also make sure anything "out" with that user is reset as todo.
             self.IDDB.resetUsersToDo(user)
             self.MDB.resetUsersToDo(user)
             return ['ACK', self.authority.getToken(user)]
@@ -182,7 +188,7 @@ class Server(object):
             return False
 
     def loadPapers(self):
-        #Needs improvement
+        # Needs improvement
         print("Adding IDgroups {}".format(sorted(examsGrouped.keys())))
         for t in sorted(examsGrouped.keys()):
             self.IDDB.addUnIDdExam(int(t), "t{:s}idg".format(t.zfill(4)))
@@ -229,7 +235,7 @@ class Server(object):
         self.removeFile(tfn)
         return ['ACK']
 
-    def MgetPageGroupMax(self,user, token, pg, v):
+    def MgetPageGroupMax(self, user, token, pg, v):
         iv = int(v)
         ipg = int(pg)
         if ipg < 1 or ipg > self.testSpec.getNumberOfGroups():
@@ -291,7 +297,7 @@ class Server(object):
         return ['ACK']
 
     def MreturnMarked(self, user, token, code, mark, fname, mtime):
-        ## move annoted file to right place with new filename
+        # move annoted file to right place with new filename
         self.MDB.takeGroupImageFromClient(code, user, mark, fname, mtime)
         self.recordMark(user, mark, fname, mtime)
         self.claimFile(fname)
@@ -332,6 +338,7 @@ def checkPorts():
         print("Problem with webdav port {} on server {}. Please check and try again.".format(serverInfo['wport'], serverInfo['server']))
         exit()
 
+
 getServerInfo()
 checkPorts()
 
@@ -351,7 +358,7 @@ findPageGroups()
 
 theIDDB = IDDatabase()
 theMarkDB = MarkDatabase()
-os.system("mkdir -p ./markedPapers") # make sure this directory exists
+os.system("mkdir -p ./markedPapers")  # make sure this directory exists
 peon = Server(theIDDB, theMarkDB, spec)
 
 # # # # # # # # # # # #

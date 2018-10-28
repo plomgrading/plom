@@ -1,5 +1,8 @@
-import os, sys, argparse, tempfile, json
-import asyncio, ssl
+import sys
+import tempfile
+import json
+import asyncio
+import ssl
 from operator import itemgetter
 from collections import defaultdict
 
@@ -11,18 +14,19 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 import seaborn as sns
-sns.set() ## Sets up seaborn defaults for plots.
+sns.set()  # Sets up seaborn defaults for plots.
 
 from examviewwindow import ExamViewWindow
 
 server = 'localhost'
-webdav_port=41985
-message_port=41984
+webdav_port = 41985
+message_port = 41984
 
 # # # # # # # # # # # #
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 # # # # # # # # # # # #
+
 
 async def handle_messaging(msg):
     reader, writer = await asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
@@ -35,9 +39,10 @@ async def handle_messaging(msg):
     data = await reader.read(100)
     terminate = data.endswith(b'\x00')
     data = data.rstrip(b'\x00')
-    rmesg = json.loads(data.decode()) # message should be a list [cmd, user, arg1, arg2, etc]
+    rmesg = json.loads(data.decode())  # message should be a list [cmd, user, arg1, arg2, etc]
     writer.close()
     return rmesg
+
 
 def SRMsg(msg):
     # print("Sending message {}",format(msg))
@@ -87,6 +92,7 @@ class userHistogram(QDialog):
         grid.addWidget(self.closeB, 99, 99, 1, 1)
         self.setLayout(grid)
         self.show()
+
 
 class versionHistogram(QDialog):
     def __init__(self, counts):
@@ -225,17 +231,19 @@ class simpleTableView(QTableView):
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
 
     def keyPressEvent(self, event):
-         key = event.key()
-         if key == Qt.Key_Return or key == Qt.Key_Enter:
-             self.parent().requestPageImage(self.selectedIndexes()[0])
-         else:
-             super(QTableView, self).keyPressEvent(event)
+        key = event.key()
+        if key == Qt.Key_Return or key == Qt.Key_Enter:
+            self.parent().requestPageImage(self.selectedIndexes()[0])
+        else:
+            super(QTableView, self).keyPressEvent(event)
+
 
 class filterComboBox(QComboBox):
     def __init__(self, txt):
         QWidget.__init__(self)
-        self.title=txt
+        self.title = txt
         self.addItem(txt)
+
 
 class examTable(QWidget):
     def __init__(self):
@@ -245,141 +253,142 @@ class examTable(QWidget):
         self.db.setHostName("Andrew")
         self.db.setConnectOptions("QSQLITE_OPEN_READONLY")
         self.db.open()
-        self.initUI();
+        self.initUI()
         self.loadData()
         self.setFilterOptions()
 
     def initUI(self):
         grid = QGridLayout()
-        self.exM = QSqlTableModel(self,self.db)
+        self.exM = QSqlTableModel(self, self.db)
         self.exM.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.exM.setTable("groupimage")
         self.exV = simpleTableView(self.exM)
 
-        grid.addWidget(self.exV,0,0,4,7)
+        grid.addWidget(self.exV, 0, 0, 4, 7)
 
-        self.filterGo=QPushButton("Filter Now")
+        self.filterGo = QPushButton("Filter Now")
         self.filterGo.clicked.connect(lambda: self.filter())
-        grid.addWidget(self.filterGo,5,0)
-        self.flP=filterComboBox("PageGroup"); grid.addWidget(self.flP,5,2)
-        self.flV=filterComboBox("Version"); grid.addWidget(self.flV,5,3)
-        self.flS=filterComboBox("Status"); grid.addWidget(self.flS,5,4)
-        self.flU=filterComboBox("Marker"); grid.addWidget(self.flU,5,5)
-        self.flM=filterComboBox("Mark"); grid.addWidget(self.flM,5,6)
+        grid.addWidget(self.filterGo, 5, 0)
+        self.flP = filterComboBox("PageGroup")
+        grid.addWidget(self.flP, 5, 2)
+        self.flV = filterComboBox("Version")
+        grid.addWidget(self.flV, 5, 3)
+        self.flS = filterComboBox("Status")
+        grid.addWidget(self.flS, 5, 4)
+        self.flU = filterComboBox("Marker")
+        grid.addWidget(self.flU, 5, 5)
+        self.flM = filterComboBox("Mark")
+        grid.addWidget(self.flM, 5, 6)
 
         self.pgprogB = QPushButton("PG progress")
         self.pgprogB.clicked.connect(lambda: self.computePageGroupProgress())
-        grid.addWidget(self.pgprogB, 1,8)
+        grid.addWidget(self.pgprogB, 1, 8)
         self.vprogB = QPushButton("V progress")
         self.vprogB.clicked.connect(lambda: self.computeVersionProgress())
-        grid.addWidget(self.vprogB, 2,8)
+        grid.addWidget(self.vprogB, 2, 8)
         self.uprogB = QPushButton("U progress")
         self.uprogB.clicked.connect(lambda: self.computeUserProgress())
-        grid.addWidget(self.uprogB, 3,8)
+        grid.addWidget(self.uprogB, 3, 8)
 
         self.vhistB = QPushButton("V histogram")
         self.vhistB.clicked.connect(lambda: self.computeVersionHistogram())
-        grid.addWidget(self.vhistB, 2,9)
+        grid.addWidget(self.vhistB, 2, 9)
         self.uhistB = QPushButton("U histogram")
         self.uhistB.clicked.connect(lambda: self.computeUserHistogram())
-        grid.addWidget(self.uhistB, 3,9)
+        grid.addWidget(self.uhistB, 3, 9)
 
         self.pgImg = ExamViewWindow()
-        grid.addWidget(self.pgImg, 0,10,20,20)
+        grid.addWidget(self.pgImg, 0, 10, 20, 20)
 
         self.setLayout(grid)
         self.show()
 
     def requestPageImage(self, index):
-        rec = self.exM.record( index.row() )
-        if( rec.value('status')=='Marked'):
-            # print("Need marked image at ../mark/markedPapers/{}".format(rec.value('annotatedFile')))
+        rec = self.exM.record(index.row())
+        if rec.value('status') == 'Marked':
             self.pgImg.updateImage("./markedPapers/{}".format(rec.value('annotatedFile')))
         else:
-            # print("Need original image at {}".format(rec.value('originalFile')))
-            self.pgImg.updateImage( rec.value('originalFile'))
+            self.pgImg.updateImage(rec.value('originalFile'))
 
     def computeVersionHistogram(self):
         vstats = defaultdict(lambda: defaultdict(int))
-        for r in range( self.exM.rowCount() ):
-            if(self.exM.record(r).value('status')=='Marked'):
-                vstats[ self.exM.record(r).value('version') ][self.exM.record(r).value('mark')]+=1
+        for r in range(self.exM.rowCount()):
+            if self.exM.record(r).value('status') == 'Marked':
+                vstats[self.exM.record(r).value('version')][self.exM.record(r).value('mark')] += 1
         tmp = versionHistogram(vstats)
 
     def computeUserHistogram(self):
         ustats = defaultdict(lambda: defaultdict(int))
-        for r in range( self.exM.rowCount() ):
-            if(self.exM.record(r).value('status')=='Marked'):
-                ustats[ self.exM.record(r).value('user') ][self.exM.record(r).value('mark')]+=1
+        for r in range(self.exM.rowCount()):
+            if self.exM.record(r).value('status') == 'Marked':
+                ustats[self.exM.record(r).value('user')][self.exM.record(r).value('mark')] += 1
         tmp = userHistogram(ustats)
 
-
     def computePageGroupProgress(self):
-        pgstats = defaultdict(lambda: [0,0,0])
-        for r in range( self.exM.rowCount() ):
-            pgstats[ self.exM.record(r).value('pageGroup') ][0]+=1
-            if(self.exM.record(r).value('status')=='Marked'):
-                pgstats[ self.exM.record(r).value('pageGroup') ][1]+=1
-                pgstats[ self.exM.record(r).value('pageGroup') ][2]+=self.exM.record(r).value('markingTime')
+        pgstats = defaultdict(lambda: [0, 0, 0])
+        for r in range(self.exM.rowCount()):
+            pgstats[self.exM.record(r).value('pageGroup')][0] += 1
+            if self.exM.record(r).value('status') == 'Marked':
+                pgstats[self.exM.record(r).value('pageGroup')][1] += 1
+                pgstats[self.exM.record(r).value('pageGroup')][2] += self.exM.record(r).value('markingTime')
         tmp = groupProgress("PageGroup", pgstats)
 
     def computeVersionProgress(self):
-        vstats = defaultdict(lambda: [0,0,0])
-        for r in range( self.exM.rowCount() ):
-            vstats[ self.exM.record(r).value('version') ][0]+=1
-            if(self.exM.record(r).value('status')=='Marked'):
-                vstats[ self.exM.record(r).value('version') ][1]+=1
-                vstats[ self.exM.record(r).value('version') ][2]+=self.exM.record(r).value('markingTime')
+        vstats = defaultdict(lambda: [0, 0, 0])
+        for r in range(self.exM.rowCount()):
+            vstats[self.exM.record(r).value('version')][0] += 1
+            if self.exM.record(r).value('status') == 'Marked':
+                vstats[self.exM.record(r).value('version')][1] += 1
+                vstats[self.exM.record(r).value('version')][2] += self.exM.record(r).value('markingTime')
         tmp = groupProgress("Version", vstats)
 
     def computeUserProgress(self):
-        ustats = defaultdict(lambda: [0,0,0])
-        for r in range( self.exM.rowCount() ):
-            if( self.exM.record(r).value('user') == 'None' ):
+        ustats = defaultdict(lambda: [0, 0, 0])
+        for r in range(self.exM.rowCount()):
+            if self.exM.record(r).value('user') == 'None':
                 continue
-            ustats[ self.exM.record(r).value('user') ][0]+=1
-            if(self.exM.record(r).value('status')=='Marked'):
-                ustats[ self.exM.record(r).value('user') ][1]+=1
-                ustats[ self.exM.record(r).value('user') ][2]+=self.exM.record(r).value('markingTime')
+            ustats[self.exM.record(r).value('user')][0] += 1
+            if self.exM.record(r).value('status') == 'Marked':
+                ustats[self.exM.record(r).value('user')][1] += 1
+                ustats[self.exM.record(r).value('user')][2] += self.exM.record(r).value('markingTime')
         tmp = userProgress(ustats)
 
-    def getUniqueFromColumn(self,col):
-        lst=set()
+    def getUniqueFromColumn(self, col):
+        lst = set()
         query = QSqlQuery(db=self.db)
         query.exec_("select {} from groupimage".format(col))
         while(query.next()):
-            lst.add( str(query.value(0)))
-        return( sorted(list(lst)) )
+            lst.add(str(query.value(0)))
+        return sorted(list(lst))
 
     def loadData(self):
-        #self.doQueryAndRemoveColumns("select * from exam")
-        for c in [0,2,3,6]:
+        for c in [0, 2, 3, 6]:
             self.exV.hideColumn(c)
         self.exV.resizeColumnsToContents()
         self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
 
     def setFilterOptions(self):
-        self.flP.insertItems( 1, self.getUniqueFromColumn('pageGroup') )
-        self.flV.insertItems( 1, self.getUniqueFromColumn('version') )
-        self.flS.insertItems( 1, self.getUniqueFromColumn('status') )
-        self.flU.insertItems( 1, self.getUniqueFromColumn('user') )
-        self.flM.insertItems( 1, self.getUniqueFromColumn('mark') )
+        self.flP.insertItems(1, self.getUniqueFromColumn('pageGroup'))
+        self.flV.insertItems(1, self.getUniqueFromColumn('version'))
+        self.flS.insertItems(1, self.getUniqueFromColumn('status'))
+        self.flU.insertItems(1, self.getUniqueFromColumn('user'))
+        self.flM.insertItems(1, self.getUniqueFromColumn('mark'))
 
     def filter(self):
         flt = []
-        if(self.flP.currentText()!='PageGroup'):
+        if self.flP.currentText() != 'PageGroup':
             flt.append('pageGroup=\'{}\''.format(self.flP.currentText()))
-        if(self.flV.currentText()!='Version'):
+        if self.flV.currentText() != 'Version':
             flt.append('version=\'{}\''.format(self.flV.currentText()))
-        if(self.flS.currentText()!='Status'):
+        if self.flS.currentText() != 'Status':
             flt.append('status=\'{}\''.format(self.flS.currentText()))
-        if(self.flU.currentText()!='Marker'):
+        if self.flU.currentText() != 'Marker':
             flt.append('user=\'{}\''.format(self.flU.currentText()))
-        if(self.flM.currentText()!='Mark'):
+        if self.flM.currentText() != 'Mark':
             flt.append('mark=\'{}\''.format(self.flM.currentText()))
 
-        if(len(flt)>0):
-            flts =  " AND ".join(flt)
+        if len(flt) > 0:
+            flts = " AND ".join(flt)
         else:
             flts = ""
         self.exM.setFilter(flts)
@@ -390,40 +399,22 @@ class examTable(QWidget):
 class manager(QWidget):
     def __init__(self):
         QWidget.__init__(self)
-        self.initUI();
+        self.initUI()
 
     def initUI(self):
         grid = QGridLayout()
-        self.extb=examTable()
+        self.extb = examTable()
 
-        grid.addWidget(self.extb,1,1,4,6)
+        grid.addWidget(self.extb, 1, 1, 4, 6)
 
-        # self.listB = QPushButton("list users")
-        # self.listB.clicked.connect(lambda: self.listUsers())
-        # grid.addWidget(self.listB,6,1)
-        #
-        # self.addB = QPushButton("add user")
-        # self.addB.clicked.connect(lambda: self.addUser())
-        # grid.addWidget(self.addB,6,2)
-
-        self.closeB=QPushButton("close")
+        self.closeB = QPushButton("close")
         self.closeB.clicked.connect(lambda: self.close())
-        grid.addWidget(self.closeB,6,99)
+        grid.addWidget(self.closeB, 6, 99)
 
         self.setLayout(grid)
         self.setWindowTitle('Where we are at.')
         self.show()
 
-    # def addUser(self):
-    #     tmp = userDialog()
-    #     if( tmp.exec_() == 1):
-    #         msg = SRMsg(['ZAU', tmp.getName()])
-    #     else:
-    #         return
-    # def listUsers(self):
-    #     msg = SRMsg(['ZLU'])
-    #     tmp = userListDialog(msg[1])
-    #     tmp.exec_()
 
 loop = asyncio.get_event_loop()
 tempDirectory = tempfile.TemporaryDirectory()
