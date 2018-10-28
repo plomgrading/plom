@@ -47,8 +47,8 @@ def readExamsGrouped():
 
 def findPageGroups():
     global pageGroupsForGrading
-    for pg in range(1,spec.getNumberOfGroups()+1):
-        for fname in glob.glob("{}/group_{}/*/*.png".format(pathScanDirectory,  str(pg).zfill(2))):
+    for pg in range(1, spec.getNumberOfGroups()+1):
+        for fname in glob.glob("{}/group_{}/*/*.png".format(pathScanDirectory, str(pg).zfill(2))):
             print("Adding pageimage from {}".format(fname))
             pageGroupsForGrading[os.path.basename(fname)[:-4]] = fname
 
@@ -73,7 +73,7 @@ async def handle_messaging(reader, writer):
     message = json.loads(data.decode()) # message should be a list [cmd, user, password, arg1, arg2, etc]
     print("Got message {}".format(message))
 
-    if type(message) != type([1,2,3]):
+    if type(message) != type([1, 2, 3]):
         print("Some sort of message error here - didn't receive a list.")
     else:
         rmesg = peon.proc_cmd(message)
@@ -94,10 +94,10 @@ def splitTGV(tgv): #t1234p67v9
     return(int(tgv[1:5]), int(tgv[6:8]), int(tgv[9]))
 
 class Server(object):
-    def __init__(self, id_db, mark_db, spec):
+    def __init__(self, id_db, mark_db, tspec):
         self.IDDB = id_db
         self.MDB = mark_db
-        self.testSpec = spec
+        self.testSpec = tspec
 
         self.loadPapers()
         self.loadUsers()
@@ -119,7 +119,7 @@ class Server(object):
         readExamsGrouped()
         findPageGroups()
         self.loadPapers()
-        return(['ACK'])
+        return ['ACK']
 
     def reloadUsers(self, password):
         if not self.authority.authoriseUser('Manager', password):
@@ -139,14 +139,14 @@ class Server(object):
                         self.MDB.resetUsersToDo(u)
                         self.authority.detoken(u)
         print("Current user list = {}".format(list(self.userList.keys())))
-        return(['ACK'])
+        return ['ACK']
 
     def proc_cmd(self, message):
-        cmd = servCmd.get(message[0], 'msgError')
+        pcmd = servCmd.get(message[0], 'msgError')
 
         if message[0] == 'PING':
             # Return an ack if a ping is sent.
-            return(['ACK'])
+            return ['ACK']
         elif message[0] == 'AUTH':
             # message should be ['AUTH', user, password]
             return self.authoriseUser(*message[1:])
@@ -160,8 +160,8 @@ class Server(object):
             return rv
         else:
             # should be ['CMD', user, token, arg1, arg2,...]
-            if self.validate(message[1],message[2]):
-                return getattr(self, cmd)(*message[1:])
+            if self.validate(message[1], message[2]):
+                return getattr(self, pcmd)(*message[1:])
             else:
                 print("Attempt by non-user to {}".format(message))
                 return(['ERR', 'You are not an authorised user'])
@@ -171,9 +171,9 @@ class Server(object):
             #On token request also make sure anything "out" with that user is reset as todo.
             self.IDDB.resetUsersToDo(user)
             self.MDB.resetUsersToDo(user)
-            return(['ACK', self.authority.getToken(user)])
+            return ['ACK', self.authority.getToken(user)]
         else:
-            return(['ERR', 'You are not an authorised user'])
+            return ['ERR', 'You are not an authorised user']
 
     def validate(self, user, token):
         if self.authority.validateToken(user, token):
@@ -192,15 +192,15 @@ class Server(object):
             t, pg, v = splitTGV(tgv)
             self.MDB.addUnmarkedGroupImage(t, pg, v, tgv, pageGroupsForGrading[tgv])
 
-    def provideFile(self,fname):
+    def provideFile(self, fname):
         tfn = tempfile.NamedTemporaryFile(delete=False, dir=davDirectory)
         os.system("cp " + fname + " " + tfn.name)
         return os.path.basename(tfn.name)
 
-    def claimFile(self,fname):
+    def claimFile(self, fname):
         os.system("mv " + davDirectory + "/" + fname + " ./markedPapers/")
 
-    def removeFile(self,davfn):
+    def removeFile(self, davfn):
         os.remove(davDirectory+"/"+davfn)
 
     def printToDo(self):
@@ -220,7 +220,7 @@ class Server(object):
         self.IDDB.printIdentified()
 
     def msgError(self, *args):
-        return(['ERR', 'Some sort of command error - what did you send?'])
+        return ['ERR', 'Some sort of command error - what did you send?']
 
     def IDrequestClassList(self, user, token):
         return ['ACK', self.provideFile("../resources/classlist.csv")]
@@ -253,21 +253,21 @@ class Server(object):
         return ['ACK']
 
     def IDnextUnIDd(self, user, token):
-        give=self.IDDB.giveIDImageToClient(user)
+        give = self.IDDB.giveIDImageToClient(user)
         if give is None:
             return ['ERR', 'No more papers']
         else:
             return ['ACK', give, self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give))]
 
     def IDProgressCount(self, user, token):
-        return['ACK', self.IDDB.countIdentified(), self.IDDB.countAll()]
+        return ['ACK', self.IDDB.countIdentified(), self.IDDB.countAll()]
 
     def IDgotTest(self, user, token, test, tfn):
         self.removeFile(tfn)
         return ['ACK']
 
     def IDreturnIDd(self, user, token, ret, sid, sname):
-        if self.IDDB.takeIDImageFromClient(ret, user, sid, sname) == True:
+        if self.IDDB.takeIDImageFromClient(ret, user, sid, sname):
             return ['ACK']
         else:
             return ['ERR', 'That student number already used.']
@@ -311,11 +311,11 @@ def checkPortFree(ip, port):
     try:
         sock.bind((ip, port))
     except socket.error as err:
-            if err.errno == errno.EADDRINUSE:
-                return False
-            else:
-                print("There is some sort of ip/port error. Number = {}".format(err.errno))
-                return False
+        if err.errno == errno.EADDRINUSE:
+            return False
+        else:
+            print("There is some sort of ip/port error. Number = {}".format(err.errno))
+            return False
     return True
 
 
@@ -344,9 +344,9 @@ davproc = subprocess.Popen(shlex.split(cmd))
 
 spec = TestSpecification()
 spec.readSpec()
-examsGrouped={}
+examsGrouped = {}
 readExamsGrouped()
-pageGroupsForGrading={}
+pageGroupsForGrading = {}
 findPageGroups()
 
 theIDDB = IDDatabase()

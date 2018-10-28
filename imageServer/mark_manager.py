@@ -35,29 +35,30 @@ async def handle_messaging(msg):
     data = await reader.read(100)
     terminate = data.endswith(b'\x00')
     data = data.rstrip(b'\x00')
-    rmesg = json.loads( data.decode() ) # message should be a list [cmd, user, arg1, arg2, etc]
+    rmesg = json.loads(data.decode()) # message should be a list [cmd, user, arg1, arg2, etc]
     writer.close()
-    return(rmesg)
+    return rmesg
 
 def SRMsg(msg):
     # print("Sending message {}",format(msg))
     rmsg = loop.run_until_complete(handle_messaging(msg))
-    if( rmsg[0] == 'ACK'):
-        return(rmsg)
-    elif( rmsg[0] == 'ERR'):
+    if rmsg[0] == 'ACK':
+        return rmsg
+    elif rmsg[0] == 'ERR':
         # print("Some sort of error occurred - didnt get an ACK, instead got ", rmsg)
         msg = errorMessage(rmsg[1])
         msg.exec_()
-        return(rmsg)
+        return rmsg
     else:
         msg = errorMessage("Something really wrong has happened.")
         self.Close()
 
+
 class errorMessage(QMessageBox):
-  def __init__(self, txt):
-    super(QMessageBox, self).__init__()
-    self.setText(txt)
-    self.setStandardButtons(QMessageBox.Ok)
+    def __init__(self, txt):
+        super(errorMessage, self).__init__()
+        self.setText(txt)
+        self.setStandardButtons(QMessageBox.Ok)
 
 
 class userHistogram(QDialog):
@@ -67,13 +68,13 @@ class userHistogram(QDialog):
         grid = QGridLayout()
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
-        grid.addWidget(self.canvas,1,1,4,4)
+        grid.addWidget(self.canvas, 1, 1, 4, 4)
 
         self.figure.clear()
         ax = self.figure.add_subplot(111)
         for u in counts.keys():
             uh = counts[u]
-            tot=0
+            tot = 0
             for m in uh.values():
                 tot += m
             ax.plot(list(uh.keys()), [t/tot for t in list(uh.values())], 'o-', label="User {}".format(u))
@@ -81,9 +82,9 @@ class userHistogram(QDialog):
         ax.set_xlabel('mark')
         ax.set_ylabel('proportion')
 
-        self.closeB =QPushButton("close")
-        self.closeB.clicked.connect(lambda: self.close())
-        grid.addWidget(self.closeB, 99,99,1,1)
+        self.closeB = QPushButton("close")
+        self.closeB.clicked.connect(self.close)
+        grid.addWidget(self.closeB, 99, 99, 1, 1)
         self.setLayout(grid)
         self.show()
 
@@ -94,13 +95,13 @@ class versionHistogram(QDialog):
         grid = QGridLayout()
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
-        grid.addWidget(self.canvas,1,1,4,4)
+        grid.addWidget(self.canvas, 1, 1, 4, 4)
 
         self.figure.clear()
         ax = self.figure.add_subplot(111)
         for v in counts.keys():
             vh = counts[v]
-            tot=0
+            tot = 0
             for m in vh.values():
                 tot += m
             ax.plot(list(vh.keys()), [t/tot for t in list(vh.values())], 'o-', label="Version {}".format(v))
@@ -108,11 +109,12 @@ class versionHistogram(QDialog):
         ax.set_xlabel('mark')
         ax.set_ylabel('proportion')
 
-        self.closeB =QPushButton("close")
-        self.closeB.clicked.connect(lambda: self.close())
-        grid.addWidget(self.closeB, 99,99)
+        self.closeB = QPushButton("close")
+        self.closeB.clicked.connect(self.close)
+        grid.addWidget(self.closeB, 99, 99)
         self.setLayout(grid)
         self.show()
+
 
 class userProgress(QDialog):
     def __init__(self, counts):
@@ -121,43 +123,47 @@ class userProgress(QDialog):
         grid = QGridLayout()
 
         self.ptab = QTableWidget(len(counts)+1, 5)
-        self.ptab.setHorizontalHeaderLabels(['User','Done','Progress', 'Avg Time', 'Total Time'])
-        grid.addWidget(self.ptab,1,1)
+        self.ptab.setHorizontalHeaderLabels(['User', 'Done', 'Progress', 'Avg Time', 'Total Time'])
+        grid.addWidget(self.ptab, 1, 1)
 
-        gb={}
-        r=1; mx=0; doneTotal=0
+        gb = {}
+        r = 1
+        mx = 0
+        doneTotal = 0
         for k in counts.keys():
-            if(counts[k][0]>mx):
-                mx=counts[k][0]
+            if counts[k][0] > mx:
+                mx = counts[k][0]
 
         for k in counts.keys():
-            gb[k] = QProgressBar(); gb[k].setMaximum(mx);  gb[k].setValue(counts[k][0]); gb[k].setFormat("%v")
-            self.ptab.setItem(r,0,QTableWidgetItem(str(k)))
-            self.ptab.setItem(r,1,QTableWidgetItem(str( counts[k][0])))
-            self.ptab.setCellWidget(r,2,gb[k])
-            if(counts[k][1]>0):
-                self.ptab.setItem(r,3,QTableWidgetItem(str( counts[k][2] / counts[k][1])))
-                self.ptab.setItem(r,4,QTableWidgetItem(str( counts[k][2])))
+            gb[k] = QProgressBar()
+            gb[k].setMaximum(mx)
+            gb[k].setValue(counts[k][0])
+            gb[k].setFormat("%v")
+            self.ptab.setItem(r, 0, QTableWidgetItem(str(k)))
+            self.ptab.setItem(r, 1, QTableWidgetItem(str(counts[k][0])))
+            self.ptab.setCellWidget(r, 2, gb[k])
+            if counts[k][1] > 0:
+                self.ptab.setItem(r, 3, QTableWidgetItem(str(counts[k][2]/counts[k][1])))
+                self.ptab.setItem(r, 4, QTableWidgetItem(str(counts[k][2])))
             else:
-                self.ptab.setItem(r,3,QTableWidgetItem("."))
-                self.ptab.setItem(r,4,QTableWidgetItem("."))
+                self.ptab.setItem(r, 3, QTableWidgetItem("."))
+                self.ptab.setItem(r, 4, QTableWidgetItem("."))
             doneTotal += counts[k][0]
-            r+=1
-        # gb[-1] = QProgressBar(); gb[-1].setMaximum(mx); gb[-1].setValue(doneTotal)
-        self.ptab.setItem(0,0,QTableWidgetItem('All'))
-        self.ptab.setItem(0,1,QTableWidgetItem(str(doneTotal)))
-        # self.ptab.setCellWidget(0,2,gb[-1])
+            r += 1
+        self.ptab.setItem(0, 0, QTableWidgetItem('All'))
+        self.ptab.setItem(0, 1, QTableWidgetItem(str(doneTotal)))
 
         self.ptab.resizeColumnsToContents()
         self.ptab.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.ptab.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.ptab.setSelectionBehavior(QAbstractItemView.SelectRows)
 
-        self.closeB =QPushButton("close")
-        self.closeB.clicked.connect(lambda: self.close())
-        grid.addWidget(self.closeB, 99,99)
+        self.closeB = QPushButton("close")
+        self.closeB.clicked.connect(self.close)
+        grid.addWidget(self.closeB, 99, 99)
         self.setLayout(grid)
         self.show()
+
 
 class groupProgress(QDialog):
     def __init__(self, txt, counts):
@@ -166,42 +172,49 @@ class groupProgress(QDialog):
         grid = QGridLayout()
 
         self.ptab = QTableWidget(len(counts)+1, 6)
-        self.ptab.setHorizontalHeaderLabels([txt,'Total','Done','Progress', 'Avg Time', 'Total Time'])
-        grid.addWidget(self.ptab,1,1)
+        self.ptab.setHorizontalHeaderLabels([txt, 'Total', 'Done', 'Progress', 'Avg Time', 'Total Time'])
+        grid.addWidget(self.ptab, 1, 1)
 
-        gb={}
-        r=1; total=0; doneTotal=0
+        gb = {}
+        r = 1
+        total = 0
+        doneTotal = 0
         for k in counts.keys():
-            gb[k] = QProgressBar(); gb[k].setMaximum(counts[k][0]);  gb[k].setValue(counts[k][1])
-            self.ptab.setItem(r,0,QTableWidgetItem(str(k)))
-            self.ptab.setItem(r,1,QTableWidgetItem(str( counts[k][0])))
-            self.ptab.setItem(r,2,QTableWidgetItem(str( counts[k][1])))
-            self.ptab.setCellWidget(r,3,gb[k])
-            if(counts[k][1]>0):
-                self.ptab.setItem(r,4,QTableWidgetItem(str( counts[k][2] / counts[k][1])))
-                self.ptab.setItem(r,5,QTableWidgetItem(str( counts[k][2])))
+            gb[k] = QProgressBar()
+            gb[k].setMaximum(counts[k][0])
+            gb[k].setValue(counts[k][1])
+            self.ptab.setItem(r, 0, QTableWidgetItem(str(k)))
+            self.ptab.setItem(r, 1, QTableWidgetItem(str(counts[k][0])))
+            self.ptab.setItem(r, 2, QTableWidgetItem(str(counts[k][1])))
+            self.ptab.setCellWidget(r, 3, gb[k])
+            if counts[k][1] > 0:
+                self.ptab.setItem(r, 4, QTableWidgetItem(str(counts[k][2]/counts[k][1])))
+                self.ptab.setItem(r, 5, QTableWidgetItem(str(counts[k][2])))
             else:
-                self.ptab.setItem(r,4,QTableWidgetItem("."))
-                self.ptab.setItem(r,5,QTableWidgetItem("."))
+                self.ptab.setItem(r, 4, QTableWidgetItem("."))
+                self.ptab.setItem(r, 5, QTableWidgetItem("."))
 
-            total += counts[k][0]; doneTotal += counts[k][1]
-            r+=1
-        gb[-1] = QProgressBar(); gb[-1].setMaximum(total); gb[-1].setValue(doneTotal)
-        self.ptab.setItem(0,0,QTableWidgetItem('All'))
-        self.ptab.setItem(0,1,QTableWidgetItem(str(total)))
-        self.ptab.setItem(0,2,QTableWidgetItem(str(doneTotal)))
-        self.ptab.setCellWidget(0,3,gb[-1])
+            total += counts[k][0]
+            doneTotal += counts[k][1]
+            r += 1
+        gb[-1] = QProgressBar()
+        gb[-1].setMaximum(total)
+        gb[-1].setValue(doneTotal)
+        self.ptab.setItem(0, 0, QTableWidgetItem('All'))
+        self.ptab.setItem(0, 1, QTableWidgetItem(str(total)))
+        self.ptab.setItem(0, 2, QTableWidgetItem(str(doneTotal)))
+        self.ptab.setCellWidget(0, 3, gb[-1])
 
         self.ptab.resizeColumnsToContents()
         self.ptab.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.ptab.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.ptab.setSelectionBehavior(QAbstractItemView.SelectRows)
-
-        self.closeB =QPushButton("close")
-        self.closeB.clicked.connect(lambda: self.close())
-        grid.addWidget(self.closeB, 99,99)
+        self.closeB = QPushButton("close")
+        self.closeB.clicked.connect(self.close)
+        grid.addWidget(self.closeB, 99, 99)
         self.setLayout(grid)
         self.show()
+
 
 class simpleTableView(QTableView):
     def __init__(self, model):
