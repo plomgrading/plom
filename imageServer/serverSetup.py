@@ -2,10 +2,9 @@ import sys
 import os
 import json
 import csv
-
 from PyQt5.QtWidgets import QApplication, QStyleFactory, QWidget, QFileDialog, QMessageBox
-
 from ui_server_setup import Ui_ServerInfo
+
 
 class SetUp(QWidget):
     def __init__(self):
@@ -16,7 +15,6 @@ class SetUp(QWidget):
         self.ui.manageUsersButton.clicked.connect(self.manageUsers)
         self.ui.saveCloseButton.clicked.connect(self.saveAndClose)
         self.ui.classListButton.clicked.connect(self.getClassList)
-
         self.info = {}
         self.getServerInfo()
         self.putInfoIntoUi()

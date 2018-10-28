@@ -10,6 +10,7 @@ sslContext.check_hostname = False
 
 serverInfo = {'server': '127.0.0.1', 'mport': 41984, 'wport': 41985}
 
+
 def getServerInfo():
     global serverInfo
     if os.path.isfile("../resources/serverDetails.json"):
@@ -30,7 +31,7 @@ async def handle_image_reload(server, message_port, password):
     data = await reader.read(100)
     terminate = data.endswith(b'\x00')
     data = data.rstrip(b'\x00')
-    rmesg = json.loads(data.decode()) # message should be a list [cmd, user, arg1, arg2, etc]
+    rmesg = json.loads(data.decode())  # message should be a list [cmd, user, arg1, arg2, etc]
     writer.close()
     return rmesg
 
@@ -67,7 +68,6 @@ class AddScans(QWidget):
         self.setLayout(vl)
         self.show()
 
-
     def contactServerReload(self):
         global serverInfo
         tmp = SimpleMessage("Contact server to reload images?")
@@ -76,11 +76,13 @@ class AddScans(QWidget):
             if ok:
                 requestImageReload(serverInfo['server'], serverInfo['mport'], pwd)
 
+
 def main():
     getServerInfo()
     app = QApplication(sys.argv)
     iic = AddScans()
     app.exec_()
+
 
 if __name__ == '__main__':
     main()
