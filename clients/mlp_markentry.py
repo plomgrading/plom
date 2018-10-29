@@ -1,9 +1,11 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, QStackedWidget, QLabel, QSizePolicy
 from PyQt5.QtCore import pyqtSignal, Qt
 
+
 class MarkEntry(QStackedWidget):
     markSetSignal = pyqtSignal(int)
     deltaSetSignal = pyqtSignal(int)
+
     def __init__(self, maxScore):
         super(MarkEntry, self).__init__()
         self.maxScore = maxScore
@@ -51,7 +53,6 @@ class MarkEntry(QStackedWidget):
         self.scoreL.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.pageC.setLayout(grid)
 
-
     def setMarkingUp(self):
         self.setMark(0)
         grid = QGridLayout()
@@ -60,7 +61,7 @@ class MarkEntry(QStackedWidget):
         grid.addWidget(self.scoreL, 0, 0, 1, 2)
         for k in range(0, self.numButtons+1):
             self.markButtons["p{}".format(k)] = QPushButton("+&{}".format(k))
-            grid.addWidget(self.markButtons["p{}".format(k)], k//2+1, k%2, 1, 1)
+            grid.addWidget(self.markButtons["p{}".format(k)], k//2+1, k % 2, 1, 1)
             self.markButtons["p{}".format(k)].clicked.connect(self.setDeltaMark)
             self.markButtons["p{}".format(k)].setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
@@ -76,7 +77,7 @@ class MarkEntry(QStackedWidget):
         grid.addWidget(self.scoreL, 0, 0, 1, 2)
         for k in range(1, self.numButtons+1):
             self.markButtons["m{}".format(k)] = QPushButton("-&{}".format(k))
-            grid.addWidget(self.markButtons["m{}".format(k)], k//2+1, k%2, 1, 1)
+            grid.addWidget(self.markButtons["m{}".format(k)], k//2+1, k % 2, 1, 1)
             self.markButtons["m{}".format(k)].clicked.connect(self.setDeltaMark)
             self.markButtons["m{}".format(k)].setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
@@ -91,7 +92,7 @@ class MarkEntry(QStackedWidget):
 
         for k in range(0, self.maxScore+1):
             self.markButtons["{}".format(k)] = QPushButton("&{}".format(k))
-            grid.addWidget(self.markButtons["{}".format(k)], k//3, k%3)
+            grid.addWidget(self.markButtons["{}".format(k)], k//3, k % 3)
             self.markButtons["{}".format(k)].clicked.connect(self.setTotalMark)
             self.markButtons["{}".format(k)].setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
@@ -102,14 +103,14 @@ class MarkEntry(QStackedWidget):
 
     def setDeltaMark(self):
         self.pdmb.setStyleSheet("")
-        self.pdmb=self.sender()
+        self.pdmb = self.sender()
         self.pdmb.setStyleSheet(self.redStyle)
         self.currentDelta = int(self.sender().text().replace('&', ''))
         self.deltaSetSignal.emit(self.currentDelta)
 
     def setTotalMark(self):
         self.pmtb.setStyleSheet("")
-        self.pmtb=self.sender()
+        self.pmtb = self.sender()
         self.pmtb.setStyleSheet(self.redStyle)
         self.currentScore = int(self.sender().text().replace('&', ''))
         self.markSetSignal.emit(self.currentScore)

@@ -1,16 +1,15 @@
 import sys
 import os
 import json
-
-global tempDirectory, directoryPath
-
 import mlp_marker
 import mlp_identifier
-
 from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory
 from uiFiles.ui_chooser import Ui_Chooser
 
+
+global tempDirectory, directoryPath
 lastTime = {}
+
 
 def readLastTime():
     global lastTime
@@ -24,6 +23,7 @@ def readLastTime():
         lastTime["wport"] = "41985"
         lastTime["pg"] = 1
         lastTime["v"] = 1
+
 
 def writeLastTime():
     fh = open("lastTime.json", 'w')
@@ -112,6 +112,7 @@ class Chooser(QWidget):
         writeLastTime()
 
         self.close()
+
 
 app = QApplication(sys.argv)
 app.setStyle(QStyleFactory.create("Fusion"))
