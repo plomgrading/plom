@@ -1,7 +1,7 @@
 import sys
 import os
 
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, pyqtSlot
 from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap, QCloseEvent
 from PyQt5.QtWidgets import QAbstractItemView, QDialog, QMessageBox, QPushButton, QShortcut, QSizePolicy, QTableWidget, QTableWidgetItem, QGridLayout
 
@@ -194,10 +194,17 @@ class Annotator(QDialog):
         self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
         self.setIcon(self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path))
         self.setIcon(self.ui.commentDownButton, "com dn", "{}/comment_down.svg".format(base_path))
-        # QShortcut(QKeySequence("Ctrl+Z"), self.view, self.view.undo, context=Qt.WidgetShortcut)
-        # QShortcut(QKeySequence("Ctrl+Y"), self.view, self.view.redo, context=Qt.WidgetShortcut)
-        QShortcut(QKeySequence("Alt+Return"), self.view,(lambda:(self.commentW.saveComments(), self.closeEvent())), context=Qt.WidgetShortcut)
-        QShortcut(QKeySequence("Alt+Enter"), self.view,(lambda:(self.commentW.saveComments(), self.closeEvent())), context=Qt.WidgetShortcut)
+
+        self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
+        self.endShortCut.activated.connect(self.endAndRelaunch)
+        self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
+        self.endShortCutb.activated.connect(self.endAndRelaunch)
+
+
+    @pyqtSlot()
+    def endAndRelaunch(self):
+        self.commentW.saveComments()
+        self.closeEvent(True)
 
     def setIcon(self, tb, txt, iconFile):
         tb.setText(txt)
