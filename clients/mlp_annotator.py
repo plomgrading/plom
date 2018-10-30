@@ -197,6 +197,7 @@ class Annotator(QDialog):
         # QShortcut(QKeySequence("Ctrl+Z"), self.view, self.view.undo, context=Qt.WidgetShortcut)
         # QShortcut(QKeySequence("Ctrl+Y"), self.view, self.view.redo, context=Qt.WidgetShortcut)
         QShortcut(QKeySequence("Alt+Return"), self.view,(lambda:(self.commentW.saveComments(), self.closeEvent())), context=Qt.WidgetShortcut)
+        QShortcut(QKeySequence("Alt+Enter"), self.view,(lambda:(self.commentW.saveComments(), self.closeEvent())), context=Qt.WidgetShortcut)
 
     def setIcon(self, tb, txt, iconFile):
         tb.setText(txt)
@@ -226,7 +227,9 @@ class Annotator(QDialog):
         self.ui.commentUpButton.clicked.connect(lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()))
         self.ui.commentDownButton.clicked.connect(lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()))
 
-        self.ui.finishedButton.clicked.connect(lambda:(self.commentW.saveComments(), self.closeEvent()))
+        self.ui.finishedButton.clicked.connect(lambda:(self.commentW.saveComments(), self.closeEvent(True)))
+        self.ui.finishNoRelaunchButton.clicked.connect(lambda:(self.commentW.saveComments(), self.closeEvent(False)))
+
         self.ui.cancelButton.clicked.connect(self.reject)
 
         self.commentW.CL.commentSignal.connect(self.handleComment)
@@ -266,8 +269,9 @@ class Annotator(QDialog):
         if lookingAhead < 0 or lookingAhead > self.maxMark:
             self.ui.moveButton.animateClick()
 
-    def closeEvent(self,tmp = "blah"):
-        if type(tmp) == QCloseEvent:
+    def closeEvent(self,relaunch):
+        if type(relaunch) == QCloseEvent:
+            self.launchAgain=False
             self.reject()
         else:
             # if marking total or up, be careful of giving 0-marks
@@ -280,6 +284,10 @@ class Annotator(QDialog):
                 msg = SimpleMessage('You have given {} - please confirm'.format(self.maxMark))
                 if msg.exec_() == QMessageBox.No:
                     return
+            if relaunch:
+                self.launchAgain = True
+            else:
+                self.launchAgain = False
 
             self.view.save()
             self.accept()
