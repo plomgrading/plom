@@ -43,15 +43,22 @@ def readExamsGrouped():
 
 def checkExam(n):
     print("Exam {}".format(n), end="")
-    if(checkMarked(n) and checkIDed(n) ):
-        print("\tComplete - build front page and reassemble.")
-        return(True)
-    else:
-        if checkMarked(n):
+    cm = checkMarked(n)
+    ci = checkIDed(n)
+    if cm:
+        if ci:
+            print("\tComplete - build front page and reassemble.")
+            return True
+        else:
             print("\tMarked but not ID'd")
-        if checkIDed(n):
+            return False
+    else:
+        if ci:
             print("\tID'd but not marked")
-        return(False)
+            return False
+        else:
+            print("\tNeither ID'd nor marked")
+            return False
 
 def writeExamsCompleted():
     fh = open("../resources/examsCompleted.json",'w')
