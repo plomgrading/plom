@@ -27,7 +27,8 @@ import hashlib
 saltstr = 'salt'
 
 # TODO: should get this from project
-basename = 'mt1'
+basename = 'mt2'
+coursename = 'Math 253 Midterm 2'
 
 
 def myhash(s):
@@ -78,4 +79,17 @@ if __name__ == '__main__':
     do_renaming('reassembled', 'codedReturn')
     # TODO: return code?
 
-    print('all done!')
+
+    print('Adding codedReturn/index.html file')
+    shutil.copyfile('view_test_template.html', 'codedReturn/index.html')
+    with open('view_test_template.html', 'r') as htmlfile:
+        html = htmlfile.read()
+    html = html.replace('__COURSENAME__', coursename)
+    html = html.replace('__TESTNAME__', basename)
+
+    newname = os.path.join('codedReturn', 'index.html')
+    with open(newname, 'w') as htmlfile:
+        htmlfile.write(html)
+
+
+    print('All done: copy "codedReturn/" to your webserver')
