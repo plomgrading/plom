@@ -54,6 +54,14 @@
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="2">
+       <widget class="QPushButton" name="finishNoRelaunchButton">
+        <property name="text">
+         <string>End &amp;&amp; 
+ Return</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
        <widget class="QPushButton" name="cancelButton">
         <property name="text">
          <string>&amp;Cancel</string>
@@ -63,12 +71,26 @@
       <item row="0" column="0">
        <widget class="QPushButton" name="finishedButton">
         <property name="text">
-         <string>Finished</string>
+         <string>End &amp;&amp; 
+ Next</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
        <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="3">
+       <spacer name="horizontalSpacer_4">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>

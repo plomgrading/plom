@@ -1,7 +1,7 @@
 import sys
 import os
 
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, pyqtSlot
 from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap, QCloseEvent
 from PyQt5.QtWidgets import QAbstractItemView, QDialog, QMessageBox, QPushButton, QShortcut, QSizePolicy, QTableWidget, QTableWidgetItem, QGridLayout
 
@@ -194,9 +194,17 @@ class Annotator(QDialog):
         self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
         self.setIcon(self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path))
         self.setIcon(self.ui.commentDownButton, "com dn", "{}/comment_down.svg".format(base_path))
-        # QShortcut(QKeySequence("Ctrl+Z"), self.view, self.view.undo, context=Qt.WidgetShortcut)
-        # QShortcut(QKeySequence("Ctrl+Y"), self.view, self.view.redo, context=Qt.WidgetShortcut)
-        QShortcut(QKeySequence("Alt+Return"), self.view,(lambda:(self.commentW.saveComments(), self.closeEvent())), context=Qt.WidgetShortcut)
+
+        self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
+        self.endShortCut.activated.connect(self.endAndRelaunch)
+        self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
+        self.endShortCutb.activated.connect(self.endAndRelaunch)
+
+
+    @pyqtSlot()
+    def endAndRelaunch(self):
+        self.commentW.saveComments()
+        self.closeEvent(True)
 
     def setIcon(self, tb, txt, iconFile):
         tb.setText(txt)
@@ -226,7 +234,9 @@ class Annotator(QDialog):
         self.ui.commentUpButton.clicked.connect(lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()))
         self.ui.commentDownButton.clicked.connect(lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()))
 
-        self.ui.finishedButton.clicked.connect(lambda:(self.commentW.saveComments(), self.closeEvent()))
+        self.ui.finishedButton.clicked.connect(lambda:(self.commentW.saveComments(), self.closeEvent(True)))
+        self.ui.finishNoRelaunchButton.clicked.connect(lambda:(self.commentW.saveComments(), self.closeEvent(False)))
+
         self.ui.cancelButton.clicked.connect(self.reject)
 
         self.commentW.CL.commentSignal.connect(self.handleComment)
@@ -266,8 +276,9 @@ class Annotator(QDialog):
         if lookingAhead < 0 or lookingAhead > self.maxMark:
             self.ui.moveButton.animateClick()
 
-    def closeEvent(self,tmp = "blah"):
-        if type(tmp) == QCloseEvent:
+    def closeEvent(self,relaunch):
+        if type(relaunch) == QCloseEvent:
+            self.launchAgain=False
             self.reject()
         else:
             # if marking total or up, be careful of giving 0-marks
@@ -280,6 +291,10 @@ class Annotator(QDialog):
                 msg = SimpleMessage('You have given {} - please confirm'.format(self.maxMark))
                 if msg.exec_() == QMessageBox.No:
                     return
+            if relaunch:
+                self.launchAgain = True
+            else:
+                self.launchAgain = False
 
             self.view.save()
             self.accept()
