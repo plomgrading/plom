@@ -140,7 +140,7 @@ class commentRowModel(QStandardItemModel):
 
 
 class SimpleCommentTable(QTableView):
-    commentSignal = pyqtSignal(['QString', int]) #This is picked up by the annotator
+    commentSignal = pyqtSignal(list) #This is picked up by the annotator
     def __init__(self, parent):
         super(SimpleCommentTable, self).__init__()
         self.verticalHeader().hide()
@@ -153,17 +153,20 @@ class SimpleCommentTable(QTableView):
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.viewport().setAcceptDrops(True)
         self.setDropIndicatorShown(True)
+        self.clicked.connect(self.handleClick)
 
-        self.model = commentRowModel()
-        self.model.setHorizontalHeaderLabels(['delta', 'comment'])
-        self.setModel(self.model)
+        self.cmodel = commentRowModel()
+        self.cmodel.setHorizontalHeaderLabels(['delta', 'comment'])
+        self.setModel(self.cmodel)
 
         self.delegate = commentDelegate()
         self.setItemDelegate(self.delegate)
 
-        self.clist=[]
+        self.clist = []
         self.loadCommentList()
+        self.populateTable()
 
+    def populateTable(self):
         for (dlt, txt) in self.clist:
             txti = QStandardItem(txt)
             txti.setEditable(True)
@@ -176,11 +179,12 @@ class SimpleCommentTable(QTableView):
 
             delti.setEditable(True)
             delti.setDropEnabled(False)
+            self.cmodel.appendRow([delti, txti])
 
-            self.model.appendRow([delti, txti])
-
-    def handleClick(self):
-        self.commentSignal.emit([self.currentItem().text()])
+    def handleClick(self, index):
+        r = index.row()
+        print("Sending data {} {}".format(self.cmodel.index(r,0).data(), self.cmodel.index(r,1).data()))
+        self.commentSignal.emit([self.cmodel.index(r,0).data(), self.cmodel.index(r,1).data()])
 
     def loadCommentList(self):
         if os.path.exists('commentList.json'):

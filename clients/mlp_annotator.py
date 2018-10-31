@@ -242,9 +242,9 @@ class Annotator(QDialog):
         self.commentW.CL.commentSignal.connect(self.handleComment)
 
 
-    def handleComment(self, txt):
+    def handleComment(self, dlt_txt):
         self.setMode("text", QCursor(Qt.IBeamCursor))
-        self.view.makeComment(txt)
+        self.view.makeComment(dlt_txt[0], dlt_txt[1])
 
     def setMarkEntry(self, markStyle):
         self.markEntry = MarkEntry(self.maxMark)

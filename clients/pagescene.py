@@ -130,7 +130,11 @@ class PageScene(QGraphicsScene):
         self.undoStack.push(command)
 
     def comment_mousePressEvent(self, event):
-        self.originPos = event.scenePos() + QPointF(0, -24)
+        pt = event.scenePos()
+        command = CommandDelta(self, pt, self.commentDelta)
+        self.undoStack.push(command)
+
+        self.originPos = event.scenePos() + QPointF(36, -24)
         self.blurb = TextItem(self)
         self.blurb.setPos(self.originPos)
         self.blurb.setPlainText(self.commentText)
@@ -272,11 +276,6 @@ class PageScene(QGraphicsScene):
         else:
             self.parent().scale(1.25, 1.25)
         self.parent().centerOn(event.scenePos())
-        #     rec = self.boxItem.rect()
-        #     if rec.height() >= 100 and rec.width() >= 100:
-        #         self.parent().fitInView(self.boxItem, Qt.KeepAspectRatio)
-        # # print("Zoom release ", type(self.boxItem))
-        # self.removeItem(self.boxItem)
 
     def delta_mousePressEvent(self, event):
         pt = event.scenePos()
