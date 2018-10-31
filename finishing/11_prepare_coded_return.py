@@ -28,7 +28,7 @@ saltstr = 'salt'
 
 # TODO: should get this from project
 basename = 'mt2'
-coursename = 'Math 253 Midterm 2'
+longname = 'Math 253 Midterm 2'
 
 
 def myhash(s):
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     shutil.copyfile('view_test_template.html', 'codedReturn/index.html')
     with open('view_test_template.html', 'r') as htmlfile:
         html = htmlfile.read()
-    html = html.replace('__COURSENAME__', coursename)
+    html = html.replace('__COURSENAME__', longname)
     html = html.replace('__TESTNAME__', basename)
 
     newname = os.path.join('codedReturn', 'index.html')
