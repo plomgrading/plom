@@ -2,8 +2,8 @@ import os
 import json
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
-from PyQt5.QtGui import QCursor, QIcon, QPixmap
-from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QSpinBox, QPushButton, QTableView, QTableWidget, QTableWidgetItem, QToolButton, QWidget
+from PyQt5.QtGui import QCursor, QIcon, QPixmap, QStandardItem, QStandardItemModel
+from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QSpinBox, QPushButton, QTableView, QToolButton, QWidget
 
 class ErrorMessage(QMessageBox):
     def __init__(self, txt):
@@ -123,11 +123,16 @@ class CommentWidget(QWidget):
         self.CL.setCurrentRow((self.CL.currentRow()-1) % self.CL.count())
 
 
-class SimpleCommentTable(QTableWidget):
+class commentRowModel(QStandardItemModel):
+    def dropMimeData(self, data, action, r, c, parent):
+        return super().dropMimeData(data, action, r, 0, parent)
+
+
+class SimpleCommentTable(QTableView):
     commentSignal = pyqtSignal(['QString', int]) #This is picked up by the annotator
     def __init__(self, parent):
-        super(SimpleCommentTable, self).__init__(1,2)
-        self.setHorizontalHeaderLabels(['delta', 'comment'])
+        super(SimpleCommentTable, self).__init__()
+        self.verticalHeader().hide()
         self.resizeColumnToContents(0)
         self.horizontalHeader().setStretchLastSection(True)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -137,20 +142,25 @@ class SimpleCommentTable(QTableWidget):
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.viewport().setAcceptDrops(True)
         self.setDropIndicatorShown(True)
-        self.verticalHeader().setSectionsMovable(True)
 
-        HERE
+        self.model = commentRowModel()
+        self.model.setHorizontalHeaderLabels(['delta', 'comment'])
+        self.setModel(self.model)
 
-        # self.itemClicked.connect(self.handleClick)
         self.loadCommentList()
 
-        self.setRowCount(len(self.clist))
-        for r in range(len(self.clist)):
-            tx = QTableWidgetItem(self.clist[r])
-            dt = QTableWidgetItem(str(0))
-            tx.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsDragEnabled)
-            self.setItem(r,1,tx)
-            self.setItem(r,0,dt)
+        k=0
+        for txt in self.clist:
+            k += 1
+            txti = QStandardItem(txt)
+            txti.setEditable(True)
+            txti.setDropEnabled(False)
+
+            delti = QStandardItem(str(k))
+            delti.setEditable(True)
+            delti.setDropEnabled(False)
+
+            self.model.appendRow([delti, txti])
 
     def handleClick(self):
         self.commentSignal.emit([self.currentItem().text()])
