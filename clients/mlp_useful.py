@@ -124,15 +124,15 @@ class CommentWidget(QWidget):
 
 
 class commentDelegate(QItemDelegate):
+    up = 3
+    down = 0
     def paint(self, painter, option, index):
         if index.column() == 0:
             v = int(index.model().data(index, Qt.EditRole))
-            if v < 0 or v > 3:
-                painter.setBrush(Qt.blue)
+            if v < self.down or v > self.up:
+                painter.setBrush(Qt.red)
                 painter.drawRect(option.rect)
-            painter.drawText(option.rect, Qt.AlignLeft | Qt.AlignVCenter, " {}".format(v))
-        else:
-            QItemDelegate.paint(self, painter, option, index)
+        QItemDelegate.paint(self, painter, option, index)
 
 class commentRowModel(QStandardItemModel):
     def dropMimeData(self, data, action, r, c, parent):
@@ -161,16 +161,19 @@ class SimpleCommentTable(QTableView):
         self.delegate = commentDelegate()
         self.setItemDelegate(self.delegate)
 
+        self.clist=[]
         self.loadCommentList()
 
-        k=-2
-        for txt in self.clist:
-            k += 1
+        for (dlt, txt) in self.clist:
             txti = QStandardItem(txt)
             txti.setEditable(True)
             txti.setDropEnabled(False)
 
-            delti = QStandardItem(str(k))
+            if dlt > 0:
+                delti = QStandardItem("+{}".format(dlt))
+            else:
+                delti = QStandardItem("{}".format(dlt))
+
             delti.setEditable(True)
             delti.setDropEnabled(False)
 
@@ -183,12 +186,12 @@ class SimpleCommentTable(QTableView):
         if os.path.exists('commentList.json'):
             self.clist = json.load(open('commentList.json'))
         else:
-            self.clist = ['algebra', 'arithmetic', 'be careful', 'very nice']
-    #
-    # def saveCommentList(self):
-    #     self.clist=[]
-    #     for r in range(self.count()):
-    #         self.clist.append( self.item(r).text() )
-    #
-    #     with open('commentList.json', 'w') as fname:
-    #         json.dump(self.clist, fname)
+            self.clist = [(-1, 'algebra'), (-1, 'arithmetic'), (0, 'be careful'), (1, 'very nice')]
+
+    def saveCommentList(self):
+        self.clist = []
+        for r in range(self.count()):
+            self.clist.append((self.item(r, 0).text(), self.item(r, 1)))
+
+        with open('commentList.json', 'w') as fname:
+            json.dump(self.clist, fname)
