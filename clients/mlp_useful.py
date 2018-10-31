@@ -3,7 +3,7 @@ import json
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QCursor, QIcon, QPixmap, QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QSpinBox, QPushButton, QTableView, QToolButton, QWidget
+from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QSpinBox, QPushButton, QTableView, QToolButton, QWidget, QItemDelegate
 
 class ErrorMessage(QMessageBox):
     def __init__(self, txt):
@@ -123,6 +123,17 @@ class CommentWidget(QWidget):
         self.CL.setCurrentRow((self.CL.currentRow()-1) % self.CL.count())
 
 
+class commentDelegate(QItemDelegate):
+    def paint(self, painter, option, index):
+        if index.column() == 0:
+            v = int(index.model().data(index, Qt.EditRole))
+            if v < 0 or v > 3:
+                painter.setBrush(Qt.blue)
+                painter.drawRect(option.rect)
+            painter.drawText(option.rect, Qt.AlignLeft | Qt.AlignVCenter, " {}".format(v))
+        else:
+            QItemDelegate.paint(self, painter, option, index)
+
 class commentRowModel(QStandardItemModel):
     def dropMimeData(self, data, action, r, c, parent):
         return super().dropMimeData(data, action, r, 0, parent)
@@ -147,9 +158,12 @@ class SimpleCommentTable(QTableView):
         self.model.setHorizontalHeaderLabels(['delta', 'comment'])
         self.setModel(self.model)
 
+        self.delegate = commentDelegate()
+        self.setItemDelegate(self.delegate)
+
         self.loadCommentList()
 
-        k=0
+        k=-2
         for txt in self.clist:
             k += 1
             txti = QStandardItem(txt)
