@@ -3,7 +3,7 @@ import json
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QCursor, QIcon, QPixmap
-from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QSpinBox, QPushButton, QTableView, QToolButton, QWidget
+from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QSpinBox, QPushButton, QTableView, QTableWidget, QTableWidgetItem, QToolButton, QWidget
 
 class ErrorMessage(QMessageBox):
     def __init__(self, txt):
@@ -83,7 +83,7 @@ class CommentWidget(QWidget):
     def __init__(self,parent=None):
         super(CommentWidget,self).__init__()
         grid = QGridLayout()
-        self.CL = SimpleCommentList(self)
+        self.CL = SimpleCommentTable(self)
         grid.addWidget(self.CL, 1, 1, 2, 3)
         self.addB = QPushButton('Add')
         self.addB.clicked.connect(self.addItem)
@@ -100,15 +100,15 @@ class CommentWidget(QWidget):
 
     def addItem(self):
         self.CL.setFocus()
-        it = QListWidgetItem('EDIT ME')
-        it.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsDragEnabled)
-        self.CL.addItem(it)
-        self.CL.setCurrentItem(it)
-        self.CL.editItem(self.CL.currentItem())
+        # it = QListWidgetItem('EDIT ME')
+        # it.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsDragEnabled)
+        # self.CL.addItem(it)
+        # self.CL.setCurrentItem(it)
+        # self.CL.editItem(self.CL.currentItem())
 
     def deleteItem(self):
         self.CL.setFocus()
-        self.CL.takeItem(self.CL.currentRow())
+        # self.CL.takeItem(self.CL.currentRow())
 
     def currentItem(self):
         if self.CL.currentRow() >= 0:
@@ -121,3 +121,50 @@ class CommentWidget(QWidget):
 
     def previousItem(self):
         self.CL.setCurrentRow((self.CL.currentRow()-1) % self.CL.count())
+
+
+class SimpleCommentTable(QTableWidget):
+    commentSignal = pyqtSignal(['QString', int]) #This is picked up by the annotator
+    def __init__(self, parent):
+        super(SimpleCommentTable, self).__init__(1,2)
+        self.setHorizontalHeaderLabels(['delta', 'comment'])
+        self.resizeColumnToContents(0)
+        self.horizontalHeader().setStretchLastSection(True)
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setDragEnabled(True)
+        self.setDragDropOverwriteMode(False)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.viewport().setAcceptDrops(True)
+        self.setDropIndicatorShown(True)
+        self.verticalHeader().setSectionsMovable(True)
+
+        HERE
+
+        # self.itemClicked.connect(self.handleClick)
+        self.loadCommentList()
+
+        self.setRowCount(len(self.clist))
+        for r in range(len(self.clist)):
+            tx = QTableWidgetItem(self.clist[r])
+            dt = QTableWidgetItem(str(0))
+            tx.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsDragEnabled)
+            self.setItem(r,1,tx)
+            self.setItem(r,0,dt)
+
+    def handleClick(self):
+        self.commentSignal.emit([self.currentItem().text()])
+
+    def loadCommentList(self):
+        if os.path.exists('commentList.json'):
+            self.clist = json.load(open('commentList.json'))
+        else:
+            self.clist = ['algebra', 'arithmetic', 'be careful', 'very nice']
+    #
+    # def saveCommentList(self):
+    #     self.clist=[]
+    #     for r in range(self.count()):
+    #         self.clist.append( self.item(r).text() )
+    #
+    #     with open('commentList.json', 'w') as fname:
+    #         json.dump(self.clist, fname)
