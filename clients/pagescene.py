@@ -178,7 +178,6 @@ class PageScene(QGraphicsScene):
         self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
 
     def line_mouseReleaseEvent(self, event):
-        # print("Line release ", type(self.lineItem))
         self.removeItem(self.lineItem)
         if self.arrowFlag == 0:
             command = CommandLine(self, self.originPos, self.currentPos)

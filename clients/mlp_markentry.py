@@ -13,6 +13,7 @@ class MarkEntry(QStackedWidget):
         self.numButtons = 5
         self.markButtons = {}
         self.redStyle = "border: 2px solid #ff0000; background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, stop: 0.3 #ffcccc, stop: 0.7 #ffcccc, stop: 1 #ff0000);"
+        self.greenStyle = "border: 2px solid #008888; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00bbbb, stop: 1 #008888); "
 
         self.pageC = QWidget()
         self.pageM = QWidget()
@@ -104,14 +105,14 @@ class MarkEntry(QStackedWidget):
     def setDeltaMark(self):
         self.pdmb.setStyleSheet("")
         self.pdmb = self.sender()
-        self.pdmb.setStyleSheet(self.redStyle)
+        self.pdmb.setStyleSheet(self.greenStyle)
         self.currentDelta = int(self.sender().text().replace('&', ''))
         self.deltaSetSignal.emit(self.currentDelta)
 
     def setTotalMark(self):
         self.pmtb.setStyleSheet("")
         self.pmtb = self.sender()
-        self.pmtb.setStyleSheet(self.redStyle)
+        self.pmtb.setStyleSheet(self.greenStyle)
         self.currentScore = int(self.sender().text().replace('&', ''))
         self.markSetSignal.emit(self.currentScore)
 
@@ -119,3 +120,6 @@ class MarkEntry(QStackedWidget):
         self.currentScore = newScore
         self.scoreL.setText("{} / {}".format(self.currentScore, self.maxScore))
         self.markSetSignal.emit(self.currentScore)
+
+    def clearButtonStyle(self):
+        self.pdmb.setStyleSheet("")

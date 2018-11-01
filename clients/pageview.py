@@ -32,7 +32,6 @@ class PageView(QGraphicsView):
 
     def makeComment(self, dlt, text):
         self.scene.mode = 'comment'
-        print("Making signed comment = {} {}".format(dlt, text))
         self.scene.commentDelta = int(dlt)
         self.scene.commentText = text
         self.setDragMode(0)

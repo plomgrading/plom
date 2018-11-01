@@ -171,6 +171,7 @@ class Annotator(QDialog):
         else:
             self.previousButton = self.sender()
             self.previousButton.setStyleSheet(self.currentBackground)
+            self.markEntry.clearButtonStyle()
         self.view.setMode(newMode)
         self.view.setCursor(newCursor)
         self.repaint()
@@ -179,7 +180,6 @@ class Annotator(QDialog):
         ## pyinstaller creates a temp folder and stores path in _MEIPASS
         try:
             base_path = sys._MEIPASS
-            # print("")
         except Exception:
             base_path = "./icons"
 

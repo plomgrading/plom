@@ -2,7 +2,7 @@ import os
 import json
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
-from PyQt5.QtGui import QCursor, QIcon, QPixmap, QStandardItem, QStandardItemModel
+from PyQt5.QtGui import QCursor, QIcon, QPainter, QPen, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QSpinBox, QPushButton, QTableView, QToolButton, QWidget, QItemDelegate
 
 class ErrorMessage(QMessageBox):
@@ -69,7 +69,6 @@ class CommentWidget(QWidget):
         self.CL.delegate.maxMark = maxMark
         self.CL.delegate.currentMark = currentMark
         self.CL.viewport().update()
-        print("Changing mark = {} out of {}".format(currentMark, maxMark))
 
     def saveComments(self):
         self.CL.saveCommentList()
@@ -82,15 +81,15 @@ class CommentWidget(QWidget):
 
     def currentItem(self):
         self.CL.currentItem()
-        self.parent().focus()
+        self.setFocus()
 
     def nextItem(self):
         self.CL.nextItem()
-        self.parent().focus()
+        self.setFocus()
 
     def previousItem(self):
         self.CL.previousItem()
-        self.parent().focus()
+        self.setFocus()
 
 
 class commentDelegate(QItemDelegate):
@@ -101,19 +100,23 @@ class commentDelegate(QItemDelegate):
         self.style = 0
 
     def paint(self, painter, option, index):
+        QItemDelegate.paint(self, painter, option, index)
         if index.column() == 0:
             delta = int(index.model().data(index, Qt.EditRole))
             if self.style == 2:  # mark up - disable negative
                 if delta <= 0 or delta + self.currentMark > self.maxMark:
-                    painter.setBrush(Qt.red)
-                    painter.drawRect(option.rect)
+                    painter.setRenderHint(QPainter.Antialiasing)
+                    painter.setPen(QPen(Qt.red, 3))
+                    painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
+                    painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
             elif self.style == 3:  # mark down - disable positive
                 if delta >= 0 or delta + self.currentMark < 0:
-                    painter.setBrush(Qt.red)
-                    painter.drawRect(option.rect)
+                    painter.setRenderHint(QPainter.Antialiasing)
+                    painter.setPen(QPen(Qt.red, 3))
+                    painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
+                    painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
             if self.style == 1:  # mark total - enable all
                 pass
-        QItemDelegate.paint(self, painter, option, index)
 
 
 class commentRowModel(QStandardItemModel):
@@ -141,7 +144,6 @@ class SimpleCommentTable(QTableView):
     def __init__(self, parent):
         super(SimpleCommentTable, self).__init__()
         self.verticalHeader().hide()
-        self.resizeColumnToContents(0)
         self.horizontalHeader().setStretchLastSection(True)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -163,11 +165,11 @@ class SimpleCommentTable(QTableView):
         self.loadCommentList()
         self.populateTable()
         self.resizeRowsToContents()  # resize rows and make sure any updates also resize.
+        self.resizeColumnToContents(0)
         self.cmodel.itemChanged.connect(self.resizeRowsToContents)
 
         # set these so that double-click enables edits, but not keypress.
         self.setEditTriggers(QAbstractItemView.NoEditTriggers | QAbstractItemView.DoubleClicked)
-
 
     def populateTable(self):
         for (dlt, txt) in self.clist:
@@ -179,11 +181,11 @@ class SimpleCommentTable(QTableView):
                 delti = QStandardItem("+{}".format(int(dlt)))
             else:
                 delti = QStandardItem("{}".format(dlt))
-
             delti.setEditable(True)
             delti.setDropEnabled(False)
+            delti.setTextAlignment(Qt.AlignCenter)
+
             self.cmodel.appendRow([delti, txti])
-            # self.resizeRowsToContents()
 
     def handleClick(self, index=0):
         if index == 0:  # make sure something is selected
@@ -192,8 +194,8 @@ class SimpleCommentTable(QTableView):
         self.commentSignal.emit([self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()])
 
     def loadCommentList(self):
-        if os.path.exists('commentList.json'):
-            self.clist = json.load(open('commentList.json'))
+        if os.path.exists('signedCommentList.json'):
+            self.clist = json.load(open('signedCommentList.json'))
         else:
             self.clist = [(-1, 'algebra'), (-1, 'arithmetic'), (0, 'be careful'), (1, 'very nice')]
 
@@ -202,7 +204,7 @@ class SimpleCommentTable(QTableView):
         for r in range(self.cmodel.rowCount()):
             self.clist.append((self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()))
 
-        with open('commentList.json', 'w') as fname:
+        with open('signedCommentList.json', 'w') as fname:
             json.dump(self.clist, fname)
 
     def addItem(self):
@@ -212,6 +214,7 @@ class SimpleCommentTable(QTableView):
         delti = QStandardItem("0")
         delti.setEditable(True)
         delti.setDropEnabled(False)
+        delti.setTextAlignment(Qt.AlignCenter)
         self.cmodel.appendRow([delti, txti])
         self.selectRow(self.cmodel.rowCount()-1)  # select current row
         self.edit(self.selectedIndexes()[1])  # fire up editor on the comment which is second selected index
