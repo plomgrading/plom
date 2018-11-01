@@ -80,8 +80,8 @@ class SimpleCommentList(QListWidget):
             json.dump(self.clist, fname)
 
 class CommentWidget(QWidget):
-    def __init__(self,parent=None):
-        super(CommentWidget,self).__init__()
+    def __init__(self, parent=None):
+        super(CommentWidget, self).__init__()
         grid = QGridLayout()
         self.CL = SimpleCommentTable(self)
         grid.addWidget(self.CL, 1, 1, 2, 3)
@@ -94,6 +94,15 @@ class CommentWidget(QWidget):
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.delB, 3, 3)
         self.setLayout(grid)
+
+    def setStyle(self, markStyle):
+        self.CL.delegate.style = markStyle
+
+    def changeMark(self, maxMark, currentMark):
+        self.CL.delegate.maxMark = maxMark
+        self.CL.delegate.currentMark = currentMark
+        self.CL.viewport().update()
+        print("Changing mark = {} out of {}".format(currentMark, maxMark))
 
     def saveComments(self):
         self.CL.saveCommentList()
@@ -124,14 +133,25 @@ class CommentWidget(QWidget):
 
 
 class commentDelegate(QItemDelegate):
-    up = 3
-    down = 0
+    def __init__(self):
+        super(commentDelegate, self).__init__()
+        self.currentMark = 0
+        self.maxMark = 0
+        self.style = 0
+
     def paint(self, painter, option, index):
         if index.column() == 0:
-            v = int(index.model().data(index, Qt.EditRole))
-            if v < self.down or v > self.up:
-                painter.setBrush(Qt.red)
-                painter.drawRect(option.rect)
+            delta = int(index.model().data(index, Qt.EditRole))
+            if self.style == 2:  # mark up - disable negative
+                if delta <= 0 or delta + self.currentMark > self.maxMark:
+                    painter.setBrush(Qt.red)
+                    painter.drawRect(option.rect)
+            elif self.style == 3:  # mark down - disable positive
+                if delta >= 0 or delta + self.currentMark < 0:
+                    painter.setBrush(Qt.red)
+                    painter.drawRect(option.rect)
+            if self.style == 1:  # mark total - enable all
+                pass
         QItemDelegate.paint(self, painter, option, index)
 
 class commentRowModel(QStandardItemModel):
@@ -183,8 +203,7 @@ class SimpleCommentTable(QTableView):
 
     def handleClick(self, index):
         r = index.row()
-        print("Sending data {} {}".format(self.cmodel.index(r,0).data(), self.cmodel.index(r,1).data()))
-        self.commentSignal.emit([self.cmodel.index(r,0).data(), self.cmodel.index(r,1).data()])
+        self.commentSignal.emit([self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()])
 
     def loadCommentList(self):
         if os.path.exists('commentList.json'):

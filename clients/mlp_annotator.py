@@ -17,6 +17,7 @@ class Annotator(QDialog):
         self.imageFile = fname
         self.maxMark = maxMark
         self.score = 0
+        self.markStyle = markStyle
         self.currentBackground = "border: 2px solid #008888; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00bbbb, stop: 1 #008888); "
         self.previousButton = None
 
@@ -30,14 +31,18 @@ class Annotator(QDialog):
         self.setView()
 
         self.commentW = CommentWidget()
-        self.ui.commentGrid.addWidget(self.commentW,1,1)
+        self.ui.commentGrid.addWidget(self.commentW, 1, 1)
 
         self.setIcons()
         self.setButtons()
         # pass the marking style to the mark entry widget.
-        self.setMarkEntry(markStyle)
+        self.setMarkEntry(self.markStyle)
         self.view.scene.scoreBox.changeMax(self.maxMark)
         self.view.scene.scoreBox.changeScore(self.score)
+        # pass this to the comment table too
+        self.commentW.setStyle(self.markStyle)
+        self.commentW.changeMark(self.maxMark, self.score)
+
         self.showMaximized()
 
         ## Hot-key presses for various functions.
@@ -244,11 +249,22 @@ class Annotator(QDialog):
 
     def handleComment(self, dlt_txt):
         self.setMode("text", QCursor(Qt.IBeamCursor))
+        # set the delta to 0 if it is out-of-bounds.
+        delta=int(dlt_txt[0])
+        if self.markStyle == 2:  # mark up - disable negative
+            if delta <= 0 or delta + self.score > self.maxMark:
+                self.view.makeComment(0, dlt_txt[1])
+                return
+        elif self.markStyle == 2:  # mark down - disable positive
+            if delta >= 0 or delta + self.score < 0:
+                self.view.makeComment(0, dlt_txt[1])
+                return
+        # Remaining possibility = mark total, enable all.
         self.view.makeComment(dlt_txt[0], dlt_txt[1])
 
     def setMarkEntry(self, markStyle):
         self.markEntry = MarkEntry(self.maxMark)
-        self.ui.markGrid.addWidget(self.markEntry,1,1)
+        self.ui.markGrid.addWidget(self.markEntry, 1, 1)
         self.markEntry.markSetSignal.connect(self.totalMarkSet)
         self.markEntry.deltaSetSignal.connect(self.deltaMarkSet)
         self.view.scene.markChangedSignal.connect(self.changeMark)
@@ -258,6 +274,7 @@ class Annotator(QDialog):
         self.score = tm
         self.ui.finishedButton.setFocus()
         self.view.scene.scoreBox.changeScore(self.score)
+        self.commentW.changeMark(self.maxMark, self.score)
 
     def deltaMarkSet(self, dm):
         lookingAhead = self.score+dm

@@ -68,6 +68,7 @@ class PageScene(QGraphicsScene):
         self.deleteItem = None
         self.markDelta = 0
         self.commentText = ""
+        self.commentDelta = 0
 
         self.scoreBox = ScoreBox()
         self.scoreBox.setZValue(10)
@@ -131,10 +132,13 @@ class PageScene(QGraphicsScene):
 
     def comment_mousePressEvent(self, event):
         pt = event.scenePos()
-        command = CommandDelta(self, pt, self.commentDelta)
-        self.undoStack.push(command)
+        offset = QPointF(0,-24)
+        if self.commentDelta != 0:  # then put down a marker. Else just the comment.
+            command = CommandDelta(self, pt, self.commentDelta)
+            self.undoStack.push(command)
+            offset = QPointF(36,-24)
 
-        self.originPos = event.scenePos() + QPointF(36, -24)
+        self.originPos = event.scenePos() + offset
         self.blurb = TextItem(self)
         self.blurb.setPos(self.originPos)
         self.blurb.setPlainText(self.commentText)
