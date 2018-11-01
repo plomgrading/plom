@@ -81,7 +81,6 @@ if __name__ == '__main__':
 
 
     print('Adding codedReturn/index.html file')
-    shutil.copyfile('view_test_template.html', 'codedReturn/index.html')
     with open('view_test_template.html', 'r') as htmlfile:
         html = htmlfile.read()
     html = html.replace('__COURSENAME__', longname)
