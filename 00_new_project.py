@@ -10,7 +10,7 @@ directories += ['build/examsToPrint', 'build/sourceVersions']
 directories += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/', 'scanAndGroup/readyForMarking', 'scanAndGroup/scannedExams']
 directories += ['imageServer/markedPapers']
 directories += ['clients', 'clients/uiFiles', 'clients/icons']
-directories += ['finishing/frontPages', 'finishing/reassembled/']
+directories += ['finishing/frontPages', 'finishing/reassembled/', 'finishing/reassembled_ID_but_not_marked']
 
 files = ['resources/testspecification.py', 'resources/davconf.conf']
 files += ['build/01_build_specification_gui.py', 'build/cleanAll.py', 'build/editMeToBuildASpec.py', 'build/02_build_tests_from_spec.py', 'build/mergeAndCodePages.py', 'build/buildTestPDFs.py', 'build/ui_builder.py', 'build/version_selector_qlist.py']

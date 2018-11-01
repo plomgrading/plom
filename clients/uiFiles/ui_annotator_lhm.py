@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator_lefthandmouse.ui'
+# Form implementation generated from reading ui file './ui_annotator_lefthandmouse.ui'
 #
 # Created by: PyQt5 UI code generator 5.10.1
 #
@@ -32,14 +32,19 @@ class Ui_annotator_lhm(object):
         self.frame_2.setObjectName("frame_2")
         self.gridLayout_2 = QtWidgets.QGridLayout(self.frame_2)
         self.gridLayout_2.setObjectName("gridLayout_2")
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_2.addItem(spacerItem, 0, 1, 1, 1)
-        self.cancelButton = QtWidgets.QPushButton(self.frame_2)
-        self.cancelButton.setObjectName("cancelButton")
-        self.gridLayout_2.addWidget(self.cancelButton, 0, 2, 1, 1)
         self.finishedButton = QtWidgets.QPushButton(self.frame_2)
         self.finishedButton.setObjectName("finishedButton")
         self.gridLayout_2.addWidget(self.finishedButton, 0, 0, 1, 1)
+        self.cancelButton = QtWidgets.QPushButton(self.frame_2)
+        self.cancelButton.setObjectName("cancelButton")
+        self.gridLayout_2.addWidget(self.cancelButton, 0, 4, 1, 1)
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_2.addItem(spacerItem, 0, 1, 1, 1)
+        self.finishNoRelaunchButton = QtWidgets.QPushButton(self.frame_2)
+        self.finishNoRelaunchButton.setObjectName("finishNoRelaunchButton")
+        self.gridLayout_2.addWidget(self.finishNoRelaunchButton, 0, 2, 1, 1)
+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_2.addItem(spacerItem1, 0, 3, 1, 1)
         self.gridLayout.addWidget(self.frame_2, 4, 1, 1, 1)
         self.pageFrame = QtWidgets.QFrame(annotator_lhm)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
@@ -130,13 +135,13 @@ class Ui_annotator_lhm(object):
         self.frame.setObjectName("frame")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.frame)
         self.horizontalLayout.setObjectName("horizontalLayout")
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem1)
+        spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem2)
         self.keyHelpButton = QtWidgets.QPushButton(self.frame)
         self.keyHelpButton.setObjectName("keyHelpButton")
         self.horizontalLayout.addWidget(self.keyHelpButton)
-        spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem2)
+        spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem3)
         self.gridLayout_3.addWidget(self.frame, 3, 0, 1, 5)
         self.gridLayout.addWidget(self.groupBox, 0, 1, 1, 1)
 
@@ -148,8 +153,11 @@ class Ui_annotator_lhm(object):
         _translate = QtCore.QCoreApplication.translate
         annotator_lhm.setWindowTitle(_translate("annotator_lhm", "Annotate paper"))
         self.groupBox_3.setTitle(_translate("annotator_lhm", "Comment list"))
+        self.finishedButton.setText(_translate("annotator_lhm", "End && \n"
+" Next"))
         self.cancelButton.setText(_translate("annotator_lhm", "&Cancel"))
-        self.finishedButton.setText(_translate("annotator_lhm", "Finished"))
+        self.finishNoRelaunchButton.setText(_translate("annotator_lhm", "End && \n"
+" Return"))
         self.markBox.setTitle(_translate("annotator_lhm", "Enter Mark"))
         self.groupBox.setTitle(_translate("annotator_lhm", "Tools"))
         self.crossButton.setToolTip(_translate("annotator_lhm", "press i"))

@@ -259,7 +259,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.setFocus()
 
 
-    def requestNext(self):
+    def requestNext(self, launchAgain=False):
         msg = mlp_messenger.SRMsg(['mNUM', self.userName, self.token, self.pageGroup, self.version])
         if msg[0] == 'ERR':
             return
@@ -270,11 +270,14 @@ class MarkerClient(QWidget):
         # Ack that test received.
         msg = mlp_messenger.SRMsg(['mGTP', self.userName, self.token, tname])
         self.ui.tableView.resizeColumnsToContents()
-        # ask server for id-count update
-        msg = mlp_messenger.SRMsg(['mPRC', self.userName, self.token, self.pageGroup, self.version]) #returns [ACK, #id'd, #total]
-        if msg[0] == 'ACK':
-            self.ui.mProgressBar.setValue(msg[1])
-            self.ui.mProgressBar.setMaximum(msg[2])
+        # ask server for counts update
+        progress_msg = mlp_messenger.SRMsg(['mPRC', self.userName, self.token, self.pageGroup, self.version]) #returns [ACK, #id'd, #total]
+        if progress_msg[0] == 'ACK':
+            self.ui.mProgressBar.setValue(progress_msg[1])
+            self.ui.mProgressBar.setMaximum(progress_msg[2])
+        # launch annotator on the new test
+        if msg[0] != 'ERR' and launchAgain:
+            self.annotateTest()
 
 
     def moveToNextTest(self):
@@ -328,7 +331,7 @@ class MarkerClient(QWidget):
         annotator = Annotator(fname, self.maxScore, self.markStyle, self.mouseHand)
         if annotator.exec_():
             if annotator.score >= 0:
-                return [str(annotator.score), timer.elapsed()//1000] #number of seconds rounded down.
+                return [str(annotator.score), timer.elapsed()//1000, annotator.launchAgain] #number of seconds rounded down.
             else:
                 msg = ErrorMessage('You have to give a mark.')
                 msg.exec_()
@@ -336,7 +339,7 @@ class MarkerClient(QWidget):
         else:
             msg = ErrorMessage("mark not recorded")
             msg.exec_()
-            return [None, timer.elapsed()]
+            return [None, timer.elapsed(), False]
 
     def writeGradeOnImage(self,fname,gr):
         img = QPixmap(fname)
@@ -369,7 +372,7 @@ class MarkerClient(QWidget):
         if self.exM.data(index[1]) in ['untouched', 'reverted']:
             copyfile("{:s}".format(self.exM.getOriginalFile(index[0].row())), aname)
 
-        [gr, mtime] = self.waitForAnnotator(aname)
+        [gr, mtime, launchAgain] = self.waitForAnnotator(aname)
         if gr is None: #Exited annotator with 'cancel'
             return
 
@@ -382,7 +385,7 @@ class MarkerClient(QWidget):
         msg = mlp_messenger.SRMsg(['mRMD', self.userName, self.token, self.exM.data(index[0]), gr, dname, mtime])
 
         if self.moveToNextUnmarkedTest() == False:
-            self.requestNext()
+            self.requestNext(launchAgain)
 
 
     def waitForFlipper(self, fname):
