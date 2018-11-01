@@ -132,11 +132,12 @@ class PageScene(QGraphicsScene):
 
     def comment_mousePressEvent(self, event):
         pt = event.scenePos()
-        offset = QPointF(0,-24)
+        offset = QPointF(0, -24)
         if self.commentDelta != 0:  # then put down a marker. Else just the comment.
             command = CommandDelta(self, pt, self.commentDelta)
             self.undoStack.push(command)
-            offset = QPointF(36,-24)
+            x = len(str(abs(int(self.commentDelta))))  # number of digits in delta
+            offset = QPointF(26+15*x, -24)
 
         self.originPos = event.scenePos() + offset
         self.blurb = TextItem(self)

@@ -234,7 +234,6 @@ class Annotator(QDialog):
 
         self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
 
-
         self.ui.commentButton.clicked.connect(lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()))
         self.ui.commentUpButton.clicked.connect(lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()))
         self.ui.commentDownButton.clicked.connect(lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()))
@@ -250,7 +249,7 @@ class Annotator(QDialog):
     def handleComment(self, dlt_txt):
         self.setMode("text", QCursor(Qt.IBeamCursor))
         # set the delta to 0 if it is out-of-bounds.
-        delta=int(dlt_txt[0])
+        delta = int(dlt_txt[0])
         if self.markStyle == 2:  # mark up - disable negative
             if delta <= 0 or delta + self.score > self.maxMark:
                 self.view.makeComment(0, dlt_txt[1])
