@@ -8,7 +8,7 @@ class tmp(QWidget):
         super(tmp, self).__init__()
         self.tab = SimpleCommentTable(self)
         grid = QGridLayout()
-        grid.addWidget(self.tab,1,1)
+        grid.addWidget(self.tab, 1, 1)
         self.setLayout(grid)
         self.show()
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './ui_marker.ui'
+# Form implementation generated from reading ui file '../qtCreatorFiles/ui_marker.ui'
 #
 # Created by: PyQt5 UI code generator 5.10.1
 #
@@ -72,6 +72,7 @@ class Ui_MarkerWindow(object):
         self.gridLayout_2 = QtWidgets.QGridLayout(self.tableBox)
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.tableView = SimpleTableView(self.tableBox)
+        self.tableView.setMinimumSize(QtCore.QSize(250, 0))
         self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tableView.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.tableView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
@@ -119,11 +120,6 @@ class Ui_MarkerWindow(object):
         self.markTotalRB.setObjectName("markTotalRB")
         self.markStyleGroup.addButton(self.markTotalRB)
         self.horizontalLayout_4.addWidget(self.markTotalRB)
-        self.markLaterRB = QtWidgets.QRadioButton(self.styleChoiceBox)
-        self.markLaterRB.setChecked(False)
-        self.markLaterRB.setObjectName("markLaterRB")
-        self.markStyleGroup.addButton(self.markLaterRB)
-        self.horizontalLayout_4.addWidget(self.markLaterRB)
         self.verticalLayout_2.addWidget(self.styleChoiceBox)
         self.handChoiceBox = QtWidgets.QGroupBox(self.widget)
         self.handChoiceBox.setObjectName("handChoiceBox")
@@ -204,7 +200,6 @@ class Ui_MarkerWindow(object):
         self.markUpRB.setText(_translate("MarkerWindow", "&Up"))
         self.markDownRB.setText(_translate("MarkerWindow", "Down"))
         self.markTotalRB.setText(_translate("MarkerWindow", "Total"))
-        self.markLaterRB.setText(_translate("MarkerWindow", "Later"))
         self.handChoiceBox.setTitle(_translate("MarkerWindow", "Mouse Hand"))
         self.leftMouseRB.setText(_translate("MarkerWindow", "&Left"))
         self.rightMouseRB.setText(_translate("MarkerWindow", "Right"))
