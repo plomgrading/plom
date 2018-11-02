@@ -89,7 +89,7 @@ class MarkEntry(QStackedWidget):
 
     def setMarkingTotal(self):
         grid = QGridLayout()
-        self.pmtb = QPushButton()
+        self.ptmb = QPushButton()
 
         for k in range(0, self.maxScore+1):
             self.markButtons["{}".format(k)] = QPushButton("&{}".format(k))
@@ -110,9 +110,9 @@ class MarkEntry(QStackedWidget):
         self.deltaSetSignal.emit(self.currentDelta)
 
     def setTotalMark(self):
-        self.pmtb.setStyleSheet("")
-        self.pmtb = self.sender()
-        self.pmtb.setStyleSheet(self.greenStyle)
+        self.ptmb.setStyleSheet("")
+        self.ptmb = self.sender()
+        self.ptmb.setStyleSheet(self.greenStyle)
         self.currentScore = int(self.sender().text().replace('&', ''))
         self.markSetSignal.emit(self.currentScore)
 
@@ -122,4 +122,7 @@ class MarkEntry(QStackedWidget):
         self.markSetSignal.emit(self.currentScore)
 
     def clearButtonStyle(self):
-        self.pdmb.setStyleSheet("")
+        if self.style == "Total":
+            self.ptmb.setStyleSheet("")
+        else:
+            self.pdmb.setStyleSheet("")

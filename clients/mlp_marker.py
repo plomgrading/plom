@@ -208,7 +208,6 @@ class MarkerClient(QWidget):
         # self.ui.nextButton.clicked.connect(self.moveToNextTest)
         self.ui.flipButton.clicked.connect(self.flipIt)
 
-        self.ui.markStyleGroup.setId(self.ui.markLaterRB, 0)
         self.ui.markStyleGroup.setId(self.ui.markTotalRB, 1)
         self.ui.markStyleGroup.setId(self.ui.markUpRB, 2)
         self.ui.markStyleGroup.setId(self.ui.markDownRB, 3)
