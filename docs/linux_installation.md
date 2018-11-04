@@ -47,3 +47,12 @@ Other stuff we get from pip:
 # pip3 install --user peewee
 # pip3 install --user wsgidav
 # pip3 install --user easywebdav2
+# pip3 install --user pymupdf pyqrcode pypng
+# pip3 install --user weasyprint
+
+It also may be useful to install `x2goserver`.
+
+Finally: it has been noted that ImageMagick doesn't allow hacking
+of pdf files by default, some edits are needed to
+`/etc/ImageMagick-6/policy.xml`.
+TODO: make this more specific.
