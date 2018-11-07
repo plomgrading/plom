@@ -254,7 +254,7 @@ class Annotator(QDialog):
             if delta <= 0 or delta + self.score > self.maxMark:
                 self.view.makeComment(0, dlt_txt[1])
                 return
-        elif self.markStyle == 2:  # mark down - disable positive
+        elif self.markStyle == 3:  # mark down - disable positive
             if delta >= 0 or delta + self.score < 0:
                 self.view.makeComment(0, dlt_txt[1])
                 return
