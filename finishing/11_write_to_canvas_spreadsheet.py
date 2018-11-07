@@ -19,8 +19,7 @@
 import os, sys
 import csv
 
-import importlib
-myhash = importlib.import_module('10_prepare_coded_return').myhash
+from utils import myhash
 
 canvas_fromfile = 'canvas_from_export.csv'
 canvas_tofile = 'canvas_for_import.csv'

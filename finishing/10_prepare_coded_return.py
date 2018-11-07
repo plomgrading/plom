@@ -19,28 +19,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os, sys, shutil
-import hashlib
 
-
-# if you know the salt string and you know someone's student
-# number, you can determine their code.
-saltstr = 'salt'
+from utils import myhash, saltstr
 
 # TODO: should get this from project
 basename = 'mt2'
 longname = 'Math 253 Midterm 2'
-
-
-def myhash(s):
-    """
-    Hash a string to a 5-digit code
-
-    Combine the string with a salt string, compute the md5sum, grab
-    the first few digits as an integer between 10000 and 99999.
-    """
-    hashthis = s + saltstr
-    h = hashlib.md5(hashthis.encode('utf-8')).hexdigest()
-    return str(int(h[0:8], 16) % 89999 + 10000)
 
 
 def do_renaming(fromdir, todir):
