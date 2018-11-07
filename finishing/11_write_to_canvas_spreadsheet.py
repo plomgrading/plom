@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
+import os, sys
 import csv
 
 import importlib
@@ -89,8 +89,8 @@ def canvas_csv_check_pdf(canvas_fromfile):
             # TODO: this looks rather fragile!
             parts = filename.partition('_')[2].partition('.')[0]
             sn, meh, code = parts.partition('_')
-            if sns[sn] == code:
-                print('  Good: paper {2} has entry in the spreadsheet {0}, {1}'.format(
+            if sns.get(sn) == code:
+                print('  Good: paper {2} has entry in spreadsheet {0}, {1}'.format(
                     sn, code, filename))
                 sns.pop(sn)
             else:
