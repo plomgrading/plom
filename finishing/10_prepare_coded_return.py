@@ -28,6 +28,7 @@ longname = 'Math 253 Midterm 2'
 
 def do_renaming(fromdir, todir, basename):
     print('Searching for foo_<studentnumber>.pdf files in {0}...'.format(fromdir))
+    numfiles = 0
     for file in os.scandir(fromdir):
         filename = os.fsdecode(file)
         if filename.endswith(".pdf"):
@@ -39,6 +40,8 @@ def do_renaming(fromdir, todir, basename):
             print('  found SN {0}: code {1}, copying "{2}" to "{3}"'.format( \
                 sn, code, filename, newname))
             shutil.copyfile(filename, newname)
+            numfiles += 1
+    return numfiles
 
 
 if __name__ == '__main__':
@@ -72,7 +75,12 @@ if __name__ == '__main__':
         print('Directory "codedReturn" already exists: if you want to re-run this script, try deleting it first.')
         sys.exit()
 
-    do_renaming(fromdir, 'codedReturn', basename)
+    numfiles = do_renaming(fromdir, 'codedReturn', basename)
+    if numfiles > 0:
+        print('renamed and copied {0} files'.format(numfiles))
+    else:
+        print('no pdf files in "{0}"?  Stopping!'.format(fromdir))
+        sys.exit()
 
     print('Adding codedReturn/index.html file')
     with open('view_test_template.html', 'r') as htmlfile:
