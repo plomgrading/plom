@@ -51,13 +51,17 @@ if __name__ == '__main__':
 
     basename = spec.Name
 
-    # TODO: what if both exist?
-    if os.path.isdir('reassembled'):
-        fromdir = 'reassembled'
-    elif os.path.isdir('reassembled_ID_but_not_marked'):
-        fromdir = 'reassembled_ID_but_not_marked'
+    reassembles = ['reassembled', 'reassembled_ID_but_not_marked']
+    if os.path.isdir(reassembles[0]) and os.path.isdir(reassembles[1]):
+        print('You have more than "reassembled*" directory:')
+        print('  decide what you trying to do and run me again.')
+        sys.exit()
+    elif os.path.isdir(reassembles[0]):
+        fromdir = reassembles[0]
+    elif os.path.isdir(reassembles[1]):
+        fromdir = reassembles[1]
     else:
-        print('Can find neither "reassembled" nor "reassembled_ID_but_not_marked" dir')
+        print('I cannot find any of the dirs: ' + ', '.join(reassembles))
         print('  Have you called one of the "09" scripts first?')
         sys.exit()
     print('Going to take pdf files from "{0}".'.format(fromdir))
