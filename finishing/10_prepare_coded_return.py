@@ -62,8 +62,6 @@ if __name__ == '__main__':
         sys.exit()
 
     do_renaming('reassembled', 'codedReturn', basename)
-    # TODO: return code?
-
 
     print('Adding codedReturn/index.html file')
     with open('view_test_template.html', 'r') as htmlfile:
@@ -76,4 +74,6 @@ if __name__ == '__main__':
         htmlfile.write(html)
 
 
-    print('All done: copy "codedReturn/" to your webserver')
+    print('All done!  Next tasks:')
+    print('  copy "codedReturn/" to your webserver')
+    print('  run 11_write_to_canvas_spreadsheet.py and upload to canvas')
