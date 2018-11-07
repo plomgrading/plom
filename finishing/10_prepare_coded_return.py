@@ -51,9 +51,16 @@ if __name__ == '__main__':
 
     basename = spec.Name
 
-    if not os.path.isdir('reassembled'):
-        print('"reassembled" directory not found: call the "reassemble" script first?')
+    # TODO: what if both exist?
+    if os.path.isdir('reassembled'):
+        fromdir = 'reassembled'
+    elif os.path.isdir('reassembled_ID_but_not_marked'):
+        fromdir = 'reassembled_ID_but_not_marked'
+    else:
+        print('Can find neither "reassembled" nor "reassembled_ID_but_not_marked" dir')
+        print('  Have you called one of the "09" scripts first?')
         sys.exit()
+    print('Going to take pdf files from "{0}".'.format(fromdir))
 
     try:
         os.mkdir('codedReturn')
@@ -61,7 +68,7 @@ if __name__ == '__main__':
         print('Directory "codedReturn" already exists: if you want to re-run this script, try deleting it first.')
         sys.exit()
 
-    do_renaming('reassembled', 'codedReturn', basename)
+    do_renaming(fromdir, 'codedReturn', basename)
 
     print('Adding codedReturn/index.html file')
     with open('view_test_template.html', 'r') as htmlfile:
