@@ -60,10 +60,22 @@ def canvas_csv_add_return_codes(canvas_fromfile, canvas_tofile):
                     assert len(sn) == 8
                     if dorow:
                         code = myhash(sn)
-                        row[rcode] = code
-                        sns[sn] = code
-                        print('  row {0}, adding code {3} for {2} "{1}"'.format( \
-                            i, name, sn, row[rcode]))
+                        oldcode = row[rcode]
+                        if oldcode == code:
+                            sns[sn] = code
+                            print('  row {0}: already had (correct) code {1} for {2} "{3}"'.format( \
+                                i, oldcode, sn, name))
+                        elif oldcode == '':
+                            row[rcode] = code
+                            sns[sn] = code
+                            print('  row {0}: adding code {3} for {2} "{1}"'.format( \
+                                i, name, sn, row[rcode]))
+                        else:
+                            print('  row {0}: oops sn {1} "{2}" already had code {3}'.format( \
+                                i, sn, name, oldcode))
+                            print('    (We tried to assign new code {0})'.format(code))
+                            print('    HAVE YOU CHANGED THE SALT SINCE LAST TEST?')
+                            sys.exit()
                 writer.writerow(row)
     print('File for upload to Canvas: "{0}"'.format(canvas_tofile))
     return sns
