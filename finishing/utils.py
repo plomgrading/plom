@@ -20,9 +20,11 @@
 
 import hashlib
 
-# if you know the salt string and you know someone's student
-# number, you can determine their code.
-saltstr = 'salt'
+# If you know the salt string and you know someone's student
+# number, you can determine their code.  You should set this
+# per course (not per test).  TODO: move into the spec file?
+SALTSTR = 'salt'
+
 
 def myhash(s, salt=None):
     """
@@ -31,7 +33,7 @@ def myhash(s, salt=None):
     Combine the string with a salt string, compute the md5sum, grab
     the first few digits as an integer between 10000 and 99999.
     """
-    salt = saltstr if salt is None else salt
+    salt = SALTSTR if salt is None else salt
     hashthis = s + salt
     h = hashlib.md5(hashthis.encode('utf-8')).hexdigest()
     return str(int(h[0:8], 16) % 89999 + 10000)
