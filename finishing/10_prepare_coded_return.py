@@ -23,11 +23,10 @@ import os, sys, shutil
 from utils import myhash, saltstr
 
 # TODO: should get this from project
-basename = 'mt2'
 longname = 'Math 253 Midterm 2'
 
 
-def do_renaming(fromdir, todir):
+def do_renaming(fromdir, todir, basename):
     print('Searching for foo_<studentnumber>.pdf files in {0}...'.format(fromdir))
     for file in os.scandir(fromdir):
         filename = os.fsdecode(file)
@@ -50,6 +49,8 @@ if __name__ == '__main__':
     spec = TestSpecification()
     spec.readSpec()
 
+    basename = spec.Name
+
     if not os.path.isdir('reassembled'):
         print('"reassembled" directory not found: call the "reassemble" script first?')
         sys.exit()
@@ -60,7 +61,7 @@ if __name__ == '__main__':
         print('Directory "codedReturn" already exists: if you want to re-run this script, try deleting it first.')
         sys.exit()
 
-    do_renaming('reassembled', 'codedReturn')
+    do_renaming('reassembled', 'codedReturn', basename)
     # TODO: return code?
 
 
