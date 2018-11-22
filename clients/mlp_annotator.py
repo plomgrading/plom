@@ -269,8 +269,15 @@ class Annotator(QDialog):
         self.ui.markGrid.addWidget(self.markEntry, 1, 1)
         self.markEntry.markSetSignal.connect(self.totalMarkSet)
         self.markEntry.deltaSetSignal.connect(self.deltaMarkSet)
-        self.view.scene.markChangedSignal.connect(self.changeMark)
         self.markEntry.setStyle(markStyle)
+        if markStyle == 1:  # mark total style
+            # don't connect the delta-tool to the changeMark function
+            # this ensures that marked-comments do not change the total
+            pass
+        else:
+            # connect the delta tool to the changeMark function.
+            # delta and marked comments will change the total.
+            self.view.scene.markChangedSignal.connect(self.changeMark)
 
     def totalMarkSet(self, tm):
         self.score = tm
