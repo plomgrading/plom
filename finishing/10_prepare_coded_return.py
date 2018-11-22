@@ -20,7 +20,7 @@
 
 import os, sys, shutil
 
-from utils import myhash, saltstr
+from utils import myhash, SALTSTR as saltstr
 
 # TODO: should get this from project
 longname = 'Math 253 Midterm 2'
