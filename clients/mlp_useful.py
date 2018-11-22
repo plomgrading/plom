@@ -105,16 +105,12 @@ class commentDelegate(QItemDelegate):
             delta = int(index.model().data(index, Qt.EditRole))
             if self.style == 2:  # mark up - disable negative
                 if delta <= 0 or delta + self.currentMark > self.maxMark:
-                    painter.setRenderHint(QPainter.Antialiasing)
-                    painter.setPen(QPen(Qt.red, 3))
-                    painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
-                    painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
+                    painter.setBrush(Qt.gray)
+                    painter.drawRect(option.rect)
             elif self.style == 3:  # mark down - disable positive
                 if delta >= 0 or delta + self.currentMark < 0:
-                    painter.setRenderHint(QPainter.Antialiasing)
-                    painter.setPen(QPen(Qt.red, 3))
-                    painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
-                    painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
+                    painter.setBrush(Qt.gray)
+                    painter.drawRect(option.rect)
             if self.style == 1:  # mark total - enable all
                 pass
 

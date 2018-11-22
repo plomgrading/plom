@@ -112,7 +112,7 @@ class MarkEntry(QStackedWidget):
     def setTotalMark(self):
         self.ptmb.setStyleSheet("")
         self.ptmb = self.sender()
-        self.ptmb.setStyleSheet(self.greenStyle)
+        self.ptmb.setStyleSheet(self.redStyle)
         self.currentScore = int(self.sender().text().replace('&', ''))
         self.markSetSignal.emit(self.currentScore)
 
@@ -123,6 +123,6 @@ class MarkEntry(QStackedWidget):
 
     def clearButtonStyle(self):
         if self.style == "Total":
-            self.ptmb.setStyleSheet("")
+            pass  # don't clear the styling when marking total.
         else:
             self.pdmb.setStyleSheet("")

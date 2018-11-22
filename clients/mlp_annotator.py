@@ -18,8 +18,8 @@ class Annotator(QDialog):
         self.maxMark = maxMark
         self.score = 0
         self.markStyle = markStyle
-        self.currentBackground = "border: 2px solid #008888; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00bbbb, stop: 1 #008888); "
-        self.previousButton = None
+        self.currentBackground = "border: 2px solid #00aaaa; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00dddd, stop: 1 #00aaaa); "
+        self.currentButton = None
 
         # right-hand mouse = 0, left-hand mouse = 1
         if mouseHand == 0:
@@ -161,17 +161,20 @@ class Annotator(QDialog):
             super(Annotator, self).keyPressEvent(event)
 
     def setMode(self, newMode, newCursor):
-        if self.previousButton is None:
+        # Clear styling of the current button
+        if self.currentButton is None:
             pass
         else:
-            self.previousButton.setStyleSheet("")
+            self.currentButton.setStyleSheet("")
 
+        # Button has been changed, so update currentButton and its styling.
         if self.sender() == self.markEntry:
-            self.previousButton=None
+            self.currentButton = None
         else:
-            self.previousButton = self.sender()
-            self.previousButton.setStyleSheet(self.currentBackground)
+            self.currentButton = self.sender()
+            self.currentButton.setStyleSheet(self.currentBackground)
             self.markEntry.clearButtonStyle()
+
         self.view.setMode(newMode)
         self.view.setCursor(newCursor)
         self.repaint()
