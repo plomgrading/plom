@@ -96,9 +96,11 @@ def canvas_csv_check_pdf(sns):
                     sn, code, file.name))
                 sns.pop(sn)
             else:
+                print('  ***************************************************************')
                 print('  Bad: we found a pdf file that has no student in the spreadsheet')
                 print('    Filename: {0}'.format(file.name))
-                sys.exit()
+                print('  ***************************************************************')
+                #sys.exit()
 
     # anyone that has a pdf file has been popped from the dict, report the remainders
     if len(sns) == 0:
