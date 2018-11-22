@@ -32,6 +32,7 @@ def do_renaming(fromdir, todir, basename):
     for file in os.scandir(fromdir):
         filename = os.fsdecode(file)
         if filename.endswith(".pdf"):
+            # TODO: broken with reassumed_ID_but_not_marked, takes first "_"
             sn = filename.partition('_')[2].partition('.')[0]
             assert len(sn) == 8
             code = myhash(sn)
@@ -54,9 +55,10 @@ if __name__ == '__main__':
 
     basename = spec.Name
 
+    # TODO: but "reassembed" is created even if I use 09alt
     reassembles = ['reassembled', 'reassembled_ID_but_not_marked']
     if os.path.isdir(reassembles[0]) and os.path.isdir(reassembles[1]):
-        print('You have more than "reassembled*" directory:')
+        print('You have more than one "reassembled*" directory:')
         print('  decide what you trying to do and run me again.')
         sys.exit()
     elif os.path.isdir(reassembles[0]):
