@@ -30,17 +30,15 @@ def do_renaming(fromdir, todir, basename):
     print('Searching for foo_<studentnumber>.pdf files in {0}...'.format(fromdir))
     numfiles = 0
     for file in os.scandir(fromdir):
-        filename = os.fsdecode(file)
-        if filename.endswith(".pdf"):
-            # TODO: broken with reassumed_ID_but_not_marked, takes first "_"
-            sn = filename.partition('_')[2].partition('.')[0]
+        if file.name.endswith(".pdf"):
+            sn = file.name.partition('_')[2].partition('.')[0]
             assert len(sn) == 8
             code = myhash(sn)
             newname = '{0}_{1}_{2}.pdf'.format(basename, sn, code)
             newname = os.path.join(todir, newname)
             print('  found SN {0}: code {1}, copying "{2}" to "{3}"'.format( \
-                sn, code, filename, newname))
-            shutil.copyfile(filename, newname)
+                sn, code, file.name, newname))
+            shutil.copyfile(os.path.join(fromdir, file.name), newname)
             numfiles += 1
     return numfiles
 

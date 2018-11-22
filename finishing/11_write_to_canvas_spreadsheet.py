@@ -87,18 +87,17 @@ def canvas_csv_add_return_codes(canvas_fromfile, canvas_tofile):
 def canvas_csv_check_pdf(sns):
     print('Checking that each codedReturn paper has a corresponding student in the canvas sheet...')
     for file in os.scandir('codedReturn'):
-        filename = os.fsdecode(file)
-        if filename.endswith(".pdf"):
+        if file.name.endswith(".pdf"):
             # TODO: this looks rather fragile!
-            parts = filename.partition('_')[2].partition('.')[0]
+            parts = file.name.partition('_')[2].partition('.')[0]
             sn, meh, code = parts.partition('_')
             if sns.get(sn) == code:
                 print('  Good: paper {2} has entry in spreadsheet {0}, {1}'.format(
-                    sn, code, filename))
+                    sn, code, file.name))
                 sns.pop(sn)
             else:
                 print('  Bad: we found a pdf file that has no student in the spreadsheet')
-                print('    Filename: {0}'.format(filename))
+                print('    Filename: {0}'.format(file.name))
                 sys.exit()
 
     # anyone that has a pdf file has been popped from the dict, report the remainders
