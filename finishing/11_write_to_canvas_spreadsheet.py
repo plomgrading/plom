@@ -84,7 +84,7 @@ def canvas_csv_add_return_codes(canvas_fromfile, canvas_tofile):
     return sns
 
 
-def canvas_csv_check_pdf(canvas_fromfile):
+def canvas_csv_check_pdf(sns):
     print('Checking that each codedReturn paper has a corresponding student in the canvas sheet...')
     for file in os.scandir('codedReturn'):
         filename = os.fsdecode(file)
@@ -106,9 +106,9 @@ def canvas_csv_check_pdf(canvas_fromfile):
         print('Everyone listed in the canvas file has a pdf file')
     else:
         print('The following people are in the spreadsheet but do not have a pdf file; did they write?')
-        for (i, sn) in enumerate(sns):
+        for (sn, code) in sns.items():
             # TODO: name rank and serial number would be good
-            print('  SN: {0}, code: {1}'.format(i,sn))
+            print('  SN: {0}, code: {1}'.format(sn, code))
 
 
 if __name__ == '__main__':
