@@ -55,9 +55,9 @@ def canvas_csv_add_return_codes(canvas_fromfile, canvas_tofile):
                     dorow = True
                     if name == 'Test Student':
                         dorow = False
-                    assert len(name) > 0
-                    assert len(sn) == 8
                     if dorow:
+                        assert len(name) > 0
+                        assert len(sn) == 8
                         code = myhash(sn)
                         oldcode = row[rcode]
                         if oldcode == code:
