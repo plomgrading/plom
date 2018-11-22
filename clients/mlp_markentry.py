@@ -13,7 +13,7 @@ class MarkEntry(QStackedWidget):
         self.numButtons = 5
         self.markButtons = {}
         self.redStyle = "border: 2px solid #ff0000; background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, stop: 0.3 #ffcccc, stop: 0.7 #ffcccc, stop: 1 #ff0000);"
-        self.greenStyle = "border: 2px solid #008888; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00bbbb, stop: 1 #008888); "
+        self.greenStyle = "border: 2px solid #00aaaa; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00dddd, stop: 1 #00aaaa); "
 
         self.pageC = QWidget()
         self.pageM = QWidget()

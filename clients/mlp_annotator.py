@@ -18,7 +18,8 @@ class Annotator(QDialog):
         self.maxMark = maxMark
         self.score = 0
         self.markStyle = markStyle
-        self.currentBackground = "border: 2px solid #00aaaa; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00dddd, stop: 1 #00aaaa); "
+        self.currentButtonStyleBackground = "border: 2px solid #00aaaa; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00dddd, stop: 1 #00aaaa);"
+        self.currentButtonStyleOutline = "border: 2px solid #00aaaa; "
         self.currentButton = None
 
         # right-hand mouse = 0, left-hand mouse = 1
@@ -99,8 +100,19 @@ class Annotator(QDialog):
             Qt.Key_5: lambda: self.keyToChangeMark(5),
 
             # Then list keys
-            Qt.Key_Question: lambda: self.keyPopUp()
+            Qt.Key_Question: lambda: self.keyPopUp(),
+
+            # Hide all the tools
+            Qt.Key_Home: lambda: self.toggleTools(),
         }
+
+    def toggleTools(self):
+        if self.ui.hideableBox.isHidden():
+            self.ui.hideableBox.show()
+            self.ui.hideButton.setText("Hide")
+        else:
+            self.ui.hideableBox.hide()
+            self.ui.hideButton.setText("Reveal")
 
     def keyPopUp(self):
         keylist = {'a': 'Zoom', 's': 'Undo', 'd': 'Tick/QMark/Cross', 'f': 'Current Comment', 'g': 'Text',
@@ -172,7 +184,11 @@ class Annotator(QDialog):
             self.currentButton = None
         else:
             self.currentButton = self.sender()
-            self.currentButton.setStyleSheet(self.currentBackground)
+            print(self.currentButton)
+            if self.currentButton == self.commentW.CL:
+                self.currentButton.setStyleSheet(self.currentButtonStyleOutline)
+            else:
+                self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
             self.markEntry.clearButtonStyle()
 
         self.view.setMode(newMode)
@@ -247,6 +263,8 @@ class Annotator(QDialog):
         self.ui.cancelButton.clicked.connect(self.reject)
 
         self.commentW.CL.commentSignal.connect(self.handleComment)
+
+        self.ui.hideButton.clicked.connect(self.toggleTools)
 
 
     def handleComment(self, dlt_txt):
