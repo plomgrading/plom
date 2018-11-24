@@ -2,8 +2,8 @@ import os
 import json
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
-from PyQt5.QtGui import QCursor, QIcon, QPixmap
-from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QSpinBox, QPushButton, QTableView, QToolButton, QWidget
+from PyQt5.QtGui import QCursor, QIcon, QPainter, QPen, QPixmap, QStandardItem, QStandardItemModel
+from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QSpinBox, QPushButton, QTableView, QToolButton, QWidget, QItemDelegate
 
 class ErrorMessage(QMessageBox):
     def __init__(self, txt):
@@ -45,45 +45,12 @@ class SimpleToolButton(QToolButton):
         self.setIconSize(QSize(24, 24))
         self.setMinimumWidth(100)
 
-class SimpleCommentList(QListWidget):
-    commentSignal = pyqtSignal(['QString']) #This is picked up by the annotator
-    def __init__(self, parent):
-        super(SimpleCommentList, self).__init__()
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.setDragEnabled(True)
-        self.setDragDropMode(QAbstractItemView.InternalMove)
-        self.viewport().setAcceptDrops(True)
-        self.setDropIndicatorShown(True)
-        self.itemClicked.connect(self.handleClick)
-        self.loadCommentList()
-
-        for txt in self.clist:
-            it = QListWidgetItem(txt)
-            it.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsDragEnabled)
-            self.addItem(it)
-
-    def handleClick(self):
-        self.commentSignal.emit(self.currentItem().text())
-
-    def loadCommentList(self):
-        if os.path.exists('commentList.json'):
-            self.clist = json.load(open('commentList.json'))
-        else:
-            self.clist = ['algebra', 'arithmetic', 'be careful', 'very nice']
-
-    def saveCommentList(self):
-        self.clist=[]
-        for r in range(self.count()):
-            self.clist.append( self.item(r).text() )
-
-        with open('commentList.json', 'w') as fname:
-            json.dump(self.clist, fname)
 
 class CommentWidget(QWidget):
-    def __init__(self,parent=None):
-        super(CommentWidget,self).__init__()
+    def __init__(self, parent=None):
+        super(CommentWidget, self).__init__()
         grid = QGridLayout()
-        self.CL = SimpleCommentList(self)
+        self.CL = SimpleCommentTable(self)
         grid.addWidget(self.CL, 1, 1, 2, 3)
         self.addB = QPushButton('Add')
         self.addB.clicked.connect(self.addItem)
@@ -95,29 +62,182 @@ class CommentWidget(QWidget):
         grid.addWidget(self.delB, 3, 3)
         self.setLayout(grid)
 
+    def setStyle(self, markStyle):
+        self.CL.delegate.style = markStyle
+
+    def changeMark(self, maxMark, currentMark):
+        self.CL.delegate.maxMark = maxMark
+        self.CL.delegate.currentMark = currentMark
+        self.CL.viewport().update()
+
     def saveComments(self):
         self.CL.saveCommentList()
 
     def addItem(self):
-        self.CL.setFocus()
-        it = QListWidgetItem('EDIT ME')
-        it.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsDragEnabled)
-        self.CL.addItem(it)
-        self.CL.setCurrentItem(it)
-        self.CL.editItem(self.CL.currentItem())
+        self.CL.addItem()
 
     def deleteItem(self):
-        self.CL.setFocus()
-        self.CL.takeItem(self.CL.currentRow())
+        self.CL.deleteItem()
 
     def currentItem(self):
-        if self.CL.currentRow() >= 0:
-            self.CL.setCurrentRow(self.CL.currentRow())
-        else:
-            self.CL.setCurrentRow(0)
+        self.CL.currentItem()
+        self.setFocus()
 
     def nextItem(self):
-        self.CL.setCurrentRow((self.CL.currentRow()+1) % self.CL.count())
+        self.CL.nextItem()
+        self.setFocus()
 
     def previousItem(self):
-        self.CL.setCurrentRow((self.CL.currentRow()-1) % self.CL.count())
+        self.CL.previousItem()
+        self.setFocus()
+
+
+class commentDelegate(QItemDelegate):
+    def __init__(self):
+        super(commentDelegate, self).__init__()
+        self.currentMark = 0
+        self.maxMark = 0
+        self.style = 0
+
+    def paint(self, painter, option, index):
+        QItemDelegate.paint(self, painter, option, index)
+        if index.column() == 0:
+            delta = int(index.model().data(index, Qt.EditRole))
+            if self.style == 2:  # mark up - disable negative
+                if delta <= 0 or delta + self.currentMark > self.maxMark:
+                    painter.setBrush(Qt.gray)
+                    painter.drawRect(option.rect)
+            elif self.style == 3:  # mark down - disable positive
+                if delta >= 0 or delta + self.currentMark < 0:
+                    painter.setBrush(Qt.gray)
+                    painter.drawRect(option.rect)
+            if self.style == 1:  # mark total - enable all
+                pass
+
+
+class commentRowModel(QStandardItemModel):
+    def dropMimeData(self, data, action, r, c, parent):
+        return super().dropMimeData(data, action, r, 0, parent)
+
+    def setData(self, index, value, role=Qt.EditRole):
+        # check that data in column zero is numeric
+        if index.column() == 0:  # try to convert value to integer
+            try:
+                v = int(value)  # success! is number
+                if v > 0:  # if it is positive, then make sure string is "+v"
+                    value = "+{}".format(v)
+                # otherwise the current value is "0" or "-n".
+            except ValueError:
+                value = "0"  # failed, so set to 0.
+        # If its column 1 then convert '\n' into actual newline in the string
+        elif index.column() == 1:
+            value = value.replace('\\n', '\n')
+        return super().setData(index, value, role)
+
+
+class SimpleCommentTable(QTableView):
+    commentSignal = pyqtSignal(list) #This is picked up by the annotator
+    def __init__(self, parent):
+        super(SimpleCommentTable, self).__init__()
+        self.verticalHeader().hide()
+        self.horizontalHeader().setStretchLastSection(True)
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setDragEnabled(True)
+        self.setDragDropOverwriteMode(False)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.viewport().setAcceptDrops(True)
+        self.setDropIndicatorShown(True)
+        self.clicked.connect(self.handleClick)
+
+        self.cmodel = commentRowModel()
+        self.cmodel.setHorizontalHeaderLabels(['delta', 'comment'])
+        self.setModel(self.cmodel)
+
+        self.delegate = commentDelegate()
+        self.setItemDelegate(self.delegate)
+
+        self.clist = []
+        self.loadCommentList()
+        self.populateTable()
+        self.resizeRowsToContents()  # resize rows and make sure any updates also resize.
+        self.resizeColumnToContents(0)
+        self.cmodel.itemChanged.connect(self.resizeRowsToContents)
+
+        # set these so that double-click enables edits, but not keypress.
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers | QAbstractItemView.DoubleClicked)
+
+    def populateTable(self):
+        for (dlt, txt) in self.clist:
+            txti = QStandardItem(txt)
+            txti.setEditable(True)
+            txti.setDropEnabled(False)
+
+            if int(dlt) > 0:
+                delti = QStandardItem("+{}".format(int(dlt)))
+            else:
+                delti = QStandardItem("{}".format(dlt))
+            delti.setEditable(True)
+            delti.setDropEnabled(False)
+            delti.setTextAlignment(Qt.AlignCenter)
+
+            self.cmodel.appendRow([delti, txti])
+
+    def handleClick(self, index=0):
+        if index == 0:  # make sure something is selected
+            self.currentItem()
+        r = self.selectedIndexes()[0].row()
+        self.commentSignal.emit([self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()])
+
+    def loadCommentList(self):
+        if os.path.exists('signedCommentList.json'):
+            self.clist = json.load(open('signedCommentList.json'))
+        else:
+            self.clist = [(-1, 'algebra'), (-1, 'arithmetic'), (0, 'be careful'), (1, 'very nice')]
+
+    def saveCommentList(self):
+        self.clist = []
+        for r in range(self.cmodel.rowCount()):
+            self.clist.append((self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()))
+
+        with open('signedCommentList.json', 'w') as fname:
+            json.dump(self.clist, fname)
+
+    def addItem(self):
+        txti = QStandardItem("EDIT ME")
+        txti.setEditable(True)
+        txti.setDropEnabled(False)
+        delti = QStandardItem("0")
+        delti.setEditable(True)
+        delti.setDropEnabled(False)
+        delti.setTextAlignment(Qt.AlignCenter)
+        self.cmodel.appendRow([delti, txti])
+        self.selectRow(self.cmodel.rowCount()-1)  # select current row
+        self.edit(self.selectedIndexes()[1])  # fire up editor on the comment which is second selected index
+
+    def deleteItem(self):
+        sel = self.selectedIndexes()
+        if len(sel) == 0:
+            return
+        self.cmodel.removeRow(sel[0].row())
+
+    def currentItem(self):
+        sel = self.selectedIndexes()
+        if len(sel) == 0:
+            self.selectRow(0)
+        else:
+            self.selectRow(sel[0].row())
+
+    def nextItem(self):
+        sel = self.selectedIndexes()
+        if len(sel) == 0:
+            self.selectRow(0)
+        else:
+            self.selectRow((sel[0].row() + 1) % self.cmodel.rowCount())
+
+    def previousItem(self):
+        sel = self.selectedIndexes()
+        if len(sel) == 0:
+            self.selectRow(0)
+        else:
+            self.selectRow((sel[0].row() - 1) % self.cmodel.rowCount())

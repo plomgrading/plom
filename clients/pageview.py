@@ -30,8 +30,9 @@ class PageView(QGraphicsView):
         else:
             self.setDragMode(0)
 
-    def makeComment(self, text):
+    def makeComment(self, dlt, text):
         self.scene.mode = 'comment'
+        self.scene.commentDelta = int(dlt)
         self.scene.commentText = text
         self.setDragMode(0)
 

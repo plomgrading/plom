@@ -10,9 +10,10 @@ class MarkEntry(QStackedWidget):
         super(MarkEntry, self).__init__()
         self.maxScore = maxScore
         self.currentScore = 0
-        self.numButtons = 5
+        self.numButtons = self.maxScore
         self.markButtons = {}
         self.redStyle = "border: 2px solid #ff0000; background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, stop: 0.3 #ffcccc, stop: 0.7 #ffcccc, stop: 1 #ff0000);"
+        self.greenStyle = "border: 2px solid #00aaaa; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00dddd, stop: 1 #00aaaa); "
 
         self.pageC = QWidget()
         self.pageM = QWidget()
@@ -58,10 +59,15 @@ class MarkEntry(QStackedWidget):
         grid = QGridLayout()
         self.pdmb = QPushButton()
 
+        if self.numButtons > 5:
+            ncolumn = 3
+        else:
+            ncolumn = 2
+
         grid.addWidget(self.scoreL, 0, 0, 1, 2)
         for k in range(0, self.numButtons+1):
             self.markButtons["p{}".format(k)] = QPushButton("+&{}".format(k))
-            grid.addWidget(self.markButtons["p{}".format(k)], k//2+1, k % 2, 1, 1)
+            grid.addWidget(self.markButtons["p{}".format(k)], k//ncolumn+1, k % ncolumn, 1, 1)
             self.markButtons["p{}".format(k)].clicked.connect(self.setDeltaMark)
             self.markButtons["p{}".format(k)].setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
@@ -74,10 +80,15 @@ class MarkEntry(QStackedWidget):
         grid = QGridLayout()
         self.pdmb = QPushButton()
 
+        if self.numButtons > 5:
+            ncolumn = 3
+        else:
+            ncolumn = 2
+
         grid.addWidget(self.scoreL, 0, 0, 1, 2)
         for k in range(1, self.numButtons+1):
             self.markButtons["m{}".format(k)] = QPushButton("-&{}".format(k))
-            grid.addWidget(self.markButtons["m{}".format(k)], k//2+1, k % 2, 1, 1)
+            grid.addWidget(self.markButtons["m{}".format(k)], k//ncolumn+1, k % ncolumn, 1, 1)
             self.markButtons["m{}".format(k)].clicked.connect(self.setDeltaMark)
             self.markButtons["m{}".format(k)].setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
@@ -88,11 +99,16 @@ class MarkEntry(QStackedWidget):
 
     def setMarkingTotal(self):
         grid = QGridLayout()
-        self.pmtb = QPushButton()
+        self.ptmb = QPushButton()
+
+        if self.maxScore > 5:
+            ncolumn = 3
+        else:
+            ncolumn = 2
 
         for k in range(0, self.maxScore+1):
             self.markButtons["{}".format(k)] = QPushButton("&{}".format(k))
-            grid.addWidget(self.markButtons["{}".format(k)], k//3, k % 3)
+            grid.addWidget(self.markButtons["{}".format(k)], k//ncolumn, k % ncolumn)
             self.markButtons["{}".format(k)].clicked.connect(self.setTotalMark)
             self.markButtons["{}".format(k)].setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
@@ -104,14 +120,14 @@ class MarkEntry(QStackedWidget):
     def setDeltaMark(self):
         self.pdmb.setStyleSheet("")
         self.pdmb = self.sender()
-        self.pdmb.setStyleSheet(self.redStyle)
+        self.pdmb.setStyleSheet(self.greenStyle)
         self.currentDelta = int(self.sender().text().replace('&', ''))
         self.deltaSetSignal.emit(self.currentDelta)
 
     def setTotalMark(self):
-        self.pmtb.setStyleSheet("")
-        self.pmtb = self.sender()
-        self.pmtb.setStyleSheet(self.redStyle)
+        self.ptmb.setStyleSheet("")
+        self.ptmb = self.sender()
+        self.ptmb.setStyleSheet(self.redStyle)
         self.currentScore = int(self.sender().text().replace('&', ''))
         self.markSetSignal.emit(self.currentScore)
 
@@ -119,3 +135,9 @@ class MarkEntry(QStackedWidget):
         self.currentScore = newScore
         self.scoreL.setText("{} / {}".format(self.currentScore, self.maxScore))
         self.markSetSignal.emit(self.currentScore)
+
+    def clearButtonStyle(self):
+        if self.style == "Total":
+            pass  # don't clear the styling when marking total.
+        else:
+            self.pdmb.setStyleSheet("")

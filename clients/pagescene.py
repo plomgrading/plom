@@ -68,6 +68,7 @@ class PageScene(QGraphicsScene):
         self.deleteItem = None
         self.markDelta = 0
         self.commentText = ""
+        self.commentDelta = 0
 
         self.scoreBox = ScoreBox()
         self.scoreBox.setZValue(10)
@@ -130,7 +131,15 @@ class PageScene(QGraphicsScene):
         self.undoStack.push(command)
 
     def comment_mousePressEvent(self, event):
-        self.originPos = event.scenePos() + QPointF(0, -24)
+        pt = event.scenePos()
+        offset = QPointF(0, -24)
+        if self.commentDelta != 0:  # then put down a marker. Else just the comment.
+            command = CommandDelta(self, pt, self.commentDelta)
+            self.undoStack.push(command)
+            x = len(str(abs(int(self.commentDelta))))  # number of digits in delta
+            offset = QPointF(26+15*x, -24)
+
+        self.originPos = event.scenePos() + offset
         self.blurb = TextItem(self)
         self.blurb.setPos(self.originPos)
         self.blurb.setPlainText(self.commentText)
@@ -169,7 +178,6 @@ class PageScene(QGraphicsScene):
         self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
 
     def line_mouseReleaseEvent(self, event):
-        # print("Line release ", type(self.lineItem))
         self.removeItem(self.lineItem)
         if self.arrowFlag == 0:
             command = CommandLine(self, self.originPos, self.currentPos)
@@ -272,11 +280,6 @@ class PageScene(QGraphicsScene):
         else:
             self.parent().scale(1.25, 1.25)
         self.parent().centerOn(event.scenePos())
-        #     rec = self.boxItem.rect()
-        #     if rec.height() >= 100 and rec.width() >= 100:
-        #         self.parent().fitInView(self.boxItem, Qt.KeepAspectRatio)
-        # # print("Zoom release ", type(self.boxItem))
-        # self.removeItem(self.boxItem)
 
     def delta_mousePressEvent(self, event):
         pt = event.scenePos()
