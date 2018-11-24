@@ -25,7 +25,7 @@ Not yet in fedora: easywebdav2, pyqrcode, wsgidav, cheroot
 TODO: fedora has python2-backports-functools_lru_cache, why is there
 even such a thing on Python 3?  Pip3 pulls it in for easywebdav2
 Probably its a stub package.  Not really our problem as its not a
-direction dependency.
+direct dependency.
 
 
 
@@ -54,5 +54,11 @@ It also may be useful to install `x2goserver`.
 
 Finally: it has been noted that ImageMagick doesn't allow hacking
 of pdf files by default, some edits are needed to
-`/etc/ImageMagick-6/policy.xml`.
-TODO: make this more specific.
+`/etc/ImageMagick-6/policy.xml`.  Near the end of the file,
+comment out the `pattern="PDF"` part:
+```dif
+   <policy domain="coder" rights="none" pattern="EPS" />
+-  <policy domain="coder" rights="none" pattern="PDF" />
++  <!--<policy domain="coder" rights="none" pattern="PDF" />-->
+   <policy domain="coder" rights="none" pattern="XPS" />
+```
