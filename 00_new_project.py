@@ -7,7 +7,7 @@ from resources.uiFiles.ui_launcher import Ui_Launcher
 
 directories = ['build', 'finishing', 'imageServer', 'resources', 'scanAndGroup']
 directories += ['build/examsToPrint', 'build/sourceVersions']
-directories += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/', 'scanAndGroup/readyForMarking', 'scanAndGroup/scannedExams']
+directories += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/', 'scanAndGroup/readyForMarking', 'scanAndGroup/scannedExams', 'scanAndGroup/extraPages/']
 directories += ['imageServer/markedPapers']
 directories += ['clients', 'clients/uiFiles', 'clients/icons']
 directories += ['finishing/frontPages', 'finishing/reassembled/', 'finishing/reassembled_ID_but_not_marked']

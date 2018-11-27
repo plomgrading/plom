@@ -152,6 +152,17 @@ class ImageTable(QTableWidget):
         self.item(r, 4).setText("Valid")
         self.resizeColumnsToContents()
 
+    def setTGExtra(self, t, g):
+        r = self.currentRow()
+        self.item(r, 1).setText(t)
+        self.item(r, 2).setText(g)
+        # Determine version from test number and group number
+        # v = examsProduced[t][p]  but p=page, not group
+        # set p to be the spec.PageGroups[g][0] (ie first page of the group)
+        self.item(r, 3).setText( examsProduced[t][spec.PageGroups[g]] )
+        self.item(r, 4).setText("Extra")
+        self.resizeColumnsToContents()
+
     def flipCurrent(self):
         r = self.currentRow();
         if r is not None:
@@ -175,6 +186,23 @@ class ImageTable(QTableWidget):
                     examsScanned[tsi][psi] = [v, fname]
                 print("Assigning file {} to t{}p{}v{}".format(fname, t,p,v))
                 os.system("cp pageImages/problemImages/{} ./decodedPages/page_{}/version_{}/t{}p{}v{}.png\n".format(fname, str(p).zfill(2), str(v), str(t).zfill(4), str(p).zfill(2), str(v)))
+                os.system("mv pageImages/problemImages/{}* ./pageImages/alreadyProcessed/".format(fname))
+
+    def saveExtras(self):
+        for r in range(self.rowCount()):
+            if self.item(r, 4).text() == 'Extra':
+                t = self.item(r, 1).text()
+                g = self.item(r, 2).text()
+                v = self.item(r, 3).text()
+                n = 0
+                fname = self.item(r, 0).text()
+                # Since there can be more than 1 extra page for the same pagegroup
+                ename = "extraPages/xt{}g{}v{}n{}.png".format(str(t).zfill(4), str(g).zfill(2), v, n)
+                while os.path.exists(ename):
+                    v = v+1 #file exists, add 1 to counter.
+                    ename = "extraPages/xt{}g{}v{}n{}.png".format(str(t).zfill(4), str(g).zfill(2), v, n)
+
+                os.system("cp pageImages/problemImages/{} ./{}\n".format(fname, ename))
                 os.system("mv pageImages/problemImages/{}* ./pageImages/alreadyProcessed/".format(fname))
 
 
@@ -255,6 +283,47 @@ class PageIDDialog(QDialog):
         return True
 
 
+class PageExtraDialog(QDialog):
+    def __init__(self):
+        super(PageExtraDialog, self).__init__()
+        self.setWindowTitle("Extra page")
+
+        grid = QGridLayout()
+
+        self.testL = QLabel("Test number")
+        self.testSB = QSpinBox()
+        self.testSB.setRange(0, spec.Tests)
+        self.testSB.setValue(1)
+        grid.addWidget(self.testL, 1, 1)
+        grid.addWidget(self.testSB, 1, 2)
+
+        self.groupL = QLabel("Pagegroup number")
+        self.groupSB = QSpinBox()
+        self.groupSB.setRange(1, spec.getNumberOfGroups())
+        self.groupSB.setValue(1)
+        grid.addWidget(self.groupL, 2, 1)
+        grid.addWidget(self.groupSB, 2, 2)
+
+        self.validateB = QPushButton("Accept")
+        grid.addWidget(self.validateB, 3, 1)
+        self.validateB.clicked.connect(self.validate)
+
+        self.setLayout(grid)
+        self.setModal(False)
+
+    def validate(self):
+        if self.checkIsValid():
+            self.accept()
+        else:
+            self.reject()
+
+    def checkIsValid(self):
+        t = str(self.testSB.value())
+        g = str(self.groupSB.value())
+
+        return True
+
+
 class PageIdentifier(QWidget):
     def __init__(self):
         super(PageIdentifier, self).__init__()
@@ -276,12 +345,18 @@ class PageIdentifier(QWidget):
         if self.imageT.imageList:
             self.pageImg.updateImage(self.imageT.imageList[0])
 
+        self.extraB = QPushButton("Extra page")
+        self.extraB.clicked.connect(self.extraPage)
+        grid.addWidget(self.extraB,5,1)
+
+
         self.flippitB = QPushButton("Flip image")
         self.flippitB.clicked.connect(self.flipCurrent)
-        grid.addWidget(self.flippitB,5,1)
+        grid.addWidget(self.flippitB,6,1)
 
         self.closeB = QPushButton("Save && Close")
         self.closeB.clicked.connect(self.saveValid)
+        self.closeB.clicked.connect(self.saveExtras)
         grid.addWidget(self.closeB,8,1,2,2)
 
         self.closeB = QPushButton("Close")
@@ -296,6 +371,15 @@ class PageIdentifier(QWidget):
         self.imageT.saveValid()
         writeExamsScanned()
         self.close()
+
+
+    def extraPage(self):
+        pexd = PageExtraDialog()
+        if pexd.exec_() == QDialog.Accepted:
+            t = str(pexd.testSB.value()).zfill(4)
+            g = str(pexd.groupSB.value()).zfill(2)
+            self.imageT.setTGExtra(t, g)
+            self.imageT.setFocus()
 
     def flipCurrent(self):
         r = self.imageT.flipCurrent()
