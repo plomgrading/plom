@@ -8,17 +8,19 @@ from PyQt5.QtCore import Qt, QRectF
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import QApplication, QAbstractItemView, QDialog, QErrorMessage, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLineEdit, QPushButton, QSpinBox, QTableWidget, QTableWidgetItem, QWidget
 
-sys.path.append('..') #this allows us to import from ../resources
+sys.path.append('..')  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
 
 spec = TestSpecification()
 examsProduced = {}
 examsScanned = {}
 
+
 def readExamsProduced():
     global examsProduced
     with open('../resources/examsProduced.json') as data_file:
         examsProduced = json.load(data_file)
+
 
 def readExamsScanned():
     global examsScanned
@@ -26,10 +28,12 @@ def readExamsScanned():
         with open('../resources/examsScanned.json') as data_file:
             examsScanned = json.load(data_file)
 
+
 def writeExamsScanned():
     es = open("../resources/examsScanned.json", 'w')
     es.write(json.dumps(examsScanned, indent=2, sort_keys=True))
     es.close()
+
 
 class PageViewWindow(QWidget):
     def __init__(self, fname=None):
@@ -41,10 +45,10 @@ class PageViewWindow(QWidget):
         self.view.setRenderHint(QPainter.HighQualityAntialiasing)
 
         self.resetB = QPushButton('reset view')
-        self.resetB.clicked.connect(lambda: self.view.resetView() )
+        self.resetB.clicked.connect(lambda: self.view.resetView())
 
         grid = QGridLayout()
-        grid.addWidget(self.view,1, 1, 10, 4)
+        grid.addWidget(self.view, 1, 1, 10, 4)
         grid.addWidget(self.resetB, 20, 1)
 
         self.setLayout(grid)
@@ -52,6 +56,7 @@ class PageViewWindow(QWidget):
 
     def updateImage(self, fname):
         self.view.updateImage(fname)
+
 
 class PageView(QGraphicsView):
     def __init__(self, fname):
@@ -78,9 +83,9 @@ class PageView(QGraphicsView):
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.RightButton:
-            self.scale(0.8,0.8)
+            self.scale(0.8, 0.8)
         else:
-            self.scale(1.25,1.25)
+            self.scale(1.25, 1.25)
         self.centerOn(event.pos())
 
     def resetView(self):
@@ -93,12 +98,14 @@ class PageView(QGraphicsView):
         else:
             super(PageView, self).keyPressEvent(event)
 
+
 class PageScene(QGraphicsScene):
     def __init__(self):
         QGraphicsScene.__init__(self)
         self.ink = QPen(QColor(0, 255, 0), 2)
         self.lightBrush = QBrush(QColor(0, 255, 0, 16))
         self.boxItem = QGraphicsRectItem()
+
 
 class ImageTable(QTableWidget):
     def __init__(self):
@@ -110,7 +117,6 @@ class ImageTable(QTableWidget):
 
         self.imageList = []
         self.reloadImageList()
-
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -181,12 +187,12 @@ class ImageTable(QTableWidget):
                 tsi = str(int(t))
                 psi = str(int(p))
                 if tsi not in examsScanned.keys():
-                    examsScanned.update({tsi:{}})
+                    examsScanned.update({tsi: {}})
                 if psi not in examsScanned[tsi].keys():
-                    examsScanned[tsi].update({psi:[v,fname]})
+                    examsScanned[tsi].update({psi: [v, fname]})
                 else:
                     examsScanned[tsi][psi] = [v, fname]
-                print("Assigning file {} to t{}p{}v{}".format(fname, t,p,v))
+                print("Assigning file {} to t{}p{}v{}".format(fname, t, p, v))
                 os.system("cp pageImages/problemImages/{} ./decodedPages/page_{}/version_{}/t{}p{}v{}.png\n".format(fname, str(p).zfill(2), str(v), str(t).zfill(4), str(p).zfill(2), str(v)))
                 os.system("mv pageImages/problemImages/{}* ./pageImages/alreadyProcessed/".format(fname))
 
@@ -201,7 +207,7 @@ class ImageTable(QTableWidget):
                 # Since there can be more than 1 extra page for the same pagegroup
                 ename = "extraPages/xt{}g{}v{}n{}.png".format(str(t).zfill(4), str(g).zfill(2), v, n)
                 while os.path.exists(ename):
-                    v = v+1 #file exists, add 1 to counter.
+                    n = n+1  #file exists, add 1 to counter.
                     ename = "extraPages/xt{}g{}v{}n{}.png".format(str(t).zfill(4), str(g).zfill(2), v, n)
 
                 os.system("cp pageImages/problemImages/{} ./{}\n".format(fname, ename))
@@ -320,9 +326,9 @@ class PageExtraDialog(QDialog):
             self.reject()
 
     def checkIsValid(self):
-        t = str(self.testSB.value())
-        g = str(self.groupSB.value())
-
+        # Should there be some validity checking here?
+        # t = str(self.testSB.value())
+        # g = str(self.groupSB.value())
         return True
 
 
@@ -349,20 +355,20 @@ class PageIdentifier(QWidget):
 
         self.extraB = QPushButton("Extra page")
         self.extraB.clicked.connect(self.extraPage)
-        grid.addWidget(self.extraB,5,1)
+        grid.addWidget(self.extraB, 5, 1)
 
 
         self.flippitB = QPushButton("Flip image")
         self.flippitB.clicked.connect(self.flipCurrent)
-        grid.addWidget(self.flippitB,6,1)
+        grid.addWidget(self.flippitB, 6, 1)
 
         self.closeB = QPushButton("Save && Close")
         self.closeB.clicked.connect(self.saveValid)
-        grid.addWidget(self.closeB,8,1,2,2)
+        grid.addWidget(self.closeB, 8, 1, 2, 2)
 
         self.closeB = QPushButton("Close")
         self.closeB.clicked.connect(self.close)
-        grid.addWidget(self.closeB,100,1)
+        grid.addWidget(self.closeB, 100, 1)
 
         self.setLayout(grid)
         self.setWindowTitle('Identify Page Images')
@@ -373,7 +379,6 @@ class PageIdentifier(QWidget):
         self.imageT.saveExtras()
         writeExamsScanned()
         self.close()
-
 
     def extraPage(self):
         pexd = PageExtraDialog()
@@ -397,6 +402,7 @@ class PageIdentifier(QWidget):
             self.imageT.setTPV(t, p, v)
             self.imageT.setFocus()
 
+
 def main():
     spec.readSpec()
     readExamsProduced()
@@ -404,6 +410,7 @@ def main():
     app = QApplication(sys.argv)
     PI = PageIdentifier()
     sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()
