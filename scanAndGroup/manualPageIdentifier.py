@@ -159,7 +159,9 @@ class ImageTable(QTableWidget):
         # Determine version from test number and group number
         # v = examsProduced[t][p]  but p=page, not group
         # set p to be the spec.PageGroups[g][0] (ie first page of the group)
-        self.item(r, 3).setText( examsProduced[t][spec.PageGroups[g]] )
+        p = str(spec.PageGroups[int(g)][0])
+        v = str(examsProduced[t][p])
+        self.item(r, 3).setText(v)
         self.item(r, 4).setText("Extra")
         self.resizeColumnsToContents()
 
@@ -356,7 +358,6 @@ class PageIdentifier(QWidget):
 
         self.closeB = QPushButton("Save && Close")
         self.closeB.clicked.connect(self.saveValid)
-        self.closeB.clicked.connect(self.saveExtras)
         grid.addWidget(self.closeB,8,1,2,2)
 
         self.closeB = QPushButton("Close")
@@ -369,6 +370,7 @@ class PageIdentifier(QWidget):
 
     def saveValid(self):
         self.imageT.saveValid()
+        self.imageT.saveExtras()
         writeExamsScanned()
         self.close()
 
@@ -376,8 +378,8 @@ class PageIdentifier(QWidget):
     def extraPage(self):
         pexd = PageExtraDialog()
         if pexd.exec_() == QDialog.Accepted:
-            t = str(pexd.testSB.value()).zfill(4)
-            g = str(pexd.groupSB.value()).zfill(2)
+            t = str(pexd.testSB.value())
+            g = str(pexd.groupSB.value())
             self.imageT.setTGExtra(t, g)
             self.imageT.setFocus()
 
