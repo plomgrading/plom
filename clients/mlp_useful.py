@@ -2,8 +2,10 @@ import os
 import json
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
-from PyQt5.QtGui import QCursor, QIcon, QPainter, QPen, QPixmap, QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QAbstractItemView, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QSpinBox, QPushButton, QTableView, QToolButton, QWidget, QItemDelegate
+from PyQt5.QtGui import QIcon, QPixmap, QStandardItem, QStandardItemModel
+from PyQt5.QtWidgets import QAbstractItemView, QGridLayout, QMessageBox, \
+    QPushButton, QTableView, QToolButton, QWidget, QItemDelegate
+
 
 class ErrorMessage(QMessageBox):
     def __init__(self, txt):
@@ -11,18 +13,22 @@ class ErrorMessage(QMessageBox):
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Ok)
 
+
 class SimpleMessage(QMessageBox):
     def __init__(self, txt):
         super(SimpleMessage, self).__init__()
         self.setText(txt)
-        self.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
+        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
         fnt = self.font()
         fnt.setPointSize((fnt.pointSize()*3)//2)
         self.setFont(fnt)
 
+
 class SimpleTableView(QTableView):
-    annotateSignal = pyqtSignal() #This is picked up by the marker, lets it know to annotate
+    # This is picked up by the marker, lets it know to annotate
+    annotateSignal = pyqtSignal()
+
     def __init__(self, parent=None):
         super(SimpleTableView, self).__init__()
         self.setSortingEnabled(True)
@@ -35,6 +41,7 @@ class SimpleTableView(QTableView):
             self.annotateSignal.emit()
         else:
             super(SimpleTableView, self).keyPressEvent(event)
+
 
 class SimpleToolButton(QToolButton):
     def __init__(self, txt, icon):
@@ -136,7 +143,9 @@ class commentRowModel(QStandardItemModel):
 
 
 class SimpleCommentTable(QTableView):
-    commentSignal = pyqtSignal(list) #This is picked up by the annotator
+    # This is picked up by the annotator
+    commentSignal = pyqtSignal(list)
+
     def __init__(self, parent):
         super(SimpleCommentTable, self).__init__()
         self.verticalHeader().hide()
@@ -160,12 +169,13 @@ class SimpleCommentTable(QTableView):
         self.clist = []
         self.loadCommentList()
         self.populateTable()
-        self.resizeRowsToContents()  # resize rows and make sure any updates also resize.
+        self.resizeRowsToContents()
         self.resizeColumnToContents(0)
         self.cmodel.itemChanged.connect(self.resizeRowsToContents)
 
         # set these so that double-click enables edits, but not keypress.
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers | QAbstractItemView.DoubleClicked)
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers
+                             | QAbstractItemView.DoubleClicked)
 
     def populateTable(self):
         for (dlt, txt) in self.clist:
@@ -187,19 +197,22 @@ class SimpleCommentTable(QTableView):
         if index == 0:  # make sure something is selected
             self.currentItem()
         r = self.selectedIndexes()[0].row()
-        self.commentSignal.emit([self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()])
+        self.commentSignal.emit([self.cmodel.index(r, 0).data(),
+                                 self.cmodel.index(r, 1).data()])
 
     def loadCommentList(self):
         if os.path.exists('signedCommentList.json'):
             self.clist = json.load(open('signedCommentList.json'))
         else:
-            self.clist = [(-1, 'algebra'), (-1, 'arithmetic'), (0, 'be careful'), (1, 'very nice')]
+            self.clist = [(-1, 'algebra'), (-1, 'arithmetic'), (-1, 'huh?'),
+                          (0, 'be careful'),
+                          (1, 'good'), (1, 'very nice'), (1, 'yes')]
 
     def saveCommentList(self):
         self.clist = []
         for r in range(self.cmodel.rowCount()):
-            self.clist.append((self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()))
-
+            self.clist.append((self.cmodel.index(r, 0).data(),
+                               self.cmodel.index(r, 1).data()))
         with open('signedCommentList.json', 'w') as fname:
             json.dump(self.clist, fname)
 
@@ -212,8 +225,10 @@ class SimpleCommentTable(QTableView):
         delti.setDropEnabled(False)
         delti.setTextAlignment(Qt.AlignCenter)
         self.cmodel.appendRow([delti, txti])
-        self.selectRow(self.cmodel.rowCount()-1)  # select current row
-        self.edit(self.selectedIndexes()[1])  # fire up editor on the comment which is second selected index
+        # select current row
+        self.selectRow(self.cmodel.rowCount()-1)
+        # fire up editor on the comment which is second selected index
+        self.edit(self.selectedIndexes()[1])
 
     def deleteItem(self):
         sel = self.selectedIndexes()
