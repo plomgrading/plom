@@ -204,7 +204,6 @@ class Annotator(QDialog):
             self.currentButton = None
         else:
             self.currentButton = self.sender()
-            print(self.currentButton)
             if self.currentButton == self.commentW.CL:
                 self.currentButton.setStyleSheet(
                     self.currentButtonStyleOutline)
