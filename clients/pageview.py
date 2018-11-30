@@ -1,11 +1,9 @@
-import sys
-import os
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QPainter
 from PyQt5.QtWidgets import QGraphicsView
 
 from pagescene import PageScene
+
 
 class PageView(QGraphicsView):
     def __init__(self, parent, imgName):
@@ -17,7 +15,7 @@ class PageView(QGraphicsView):
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
         self.scene = PageScene(self, imgName)
         self.setScene(self.scene)
-        self.mode = "pen"
+        self.mode = "move"
 
     def resizeEvent(self, e):
         self.fitInView(self.scene.imageItem, Qt.KeepAspectRatio)
@@ -43,6 +41,7 @@ class PageView(QGraphicsView):
 
     def undo(self):
         self.scene.undoStack.undo()
+
     def redo(self):
         self.scene.undoStack.redo()
 
@@ -53,4 +52,4 @@ class PageView(QGraphicsView):
         self.scale(1.25, 1.25)
 
     def zoomOut(self):
-        self.scale(0.8,0.8)
+        self.scale(0.8, 0.8)

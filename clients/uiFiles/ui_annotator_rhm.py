@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './ui_annotator_righthandmouse.ui'
+# Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator_righthandmouse.ui'
 #
 # Created by: PyQt5 UI code generator 5.10.1
 #
@@ -93,16 +93,21 @@ class Ui_annotator_rhm(object):
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame.setObjectName("frame")
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self.frame)
-        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.gridLayout_4 = QtWidgets.QGridLayout(self.frame)
+        self.gridLayout_4.setObjectName("gridLayout_4")
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem)
+        self.gridLayout_4.addItem(spacerItem, 1, 0, 1, 1)
         self.keyHelpButton = QtWidgets.QPushButton(self.frame)
         self.keyHelpButton.setObjectName("keyHelpButton")
-        self.horizontalLayout.addWidget(self.keyHelpButton)
+        self.gridLayout_4.addWidget(self.keyHelpButton, 1, 1, 1, 1)
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem1)
-        self.gridLayout_3.addWidget(self.frame, 4, 2, 1, 5)
+        self.gridLayout_4.addItem(spacerItem1, 1, 2, 1, 1)
+        self.toolLineEdit = QtWidgets.QLineEdit(self.frame)
+        self.toolLineEdit.setAlignment(QtCore.Qt.AlignCenter)
+        self.toolLineEdit.setReadOnly(True)
+        self.toolLineEdit.setObjectName("toolLineEdit")
+        self.gridLayout_4.addWidget(self.toolLineEdit, 0, 0, 1, 3)
+        self.gridLayout_3.addWidget(self.frame, 5, 2, 1, 5)
         self.verticalLayout.addWidget(self.groupBox)
         self.markBox = QtWidgets.QGroupBox(self.hideableBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
