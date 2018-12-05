@@ -12,6 +12,21 @@ from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
 from uiFiles.ui_annotator_rhm import Ui_annotator_rhm
 
 
+modeLines = {
+    'box': 'L: highlighted box. R: opaque white box.',
+    'comment': 'L: paste comment and associated mark.',
+    'cross': 'L: cross. M: ?-mark. R: checkmark.',
+    'delta': 'L: paste mark. M: ?-mark. R: checkmark/cross.',
+    'delete': 'Delete object.',
+    'line': 'L: straight line. R: arrow.',
+    'move': 'Move object.',
+    'pan': 'Pan view.',
+    'pen': 'L: freehand pen. R: freehand highlighter.',
+    'text': 'Text. Enter: newline, Shift-Enter/ESC: finish.',
+    'tick': 'L: checkmark. M: ?-mark. R: cross.',
+    'zoom': 'L: Zoom in. R: zoom out.',
+    }
+
 class Annotator(QDialog):
     def __init__(self, fname, maxMark, markStyle, mouseHand, parent=None):
         super(Annotator, self).__init__(parent)
@@ -201,13 +216,16 @@ class Annotator(QDialog):
 
         # Button has been changed, so update currentButton and its styling.
         if self.sender() == self.markEntry:
+            self.setToolLine('delta')
             self.currentButton = None
         else:
             self.currentButton = self.sender()
             if self.currentButton == self.commentW.CL:
+                self.setToolLine('comment')
                 self.currentButton.setStyleSheet(
                     self.currentButtonStyleOutline)
             else:
+                self.setToolLine(newMode)
                 self.currentButton.setStyleSheet(
                     self.currentButtonStyleBackground)
             self.markEntry.clearButtonStyle()
@@ -215,6 +233,10 @@ class Annotator(QDialog):
         self.view.setMode(newMode)
         self.view.setCursor(newCursor)
         self.repaint()
+
+    def setToolLine(self, newMode):
+        self.ui.toolLineEdit.setText("{}".format(
+            modeLines.get(newMode, newMode)))
 
     def setIcons(self):
         # pyinstaller creates a temp folder and stores path in _MEIPASS
