@@ -9,7 +9,9 @@ from resources.uiFiles.ui_launcher import Ui_Launcher
 directories = ['build', 'finishing', 'imageServer', 'resources',
                'scanAndGroup']
 directories += ['build/examsToPrint', 'build/sourceVersions']
-directories += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/', 'scanAndGroup/readyForMarking', 'scanAndGroup/scannedExams', 'scanAndGroup/extraPages/']
+directories += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/',
+                'scanAndGroup/readyForMarking', 'scanAndGroup/scannedExams',
+                'scanAndGroup/extraPages/']
 directories += ['imageServer/markedPapers']
 directories += ['clients', 'clients/uiFiles', 'clients/icons']
 directories += ['finishing/frontPages', 'finishing/reassembled/',
@@ -63,17 +65,45 @@ files += ['finishing/07_check_completed.py', 'finishing/coverPageBuilder.py',
           'finish/10_reassembled_ided_but_unmarked.py',
           'finishing/testReassembler_only_ided.py']
 
-files += ['imageServer/authenticate.py', 'imageServer/mark_manager.py', 'imageServer/examviewwindow.py', 'imageServer/mark_storage.py', 'imageServer/id_storage.py',  'imageServer/identify_manager.py', 'imageServer/userManager.py', 'imageServer/image_server.py', 'imageServer/ui_server_setup.py', 'imageServer/serverSetup.py', 'imageServer/moreScansAdded.py']
+files += ['imageServer/authenticate.py', 'imageServer/mark_manager.py',
+          'imageServer/examviewwindow.py', 'imageServer/mark_storage.py',
+          'imageServer/id_storage.py',  'imageServer/identify_manager.py',
+          'imageServer/userManager.py', 'imageServer/image_server.py',
+          'imageServer/ui_server_setup.py', 'imageServer/serverSetup.py',
+          'imageServer/moreScansAdded.py']
 
-files += ['clients/mlp_client.py', 'clients/mlp_marker.py', 'clients/mlp_identifier.py', 'clients/mlp_annotator.py', 'clients/mlp_messenger.py', 'clients/mlp_useful.py', 'clients/mlp_markentry.py', 'clients/pageview.py', 'clients/pagescene.py', 'clients/tools.py', 'clients/examviewwindow.py', 'clients/reorientationwindow.py', 'clients/mlp_client.spec']
+files += ['clients/mlp_client.py', 'clients/mlp_marker.py',
+          'clients/mlp_identifier.py', 'clients/mlp_annotator.py',
+          'clients/mlp_messenger.py', 'clients/mlp_useful.py',
+          'clients/mlp_markentry.py', 'clients/pageview.py',
+          'clients/pagescene.py', 'clients/tools.py',
+          'clients/examviewwindow.py', 'clients/reorientationwindow.py',
+          'clients/mlp_client.spec']
 
-files += ['clients/uiFiles/ui_annotator_lhm.py', 'clients/uiFiles/ui_annotator_rhm.py', 'clients/uiFiles/ui_chooser.py', 'clients/uiFiles/ui_identify.py', 'clients/uiFiles/ui_marker.py']
+files += ['clients/uiFiles/ui_annotator_lhm.py',
+          'clients/uiFiles/ui_annotator_rhm.py',
+          'clients/uiFiles/ui_chooser.py',
+          'clients/uiFiles/ui_identify.py',
+          'clients/uiFiles/ui_marker.py']
 
-files += ['clients/icons/comment.svg', 'clients/icons/comment_up.svg', 'clients/icons/comment_down.svg', 'clients/icons/cross.svg', 'clients/icons/pan.svg', 'clients/icons/text.svg', 'clients/icons/delete.svg', 'clients/icons/pen.svg', 'clients/icons/tick.svg', 'clients/icons/line.svg', 'clients/icons/rectangle.svg', 'clients/icons/undo.svg', 'clients/icons/move.svg', 'clients/icons/redo.svg', 'clients/icons/zoom.svg']
+files += ['clients/icons/comment.svg', 'clients/icons/comment_up.svg',
+          'clients/icons/comment_down.svg', 'clients/icons/cross.svg',
+          'clients/icons/pan.svg', 'clients/icons/text.svg',
+          'clients/icons/delete.svg', 'clients/icons/pen.svg',
+          'clients/icons/tick.svg', 'clients/icons/line.svg',
+          'clients/icons/rectangle.svg', 'clients/icons/undo.svg',
+          'clients/icons/move.svg', 'clients/icons/redo.svg',
+          'clients/icons/zoom.svg']
 
-files += [
-'finishing/07_check_completed.py', 'finishing/coverPageBuilder.py', 'finishing/08_build_cover_pages.py', 'finishing/testReassembler.py', 'finishing/09_reassemble.py', 'finishing/testspecification.py', '10_reassembled_ided_but_unmarked.py', 'testReassembler_only_ided.py'
-]
+files += ['finishing/07_check_completed.py',
+          'finishing/coverPageBuilder.py',
+          'finishing/08_build_cover_pages.py',
+          'finishing/testReassembler.py',
+          'finishing/09_reassemble.py',
+          'finishing/testspecification.py',
+          'finishing/10_reassembled_ided_but_unmarked.py',
+          'finishing/testReassembler_only_ided.py']
+
 
 class ErrorMessage(QMessageBox):
     def __init__(self, txt):

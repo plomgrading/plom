@@ -29,14 +29,17 @@ for p in range(1, length+1):
     exam.insertPDF(V[pageVersions[str(p)]], from_page=p-1,
                    to_page=p-1, start_at=-1)
 
-# Fit the QRcodes inside 92x80 boxes
+# Page width and height
 pW = exam[0].bound().width
 pH = exam[0].bound().height
-rTC = fitz.Rect(pW//2-50, 20, pW//2+50, 40) #a box for test number
-rDNW0 = fitz.Rect(15, 15, 90, 90) #leave top-left of pages blank so that marks don't overwrite student work
-rDNW1 = fitz.Rect(pW-90, 15, pW-15, 90) #leave top-right of pages blank so that marks don't overwrite student work
+# a box for the test number
+rTC = fitz.Rect(pW//2-50, 20, pW // 2 + 50, 40)
+# leave top-left of pages blank so that marks don't overwrite student work
+rDNW0 = fitz.Rect(15, 15, 90, 90)
+# leave top-right of pages blank so that marks don't overwrite student work
+rDNW1 = fitz.Rect(pW-90, 15, pW-15, 90)
 
-# 70x70 boxes
+# 70x70 corner boxes for the QR codes
 rNW = fitz.Rect(15, 20, 85, 90)
 rNE = fitz.Rect(pW-85, 20, pW-15, 90)
 rSW = fitz.Rect(15, pH-90, 85, pH-20)
@@ -51,9 +54,13 @@ with tempfile.TemporaryDirectory() as tmpDir:
     nameQR.png(nameFile, scale=4)
     os.system("mogrify {} {}".format(mogOpC, nameFile))
 
-    cmd = "convert -size 116x58 xc:white -draw \"stroke black fill grey path \'M 57,0  L 0,57  L 114,57 L 57,0 Z\'\"  -gravity south -annotate +0+4 \'{}\' -rotate -45 -trim {}".format(name, dnw0File)
+    cmd = "convert -size 116x58 xc:white -draw \"stroke black fill grey "\
+        "path \'M 57,0  L 0,57  L 114,57 L 57,0 Z\'\"  -gravity south "\
+        "-annotate +0+4 \'{}\' -rotate -45 -trim {}".format(name, dnw0File)
     os.system(cmd)
-    cmd = "convert -size 116x58 xc:white -draw \"stroke black fill grey path \'M 57,0  L 0,57  L 114,57 L 57,0 Z\'\"  -gravity south -annotate +0+4 \'{}\' -rotate +45 -trim {}".format(name, dnw1File)
+    cmd = "convert -size 116x58 xc:white -draw \"stroke black fill grey "\
+        "path \'M 57,0  L 0,57  L 114,57 L 57,0 Z\'\"  -gravity south "\
+        "-annotate +0+4 \'{}\' -rotate +45 -trim {}".format(name, dnw1File)
     os.system(cmd)
 
     pageQRs = {}
