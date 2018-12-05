@@ -32,11 +32,9 @@ for p in range(1, length+1):
 # Fit the QRcodes inside 92x80 boxes
 pW = exam[0].bound().width
 pH = exam[0].bound().height
-# a box for test number
-rTC = fitz.Rect(pW//2-50, 20, pW//2+50, 40)
-# leave top-left of pages blank so that marks don't overwrite student work
-rDNW = fitz.Rect(10, 10, 120, 40)
-rDNW0 = fitz.Rect(15, 15, 90, 90)
+rTC = fitz.Rect(pW//2-50, 20, pW//2+50, 40) #a box for test number
+rDNW0 = fitz.Rect(15, 15, 90, 90) #leave top-left of pages blank so that marks don't overwrite student work
+rDNW1 = fitz.Rect(pW-90, 15, pW-15, 90) #leave top-right of pages blank so that marks don't overwrite student work
 
 # 70x70 boxes
 rNW = fitz.Rect(15, 20, 85, 90)
@@ -47,17 +45,15 @@ rSE = fitz.Rect(pW-85, pH-90, pW-15, pH-20)
 with tempfile.TemporaryDirectory() as tmpDir:
     nameQR = pyqrcode.create('N.{}'.format(name), error='H')
     nameFile = os.path.join(tmpDir, "name.png")
-    dnwFile = os.path.join(tmpDir, "dnw.png")
     dnw0File = os.path.join(tmpDir, "dnw0.png")
+    dnw1File = os.path.join(tmpDir, "dnw1.png")
 
     nameQR.png(nameFile, scale=4)
     os.system("mogrify {} {}".format(mogOpC, nameFile))
-    os.system("convert -size 100x30 xc:grey -bordercolor black "
-              "-border 1 {}".format(dnwFile))
-    cmd = "convert -size 116x58 xc:white -draw \"stroke black " \
-        "fill grey path \'M 57,0  L 0,57  L 114,57 L 57,0 Z\'\"" \
-        " -gravity south -annotate +0+4 \'{}\' -rotate -45 " \
-        "-trim {}".format(name, dnw0File)
+
+    cmd = "convert -size 116x58 xc:white -draw \"stroke black fill grey path \'M 57,0  L 0,57  L 114,57 L 57,0 Z\'\"  -gravity south -annotate +0+4 \'{}\' -rotate -45 -trim {}".format(name, dnw0File)
+    os.system(cmd)
+    cmd = "convert -size 116x58 xc:white -draw \"stroke black fill grey path \'M 57,0  L 0,57  L 114,57 L 57,0 Z\'\"  -gravity south -annotate +0+4 \'{}\' -rotate +45 -trim {}".format(name, dnw1File)
     os.system(cmd)
 
     pageQRs = {}
@@ -79,8 +75,8 @@ with tempfile.TemporaryDirectory() as tmpDir:
                                         str(p).zfill(2), tpFile[p]))
 
     qrName = fitz.Pixmap(nameFile)
-    dnw = fitz.Pixmap(dnwFile)
     dnw0 = fitz.Pixmap(dnw0File)
+    dnw1 = fitz.Pixmap(dnw1File)
     for p in range(length):
         testnumber = fitz.Pixmap(tpFile[p+1])
         # put testnumber at centre top each page
@@ -93,6 +89,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
             exam[p].insertImage(rSW, pixmap=qrName, overlay=True)
         else:
             exam[p].insertImage(rNW, pixmap=qrPage, overlay=True)
+            exam[p].insertImage(rDNW1, pixmap=dnw1, overlay=True)
             exam[p].insertImage(rSW, pixmap=qrPage, overlay=True)
             exam[p].insertImage(rSE, pixmap=qrName, overlay=True)
 
