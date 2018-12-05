@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, QStackedWidget, QLabel, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, \
+    QStackedWidget, QLabel, QSizePolicy
 from PyQt5.QtCore import pyqtSignal, Qt
 
 
@@ -12,8 +13,12 @@ class MarkEntry(QStackedWidget):
         self.currentScore = 0
         self.numButtons = self.maxScore
         self.markButtons = {}
-        self.redStyle = "border: 2px solid #ff0000; background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, stop: 0.3 #ffcccc, stop: 0.7 #ffcccc, stop: 1 #ff0000);"
-        self.greenStyle = "border: 2px solid #00aaaa; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00dddd, stop: 1 #00aaaa); "
+        self.redStyle = "border: 2px solid #ff0000; background: "\
+            "qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, "\
+            "stop: 0.3 #ffcccc, stop: 0.7 #ffcccc, stop: 1 #ff0000);"
+        self.greenStyle = "border: 2px solid #00aaaa; background: "\
+            "qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00dddd, "\
+            "stop: 1 #00aaaa); "
 
         self.pageC = QWidget()
         self.pageM = QWidget()
@@ -51,7 +56,8 @@ class MarkEntry(QStackedWidget):
         fnt.setPointSize(fnt.pointSize()*2)
         self.scoreL.setFont(fnt)
         self.scoreL.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.scoreL.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        self.scoreL.setSizePolicy(QSizePolicy.MinimumExpanding,
+                                  QSizePolicy.MinimumExpanding)
         self.pageC.setLayout(grid)
 
     def setMarkingUp(self):
@@ -67,9 +73,12 @@ class MarkEntry(QStackedWidget):
         grid.addWidget(self.scoreL, 0, 0, 1, 2)
         for k in range(0, self.numButtons+1):
             self.markButtons["p{}".format(k)] = QPushButton("+&{}".format(k))
-            grid.addWidget(self.markButtons["p{}".format(k)], k//ncolumn+1, k % ncolumn, 1, 1)
-            self.markButtons["p{}".format(k)].clicked.connect(self.setDeltaMark)
-            self.markButtons["p{}".format(k)].setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+            grid.addWidget(self.markButtons["p{}".format(k)],
+                           k//ncolumn+1, k % ncolumn, 1, 1)
+            self.markButtons["p{}".format(k)].clicked.connect(
+                self.setDeltaMark)
+            self.markButtons["p{}".format(k)].setSizePolicy(
+                QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
         self.pageM.setLayout(grid)
         self.setCurrentWidget(self.pageM)
@@ -88,9 +97,12 @@ class MarkEntry(QStackedWidget):
         grid.addWidget(self.scoreL, 0, 0, 1, 2)
         for k in range(1, self.numButtons+1):
             self.markButtons["m{}".format(k)] = QPushButton("-&{}".format(k))
-            grid.addWidget(self.markButtons["m{}".format(k)], k//ncolumn+1, k % ncolumn, 1, 1)
-            self.markButtons["m{}".format(k)].clicked.connect(self.setDeltaMark)
-            self.markButtons["m{}".format(k)].setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+            grid.addWidget(self.markButtons["m{}".format(k)],
+                           k//ncolumn+1, k % ncolumn, 1, 1)
+            self.markButtons["m{}".format(k)].clicked.connect(
+                self.setDeltaMark)
+            self.markButtons["m{}".format(k)].setSizePolicy(
+                QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
         self.pageM.setLayout(grid)
         self.setCurrentWidget(self.pageM)
@@ -108,9 +120,11 @@ class MarkEntry(QStackedWidget):
 
         for k in range(0, self.maxScore+1):
             self.markButtons["{}".format(k)] = QPushButton("&{}".format(k))
-            grid.addWidget(self.markButtons["{}".format(k)], k//ncolumn, k % ncolumn)
+            grid.addWidget(self.markButtons["{}".format(k)],
+                           k//ncolumn, k % ncolumn)
             self.markButtons["{}".format(k)].clicked.connect(self.setTotalMark)
-            self.markButtons["{}".format(k)].setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+            self.markButtons["{}".format(k)].setSizePolicy(
+                QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
         self.pageM.setLayout(grid)
         self.setCurrentWidget(self.pageM)

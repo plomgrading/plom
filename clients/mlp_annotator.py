@@ -1,15 +1,16 @@
 import sys
-import os
 
 from PyQt5.QtCore import Qt, QSize, pyqtSlot
 from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap, QCloseEvent
-from PyQt5.QtWidgets import QAbstractItemView, QDialog, QMessageBox, QPushButton, QShortcut, QSizePolicy, QTableWidget, QTableWidgetItem, QGridLayout
+from PyQt5.QtWidgets import QAbstractItemView, QDialog, QMessageBox, \
+    QPushButton, QShortcut, QTableWidget, QTableWidgetItem, QGridLayout
 
 from mlp_markentry import MarkEntry
 from pageview import PageView
 from mlp_useful import CommentWidget, SimpleMessage
 from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
 from uiFiles.ui_annotator_rhm import Ui_annotator_rhm
+
 
 class Annotator(QDialog):
     def __init__(self, fname, maxMark, markStyle, mouseHand, parent=None):
@@ -18,7 +19,9 @@ class Annotator(QDialog):
         self.maxMark = maxMark
         self.score = 0
         self.markStyle = markStyle
-        self.currentButtonStyleBackground = "border: 2px solid #00aaaa; background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00dddd, stop: 1 #00aaaa);"
+        self.currentButtonStyleBackground = "border: 2px solid #00aaaa; " \
+            "background: qlineargradient(x1:0,y1:0,x2:0,y2:1, " \
+            "stop: 0 #00dddd, stop: 1 #00aaaa);"
         self.currentButtonStyleOutline = "border: 2px solid #00aaaa; "
         self.currentButton = None
 
@@ -46,42 +49,48 @@ class Annotator(QDialog):
 
         self.showMaximized()
 
-        ## Hot-key presses for various functions.
+        # Hot-key presses for various functions.
         self.keycodes = {
             # home-row
             Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
             Qt.Key_S: lambda: self.ui.undoButton.animateClick(),
             Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
-            Qt.Key_F: lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()),
+            Qt.Key_F: lambda: (self.commentW.currentItem(),
+                               self.commentW.CL.handleClick()),
             Qt.Key_G: lambda: self.ui.textButton.animateClick(),
             # lower-row
             Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
             Qt.Key_X: lambda: self.ui.deleteButton.animateClick(),
             Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
-            Qt.Key_V: lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()),
+            Qt.Key_V: lambda: (self.commentW.nextItem(),
+                               self.commentW.CL.handleClick()),
             Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
             # upper-row
             Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
             Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
             Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
-            Qt.Key_R: lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()),
+            Qt.Key_R: lambda: (self.commentW.previousItem(),
+                               self.commentW.CL.handleClick()),
             Qt.Key_T: lambda: self.ui.penButton.animateClick(),
 
             # and then the same but for the left-handed
             Qt.Key_H: lambda: self.ui.textButton.animateClick(),
-            Qt.Key_J: lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()),
+            Qt.Key_J: lambda: (self.commentW.currentItem(),
+                               self.commentW.CL.handleClick()),
             Qt.Key_K: lambda: self.ui.tickButton.animateClick(),
             Qt.Key_L: lambda: self.ui.undoButton.animateClick(),
             Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
 
             Qt.Key_N: lambda: self.ui.lineButton.animateClick(),
-            Qt.Key_M: lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()),
+            Qt.Key_M: lambda: (self.commentW.nextItem(),
+                               self.commentW.CL.handleClick()),
             Qt.Key_Comma: lambda: self.ui.boxButton.animateClick(),
             Qt.Key_Period: lambda: self.ui.deleteButton.animateClick(),
             Qt.Key_Slash: lambda: self.ui.moveButton.animateClick(),
 
             Qt.Key_Y: lambda: self.ui.penButton.animateClick(),
-            Qt.Key_U: lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()),
+            Qt.Key_U: lambda: (self.commentW.previousItem(),
+                               self.commentW.CL.handleClick()),
             Qt.Key_I: lambda: self.ui.crossButton.animateClick(),
             Qt.Key_O: lambda: self.ui.redoButton.animateClick(),
             Qt.Key_P: lambda: self.ui.panButton.animateClick(),
@@ -115,15 +124,22 @@ class Annotator(QDialog):
             self.ui.hideButton.setText("Reveal")
 
     def keyPopUp(self):
-        keylist = {'a': 'Zoom', 's': 'Undo', 'd': 'Tick/QMark/Cross', 'f': 'Current Comment', 'g': 'Text',
-                   'z': 'Move', 'x': 'Delete', 'c': 'Box/Whitebox', 'v': 'Next Comment', 'b': 'Line/Arrow', 'q': 'Pan',  'w': 'Redo',  'e': 'Cross/QMark/Tick', 'r': 'Previous Comment', 't': 'Pen/Highlighter',
-                   '+': 'Maximize Window', '\\': 'Maximize Window', '-': 'Zoom Out', '=': 'Zoom In',
-                   '`': 'Set Mark 0', '0': 'Set Mark 0', '1': 'Set Mark 1', '2': 'Set Mark 2',
-                   '3': 'Set Mark 3', '4': 'Set Mark 4', '5': 'Set Mark 5',
-                    ';': 'Zoom', 'l': 'Undo', 'k': 'Tick/QMark/Cross', 'j': 'Current Comment', 'h': 'Text',
-                    '/': 'Move', '.': 'Delete', ',': 'Box/Whitebox', 'm':'Next Comment', 'n':'Line/Arrow',
-                    'p': 'Pan', 'o': 'Redo', 'i': 'Cross/QMark/Tick', 'u': 'Previous Comment', 'y': 'Pen/Highlighter',
-                    '?': 'Key Help'}
+        keylist = {'a': 'Zoom', 's': 'Undo', 'd': 'Tick/QMark/Cross',
+                   'f': 'Current Comment', 'g': 'Text', 'z': 'Move',
+                   'x': 'Delete', 'c': 'Box/Whitebox', 'v': 'Next Comment',
+                   'b': 'Line/Arrow', 'q': 'Pan',  'w': 'Redo',
+                   'e': 'Cross/QMark/Tick', 'r': 'Previous Comment',
+                   't': 'Pen/Highlighter', '+': 'Maximize Window',
+                   '\\': 'Maximize Window', '-': 'Zoom Out', '=': 'Zoom In',
+                   '`': 'Set Mark 0', '0': 'Set Mark 0', '1': 'Set Mark 1',
+                   '2': 'Set Mark 2', '3': 'Set Mark 3', '4': 'Set Mark 4',
+                   '5': 'Set Mark 5', ';': 'Zoom', 'l': 'Undo',
+                   'k': 'Tick/QMark/Cross', 'j': 'Current Comment',
+                   'h': 'Text', '/': 'Move', '.': 'Delete',
+                   ',': 'Box/Whitebox', 'm': 'Next Comment', 'n': 'Line/Arrow',
+                   'p': 'Pan', 'o': 'Redo', 'i': 'Cross/QMark/Tick',
+                   'u': 'Previous Comment', 'y': 'Pen/Highlighter',
+                   '?': 'Key Help'}
 
         kp = QDialog()
         grid = QGridLayout()
@@ -133,25 +149,27 @@ class Annotator(QDialog):
         for a in keylist.keys():
             r = kt.rowCount()
             kt.setRowCount(r+1)
-            kt.setItem(r,0,QTableWidgetItem(a))
-            kt.setItem(r,1,QTableWidgetItem("{}".format(keylist[a])))
+            kt.setItem(r, 0, QTableWidgetItem(a))
+            kt.setItem(r, 1, QTableWidgetItem("{}".format(keylist[a])))
 
-        kt.setHorizontalHeaderLabels(['key','function'])
+        kt.setHorizontalHeaderLabels(['key', 'function'])
         kt.verticalHeader().hide()
         kt.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         cb = QPushButton("&close")
         cb.clicked.connect(kp.accept)
-        grid.addWidget(kt,1,1,3,3)
-        grid.addWidget(cb,4,3)
+        grid.addWidget(kt, 1, 1, 3, 3)
+        grid.addWidget(cb, 4, 3)
         kp.setLayout(grid)
         kp.exec_()
 
     def setView(self):
         self.view = PageView(self, self.imageFile)
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint)
-        self.view.fitInView(self.view.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowSystemMenuHint
+                            | Qt.WindowMinMaxButtonsHint)
+        self.view.fitInView(self.view.scene.sceneRect(),
+                            Qt.KeepAspectRatioByExpanding)
         self.view.centerOn(0, 0)
 
     def swapMaxNorm(self):
@@ -162,9 +180,11 @@ class Annotator(QDialog):
 
     def keyToChangeMark(self, buttonNumber):
         if self.markEntry.style == 'Up':
-            self.markEntry.markButtons['p{}'.format(buttonNumber)].animateClick()
-        elif self.markEntry.style == 'Down' and buttonNumber>0:
-            self.markEntry.markButtons['m{}'.format(buttonNumber)].animateClick()
+            self.markEntry.markButtons[
+                'p{}'.format(buttonNumber)].animateClick()
+        elif self.markEntry.style == 'Down' and buttonNumber > 0:
+            self.markEntry.markButtons[
+                'm{}'.format(buttonNumber)].animateClick()
 
     def keyPressEvent(self, event):
         self.keycodes.get(event.key(), lambda *args: None)()
@@ -184,11 +204,12 @@ class Annotator(QDialog):
             self.currentButton = None
         else:
             self.currentButton = self.sender()
-            print(self.currentButton)
             if self.currentButton == self.commentW.CL:
-                self.currentButton.setStyleSheet(self.currentButtonStyleOutline)
+                self.currentButton.setStyleSheet(
+                    self.currentButtonStyleOutline)
             else:
-                self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
+                self.currentButton.setStyleSheet(
+                    self.currentButtonStyleBackground)
             self.markEntry.clearButtonStyle()
 
         self.view.setMode(newMode)
@@ -196,34 +217,47 @@ class Annotator(QDialog):
         self.repaint()
 
     def setIcons(self):
-        ## pyinstaller creates a temp folder and stores path in _MEIPASS
+        # pyinstaller creates a temp folder and stores path in _MEIPASS
         try:
             base_path = sys._MEIPASS
         except Exception:
             base_path = "./icons"
 
-        #tweak path for loading the icons for use with pyinstaller one-file.
+        # tweak path for loading the icons for use with pyinstaller one-file.
         self.setIcon(self.ui.penButton, "pen", "{}/pen.svg".format(base_path))
-        self.setIcon(self.ui.lineButton, "line", "{}/line.svg".format(base_path))
-        self.setIcon(self.ui.boxButton, "box", "{}/rectangle.svg".format(base_path))
-        self.setIcon(self.ui.textButton, "text", "{}/text.svg".format(base_path))
-        self.setIcon(self.ui.tickButton, "tick", "{}/tick.svg".format(base_path))
-        self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
-        self.setIcon(self.ui.deleteButton, "delete", "{}/delete.svg".format(base_path))
-        self.setIcon(self.ui.moveButton, "move", "{}/move.svg".format(base_path))
-        self.setIcon(self.ui.zoomButton, "zoom", "{}/zoom.svg".format(base_path))
-        self.setIcon(self.ui.panButton, "pan", "{}/pan.svg".format(base_path))
-        self.setIcon(self.ui.undoButton, "undo", "{}/undo.svg".format(base_path))
-        self.setIcon(self.ui.redoButton, "redo", "{}/redo.svg".format(base_path))
-        self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
-        self.setIcon(self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path))
-        self.setIcon(self.ui.commentDownButton, "com dn", "{}/comment_down.svg".format(base_path))
+        self.setIcon(self.ui.lineButton, "line",
+                     "{}/line.svg".format(base_path))
+        self.setIcon(self.ui.boxButton, "box",
+                     "{}/rectangle.svg".format(base_path))
+        self.setIcon(self.ui.textButton, "text",
+                     "{}/text.svg".format(base_path))
+        self.setIcon(self.ui.tickButton, "tick",
+                     "{}/tick.svg".format(base_path))
+        self.setIcon(self.ui.crossButton, "cross",
+                     "{}/cross.svg".format(base_path))
+        self.setIcon(self.ui.deleteButton, "delete",
+                     "{}/delete.svg".format(base_path))
+        self.setIcon(self.ui.moveButton, "move",
+                     "{}/move.svg".format(base_path))
+        self.setIcon(self.ui.zoomButton, "zoom",
+                     "{}/zoom.svg".format(base_path))
+        self.setIcon(self.ui.panButton, "pan",
+                     "{}/pan.svg".format(base_path))
+        self.setIcon(self.ui.undoButton, "undo",
+                     "{}/undo.svg".format(base_path))
+        self.setIcon(self.ui.redoButton, "redo",
+                     "{}/redo.svg".format(base_path))
+        self.setIcon(self.ui.commentButton, "com",
+                     "{}/comment.svg".format(base_path))
+        self.setIcon(self.ui.commentUpButton, "com up",
+                     "{}/comment_up.svg".format(base_path))
+        self.setIcon(self.ui.commentDownButton, "com dn",
+                     "{}/comment_down.svg".format(base_path))
 
         self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
         self.endShortCut.activated.connect(self.endAndRelaunch)
         self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
         self.endShortCutb.activated.connect(self.endAndRelaunch)
-
 
     @pyqtSlot()
     def endAndRelaunch(self):
@@ -238,34 +272,51 @@ class Annotator(QDialog):
         tb.setMinimumWidth(60)
 
     def setButtons(self):
-        self.ui.penButton.clicked.connect(lambda: self.setMode("pen", QCursor(Qt.ArrowCursor)))
-        self.ui.lineButton.clicked.connect(lambda: self.setMode("line", QCursor(Qt.CrossCursor)))
-        self.ui.boxButton.clicked.connect(lambda: self.setMode("box", QCursor(Qt.ArrowCursor)))
-        self.ui.textButton.clicked.connect(lambda: self.setMode("text", QCursor(Qt.IBeamCursor)))
-        self.ui.crossButton.clicked.connect(lambda: self.setMode("cross", QCursor(Qt.ArrowCursor)))
-        self.ui.tickButton.clicked.connect(lambda: self.setMode("tick", QCursor(Qt.ArrowCursor)))
-        self.ui.moveButton.clicked.connect(lambda: self.setMode("move", QCursor(Qt.OpenHandCursor)))
-        self.ui.deleteButton.clicked.connect(lambda: self.setMode("delete", QCursor(Qt.ForbiddenCursor)))
-        self.ui.zoomButton.clicked.connect(lambda: self.setMode("zoom", QCursor(Qt.SizeFDiagCursor)))
-        self.ui.panButton.clicked.connect(lambda: (self.setMode("pan", QCursor(Qt.OpenHandCursor)), self.view.setDragMode(1)))
+        self.ui.penButton.clicked.connect(
+            lambda: self.setMode("pen", QCursor(Qt.ArrowCursor)))
+        self.ui.lineButton.clicked.connect(
+            lambda: self.setMode("line", QCursor(Qt.CrossCursor)))
+        self.ui.boxButton.clicked.connect(
+            lambda: self.setMode("box", QCursor(Qt.ArrowCursor)))
+        self.ui.textButton.clicked.connect(
+            lambda: self.setMode("text", QCursor(Qt.IBeamCursor)))
+        self.ui.crossButton.clicked.connect(
+            lambda: self.setMode("cross", QCursor(Qt.ArrowCursor)))
+        self.ui.tickButton.clicked.connect(
+            lambda: self.setMode("tick", QCursor(Qt.ArrowCursor)))
+        self.ui.moveButton.clicked.connect(
+            lambda: self.setMode("move", QCursor(Qt.OpenHandCursor)))
+        self.ui.deleteButton.clicked.connect(
+            lambda: self.setMode("delete", QCursor(Qt.ForbiddenCursor)))
+        self.ui.zoomButton.clicked.connect(
+            lambda: self.setMode("zoom", QCursor(Qt.SizeFDiagCursor)))
+        self.ui.panButton.clicked.connect(
+            lambda: (self.setMode("pan", QCursor(Qt.OpenHandCursor)),
+                     self.view.setDragMode(1)))
         self.ui.undoButton.clicked.connect(self.view.undo)
         self.ui.redoButton.clicked.connect(self.view.redo)
 
         self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
 
-        self.ui.commentButton.clicked.connect(lambda: (self.commentW.currentItem(), self.commentW.CL.handleClick()))
-        self.ui.commentUpButton.clicked.connect(lambda: (self.commentW.previousItem(), self.commentW.CL.handleClick()))
-        self.ui.commentDownButton.clicked.connect(lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()))
+        self.ui.commentButton.clicked.connect(
+            lambda: (self.commentW.currentItem(),
+                     self.commentW.CL.handleClick()))
+        self.ui.commentUpButton.clicked.connect(
+            lambda: (self.commentW.previousItem(),
+                     self.commentW.CL.handleClick()))
+        self.ui.commentDownButton.clicked.connect(
+            lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()))
 
-        self.ui.finishedButton.clicked.connect(lambda:(self.commentW.saveComments(), self.closeEvent(True)))
-        self.ui.finishNoRelaunchButton.clicked.connect(lambda:(self.commentW.saveComments(), self.closeEvent(False)))
+        self.ui.finishedButton.clicked.connect(
+            lambda: (self.commentW.saveComments(), self.closeEvent(True)))
+        self.ui.finishNoRelaunchButton.clicked.connect(
+            lambda: (self.commentW.saveComments(), self.closeEvent(False)))
 
         self.ui.cancelButton.clicked.connect(self.reject)
 
         self.commentW.CL.commentSignal.connect(self.handleComment)
 
         self.ui.hideButton.clicked.connect(self.toggleTools)
-
 
     def handleComment(self, dlt_txt):
         self.setMode("text", QCursor(Qt.IBeamCursor))
@@ -320,9 +371,9 @@ class Annotator(QDialog):
         if lookingAhead < 0 or lookingAhead > self.maxMark:
             self.ui.moveButton.animateClick()
 
-    def closeEvent(self,relaunch):
+    def closeEvent(self, relaunch):
         if type(relaunch) == QCloseEvent:
-            self.launchAgain=False
+            self.launchAgain = False
             self.reject()
         else:
             # if marking total or up, be careful of giving 0-marks
@@ -331,8 +382,9 @@ class Annotator(QDialog):
                 if msg.exec_() == QMessageBox.No:
                     return
             # if marking down, be careful of giving max-marks
-            if self.score == self.maxMark  and self.markEntry.style == 'Down':
-                msg = SimpleMessage('You have given {} - please confirm'.format(self.maxMark))
+            if self.score == self.maxMark and self.markEntry.style == 'Down':
+                msg = SimpleMessage(
+                    'You have given {} - please confirm'.format(self.maxMark))
                 if msg.exec_() == QMessageBox.No:
                     return
             if relaunch:

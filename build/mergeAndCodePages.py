@@ -12,20 +12,24 @@ versions = int(sys.argv[3])
 test = sys.argv[4].zfill(4)
 pageVersions = eval(sys.argv[5])
 
-mogOpA = "-gravity south -splice 0x16 -undercolor white -fill black -pointsize 16 -annotate +0+10"
-mogOpB = "-bordercolor none -border 0x0 -mattecolor black -frame 1x1 -background \"#FFFFFF\" -flatten -rotate 270"
-mogOpC = " -mattecolor black -frame 1x1 -background \"#FFFFFF\" -flatten -rotate 270"
+mogOpA = "-gravity south -splice 0x16 -undercolor white " \
+    "-fill black -pointsize 16 -annotate +0+10"
+mogOpB = "-bordercolor none -border 0x0 -mattecolor black " \
+    "-frame 1x1 -background \"#FFFFFF\" -flatten -rotate 270"
+mogOpC = " -mattecolor black -frame 1x1 -background \"#FFFFFF\" " \
+    "-flatten -rotate 270"
 
-V={}
+V = {}
 for v in range(1, versions+1):
     V[v] = fitz.open("sourceVersions/version{}.pdf".format(v))
 
 exam = fitz.open()
 for p in range(1, length+1):
     # Pymupdf starts pagecounts from 0 rather than 1. So offset things.
-    exam.insertPDF(V[pageVersions[str(p)]], from_page=p-1, to_page=p-1, start_at=-1)
+    exam.insertPDF(V[pageVersions[str(p)]], from_page=p-1,
+                   to_page=p-1, start_at=-1)
 
-# Fit the QRcodes inside boxes 112x100 or in 92x80 boxes
+# Fit the QRcodes inside 92x80 boxes
 pW = exam[0].bound().width
 pH = exam[0].bound().height
 rTC = fitz.Rect(pW//2-50, 20, pW//2+50, 40) #a box for test number
@@ -54,22 +58,29 @@ with tempfile.TemporaryDirectory() as tmpDir:
 
     pageQRs = {}
     pageFile = {}
-    tpFile={}
+    tpFile = {}
     for p in range(1, length+1):
-        tpv = 't{}p{}v{}'.format(str(test).zfill(4), str(p).zfill(2), pageVersions[str(p)])
+        tpv = 't{}p{}v{}'.format(str(test).zfill(4), str(p).zfill(2),
+                                 pageVersions[str(p)])
         pageQRs[p] = pyqrcode.create(tpv, error='H')
         pageFile[p] = os.path.join(tmpDir, "page{}.png".format(p))
         pageQRs[p].png(pageFile[p], scale=4)
         os.system("mogrify {} {}".format(mogOpC, pageFile[p]))
-        tpFile[p] = os.path.join(tmpDir, "t{}p{}.png".format(str(test).zfill(4), str(p).zfill(2)))
-        os.system("convert -pointsize 36 -size 200x42 caption:'{}.{}' -trim -gravity Center -extent 200x42 -bordercolor black -border 1 {}".format( str(test).zfill(4), str(p).zfill(2), tpFile[p]) )
+        tpFile[p] = os.path.join(tmpDir,
+                                 "t{}p{}.png".format(str(test).zfill(4),
+                                                     str(p).zfill(2)))
+        os.system("convert -pointsize 36 -size 200x42 caption:'{}.{}' -trim "
+                  "-gravity Center -extent 200x42 -bordercolor black "
+                  "-border 1 {}".format(str(test).zfill(4),
+                                        str(p).zfill(2), tpFile[p]))
 
     qrName = fitz.Pixmap(nameFile)
     dnw0 = fitz.Pixmap(dnw0File)
     dnw1 = fitz.Pixmap(dnw1File)
     for p in range(length):
         testnumber = fitz.Pixmap(tpFile[p+1])
-        exam[p].insertImage(rTC, pixmap=testnumber, overlay=True) #put testnumber at centre top each page
+        # put testnumber at centre top each page
+        exam[p].insertImage(rTC, pixmap=testnumber, overlay=True)
         qrPage = fitz.Pixmap(pageFile[p+1])
         if p % 2 == 0:
             exam[p].insertImage(rNE, pixmap=qrPage, overlay=True)
