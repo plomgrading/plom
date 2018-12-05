@@ -2,32 +2,68 @@ import sys
 import os
 import shutil
 import locale
-from PyQt5.QtWidgets import QApplication, QDialog, QErrorMessage, QFileDialog, QGridLayout, QMessageBox, QPushButton, QTreeWidget, QTreeWidgetItem, QWidget
+from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QGridLayout,\
+    QMessageBox, QPushButton, QTreeWidget, QTreeWidgetItem, QWidget
 from resources.uiFiles.ui_launcher import Ui_Launcher
 
-directories = ['build', 'finishing', 'imageServer', 'resources', 'scanAndGroup']
+directories = ['build', 'finishing', 'imageServer', 'resources',
+               'scanAndGroup']
 directories += ['build/examsToPrint', 'build/sourceVersions']
-directories += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/', 'scanAndGroup/readyForMarking', 'scanAndGroup/scannedExams']
+directories += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/',
+                'scanAndGroup/readyForMarking', 'scanAndGroup/scannedExams']
 directories += ['imageServer/markedPapers']
 directories += ['clients', 'clients/uiFiles', 'clients/icons']
-directories += ['finishing/frontPages', 'finishing/reassembled/', 'finishing/reassembled_ID_but_not_marked']
+directories += ['finishing/frontPages', 'finishing/reassembled/',
+                'finishing/reassembled_ID_but_not_marked']
 
 files = ['resources/testspecification.py', 'resources/davconf.conf']
-files += ['build/01_build_specification_gui.py', 'build/cleanAll.py', 'build/editMeToBuildASpec.py', 'build/02_build_tests_from_spec.py', 'build/mergeAndCodePages.py', 'build/buildTestPDFs.py', 'build/ui_builder.py', 'build/version_selector_qlist.py']
-files += [
-'scanAndGroup/03_scans_to_page_images.py', 'scanAndGroup/cleanAll.py', 'scanAndGroup/04_decode_images.py', 'scanAndGroup/extractQRAndOrient.py', 'scanAndGroup/05_missing_pages.py', 'scanAndGroup/manualPageIdentifier.py', 'scanAndGroup/06_group_pages.py', 'scanAndGroup/testspecification.py']
+files += ['build/01_build_specification_gui.py', 'build/cleanAll.py',
+          'build/editMeToBuildASpec.py', 'build/02_build_tests_from_spec.py',
+          'build/mergeAndCodePages.py', 'build/buildTestPDFs.py',
+          'build/ui_builder.py', 'build/version_selector_qlist.py']
+files += ['scanAndGroup/03_scans_to_page_images.py',
+          'scanAndGroup/cleanAll.py', 'scanAndGroup/04_decode_images.py',
+          'scanAndGroup/extractQRAndOrient.py',
+          'scanAndGroup/05_missing_pages.py',
+          'scanAndGroup/manualPageIdentifier.py',
+          'scanAndGroup/06_group_pages.py',
+          'scanAndGroup/testspecification.py']
 
-files += ['imageServer/authenticate.py', 'imageServer/mark_manager.py', 'imageServer/examviewwindow.py', 'imageServer/mark_storage.py', 'imageServer/id_storage.py',  'imageServer/identify_manager.py', 'imageServer/userManager.py', 'imageServer/image_server.py', 'imageServer/ui_server_setup.py', 'imageServer/serverSetup.py', 'imageServer/moreScansAdded.py']
+files += ['imageServer/authenticate.py', 'imageServer/mark_manager.py',
+          'imageServer/examviewwindow.py', 'imageServer/mark_storage.py',
+          'imageServer/id_storage.py',  'imageServer/identify_manager.py',
+          'imageServer/userManager.py', 'imageServer/image_server.py',
+          'imageServer/ui_server_setup.py', 'imageServer/serverSetup.py',
+          'imageServer/moreScansAdded.py']
 
-files += ['clients/mlp_client.py', 'clients/mlp_marker.py', 'clients/mlp_identifier.py', 'clients/mlp_annotator.py', 'clients/mlp_messenger.py', 'clients/mlp_useful.py', 'clients/mlp_markentry.py', 'clients/pageview.py', 'clients/pagescene.py', 'clients/tools.py', 'clients/examviewwindow.py', 'clients/reorientationwindow.py', 'clients/mlp_client.spec']
+files += ['clients/mlp_client.py', 'clients/mlp_marker.py',
+          'clients/mlp_identifier.py', 'clients/mlp_annotator.py',
+          'clients/mlp_messenger.py', 'clients/mlp_useful.py',
+          'clients/mlp_markentry.py', 'clients/pageview.py',
+          'clients/pagescene.py', 'clients/tools.py',
+          'clients/examviewwindow.py', 'clients/reorientationwindow.py',
+          'clients/mlp_client.spec']
 
-files += ['clients/uiFiles/ui_annotator_lhm.py', 'clients/uiFiles/ui_annotator_rhm.py', 'clients/uiFiles/ui_chooser.py', 'clients/uiFiles/ui_identify.py', 'clients/uiFiles/ui_marker.py']
+files += ['clients/uiFiles/ui_annotator_lhm.py',
+          'clients/uiFiles/ui_annotator_rhm.py',
+          'clients/uiFiles/ui_chooser.py', 'clients/uiFiles/ui_identify.py',
+          'clients/uiFiles/ui_marker.py']
 
-files += ['clients/icons/comment.svg', 'clients/icons/comment_up.svg ', 'clients/icons/comment_down.svg ', 'clients/icons/cross.svg', 'clients/icons/pan.svg', 'clients/icons/text.svg', 'clients/icons/delete.svg', 'clients/icons/pen.svg', 'clients/icons/tick.svg', 'clients/icons/line.svg', 'clients/icons/rectangle.svg', 'clients/icons/undo.svg', 'clients/icons/move.svg', 'clients/icons/redo.svg', 'clients/icons/zoom.svg']
+files += ['clients/icons/comment.svg', 'clients/icons/comment_up.svg ',
+          'clients/icons/comment_down.svg ', 'clients/icons/cross.svg',
+          'clients/icons/pan.svg', 'clients/icons/text.svg',
+          'clients/icons/delete.svg', 'clients/icons/pen.svg',
+          'clients/icons/tick.svg', 'clients/icons/line.svg',
+          'clients/icons/rectangle.svg', 'clients/icons/undo.svg',
+          'clients/icons/move.svg', 'clients/icons/redo.svg',
+          'clients/icons/zoom.svg']
 
-files += [
-'finishing/07_check_completed.py', 'finishing/coverPageBuilder.py', 'finishing/08_build_cover_pages.py', 'finishing/testReassembler.py', 'finishing/09_reassemble.py', 'finishing/testspecification.py', '10_reassembled_ided_but_unmarked.py', 'testReassembler_only_ided.py'
-]
+files += ['finishing/07_check_completed.py', 'finishing/coverPageBuilder.py',
+          'finishing/08_build_cover_pages.py', 'finishing/testReassembler.py',
+          'finishing/09_reassemble.py', 'finishing/testspecification.py',
+          'finish/10_reassembled_ided_but_unmarked.py',
+          'finishing/testReassembler_only_ided.py']
+
 
 class ErrorMessage(QMessageBox):
     def __init__(self, txt):
@@ -35,26 +71,45 @@ class ErrorMessage(QMessageBox):
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Ok)
 
+
 class SimpleMessage(QMessageBox):
     def __init__(self, txt):
         super(SimpleMessage, self).__init__()
         self.setText(txt)
-        self.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
+        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
+
 
 class LeftToDo(QDialog):
     def __init__(self):
         super(LeftToDo, self).__init__()
         tasks = {}
         tasks['0: Right now'] = ['Go to project']
-        tasks['1: Build'] = ['Name test', 'Set number of source tests', 'Copy source tests into place', 'Set up page grouping', 'Set up version choices for page groups', 'Set total number of tests to produce']
-        tasks['2: Run the test'] = ['Print tests', 'Run test', 'Make students happy', 'Scan tests']
-        tasks['3: Scan and Group'] = ['Copy test scans to scannedExams', 'Convert scans to page images', 'Decode page images', 'Check for missing pages', 'Group page images into page-groups']
-        tasks['4: Resources'] = ['Copy csv of your class list here']
-        tasks['5: Image server'] = ['Make sure you have access to two ports', 'Set up users', 'Run the image server', 'Check progress with ID-manager', 'Check progress with Marking-manager']
-        tasks['6: Clients'] = ['Give markers client apps']
-        tasks['7: Finishing'] = ['Check tests are completed', 'Build cover pages', 'Reassemble papers']
-
+        tasks['1: Build'] = ['Name test', 'Set number of source tests',
+                             'Copy source tests into place',
+                             'Set up page grouping',
+                             'Set up version choices for groups',
+                             'Set total number of tests to produce',
+                             'Produce test-files']
+        tasks['2: Run the test'] = ['Print tests', 'Run test',
+                                    'Make students very happy', 'Scan tests']
+        tasks['3: Scan and Group'] = ['Copy test scans to scannedExams',
+                                      'Convert scans to page images',
+                                      'Decode page images',
+                                      'Manual identification'
+                                      'Check for missing pages',
+                                      'Group page images into page-groups',
+                                      'Add an extra pages']
+        tasks['4: Image server'] = ['Make sure you have access to two ports',
+                                    'Set up users',
+                                    'Get your class list csv'
+                                    'Run the image server',
+                                    'Check progress with ID-manager',
+                                    'Check progress with Marking-manager']
+        tasks['5: Clients'] = ['Give markers client apps']
+        tasks['6: Finishing'] = ['Check tests are completed',
+                                 'Build cover pages',
+                                 'Reassemble papers']
         self.setWindowTitle("What to do next")
         self.setModal(True)
         grid = QGridLayout()
@@ -84,22 +139,29 @@ def buildDirs(projPath):
     for dir in directories:
         try:
             os.mkdir(projPath+"/"+dir)
-        except:
+        except os.FileExistsError:
             pass
+
 
 def copyFiles(projPath):
     for fname in files:
         try:
             shutil.copyfile(fname, projPath+'/'+fname)
-        except:
+        except OSError:
             pass
+
 
 def buildKey(projPath):
     print("Building new ssl key/certificate for server")
     # Command to generate the self-signed key:
-    #     openssl req -x509 -newkey rsa:2048 -keyout selfsigned.key -nodes -out selfsigned.cert -sha256 -days 1000
-    sslcmd = "openssl req -x509 -sha256 -newkey rsa:2048 -keyout {}/resources/mlp.key -nodes -out {}/resources/mlp-selfsigned.crt -days 1000".format(projPath, projPath)
-    sslcmd += " -subj \'/C={}/ST=./L=./CN=localhost\'".format(locale.getdefaultlocale()[0][-2:])
+    # openssl req -x509 -newkey rsa:2048 -keyout selfsigned.key \
+    #          -nodes -out selfsigned.cert -sha256 -days 1000
+
+    sslcmd = "openssl req -x509 -sha256 -newkey rsa:2048 -keyout " \
+        "{}/resources/mlp.key -nodes -out " \
+        "{}/resources/mlp-selfsigned.crt -days 1000 -subj".format(projPath,
+                                                                  projPath)
+    sslcmd += " \'/C={}/ST=./L=./CN=localhost\'".format(locale.getdefaultlocale()[0][-2:])
     print(sslcmd)
     os.system(sslcmd)
 
@@ -108,23 +170,28 @@ def doThings(projPath):
     try:
         os.mkdir(projPath)
     except FileExistsError:
-        msg = SimpleMessage('Directory {} already exists. Okay to continue?'.format(projPath))
+        msg = SimpleMessage('Directory {} already exists. '
+                            'Okay to continue?'.format(projPath))
         if msg.exec_() == QMessageBox.No:
             return
-
     msg = ErrorMessage('Building directories and moving scripts')
     msg.exec_()
     buildDirs(projPath)
     copyFiles(projPath)
 
-    msg = SimpleMessage('Build new ssl-keys (recommended if you have openssl installed). Otherwise copy ones from repository (not-recommended)')
+    msg = SimpleMessage('Build new ssl-keys (recommended if you have openssl '
+                        'installed). Otherwise copy ones from repository '
+                        '(not-recommended)')
     if msg.exec_() == QMessageBox.Yes:
         buildKey(projPath)
     else:
-        shutil.copyfile('./resources/mlp.key', projPath+'/resources/mlp.key')
-        shutil.copyfile('./resources/mlp-selfsigned.crt', projPath+'/resources/mlp-selfsigned.crt')
+        shutil.copyfile('./resources/mlp.key',
+                        projPath+'/resources/mlp.key')
+        shutil.copyfile('./resources/mlp-selfsigned.crt',
+                        projPath+'/resources/mlp-selfsigned.crt')
 
-    msg = ErrorMessage('Set up server options: IP, ports, the class list csv file and set manager password')
+    msg = ErrorMessage('Set up server options: IP, ports, the class list '
+                       'csv file and set manager password')
     msg.exec_()
     cpwd = os.getcwd()
     os.chdir(projPath+'/imageServer')
@@ -133,6 +200,7 @@ def doThings(projPath):
 
     msg = LeftToDo()
     msg.exec_()
+
 
 class ProjectLauncher(QWidget):
     def __init__(self):
@@ -147,7 +215,9 @@ class ProjectLauncher(QWidget):
 
     def getDirectory(self):
         home = os.getenv("HOME")
-        dir = QFileDialog.getExistingDirectory(self, "Choose a location for your project", home, QFileDialog.ShowDirsOnly|QFileDialog.DontResolveSymlinks)
+        dir = QFileDialog.getExistingDirectory(
+            self, "Choose a location for your project",
+            home, QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
         if os.path.isdir(dir):
             self.ui.directoryLE.setText(dir)
 
@@ -161,6 +231,7 @@ class ProjectLauncher(QWidget):
             msg.exec_()
             return
         self.close()
+
 
 app = QApplication(sys.argv)
 window = ProjectLauncher()
