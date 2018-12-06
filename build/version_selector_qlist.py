@@ -100,9 +100,9 @@ class Ui_MainWindow(object):
         myBrowser.setGeometry(10, 10, 640, 480)
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fname, = QFileDialog.getOpenFileName(
-            myBrowser, "QFileDialog.getOpenFileName()", "",
-            "Pdf Files (*.pdf)", options=options)
+        fname,_ = QFileDialog.getOpenFileName(
+            myBrowser, "QFileDialog.getOpenFileName()",
+            "", "Pdf Files (*.pdf)", options=options)
         if fname:
             oldText = self.listWidget.currentItem().text()[0:9]
             for x in versions.values():

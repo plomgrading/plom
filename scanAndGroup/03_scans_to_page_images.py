@@ -16,7 +16,7 @@ def buildDirectories():
     for dir in lst:
         try:
             os.mkdir(dir)
-        except os.FileExistsError:
+        except FileExistsError:
             pass
     # For each page/version we need a page/version dir
     # in decoded pages
