@@ -1,20 +1,26 @@
-import os,json,csv
-from testspecification import TestSpecification
 from collections import defaultdict
+import csv
+import json
+import os
 import sys
 import sqlite3
+from testspecification import TestSpecification
 
-sys.path.append("../imageServer")
+# Do we need this?
+# sys.path.append("../imageServer")
 
+# Access the databases
+# Open the marks database (readonly)
 markdb = sqlite3.connect('file:../resources/test_marks.db?mode=ro', uri=True)
 curMark = markdb.cursor()
-
+# Open the ID database (readonly)
 iddb = sqlite3.connect('file:../resources/identity.db?mode=ro', uri=True)
 curID = iddb.cursor()
-
+# Create dictionaries for the marked groups, ID'd papers and completed tests.
 groupImagesMarked=defaultdict(lambda: defaultdict(list))
 examsIDed = {}
 completedTests=defaultdict(lambda: defaultdict(list))
+
 
 def checkMarked(n):
     global groupImagesMarked
