@@ -14,7 +14,8 @@ directories += ['scanAndGroup/decodedPages', 'scanAndGroup/pageImages/',
                 'scanAndGroup/extraPages/']
 directories += ['imageServer/markedPapers']
 directories += ['clients', 'clients/uiFiles', 'clients/icons']
-directories += ['finishing/frontPages', 'finishing/reassembled/',
+directories += ['finishing/frontPages', 'finishing/coverPages',
+                'finishing/reassembled/',
                 'finishing/reassembled_ID_but_not_marked']
 
 files = ['resources/testspecification.py', 'resources/davconf.conf']
