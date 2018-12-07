@@ -45,7 +45,6 @@ def buildCoverPage(n):
     """Construct string of command to pass to the coverPageBuilder script.
     Script needs [TestNumber, Name, ID,]
     and then for each group [group, version, mark, maxPossibleMark]
-    and finally
     """
     arg = []
     sname = examsIDed[n][2]
