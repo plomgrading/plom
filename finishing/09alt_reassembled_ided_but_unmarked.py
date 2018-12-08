@@ -64,4 +64,4 @@ fh.close()
 # pipe the commandlist into gnu-parallel
 os.system("parallel --bar <commandlist.txt")
 # delete the commandlist file.
-os.unlink("rm commandlist.txt")
+os.unlink("commandlist.txt")

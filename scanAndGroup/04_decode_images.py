@@ -185,6 +185,7 @@ def addCurrentScansToExamsScanned():
                                     str(p).zfill(2), str(v)))
             # move the filename into alreadyProcessed
             shutil.move(fn, "alreadyProcessed")
+            shutil.move(fn+".qr", "alreadyProcessed")
     os.chdir("../")
 
 

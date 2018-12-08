@@ -63,7 +63,7 @@ files += ['clients/icons/comment.svg', 'clients/icons/comment_up.svg ',
 files += ['finishing/07_check_completed.py', 'finishing/coverPageBuilder.py',
           'finishing/08_build_cover_pages.py', 'finishing/testReassembler.py',
           'finishing/09_reassemble.py', 'finishing/testspecification.py',
-          'finish/10_reassembled_ided_but_unmarked.py',
+          'finish/09alt_reassembled_ided_but_unmarked.py',
           'finishing/testReassembler_only_ided.py']
 
 files += ['imageServer/authenticate.py', 'imageServer/mark_manager.py',
