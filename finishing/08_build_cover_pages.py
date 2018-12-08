@@ -1,10 +1,16 @@
-import os,json
-from testspecification import TestSpecification
 from collections import defaultdict
+import json
+import os
+import sys
+# this allows us to import from ../resources
+sys.path.append('..')
+from resources.testspecification import TestSpecification
 
 
 def readExamsCompleted():
-    """Read json of completed (ie marked+id'd) tests. Store in examsCompleted"""
+    """Read json of completed (ie marked+id'd) tests.
+    Store in examsCompleted
+    """
     global examsCompleted
     if(os.path.exists("../resources/examsCompleted.json")):
         with open('../resources/examsCompleted.json') as data_file:

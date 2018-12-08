@@ -3,7 +3,10 @@ import csv
 import json
 import os
 import sqlite3
-from testspecification import TestSpecification
+import sys
+# this allows us to import from ../resources
+sys.path.append('..')
+from resources.testspecification import TestSpecification
 
 # Do we need this?
 # sys.path.append("../imageServer")

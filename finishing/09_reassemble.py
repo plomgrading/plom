@@ -1,6 +1,11 @@
-import os,json
-from testspecification import TestSpecification
 from collections import defaultdict
+import json
+import os
+import sys
+# this allows us to import from ../resources
+sys.path.append('..')
+from resources.testspecification import TestSpecification
+
 
 def readExamsGrouped():
     global examsGrouped
@@ -8,11 +13,13 @@ def readExamsGrouped():
         with open('../resources/examsGrouped.json') as data_file:
             examsGrouped = json.load(data_file)
 
+
 def readExamsCompleted():
     global examsCompleted
     if(os.path.exists("../resources/examsCompleted.json")):
         with open('../resources/examsCompleted.json') as data_file:
             examsCompleted = json.load(data_file)
+
 
 def readExamsIDed():
     global examsIDed
@@ -20,12 +27,14 @@ def readExamsIDed():
         with open('../resources/examsIdentified.json') as data_file:
             examsIDed = json.load(data_file)
 
+
 def imageList(n):
     imgl = ["coverPages/cover_{}.pdf".format(n.zfill(4))]
     imgl.append( "../scanAndGroup/readyForMarking/idgroup/{}.png".format(examsGrouped[n][0]) )
     for pg in range(spec.getNumberOfGroups()):
         imgl.append( "../imageServer/markedPapers/G{}.png".format(examsGrouped[n][pg+1][1:]) )
     return(imgl)
+
 
 def writeExamsCompleted():
     fh = open("../resources/examsReassembled.json",'w')
@@ -42,7 +51,6 @@ spec.readSpec()
 readExamsCompleted()
 readExamsIDed()
 readExamsGrouped()
-
 fh = open("./commandlist.txt","w")
 for n in sorted(examsCompleted.keys()):
     if(examsCompleted[n]==True):

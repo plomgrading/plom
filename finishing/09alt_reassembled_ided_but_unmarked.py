@@ -1,6 +1,11 @@
-import os,json
-from testspecification import TestSpecification
 from collections import defaultdict
+import json
+import os
+import sys
+# this allows us to import from ../resources
+sys.path.append('..')
+from resources.testspecification import TestSpecification
+
 
 def readExamsGrouped():
     global examsGrouped
@@ -8,11 +13,13 @@ def readExamsGrouped():
         with open('../resources/examsGrouped.json') as data_file:
             examsGrouped = json.load(data_file)
 
+
 def readExamsIDed():
     global examsIDed
     if(os.path.exists("../resources/examsIdentified.json")):
         with open('../resources/examsIdentified.json') as data_file:
             examsIDed = json.load(data_file)
+
 
 def imageList(n):
     imgl = []
@@ -21,6 +28,7 @@ def imageList(n):
         v = examsGrouped[n][pg+1][1:][-1] #version is last digit of the code.
         imgl.append( "../scanAndGroup/readyForMarking/group_{}/version_{}/{}.png".format(str(pg+1).zfill(2), v, examsGrouped[n][pg+1]) )
     return(imgl)
+
 
 os.system('mkdir -p reassembled_ID_but_not_marked')
 
