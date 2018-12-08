@@ -1,5 +1,7 @@
-import sys, tempfile, json
 from collections import defaultdict
+import json
+import sys
+import tempfile
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QApplication, QComboBox,  QDialog, QGridLayout,  QMessageBox, QProgressBar, QPushButton, QTableView, QTableWidget, QTableWidgetItem, QWidget
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
@@ -58,7 +60,7 @@ class ErrorMessage(QMessageBox):
 
 class UserProgress(QDialog):
     def __init__(self, counts):
-        QDialog.__init__(self)
+        super(UserProgress, self).__init__()
         self.setModal(True)
         grid = QGridLayout()
 
@@ -163,7 +165,8 @@ class ExamTable(QWidget):
 
     def requestPageImage(self, index):
         rec = self.exM.record(index.row())
-        self.pgImg.updateImage("../scanAndGroup/readyForMarking/idgroup/{}.png".format(rec.value('tgv')))
+        self.pgImg.updateImage("../scanAndGroup/readyForMarking/idgroup/{}.png"
+                               .format(rec.value('tgv')))
 
     def computeUserProgress(self):
         ustats = defaultdict(lambda: [0, 0])
@@ -173,7 +176,7 @@ class ExamTable(QWidget):
             ustats[self.exM.record(r).value('user')][0] += 1
             if self.exM.record(r).value('status') == 'Identified':
                 ustats[self.exM.record(r).value('user')][1] += 1
-        tmp = UserProgress(ustats)
+        UserProgress(ustats).exec_()
 
     def getUniqueFromColumn(self, col):
         lst = set()

@@ -3,20 +3,17 @@ import tempfile
 import json
 import asyncio
 import ssl
-from operator import itemgetter
 from collections import defaultdict
-
+from examviewwindow import ExamViewWindow
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QApplication, QComboBox, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QMessageBox, QProgressBar, QPushButton, QTableView, QTableWidget, QTableWidgetItem, QWidget
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
-
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set()  # Sets up seaborn defaults for plots.
 
-from examviewwindow import ExamViewWindow
 
 server = 'localhost'
 webdav_port = 41985
@@ -78,11 +75,11 @@ class userHistogram(QDialog):
         self.figure.clear()
         ax = self.figure.add_subplot(111)
         for u in counts.keys():
-            uh = counts[u]
+            uh = sorted(counts[u].items())
             tot = 0
-            for m in uh.values():
-                tot += m
-            ax.plot(list(uh.keys()), [t/tot for t in list(uh.values())], 'o-', label="User {}".format(u))
+            for x in uh:
+                tot += x[1]
+            ax.plot([x[0] for x in uh], [x[1]/tot for x in uh], 'o-', label="User {}".format(u))
         ax.legend()
         ax.set_xlabel('mark')
         ax.set_ylabel('proportion')
@@ -106,11 +103,11 @@ class versionHistogram(QDialog):
         self.figure.clear()
         ax = self.figure.add_subplot(111)
         for v in counts.keys():
-            vh = counts[v]
+            vh = sorted(counts[v].items())
             tot = 0
-            for m in vh.values():
-                tot += m
-            ax.plot(list(vh.keys()), [t/tot for t in list(vh.values())], 'o-', label="Version {}".format(v))
+            for x in vh:
+                tot += x[1]
+            ax.plot([x[0] for x in vh], [x[1]/tot for x in vh], 'o-', label="Version {}".format(v))
         ax.legend()
         ax.set_xlabel('mark')
         ax.set_ylabel('proportion')
@@ -315,14 +312,14 @@ class examTable(QWidget):
         for r in range(self.exM.rowCount()):
             if self.exM.record(r).value('status') == 'Marked':
                 vstats[self.exM.record(r).value('version')][self.exM.record(r).value('mark')] += 1
-        tmp = versionHistogram(vstats)
+        versionHistogram(vstats).exec_()
 
     def computeUserHistogram(self):
         ustats = defaultdict(lambda: defaultdict(int))
         for r in range(self.exM.rowCount()):
             if self.exM.record(r).value('status') == 'Marked':
                 ustats[self.exM.record(r).value('user')][self.exM.record(r).value('mark')] += 1
-        tmp = userHistogram(ustats)
+        userHistogram(ustats).exec_()
 
     def computePageGroupProgress(self):
         pgstats = defaultdict(lambda: [0, 0, 0])
@@ -331,7 +328,7 @@ class examTable(QWidget):
             if self.exM.record(r).value('status') == 'Marked':
                 pgstats[self.exM.record(r).value('pageGroup')][1] += 1
                 pgstats[self.exM.record(r).value('pageGroup')][2] += self.exM.record(r).value('markingTime')
-        tmp = groupProgress("PageGroup", pgstats)
+        groupProgress("PageGroup", pgstats).exec_()
 
     def computeVersionProgress(self):
         vstats = defaultdict(lambda: [0, 0, 0])
@@ -340,7 +337,7 @@ class examTable(QWidget):
             if self.exM.record(r).value('status') == 'Marked':
                 vstats[self.exM.record(r).value('version')][1] += 1
                 vstats[self.exM.record(r).value('version')][2] += self.exM.record(r).value('markingTime')
-        tmp = groupProgress("Version", vstats)
+        groupProgress("Version", vstats).exec_()
 
     def computeUserProgress(self):
         ustats = defaultdict(lambda: [0, 0, 0])
@@ -351,7 +348,7 @@ class examTable(QWidget):
             if self.exM.record(r).value('status') == 'Marked':
                 ustats[self.exM.record(r).value('user')][1] += 1
                 ustats[self.exM.record(r).value('user')][2] += self.exM.record(r).value('markingTime')
-        tmp = userProgress(ustats)
+        userProgress(ustats).exec_()
 
     def getUniqueFromColumn(self, col):
         lst = set()
