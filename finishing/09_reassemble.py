@@ -8,6 +8,9 @@ from resources.testspecification import TestSpecification
 
 
 def readExamsGrouped():
+    """Read json of marked'd tests. Store in examsMarked.
+    Indexed by [testnumber][pagegroup], stores mark and version number.
+    """
     global examsGrouped
     if(os.path.exists("../resources/examsGrouped.json")):
         with open('../resources/examsGrouped.json') as data_file:
@@ -15,6 +18,9 @@ def readExamsGrouped():
 
 
 def readExamsCompleted():
+    """Read json of completed (ie marked+id'd) tests.
+    Store in examsCompleted
+    """
     global examsCompleted
     if(os.path.exists("../resources/examsCompleted.json")):
         with open('../resources/examsCompleted.json') as data_file:
@@ -22,6 +28,9 @@ def readExamsCompleted():
 
 
 def readExamsIDed():
+    """Read json of ID'd tests. Store in examsIDed.
+    Stores the studentID and StudentName along with testnumber.
+    """
     global examsIDed
     if(os.path.exists("../resources/examsIdentified.json")):
         with open('../resources/examsIdentified.json') as data_file:
@@ -29,32 +38,44 @@ def readExamsIDed():
 
 
 def imageList(n):
+    """
+    Creates a list of the image files to be reassembled into
+    a completed testpaper with coversheet.
+    This will be passed to the reassembly script.
+    """
+    # list of image files for the reassembly
+    # zeroth = the coverpage.
     imgl = ["coverPages/cover_{}.pdf".format(n.zfill(4))]
-    imgl.append( "../scanAndGroup/readyForMarking/idgroup/{}.png".format(examsGrouped[n][0]) )
+    # then the ID-group pages
+    imgl.append("../scanAndGroup/readyForMarking/idgroup/{}.png"
+                .format(examsGrouped[n][0]))
+    # then all the group images
+    # get the TGV and filename from the examsgrouped json.
     for pg in range(spec.getNumberOfGroups()):
-        imgl.append( "../imageServer/markedPapers/G{}.png".format(examsGrouped[n][pg+1][1:]) )
+        # note pg is offset by 1.
+        # then filename = Gxxxxgyyvzz.png for tgv  txxxxgyyvz
+        # so replace first char by G
+        imgl.append("../imageServer/markedPapers/G{}.png"
+                    .format(examsGrouped[n][pg+1][1:]))
     return(imgl)
 
 
-def writeExamsCompleted():
-    fh = open("../resources/examsReassembled.json",'w')
-    fh.write( json.dumps(examsCompleted, indent=2, sort_keys=True))
-    fh.close()
-
-
-os.system('mkdir -p reassembled')
-os.system('mkdir -p frontPages')
-
+# read the test spec.
 spec = TestSpecification()
 spec.readSpec()
-
+# Read in the completed exams, the ID'd exams and grouped exams.
 readExamsCompleted()
 readExamsIDed()
 readExamsGrouped()
-fh = open("./commandlist.txt","w")
+# Open a file for a list of commands to process to reassemble papers.
+fh = open("./commandlist.txt", "w")
+# Look at all the successfully completed exams
 for n in sorted(examsCompleted.keys()):
-    if(examsCompleted[n]==True):
-        fh.write( "python3 testReassembler.py {} \"{}\"\n".format(examsIDed[n][1], imageList(n)))
+    if examsCompleted[n]:
+        fh.write("python3 testReassembler.py {} \"{}\"\n"
+                 .format(examsIDed[n][1], imageList(n)))
 fh.close()
+# pipe commands through gnu-parallel
 os.system("parallel --bar <commandlist.txt")
-os.system("rm commandlist.txt")
+# then delete command file.
+os.unlink("commandlist.txt")
