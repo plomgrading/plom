@@ -24,24 +24,21 @@ class IDImage(Model):
 
 class IDDatabase:
     """Class to handle all our database transactions."""
-    def __init__(self):
+    def __init__(self, logger):
         """Fire up basic logging and create the table in the database."""
-        logging.basicConfig(
-            filename='identity_storage.log', filemode='w', level=logging.INFO,
-            format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p'
-            )
-        logging.info("Initialised ")
+        self.logging = logger
+        self.logging.info("Initialised ")
         self.createTable()
 
     def connectToDB(self):
         """Connect to the database"""
-        logging.info("Connecting to database")
+        self.logging.info("Connecting to database")
         with iddb:
             iddb.connect()
 
     def createTable(self):
         """Create the required table in the database"""
-        logging.info("Creating database tables")
+        self.logging.info("Creating database tables")
         with iddb:
             iddb.create_tables([IDImage])
 
@@ -94,14 +91,14 @@ class IDDatabase:
 
     def addUnIDdExam(self, t, code):
         """Add exam number t with given code to the database"""
-        logging.info("Adding unid'd IDImage {} to database".format(t))
+        self.logging.info("Adding unid'd IDImage {} to database".format(t))
         try:
             with iddb.atomic():
                 IDImage.create(number=t, tgv=code, status='ToDo',
                                user='None', time=datetime.now(),
                                sid=-t, sname="")
         except IntegrityError:
-            logging.info("IDImage {} {} already exists.".format(t, code))
+            self.logging.info("IDImage {} {} already exists.".format(t, code))
 
     def giveIDImageToClient(self, username):
         """Find unid'd test and send to client"""
@@ -110,7 +107,7 @@ class IDDatabase:
                 # Grab image from todo pile
                 x = IDImage.get(status='ToDo')
                 # log it.
-                logging.info("Passing IDImage {} {} to client {}"
+                self.logging.info("Passing IDImage {} {} to client {}"
                              .format(x.number, x.tgv, username))
                 # Update status, user, time.
                 x.status = 'OutForIDing'
@@ -120,7 +117,7 @@ class IDDatabase:
                 # return tgv.
                 return x.tgv
         except IDImage.DoesNotExist:
-            logging.info("Nothing left on To-Do pile")
+            self.logging.info("Nothing left on To-Do pile")
 
     def takeIDImageFromClient(self, code, username, sid, sname):
         """Get ID'dimage back from client - update record in database."""
@@ -135,15 +132,15 @@ class IDDatabase:
                 x.time = datetime.now()
                 x.save()
                 # log it.
-                logging.info(
+                self.logging.info(
                     "IDImage {} {} identified as {} {} by user {}".format(
                         x.number, code, sid, sname, username))
                 return True
         except IntegrityError:
-            logging.info("Student number {} already entered".format(sid))
+            self.logging.info("Student number {} already entered".format(sid))
             return False
         except IDImage.DoesNotExist:
-            logging.info("That IDImage number {} / username {} pair not known"
+            self.logging.info("That IDImage number {} / username {} pair not known"
                          .format(code, username))
             return False
 
@@ -152,7 +149,7 @@ class IDDatabase:
         back on todo pile
         """
         # Log user returning given tgv.
-        logging.info("User {} returning unid'd IDImages {}".format(username, code))
+        self.logging.info("User {} returning unid'd IDImages {}".format(username, code))
         with iddb.atomic():
             # get the record by username+code
             query = IDImage.select().where(IDImage.user == username,
@@ -164,7 +161,7 @@ class IDDatabase:
                 x.time = datetime.now()
                 x.save()
                 # log the result.
-                logging.info(">>> Returning IDImage {} {} from user {}"
+                self.logging.info(">>> Returning IDImage {} {} from user {}"
                              .format(x.number, x.tgv, username))
 
     def saveIdentified(self):
@@ -182,7 +179,7 @@ class IDDatabase:
         """Take anything currently out with user and put it back
         on the todo pile
         """
-        logging.info(
+        self.logging.info(
             "Anything from user {} that is OutForIDing - reset it as ToDo."
             .format(username)
             )
@@ -193,5 +190,5 @@ class IDDatabase:
             x.user = 'None'
             x.time = datetime.now()
             x.save()
-            logging.info(">>> Returning IDImage {} from {} to the ToDo pile"
+            self.logging.info(">>> Returning IDImage {} from {} to the ToDo pile"
                          .format(x.tgv, username))

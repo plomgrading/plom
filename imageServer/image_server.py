@@ -3,6 +3,7 @@ import datetime
 import errno
 import glob
 import json
+import logging
 import os
 import shlex
 import socket
@@ -18,9 +19,19 @@ from authenticate import *
 sys.path.append('..')  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
 
+# # # # # # # # # # # #
+# For setting up separate logging for IDing and Marking
+def setupLogger(name, log_file, level=logging.INFO):
+    # https://stackoverflow.com/questions/11232230/logging-to-two-files-with-different-settings
+    """Function setup as many loggers as you want"""
+    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
+    handler = logging.FileHandler(log_file)
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+    return logger
 
 # # # # # # # # # # # #
-
 # default values.
 
 serverInfo = {'server': '127.0.0.1', 'mport': 41984, 'wport': 41985}
@@ -356,9 +367,14 @@ readExamsGrouped()
 pageGroupsForGrading = {}
 findPageGroups()
 
-theIDDB = IDDatabase()
-theMarkDB = MarkDatabase()
-os.system("mkdir -p ./markedPapers")  # make sure this directory exists
+# Set up loggers for marking and ID-ing
+IDLogger = setupLogger("IDLogger", "identity_storage.log")
+MarkLogger = setupLogger("MarkLogger", "mark_storage.log")
+# Set up the classes for handling transactions with databases
+# Pass them the loggers
+theIDDB = IDDatabase(IDLogger)
+theMarkDB = MarkDatabase(MarkLogger)
+# Fire up the server with both database client classes and the test-spec.
 peon = Server(theIDDB, theMarkDB, spec)
 
 # # # # # # # # # # # #
