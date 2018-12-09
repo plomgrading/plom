@@ -143,7 +143,8 @@ class IDDatabase:
             logging.info("Student number {} already entered".format(sid))
             return False
         except IDImage.DoesNotExist:
-            logging.info("That IDImage number / username pair not known")
+            logging.info("That IDImage number {} / username {} pair not known"
+                         .format(code, username))
             return False
 
     def didntFinish(self, username, code):

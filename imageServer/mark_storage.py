@@ -1,16 +1,18 @@
-from datetime import datetime
-from peewee import *
-import logging
-import json
 from collections import defaultdict
+from datetime import datetime
+import json
+import logging
+from peewee import *
 
+
+# open the database file in resources.
 markdb = SqliteDatabase('../resources/test_marks.db')
 
 
 class GroupImage(Model):
+    """Simple database model for peewee."""
     tgv = CharField(unique=True)
     originalFile = CharField(unique=True)
-
     number = IntegerField()
     pageGroup = IntegerField()
     version = IntegerField()
@@ -26,119 +28,170 @@ class GroupImage(Model):
 
 
 class MarkDatabase:
+    """Class to handle all our database transactions."""
     def __init__(self):
-        logging.basicConfig(filename='test_mark_storage.log', filemode='w', level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        """Fire up basic logging and create the table in the database."""
+        logging.basicConfig(
+            filename='test_mark_storage.log', filemode='w',
+            level=logging.INFO, format='%(asctime)s %(message)s',
+            datefmt='%d/%m/%Y %I:%M:%S %p')
         logging.info("Initialised ")
         self.createTable()
 
     def connectToDB(self):
+        """Connect to the database"""
         logging.info("Connecting to database")
         with markdb:
             markdb.connect()
 
     def createTable(self):
+        """Create the required table in the database"""
         logging.info("Creating database tables")
         with markdb:
             markdb.create_tables([GroupImage])
 
     def shutdown(self):
+        """Shut connection to the database"""
         with markdb:
             markdb.close()
 
-    def clean(self):
-        logging.info("Cleaning out database")
-        query = GroupImage.delete()
-        query.execute()
-
     def printGroupImageWithCode(self, code):
-        query = GroupImage.select().where(GroupImage.tgz == code).order_by(GroupImage.tgv)
+        """Print every record with given code"""
+        query = GroupImage.select().where(GroupImage.tgz == code)\
+            .order_by(GroupImage.tgv)
         for x in query:
             print(x.tgv, x.status, x.user, x.time, x.mark, x.markingTime)
 
     def printToDo(self):
+        """Print every record that is still ToDo"""
         query = GroupImage.select().where(GroupImage.status == 'ToDo').order_by(GroupImage.tgv)
         for x in query:
             print(x.tgv, x.status)
 
     def printOutForMarking(self):
-        query = GroupImage.select().where(GroupImage.status == 'OutForMarking').order_by(GroupImage.tgv)
+        """Print every record that is out for marking"""
+        query = GroupImage.select().where(GroupImage.status == 'OutForMarking')\
+            .order_by(GroupImage.tgv)
         for x in query:
             print(x.tgv, x.status, x.user, x.time)
 
     def printMarked(self):
-        query = GroupImage.select().where(GroupImage.status == 'Marked').order_by(GroupImage.tgv)
+        """Print every record that has been marked"""
+        query = GroupImage.select().where(GroupImage.status == 'Marked')\
+            .order_by(GroupImage.tgv)
         for x in query:
             print(x.tgv, x.status, x.user, x.time, x.mark, x.markingTime)
 
     def printAllGroupImages(self):
+        """Print all records"""
         self.printToDo()
         self.printOutForMarking()
         self.printMarked()
 
     def countAll(self, pg, v):
+        """Count all records in given (group,version)"""
         try:
-            return GroupImage.select().where(GroupImage.pageGroup == pg, GroupImage.version == v).count()
+            return GroupImage.select().where(
+                GroupImage.pageGroup == pg, GroupImage.version == v).count()
         except GroupImage.DoesNotExist:
                 return 0
 
     def countMarked(self, pg, v):
+        """Count all records in given (group,version) that have been marked"""
         try:
-            return GroupImage.select().where(GroupImage.pageGroup == pg, GroupImage.version == v, GroupImage.status == 'Marked').count()
+            return GroupImage.select().where(
+                GroupImage.pageGroup == pg, GroupImage.version == v,
+                GroupImage.status == 'Marked'
+                ).count()
         except GroupImage.DoesNotExist:
             return 0
 
     def addUnmarkedGroupImage(self, t, pg, v, code, fname):
-        logging.info("Adding unmarked GroupImage {} at {} to database".format(code, fname))
+        """Add a pageimage with given number, group, version, code
+        and filename.
+        """
+        logging.info("Adding unmarked GroupImage {} at {} to database"
+                     .format(code, fname))
         try:
             with markdb.atomic():
-                sheet = GroupImage.create(number=t, pageGroup=pg, version=v, tgv=code, originalFile=fname, annotatedFile='', status='ToDo', user='None', time=datetime.now(), mark=-1, markingTime=0)
+                GroupImage.create(number=t, pageGroup=pg, version=v,
+                                  tgv=code, originalFile=fname,
+                                  annotatedFile='', status='ToDo',
+                                  user='None', time=datetime.now(),
+                                  mark=-1, markingTime=0
+                                  )
         except IntegrityError:
             logging.info("GroupImage {} {} already exists.".format(t, code))
 
     def giveGroupImageToClient(self, username, pg, v):
+        """Find unmarked image with (group,version) and give to client"""
         try:
             with markdb.atomic():
+                # grab image from ToDo pile with required group,version
                 x = GroupImage.get(status='ToDo', pageGroup=pg, version=v)
-                logging.info("Sending GroupImage {:s} to client {:s}".format(x.tgv, username))
+                # log it
+                logging.info("Sending GroupImage {:s} to client {:s}"
+                             .format(x.tgv, username))
+                # update status, user, time
                 x.status = 'OutForMarking'
                 x.user = username
                 x.time = datetime.now()
                 x.save()
+                # return the tgv and filename
                 return (x.tgv, x.originalFile)
         except GroupImage.DoesNotExist:
             logging.info("Nothing left on To-Do pile")
             return (None, None)
 
     def takeGroupImageFromClient(self, code, username, mark, fname, mt):
+        """Get marked image back from client and update the record
+        in the database.
+        """
         try:
             with markdb.atomic():
+                # get the record by code and username
                 x = GroupImage.get(tgv=code, user=username)
+                # update status, mark, annotate-file-name, time, and
+                # time spent marking the image
                 x.status = 'Marked'
                 x.mark = mark
                 x.annotatedFile = fname
                 x.time = datetime.now()
                 x.markingTime = mt
                 x.save()
-                logging.info("GroupImage {} marked {} by user {} and placed at {}".format(code, mark, username, fname))
+                logging.info(
+                    "GroupImage {} marked {} by user {} and placed at {}"
+                    .format(code, mark, username, fname))
         except GroupImage.DoesNotExist:
             self.printGroupImageWithCode(code)
-            logging.info("That GroupImage number {} / username {} pair not known".format(code, username))
+            logging.info("That GroupImage number {} / username {} pair not known"
+                         .format(code, username))
 
     def didntFinish(self, username, code):
+        """When user logs off, any images they have still out should be put
+        back on todo pile
+        """
+        # Log user returning given tgv.
         logging.info("User {:s} returning unmarked GroupImage {}".format(username, code))
         with markdb.atomic():
-            query = GroupImage.select().where(GroupImage.user == username, GroupImage.tgv == code)
+            # get the record by username+code
+            query = GroupImage.select().where(GroupImage.user == username,
+                                              GroupImage.tgv == code)
             for x in query:
+                # set it back as todo, no user, update time and save.
                 x.status = 'ToDo'
                 x.user = 'None'
                 x.time = datetime.now()
                 x.markingTime = 0
                 x.save()
-                logging.info(">>> Returning GroupImage {:s} from user {:s}".format(x.tgv, username))
+                logging.info(">>> Returning GroupImage {} from user {}"
+                             .format(x.tgv, username))
 
     def saveMarked(self):
+        """Dump all the marked images to a json."""
         GroupImagesMarked = defaultdict(lambda: defaultdict(list))
-        query = GroupImage.select().where(GroupImage.status == 'Marked').order_by(GroupImage.tgv)
+        query = GroupImage.select().where(GroupImage.status == 'Marked')\
+            .order_by(GroupImage.tgv)
         for x in query:
             GroupImagesMarked[x.number][x.pageGroup] = [x.version, x.mark, x.user]
         eg = open("../resources/groupImagesMarked.json", 'w')
@@ -146,12 +199,18 @@ class MarkDatabase:
         eg.close()
 
     def resetUsersToDo(self, username):
-        logging.info("Anything from user {} that is OutForMarking - reset it as ToDo.".format(username))
-        query = GroupImage.select().where(GroupImage.user == username, GroupImage.status == "OutForMarking")
+        """Take anything currently out with user and put it back
+        on the todo pile
+        """
+        logging.info("Anything from user {} that is OutForMarking - reset it as ToDo."
+                     .format(username))
+        query = GroupImage.select().where(GroupImage.user == username,
+                                          GroupImage.status == "OutForMarking")
         for x in query:
             x.status = 'ToDo'
             x.user = 'None'
             x.time = datetime.now()
             x.markingTime = 0
             x.save()
-            logging.info(">>> Returning GroupImage {} from {} to the ToDo pile".format(x.tgv, username))
+            logging.info(">>> Returning GroupImage {} from {} to the ToDo pile"
+                         .format(x.tgv, username))
