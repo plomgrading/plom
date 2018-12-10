@@ -1,5 +1,5 @@
 from examviewwindow import ExamViewWindow
-from mlp_useful import ErrorMessage, SimpleMessage
+from useful_classes import ErrorMessage, SimpleMessage
 import tempfile
 import os
 

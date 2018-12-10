@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QAbstractItemView, QGridLayout, QMessageBox, \
 
 
 class ErrorMessage(QMessageBox):
+    """A simple error message pop-up"""
     def __init__(self, txt):
         super(ErrorMessage, self).__init__()
         self.setText(txt)
@@ -15,6 +16,9 @@ class ErrorMessage(QMessageBox):
 
 
 class SimpleMessage(QMessageBox):
+    """A simple message pop-up with yes/no buttons and
+    large font.
+    """
     def __init__(self, txt):
         super(SimpleMessage, self).__init__()
         self.setText(txt)
@@ -26,16 +30,22 @@ class SimpleMessage(QMessageBox):
 
 
 class SimpleTableView(QTableView):
+    """A table-view widget that emits annotateSignal when
+    the user hits enter or return.
+    """
     # This is picked up by the marker, lets it know to annotate
     annotateSignal = pyqtSignal()
 
     def __init__(self, parent=None):
         super(SimpleTableView, self).__init__()
+        # User can sort, cannot edit, selects by rows.
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
 
     def keyPressEvent(self, event):
+        # If user hits enter or return, then fire off
+        # the annotateSignal, else pass the event on.
         key = event.key()
         if key == Qt.Key_Return or key == Qt.Key_Enter:
             self.annotateSignal.emit()
@@ -44,6 +54,7 @@ class SimpleTableView(QTableView):
 
 
 class SimpleToolButton(QToolButton):
+    """Specialise the tool button to be an icon above text."""
     def __init__(self, txt, icon):
         super(SimpleToolButton, self).__init__()
         self.setText(txt)
@@ -54,25 +65,36 @@ class SimpleToolButton(QToolButton):
 
 
 class CommentWidget(QWidget):
+    """A widget wrapper around the marked-comment table."""
     def __init__(self, parent=None):
+        # layout the widget - a table and add/delete buttons.
         super(CommentWidget, self).__init__()
         grid = QGridLayout()
+        # the table has 2 cols, delta&comment.
         self.CL = SimpleCommentTable(self)
         grid.addWidget(self.CL, 1, 1, 2, 3)
         self.addB = QPushButton('Add')
-        self.addB.clicked.connect(self.addItem)
-
         self.delB = QPushButton('Delete')
-        self.delB.clicked.connect(self.deleteItem)
-
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.delB, 3, 3)
         self.setLayout(grid)
+        # connect the buttons to functions.
+        self.addB.clicked.connect(self.addItem)
+        self.delB.clicked.connect(self.deleteItem)
 
     def setStyle(self, markStyle):
+        # The list needs a style-delegate because the display
+        # of the delta-mark will change depending on
+        # the current total mark and whether mark
+        # total or up or down. Delta-marks that cannot
+        # be assigned will be shaded out to indicate that
+        # they will not be pasted into the window.
         self.CL.delegate.style = markStyle
 
     def changeMark(self, maxMark, currentMark):
+        # Update the current and max mark for the lists's
+        # delegate so that it knows how to display the comments
+        # and deltas when the mark changes.
         self.CL.delegate.maxMark = maxMark
         self.CL.delegate.currentMark = currentMark
         self.CL.viewport().update()
@@ -87,19 +109,33 @@ class CommentWidget(QWidget):
         self.CL.deleteItem()
 
     def currentItem(self):
+        # grab focus and trigger a "row selected" signal
+        # in the comment list
         self.CL.currentItem()
         self.setFocus()
 
     def nextItem(self):
+        # grab focus and trigger a "row selected" signal
+        # in the comment list
         self.CL.nextItem()
         self.setFocus()
 
     def previousItem(self):
+        # grab focus and trigger a "row selected" signal
+        # in the comment list
         self.CL.previousItem()
         self.setFocus()
 
 
 class commentDelegate(QItemDelegate):
+    """A style delegate that changes how rows of the
+    comment list are displayed. In particular, the
+    delta will be shaded out if it cannot be applied
+    given the current mark and the max mark.
+    Eg - if marking down then all positive delta are shaded
+    if marking up then all negative delta are shaded
+    if mark = 7/10 then any delta >= 4 is shaded.
+    """
     def __init__(self):
         super(commentDelegate, self).__init__()
         self.currentMark = 0
@@ -107,14 +143,20 @@ class commentDelegate(QItemDelegate):
         self.style = 0
 
     def paint(self, painter, option, index):
+        # Run the standard delegate and then paint over
+        # if necessary
         QItemDelegate.paint(self, painter, option, index)
+        # Only shade the deltas which are in col 0.
         if index.column() == 0:
+            # Grab the delta value.
             delta = int(index.model().data(index, Qt.EditRole))
-            if self.style == 2:  # mark up - disable negative
+            if self.style == 2:
+                # mark up - shade negative, or if goes past max mark
                 if delta <= 0 or delta + self.currentMark > self.maxMark:
                     painter.setBrush(Qt.gray)
                     painter.drawRect(option.rect)
-            elif self.style == 3:  # mark down - disable positive
+            elif self.style == 3:
+                # mark down - shade positive, or if goes below 0
                 if delta >= 0 or delta + self.currentMark < 0:
                     painter.setBrush(Qt.gray)
                     painter.drawRect(option.rect)
@@ -123,10 +165,19 @@ class commentDelegate(QItemDelegate):
 
 
 class commentRowModel(QStandardItemModel):
+    """Need to alter the standrd item model so that when we
+    drag/drop to rearrange things, the whole row is moved,
+    not just the item. Solution found at
+    http://apocalyptech.com/linux/qt/qtableview/
+    """
     def dropMimeData(self, data, action, r, c, parent):
         return super().dropMimeData(data, action, r, 0, parent)
 
     def setData(self, index, value, role=Qt.EditRole):
+        """Simple validation of data in the row. Also convert
+        an escaped '\n' into an actual newline for multiline
+        comments.
+        """
         # check that data in column zero is numeric
         if index.column() == 0:  # try to convert value to integer
             try:
@@ -143,34 +194,49 @@ class commentRowModel(QStandardItemModel):
 
 
 class SimpleCommentTable(QTableView):
-    # This is picked up by the annotator
+    """The comment table needs to signal the annotator to tell
+    it what the current comment and delta are.
+    Also needs to know the current/max mark and marking style
+    in order to change the shading of the delta that goes with
+    each comment.
+    """
+    # This is picked up by the annotator and tells is what is
+    # the current comment and delta
     commentSignal = pyqtSignal(list)
 
     def __init__(self, parent):
         super(SimpleCommentTable, self).__init__()
+        # No numbers down the left-side
         self.verticalHeader().hide()
+        # The comment column should be as wide as possible
         self.horizontalHeader().setStretchLastSection(True)
+        # Only select one row at a time.
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # Can drag and drop to reorder, not overwrite.
         self.setDragEnabled(True)
         self.setDragDropOverwriteMode(False)
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.viewport().setAcceptDrops(True)
         self.setDropIndicatorShown(True)
+        # When clicked, the selection changes, so must emit signal
+        # to the annotator.
         self.clicked.connect(self.handleClick)
-
+        # Use the row model defined above, so we can drag/drop rows
         self.cmodel = commentRowModel()
         self.cmodel.setHorizontalHeaderLabels(['delta', 'comment'])
         self.setModel(self.cmodel)
-
+        # Use the delegate defined above to shade deltas when needed
         self.delegate = commentDelegate()
         self.setItemDelegate(self.delegate)
-
+        # A list of [delta, comment] pairs
         self.clist = []
+        # Load in from file (if it exists) and populate table.
         self.loadCommentList()
         self.populateTable()
         self.resizeRowsToContents()
         self.resizeColumnToContents(0)
+        # If an item is changed resize things appropriately.
         self.cmodel.itemChanged.connect(self.resizeRowsToContents)
 
         # set these so that double-click enables edits, but not keypress.
@@ -178,22 +244,28 @@ class SimpleCommentTable(QTableView):
                              | QAbstractItemView.DoubleClicked)
 
     def populateTable(self):
+        # Grab [delta, comment] from the list and put into table.
         for (dlt, txt) in self.clist:
+            # User can edit the text, but doesn't handle drops.
             txti = QStandardItem(txt)
             txti.setEditable(True)
             txti.setDropEnabled(False)
-
+            # If delta>0 then should be "+n"
             if int(dlt) > 0:
                 delti = QStandardItem("+{}".format(int(dlt)))
             else:
+                # is zero or negative - is "0" or "-n"
                 delti = QStandardItem("{}".format(dlt))
+            # User can edit the delta, but doesn't handle drops.
             delti.setEditable(True)
             delti.setDropEnabled(False)
             delti.setTextAlignment(Qt.AlignCenter)
-
+            # Append it to the table.
             self.cmodel.appendRow([delti, txti])
 
     def handleClick(self, index=0):
+        # When an item is clicked, grab the details and emit
+        # the comment signal for the annotator to read.
         if index == 0:  # make sure something is selected
             self.currentItem()
         r = self.selectedIndexes()[0].row()
@@ -201,6 +273,8 @@ class SimpleCommentTable(QTableView):
                                  self.cmodel.index(r, 1).data()])
 
     def loadCommentList(self):
+        # grab comments from the json file,
+        # if no file, then populate with some simple ones
         if os.path.exists('signedCommentList.json'):
             self.clist = json.load(open('signedCommentList.json'))
         else:
@@ -209,6 +283,8 @@ class SimpleCommentTable(QTableView):
                           (1, 'good'), (1, 'very nice'), (1, 'yes')]
 
     def saveCommentList(self):
+        # grab comments from the table, populate a list
+        # export to json file.
         self.clist = []
         for r in range(self.cmodel.rowCount()):
             self.clist.append((self.cmodel.index(r, 0).data(),
@@ -217,6 +293,8 @@ class SimpleCommentTable(QTableView):
             json.dump(self.clist, fname)
 
     def addItem(self):
+        # Create a [delta, comment] pair for user to edit
+        # and append to end of table.
         txti = QStandardItem("EDIT ME")
         txti.setEditable(True)
         txti.setDropEnabled(False)
@@ -225,18 +303,21 @@ class SimpleCommentTable(QTableView):
         delti.setDropEnabled(False)
         delti.setTextAlignment(Qt.AlignCenter)
         self.cmodel.appendRow([delti, txti])
-        # select current row
+        # select the new row
         self.selectRow(self.cmodel.rowCount()-1)
         # fire up editor on the comment which is second selected index
         self.edit(self.selectedIndexes()[1])
 
     def deleteItem(self):
+        # Remove the selected row (or do nothing if no selection)
         sel = self.selectedIndexes()
         if len(sel) == 0:
             return
         self.cmodel.removeRow(sel[0].row())
 
     def currentItem(self):
+        # If no selected row, then select row 0.
+        # else select current row - triggers a signal.
         sel = self.selectedIndexes()
         if len(sel) == 0:
             self.selectRow(0)
@@ -244,6 +325,7 @@ class SimpleCommentTable(QTableView):
             self.selectRow(sel[0].row())
 
     def nextItem(self):
+        # Select next row (wraps around)
         sel = self.selectedIndexes()
         if len(sel) == 0:
             self.selectRow(0)
@@ -251,6 +333,7 @@ class SimpleCommentTable(QTableView):
             self.selectRow((sel[0].row() + 1) % self.cmodel.rowCount())
 
     def previousItem(self):
+        # Select previous row (wraps around)
         sel = self.selectedIndexes()
         if len(sel) == 0:
             self.selectRow(0)

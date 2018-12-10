@@ -4,7 +4,7 @@ import tempfile
 
 from examviewwindow import ExamViewWindow
 from mlp_annotator import Annotator
-from mlp_useful import ErrorMessage, SimpleMessage
+from useful_classes import ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
 
 from PyQt5.QtCore import Qt, QAbstractTableModel, QElapsedTimer, QModelIndex, QPoint, QRectF, QVariant

@@ -4,6 +4,7 @@ import json
 import ssl
 from PyQt5.QtWidgets import QMessageBox
 import urllib3
+from useful_classes import ErrorMessage
 
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.
@@ -14,14 +15,6 @@ sslContext.check_hostname = False
 server = '127.0.0.1'
 message_port = 41984
 webdav_port = 41985
-
-
-# Simple error message box
-class ErrorMessage(QMessageBox):
-    def __init__(self, txt):
-        super(ErrorMessage, self).__init__()
-        self.setText(txt)
-        self.setStandardButtons(QMessageBox.Ok)
 
 
 def setServerDetails(s, mp, dp):

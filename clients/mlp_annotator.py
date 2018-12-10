@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QAbstractItemView, QDialog, QMessageBox, \
 
 from mark_handler import MarkHandler
 from pageview import PageView
-from mlp_useful import CommentWidget, SimpleMessage
+from useful_classes import CommentWidget, SimpleMessage
 from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
 from uiFiles.ui_annotator_rhm import Ui_annotator_rhm
 
