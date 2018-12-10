@@ -169,10 +169,10 @@ class ExamModel(QAbstractTableModel):
 class MarkerClient(QWidget):
     def __init__(self, userName, password, server, message_port, web_port, pageGroup, version):
         super(MarkerClient, self).__init__()
-        mlp_messenger.setServerDetails(server, message_port, web_port)
-        mlp_messenger.startMessenger()
+        messenger.setServerDetails(server, message_port, web_port)
+        messenger.startMessenger()
 
-        if not mlp_messenger.pingTest():
+        if not messenger.pingTest():
             self.deleteLater()
             return
 
@@ -221,7 +221,7 @@ class MarkerClient(QWidget):
         self.requestNext()
 
     def requestToken(self):
-        msg = mlp_messenger.SRMsg(['AUTH', self.userName, self.password])
+        msg = messenger.SRMsg(['AUTH', self.userName, self.password])
         if msg[0] == 'ERR':
             ErrorMessage("Password problem")
             quit()
@@ -231,16 +231,16 @@ class MarkerClient(QWidget):
 
     def shutDown(self):
         self.DNF()
-        msg = mlp_messenger.SRMsg(['UCL', self.userName, self.token])
+        msg = messenger.SRMsg(['UCL', self.userName, self.token])
         self.close()
 
     def DNF(self):
         for r in range(self.exM.rowCount()):
             if self.exM.data(self.exM.index(r, 1)) != "marked":
-                msg = mlp_messenger.SRMsg(['mDNF', self.userName, self.token, self.exM.data(self.exM.index(r,0))])
+                msg = messenger.SRMsg(['mDNF', self.userName, self.token, self.exM.data(self.exM.index(r,0))])
 
     def getRubric(self):
-        msg = mlp_messenger.SRMsg(['mGMX', self.userName, self.token, self.pageGroup, self.version])
+        msg = messenger.SRMsg(['mGMX', self.userName, self.token, self.pageGroup, self.version])
         if msg[0] == 'ERR':
             quit()
         self.maxScore = msg[1]
@@ -259,18 +259,18 @@ class MarkerClient(QWidget):
 
 
     def requestNext(self, launchAgain=False):
-        msg = mlp_messenger.SRMsg(['mNUM', self.userName, self.token, self.pageGroup, self.version])
+        msg = messenger.SRMsg(['mNUM', self.userName, self.token, self.pageGroup, self.version])
         if msg[0] == 'ERR':
             return
         fname = os.path.join(self.workingDirectory, msg[1]+".png")
         tname = msg[2]
-        mlp_messenger.getFileDav(tname, fname)
+        messenger.getFileDav(tname, fname)
         self.addTGVToList(TestPageGroup(msg[1], fname))
         # Ack that test received.
-        msg = mlp_messenger.SRMsg(['mGTP', self.userName, self.token, tname])
+        msg = messenger.SRMsg(['mGTP', self.userName, self.token, tname])
         self.ui.tableView.resizeColumnsToContents()
         # ask server for counts update
-        progress_msg = mlp_messenger.SRMsg(['mPRC', self.userName, self.token, self.pageGroup, self.version]) #returns [ACK, #id'd, #total]
+        progress_msg = messenger.SRMsg(['mPRC', self.userName, self.token, self.pageGroup, self.version]) #returns [ACK, #id'd, #total]
         if progress_msg[0] == 'ACK':
             self.ui.mProgressBar.setValue(progress_msg[1])
             self.ui.mProgressBar.setMaximum(progress_msg[2])
@@ -379,9 +379,9 @@ class MarkerClient(QWidget):
         # self.writeGradeOnImage(aname, gr)
 
         dname = os.path.basename(aname)
-        mlp_messenger.putFileDav(aname, dname)
+        messenger.putFileDav(aname, dname)
 
-        msg = mlp_messenger.SRMsg(['mRMD', self.userName, self.token, self.exM.data(index[0]), gr, dname, mtime])
+        msg = messenger.SRMsg(['mRMD', self.userName, self.token, self.exM.data(index[0]), gr, dname, mtime])
 
         if self.moveToNextUnmarkedTest() == False:
             self.requestNext(launchAgain)

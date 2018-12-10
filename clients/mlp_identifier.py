@@ -122,10 +122,10 @@ class IDClient(QWidget):
     def __init__(self, userName, password, server, message_port, web_port):
         super(IDClient, self).__init__()
 
-        mlp_messenger.setServerDetails(server, message_port, web_port)
-        mlp_messenger.startMessenger()
+        messenger.setServerDetails(server, message_port, web_port)
+        messenger.startMessenger()
 
-        if not mlp_messenger.pingTest():
+        if not messenger.pingTest():
             self.deleteLater()
             return
 
@@ -158,7 +158,7 @@ class IDClient(QWidget):
         self.requestNext()
 
     def requestToken(self):
-        msg = mlp_messenger.SRMsg(['AUTH', self.userName, self.password])
+        msg = messenger.SRMsg(['AUTH', self.userName, self.password])
         if msg[0] == 'ERR':
             ErrorMessage("Password problem")
             quit()
@@ -167,13 +167,13 @@ class IDClient(QWidget):
             print('Token set to {}'.format(self.token))
 
     def getClassList(self):
-        msg = mlp_messenger.SRMsg(['iRCL', self.userName, self.token])
+        msg = messenger.SRMsg(['iRCL', self.userName, self.token])
         if msg[0] == 'ERR':
             ErrorMessage("Classlist problem")
             quit()
         dfn = msg[1]
         fname = os.path.join(self.workingDirectory, "cl.csv") #for windows/linux compatibility
-        mlp_messenger.getFileDav(dfn, fname)
+        messenger.getFileDav(dfn, fname)
         # read classlist into dictionaries
         self.studentNamesToNumbers = defaultdict(int)
         self.studentNumbersToNames = defaultdict(str)
@@ -184,7 +184,7 @@ class IDClient(QWidget):
                 self.studentNamesToNumbers[sn] = str(row['id'])
                 self.studentNumbersToNames[str(row['id'])] = sn
           #acknowledge class list
-        msg = mlp_messenger.SRMsg(['iGCL', self.userName, self.token, dfn])
+        msg = messenger.SRMsg(['iGCL', self.userName, self.token, dfn])
         if msg[0] == 'ERR':
             ErrorMessage("Classlist problem")
             quit()
@@ -211,14 +211,14 @@ class IDClient(QWidget):
 
     def shutDown(self):
         self.DNF()
-        msg = mlp_messenger.SRMsg(['UCL', self.userName, self.token])
+        msg = messenger.SRMsg(['UCL', self.userName, self.token])
         self.close()
 
     def DNF(self):
         rc = self.exM.rowCount()
         for r in range(rc):
             if self.exM.data(self.exM.index(r, 1)) != "identified":
-                msg = mlp_messenger.SRMsg(['iDNF', self.userName, self.token, self.exM.data(self.exM.index(r, 0))])
+                msg = messenger.SRMsg(['iDNF', self.userName, self.token, self.exM.data(self.exM.index(r, 0))])
 
     def selChanged(self, selnew, selold):
         self.ui.idEdit.setText(self.exM.data(selnew.indexes()[2]))
@@ -236,20 +236,20 @@ class IDClient(QWidget):
 
     def requestNext(self):
         # ask server for next unid'd paper >>> test,fname = server.nextUnIDd(self.userName)
-        msg = mlp_messenger.SRMsg(['iNID', self.userName, self.token])
+        msg = messenger.SRMsg(['iNID', self.userName, self.token])
         if msg[0] == 'ERR':
             return
         test = msg[1]
         fname = msg[2]
         iname = os.path.join(self.workingDirectory, test+".png") #windows/linux compatibility
-        mlp_messenger.getFileDav(fname, iname)
+        messenger.getFileDav(fname, iname)
         self.addPaperToList(Paper(test, iname))
         #acknowledge got test  >>>   server.gotTest(self.userName, test, fname)
-        msg = mlp_messenger.SRMsg(['iGTP', self.userName, self.token, test, fname])
+        msg = messenger.SRMsg(['iGTP', self.userName, self.token, test, fname])
         self.ui.tableView.resizeColumnsToContents()
         self.ui.idEdit.setFocus()
         # ask server for id-count update
-        msg = mlp_messenger.SRMsg(['iPRC', self.userName, self.token]) #returns [ACK, #id'd, #total]
+        msg = messenger.SRMsg(['iPRC', self.userName, self.token]) #returns [ACK, #id'd, #total]
         if msg[0] == 'ACK':
             self.ui.idProgressBar.setValue(msg[1])
             self.ui.idProgressBar.setMaximum(msg[2])
@@ -260,9 +260,9 @@ class IDClient(QWidget):
         self.exM.identifyStudent(index, self.ui.idEdit.text(),self.ui.nameEdit.text())
         code = self.exM.data(index[0])
         if alreadyIDd:
-            msg = mlp_messenger.SRMsg(['iRAD', self.userName, self.token, code, self.ui.idEdit.text(), self.ui.nameEdit.text()])
+            msg = messenger.SRMsg(['iRAD', self.userName, self.token, code, self.ui.idEdit.text(), self.ui.nameEdit.text()])
         else:
-            msg = mlp_messenger.SRMsg(['iRID', self.userName, self.token, code, self.ui.idEdit.text(), self.ui.nameEdit.text()])
+            msg = messenger.SRMsg(['iRID', self.userName, self.token, code, self.ui.idEdit.text(), self.ui.nameEdit.text()])
         if msg[0] == 'ERR':
             self.exM.revertStudent(index)
             QTimer.singleShot(0, self.ui.idEdit.clear)
