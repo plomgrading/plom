@@ -1,5 +1,4 @@
 from math import sqrt
-
 from PyQt5.QtCore import Qt, QLineF, QPointF,  pyqtProperty, \
     QPropertyAnimation, QTimer
 from PyQt5.QtGui import QBrush, QColor, QFont, QPainterPath, \
@@ -10,25 +9,36 @@ from PyQt5.QtWidgets import QGraphicsItem, QGraphicsLineItem, \
 
 
 # Commands for the undo stack
+# Each command needs init, redo and undo
+# To highlight objects when created / destroyed they
+# run a simple animation.
+# The arrow is very typical
 class CommandArrow(QUndoCommand):
+    # Command to create/remove an arrow object
     def __init__(self, scene, pti, ptf):
         super(CommandArrow, self).__init__()
         self.scene = scene
+        # line starts at pti(nitial) and ends at ptf(inal).
         self.pti = pti
         self.ptf = ptf
+        # create an arrow item
         self.arrowItem = ArrowItemObject(self.pti, self.ptf)
 
     def redo(self):
+        # arrow item knows how to highlight on undo and redo.
         self.arrowItem.flash_redo()
         self.scene.addItem(self.arrowItem.ai)
 
     def undo(self):
+        # the undo animation takes 0.5s
+        # so trigger its removal after 0.5s.
         self.arrowItem.flash_undo()
         QTimer.singleShot(500,
                           lambda: self.scene.removeItem(self.arrowItem.ai))
 
 
 class CommandBox(QUndoCommand):
+    # Very similar to CommandArrow.
     def __init__(self, scene, rect):
         super(CommandBox, self).__init__()
         self.scene = scene
@@ -45,6 +55,7 @@ class CommandBox(QUndoCommand):
 
 
 class CommandCross(QUndoCommand):
+    # Very similar to CommandArrow.
     def __init__(self, scene, pt):
         super(CommandCross, self).__init__()
         self.scene = scene
@@ -62,6 +73,8 @@ class CommandCross(QUndoCommand):
 
 
 class CommandDelta(QUndoCommand):
+    # Very similar to CommandArrow
+    # But must send a "the total mark has changed" signal
     def __init__(self, scene, pt, delta):
         super(CommandDelta, self).__init__()
         self.scene = scene
@@ -71,32 +84,43 @@ class CommandDelta(QUndoCommand):
     def redo(self):
         self.delItem.flash_redo()
         self.scene.addItem(self.delItem)
+        # Emit a markChangedSignal for the marker to pick up and change total.
+        # Mark increased by delta
         self.scene.markChangedSignal.emit(self.delta)
 
     def undo(self):
         self.delItem.flash_undo()
         QTimer.singleShot(500, lambda: self.scene.removeItem(self.delItem))
+        # Emit a markChangedSignal for the marker to pick up and change total.
+        # Mark decreased by delta
         self.scene.markChangedSignal.emit(-self.delta)
 
 
 class CommandDelete(QUndoCommand):
+    # Deletes the graphicsitem. Have to be careful when it is
+    # a delta-item which changes the current mark
     def __init__(self, scene, deleteItem):
         super(CommandDelete, self).__init__()
         self.scene = scene
         self.deleteItem = deleteItem
 
     def redo(self):
+        # If the object is a DeltaItem then emit a mark-changed signal.
         if isinstance(self.deleteItem, DeltaItem):
+            # Mark decreases by delta
             self.scene.markChangedSignal.emit(-self.deleteItem.delta)
         self.scene.removeItem(self.deleteItem)
 
     def undo(self):
+        # If the object is a DeltaItem then emit a mark-changed signal.
         if isinstance(self.deleteItem, DeltaItem):
+            # Mark increases by delta
             self.scene.markChangedSignal.emit(self.deleteItem.delta)
         self.scene.addItem(self.deleteItem)
 
 
 class CommandHighlight(QUndoCommand):
+    # Very similar to CommandArrow
     def __init__(self, scene, path):
         super(CommandHighlight, self).__init__()
         self.scene = scene
@@ -114,11 +138,13 @@ class CommandHighlight(QUndoCommand):
 
 
 class CommandLine(QUndoCommand):
+    # Very similar to CommandArrow
     def __init__(self, scene, pti, ptf):
         super(CommandLine, self).__init__()
         self.scene = scene
         self.pti = pti
         self.ptf = ptf
+        # A line from pti(nitial) to ptf(inal)
         self.lineItem = LineItemObject(self.pti, self.ptf)
 
     def redo(self):
@@ -131,25 +157,40 @@ class CommandLine(QUndoCommand):
 
 
 class CommandMoveItem(QUndoCommand):
+    # Moves the graphicsitem. we give it an ID so it can be merged with other
+    # commandmoves on the undo-stack.
+    # Don't use this for moving text - that gets its own command.
+    # Graphicsitems are separate from graphicsTEXTitems
     def __init__(self, xitem, delta):
         super(CommandMoveItem, self).__init__()
+        # The item to move
         self.xitem = xitem
+        # The delta-position of that item.
         self.delta = delta
 
     def id(self):
+        # Give it an id number for merging of undo/redo commands
         return 101
 
     def redo(self):
+        # Temporarily disable the item emiting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
+        # Move the object
         self.xitem.setPos(self.xitem.pos()+self.delta)
+        # Reenable the item emiting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
     def undo(self):
+        # Temporarily disable the item emiting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
+        # Move the object back
         self.xitem.setPos(self.xitem.pos()-self.delta)
+        # Reenable the item emiting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
     def mergeWith(self, other):
+        # Most commands cannot be merged - make sure the moved items are the
+        # same - if so then merge things.
         if self.xitem != other.xitem:
             return False
         self.delta = other.delta
@@ -157,6 +198,10 @@ class CommandMoveItem(QUndoCommand):
 
 
 class CommandMoveText(QUndoCommand):
+    # Moves the textitem. we give it an ID so it can be merged with other
+    # commandmoves on the undo-stack.
+    # Don't use this for moving other graphics items
+    # Graphicsitems are separate from graphicsTEXTitems
     def __init__(self, xitem, new_pos):
         super(CommandMoveText, self).__init__()
         self.xitem = xitem
@@ -164,19 +209,28 @@ class CommandMoveText(QUndoCommand):
         self.new_pos = new_pos
 
     def id(self):
+        # Give it an id number for merging of undo/redo commands
         return 102
 
     def redo(self):
+        # Temporarily disable the item emiting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
+        # Move the object
         self.xitem.setPos(self.new_pos)
+        # Reenable the item emiting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
     def undo(self):
+        # Temporarily disable the item emiting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
+        # Move the object back
         self.xitem.setPos(self.old_pos)
+        # Reenable the item emiting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
     def mergeWith(self, other):
+        # Most commands cannot be merged - make sure the moved items are the
+        # same - if so then merge things.
         if self.xitem != other.xitem:
             return False
         self.new_pos = other.new_pos
@@ -184,6 +238,7 @@ class CommandMoveText(QUndoCommand):
 
 
 class CommandPen(QUndoCommand):
+    # Very similar to CommandArrow
     def __init__(self, scene, path):
         super(CommandPen, self).__init__()
         self.scene = scene
@@ -200,6 +255,7 @@ class CommandPen(QUndoCommand):
 
 
 class CommandQMark(QUndoCommand):
+    # Very similar to CommandArrow
     def __init__(self, scene, pt):
         super(CommandQMark, self).__init__()
         self.scene = scene
@@ -216,6 +272,8 @@ class CommandQMark(QUndoCommand):
 
 
 class CommandText(QUndoCommand):
+    # Very similar to CommandArrow, except that creates a textitem
+    # rather than a graphicsitem
     def __init__(self, scene, blurb, ink):
         super(CommandText, self).__init__()
         self.scene = scene
@@ -231,6 +289,7 @@ class CommandText(QUndoCommand):
 
 
 class CommandTick(QUndoCommand):
+    # Very similar to CommandArrow
     def __init__(self, scene, pt):
         super(CommandTick, self).__init__()
         self.scene = scene
@@ -247,6 +306,7 @@ class CommandTick(QUndoCommand):
 
 
 class CommandWhiteBox(QUndoCommand):
+    # Very similar to CommandArrow
     def __init__(self, scene, rect):
         super(CommandWhiteBox, self).__init__()
         self.scene = scene
@@ -263,42 +323,71 @@ class CommandWhiteBox(QUndoCommand):
                           self.scene.removeItem(self.whiteBoxItem.wbi))
 
 
+# ################################
 # Graphics Items
+# These are the underlying graphicsitems that get put in the
+# graphicsscene. We don't use them directly because we want
+# to animate their undo/redo - and that only works for
+# grahicsobjects which handle the actual animation of
+# properties like width and colour. Hence the extra layer
+# of classes.
 class ArrowItem(QGraphicsPathItem):
     def __init__(self, pti, ptf):
+        """Creates an arrow from pti to ptf.
+        Some manipulations required to draw the arrow head.
+        """
         super(ArrowItem, self).__init__()
         self.pti = pti
         self.ptf = ptf
+        # vector direction of line
         delta = ptf-pti
+        # length of the line
         el = sqrt(delta.x()**2 + delta.y()**2)
+        # unit vector in direction of line.
         ndelta = delta/el
+        # orthogonal unit vector to line.
         northog = QPointF(-ndelta.y(), ndelta.x())
+        # base of arrowhead
         self.arBase = ptf-8*ndelta
+        # point of arrowhead
         self.arTip = ptf+4*ndelta
+        # left-barb of the arrowhead
         self.arLeft = self.arBase-5*northog-2*ndelta
+        # right-barb of the arrowhead
         self.arRight = self.arBase+5*northog-2*ndelta
         self.path = QPainterPath()
+        # put a small ball at start of arrow.
         self.path.addEllipse(self.pti.x()-3, self.pti.y()-3, 6, 6)
+        # draw line from pti to ptf
         self.path.moveTo(self.pti)
         self.path.lineTo(self.ptf)
+        # line to left-barb then to base of arrowhead, then to right barb
         self.path.lineTo(self.arLeft)
         self.path.lineTo(self.arBase)
         self.path.lineTo(self.arRight)
+        # then back to the end of the line.
         self.path.lineTo(self.ptf)
         self.setPath(self.path)
+        # style the line.
         self.setPen(QPen(Qt.red, 2, cap=Qt.RoundCap, join=Qt.RoundJoin))
+        # fill in the arrow with a red brush
         self.setBrush(QBrush(Qt.red))
+        # The line is moveable and should signal any changes
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
+            # If the position changes then do so with an redo/undo command
             command = CommandMoveItem(self, value)
+            # Push the command onto the stack.
             self.scene().undoStack.push(command)
+        # Exec the parent class change command.
         return QGraphicsPathItem.itemChange(self, change, value)
 
 
 class BoxItem(QGraphicsRectItem):
+    # Very similar to the arrowitem but simpler to draw the box.
     def __init__(self, rect):
         super(BoxItem, self).__init__()
         self.rect = rect
@@ -316,10 +405,12 @@ class BoxItem(QGraphicsRectItem):
 
 
 class CrossItem(QGraphicsPathItem):
+    # Very similar to the arrowitem.
     def __init__(self, pt):
         super(CrossItem, self).__init__()
         self.pt = pt
         self.path = QPainterPath()
+        # Draw a cross whose vertex is at pt (under mouse click)
         self.path.moveTo(pt.x()-12, pt.y()-12)
         self.path.lineTo(pt.x()+12, pt.y()+12)
         self.path.moveTo(pt.x()-12, pt.y()+12)
@@ -337,6 +428,7 @@ class CrossItem(QGraphicsPathItem):
 
 
 class HighLightItem(QGraphicsPathItem):
+    # Very similar to the arrowitem, but much simpler
     def __init__(self, path):
         super(HighLightItem, self).__init__()
         self.path = path
@@ -353,6 +445,7 @@ class HighLightItem(QGraphicsPathItem):
 
 
 class LineItem(QGraphicsLineItem):
+    # Very similar to the arrowitem, but no arrowhead
     def __init__(self, pti, ptf):
         super(LineItem, self).__init__()
         self.pti = pti
@@ -370,6 +463,7 @@ class LineItem(QGraphicsLineItem):
 
 
 class PenItem(QGraphicsPathItem):
+    # Very similar to the arrowitem, but much simpler
     def __init__(self, path):
         super(PenItem, self).__init__()
         self.pi = QGraphicsPathItem()
@@ -387,10 +481,12 @@ class PenItem(QGraphicsPathItem):
 
 
 class QMarkItem(QGraphicsPathItem):
+    # Very similar to the arrowitem, but careful drawing the "?"
     def __init__(self, pt):
         super(QMarkItem, self).__init__()
         self.pt = pt
         self.path = QPainterPath()
+        # Draw a ?-mark with barycentre under mouseclick
         self.path.moveTo(pt.x()-6, pt.y()-10)
         self.path.quadTo(pt.x()-6, pt.y()-15, pt.x(), pt.y()-15)
         self.path.quadTo(pt.x()+6, pt.y()-15, pt.x()+6, pt.y()-10)
@@ -411,10 +507,12 @@ class QMarkItem(QGraphicsPathItem):
 
 
 class TickItem(QGraphicsPathItem):
+    # Very similar to the arrowitem
     def __init__(self, pt):
         super(TickItem, self).__init__()
         self.pt = pt
         self.path = QPainterPath()
+        # Draw the checkmark with barycentre under mouseclick.
         self.path.moveTo(pt.x()-10, pt.y())
         self.path.lineTo(pt.x(), pt.y()+10)
         self.path.lineTo(pt.x()+20, pt.y()-10)
@@ -431,6 +529,7 @@ class TickItem(QGraphicsPathItem):
 
 
 class WhiteBoxItem(QGraphicsRectItem):
+    # Very similar to the arrowitem
     def __init__(self, rect):
         super(WhiteBoxItem, self).__init__()
         self.rect = rect
@@ -448,8 +547,13 @@ class WhiteBoxItem(QGraphicsRectItem):
 
 
 class TextItem(QGraphicsTextItem):
+    # Textitem is a qgraphicstextitem, has to handle
+    # textinput and double-click to start editing etc.
+    # Shift-return ends the editor
     def __init__(self, parent):
         super(TextItem, self).__init__()
+        # Thick is thickness of bounding box hightlight used
+        # to highlight the object when undo / redo happens.
         self.thick = 0
         self.setDefaultTextColor(Qt.red)
         self.setPlainText("")
@@ -458,10 +562,13 @@ class TextItem(QGraphicsTextItem):
         self.setFont(self.font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        # Set it as editably with the text-editor
         self.setTextInteractionFlags(Qt.TextEditorInteraction)
+        # Undo/redo animates via the thickness property
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def mouseDoubleClickEvent(self, event):
+        # On double-click start the text-editor
         self.setTextInteractionFlags(Qt.TextEditorInteraction)
         self.setFocus()
 
@@ -469,6 +576,9 @@ class TextItem(QGraphicsTextItem):
         super(TextItem, self).focusInEvent(event)
 
     def focusOutEvent(self, event):
+        # When object loses the focus, need to make sure that
+        # the editor stops, any highlighted text is released
+        # and stops taking any text-interactions.
         tc = self.textCursor()
         tc.clearSelection()
         self.setTextCursor(tc)
@@ -476,8 +586,10 @@ class TextItem(QGraphicsTextItem):
         super(TextItem, self).focusOutEvent(event)
 
     def keyPressEvent(self, event):
+        # Shift-return ends the editor and releases the object
         if event.modifiers() == Qt.ShiftModifier \
                     and event.key() == Qt.Key_Return:
+            # Clear any highlighted text and release.
             tc = self.textCursor()
             tc.clearSelection()
             self.setTextCursor(tc)
@@ -485,7 +597,7 @@ class TextItem(QGraphicsTextItem):
         super(TextItem, self).keyPressEvent(event)
 
     def paint(self, painter, option, widget):
-        # paint the background
+        # paint a bounding rectangle for undo/redo highlighting
         if self.thick > 0:
             painter.setPen(QPen(Qt.red, self.thick))
             painter.drawRoundedRect(option.rect, 10, 10)
@@ -500,6 +612,7 @@ class TextItem(QGraphicsTextItem):
         return QGraphicsTextItem.itemChange(self, change, value)
 
     def flash_undo(self):
+        # When undo-ing, draw a none->thick->none border around text.
         self.anim.setDuration(500)
         self.anim.setStartValue(0)
         self.anim.setKeyValueAt(0.5, 8)
@@ -507,16 +620,19 @@ class TextItem(QGraphicsTextItem):
         self.anim.start()
 
     def flash_redo(self):
+        # When redo-ing, draw a none->med->none border around text.
         self.anim.setDuration(250)
         self.anim.setStartValue(0)
         self.anim.setKeyValueAt(0.5, 4)
         self.anim.setEndValue(0)
         self.anim.start()
 
+    # For the animation of border
     @pyqtProperty(int)
     def thickness(self):
         return self.thick
 
+    # For the animation of border
     @thickness.setter
     def thickness(self, value):
         self.thick = value
@@ -524,24 +640,31 @@ class TextItem(QGraphicsTextItem):
 
 
 class DeltaItem(QGraphicsTextItem):
+    # Similar to textitem above
     def __init__(self, pt, delta):
         super(DeltaItem, self).__init__()
         self.thick = 2
         self.delta = delta
         self.setDefaultTextColor(Qt.red)
+        # If positive mark then starts with a "+"-sign
         if self.delta > 0:
             self.setPlainText(" +{} ".format(self.delta))
         else:
+            # else starts with a "-"-sign (unless zero).
             self.setPlainText(" {} ".format(self.delta))
         self.font = QFont("Helvetica")
+        # Slightly larger font than regular textitem.
         self.font.setPointSize(30)
         self.setFont(self.font)
+        # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.setPos(pt)
+        # Has an animated border for undo/redo.
         self.anim = QPropertyAnimation(self, b"thickness")
         cr = self.boundingRect()
+        # centre under the mouse-click.
         self.moveBy(-(cr.right()+cr.left())/2, -(cr.top()+cr.bottom())/2)
 
     def paint(self, painter, option, widget):
@@ -558,6 +681,7 @@ class DeltaItem(QGraphicsTextItem):
         return QGraphicsTextItem.itemChange(self, change, value)
 
     def flash_undo(self):
+        # Animate border when undo thin->thick->none
         self.anim.setDuration(500)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 8)
@@ -565,30 +689,43 @@ class DeltaItem(QGraphicsTextItem):
         self.anim.start()
 
     def flash_redo(self):
+        # Animate border when undo thin->med->thin
         self.anim.setDuration(250)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 4)
         self.anim.setEndValue(2)
         self.anim.start()
 
+    # For the animation of border
     @pyqtProperty(int)
     def thickness(self):
         return self.thick
 
+    # For the animation of border
     @thickness.setter
     def thickness(self, value):
         self.thick = value
         self.update()
 
 
-# ItemObjects so that the undo/redo flash works
+# ################################
+# GraphicsItemObjects
+# These are intermediate graphics objects that we need to
+# to animate the undo/redo. These handle the animation of
+# object properties like thickness or colour.
+# Textitems (thankfully) handle animation themselves so we
+# don't have to define objects for them.
+
 class ArrowItemObject(QGraphicsObject):
+    # An object wrapper around the arrowitem to handle the
+    # animation of its thickness
     def __init__(self, pti, ptf):
         super(ArrowItemObject, self).__init__()
         self.ai = ArrowItem(pti, ptf)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
+        # thin -> thick -> none.
         self.anim.setDuration(500)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 6)
@@ -596,12 +733,14 @@ class ArrowItemObject(QGraphicsObject):
         self.anim.start()
 
     def flash_redo(self):
+        # thin -> med -> thin.
         self.anim.setDuration(250)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 4)
         self.anim.setEndValue(2)
         self.anim.start()
 
+    # Set and get thickness of the pen to draw the arrow.
     @pyqtProperty(int)
     def thickness(self):
         return self.ai.pen().width()
@@ -612,12 +751,14 @@ class ArrowItemObject(QGraphicsObject):
 
 
 class BoxItemObject(QGraphicsObject):
+    # As per the ArrowItemObject, except animate the opacity of the box.
     def __init__(self, rect):
         super(BoxItemObject, self).__init__()
         self.bi = BoxItem(rect)
         self.anim = QPropertyAnimation(self, b"opacity")
 
     def flash_undo(self):
+        # translucent -> opaque -> clear.
         self.anim.setDuration(500)
         self.anim.setStartValue(16)
         self.anim.setKeyValueAt(0.5, 192)
@@ -625,6 +766,7 @@ class BoxItemObject(QGraphicsObject):
         self.anim.start()
 
     def flash_redo(self):
+        # translucent -> opaque -> translucent.
         self.anim.setDuration(250)
         self.anim.setStartValue(16)
         self.anim.setKeyValueAt(0.5, 64)
@@ -641,6 +783,7 @@ class BoxItemObject(QGraphicsObject):
 
 
 class CrossItemObject(QGraphicsObject):
+    # As per the ArrowItemObject
     def __init__(self, pt):
         super(CrossItemObject, self).__init__()
         self.ci = CrossItem(pt)
@@ -670,6 +813,8 @@ class CrossItemObject(QGraphicsObject):
 
 
 class HighLightItemObject(QGraphicsObject):
+    # As per the ArrowItemObject except animate the opacity of
+    # the highlighter path
     def __init__(self, path):
         super(HighLightItemObject, self).__init__()
         self.hli = HighLightItem(path)
@@ -699,6 +844,7 @@ class HighLightItemObject(QGraphicsObject):
 
 
 class LineItemObject(QGraphicsObject):
+    # As per the ArrowItemObject
     def __init__(self, pti, ptf):
         super(LineItemObject, self).__init__()
         self.li = LineItem(pti, ptf)
@@ -728,6 +874,7 @@ class LineItemObject(QGraphicsObject):
 
 
 class PenItemObject(QGraphicsObject):
+    # As per the ArrowItemObject
     def __init__(self, path):
         super(PenItemObject, self).__init__()
         self.pi = PenItem(path)
@@ -757,6 +904,7 @@ class PenItemObject(QGraphicsObject):
 
 
 class QMarkItemObject(QGraphicsObject):
+    # As per the ArrowItemObject
     def __init__(self, pt):
         super(QMarkItemObject, self).__init__()
         self.qmi = QMarkItem(pt)
@@ -786,6 +934,7 @@ class QMarkItemObject(QGraphicsObject):
 
 
 class TickItemObject(QGraphicsObject):
+    # As per the ArrowItemObject
     def __init__(self, pt):
         super(TickItemObject, self).__init__()
         self.ti = TickItem(pt)
@@ -815,6 +964,7 @@ class TickItemObject(QGraphicsObject):
 
 
 class WhiteBoxItemObject(QGraphicsObject):
+    # As per the ArrowItemObject - animate thickness of boundary
     def __init__(self, rect):
         super(WhiteBoxItemObject, self).__init__()
         self.wbi = WhiteBoxItem(rect)
