@@ -27,9 +27,8 @@ class PageView(QGraphicsView):
         self.setMode("pan")
 
     def resizeEvent(self, e):
-        # On resize used to resize the image to keep it all in view,
-        # but perhaps better to do nothing.
-        # self.fitInView(self.scene.imageItem, Qt.KeepAspectRatio)
+        # On resize used to resize the image to keep it all in view
+        self.fitInView(self.scene.imageItem, Qt.KeepAspectRatio)
         super(PageView, self).resizeEvent(e)
 
     def setMode(self, mode):
