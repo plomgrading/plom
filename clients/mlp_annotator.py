@@ -5,7 +5,7 @@ from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap, QCloseEvent
 from PyQt5.QtWidgets import QAbstractItemView, QDialog, QMessageBox, \
     QPushButton, QShortcut, QTableWidget, QTableWidgetItem, QGridLayout
 
-from mlp_markentry import MarkEntry
+from mark_handler import MarkHandler
 from pageview import PageView
 from mlp_useful import CommentWidget, SimpleMessage
 from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
@@ -55,7 +55,7 @@ class Annotator(QDialog):
         self.setIcons()
         self.setButtons()
         # pass the marking style to the mark entry widget.
-        self.setMarkEntry(self.markStyle)
+        self.setmarkHandler(self.markStyle)
         self.view.scene.scoreBox.changeMax(self.maxMark)
         self.view.scene.scoreBox.changeScore(self.score)
         # pass this to the comment table too
@@ -194,11 +194,11 @@ class Annotator(QDialog):
             self.setWindowState(Qt.WindowNoState)
 
     def keyToChangeMark(self, buttonNumber):
-        if self.markEntry.style == 'Up':
-            self.markEntry.markButtons[
+        if self.markHandler.style == 'Up':
+            self.markHandler.markButtons[
                 'p{}'.format(buttonNumber)].animateClick()
-        elif self.markEntry.style == 'Down' and buttonNumber > 0:
-            self.markEntry.markButtons[
+        elif self.markHandler.style == 'Down' and buttonNumber > 0:
+            self.markHandler.markButtons[
                 'm{}'.format(buttonNumber)].animateClick()
 
     def keyPressEvent(self, event):
@@ -215,7 +215,7 @@ class Annotator(QDialog):
             self.currentButton.setStyleSheet("")
 
         # Button has been changed, so update currentButton and its styling.
-        if self.sender() == self.markEntry:
+        if self.sender() == self.markHandler:
             self.setToolLine('delta')
             self.currentButton = None
         else:
@@ -228,7 +228,7 @@ class Annotator(QDialog):
                 self.setToolLine(newMode)
                 self.currentButton.setStyleSheet(
                     self.currentButtonStyleBackground)
-            self.markEntry.clearButtonStyle()
+            self.markHandler.clearButtonStyle()
 
         self.view.setMode(newMode)
         self.view.setCursor(newCursor)
@@ -355,12 +355,12 @@ class Annotator(QDialog):
         # Remaining possibility = mark total, enable all.
         self.view.makeComment(dlt_txt[0], dlt_txt[1])
 
-    def setMarkEntry(self, markStyle):
-        self.markEntry = MarkEntry(self.maxMark)
-        self.ui.markGrid.addWidget(self.markEntry, 1, 1)
-        self.markEntry.markSetSignal.connect(self.totalMarkSet)
-        self.markEntry.deltaSetSignal.connect(self.deltaMarkSet)
-        self.markEntry.setStyle(markStyle)
+    def setmarkHandler(self, markStyle):
+        self.markHandler = MarkHandler(self.maxMark)
+        self.ui.markGrid.addWidget(self.markHandler, 1, 1)
+        self.markHandler.markSetSignal.connect(self.totalMarkSet)
+        self.markHandler.deltaSetSignal.connect(self.deltaMarkSet)
+        self.markHandler.setStyle(markStyle)
         if markStyle == 1:  # mark total style
             # don't connect the delta-tool to the changeMark function
             # this ensures that marked-comments do not change the total
@@ -386,8 +386,8 @@ class Annotator(QDialog):
 
     def changeMark(self, dm):
         self.score += dm
-        self.markEntry.setMark(self.score)
-        self.markEntry.repaint()
+        self.markHandler.setMark(self.score)
+        self.markHandler.repaint()
         self.view.scene.scoreBox.changeScore(self.score)
         lookingAhead = self.score+dm
         if lookingAhead < 0 or lookingAhead > self.maxMark:
@@ -399,12 +399,12 @@ class Annotator(QDialog):
             self.reject()
         else:
             # if marking total or up, be careful of giving 0-marks
-            if self.score == 0 and self.markEntry.style != 'Down':
+            if self.score == 0 and self.markHandler.style != 'Down':
                 msg = SimpleMessage('You have given 0 - please confirm')
                 if msg.exec_() == QMessageBox.No:
                     return
             # if marking down, be careful of giving max-marks
-            if self.score == self.maxMark and self.markEntry.style == 'Down':
+            if self.score == self.maxMark and self.markHandler.style == 'Down':
                 msg = SimpleMessage(
                     'You have given {} - please confirm'.format(self.maxMark))
                 if msg.exec_() == QMessageBox.No:

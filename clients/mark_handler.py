@@ -3,54 +3,30 @@ from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, \
 from PyQt5.QtCore import pyqtSignal, Qt
 
 
-class MarkEntry(QStackedWidget):
+class MarkHandler(QWidget):
+    # When a mark or delta is set, these signals will be emitted.
     markSetSignal = pyqtSignal(int)
     deltaSetSignal = pyqtSignal(int)
 
     def __init__(self, maxScore):
-        super(MarkEntry, self).__init__()
+        super(MarkHandler, self).__init__()
+        # Set max score/mark
         self.maxScore = maxScore
+        # Set current score/mark.
         self.currentScore = 0
+        # One button for each possible mark, and a dictionary to store them.
         self.numButtons = self.maxScore
         self.markButtons = {}
+        # Styling for buttons
         self.redStyle = "border: 2px solid #ff0000; background: "\
             "qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, "\
             "stop: 0.3 #ffcccc, stop: 0.7 #ffcccc, stop: 1 #ff0000);"
         self.greenStyle = "border: 2px solid #00aaaa; background: "\
             "qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00dddd, "\
             "stop: 1 #00aaaa); "
-
-        self.pageC = QWidget()
-        self.pageM = QWidget()
-
-        self.addWidget(self.pageC)
-        self.addWidget(self.pageM)
-        self.setupC()
-        self.style = "None"
-
-    def setStyle(self, markStyle):
-        # if passed a marking style, then set up accordingly.
-        if markStyle == 1:
-            self.mtotalB.animateClick()
-        elif markStyle == 2:
-            self.mupB.animateClick()
-        elif markStyle == 3:
-            self.mdownB.animateClick()
-
-    def setupC(self):
-        grid = QGridLayout()
-        self.mupB = QPushButton("Mark Up")
-        self.mdownB = QPushButton("Mark Down")
-        self.mtotalB = QPushButton("Mark Total")
-
-        grid.addWidget(self.mupB, 1, 1)
-        grid.addWidget(self.mdownB, 2, 1)
-        grid.addWidget(self.mtotalB, 3, 1)
-
-        self.mupB.clicked.connect(self.setMarkingUp)
-        self.mdownB.clicked.connect(self.setMarkingDown)
-        self.mtotalB.clicked.connect(self.setMarkingTotal)
-
+        # By default we set style to marking-UP.
+        self.style = "Up"
+        # Set up a current-score/mark label at top of widget.
         self.scoreL = QLabel("")
         fnt = self.scoreL.font()
         fnt.setPointSize(fnt.pointSize()*2)
@@ -58,7 +34,21 @@ class MarkEntry(QStackedWidget):
         self.scoreL.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.scoreL.setSizePolicy(QSizePolicy.MinimumExpanding,
                                   QSizePolicy.MinimumExpanding)
-        self.pageC.setLayout(grid)
+
+    def setStyle(self, markStyle):
+        """Sets the mark entry style - either total, up or down
+        Total - user just clicks the total mark.
+        Up - score starts at zero and increments.
+        Down - score starts at max and decrements.
+        """
+        # if passed a marking style, then set up accordingly.
+        if markStyle == 1:
+            self.setMarkingTotal()
+        elif markStyle == 3:
+            self.setMarkingDown()
+        else:
+            # Default to mark-up.
+            self.setMarkingUp()
 
     def setMarkingUp(self):
         self.setMark(0)
@@ -80,8 +70,7 @@ class MarkEntry(QStackedWidget):
             self.markButtons["p{}".format(k)].setSizePolicy(
                 QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
-        self.pageM.setLayout(grid)
-        self.setCurrentWidget(self.pageM)
+        self.setLayout(grid)
         self.style = "Up"
 
     def setMarkingDown(self):
@@ -104,8 +93,7 @@ class MarkEntry(QStackedWidget):
             self.markButtons["m{}".format(k)].setSizePolicy(
                 QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
-        self.pageM.setLayout(grid)
-        self.setCurrentWidget(self.pageM)
+        self.setLayout(grid)
         self.markSetSignal.emit(self.currentScore)
         self.style = "Down"
 
@@ -126,8 +114,7 @@ class MarkEntry(QStackedWidget):
             self.markButtons["{}".format(k)].setSizePolicy(
                 QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
-        self.pageM.setLayout(grid)
-        self.setCurrentWidget(self.pageM)
+        self.setLayout(grid)
         self.markSetSignal.emit(self.currentScore)
         self.style = "Total"
 
