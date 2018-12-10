@@ -1,43 +1,60 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QPainter
 from PyQt5.QtWidgets import QGraphicsView
-
+# Import the pagescene class.
 from pagescene import PageScene
 
 
 class PageView(QGraphicsView):
+    """Extend the graphicsview so that it can pass undo/redo
+    comments, delta-marks, save and zoom in /out
+    """
     def __init__(self, parent, imgName):
+        # init the qgraphicsview
         super(PageView, self).__init__(parent)
+        # Set scrollbars
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.setBackgroundBrush(QBrush(Qt.blue))
+        # set the area outside the groupimage to be dark-cyan.
+        self.setBackgroundBrush(QBrush(Qt.darkCyan))
+        # Nice antialiasing and scaling of objects (esp the groupimage)
         self.setRenderHint(QPainter.Antialiasing, True)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        # Init the pagescene with the groupimage
         self.scene = PageScene(self, imgName)
         self.setScene(self.scene)
-        self.mode = "move"
+        # Set the starting mode to pan
+        self.setMode("pan")
 
     def resizeEvent(self, e):
-        self.fitInView(self.scene.imageItem, Qt.KeepAspectRatio)
+        # On resize used to resize the image to keep it all in view,
+        # but perhaps better to do nothing.
+        # self.fitInView(self.scene.imageItem, Qt.KeepAspectRatio)
         super(PageView, self).resizeEvent(e)
 
     def setMode(self, mode):
+        # Set the mode in the pagescene.
         self.scene.mode = mode
+        # If mode is pan, then that is handled in the view
+        # by turning on drag-mode.
+        # remember to turn it off when leaving pan-mode.
         if mode == 'pan':
             self.setDragMode(1)
         else:
             self.setDragMode(0)
 
     def makeComment(self, dlt, text):
+        self.setDragMode(0)
+        # Pass the comment and delta on to the pagescene.
         self.scene.mode = 'comment'
         self.scene.commentDelta = int(dlt)
         self.scene.commentText = text
-        self.setDragMode(0)
 
     def markDelta(self, delta):
+        self.setDragMode(0)
+        # Pass the delta on to the pagescene.
         self.scene.mode = 'delta'
         self.scene.markDelta = delta
-        self.setDragMode(0)
 
     def undo(self):
         self.scene.undoStack.undo()
