@@ -12,7 +12,7 @@ import time
 
 ###
 from uiFiles.ui_identify import Ui_IdentifyWindow
-import mlp_messenger
+import messenger
 
 tempDirectory = tempfile.TemporaryDirectory()
 directoryPath = tempDirectory.name

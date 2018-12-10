@@ -12,7 +12,7 @@ from PyQt5.QtGui import QBrush, QFont, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import QAbstractItemView, QDialog, QMessageBox, QWidget
 
 
-import mlp_messenger
+import messenger
 from uiFiles.ui_marker import Ui_MarkerWindow
 
 ## in order to get shortcuts under OSX this needs to set this.... but only osx.
