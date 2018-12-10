@@ -166,7 +166,7 @@ class ExamModel(QAbstractTableModel):
 ##########################
 
 
-class MarkerClient(QWidget):
+class MarkerClient(QDialog):
     def __init__(self, userName, password, server, message_port, web_port, pageGroup, version):
         super(MarkerClient, self).__init__()
         messenger.setServerDetails(server, message_port, web_port)

@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_annotator_lhm(object):
     def setupUi(self, annotator_lhm):
         annotator_lhm.setObjectName("annotator_lhm")
+        annotator_lhm.setWindowModality(QtCore.Qt.WindowModal)
         annotator_lhm.resize(862, 670)
         self.gridLayout = QtWidgets.QGridLayout(annotator_lhm)
         self.gridLayout.setObjectName("gridLayout")

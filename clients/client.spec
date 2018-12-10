@@ -2,8 +2,7 @@
 
 block_cipher = None
 
-a = Analysis(['mlp_client.py'],
-             # pathex=['/Users/andrew/Projects/MLP/clients'],
+a = Analysis(['client.py'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -24,7 +23,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='mlp_client',
+          name='client',
           debug=False,
           strip=False,
           onefile=True,

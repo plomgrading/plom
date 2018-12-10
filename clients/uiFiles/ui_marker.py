@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MarkerWindow(object):
     def setupUi(self, MarkerWindow):
         MarkerWindow.setObjectName("MarkerWindow")
+        MarkerWindow.setWindowModality(QtCore.Qt.WindowModal)
         MarkerWindow.resize(1024, 798)
         self.gridLayout_3 = QtWidgets.QGridLayout(MarkerWindow)
         self.gridLayout_3.setObjectName("gridLayout_3")

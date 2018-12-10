@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>annotator_lhm</class>
  <widget class="QWidget" name="annotator_lhm">
+  <property name="windowModality">
+   <enum>Qt::WindowModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>

@@ -118,7 +118,7 @@ class ExamModel(QAbstractTableModel):
             return self.header[c]
         return c
 
-class IDClient(QWidget):
+class IDClient(QDialog):
     def __init__(self, userName, password, server, message_port, web_port):
         super(IDClient, self).__init__()
 
