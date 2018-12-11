@@ -1,61 +1,69 @@
-from examviewwindow import ExamViewWindow
-from useful_classes import ErrorMessage, SimpleMessage
-import tempfile
-import os
-
-from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QStringListModel, QTimer, QVariant
-from PyQt5.QtWidgets import QCompleter, QDialog, QInputDialog, QMessageBox, QWidget
-
-import csv
 from collections import defaultdict
-import time
-
-###
-from uiFiles.ui_identify import Ui_IdentifyWindow
+import csv
+import os
+import tempfile
+from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, \
+    QStringListModel, QTimer, QVariant
+from PyQt5.QtWidgets import QCompleter, QDialog, QInputDialog, QMessageBox
+from examviewwindow import ExamViewWindow
 import messenger
+from useful_classes import ErrorMessage, SimpleMessage
+from uiFiles.ui_identify import Ui_IdentifyWindow
 
 tempDirectory = tempfile.TemporaryDirectory()
 directoryPath = tempDirectory.name
 
-identifiedColor = '#00bb00'
 
 class Paper:
+    """A simple container for storing a test's idgroup code (tgv) and
+    the associated filename for the image. Once identified also
+    store the studentName and ID-numer.
+    """
     def __init__(self, tgv, fname):
-        #tgv = t0000p00v0
-        #... = 0123456789
+        # tgv = t0000p00v0
+        # ... = 0123456789
+        # The test-IDgroup code
         self.prefix = tgv
+        # The test number
         self.test = tgv[1:5]
+        # Set status as unid'd
         self.status = "unidentified"
+        # no name or id-number yet.
         self.sname = ""
         self.sid = ""
+        # the filename of the image.
         self.originalFile = fname
-
-    def printMe(self):
-        print([self.prefix, self.status, self.sid, self.sname, self.originalFile])
 
     def setStatus(self, st):
         self.status = st
 
     def setReverted(self):
+        # reset the test as unidentified and no ID or name.
         self.status = "unidentified"
-        self.sid = "-1"
-        self.sname = "unknown"
+        self.sid = ""
+        self.sname = ""
 
     def setID(self, sid, sname):
-        #tgv = t0000p00v0
-        #... = 0123456789
+        # tgv = t0000p00v0
+        # ... = 0123456789
+        # Set the test as ID'd and store name / number.
         self.status = "identified"
         self.sid = sid
-        self.sname=sname
+        self.sname = sname
 
 
 class ExamModel(QAbstractTableModel):
+    """A tablemodel for handling the test-ID-ing data."""
     def __init__(self, parent=None):
         QAbstractTableModel.__init__(self, parent)
+        # Data stored in this ordered list.
         self.paperList = []
+        # Headers.
         self.header = ['Code', 'Status', 'ID', 'Name']
 
     def setData(self, index, value, role=Qt.EditRole):
+        # Columns are [code, status, ID and Name]
+        # Put data in appropriate box when setting.
         if role != Qt.EditRole:
             return False
         if index.column() == 0:
@@ -77,16 +85,19 @@ class ExamModel(QAbstractTableModel):
         return False
 
     def identifyStudent(self, index, sid, sname):
+        # When ID'd - set status, ID and Name.
         self.setData(index[1], 'identified')
         self.setData(index[2], sid)
         self.setData(index[3], sname)
 
     def revertStudent(self, index):
+        # When reverted - set status, ID and Name appropriately.
         self.setData(index[1], 'unidentified')
         self.setData(index[2], '')
         self.setData(index[3], '')
 
     def addPaper(self, rho):
+        # Append paper to list and update last row of table
         r = self.rowCount()
         self.beginInsertRows(QModelIndex(), r, r)
         self.paperList.append(rho)
@@ -95,10 +106,13 @@ class ExamModel(QAbstractTableModel):
 
     def rowCount(self, parent=None):
         return len(self.paperList)
+
     def columnCount(self, parent=None):
         return 4
 
     def data(self, index, role=Qt.DisplayRole):
+        # Columns are [code, status, ID and Name]
+        # Get data from appropriate box when called.
         if role != Qt.DisplayRole:
             return QVariant()
         elif index.column() == 0:
@@ -112,78 +126,110 @@ class ExamModel(QAbstractTableModel):
         return QVariant()
 
     def headerData(self, c, orientation, role):
+        # Return the right header.
         if role != Qt.DisplayRole:
             return
         elif orientation == Qt.Horizontal:
             return self.header[c]
         return c
 
+
 class IDClient(QDialog):
     def __init__(self, userName, password, server, message_port, web_port):
+        # Init the client with username, password, server and port data.
         super(IDClient, self).__init__()
-
+        # Init the messenger with server and port data.
         messenger.setServerDetails(server, message_port, web_port)
         messenger.startMessenger()
-
+        # Ping to see if server is up.
         if not messenger.pingTest():
             self.deleteLater()
             return
-
-        self.ui = Ui_IdentifyWindow()
-
+        # Save username, password, and path the local temp directory for
+        # image files and the class list.
         self.userName = userName
         self.password = password
         self.workingDirectory = directoryPath
-        self.requestToken()
-        self.getClassList()
+        # List of papers we have to ID.
         self.paperList = []
         self.unidCount = 0
-        self.exM = ExamModel()
+        # Fire up the interface.
+        self.ui = Ui_IdentifyWindow()
         self.ui.setupUi(self)
-
+        # Paste username into the GUI.
         self.ui.userLabel.setText(self.userName)
+        # Exam model for the table of papers - associate to table in GUI.
+        self.exM = ExamModel()
         self.ui.tableView.setModel(self.exM)
+        # Connect the table's model sel-changed to appropriate function.
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
-
+        # A view window for the papers so user can zoom in as needed.
+        # Paste into appropriate location in gui.
         self.testImg = ExamViewWindow()
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
-
+        # Start using connection to server.
+        # Ask server to authenticate user and return the authentication token.
+        self.requestToken()
+        # Get the classlist from server for name/ID completion.
+        self.getClassList()
+        # Init the name/ID completers
         self.setCompleters()
+        # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nameEdit.returnPressed.connect(self.enterName)
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.nextButton.clicked.connect(self.requestNext)
-
+        # Make sure window is maximised and request a paper from server.
         self.showMaximized()
         self.requestNext()
 
     def requestToken(self):
+        """Send authorisation request (AUTH) to server. The request sends name and
+        password (over ssl) to the server. If hash of password matches the one
+        of file, then the server sends back an "ACK" and an authentication
+        token. The token is then used to authenticate future transactions with
+        the server (since password hashing is slow).
+        """
+        # Send and return message with messenger.
         msg = messenger.SRMsg(['AUTH', self.userName, self.password])
+        # Return should be [ACK, token]
+        # Either a problem or store the resulting token.
         if msg[0] == 'ERR':
             ErrorMessage("Password problem")
             quit()
         else:
             self.token = msg[1]
-            print('Token set to {}'.format(self.token))
 
     def getClassList(self):
+        """Send request for classlist (iRCL) to server. The server then sends
+        back the CSV of the classlist.
+        Merge the two name-fields. Should replace this with the requirement
+        of either two fields = FamilyName+GivenName or a single Name field.
+        """
+        # Send request for classlist (iRCL) to server
         msg = messenger.SRMsg(['iRCL', self.userName, self.token])
+        # Return should be [ACK, path/filename]
         if msg[0] == 'ERR':
             ErrorMessage("Classlist problem")
             quit()
+        # Get the filename from the message.
         dfn = msg[1]
-        fname = os.path.join(self.workingDirectory, "cl.csv") #for windows/linux compatibility
+        fname = os.path.join(self.workingDirectory, "cl.csv")
+        # Get file from dav and copy into local temp working dir as cl.csv
         messenger.getFileDav(dfn, fname)
-        # read classlist into dictionaries
+        # create dictionaries to store the classlist
         self.studentNamesToNumbers = defaultdict(int)
         self.studentNumbersToNames = defaultdict(str)
+        # Read cl.csv into those dictionaries
         with open(fname) as csvfile:
             reader = csv.DictReader(csvfile, skipinitialspace=True)
             for row in reader:
+                # Merge names into single field
                 sn = row['surname']+', '+row['name']
                 self.studentNamesToNumbers[sn] = str(row['id'])
                 self.studentNumbersToNames[str(row['id'])] = sn
-          #acknowledge class list
+        # Now that we've read in the classlist - tell server we got it
+        # Server will remove it from the webdav server.
         msg = messenger.SRMsg(['iGCL', self.userName, self.token, dfn])
         if msg[0] == 'ERR':
             ErrorMessage("Classlist problem")
@@ -191,176 +237,283 @@ class IDClient(QDialog):
         return True
 
     def setCompleters(self):
+        """Set up the studentname + studentnumber line-edit completers.
+        Means that user can enter the first few numbers (or letters) and
+        be prompted with little pop-up with list of possible completions.
+        """
+        # Build stringlistmodels - one for ID and one for names.
         self.sidlist = QStringListModel()
         self.snamelist = QStringListModel()
-
+        # Feed in the numbers and names.
         self.sidlist.setStringList(list(self.studentNumbersToNames.keys()))
         self.snamelist.setStringList(list(self.studentNamesToNumbers.keys()))
-
+        # Build the number-completer
         self.sidcompleter = QCompleter()
         self.sidcompleter.setModel(self.sidlist)
+        # Build the name-completer
         self.snamecompleter = QCompleter()
         self.snamecompleter.setModel(self.snamelist)
         self.snamecompleter.setCaseSensitivity(Qt.CaseInsensitive)
-
+        # Link the ID-completer to the ID-lineedit in the gui.
         self.ui.idEdit.setCompleter(self.sidcompleter)
+        # Similarly for the name-completer
         self.ui.nameEdit.setCompleter(self.snamecompleter)
-
+        # Make sure both lineedits have little "Clear this" buttons.
         self.ui.idEdit.setClearButtonEnabled(True)
         self.ui.nameEdit.setClearButtonEnabled(True)
 
     def shutDown(self):
+        """Send the server a DNF (did not finish) message so it knows to
+        take anything that this user has out-for-id-ing and return it to
+        the todo pile. Then send a user-closing message so that the
+        authorisation token is removed. Then finally close.
+        """
         self.DNF()
         msg = messenger.SRMsg(['UCL', self.userName, self.token])
         self.close()
 
     def DNF(self):
+        """Send the server a "did not finished" message for each paper
+        in the list that has not been ID'd. The server will put these back
+        onto the todo-pile.
+        """
+        # Go through each entry in the table - it not ID'd then send a DNF
+        # to the server.
         rc = self.exM.rowCount()
         for r in range(rc):
             if self.exM.data(self.exM.index(r, 1)) != "identified":
+                # Tell user DNF, user, auth-token, and paper's code.
                 msg = messenger.SRMsg(['iDNF', self.userName, self.token, self.exM.data(self.exM.index(r, 0))])
 
     def selChanged(self, selnew, selold):
+        # When the selection changes, update the ID and name line-edit boxes
+        # with the data from the table - if it exists.
+        # Update the displayed image with that of the newly selected test.
         self.ui.idEdit.setText(self.exM.data(selnew.indexes()[2]))
         self.ui.nameEdit.setText(self.exM.data(selnew.indexes()[3]))
         self.updateImage(selnew.indexes()[0].row())
 
     def updateImage(self, r=0):
+        # Update the test-image pixmap with the image in the indicated file.
         self.testImg.updateImage(self.exM.paperList[r].originalFile)
 
     def addPaperToList(self, paper):
+        # Add paper to the exam-table-model - get back the corresponding row.
         r = self.exM.addPaper(paper)
+        # select that row and display the image
         self.ui.tableView.selectRow(r)
         self.updateImage(r)
+        # One more unid'd paper
         self.unidCount += 1
 
     def requestNext(self):
-        # ask server for next unid'd paper >>> test,fname = server.nextUnIDd(self.userName)
+        """Ask the server for an unID'd paper (iNID). Server should return
+        message [ACK, testcode, filename]. Get file from webdav, add to the
+        list of papers and update the image.
+        """
+        # ask server for next unid'd paper
         msg = messenger.SRMsg(['iNID', self.userName, self.token])
         if msg[0] == 'ERR':
             return
+        # return message is [ACK, code, filename]
         test = msg[1]
         fname = msg[2]
+        # Image name will be <code>.png
         iname = os.path.join(self.workingDirectory, test+".png") #windows/linux compatibility
+        # Grab image from webdav and copy to <code.png>
         messenger.getFileDav(fname, iname)
+        # Add the paper [code, filename, etc] to the list
         self.addPaperToList(Paper(test, iname))
-        #acknowledge got test  >>>   server.gotTest(self.userName, test, fname)
+        # Tell server we got the image (iGTP) - the server then deletes it.
         msg = messenger.SRMsg(['iGTP', self.userName, self.token, test, fname])
+        # Clean up table - and set focus on the ID-lineedit so user can
+        # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()
         self.ui.idEdit.setFocus()
         # ask server for id-count update
-        msg = messenger.SRMsg(['iPRC', self.userName, self.token]) #returns [ACK, #id'd, #total]
+        msg = messenger.SRMsg(['iPRC', self.userName, self.token])
+        # returns [ACK, #id'd, #total]
         if msg[0] == 'ACK':
             self.ui.idProgressBar.setValue(msg[1])
             self.ui.idProgressBar.setMaximum(msg[2])
 
-
-
     def identifyStudent(self, index, alreadyIDd=False):
-        self.exM.identifyStudent(index, self.ui.idEdit.text(),self.ui.nameEdit.text())
+        """User ID's the student of the current paper. Some care around whether
+        or not the paper was ID'd previously. Not called directly - instead
+        is called by "enterID" or "enterName" when user hits return on either
+        of those lineedits.
+        """
+        # Pass the contents of the ID-lineedit and Name-lineedit to the exam
+        # model to put data into the table.
+        self.exM.identifyStudent(index, self.ui.idEdit.text(),
+                                 self.ui.nameEdit.text())
         code = self.exM.data(index[0])
         if alreadyIDd:
-            msg = messenger.SRMsg(['iRAD', self.userName, self.token, code, self.ui.idEdit.text(), self.ui.nameEdit.text()])
+            # If the paper was ID'd previously send return-already-ID'd (iRAD)
+            # with the code, ID, name.
+            msg = messenger.SRMsg(
+                ['iRAD', self.userName, self.token, code,
+                 self.ui.idEdit.text(), self.ui.nameEdit.text()])
         else:
-            msg = messenger.SRMsg(['iRID', self.userName, self.token, code, self.ui.idEdit.text(), self.ui.nameEdit.text()])
+            # If the paper was not ID'd previously send return-ID'd (iRID)
+            # with the code, ID, name.
+            msg = messenger.SRMsg(
+                ['iRID', self.userName, self.token, code,
+                 self.ui.idEdit.text(), self.ui.nameEdit.text()])
         if msg[0] == 'ERR':
+            # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
+            # Use timer to avoid conflict between completer and
+            # clearing the line-edit. Very annoying but this fixes it.
             QTimer.singleShot(0, self.ui.idEdit.clear)
             QTimer.singleShot(0, self.ui.nameEdit.clear)
             return False
         else:
+            # Use timer to avoid conflict between completer and
+            # clearing the line-edit. Very annoying but this fixes it.
             QTimer.singleShot(0, self.ui.idEdit.clear)
             QTimer.singleShot(0, self.ui.nameEdit.clear)
-
+            # Update un-id'd count.
             self.unidCount -= 1
             return True
 
     def moveToNextUnID(self):
+        # Move to the next test in table which is not ID'd.
         rt = self.exM.rowCount()
         if rt == 0:
             return
         rstart = self.ui.tableView.selectedIndexes()[0].row()
-        r = (rstart+1) %  rt
-        while(self.exM.data(self.exM.index(r, 2)) == "identified" and  r != rstart):
-            r = (r+1) %  rt
+        r = (rstart+1) % rt
+        # Be careful to not get stuck in loop if all are ID'd.
+        while(self.exM.data(self.exM.index(r, 2)) == "identified"
+              and r != rstart):
+            r = (r+1) % rt
         self.ui.tableView.selectRow(r)
 
     def enterID(self):
+        """Triggered when user hits return in the ID-lineedit.. that is
+        when they have entered a full student ID.
+        """
+        # if no papers then simply return.
         if self.exM.rowCount() == 0:
             return
+        # Grab table-index and code of current test.
         index = self.ui.tableView.selectedIndexes()
         code = self.exM.data(index[0])
-        if code == None:
+        # No code then return.
+        if code is None:
             return
+        # Get the status of the test
         status = self.exM.data(index[1])
         alreadyIDd = False
-
+        # If the paper is already ID'd ask the user if they want to
+        # change it - set the alreadyIDd flag to true.
         if status == "identified":
             msg = SimpleMessage('Do you want to change the ID?')
             if msg.exec_() == QMessageBox.No:
                 return
             else:
                 alreadyIDd = True
-
+        # Check if the entered ID is in the list from the classlist.
         if self.ui.idEdit.text() in self.studentNumbersToNames:
-            self.ui.nameEdit.setText(self.studentNumbersToNames[self.ui.idEdit.text()])
-            msg = SimpleMessage('Student ID {:s} = {:s}. Enter and move to next?'.format(self.ui.idEdit.text(),self.ui.nameEdit.text()))
+            # If so then fill in the name-edit with the corresponding name.
+            self.ui.nameEdit.setText(
+                self.studentNumbersToNames[self.ui.idEdit.text()])
+            # Ask user to confirm ID/Name
+            msg = SimpleMessage(
+                'Student ID {} = {}. Enter and move to next?'
+                .format(self.ui.idEdit.text(), self.ui.nameEdit.text()))
+            # If user says "no" then just return from function.
             if msg.exec_() == QMessageBox.No:
                 return
         else:
-            msg = SimpleMessage('Student ID {:s} not in list. Do you want to enter it anyway?'.format(self.ui.idEdit.text()))
+            # Number is not in class list - ask user if they really want to
+            # enter that number.
+            msg = SimpleMessage(
+                'Student ID {} not in list. Do you want to enter it anyway?'
+                .format(self.ui.idEdit.text()))
+            # If no then return from function.
             if msg.exec_() == QMessageBox.No:
                 return
-            name, ok = QInputDialog.getText(self, 'Enter name', 'Enter student name:')
+            # Otherwise get a name from the user (and the okay)
+            name, ok = QInputDialog.getText(self, 'Enter name',
+                                            'Enter student name:')
+            # If okay, then set name accordingly, else set name to "unknown"
             if ok:
                 self.ui.nameEdit.setText(str(name))
             else:
                 self.ui.nameEdit.setText("Unknown")
-
+        # Run identify student command (which talks to server)
         if self.identifyStudent(index, alreadyIDd):
+            # if successful, and everything local has been ID'd get next
             if alreadyIDd is False and self.unidCount == 0:
                 self.requestNext()
             else:
+                # otherwise move to the next unidentified paper.
                 self.moveToNextUnID()
         return
 
     def enterName(self):
+        """Triggered when user hits return in the name-lineedit.. that is
+        when they have entered a full student ID.
+        """
+        # if no papers then simply return.
         if self.exM.rowCount() == 0:
             return
+        # Grab table-index and code of current test.
         index = self.ui.tableView.selectedIndexes()
         code = self.exM.data(index[0])
-        if code == None:
+        # No code then return.
+        if code is None:
             return
+        # Get the status of the test
         status = self.exM.data(index[1])
         alreadyIDd = False
-
+        # If the paper is already ID'd ask the user if they want to
+        # change it - set the alreadyIDd flag to true.
         if status == "identified":
             msg = SimpleMessage('Do you want to change the ID?')
             if msg.exec_() == QMessageBox.No:
                 return
             else:
                 alreadyIDd = True
-
+        # Check if the entered name is in the list from the classlist.
         if self.ui.nameEdit.text() in self.studentNamesToNumbers:
-            self.ui.idEdit.setText(self.studentNamesToNumbers[self.ui.nameEdit.text()])
-            msg = SimpleMessage('Student ID {:s} = {:s}. Enter and move to next?'.format(self.ui.idEdit.text(), self.ui.nameEdit.text()))
+            # If so then fill in the ID-edit with the corresponding number.
+            self.ui.idEdit.setText(
+                self.studentNamesToNumbers[self.ui.nameEdit.text()])
+            # Ask user to confirm ID/Name
+            msg = SimpleMessage(
+                'Student ID {} = {}. Enter and move to next?'
+                .format(self.ui.idEdit.text(), self.ui.nameEdit.text()))
+            # If user says "no" then just return from function.
             if msg.exec_() == QMessageBox.No:
                 return
         else:
-            msg = SimpleMessage('Student name {:s} not in list. Do you want to enter it anyway?'.format(self.ui.nameEdit.text()))
+            # Name is not in class list - ask user if they really want to
+            # enter that name.
+            msg = SimpleMessage(
+                'Student name {} not in list. Do you want to enter it anyway?'
+                .format(self.ui.nameEdit.text()))
+            # If no then return from function.
             if msg.exec_() == QMessageBox.No:
                 return
-            num, ok = QInputDialog.getText(self, 'Enter number', 'Enter student number:')
+            # Otherwise get a number from the user (and the okay)
+            num, ok = QInputDialog.getText(self, 'Enter number',
+                                           'Enter student number:')
+            # If okay, then set number accordingly, else give error
             if ok:
                 self.ui.idEdit.setText(str(num))
             else:
                 msg = ErrorMessage("Cannot enter without a student number.")
                 msg.exec_()
                 return
-
+        # Run identify student command (which talks to server)
         if self.identifyStudent(index, alreadyIDd):
-            if alreadyIDd == False and self.unidCount == 0:
+            # if successful, and everything local has been ID'd get next
+            if alreadyIDd is False and self.unidCount == 0:
                 self.requestNext()
             else:
+                # otherwise move to the next unidentified paper.
                 self.moveToNextUnID()
         return
