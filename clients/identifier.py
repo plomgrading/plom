@@ -10,6 +10,7 @@ import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_identify import Ui_IdentifyWindow
 
+# set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
 directoryPath = tempDirectory.name
 
