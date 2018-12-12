@@ -127,7 +127,7 @@ class ExamModel(QAbstractTableModel):
         return QVariant()
 
     def headerData(self, c, orientation, role):
-        # Return the right header.
+        # Return the correct header.
         if role != Qt.DisplayRole:
             return
         elif orientation == Qt.Horizontal:
