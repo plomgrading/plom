@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QAbstractItemView, QDialog, QMessageBox, QWidget
 
 from examviewwindow import ExamViewWindow
 import messenger
-from mlp_annotator import Annotator
+from annotator import Annotator
 from useful_classes import ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow

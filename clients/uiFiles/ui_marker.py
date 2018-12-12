@@ -209,4 +209,4 @@ class Ui_MarkerWindow(object):
         self.mProgressBar.setFormat(_translate("MarkerWindow", "%v of %m"))
         self.paperBox.setTitle(_translate("MarkerWindow", "Current paper"))
 
-from mlp_useful import SimpleTableView
+from useful_classes import SimpleTableView

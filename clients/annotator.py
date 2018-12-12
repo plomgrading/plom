@@ -1,3 +1,4 @@
+from functools import partial
 import sys
 
 from PyQt5.QtCore import Qt, QSize, pyqtSlot
@@ -63,12 +64,16 @@ class Annotator(QDialog):
         # Create the comment list widget and put into gui.
         self.commentW = CommentWidget()
         self.ui.commentGrid.addWidget(self.commentW, 1, 1)
+        # pass the marking style to the mark entry widget.
+        # also when we set this up we have to connect various
+        # mark set, delta-set, mark change signals to functions
+        self.setMarkHandler(self.markStyle)
+        # set alt-enter / alt-return as shortcut to finish annotating
+        self.setEndShortCuts()
         # Set the tool icons
         self.setIcons()
         # Connect all the buttons to relevant functions
         self.setButtons()
-        # pass the marking style to the mark entry widget.
-        self.setmarkHandler(self.markStyle)
         # Set up the score-box that gets stamped in top-left of image.
         # "k out of n" where k=current score, n = max score.
         self.view.scene.scoreBox.changeMax(self.maxMark)
@@ -281,9 +286,13 @@ class Annotator(QDialog):
         # and set current button to none.
         if self.sender() == self.markHandler:
             self.setToolLine('delta')
+            # set button=none, since markHandler does its own styling
             self.currentButton = None
         else:
+            # otherwise the button = whoever sent us here.
             self.currentButton = self.sender()
+            # Set the style of that button - be careful of the
+            # comment list - since it needs different styling
             if self.currentButton == self.commentW.CL:
                 self.setToolLine('comment')
                 self.currentButton.setStyleSheet(
@@ -292,136 +301,186 @@ class Annotator(QDialog):
                 self.setToolLine(newMode)
                 self.currentButton.setStyleSheet(
                     self.currentButtonStyleBackground)
+            # Clear the style of the mark-handler (this will mostly not do
+            # anything, but saves us testing if we had styled it)
             self.markHandler.clearButtonStyle()
-
+        # pass the new mode to the graphicsview
         self.view.setMode(newMode)
+        # set the mouse cursor
         self.view.setCursor(newCursor)
+        # refresh everything.
         self.repaint()
 
     def setToolLine(self, newMode):
+        # sets the short help/description of the current tool
         self.ui.toolLineEdit.setText("{}".format(
             modeLines.get(newMode, newMode)))
 
-    def setIcons(self):
-        # pyinstaller creates a temp folder and stores path in _MEIPASS
-        try:
-            base_path = sys._MEIPASS
-        except Exception:
-            base_path = "./icons"
-
-        # tweak path for loading the icons for use with pyinstaller one-file.
-        self.setIcon(self.ui.penButton, "pen", "{}/pen.svg".format(base_path))
-        self.setIcon(self.ui.lineButton, "line",
-                     "{}/line.svg".format(base_path))
-        self.setIcon(self.ui.boxButton, "box",
-                     "{}/rectangle.svg".format(base_path))
-        self.setIcon(self.ui.textButton, "text",
-                     "{}/text.svg".format(base_path))
-        self.setIcon(self.ui.tickButton, "tick",
-                     "{}/tick.svg".format(base_path))
-        self.setIcon(self.ui.crossButton, "cross",
-                     "{}/cross.svg".format(base_path))
-        self.setIcon(self.ui.deleteButton, "delete",
-                     "{}/delete.svg".format(base_path))
-        self.setIcon(self.ui.moveButton, "move",
-                     "{}/move.svg".format(base_path))
-        self.setIcon(self.ui.zoomButton, "zoom",
-                     "{}/zoom.svg".format(base_path))
-        self.setIcon(self.ui.panButton, "pan",
-                     "{}/pan.svg".format(base_path))
-        self.setIcon(self.ui.undoButton, "undo",
-                     "{}/undo.svg".format(base_path))
-        self.setIcon(self.ui.redoButton, "redo",
-                     "{}/redo.svg".format(base_path))
-        self.setIcon(self.ui.commentButton, "com",
-                     "{}/comment.svg".format(base_path))
-        self.setIcon(self.ui.commentUpButton, "com up",
-                     "{}/comment_up.svg".format(base_path))
-        self.setIcon(self.ui.commentDownButton, "com dn",
-                     "{}/comment_down.svg".format(base_path))
-
-        self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
-        self.endShortCut.activated.connect(self.endAndRelaunch)
-        self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
-        self.endShortCutb.activated.connect(self.endAndRelaunch)
-
-    @pyqtSlot()
-    def endAndRelaunch(self):
-        self.commentW.saveComments()
-        self.closeEvent(True)
-
     def setIcon(self, tb, txt, iconFile):
+        # Helper command for setIcons - sets the text, loads the icon
+        # and formats things nicely.
         tb.setText(txt)
         tb.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         tb.setIcon(QIcon(QPixmap(iconFile)))
         tb.setIconSize(QSize(24, 24))
         tb.setMinimumWidth(60)
 
+    def setIcons(self):
+        """Set up the icons for the tools.
+        A little care because of where a pyinstaller-built executable
+        stores them.
+        """
+        # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
+        # pyinstaller creates a temp folder and stores path in _MEIPASS
+        try:
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = "./icons"
+
+        iconList = [
+            [self.ui.boxButton, "box", "rectangle.svg"],
+            [self.ui.commentButton, "com", "comment.svg"],
+            [self.ui.commentDownButton, "com dn", "comment_down.svg"],
+            [self.ui.commentUpButton, "com up", "comment_up.svg"],
+            [self.ui.crossButton, "cross", "cross.svg"],
+            [self.ui.deleteButton, "delete", "delete.svg"],
+            [self.ui.lineButton, "line", "line.svg"],
+            [self.ui.moveButton, "move", "move.svg"],
+            [self.ui.panButton, "pan", "pan.svg"],
+            [self.ui.penButton, "pen", "pen.svg"],
+            [self.ui.redoButton, "redo", "redo.svg"],
+            [self.ui.textButton, "text", "text.svg"],
+            [self.ui.tickButton, "tick", "tick.svg"],
+            [self.ui.undoButton, "undo", "undo.svg"],
+            [self.ui.zoomButton, "zoom", "zoom.svg"],
+        ]
+        for X in iconList:
+            self.setIcon(X[0], X[1], "{}/{}".format(base_path, X[2]))
+
+    # The 'endAndRelaunch' slot - this saves the comment-list, closes
+    # the annotator. The marker window then asks the server for the next
+    # unmarked image and fires up the annotator on that.
+    @pyqtSlot()
+    def endAndRelaunch(self):
+        self.commentW.saveComments()
+        self.closeEvent(True)
+
+    def setEndShortCuts(self):
+        # Set alt-enter or alt-return to end the annotator
+        # The key-shortcuts fire a signal, which triggers the
+        # endAndRelaunch slot.
+        self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
+        self.endShortCut.activated.connect(self.endAndRelaunch)
+        self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
+        self.endShortCutb.activated.connect(self.endAndRelaunch)
+
     def setButtons(self):
-        self.ui.penButton.clicked.connect(
-            lambda: self.setMode("pen", QCursor(Qt.ArrowCursor)))
-        self.ui.lineButton.clicked.connect(
-            lambda: self.setMode("line", QCursor(Qt.CrossCursor)))
-        self.ui.boxButton.clicked.connect(
-            lambda: self.setMode("box", QCursor(Qt.ArrowCursor)))
-        self.ui.textButton.clicked.connect(
-            lambda: self.setMode("text", QCursor(Qt.IBeamCursor)))
-        self.ui.crossButton.clicked.connect(
-            lambda: self.setMode("cross", QCursor(Qt.ArrowCursor)))
-        self.ui.tickButton.clicked.connect(
-            lambda: self.setMode("tick", QCursor(Qt.ArrowCursor)))
-        self.ui.moveButton.clicked.connect(
-            lambda: self.setMode("move", QCursor(Qt.OpenHandCursor)))
-        self.ui.deleteButton.clicked.connect(
-            lambda: self.setMode("delete", QCursor(Qt.ForbiddenCursor)))
-        self.ui.zoomButton.clicked.connect(
-            lambda: self.setMode("zoom", QCursor(Qt.SizeFDiagCursor)))
-        self.ui.panButton.clicked.connect(
-            lambda: (self.setMode("pan", QCursor(Qt.OpenHandCursor)),
-                     self.view.setDragMode(1)))
+        """Connect buttons to functions.
+        """
+        # List of tool buttons, the corresponding modes and cursor shapes
+        toolList = [
+            [self.ui.boxButton, "box", Qt.ArrowCursor],
+            [self.ui.crossButton, "cross", Qt.ArrowCursor],
+            [self.ui.deleteButton, "delete", Qt.ForbiddenCursor],
+            [self.ui.lineButton, "line", Qt.CrossCursor],
+            [self.ui.moveButton, "move", Qt.OpenHandCursor],
+            [self.ui.panButton, "pan", Qt.OpenHandCursor],
+            [self.ui.penButton, "pen", Qt.ArrowCursor],
+            [self.ui.textButton, "text", Qt.IBeamCursor],
+            [self.ui.tickButton, "tick", Qt.ArrowCursor],
+            [self.ui.zoomButton, "zoom", Qt.SizeFDiagCursor],
+            ]
+        # Set each thing in the list
+        for X in toolList:
+            X[0].clicked.connect(partial(self.setMode, X[1], X[2]))
+        # The pan button also needs to change dragmode in the view
+        self.ui.panButton.clicked.connect(partial(self.view.setDragMode, 1))
+
+        # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.view.undo)
         self.ui.redoButton.clicked.connect(self.view.redo)
-
+        # The key-help button connects to the keyPopUp command.
         self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
-
-        self.ui.commentButton.clicked.connect(
-            lambda: (self.commentW.currentItem(),
-                     self.commentW.CL.handleClick()))
-        self.ui.commentUpButton.clicked.connect(
-            lambda: (self.commentW.previousItem(),
-                     self.commentW.CL.handleClick()))
-        self.ui.commentDownButton.clicked.connect(
-            lambda: (self.commentW.nextItem(), self.commentW.CL.handleClick()))
-
-        self.ui.finishedButton.clicked.connect(
-            lambda: (self.commentW.saveComments(), self.closeEvent(True)))
-        self.ui.finishNoRelaunchButton.clicked.connect(
-            lambda: (self.commentW.saveComments(), self.closeEvent(False)))
-
+        # Cancel button closes annotator(QDialog) with a 'reject'
         self.ui.cancelButton.clicked.connect(self.reject)
-
-        self.commentW.CL.commentSignal.connect(self.handleComment)
-
+        # Hide button connects to the toggleTools command
         self.ui.hideButton.clicked.connect(self.toggleTools)
 
+        # Connect the comment buttons to the comment list
+        # They select the item and trigger its handleClick which fires
+        # off a commentSignal which will be picked up by the annotator
+        # First up connect the comment list's signal to the annotator's
+        # handle comment function.
+        self.commentW.CL.commentSignal.connect(self.handleComment)
+        # Now connect up the buttons
+        self.ui.commentButton.clicked.connect(self.commentW.currentItem)
+        self.ui.commentButton.clicked.connect(self.commentW.CL.handleClick)
+        # the previous comment button
+        self.ui.commentUpButton.clicked.connect(self.commentW.previousItem)
+        self.ui.commentUpButton.clicked.connect(self.commentW.CL.handleClick)
+        # the next comment button
+        self.ui.commentDownButton.clicked.connect(self.commentW.nextItem)
+        self.ui.commentDownButton.clicked.connect(self.commentW.CL.handleClick)
+        # Connect up the finishing buttons
+        self.ui.finishedButton.clicked.connect(self.commentW.saveComments)
+        self.ui.finishedButton.clicked.connect(partial(self.closeEvent, True))
+        self.ui.finishNoRelaunchButton.clicked.connect(self.commentW.saveComments)
+        self.ui.finishNoRelaunchButton.clicked.connect(partial(self.closeEvent, False))
+
     def handleComment(self, dlt_txt):
+        """When the user selects a comment this function will be triggered.
+        The function is passed dlt_txt = [delta, comment text].
+        It sets the mode to text, but also passes the comment's text and
+        value (ie +/- n marks) to the pageview - which in turn tells the
+        pagescene. The scene's mode will be set to 'comment' so that when
+        the user clicks there the delta+comment items are created and
+        then pasted into place.
+        """
+        # Set the model to text and change cursor.
         self.setMode("text", QCursor(Qt.IBeamCursor))
-        # set the delta to 0 if it is out-of-bounds.
+        # Grab the delta from the arguments
         delta = int(dlt_txt[0])
+        # We only paste the delta if it is appropriate - this depends on
+        # the marking style.
+        # If marking-up then keep delta if positive, and if applying it
+        # will not push mark past maximium possible
         if self.markStyle == 2:  # mark up - disable negative
             if delta <= 0 or delta + self.score > self.maxMark:
                 self.view.makeComment(0, dlt_txt[1])
                 return
-        elif self.markStyle == 3:  # mark down - disable positive
+            else:
+                self.view.makeComment(dlt_txt[0], dlt_txt[1])
+                return
+        # If marking down, then keep delta if negative, and if applying it
+        # doesn't push mark down past zero.
+        elif self.markStyle == 3:
             if delta >= 0 or delta + self.score < 0:
                 self.view.makeComment(0, dlt_txt[1])
                 return
-        # Remaining possibility = mark total, enable all.
-        self.view.makeComment(dlt_txt[0], dlt_txt[1])
+            else:
+                self.view.makeComment(dlt_txt[0], dlt_txt[1])
+                return
+        else:
+            # Remaining possibility = mark total - no restrictions
+            # since user has to set total mark manually - the deltas do not
+            # change the mark.
+            self.view.makeComment(dlt_txt[0], dlt_txt[1])
+            return
 
-    def setmarkHandler(self, markStyle):
+    def setMarkHandler(self, markStyle):
+        """Set up the mark handling widget inside the annotator gui.
+        Can be one of 3 styles - mark up, down or total.
+        Also connect the handler's signals - when the mark is set,
+        or delta-mark set to appropriate functions in the annotator.
+        Also - to set up the mark-delta correctly - the view has to
+        signal back to the annotator when a delta is pasted onto the
+        image.
+        """
+        # Build the mark handler and put into the gui.
         self.markHandler = MarkHandler(self.maxMark)
         self.ui.markGrid.addWidget(self.markHandler, 1, 1)
+        # Connect the markHandler's mark-set and delta-set signals to
+        # the appropriate functions here.
         self.markHandler.markSetSignal.connect(self.totalMarkSet)
         self.markHandler.deltaSetSignal.connect(self.deltaMarkSet)
         self.markHandler.setStyle(markStyle)
@@ -432,37 +491,72 @@ class Annotator(QDialog):
         else:
             # connect the delta tool to the changeMark function.
             # delta and marked comments will change the total.
+            # The view makes this signal when a delta is pasted
             self.view.scene.markChangedSignal.connect(self.changeMark)
 
     def totalMarkSet(self, tm):
+        # Set the total mark and pass that info to the comment list
+        # so it can shade over deltas that are no longer applicable.
         self.score = tm
-        self.ui.finishedButton.setFocus()
-        self.view.scene.scoreBox.changeScore(self.score)
         self.commentW.changeMark(self.maxMark, self.score)
+        # also tell the scorebox in the top-left of the image what the
+        # new total mark is.
+        self.view.scene.scoreBox.changeScore(self.score)
 
     def deltaMarkSet(self, dm):
+        """When a delta-mark button is clicked, or a comment selected
+        the view (and scene) need to know what the current delta is so
+        that it can be pasted in correctly (when user clicks on image).
+        """
+        # Compute mark if delta is applied = current mark + delta
         lookingAhead = self.score+dm
+        # If it is out of range then change mode to "move" so that
+        # the user cannot paste in that delta.
         if lookingAhead < 0 or lookingAhead > self.maxMark:
             self.ui.moveButton.animateClick()
             return
+        # Otherwise set the mode and tell the view the current delta value.
+        # which it, in turn, passes on to the pagescene.
         self.setMode("delta", QCursor(Qt.ArrowCursor))
         self.view.markDelta(dm)
 
     def changeMark(self, dm):
+        """The mark has been changed by delta=dm. Update the mark-handler
+        and the scorebox and check if the user can use this delta again
+        while keeping the mark between 0 and the max possible.
+        """
+        # Update the current mark
         self.score += dm
+        # Tell the mark-handler what the new mark is and force a repaint.
         self.markHandler.setMark(self.score)
         self.markHandler.repaint()
+        # Tell the view (and scene) what the current mark is.
         self.view.scene.scoreBox.changeScore(self.score)
+        # Look ahead to see if this delta can be used again while keeping
+        # the mark within range. If not, then set mode to 'move'.
         lookingAhead = self.score+dm
         if lookingAhead < 0 or lookingAhead > self.maxMark:
             self.ui.moveButton.animateClick()
 
     def closeEvent(self, relaunch):
+        """When the user closes the window - either by clicking on the
+        little standard all windows have them close icon in the titlebar
+        or by clicking on 'finished' - do some basic checks.
+        If the titlebar close has been clicked then we assume the user
+        is cancelling the annotations.
+        Otherwise - we assume they want to accept them. Simple sanity check
+        that user meant to close the window.
+        Be careful of a score of 0 - when mark total or mark up.
+        Be careful of max-score when marking down.
+        In either case - get user to confirm the score before closing.
+        """
+        # If the titlebar close clicked then don't relauch and close the
+        # annotator (QDialog) with a 'reject'
         if type(relaunch) == QCloseEvent:
             self.launchAgain = False
             self.reject()
         else:
-            # if marking total or up, be careful of giving 0-marks
+            # if marking total or up, be careful when giving 0-marks
             if self.score == 0 and self.markHandler.style != 'Down':
                 msg = SimpleMessage('You have given 0 - please confirm')
                 if msg.exec_() == QMessageBox.No:
@@ -477,6 +571,7 @@ class Annotator(QDialog):
                 self.launchAgain = True
             else:
                 self.launchAgain = False
-
+            # Save the view/scene to file.
             self.view.save()
+            # Close the annotator(QDialog) with an 'accept'.
             self.accept()

@@ -339,7 +339,7 @@
   <customwidget>
    <class>SimpleTableView</class>
    <extends>QTableView</extends>
-   <header>mlp_useful.h</header>
+   <header>useful_classes.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
@@ -353,7 +353,7 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="mouseHandGroup"/>
   <buttongroup name="markStyleGroup"/>
+  <buttongroup name="mouseHandGroup"/>
  </buttongroups>
 </ui>
