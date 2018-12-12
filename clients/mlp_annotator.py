@@ -11,7 +11,7 @@ from useful_classes import CommentWidget, SimpleMessage
 from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
 from uiFiles.ui_annotator_rhm import Ui_annotator_rhm
 
-
+# Short descriptions of each tool to display to user.
 modeLines = {
     'box': 'L: highlighted box. R: opaque white box.',
     'comment': 'L: paste comment and associated mark.',
@@ -27,44 +27,66 @@ modeLines = {
     'zoom': 'L: Zoom in. R: zoom out.',
     }
 
+
 class Annotator(QDialog):
+    """The main annotation window for annotating group-images
+    and assigning marks.
+    """
     def __init__(self, fname, maxMark, markStyle, mouseHand, parent=None):
         super(Annotator, self).__init__(parent)
+        # Grab filename of image, max mark, mark style (total/up/down)
+        # and mouse-hand (left/right)
         self.imageFile = fname
         self.maxMark = maxMark
-        self.score = 0
         self.markStyle = markStyle
+        # Set current mark to 0.
+        self.score = 0
+        # make styling of currently selected button/tool.
         self.currentButtonStyleBackground = "border: 2px solid #00aaaa; " \
             "background: qlineargradient(x1:0,y1:0,x2:0,y2:1, " \
             "stop: 0 #00dddd, stop: 1 #00aaaa);"
+        # when comments are used, we just outline the comment list - not
+        # the whole background - so make a style for that.
         self.currentButtonStyleOutline = "border: 2px solid #00aaaa; "
+        # No button yet selected.
         self.currentButton = None
-
+        # Window depends on mouse-hand - si
         # right-hand mouse = 0, left-hand mouse = 1
         if mouseHand == 0:
             self.ui = Ui_annotator_rhm()
         else:
             self.ui = Ui_annotator_lhm()
-
+        # Set up the gui.
         self.ui.setupUi(self)
+        # Set up the view of the group-image - loads in the image etc
         self.setView()
-
+        # Create the comment list widget and put into gui.
         self.commentW = CommentWidget()
         self.ui.commentGrid.addWidget(self.commentW, 1, 1)
-
+        # Set the tool icons
         self.setIcons()
+        # Connect all the buttons to relevant functions
         self.setButtons()
         # pass the marking style to the mark entry widget.
         self.setmarkHandler(self.markStyle)
+        # Set up the score-box that gets stamped in top-left of image.
+        # "k out of n" where k=current score, n = max score.
         self.view.scene.scoreBox.changeMax(self.maxMark)
         self.view.scene.scoreBox.changeScore(self.score)
-        # pass this to the comment table too
+        # pass this to the comment table too - it needs to know if we are
+        # marking up/down/total to correctly shade deltas.
         self.commentW.setStyle(self.markStyle)
         self.commentW.changeMark(self.maxMark, self.score)
-
+        # Make sure window is maximised.
         self.showMaximized()
+        # Make sure window has min/max buttons.
+        self.setWindowFlags(self.windowFlags() | Qt.WindowSystemMenuHint
+                            | Qt.WindowMinMaxButtonsHint)
 
-        # Hot-key presses for various functions.
+        # Keyboard shortcuts.
+        # Connect various key-presses to associated tool-button clicks
+        # Allows us to translate a key-press into a button-press.
+        # Key layout (mostly) matches tool-button layout
         self.keycodes = {
             # home-row
             Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
@@ -89,20 +111,21 @@ class Annotator(QDialog):
             Qt.Key_T: lambda: self.ui.penButton.animateClick(),
 
             # and then the same but for the left-handed
+            # home-row
             Qt.Key_H: lambda: self.ui.textButton.animateClick(),
             Qt.Key_J: lambda: (self.commentW.currentItem(),
                                self.commentW.CL.handleClick()),
             Qt.Key_K: lambda: self.ui.tickButton.animateClick(),
             Qt.Key_L: lambda: self.ui.undoButton.animateClick(),
             Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
-
+            # lower-row
             Qt.Key_N: lambda: self.ui.lineButton.animateClick(),
             Qt.Key_M: lambda: (self.commentW.nextItem(),
                                self.commentW.CL.handleClick()),
             Qt.Key_Comma: lambda: self.ui.boxButton.animateClick(),
             Qt.Key_Period: lambda: self.ui.deleteButton.animateClick(),
             Qt.Key_Slash: lambda: self.ui.moveButton.animateClick(),
-
+            # top-row
             Qt.Key_Y: lambda: self.ui.penButton.animateClick(),
             Qt.Key_U: lambda: (self.commentW.previousItem(),
                                self.commentW.CL.handleClick()),
@@ -115,6 +138,7 @@ class Annotator(QDialog):
             Qt.Key_Backslash: lambda: self.swapMaxNorm(),
             Qt.Key_Minus: lambda: self.view.zoomOut(),
             Qt.Key_Equal: lambda: self.view.zoomIn(),
+            # Only change-mark shortcuts 0-5.
             Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
             Qt.Key_0: lambda: self.keyToChangeMark(0),
             Qt.Key_1: lambda: self.keyToChangeMark(1),
@@ -123,14 +147,16 @@ class Annotator(QDialog):
             Qt.Key_4: lambda: self.keyToChangeMark(4),
             Qt.Key_5: lambda: self.keyToChangeMark(5),
 
-            # Then list keys
+            # ?-mark pop up a key-list
             Qt.Key_Question: lambda: self.keyPopUp(),
 
-            # Hide all the tools
+            # Toggle hide/unhide tools so as to maximise space for annotation
             Qt.Key_Home: lambda: self.toggleTools(),
         }
 
     def toggleTools(self):
+        # Show / hide all the tools and so more space for the group-image
+        # All tools in gui inside 'hideablebox' - so easily shown/hidden
         if self.ui.hideableBox.isHidden():
             self.ui.hideableBox.show()
             self.ui.hideButton.setText("Hide")
@@ -139,6 +165,8 @@ class Annotator(QDialog):
             self.ui.hideButton.setText("Reveal")
 
     def keyPopUp(self):
+        # Pops up a little window which containts table of
+        # keys and associated tools.
         keylist = {'a': 'Zoom', 's': 'Undo', 'd': 'Tick/QMark/Cross',
                    'f': 'Current Comment', 'g': 'Text', 'z': 'Move',
                    'x': 'Delete', 'c': 'Box/Whitebox', 'v': 'Next Comment',
@@ -155,45 +183,66 @@ class Annotator(QDialog):
                    'p': 'Pan', 'o': 'Redo', 'i': 'Cross/QMark/Tick',
                    'u': 'Previous Comment', 'y': 'Pen/Highlighter',
                    '?': 'Key Help'}
-
+        # build KeyPress shortcuts dialog
         kp = QDialog()
         grid = QGridLayout()
+        # Sortable table to display [key, description] pairs
         kt = QTableWidget()
         kt.setColumnCount(2)
+        # Set headers - not editable.
+        kt.setHorizontalHeaderLabels(['key', 'function'])
+        kt.verticalHeader().hide()
+        kt.setEditTriggers(QAbstractItemView.NoEditTriggers)
         kt.setSortingEnabled(True)
+        # Read through the keys and put into table.
         for a in keylist.keys():
             r = kt.rowCount()
             kt.setRowCount(r+1)
             kt.setItem(r, 0, QTableWidgetItem(a))
             kt.setItem(r, 1, QTableWidgetItem("{}".format(keylist[a])))
-
-        kt.setHorizontalHeaderLabels(['key', 'function'])
-        kt.verticalHeader().hide()
-        kt.setEditTriggers(QAbstractItemView.NoEditTriggers)
-
+        # Give it a close-button.
         cb = QPushButton("&close")
         cb.clicked.connect(kp.accept)
         grid.addWidget(kt, 1, 1, 3, 3)
         grid.addWidget(cb, 4, 3)
         kp.setLayout(grid)
+        # Pop it up.
         kp.exec_()
 
     def setView(self):
+        """Starts the pageview.
+        The pageview (which is a qgraphicsview) which is (mostly) a layer
+        between the annotation widget and the qgraphicsscene which
+        actually stores all the graphics objects (the image, lines, boxes,
+        text etc etc). The view allows us to zoom pan etc over image and
+        its annotations.
+        """
+        # Start the pageview - pass it this widget (so it can communicate
+        # back to us) and the filename of the image.
         self.view = PageView(self, self.imageFile)
+        # put the view into the gui.
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowSystemMenuHint
-                            | Qt.WindowMinMaxButtonsHint)
+        # set the initial view to contain the entire scene which at
+        # this stage is just the image.
         self.view.fitInView(self.view.scene.sceneRect(),
                             Qt.KeepAspectRatioByExpanding)
+        # Centre at top-left of image.
         self.view.centerOn(0, 0)
 
     def swapMaxNorm(self):
+        """Toggles the window size between max and normal"""
         if self.windowState() != Qt.WindowMaximized:
             self.setWindowState(Qt.WindowMaximized)
         else:
             self.setWindowState(Qt.WindowNoState)
 
     def keyToChangeMark(self, buttonNumber):
+        """Translates a key-press (0,1,2,3,4,5) into a button-press
+        of the various delta-mark buttons in the mark-entry widget.
+        If mark-up style then they trigger the positive mark buttons,
+        hence p0,p1 etc... if mark down then triggers the negative mark
+        buttons - n1,n2, etc.
+        """
         if self.markHandler.style == 'Up':
             self.markHandler.markButtons[
                 'p{}'.format(buttonNumber)].animateClick()
@@ -202,19 +251,34 @@ class Annotator(QDialog):
                 'm{}'.format(buttonNumber)].animateClick()
 
     def keyPressEvent(self, event):
+        """Translates key-presses into tool-button presses if
+        appropriate. Also captures the escape-key since this would
+        normally close a qdialog.
+        """
+        # If a key-press detected use the keycodes dict to translate
+        # the press into a function call (if exists)
         self.keycodes.get(event.key(), lambda *args: None)()
-
+        # If escape key pressed then do not process it because
+        # esc in a qdialog closes the window as a "reject".
         if event.key() != Qt.Key_Escape:
             super(Annotator, self).keyPressEvent(event)
 
     def setMode(self, newMode, newCursor):
-        # Clear styling of the current button
+        """Change the current tool mode.
+        Changes the styling of the corresponding button, and
+        also the cursor.
+        """
+        # Clear styling of the what was until now the current button
         if self.currentButton is None:
             pass
         else:
             self.currentButton.setStyleSheet("")
-
-        # Button has been changed, so update currentButton and its styling.
+        # We change currentbutton to which ever widget sent us
+        # to this function. We have to be a little careful since
+        # not all widgets get the styling in the same way.
+        # If the mark-handler widget sent us here, it takes care
+        # of its own styling - so we update the little tool-tip
+        # and set current button to none.
         if self.sender() == self.markHandler:
             self.setToolLine('delta')
             self.currentButton = None
