@@ -1,6 +1,6 @@
 import json
 import os
-import mlp_marker
+import marker
 import identifier
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory
@@ -88,8 +88,8 @@ class Chooser(QWidget):
             # Run the marker client.
             pg = str(self.ui.pgSB.value()).zfill(2)
             v = str(self.ui.vSB.value())
-            self.marker = mlp_marker.MarkerClient(user, pwd, server, mport,
-                                                  wport, pg, v)
+            self.marker = marker.MarkerClient(user, pwd, server, mport,
+                                              wport, pg, v)
             self.marker.exec_()
         else:
             # Run the ID client.
