@@ -37,8 +37,10 @@ def setupLogger(name, log_file, level=logging.INFO):
     # For setting up separate logging for IDing and Marking
     # https://stackoverflow.com/questions/11232230/logging-to-two-files-with-different-settings
     """Function setup as many loggers as you want"""
-    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
+    formatter = logging.Formatter('%(asctime)s %(message)s',
+                                  datefmt='%d/%m/%Y %H:%M:%S')
     handler = logging.FileHandler(log_file)
+    handler.setFormatter(formatter)
     logger = logging.getLogger(name)
     logger.setLevel(level)
     logger.addHandler(handler)
