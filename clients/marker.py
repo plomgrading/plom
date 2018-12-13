@@ -3,9 +3,8 @@ import shutil
 import tempfile
 
 from PyQt5.QtCore import Qt, QAbstractTableModel, QElapsedTimer, QModelIndex,\
-    QPoint, QRectF, QVariant
-from PyQt5.QtGui import QBrush, QFont, QPainter, QPen, QPixmap
-from PyQt5.QtWidgets import QAbstractItemView, QDialog, QMessageBox, QWidget
+    QVariant
+from PyQt5.QtWidgets import QDialog, QMessageBox
 
 from examviewwindow import ExamViewWindow
 import messenger
@@ -14,10 +13,10 @@ from useful_classes import ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
 
-## in order to get shortcuts under OSX this needs to set this.... but only osx.
-## To test platform
+# in order to get shortcuts under OSX this needs to set this.... but only osx.
+# To test platform
 import platform
-if(platform.system()=='Darwin'):
+if platform.system() == 'Darwin':
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
     qt_set_sequence_auto_mnemonic(True)
 
@@ -192,10 +191,10 @@ class ExamModel(QAbstractTableModel):
 
 class MarkerClient(QDialog):
     def __init__(self, userName, password, server, message_port, web_port,
-                 pageGroup, version):
+                 pageGroup, version, parent=None):
         # Init the client with username, password, server and port data,
         # and which group/version is being marked.
-        super(MarkerClient, self).__init__()
+        super(MarkerClient, self).__init__(parent)
         # Fire up the messenger with server data.
         messenger.setServerDetails(server, message_port, web_port)
         messenger.startMessenger()
@@ -412,7 +411,7 @@ class MarkerClient(QDialog):
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(fname, self.maxScore,
-                              self.markStyle, self.mouseHand)
+                              self.markStyle, self.mouseHand, self)
         # run the annotator
         if annotator.exec_():
             # If annotator returns "accept"

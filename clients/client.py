@@ -89,7 +89,7 @@ class Chooser(QWidget):
             pg = str(self.ui.pgSB.value()).zfill(2)
             v = str(self.ui.vSB.value())
             self.marker = marker.MarkerClient(user, pwd, server, mport,
-                                              wport, pg, v)
+                                              wport, pg, v, self)
             self.marker.exec_()
         else:
             # Run the ID client.

@@ -82,12 +82,11 @@ class Annotator(QDialog):
         # marking up/down/total to correctly shade deltas.
         self.commentW.setStyle(self.markStyle)
         self.commentW.changeMark(self.maxMark, self.score)
-        # Make sure window is maximised.
-        self.showMaximized()
         # Make sure window has min/max buttons.
         self.setWindowFlags(self.windowFlags() | Qt.WindowSystemMenuHint
                             | Qt.WindowMinMaxButtonsHint)
-
+        # Make sure window is maximised.
+        self.showMaximized()
         # Keyboard shortcuts.
         # Connect various key-presses to associated tool-button clicks
         # Allows us to translate a key-press into a button-press.
