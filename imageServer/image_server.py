@@ -119,7 +119,7 @@ async def handle_messaging(reader, writer):
     if not isinstance(message, list):
         SLogger.info(">>> Got strange message - not a list. {}".format(message))
     else:
-        SLogger.info("Got message [{}, {}, ...]".format(message[0:1]))
+        SLogger.info("Got message: {}".format(message))
         # Run the command on the server and get the return message.
         # peon will be the instance of the server when it runs.
         rmesg = peon.proc_cmd(message)
@@ -307,7 +307,7 @@ class Server(object):
         back from the webdav and into markedPapers.
         """
         # This should really use path-join.
-        shutil.move(davDirectory + "/" + fname, " ./markedPapers/")
+        shutil.move(davDirectory + "/" + fname, "markedPapers")
 
     def removeFile(self, davfn):
         """Once a file has been grabbed by the client, delete it from the webdav.

@@ -36,6 +36,7 @@ files += ['scanAndGroup/03_scans_to_page_images.py',
           'scanAndGroup/05_missing_pages.py',
           'scanAndGroup/manualPageIdentifier.py',
           'scanAndGroup/06_group_pages.py',
+          'scanAndGroup/06a_group_extra_pages.py',
           'scanAndGroup/testspecification.py']
 
 files += ['imageServer/authenticate.py', 'imageServer/mark_manager.py',
@@ -58,8 +59,8 @@ files += ['clients/uiFiles/ui_annotator_lhm.py',
           'clients/uiFiles/ui_chooser.py', 'clients/uiFiles/ui_identify.py',
           'clients/uiFiles/ui_marker.py']
 
-files += ['clients/icons/comment.svg', 'clients/icons/comment_up.svg ',
-          'clients/icons/comment_down.svg ', 'clients/icons/cross.svg',
+files += ['clients/icons/comment.svg', 'clients/icons/comment_up.svg',
+          'clients/icons/comment_down.svg', 'clients/icons/cross.svg',
           'clients/icons/pan.svg', 'clients/icons/text.svg',
           'clients/icons/delete.svg', 'clients/icons/pen.svg',
           'clients/icons/tick.svg', 'clients/icons/line.svg',
