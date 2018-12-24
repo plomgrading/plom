@@ -1,4 +1,8 @@
-# Code from Elvis Cai.
+__author__ = "Andrew Rechnitzer and Elvis Cai"
+__copyright__ = "Copyright (C) 2018 Andrew Rechnitzer and Elvis Cai"
+__credits__ = ['Andrew Rechnitzer', 'Elvis Cai']
+__license__ = "GPLv3"
+
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QWidget, QFileDialog
 # from PyQt5.QtGui import QIcon

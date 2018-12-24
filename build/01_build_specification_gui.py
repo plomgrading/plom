@@ -1,3 +1,8 @@
+__author__ = "Andrew Rechnitzer and Elvis Cai"
+__copyright__ = "Copyright (C) 2018 Andrew Rechnitzer and Elvis Cai"
+__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__license__ = "GPLv3"
+
 import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QComboBox, QMessageBox,\
