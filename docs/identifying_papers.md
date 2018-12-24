@@ -1,3 +1,9 @@
+<!--
+__author__ = "Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
+__license__ = "GFDL"
+ -->
+
 # Identifying papers
 ## A little background first
 * When the test papers are produced every page of every test is stamped with unique QR-codes that identify them. The code is of the form TxxxxPyyVz - where xxxx is the test number, yy is the page number and z is the version of that page.

@@ -1,3 +1,8 @@
+<!--
+__author__ = "Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
+__license__ = "GFDL"
+ -->
 # Starting the MLP client
 ## Permisisons and clicking
  * Linux and OSX - you might need to make sure that the file is executable, using the following command in a terminal

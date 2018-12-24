@@ -1,3 +1,9 @@
+<!--
+__author__ = "Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
+__license__ = "GFDL"
+ -->
+
 # Marking papers
 ## The two windows
 * The software for marking consists of two windows
