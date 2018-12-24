@@ -1,3 +1,8 @@
+__author__ = "Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
+__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai', 'Matt Coles']
+__license__ = "GPLv3"
+
 from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, \
     QStackedWidget, QLabel, QSizePolicy
 from PyQt5.QtCore import pyqtSignal, Qt
