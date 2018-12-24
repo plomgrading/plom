@@ -1,3 +1,9 @@
+__author__ = "Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
+__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai', 'Matt Coles']
+__license__ = "GPLv3"
+
+
 import json
 
 class TestSpecification:
