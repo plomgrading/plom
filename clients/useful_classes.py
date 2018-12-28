@@ -6,7 +6,7 @@ import os
 import json
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
-from PyQt5.QtGui import QIcon, QPixmap, QStandardItem, QStandardItemModel
+from PyQt5.QtGui import QDropEvent, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import QAbstractItemView, QGridLayout, QMessageBox, \
     QPushButton, QTableView, QToolButton, QWidget, QItemDelegate
 
@@ -171,11 +171,9 @@ class commentDelegate(QItemDelegate):
 class commentRowModel(QStandardItemModel):
     """Need to alter the standrd item model so that when we
     drag/drop to rearrange things, the whole row is moved,
-    not just the item. Solution found at
-    http://apocalyptech.com/linux/qt/qtableview/
+    not just the item. Solution found at (and then tweaked)
+    https://stackoverflow.com/questions/26227885/drag-and-drop-rows-within-qtablewidget/43789304#43789304
     """
-    def dropMimeData(self, data, action, r, c, parent):
-        return super().dropMimeData(data, action, r, 0, parent)
 
     def setData(self, index, value, role=Qt.EditRole):
         """Simple validation of data in the row. Also convert
@@ -203,6 +201,9 @@ class SimpleCommentTable(QTableView):
     Also needs to know the current/max mark and marking style
     in order to change the shading of the delta that goes with
     each comment.
+
+    Dragdrop rows solution found at (and tweaked)
+    https://stackoverflow.com/questions/26227885/drag-and-drop-rows-within-qtablewidget/43789304#43789304
     """
     # This is picked up by the annotator and tells is what is
     # the current comment and delta
@@ -217,19 +218,25 @@ class SimpleCommentTable(QTableView):
         # Only select one row at a time.
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        # Can drag and drop to reorder, not overwrite.
+        # Drag and drop rows to reorder and also paste into pageview
+        self.setDragDropMode(QAbstractItemView.DragDrop)
         self.setDragEnabled(True)
-        self.setDragDropOverwriteMode(False)
-        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setAcceptDrops(True)
         self.viewport().setAcceptDrops(True)
+        self.setDragDropOverwriteMode(False)
         self.setDropIndicatorShown(True)
+
         # When clicked, the selection changes, so must emit signal
         # to the annotator.
-        self.clicked.connect(self.handleClick)
-        # Use the row model defined above, so we can drag/drop rows
+        self.pressed.connect(self.handleClick)
+
+        # Use the row model defined above, to allow newlines inside comments
         self.cmodel = commentRowModel()
+        # self.cmodel = QStandardItemModel()
         self.cmodel.setHorizontalHeaderLabels(['delta', 'comment'])
         self.setModel(self.cmodel)
+        # When editor finishes make sure current row re-selected.
+        self.cmodel.itemChanged.connect(self.handleClick)
         # Use the delegate defined above to shade deltas when needed
         self.delegate = commentDelegate()
         self.setItemDelegate(self.delegate)
@@ -246,6 +253,54 @@ class SimpleCommentTable(QTableView):
         # set these so that double-click enables edits, but not keypress.
         self.setEditTriggers(QAbstractItemView.NoEditTriggers
                              | QAbstractItemView.DoubleClicked)
+
+    def dropEvent(self, event: QDropEvent):
+        # If drag and drop from self to self.
+        if not event.isAccepted() and event.source() == self:
+            # grab the row number of dragged row and its data
+            row = self.selectedIndexes()[0].row()
+            rowData = [self.cmodel.index(row, 0).data(),
+                       self.cmodel.index(row, 1).data()]
+            # Get the row on which to drop
+            dropRow = self.drop_on(event)
+            # If we drag from earlier row, handle index after deletion
+            if row < dropRow:
+                dropRow -= 1
+            # Delete the original row
+            self.cmodel.removeRow(row)
+            # Insert it at drop position
+            self.cmodel.insertRow(dropRow, [QStandardItem(rowData[0]),
+                                            QStandardItem(rowData[1])])
+            # Select the dropped row
+            self.selectRow(dropRow)
+            # Resize the rows - they were expanding after drags for some reason
+            self.resizeRowsToContents()
+        else:
+            super().dropEvent(event)
+
+    def drop_on(self, event):
+        # Where is the drop event - which row
+        index = self.indexAt(event.pos())
+        if not index.isValid():
+            return self.cmodel.rowCount()
+        if self.isBelow(event.pos(), index):
+            return index.row() + 1
+        else:
+            return index.row()
+
+    def isBelow(self, pos, index):
+        rect = self.visualRect(index)
+        margin = 2
+        if pos.y() < rect.top() + margin:
+            return False
+        elif rect.bottom() < pos.y() + margin:
+            return True
+        # noinspection PyTypeChecker
+        return (
+            rect.contains(pos, True) and
+            not (int(self.model().flags(index)) & Qt.ItemIsDropEnabled) and
+            pos.y() >= rect.center().y()
+            )
 
     def populateTable(self):
         # Grab [delta, comment] from the list and put into table.

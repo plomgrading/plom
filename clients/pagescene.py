@@ -122,6 +122,7 @@ class PageScene(QGraphicsScene):
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
 
+
     def save(self):
         """ Save the annotated group-image.
         That is, overwrite the imagefile with a dump of the current
@@ -465,3 +466,34 @@ class PageScene(QGraphicsScene):
             command = CommandHighlight(self, self.path)
         self.highlightFlag = 0
         self.undoStack.push(command)
+
+    # Handle drag / drop events
+    def dragEnterEvent(self, e):
+        if e.mimeData().hasFormat('text/plain'):
+            # User has dragged in plain text from somewhere
+            e.acceptProposedAction()
+        elif e.mimeData().hasFormat('application/x-qabstractitemmodeldatalist') or e.mimeData().hasFormat('application/x-qstandarditemmodeldatalist'):
+            # User has dragged in a comment from the comment-list.
+            e.setDropAction(Qt.CopyAction)
+        else:
+            e.ignore()
+
+    def dragMoveEvent(self, e):
+        e.acceptProposedAction()
+
+    def dropEvent(self, e):
+        if e.mimeData().hasFormat('text/plain'):
+            # Simulate a comment click.
+            self.commentText = e.mimeData().text()
+            self.commentDelta = 0
+            self.mousePressComment(e)
+
+        elif e.mimeData().hasFormat('application/x-qabstractitemmodeldatalist') or e.mimeData().hasFormat('application/x-qstandarditemmodeldatalist'):
+            # Simulate a comment click.
+            self.mousePressComment(e)
+            # User has dragged in a comment from the comment-list.
+            pass
+        else:
+            pass
+        # After the drop event make sure pageview has the focus.
+        self.parent().setFocus(Qt.TabFocusReason)

@@ -28,6 +28,9 @@ class PageView(QGraphicsView):
         # Init the pagescene with the groupimage
         self.scene = PageScene(self, imgName)
         self.setScene(self.scene)
+
+        # the graphics view accepts drag/drop from the comment list
+        self.setAcceptDrops(True)
         # Set the starting mode to pan
         self.setMode("pan")
 
