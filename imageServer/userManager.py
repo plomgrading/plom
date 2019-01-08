@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 import asyncio
@@ -8,9 +8,25 @@ import json
 import os
 import ssl
 import sys
+
 # Grab required Qt stuff
 from PyQt5.QtCore import QSize
-from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QApplication, QDialog, QGridLayout, QInputDialog, QLabel, QLineEdit, QMessageBox, QPushButton, QTableWidget, QTableWidgetItem, QWidget
+from PyQt5.QtWidgets import (
+    QAbstractItemView,
+    QAbstractScrollArea,
+    QApplication,
+    QDialog,
+    QGridLayout,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QWidget,
+)
+
 # Stuff for hashing and verifying passwords
 from passlib.hash import pbkdf2_sha256
 from passlib.context import CryptContext
@@ -21,13 +37,16 @@ mlpctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 # Server info defaults
-serverInfo = {'server': '127.0.0.1', 'mport': 41984, 'wport': 41985}
+serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
+
+
 def getServerInfo():
     """Get server details from json file"""
     global serverInfo
     if os.path.isfile("../resources/serverDetails.json"):
-        with open('../resources/serverDetails.json') as data_file:
+        with open("../resources/serverDetails.json") as data_file:
             serverInfo = json.load(data_file)
+
 
 async def handle_user_reload(server, message_port, password):
     """Asyncio messager handler.
@@ -35,18 +54,20 @@ async def handle_user_reload(server, message_port, password):
     waits for response.
     """
     # open async connection
-    reader, writer = await asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
+    reader, writer = await asyncio.open_connection(
+        server, message_port, loop=loop, ssl=sslContext
+    )
     # convert message to json and then send is encoded.
-    jm = json.dumps(['RUSR', password])
+    jm = json.dumps(["RUSR", password])
     writer.write(jm.encode())
     # SSL does not support EOF, so send a null byte
     # to indicate the end of the message.
-    writer.write(b'\x00')
+    writer.write(b"\x00")
     await writer.drain()
 
     data = await reader.read(100)
-    terminate = data.endswith(b'\x00')
-    data = data.rstrip(b'\x00')
+    terminate = data.endswith(b"\x00")
+    data = data.rstrip(b"\x00")
     rmesg = json.loads(data.decode())  # message should be an ['ACK']
     writer.close()
     return rmesg
@@ -54,13 +75,13 @@ async def handle_user_reload(server, message_port, password):
 
 def requestUserReload(server, message_port, password):
     """Get message handler to send user reload request."""
-    rmsg = loop.run_until_complete(
-        handle_user_reload(server, message_port, password))
-    return(rmsg)
+    rmsg = loop.run_until_complete(handle_user_reload(server, message_port, password))
+    return rmsg
 
 
 class SimpleMessage(QMessageBox):
     """Very simple messagebox with yes/no buttons"""
+
     def __init__(self, txt):
         super(SimpleMessage, self).__init__()
         self.setText(txt)
@@ -69,6 +90,7 @@ class SimpleMessage(QMessageBox):
 
 class ManagerDialog(QDialog):
     """Simple dialog to set manager password"""
+
     def __init__(self):
         super(ManagerDialog, self).__init__()
         self.name = "Manager"
@@ -82,9 +104,9 @@ class ManagerDialog(QDialog):
         self.pwLE.setEchoMode(QLineEdit.Password)
         self.pwLE2 = QLineEdit("")
         self.pwLE2.setEchoMode(QLineEdit.Password)
-        self.okB = QPushButton('Accept')
+        self.okB = QPushButton("Accept")
         self.okB.clicked.connect(self.validate)
-        self.cnB = QPushButton('Cancel')
+        self.cnB = QPushButton("Cancel")
         self.cnB.clicked.connect(self.reject)
 
         grid = QGridLayout()
@@ -104,8 +126,7 @@ class ManagerDialog(QDialog):
         If all good then accept
         else clear the two password lineedits.
         """
-        if ((len(self.pwLE.text()) < 4)
-                or (self.pwLE.text() != self.pwLE2.text())):
+        if (len(self.pwLE.text()) < 4) or (self.pwLE.text() != self.pwLE2.text()):
             self.pwLE.clear()
             self.pwLE2.clear()
             return
@@ -114,11 +135,12 @@ class ManagerDialog(QDialog):
     def getNamePassword(self):
         """Return [Manager, manager password]"""
         self.pwd = self.pwLE.text()
-        return(['Manager', self.pwd])
+        return ["Manager", self.pwd]
 
 
 class UserDialog(QDialog):
     """Simple dialog to enter username and password"""
+
     def __init__(self):
         super(UserDialog, self).__init__()
         self.name = ""
@@ -134,9 +156,9 @@ class UserDialog(QDialog):
         self.pwLE.setEchoMode(QLineEdit.Password)
         self.pwLE2 = QLineEdit("")
         self.pwLE2.setEchoMode(QLineEdit.Password)
-        self.okB = QPushButton('Accept')
+        self.okB = QPushButton("Accept")
         self.okB.clicked.connect(self.validate)
-        self.cnB = QPushButton('Cancel')
+        self.cnB = QPushButton("Cancel")
         self.cnB.clicked.connect(self.reject)
 
         grid = QGridLayout()
@@ -158,8 +180,7 @@ class UserDialog(QDialog):
         If all good then accept
         else clear the two password lineedits.
         """
-        if ((len(self.pwLE.text()) < 4)
-                or (self.pwLE.text() != self.pwLE2.text())):
+        if (len(self.pwLE.text()) < 4) or (self.pwLE.text() != self.pwLE2.text()):
             self.pwLE.clear()
             self.pwLE2.clear()
             return
@@ -177,6 +198,7 @@ class UserDialog(QDialog):
 
 class userManager(QWidget):
     """Simple user manager window which lists the set of users"""
+
     def __init__(self):
         QWidget.__init__(self)
         # dictionary for user list [user: hashedPassword]
@@ -189,8 +211,8 @@ class userManager(QWidget):
         """Load the userlist from json"""
         # If the file is there load it, else set user list to {}
         # Json is dict of [user: hashedPassword]
-        if(os.path.exists("../resources/userList.json")):
-            with open('../resources/userList.json') as data_file:
+        if os.path.exists("../resources/userList.json"):
+            with open("../resources/userList.json") as data_file:
                 self.users = json.load(data_file)
                 print("Users = {}".format(self.users))
         else:
@@ -198,7 +220,7 @@ class userManager(QWidget):
 
     def saveUsers(self):
         """Save the user list to json file"""
-        fh = open("../resources/userList.json", 'w')
+        fh = open("../resources/userList.json", "w")
         fh.write(json.dumps(self.users, indent=2))
         fh.close()
 
@@ -224,7 +246,7 @@ class userManager(QWidget):
 
         self.userT = QTableWidget()
         self.userT.setColumnCount(2)
-        self.userT.setHorizontalHeaderLabels(['Username', 'Hashed Password'])
+        self.userT.setHorizontalHeaderLabels(["Username", "Hashed Password"])
         self.userT.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.userT.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.userT.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
@@ -254,7 +276,7 @@ class userManager(QWidget):
         grid.addWidget(self.urB, 7, 4)
 
         self.setLayout(grid)
-        self.setWindowTitle('User list')
+        self.setWindowTitle("User list")
         self.show()
 
     def setManager(self):
@@ -306,14 +328,12 @@ class userManager(QWidget):
         global serverInfo
         tmp = SimpleMessage("Contact server to reload users?")
         if tmp.exec_() == QMessageBox.Yes:
-            pwd, ok = QInputDialog.getText(self, "Authenticate",
-                                           "Enter manager password",
-                                           QLineEdit.Password)
+            pwd, ok = QInputDialog.getText(
+                self, "Authenticate", "Enter manager password", QLineEdit.Password
+            )
             if ok:
                 # Fire off reload request
-                requestUserReload(serverInfo['server'],
-                                  serverInfo['mport'], pwd)
-
+                requestUserReload(serverInfo["server"], serverInfo["mport"], pwd)
 
 
 # Set asycio event loop running for communication with server.
@@ -327,5 +347,5 @@ def main():
     app.exec_()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

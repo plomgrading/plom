@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 import uuid
@@ -11,10 +11,10 @@ class Authority:
     """A class to do all our authentication
     - user list, passwords and tokens.
     """
+
     def __init__(self, userList):
         """Set up cryptocontext, userlist and tokenlist"""
-        self.ctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"],
-                                deprecated="auto")
+        self.ctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
         self.userList = userList
         self.tokenList = {}
 

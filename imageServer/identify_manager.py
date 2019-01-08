@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 from collections import defaultdict
@@ -8,13 +8,27 @@ import json
 import sys
 import tempfile
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QApplication, QComboBox,  QDialog, QGridLayout,  QMessageBox, QProgressBar, QPushButton, QTableView, QTableWidget, QTableWidgetItem, QWidget
+from PyQt5.QtWidgets import (
+    QAbstractItemView,
+    QAbstractScrollArea,
+    QApplication,
+    QComboBox,
+    QDialog,
+    QGridLayout,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QTableView,
+    QTableWidget,
+    QTableWidgetItem,
+    QWidget,
+)
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from examviewwindow import ExamViewWindow
 import ssl
 import asyncio
 
-server = 'localhost'
+server = "localhost"
 webdav_port = 41985
 message_port = 41984
 
@@ -25,27 +39,30 @@ sslContext.check_hostname = False
 
 
 async def handle_messaging(msg):
-    reader, writer = await asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
+    reader, writer = await asyncio.open_connection(
+        server, message_port, loop=loop, ssl=sslContext
+    )
     jm = json.dumps(msg)
     writer.write(jm.encode())
     # SSL does not support EOF, so send a null byte to indicate the end of the message.
-    writer.write(b'\x00')
+    writer.write(b"\x00")
     await writer.drain()
 
     data = await reader.read(100)
-    terminate = data.endswith(b'\x00')
-    data = data.rstrip(b'\x00')
+    terminate = data.endswith(b"\x00")
+    data = data.rstrip(b"\x00")
     rmesg = json.loads(data.decode())
     # message should be a list [cmd, user, arg1, arg2, etc]
     writer.close()
     return rmesg
 
+
 def SRMsg(msg):
     # print("Sending message {}",format(msg))
     rmsg = loop.run_until_complete(handle_messaging(msg))
-    if rmsg[0] == 'ACK':
+    if rmsg[0] == "ACK":
         return rmsg
-    elif rmsg[0] == 'ERR':
+    elif rmsg[0] == "ERR":
         # print("Some sort of error occurred - didnt get an ACK, instead got ", rmsg)
         msg = ErrorMessage(rmsg[1])
         msg.exec_()
@@ -69,8 +86,8 @@ class UserProgress(QDialog):
         self.setModal(True)
         grid = QGridLayout()
 
-        self.ptab = QTableWidget(len(counts)+1, 3)
-        self.ptab.setHorizontalHeaderLabels(['User', 'Done', 'Progress'])
+        self.ptab = QTableWidget(len(counts) + 1, 3)
+        self.ptab.setHorizontalHeaderLabels(["User", "Done", "Progress"])
         grid.addWidget(self.ptab, 1, 1)
 
         gb = {}
@@ -91,7 +108,7 @@ class UserProgress(QDialog):
             self.ptab.setCellWidget(r, 2, gb[k])
             doneTotal += counts[k][0]
             r += 1
-        self.ptab.setItem(0, 0, QTableWidgetItem('All'))
+        self.ptab.setItem(0, 0, QTableWidgetItem("All"))
         self.ptab.setItem(0, 1, QTableWidgetItem(str(doneTotal)))
 
         self.ptab.resizeColumnsToContents()
@@ -133,7 +150,7 @@ class ExamTable(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.db = QSqlDatabase.addDatabase("QSQLITE")
-        self.db.setDatabaseName('../resources/identity.db')
+        self.db.setDatabaseName("../resources/identity.db")
         self.db.setHostName("Andrew")
         self.db.setConnectOptions("QSQLITE_OPEN_READONLY")
         self.db.open()
@@ -170,17 +187,18 @@ class ExamTable(QWidget):
 
     def requestPageImage(self, index):
         rec = self.exM.record(index.row())
-        self.pgImg.updateImage("../scanAndGroup/readyForMarking/idgroup/{}.png"
-                               .format(rec.value('tgv')))
+        self.pgImg.updateImage(
+            "../scanAndGroup/readyForMarking/idgroup/{}.png".format(rec.value("tgv"))
+        )
 
     def computeUserProgress(self):
         ustats = defaultdict(lambda: [0, 0])
         for r in range(self.exM.rowCount()):
-            if self.exM.record(r).value('user') == 'None':
+            if self.exM.record(r).value("user") == "None":
                 continue
-            ustats[self.exM.record(r).value('user')][0] += 1
-            if self.exM.record(r).value('status') == 'Identified':
-                ustats[self.exM.record(r).value('user')][1] += 1
+            ustats[self.exM.record(r).value("user")][0] += 1
+            if self.exM.record(r).value("status") == "Identified":
+                ustats[self.exM.record(r).value("user")][1] += 1
         UserProgress(ustats).exec_()
 
     def getUniqueFromColumn(self, col):
@@ -198,15 +216,15 @@ class ExamTable(QWidget):
         self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
 
     def setFilterOptions(self):
-        self.flS.insertItems(1, self.getUniqueFromColumn('status'))
-        self.flU.insertItems(1, self.getUniqueFromColumn('user'))
+        self.flS.insertItems(1, self.getUniqueFromColumn("status"))
+        self.flU.insertItems(1, self.getUniqueFromColumn("user"))
 
     def filter(self):
         flt = []
-        if self.flS.currentText() != 'Status':
-            flt.append('status=\'{}\''.format(self.flS.currentText()))
-        if self.flU.currentText() != 'Marker':
-            flt.append('user=\'{}\''.format(self.flU.currentText()))
+        if self.flS.currentText() != "Status":
+            flt.append("status='{}'".format(self.flS.currentText()))
+        if self.flU.currentText() != "Marker":
+            flt.append("user='{}'".format(self.flU.currentText()))
 
         if len(flt) > 0:
             flts = " AND ".join(flt)
@@ -232,7 +250,7 @@ class Manager(QWidget):
         grid.addWidget(self.closeB, 6, 99)
 
         self.setLayout(grid)
-        self.setWindowTitle('Where we are at.')
+        self.setWindowTitle("Where we are at.")
         self.show()
 
 

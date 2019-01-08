@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 import sys
@@ -11,16 +11,34 @@ import ssl
 from collections import defaultdict
 from examviewwindow import ExamViewWindow
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QAbstractItemView, QAbstractScrollArea, QApplication, QComboBox, QDialog, QGridLayout, QLabel, QLineEdit, QListWidget, QMessageBox, QProgressBar, QPushButton, QTableView, QTableWidget, QTableWidgetItem, QWidget
+from PyQt5.QtWidgets import (
+    QAbstractItemView,
+    QAbstractScrollArea,
+    QApplication,
+    QComboBox,
+    QDialog,
+    QGridLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QTableView,
+    QTableWidget,
+    QTableWidgetItem,
+    QWidget,
+)
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 sns.set()  # Sets up seaborn defaults for plots.
 
 
-server = 'localhost'
+server = "localhost"
 webdav_port = 41985
 message_port = 41984
 
@@ -31,17 +49,21 @@ sslContext.check_hostname = False
 
 
 async def handle_messaging(msg):
-    reader, writer = await asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
+    reader, writer = await asyncio.open_connection(
+        server, message_port, loop=loop, ssl=sslContext
+    )
     jm = json.dumps(msg)
     writer.write(jm.encode())
     # SSL does not support EOF, so send a null byte to indicate the end of the message.
-    writer.write(b'\x00')
+    writer.write(b"\x00")
     await writer.drain()
 
     data = await reader.read(100)
-    terminate = data.endswith(b'\x00')
-    data = data.rstrip(b'\x00')
-    rmesg = json.loads(data.decode())  # message should be a list [cmd, user, arg1, arg2, etc]
+    terminate = data.endswith(b"\x00")
+    data = data.rstrip(b"\x00")
+    rmesg = json.loads(
+        data.decode()
+    )  # message should be a list [cmd, user, arg1, arg2, etc]
     writer.close()
     return rmesg
 
@@ -49,9 +71,9 @@ async def handle_messaging(msg):
 def SRMsg(msg):
     # print("Sending message {}",format(msg))
     rmsg = loop.run_until_complete(handle_messaging(msg))
-    if rmsg[0] == 'ACK':
+    if rmsg[0] == "ACK":
         return rmsg
-    elif rmsg[0] == 'ERR':
+    elif rmsg[0] == "ERR":
         # print("Some sort of error occurred - didnt get an ACK, instead got ", rmsg)
         msg = errorMessage(rmsg[1])
         msg.exec_()
@@ -84,10 +106,15 @@ class userHistogram(QDialog):
             tot = 0
             for x in uh:
                 tot += x[1]
-            ax.plot([x[0] for x in uh], [x[1]/tot for x in uh], 'o-', label="User {}".format(u))
+            ax.plot(
+                [x[0] for x in uh],
+                [x[1] / tot for x in uh],
+                "o-",
+                label="User {}".format(u),
+            )
         ax.legend()
-        ax.set_xlabel('mark')
-        ax.set_ylabel('proportion')
+        ax.set_xlabel("mark")
+        ax.set_ylabel("proportion")
 
         self.closeB = QPushButton("close")
         self.closeB.clicked.connect(self.close)
@@ -112,10 +139,15 @@ class versionHistogram(QDialog):
             tot = 0
             for x in vh:
                 tot += x[1]
-            ax.plot([x[0] for x in vh], [x[1]/tot for x in vh], 'o-', label="Version {}".format(v))
+            ax.plot(
+                [x[0] for x in vh],
+                [x[1] / tot for x in vh],
+                "o-",
+                label="Version {}".format(v),
+            )
         ax.legend()
-        ax.set_xlabel('mark')
-        ax.set_ylabel('proportion')
+        ax.set_xlabel("mark")
+        ax.set_ylabel("proportion")
 
         self.closeB = QPushButton("close")
         self.closeB.clicked.connect(self.close)
@@ -130,8 +162,10 @@ class userProgress(QDialog):
         self.setModal(True)
         grid = QGridLayout()
 
-        self.ptab = QTableWidget(len(counts)+1, 5)
-        self.ptab.setHorizontalHeaderLabels(['User', 'Done', 'Progress', 'Avg Time', 'Total Time'])
+        self.ptab = QTableWidget(len(counts) + 1, 5)
+        self.ptab.setHorizontalHeaderLabels(
+            ["User", "Done", "Progress", "Avg Time", "Total Time"]
+        )
         grid.addWidget(self.ptab, 1, 1)
 
         gb = {}
@@ -151,14 +185,16 @@ class userProgress(QDialog):
             self.ptab.setItem(r, 1, QTableWidgetItem(str(counts[k][0])))
             self.ptab.setCellWidget(r, 2, gb[k])
             if counts[k][1] > 0:
-                self.ptab.setItem(r, 3, QTableWidgetItem(str(counts[k][2]/counts[k][1])))
+                self.ptab.setItem(
+                    r, 3, QTableWidgetItem(str(counts[k][2] / counts[k][1]))
+                )
                 self.ptab.setItem(r, 4, QTableWidgetItem(str(counts[k][2])))
             else:
                 self.ptab.setItem(r, 3, QTableWidgetItem("."))
                 self.ptab.setItem(r, 4, QTableWidgetItem("."))
             doneTotal += counts[k][0]
             r += 1
-        self.ptab.setItem(0, 0, QTableWidgetItem('All'))
+        self.ptab.setItem(0, 0, QTableWidgetItem("All"))
         self.ptab.setItem(0, 1, QTableWidgetItem(str(doneTotal)))
 
         self.ptab.resizeColumnsToContents()
@@ -179,8 +215,10 @@ class groupProgress(QDialog):
         self.setModal(True)
         grid = QGridLayout()
 
-        self.ptab = QTableWidget(len(counts)+1, 6)
-        self.ptab.setHorizontalHeaderLabels([txt, 'Total', 'Done', 'Progress', 'Avg Time', 'Total Time'])
+        self.ptab = QTableWidget(len(counts) + 1, 6)
+        self.ptab.setHorizontalHeaderLabels(
+            [txt, "Total", "Done", "Progress", "Avg Time", "Total Time"]
+        )
         grid.addWidget(self.ptab, 1, 1)
 
         gb = {}
@@ -196,7 +234,9 @@ class groupProgress(QDialog):
             self.ptab.setItem(r, 2, QTableWidgetItem(str(counts[k][1])))
             self.ptab.setCellWidget(r, 3, gb[k])
             if counts[k][1] > 0:
-                self.ptab.setItem(r, 4, QTableWidgetItem(str(counts[k][2]/counts[k][1])))
+                self.ptab.setItem(
+                    r, 4, QTableWidgetItem(str(counts[k][2] / counts[k][1]))
+                )
                 self.ptab.setItem(r, 5, QTableWidgetItem(str(counts[k][2])))
             else:
                 self.ptab.setItem(r, 4, QTableWidgetItem("."))
@@ -208,7 +248,7 @@ class groupProgress(QDialog):
         gb[-1] = QProgressBar()
         gb[-1].setMaximum(total)
         gb[-1].setValue(doneTotal)
-        self.ptab.setItem(0, 0, QTableWidgetItem('All'))
+        self.ptab.setItem(0, 0, QTableWidgetItem("All"))
         self.ptab.setItem(0, 1, QTableWidgetItem(str(total)))
         self.ptab.setItem(0, 2, QTableWidgetItem(str(doneTotal)))
         self.ptab.setCellWidget(0, 3, gb[-1])
@@ -251,7 +291,7 @@ class examTable(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.db = QSqlDatabase.addDatabase("QSQLITE")
-        self.db.setDatabaseName('../resources/test_marks.db')
+        self.db.setDatabaseName("../resources/test_marks.db")
         self.db.setHostName("Andrew")
         self.db.setConnectOptions("QSQLITE_OPEN_READONLY")
         self.db.open()
@@ -307,59 +347,71 @@ class examTable(QWidget):
 
     def requestPageImage(self, index):
         rec = self.exM.record(index.row())
-        if rec.value('status') == 'Marked':
-            self.pgImg.updateImage("./markedPapers/{}".format(rec.value('annotatedFile')))
+        if rec.value("status") == "Marked":
+            self.pgImg.updateImage(
+                "./markedPapers/{}".format(rec.value("annotatedFile"))
+            )
         else:
-            self.pgImg.updateImage(rec.value('originalFile'))
+            self.pgImg.updateImage(rec.value("originalFile"))
 
     def computeVersionHistogram(self):
         vstats = defaultdict(lambda: defaultdict(int))
         for r in range(self.exM.rowCount()):
-            if self.exM.record(r).value('status') == 'Marked':
-                vstats[self.exM.record(r).value('version')][self.exM.record(r).value('mark')] += 1
+            if self.exM.record(r).value("status") == "Marked":
+                vstats[self.exM.record(r).value("version")][
+                    self.exM.record(r).value("mark")
+                ] += 1
         versionHistogram(vstats).exec_()
 
     def computeUserHistogram(self):
         ustats = defaultdict(lambda: defaultdict(int))
         for r in range(self.exM.rowCount()):
-            if self.exM.record(r).value('status') == 'Marked':
-                ustats[self.exM.record(r).value('user')][self.exM.record(r).value('mark')] += 1
+            if self.exM.record(r).value("status") == "Marked":
+                ustats[self.exM.record(r).value("user")][
+                    self.exM.record(r).value("mark")
+                ] += 1
         userHistogram(ustats).exec_()
 
     def computePageGroupProgress(self):
         pgstats = defaultdict(lambda: [0, 0, 0])
         for r in range(self.exM.rowCount()):
-            pgstats[self.exM.record(r).value('pageGroup')][0] += 1
-            if self.exM.record(r).value('status') == 'Marked':
-                pgstats[self.exM.record(r).value('pageGroup')][1] += 1
-                pgstats[self.exM.record(r).value('pageGroup')][2] += self.exM.record(r).value('markingTime')
+            pgstats[self.exM.record(r).value("pageGroup")][0] += 1
+            if self.exM.record(r).value("status") == "Marked":
+                pgstats[self.exM.record(r).value("pageGroup")][1] += 1
+                pgstats[self.exM.record(r).value("pageGroup")][2] += self.exM.record(
+                    r
+                ).value("markingTime")
         groupProgress("PageGroup", pgstats).exec_()
 
     def computeVersionProgress(self):
         vstats = defaultdict(lambda: [0, 0, 0])
         for r in range(self.exM.rowCount()):
-            vstats[self.exM.record(r).value('version')][0] += 1
-            if self.exM.record(r).value('status') == 'Marked':
-                vstats[self.exM.record(r).value('version')][1] += 1
-                vstats[self.exM.record(r).value('version')][2] += self.exM.record(r).value('markingTime')
+            vstats[self.exM.record(r).value("version")][0] += 1
+            if self.exM.record(r).value("status") == "Marked":
+                vstats[self.exM.record(r).value("version")][1] += 1
+                vstats[self.exM.record(r).value("version")][2] += self.exM.record(
+                    r
+                ).value("markingTime")
         groupProgress("Version", vstats).exec_()
 
     def computeUserProgress(self):
         ustats = defaultdict(lambda: [0, 0, 0])
         for r in range(self.exM.rowCount()):
-            if self.exM.record(r).value('user') == 'None':
+            if self.exM.record(r).value("user") == "None":
                 continue
-            ustats[self.exM.record(r).value('user')][0] += 1
-            if self.exM.record(r).value('status') == 'Marked':
-                ustats[self.exM.record(r).value('user')][1] += 1
-                ustats[self.exM.record(r).value('user')][2] += self.exM.record(r).value('markingTime')
+            ustats[self.exM.record(r).value("user")][0] += 1
+            if self.exM.record(r).value("status") == "Marked":
+                ustats[self.exM.record(r).value("user")][1] += 1
+                ustats[self.exM.record(r).value("user")][2] += self.exM.record(r).value(
+                    "markingTime"
+                )
         userProgress(ustats).exec_()
 
     def getUniqueFromColumn(self, col):
         lst = set()
         query = QSqlQuery(db=self.db)
         query.exec_("select {} from groupimage".format(col))
-        while(query.next()):
+        while query.next():
             lst.add(str(query.value(0)))
         return sorted(list(lst))
 
@@ -370,24 +422,24 @@ class examTable(QWidget):
         self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
 
     def setFilterOptions(self):
-        self.flP.insertItems(1, self.getUniqueFromColumn('pageGroup'))
-        self.flV.insertItems(1, self.getUniqueFromColumn('version'))
-        self.flS.insertItems(1, self.getUniqueFromColumn('status'))
-        self.flU.insertItems(1, self.getUniqueFromColumn('user'))
-        self.flM.insertItems(1, self.getUniqueFromColumn('mark'))
+        self.flP.insertItems(1, self.getUniqueFromColumn("pageGroup"))
+        self.flV.insertItems(1, self.getUniqueFromColumn("version"))
+        self.flS.insertItems(1, self.getUniqueFromColumn("status"))
+        self.flU.insertItems(1, self.getUniqueFromColumn("user"))
+        self.flM.insertItems(1, self.getUniqueFromColumn("mark"))
 
     def filter(self):
         flt = []
-        if self.flP.currentText() != 'PageGroup':
-            flt.append('pageGroup=\'{}\''.format(self.flP.currentText()))
-        if self.flV.currentText() != 'Version':
-            flt.append('version=\'{}\''.format(self.flV.currentText()))
-        if self.flS.currentText() != 'Status':
-            flt.append('status=\'{}\''.format(self.flS.currentText()))
-        if self.flU.currentText() != 'Marker':
-            flt.append('user=\'{}\''.format(self.flU.currentText()))
-        if self.flM.currentText() != 'Mark':
-            flt.append('mark=\'{}\''.format(self.flM.currentText()))
+        if self.flP.currentText() != "PageGroup":
+            flt.append("pageGroup='{}'".format(self.flP.currentText()))
+        if self.flV.currentText() != "Version":
+            flt.append("version='{}'".format(self.flV.currentText()))
+        if self.flS.currentText() != "Status":
+            flt.append("status='{}'".format(self.flS.currentText()))
+        if self.flU.currentText() != "Marker":
+            flt.append("user='{}'".format(self.flU.currentText()))
+        if self.flM.currentText() != "Mark":
+            flt.append("mark='{}'".format(self.flM.currentText()))
 
         if len(flt) > 0:
             flts = " AND ".join(flt)
@@ -414,7 +466,7 @@ class manager(QWidget):
         grid.addWidget(self.closeB, 6, 99)
 
         self.setLayout(grid)
-        self.setWindowTitle('Where we are at.')
+        self.setWindowTitle("Where we are at.")
         self.show()
 
 

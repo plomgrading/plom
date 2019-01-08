@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 import asyncio
@@ -22,19 +22,18 @@ from id_storage import *
 from mark_storage import *
 from authenticate import Authority
 
-sys.path.append('..')  # this allows us to import from ../resources
+sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
 
 
 # default server values and location of grouped-scans.
-serverInfo = {'server': '127.0.0.1', 'mport': 41984, 'wport': 41985}
+serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
 pathScanDirectory = "../scanAndGroup/readyForMarking/"
 # # # # # # # # # # # #
 # Fire up ssl for network communications
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
-sslContext.load_cert_chain('../resources/mlp-selfsigned.crt',
-                           '../resources/mlp.key')
+sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.key")
 
 
 # Set up loggers for server, marking and ID-ing
@@ -42,8 +41,9 @@ def setupLogger(name, log_file, level=logging.INFO):
     # For setting up separate logging for IDing and Marking
     # https://stackoverflow.com/questions/11232230/logging-to-two-files-with-different-settings
     """Function setup as many loggers as you want"""
-    formatter = logging.Formatter('%(asctime)s %(message)s',
-                                  datefmt='%d/%m/%Y %H:%M:%S')
+    formatter = logging.Formatter(
+        "%(asctime)s %(message)s", datefmt="%d/%m/%Y %H:%M:%S"
+    )
     handler = logging.FileHandler(log_file)
     handler.setFormatter(formatter)
     logger = logging.getLogger(name)
@@ -64,7 +64,7 @@ def readExamsGrouped():
     """
     global examsGrouped
     if os.path.exists("../resources/examsGrouped.json"):
-        with open('../resources/examsGrouped.json') as data_file:
+        with open("../resources/examsGrouped.json") as data_file:
             examsGrouped = json.load(data_file)
             for n in examsGrouped.keys():
                 print("Adding id group {}".format(examsGrouped[n][0]))
@@ -75,9 +75,10 @@ def findPageGroups():
     Store in pageGroupsForGrading by tgv code.
     """
     global pageGroupsForGrading
-    for pg in range(1, spec.getNumberOfGroups()+1):
-        for fname in glob.glob("{}/group_{}/*/*.png".format(
-                pathScanDirectory, str(pg).zfill(2))):
+    for pg in range(1, spec.getNumberOfGroups() + 1):
+        for fname in glob.glob(
+            "{}/group_{}/*/*.png".format(pathScanDirectory, str(pg).zfill(2))
+        ):
             print("Adding pageimage from {}".format(fname))
             # Since file is tXXXXgYYvZ.png - get the tgv by deleting 4 char.
             pageGroupsForGrading[os.path.basename(fname)[:-4]] = fname
@@ -87,7 +88,7 @@ def getServerInfo():
     """Read the server info from json."""
     global serverInfo
     if os.path.isfile("../resources/serverDetails.json"):
-        with open('../resources/serverDetails.json') as data_file:
+        with open("../resources/serverDetails.json") as data_file:
             serverInfo = json.load(data_file)
             print("Server details loaded: ", serverInfo)
     else:
@@ -96,16 +97,26 @@ def getServerInfo():
 
 # # # # # # # # # # # #
 # A dict of messages from client and corresponding server commands.
-servCmd = {'AUTH': 'authoriseUser', 'UCL': 'userClosing',
-           'iDNF': 'IDdidntFinish', 'iNID': 'IDnextUnIDd',
-           'iGTP': 'IDgotTest', 'iPRC': 'IDProgressCount',
-           'iRID': 'IDreturnIDd', 'iRAD': 'IDreturnAlreadyIDd',
-           'iRCL': 'IDrequestClassList', 'iGCL': 'IDgotClassList',
-           'mDNF': 'MdidntFinish', 'mNUM': 'MnextUnmarked',
-           'mGTP': 'MgotTest', 'mPRC': 'MProgressCount',
-           'mRMD': 'MreturnMarked', 'mRAM': 'MreturnAlreadyMarked',
-           'mGMX': 'MgetPageGroupMax'
-           }
+servCmd = {
+    "AUTH": "authoriseUser",
+    "UCL": "userClosing",
+    "iDNF": "IDdidntFinish",
+    "iNID": "IDnextUnIDd",
+    "iGTP": "IDgotTest",
+    "iPRC": "IDProgressCount",
+    "iRID": "IDreturnIDd",
+    "iRAD": "IDreturnAlreadyIDd",
+    "iRCL": "IDrequestClassList",
+    "iGCL": "IDgotClassList",
+    "mDNF": "MdidntFinish",
+    "mNUM": "MnextUnmarked",
+    "mGTP": "MgotTest",
+    "mPRC": "MProgressCount",
+    "mRMD": "MreturnMarked",
+    "mRAM": "MreturnAlreadyMarked",
+    "mGMX": "MgetPageGroupMax",
+}
+
 
 async def handle_messaging(reader, writer):
     """Asyncio messager handler.
@@ -115,8 +126,8 @@ async def handle_messaging(reader, writer):
     Server, peon, then runs command and we send back the return message.
     """
     data = await reader.read(128)
-    terminate = data.endswith(b'\x00')
-    data = data.rstrip(b'\x00')
+    terminate = data.endswith(b"\x00")
+    data = data.rstrip(b"\x00")
     message = json.loads(data.decode())
     # print("Got message {}".format(message))
 
@@ -130,16 +141,18 @@ async def handle_messaging(reader, writer):
         rmesg = peon.proc_cmd(message)
         SLogger.info("Returning message {}".format(rmesg))
 
-    addr = writer.get_extra_info('peername')
+    addr = writer.get_extra_info("peername")
     # convert message to json
     jdm = json.dumps(rmesg)
     # send encoded-json'd message back over connection.
     writer.write(jdm.encode())
     # SSL does not support EOF, so send a null byte
     # to indicate the end of the message.
-    writer.write(b'\x00')
+    writer.write(b"\x00")
     await writer.drain()
     writer.close()
+
+
 # # # # # # # # # # # #
 
 
@@ -164,12 +177,11 @@ class Server(object):
         self.logger.info("Loading user list")
         # Look for the file.
         if os.path.exists("../resources/userList.json"):
-            with open('../resources/userList.json') as data_file:
+            with open("../resources/userList.json") as data_file:
                 # Load the users and pass them to the authority.
                 self.userList = json.load(data_file)
                 self.authority = Authority(self.userList)
-                self.logger.info(
-                    "Users = {}".format(list(self.userList.keys())))
+                self.logger.info("Users = {}".format(list(self.userList.keys())))
         else:
             # Cannot find users - give error and quit out.
             self.logger.info(">>> Cannot find user/password file.")
@@ -180,25 +192,25 @@ class Server(object):
         """Reload all the grouped exams and all the page images.
         """
         # Check user is manager.
-        if not self.authority.authoriseUser('Manager', password):
-            return(['ERR', 'You are not authorised to reload images'])
+        if not self.authority.authoriseUser("Manager", password):
+            return ["ERR", "You are not authorised to reload images"]
         self.logger.info("Reloading group images")
         # Read in the groups and images again.
         readExamsGrouped()
         findPageGroups()
         self.loadPapers()
         # Send acknowledgement back to manager.
-        return ['ACK']
+        return ["ACK"]
 
     def reloadUsers(self, password):
         """Reload the user list."""
         # Check user is manager.
-        if not self.authority.authoriseUser('Manager', password):
-            return(['ERR', 'You are not authorised to reload users'])
+        if not self.authority.authoriseUser("Manager", password):
+            return ["ERR", "You are not authorised to reload users"]
         self.logger.info("Reloading the user list")
         # Load in the user list and check against existing user list for differences
         if os.path.exists("../resources/userList.json"):
-            with open('../resources/userList.json') as data_file:
+            with open("../resources/userList.json") as data_file:
                 newUserList = json.load(data_file)
                 # for each user in the new list..
                 for u in newUserList:
@@ -219,7 +231,7 @@ class Server(object):
                         self.authority.detoken(u)
         self.logger.info("Current user list = {}".format(list(self.userList.keys())))
         # return acknowledgement to manager.
-        return ['ACK']
+        return ["ACK"]
 
     def proc_cmd(self, message):
         """Process the server command in the message
@@ -229,22 +241,22 @@ class Server(object):
         """
         # convert the command in message[0] to a function-call
         # if cannot convert then exec msgError()
-        pcmd = servCmd.get(message[0], 'msgError')
-        if message[0] == 'PING':
+        pcmd = servCmd.get(message[0], "msgError")
+        if message[0] == "PING":
             # Client has sent a ping to test if server is up
             # so we return an ACK
-            return ['ACK']
-        elif message[0] == 'AUTH':
+            return ["ACK"]
+        elif message[0] == "AUTH":
             # Client is requesting authentication
             # message should be ['AUTH', user, password]
             # So we return their authentication token (if they are legit)
             return self.authoriseUser(*message[1:])
-        elif message[0] == 'RUSR':
+        elif message[0] == "RUSR":
             # Manager is requesting server reload users.
             # message should be ['RUSR', managerpwd]
             rv = self.reloadUsers(*message[1:])
             return rv
-        elif message[0] == 'RIMR':
+        elif message[0] == "RIMR":
             # Manager is requesting server reload images
             # message should be ['RIMR', managerpwd]
             rv = self.reloadImages(*message[1:])
@@ -259,7 +271,7 @@ class Server(object):
             else:
                 self.logger.info(">>> Unauthorised attempt by user {}".format(user))
                 print("Attempt by non-user to {}".format(message))
-                return(['ERR', 'You are not an authorised user'])
+                return ["ERR", "You are not an authorised user"]
 
     def authoriseUser(self, user, password):
         """When a user requests authorisation
@@ -275,9 +287,9 @@ class Server(object):
             self.IDDB.resetUsersToDo(user)
             self.MDB.resetUsersToDo(user)
             self.logger.info("Authorising user {}".format(user))
-            return ['ACK', self.authority.getToken(user)]
+            return ["ACK", self.authority.getToken(user)]
         else:
-            return ['ERR', 'You are not an authorised user']
+            return ["ERR", "You are not an authorised user"]
 
     def validate(self, user, token):
         """Check the user's token is valid"""
@@ -317,7 +329,7 @@ class Server(object):
     def removeFile(self, davfn):
         """Once a file has been grabbed by the client, delete it from the webdav.
         """
-        os.unlink(davDirectory+"/"+davfn)
+        os.unlink(davDirectory + "/" + davfn)
 
     def printToDo(self):
         """Ask each database to print the images that are still on
@@ -351,21 +363,21 @@ class Server(object):
     def msgError(self, *args):
         """The client sent a strange message, so send back an error message.
         """
-        return ['ERR', 'Some sort of command error - what did you send?']
+        return ["ERR", "Some sort of command error - what did you send?"]
 
     def IDrequestClassList(self, user, token):
         """The client requests the classlist, so the server copies
         the class list to the webdav and returns the temp webdav path
         to that file to the client.
         """
-        return ['ACK', self.provideFile("../resources/classlist.csv")]
+        return ["ACK", self.provideFile("../resources/classlist.csv")]
 
     def IDgotClassList(self, user, token, tfn):
         """The client acknowledges they got the class list,
         so the server deletes it and sends back an ACK.
         """
         self.removeFile(tfn)
-        return ['ACK']
+        return ["ACK"]
 
     def MgetPageGroupMax(self, user, token, pg, v):
         """When a marked-client logs on they need the max mark for the group
@@ -375,11 +387,11 @@ class Server(object):
         iv = int(v)
         ipg = int(pg)
         if ipg < 1 or ipg > self.testSpec.getNumberOfGroups():
-            return ['ERR', 'Pagegroup out of range']
+            return ["ERR", "Pagegroup out of range"]
         if iv < 1 or iv > self.testSpec.Versions:
-            return ['ERR', 'Version out of range']
+            return ["ERR", "Version out of range"]
         # Send an ack with the max-mark for the pagegroup.
-        return ['ACK', self.testSpec.Marks[ipg]]
+        return ["ACK", self.testSpec.Marks[ipg]]
 
     def IDdidntFinish(self, user, token, code):
         """User didn't finish IDing the image with given code. Tell the
@@ -387,7 +399,7 @@ class Server(object):
         """
         self.IDDB.didntFinish(user, code)
         # send back an ACK.
-        return ['ACK']
+        return ["ACK"]
 
     def MdidntFinish(self, user, token, tgv):
         """User didn't finish marking the image with given code. Tell the
@@ -395,13 +407,13 @@ class Server(object):
         """
         self.MDB.didntFinish(user, tgv)
         # send back an ACK.
-        return ['ACK']
+        return ["ACK"]
 
     def userClosing(self, user, token):
         """Client is closing down their app, so remove the authorisation token
         """
         self.authority.detoken(user)
-        return ['ACK']
+        return ["ACK"]
 
     def IDnextUnIDd(self, user, token):
         """The client has asked for the next unidentified paper, so
@@ -412,23 +424,25 @@ class Server(object):
         # Get code of next unidentified image from the database
         give = self.IDDB.giveIDImageToClient(user)
         if give is None:
-            return ['ERR', 'No more papers']
+            return ["ERR", "No more papers"]
         else:
             # copy the file into the webdav and tell client the code and path
-            return ['ACK', give,
-                    self.provideFile("{}/idgroup/{}.png"
-                                     .format(pathScanDirectory, give))]
+            return [
+                "ACK",
+                give,
+                self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give)),
+            ]
 
     def IDProgressCount(self, user, token):
         """Send back current ID progress counts to the client"""
-        return ['ACK', self.IDDB.countIdentified(), self.IDDB.countAll()]
+        return ["ACK", self.IDDB.countIdentified(), self.IDDB.countAll()]
 
     def IDgotTest(self, user, token, test, tfn):
         """Client acknowledges they got the ID pageimage, so server
         deletes it from the webdav and sends an ack.
         """
         self.removeFile(tfn)
-        return ['ACK']
+        return ["ACK"]
 
     def IDreturnIDd(self, user, token, ret, sid, sname):
         """Client has ID'd the pageimage with code=ret, student-number=sid,
@@ -437,9 +451,9 @@ class Server(object):
         and ACK, else send an error that the number has been used.
         """
         if self.IDDB.takeIDImageFromClient(ret, user, sid, sname):
-            return ['ACK']
+            return ["ACK"]
         else:
-            return ['ERR', 'That student number already used.']
+            return ["ERR", "That student number already used."]
 
     def IDreturnAlreadyIDd(self, user, token, ret, sid, sname):
         """Client has re-ID'd the pageimage with code=ret, student-number=sid,
@@ -448,7 +462,7 @@ class Server(object):
         and ACK, else send an error that the number has been used.
         """
         self.IDDB.takeIDImageFromClient(ret, user, sid, sname)
-        return ['ACK']
+        return ["ACK"]
 
     def MnextUnmarked(self, user, token, pg, v):
         """The client has asked for the next unmarked image (with
@@ -458,21 +472,21 @@ class Server(object):
         """
         give, fname = self.MDB.giveGroupImageToClient(user, pg, v)
         if give is None:
-            return ['ERR', 'Nothing left on todo pile']
+            return ["ERR", "Nothing left on todo pile"]
         else:
             # copy the file into the webdav and tell client code / path.
-            return ['ACK', give, self.provideFile(fname)]
+            return ["ACK", give, self.provideFile(fname)]
 
     def MProgressCount(self, user, token, pg, v):
         """Send back current marking progress counts to the client"""
-        return['ACK', self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
+        return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
     def MgotTest(self, user, token, tfn):
         """Client acknowledges they got the pageimage to mark, so
         server deletes it from the webdav and sends an ack.
         """
         self.removeFile(tfn)
-        return ['ACK']
+        return ["ACK"]
 
     def MreturnMarked(self, user, token, code, mark, fname, mtime):
         """Client has marked the pageimage with code, mark, annotated-file-name
@@ -483,22 +497,25 @@ class Server(object):
         self.MDB.takeGroupImageFromClient(code, user, mark, fname, mtime)
         self.recordMark(user, mark, fname, mtime)
         self.claimFile(fname)
-        return ['ACK']
+        return ["ACK"]
 
     def recordMark(self, user, mark, fname, mtime):
         """For test blah.png, we record, in blah.png.txt, as a backup
         the filename, mark, user, time and marking time.
         This is not used.
         """
-        fh = open("./markedPapers/{}.txt".format(fname), 'w')
-        fh.write("{}\t{}\t{}\t{}\t{}".format(
-            fname, mark, user, datetime.now().strftime("%Y-%m-%d,%H:%M"),
-            mtime))
+        fh = open("./markedPapers/{}.txt".format(fname), "w")
+        fh.write(
+            "{}\t{}\t{}\t{}\t{}".format(
+                fname, mark, user, datetime.now().strftime("%Y-%m-%d,%H:%M"), mtime
+            )
+        )
         fh.close()
 
 
 # # # # # # # # # # # #
 # # # # # # # # # # # #
+
 
 def checkPortFree(ip, port):
     """Test if the given port is free so server can use it
@@ -513,10 +530,10 @@ def checkPortFree(ip, port):
         if err.errno == errno.EADDRINUSE:
             return False
         else:
-            SLogger.info("There is some sort of ip/port error. Number = {}"
-                         .format(err.errno))
-            print("There is some sort of ip/port error. Number = {}"
-                  .format(err.errno))
+            SLogger.info(
+                "There is some sort of ip/port error. Number = {}".format(err.errno)
+            )
+            print("There is some sort of ip/port error. Number = {}".format(err.errno))
             return False
     return True
 
@@ -525,28 +542,40 @@ def checkPorts():
     """Check that the messaging and webdav ports are free
     on the server.
     """
-    if checkPortFree(serverInfo['server'], serverInfo['mport']):
+    if checkPortFree(serverInfo["server"], serverInfo["mport"]):
         SLogger.info("Messaging port is free and working.")
         print("Messaging port is free and working.")
     else:
-        SLogger.info("Problem with messaging port {} on server {}. "
-                     "Please check and try again.".format(
-                         serverInfo['mport'], serverInfo['server']))
-        print("Problem with messaging port {} on server {}. "
-              "Please check and try again.".format(
-                  serverInfo['mport'], serverInfo['server']))
+        SLogger.info(
+            "Problem with messaging port {} on server {}. "
+            "Please check and try again.".format(
+                serverInfo["mport"], serverInfo["server"]
+            )
+        )
+        print(
+            "Problem with messaging port {} on server {}. "
+            "Please check and try again.".format(
+                serverInfo["mport"], serverInfo["server"]
+            )
+        )
         exit()
 
-    if checkPortFree(serverInfo['server'], serverInfo['wport']):
+    if checkPortFree(serverInfo["server"], serverInfo["wport"]):
         SLogger.info("Webdav port is free and working.")
         print("Webdav port is free and working.")
     else:
-        SLogger.info("Problem with webdav port {} on server {}. "
-                     "Please check and try again.".format(
-                         serverInfo['wport'], serverInfo['server']))
-        print("Problem with webdav port {} on server {}. "
-              "Please check and try again.".format(
-                  serverInfo['wport'], serverInfo['server']))
+        SLogger.info(
+            "Problem with webdav port {} on server {}. "
+            "Please check and try again.".format(
+                serverInfo["wport"], serverInfo["server"]
+            )
+        )
+        print(
+            "Problem with webdav port {} on server {}. "
+            "Please check and try again.".format(
+                serverInfo["wport"], serverInfo["server"]
+            )
+        )
         exit()
 
 
@@ -562,7 +591,9 @@ davDirectory = tempDirectory.name
 os.system("chmod o-r {}".format(davDirectory))
 SLogger.info("Webdav directory = {}".format(davDirectory))
 # Fire up the webdav server.
-cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.conf".format(serverInfo['server'], serverInfo['wport'], davDirectory)
+cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.conf".format(
+    serverInfo["server"], serverInfo["wport"], davDirectory
+)
 davproc = subprocess.Popen(shlex.split(cmd))
 
 # Read the test specification
@@ -586,22 +617,30 @@ peon = Server(theIDDB, theMarkDB, spec, SLogger)
 # # # # # # # # # # # #
 # Fire up the asyncio event loop.
 loop = asyncio.get_event_loop()
-coro = asyncio.start_server(handle_messaging, serverInfo['server'],
-                            serverInfo['mport'], loop=loop, ssl=sslContext)
+coro = asyncio.start_server(
+    handle_messaging,
+    serverInfo["server"],
+    serverInfo["mport"],
+    loop=loop,
+    ssl=sslContext,
+)
 try:
     server = loop.run_until_complete(coro)
 except OSError:
-    SLogger.info("There is a problem running the socket-listening loop. "
-                 "Check if port {} is free and try again."
-                 .format(serverInfo['mport']))
-    print("There is a problem running the socket-listening loop. "
-          "Check if port {} is free and try again.".format(serverInfo['mport']))
+    SLogger.info(
+        "There is a problem running the socket-listening loop. "
+        "Check if port {} is free and try again.".format(serverInfo["mport"])
+    )
+    print(
+        "There is a problem running the socket-listening loop. "
+        "Check if port {} is free and try again.".format(serverInfo["mport"])
+    )
     subprocess.Popen.kill(davproc)
     loop.close()
     exit()
 
-SLogger.info('Serving messages on {}'.format(server.sockets[0].getsockname()))
-print('Serving messages on {}'.format(server.sockets[0].getsockname()))
+SLogger.info("Serving messages on {}".format(server.sockets[0].getsockname()))
+print("Serving messages on {}".format(server.sockets[0].getsockname()))
 try:
     # Run the event loop until it is killed off.
     loop.run_forever()
