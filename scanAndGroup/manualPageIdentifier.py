@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 import glob
@@ -10,12 +10,26 @@ import shutil
 import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QPixmap
-from PyQt5.QtWidgets import QApplication, QAbstractItemView, QDialog, \
-    QErrorMessage, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, \
-    QGridLayout, QLabel, QLineEdit, QPushButton, QSpinBox, QTableWidget, \
-    QTableWidgetItem, QWidget
+from PyQt5.QtWidgets import (
+    QApplication,
+    QAbstractItemView,
+    QDialog,
+    QErrorMessage,
+    QGraphicsPixmapItem,
+    QGraphicsScene,
+    QGraphicsView,
+    QGridLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QSpinBox,
+    QTableWidget,
+    QTableWidgetItem,
+    QWidget,
+)
+
 # this allows us to import from ../resources
-sys.path.append('..')
+sys.path.append("..")
 from resources.testspecification import TestSpecification
 
 # Read the test specification
@@ -29,7 +43,7 @@ examsScanned = {}
 def readExamsProduced():
     """Read the exams that were produced during build"""
     global examsProduced
-    with open('../resources/examsProduced.json') as data_file:
+    with open("../resources/examsProduced.json") as data_file:
         examsProduced = json.load(data_file)
 
 
@@ -37,13 +51,13 @@ def readExamsScanned():
     """Read the list of test/page/versions that have been scanned"""
     global examsScanned
     if os.path.exists("../resources/examsScanned.json"):
-        with open('../resources/examsScanned.json') as data_file:
+        with open("../resources/examsScanned.json") as data_file:
             examsScanned = json.load(data_file)
 
 
 def writeExamsScanned():
     """Update the list of test/page/versions that have been scanned"""
-    es = open("../resources/examsScanned.json", 'w')
+    es = open("../resources/examsScanned.json", "w")
     es.write(json.dumps(examsScanned, indent=2, sort_keys=True))
     es.close()
 
@@ -68,8 +82,9 @@ class PageView(QGraphicsView):
         # scale nicely
         self.imageItem.setTransformationMode(Qt.SmoothTransformation)
         # make sure scene includes all of image.
-        self.scene.setSceneRect(0, 0, max(1000, self.image.width()),
-                                max(1000, self.image.height()))
+        self.scene.setSceneRect(
+            0, 0, max(1000, self.image.width()), max(1000, self.image.height())
+        )
         # put image into scene
         self.scene.addItem(self.imageItem)
         # assign scene to the view
@@ -101,7 +116,7 @@ class PageView(QGraphicsView):
         the page identifier popup
         """
         key = event.key()
-        if(key == Qt.Key_Return or key == Qt.Key_Enter):
+        if key == Qt.Key_Return or key == Qt.Key_Enter:
             self.parent().parent().identifyIt()
         else:
             super(PageView, self).keyPressEvent(event)
@@ -111,6 +126,7 @@ class PageViewWindow(QWidget):
     """A simple window widget to display a pageimage
     User can left-click to zoom in, right-click to zoom out.
     """
+
     def __init__(self, fname=None):
         QWidget.__init__(self)
         self.initUI(fname)
@@ -122,7 +138,7 @@ class PageViewWindow(QWidget):
         self.view.setRenderHint(QPainter.HighQualityAntialiasing)
         # a reset-view button and link to the resetView command
         # in our specialised pageview.
-        self.resetB = QPushButton('reset view')
+        self.resetB = QPushButton("reset view")
         self.resetB.clicked.connect(lambda: self.view.resetView())
         # Layout the widgets - the image-view and the reset button
         grid = QGridLayout()
@@ -141,6 +157,7 @@ class ImageTable(QTableWidget):
     their filenames, and the TPV codes once id'd
     Also records if they are 'extra' pages
     """
+
     def __init__(self):
         """Set a min width,
         selection mode is single row at a time,
@@ -183,7 +200,7 @@ class ImageTable(QTableWidget):
         # Columns are filename, testnumber, pagenumber, version, and
         # a name field which will be 'valid' if the testname matches
         # the one in the spec, or 'extra' if it is an extra page
-        self.setHorizontalHeaderLabels(['file', 't', 'p', 'v', 'name'])
+        self.setHorizontalHeaderLabels(["file", "t", "p", "v", "name"])
         for r in range(len(self.imageList)):
             fItem = QTableWidgetItem(os.path.basename(self.imageList[r]))
             tItem = QTableWidgetItem(".")
@@ -235,10 +252,11 @@ class ImageTable(QTableWidget):
         r = self.currentRow()
         if r is not None:
             # turn 90 in case in landscape.
-            os.system("mogrify -rotate 90 -compress lossless "
-                      "pageImages/problemImages/{}"
-                      .format(self.item(r, 0).text()))
-        return(r)
+            os.system(
+                "mogrify -rotate 90 -compress lossless "
+                "pageImages/problemImages/{}".format(self.item(r, 0).text())
+            )
+        return r
 
     def saveValid(self):
         """Go through the list of successfully id'd page images
@@ -246,7 +264,7 @@ class ImageTable(QTableWidget):
         dictionary, and copy the file into the correct place.
         """
         for r in range(self.rowCount()):
-            if self.item(r, 4).text() == 'Valid':
+            if self.item(r, 4).text() == "Valid":
                 # grab the tpv data and the filename
                 t = self.item(r, 1).text()
                 p = self.item(r, 2).text()
@@ -268,12 +286,20 @@ class ImageTable(QTableWidget):
                 print("Assigning file {} to t{}p{}v{}".format(fname, t, p, v))
                 # copy the file into place and move the original
                 # into alreadyProcessed
-                shutil.copy("pageImages/problemImages/{}".format(fname),
-                            "./decodedPages/page_{}/version_{}/t{}p{}v{}.png"
-                            .format(str(p).zfill(2), str(v), str(t).zfill(4),
-                                    str(p).zfill(2), str(v)))
-                shutil.move("pageImages/problemImages/{}".format(fname),
-                            "./pageImages/alreadyProcessed/")
+                shutil.copy(
+                    "pageImages/problemImages/{}".format(fname),
+                    "./decodedPages/page_{}/version_{}/t{}p{}v{}.png".format(
+                        str(p).zfill(2),
+                        str(v),
+                        str(t).zfill(4),
+                        str(p).zfill(2),
+                        str(v),
+                    ),
+                )
+                shutil.move(
+                    "pageImages/problemImages/{}".format(fname),
+                    "./pageImages/alreadyProcessed/",
+                )
 
     def saveExtras(self):
         """Go through the list of identified extra pages
@@ -281,7 +307,7 @@ class ImageTable(QTableWidget):
          into the extras directory.
         """
         for r in range(self.rowCount()):
-            if self.item(r, 4).text() == 'Extra':
+            if self.item(r, 4).text() == "Extra":
                 t = self.item(r, 1).text()
                 g = self.item(r, 2).text()
                 v = self.item(r, 3).text()
@@ -289,17 +315,22 @@ class ImageTable(QTableWidget):
                 n = 0
                 fname = self.item(r, 0).text()
                 # There may be more than 1 extra page for the same pagegroup
-                ename = "extraPages/xt{}g{}v{}n{}.png".\
-                    format(str(t).zfill(4), str(g).zfill(2), v, n)
+                ename = "extraPages/xt{}g{}v{}n{}.png".format(
+                    str(t).zfill(4), str(g).zfill(2), v, n
+                )
                 while os.path.exists(ename):
-                    n = n+1  # file exists, add 1 to counter.
-                    ename = "extraPages/xt{}g{}v{}n{}.png".\
-                        format(str(t).zfill(4), str(g).zfill(2), v, n)
+                    n = n + 1  # file exists, add 1 to counter.
+                    ename = "extraPages/xt{}g{}v{}n{}.png".format(
+                        str(t).zfill(4), str(g).zfill(2), v, n
+                    )
                 # copy file into place, and move original to alreadyProcessed
-                shutil.copy("pageImages/problemImages/{}".format(fname),
-                            "./{}".format(ename))
-                shutil.move("pageImages/problemImages/{}".format(fname),
-                            "./pageImages/alreadyProcessed")
+                shutil.copy(
+                    "pageImages/problemImages/{}".format(fname), "./{}".format(ename)
+                )
+                shutil.move(
+                    "pageImages/problemImages/{}".format(fname),
+                    "./pageImages/alreadyProcessed",
+                )
 
 
 class PageIDDialog(QDialog):
@@ -308,6 +339,7 @@ class PageIDDialog(QDialog):
     The tpv is compared against the one recorded
     during build.
     """
+
     def __init__(self):
         super(PageIDDialog, self).__init__()
         self.setWindowTitle("Manual check")
@@ -359,8 +391,9 @@ class PageIDDialog(QDialog):
         # If this does not match the one on file pop-up an error.
         if examsProduced[t][p] != v:
             msg = QErrorMessage(self)
-            msg.showMessage("TPV should be ({},{},{})"
-                            .format(t, p, examsProduced[t][p]))
+            msg.showMessage(
+                "TPV should be ({},{},{})".format(t, p, examsProduced[t][p])
+            )
             msg.exec_()
             # reset the version spinbox to 0.
             self.versionSB.setValue(0)
@@ -368,7 +401,7 @@ class PageIDDialog(QDialog):
         # If testname wrong then pop-up error.
         if self.nameLE.text() != spec.Name:
             msg = QErrorMessage(self)
-            msg.showMessage("Name should be \"{}\"".format(spec.Name))
+            msg.showMessage('Name should be "{}"'.format(spec.Name))
             msg.exec_()
             return False
         # If TPV is valid, but already scanned then pop-up an error
@@ -376,9 +409,10 @@ class PageIDDialog(QDialog):
             if p in examsScanned[t]:
                 msg = QErrorMessage(self)
                 msg.showMessage(
-                    "TPV=({},{},{}) has already been scanned as file {}"
-                    .format(t, p, examsScanned[t][p][0],
-                            examsScanned[t][p][1]))
+                    "TPV=({},{},{}) has already been scanned as file {}".format(
+                        t, p, examsScanned[t][p][0], examsScanned[t][p][1]
+                    )
+                )
                 msg.exec_()
                 self.versionSB.setValue(0)
                 return False
@@ -397,6 +431,7 @@ class PageExtraDialog(QDialog):
     """Popup dialog for user to enter test/group code
     for extra pages.
     """
+
     def __init__(self):
         super(PageExtraDialog, self).__init__()
         self.setWindowTitle("Extra page")
@@ -444,6 +479,7 @@ class PageIdentifier(QWidget):
     """Widget to put everything together - the table and the viewer and
     connect them with the pop-ups etc etc.
     """
+
     def __init__(self):
         super(PageIdentifier, self).__init__()
         self.initUI()
@@ -484,15 +520,14 @@ class PageIdentifier(QWidget):
         grid.addWidget(self.closeB, 100, 1)
         # Fix layout.
         self.setLayout(grid)
-        self.setWindowTitle('Identify Page Images')
+        self.setWindowTitle("Identify Page Images")
         self.show()
 
     def selChanged(self, selnew, selold):
         """When current selection changes in the table
         tell the image to update itself.
         """
-        self.pageImg.updateImage(
-            self.imageT.imageList[selnew.indexes()[0].row()])
+        self.pageImg.updateImage(self.imageT.imageList[selnew.indexes()[0].row()])
 
     def saveValid(self):
         """Save the validated tpv and extras.
@@ -537,5 +572,5 @@ def main():
     sys.exit(app.exec_())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

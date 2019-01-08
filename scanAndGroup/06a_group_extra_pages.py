@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 from collections import defaultdict
@@ -32,13 +32,15 @@ for fname in glob.glob("xt*.png"):
     sv = fname[10]
     sn = fname[12]
 
-    print("Copying files for {} = test number {} group {} version {}"
-          .format(fname, st, sg, sv))
+    print(
+        "Copying files for {} = test number {} group {} version {}".format(
+            fname, st, sg, sv
+        )
+    )
     # pagegroup file name (not full path)
     gname = "t{}g{}v{}.png".format(st, sg, sv)
     # the full path of the pagegroup image file
-    fullgname = "../readyForMarking/group_{}/version_{}/{}"\
-        .format(sg, sv, gname)
+    fullgname = "../readyForMarking/group_{}/version_{}/{}".format(sg, sv, gname)
     fullPath[gname] = fullgname
     # Copy across the original page-group.
     shutil.copy(fullgname, "originals")
@@ -51,8 +53,7 @@ for fname in glob.glob("xt*.png"):
 # using imagemagick montage
 for gname in mergeFiles.keys():
     # Merge using imagemagick
-    print("Merging into {} the extra pages in {}"
-          .format(gname, mergeFiles[gname]))
+    print("Merging into {} the extra pages in {}".format(gname, mergeFiles[gname]))
     cmd = "montage -quiet originals/{}".format(gname)
     # Potentially there should be some user selection of order here.
     # at present this is given by the final digit n in the xtblah name
@@ -69,8 +70,7 @@ for gname in mergeFiles.keys():
 # Finally move the extra-page images into alreadyProcessed
 for gname in mergeFiles.keys():
     for fname in mergeFiles[gname]:
-        print("Moving extra page {} to alreadyProcessed directory"
-              .format(fname))
+        print("Moving extra page {} to alreadyProcessed directory".format(fname))
         shutil.move(fname, "alreadyProcessed")
 
 os.chdir("../")

@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 import json
@@ -8,7 +8,7 @@ import os
 import sys
 
 # this allows us to import from ../resources
-sys.path.append('..')
+sys.path.append("..")
 from resources.testspecification import TestSpecification
 
 
@@ -16,7 +16,7 @@ def readExamsScanned():
     """Read the test/page we have scanned in 03/04 scripts"""
     global examsScanned
     if os.path.exists("../resources/examsScanned.json"):
-        with open('../resources/examsScanned.json') as data_file:
+        with open("../resources/examsScanned.json") as data_file:
             examsScanned = json.load(data_file)
 
 
@@ -29,7 +29,7 @@ def checkTestComplete(t):
     """
     # list for missing pages
     missing = []
-    for p in range(1, spec.Length+1):
+    for p in range(1, spec.Length + 1):
         # if page not in scanned list then add it to missing.
         if str(p) not in examsScanned[t]:
             missing.append(p)

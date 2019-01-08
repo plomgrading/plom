@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 from collections import defaultdict
@@ -10,8 +10,9 @@ import os
 import re
 import shutil
 import sys
+
 # this allows us to import from ../resources
-sys.path.append('..')
+sys.path.append("..")
 from resources.testspecification import TestSpecification
 
 
@@ -28,8 +29,7 @@ def decodeQRs():
     for fname in glob.glob("*.png"):
         # If the .qr file does not exist, or if it has length 0
         # then run extract/orient script on that png.
-        if ((not os.path.exists(fname + ".qr")) or
-                os.path.getsize(fname+".qr") == 0):
+        if (not os.path.exists(fname + ".qr")) or os.path.getsize(fname + ".qr") == 0:
             fh.write("python3 ../extractQRAndOrient.py {}\n".format(fname))
     fh.close()
     # run those commands through gnu-parallel then delete.
@@ -41,7 +41,7 @@ def decodeQRs():
 def readExamsProduced():
     """Read the exams that were produced during build"""
     global examsProduced
-    with open('../resources/examsProduced.json') as data_file:
+    with open("../resources/examsProduced.json") as data_file:
         examsProduced = json.load(data_file)
 
 
@@ -49,13 +49,13 @@ def readExamsScanned():
     """Read the list of test/page/versions that have been scanned"""
     global examsScanned
     if os.path.exists("../resources/examsScanned.json"):
-        with open('../resources/examsScanned.json') as data_file:
+        with open("../resources/examsScanned.json") as data_file:
             examsScanned = json.load(data_file)
 
 
 def writeExamsScanned():
     """Update the list of test/page/versions that have been scanned"""
-    es = open("../resources/examsScanned.json", 'w')
+    es = open("../resources/examsScanned.json", "w")
     es.write(json.dumps(examsScanned, indent=2, sort_keys=True))
     es.close()
 
@@ -96,13 +96,13 @@ def checkQRsValid():
         if nameFlag == 1 and codeFlag == 1 and testName == spec.Name:
             # Convert X,Y,Z to ints and make note it has been scanned.
             # store as esn[testnumber][pagenumber] = [version, blah.png]
-            examsScannedNow[int(code[1])][int(code[2])] = \
-                (int(code[3]), fname[:-3])
+            examsScannedNow[int(code[1])][int(code[2])] = (int(code[3]), fname[:-3])
         else:
             # Difficulty scanning this pageimage so move it
             # to problemimages
-            print("A problem with codes in {} and "
-                  "testname {}".format(fname, testName))
+            print(
+                "A problem with codes in {} and " "testname {}".format(fname, testName)
+            )
             # move blah.png.qr
             shutil.move(fname, "problemImages")
             # move blah.png
@@ -134,21 +134,28 @@ def validateQRsAgainstProduction():
             # if the tpv's match then all good.
             if examsProduced[ts][ps] == v:
                 # print success and thats all.
-                print("Valid scan of t{:s} p{:s} v{:d} from file {:s}".format(
-                    ts, ps, v, fn))
+                print(
+                    "Valid scan of t{:s} p{:s} v{:d} from file {:s}".format(
+                        ts, ps, v, fn
+                    )
+                )
             else:
                 # print mismatch warning and move file to problem-images
                 print(">> Mismatch between exam scanned and exam produced")
-                print(">> Produced t{:s} p{:s} v{:d}".format(
-                    ts, ps, examsProduced[ts][ps]))
-                print(">> Scanned t{:s} p{:s} v{:d} from file {:s}".format(
-                    ts, ps, v, fn))
+                print(
+                    ">> Produced t{:s} p{:s} v{:d}".format(
+                        ts, ps, examsProduced[ts][ps]
+                    )
+                )
+                print(
+                    ">> Scanned t{:s} p{:s} v{:d} from file {:s}".format(ts, ps, v, fn)
+                )
                 print(">> Moving problem files to problemImages")
                 # move the blah.png and blah.png.qr
                 # this means that they won't be added to the
                 # list of correctly scanned page images
                 shutil.move(fn, "problemImages")
-                shutil.move(fn+".qr", "problemImages")
+                shutil.move(fn + ".qr", "problemImages")
                 # Remove page from the exams-scanned-now list.
                 examsScannedNow[ts].pop(ps)
     os.chdir("../")
@@ -174,8 +181,11 @@ def addCurrentScansToExamsScanned():
             if ps in examsScanned[ts]:
                 # Eventually we should output this sort of thing to
                 # a log file in case of user-errors.
-                print(">> Have already scanned t{:s}p{:s}v{:d} in file {:s}".
-                      format(ts, ps, v, fn))
+                print(
+                    ">> Have already scanned t{:s}p{:s}v{:d} in file {:s}".format(
+                        ts, ps, v, fn
+                    )
+                )
                 print(">> Will overwrite with new version")
                 examsScanned[ts][ps] = examsScannedNow[t][p]
             else:
@@ -184,13 +194,19 @@ def addCurrentScansToExamsScanned():
                 # copy the file into place
                 # eventually we should move it instead of copying it.
                 # save on disc space?
-                shutil.copy(fn,
-                            "../decodedPages/page_{}/version_{}/t{}p{}v{}.png"
-                            .format(str(p).zfill(2), str(v), str(t).zfill(4),
-                                    str(p).zfill(2), str(v)))
+                shutil.copy(
+                    fn,
+                    "../decodedPages/page_{}/version_{}/t{}p{}v{}.png".format(
+                        str(p).zfill(2),
+                        str(v),
+                        str(t).zfill(4),
+                        str(p).zfill(2),
+                        str(v),
+                    ),
+                )
             # move the filename into alreadyProcessed
             shutil.move(fn, "alreadyProcessed")
-            shutil.move(fn+".qr", "alreadyProcessed")
+            shutil.move(fn + ".qr", "alreadyProcessed")
     os.chdir("../")
 
 
