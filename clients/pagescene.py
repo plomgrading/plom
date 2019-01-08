@@ -1,18 +1,45 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai', 'Matt Coles']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
 __license__ = "GPLv3"
 
 from PyQt5.QtCore import Qt, QLineF, QPointF, QRectF, pyqtSignal
-from PyQt5.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, \
-    QPixmap, QTransform, QFont
-from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsPathItem, \
-    QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, QUndoStack, \
-    QGraphicsTextItem
+from PyQt5.QtGui import (
+    QBrush,
+    QColor,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+    QTransform,
+    QFont,
+)
+from PyQt5.QtWidgets import (
+    QGraphicsLineItem,
+    QGraphicsPathItem,
+    QGraphicsPixmapItem,
+    QGraphicsRectItem,
+    QGraphicsScene,
+    QUndoStack,
+    QGraphicsTextItem,
+)
+
 # Import all the tool commands for undo/redo stack.
-from tools import CommandArrow, CommandBox, CommandCross, CommandDelete, \
-    CommandDelta, CommandHighlight, CommandLine, CommandPen, CommandQMark, \
-    CommandText, CommandTick, TextItem, CommandWhiteBox
+from tools import (
+    CommandArrow,
+    CommandBox,
+    CommandCross,
+    CommandDelete,
+    CommandDelta,
+    CommandHighlight,
+    CommandLine,
+    CommandPen,
+    CommandQMark,
+    CommandText,
+    CommandTick,
+    TextItem,
+    CommandWhiteBox,
+)
 
 
 class ScoreBox(QGraphicsTextItem):
@@ -20,6 +47,7 @@ class ScoreBox(QGraphicsTextItem):
     corner of the group-image to indicate the current total mark.
     Drawn with a rounded-rectangle border.
     """
+
     def __init__(self):
         super(ScoreBox, self).__init__()
         self.score = 0
@@ -36,14 +64,16 @@ class ScoreBox(QGraphicsTextItem):
     def changeScore(self, x):
         # set the current mark.
         self.score = x
-        self.setPlainText("{} out of {}".format(str(x).zfill(2),
-                                                str(self.maxScore).zfill(2)))
+        self.setPlainText(
+            "{} out of {}".format(str(x).zfill(2), str(self.maxScore).zfill(2))
+        )
 
     def changeMax(self, x):
         # set the max-mark.
         self.maxScore = x
-        self.setPlainText("{} out of {}".format(str(x).zfill(2),
-                                                str(self.maxScore).zfill(2)))
+        self.setPlainText(
+            "{} out of {}".format(str(x).zfill(2), str(self.maxScore).zfill(2))
+        )
 
     def paint(self, painter, option, widget):
         # paint the text with a simple rounded rectangle border.
@@ -55,16 +85,26 @@ class ScoreBox(QGraphicsTextItem):
 
 # Dictionaries to translate tool-modes into functions
 # for mouse press, move and release
-mousePress = {'box': 'mousePressBox', 'comment': 'mousePressComment',
-              'cross': 'mousePressCross', 'delete': 'mousePressDelete',
-              'delta': 'mousePressDelta', 'line': 'mousePressLine',
-              'move': 'mousePressMove', 'pen': 'mousePressPen',
-              'text': 'mousePressText', 'tick': 'mousePressTick',
-              'zoom': 'mousePressZoom'}
-mouseMove = {'box': 'mouseMoveBox', 'line': 'mouseMoveLine',
-             'pen': 'mouseMovePen'}
-mouseRelease = {'box': 'mouseReleaseBox', 'line': 'mouseReleaseLine',
-                'move': 'mouseReleaseMove', 'pen': 'mouseReleasePen'}
+mousePress = {
+    "box": "mousePressBox",
+    "comment": "mousePressComment",
+    "cross": "mousePressCross",
+    "delete": "mousePressDelete",
+    "delta": "mousePressDelta",
+    "line": "mousePressLine",
+    "move": "mousePressMove",
+    "pen": "mousePressPen",
+    "text": "mousePressText",
+    "tick": "mousePressTick",
+    "zoom": "mousePressZoom",
+}
+mouseMove = {"box": "mouseMoveBox", "line": "mouseMoveLine", "pen": "mouseMovePen"}
+mouseRelease = {
+    "box": "mouseReleaseBox",
+    "line": "mouseReleaseLine",
+    "move": "mouseReleaseMove",
+    "pen": "mouseReleasePen",
+}
 
 
 class PageScene(QGraphicsScene):
@@ -72,6 +112,7 @@ class PageScene(QGraphicsScene):
     mouse-press/move/release into operations on graphicsitems and
     textitems.
     """
+
     # When a delta is created or deleted, need to emit a markChangedSignal
     # which will be picked up by the annotation widget to update
     markChangedSignal = pyqtSignal(int)
@@ -121,7 +162,6 @@ class PageScene(QGraphicsScene):
         self.scoreBox = ScoreBox()
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
-
 
     def save(self):
         """ Save the annotated group-image.
@@ -204,8 +244,7 @@ class PageScene(QGraphicsScene):
         # Create a temp box item for animating the drawing as the
         # user moves the mouse.
         # Do not push command onto undoStack until drawing finished.
-        self.boxItem = QGraphicsRectItem(QRectF(self.originPos,
-                                                self.currentPos))
+        self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
         self.boxItem.setPen(self.ink)
         self.boxItem.setBrush(self.lightBrush)
         self.addItem(self.boxItem)
@@ -229,7 +268,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(command)
             # digits in the delta, and a (rough) corresponding offset.
             x = len(str(abs(int(self.commentDelta))))
-            offset = QPointF(26+15*x, -24)
+            offset = QPointF(26 + 15 * x, -24)
         # position of text.
         self.originPos = event.scenePos() + offset
         # create the textitem, and push onto the undo stack
@@ -301,8 +340,7 @@ class PageScene(QGraphicsScene):
         # Do not push command onto undoStack until drawing finished.
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
-        self.lineItem = QGraphicsLineItem(
-            QLineF(self.originPos, self.currentPos))
+        self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
         self.lineItem.setPen(self.ink)
         self.addItem(self.lineItem)
 
@@ -349,7 +387,7 @@ class PageScene(QGraphicsScene):
         under = self.itemAt(event.scenePos(), QTransform())
         # If it is a textitem and this is not the move-tool
         # then fire up the editor.
-        if isinstance(under, TextItem) and self.mode != 'move':
+        if isinstance(under, TextItem) and self.mode != "move":
             under.setTextInteractionFlags(Qt.TextEditorInteraction)
             self.setFocusItem(under, Qt.MouseFocusReason)
             return
@@ -387,7 +425,6 @@ class PageScene(QGraphicsScene):
             self.parent().scale(1.25, 1.25)
         self.parent().centerOn(event.scenePos())
 
-
     # Mouse move tool functions.
     # Not relevant for most tools
     def mouseMoveBox(self, event):
@@ -396,8 +433,7 @@ class PageScene(QGraphicsScene):
         """
         self.currentPos = event.scenePos()
         if self.boxItem is None:
-            self.boxItem = QGraphicsRectItem(QRectF(self.originPos,
-                                                    self.currentPos))
+            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
         else:
             self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
 
@@ -429,8 +465,7 @@ class PageScene(QGraphicsScene):
         if self.whiteFlag == 0:
             command = CommandBox(self, QRectF(self.originPos, self.currentPos))
         else:
-            command = CommandWhiteBox(self, QRectF(self.originPos,
-                                                   self.currentPos))
+            command = CommandWhiteBox(self, QRectF(self.originPos, self.currentPos))
         self.whiteFlag = 0
         self.undoStack.push(command)
 
@@ -469,10 +504,12 @@ class PageScene(QGraphicsScene):
 
     # Handle drag / drop events
     def dragEnterEvent(self, e):
-        if e.mimeData().hasFormat('text/plain'):
+        if e.mimeData().hasFormat("text/plain"):
             # User has dragged in plain text from somewhere
             e.acceptProposedAction()
-        elif e.mimeData().hasFormat('application/x-qabstractitemmodeldatalist') or e.mimeData().hasFormat('application/x-qstandarditemmodeldatalist'):
+        elif e.mimeData().hasFormat(
+            "application/x-qabstractitemmodeldatalist"
+        ) or e.mimeData().hasFormat("application/x-qstandarditemmodeldatalist"):
             # User has dragged in a comment from the comment-list.
             e.setDropAction(Qt.CopyAction)
         else:
@@ -482,13 +519,15 @@ class PageScene(QGraphicsScene):
         e.acceptProposedAction()
 
     def dropEvent(self, e):
-        if e.mimeData().hasFormat('text/plain'):
+        if e.mimeData().hasFormat("text/plain"):
             # Simulate a comment click.
             self.commentText = e.mimeData().text()
             self.commentDelta = 0
             self.mousePressComment(e)
 
-        elif e.mimeData().hasFormat('application/x-qabstractitemmodeldatalist') or e.mimeData().hasFormat('application/x-qstandarditemmodeldatalist'):
+        elif e.mimeData().hasFormat(
+            "application/x-qabstractitemmodeldatalist"
+        ) or e.mimeData().hasFormat("application/x-qstandarditemmodeldatalist"):
             # Simulate a comment click.
             self.mousePressComment(e)
             # User has dragged in a comment from the comment-list.

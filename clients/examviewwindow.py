@@ -1,16 +1,23 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai', 'Matt Coles']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
 __license__ = "GPLv3"
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QPixmap
-from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, \
-    QGraphicsView, QGridLayout, QPushButton, QWidget
+from PyQt5.QtWidgets import (
+    QGraphicsPixmapItem,
+    QGraphicsScene,
+    QGraphicsView,
+    QGridLayout,
+    QPushButton,
+    QWidget,
+)
 
 
 class ExamViewWindow(QWidget):
     """Simple view window for pageimages"""
+
     def __init__(self, fname=None):
         QWidget.__init__(self)
         self.initUI(fname)
@@ -21,7 +28,7 @@ class ExamViewWindow(QWidget):
         # Render nicely
         self.view.setRenderHint(QPainter.HighQualityAntialiasing)
         # reset view button passes to the examview.
-        self.resetB = QPushButton('reset view')
+        self.resetB = QPushButton("reset view")
         self.resetB.clicked.connect(lambda: self.view.resetView())
         # Layout simply
         grid = QGridLayout()
@@ -39,6 +46,7 @@ class ExamView(QGraphicsView):
     """Simple extension of QGraphicsView
     - containing an image and click-to-zoom/unzoom
     """
+
     def __init__(self, fname):
         QGraphicsView.__init__(self)
         self.initUI(fname)
@@ -51,8 +59,9 @@ class ExamView(QGraphicsView):
         self.imageItem = QGraphicsPixmapItem(self.image)
         self.imageItem.setTransformationMode(Qt.SmoothTransformation)
         # Set sensible sizes and put into the view, and fit view to the image.
-        self.scene.setSceneRect(0, 0, max(1000, self.image.width()),
-                                max(1000, self.image.height()))
+        self.scene.setSceneRect(
+            0, 0, max(1000, self.image.width()), max(1000, self.image.height())
+        )
         self.scene.addItem(self.imageItem)
         self.setScene(self.scene)
         self.fitInView(self.imageItem, Qt.KeepAspectRatio)
@@ -66,7 +75,7 @@ class ExamView(QGraphicsView):
 
     def mouseReleaseEvent(self, event):
         """Left/right click to zoom in and out"""
-        if(event.button() == Qt.RightButton):
+        if event.button() == Qt.RightButton:
             self.scale(0.8, 0.8)
         else:
             self.scale(1.25, 1.25)

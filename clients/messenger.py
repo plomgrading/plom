@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai', 'Matt Coles']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
 __license__ = "GPLv3"
 
 import asyncio
@@ -17,7 +17,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 # Server defaults
-server = '127.0.0.1'
+server = "127.0.0.1"
 message_port = 41984
 webdav_port = 41985
 
@@ -36,19 +36,20 @@ async def handle_messaging(msg):
     Message should be a list [cmd, user, password, arg1, arg2, etc]
     Reads return message from the stream - usually ['ACK', arg1, arg2,...]
     """
-    reader, writer = await asyncio.open_connection(server, message_port,
-                                                   loop=loop, ssl=sslContext)
+    reader, writer = await asyncio.open_connection(
+        server, message_port, loop=loop, ssl=sslContext
+    )
     # Message should be  [cmd, user, password, arg1, arg2, etc]
     jm = json.dumps(msg)
     writer.write(jm.encode())
     # SSL does not support EOF, so send a null byte to indicate the end
     # of the message.
-    writer.write(b'\x00')
+    writer.write(b"\x00")
     await writer.drain()
 
     data = await reader.read(100)
-    terminate = data.endswith(b'\x00')
-    data = data.rstrip(b'\x00')
+    terminate = data.endswith(b"\x00")
+    data = data.rstrip(b"\x00")
     rmesg = json.loads(data.decode())  # message should be a list [ACK, arg1, arg2, etc]
     writer.close()
     return rmesg
@@ -59,9 +60,9 @@ def SRMsg(msg):
     return message. If error then pop-up an error message.
     """
     rmsg = loop.run_until_complete(handle_messaging(msg))
-    if rmsg[0] == 'ACK':
+    if rmsg[0] == "ACK":
         return rmsg
-    elif rmsg[0] == 'ERR':
+    elif rmsg[0] == "ERR":
         msg = ErrorMessage(rmsg[1])
         msg.exec_()
         return rmsg
@@ -72,8 +73,9 @@ def SRMsg(msg):
 
 def getFileDav(dfn, lfn):
     """Get file dfn from the webdav server and save as lfn."""
-    webdav = easywebdav2.connect(server, port=webdav_port,
-                                 protocol='https', verify_ssl=False)
+    webdav = easywebdav2.connect(
+        server, port=webdav_port, protocol="https", verify_ssl=False
+    )
     try:
         webdav.download(dfn, lfn)
     except Exception as ex:
@@ -84,8 +86,9 @@ def getFileDav(dfn, lfn):
 
 def putFileDav(lfn, dfn):
     """Upload file lfn to the webdav as dfn."""
-    webdav = easywebdav2.connect(server, port=webdav_port,
-                                 protocol='https', verify_ssl=False)
+    webdav = easywebdav2.connect(
+        server, port=webdav_port, protocol="https", verify_ssl=False
+    )
     try:
         webdav.upload(lfn, dfn)
     except Exception as ex:
@@ -99,25 +102,25 @@ async def handle_ping_test():
     If nothing back after 2 seconds then assume the server is
     down and tell the user, then exit.
     """
-    ptest = asyncio.open_connection(server, message_port,
-                                    loop=loop, ssl=sslContext)
+    ptest = asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
     try:
         # Wait for 2 seconds, then raise TimeoutError
         reader, writer = await asyncio.wait_for(ptest, timeout=2)
-        jm = json.dumps(['PING'])
+        jm = json.dumps(["PING"])
         writer.write(jm.encode())
-        writer.write(b'\x00')
+        writer.write(b"\x00")
         await writer.drain()
 
         data = await reader.read(100)
-        terminate = data.endswith(b'\x00')
-        data = data.rstrip(b'\x00')
+        terminate = data.endswith(b"\x00")
+        data = data.rstrip(b"\x00")
         rmesg = json.loads(data.decode())  # message should be ['ACK']
         writer.close()
         return True
     except (asyncio.TimeoutError, ConnectionRefusedError):
-        msg = ErrorMessage("Server does not return ping."
-                           " Please double check details and try again.")
+        msg = ErrorMessage(
+            "Server does not return ping." " Please double check details and try again."
+        )
         msg.exec_()
         return False
 
@@ -127,7 +130,7 @@ def pingTest():
     to check it is up and running
     """
     rmsg = loop.run_until_complete(handle_ping_test())
-    return(rmsg)
+    return rmsg
 
 
 def startMessenger():

@@ -1,13 +1,21 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai', 'Matt Coles']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
 __license__ = "GPLv3"
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QPixmap
-from PyQt5.QtWidgets import QDialog, QGridLayout, QGraphicsPixmapItem,\
-    QGraphicsScene, QGraphicsView, QGraphicsWidget, QLabel, QPushButton,\
-    QSpinBox
+from PyQt5.QtWidgets import (
+    QDialog,
+    QGridLayout,
+    QGraphicsPixmapItem,
+    QGraphicsScene,
+    QGraphicsView,
+    QGraphicsWidget,
+    QLabel,
+    QPushButton,
+    QSpinBox,
+)
 
 
 class ExamReorientWindow(QDialog):
@@ -16,6 +24,7 @@ class ExamReorientWindow(QDialog):
     split into that number of sub-images. They can then be flipped
     independently. The result is then saved.
     """
+
     def __init__(self, fname):
         QGraphicsWidget.__init__(self)
         self.initUI(fname)
@@ -78,7 +87,7 @@ class ExamReorientWindow(QDialog):
         for k in range(n):
             self.flip[k] = QPushButton("{}".format(k))
             self.flip[k].clicked.connect(lambda: self.flipPage())
-            self.grid.addWidget(self.flip[k], 5, 3+k)
+            self.grid.addWidget(self.flip[k], 5, 3 + k)
         # remove the original image and paste in each nth portion of it.
         self.scene.removeItem(self.imageItem)
         w = self.image.width() // n
@@ -87,19 +96,19 @@ class ExamReorientWindow(QDialog):
         self.splitImg = {}
         self.splitImgI = {}
         for k in range(n):
-            self.splitImg[k] = self.image.copy(w*k, 0, w, h)
+            self.splitImg[k] = self.image.copy(w * k, 0, w, h)
             self.splitImgI[k] = QGraphicsPixmapItem(self.splitImg[k])
-            self.splitImgI[k].setPos(w*k, 0)
+            self.splitImgI[k].setPos(w * k, 0)
             # Flip around centre.
-            self.splitImgI[k].setTransformOriginPoint(w//2, h//2)
+            self.splitImgI[k].setTransformOriginPoint(w // 2, h // 2)
             # Place into the scene
             self.scene.addItem(self.splitImgI[k])
-        self.view.fitInView(0, 0, w*n, h)
+        self.view.fitInView(0, 0, w * n, h)
 
     def flipPage(self):
         # rotate the relevant nth of the groupimage by 180 around its centre
         sender = self.sender()
-        k = int(sender.text().replace('&', ''))
+        k = int(sender.text().replace("&", ""))
         if self.splitImgI[k].rotation() == 0:
             self.splitImgI[k].setRotation(180)
         else:

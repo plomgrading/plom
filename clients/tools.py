@@ -1,16 +1,20 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai', 'Matt Coles']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
 __license__ = "GPLv3"
 
 from math import sqrt
-from PyQt5.QtCore import Qt, QLineF, QPointF,  pyqtProperty, \
-    QPropertyAnimation, QTimer
-from PyQt5.QtGui import QBrush, QColor, QFont, QPainterPath, \
-    QPen
-from PyQt5.QtWidgets import QGraphicsItem, QGraphicsLineItem, \
-    QGraphicsPathItem, QGraphicsRectItem, QGraphicsObject, \
-    QGraphicsTextItem, QUndoCommand
+from PyQt5.QtCore import Qt, QLineF, QPointF, pyqtProperty, QPropertyAnimation, QTimer
+from PyQt5.QtGui import QBrush, QColor, QFont, QPainterPath, QPen
+from PyQt5.QtWidgets import (
+    QGraphicsItem,
+    QGraphicsLineItem,
+    QGraphicsPathItem,
+    QGraphicsRectItem,
+    QGraphicsObject,
+    QGraphicsTextItem,
+    QUndoCommand,
+)
 
 
 # Commands for the undo stack
@@ -38,8 +42,7 @@ class CommandArrow(QUndoCommand):
         # the undo animation takes 0.5s
         # so trigger its removal after 0.5s.
         self.arrowItem.flash_undo()
-        QTimer.singleShot(500,
-                          lambda: self.scene.removeItem(self.arrowItem.ai))
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.arrowItem.ai))
 
 
 class CommandBox(QUndoCommand):
@@ -73,8 +76,7 @@ class CommandCross(QUndoCommand):
 
     def undo(self):
         self.crossItem.flash_undo()
-        QTimer.singleShot(500,
-                          lambda: self.scene.removeItem(self.crossItem.ci))
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.crossItem.ci))
 
 
 class CommandDelta(QUndoCommand):
@@ -138,8 +140,7 @@ class CommandHighlight(QUndoCommand):
 
     def undo(self):
         self.highLightItem.flash_undo()
-        QTimer.singleShot(500, lambda:
-                          self.scene.removeItem(self.highLightItem.hli))
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.highLightItem.hli))
 
 
 class CommandLine(QUndoCommand):
@@ -181,7 +182,7 @@ class CommandMoveItem(QUndoCommand):
         # Temporarily disable the item emiting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
         # Move the object
-        self.xitem.setPos(self.xitem.pos()+self.delta)
+        self.xitem.setPos(self.xitem.pos() + self.delta)
         # Reenable the item emiting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
@@ -189,7 +190,7 @@ class CommandMoveItem(QUndoCommand):
         # Temporarily disable the item emiting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
         # Move the object back
-        self.xitem.setPos(self.xitem.pos()-self.delta)
+        self.xitem.setPos(self.xitem.pos() - self.delta)
         # Reenable the item emiting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
@@ -324,8 +325,7 @@ class CommandWhiteBox(QUndoCommand):
 
     def undo(self):
         self.whiteBoxItem.flash_undo()
-        QTimer.singleShot(500, lambda:
-                          self.scene.removeItem(self.whiteBoxItem.wbi))
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.whiteBoxItem.wbi))
 
 
 # ################################
@@ -345,24 +345,24 @@ class ArrowItem(QGraphicsPathItem):
         self.pti = pti
         self.ptf = ptf
         # vector direction of line
-        delta = ptf-pti
+        delta = ptf - pti
         # length of the line
-        el = sqrt(delta.x()**2 + delta.y()**2)
+        el = sqrt(delta.x() ** 2 + delta.y() ** 2)
         # unit vector in direction of line.
-        ndelta = delta/el
+        ndelta = delta / el
         # orthogonal unit vector to line.
         northog = QPointF(-ndelta.y(), ndelta.x())
         # base of arrowhead
-        self.arBase = ptf-8*ndelta
+        self.arBase = ptf - 8 * ndelta
         # point of arrowhead
-        self.arTip = ptf+4*ndelta
+        self.arTip = ptf + 4 * ndelta
         # left-barb of the arrowhead
-        self.arLeft = self.arBase-5*northog-2*ndelta
+        self.arLeft = self.arBase - 5 * northog - 2 * ndelta
         # right-barb of the arrowhead
-        self.arRight = self.arBase+5*northog-2*ndelta
+        self.arRight = self.arBase + 5 * northog - 2 * ndelta
         self.path = QPainterPath()
         # put a small ball at start of arrow.
-        self.path.addEllipse(self.pti.x()-3, self.pti.y()-3, 6, 6)
+        self.path.addEllipse(self.pti.x() - 3, self.pti.y() - 3, 6, 6)
         # draw line from pti to ptf
         self.path.moveTo(self.pti)
         self.path.lineTo(self.ptf)
@@ -416,10 +416,10 @@ class CrossItem(QGraphicsPathItem):
         self.pt = pt
         self.path = QPainterPath()
         # Draw a cross whose vertex is at pt (under mouse click)
-        self.path.moveTo(pt.x()-12, pt.y()-12)
-        self.path.lineTo(pt.x()+12, pt.y()+12)
-        self.path.moveTo(pt.x()-12, pt.y()+12)
-        self.path.lineTo(pt.x()+12, pt.y()-12)
+        self.path.moveTo(pt.x() - 12, pt.y() - 12)
+        self.path.lineTo(pt.x() + 12, pt.y() + 12)
+        self.path.moveTo(pt.x() - 12, pt.y() + 12)
+        self.path.lineTo(pt.x() + 12, pt.y() - 12)
         self.setPath(self.path)
         self.setPen(QPen(Qt.red, 3))
         self.setFlag(QGraphicsItem.ItemIsMovable)
@@ -473,7 +473,7 @@ class PenItem(QGraphicsPathItem):
         super(PenItem, self).__init__()
         self.pi = QGraphicsPathItem()
         self.path = path
-        self.setPath(self. path)
+        self.setPath(self.path)
         self.setPen(QPen(Qt.red, 2))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
@@ -492,13 +492,14 @@ class QMarkItem(QGraphicsPathItem):
         self.pt = pt
         self.path = QPainterPath()
         # Draw a ?-mark with barycentre under mouseclick
-        self.path.moveTo(pt.x()-6, pt.y()-10)
-        self.path.quadTo(pt.x()-6, pt.y()-15, pt.x(), pt.y()-15)
-        self.path.quadTo(pt.x()+6, pt.y()-15, pt.x()+6, pt.y()-10)
-        self.path.cubicTo(pt.x()+6, pt.y()-1, pt.x(), pt.y()-7,
-                          pt.x(), pt.y()+2)
-        self.path.moveTo(pt.x(), pt.y()+12)
-        self.path.lineTo(pt.x(), pt.y()+10)
+        self.path.moveTo(pt.x() - 6, pt.y() - 10)
+        self.path.quadTo(pt.x() - 6, pt.y() - 15, pt.x(), pt.y() - 15)
+        self.path.quadTo(pt.x() + 6, pt.y() - 15, pt.x() + 6, pt.y() - 10)
+        self.path.cubicTo(
+            pt.x() + 6, pt.y() - 1, pt.x(), pt.y() - 7, pt.x(), pt.y() + 2
+        )
+        self.path.moveTo(pt.x(), pt.y() + 12)
+        self.path.lineTo(pt.x(), pt.y() + 10)
         self.setPath(self.path)
         self.setPen(QPen(Qt.red, 3))
         self.setFlag(QGraphicsItem.ItemIsMovable)
@@ -518,9 +519,9 @@ class TickItem(QGraphicsPathItem):
         self.pt = pt
         self.path = QPainterPath()
         # Draw the checkmark with barycentre under mouseclick.
-        self.path.moveTo(pt.x()-10, pt.y())
-        self.path.lineTo(pt.x(), pt.y()+10)
-        self.path.lineTo(pt.x()+20, pt.y()-10)
+        self.path.moveTo(pt.x() - 10, pt.y())
+        self.path.lineTo(pt.x(), pt.y() + 10)
+        self.path.lineTo(pt.x() + 20, pt.y() - 10)
         self.setPath(self.path)
         self.setPen(QPen(Qt.red, 3))
         self.setFlag(QGraphicsItem.ItemIsMovable)
@@ -592,8 +593,7 @@ class TextItem(QGraphicsTextItem):
 
     def keyPressEvent(self, event):
         # Shift-return ends the editor and releases the object
-        if event.modifiers() == Qt.ShiftModifier \
-                    and event.key() == Qt.Key_Return:
+        if event.modifiers() == Qt.ShiftModifier and event.key() == Qt.Key_Return:
             # Clear any highlighted text and release.
             tc = self.textCursor()
             tc.clearSelection()
@@ -670,7 +670,7 @@ class DeltaItem(QGraphicsTextItem):
         self.anim = QPropertyAnimation(self, b"thickness")
         cr = self.boundingRect()
         # centre under the mouse-click.
-        self.moveBy(-(cr.right()+cr.left())/2, -(cr.top()+cr.bottom())/2)
+        self.moveBy(-(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2)
 
     def paint(self, painter, option, widget):
         # paint the background
@@ -720,6 +720,7 @@ class DeltaItem(QGraphicsTextItem):
 # object properties like thickness or colour.
 # Textitems (thankfully) handle animation themselves so we
 # don't have to define objects for them.
+
 
 class ArrowItemObject(QGraphicsObject):
     # An object wrapper around the arrowitem to handle the

@@ -1,14 +1,20 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai', 'Matt Coles']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
 __license__ = "GPLv3"
 
 from collections import defaultdict
 import csv
 import os
 import tempfile
-from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, \
-    QStringListModel, QTimer, QVariant
+from PyQt5.QtCore import (
+    Qt,
+    QAbstractTableModel,
+    QModelIndex,
+    QStringListModel,
+    QTimer,
+    QVariant,
+)
 from PyQt5.QtWidgets import QCompleter, QDialog, QInputDialog, QMessageBox
 from examviewwindow import ExamViewWindow
 import messenger
@@ -25,6 +31,7 @@ class Paper:
     the associated filename for the image. Once identified also
     store the studentName and ID-numer.
     """
+
     def __init__(self, tgv, fname):
         # tgv = t0000p00v0
         # ... = 0123456789
@@ -60,12 +67,13 @@ class Paper:
 
 class ExamModel(QAbstractTableModel):
     """A tablemodel for handling the test-ID-ing data."""
+
     def __init__(self, parent=None):
         QAbstractTableModel.__init__(self, parent)
         # Data stored in this ordered list.
         self.paperList = []
         # Headers.
-        self.header = ['Code', 'Status', 'ID', 'Name']
+        self.header = ["Code", "Status", "ID", "Name"]
 
     def setData(self, index, value, role=Qt.EditRole):
         # Columns are [code, status, ID and Name]
@@ -92,15 +100,15 @@ class ExamModel(QAbstractTableModel):
 
     def identifyStudent(self, index, sid, sname):
         # When ID'd - set status, ID and Name.
-        self.setData(index[1], 'identified')
+        self.setData(index[1], "identified")
         self.setData(index[2], sid)
         self.setData(index[3], sname)
 
     def revertStudent(self, index):
         # When reverted - set status, ID and Name appropriately.
-        self.setData(index[1], 'unidentified')
-        self.setData(index[2], '')
-        self.setData(index[3], '')
+        self.setData(index[1], "unidentified")
+        self.setData(index[2], "")
+        self.setData(index[3], "")
 
     def addPaper(self, rho):
         # Append paper to list and update last row of table
@@ -197,10 +205,10 @@ class IDClient(QDialog):
         the server (since password hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(['AUTH', self.userName, self.password])
+        msg = messenger.SRMsg(["AUTH", self.userName, self.password])
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
-        if msg[0] == 'ERR':
+        if msg[0] == "ERR":
             ErrorMessage("Password problem")
             quit()
         else:
@@ -213,9 +221,9 @@ class IDClient(QDialog):
         of either two fields = FamilyName+GivenName or a single Name field.
         """
         # Send request for classlist (iRCL) to server
-        msg = messenger.SRMsg(['iRCL', self.userName, self.token])
+        msg = messenger.SRMsg(["iRCL", self.userName, self.token])
         # Return should be [ACK, path/filename]
-        if msg[0] == 'ERR':
+        if msg[0] == "ERR":
             ErrorMessage("Classlist problem")
             quit()
         # Get the filename from the message.
@@ -231,13 +239,13 @@ class IDClient(QDialog):
             reader = csv.DictReader(csvfile, skipinitialspace=True)
             for row in reader:
                 # Merge names into single field
-                sn = row['surname']+', '+row['name']
-                self.studentNamesToNumbers[sn] = str(row['id'])
-                self.studentNumbersToNames[str(row['id'])] = sn
+                sn = row["surname"] + ", " + row["name"]
+                self.studentNamesToNumbers[sn] = str(row["id"])
+                self.studentNumbersToNames[str(row["id"])] = sn
         # Now that we've read in the classlist - tell server we got it
         # Server will remove it from the webdav server.
-        msg = messenger.SRMsg(['iGCL', self.userName, self.token, dfn])
-        if msg[0] == 'ERR':
+        msg = messenger.SRMsg(["iGCL", self.userName, self.token, dfn])
+        if msg[0] == "ERR":
             ErrorMessage("Classlist problem")
             quit()
         return True
@@ -275,7 +283,7 @@ class IDClient(QDialog):
         authorisation token is removed. Then finally close.
         """
         self.DNF()
-        msg = messenger.SRMsg(['UCL', self.userName, self.token])
+        msg = messenger.SRMsg(["UCL", self.userName, self.token])
         self.close()
 
     def DNF(self):
@@ -289,7 +297,14 @@ class IDClient(QDialog):
         for r in range(rc):
             if self.exM.data(self.exM.index(r, 1)) != "identified":
                 # Tell user DNF, user, auth-token, and paper's code.
-                msg = messenger.SRMsg(['iDNF', self.userName, self.token, self.exM.data(self.exM.index(r, 0))])
+                msg = messenger.SRMsg(
+                    [
+                        "iDNF",
+                        self.userName,
+                        self.token,
+                        self.exM.data(self.exM.index(r, 0)),
+                    ]
+                )
 
     def selChanged(self, selnew, selold):
         # When the selection changes, update the ID and name line-edit boxes
@@ -318,28 +333,30 @@ class IDClient(QDialog):
         list of papers and update the image.
         """
         # ask server for next unid'd paper
-        msg = messenger.SRMsg(['iNID', self.userName, self.token])
-        if msg[0] == 'ERR':
+        msg = messenger.SRMsg(["iNID", self.userName, self.token])
+        if msg[0] == "ERR":
             return
         # return message is [ACK, code, filename]
         test = msg[1]
         fname = msg[2]
         # Image name will be <code>.png
-        iname = os.path.join(self.workingDirectory, test+".png") #windows/linux compatibility
+        iname = os.path.join(
+            self.workingDirectory, test + ".png"
+        )  # windows/linux compatibility
         # Grab image from webdav and copy to <code.png>
         messenger.getFileDav(fname, iname)
         # Add the paper [code, filename, etc] to the list
         self.addPaperToList(Paper(test, iname))
         # Tell server we got the image (iGTP) - the server then deletes it.
-        msg = messenger.SRMsg(['iGTP', self.userName, self.token, test, fname])
+        msg = messenger.SRMsg(["iGTP", self.userName, self.token, test, fname])
         # Clean up table - and set focus on the ID-lineedit so user can
         # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()
         self.ui.idEdit.setFocus()
         # ask server for id-count update
-        msg = messenger.SRMsg(['iPRC', self.userName, self.token])
+        msg = messenger.SRMsg(["iPRC", self.userName, self.token])
         # returns [ACK, #id'd, #total]
-        if msg[0] == 'ACK':
+        if msg[0] == "ACK":
             self.ui.idProgressBar.setValue(msg[1])
             self.ui.idProgressBar.setMaximum(msg[2])
 
@@ -351,22 +368,35 @@ class IDClient(QDialog):
         """
         # Pass the contents of the ID-lineedit and Name-lineedit to the exam
         # model to put data into the table.
-        self.exM.identifyStudent(index, self.ui.idEdit.text(),
-                                 self.ui.nameEdit.text())
+        self.exM.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text())
         code = self.exM.data(index[0])
         if alreadyIDd:
             # If the paper was ID'd previously send return-already-ID'd (iRAD)
             # with the code, ID, name.
             msg = messenger.SRMsg(
-                ['iRAD', self.userName, self.token, code,
-                 self.ui.idEdit.text(), self.ui.nameEdit.text()])
+                [
+                    "iRAD",
+                    self.userName,
+                    self.token,
+                    code,
+                    self.ui.idEdit.text(),
+                    self.ui.nameEdit.text(),
+                ]
+            )
         else:
             # If the paper was not ID'd previously send return-ID'd (iRID)
             # with the code, ID, name.
             msg = messenger.SRMsg(
-                ['iRID', self.userName, self.token, code,
-                 self.ui.idEdit.text(), self.ui.nameEdit.text()])
-        if msg[0] == 'ERR':
+                [
+                    "iRID",
+                    self.userName,
+                    self.token,
+                    code,
+                    self.ui.idEdit.text(),
+                    self.ui.nameEdit.text(),
+                ]
+            )
+        if msg[0] == "ERR":
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
             # Use timer to avoid conflict between completer and
@@ -389,11 +419,10 @@ class IDClient(QDialog):
         if rt == 0:
             return
         rstart = self.ui.tableView.selectedIndexes()[0].row()
-        r = (rstart+1) % rt
+        r = (rstart + 1) % rt
         # Be careful to not get stuck in loop if all are ID'd.
-        while(self.exM.data(self.exM.index(r, 2)) == "identified"
-              and r != rstart):
-            r = (r+1) % rt
+        while self.exM.data(self.exM.index(r, 2)) == "identified" and r != rstart:
+            r = (r + 1) % rt
         self.ui.tableView.selectRow(r)
 
     def enterID(self):
@@ -415,7 +444,7 @@ class IDClient(QDialog):
         # If the paper is already ID'd ask the user if they want to
         # change it - set the alreadyIDd flag to true.
         if status == "identified":
-            msg = SimpleMessage('Do you want to change the ID?')
+            msg = SimpleMessage("Do you want to change the ID?")
             if msg.exec_() == QMessageBox.No:
                 return
             else:
@@ -423,12 +452,13 @@ class IDClient(QDialog):
         # Check if the entered ID is in the list from the classlist.
         if self.ui.idEdit.text() in self.studentNumbersToNames:
             # If so then fill in the name-edit with the corresponding name.
-            self.ui.nameEdit.setText(
-                self.studentNumbersToNames[self.ui.idEdit.text()])
+            self.ui.nameEdit.setText(self.studentNumbersToNames[self.ui.idEdit.text()])
             # Ask user to confirm ID/Name
             msg = SimpleMessage(
-                'Student ID {} = {}. Enter and move to next?'
-                .format(self.ui.idEdit.text(), self.ui.nameEdit.text()))
+                "Student ID {} = {}. Enter and move to next?".format(
+                    self.ui.idEdit.text(), self.ui.nameEdit.text()
+                )
+            )
             # If user says "no" then just return from function.
             if msg.exec_() == QMessageBox.No:
                 return
@@ -436,14 +466,15 @@ class IDClient(QDialog):
             # Number is not in class list - ask user if they really want to
             # enter that number.
             msg = SimpleMessage(
-                'Student ID {} not in list. Do you want to enter it anyway?'
-                .format(self.ui.idEdit.text()))
+                "Student ID {} not in list. Do you want to enter it anyway?".format(
+                    self.ui.idEdit.text()
+                )
+            )
             # If no then return from function.
             if msg.exec_() == QMessageBox.No:
                 return
             # Otherwise get a name from the user (and the okay)
-            name, ok = QInputDialog.getText(self, 'Enter name',
-                                            'Enter student name:')
+            name, ok = QInputDialog.getText(self, "Enter name", "Enter student name:")
             # If okay, then set name accordingly, else set name to "unknown"
             if ok:
                 self.ui.nameEdit.setText(str(name))
@@ -478,7 +509,7 @@ class IDClient(QDialog):
         # If the paper is already ID'd ask the user if they want to
         # change it - set the alreadyIDd flag to true.
         if status == "identified":
-            msg = SimpleMessage('Do you want to change the ID?')
+            msg = SimpleMessage("Do you want to change the ID?")
             if msg.exec_() == QMessageBox.No:
                 return
             else:
@@ -486,12 +517,13 @@ class IDClient(QDialog):
         # Check if the entered name is in the list from the classlist.
         if self.ui.nameEdit.text() in self.studentNamesToNumbers:
             # If so then fill in the ID-edit with the corresponding number.
-            self.ui.idEdit.setText(
-                self.studentNamesToNumbers[self.ui.nameEdit.text()])
+            self.ui.idEdit.setText(self.studentNamesToNumbers[self.ui.nameEdit.text()])
             # Ask user to confirm ID/Name
             msg = SimpleMessage(
-                'Student ID {} = {}. Enter and move to next?'
-                .format(self.ui.idEdit.text(), self.ui.nameEdit.text()))
+                "Student ID {} = {}. Enter and move to next?".format(
+                    self.ui.idEdit.text(), self.ui.nameEdit.text()
+                )
+            )
             # If user says "no" then just return from function.
             if msg.exec_() == QMessageBox.No:
                 return
@@ -499,14 +531,17 @@ class IDClient(QDialog):
             # Name is not in class list - ask user if they really want to
             # enter that name.
             msg = SimpleMessage(
-                'Student name {} not in list. Do you want to enter it anyway?'
-                .format(self.ui.nameEdit.text()))
+                "Student name {} not in list. Do you want to enter it anyway?".format(
+                    self.ui.nameEdit.text()
+                )
+            )
             # If no then return from function.
             if msg.exec_() == QMessageBox.No:
                 return
             # Otherwise get a number from the user (and the okay)
-            num, ok = QInputDialog.getText(self, 'Enter number',
-                                           'Enter student number:')
+            num, ok = QInputDialog.getText(
+                self, "Enter number", "Enter student number:"
+            )
             # If okay, then set number accordingly, else give error
             if ok:
                 self.ui.idEdit.setText(str(num))

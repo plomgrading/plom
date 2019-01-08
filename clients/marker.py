@@ -1,14 +1,13 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai', 'Matt Coles']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
 __license__ = "GPLv3"
 
 import os
 import shutil
 import tempfile
 
-from PyQt5.QtCore import Qt, QAbstractTableModel, QElapsedTimer, QModelIndex,\
-    QVariant
+from PyQt5.QtCore import Qt, QAbstractTableModel, QElapsedTimer, QModelIndex, QVariant
 from PyQt5.QtWidgets import QDialog, QMessageBox
 
 from examviewwindow import ExamViewWindow
@@ -21,8 +20,10 @@ from uiFiles.ui_marker import Ui_MarkerWindow
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
 import platform
-if platform.system() == 'Darwin':
+
+if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
+
     qt_set_sequence_auto_mnemonic(True)
 
 # set up variables to store paths for marker and id clients
@@ -36,6 +37,7 @@ class TestPageGroup:
     filename, the annotated image filename, the mark, and the
     time spent marking the groupimage.
     """
+
     def __init__(self, tgv, fname):
         # tgv = t0000p00v0
         # ... = 0123456789
@@ -84,12 +86,13 @@ class TestPageGroup:
 
 class ExamModel(QAbstractTableModel):
     """A tablemodel for handling the group image marking data."""
+
     def __init__(self, parent=None):
         QAbstractTableModel.__init__(self, parent)
         # Data stored in this ordered list
         self.paperList = []
         # Header
-        self.header = ['TGV', 'Status', 'Mark', 'Time']
+        self.header = ["TGV", "Status", "Mark", "Time"]
 
     def setData(self, index, value, role=Qt.EditRole):
         # Columns are [tgv-code, status, mark, time-taken-to-mark]
@@ -132,7 +135,7 @@ class ExamModel(QAbstractTableModel):
         # When a image (or portion) if flipped 180deg set the
         # status to annotated to indicate it has been altered.
         # Store the filename of the flupped image.
-        self.setData(index[1], 'annotated')
+        self.setData(index[1], "annotated")
         self.paperList[index[0].row()].annotatedFile = aname
 
     def markPaper(self, index, mrk, aname, mtime):
@@ -140,8 +143,8 @@ class ExamModel(QAbstractTableModel):
         # and the total marking time (in case it was annotated earlier)
         mt = self.data(index[3])
         # total elapsed time.
-        self.setData(index[3], mtime+mt)
-        self.setData(index[1], 'marked')
+        self.setData(index[3], mtime + mt)
+        self.setData(index[1], "marked")
         self.setData(index[2], mrk)
         self.setAnnotatedFile(index[0].row(), aname)
 
@@ -149,7 +152,7 @@ class ExamModel(QAbstractTableModel):
         # When user reverts to original image, set status to "reverted"
         # mark back to -1, and marking time to zero.
         # remove the annotated image file.
-        self.setData(index[1], 'reverted')
+        self.setData(index[1], "reverted")
         self.setData(index[2], -1)
         self.setData(index[3], 0)
         # remove annotated picture
@@ -191,12 +194,22 @@ class ExamModel(QAbstractTableModel):
             return self.header[c]
         return c
 
+
 ##########################
 
 
 class MarkerClient(QDialog):
-    def __init__(self, userName, password, server, message_port, web_port,
-                 pageGroup, version, parent=None):
+    def __init__(
+        self,
+        userName,
+        password,
+        server,
+        message_port,
+        web_port,
+        pageGroup,
+        version,
+        parent=None,
+    ):
         # Init the client with username, password, server and port data,
         # and which group/version is being marked.
         super(MarkerClient, self).__init__(parent)
@@ -275,10 +288,10 @@ class MarkerClient(QDialog):
         hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(['AUTH', self.userName, self.password])
+        msg = messenger.SRMsg(["AUTH", self.userName, self.password])
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
-        if msg[0] == 'ERR':
+        if msg[0] == "ERR":
             ErrorMessage("Password problem")
             quit()
         else:
@@ -289,10 +302,11 @@ class MarkerClient(QDialog):
         The server then sends back [ACK, maxmark].
         """
         # Send max-mark request (mGMX) to server
-        msg = messenger.SRMsg(['mGMX', self.userName, self.token,
-                               self.pageGroup, self.version])
+        msg = messenger.SRMsg(
+            ["mGMX", self.userName, self.token, self.pageGroup, self.version]
+        )
         # Return should be [ACK, maxmark]
-        if msg[0] == 'ERR':
+        if msg[0] == "ERR":
             quit()
         self.maxScore = msg[1]
 
@@ -307,7 +321,7 @@ class MarkerClient(QDialog):
         # Grab the group-image from file and display in the examviewwindow
         # If group has been marked or annotated then display the annotated file
         # Else display the original group image
-        if self.exM.data(self.exM.index(r, 1)) in ['marked', 'annotated']:
+        if self.exM.data(self.exM.index(r, 1)) in ["marked", "annotated"]:
             self.testImg.updateImage(self.exM.getAnnotatedFile(r))
         else:
             self.testImg.updateImage(self.exM.getOriginalFile(r))
@@ -320,41 +334,43 @@ class MarkerClient(QDialog):
         the list of papers and update the image.
         """
         # Ask server for next unmarked paper
-        msg = messenger.SRMsg(['mNUM', self.userName, self.token,
-                               self.pageGroup, self.version])
-        if msg[0] == 'ERR':
+        msg = messenger.SRMsg(
+            ["mNUM", self.userName, self.token, self.pageGroup, self.version]
+        )
+        if msg[0] == "ERR":
             return
         # Return message should be [ACK, code, temp-filename]
         # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
-        fname = os.path.join(self.workingDirectory, msg[1]+".png")
+        fname = os.path.join(self.workingDirectory, msg[1] + ".png")
         # Get file from the tempfilename in the webdav
         tname = msg[2]
         messenger.getFileDav(tname, fname)
         # Add the page-group to the list of things to mark
         self.addTGVToList(TestPageGroup(msg[1], fname))
         # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg(['mGTP', self.userName, self.token, tname])
+        msg = messenger.SRMsg(["mGTP", self.userName, self.token, tname])
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         # ask server for marking-count update
-        progress_msg = messenger.SRMsg(['mPRC', self.userName, self.token,
-                                        self.pageGroup, self.version])
+        progress_msg = messenger.SRMsg(
+            ["mPRC", self.userName, self.token, self.pageGroup, self.version]
+        )
         # returns [ACK, #marked, #total]
-        if progress_msg[0] == 'ACK':
+        if progress_msg[0] == "ACK":
             self.ui.mProgressBar.setValue(progress_msg[1])
             self.ui.mProgressBar.setMaximum(progress_msg[2])
         # launch annotator on the new test
         # Note-launch-again is set to true when user just wants to get
         # the next test and get annotating directly.
         # When false the user stays at the marker window
-        if msg[0] != 'ERR' and launchAgain:
+        if msg[0] != "ERR" and launchAgain:
             self.annotateTest()
 
     def moveToNextTest(self):
         # Move to the next test in the table.
         if self.exM.rowCount() == 0:
             return
-        r = self.ui.tableView.selectedIndexes()[0].row()+1
+        r = self.ui.tableView.selectedIndexes()[0].row() + 1
         if r > self.exM.rowCount():
             r = 0
         self.ui.tableView.selectRow(r)
@@ -363,7 +379,7 @@ class MarkerClient(QDialog):
         # Move to the previous test in the table.
         if self.exM.rowCount() == 0:
             return
-        r = self.ui.tableView.selectedIndexes()[0].row()-1
+        r = self.ui.tableView.selectedIndexes()[0].row() - 1
         if r < 0:
             r = self.exM.rowCount()
         self.ui.tableView.selectRow(r)
@@ -375,9 +391,9 @@ class MarkerClient(QDialog):
         if rt == 0:
             return
         rstart = self.ui.tableView.selectedIndexes()[0].row()
-        r = (rstart+1) % rt
+        r = (rstart + 1) % rt
         while self.exM.data(self.exM.index(r, 1)) == "marked" and r != rstart:
-            r = (r+1) % rt
+            r = (r + 1) % rt
             self.ui.tableView.selectRow(r)
         if r == rstart:
             return False
@@ -390,10 +406,10 @@ class MarkerClient(QDialog):
         if len(index) == 0:
             return
         # If test is untouched or already reverted, nothing to do
-        if(self.exM.data(index[1]) in ["untouched", "reverted"]):
+        if self.exM.data(index[1]) in ["untouched", "reverted"]:
             return
         # Check user really wants to revert
-        msg = SimpleMessage('Do you want to revert to original scan?')
+        msg = SimpleMessage("Do you want to revert to original scan?")
         if msg.exec_() == QMessageBox.No:
             return
         # Revert the test in the table (set status, mark etc)
@@ -415,8 +431,9 @@ class MarkerClient(QDialog):
         self.mouseHand = self.ui.mouseHandGroup.checkedId()
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
-        annotator = Annotator(fname, self.maxScore,
-                              self.markStyle, self.mouseHand, self)
+        annotator = Annotator(
+            fname, self.maxScore, self.markStyle, self.mouseHand, self
+        )
         # run the annotator
         if annotator.exec_():
             # If annotator returns "accept"
@@ -426,11 +443,14 @@ class MarkerClient(QDialog):
             # with the next page-image. In relaunch, then we will need to
             # ask server for next image.
             if annotator.score >= 0:
-                return [str(annotator.score), timer.elapsed()//1000,
-                        annotator.launchAgain]
+                return [
+                    str(annotator.score),
+                    timer.elapsed() // 1000,
+                    annotator.launchAgain,
+                ]
             else:
                 # No score back from annotator, so relaunch.
-                msg = ErrorMessage('You have to give a mark.')
+                msg = ErrorMessage("You have to give a mark.")
                 msg.exec_()
                 return self.waitForAnnotator(fname)
         else:
@@ -453,20 +473,21 @@ class MarkerClient(QDialog):
         index = self.ui.tableView.selectedIndexes()
         # If image has been marked confirm with user if they want
         # to annotate further.
-        if self.exM.data(index[1]) == 'marked':
-            msg = SimpleMessage('Do you want to annotate further?')
+        if self.exM.data(index[1]) == "marked":
+            msg = SimpleMessage("Do you want to annotate further?")
             if msg.exec_() == QMessageBox.No:
                 return
         # Create annotated filename. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
-        aname = os.path.join(self.workingDirectory,
-                             "G" + self.exM.data(index[0])[1:] + ".png")
+        aname = os.path.join(
+            self.workingDirectory, "G" + self.exM.data(index[0])[1:] + ".png"
+        )
         # If paper is untouched or reverted, copy the original image to
         # the annotated filename. (so if already annotated, we use that).
-        if self.exM.data(index[1]) in ['untouched', 'reverted']:
-            shutil.copyfile("{}".format(
-                self.exM.getOriginalFile(index[0].row())), aname
-                )
+        if self.exM.data(index[1]) in ["untouched", "reverted"]:
+            shutil.copyfile(
+                "{}".format(self.exM.getOriginalFile(index[0].row())), aname
+            )
         # Get mark, markingtime, and launch-again flag from 'waitForAnnotator'
         [gr, mtime, launchAgain] = self.waitForAnnotator(aname)
         # Exited annotator with 'cancel', so don't save anything.
@@ -482,8 +503,17 @@ class MarkerClient(QDialog):
         # and the marking time.
         # Server will save data and copy the annotated file, then delete it
         # from the webdav
-        msg = messenger.SRMsg(['mRMD', self.userName, self.token,
-                              self.exM.data(index[0]), gr, dname, mtime])
+        msg = messenger.SRMsg(
+            [
+                "mRMD",
+                self.userName,
+                self.token,
+                self.exM.data(index[0]),
+                gr,
+                dname,
+                mtime,
+            ]
+        )
         # Check if no unmarked test, then request one.
         if self.moveToNextUnmarkedTest() is False:
             self.requestNext(launchAgain)
@@ -505,12 +535,14 @@ class MarkerClient(QDialog):
         # Get the current row of table
         index = self.ui.tableView.selectedIndexes()
         # Create the annotated image name
-        aname = os.path.join(self.workingDirectory,
-                             "G" + self.exM.data(index[0])[1:] + ".png")
+        aname = os.path.join(
+            self.workingDirectory, "G" + self.exM.data(index[0])[1:] + ".png"
+        )
         # If paper has is untouched or reverted, copy to annotated filename.
-        if(self.exM.data(index[1]) in ['untouched', 'reverted']):
-            shutil.copyfile("{}".format(
-                self.exM.getOriginalFile(index[0].row())), aname)
+        if self.exM.data(index[1]) in ["untouched", "reverted"]:
+            shutil.copyfile(
+                "{}".format(self.exM.getOriginalFile(index[0].row())), aname
+            )
             # Pass file to 'waitforflipper' - if returns true then changes
             # have been made - so update entry accordingly.
             if self.waitForFlipper(aname):
@@ -520,7 +552,7 @@ class MarkerClient(QDialog):
                 self.updateImage(index[0].row())
         else:
             # Cannot flip an annotated or marked paper - alert user
-            msg = ErrorMessage('Can only flip original or reverted test.')
+            msg = ErrorMessage("Can only flip original or reverted test.")
             msg.exec_()
 
     def selChanged(self, selnew, selold):
@@ -534,7 +566,7 @@ class MarkerClient(QDialog):
         self.DNF()
         # Then send a 'user closing' message - server will revoke
         # authentication token.
-        msg = messenger.SRMsg(['UCL', self.userName, self.token])
+        msg = messenger.SRMsg(["UCL", self.userName, self.token])
         # then close
         self.close()
 
@@ -545,5 +577,11 @@ class MarkerClient(QDialog):
             if self.exM.data(self.exM.index(r, 1)) != "marked":
                 # Tell server the code fo any paper that is not marked.
                 # server will put that back on the todo-pile.
-                msg = messenger.SRMsg(['mDNF', self.userName, self.token,
-                                      self.exM.data(self.exM.index(r, 0))])
+                msg = messenger.SRMsg(
+                    [
+                        "mDNF",
+                        self.userName,
+                        self.token,
+                        self.exM.data(self.exM.index(r, 0)),
+                    ]
+                )

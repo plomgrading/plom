@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai', 'Matt Coles']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
 __license__ = "GPLv3"
 
 import json
@@ -25,7 +25,7 @@ def readLastTime():
     global lastTime
     # If exists, read from json file.
     if os.path.isfile("lastTime.json"):
-        with open('lastTime.json') as data_file:
+        with open("lastTime.json") as data_file:
             lastTime = json.load(data_file)
     else:
         # set some reasonable defaults.
@@ -39,7 +39,7 @@ def readLastTime():
 
 def writeLastTime():
     # Write the options to json file.
-    fh = open("lastTime.json", 'w')
+    fh = open("lastTime.json", "w")
     fh.write(json.dumps(lastTime, indent=4, sort_keys=True))
     fh.close()
 
@@ -93,13 +93,13 @@ class Chooser(QWidget):
             # Run the marker client.
             pg = str(self.ui.pgSB.value()).zfill(2)
             v = str(self.ui.vSB.value())
-            self.marker = marker.MarkerClient(user, pwd, server, mport,
-                                              wport, pg, v, self)
+            self.marker = marker.MarkerClient(
+                user, pwd, server, mport, wport, pg, v, self
+            )
             self.marker.exec_()
         else:
             # Run the ID client.
-            self.identifier = identifier.IDClient(user, pwd, server,
-                                                  mport, wport)
+            self.identifier = identifier.IDClient(user, pwd, server, mport, wport)
             self.identifier.exec_()
 
     def runMarker(self):

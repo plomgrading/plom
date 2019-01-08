@@ -1,10 +1,16 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai', 'Matt Coles']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
 __license__ = "GPLv3"
 
-from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, \
-    QStackedWidget, QLabel, QSizePolicy
+from PyQt5.QtWidgets import (
+    QWidget,
+    QPushButton,
+    QGridLayout,
+    QStackedWidget,
+    QLabel,
+    QSizePolicy,
+)
 from PyQt5.QtCore import pyqtSignal, Qt
 
 
@@ -23,22 +29,27 @@ class MarkHandler(QWidget):
         self.numButtons = self.maxScore
         self.markButtons = {}
         # Styling for buttons
-        self.redStyle = "border: 2px solid #ff0000; background: "\
-            "qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, "\
+        self.redStyle = (
+            "border: 2px solid #ff0000; background: "
+            "qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, "
             "stop: 0.3 #ffcccc, stop: 0.7 #ffcccc, stop: 1 #ff0000);"
-        self.greenStyle = "border: 2px solid #00aaaa; background: "\
-            "qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00dddd, "\
+        )
+        self.greenStyle = (
+            "border: 2px solid #00aaaa; background: "
+            "qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00dddd, "
             "stop: 1 #00aaaa); "
+        )
         # By default we set style to marking-UP.
         self.style = "Up"
         # Set up a current-score/mark label at top of widget.
         self.scoreL = QLabel("")
         fnt = self.scoreL.font()
-        fnt.setPointSize(fnt.pointSize()*2)
+        fnt.setPointSize(fnt.pointSize() * 2)
         self.scoreL.setFont(fnt)
         self.scoreL.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.scoreL.setSizePolicy(QSizePolicy.MinimumExpanding,
-                                  QSizePolicy.MinimumExpanding)
+        self.scoreL.setSizePolicy(
+            QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+        )
 
     def setStyle(self, markStyle):
         """Sets the mark entry style - either total, up or down
@@ -66,14 +77,15 @@ class MarkHandler(QWidget):
             ncolumn = 2
 
         grid.addWidget(self.scoreL, 0, 0, 1, 2)
-        for k in range(0, self.numButtons+1):
+        for k in range(0, self.numButtons + 1):
             self.markButtons["p{}".format(k)] = QPushButton("+&{}".format(k))
-            grid.addWidget(self.markButtons["p{}".format(k)],
-                           k//ncolumn+1, k % ncolumn, 1, 1)
-            self.markButtons["p{}".format(k)].clicked.connect(
-                self.setDeltaMark)
+            grid.addWidget(
+                self.markButtons["p{}".format(k)], k // ncolumn + 1, k % ncolumn, 1, 1
+            )
+            self.markButtons["p{}".format(k)].clicked.connect(self.setDeltaMark)
             self.markButtons["p{}".format(k)].setSizePolicy(
-                QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+                QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+            )
 
         self.setLayout(grid)
         self.style = "Up"
@@ -89,14 +101,15 @@ class MarkHandler(QWidget):
             ncolumn = 2
 
         grid.addWidget(self.scoreL, 0, 0, 1, 2)
-        for k in range(1, self.numButtons+1):
+        for k in range(1, self.numButtons + 1):
             self.markButtons["m{}".format(k)] = QPushButton("-&{}".format(k))
-            grid.addWidget(self.markButtons["m{}".format(k)],
-                           k//ncolumn+1, k % ncolumn, 1, 1)
-            self.markButtons["m{}".format(k)].clicked.connect(
-                self.setDeltaMark)
+            grid.addWidget(
+                self.markButtons["m{}".format(k)], k // ncolumn + 1, k % ncolumn, 1, 1
+            )
+            self.markButtons["m{}".format(k)].clicked.connect(self.setDeltaMark)
             self.markButtons["m{}".format(k)].setSizePolicy(
-                QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+                QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+            )
 
         self.setLayout(grid)
         self.markSetSignal.emit(self.currentScore)
@@ -111,13 +124,13 @@ class MarkHandler(QWidget):
         else:
             ncolumn = 2
 
-        for k in range(0, self.maxScore+1):
+        for k in range(0, self.maxScore + 1):
             self.markButtons["{}".format(k)] = QPushButton("&{}".format(k))
-            grid.addWidget(self.markButtons["{}".format(k)],
-                           k//ncolumn, k % ncolumn)
+            grid.addWidget(self.markButtons["{}".format(k)], k // ncolumn, k % ncolumn)
             self.markButtons["{}".format(k)].clicked.connect(self.setTotalMark)
             self.markButtons["{}".format(k)].setSizePolicy(
-                QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+                QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+            )
 
         self.setLayout(grid)
         self.markSetSignal.emit(self.currentScore)
@@ -127,14 +140,14 @@ class MarkHandler(QWidget):
         self.pdmb.setStyleSheet("")
         self.pdmb = self.sender()
         self.pdmb.setStyleSheet(self.greenStyle)
-        self.currentDelta = int(self.sender().text().replace('&', ''))
+        self.currentDelta = int(self.sender().text().replace("&", ""))
         self.deltaSetSignal.emit(self.currentDelta)
 
     def setTotalMark(self):
         self.ptmb.setStyleSheet("")
         self.ptmb = self.sender()
         self.ptmb.setStyleSheet(self.redStyle)
-        self.currentScore = int(self.sender().text().replace('&', ''))
+        self.currentScore = int(self.sender().text().replace("&", ""))
         self.markSetSignal.emit(self.currentScore)
 
     def setMark(self, newScore):

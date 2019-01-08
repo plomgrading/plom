@@ -1,18 +1,27 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai', 'Matt Coles']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
 __license__ = "GPLv3"
 import os
 import json
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QDropEvent, QIcon, QPixmap, QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QAbstractItemView, QGridLayout, QMessageBox, \
-    QPushButton, QTableView, QToolButton, QWidget, QItemDelegate
+from PyQt5.QtWidgets import (
+    QAbstractItemView,
+    QGridLayout,
+    QMessageBox,
+    QPushButton,
+    QTableView,
+    QToolButton,
+    QWidget,
+    QItemDelegate,
+)
 
 
 class ErrorMessage(QMessageBox):
     """A simple error message pop-up"""
+
     def __init__(self, txt):
         super(ErrorMessage, self).__init__()
         self.setText(txt)
@@ -23,13 +32,14 @@ class SimpleMessage(QMessageBox):
     """A simple message pop-up with yes/no buttons and
     large font.
     """
+
     def __init__(self, txt):
         super(SimpleMessage, self).__init__()
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
         fnt = self.font()
-        fnt.setPointSize((fnt.pointSize()*3)//2)
+        fnt.setPointSize((fnt.pointSize() * 3) // 2)
         self.setFont(fnt)
 
 
@@ -37,6 +47,7 @@ class SimpleTableView(QTableView):
     """A table-view widget that emits annotateSignal when
     the user hits enter or return.
     """
+
     # This is picked up by the marker, lets it know to annotate
     annotateSignal = pyqtSignal()
 
@@ -59,6 +70,7 @@ class SimpleTableView(QTableView):
 
 class SimpleToolButton(QToolButton):
     """Specialise the tool button to be an icon above text."""
+
     def __init__(self, txt, icon):
         super(SimpleToolButton, self).__init__()
         self.setText(txt)
@@ -70,6 +82,7 @@ class SimpleToolButton(QToolButton):
 
 class CommentWidget(QWidget):
     """A widget wrapper around the marked-comment table."""
+
     def __init__(self, parent=None):
         # layout the widget - a table and add/delete buttons.
         super(CommentWidget, self).__init__()
@@ -77,8 +90,8 @@ class CommentWidget(QWidget):
         # the table has 2 cols, delta&comment.
         self.CL = SimpleCommentTable(self)
         grid.addWidget(self.CL, 1, 1, 2, 3)
-        self.addB = QPushButton('Add')
-        self.delB = QPushButton('Delete')
+        self.addB = QPushButton("Add")
+        self.delB = QPushButton("Delete")
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.delB, 3, 3)
         self.setLayout(grid)
@@ -140,6 +153,7 @@ class commentDelegate(QItemDelegate):
     if marking up then all negative delta are shaded
     if mark = 7/10 then any delta >= 4 is shaded.
     """
+
     def __init__(self):
         super(commentDelegate, self).__init__()
         self.currentMark = 0
@@ -191,7 +205,7 @@ class commentRowModel(QStandardItemModel):
                 value = "0"  # failed, so set to 0.
         # If its column 1 then convert '\n' into actual newline in the string
         elif index.column() == 1:
-            value = value.replace('\\n', '\n')
+            value = value.replace("\\n", "\n")
         return super().setData(index, value, role)
 
 
@@ -205,6 +219,7 @@ class SimpleCommentTable(QTableView):
     Dragdrop rows solution found at (and tweaked)
     https://stackoverflow.com/questions/26227885/drag-and-drop-rows-within-qtablewidget/43789304#43789304
     """
+
     # This is picked up by the annotator and tells is what is
     # the current comment and delta
     commentSignal = pyqtSignal(list)
@@ -233,7 +248,7 @@ class SimpleCommentTable(QTableView):
         # Use the row model defined above, to allow newlines inside comments
         self.cmodel = commentRowModel()
         # self.cmodel = QStandardItemModel()
-        self.cmodel.setHorizontalHeaderLabels(['delta', 'comment'])
+        self.cmodel.setHorizontalHeaderLabels(["delta", "comment"])
         self.setModel(self.cmodel)
         # When editor finishes make sure current row re-selected.
         self.cmodel.itemChanged.connect(self.handleClick)
@@ -251,16 +266,19 @@ class SimpleCommentTable(QTableView):
         self.cmodel.itemChanged.connect(self.resizeRowsToContents)
 
         # set these so that double-click enables edits, but not keypress.
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers
-                             | QAbstractItemView.DoubleClicked)
+        self.setEditTriggers(
+            QAbstractItemView.NoEditTriggers | QAbstractItemView.DoubleClicked
+        )
 
     def dropEvent(self, event: QDropEvent):
         # If drag and drop from self to self.
         if not event.isAccepted() and event.source() == self:
             # grab the row number of dragged row and its data
             row = self.selectedIndexes()[0].row()
-            rowData = [self.cmodel.index(row, 0).data(),
-                       self.cmodel.index(row, 1).data()]
+            rowData = [
+                self.cmodel.index(row, 0).data(),
+                self.cmodel.index(row, 1).data(),
+            ]
             # Get the row on which to drop
             dropRow = self.drop_on(event)
             # If we drag from earlier row, handle index after deletion
@@ -269,8 +287,9 @@ class SimpleCommentTable(QTableView):
             # Delete the original row
             self.cmodel.removeRow(row)
             # Insert it at drop position
-            self.cmodel.insertRow(dropRow, [QStandardItem(rowData[0]),
-                                            QStandardItem(rowData[1])])
+            self.cmodel.insertRow(
+                dropRow, [QStandardItem(rowData[0]), QStandardItem(rowData[1])]
+            )
             # Select the dropped row
             self.selectRow(dropRow)
             # Resize the rows - they were expanding after drags for some reason
@@ -297,10 +316,10 @@ class SimpleCommentTable(QTableView):
             return True
         # noinspection PyTypeChecker
         return (
-            rect.contains(pos, True) and
-            not (int(self.model().flags(index)) & Qt.ItemIsDropEnabled) and
-            pos.y() >= rect.center().y()
-            )
+            rect.contains(pos, True)
+            and not (int(self.model().flags(index)) & Qt.ItemIsDropEnabled)
+            and pos.y() >= rect.center().y()
+        )
 
     def populateTable(self):
         # Grab [delta, comment] from the list and put into table.
@@ -328,27 +347,35 @@ class SimpleCommentTable(QTableView):
         if index == 0:  # make sure something is selected
             self.currentItem()
         r = self.selectedIndexes()[0].row()
-        self.commentSignal.emit([self.cmodel.index(r, 0).data(),
-                                 self.cmodel.index(r, 1).data()])
+        self.commentSignal.emit(
+            [self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()]
+        )
 
     def loadCommentList(self):
         # grab comments from the json file,
         # if no file, then populate with some simple ones
-        if os.path.exists('signedCommentList.json'):
-            self.clist = json.load(open('signedCommentList.json'))
+        if os.path.exists("signedCommentList.json"):
+            self.clist = json.load(open("signedCommentList.json"))
         else:
-            self.clist = [(-1, 'algebra'), (-1, 'arithmetic'), (-1, 'huh?'),
-                          (0, 'be careful'),
-                          (1, 'good'), (1, 'very nice'), (1, 'yes')]
+            self.clist = [
+                (-1, "algebra"),
+                (-1, "arithmetic"),
+                (-1, "huh?"),
+                (0, "be careful"),
+                (1, "good"),
+                (1, "very nice"),
+                (1, "yes"),
+            ]
 
     def saveCommentList(self):
         # grab comments from the table, populate a list
         # export to json file.
         self.clist = []
         for r in range(self.cmodel.rowCount()):
-            self.clist.append((self.cmodel.index(r, 0).data(),
-                               self.cmodel.index(r, 1).data()))
-        with open('signedCommentList.json', 'w') as fname:
+            self.clist.append(
+                (self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data())
+            )
+        with open("signedCommentList.json", "w") as fname:
             json.dump(self.clist, fname)
 
     def addItem(self):
@@ -363,7 +390,7 @@ class SimpleCommentTable(QTableView):
         delti.setTextAlignment(Qt.AlignCenter)
         self.cmodel.appendRow([delti, txti])
         # select the new row
-        self.selectRow(self.cmodel.rowCount()-1)
+        self.selectRow(self.cmodel.rowCount() - 1)
         # fire up editor on the comment which is second selected index
         self.edit(self.selectedIndexes()[1])
 
