@@ -1,10 +1,11 @@
 __author__ = "Andrew Rechnitzer and Elvis Cai"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer and Elvis Cai"
-__credits__ = ['Andrew Rechnitzer', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Elvis Cai"]
 __license__ = "GPLv3"
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QWidget, QFileDialog
+
 # from PyQt5.QtGui import QIcon
 import sys
 import os
@@ -47,9 +48,9 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.addWidget(self.listWidget)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
-        spacerItem = QtWidgets.QSpacerItem(40, 20,
-                                           QtWidgets.QSizePolicy.Expanding,
-                                           QtWidgets.QSizePolicy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.horizontalLayout.addItem(spacerItem)
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setObjectName("label")
@@ -87,7 +88,7 @@ class Ui_MainWindow(object):
 
         for r in range(0, self.verNum):
             item = self.listWidget.item(r)
-            item.setText(_translate("MainWindow", "version "+str(r+1)))
+            item.setText(_translate("MainWindow", "version " + str(r + 1)))
 
         self.listWidget.setCurrentItem(self.listWidget.item(0))
 
@@ -104,9 +105,13 @@ class Ui_MainWindow(object):
         myBrowser.setGeometry(10, 10, 640, 480)
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fname,_ = QFileDialog.getOpenFileName(
-            myBrowser, "QFileDialog.getOpenFileName()",
-            "", "Pdf Files (*.pdf)", options=options)
+        fname, _ = QFileDialog.getOpenFileName(
+            myBrowser,
+            "QFileDialog.getOpenFileName()",
+            "",
+            "Pdf Files (*.pdf)",
+            options=options,
+        )
         if fname:
             oldText = self.listWidget.currentItem().text()[0:9]
             for x in versions.values():
@@ -118,15 +123,15 @@ class Ui_MainWindow(object):
             newText = oldText + ": " + fname
             self.listWidget.currentItem().setText(newText)
 
-            if(self.listWidget.currentRow() < self.verNum):
-                newRow = self.listWidget.currentRow()+1
+            if self.listWidget.currentRow() < self.verNum:
+                newRow = self.listWidget.currentRow() + 1
                 self.listWidget.setCurrentRow(newRow)
 
     def errorManager(self, num):
         print("in error manager")
         switcher = {
             1: "Please do not use the same file twice",
-            2: "Please match all files"
+            2: "Please match all files",
         }
         errormsg = switcher.get(num, "Invalid")
         error = errorMessage(errormsg)
@@ -139,9 +144,9 @@ class Ui_MainWindow(object):
             for i in range(0, self.verNum):
                 item = self.listWidget.item(i)
                 thisItemText = item.text()
-                this_old_name_loc = thisItemText.split(' ')[2]
+                this_old_name_loc = thisItemText.split(" ")[2]
                 # now rename the file
-                newFileName = "version" + str(i+1) + ".pdf"
+                newFileName = "version" + str(i + 1) + ".pdf"
                 newPathName = os.path.join("sourceVersions", newFileName)
                 try:
                     shutil.copy2(this_old_name_loc, newPathName)

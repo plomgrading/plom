@@ -22,38 +22,36 @@ pageVersions = eval(sys.argv[5])
 
 # Command line parameters to imagemagick's mogrify
 # puts a frame around the image.
-mogParams = " -mattecolor black -frame 1x1 -background \"#FFFFFF\" " \
-    "-flatten"
+mogParams = ' -mattecolor black -frame 1x1 -background "#FFFFFF" ' "-flatten"
 
 # Which pdfsource file from which to extract each page version
 V = {}
-for v in range(1, versions+1):
+for v in range(1, versions + 1):
     V[v] = fitz.open("sourceVersions/version{}.pdf".format(v))
 
 # Create test pdf as "exam"
 exam = fitz.open()
 # Insert the relevant page-versions into this pdf.
-for p in range(1, length+1):
+for p in range(1, length + 1):
     # Pymupdf starts pagecounts from 0 rather than 1. So offset things.
-    exam.insertPDF(V[pageVersions[str(p)]], from_page=p-1,
-                   to_page=p-1, start_at=-1)
+    exam.insertPDF(V[pageVersions[str(p)]], from_page=p - 1, to_page=p - 1, start_at=-1)
 
 # Start to decorate the pages with qr-codes etc
 # Get page width and height
 pW = exam[0].bound().width
 pH = exam[0].bound().height
 # create a box for the test number near top-centre
-rTC = fitz.Rect(pW//2-50, 20, pW // 2 + 50, 40)
+rTC = fitz.Rect(pW // 2 - 50, 20, pW // 2 + 50, 40)
 # put marks at top left/right so students don't write near
 # staple or near where client will stamp marks
 # create two "do not write" rectangles accordingly
 rDNW0 = fitz.Rect(15, 15, 90, 90)
-rDNW1 = fitz.Rect(pW-90, 15, pW-15, 90)
+rDNW1 = fitz.Rect(pW - 90, 15, pW - 15, 90)
 # 70x70 page-corner boxes for the QR codes
 rNW = fitz.Rect(15, 20, 85, 90)
-rNE = fitz.Rect(pW-85, 20, pW-15, 90)
-rSW = fitz.Rect(15, pH-90, 85, pH-20)
-rSE = fitz.Rect(pW-85, pH-90, pW-15, pH-20)
+rNE = fitz.Rect(pW - 85, 20, pW - 15, 90)
+rSW = fitz.Rect(15, pH - 90, 85, pH - 20)
+rSE = fitz.Rect(pW - 85, pH - 90, pW - 15, pH - 20)
 
 # Build all relevant pngs in a temp directory
 with tempfile.TemporaryDirectory() as tmpDir:
@@ -62,47 +60,53 @@ with tempfile.TemporaryDirectory() as tmpDir:
     dnw0File = os.path.join(tmpDir, "dnw0.png")
     dnw1File = os.path.join(tmpDir, "dnw1.png")
     # create the testname QR
-    nameQR = pyqrcode.create('N.{}'.format(name), error='H')
+    nameQR = pyqrcode.create("N.{}".format(name), error="H")
     # write it to png
     nameQR.png(nameFile, scale=4)
     # put a nice border around it.
     os.system("mogrify {} {}".format(mogParams, nameFile))
     # make a little grey triangle with the test name
     # put this in corner where staple is
-    cmd = "convert -size 116x58 xc:white -draw \"stroke black fill grey "\
-        "path \'M 57,0  L 0,57  L 114,57 L 57,0 Z\'\"  -gravity south "\
-        "-annotate +0+4 \'{}\' -rotate -45 -trim {}".format(name, dnw0File)
+    cmd = (
+        'convert -size 116x58 xc:white -draw "stroke black fill grey '
+        "path 'M 57,0  L 0,57  L 114,57 L 57,0 Z'\"  -gravity south "
+        "-annotate +0+4 '{}' -rotate -45 -trim {}".format(name, dnw0File)
+    )
     os.system(cmd)
     # and one for the other corner (back of page) in other orientation
-    cmd = "convert -size 116x58 xc:white -draw \"stroke black fill grey "\
-        "path \'M 57,0  L 0,57  L 114,57 L 57,0 Z\'\"  -gravity south "\
-        "-annotate +0+4 \'{}\' -rotate +45 -trim {}".format(name, dnw1File)
+    cmd = (
+        'convert -size 116x58 xc:white -draw "stroke black fill grey '
+        "path 'M 57,0  L 0,57  L 114,57 L 57,0 Z'\"  -gravity south "
+        "-annotate +0+4 '{}' -rotate +45 -trim {}".format(name, dnw1File)
+    )
     os.system(cmd)
 
     # create QR codes and other stamps for each test/page/version
     pageQRs = {}
     pageFile = {}
     tpFile = {}
-    for p in range(1, length+1):
+    for p in range(1, length + 1):
         # the TPV code for each test/page/version
-        tpv = 't{}p{}v{}'.format(str(test).zfill(4), str(p).zfill(2),
-                                 pageVersions[str(p)])
+        tpv = "t{}p{}v{}".format(
+            str(test).zfill(4), str(p).zfill(2), pageVersions[str(p)]
+        )
         # the corresponing QR code
-        pageQRs[p] = pyqrcode.create(tpv, error='H')
+        pageQRs[p] = pyqrcode.create(tpv, error="H")
         # save it in the associated file
         pageFile[p] = os.path.join(tmpDir, "page{}.png".format(p))
         pageQRs[p].png(pageFile[p], scale=4)
         # put a border around it
         os.system("mogrify {} {}".format(mogParams, pageFile[p]))
         # a file for the test/page stamp in top-centre of page
-        tpFile[p] = os.path.join(tmpDir,
-                                 "t{}p{}.png".format(str(test).zfill(4),
-                                                     str(p).zfill(2)))
+        tpFile[p] = os.path.join(
+            tmpDir, "t{}p{}.png".format(str(test).zfill(4), str(p).zfill(2))
+        )
         # create the test/page stamp using imagemagick
-        os.system("convert -pointsize 36 -size 200x42 caption:'{}.{}' -trim "
-                  "-gravity Center -extent 200x42 -bordercolor black "
-                  "-border 1 {}".format(str(test).zfill(4),
-                                        str(p).zfill(2), tpFile[p]))
+        os.system(
+            "convert -pointsize 36 -size 200x42 caption:'{}.{}' -trim "
+            "-gravity Center -extent 200x42 -bordercolor black "
+            "-border 1 {}".format(str(test).zfill(4), str(p).zfill(2), tpFile[p])
+        )
     # After creating all of the QRcodes etc we can put them onto
     # the actual pdf pages as pixmaps using pymupdf
     # read the test-name QR and DNW triangles in to pymupdf
@@ -111,11 +115,11 @@ with tempfile.TemporaryDirectory() as tmpDir:
     dnw1 = fitz.Pixmap(dnw1File)
     for p in range(length):
         # read in the test/page stamp
-        testnumber = fitz.Pixmap(tpFile[p+1])
+        testnumber = fitz.Pixmap(tpFile[p + 1])
         # put it at centre top each page
         exam[p].insertImage(rTC, pixmap=testnumber, overlay=True)
         # grab the tpv QRcode for current page
-        qrPage = fitz.Pixmap(pageFile[p+1])
+        qrPage = fitz.Pixmap(pageFile[p + 1])
         if p % 2 == 0:
             # if even page then stamp DNW near staple
             exam[p].insertImage(rDNW0, pixmap=dnw0, overlay=True)
