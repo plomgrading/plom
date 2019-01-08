@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 from collections import defaultdict
@@ -9,8 +9,9 @@ import json
 import os
 import sqlite3
 import sys
+
 # this allows us to import from ../resources
-sys.path.append('..')
+sys.path.append("..")
 from resources.testspecification import TestSpecification
 
 # Do we need this?
@@ -28,7 +29,7 @@ def checkMarked(n):
     # 5=version, 6=annotatedFile, 7=status, 8=user,
     # 9=time, 10=mark, 11=timeSpentMarking
     for row in curMark.execute("SELECT * FROM groupimage WHERE number='{}'".format(n)):
-        if row[7] != 'Marked':
+        if row[7] != "Marked":
             return False
         else:
             # Save the version and mark in the dictionary.
@@ -46,7 +47,7 @@ def checkIDed(n):
     # 0=index, 1=TestNumber, 2=tgv, 3=status, 4=user
     # 5=time, 6=StudentID, 7=StudentName.
     for row in curID.execute("SELECT * FROM idimage WHERE number = '{}'".format(n)):
-        if row[3] != 'Identified':
+        if row[3] != "Identified":
             return False
         else:
             # store StudentID and StudentName
@@ -59,8 +60,8 @@ def readExamsGrouped():
     Store in examsGrouped.
     """
     global examsGrouped
-    if(os.path.exists("../resources/examsGrouped.json")):
-        with open('../resources/examsGrouped.json') as data_file:
+    if os.path.exists("../resources/examsGrouped.json"):
+        with open("../resources/examsGrouped.json") as data_file:
             examsGrouped = json.load(data_file)
 
 
@@ -91,7 +92,7 @@ def writeExamsCompleted():
     """Dump a json file of all completed (ie marked+ID'd) exams.
     Each entry is just true/false.
     """
-    fh = open("../resources/examsCompleted.json", 'w')
+    fh = open("../resources/examsCompleted.json", "w")
     fh.write(json.dumps(examsCompleted, indent=2, sort_keys=True))
     fh.close()
 
@@ -102,17 +103,21 @@ def writeMarkCSV():
     pageGroup, the total mark, and finally the version for each pagegroup.
     """
     # Construct the header
-    head = ['StudentID', 'StudentName', 'TestNumber']
-    for pg in range(1, spec.getNumberOfGroups()+1):
-        head.append('PageGroup{} Mark'.format(pg))
-    head.append('Total')
-    for pg in range(1, spec.getNumberOfGroups()+1):
-        head.append('PageGroup{} Version'.format(pg))
+    head = ["StudentID", "StudentName", "TestNumber"]
+    for pg in range(1, spec.getNumberOfGroups() + 1):
+        head.append("PageGroup{} Mark".format(pg))
+    head.append("Total")
+    for pg in range(1, spec.getNumberOfGroups() + 1):
+        head.append("PageGroup{} Version".format(pg))
     # Write a tab-delimited csv (should that be a tsv?)
-    with open("testMarks.csv", 'w') as csvfile:
-        testWriter = csv.DictWriter(csvfile, fieldnames=head,
-                                    delimiter='\t', quotechar="\"",
-                                    quoting=csv.QUOTE_NONNUMERIC)
+    with open("testMarks.csv", "w") as csvfile:
+        testWriter = csv.DictWriter(
+            csvfile,
+            fieldnames=head,
+            delimiter="\t",
+            quotechar='"',
+            quoting=csv.QUOTE_NONNUMERIC,
+        )
         testWriter.writeheader()
         # Look through all the completed exams and write only completed ones.
         for n in sorted(examsCompleted.keys()):
@@ -123,17 +128,15 @@ def writeMarkCSV():
             # Construct the row for output.
             ns = str(n)
             row = dict()
-            row['StudentID'] = examsIDed[ns][0]
-            row['StudentName'] = examsIDed[ns][1]
-            row['TestNumber'] = n
+            row["StudentID"] = examsIDed[ns][0]
+            row["StudentName"] = examsIDed[ns][1]
+            row["TestNumber"] = n
             tot = 0
-            for pg in range(1, spec.getNumberOfGroups()+1):
+            for pg in range(1, spec.getNumberOfGroups() + 1):
                 tot += groupImagesMarked[ns][pg][1]
-                row['PageGroup{} Mark'.format(pg)] = \
-                    groupImagesMarked[ns][pg][1]
-                row['PageGroup{} Version'.format(pg)] = \
-                    groupImagesMarked[ns][pg][0]
-            row['Total'] = tot
+                row["PageGroup{} Mark".format(pg)] = groupImagesMarked[ns][pg][1]
+                row["PageGroup{} Version".format(pg)] = groupImagesMarked[ns][pg][0]
+            row["Total"] = tot
             # write the row to the csv.
             testWriter.writerow(row)
 
@@ -148,10 +151,10 @@ def writeExamsIdentified():
     # 0=index, 1=TestNumber, 2=tgv, 3=status, 4=user
     # 5=time, 6=StudentID, 7=StudentName.
     for row in curID.execute("SELECT * FROM idimage"):
-        if row[3] == 'Identified':
+        if row[3] == "Identified":
             exid[row[1]] = [row[2], row[6], row[7], row[4]]
     # dump to json in resources directory.
-    eg = open("../resources/examsIdentified.json", 'w')
+    eg = open("../resources/examsIdentified.json", "w")
     eg.write(json.dumps(exid, indent=2, sort_keys=True))
     eg.close()
 
@@ -161,16 +164,16 @@ def writeExamsMarked():
     Each entry is indexed  by testnumber and pageGroup.
     It contains, version, mark and user who marked it.
     """
-    exmarked=defaultdict(lambda: defaultdict(list))
+    exmarked = defaultdict(lambda: defaultdict(list))
     # A row of the table in the Mark DB is
     # 0=index, 1=TGV, 2=originalFile, 3=testnumber, 4=pageGroup
     # 5=version, 6=annotatedFile, 7=status, 8=user,
     # 9=time, 10=mark, 11=timeSpentMarking
     for row in curMark.execute("SELECT * FROM groupimage"):
-        if row[7] == 'Marked':
-            exmarked[row[3]][row[4]]=[row[5], row[10], row[8]]
+        if row[7] == "Marked":
+            exmarked[row[3]][row[4]] = [row[5], row[10], row[8]]
     # dump to json in resources directory.
-    eg = open("../resources/groupImagesMarked.json", 'w')
+    eg = open("../resources/groupImagesMarked.json", "w")
     eg.write(json.dumps(exmarked, indent=2, sort_keys=True))
     eg.close()
 
@@ -182,10 +185,10 @@ spec.readSpec()
 readExamsGrouped()
 # Access the databases
 # Open the marks database (readonly)
-markdb = sqlite3.connect('file:../resources/test_marks.db?mode=ro', uri=True)
+markdb = sqlite3.connect("file:../resources/test_marks.db?mode=ro", uri=True)
 curMark = markdb.cursor()
 # Open the ID database (readonly)
-iddb = sqlite3.connect('file:../resources/identity.db?mode=ro', uri=True)
+iddb = sqlite3.connect("file:../resources/identity.db?mode=ro", uri=True)
 curID = iddb.cursor()
 # Create dictionaries for the marked groups, ID'd papers and completed tests.
 groupImagesMarked = defaultdict(lambda: defaultdict(list))

@@ -1,14 +1,15 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 from collections import defaultdict
 import json
 import os
 import sys
+
 # this allows us to import from ../resources
-sys.path.append('..')
+sys.path.append("..")
 from resources.testspecification import TestSpecification
 
 
@@ -17,8 +18,8 @@ def readExamsGrouped():
     Indexed by [testnumber][pagegroup], stores mark and version number.
     """
     global examsGrouped
-    if(os.path.exists("../resources/examsGrouped.json")):
-        with open('../resources/examsGrouped.json') as data_file:
+    if os.path.exists("../resources/examsGrouped.json"):
+        with open("../resources/examsGrouped.json") as data_file:
             examsGrouped = json.load(data_file)
 
 
@@ -27,8 +28,8 @@ def readExamsIDed():
     Stores the studentID and StudentName along with testnumber.
     """
     global examsIDed
-    if(os.path.exists("../resources/examsIdentified.json")):
-        with open('../resources/examsIdentified.json') as data_file:
+    if os.path.exists("../resources/examsIdentified.json"):
+        with open("../resources/examsIdentified.json") as data_file:
             examsIDed = json.load(data_file)
 
 
@@ -41,17 +42,21 @@ def imageList(n):
     # list of image files for the reassembly
     imgl = []
     # zeroth is the ID-group
-    imgl.append("../scanAndGroup/readyForMarking/idgroup/{}.png"
-                .format(examsGrouped[n][0]))
+    imgl.append(
+        "../scanAndGroup/readyForMarking/idgroup/{}.png".format(examsGrouped[n][0])
+    )
     # then the grouped pages
     for pg in range(spec.getNumberOfGroups()):
         # note pg is offset by 1.
         # get the version as last digit of the tgv code:
-        v = examsGrouped[n][pg+1][1:][-1]
+        v = examsGrouped[n][pg + 1][1:][-1]
         # groupimage from the approrpiate subdirectory
-        imgl.append("../scanAndGroup/readyForMarking/group_{}/version_{}/{}.png"
-                    .format(str(pg+1).zfill(2), v, examsGrouped[n][pg+1]))
-    return(imgl)
+        imgl.append(
+            "../scanAndGroup/readyForMarking/group_{}/version_{}/{}.png".format(
+                str(pg + 1).zfill(2), v, examsGrouped[n][pg + 1]
+            )
+        )
+    return imgl
 
 
 # read the test spec
@@ -63,8 +68,11 @@ readExamsGrouped()
 # Open a file for the list of commands to process to reassemble papers
 fh = open("./commandlist.txt", "w")
 for n in sorted(examsIDed.keys()):
-    fh.write("python3 testReassembler_only_ided.py {} \"{}\"\n"\
-             .format(examsIDed[n][1], imageList(n)))
+    fh.write(
+        'python3 testReassembler_only_ided.py {} "{}"\n'.format(
+            examsIDed[n][1], imageList(n)
+        )
+    )
 fh.close()
 # pipe the commandlist into gnu-parallel
 os.system("parallel --bar <commandlist.txt")

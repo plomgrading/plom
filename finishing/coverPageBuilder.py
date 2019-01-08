@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 import sys
@@ -13,7 +13,8 @@ from weasyprint import HTML, CSS
 # all as a list.
 arg = eval(sys.argv[1])
 # A simple CSS header to style the cover page nicely.
-css = CSS(string='''
+css = CSS(
+    string="""
 @page {
   size: Letter; /* Change from the default size of A4 */
   margin: 2.5cm; /* Set margin on each page */
@@ -27,7 +28,8 @@ table, th, td {
     padding: 5px;
     text-align: center;
 }
-''')
+"""
+)
 # Create html page of name ID etc and table of marks
 htmlText = "<h3>Results</h3>\n"
 htmlText += "<ul>"
@@ -45,14 +47,17 @@ for x in range(3, len(arg)):
     totalMark += y[2]
     maxPossible += y[3]
     # Row of mark table with Group, Version, Mark, MaxPossibleMark
-    htmlText += "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"\
-        .format(y[0], y[1], y[2], y[3])
+    htmlText += "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n".format(
+        y[0], y[1], y[2], y[3]
+    )
 # Final total mark out of maxPossible total mark.
-htmlText += "<tr><td>total</td><td>&middot;</td><td>{}</td><td>{}</td>\n"\
-    .format(totalMark, maxPossible)
+htmlText += "<tr><td>total</td><td>&middot;</td><td>{}</td><td>{}</td>\n".format(
+    totalMark, maxPossible
+)
 htmlText += "</table>\n"
 # Pipe the htmltext into weasyprint.
 cover = HTML(string=htmlText)
 # Write out the coverpage to PDF call it cover_X.pdf where X=StudentID.
-cover.write_pdf("coverPages/cover_{}.pdf".format(str(arg[0]).zfill(4)),
-                stylesheets=[css])
+cover.write_pdf(
+    "coverPages/cover_{}.pdf".format(str(arg[0]).zfill(4)), stylesheets=[css]
+)

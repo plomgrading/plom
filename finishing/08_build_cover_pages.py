@@ -1,14 +1,15 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 from collections import defaultdict
 import json
 import os
 import sys
+
 # this allows us to import from ../resources
-sys.path.append('..')
+sys.path.append("..")
 from resources.testspecification import TestSpecification
 
 
@@ -17,8 +18,8 @@ def readExamsCompleted():
     Store in examsCompleted
     """
     global examsCompleted
-    if(os.path.exists("../resources/examsCompleted.json")):
-        with open('../resources/examsCompleted.json') as data_file:
+    if os.path.exists("../resources/examsCompleted.json"):
+        with open("../resources/examsCompleted.json") as data_file:
             examsCompleted = json.load(data_file)
 
 
@@ -27,8 +28,8 @@ def readExamsIDed():
     Stores the studentID and StudentName along with testnumber.
     """
     global examsIDed
-    if(os.path.exists("../resources/examsIdentified.json")):
-        with open('../resources/examsIdentified.json') as data_file:
+    if os.path.exists("../resources/examsIdentified.json"):
+        with open("../resources/examsIdentified.json") as data_file:
             examsIDed = json.load(data_file)
 
 
@@ -37,8 +38,8 @@ def readGroupImagesMarked():
     Indexed by [testnumber][pagegroup], stores mark and version number.
     """
     global groupImagesMarked
-    if(os.path.exists("../resources/groupImagesMarked.json")):
-        with open('../resources/groupImagesMarked.json') as data_file:
+    if os.path.exists("../resources/groupImagesMarked.json"):
+        with open("../resources/groupImagesMarked.json") as data_file:
             groupImagesMarked = json.load(data_file)
 
 
@@ -46,7 +47,7 @@ def extractMarks(n):
     """Grab the marks for testnumber n and store in examScores as list of
     triples [group, version, mark]
     """
-    for pg in range(1,spec.getNumberOfGroups()+1):
+    for pg in range(1, spec.getNumberOfGroups() + 1):
         pgs = str(pg)
         v = groupImagesMarked[n][pgs][0]
         examScores[n].append([pg, v, groupImagesMarked[n][pgs][1]])
@@ -67,7 +68,7 @@ def buildCoverPage(n):
     for x in examScores[n]:
         arg.append([x[0], x[1], x[2], spec.Marks[x[0]]])
     # return string of the command.
-    return("python3 coverPageBuilder.py \"{}\"\n".format(arg))
+    return 'python3 coverPageBuilder.py "{}"\n'.format(arg)
 
 
 # read test specification
@@ -86,8 +87,7 @@ for n in sorted(examsCompleted.keys()):
     s = "" + n
     if examsCompleted[n]:
         # If coverpage hasn't been built before
-        if not os.path.isfile("./coverPages/cover_{}.pdf"
-                              .format(str(n).zfill(4))):
+        if not os.path.isfile("./coverPages/cover_{}.pdf".format(str(n).zfill(4))):
             # extract the info for test n
             extractMarks(n)
             # write the corresponding command to file.

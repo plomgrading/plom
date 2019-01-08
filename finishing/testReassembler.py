@@ -1,12 +1,13 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 import fitz
 import os
 import sys
 import tempfile
+
 # takes StudentID and list of group image files as args.
 # 0th item on list is the coverpage.
 # other items are the groupimage files.
@@ -15,7 +16,7 @@ imgl = eval(sys.argv[2])
 # output as test_<StudentID>.pdf
 outname = "reassembled/test_{}.pdf".format(sid)
 # work on a tempfile
-with tempfile.NamedTemporaryFile(suffix='.pdf') as tf:
+with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
     # use imagemagick to glob the group-images together into a pdf.
     # first build the imagemagick command.
     cmd = "convert -quality 100"

@@ -1,19 +1,20 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__credits__ = ['Andrew Rechnitzer', 'Colin MacDonald', 'Elvis Cai']
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
 import os
 import sys
 import tempfile
 import shutil
+
 # takes StudentID and list of group image files as args.
 sid = eval(sys.argv[1])
 imgl = eval(sys.argv[2])
 # output to indicate file
 outname = "reassembled_ID_but_not_marked/test_{}.pdf".format(sid)
 # work on a tempfile
-with tempfile.NamedTemporaryFile(suffix='.pdf') as tf:
+with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
     # use imagemagick to glob together the groupimages
     # build the command
     cmd = "convert -quality 100"
