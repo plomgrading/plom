@@ -35,7 +35,7 @@ button {
 		}
 		var code = document.getElementById('studentCode').value;
 		code = code.replace(/,/g,'')
-		if( !code || code.length!=5 ) {
+		if( !code || code.length!=12 ) {
 			alert("Invalid code!");
 			return;
 		}
@@ -67,7 +67,7 @@ button {
 <br>
 <div>
 	<label class="label" for="studentCode">Code: </label>
-	<input id="studentCode" name="studentCode" type="text" maxlength="6" />
+	<input id="studentCode" name="studentCode" type="text" />
 </div>
 <br>
 <div>
