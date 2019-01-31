@@ -30,7 +30,7 @@ We have a secret code for each student.  We want to upload these numbers to Canv
       1.  Create new assignment under Assignments.
       2.  Made it a new group.
       3.  Check "do not count towards the grade"
-      3.  Set the maximum points to `99999`.
+      3.  Set the maximum points to `999999999999` (twelve nines).
           This might look slightly different...
       4.  Edit the assignment to say something non-scary so no one
           thinks its part of their score.
