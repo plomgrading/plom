@@ -28,18 +28,20 @@ SALTSTR = 'salt'
 
 def myhash(s, salt=None):
     """
-    Hash a string to a 5-digit code
+    Hash a string to a 12-digit code
 
     Combine the string with a salt string, compute the md5sum, grab
-    the first few digits as an integer between 10000 and 99999.
+    the first few digits as an integer between 100000000000 and 999999999999.
     """
     salt = SALTSTR if salt is None else salt
     hashthis = s + salt
     h = hashlib.md5(hashthis.encode('utf-8')).hexdigest()
-    return str(int(h[0:8], 16) % 89999 + 10000)
+    b = 899_999_999_999
+    l = 100_000_000_000
+    return str(int(h, 16) % b + l)
 
 
 def test_hash():
-    assert myhash('12345678', salt='salt') == '58415'
-    assert myhash('12345678', salt='salty') == '50654'
-    assert myhash('12345679', salt='salt') == '85054'
+    assert myhash('12345678', salt='salt') == '351525727036'
+    assert myhash('12345678', salt='salty') == '782385405730'
+    assert myhash('12345679', salt='salt') == '909470548567'
