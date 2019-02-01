@@ -39,7 +39,7 @@ def canvas_csv_add_return_codes(canvas_fromfile, canvas_tofile):
 
             for i, row in enumerate(reader):
                 if i == 0:
-                    assert row[0] == 'Student'
+                    assert row[0] == 'Student', "First row should start with 'Student'"
                     # find index of the student number
                     rsn = row.index('SIS User ID')
                     # find the "return code (#####)" column
@@ -48,7 +48,7 @@ def canvas_csv_add_return_codes(canvas_fromfile, canvas_tofile):
                     rcode, = tmp
                 elif i == 1 or i == 2:
                     # two lines of junk
-                    assert row[0] == '' or 'Points Possible' in row[0]
+                    assert row[0] == '' or 'Points Possible' in row[0], "2nd and 3rd rows should be part of the header"
                 else:
                     name = row[0]
                     sn = row[rsn]
@@ -56,8 +56,8 @@ def canvas_csv_add_return_codes(canvas_fromfile, canvas_tofile):
                     if name == 'Test Student':
                         dorow = False
                     if dorow:
-                        assert len(name) > 0
-                        assert len(sn) == 8
+                        assert len(name) > 0, "Student name is empty"
+                        assert len(sn) == 8, "Student number is not 8 characters"
                         code = myhash(sn)
                         oldcode = row[rcode]
                         # strip commas added by canvas
