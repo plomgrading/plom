@@ -113,5 +113,19 @@ def canvas_csv_check_pdf(sns):
 
 
 if __name__ == '__main__':
+    print("""
+    *** Warning: this script is "alpha" software at best! ***
+
+    It inputs a .csv file from Canvas and outputs a new .csv file with
+    the "return code (<int>)" column filled-in.  Any existing entries
+    are checked to confirm correctness.
+
+    This code is probably buggy and is certainly picky about the
+    formatting of the csv file.  It may fail with cryptic errors.  You
+    will want to have read "docs/returning_papers.md".  You should
+    consider the output quite carefully both before uploading to
+    Canvas and during the upload process.  Consider yourself warned...
+    """)
+    input('Press Enter to continue...')
     sns = canvas_csv_add_return_codes(canvas_fromfile, canvas_tofile)
     canvas_csv_check_pdf(sns)
