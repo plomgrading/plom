@@ -60,10 +60,12 @@ def canvas_csv_add_return_codes(canvas_fromfile, canvas_tofile):
                         assert len(sn) == 8, "Student number is not 8 characters"
                         code = myhash(sn)
                         oldcode = row[rcode]
-                        # strip commas added by canvas
-                        oldcode = oldcode.replace(',','')
-                        # TODO, why?  was this just stupid heat-of-the-moment way to strip ".00"?
-                        oldcode = str(int(float(oldcode)))
+                        if (oldcode):
+                            # strip commas and trailing decimals added by canvas
+                            oldcode = oldcode.replace(',', '')
+                            # TODO: regex to remove all trailing zeros would be less fragile
+                            oldcode = oldcode.replace('.00', '')
+                            oldcode = oldcode.replace('.0', '')
                         if oldcode == code:
                             sns[sn] = code
                             print('  row {0}: already had (correct) code {1} for {2} "{3}"'.format( \
