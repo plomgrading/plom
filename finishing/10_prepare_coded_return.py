@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; -*-
 #
-# Copyright (C) 2018 Colin B. Macdonald <cbm@m.fsf.org>
+# Copyright (C) 2018-2019 Colin B. Macdonald <cbm@m.fsf.org>
 #
 # This file is part of MLP.
 #
