@@ -324,7 +324,8 @@ class Server(object):
         back from the webdav and into markedPapers.
         """
         # This should really use path-join.
-        shutil.move(davDirectory + "/" + fname, "markedPapers")
+        shutil.move(davDirectory + "/" + fname, "markedPapers/" + fname)
+        # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
 
     def removeFile(self, davfn):
         """Once a file has been grabbed by the client, delete it from the webdav.
