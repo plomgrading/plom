@@ -129,8 +129,4 @@ System to generate tests from a small number of similar source versions
 ## Returning tests.
 * Canvas does not, as yet, allow us to bulk upload documents for students (one for each student). Perhaps a canvas-workaround would be to upload links for students, where the file name for each paper is called something like "exam_X_Y.pdf" where X is the student number and Y is a random (or md5-sum generated) string.
 
-* Alternatively, we have been using the following system to return scanned papers without heavy authentication stuff - we got the idea from physics.
-  * Files are again named something like "exam_X_Y.pdf" where X is the student number, and Y is an "exam code".
-  * The exam codes are uploading into canvas' gradebook so students can access them.
-  * The pdfs are then put on some webserver and students directed to a "return-my-paper" webpage.
-  * The webpage is just a simple bit of javascript (or similar) which takes as input a student number and an exam code. It just concatenates these to make the file name and returns the appropriate link (if it exists).
+* Alternatively, we have been using a system documented in `docs/returning_papers.md` where students get a "return code" from Canvas that they then type into a different webpage to obtain their exam.
