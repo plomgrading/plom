@@ -304,10 +304,12 @@ class MarkerClient(QDialog):
             return
         fname = os.path.join(self.workingDirectory, "markedList.txt")
         messenger.getFileDav(msg[1], fname)
+        # Ack that test received - server then deletes it from webdav
+        msg = messenger.SRMsg(["mDWF", self.userName, self.token, msg[1]])
+        # Add those marked papers to our paper-list
         with open(fname) as json_file:
             markedList = json.load(json_file)
             for x in markedList:
-                print("Add {} to list".format(x))
                 self.addTGVToList(
                     TestPageGroup(x[0], fname="", stat="marked", mrk=x[2], mtime=x[3]),
                     update=False,
@@ -328,14 +330,21 @@ class MarkerClient(QDialog):
         msg = messenger.SRMsg(["mGGI", self.userName, self.token, tgv])
         if msg[0] == "ERR":
             return
-        fname = os.path.join(self.workingDirectory, msg[1] + ".png")
-        messenger.getFileDav(msg[2], fname)
+        fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
+        aname = os.path.join(self.workingDirectory, "G{}.png".format(msg[1][1:]))
+        tfname = msg[2]  # the temp original image file on webdav
+        taname = msg[3]  # the temp annotated image file on webdav
+        messenger.getFileDav(tfname, fname)
+        # got original file so ask server to remove it.
+        msg = messenger.SRMsg(["mDWF", self.userName, self.token, tfname])
         self.exM.paperList[r].originalFile = fname
-        if msg[3] is None:
+        # If there is an annotated image then get it.
+        if taname is None:
             return
-        fname = os.path.join(self.workingDirectory, "G{}.png".format(msg[1][1:]))
-        messenger.getFileDav(msg[3], fname)
-        self.exM.paperList[r].annotatedFile = fname
+        messenger.getFileDav(taname, aname)
+        # got annotated image so ask server to remove it.
+        msg = messenger.SRMsg(["mDWF", self.userName, self.token, taname])
+        self.exM.paperList[r].annotatedFile = aname
 
     def updateImage(self, r=0):
         # Here the system should check if imagefiles exist and grab if needed.
@@ -370,7 +379,7 @@ class MarkerClient(QDialog):
         # Add the page-group to the list of things to mark
         self.addTGVToList(TestPageGroup(msg[1], fname))
         # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg(["mGTP", self.userName, self.token, tname])
+        msg = messenger.SRMsg(["mDWF", self.userName, self.token, tname])
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         # ask server for marking-count update

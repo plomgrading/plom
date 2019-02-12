@@ -110,14 +110,13 @@ servCmd = {
     "iGCL": "IDgotClassList",
     "mDNF": "MdidntFinish",
     "mNUM": "MnextUnmarked",
-    "mGTP": "MgotTest",
     "mPRC": "MProgressCount",
     "mRMD": "MreturnMarked",
     "mRAM": "MreturnAlreadyMarked",
     "mGMX": "MgetPageGroupMax",
     "mGML": "MgetMarkedPaperList",
     "mGGI": "MgetGroupImages",
-    "mDWI": "MDoneWithImageFile",
+    "mDWF": "MdoneWithFile",
 }
 
 
@@ -485,11 +484,11 @@ class Server(object):
         """Send back current marking progress counts to the client"""
         return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
-    def MgotTest(self, user, token, tfn):
-        """Client acknowledges they got the pageimage to mark, so
+    def MdoneWithFile(self, user, token, filename):
+        """Client acknowledges they got the file, so
         server deletes it from the webdav and sends an ack.
         """
-        self.removeFile(tfn)
+        self.removeFile(filename)
         return ["ACK"]
 
     def MreturnMarked(self, user, token, code, mark, fname, mtime):
