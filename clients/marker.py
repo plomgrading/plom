@@ -4,11 +4,12 @@ __credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"
 __license__ = "GPLv3"
 
 import os
+import json
 import shutil
 import tempfile
 
 from PyQt5.QtCore import Qt, QAbstractTableModel, QElapsedTimer, QModelIndex, QVariant
-from PyQt5.QtWidgets import QDialog, QMessageBox
+from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton
 
 from examviewwindow import ExamViewWindow
 import messenger
@@ -38,35 +39,24 @@ class TestPageGroup:
     time spent marking the groupimage.
     """
 
-    def __init__(self, tgv, fname):
+    def __init__(self, tgv, fname="", stat="untouched", mrk="-1", mtime=0):
         # tgv = t0000p00v0
         # ... = 0123456789
         # the test code
         self.prefix = tgv
         # the test number
-        self.test = tgv[1:5]
-        # the group number
-        self.group = tgv[6:8]
-        # the version number
-        self.version = tgv[9]
-        # The marking status
-        self.status = "untouched"
+        self.status = stat
         # By default set mark to be negative (since 0 is a possible mark)
-        self.mark = "-1"
+        self.mark = mrk
         # The filename of the untouched image
         self.originalFile = fname
         # The filename for the (future) annotated image
         self.annotatedFile = ""
         # The time spent marking the image.
-        self.markingTime = 0
+        self.markingTime = mtime
 
     def setstatus(self, st):
         self.status = st
-
-    def setAnnotatedFile(self, fname):
-        # Only called when image (or portion) is flipped around 180deg
-        self.annotatedFile = fname
-        self.status = "annotated"
 
     def setReverted(self):
         # When user reverts back to the original image
@@ -130,13 +120,6 @@ class ExamModel(QAbstractTableModel):
         # Set the annotated image filename
         # This data is stored but not displayed in table
         self.paperList[r].annotatedFile = aname
-
-    def setFlipped(self, index, aname):
-        # When a image (or portion) if flipped 180deg set the
-        # status to annotated to indicate it has been altered.
-        # Store the filename of the flupped image.
-        self.setData(index[1], "annotated")
-        self.paperList[index[0].row()].annotatedFile = aname
 
     def markPaper(self, index, mrk, aname, mtime):
         # When marked, set the annotated filename, the mark,
@@ -240,8 +223,6 @@ class MarkerClient(QDialog):
         # Exam model for the table of groupimages - connect to table
         self.exM = ExamModel()
         self.ui.tableView.setModel(self.exM)
-        # Connect the table-model's selection change to appropriate function
-        self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         # Double-click or signale fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
@@ -254,7 +235,6 @@ class MarkerClient(QDialog):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.revertButton.clicked.connect(self.revertTest)
-        self.ui.flipButton.clicked.connect(self.flipIt)
         # Give IDs to the radio-buttons which select the marking style
         # 1 = mark total = user clicks the total-mark
         # 2 = mark-up = mark starts at 0 and user increments it
@@ -275,6 +255,11 @@ class MarkerClient(QDialog):
         self.getRubric()
         # Paste the max-mark into the gui.
         self.ui.scoreLabel.setText(str(self.maxScore))
+        # Get list of papers already marked and add to table.
+        self.getMarkedList()
+        # Connect the view **after** list updated.
+        # Connect the table-model's selection change to appropriate function
+        self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         # Get a pagegroup to mark from the server
         self.requestNext()
 
@@ -310,14 +295,51 @@ class MarkerClient(QDialog):
             quit()
         self.maxScore = msg[1]
 
-    def addTGVToList(self, paper):
+    def getMarkedList(self):
+        # Ask server for list of previously marked papers
+        msg = messenger.SRMsg(
+            ["mGML", self.userName, self.token, self.pageGroup, self.version]
+        )
+        if msg[0] == "ERR":
+            return
+        fname = os.path.join(self.workingDirectory, "markedList.txt")
+        messenger.getFileDav(msg[1], fname)
+        with open(fname) as json_file:
+            markedList = json.load(json_file)
+            for x in markedList:
+                print("Add {} to list".format(x))
+                self.addTGVToList(
+                    TestPageGroup(x[0], fname="", stat="marked", mrk=x[2], mtime=x[3]),
+                    update=False,
+                )
+
+    def addTGVToList(self, paper, update=True):
         # Add a new entry (given inside paper) to the table and
         # select it and update the displayed page-group image
         r = self.exM.addPaper(paper)
-        self.ui.tableView.selectRow(r)
-        self.updateImage(r)
+        if update is True:
+            self.ui.tableView.selectRow(r)
+            self.updateImage(r)
+
+    def checkFiles(self, r):
+        tgv = self.exM.paperList[r].prefix
+        if self.exM.getOriginalFile(r) is not "":
+            return
+        msg = messenger.SRMsg(["mGGI", self.userName, self.token, tgv])
+        if msg[0] == "ERR":
+            return
+        fname = os.path.join(self.workingDirectory, msg[1] + ".png")
+        messenger.getFileDav(msg[2], fname)
+        self.exM.paperList[r].originalFile = fname
+        if msg[3] is None:
+            return
+        fname = os.path.join(self.workingDirectory, "G{}.png".format(msg[1][1:]))
+        messenger.getFileDav(msg[3], fname)
+        self.exM.paperList[r].annotatedFile = fname
 
     def updateImage(self, r=0):
+        # Here the system should check if imagefiles exist and grab if needed.
+        self.checkFiles(r)
         # Grab the group-image from file and display in the examviewwindow
         # If group has been marked or annotated then display the annotated file
         # Else display the original group image
@@ -474,9 +496,9 @@ class MarkerClient(QDialog):
         # If image has been marked confirm with user if they want
         # to annotate further.
         if self.exM.data(index[1]) == "marked":
-            msg = SimpleMessage("Do you want to annotate further?")
-            if msg.exec_() == QMessageBox.No:
-                return
+            msg = ErrorMessage("You must revert image before remarking.")
+            msg.exec_()
+            return
         # Create annotated filename. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
         aname = os.path.join(
@@ -517,43 +539,6 @@ class MarkerClient(QDialog):
         # Check if no unmarked test, then request one.
         if self.moveToNextUnmarkedTest() is False:
             self.requestNext(launchAgain)
-
-    def waitForFlipper(self, fname):
-        """Runs the exam reorientation widget - which allows user to flip
-        parts of the group image (in case page is scanned upsidedown).
-        """
-        flipper = ExamReorientWindow(fname)
-        if flipper.exec_() == QDialog.Accepted:
-            return True
-        else:
-            return False
-
-    def flipIt(self):
-        """Passes the file of the current image to 'waitForFlipper' and
-        handles any updates if changes are made.
-        """
-        # Get the current row of table
-        index = self.ui.tableView.selectedIndexes()
-        # Create the annotated image name
-        aname = os.path.join(
-            self.workingDirectory, "G" + self.exM.data(index[0])[1:] + ".png"
-        )
-        # If paper has is untouched or reverted, copy to annotated filename.
-        if self.exM.data(index[1]) in ["untouched", "reverted"]:
-            shutil.copyfile(
-                "{}".format(self.exM.getOriginalFile(index[0].row())), aname
-            )
-            # Pass file to 'waitforflipper' - if returns true then changes
-            # have been made - so update entry accordingly.
-            if self.waitForFlipper(aname):
-                # tell exam-model that image was flipped.
-                self.exM.setFlipped(index, aname)
-                # update displayed group-image
-                self.updateImage(index[0].row())
-        else:
-            # Cannot flip an annotated or marked paper - alert user
-            msg = ErrorMessage("Can only flip original or reverted test.")
-            msg.exec_()
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image

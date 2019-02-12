@@ -265,3 +265,24 @@ class MarkDatabase:
                     x.tgv, username
                 )
             )
+
+    def buildMarkedList(self, username, pg, v):
+        query = GroupImage.select().where(
+            GroupImage.user == username,
+            GroupImage.pageGroup == pg,
+            GroupImage.version == v,
+        )
+        markedList = []
+        for x in query:
+            if x.status == "Marked":
+                markedList.append([x.tgv, x.status, x.mark, x.markingTime])
+        return markedList
+
+    def getGroupImage(self, username, code):
+        try:
+            with markdb.atomic():
+                x = GroupImage.get(tgv=code, user=username)
+                return (x.tgv, x.originalFile, x.annotatedFile)
+        except GroupImage.DoesNotExist:
+            print("Request for non-existant tgv")
+            return (None, None, None)

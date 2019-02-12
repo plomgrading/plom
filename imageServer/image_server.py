@@ -115,6 +115,9 @@ servCmd = {
     "mRMD": "MreturnMarked",
     "mRAM": "MreturnAlreadyMarked",
     "mGMX": "MgetPageGroupMax",
+    "mGML": "MgetMarkedPaperList",
+    "mGGI": "MgetGroupImages",
+    "mDWI": "MDoneWithImageFile",
 }
 
 
@@ -512,6 +515,39 @@ class Server(object):
             )
         )
         fh.close()
+
+    def MgetMarkedPaperList(self, user, token, pg, v):
+        """When a marked-client logs on they request a list of papers they have already marked.
+        Check the (group/version) is valid and then send back a textfile with list of TGVs.
+        """
+        iv = int(v)
+        ipg = int(pg)
+        if ipg < 1 or ipg > self.testSpec.getNumberOfGroups():
+            return ["ERR", "Pagegroup out of range"]
+        if iv < 1 or iv > self.testSpec.Versions:
+            return ["ERR", "Version out of range"]
+        markedList = self.MDB.buildMarkedList(user, pg, v)
+        # dump the list to file as json and then give file to client
+        tfn = tempfile.NamedTemporaryFile()
+        with open(tfn.name, "w") as outfile:
+            json.dump(markedList, outfile)
+        # Send an ack with the max-mark for the pagegroup.
+        return ["ACK", self.provideFile(tfn.name)]
+
+    def MgetGroupImages(self, user, token, tgv):
+        give, fname, aname = self.MDB.getGroupImage(user, tgv)
+        if fname is not None:
+            if aname is not None:
+                return [
+                    "ACK",
+                    give,
+                    self.provideFile(fname),
+                    self.provideFile("markedPapers/" + aname),
+                ]
+            else:
+                return ["ACK", give, self.provideFile(fname), None]
+        else:
+            return ["Err", "Non-existant tgv {}".format(tgv)]
 
 
 # # # # # # # # # # # #
