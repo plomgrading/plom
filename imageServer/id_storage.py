@@ -231,3 +231,20 @@ class IDDatabase:
                     x.tgv, username
                 )
             )
+
+    def buildIDList(self, username):
+        query = IDImage.select().where(IDImage.user == username)
+        idList = []
+        for x in query:
+            if x.status == "Identified":
+                idList.append([x.tgv, x.status, x.sid, x.sname])
+        return idList
+
+    def getGroupImage(self, username, code):
+        try:
+            with iddb.atomic():
+                x = IDImage.get(tgv=code, user=username)
+                return x.tgv
+        except IDImage.DoesNotExist:
+            print("Request for non-existant tgv = {}".format(code))
+            return None

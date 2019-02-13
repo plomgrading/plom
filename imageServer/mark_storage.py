@@ -284,5 +284,5 @@ class MarkDatabase:
                 x = GroupImage.get(tgv=code, user=username)
                 return (x.tgv, x.originalFile, x.annotatedFile)
         except GroupImage.DoesNotExist:
-            print("Request for non-existant tgv")
+            print("Request for non-existant tgv={}".format(code))
             return (None, None, None)

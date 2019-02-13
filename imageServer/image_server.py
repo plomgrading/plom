@@ -102,12 +102,13 @@ servCmd = {
     "UCL": "userClosing",
     "iDNF": "IDdidntFinish",
     "iNID": "IDnextUnIDd",
-    "iGTP": "IDgotTest",
     "iPRC": "IDProgressCount",
     "iRID": "IDreturnIDd",
     "iRAD": "IDreturnAlreadyIDd",
     "iRCL": "IDrequestClassList",
-    "iGCL": "IDgotClassList",
+    "iGAL": "IDgetAlreadyIDList",
+    "iGGI": "IDgetGroupImage",
+    "iDWF": "IDdoneWithFile",
     "mDNF": "MdidntFinish",
     "mNUM": "MnextUnmarked",
     "mPRC": "MProgressCount",
@@ -375,8 +376,8 @@ class Server(object):
         """
         return ["ACK", self.provideFile("../resources/classlist.csv")]
 
-    def IDgotClassList(self, user, token, tfn):
-        """The client acknowledges they got the class list,
+    def IDdoneWithFile(self, user, token, tfn):
+        """The client acknowledges they got the file,
         so the server deletes it and sends back an ACK.
         """
         self.removeFile(tfn)
@@ -440,13 +441,6 @@ class Server(object):
         """Send back current ID progress counts to the client"""
         return ["ACK", self.IDDB.countIdentified(), self.IDDB.countAll()]
 
-    def IDgotTest(self, user, token, test, tfn):
-        """Client acknowledges they got the ID pageimage, so server
-        deletes it from the webdav and sends an ack.
-        """
-        self.removeFile(tfn)
-        return ["ACK"]
-
     def IDreturnIDd(self, user, token, ret, sid, sname):
         """Client has ID'd the pageimage with code=ret, student-number=sid,
         and student-name=sname. Send the information to the database (which
@@ -466,6 +460,26 @@ class Server(object):
         """
         self.IDDB.takeIDImageFromClient(ret, user, sid, sname)
         return ["ACK"]
+
+    def IDgetAlreadyIDList(self, user, token):
+        """When a id-client logs on they request a list of papers they have already IDd.
+        Send back a textfile with list of TGVs.
+        """
+        idList = self.IDDB.buildIDList(user)
+        # dump the list to file as json and then give file to client
+        tfn = tempfile.NamedTemporaryFile()
+        with open(tfn.name, "w") as outfile:
+            json.dump(idList, outfile)
+        # Send an ack with the file
+        return ["ACK", self.provideFile(tfn.name)]
+
+    def IDgetGroupImage(self, user, token, tgv):
+        give = self.IDDB.getGroupImage(user, tgv)
+        fname = "{}/idgroup/{}.png".format(pathScanDirectory, give)
+        if fname is not None:
+            return ["ACK", give, self.provideFile(fname), None]
+        else:
+            return ["Err", "User {} is not authorised for tgv={}".format(user, tgv)]
 
     def MnextUnmarked(self, user, token, pg, v):
         """The client has asked for the next unmarked image (with
@@ -530,7 +544,7 @@ class Server(object):
         tfn = tempfile.NamedTemporaryFile()
         with open(tfn.name, "w") as outfile:
             json.dump(markedList, outfile)
-        # Send an ack with the max-mark for the pagegroup.
+        # Send an ack with the file
         return ["ACK", self.provideFile(tfn.name)]
 
     def MgetGroupImages(self, user, token, tgv):
@@ -546,7 +560,7 @@ class Server(object):
             else:
                 return ["ACK", give, self.provideFile(fname), None]
         else:
-            return ["Err", "Non-existant tgv {}".format(tgv)]
+            return ["Err", "Non-existant tgv={}".format(tgv)]
 
 
 # # # # # # # # # # # #
