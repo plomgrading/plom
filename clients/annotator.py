@@ -22,6 +22,7 @@ from PyQt5.QtWidgets import (
 from mark_handler import MarkHandler
 from pageview import PageView
 from useful_classes import CommentWidget, SimpleMessage
+from test_view import TestView
 from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
 from uiFiles.ui_annotator_rhm import Ui_annotator_rhm
 
@@ -49,11 +50,15 @@ class Annotator(QDialog):
 
     def __init__(self, fname, maxMark, markStyle, mouseHand, parent=None):
         super(Annotator, self).__init__(parent)
+        # remember parent
+        self.parent = parent
         # Grab filename of image, max mark, mark style (total/up/down)
         # and mouse-hand (left/right)
         self.imageFile = fname
         self.maxMark = maxMark
         self.markStyle = markStyle
+        # a test view window - initially set to None
+        self.testView = None
         # Set current mark to 0.
         self.score = 0
         # make styling of currently selected button/tool.
@@ -181,6 +186,8 @@ class Annotator(QDialog):
             Qt.Key_Question: lambda: self.keyPopUp(),
             # Toggle hide/unhide tools so as to maximise space for annotation
             Qt.Key_Home: lambda: self.toggleTools(),
+            # view whole paper
+            Qt.Key_F1: lambda: self.viewWholePaper(),
         }
 
     def toggleTools(self):
@@ -192,6 +199,15 @@ class Annotator(QDialog):
         else:
             self.ui.hideableBox.hide()
             self.ui.hideButton.setText("Reveal")
+
+    def viewWholePaper(self):
+        files = self.parent.viewWholePaper()
+        if self.testView is None:
+            self.testView = TestView(self, files)
+
+    def doneViewingPaper(self):
+        self.testView = None
+        self.parent.doneWithViewFiles()
 
     def keyPopUp(self):
         # Pops up a little window which containts table of

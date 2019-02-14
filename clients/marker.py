@@ -579,3 +579,34 @@ class MarkerClient(QDialog):
                         self.exM.data(self.exM.index(r, 0)),
                     ]
                 )
+
+    def viewWholePaper(self):
+        index = self.ui.tableView.selectedIndexes()
+        tgv = self.exM.paperList[index[0].row()].prefix
+        testnumber = tgv[1:5]  # since tgv = tXXXXgYYvZ
+        msg = messenger.SRMsg(
+            [
+                "mGWP",
+                self.userName,
+                self.token,
+                testnumber
+            ]
+        )
+        if msg[0] == "ERR":
+            return []
+
+        self.viewFiles = msg[1:]
+        self.localViewFiles = []
+        ## GIVE FILES NAMES
+        for f in self.viewFiles:
+            tfn = tempfile.NamedTemporaryFile(delete=False).name
+            self.localViewFiles.append(tfn)
+            messenger.getFileDav(f, tfn)
+        return self.localViewFiles
+
+    def doneWithViewFiles(self):
+        for f in self.viewFiles:
+            msg = messenger.SRMsg(["mDWF", self.userName, self.token, f])
+        for f in self.localViewFiles:
+            os.unlink(f)
+        self.viewFiles = []

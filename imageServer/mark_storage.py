@@ -286,3 +286,14 @@ class MarkDatabase:
         except GroupImage.DoesNotExist:
             print("Request for non-existant tgv={}".format(code))
             return (None, None, None)
+
+    def getTestAll(self, number):
+        lst = []
+        query = (
+            GroupImage.select()
+            .where(GroupImage.number == int(number))
+            .order_by(GroupImage.pageGroup)
+            )
+        for x in query:
+            lst.append(x.originalFile)
+        return(lst)

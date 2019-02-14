@@ -118,6 +118,7 @@ servCmd = {
     "mGML": "MgetMarkedPaperList",
     "mGGI": "MgetGroupImages",
     "mDWF": "MdoneWithFile",
+    "mGWP": "MgetWholePaper"
 }
 
 
@@ -561,6 +562,15 @@ class Server(object):
                 return ["ACK", give, self.provideFile(fname), None]
         else:
             return ["Err", "Non-existant tgv={}".format(tgv)]
+
+    def MgetWholePaper(self, user, token, testNumber):
+        # client passes the tgv code of their current group image.
+        # from this we infer the test number.
+        files = self.MDB.getTestAll(testNumber)
+        msg = ["ACK"]
+        for f in files:
+            msg.append(self.provideFile(f))
+        return(msg)
 
 
 # # # # # # # # # # # #
