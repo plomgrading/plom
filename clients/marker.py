@@ -474,7 +474,7 @@ class MarkerClient(QDialog):
             # with the next page-image. In relaunch, then we will need to
             # ask server for next image.
             if annotator.score >= 0:
-                return [
+                ret = [
                     str(annotator.score),
                     timer.elapsed() // 1000,
                     annotator.launchAgain,
@@ -483,12 +483,13 @@ class MarkerClient(QDialog):
                 # No score back from annotator, so relaunch.
                 msg = ErrorMessage("You have to give a mark.")
                 msg.exec_()
-                return self.waitForAnnotator(fname)
+                ret = self.waitForAnnotator(fname)
         else:
             # If annotator returns "reject", then pop up error
             msg = ErrorMessage("mark not recorded")
             msg.exec_()
-            return [None, timer.elapsed(), False]
+            ret = [None, timer.elapsed(), False]
+        return ret
 
     def annotateTest(self):
         """Command grabs current test from table and (after checks) passes it
@@ -584,14 +585,7 @@ class MarkerClient(QDialog):
         index = self.ui.tableView.selectedIndexes()
         tgv = self.exM.paperList[index[0].row()].prefix
         testnumber = tgv[1:5]  # since tgv = tXXXXgYYvZ
-        msg = messenger.SRMsg(
-            [
-                "mGWP",
-                self.userName,
-                self.token,
-                testnumber
-            ]
-        )
+        msg = messenger.SRMsg(["mGWP", self.userName, self.token, testnumber])
         if msg[0] == "ERR":
             return []
 

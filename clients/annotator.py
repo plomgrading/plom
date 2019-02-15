@@ -3,7 +3,6 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
 __license__ = "GPLv3"
 
-from functools import partial
 import sys
 
 from PyQt5.QtCore import Qt, QSize, pyqtSlot
@@ -399,25 +398,25 @@ class Annotator(QDialog):
         except Exception:
             base_path = "./icons"
 
-        iconList = [
-            [self.ui.boxButton, "box", "rectangle.svg"],
-            [self.ui.commentButton, "com", "comment.svg"],
-            [self.ui.commentDownButton, "com dn", "comment_down.svg"],
-            [self.ui.commentUpButton, "com up", "comment_up.svg"],
-            [self.ui.crossButton, "cross", "cross.svg"],
-            [self.ui.deleteButton, "delete", "delete.svg"],
-            [self.ui.lineButton, "line", "line.svg"],
-            [self.ui.moveButton, "move", "move.svg"],
-            [self.ui.panButton, "pan", "pan.svg"],
-            [self.ui.penButton, "pen", "pen.svg"],
-            [self.ui.redoButton, "redo", "redo.svg"],
-            [self.ui.textButton, "text", "text.svg"],
-            [self.ui.tickButton, "tick", "tick.svg"],
-            [self.ui.undoButton, "undo", "undo.svg"],
-            [self.ui.zoomButton, "zoom", "zoom.svg"],
-        ]
-        for X in iconList:
-            self.setIcon(X[0], X[1], "{}/{}".format(base_path, X[2]))
+        self.setIcon(self.ui.boxButton, "box", "{}/rectangle.svg".format(base_path))
+        self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
+        self.setIcon(
+            self.ui.commentDownButton, "com dn", "{}/comment_down.svg".format(base_path)
+        )
+        self.setIcon(
+            self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path)
+        )
+        self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
+        self.setIcon(self.ui.deleteButton, "delete", "{}/delete.svg".format(base_path))
+        self.setIcon(self.ui.lineButton, "line", "{}/line.svg".format(base_path))
+        self.setIcon(self.ui.moveButton, "move", "{}/move.svg".format(base_path))
+        self.setIcon(self.ui.panButton, "pan", "{}/pan.svg".format(base_path))
+        self.setIcon(self.ui.penButton, "pen", "{}/pen.svg".format(base_path))
+        self.setIcon(self.ui.redoButton, "redo", "{}/redo.svg".format(base_path))
+        self.setIcon(self.ui.textButton, "text", "{}/text.svg".format(base_path))
+        self.setIcon(self.ui.tickButton, "tick", "{}/tick.svg".format(base_path))
+        self.setIcon(self.ui.undoButton, "undo", "{}/undo.svg".format(base_path))
+        self.setIcon(self.ui.zoomButton, "zoom", "{}/zoom.svg".format(base_path))
 
     # The 'endAndRelaunch' slot - this saves the comment-list, closes
     # the annotator. The marker window then asks the server for the next
@@ -436,27 +435,53 @@ class Annotator(QDialog):
         self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
         self.endShortCutb.activated.connect(self.endAndRelaunch)
 
+    # Simple mode change functions
+    def boxMode(self):
+        setMode("box", Qt.ArrowCursor)
+
+    def crossMode(self):
+        setMode("cross", Qt.ArrowCursor)
+
+    def deleteMode(self):
+        setMode("delete", Qt.ForbiddenCursor)
+
+    def lineMode(self):
+        setMode("line", Qt.CrossCursor)
+
+    def moveMode(self):
+        setMode("move", Qt.OpenHandCursor)
+
+    def panMode(self):
+        setMode("pan", Qt.OpenHandCursor)
+        # The pan button also needs to change dragmode in the view
+        self.view.setDragMode(1)
+
+    def penMode(self):
+        setMode("pen", Qt.ArrowCursor)
+
+    def textMode(self):
+        setMode("text", Qt.IBeamCursor)
+
+    def tickMode(self):
+        setMode("tick", Qt.ArrowCursor)
+
+    def zoomMode(self):
+        setMode("zoom", Qt.SizeFDiagCursor)
+
     def setButtons(self):
         """Connect buttons to functions.
         """
         # List of tool buttons, the corresponding modes and cursor shapes
-        toolList = [
-            [self.ui.boxButton, "box", Qt.ArrowCursor],
-            [self.ui.crossButton, "cross", Qt.ArrowCursor],
-            [self.ui.deleteButton, "delete", Qt.ForbiddenCursor],
-            [self.ui.lineButton, "line", Qt.CrossCursor],
-            [self.ui.moveButton, "move", Qt.OpenHandCursor],
-            [self.ui.panButton, "pan", Qt.OpenHandCursor],
-            [self.ui.penButton, "pen", Qt.ArrowCursor],
-            [self.ui.textButton, "text", Qt.IBeamCursor],
-            [self.ui.tickButton, "tick", Qt.ArrowCursor],
-            [self.ui.zoomButton, "zoom", Qt.SizeFDiagCursor],
-        ]
-        # Set each thing in the list
-        for X in toolList:
-            X[0].clicked.connect(partial(self.setMode, X[1], X[2]))
-        # The pan button also needs to change dragmode in the view
-        self.ui.panButton.clicked.connect(partial(self.view.setDragMode, 1))
+        self.ui.boxButton.clicked.connect(self.boxMode)
+        self.ui.crossButton.clicked.connect(self.crossMode)
+        self.ui.deleteButton.clicked.connect(self.deleteMode)
+        self.ui.lineButton.clicked.connect(self.lineMode)
+        self.ui.moveButton.clicked.connect(self.moveMode)
+        self.ui.panButton.clicked.connect(self.panMode)
+        self.ui.penButton.clicked.connect(self.penMode)
+        self.ui.textButton.clicked.connect(self.textMode)
+        self.ui.tickButton.clicked.connect(self.tickMode)
+        self.ui.zoomButton.clicked.connect(self.zoomMode)
 
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.view.undo)
@@ -485,9 +510,9 @@ class Annotator(QDialog):
         self.ui.commentDownButton.clicked.connect(self.commentW.CL.handleClick)
         # Connect up the finishing buttons
         self.ui.finishedButton.clicked.connect(self.commentW.saveComments)
-        self.ui.finishedButton.clicked.connect(partial(self.closeEvent, True))
+        self.ui.finishedButton.clicked.connect(self.closeEventRelaunch)
         self.ui.finishNoRelaunchButton.clicked.connect(self.commentW.saveComments)
-        self.ui.finishNoRelaunchButton.clicked.connect(partial(self.closeEvent, False))
+        self.ui.finishNoRelaunchButton.clicked.connect(self.closeEventNoRelaunch)
 
     def handleComment(self, dlt_txt):
         """When the user selects a comment this function will be triggered.
@@ -599,6 +624,12 @@ class Annotator(QDialog):
         lookingAhead = self.score + dm
         if lookingAhead < 0 or lookingAhead > self.maxMark:
             self.ui.moveButton.animateClick()
+
+    def closeEventRelaunch(self):
+        self.closeEvent(True)
+
+    def closeEventNoRelaunch(self):
+        self.closeEvent(False)
 
     def closeEvent(self, relaunch):
         """When the user closes the window - either by clicking on the

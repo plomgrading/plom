@@ -11,7 +11,6 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory
 from uiFiles.ui_chooser import Ui_Chooser
 
-
 # set up variables to store paths for marker and id clients
 global tempDirectory, directoryPath
 # to store login + options for next run of client.
