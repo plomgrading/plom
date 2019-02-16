@@ -147,7 +147,7 @@ class Ui_SpecBuilder(object):
         self.testNameLabel.setText(_translate("SpecBuilder", "Test Name"))
         self.versionLabel.setText(_translate("SpecBuilder", "# versions"))
         self.pagesLabel.setText(_translate("SpecBuilder", "# pages"))
-        self.confirmButton.setText(_translate("SpecBuilder", "Confrm"))
+        self.confirmButton.setText(_translate("SpecBuilder", "Confirm"))
         self.pageGroupGB.setTitle(_translate("SpecBuilder", "Page groups"))
         self.addRowButton.setText(_translate("SpecBuilder", "Add row"))
         self.totalLabel.setText(_translate("SpecBuilder", "Total mark = 0"))
