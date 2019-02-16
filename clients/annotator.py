@@ -437,36 +437,36 @@ class Annotator(QDialog):
 
     # Simple mode change functions
     def boxMode(self):
-        setMode("box", Qt.ArrowCursor)
+        self.setMode("box", Qt.ArrowCursor)
 
     def crossMode(self):
-        setMode("cross", Qt.ArrowCursor)
+        self.setMode("cross", Qt.ArrowCursor)
 
     def deleteMode(self):
-        setMode("delete", Qt.ForbiddenCursor)
+        self.setMode("delete", Qt.ForbiddenCursor)
 
     def lineMode(self):
-        setMode("line", Qt.CrossCursor)
+        self.setMode("line", Qt.CrossCursor)
 
     def moveMode(self):
-        setMode("move", Qt.OpenHandCursor)
+        self.setMode("move", Qt.OpenHandCursor)
 
     def panMode(self):
-        setMode("pan", Qt.OpenHandCursor)
+        self.setMode("pan", Qt.OpenHandCursor)
         # The pan button also needs to change dragmode in the view
         self.view.setDragMode(1)
 
     def penMode(self):
-        setMode("pen", Qt.ArrowCursor)
+        self.setMode("pen", Qt.ArrowCursor)
 
     def textMode(self):
-        setMode("text", Qt.IBeamCursor)
+        self.setMode("text", Qt.IBeamCursor)
 
     def tickMode(self):
-        setMode("tick", Qt.ArrowCursor)
+        self.setMode("tick", Qt.ArrowCursor)
 
     def zoomMode(self):
-        setMode("zoom", Qt.SizeFDiagCursor)
+        self.setMode("zoom", Qt.SizeFDiagCursor)
 
     def setButtons(self):
         """Connect buttons to functions.
