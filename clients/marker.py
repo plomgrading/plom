@@ -364,6 +364,15 @@ class MarkerClient(QDialog):
         message [ACK, test-code, temp-filename]. Get file from webdav, add to
         the list of papers and update the image.
         """
+        # ask server for marking-count update
+        progress_msg = messenger.SRMsg(
+            ["mPRC", self.userName, self.token, self.pageGroup, self.version]
+        )
+        # returns [ACK, #marked, #total]
+        if progress_msg[0] == "ACK":
+            self.ui.mProgressBar.setValue(progress_msg[1])
+            self.ui.mProgressBar.setMaximum(progress_msg[2])
+
         # Ask server for next unmarked paper
         msg = messenger.SRMsg(
             ["mNUM", self.userName, self.token, self.pageGroup, self.version]
@@ -382,14 +391,6 @@ class MarkerClient(QDialog):
         msg = messenger.SRMsg(["mDWF", self.userName, self.token, tname])
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
-        # ask server for marking-count update
-        progress_msg = messenger.SRMsg(
-            ["mPRC", self.userName, self.token, self.pageGroup, self.version]
-        )
-        # returns [ACK, #marked, #total]
-        if progress_msg[0] == "ACK":
-            self.ui.mProgressBar.setValue(progress_msg[1])
-            self.ui.mProgressBar.setMaximum(progress_msg[2])
         # launch annotator on the new test
         # Note-launch-again is set to true when user just wants to get
         # the next test and get annotating directly.

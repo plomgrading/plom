@@ -374,6 +374,13 @@ class IDClient(QDialog):
         message [ACK, testcode, filename]. Get file from webdav, add to the
         list of papers and update the image.
         """
+        # ask server for id-count update
+        msg = messenger.SRMsg(["iPRC", self.userName, self.token])
+        # returns [ACK, #id'd, #total]
+        if msg[0] == "ACK":
+            self.ui.idProgressBar.setMaximum(msg[2])
+            self.ui.idProgressBar.setValue(msg[1])
+
         # ask server for next unid'd paper
         msg = messenger.SRMsg(["iNID", self.userName, self.token])
         if msg[0] == "ERR":
@@ -395,12 +402,6 @@ class IDClient(QDialog):
         # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()
         self.ui.idEdit.setFocus()
-        # ask server for id-count update
-        msg = messenger.SRMsg(["iPRC", self.userName, self.token])
-        # returns [ACK, #id'd, #total]
-        if msg[0] == "ACK":
-            self.ui.idProgressBar.setMaximum(msg[2])
-            self.ui.idProgressBar.setValue(msg[1])
 
     def identifyStudent(self, index, alreadyIDd=False):
         """User ID's the student of the current paper. Some care around whether
