@@ -36,10 +36,23 @@ class ExamViewWindow(QWidget):
         grid.addWidget(self.resetB, 20, 1)
         self.setLayout(grid)
         self.show()
+        # Store the current exam view as a qtransform
+        self.viewTrans = self.view.transform()
+        self.dx = self.view.horizontalScrollBar().value()
+        self.dy = self.view.verticalScrollBar().value()
 
     def updateImage(self, fname):
         """Pass file to the view to update the image"""
+        # first store the current view transform and scroll values
+        self.viewTrans = self.view.transform()
+        self.dx = self.view.horizontalScrollBar().value()
+        self.dy = self.view.verticalScrollBar().value()
+        # update the image
         self.view.updateImage(fname)
+        # re-set the view transform and scroll values
+        self.view.setTransform(self.viewTrans)
+        self.view.horizontalScrollBar().setValue(self.dx)
+        self.view.verticalScrollBar().setValue(self.dy)
 
 
 class ExamView(QGraphicsView):
