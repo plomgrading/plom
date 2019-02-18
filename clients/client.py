@@ -127,12 +127,9 @@ class Chooser(QWidget):
 app = QApplication(sys.argv)
 app.setStyle(QStyleFactory.create("Fusion"))
 ## To try to sort out font size scaling we poll the DPI
-print(
-    "Local dpix, dpiy = {},{}".format(QWidget().logicalDpiX(), QWidget().logicalDpiY())
-)
-
 fntscale = 96.0 / QWidget().logicalDpiY()  # UI was built on system with dpiy=96
-print("Scaling default font by {}".format(fntscale))
+print("Local dpiy = {}".format(QWidget().logicalDpiY()))
+print("UI was built with dpiy = 96, so scaling by {}".format(fntscale))
 fnt = app.font()
 fntsize = fnt.pointSizeF() * fntscale  # scale the font size.
 fnt.setPointSizeF(fntsize)
