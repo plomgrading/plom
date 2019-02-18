@@ -8,6 +8,7 @@ import os
 import marker
 import identifier
 import sys
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory
 from uiFiles.ui_chooser import Ui_Chooser
 
@@ -125,6 +126,13 @@ class Chooser(QWidget):
 
 app = QApplication(sys.argv)
 app.setStyle(QStyleFactory.create("Fusion"))
+## To try to sort out font size scaling we poll the DPI
+dpix = QWidget().logicalDpiX()
+dpiy = QWidget().logicalDpiY()
+fnt = app.font()
+
+print("ARGH = {},{}".format(dpix, dpiy))
+print("Font = {} {} {}".format(fnt.family(), fnt.pixelSize(), fnt.pointSizeF()))
 
 window = Chooser()
 window.show()
