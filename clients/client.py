@@ -130,7 +130,7 @@ app.setStyle(QStyleFactory.create("Fusion"))
 fntscale = 96.0 / QWidget().logicalDpiY()  # UI was built on system with dpiy=96
 print("Scaling default font by {}".format(fntscale))
 fnt = app.font()
-fntsize = fnt.pointSizeF() / fntscale  # scale the font size.
+fntsize = fnt.pointSizeF() * fntscale  # scale the font size.
 fnt.setPointSizeF(fntsize)
 app.setFont(fnt)
 
