@@ -216,6 +216,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="totalButton">
+        <property name="text">
+         <string>&amp;Total</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="closeButton">
         <property name="text">
          <string>&amp;Close</string>
@@ -237,6 +244,7 @@
   <tabstop>vSB</tabstop>
   <tabstop>markButton</tabstop>
   <tabstop>identifyButton</tabstop>
+  <tabstop>totalButton</tabstop>
   <tabstop>closeButton</tabstop>
  </tabstops>
  <resources/>
