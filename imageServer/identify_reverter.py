@@ -3,16 +3,11 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
 __license__ = "GPLv3"
 
+from collections import defaultdict
+from datetime import datetime
+import json
 import sys
 import tempfile
-import json
-import asyncio
-from datetime import datetime
-import ssl
-from collections import defaultdict
-from examviewwindow import ExamViewWindow
-import os
-import shutil
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -21,9 +16,6 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QDialog,
     QGridLayout,
-    QLabel,
-    QLineEdit,
-    QListWidget,
     QMessageBox,
     QProgressBar,
     QPushButton,
@@ -33,11 +25,12 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
+from examviewwindow import ExamViewWindow
 
 
-class errorMessage(QMessageBox):
+class ErrorMessage(QMessageBox):
     def __init__(self, txt):
-        super(errorMessage, self).__init__()
+        super(ErrorMessage, self).__init__()
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Ok)
 
@@ -50,7 +43,7 @@ class simpleMessage(QMessageBox):
         self.setDefaultButton(QMessageBox.No)
 
 
-class simpleTableView(QTableView):
+class SimpleTableView(QTableView):
     def __init__(self, model):
         QTableView.__init__(self)
         self.setModel(model)
@@ -63,21 +56,21 @@ class simpleTableView(QTableView):
         if key == Qt.Key_Return or key == Qt.Key_Enter:
             self.parent().requestPageImage(self.selectedIndexes()[0])
         else:
-            super(QTableView, self).keyPressEvent(event)
+            super(SimpleTableView, self).keyPressEvent(event)
 
 
-class filterComboBox(QComboBox):
+class FilterComboBox(QComboBox):
     def __init__(self, txt):
         QWidget.__init__(self)
         self.title = txt
         self.addItem(txt)
 
 
-class examTable(QWidget):
+class ExamTable(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.db = QSqlDatabase.addDatabase("QSQLITE")
-        self.db.setDatabaseName("../resources/test_marks.db")
+        self.db.setDatabaseName("../resources/identity.db")
         self.db.setHostName("Andrew")
         self.db.open()
         self.initUI()
@@ -88,28 +81,22 @@ class examTable(QWidget):
         grid = QGridLayout()
         self.exM = QSqlTableModel(self, self.db)
         self.exM.setEditStrategy(QSqlTableModel.OnManualSubmit)
-        self.exM.setTable("groupimage")
-        self.exV = simpleTableView(self.exM)
+        self.exM.setTable("idimage")
+        self.exV = SimpleTableView(self.exM)
 
         grid.addWidget(self.exV, 0, 0, 4, 7)
 
         self.filterGo = QPushButton("Filter Now")
-        self.filterGo.clicked.connect(lambda: self.filter())
+        self.filterGo.clicked.connect(self.filter)
         grid.addWidget(self.filterGo, 5, 0)
-        self.flP = filterComboBox("PageGroup")
-        grid.addWidget(self.flP, 5, 2)
-        self.flV = filterComboBox("Version")
-        grid.addWidget(self.flV, 5, 3)
-        self.flS = filterComboBox("Status")
-        grid.addWidget(self.flS, 5, 4)
-        self.flU = filterComboBox("Marker")
-        grid.addWidget(self.flU, 5, 5)
-        self.flM = filterComboBox("Mark")
-        grid.addWidget(self.flM, 5, 6)
+        self.flU = FilterComboBox("Marker")
+        grid.addWidget(self.flU, 5, 2)
+        self.flS = FilterComboBox("Status")
+        grid.addWidget(self.flS, 5, 3)
 
         self.revertB = QPushButton("Revert")
         self.revertB.clicked.connect(lambda: self.revertCurrent())
-        grid.addWidget(self.revertB, 1, 8)
+        grid.addWidget(self.revertB, 2, 8)
 
         self.pgImg = ExamViewWindow()
         grid.addWidget(self.pgImg, 0, 10, 20, 20)
@@ -119,12 +106,52 @@ class examTable(QWidget):
 
     def requestPageImage(self, index):
         rec = self.exM.record(index.row())
-        if rec.value("status") == "Marked":
-            self.pgImg.updateImage(
-                "./markedPapers/{}".format(rec.value("annotatedFile"))
-            )
+        self.pgImg.updateImage(
+            "../scanAndGroup/readyForMarking/idgroup/{}.png".format(rec.value("tgv"))
+        )
+
+    def computeUserProgress(self):
+        ustats = defaultdict(lambda: [0, 0])
+        for r in range(self.exM.rowCount()):
+            if self.exM.record(r).value("user") == "None":
+                continue
+            ustats[self.exM.record(r).value("user")][0] += 1
+            if self.exM.record(r).value("status") == "Identified":
+                ustats[self.exM.record(r).value("user")][1] += 1
+        UserProgress(ustats).exec_()
+
+    def getUniqueFromColumn(self, col):
+        lst = set()
+        query = QSqlQuery(db=self.db)
+        print(query.exec_("select {} from idimage".format(col)))
+        while query.next():
+            lst.add(str(query.value(0)))
+        return sorted(list(lst))
+
+    def loadData(self):
+        for c in [0, 1]:
+            self.exV.hideColumn(c)
+        self.exV.resizeColumnsToContents()
+        self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+
+    def setFilterOptions(self):
+        self.flS.insertItems(1, self.getUniqueFromColumn("status"))
+        self.flU.insertItems(1, self.getUniqueFromColumn("user"))
+
+    def filter(self):
+        flt = []
+        if self.flS.currentText() != "Status":
+            flt.append("status='{}'".format(self.flS.currentText()))
+        if self.flU.currentText() != "Marker":
+            flt.append("user='{}'".format(self.flU.currentText()))
+
+        if len(flt) > 0:
+            flts = " AND ".join(flt)
         else:
-            self.pgImg.updateImage(rec.value("originalFile"))
+            flts = ""
+        self.exM.setFilter(flts)
+        self.exV.resizeColumnsToContents()
+        self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
 
     def revertCurrent(self):
         indices = self.exV.selectedIndexes()
@@ -145,85 +172,30 @@ class examTable(QWidget):
         )
         if msg.exec_() == QMessageBox.No:
             return
-        # Revert status and delete any annotated file.
+        # Revert status
         rec.setValue("status", "ToDo")
         rec.setValue("user", "None")
         rec.setValue("time", "{}".format(datetime.now()))
-        rec.setValue("mark", -1)
-        rec.setValue("markingTime", 0)
-        # Move annotated file to a sensible subdirectory...
-        # Check if subdir exists
-        if not os.path.exists("markedPapers/revertedPapers"):
-            os.makedirs("markedPapers/revertedPapers")
-        # Move the png file
-        fname = rec.value("annotatedFile")
-        shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/" + fname)
-        # And move the associated textfile.
-        fname += ".txt"
-        shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/" + fname)
-        # now safe to set the annotatedFile value in the record
-        rec.setValue("annotatedFile", "")
+        rec.setValue("sid", -1)
+        rec.setValue("sname", "")
         # update the row
         self.exM.setRecord(currentRow, rec)
         # and update the database
         self.exM.submitAll()
 
-    def getUniqueFromColumn(self, col):
-        lst = set()
-        query = QSqlQuery(db=self.db)
-        query.exec_("select {} from groupimage".format(col))
-        while query.next():
-            lst.add(str(query.value(0)))
-        return sorted(list(lst))
 
-    def loadData(self):
-        for c in [0, 2, 3, 6]:
-            self.exV.hideColumn(c)
-        self.exV.resizeColumnsToContents()
-        self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
-
-    def setFilterOptions(self):
-        self.flP.insertItems(1, self.getUniqueFromColumn("pageGroup"))
-        self.flV.insertItems(1, self.getUniqueFromColumn("version"))
-        self.flS.insertItems(1, self.getUniqueFromColumn("status"))
-        self.flU.insertItems(1, self.getUniqueFromColumn("user"))
-        self.flM.insertItems(1, self.getUniqueFromColumn("mark"))
-
-    def filter(self):
-        flt = []
-        if self.flP.currentText() != "PageGroup":
-            flt.append("pageGroup='{}'".format(self.flP.currentText()))
-        if self.flV.currentText() != "Version":
-            flt.append("version='{}'".format(self.flV.currentText()))
-        if self.flS.currentText() != "Status":
-            flt.append("status='{}'".format(self.flS.currentText()))
-        if self.flU.currentText() != "Marker":
-            flt.append("user='{}'".format(self.flU.currentText()))
-        if self.flM.currentText() != "Mark":
-            flt.append("mark='{}'".format(self.flM.currentText()))
-
-        if len(flt) > 0:
-            flts = " AND ".join(flt)
-        else:
-            flts = ""
-        self.exM.setFilter(flts)
-        self.exV.resizeColumnsToContents()
-        self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
-
-
-class manager(QWidget):
+class Manager(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.initUI()
 
     def initUI(self):
         grid = QGridLayout()
-        self.extb = examTable()
-
+        self.extb = ExamTable()
         grid.addWidget(self.extb, 1, 1, 4, 6)
 
         self.closeB = QPushButton("close")
-        self.closeB.clicked.connect(lambda: self.close())
+        self.closeB.clicked.connect(self.close)
         grid.addWidget(self.closeB, 6, 99)
 
         self.setLayout(grid)
@@ -235,5 +207,5 @@ tempDirectory = tempfile.TemporaryDirectory()
 directoryPath = tempDirectory.name
 
 app = QApplication(sys.argv)
-iic = manager()
+iic = Manager()
 app.exec_()
