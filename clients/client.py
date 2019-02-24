@@ -36,6 +36,7 @@ def readLastTime():
         lastTime["wport"] = "41985"
         lastTime["pg"] = 1
         lastTime["v"] = 1
+        lastTime["fontSize"] = 10
 
 
 def writeLastTime():
@@ -75,6 +76,8 @@ class Chooser(QWidget):
         self.ui.wportSB.setValue(int(lastTime["wport"]))
         self.ui.pgSB.setValue(int(lastTime["pg"]))
         self.ui.vSB.setValue(int(lastTime["v"]))
+        self.ui.fontSB.setValue(int(lastTime["fontSize"]))
+        self.setFont()
 
     def validate(self):
         # Check username is a reasonable string
@@ -120,6 +123,7 @@ class Chooser(QWidget):
         lastTime["wport"] = self.ui.wportSB.value()
         lastTime["pg"] = self.ui.pgSB.value()
         lastTime["v"] = self.ui.vSB.value()
+        lastTime["fontSize"] = self.ui.fontSB.value()
 
         writeLastTime()
 
