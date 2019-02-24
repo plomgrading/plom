@@ -445,6 +445,8 @@ class IDClient(QDialog):
         # change it - set the alreadyIDd flag to true.
         if status == "identified":
             msg = SimpleMessage("Do you want to change the ID?")
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             if msg.exec_() == QMessageBox.No:
                 return
             else:
@@ -459,6 +461,8 @@ class IDClient(QDialog):
                     self.ui.idEdit.text(), self.ui.nameEdit.text()
                 )
             )
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             # If user says "no" then just return from function.
             if msg.exec_() == QMessageBox.No:
                 return
@@ -470,6 +474,8 @@ class IDClient(QDialog):
                     self.ui.idEdit.text()
                 )
             )
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             # If no then return from function.
             if msg.exec_() == QMessageBox.No:
                 return
@@ -510,6 +516,8 @@ class IDClient(QDialog):
         # change it - set the alreadyIDd flag to true.
         if status == "identified":
             msg = SimpleMessage("Do you want to change the ID?")
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             if msg.exec_() == QMessageBox.No:
                 return
             else:
@@ -524,6 +532,8 @@ class IDClient(QDialog):
                     self.ui.idEdit.text(), self.ui.nameEdit.text()
                 )
             )
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             # If user says "no" then just return from function.
             if msg.exec_() == QMessageBox.No:
                 return
@@ -535,6 +545,8 @@ class IDClient(QDialog):
                     self.ui.nameEdit.text()
                 )
             )
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             # If no then return from function.
             if msg.exec_() == QMessageBox.No:
                 return
