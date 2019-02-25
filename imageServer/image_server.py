@@ -139,7 +139,11 @@ async def handle_messaging(reader, writer):
     if not isinstance(message, list):
         SLogger.info(">>> Got strange message - not a list. {}".format(message))
     else:
-        SLogger.info("Got message: {}".format(message))
+        if message[0] == 'AUTH':
+            # do not log the password - just auth and username
+            SLogger.info("Got auth request: {}".format(message[:2]))
+        else:
+            SLogger.info("Got message: {}".format(message))
         # Run the command on the server and get the return message.
         # peon will be the instance of the server when it runs.
         rmesg = peon.proc_cmd(message)

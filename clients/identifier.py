@@ -16,6 +16,7 @@ from PyQt5.QtCore import (
     QTimer,
     QVariant,
 )
+from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QCompleter, QDialog, QInputDialog, QMessageBox
 from examviewwindow import ExamViewWindow
 import messenger
@@ -185,13 +186,17 @@ class IDClient(QDialog):
         self.requestToken()
         # Get the classlist from server for name/ID completion.
         self.getClassList()
-        # Init the name/ID completers
+        # Init the name/ID completers and a validator for ID
         self.setCompleters()
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nameEdit.returnPressed.connect(self.enterName)
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.nextButton.clicked.connect(self.requestNext)
+        # Make sure no button is clicked by a return-press
+        self.ui.nextButton.setAutoDefault(False)
+        self.ui.closeButton.setAutoDefault(False)
+
         # Make sure window is maximised and request a paper from server.
         self.showMaximized()
         # Get list of papers already ID'd and add to table.
@@ -282,6 +287,9 @@ class IDClient(QDialog):
         # Make sure both lineedits have little "Clear this" buttons.
         self.ui.idEdit.setClearButtonEnabled(True)
         self.ui.nameEdit.setClearButtonEnabled(True)
+        # the id-line edit needs a validator to make sure that only 8 digit numbers entered
+        self.idValidator = QIntValidator(10000000, 10 ** 8 - 1)
+        self.ui.idEdit.setValidator(self.idValidator)
 
     def shutDown(self):
         """Send the server a DNF (did not finish) message so it knows to
@@ -489,6 +497,8 @@ class IDClient(QDialog):
         # change it - set the alreadyIDd flag to true.
         if status == "identified":
             msg = SimpleMessage("Do you want to change the ID?")
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             if msg.exec_() == QMessageBox.No:
                 return
             else:
@@ -516,6 +526,8 @@ class IDClient(QDialog):
                     self.ui.idEdit.text()
                 )
             )
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             # If no then return from function.
             if msg.exec_() == QMessageBox.No:
                 return
@@ -556,6 +568,8 @@ class IDClient(QDialog):
         # change it - set the alreadyIDd flag to true.
         if status == "identified":
             msg = SimpleMessage("Do you want to change the ID?")
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             if msg.exec_() == QMessageBox.No:
                 return
             else:
@@ -583,6 +597,8 @@ class IDClient(QDialog):
                     self.ui.nameEdit.text()
                 )
             )
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             # If no then return from function.
             if msg.exec_() == QMessageBox.No:
                 return
