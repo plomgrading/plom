@@ -110,16 +110,6 @@ class ExamTable(QWidget):
             "../scanAndGroup/readyForMarking/idgroup/{}.png".format(rec.value("tgv"))
         )
 
-    def computeUserProgress(self):
-        ustats = defaultdict(lambda: [0, 0])
-        for r in range(self.exM.rowCount()):
-            if self.exM.record(r).value("user") == "None":
-                continue
-            ustats[self.exM.record(r).value("user")][0] += 1
-            if self.exM.record(r).value("status") == "Identified":
-                ustats[self.exM.record(r).value("user")][1] += 1
-        UserProgress(ustats).exec_()
-
     def getUniqueFromColumn(self, col):
         lst = set()
         query = QSqlQuery(db=self.db)
