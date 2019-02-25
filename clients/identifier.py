@@ -459,6 +459,8 @@ class IDClient(QDialog):
                     self.ui.idEdit.text(), self.ui.nameEdit.text()
                 )
             )
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             # If user says "no" then just return from function.
             if msg.exec_() == QMessageBox.No:
                 return
@@ -524,6 +526,8 @@ class IDClient(QDialog):
                     self.ui.idEdit.text(), self.ui.nameEdit.text()
                 )
             )
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             # If user says "no" then just return from function.
             if msg.exec_() == QMessageBox.No:
                 return
