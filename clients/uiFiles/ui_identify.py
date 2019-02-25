@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file './ui_identify.ui'
 #
-# Created by: PyQt5 UI code generator 5.10.1
+# Created by: PyQt5 UI code generator 5.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,8 +12,8 @@ class Ui_IdentifyWindow(object):
     def setupUi(self, IdentifyWindow):
         IdentifyWindow.setObjectName("IdentifyWindow")
         IdentifyWindow.setWindowModality(QtCore.Qt.ApplicationModal)
-        IdentifyWindow.resize(1062, 660)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        IdentifyWindow.resize(1000, 600)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(1)
         sizePolicy.setHeightForWidth(IdentifyWindow.sizePolicy().hasHeightForWidth())

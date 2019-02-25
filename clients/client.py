@@ -9,6 +9,7 @@ import marker
 import identifier
 import totaler
 import sys
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory
 from uiFiles.ui_chooser import Ui_Chooser
 
@@ -36,6 +37,7 @@ def readLastTime():
         lastTime["wport"] = "41985"
         lastTime["pg"] = 1
         lastTime["v"] = 1
+        lastTime["fontSize"] = 10
 
 
 def writeLastTime():
@@ -46,8 +48,9 @@ def writeLastTime():
 
 
 class Chooser(QWidget):
-    def __init__(self):
+    def __init__(self, parent):
         super(Chooser, self).__init__()
+        self.parent = parent
         # runit = either marker or identifier clients.
         self.runIt = None
         # will be the marker-widget
@@ -64,6 +67,7 @@ class Chooser(QWidget):
         self.ui.identifyButton.clicked.connect(self.runIDer)
         self.ui.totalButton.clicked.connect(self.runTotaler)
         self.ui.closeButton.clicked.connect(self.closeWindow)
+        self.ui.fontButton.clicked.connect(self.setFont)
 
     def setLastTime(self):
         # set login etc from last time client ran.
@@ -74,6 +78,8 @@ class Chooser(QWidget):
         self.ui.wportSB.setValue(int(lastTime["wport"]))
         self.ui.pgSB.setValue(int(lastTime["pg"]))
         self.ui.vSB.setValue(int(lastTime["v"]))
+        self.ui.fontSB.setValue(int(lastTime["fontSize"]))
+        self.setFont()
 
     def validate(self):
         # Check username is a reasonable string
@@ -127,16 +133,31 @@ class Chooser(QWidget):
         lastTime["wport"] = self.ui.wportSB.value()
         lastTime["pg"] = self.ui.pgSB.value()
         lastTime["v"] = self.ui.vSB.value()
+        lastTime["fontSize"] = self.ui.fontSB.value()
 
         writeLastTime()
 
         self.close()
 
+    def setFont(self):
+        v = self.ui.fontSB.value()
+        fnt = self.parent.font()
+        fnt.setPointSize(v)
+        self.parent.setFont(fnt)
+
 
 app = QApplication(sys.argv)
 app.setStyle(QStyleFactory.create("Fusion"))
+## To try to sort out font size scaling we poll the DPI
+# fntscale = 96.0 / QWidget().logicalDpiY()  # UI was built on system with dpiy=96
+# print("Local dpiy = {}".format(QWidget().logicalDpiY()))
+# print("UI was built with dpiy = 96, so scaling by {}".format(fntscale))
+# fnt = app.font()
+# fntsize = fnt.pointSizeF() * fntscale  # scale the font size.
+# fnt.setPointSizeF(fntsize)
+# app.setFont(fnt)
 
-window = Chooser()
+window = Chooser(app)
 window.show()
 rv = app.exec_()
 sys.exit(rv)
