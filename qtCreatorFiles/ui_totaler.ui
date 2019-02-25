@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TotalWindow</class>
+ <widget class="QWidget" name="TotalWindow">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1062</width>
+    <height>660</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>1</horstretch>
+    <verstretch>1</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="baseSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Enter total mark</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_5">
+   <property name="sizeConstraint">
+    <enum>QLayout::SetDefaultConstraint</enum>
+   </property>
+   <item row="4" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetDefaultConstraint</enum>
+     </property>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="closeButton">
+       <property name="text">
+        <string>&amp;Close</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="0" column="1" rowspan="5">
+    <widget class="QWidget" name="widget_2" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>5</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_4">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetDefaultConstraint</enum>
+      </property>
+      <item row="0" column="0">
+       <widget class="QGroupBox" name="paperBox">
+        <property name="title">
+         <string>Current paper</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_7">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetDefaultConstraint</enum>
+         </property>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QWidget" name="widget" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>2</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetNoConstraint</enum>
+      </property>
+      <item row="2" column="0">
+       <widget class="QGroupBox" name="totalBox">
+        <property name="title">
+         <string>Enter total out of </string>
+        </property>
+        <layout class="QFormLayout" name="formLayout">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetDefaultConstraint</enum>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="markLabel">
+           <property name="text">
+            <string>Total</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="totalEdit"/>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QPushButton" name="nextButton">
+        <property name="text">
+         <string>&amp;Get next</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QGroupBox" name="userBox">
+        <property name="title">
+         <string>User</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetDefaultConstraint</enum>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="userLabel">
+           <property name="text">
+            <string>Username</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QGroupBox" name="tableBox">
+        <property name="title">
+         <string>Table of papers</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetDefaultConstraint</enum>
+         </property>
+         <item row="0" column="0">
+          <widget class="QTableView" name="tableView">
+           <property name="editTriggers">
+            <set>QAbstractItemView::NoEditTriggers</set>
+           </property>
+           <property name="selectionMode">
+            <enum>QAbstractItemView::SingleSelection</enum>
+           </property>
+           <property name="selectionBehavior">
+            <enum>QAbstractItemView::SelectRows</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="progressGroupBox">
+     <property name="title">
+      <string>Progress</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QProgressBar" name="idProgressBar">
+        <property name="maximum">
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="format">
+         <string>%v of %m</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>totalEdit</tabstop>
+  <tabstop>tableView</tabstop>
+  <tabstop>nextButton</tabstop>
+  <tabstop>closeButton</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

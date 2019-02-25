@@ -20,6 +20,7 @@ import tempfile
 
 from id_storage import *
 from mark_storage import *
+from total_storage import *
 from authenticate import Authority
 
 sys.path.append("..")  # this allows us to import from ../resources
@@ -55,6 +56,7 @@ def setupLogger(name, log_file, level=logging.INFO):
 SLogger = setupLogger("SLogger", "server.log")
 IDLogger = setupLogger("IDLogger", "identity_storage.log")
 MarkLogger = setupLogger("MarkLogger", "mark_storage.log")
+TotalLogger = setupLogger("TotalLogger", "total_storage.log")
 
 # # # # # # # # # # # #
 # These functions need improving - read from the JSON files?
@@ -118,7 +120,14 @@ servCmd = {
     "mGML": "MgetMarkedPaperList",
     "mGGI": "MgetGroupImages",
     "mDWF": "MdoneWithFile",
-    "mGWP": "MgetWholePaper"
+    "mGWP": "MgetWholePaper",
+    "tGMM": "TgetMaxMark",
+    "tGTP": "TgotTest",
+    "tPRC": "TProgressCount",
+    "tNUT": "TNextUntotaled",
+    "tDNF": "TDidntFinish",
+    "tRAT": "TReturnAlreadyTotaled",
+    "tRUT": "TReturnTotaled",
 }
 
 
@@ -139,7 +148,7 @@ async def handle_messaging(reader, writer):
     if not isinstance(message, list):
         SLogger.info(">>> Got strange message - not a list. {}".format(message))
     else:
-        if message[0] == 'AUTH':
+        if message[0] == "AUTH":
             # do not log the password - just auth and username
             SLogger.info("Got auth request: {}".format(message[:2]))
         else:
@@ -165,11 +174,12 @@ async def handle_messaging(reader, writer):
 
 
 class Server(object):
-    def __init__(self, id_db, mark_db, tspec, logger):
+    def __init__(self, id_db, mark_db, total_db, tspec, logger):
         """Init the server, grab the ID and Mark databases, and the test-spec
         """
         self.IDDB = id_db
         self.MDB = mark_db
+        self.TDB = total_db
         self.testSpec = tspec
         self.logger = logger
         self.logger.info("Loading images and users.")
@@ -294,6 +304,7 @@ class Server(object):
             # On token request also make sure anything "out" with that user is reset as todo.
             self.IDDB.resetUsersToDo(user)
             self.MDB.resetUsersToDo(user)
+            self.TDB.resetUsersToDo(user)
             self.logger.info("Authorising user {}".format(user))
             return ["ACK", self.authority.getToken(user)]
         else:
@@ -312,6 +323,10 @@ class Server(object):
         self.logger.info("Adding IDgroups {}".format(sorted(examsGrouped.keys())))
         for t in sorted(examsGrouped.keys()):
             self.IDDB.addUnIDdExam(int(t), "t{:s}idg".format(t.zfill(4)))
+
+        self.logger.info("Adding Total-images {}".format(sorted(examsGrouped.keys())))
+        for t in sorted(examsGrouped.keys()):
+            self.TDB.addUntotaledExam(int(t), "t{:s}idg".format(t.zfill(4)))
 
         self.logger.info("Adding TGVs {}".format(sorted(pageGroupsForGrading.keys())))
         for tgv in sorted(pageGroupsForGrading.keys()):
@@ -415,6 +430,14 @@ class Server(object):
         database to put this back on the todo-pile.
         """
         self.MDB.didntFinish(user, tgv)
+        # send back an ACK.
+        return ["ACK"]
+
+    def TDidntFinish(self, user, token, code):
+        """User didn't finish totaling the image with given code. Tell the
+        database to put this back on the todo-pile.
+        """
+        self.TDB.didntFinish(user, code)
         # send back an ACK.
         return ["ACK"]
 
@@ -574,7 +597,51 @@ class Server(object):
         msg = ["ACK"]
         for f in files:
             msg.append(self.provideFile(f))
-        return(msg)
+        return msg
+
+    def TgetMaxMark(self, user, token):
+        return ["ACK", sum(spec.Marks)]
+
+    def TgotTest(self, user, token, test, tfn):
+        """Client acknowledges they got the test pageimage, so server
+        deletes it from the webdav and sends an ack.
+        """
+        self.removeFile(tfn)
+        return ["ACK"]
+
+    def TProgressCount(self, user, token):
+        """Send back current total progress counts to the client"""
+        return ["ACK", self.TDB.countTotaled(), self.TDB.countAll()]
+
+    def TNextUntotaled(self, user, token):
+        """The client has asked for the next untotaled paper, so
+        ask the database for its code and then copy the appropriate file
+        into the webdav and send code and the temp-webdav path back to the
+        client.
+        """
+        # Get code of next unidentified image from the database
+        give = self.TDB.giveTotalImageToClient(user)
+        if give is None:
+            return ["ERR", "No more papers"]
+        else:
+            # copy the file into the webdav and tell client the code and path
+            return [
+                "ACK",
+                give,
+                self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give)),
+            ]
+
+    def TReturnTotaled(self, user, token, ret, value):
+        """Client has totaled the pageimage with code=ret, total=value.
+        Send the information to the database and return an ACK
+        """
+        self.TDB.takeTotalImageFromClient(ret, user, value)
+        return ["ACK"]
+
+    def TReturnAlreadyIDd(self, user, token, ret, sid, sname):
+        """ As per TReturnTotaled"""
+        self.TDB.takeTotalImageFromClient(ret, user, value)
+        return ["ACK"]
 
 
 # # # # # # # # # # # #
@@ -675,8 +742,9 @@ findPageGroups()
 # Pass them the loggers
 theIDDB = IDDatabase(IDLogger)
 theMarkDB = MarkDatabase(MarkLogger)
+theTotalDB = TotalDatabase(TotalLogger)
 # Fire up the server with both database client classes and the test-spec.
-peon = Server(theIDDB, theMarkDB, spec, SLogger)
+peon = Server(theIDDB, theMarkDB, theTotalDB, spec, SLogger)
 
 # # # # # # # # # # # #
 # Fire up the asyncio event loop.
@@ -725,3 +793,4 @@ SLogger.info("Closing databases")
 print("Closing databases")
 theIDDB.saveIdentified()
 theMarkDB.saveMarked()
+theTotalDB.saveTotaled()

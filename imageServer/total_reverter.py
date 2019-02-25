@@ -70,7 +70,7 @@ class ExamTable(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.db = QSqlDatabase.addDatabase("QSQLITE")
-        self.db.setDatabaseName("../resources/identity.db")
+        self.db.setDatabaseName("../resources/totals.db")
         self.db.setHostName("Andrew")
         self.db.open()
         self.initUI()
@@ -81,7 +81,7 @@ class ExamTable(QWidget):
         grid = QGridLayout()
         self.exM = QSqlTableModel(self, self.db)
         self.exM.setEditStrategy(QSqlTableModel.OnManualSubmit)
-        self.exM.setTable("idimage")
+        self.exM.setTable("totalimage")
         self.exV = SimpleTableView(self.exM)
 
         grid.addWidget(self.exV, 0, 0, 4, 7)
@@ -89,7 +89,7 @@ class ExamTable(QWidget):
         self.filterGo = QPushButton("Filter Now")
         self.filterGo.clicked.connect(self.filter)
         grid.addWidget(self.filterGo, 5, 0)
-        self.flU = FilterComboBox("Marker")
+        self.flU = FilterComboBox("Totaler")
         grid.addWidget(self.flU, 5, 2)
         self.flS = FilterComboBox("Status")
         grid.addWidget(self.flS, 5, 3)
@@ -113,7 +113,7 @@ class ExamTable(QWidget):
     def getUniqueFromColumn(self, col):
         lst = set()
         query = QSqlQuery(db=self.db)
-        print(query.exec_("select {} from idimage".format(col)))
+        print(query.exec_("select {} from totalimage".format(col)))
         while query.next():
             lst.add(str(query.value(0)))
         return sorted(list(lst))
@@ -132,7 +132,7 @@ class ExamTable(QWidget):
         flt = []
         if self.flS.currentText() != "Status":
             flt.append("status='{}'".format(self.flS.currentText()))
-        if self.flU.currentText() != "Marker":
+        if self.flU.currentText() != "Totaler":
             flt.append("user='{}'".format(self.flU.currentText()))
 
         if len(flt) > 0:
@@ -166,10 +166,7 @@ class ExamTable(QWidget):
         rec.setValue("status", "ToDo")
         rec.setValue("user", "None")
         rec.setValue("time", "{}".format(datetime.now()))
-        rec.setValue("sname", "")
-        # grab test number so we can set SID to -TestNumber so it is still unique
-        t = rec.value("number")
-        rec.setValue("sid", -t)
+        rec.setValue("mark", "-1")
         # update the row
         self.exM.setRecord(currentRow, rec)
         # and update the database
