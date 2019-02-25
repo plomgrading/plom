@@ -5,6 +5,7 @@ __license__ = "GPLv3"
 
 from collections import defaultdict
 import csv
+import json
 import os
 import tempfile
 from PyQt5.QtCore import (
@@ -33,7 +34,7 @@ class Paper:
     store the studentName and ID-numer.
     """
 
-    def __init__(self, tgv, fname):
+    def __init__(self, tgv, fname, stat="noTotal", mark=""):
         # tgv = t0000p00v0
         # ... = 0123456789
         # The test-IDgroup code
@@ -41,9 +42,9 @@ class Paper:
         # The test number
         self.test = tgv[1:5]
         # Set status as noTotal
-        self.status = "noTotal"
+        self.status = stat
         # no total yet
-        self.total = ""
+        self.total = mark
         # the filename of the image.
         self.originalFile = fname
 
@@ -166,8 +167,6 @@ class TotalClient(QDialog):
         # Exam model for the table of papers - associate to table in GUI.
         self.exM = ExamModel()
         self.ui.tableView.setModel(self.exM)
-        # Connect the table's model sel-changed to appropriate function.
-        self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         # A view window for the papers so user can zoom in as needed.
         # Paste into appropriate location in gui.
         self.testImg = ExamViewWindow()
@@ -189,7 +188,15 @@ class TotalClient(QDialog):
         self.ui.nextButton.setAutoDefault(False)
         # Make sure window is maximised and request a paper from server.
         self.showMaximized()
+        # Get list of papers already ID'd and add to table.
+        self.getAlreadyTotaledList()
+        # Connect the view **after** list updated.
+        # Connect the table's model sel-changed to appropriate function.
+        self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         self.requestNext()
+        # make sure exam view window's view is reset....
+        # very slight delay to ensure things loaded first
+        QTimer.singleShot(100, self.testImg.view.resetView)
 
     def requestToken(self):
         """Send authorisation request (AUTH) to server. The request sends name and
@@ -253,31 +260,72 @@ class TotalClient(QDialog):
                     ]
                 )
 
+    def getAlreadyTotaledList(self):
+        # Ask server for list of previously marked papers
+        msg = messenger.SRMsg(["tGAT", self.userName, self.token])
+        if msg[0] == "ERR":
+            return
+        fname = os.path.join(self.workingDirectory, "tList.txt")
+        messenger.getFileDav(msg[1], fname)
+        # Ack that test received - server then deletes it from webdav
+        msg = messenger.SRMsg(["tDWF", self.userName, self.token, msg[1]])
+        # Add those marked papers to our paper-list
+        with open(fname) as json_file:
+            tList = json.load(json_file)
+            for x in tList:
+                self.addPaperToList(
+                    Paper(x[0], fname="", stat="totaled", mark=x[2]), update=False
+                )
+
     def selChanged(self, selnew, selold):
         # When the selection changes, update the ID and name line-edit boxes
         # with the data from the table - if it exists.
         # Update the displayed image with that of the newly selected test.
-        self.ui.totalEdit.setText(self.exM.data(selnew.indexes()[2]))
+        self.ui.totalEdit.setText(str(self.exM.data(selnew.indexes()[2])))
         self.updateImage(selnew.indexes()[0].row())
 
+    def checkFiles(self, r):
+        tgv = self.exM.paperList[r].prefix
+        if self.exM.paperList[r].originalFile is not "":
+            return
+        msg = messenger.SRMsg(["tGGI", self.userName, self.token, tgv])
+        if msg[0] == "ERR":
+            return
+        fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
+        tfname = msg[2]  # the temp original image file on webdav
+        messenger.getFileDav(tfname, fname)
+        # got original file so ask server to remove it.
+        msg = messenger.SRMsg(["tDWF", self.userName, self.token, tfname])
+        self.exM.paperList[r].originalFile = fname
+
     def updateImage(self, r=0):
+        # Here the system should check if imagefile exist and grab if needed.
+        self.checkFiles(r)
         # Update the test-image pixmap with the image in the indicated file.
         self.testImg.updateImage(self.exM.paperList[r].originalFile)
 
-    def addPaperToList(self, paper):
+    def addPaperToList(self, paper, update=True):
         # Add paper to the exam-table-model - get back the corresponding row.
         r = self.exM.addPaper(paper)
         # select that row and display the image
-        self.ui.tableView.selectRow(r)
-        self.updateImage(r)
-        # One more unid'd paper
-        self.noTotalCount += 1
+        if update:
+            self.ui.tableView.selectRow(r)
+            self.updateImage(r)
+            # One more untotaledpaper
+            self.noTotalCount += 1
 
     def requestNext(self):
         """Ask the server for an untotaled paper (tNUT). Server should return
         message [ACK, testcode, filename]. Get file from webdav, add to the
         list of papers and update the image.
         """
+        # ask server for id-count update
+        msg = messenger.SRMsg(["tPRC", self.userName, self.token])
+        # returns [ACK, #id'd, #total]
+        if msg[0] == "ACK":
+            self.ui.idProgressBar.setValue(msg[1])
+            self.ui.idProgressBar.setMaximum(msg[2])
+
         # ask server for next unmarked paper
         msg = messenger.SRMsg(["tNUT", self.userName, self.token])
         if msg[0] == "ERR":
@@ -299,12 +347,6 @@ class TotalClient(QDialog):
         # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()
         self.ui.totalEdit.setFocus()
-        # ask server for id-count update
-        msg = messenger.SRMsg(["tPRC", self.userName, self.token])
-        # returns [ACK, #id'd, #total]
-        if msg[0] == "ACK":
-            self.ui.idProgressBar.setValue(msg[1])
-            self.ui.idProgressBar.setMaximum(msg[2])
 
     def totalPaper(self, index, alreadyTotaled=False):
         """User totals the current paper. Some care around whether
@@ -338,19 +380,20 @@ class TotalClient(QDialog):
             # Use timer to avoid conflict between completer and
             # clearing the line-edit. Very annoying but this fixes it.
             QTimer.singleShot(0, self.ui.totalEdit.clear)
-            # Update un-id'd count.
-            self.noTotalCount -= 1
+            # Update untotaled count.
+            if not alreadyTotaled:
+                self.noTotalCount -= 1
             return True
 
     def moveToNextUntotaled(self):
-        # Move to the next test in table which is not ID'd.
+        # Move to the next test in table which is not totaled.
         rt = self.exM.rowCount()
         if rt == 0:
             return
         rstart = self.ui.tableView.selectedIndexes()[0].row()
         r = (rstart + 1) % rt
-        # Be careful to not get stuck in loop if all are ID'd.
-        while self.exM.data(self.exM.index(r, 2)) == "totaled" and r != rstart:
+        # Be careful to not get stuck in loop if all are totaled.
+        while self.exM.data(self.exM.index(r, 1)) == "totaled" and r != rstart:
             r = (r + 1) % rt
         self.ui.tableView.selectRow(r)
 
@@ -383,6 +426,8 @@ class TotalClient(QDialog):
             msg = SimpleMessage(
                 "Total = {}. Enter and move to next?".format(self.ui.totalEdit.text())
             )
+            # Put message popup on top-corner of idenfier window
+            msg.move(self.pos())
             # If user says "no" then just return from function.
             if msg.exec_() == QMessageBox.No:
                 return

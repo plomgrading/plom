@@ -104,7 +104,7 @@ servCmd = {
     "UCL": "userClosing",
     "iDNF": "IDdidntFinish",
     "iNID": "IDnextUnIDd",
-    "iPRC": "IDProgressCount",
+    "iPRC": "IDprogressCount",
     "iRID": "IDreturnIDd",
     "iRAD": "IDreturnAlreadyIDd",
     "iRCL": "IDrequestClassList",
@@ -113,7 +113,7 @@ servCmd = {
     "iDWF": "IDdoneWithFile",
     "mDNF": "MdidntFinish",
     "mNUM": "MnextUnmarked",
-    "mPRC": "MProgressCount",
+    "mPRC": "MprogressCount",
     "mRMD": "MreturnMarked",
     "mRAM": "MreturnAlreadyMarked",
     "mGMX": "MgetPageGroupMax",
@@ -123,11 +123,14 @@ servCmd = {
     "mGWP": "MgetWholePaper",
     "tGMM": "TgetMaxMark",
     "tGTP": "TgotTest",
-    "tPRC": "TProgressCount",
-    "tNUT": "TNextUntotaled",
-    "tDNF": "TDidntFinish",
-    "tRAT": "TReturnAlreadyTotaled",
-    "tRUT": "TReturnTotaled",
+    "tPRC": "TprogressCount",
+    "tNUT": "TnextUntotaled",
+    "tDNF": "TdidntFinish",
+    "tRAT": "TreturnAlreadyTotaled",
+    "tRUT": "TreturnTotaled",
+    "tGAT": "TgetAlreadyTotaledList",
+    "tDWF": "TdoneWithFile",
+    "tGGI": "TgetGroupImage",
 }
 
 
@@ -433,7 +436,7 @@ class Server(object):
         # send back an ACK.
         return ["ACK"]
 
-    def TDidntFinish(self, user, token, code):
+    def TdidntFinish(self, user, token, code):
         """User didn't finish totaling the image with given code. Tell the
         database to put this back on the todo-pile.
         """
@@ -465,7 +468,7 @@ class Server(object):
                 self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give)),
             ]
 
-    def IDProgressCount(self, user, token):
+    def IDprogressCount(self, user, token):
         """Send back current ID progress counts to the client"""
         return ["ACK", self.IDDB.countIdentified(), self.IDDB.countAll()]
 
@@ -522,7 +525,7 @@ class Server(object):
             # copy the file into the webdav and tell client code / path.
             return ["ACK", give, self.provideFile(fname)]
 
-    def MProgressCount(self, user, token, pg, v):
+    def MprogressCount(self, user, token, pg, v):
         """Send back current marking progress counts to the client"""
         return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
@@ -609,11 +612,11 @@ class Server(object):
         self.removeFile(tfn)
         return ["ACK"]
 
-    def TProgressCount(self, user, token):
+    def TprogressCount(self, user, token):
         """Send back current total progress counts to the client"""
         return ["ACK", self.TDB.countTotaled(), self.TDB.countAll()]
 
-    def TNextUntotaled(self, user, token):
+    def TnextUntotaled(self, user, token):
         """The client has asked for the next untotaled paper, so
         ask the database for its code and then copy the appropriate file
         into the webdav and send code and the temp-webdav path back to the
@@ -631,17 +634,44 @@ class Server(object):
                 self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give)),
             ]
 
-    def TReturnTotaled(self, user, token, ret, value):
+    def TreturnTotaled(self, user, token, ret, value):
         """Client has totaled the pageimage with code=ret, total=value.
         Send the information to the database and return an ACK
         """
         self.TDB.takeTotalImageFromClient(ret, user, value)
         return ["ACK"]
 
-    def TReturnAlreadyIDd(self, user, token, ret, sid, sname):
+    def TreturnAlreadyTotaled(self, user, token, ret, value):
         """ As per TReturnTotaled"""
         self.TDB.takeTotalImageFromClient(ret, user, value)
         return ["ACK"]
+
+    def TgetAlreadyTotaledList(self, user, token):
+        """When a total-client logs on they request a list of papers they have already totaled.
+        Send back a textfile with list of TGVs.
+        """
+        tList = self.TDB.buildTotalList(user)
+        # dump the list to file as json and then give file to client
+        tfn = tempfile.NamedTemporaryFile()
+        with open(tfn.name, "w") as outfile:
+            json.dump(tList, outfile)
+        # Send an ack with the file
+        return ["ACK", self.provideFile(tfn.name)]
+
+    def TdoneWithFile(self, user, token, tfn):
+        """The client acknowledges they got the file,
+        so the server deletes it and sends back an ACK.
+        """
+        self.removeFile(tfn)
+        return ["ACK"]
+
+    def TgetGroupImage(self, user, token, tgv):
+        give = self.TDB.getGroupImage(user, tgv)
+        fname = "{}/idgroup/{}.png".format(pathScanDirectory, give)
+        if fname is not None:
+            return ["ACK", give, self.provideFile(fname), None]
+        else:
+            return ["Err", "User {} is not authorised for tgv={}".format(user, tgv)]
 
 
 # # # # # # # # # # # #

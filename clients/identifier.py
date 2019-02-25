@@ -358,7 +358,7 @@ class IDClient(QDialog):
         tfname = msg[2]  # the temp original image file on webdav
         messenger.getFileDav(tfname, fname)
         # got original file so ask server to remove it.
-        msg = messenger.SRMsg(["mDWF", self.userName, self.token, tfname])
+        msg = messenger.SRMsg(["iDWF", self.userName, self.token, tfname])
         self.exM.paperList[r].originalFile = fname
 
     def updateImage(self, r=0):

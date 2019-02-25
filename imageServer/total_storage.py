@@ -229,3 +229,20 @@ class TotalDatabase:
                     x.tgv, username
                 )
             )
+
+    def buildTotalList(self, username):
+        query = TotalImage.select().where(TotalImage.user == username)
+        tList = []
+        for x in query:
+            if x.status == "Totaled":
+                tList.append([x.tgv, x.status, x.mark])
+        return tList
+
+    def getGroupImage(self, username, code):
+        try:
+            with tdb.atomic():
+                x = TotalImage.get(tgv=code, user=username)
+                return x.tgv
+        except IDImage.DoesNotExist:
+            print("Request for non-existant tgv = {}".format(code))
+            return None
