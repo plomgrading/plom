@@ -28,9 +28,9 @@ from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from examviewwindow import ExamViewWindow
 
 
-class ErrorMessage(QMessageBox):
+class errorMessage(QMessageBox):
     def __init__(self, txt):
-        super(ErrorMessage, self).__init__()
+        super(errorMessage, self).__init__()
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Ok)
 
@@ -176,8 +176,10 @@ class ExamTable(QWidget):
         rec.setValue("status", "ToDo")
         rec.setValue("user", "None")
         rec.setValue("time", "{}".format(datetime.now()))
-        rec.setValue("sid", -1)
         rec.setValue("sname", "")
+        # grab test number so we can set SID to -TestNumber so it is still unique
+        t = rec.value("number")
+        rec.setValue("sid", -t)
         # update the row
         self.exM.setRecord(currentRow, rec)
         # and update the database
