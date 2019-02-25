@@ -30,6 +30,7 @@ class ExamViewWindow(QWidget):
         # reset view button passes to the examview.
         self.resetB = QPushButton("reset view")
         self.resetB.clicked.connect(lambda: self.view.resetView())
+        self.resetB.setAutoDefault(False)  # return wont click the button by default.
         # Layout simply
         grid = QGridLayout()
         grid.addWidget(self.view, 1, 1, 10, 4)

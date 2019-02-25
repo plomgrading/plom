@@ -15,6 +15,7 @@ from PyQt5.QtCore import (
     QTimer,
     QVariant,
 )
+from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QCompleter, QDialog, QInputDialog, QMessageBox
 from examviewwindow import ExamViewWindow
 import messenger
@@ -186,13 +187,17 @@ class IDClient(QDialog):
         self.requestToken()
         # Get the classlist from server for name/ID completion.
         self.getClassList()
-        # Init the name/ID completers
+        # Init the name/ID completers and a validator for ID
         self.setCompleters()
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nameEdit.returnPressed.connect(self.enterName)
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.nextButton.clicked.connect(self.requestNext)
+        # Make sure no button is clicked by a return-press
+        self.ui.nextButton.setAutoDefault(False)
+        self.ui.closeButton.setAutoDefault(False)
+
         # Make sure window is maximised and request a paper from server.
         self.showMaximized()
         self.requestNext()
@@ -275,6 +280,9 @@ class IDClient(QDialog):
         # Make sure both lineedits have little "Clear this" buttons.
         self.ui.idEdit.setClearButtonEnabled(True)
         self.ui.nameEdit.setClearButtonEnabled(True)
+        # the id-line edit needs a validator to make sure that only 8 digit numbers entered
+        self.idValidator = QIntValidator(10000000, 10 ** 8 - 1)
+        self.ui.idEdit.setValidator(self.idValidator)
 
     def shutDown(self):
         """Send the server a DNF (did not finish) message so it knows to
