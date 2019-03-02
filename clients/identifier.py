@@ -188,6 +188,8 @@ class IDClient(QDialog):
         self.getClassList()
         # Init the name/ID completers and a validator for ID
         self.setCompleters()
+        # Get the predicted list from server for ID guesses.
+        self.getPredictions()
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nameEdit.returnPressed.connect(self.enterName)
@@ -260,6 +262,46 @@ class IDClient(QDialog):
         if msg[0] == "ERR":
             ErrorMessage("Classlist problem")
             quit()
+        return True
+
+    def getPredictions(self):
+        """Send request for classlist (iRPL) to server. The server then sends
+        back the CSV of the predictions testnumber -> studentID.
+        """
+        # Send request for classlist (iRCL) to server
+        msg = messenger.SRMsg(["iRPL", self.userName, self.token])
+        # Return should be [ACK, path/filename]
+        if msg[0] == "ERR":
+            ErrorMessage("Prediction list problem")
+            quit()
+        # Get the filename from the message.
+        dfn = msg[1]
+        fname = os.path.join(self.workingDirectory, "pl.csv")
+        # Get file from dav and copy into local temp working dir as cl.csv
+        messenger.getFileDav(dfn, fname)
+        # create dictionaries to store the classlist
+        self.predictedTestToNumbers = defaultdict(int)
+        # Read pl.csv into those dictionaries
+        with open(fname) as csvfile:
+            reader = csv.DictReader(csvfile, skipinitialspace=True)
+            for row in reader:
+                self.predictedTestToNumbers[int(row["test"])] = str(row["id"])
+        # Now that we've read in the classlist - tell server we got it
+        # Server will remove it from the webdav server.
+        msg = messenger.SRMsg(["iDWF", self.userName, self.token, dfn])
+        if msg[0] == "ERR":
+            ErrorMessage("Prediction list problem")
+            quit()
+        # Also tweak font size
+        fnt = self.font()
+        fnt.setPointSize(fnt.pointSize() * 2)
+        self.ui.pNameLabel.setFont(fnt)
+        fnt.setPointSize(fnt.pointSize() * 1.5)
+        self.ui.pSIDLabel.setFont(fnt)
+        # And if no predictions then hide that box
+        if len(self.predictedTestToNumbers) == 0:
+            self.ui.predictionBox.hide()
+
         return True
 
     def setCompleters(self):
@@ -366,6 +408,22 @@ class IDClient(QDialog):
         self.checkFiles(r)
         # Update the test-image pixmap with the image in the indicated file.
         self.testImg.updateImage(self.exM.paperList[r].originalFile)
+        # update the prediction if present
+        tn = int(self.exM.paperList[r].test)
+        if tn in self.predictedTestToNumbers:
+            psid = self.predictedTestToNumbers[tn]
+            pname = self.studentNumbersToNames[psid]
+            self.ui.pSIDLabel.setText(psid)
+            self.ui.pNameLabel.setText(pname)
+            QTimer.singleShot(0, self.setuiedit)
+        else:
+            self.ui.pSIDLabel.setText("")
+            self.ui.pNameLabel.setText("")
+            QTimer.singleShot(0, self.ui.idEdit.clear)
+            self.ui.idEdit.setFocus()
+
+    def setuiedit(self):
+        self.ui.idEdit.setText(self.ui.pSIDLabel.text())
 
     def addPaperToList(self, paper, update=True):
         # Add paper to the exam-table-model - get back the corresponding row.

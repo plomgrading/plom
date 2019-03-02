@@ -108,6 +108,7 @@ servCmd = {
     "iRID": "IDreturnIDd",
     "iRAD": "IDreturnAlreadyIDd",
     "iRCL": "IDrequestClassList",
+    "iRPL": "IDrequestPredictionList",
     "iGAL": "IDgetAlreadyIDList",
     "iGGI": "IDgetGroupImage",
     "iDWF": "IDdoneWithFile",
@@ -398,6 +399,9 @@ class Server(object):
         to that file to the client.
         """
         return ["ACK", self.provideFile("../resources/classlist.csv")]
+
+    def IDrequestPredictionList(self, user, token):
+        return ["ACK", self.provideFile("../resources/predictionlist.csv")]
 
     def IDdoneWithFile(self, user, token, tfn):
         """The client acknowledges they got the file,

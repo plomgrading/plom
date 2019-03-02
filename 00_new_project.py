@@ -43,7 +43,11 @@ directories += [
     "finishing/reassembled_ID_but_not_marked",
 ]
 
-files = ["resources/testspecification.py", "resources/davconf.conf"]
+files = [
+    "resources/testspecification.py",
+    "resources/davconf.conf",
+    "resources/predictionlist.csv",
+]
 
 files += [
     "build/01_build_specification_gui.py",
@@ -70,32 +74,38 @@ files += [
 
 files += [
     "imageServer/authenticate.py",
-    "imageServer/mark_manager.py",
     "imageServer/examviewwindow.py",
-    "imageServer/mark_storage.py",
-    "imageServer/id_storage.py",
     "imageServer/identify_manager.py",
-    "imageServer/userManager.py",
+    "imageServer/identify_reverter.py",
+    "imageServer/id_storage.py",
     "imageServer/image_server.py",
-    "imageServer/ui_server_setup.py",
-    "imageServer/serverSetup.py",
+    "imageServer/mark_manager.py",
+    "imageServer/mark_reverter.py",
+    "imageServer/mark_storage.py",
     "imageServer/moreScansAdded.py",
+    "imageServer/serverSetup.py",
+    "imageServer/total_reverter.py",
+    "imageServer/total_storage.py",
+    "imageServer/ui_server_setup.py",
+    "imageServer/userManager.py",
 ]
 
 files += [
-    "clients/client.py",
-    "clients/marker.py",
-    "clients/identifier.py",
     "clients/annotator.py",
-    "clients/messenger.py",
-    "clients/useful_classes.py",
-    "clients/mark_handler.py",
-    "clients/pageview.py",
-    "clients/pagescene.py",
-    "clients/tools.py",
-    "clients/examviewwindow.py",
-    "clients/reorientationwindow.py",
+    "clients/client.py",
     "clients/client.spec",
+    "clients/examviewwindow.py",
+    "clients/identifier.py",
+    "clients/marker.py",
+    "clients/mark_handler.py",
+    "clients/messenger.py",
+    "clients/pagescene.py",
+    "clients/pageview.py",
+    "clients/reorientationwindow.py",
+    "clients/totaler.py",
+    "clients/test_view.py",
+    "clients/useful_classes.py",
+    "clients/tools.py",
 ]
 
 files += [
@@ -104,6 +114,7 @@ files += [
     "clients/uiFiles/ui_chooser.py",
     "clients/uiFiles/ui_identify.py",
     "clients/uiFiles/ui_marker.py",
+    "clients/uiFiles/ui_totaler.py",
 ]
 
 files += [
@@ -126,13 +137,16 @@ files += [
 
 files += [
     "finishing/07_check_completed.py",
-    "finishing/coverPageBuilder.py",
+    "finishing/07alt_check_ID_total.py",
     "finishing/08_build_cover_pages.py",
-    "finishing/testReassembler.py",
     "finishing/09_reassemble.py",
-    "finishing/testspecification.py",
-    "finish/09alt_reassembled_ided_but_unmarked.py",
+    "finishing/09alt_reassembled_ided_but_unmarked.py",
+    "finishing/10_prepare_coded_return.py"
+    "finishing/11_write_to_canvas_spreadsheet.py"
+    "finishing/coverPageBuilder.py",
+    "finishing/return_tools.py" "finishing/testReassembler.py",
     "finishing/testReassembler_only_ided.py",
+    "finishing/utils.py",
 ]
 
 
