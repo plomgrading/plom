@@ -114,6 +114,7 @@ files += [
     "clients/uiFiles/ui_chooser.py",
     "clients/uiFiles/ui_identify.py",
     "clients/uiFiles/ui_marker.py",
+    "clients/uiFiles/ui_testview.py",
     "clients/uiFiles/ui_totaler.py",
 ]
 
