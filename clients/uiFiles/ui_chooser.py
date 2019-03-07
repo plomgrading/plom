@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../qtCreatorFiles/ui_chooser.ui'
+# Form implementation generated from reading ui file 'ui_chooser.ui'
 #
 # Created by: PyQt5 UI code generator 5.11.3
 #
@@ -134,6 +134,9 @@ class Ui_Chooser(object):
         self.identifyButton = QtWidgets.QPushButton(self.taskGBox)
         self.identifyButton.setObjectName("identifyButton")
         self.horizontalLayout.addWidget(self.identifyButton)
+        self.totalButton = QtWidgets.QPushButton(self.taskGBox)
+        self.totalButton.setObjectName("totalButton")
+        self.horizontalLayout.addWidget(self.totalButton)
         self.closeButton = QtWidgets.QPushButton(self.taskGBox)
         self.closeButton.setObjectName("closeButton")
         self.horizontalLayout.addWidget(self.closeButton)
@@ -149,7 +152,8 @@ class Ui_Chooser(object):
         Chooser.setTabOrder(self.pgSB, self.vSB)
         Chooser.setTabOrder(self.vSB, self.markButton)
         Chooser.setTabOrder(self.markButton, self.identifyButton)
-        Chooser.setTabOrder(self.identifyButton, self.closeButton)
+        Chooser.setTabOrder(self.identifyButton, self.totalButton)
+        Chooser.setTabOrder(self.totalButton, self.closeButton)
 
     def retranslateUi(self, Chooser):
         _translate = QtCore.QCoreApplication.translate
@@ -171,5 +175,6 @@ class Ui_Chooser(object):
         self.taskGBox.setTitle(_translate("Chooser", "Choose task"))
         self.markButton.setText(_translate("Chooser", "&Mark"))
         self.identifyButton.setText(_translate("Chooser", "&Identify"))
+        self.totalButton.setText(_translate("Chooser", "&Total"))
         self.closeButton.setText(_translate("Chooser", "&Close"))
 

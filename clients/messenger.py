@@ -47,7 +47,8 @@ async def handle_messaging(msg):
     writer.write(b"\x00")
     await writer.drain()
 
-    data = await reader.read(100)
+    # data = await reader.read(100)
+    data = await reader.readline()
     terminate = data.endswith(b"\x00")
     data = data.rstrip(b"\x00")
     rmesg = json.loads(data.decode())  # message should be a list [ACK, arg1, arg2, etc]

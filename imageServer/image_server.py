@@ -20,6 +20,7 @@ import tempfile
 
 from id_storage import *
 from mark_storage import *
+from total_storage import *
 from authenticate import Authority
 
 sys.path.append("..")  # this allows us to import from ../resources
@@ -55,6 +56,7 @@ def setupLogger(name, log_file, level=logging.INFO):
 SLogger = setupLogger("SLogger", "server.log")
 IDLogger = setupLogger("IDLogger", "identity_storage.log")
 MarkLogger = setupLogger("MarkLogger", "mark_storage.log")
+TotalLogger = setupLogger("TotalLogger", "total_storage.log")
 
 # # # # # # # # # # # #
 # These functions need improving - read from the JSON files?
@@ -102,19 +104,34 @@ servCmd = {
     "UCL": "userClosing",
     "iDNF": "IDdidntFinish",
     "iNID": "IDnextUnIDd",
-    "iGTP": "IDgotTest",
-    "iPRC": "IDProgressCount",
+    "iPRC": "IDprogressCount",
     "iRID": "IDreturnIDd",
     "iRAD": "IDreturnAlreadyIDd",
     "iRCL": "IDrequestClassList",
-    "iGCL": "IDgotClassList",
+    "iRPL": "IDrequestPredictionList",
+    "iGAL": "IDgetAlreadyIDList",
+    "iGGI": "IDgetGroupImage",
+    "iDWF": "IDdoneWithFile",
     "mDNF": "MdidntFinish",
     "mNUM": "MnextUnmarked",
-    "mGTP": "MgotTest",
-    "mPRC": "MProgressCount",
+    "mPRC": "MprogressCount",
     "mRMD": "MreturnMarked",
     "mRAM": "MreturnAlreadyMarked",
     "mGMX": "MgetPageGroupMax",
+    "mGML": "MgetMarkedPaperList",
+    "mGGI": "MgetGroupImages",
+    "mDWF": "MdoneWithFile",
+    "mGWP": "MgetWholePaper",
+    "tGMM": "TgetMaxMark",
+    "tGTP": "TgotTest",
+    "tPRC": "TprogressCount",
+    "tNUT": "TnextUntotaled",
+    "tDNF": "TdidntFinish",
+    "tRAT": "TreturnAlreadyTotaled",
+    "tRUT": "TreturnTotaled",
+    "tGAT": "TgetAlreadyTotaledList",
+    "tDWF": "TdoneWithFile",
+    "tGGI": "TgetGroupImage",
 }
 
 
@@ -135,7 +152,7 @@ async def handle_messaging(reader, writer):
     if not isinstance(message, list):
         SLogger.info(">>> Got strange message - not a list. {}".format(message))
     else:
-        if message[0] == 'AUTH':
+        if message[0] == "AUTH":
             # do not log the password - just auth and username
             SLogger.info("Got auth request: {}".format(message[:2]))
         else:
@@ -161,11 +178,12 @@ async def handle_messaging(reader, writer):
 
 
 class Server(object):
-    def __init__(self, id_db, mark_db, tspec, logger):
+    def __init__(self, id_db, mark_db, total_db, tspec, logger):
         """Init the server, grab the ID and Mark databases, and the test-spec
         """
         self.IDDB = id_db
         self.MDB = mark_db
+        self.TDB = total_db
         self.testSpec = tspec
         self.logger = logger
         self.logger.info("Loading images and users.")
@@ -290,6 +308,7 @@ class Server(object):
             # On token request also make sure anything "out" with that user is reset as todo.
             self.IDDB.resetUsersToDo(user)
             self.MDB.resetUsersToDo(user)
+            self.TDB.resetUsersToDo(user)
             self.logger.info("Authorising user {}".format(user))
             return ["ACK", self.authority.getToken(user)]
         else:
@@ -308,6 +327,10 @@ class Server(object):
         self.logger.info("Adding IDgroups {}".format(sorted(examsGrouped.keys())))
         for t in sorted(examsGrouped.keys()):
             self.IDDB.addUnIDdExam(int(t), "t{:s}idg".format(t.zfill(4)))
+
+        self.logger.info("Adding Total-images {}".format(sorted(examsGrouped.keys())))
+        for t in sorted(examsGrouped.keys()):
+            self.TDB.addUntotaledExam(int(t), "t{:s}idg".format(t.zfill(4)))
 
         self.logger.info("Adding TGVs {}".format(sorted(pageGroupsForGrading.keys())))
         for tgv in sorted(pageGroupsForGrading.keys()):
@@ -377,8 +400,11 @@ class Server(object):
         """
         return ["ACK", self.provideFile("../resources/classlist.csv")]
 
-    def IDgotClassList(self, user, token, tfn):
-        """The client acknowledges they got the class list,
+    def IDrequestPredictionList(self, user, token):
+        return ["ACK", self.provideFile("../resources/predictionlist.csv")]
+
+    def IDdoneWithFile(self, user, token, tfn):
+        """The client acknowledges they got the file,
         so the server deletes it and sends back an ACK.
         """
         self.removeFile(tfn)
@@ -414,6 +440,14 @@ class Server(object):
         # send back an ACK.
         return ["ACK"]
 
+    def TdidntFinish(self, user, token, code):
+        """User didn't finish totaling the image with given code. Tell the
+        database to put this back on the todo-pile.
+        """
+        self.TDB.didntFinish(user, code)
+        # send back an ACK.
+        return ["ACK"]
+
     def userClosing(self, user, token):
         """Client is closing down their app, so remove the authorisation token
         """
@@ -438,16 +472,9 @@ class Server(object):
                 self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give)),
             ]
 
-    def IDProgressCount(self, user, token):
+    def IDprogressCount(self, user, token):
         """Send back current ID progress counts to the client"""
         return ["ACK", self.IDDB.countIdentified(), self.IDDB.countAll()]
-
-    def IDgotTest(self, user, token, test, tfn):
-        """Client acknowledges they got the ID pageimage, so server
-        deletes it from the webdav and sends an ack.
-        """
-        self.removeFile(tfn)
-        return ["ACK"]
 
     def IDreturnIDd(self, user, token, ret, sid, sname):
         """Client has ID'd the pageimage with code=ret, student-number=sid,
@@ -469,6 +496,26 @@ class Server(object):
         self.IDDB.takeIDImageFromClient(ret, user, sid, sname)
         return ["ACK"]
 
+    def IDgetAlreadyIDList(self, user, token):
+        """When a id-client logs on they request a list of papers they have already IDd.
+        Send back a textfile with list of TGVs.
+        """
+        idList = self.IDDB.buildIDList(user)
+        # dump the list to file as json and then give file to client
+        tfn = tempfile.NamedTemporaryFile()
+        with open(tfn.name, "w") as outfile:
+            json.dump(idList, outfile)
+        # Send an ack with the file
+        return ["ACK", self.provideFile(tfn.name)]
+
+    def IDgetGroupImage(self, user, token, tgv):
+        give = self.IDDB.getGroupImage(user, tgv)
+        fname = "{}/idgroup/{}.png".format(pathScanDirectory, give)
+        if fname is not None:
+            return ["ACK", give, self.provideFile(fname), None]
+        else:
+            return ["Err", "User {} is not authorised for tgv={}".format(user, tgv)]
+
     def MnextUnmarked(self, user, token, pg, v):
         """The client has asked for the next unmarked image (with
         group pg, and version v), so ask the database for its code and
@@ -482,15 +529,15 @@ class Server(object):
             # copy the file into the webdav and tell client code / path.
             return ["ACK", give, self.provideFile(fname)]
 
-    def MProgressCount(self, user, token, pg, v):
+    def MprogressCount(self, user, token, pg, v):
         """Send back current marking progress counts to the client"""
         return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
-    def MgotTest(self, user, token, tfn):
-        """Client acknowledges they got the pageimage to mark, so
+    def MdoneWithFile(self, user, token, filename):
+        """Client acknowledges they got the file, so
         server deletes it from the webdav and sends an ack.
         """
-        self.removeFile(tfn)
+        self.removeFile(filename)
         return ["ACK"]
 
     def MreturnMarked(self, user, token, code, mark, fname, mtime):
@@ -516,6 +563,119 @@ class Server(object):
             )
         )
         fh.close()
+
+    def MgetMarkedPaperList(self, user, token, pg, v):
+        """When a marked-client logs on they request a list of papers they have already marked.
+        Check the (group/version) is valid and then send back a textfile with list of TGVs.
+        """
+        iv = int(v)
+        ipg = int(pg)
+        if ipg < 1 or ipg > self.testSpec.getNumberOfGroups():
+            return ["ERR", "Pagegroup out of range"]
+        if iv < 1 or iv > self.testSpec.Versions:
+            return ["ERR", "Version out of range"]
+        markedList = self.MDB.buildMarkedList(user, pg, v)
+        # dump the list to file as json and then give file to client
+        tfn = tempfile.NamedTemporaryFile()
+        with open(tfn.name, "w") as outfile:
+            json.dump(markedList, outfile)
+        # Send an ack with the file
+        return ["ACK", self.provideFile(tfn.name)]
+
+    def MgetGroupImages(self, user, token, tgv):
+        give, fname, aname = self.MDB.getGroupImage(user, tgv)
+        if fname is not None:
+            if aname is not None:
+                return [
+                    "ACK",
+                    give,
+                    self.provideFile(fname),
+                    self.provideFile("markedPapers/" + aname),
+                ]
+            else:
+                return ["ACK", give, self.provideFile(fname), None]
+        else:
+            return ["Err", "Non-existant tgv={}".format(tgv)]
+
+    def MgetWholePaper(self, user, token, testNumber):
+        # client passes the tgv code of their current group image.
+        # from this we infer the test number.
+        files = self.MDB.getTestAll(testNumber)
+        msg = ["ACK"]
+        for f in files:
+            msg.append(self.provideFile(f))
+        return msg
+
+    def TgetMaxMark(self, user, token):
+        return ["ACK", sum(spec.Marks)]
+
+    def TgotTest(self, user, token, test, tfn):
+        """Client acknowledges they got the test pageimage, so server
+        deletes it from the webdav and sends an ack.
+        """
+        self.removeFile(tfn)
+        return ["ACK"]
+
+    def TprogressCount(self, user, token):
+        """Send back current total progress counts to the client"""
+        return ["ACK", self.TDB.countTotaled(), self.TDB.countAll()]
+
+    def TnextUntotaled(self, user, token):
+        """The client has asked for the next untotaled paper, so
+        ask the database for its code and then copy the appropriate file
+        into the webdav and send code and the temp-webdav path back to the
+        client.
+        """
+        # Get code of next unidentified image from the database
+        give = self.TDB.giveTotalImageToClient(user)
+        if give is None:
+            return ["ERR", "No more papers"]
+        else:
+            # copy the file into the webdav and tell client the code and path
+            return [
+                "ACK",
+                give,
+                self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give)),
+            ]
+
+    def TreturnTotaled(self, user, token, ret, value):
+        """Client has totaled the pageimage with code=ret, total=value.
+        Send the information to the database and return an ACK
+        """
+        self.TDB.takeTotalImageFromClient(ret, user, value)
+        return ["ACK"]
+
+    def TreturnAlreadyTotaled(self, user, token, ret, value):
+        """ As per TReturnTotaled"""
+        self.TDB.takeTotalImageFromClient(ret, user, value)
+        return ["ACK"]
+
+    def TgetAlreadyTotaledList(self, user, token):
+        """When a total-client logs on they request a list of papers they have already totaled.
+        Send back a textfile with list of TGVs.
+        """
+        tList = self.TDB.buildTotalList(user)
+        # dump the list to file as json and then give file to client
+        tfn = tempfile.NamedTemporaryFile()
+        with open(tfn.name, "w") as outfile:
+            json.dump(tList, outfile)
+        # Send an ack with the file
+        return ["ACK", self.provideFile(tfn.name)]
+
+    def TdoneWithFile(self, user, token, tfn):
+        """The client acknowledges they got the file,
+        so the server deletes it and sends back an ACK.
+        """
+        self.removeFile(tfn)
+        return ["ACK"]
+
+    def TgetGroupImage(self, user, token, tgv):
+        give = self.TDB.getGroupImage(user, tgv)
+        fname = "{}/idgroup/{}.png".format(pathScanDirectory, give)
+        if fname is not None:
+            return ["ACK", give, self.provideFile(fname), None]
+        else:
+            return ["Err", "User {} is not authorised for tgv={}".format(user, tgv)]
 
 
 # # # # # # # # # # # #
@@ -616,8 +776,9 @@ findPageGroups()
 # Pass them the loggers
 theIDDB = IDDatabase(IDLogger)
 theMarkDB = MarkDatabase(MarkLogger)
+theTotalDB = TotalDatabase(TotalLogger)
 # Fire up the server with both database client classes and the test-spec.
-peon = Server(theIDDB, theMarkDB, spec, SLogger)
+peon = Server(theIDDB, theMarkDB, theTotalDB, spec, SLogger)
 
 # # # # # # # # # # # #
 # Fire up the asyncio event loop.
@@ -666,3 +827,4 @@ SLogger.info("Closing databases")
 print("Closing databases")
 theIDDB.saveIdentified()
 theMarkDB.saveMarked()
+theTotalDB.saveTotaled()

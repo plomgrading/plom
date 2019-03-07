@@ -7,11 +7,11 @@ import json
 import os
 import marker
 import identifier
+import totaler
 import sys
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory
 from uiFiles.ui_chooser import Ui_Chooser
-
 
 # set up variables to store paths for marker and id clients
 global tempDirectory, directoryPath
@@ -64,6 +64,7 @@ class Chooser(QWidget):
         # connect buttons to functions.
         self.ui.markButton.clicked.connect(self.runMarker)
         self.ui.identifyButton.clicked.connect(self.runIDer)
+        self.ui.totalButton.clicked.connect(self.runTotaler)
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontButton.clicked.connect(self.setFont)
 
@@ -103,10 +104,14 @@ class Chooser(QWidget):
                 user, pwd, server, mport, wport, pg, v, self
             )
             self.marker.exec_()
-        else:
+        elif self.runIt == "IDer":
             # Run the ID client.
             self.identifier = identifier.IDClient(user, pwd, server, mport, wport)
             self.identifier.exec_()
+        else:
+            # Run the Total client.
+            self.totaler = totaler.TotalClient(user, pwd, server, mport, wport)
+            self.totaler.exec_()
 
     def runMarker(self):
         self.runIt = "Marker"
@@ -114,6 +119,10 @@ class Chooser(QWidget):
 
     def runIDer(self):
         self.runIt = "IDer"
+        self.validate()
+
+    def runTotaler(self):
+        self.runIt = "Totaler"
         self.validate()
 
     def closeWindow(self):

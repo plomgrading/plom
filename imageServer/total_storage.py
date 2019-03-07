@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
+__credits__ = ["Andrew Rechnitzer"]
 __license__ = "GPLv3"
 
 from datetime import datetime
@@ -10,10 +10,10 @@ import json
 
 
 # open the database file in resources.
-iddb = SqliteDatabase("../resources/identity.db")
+tdb = SqliteDatabase("../resources/totals.db")
 
 
-class IDImage(Model):
+class TotalImage(Model):
     """Simple database model for peewee."""
 
     number = IntegerField(unique=True)
@@ -21,14 +21,13 @@ class IDImage(Model):
     status = CharField()
     user = CharField()
     time = DateTimeField()
-    sid = CharField(unique=True)
-    sname = CharField()
+    mark = IntegerField()
 
     class Meta:
-        database = iddb
+        database = tdb
 
 
-class IDDatabase:
+class TotalDatabase:
     """Class to handle all our database transactions."""
 
     def __init__(self, logger):
@@ -40,132 +39,129 @@ class IDDatabase:
     def connectToDB(self):
         """Connect to the database"""
         self.logging.info("Connecting to database")
-        with iddb:
-            iddb.connect()
+        with tdb:
+            tdb.connect()
 
     def createTable(self):
         """Create the required table in the database"""
         self.logging.info("Creating database tables")
-        with iddb:
-            iddb.create_tables([IDImage])
+        with tdb:
+            tdb.create_tables([TotalImage])
 
     def shutdown(self):
         """Shut connection to the database"""
-        with iddb:
-            iddb.close()
+        with tdb:
+            tdb.close()
 
     def printToDo(self):
         """Print every record that is still ToDo"""
         query = (
-            IDImage.select().where(IDImage.status == "ToDo").order_by(IDImage.number)
+            TotalImage.select()
+            .where(TotalImage.status == "ToDo")
+            .order_by(TotalImage.number)
         )
         for x in query:
             print(x.number, x.tgv, x.status)
 
-    def printOutForIDing(self):
-        """Print every record that is out for ID-ing"""
+    def printOutForTotaling(self):
+        """Print every record that is out for totaling"""
         query = (
-            IDImage.select()
-            .where(IDImage.status == "OutForIDing")
-            .order_by(IDImage.number)
+            TotalImage.select()
+            .where(TotalImage.status == "OutForTotaling")
+            .order_by(TotalImage.number)
         )
         for x in query:
             print(x.number, x.tgv, x.status, x.user, x.time)
 
-    def printIdentified(self):
-        """Print every record that has been ID'd"""
+    def printTotaled(self):
+        """Print every record that has been totaled"""
         query = (
-            IDImage.select()
-            .where(IDImage.status == "Identified")
-            .order_by(IDImage.number)
+            TotalImage.select()
+            .where(TotalImage.status == "Totaled")
+            .order_by(TotalImage.number)
         )
         for x in query:
-            print(x.number, x.tgv, x.status, x.user, x.time, x.sid, x.sname)
+            print(x.number, x.tgv, x.status, x.user, x.time, x.mark)
 
-    def printAllIDImages(self):
+    def printAllTotalImages(self):
         """Print all the records"""
         self.printToDo()
-        self.printOutForIDing()
+        self.printOutForTotaling()
         self.printIdentified()
 
     def countAll(self):
         """Count all the records"""
         try:
-            return IDImage.select().count()
-        except IDImage.DoesNotExist:
+            return TotalImage.select().count()
+        except TotalImage.DoesNotExist:
             return 0
 
-    def countIdentified(self):
-        """Count all the ID'd records"""
+    def countTotaled(self):
+        """Count all the totaled records"""
         try:
-            return IDImage.select().where(IDImage.status == "Identified").count()
-        except IDImage.DoesNotExist:
+            return TotalImage.select().where(TotalImage.status == "Totaled").count()
+        except TotalImage.DoesNotExist:
             return 0
 
-    def addUnIDdExam(self, t, code):
+    def addUntotaledExam(self, t, code):
         """Add exam number t with given code to the database"""
-        self.logging.info("Adding unid'd IDImage {} to database".format(t))
+        self.logging.info("Adding unid'd TotalImage {} to database".format(t))
         try:
-            with iddb.atomic():
-                IDImage.create(
+            with tdb.atomic():
+                TotalImage.create(
                     number=t,
                     tgv=code,
                     status="ToDo",
                     user="None",
                     time=datetime.now(),
-                    sid=-t,
-                    sname="",
+                    mark=-1,
                 )
         except IntegrityError:
-            self.logging.info("IDImage {} {} already exists.".format(t, code))
+            self.logging.info("TotalImage {} {} already exists.".format(t, code))
 
-    def giveIDImageToClient(self, username):
+    def giveTotalImageToClient(self, username):
         """Find unid'd test and send to client"""
         try:
-            with iddb.atomic():
+            with tdb.atomic():
                 # Grab image from todo pile
-                x = IDImage.get(status="ToDo")
+                x = TotalImage.get(status="ToDo")
                 # log it.
                 self.logging.info(
-                    "Passing IDImage {} {} to client {}".format(
+                    "Passing TotalImage {} {} to client {}".format(
                         x.number, x.tgv, username
                     )
                 )
                 # Update status, user, time.
-                x.status = "OutForIDing"
+                x.status = "OutForTotaling"
                 x.user = username
                 x.time = datetime.now()
                 x.save()
                 # return tgv.
                 return x.tgv
-        except IDImage.DoesNotExist:
+        except TotalImage.DoesNotExist:
             self.logging.info("Nothing left on To-Do pile")
 
-    def takeIDImageFromClient(self, code, username, sid, sname):
+    def takeTotalImageFromClient(self, code, username, value):
         """Get ID'dimage back from client - update record in database."""
         try:
-            with iddb.atomic():
+            with tdb.atomic():
                 # get the record by code + username.
-                x = IDImage.get(tgv=code, user=username)
+                x = TotalImage.get(tgv=code, user=username)
                 # update status, Student-number, name, id-time.
-                x.status = "Identified"
-                x.sid = sid
-                x.sname = sname
-                x.time = datetime.now()
+                x.status = "Totaled"
+                x.mark = value
                 x.save()
                 # log it.
                 self.logging.info(
-                    "IDImage {} {} identified as {} {} by user {}".format(
-                        x.number, code, sid, sname, username
+                    "TotalImage {} {} totaled as {} by user {}".format(
+                        x.number, code, value, username
                     )
                 )
                 return True
-        except IntegrityError:
-            self.logging.info("Student number {} already entered".format(sid))
-            return False
-        except IDImage.DoesNotExist:
+
+        except TotalImage.DoesNotExist:
             self.logging.info(
-                "That IDImage number {} / username {} pair not known".format(
+                "That TotalImage number {} / username {} pair not known".format(
                     code, username
                 )
             )
@@ -176,11 +172,13 @@ class IDDatabase:
         back on todo pile
         """
         # Log user returning given tgv.
-        self.logging.info("User {} returning unid'd IDImages {}".format(username, code))
-        with iddb.atomic():
+        self.logging.info(
+            "User {} returning untotaled TotalImages {}".format(username, code)
+        )
+        with tdb.atomic():
             # get the record by username+code
-            query = IDImage.select().where(
-                IDImage.user == username, IDImage.tgv == code
+            query = TotalImage.select().where(
+                TotalImage.user == username, TotalImage.tgv == code
             )
             for x in query:
                 # set it back as todo, no user, update time and save.
@@ -190,23 +188,23 @@ class IDDatabase:
                 x.save()
                 # log the result.
                 self.logging.info(
-                    ">>> Returning IDImage {} {} from user {}".format(
+                    ">>> Returning TotalImage {} {} from user {}".format(
                         x.number, x.tgv, username
                     )
                 )
 
-    def saveIdentified(self):
+    def saveTotaled(self):
         """Dump all the ID'd tests to a json."""
-        examsIdentified = {}
+        examsTotaled = {}
         query = (
-            IDImage.select()
-            .where(IDImage.status == "Identified")
-            .order_by(IDImage.number)
+            TotalImage.select()
+            .where(TotalImage.status == "Totaled")
+            .order_by(TotalImage.number)
         )
         for x in query:
-            examsIdentified[x.number] = [x.tgv, x.sid, x.sname, x.user]
-        eg = open("../resources/examsIdentified.json", "w")
-        eg.write(json.dumps(examsIdentified, indent=2, sort_keys=True))
+            examsTotaled[x.number] = [x.tgv, x.mark, x.user]
+        eg = open("../resources/examsTotaled.json", "w")
+        eg.write(json.dumps(examsTotaled, indent=2, sort_keys=True))
         eg.close()
 
     def resetUsersToDo(self, username):
@@ -214,12 +212,12 @@ class IDDatabase:
         on the todo pile
         """
         self.logging.info(
-            "Anything from user {} that is OutForIDing - reset it as ToDo.".format(
+            "Anything from user {} that is OutForTotaling - reset it as ToDo.".format(
                 username
             )
         )
-        query = IDImage.select().where(
-            IDImage.user == username, IDImage.status == "OutForIDing"
+        query = TotalImage.select().where(
+            TotalImage.user == username, TotalImage.status == "OutForTotaling"
         )
         for x in query:
             x.status = "ToDo"
@@ -227,23 +225,23 @@ class IDDatabase:
             x.time = datetime.now()
             x.save()
             self.logging.info(
-                ">>> Returning IDImage {} from {} to the ToDo pile".format(
+                ">>> Returning TotalImage {} from {} to the ToDo pile".format(
                     x.tgv, username
                 )
             )
 
-    def buildIDList(self, username):
-        query = IDImage.select().where(IDImage.user == username)
-        idList = []
+    def buildTotalList(self, username):
+        query = TotalImage.select().where(TotalImage.user == username)
+        tList = []
         for x in query:
-            if x.status == "Identified":
-                idList.append([x.tgv, x.status, x.sid, x.sname])
-        return idList
+            if x.status == "Totaled":
+                tList.append([x.tgv, x.status, x.mark])
+        return tList
 
     def getGroupImage(self, username, code):
         try:
-            with iddb.atomic():
-                x = IDImage.get(tgv=code, user=username)
+            with tdb.atomic():
+                x = TotalImage.get(tgv=code, user=username)
                 return x.tgv
         except IDImage.DoesNotExist:
             print("Request for non-existant tgv = {}".format(code))

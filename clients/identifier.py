@@ -5,6 +5,7 @@ __license__ = "GPLv3"
 
 from collections import defaultdict
 import csv
+import json
 import os
 import tempfile
 from PyQt5.QtCore import (
@@ -33,7 +34,7 @@ class Paper:
     store the studentName and ID-numer.
     """
 
-    def __init__(self, tgv, fname):
+    def __init__(self, tgv, fname, stat="unidentified", id="", name=""):
         # tgv = t0000p00v0
         # ... = 0123456789
         # The test-IDgroup code
@@ -41,10 +42,10 @@ class Paper:
         # The test number
         self.test = tgv[1:5]
         # Set status as unid'd
-        self.status = "unidentified"
+        self.status = stat
         # no name or id-number yet.
-        self.sname = ""
-        self.sid = ""
+        self.sname = name
+        self.sid = id
         # the filename of the image.
         self.originalFile = fname
 
@@ -176,8 +177,6 @@ class IDClient(QDialog):
         # Exam model for the table of papers - associate to table in GUI.
         self.exM = ExamModel()
         self.ui.tableView.setModel(self.exM)
-        # Connect the table's model sel-changed to appropriate function.
-        self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         # A view window for the papers so user can zoom in as needed.
         # Paste into appropriate location in gui.
         self.testImg = ExamViewWindow()
@@ -189,6 +188,8 @@ class IDClient(QDialog):
         self.getClassList()
         # Init the name/ID completers and a validator for ID
         self.setCompleters()
+        # Get the predicted list from server for ID guesses.
+        self.getPredictions()
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nameEdit.returnPressed.connect(self.enterName)
@@ -200,7 +201,15 @@ class IDClient(QDialog):
 
         # Make sure window is maximised and request a paper from server.
         self.showMaximized()
+        # Get list of papers already ID'd and add to table.
+        self.getAlreadyIDList()
+        # Connect the view **after** list updated.
+        # Connect the table's model sel-changed to appropriate function.
+        self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         self.requestNext()
+        # make sure exam view window's view is reset....
+        # very slight delay to ensure things loaded first
+        QTimer.singleShot(100, self.testImg.view.resetView)
 
     def requestToken(self):
         """Send authorisation request (AUTH) to server. The request sends name and
@@ -249,10 +258,50 @@ class IDClient(QDialog):
                 self.studentNumbersToNames[str(row["id"])] = sn
         # Now that we've read in the classlist - tell server we got it
         # Server will remove it from the webdav server.
-        msg = messenger.SRMsg(["iGCL", self.userName, self.token, dfn])
+        msg = messenger.SRMsg(["iDWF", self.userName, self.token, dfn])
         if msg[0] == "ERR":
             ErrorMessage("Classlist problem")
             quit()
+        return True
+
+    def getPredictions(self):
+        """Send request for classlist (iRPL) to server. The server then sends
+        back the CSV of the predictions testnumber -> studentID.
+        """
+        # Send request for classlist (iRCL) to server
+        msg = messenger.SRMsg(["iRPL", self.userName, self.token])
+        # Return should be [ACK, path/filename]
+        if msg[0] == "ERR":
+            ErrorMessage("Prediction list problem")
+            quit()
+        # Get the filename from the message.
+        dfn = msg[1]
+        fname = os.path.join(self.workingDirectory, "pl.csv")
+        # Get file from dav and copy into local temp working dir as cl.csv
+        messenger.getFileDav(dfn, fname)
+        # create dictionaries to store the classlist
+        self.predictedTestToNumbers = defaultdict(int)
+        # Read pl.csv into those dictionaries
+        with open(fname) as csvfile:
+            reader = csv.DictReader(csvfile, skipinitialspace=True)
+            for row in reader:
+                self.predictedTestToNumbers[int(row["test"])] = str(row["id"])
+        # Now that we've read in the classlist - tell server we got it
+        # Server will remove it from the webdav server.
+        msg = messenger.SRMsg(["iDWF", self.userName, self.token, dfn])
+        if msg[0] == "ERR":
+            ErrorMessage("Prediction list problem")
+            quit()
+        # Also tweak font size
+        fnt = self.font()
+        fnt.setPointSize(fnt.pointSize() * 2)
+        self.ui.pNameLabel.setFont(fnt)
+        fnt.setPointSize(fnt.pointSize() * 1.5)
+        self.ui.pSIDLabel.setFont(fnt)
+        # And if no predictions then hide that box
+        if len(self.predictedTestToNumbers) == 0:
+            self.ui.predictionBox.hide()
+
         return True
 
     def setCompleters(self):
@@ -314,6 +363,24 @@ class IDClient(QDialog):
                     ]
                 )
 
+    def getAlreadyIDList(self):
+        # Ask server for list of previously marked papers
+        msg = messenger.SRMsg(["iGAL", self.userName, self.token])
+        if msg[0] == "ERR":
+            return
+        fname = os.path.join(self.workingDirectory, "idList.txt")
+        messenger.getFileDav(msg[1], fname)
+        # Ack that test received - server then deletes it from webdav
+        msg = messenger.SRMsg(["iDWF", self.userName, self.token, msg[1]])
+        # Add those marked papers to our paper-list
+        with open(fname) as json_file:
+            idList = json.load(json_file)
+            for x in idList:
+                self.addPaperToList(
+                    Paper(x[0], fname="", stat="identified", id=x[2], name=x[3]),
+                    update=False,
+                )
+
     def selChanged(self, selnew, selold):
         # When the selection changes, update the ID and name line-edit boxes
         # with the data from the table - if it exists.
@@ -322,24 +389,64 @@ class IDClient(QDialog):
         self.ui.nameEdit.setText(self.exM.data(selnew.indexes()[3]))
         self.updateImage(selnew.indexes()[0].row())
 
+    def checkFiles(self, r):
+        tgv = self.exM.paperList[r].prefix
+        if self.exM.paperList[r].originalFile is not "":
+            return
+        msg = messenger.SRMsg(["iGGI", self.userName, self.token, tgv])
+        if msg[0] == "ERR":
+            return
+        fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
+        tfname = msg[2]  # the temp original image file on webdav
+        messenger.getFileDav(tfname, fname)
+        # got original file so ask server to remove it.
+        msg = messenger.SRMsg(["iDWF", self.userName, self.token, tfname])
+        self.exM.paperList[r].originalFile = fname
+
     def updateImage(self, r=0):
+        # Here the system should check if imagefile exist and grab if needed.
+        self.checkFiles(r)
         # Update the test-image pixmap with the image in the indicated file.
         self.testImg.updateImage(self.exM.paperList[r].originalFile)
+        # update the prediction if present
+        tn = int(self.exM.paperList[r].test)
+        if tn in self.predictedTestToNumbers:
+            psid = self.predictedTestToNumbers[tn]
+            pname = self.studentNumbersToNames[psid]
+            self.ui.pSIDLabel.setText(psid)
+            self.ui.pNameLabel.setText(pname)
+            QTimer.singleShot(0, self.setuiedit)
+        else:
+            self.ui.pSIDLabel.setText("")
+            self.ui.pNameLabel.setText("")
+            QTimer.singleShot(0, self.ui.idEdit.clear)
+            self.ui.idEdit.setFocus()
 
-    def addPaperToList(self, paper):
+    def setuiedit(self):
+        self.ui.idEdit.setText(self.ui.pSIDLabel.text())
+
+    def addPaperToList(self, paper, update=True):
         # Add paper to the exam-table-model - get back the corresponding row.
         r = self.exM.addPaper(paper)
         # select that row and display the image
-        self.ui.tableView.selectRow(r)
-        self.updateImage(r)
-        # One more unid'd paper
-        self.unidCount += 1
+        if update:
+            # One more unid'd paper
+            self.unidCount += 1
+            self.ui.tableView.selectRow(r)
+            self.updateImage(r)
 
     def requestNext(self):
         """Ask the server for an unID'd paper (iNID). Server should return
         message [ACK, testcode, filename]. Get file from webdav, add to the
         list of papers and update the image.
         """
+        # ask server for id-count update
+        msg = messenger.SRMsg(["iPRC", self.userName, self.token])
+        # returns [ACK, #id'd, #total]
+        if msg[0] == "ACK":
+            self.ui.idProgressBar.setMaximum(msg[2])
+            self.ui.idProgressBar.setValue(msg[1])
+
         # ask server for next unid'd paper
         msg = messenger.SRMsg(["iNID", self.userName, self.token])
         if msg[0] == "ERR":
@@ -356,17 +463,11 @@ class IDClient(QDialog):
         # Add the paper [code, filename, etc] to the list
         self.addPaperToList(Paper(test, iname))
         # Tell server we got the image (iGTP) - the server then deletes it.
-        msg = messenger.SRMsg(["iGTP", self.userName, self.token, test, fname])
+        msg = messenger.SRMsg(["iDWF", self.userName, self.token, fname])
         # Clean up table - and set focus on the ID-lineedit so user can
         # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()
         self.ui.idEdit.setFocus()
-        # ask server for id-count update
-        msg = messenger.SRMsg(["iPRC", self.userName, self.token])
-        # returns [ACK, #id'd, #total]
-        if msg[0] == "ACK":
-            self.ui.idProgressBar.setValue(msg[1])
-            self.ui.idProgressBar.setMaximum(msg[2])
 
     def identifyStudent(self, index, alreadyIDd=False):
         """User ID's the student of the current paper. Some care around whether
@@ -418,7 +519,8 @@ class IDClient(QDialog):
             QTimer.singleShot(0, self.ui.idEdit.clear)
             QTimer.singleShot(0, self.ui.nameEdit.clear)
             # Update un-id'd count.
-            self.unidCount -= 1
+            if not alreadyIDd:
+                self.unidCount -= 1
             return True
 
     def moveToNextUnID(self):
@@ -429,7 +531,7 @@ class IDClient(QDialog):
         rstart = self.ui.tableView.selectedIndexes()[0].row()
         r = (rstart + 1) % rt
         # Be careful to not get stuck in loop if all are ID'd.
-        while self.exM.data(self.exM.index(r, 2)) == "identified" and r != rstart:
+        while self.exM.data(self.exM.index(r, 1)) == "identified" and r != rstart:
             r = (r + 1) % rt
         self.ui.tableView.selectRow(r)
 
