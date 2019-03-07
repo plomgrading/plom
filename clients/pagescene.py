@@ -48,13 +48,14 @@ class ScoreBox(QGraphicsTextItem):
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self):
+    def __init__(self, fontsize=10):
         super(ScoreBox, self).__init__()
         self.score = 0
         self.maxScore = 0
         self.setDefaultTextColor(Qt.red)
         self.font = QFont("Helvetica")
-        self.font.setPointSize(36)
+        self.fontSize = min(fontsize*3.5, 36)
+        self.font.setPointSizeF(self.fontSize)
         self.setFont(self.font)
         # Not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
@@ -131,6 +132,8 @@ class PageScene(QGraphicsScene):
         self.undoStack = QUndoStack()
         # Starting mode is move.
         self.mode = "move"
+        # Get current font size to use as base for size of comments etc.
+        self.fontSize = self.font().pointSizeF()
         # Define standard pen, highlight, fill, light-fill
         self.ink = QPen(Qt.red, 2)
         self.highlight = QPen(QColor(255, 255, 0, 64), 50)
@@ -151,7 +154,7 @@ class PageScene(QGraphicsScene):
         self.pathItem = QGraphicsPathItem()
         self.boxItem = QGraphicsRectItem()
         self.lineItem = QGraphicsLineItem()
-        self.blurb = TextItem(self)
+        self.blurb = TextItem(self, self.fontSize)
         self.deleteItem = None
         # Set a mark-delta, comment-text and comment-delta.
         self.markDelta = 0
@@ -159,7 +162,7 @@ class PageScene(QGraphicsScene):
         self.commentDelta = 0
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
-        self.scoreBox = ScoreBox()
+        self.scoreBox = ScoreBox(self.fontSize)
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
 
@@ -259,20 +262,22 @@ class PageScene(QGraphicsScene):
         pt = event.scenePos()
         # a small offset to place delta/text under mouse
         offset = QPointF(0, -24)
+        # needs updating for differing font sizes
         # If the mark-delta of the comment is non-zero then
         # create a delta-object with a different offset.
         # else just place the comment.
         if self.commentDelta != 0:
             # push the delta onto the undo stack.
-            command = CommandDelta(self, pt, self.commentDelta)
+            command = CommandDelta(self, pt, self.commentDelta, self.fontSize)
             self.undoStack.push(command)
             # digits in the delta, and a (rough) corresponding offset.
             x = len(str(abs(int(self.commentDelta))))
             offset = QPointF(26 + 15 * x, -24)
+            # the above needs updating for differing font sizes
         # position of text.
         self.originPos = event.scenePos() + offset
         # create the textitem, and push onto the undo stack
-        self.blurb = TextItem(self)
+        self.blurb = TextItem(self, self.fontSize)
         self.blurb.setPos(self.originPos)
         self.blurb.setPlainText(self.commentText)
         command = CommandText(self, self.blurb, self.ink)
@@ -314,7 +319,7 @@ class PageScene(QGraphicsScene):
         # Grab mouse click location and create command.
         pt = event.scenePos()
         if event.button() == Qt.LeftButton:
-            command = CommandDelta(self, pt, self.markDelta)
+            command = CommandDelta(self, pt, self.markDelta, self.fontSize)
         elif event.button() == Qt.MiddleButton:
             command = CommandQMark(self, pt)
         else:
@@ -395,7 +400,8 @@ class PageScene(QGraphicsScene):
         # (which fires up the editor on that object), and
         # then push it onto the undo-stack.
         self.originPos = event.scenePos() + QPointF(0, -12)
-        self.blurb = TextItem(self)
+        # also needs updating for differing font sizes
+        self.blurb = TextItem(self, self.fontSize)
         self.blurb.setPos(self.originPos)
         self.blurb.setFocus()
         command = CommandText(self, self.blurb, self.ink)

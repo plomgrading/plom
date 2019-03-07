@@ -82,11 +82,11 @@ class CommandCross(QUndoCommand):
 class CommandDelta(QUndoCommand):
     # Very similar to CommandArrow
     # But must send a "the total mark has changed" signal
-    def __init__(self, scene, pt, delta):
+    def __init__(self, scene, pt, delta, fontsize):
         super(CommandDelta, self).__init__()
         self.scene = scene
         self.delta = delta
-        self.delItem = DeltaItem(pt, self.delta)
+        self.delItem = DeltaItem(pt, self.delta, fontsize)
 
     def redo(self):
         self.delItem.flash_redo()
@@ -556,7 +556,7 @@ class TextItem(QGraphicsTextItem):
     # Textitem is a qgraphicstextitem, has to handle
     # textinput and double-click to start editing etc.
     # Shift-return ends the editor
-    def __init__(self, parent):
+    def __init__(self, parent, fontsize=10):
         super(TextItem, self).__init__()
         # Thick is thickness of bounding box hightlight used
         # to highlight the object when undo / redo happens.
@@ -564,7 +564,7 @@ class TextItem(QGraphicsTextItem):
         self.setDefaultTextColor(Qt.red)
         self.setPlainText("")
         self.font = QFont("Helvetica")
-        self.font.setPointSize(24)
+        self.font.setPointSizeF(min(24, fontsize*2.5))
         self.setFont(self.font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
@@ -646,7 +646,7 @@ class TextItem(QGraphicsTextItem):
 
 class DeltaItem(QGraphicsTextItem):
     # Similar to textitem above
-    def __init__(self, pt, delta):
+    def __init__(self, pt, delta, fontsize=10):
         super(DeltaItem, self).__init__()
         self.thick = 2
         self.delta = delta
@@ -659,7 +659,7 @@ class DeltaItem(QGraphicsTextItem):
             self.setPlainText(" {} ".format(self.delta))
         self.font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        self.font.setPointSize(30)
+        self.font.setPointSize(min(30, fontsize*3))
         self.setFont(self.font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
