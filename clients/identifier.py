@@ -410,7 +410,11 @@ class IDClient(QDialog):
         self.testImg.updateImage(self.exM.paperList[r].originalFile)
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
-        if tn in self.predictedTestToNumbers:
+        if self.exM.paperList[r].status == "identified":
+            self.ui.pSIDLabel.setText(self.exM.paperList[r].sid)
+            self.ui.pNameLabel.setText(self.exM.paperList[r].sname)
+            QTimer.singleShot(0, self.setuiedit)
+        elif tn in self.predictedTestToNumbers:
             psid = self.predictedTestToNumbers[tn]
             pname = self.studentNumbersToNames[psid]
             self.ui.pSIDLabel.setText(psid)
