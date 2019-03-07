@@ -142,10 +142,11 @@ files += [
     "finishing/08_build_cover_pages.py",
     "finishing/09_reassemble.py",
     "finishing/09alt_reassembled_ided_but_unmarked.py",
-    "finishing/10_prepare_coded_return.py"
-    "finishing/11_write_to_canvas_spreadsheet.py"
+    "finishing/10_prepare_coded_return.py",
+    "finishing/11_write_to_canvas_spreadsheet.py",
     "finishing/coverPageBuilder.py",
-    "finishing/return_tools.py" "finishing/testReassembler.py",
+    "finishing/return_tools.py",
+    "finishing/testReassembler.py",
     "finishing/testReassembler_only_ided.py",
     "finishing/utils.py",
 ]
