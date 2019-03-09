@@ -350,8 +350,17 @@ class Server(object):
         """Once an image has been marked, the server copies the image
         back from the webdav and into markedPapers.
         """
+        srcfile = os.path.join(davDirectory, fname)
+        dstfile = os.path.join("markedPapers", fname)
+        # Check if file already exists
+        if os.path.isfile(dstfile):
+            # backup the older file with a timestamp
+            os.rename(
+                dstfile,
+                dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
+            )
         # This should really use path-join.
-        shutil.move(davDirectory + "/" + fname, "markedPapers/" + fname)
+        shutil.move(srcfile, dstfile)
         # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
 
     def removeFile(self, davfn):
