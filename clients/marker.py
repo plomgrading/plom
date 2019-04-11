@@ -426,7 +426,7 @@ class MarkerClient(QDialog):
         r = (rstart + 1) % rt
         while self.exM.data(self.exM.index(r, 1)) == "marked" and r != rstart:
             r = (r + 1) % rt
-            self.ui.tableView.selectRow(r)
+        self.ui.tableView.selectRow(r)
         if r == rstart:
             return False
         return True
