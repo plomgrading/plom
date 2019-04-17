@@ -549,7 +549,7 @@ class Server(object):
         self.removeFile(filename)
         return ["ACK"]
 
-    def MreturnMarked(self, user, token, code, mark, fname, mtime):
+    def MreturnMarked(self, user, token, code, mark, fname, mtime, pg, v):
         """Client has marked the pageimage with code, mark, annotated-file-name
         (which the client has uploaded to webdav), and spent mtime marking it.
         Send the information to the database and send an ack.
@@ -558,7 +558,8 @@ class Server(object):
         self.MDB.takeGroupImageFromClient(code, user, mark, fname, mtime)
         self.recordMark(user, mark, fname, mtime)
         self.claimFile(fname)
-        return ["ACK"]
+        # return ack with current counts.
+        return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
     def recordMark(self, user, mark, fname, mtime):
         """For test blah.png, we record, in blah.png.txt, as a backup

@@ -262,6 +262,8 @@ class MarkerClient(QDialog):
         self.ui.scoreLabel.setText(str(self.maxScore))
         # Get list of papers already marked and add to table.
         self.getMarkedList()
+        # Update counts
+        self.updateCount()
         # Connect the view **after** list updated.
         # Connect the table-model's selection change to appropriate function
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
@@ -364,11 +366,7 @@ class MarkerClient(QDialog):
         # Give focus to the table (so enter-key fires up annotator)
         self.ui.tableView.setFocus()
 
-    def requestNext(self, launchAgain=False):
-        """Ask the server for an unmarked paper (mNUM). Server should return
-        message [ACK, test-code, temp-filename]. Get file from webdav, add to
-        the list of papers and update the image.
-        """
+    def updateCount(self):
         # ask server for marking-count update
         progress_msg = messenger.SRMsg(
             ["mPRC", self.userName, self.token, self.pageGroup, self.version]
@@ -377,6 +375,14 @@ class MarkerClient(QDialog):
         if progress_msg[0] == "ACK":
             self.ui.mProgressBar.setValue(progress_msg[1])
             self.ui.mProgressBar.setMaximum(progress_msg[2])
+
+    def requestNext(self, launchAgain=False):
+        """Ask the server for an unmarked paper (mNUM). Server should return
+        message [ACK, test-code, temp-filename]. Get file from webdav, add to
+        the list of papers and update the image.
+        """
+        # update count.
+        # self.updateCount()
 
         # Ask server for next unmarked paper
         msg = messenger.SRMsg(
@@ -567,8 +573,15 @@ class MarkerClient(QDialog):
                 gr,
                 dname,
                 mtime,
+                self.pageGroup,
+                self.version,
             ]
         )
+        # returns [ACK, #marked, #total]
+        if msg[0] == "ACK":
+            self.ui.mProgressBar.setValue(msg[1])
+            self.ui.mProgressBar.setMaximum(msg[2])
+
         # Check if no unmarked test, then request one.
         if self.moveToNextUnmarkedTest() is False:
             self.requestNext(launchAgain)
