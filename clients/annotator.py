@@ -5,7 +5,7 @@ __license__ = "GPLv3"
 
 import sys
 
-from PyQt5.QtCore import Qt, QSize, pyqtSlot
+from PyQt5.QtCore import Qt, QSettings, QSize, pyqtSlot
 from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap, QCloseEvent
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -108,6 +108,9 @@ class Annotator(QDialog):
         )
         # Make sure window is maximised.
         self.showMaximized()
+        # Grab window settings from parent
+        self.loadWindowSettings()
+
         # Keyboard shortcuts.
         # Connect various key-presses to associated tool-button clicks
         # Allows us to translate a key-press into a button-press.
@@ -631,6 +634,13 @@ class Annotator(QDialog):
     def closeEventNoRelaunch(self):
         self.closeEvent(False)
 
+    def loadWindowSettings(self):
+        if self.parent.annotatorSettings.value("geometry") is not None:
+            self.restoreGeometry(self.parent.annotatorSettings.value("geometry"))
+
+    def saveWindowSettings(self):
+        self.parent.annotatorSettings.setValue("geometry", self.saveGeometry())
+
     def closeEvent(self, relaunch):
         """When the user closes the window - either by clicking on the
         little standard all windows have them close icon in the titlebar
@@ -643,6 +653,9 @@ class Annotator(QDialog):
         Be careful of max-score when marking down.
         In either case - get user to confirm the score before closing.
         """
+        # Save the current window settings for next time annotator is launched
+        self.saveWindowSettings()
+
         # If the titlebar close clicked then don't relauch and close the
         # annotator (QDialog) with a 'reject'
         if type(relaunch) == QCloseEvent:

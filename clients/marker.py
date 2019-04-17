@@ -8,7 +8,14 @@ import json
 import shutil
 import tempfile
 
-from PyQt5.QtCore import Qt, QAbstractTableModel, QElapsedTimer, QModelIndex, QVariant
+from PyQt5.QtCore import (
+    Qt,
+    QAbstractTableModel,
+    QElapsedTimer,
+    QModelIndex,
+    QSettings,
+    QVariant,
+)
 from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton
 
 from examviewwindow import ExamViewWindow
@@ -234,6 +241,9 @@ class MarkerClient(QDialog):
         # Paste into appropriate location in gui.
         self.testImg = ExamViewWindow()
         self.ui.gridLayout_6.addWidget(self.testImg, 0, 0)
+        # create a settings variable for saving annotator window settings
+        self.annotatorSettings = QSettings()
+
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.getNextButton.clicked.connect(self.requestNext)
