@@ -141,6 +141,10 @@ class ExamModel(QAbstractTableModel):
         # remove annotated picture
         os.remove("{}".format(self.getAnnotatedFile(index[0].row())))
 
+    def deferPaper(self, index):
+        # When user defers paper, it must be unmarked or reverted already. Set status to "deferred"
+        self.setData(index[1], "deferred")
+
     def addPaper(self, rho):
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
@@ -235,6 +239,7 @@ class MarkerClient(QDialog):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.revertButton.clicked.connect(self.revertTest)
+        self.ui.deferButton.clicked.connect(self.deferTest)
         # Give IDs to the radio-buttons which select the marking style
         # 1 = mark total = user clicks the total-mark
         # 2 = mark-up = mark starts at 0 and user increments it
@@ -424,7 +429,10 @@ class MarkerClient(QDialog):
             return
         rstart = self.ui.tableView.selectedIndexes()[0].row()
         r = (rstart + 1) % rt
-        while self.exM.data(self.exM.index(r, 1)) == "marked" and r != rstart:
+        while (
+            self.exM.data(self.exM.index(r, 1)) in ["marked", "deferred"]
+            and r != rstart
+        ):
             r = (r + 1) % rt
         self.ui.tableView.selectRow(r)
         if r == rstart:
@@ -448,6 +456,20 @@ class MarkerClient(QDialog):
         self.exM.revertPaper(index)
         # Update the image (is now back to original untouched image)
         self.updateImage(index[0].row())
+
+    def deferTest(self):
+        # Mark test as "defer" - to be skipped until later.
+        index = self.ui.tableView.selectedIndexes()
+        # if no test then return
+        if len(index) == 0:
+            return
+        if self.exM.data(index[1]) is "deferred":
+            return
+        if self.exM.data(index[1]) is "marked":
+            msg = ErrorMessage("Paper is already marked - revert it before deferring.")
+            msg.exec_()
+            return
+        self.exM.deferPaper(index)
 
     def waitForAnnotator(self, fname):
         """This fires up the annotation window for user annotation + maring.
@@ -515,9 +537,9 @@ class MarkerClient(QDialog):
         aname = os.path.join(
             self.workingDirectory, "G" + self.exM.data(index[0])[1:] + ".png"
         )
-        # If paper is untouched or reverted, copy the original image to
+        # If paper is untouched, reverted or deferred, copy the original image to
         # the annotated filename. (so if already annotated, we use that).
-        if self.exM.data(index[1]) in ["untouched", "reverted"]:
+        if self.exM.data(index[1]) in ["untouched", "reverted", "deferred"]:
             shutil.copyfile(
                 "{}".format(self.exM.getOriginalFile(index[0].row())), aname
             )
