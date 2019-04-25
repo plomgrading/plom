@@ -680,5 +680,7 @@ class Annotator(QDialog):
                 self.launchAgain = False
             # Save the view/scene to file.
             self.view.save()
+            # Save the comments
+            self.view.saveComments()
             # Close the annotator(QDialog) with an 'accept'.
             self.accept()
