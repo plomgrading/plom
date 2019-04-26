@@ -173,7 +173,8 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             if type(X) is TextItem:
                 comments.append(X.toPlainText())
-        with open(self.imageName + ".json", "w") as commentFile:
+        # image file is <blah>.png, save comments as <blah>.json
+        with open(self.imageName[:-3] + "json", "w") as commentFile:
             json.dump(comments, commentFile)
 
     def save(self):

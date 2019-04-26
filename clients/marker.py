@@ -592,6 +592,18 @@ class MarkerClient(QDialog):
             self.ui.mProgressBar.setValue(msg[1])
             self.ui.mProgressBar.setMaximum(msg[2])
 
+        # copy annotated file to webdav
+        cfile = aname[:-3] + "json"
+        dname = os.path.basename(cfile)
+        messenger.putFileDav(cfile, dname)
+        # Send comment file back to server
+        msg = messenger.SRMsg(
+            ["mRCF", self.userName, self.token, self.pageGroup, self.version, dname]
+        )
+        if msg[0] == "ACK":
+            # all good so can remove the comment file from local.
+            os.unlink(cfile)
+
         # Check if no unmarked test, then request one.
         if self.moveToNextUnmarkedTest() is False:
             self.requestNext(launchAgain)
