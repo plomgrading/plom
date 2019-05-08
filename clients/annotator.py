@@ -80,6 +80,7 @@ class Annotator(QDialog):
         # Set up the gui.
         self.ui.setupUi(self)
         # Set up the view of the group-image - loads in the image etc
+        self.view = None
         self.setView()
         # Create the comment list widget and put into gui.
         self.commentW = CommentWidget()
@@ -682,3 +683,6 @@ class Annotator(QDialog):
             self.view.save()
             # Close the annotator(QDialog) with an 'accept'.
             self.accept()
+
+    def latexAFragment(self, txt):
+        return self.parent.latexAFragment(txt)

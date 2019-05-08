@@ -19,6 +19,7 @@ class PageView(QGraphicsView):
     def __init__(self, parent, imgName):
         # init the qgraphicsview
         super(PageView, self).__init__(parent)
+        self.parent = parent
         # Set scrollbars
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -79,3 +80,6 @@ class PageView(QGraphicsView):
 
     def zoomOut(self):
         self.scale(0.8, 0.8)
+
+    def latexAFragment(self, txt):
+        return self.parent.latexAFragment(txt)

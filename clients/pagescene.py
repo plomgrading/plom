@@ -54,7 +54,7 @@ class ScoreBox(QGraphicsTextItem):
         self.maxScore = 0
         self.setDefaultTextColor(Qt.red)
         self.font = QFont("Helvetica")
-        self.fontSize = min(fontsize*3.5, 36)
+        self.fontSize = min(fontsize * 3.5, 36)
         self.font.setPointSizeF(self.fontSize)
         self.setFont(self.font)
         # Not editable.
@@ -542,3 +542,6 @@ class PageScene(QGraphicsScene):
             pass
         # After the drop event make sure pageview has the focus.
         self.parent().setFocus(Qt.TabFocusReason)
+
+    def latexAFragment(self, txt):
+        return self.parent().latexAFragment(txt)
