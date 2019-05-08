@@ -72,6 +72,9 @@ class PageView(QGraphicsView):
     def redo(self):
         self.scene.undoStack.redo()
 
+    def saveComments(self):
+        self.scene.saveComments()
+
     def save(self):
         self.scene.save()
 

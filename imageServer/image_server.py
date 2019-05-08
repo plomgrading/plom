@@ -121,6 +121,7 @@ servCmd = {
     "mDWF": "MdoneWithFile",
     "mGWP": "MgetWholePaper",
     "mLTT": "MlatexThisText",
+    "mRCF": "MreturnCommentFile",
     "tGMM": "TgetMaxMark",
     "tGTP": "TgotTest",
     "tPRC": "TprogressCount",
@@ -362,6 +363,22 @@ class Server(object):
         shutil.move(srcfile, dstfile)
         # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
 
+    def claimCommentFile(self, fname):
+        """The file containing the comments made by the marker gets copied into the markingComments directory and then removed from the webdav.
+        """
+        srcfile = os.path.join(davDirectory, fname)
+        dstfile = os.path.join("markingComments", fname)
+        # Check if file already exists
+        if os.path.isfile(dstfile):
+            # backup the older file with a timestamp
+            os.rename(
+                dstfile,
+                dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
+            )
+        # This should really use path-join.
+        shutil.move(srcfile, dstfile)
+        # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
+
     def removeFile(self, davfn):
         """Once a file has been grabbed by the client, delete it from the webdav.
         """
@@ -559,6 +576,13 @@ class Server(object):
         self.claimFile(fname)
         # return ack with current counts.
         return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
+
+    def MreturnCommentFile(self, user, token, pg, v, fname):
+        """After client has marked pageimage it sends back a json file which
+        contains the comments made by the marker.
+        """
+        self.claimCommentFile(fname)
+        return ["ACK"]
 
     def recordMark(self, user, mark, fname, mtime):
         """For test blah.png, we record, in blah.png.txt, as a backup
