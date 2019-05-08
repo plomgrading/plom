@@ -587,7 +587,7 @@ class TextItem(QGraphicsTextItem):
         if self.state == "PNG":
             self.pngToText()
         else:
-            self.blah = self.toPlainText()
+            self.contents = self.toPlainText()
         super(TextItem, self).focusInEvent(event)
 
     def focusOutEvent(self, event):
@@ -602,7 +602,7 @@ class TextItem(QGraphicsTextItem):
 
     def textToPng(self):
         self.contents = self.toPlainText()
-        if self.parent.latexAFragment(self.blah):
+        if self.parent.latexAFragment(self.contents):
             self.setPlainText("")
             tc = self.textCursor()
             qi = QImage("frag.png")
