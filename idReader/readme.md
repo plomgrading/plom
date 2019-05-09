@@ -25,12 +25,16 @@
 * If you have not trained the model previously, then you should run `trainModelTF.py`
 * This is not fast, but when done once you can just copy the model to new projects.
 * More precisely, copy all files `digitModel*` to the same directory in a new project. These files are about 13mb.
-* **Future** include the model or...?
+* **Future** include the model in the repo or...?
+
+## After model training
+* You cannot proceed until  all papers have been scanned and grouped. ie just before the image server is run.
+* The system needs the classlist in order to make worthwhile predictions. Without the classlist I wouldn't bother.
+* Once the classlist is in place and the model has been trained (in the repo directory, not in the current project), just copy the idReader directory and its contents into the current project.
+* Then run `readStudentID.py` to make ID predictions.
+
 
 ## Making student ID predictions.
-* This cannot be done until all papers have been scanned and grouped. ie just before the image server is run.
-* The system needs the classlist in order to make worthwhile predictions. Without the classlist I wouldn't bother.
-* Once the model is trained (or copied into place), all the scans are processed and grouped, and the classlist is in place, then run `readStudentID.py`
 * That script looks at the ID page from each test and isolates the student-information box.
 * Since that box has known dimensions it is easy to extract each student number digit.
 * The image of each of those digits are then fed into the tensorflow model which returns a list of log-likelihoods.
