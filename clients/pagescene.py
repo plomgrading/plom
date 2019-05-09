@@ -3,6 +3,8 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
 __license__ = "GPLv3"
 
+import json
+
 from PyQt5.QtCore import Qt, QLineF, QPointF, QRectF, pyqtSignal
 from PyQt5.QtGui import (
     QBrush,
@@ -54,7 +56,7 @@ class ScoreBox(QGraphicsTextItem):
         self.maxScore = 0
         self.setDefaultTextColor(Qt.red)
         self.font = QFont("Helvetica")
-        self.fontSize = min(fontsize*3.5, 36)
+        self.fontSize = min(fontsize * 3.5, 36)
         self.font.setPointSizeF(self.fontSize)
         self.setFont(self.font)
         # Not editable.
@@ -165,6 +167,15 @@ class PageScene(QGraphicsScene):
         self.scoreBox = ScoreBox(self.fontSize)
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
+
+    def saveComments(self):
+        comments = []
+        for X in self.items():
+            if type(X) is TextItem:
+                comments.append(X.toPlainText())
+        # image file is <blah>.png, save comments as <blah>.json
+        with open(self.imageName[:-3] + "json", "w") as commentFile:
+            json.dump(comments, commentFile)
 
     def save(self):
         """ Save the annotated group-image.

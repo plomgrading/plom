@@ -32,7 +32,7 @@ directories += [
     "scanAndGroup/extraPages/",
 ]
 
-directories += ["imageServer/markedPapers"]
+directories += ["imageServer/markedPapers", "imageServer/markingComments"]
 
 directories += ["clients", "clients/uiFiles", "clients/icons"]
 
