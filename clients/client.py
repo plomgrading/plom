@@ -24,19 +24,19 @@ def readLastTime():
     the last run of the client.
     """
     global lastTime
+    # set some reasonable defaults.
+    lastTime["user"] = ""
+    lastTime["server"] = "localhost"
+    lastTime["mport"] = "41984"
+    lastTime["wport"] = "41985"
+    lastTime["pg"] = 1
+    lastTime["v"] = 1
+    lastTime["fontSize"] = 10
     # If exists, read from json file.
     if os.path.isfile("lastTime.json"):
         with open("lastTime.json") as data_file:
-            lastTime = json.load(data_file)
-    else:
-        # set some reasonable defaults.
-        lastTime["user"] = ""
-        lastTime["server"] = "localhost"
-        lastTime["mport"] = "41984"
-        lastTime["wport"] = "41985"
-        lastTime["pg"] = 1
-        lastTime["v"] = 1
-        lastTime["fontSize"] = 10
+            # update values from the json
+            lastTime.update(json.load(data_file))
 
 
 def writeLastTime():
