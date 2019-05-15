@@ -117,7 +117,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
         # read in the test/page stamp
         testnumber = fitz.Pixmap(tpFile[p + 1])
         # put it at centre top each page
-        exam[p].insertImage(rTC, pixmap=testnumber, overlay=True)
+        exam[p].insertImage(rTC, pixmap=testnumber, overlay=True, keep_proportion=False)
         # grab the tpv QRcode for current page
         qrPage = fitz.Pixmap(pageFile[p + 1])
         if p % 2 == 0:
