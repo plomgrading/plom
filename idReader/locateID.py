@@ -1,5 +1,6 @@
 import glob
 import sys
+import os
 
 from PyQt5.QtCore import Qt, QRectF
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPixmap
