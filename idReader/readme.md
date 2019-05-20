@@ -35,7 +35,7 @@
 
 ## LocateID
 * This loads the first ID-group image and asks the user to isolate the part of the page that contains the student information template.
-* Using the two sliders the user can increase/decrease the top/bottom rectangles and so blank out the irrelavent parts of the ID-group image.
+* Using the two sliders the user can increase/decrease the top/bottom rectangles and so blank out the irrelevant parts of the ID-group image.
 * Clicking "go" then fires up the ID-prediction script "readStudentID.py" and passes the vertical range of the image to be examined.
 
 
