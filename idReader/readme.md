@@ -31,7 +31,12 @@
 * You cannot proceed until  all papers have been scanned and grouped. ie just before the image server is run.
 * The system needs the classlist in order to make worthwhile predictions. Without the classlist I wouldn't bother.
 * Once the classlist is in place and the model has been trained (in the repo directory, not in the current project), just copy the idReader directory and its contents into the current project.
-* Then run `readStudentID.py` to make ID predictions.
+* Then run `locateID.py` to select region on page which contains the student information template.
+
+## LocateID
+* This loads the first ID-group image and asks the user to isolate the part of the page that contains the student information template.
+* Using the two sliders the user can increase/decrease the top/bottom rectangles and so blank out the irrelavent parts of the ID-group image.
+* Clicking "go" then fires up the ID-prediction script "readStudentID.py" and passes the vertical range of the image to be examined.
 
 
 ## Making student ID predictions.
