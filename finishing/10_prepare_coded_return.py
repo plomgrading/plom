@@ -44,7 +44,9 @@ def do_renaming(fromdir, todir, basename):
 
 
 if __name__ == '__main__':
-    from testspecification import TestSpecification
+    # this allows us to import from ../resources
+    sys.path.append("..")
+    from resources.testspecification import TestSpecification
 
     print('Salt is "{0}"'.format(saltstr))
 
