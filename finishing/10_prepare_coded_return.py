@@ -22,8 +22,8 @@ import os, sys, shutil
 
 from utils import myhash, SALTSTR as saltstr
 
-# TODO: should get this from project
-longname = 'Math 253 Midterm 2'
+# TODO: should get this from project, something like 'Math 253 Midterm 2'
+longname = 'Math Exam'  # bland default for now
 
 
 def do_renaming(fromdir, todir, basename):
