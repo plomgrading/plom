@@ -12,8 +12,8 @@ import os
 import sys
 
 # Get vertical range of image to examine from argv
-top = sys.argv[1]
-bottom = sys.argv[2]
+top = int(sys.argv[1])
+bottom = int(sys.argv[2])
 print("Will examine vertical range of images [{}:{}]".format(top, bottom))
 
 # Dictionary of scans and their digit-log-likes
