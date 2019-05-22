@@ -22,8 +22,8 @@ import os, sys, shutil
 
 from utils import myhash, SALTSTR as saltstr
 
-# TODO: should get this from project
-longname = 'Math 253 Midterm 2'
+# TODO: should get this from project, something like 'Math 253 Midterm 2'
+longname = 'Math Exam'  # bland default for now
 
 
 def do_renaming(fromdir, todir, basename):
@@ -44,7 +44,9 @@ def do_renaming(fromdir, todir, basename):
 
 
 if __name__ == '__main__':
-    from testspecification import TestSpecification
+    # this allows us to import from ../resources
+    sys.path.append("..")
+    from resources.testspecification import TestSpecification
 
     print('Salt is "{0}"'.format(saltstr))
 

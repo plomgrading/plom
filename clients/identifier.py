@@ -318,10 +318,11 @@ class IDClient(QDialog):
         # Build the number-completer
         self.sidcompleter = QCompleter()
         self.sidcompleter.setModel(self.sidlist)
-        # Build the name-completer
+        # Build the name-completer (matches substring, not just prefix)
         self.snamecompleter = QCompleter()
         self.snamecompleter.setModel(self.snamelist)
         self.snamecompleter.setCaseSensitivity(Qt.CaseInsensitive)
+        self.snamecompleter.setFilterMode(Qt.MatchContains)
         # Link the ID-completer to the ID-lineedit in the gui.
         self.ui.idEdit.setCompleter(self.sidcompleter)
         # Similarly for the name-completer

@@ -9,6 +9,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QDropEvent, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QAbstractItemView,
+    QCheckBox,
     QGridLayout,
     QMessageBox,
     QPushButton,
@@ -38,6 +39,24 @@ class SimpleMessage(QMessageBox):
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
+        fnt = self.font()
+        fnt.setPointSize((fnt.pointSize() * 3) // 2)
+        self.setFont(fnt)
+
+
+class SimpleMessageCheckBox(QMessageBox):
+    """A simple message pop-up with yes/no buttons, a checkbox and
+    large font.
+    """
+
+    def __init__(self, txt):
+        super(SimpleMessageCheckBox, self).__init__()
+        self.cb = QCheckBox("Don't show this message again")
+        self.setText(txt)
+        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        self.setDefaultButton(QMessageBox.Yes)
+        self.setCheckBox(self.cb)
+
         fnt = self.font()
         fnt.setPointSize((fnt.pointSize() * 3) // 2)
         self.setFont(fnt)

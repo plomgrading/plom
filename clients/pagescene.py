@@ -177,6 +177,13 @@ class PageScene(QGraphicsScene):
         with open(self.imageName[:-3] + "json", "w") as commentFile:
             json.dump(comments, commentFile)
 
+    def countComments(self):
+        count = 0
+        for X in self.items():
+            if type(X) is TextItem:
+                count += 1
+        return count
+
     def save(self):
         """ Save the annotated group-image.
         That is, overwrite the imagefile with a dump of the current

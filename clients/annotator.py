@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (
 
 from mark_handler import MarkHandler
 from pageview import PageView
-from useful_classes import CommentWidget, SimpleMessage
+from useful_classes import CommentWidget, SimpleMessage, SimpleMessageCheckBox
 from test_view import TestView
 from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
 from uiFiles.ui_annotator_rhm import Ui_annotator_rhm
@@ -56,6 +56,10 @@ class Annotator(QDialog):
         self.imageFile = fname
         self.maxMark = maxMark
         self.markStyle = markStyle
+        # Show warnings or not
+        self.markWarn = True
+        self.commentWarn = True
+
         # a test view window - initially set to None
         self.testView = None
         # Set current mark to 0.
@@ -637,9 +641,15 @@ class Annotator(QDialog):
     def loadWindowSettings(self):
         if self.parent.annotatorSettings.value("geometry") is not None:
             self.restoreGeometry(self.parent.annotatorSettings.value("geometry"))
+        if self.parent.annotatorSettings.value("markWarnings") is not None:
+            self.markWarn = self.parent.annotatorSettings.value("markWarnings")
+        if self.parent.annotatorSettings.value("commentWarnings") is not None:
+            self.commentWarn = self.parent.annotatorSettings.value("commentWarnings")
 
     def saveWindowSettings(self):
         self.parent.annotatorSettings.setValue("geometry", self.saveGeometry())
+        self.parent.annotatorSettings.setValue("markWarnings", self.markWarn)
+        self.parent.annotatorSettings.setValue("commentWarnings", self.commentWarn)
 
     def closeEvent(self, relaunch):
         """When the user closes the window - either by clicking on the
@@ -662,18 +672,38 @@ class Annotator(QDialog):
             self.launchAgain = False
             self.reject()
         else:
+            # check if comments have been left.
+            if self.view.countComments() == 0:
+                # error message if total is not 0 or full
+                if self.score > 0 and self.score < self.maxMark and self.commentWarn:
+                    msg = SimpleMessageCheckBox(
+                        "You have given no comments.\n Please confirm."
+                    )
+                    if msg.exec_() == QMessageBox.No:
+                        return
+                    if msg.cb.checkState() == Qt.Checked:
+                        self.commentWarn = False
+
             # if marking total or up, be careful when giving 0-marks
-            if self.score == 0 and self.markHandler.style != "Down":
-                msg = SimpleMessage("You have given 0 - please confirm")
+            if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
+                msg = SimpleMessageCheckBox("You have given 0 - please confirm")
                 if msg.exec_() == QMessageBox.No:
                     return
+                if msg.cb.checkState() == Qt.Checked:
+                    self.markWarn = False
             # if marking down, be careful of giving max-marks
-            if self.score == self.maxMark and self.markHandler.style == "Down":
-                msg = SimpleMessage(
+            if (
+                self.score == self.maxMark
+                and self.markHandler.style == "Down"
+                and self.markWarn
+            ):
+                msg = SimpleMessageCheckBox(
                     "You have given {} - please confirm".format(self.maxMark)
                 )
                 if msg.exec_() == QMessageBox.No:
                     return
+                if msg.cb.checkState() == Qt.Checked:
+                    self.markWarn = False
             if relaunch:
                 self.launchAgain = True
             else:
@@ -682,5 +712,7 @@ class Annotator(QDialog):
             self.view.save()
             # Save the comments
             self.view.saveComments()
+            # Save the window settings
+            self.saveWindowSettings()
             # Close the annotator(QDialog) with an 'accept'.
             self.accept()
