@@ -47,9 +47,7 @@ class Annotator(QDialog):
     and assigning marks.
     """
 
-    def __init__(
-        self, fname, maxMark, markStyle, mouseHand, parent=None, warnings=True
-    ):
+    def __init__(self, fname, maxMark, markStyle, mouseHand, parent=None):
         super(Annotator, self).__init__(parent)
         # remember parent
         self.parent = parent
@@ -59,7 +57,8 @@ class Annotator(QDialog):
         self.maxMark = maxMark
         self.markStyle = markStyle
         # Show warnings or not
-        self.warn = warnings
+        self.markWarn = True
+        self.commentWarn = True
 
         # a test view window - initially set to None
         self.testView = None
@@ -642,12 +641,15 @@ class Annotator(QDialog):
     def loadWindowSettings(self):
         if self.parent.annotatorSettings.value("geometry") is not None:
             self.restoreGeometry(self.parent.annotatorSettings.value("geometry"))
-        if self.parent.annotatorSettings.value("warnings") is not None:
-            self.warn = self.parent.annotatorSettings.value("warnings")
+        if self.parent.annotatorSettings.value("markWarnings") is not None:
+            self.markWarn = self.parent.annotatorSettings.value("markWarnings")
+        if self.parent.annotatorSettings.value("commentWarnings") is not None:
+            self.commentWarn = self.parent.annotatorSettings.value("commentWarnings")
 
     def saveWindowSettings(self):
         self.parent.annotatorSettings.setValue("geometry", self.saveGeometry())
-        self.parent.annotatorSettings.setValue("warnings", self.warn)
+        self.parent.annotatorSettings.setValue("markWarnings", self.markWarn)
+        self.parent.annotatorSettings.setValue("commentWarnings", self.commentWarn)
 
     def closeEvent(self, relaunch):
         """When the user closes the window - either by clicking on the
@@ -670,18 +672,30 @@ class Annotator(QDialog):
             self.launchAgain = False
             self.reject()
         else:
+            # check if comments have been left.
+            if self.view.countComments() == 0:
+                # error message if total is not 0 or full
+                if self.score > 0 and self.score < self.maxMark and self.commentWarn:
+                    msg = SimpleMessageCheckBox(
+                        "You have given no comments.\n Please confirm."
+                    )
+                    if msg.exec_() == QMessageBox.No:
+                        return
+                    if msg.cb.checkState() == Qt.Checked:
+                        self.commentWarn = False
+
             # if marking total or up, be careful when giving 0-marks
-            if self.score == 0 and self.markHandler.style != "Down" and self.warn:
+            if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
                 msg = SimpleMessageCheckBox("You have given 0 - please confirm")
                 if msg.exec_() == QMessageBox.No:
                     return
                 if msg.cb.checkState() == Qt.Checked:
-                    self.warn = False
+                    self.markWarn = False
             # if marking down, be careful of giving max-marks
             if (
                 self.score == self.maxMark
                 and self.markHandler.style == "Down"
-                and self.warn
+                and self.markWarn
             ):
                 msg = SimpleMessageCheckBox(
                     "You have given {} - please confirm".format(self.maxMark)
@@ -689,7 +703,7 @@ class Annotator(QDialog):
                 if msg.exec_() == QMessageBox.No:
                     return
                 if msg.cb.checkState() == Qt.Checked:
-                    self.warn = False
+                    self.markWarn = False
             if relaunch:
                 self.launchAgain = True
             else:
