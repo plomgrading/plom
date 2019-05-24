@@ -321,7 +321,15 @@ class PageScene(QGraphicsScene):
         under the mouse UNLESS it is the underlying group-image.
         """
         self.originPos = event.scenePos()
-        self.deleteItem = self.itemAt(self.originPos, QTransform())
+        # grab list of items in rectangle around click
+        delItems = self.items(
+            QRectF(self.originPos.x() - 5, self.originPos.y() - 5, 8, 8),
+            mode=Qt.IntersectsItemShape,
+            deviceTransform=QTransform(),
+        )
+        if delItems is None:
+            return
+        self.deleteItem = delItems[0]  # delete first item in list.
         if self.deleteItem == self.imageItem:
             self.deleteItem = None
             return
