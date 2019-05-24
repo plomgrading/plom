@@ -515,7 +515,7 @@ class PageIdentifier(QWidget):
         self.closeB.clicked.connect(self.saveValid)
         grid.addWidget(self.closeB, 8, 1, 2, 2)
         # Close without saving anything.
-        self.closeB = QPushButton("Close w/o save")
+        self.closeB = QPushButton("Cancel")
         self.closeB.clicked.connect(self.close)
         grid.addWidget(self.closeB, 100, 1)
         # Fix layout.
