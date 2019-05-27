@@ -124,10 +124,7 @@ class Annotator(QDialog):
             Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
             Qt.Key_S: lambda: self.ui.undoButton.animateClick(),
             Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
-            Qt.Key_F: lambda: (
-                self.commentW.currentItem(),
-                self.commentW.CL.handleClick(),
-            ),
+            Qt.Key_F: lambda: self.commentMode(),
             Qt.Key_G: lambda: self.ui.textButton.animateClick(),
             # lower-row
             Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
@@ -150,10 +147,7 @@ class Annotator(QDialog):
             # and then the same but for the left-handed
             # home-row
             Qt.Key_H: lambda: self.ui.textButton.animateClick(),
-            Qt.Key_J: lambda: (
-                self.commentW.currentItem(),
-                self.commentW.CL.handleClick(),
-            ),
+            Qt.Key_J: lambda: self.commentMode(),
             Qt.Key_K: lambda: self.ui.tickButton.animateClick(),
             Qt.Key_L: lambda: self.ui.undoButton.animateClick(),
             Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
@@ -445,6 +439,13 @@ class Annotator(QDialog):
     # Simple mode change functions
     def boxMode(self):
         self.setMode("box", Qt.ArrowCursor)
+
+    def commentMode(self):
+        if self.currentButton == self.commentW.CL:
+            self.commentW.nextItem()
+        else:
+            self.commentW.currentItem()
+        self.commentW.CL.handleClick()
 
     def crossMode(self):
         self.setMode("cross", Qt.ArrowCursor)
