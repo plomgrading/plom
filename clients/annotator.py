@@ -476,6 +476,18 @@ class Annotator(QDialog):
     def zoomMode(self):
         self.setMode("zoom", Qt.SizeFDiagCursor)
 
+    def loadModeFromBefore(self, mode):
+        self.loadModes = {
+            "box": lambda: self.boxMode(),
+            "comment": lambda: self.commentMode(),
+            "cross": lambda: self.crossMode(),
+            "line": lambda: self.lineMode(),
+            "pen": lambda: self.penMode(),
+            "text": lambda: self.textMode(),
+            "tick": lambda: self.tickMode(),
+        }
+        self.loadModes.get(mode, lambda *args: None)()
+
     def setButtons(self):
         """Connect buttons to functions.
         """
@@ -646,11 +658,14 @@ class Annotator(QDialog):
             self.markWarn = self.parent.annotatorSettings.value("markWarnings")
         if self.parent.annotatorSettings.value("commentWarnings") is not None:
             self.commentWarn = self.parent.annotatorSettings.value("commentWarnings")
+        if self.parent.annotatorSettings.value("tool") is not None:
+            self.loadModeFromBefore(self.parent.annotatorSettings.value("tool"))
 
     def saveWindowSettings(self):
         self.parent.annotatorSettings.setValue("geometry", self.saveGeometry())
         self.parent.annotatorSettings.setValue("markWarnings", self.markWarn)
         self.parent.annotatorSettings.setValue("commentWarnings", self.commentWarn)
+        self.parent.annotatorSettings.setValue("tool", self.view.scene.mode)
 
     def closeEvent(self, relaunch):
         """When the user closes the window - either by clicking on the
