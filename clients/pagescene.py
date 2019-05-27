@@ -276,6 +276,15 @@ class PageScene(QGraphicsScene):
         a text-object. They should be side-by-side with the delta
         appearing roughly at the mouse-click.
         """
+        # Find the object under the mouseclick.
+        under = self.itemAt(event.scenePos(), QTransform())
+        # If it is a textitem and this is not the move-tool
+        # then fire up the editor.
+        if isinstance(under, TextItem) and self.mode != "move":
+            under.setTextInteractionFlags(Qt.TextEditorInteraction)
+            self.setFocusItem(under, Qt.MouseFocusReason)
+            return
+
         # grab the location of the mouse-click
         pt = event.scenePos()
         # a small offset to place delta/text under mouse
