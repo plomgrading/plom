@@ -41,7 +41,12 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
         print('  Unfortunately we could not a find a unique column match!')
         raise(e)
     cols.append(testheader)
-    print('TODO: should we be ensuring target column is empty?')
+
+    if not all(df[testheader].isna()):
+        print('\n*** WARNING *** Target column "{0}" is not empty!\n'.format(testheader))
+        print(df[testheader])
+        input('Press Enter to continue and overwrite...')
+
     print('Extracting these columns to new frame:')
     print(cols)
     df = df[cols]
