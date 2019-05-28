@@ -46,9 +46,12 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     print(cols)
     df = df[cols]
 
-    # Filter out `Test Student`, those without student numbers
+    print('Filtering out "Test Student": those without Student Numbers')
     # TODO: We should assert they had a name like "Test Student"
-    #df = df.dropna(subset=['Student Number'])
+    df = df.dropna(subset=['Student Number'])
+    # then force some integer columns
+    df['Student Number'] = df['Student Number'].astype('int64')
+    df['SIS User ID'] = df['SIS User ID'].astype('int64')
 
     print('Loading "testMarks.csv" data')
     # TODO: should we be doing all this whereever testMarks.csv is created?
@@ -61,7 +64,6 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     #df[testheader] = df['Student Number'].map(marks)
 
     print('Performing "Left Merge"')
-    # TODO: some magic here about type (floats versus strings?)
     df = pandas.merge(df, marks, how='left',
                       left_on='Student Number', right_on='StudentID')
     df[testheader] = df['Total']
