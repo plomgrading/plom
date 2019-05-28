@@ -24,7 +24,7 @@ canvas_return_tofile = 'canvas_return_codes_for_import.csv'
 canvas_grades_tofile = 'canvas_grades_for_import.csv'
 
 # TODO: should get this from project?!
-canvas_test_name = 'Test2'  # almost certianly wrong
+canvas_test_name = 'Test2'  # almost certainly wrong
 
 # TODO: check if former exists and latter does not, and give some
 # basic instructions
