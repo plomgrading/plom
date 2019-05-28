@@ -30,7 +30,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     df = pandas.read_csv(canvas_fromfile, skiprows=[1, 2])
     print('Loading "{0}": will generate return codes'.format(canvas_fromfile))
     # TODO: talk to @andrewr about "SIS User ID" versus "Student Number"
-    cols = ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Student Number']
+    cols = ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', 'Student Number']
 
     print('Searching for column starting with "{0}":'.format(test_parthead))
     possible_matches = [s for s in df.columns if s.startswith(test_parthead)]
