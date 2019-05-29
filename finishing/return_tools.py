@@ -25,34 +25,14 @@ import utils
 from utils import myhash
 
 
-def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
+def import_canvas_csv(canvas_fromfile):
     # TODO: we strip the "Possible points" and muting: is this ok?
     df = pandas.read_csv(canvas_fromfile, skiprows=[1, 2])
-    print('Loading "{0}": will generate grades csv file'.format(canvas_fromfile))
+    print('Loading from Canvas csv file: "{0}"'.format(canvas_fromfile))
 
     # TODO: talk to @andrewr about "SIS User ID" versus "Student Number"
     cols = ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', 'Student Number']
-    # make sure we have all the columns we need
     assert all([c in df.columns for c in cols]), "CSV file missing columns?  We need:\n  " + str(cols)
-
-    print('Searching for column starting with "{0}":'.format(test_parthead))
-    possible_matches = [s for s in df.columns if s.startswith(test_parthead)]
-    print('  We found: ' + str(possible_matches))
-    try:
-        testheader, = possible_matches
-    except ValueError as e:
-        print('  Unfortunately we could not a find a unique column match!')
-        raise(e)
-    cols.append(testheader)
-
-    if not all(df[testheader].isnull()):
-        print('\n*** WARNING *** Target column "{0}" is not empty!\n'.format(testheader))
-        print(df[testheader])
-        input('Press Enter to continue and overwrite...')
-
-    print('Extracting these columns to new frame:')
-    print(cols)
-    df = df[cols]
 
     print('Filtering out those named "Test Student" and w/o Student Numbers')
     isbad = df.apply(lambda x: x['Student'].lower().startswith('test student')
@@ -62,6 +42,44 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     # then force some integer columns
     df['Student Number'] = df['Student Number'].astype('int64')
     df['SIS User ID'] = df['SIS User ID'].astype('int64')
+    # TODO: what if someone has non integer sections?  Better to "leave it alone"
+    # But how?  It becomes float b/c of "Test Student"
+    df['Section'] = df['Section'].astype('int64')
+    return df
+
+
+def find_partial_column_name(df, parthead, atStart=True):
+    parthead = parthead.lower()
+    if atStart:
+        print('Searching for column starting with "{0}":'.format(parthead))
+        possible_matches = [s for s in df.columns if s.lower().startswith(parthead)]
+    else:
+        print('Searching for column containing "{0}":'.format(parthead))
+        possible_matches = [s for s in df.columns if s.lower().find(parthead) >= 0]
+    print('  We found: ' + str(possible_matches))
+    try:
+        col, = possible_matches
+    except ValueError as e:
+        print('  Unfortunately we could not a find a unique column match!')
+        raise(e)
+    return col
+
+
+def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
+    df = import_canvas_csv(canvas_fromfile)
+
+    cols = ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', 'Student Number']
+
+    testheader = find_partial_column_name(df, test_parthead)
+    cols.append(testheader)
+
+    print('Extracting the following columns:\n  ' + str(cols))
+    df = df[cols]
+
+    if not all(df[testheader].isnull()):
+        print('\n*** WARNING *** Target column "{0}" is not empty!\n'.format(testheader))
+        print(df[testheader])
+        input('Press Enter to continue and overwrite...')
 
     print('Loading "testMarks.csv" data')
     # TODO: should we be doing all this whereever testMarks.csv is created?
