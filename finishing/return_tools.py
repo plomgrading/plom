@@ -42,7 +42,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
         raise(e)
     cols.append(testheader)
 
-    if not all(df[testheader].isna()):
+    if not all(df[testheader].isnull()):
         print('\n*** WARNING *** Target column "{0}" is not empty!\n'.format(testheader))
         print(df[testheader])
         input('Press Enter to continue and overwrite...')
