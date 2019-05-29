@@ -93,6 +93,7 @@ class Annotator(QDialog):
         # mark set, delta-set, mark change signals to functions
         self.setMarkHandler(self.markStyle)
         # set alt-enter / alt-return as shortcut to finish annotating
+        # also set ctrl-n and ctrl-b as same shortcut.
         self.setEndShortCuts()
         # Set the tool icons
         self.setIcons()
@@ -435,6 +436,10 @@ class Annotator(QDialog):
         self.endShortCut.activated.connect(self.endAndRelaunch)
         self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
         self.endShortCutb.activated.connect(self.endAndRelaunch)
+        self.endShortCutc = QShortcut(QKeySequence("Ctrl+n"), self)
+        self.endShortCutc.activated.connect(self.endAndRelaunch)
+        self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
+        self.endShortCutd.activated.connect(self.endAndRelaunch)
 
     # Simple mode change functions
     def boxMode(self):
