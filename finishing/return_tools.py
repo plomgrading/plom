@@ -29,8 +29,11 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     # TODO: we strip the "Possible points" and muting: is this ok?
     df = pandas.read_csv(canvas_fromfile, skiprows=[1, 2])
     print('Loading "{0}": will generate return codes'.format(canvas_fromfile))
+
     # TODO: talk to @andrewr about "SIS User ID" versus "Student Number"
     cols = ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', 'Student Number']
+    # make sure we have all the columns we need
+    assert all([c in df.columns for c in cols]), "CSV file missing columns?  We need:\n  " + str(cols)
 
     print('Searching for column starting with "{0}":'.format(test_parthead))
     possible_matches = [s for s in df.columns if s.startswith(test_parthead)]
