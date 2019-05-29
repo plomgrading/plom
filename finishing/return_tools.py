@@ -75,7 +75,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     df = df[cols]  # discard again (e.g., PG specific stuff)
 
     print('Writing grade data "{0}"'.format(canvas_tofile))
-    # index=False: don't write integers for each line
+    # index=False: don't write integer index for each line
     df.to_csv(canvas_tofile, index=False)
     return df
 
