@@ -51,9 +51,11 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     print(cols)
     df = df[cols]
 
-    print('Filtering out "Test Student": those without Student Numbers')
-    # TODO: We should assert they had a name like "Test Student"
-    df = df.dropna(subset=['Student Number'])
+    print('Filtering out those named "Test Student" and w/o Student Numbers')
+    isbad = df.apply(lambda x: x['Student'].lower().startswith('test student')
+                             and pandas.isnull(x['Student Number']),
+                     axis=1)
+    df = df[isbad == False]
     # then force some integer columns
     df['Student Number'] = df['Student Number'].astype('int64')
     df['SIS User ID'] = df['SIS User ID'].astype('int64')
