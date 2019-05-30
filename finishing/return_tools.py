@@ -103,16 +103,8 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     return df
 
 
-def canvas_csv_add_return_codes(canvas_fromfile, canvas_tofile):
-    print('Walking "{0}" to generate return codes'.format(canvas_fromfile))
-    with open(canvas_fromfile, 'r') as csvin:
-        with open(canvas_tofile, 'w') as csvout:
-            sns = _canvas_csv_add_return_codes(csvin, csvout)
-    print('File for upload to Canvas: "{0}"'.format(canvas_tofile))
-    return sns
-
-
-def _canvas_csv_add_return_codes(csvin, csvout):
+def canvas_csv_add_return_codes(csvin, csvout):
+    print('*** Generating Return Codes Spreadsheet ***')
     df = import_canvas_csv(csvin)
 
     cols = ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', 'Student Number']
@@ -161,6 +153,7 @@ def _canvas_csv_add_return_codes(csvin, csvout):
             print('    HAVE YOU CHANGED THE SALT SINCE LAST TEST?')
             raise ValueError('old return code has changed')
     df.to_csv(csvout, index=False)
+    print('File for upload to Canvas: "{0}"'.format(csvout))
     return sns
 
 
@@ -225,14 +218,14 @@ Jane Smith,43,12345679,ABCDEFGHIJ02,Math 123 S102v,12345679,909470548567
 """
     infile = StringIO(s1)
     outfile = StringIO('')
-    sns = _canvas_csv_add_return_codes(infile, outfile);
+    sns = canvas_csv_add_return_codes(infile, outfile);
     s = outfile.getvalue()
     assert s == s2 or s.replace('\r\n', '\n') == s2
 
     # return codes already exist
     infile = StringIO(s2)
     outfile = StringIO('')
-    sns = _canvas_csv_add_return_codes(infile, outfile);
+    sns = canvas_csv_add_return_codes(infile, outfile);
     s = outfile.getvalue()
     assert s == s2 or s.replace('\r\n', '\n') == s2
 
@@ -253,7 +246,7 @@ D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,347453551559
 """
     infile = StringIO(s1)
     outfile = StringIO('')
-    sns = _canvas_csv_add_return_codes(infile, outfile);
+    sns = canvas_csv_add_return_codes(infile, outfile);
     s = outfile.getvalue()
     assert s == s2 or s.replace('\r\n', '\n') == s2
 
@@ -264,22 +257,22 @@ Points Possible,,,,,,999999999999
 John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,111222333444
 """)
     outfile = StringIO('')
-    raises(ValueError, lambda: _canvas_csv_add_return_codes(infile, outfile))
+    raises(ValueError, lambda: canvas_csv_add_return_codes(infile, outfile))
 
     # missing "Student" header
     infile = StringIO("""xxStudentxx,SIS User ID,Return Code ()""")
     outfile = StringIO('')
-    raises(AssertionError, lambda: _canvas_csv_add_return_codes(infile, outfile))
+    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile))
 
     # missing "SIS User ID" header
     infile = StringIO("""Student,SISTER User IDLE,Return Code ()""")
     outfile = StringIO('')
-    raises(AssertionError, lambda: _canvas_csv_add_return_codes(infile, outfile))
+    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile))
 
     # can't find "return code"
     infile = StringIO("""Student,SIS User ID,Retrun C0de ()""")
     outfile = StringIO('')
-    raises(AssertionError, lambda: _canvas_csv_add_return_codes(infile, outfile))
+    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile))
 
     # student number too long
     infile = StringIO("""Student,SIS User ID,Return Code ()
@@ -288,7 +281,7 @@ John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,111222333444
 John Smith,12345678910,
 """)
     outfile = StringIO('')
-    raises(AssertionError, lambda: _canvas_csv_add_return_codes(infile, outfile))
+    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile))
 
     # empty student name
     infile = StringIO("""Student,SIS User ID,Return Code ()
@@ -298,14 +291,14 @@ John Smith,12345678,
 ,12348888,
 """)
     outfile = StringIO('')
-    raises(AssertionError, lambda: _canvas_csv_add_return_codes(infile, outfile))
+    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile))
 
     # missing header rows
     infile = StringIO("""Student,SIS User ID,Return Code ()
 John Smith,12345678,
 """)
     outfile = StringIO('')
-    raises(AssertionError, lambda: _canvas_csv_add_return_codes(infile, outfile))
+    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile))
 
     print("""
     *** All tests passed ***
