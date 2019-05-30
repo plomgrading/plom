@@ -362,9 +362,12 @@ class Annotator(QDialog):
             if self.currentButton == self.commentW.CL:
                 self.setToolLine("comment")
                 self.currentButton.setStyleSheet(self.currentButtonStyleOutline)
+                self.ui.commentButton.setStyleSheet(self.currentButtonStyleBackground)
             else:
                 self.setToolLine(newMode)
                 self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
+                # make sure comment button style is cleared
+                self.ui.commentButton.setStyleSheet("")
             # Clear the style of the mark-handler (this will mostly not do
             # anything, but saves us testing if we had styled it)
             self.markHandler.clearButtonStyle()
