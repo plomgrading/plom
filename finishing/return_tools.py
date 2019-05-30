@@ -28,9 +28,12 @@ from utils import myhash
 def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     # TODO: we strip the "Possible points" and muting: is this ok?
     df = pandas.read_csv(canvas_fromfile, skiprows=[1, 2])
-    print('Loading "{0}": will generate return codes'.format(canvas_fromfile))
+    print('Loading "{0}": will generate grades csv file'.format(canvas_fromfile))
+
     # TODO: talk to @andrewr about "SIS User ID" versus "Student Number"
     cols = ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', 'Student Number']
+    # make sure we have all the columns we need
+    assert all([c in df.columns for c in cols]), "CSV file missing columns?  We need:\n  " + str(cols)
 
     print('Searching for column starting with "{0}":'.format(test_parthead))
     possible_matches = [s for s in df.columns if s.startswith(test_parthead)]
@@ -42,7 +45,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
         raise(e)
     cols.append(testheader)
 
-    if not all(df[testheader].isna()):
+    if not all(df[testheader].isnull()):
         print('\n*** WARNING *** Target column "{0}" is not empty!\n'.format(testheader))
         print(df[testheader])
         input('Press Enter to continue and overwrite...')
@@ -51,9 +54,11 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     print(cols)
     df = df[cols]
 
-    print('Filtering out "Test Student": those without Student Numbers')
-    # TODO: We should assert they had a name like "Test Student"
-    df = df.dropna(subset=['Student Number'])
+    print('Filtering out those named "Test Student" and w/o Student Numbers')
+    isbad = df.apply(lambda x: x['Student'].lower().startswith('test student')
+                             and pandas.isnull(x['Student Number']),
+                     axis=1)
+    df = df[isbad == False]
     # then force some integer columns
     df['Student Number'] = df['Student Number'].astype('int64')
     df['SIS User ID'] = df['SIS User ID'].astype('int64')
@@ -75,7 +80,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     df = df[cols]  # discard again (e.g., PG specific stuff)
 
     print('Writing grade data "{0}"'.format(canvas_tofile))
-    # index=False: don't write integers for each line
+    # index=False: don't write integer index for each line
     df.to_csv(canvas_tofile, index=False)
     return df
 
