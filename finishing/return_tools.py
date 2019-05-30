@@ -64,6 +64,7 @@ def find_partial_column_name(df, parthead, atStart=True):
 
 
 def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
+    print('*** Generating Grade Spreadsheet ***')
     df = import_canvas_csv(canvas_fromfile)
 
     cols = ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', 'Student Number']
