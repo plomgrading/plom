@@ -483,13 +483,13 @@ class Annotator(QDialog):
 
     def loadModeFromBefore(self, mode):
         self.loadModes = {
-            "box": lambda: self.boxMode(),
+            "box": lambda: self.ui.boxButton.animateClick(),
             "comment": lambda: self.commentMode(),
-            "cross": lambda: self.crossMode(),
-            "line": lambda: self.lineMode(),
-            "pen": lambda: self.penMode(),
-            "text": lambda: self.textMode(),
-            "tick": lambda: self.tickMode(),
+            "cross": lambda: self.ui.crossButton.animateClick(),
+            "line": lambda: self.ui.lineButton.animateClick(),
+            "pen": lambda: self.ui.penButton.animateClick(),
+            "text": lambda: self.ui.textButton.animateClick(),
+            "tick": lambda: self.ui.tickButton.animateClick(),
         }
         self.loadModes.get(mode, lambda *args: None)()
 
