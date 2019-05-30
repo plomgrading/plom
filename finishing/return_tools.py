@@ -26,18 +26,21 @@ from utils import myhash
 
 
 def import_canvas_csv(canvas_fromfile):
-    # TODO: we strip the "Possible points" and muting: is this ok?
-    df = pandas.read_csv(canvas_fromfile, skiprows=[1, 2], dtype='object')
+    df = pandas.read_csv(canvas_fromfile, dtype='object')
     print('Loading from Canvas csv file: "{0}"'.format(canvas_fromfile))
 
     # TODO: talk to @andrewr about "SIS User ID" versus "Student Number"
     cols = ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', 'Student Number']
     assert all([c in df.columns for c in cols]), "CSV file missing columns?  We need:\n  " + str(cols)
 
-    print('Filtering out those named "Test Student" and w/o Student Numbers')
-    isbad = df.apply(lambda x: x['Student'].lower().startswith('test student')
-                             and pandas.isnull(x['Student Number']),
-                     axis=1)
+    print('Carefully filtering rows w/o "Student Number" including:\n'
+          '  almost blank rows, "Points Possible" and "Test Student"s')
+    isbad = df.apply(
+        lambda x: (pandas.isnull(x['Student Number']) and
+                   (pandas.isnull(x['Student'])
+                    or x['Student'].strip().lower().startswith('points possible')
+                    or x['Student'].strip().lower().startswith('test student'))),
+        axis=1)
     df = df[isbad == False]
 
     return df
@@ -211,10 +214,10 @@ def test_csv():
     # general test
     s1 = """Student,ID,SIS User ID,SIS Login ID,Student Number,Section,Midterm1,Return Code (241017),Assignments
 ,,,,,,Muted,,
-    Points Possible,,,,,,40,50,999999999999,(read only)
+    Points Possible,,,,,,40,999999999999,(read only)
 John Smith,42,12345678,ABCDEFGHIJ01,12345678,101,34,,49
 Jane Smith,43,12345679,ABCDEFGHIJ02,12345679,Math 123 S102v,36,,42
-Test Student,99,,bbbc6740f0b946af,,,0
+Test Student,99,,bbbc6740f0b946af,,,,0
 """
     s2 = """Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code (241017)
 John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,351525727036
@@ -231,13 +234,12 @@ Jane Smith,43,12345679,ABCDEFGHIJ02,Math 123 S102v,12345679,909470548567
     outfile = StringIO('')
     sns = _canvas_csv_add_return_codes(infile, outfile);
     s = outfile.getvalue()
-    # TODO: test broken b/c of Issue #158 [https://gitlab.math.ubc.ca/andrewr/MLP/issues/158]
-    #assert s == s2 or s.replace('\r\n', '\n') == s2
+    assert s == s2 or s.replace('\r\n', '\n') == s2
 
     # quotes, commas and decimals
     s1 = """Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code ()
-,,,,,,Muted,,
-    Points Possible,,,,,,999999999999
+,,,,,,Muted
+  Points Possible,,,,,,999999999999
 A Smith,42,12345678,ABCDEFGHIJ01,101,12345678,"351,525,727,036.0"
 B Smith,43,12348888,ABCDEFGHIJ02,102,12348888,"480,698,598,264.00"
 C Smith,44,12347777,ABCDEFGHIJ03,103,12347777,525156685030.0
@@ -257,8 +259,8 @@ D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,347453551559
 
     # changing return code is an error
     infile = StringIO("""Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code ()
-,,,,,,Muted,,
-    Points Possible,,,,,,999999999999
+,,,,,,Muted
+Points Possible,,,,,,999999999999
 John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,111222333444
 """)
     outfile = StringIO('')
