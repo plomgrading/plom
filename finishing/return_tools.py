@@ -27,7 +27,7 @@ from utils import myhash
 
 def import_canvas_csv(canvas_fromfile):
     # TODO: we strip the "Possible points" and muting: is this ok?
-    df = pandas.read_csv(canvas_fromfile, skiprows=[1, 2])
+    df = pandas.read_csv(canvas_fromfile, skiprows=[1, 2], dtype='object')
     print('Loading from Canvas csv file: "{0}"'.format(canvas_fromfile))
 
     # TODO: talk to @andrewr about "SIS User ID" versus "Student Number"
@@ -39,12 +39,7 @@ def import_canvas_csv(canvas_fromfile):
                              and pandas.isnull(x['Student Number']),
                      axis=1)
     df = df[isbad == False]
-    # then force some integer columns
-    df['Student Number'] = df['Student Number'].astype('int64')
-    df['SIS User ID'] = df['SIS User ID'].astype('int64')
-    # TODO: what if someone has non integer sections?  Better to "leave it alone"
-    # But how?  It becomes float b/c of "Test Student"
-    df['Section'] = df['Section'].astype('int64')
+
     return df
 
 
@@ -83,7 +78,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
 
     print('Loading "testMarks.csv" data')
     # TODO: should we be doing all this whereever testMarks.csv is created?
-    marks = pandas.read_csv('testMarks.csv', sep='\t')
+    marks = pandas.read_csv('testMarks.csv', sep='\t', dtype='object')
 
     # Make dict: this looks fragile, try merge instead...
     #marks = marks[['StudentID', 'Total']].set_index("StudentID").to_dict()
@@ -216,12 +211,12 @@ def test_csv():
 ,,,,,,Muted,,
     Points Possible,,,,,,40,50,999999999999,(read only)
 John Smith,42,12345678,ABCDEFGHIJ01,12345678,101,34,,49
-Jane Smith,43,12345679,ABCDEFGHIJ02,12345679,102,36,,42
+Jane Smith,43,12345679,ABCDEFGHIJ02,12345679,Math 123 S102v,36,,42
 Test Student,99,,bbbc6740f0b946af,,,0
 """
     s2 = """Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code (241017)
 John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,351525727036
-Jane Smith,43,12345679,ABCDEFGHIJ02,102,12345679,909470548567
+Jane Smith,43,12345679,ABCDEFGHIJ02,Math 123 S102v,12345679,909470548567
 """
     infile = StringIO(s1)
     outfile = StringIO('')
