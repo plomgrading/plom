@@ -5,6 +5,7 @@ import tempfile
 
 head = """
 \\documentclass[12pt]{article}
+\\usepackage[letterpaper, textwidth=5in]{geometry}
 \\usepackage{amsmath, amsfonts}
 \\usepackage{xcolor}
 \\usepackage[active, tightpage]{preview}
@@ -35,7 +36,9 @@ texit = subprocess.run(["latex", "-interaction=nonstopmode", "frag.tex"])
 if texit.returncode != 0:
     sys.exit(textit.returncode)
 
-convit = subprocess.run(["dvipng", "-q", "-D", "200", "frag.dvi", "-o" "frag.png"])
+convit = subprocess.run(
+    ["dvipng", "-q", "-D", "225", "-bg", "transparent", "frag.dvi", "-o" "frag.png"]
+)
 if convit.returncode != 0:
     sys.exit(convit.returncode)
 
