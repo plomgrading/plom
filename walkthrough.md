@@ -28,6 +28,8 @@ __license__ = "GFDL"
 * Run the 03_scans_to_page_images.py script - this takes each pdf of scans and decomposes them into a single image for each page. The results are saved in the pageImages directory
 * Run the 04_decode_images.py script - this looks at the QR codes on each page image and works out which 'tpv' code the page has - ie which **T** est, which **P** age and which **V** ersion. The results are moved into an appropriately named subdirectory of the decodedPages directory.
 * Now run 05_missing_pages.py - this looks to see that for each test we either have all the pages (ie a student sat it and we got all their pages back and into the system) or none of the pages (ie the test pdf wasn't used, or hasn't been scanned yet). This is to make sure we have no half-processed papers.
+  * If some incomplete papers are noted, run `manualPageIdentifier.py`.
+  * Then rerun 05_missing_pages.py
 * Finally run 06_group_pages.py. This script puts the page images together into the desired page groups. The results are save in various appropriately named subdirectories of the readyForGrading directory. Each groupImage is named either tXidg.png (id-group pages from test X) or tXgYvZ.png (test X, pagegroup Y, version Z).
 * Now we are ready to move onto servers and clients.
 
