@@ -37,6 +37,8 @@ __license__ = "GFDL"
 * The server is (presently) configured to serve files at 'localhost' - this would need to be tweaked if you want to serve files to other machines, but it works just fine for local testing.
 * There are 2 relevant ports - one for message passing (to and from the clients) and one for the webdav server (which is how all files are passed to and from clients - they are just copied into the webdav and appropriate messages passed (on the other port) letting client or server know things are there). The default ports were chosen because one is the backup ssh port (and so our IT lads have it open on the departmental firewall) and I asked them to open one more for me (so it is open on my work desktop = hinge). If you want to play around with these ports (and serve files to other machines) you might need to ask the IT lads to open a port for you. Though if you are doing things on UBC wireless it might be different. Experiment.
 * Before you run the server, first run userManager.py and put in a couple of users with passwords. (this is not yet ready to be done while the server is running, but it shouldnt be too hard to get that working)
+    - If you want to re-use a user list from previous exam, copy
+      the `resources/userList.json` file from the old test.
 * When you run image_server.py, it reads all the relevant page group images and indexes them in 2 databases (in ../resources) - one for identifying and one for marks. It also loads in the user list you have generated so that it can authenticate clients.
 * Not much else to do while things are being id'd or marked.
 * There are two other manager scripts = identify_manager.py and mark_manager.py which allow the IIC to look at how things are going and do some simple stats on the fly.
