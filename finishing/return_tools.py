@@ -19,8 +19,70 @@
 import os, sys
 import csv
 from io import StringIO
+import pandas
 
+import utils
 from utils import myhash
+
+
+def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
+    # TODO: we strip the "Possible points" and muting: is this ok?
+    df = pandas.read_csv(canvas_fromfile, skiprows=[1, 2])
+    print('Loading "{0}": will generate grades csv file'.format(canvas_fromfile))
+
+    # TODO: talk to @andrewr about "SIS User ID" versus "Student Number"
+    cols = ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', 'Student Number']
+    # make sure we have all the columns we need
+    assert all([c in df.columns for c in cols]), "CSV file missing columns?  We need:\n  " + str(cols)
+
+    print('Searching for column starting with "{0}":'.format(test_parthead))
+    possible_matches = [s for s in df.columns if s.startswith(test_parthead)]
+    print('  We found: ' + str(possible_matches))
+    try:
+        testheader, = possible_matches
+    except ValueError as e:
+        print('  Unfortunately we could not a find a unique column match!')
+        raise(e)
+    cols.append(testheader)
+
+    if not all(df[testheader].isnull()):
+        print('\n*** WARNING *** Target column "{0}" is not empty!\n'.format(testheader))
+        print(df[testheader])
+        input('Press Enter to continue and overwrite...')
+
+    print('Extracting these columns to new frame:')
+    print(cols)
+    df = df[cols]
+
+    print('Filtering out those named "Test Student" and w/o Student Numbers')
+    isbad = df.apply(lambda x: x['Student'].lower().startswith('test student')
+                             and pandas.isnull(x['Student Number']),
+                     axis=1)
+    df = df[isbad == False]
+    # then force some integer columns
+    df['Student Number'] = df['Student Number'].astype('int64')
+    df['SIS User ID'] = df['SIS User ID'].astype('int64')
+
+    print('Loading "testMarks.csv" data')
+    # TODO: should we be doing all this whereever testMarks.csv is created?
+    marks = pandas.read_csv('testMarks.csv', sep='\t')
+
+    # Make dict: this looks fragile, try merge instead...
+    #marks = marks[['StudentID', 'Total']].set_index("StudentID").to_dict()
+    #marks = marks['Total']
+    #df['Student Number'] = df['Student Number'].map(int)
+    #df[testheader] = df['Student Number'].map(marks)
+
+    print('Performing "Left Merge"')
+    df = pandas.merge(df, marks, how='left',
+                      left_on='Student Number', right_on='StudentID')
+    df[testheader] = df['Total']
+    df = df[cols]  # discard again (e.g., PG specific stuff)
+
+    print('Writing grade data "{0}"'.format(canvas_tofile))
+    # index=False: don't write integer index for each line
+    df.to_csv(canvas_tofile, index=False)
+    return df
 
 
 def canvas_csv_add_return_codes(canvas_fromfile, canvas_tofile):

@@ -42,10 +42,12 @@ We have a secret code for each student.  We want to upload these numbers to Canv
      csv file as `canvas_from_export.csv` and move it `finishing/`.
      Possibly need to select "All Sections".
 
-   * Run `11_write_to_canvas_spreadsheet.py`: this will create
-     `canvas_to_import.csv`.
+   * Run `11_write_to_canvas_spreadsheet.py` to create two csv files:
 
-   * Upload/Import `canvas_to_import.csv` back to Canvas.
+       1. `canvas_return_codes_to_import.csv`.
+       2. `canvas_grades_to_import.csv`.
+
+   * Upload/Import the one or both of the files back to Canvas.
 
 
 ## Sharing with students
@@ -61,9 +63,4 @@ We have a secret code for each student.  We want to upload these numbers to Canv
 
    * Unmute the return code.
 
-
-## Uploading grades to Canvas
-
-We don't do this for you (yet).  You probably can put the grades from
-`testMarks.csv` into `canvas_to_import.csv` before uploading, but this
-is not well testing nor automated.
+   * Unmute the test.

@@ -9,6 +9,12 @@ from lapsolver import solve_dense
 import numpy as np
 import json
 import os
+import sys
+
+# Get vertical range of image to examine from argv
+top = int(sys.argv[1])
+bottom = int(sys.argv[2])
+print("Will examine vertical range of images [{}:{}]".format(top, bottom))
 
 # Dictionary of scans and their digit-log-likes
 scans = {}
@@ -63,8 +69,9 @@ k = 0
 
 
 def getDigits(fn):
-    # print("Processing image {}".format(fn))
-    image = cv2.imread(fn)
+    preproc = cv2.imread(fn)
+    # extract only the required portion of the image.
+    image = preproc[:][top:bottom]
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     edged = cv2.Canny(blurred, 50, 200, 255)

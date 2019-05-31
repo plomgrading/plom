@@ -177,6 +177,13 @@ class PageScene(QGraphicsScene):
         with open(self.imageName[:-3] + "json", "w") as commentFile:
             json.dump(comments, commentFile)
 
+    def countComments(self):
+        count = 0
+        for X in self.items():
+            if type(X) is TextItem:
+                count += 1
+        return count
+
     def save(self):
         """ Save the annotated group-image.
         That is, overwrite the imagefile with a dump of the current
@@ -269,6 +276,15 @@ class PageScene(QGraphicsScene):
         a text-object. They should be side-by-side with the delta
         appearing roughly at the mouse-click.
         """
+        # Find the object under the mouseclick.
+        under = self.itemAt(event.scenePos(), QTransform())
+        # If it is a textitem and this is not the move-tool
+        # then fire up the editor.
+        if isinstance(under, TextItem) and self.mode != "move":
+            under.setTextInteractionFlags(Qt.TextEditorInteraction)
+            self.setFocusItem(under, Qt.MouseFocusReason)
+            return
+
         # grab the location of the mouse-click
         pt = event.scenePos()
         # a small offset to place delta/text under mouse
@@ -314,7 +330,15 @@ class PageScene(QGraphicsScene):
         under the mouse UNLESS it is the underlying group-image.
         """
         self.originPos = event.scenePos()
-        self.deleteItem = self.itemAt(self.originPos, QTransform())
+        # grab list of items in rectangle around click
+        delItems = self.items(
+            QRectF(self.originPos.x() - 5, self.originPos.y() - 5, 8, 8),
+            mode=Qt.IntersectsItemShape,
+            deviceTransform=QTransform(),
+        )
+        if delItems is None:
+            return
+        self.deleteItem = delItems[0]  # delete first item in list.
         if self.deleteItem == self.imageItem:
             self.deleteItem = None
             return

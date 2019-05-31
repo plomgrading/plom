@@ -9,6 +9,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QDropEvent, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QAbstractItemView,
+    QCheckBox,
     QGridLayout,
     QMessageBox,
     QPushButton,
@@ -38,6 +39,24 @@ class SimpleMessage(QMessageBox):
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
+        fnt = self.font()
+        fnt.setPointSize((fnt.pointSize() * 3) // 2)
+        self.setFont(fnt)
+
+
+class SimpleMessageCheckBox(QMessageBox):
+    """A simple message pop-up with yes/no buttons, a checkbox and
+    large font.
+    """
+
+    def __init__(self, txt):
+        super(SimpleMessageCheckBox, self).__init__()
+        self.cb = QCheckBox("Don't show this message again")
+        self.setText(txt)
+        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        self.setDefaultButton(QMessageBox.Yes)
+        self.setCheckBox(self.cb)
+
         fnt = self.font()
         fnt.setPointSize((fnt.pointSize() * 3) // 2)
         self.setFont(fnt)
@@ -161,9 +180,9 @@ class commentDelegate(QItemDelegate):
         self.style = 0
 
     def paint(self, painter, option, index):
-        # Run the standard delegate and then paint over
-        # if necessary
-        QItemDelegate.paint(self, painter, option, index)
+        # Only run the standard delegate if flag is true.
+        # else don't paint anything.
+        flag = True
         # Only shade the deltas which are in col 0.
         if index.column() == 0:
             # Grab the delta value.
@@ -171,15 +190,13 @@ class commentDelegate(QItemDelegate):
             if self.style == 2:
                 # mark up - shade negative, or if goes past max mark
                 if delta <= 0 or delta + self.currentMark > self.maxMark:
-                    painter.setBrush(Qt.gray)
-                    painter.drawRect(option.rect)
+                    flag = False
             elif self.style == 3:
                 # mark down - shade positive, or if goes below 0
                 if delta >= 0 or delta + self.currentMark < 0:
-                    painter.setBrush(Qt.gray)
-                    painter.drawRect(option.rect)
-            if self.style == 1:  # mark total - enable all
-                pass
+                    flag = False
+        if flag:
+            QItemDelegate.paint(self, painter, option, index)
 
 
 class commentRowModel(QStandardItemModel):

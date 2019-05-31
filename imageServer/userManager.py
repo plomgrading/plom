@@ -206,6 +206,7 @@ class userManager(QWidget):
         self.initUI()
         self.updateGeometry()
         self.setMinimumSize(QSize(400, 500))
+        self.move(100, 100)
 
     def loadUserList(self):
         """Load the userlist from json"""

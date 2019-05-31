@@ -150,6 +150,7 @@ files += [
     "finishing/testReassembler.py",
     "finishing/testReassembler_only_ided.py",
     "finishing/utils.py",
+    "finishing/view_test_template.html",
 ]
 
 

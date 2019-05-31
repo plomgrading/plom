@@ -118,7 +118,7 @@ async def handle_ping_test():
         rmesg = json.loads(data.decode())  # message should be ['ACK']
         writer.close()
         return True
-    except (asyncio.TimeoutError, ConnectionRefusedError):
+    except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
         msg = ErrorMessage(
             "Server does not return ping." " Please double check details and try again."
         )

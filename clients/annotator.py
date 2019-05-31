@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (
 
 from mark_handler import MarkHandler
 from pageview import PageView
-from useful_classes import CommentWidget, SimpleMessage
+from useful_classes import CommentWidget, SimpleMessage, SimpleMessageCheckBox
 from test_view import TestView
 from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
 from uiFiles.ui_annotator_rhm import Ui_annotator_rhm
@@ -56,6 +56,10 @@ class Annotator(QDialog):
         self.imageFile = fname
         self.maxMark = maxMark
         self.markStyle = markStyle
+        # Show warnings or not
+        self.markWarn = True
+        self.commentWarn = True
+
         # a test view window - initially set to None
         self.testView = None
         # Set current mark to 0.
@@ -90,6 +94,7 @@ class Annotator(QDialog):
         # mark set, delta-set, mark change signals to functions
         self.setMarkHandler(self.markStyle)
         # set alt-enter / alt-return as shortcut to finish annotating
+        # also set ctrl-n and ctrl-b as same shortcut.
         self.setEndShortCuts()
         # Set the tool icons
         self.setIcons()
@@ -121,10 +126,7 @@ class Annotator(QDialog):
             Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
             Qt.Key_S: lambda: self.ui.undoButton.animateClick(),
             Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
-            Qt.Key_F: lambda: (
-                self.commentW.currentItem(),
-                self.commentW.CL.handleClick(),
-            ),
+            Qt.Key_F: lambda: self.commentMode(),
             Qt.Key_G: lambda: self.ui.textButton.animateClick(),
             # lower-row
             Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
@@ -147,10 +149,7 @@ class Annotator(QDialog):
             # and then the same but for the left-handed
             # home-row
             Qt.Key_H: lambda: self.ui.textButton.animateClick(),
-            Qt.Key_J: lambda: (
-                self.commentW.currentItem(),
-                self.commentW.CL.handleClick(),
-            ),
+            Qt.Key_J: lambda: self.commentMode(),
             Qt.Key_K: lambda: self.ui.tickButton.animateClick(),
             Qt.Key_L: lambda: self.ui.undoButton.animateClick(),
             Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
@@ -364,9 +363,12 @@ class Annotator(QDialog):
             if self.currentButton == self.commentW.CL:
                 self.setToolLine("comment")
                 self.currentButton.setStyleSheet(self.currentButtonStyleOutline)
+                self.ui.commentButton.setStyleSheet(self.currentButtonStyleBackground)
             else:
                 self.setToolLine(newMode)
                 self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
+                # make sure comment button style is cleared
+                self.ui.commentButton.setStyleSheet("")
             # Clear the style of the mark-handler (this will mostly not do
             # anything, but saves us testing if we had styled it)
             self.markHandler.clearButtonStyle()
@@ -438,10 +440,21 @@ class Annotator(QDialog):
         self.endShortCut.activated.connect(self.endAndRelaunch)
         self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
         self.endShortCutb.activated.connect(self.endAndRelaunch)
+        self.endShortCutc = QShortcut(QKeySequence("Ctrl+n"), self)
+        self.endShortCutc.activated.connect(self.endAndRelaunch)
+        self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
+        self.endShortCutd.activated.connect(self.endAndRelaunch)
 
     # Simple mode change functions
     def boxMode(self):
         self.setMode("box", Qt.ArrowCursor)
+
+    def commentMode(self):
+        if self.currentButton == self.commentW.CL:
+            self.commentW.nextItem()
+        else:
+            self.commentW.currentItem()
+        self.commentW.CL.handleClick()
 
     def crossMode(self):
         self.setMode("cross", Qt.ArrowCursor)
@@ -471,6 +484,18 @@ class Annotator(QDialog):
 
     def zoomMode(self):
         self.setMode("zoom", Qt.SizeFDiagCursor)
+
+    def loadModeFromBefore(self, mode):
+        self.loadModes = {
+            "box": lambda: self.ui.boxButton.animateClick(),
+            "comment": lambda: self.commentMode(),
+            "cross": lambda: self.ui.crossButton.animateClick(),
+            "line": lambda: self.ui.lineButton.animateClick(),
+            "pen": lambda: self.ui.penButton.animateClick(),
+            "text": lambda: self.ui.textButton.animateClick(),
+            "tick": lambda: self.ui.tickButton.animateClick(),
+        }
+        self.loadModes.get(mode, lambda *args: None)()
 
     def setButtons(self):
         """Connect buttons to functions.
@@ -638,9 +663,18 @@ class Annotator(QDialog):
     def loadWindowSettings(self):
         if self.parent.annotatorSettings.value("geometry") is not None:
             self.restoreGeometry(self.parent.annotatorSettings.value("geometry"))
+        if self.parent.annotatorSettings.value("markWarnings") is not None:
+            self.markWarn = self.parent.annotatorSettings.value("markWarnings")
+        if self.parent.annotatorSettings.value("commentWarnings") is not None:
+            self.commentWarn = self.parent.annotatorSettings.value("commentWarnings")
+        if self.parent.annotatorSettings.value("tool") is not None:
+            self.loadModeFromBefore(self.parent.annotatorSettings.value("tool"))
 
     def saveWindowSettings(self):
         self.parent.annotatorSettings.setValue("geometry", self.saveGeometry())
+        self.parent.annotatorSettings.setValue("markWarnings", self.markWarn)
+        self.parent.annotatorSettings.setValue("commentWarnings", self.commentWarn)
+        self.parent.annotatorSettings.setValue("tool", self.view.scene.mode)
 
     def closeEvent(self, relaunch):
         """When the user closes the window - either by clicking on the
@@ -663,18 +697,38 @@ class Annotator(QDialog):
             self.launchAgain = False
             self.reject()
         else:
+            # check if comments have been left.
+            if self.view.countComments() == 0:
+                # error message if total is not 0 or full
+                if self.score > 0 and self.score < self.maxMark and self.commentWarn:
+                    msg = SimpleMessageCheckBox(
+                        "You have given no comments.\n Please confirm."
+                    )
+                    if msg.exec_() == QMessageBox.No:
+                        return
+                    if msg.cb.checkState() == Qt.Checked:
+                        self.commentWarn = False
+
             # if marking total or up, be careful when giving 0-marks
-            if self.score == 0 and self.markHandler.style != "Down":
-                msg = SimpleMessage("You have given 0 - please confirm")
+            if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
+                msg = SimpleMessageCheckBox("You have given 0 - please confirm")
                 if msg.exec_() == QMessageBox.No:
                     return
+                if msg.cb.checkState() == Qt.Checked:
+                    self.markWarn = False
             # if marking down, be careful of giving max-marks
-            if self.score == self.maxMark and self.markHandler.style == "Down":
-                msg = SimpleMessage(
+            if (
+                self.score == self.maxMark
+                and self.markHandler.style == "Down"
+                and self.markWarn
+            ):
+                msg = SimpleMessageCheckBox(
                     "You have given {} - please confirm".format(self.maxMark)
                 )
                 if msg.exec_() == QMessageBox.No:
                     return
+                if msg.cb.checkState() == Qt.Checked:
+                    self.markWarn = False
             if relaunch:
                 self.launchAgain = True
             else:
@@ -683,6 +737,8 @@ class Annotator(QDialog):
             self.view.save()
             # Save the comments
             self.view.saveComments()
+            # Save the window settings
+            self.saveWindowSettings()
             # Close the annotator(QDialog) with an 'accept'.
             self.accept()
 
