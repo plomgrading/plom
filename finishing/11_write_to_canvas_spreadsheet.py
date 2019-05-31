@@ -32,21 +32,31 @@ canvas_test_name = 'Test2'  # almost certainly wrong
 
 if __name__ == '__main__':
     print("""
-    *** Warning: this script is "alpha" software at best! ***
+    *** Warning: this script is "alpha" software ***
 
-    It inputs a .csv file from Canvas and outputs a new .csv file with
-    the "return code (<int>)" column filled-in.  Any existing entries
-    are checked to confirm correctness.
+    This script looks for "{0}", which you should
+    have exported from Canvas.  It outputs two new .csv files for
+    importing back into canvas.
 
-    This code is probably buggy and is certainly picky about the
-    formatting of the csv file.  It may fail with cryptic errors.  You
-    will want to have read "docs/returning_papers.md".  You should
-    consider the output quite carefully both before uploading to
-    Canvas and during the upload process.  Consider yourself warned...
-    """)
+      * "{1}":
+        The "return code" column will be filled.  Any existing
+        return codes will be checked to confirm correctness.
+
+      * "{2}":
+        The "{3}" column will be filled with the results of this
+        test.  EDIT THIS SCRIPT TO USE A DIFFERENT COLUMN.
+
+    Read "docs/returning_papers.md" before using this.
+    """.format(canvas_fromfile, canvas_return_tofile, canvas_grades_tofile,
+               canvas_test_name))
     input('Press Enter to continue...')
+
+    print()
     sns = canvas_csv_add_return_codes(canvas_fromfile, canvas_return_tofile)
+
+    print()
     canvas_csv_check_pdf(sns)
 
+    print()
     make_canvas_gradefile(canvas_fromfile, canvas_grades_tofile,
                           test_parthead=canvas_test_name)

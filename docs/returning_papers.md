@@ -21,6 +21,17 @@ Note: `SALTSTR` should be set once per course so that multiple midterms
 can be returned with the same code.
 
 
+## Uploading grades
+
+  * Go to Canvas, create a column with appropriate name for your test.
+
+      1.  Suppose that name is "Test 2".
+      2.  See details below how to do this.
+
+  * Edit `11_write_to_canvas_spreadsheet` to specify "Test 2".
+    TODO: this is obviously not ideal!
+
+
 ## Uploading the secret "return code" to Canvas
 
 We have a secret code for each student.  We want to upload these numbers to Canvas.
@@ -42,12 +53,18 @@ We have a secret code for each student.  We want to upload these numbers to Canv
      csv file as `canvas_from_export.csv` and move it `finishing/`.
      Possibly need to select "All Sections".
 
+
+## Generated the files
+
    * Run `11_write_to_canvas_spreadsheet.py` to create two csv files:
 
        1. `canvas_return_codes_to_import.csv`.
        2. `canvas_grades_to_import.csv`.
 
-   * Upload/Import the one or both of the files back to Canvas.
+   * Upload/Import one or both of these files back to Canvas.
+
+   * If you kept the same salt, you may be able to upload just the
+     grades.
 
 
 ## Sharing with students
