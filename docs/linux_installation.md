@@ -1,6 +1,7 @@
 <!--
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2019 Colin B. Macdonald"
 __license__ = "GFDL"
  -->
 Installing on Popular GNU/Linux Distros
