@@ -16,8 +16,10 @@
 ## Student information template
 * The ID page of the source must use the information template provided.
   * either as tikz image in your latex, or
-  * as an included svg/eps/pdf in your document.
-* **Future** - the system stamps the the template onto the front page automatically?
+  * as an included svg/eps/pdf in your document
+    - e.g., `\includegraphics{idBox}`, without changing the size.
+    - It doens't matter where it is on the first page.
+* **Future** - the system stamps the template onto the front page automatically?
 
 ## Training the model
 * Training the model takes some time - on the order of ten-fifteen minutes on my laptop.
@@ -31,6 +33,7 @@
 * You cannot proceed until  all papers have been scanned and grouped. ie just before the image server is run.
 * The system needs the classlist in order to make worthwhile predictions. Without the classlist I wouldn't bother.
 * Once the classlist is in place and the model has been trained (in the repo directory, not in the current project), just copy the idReader directory and its contents into the current project.
+  * The classlist is imported by `imageServer/serverSetup.py`
 * Then run `locateID.py` to select region on page which contains the student information template.
 
 ## LocateID
