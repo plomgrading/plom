@@ -17,6 +17,7 @@ from PyQt5.QtGui import (
     QFont,
 )
 from PyQt5.QtWidgets import (
+    QGraphicsEllipseItem,
     QGraphicsLineItem,
     QGraphicsPathItem,
     QGraphicsPixmapItem,
@@ -33,6 +34,7 @@ from tools import (
     CommandCross,
     CommandDelete,
     CommandDelta,
+    CommandEllipse,
     CommandHighlight,
     CommandLine,
     CommandPen,
@@ -143,10 +145,10 @@ class PageScene(QGraphicsScene):
         self.lightBrush = QBrush(QColor(255, 255, 0, 16))
         # Flags to indicate if drawing an arrow (vs line),
         # highlight (vs regular pen),
-        # whitebox (vs regular box)
+        # whitebox (vs regular box) --- now ellipse vs box
         self.arrowFlag = 0
         self.highlightFlag = 0
-        self.whiteFlag = 0
+        self.ellipseFlag = 0
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
         self.currentPos = QPointF(0, 0)
@@ -155,6 +157,7 @@ class PageScene(QGraphicsScene):
         self.path = QPainterPath()
         self.pathItem = QGraphicsPathItem()
         self.boxItem = QGraphicsRectItem()
+        self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
         self.blurb = TextItem(self, self.fontSize)
         self.deleteItem = None
@@ -252,23 +255,29 @@ class PageScene(QGraphicsScene):
         """Creates a temp box which is updated as the mouse moves
         and replaced with a boxitem when the drawing is finished.
         If left-click then a highlight box will be drawn at finish,
-        else an opaque whitebox is drawn at finish.
+        else an ellipse is drawn
         """
-        # If left-click then a highlight box, else an opaque whitebox.
-        # Set a flag to tell the mouseReleaseBox function which.
-        if event.button() == Qt.LeftButton:
-            self.whiteFlag = 0
-        else:
-            self.whiteFlag = 1
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
-        # Create a temp box item for animating the drawing as the
-        # user moves the mouse.
-        # Do not push command onto undoStack until drawing finished.
-        self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-        self.boxItem.setPen(self.ink)
-        self.boxItem.setBrush(self.lightBrush)
-        self.addItem(self.boxItem)
+        # If left-click then a highlight box, else an ellipse.
+        # Set a flag to tell the mouseReleaseBox function which.
+        if event.button() == Qt.LeftButton:
+            self.ellipseFlag = 0
+            # Create a temp box item for animating the drawing as the
+            # user moves the mouse.
+            # Do not push command onto undoStack until drawing finished.
+            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem.setPen(self.ink)
+            self.boxItem.setBrush(self.lightBrush)
+            self.addItem(self.boxItem)
+        else:
+            self.ellipseFlag = 1
+            self.ellipseItem = QGraphicsEllipseItem(
+                QRectF(self.originPos.x(), self.originPos.y(), 0, 0)
+            )
+            self.ellipseItem.setPen(self.ink)
+            self.ellipseItem.setBrush(self.lightBrush)
+            self.addItem(self.ellipseItem)
 
     def mousePressComment(self, event):
         """Create a marked-comment-item from whatever is the currently
@@ -473,10 +482,27 @@ class PageScene(QGraphicsScene):
         animates the drawing of the box for the user.
         """
         self.currentPos = event.scenePos()
-        if self.boxItem is None:
-            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        if self.ellipseFlag:
+            if self.ellipseItem is None:
+
+                self.ellipseItem = QGraphicsEllipseItem(
+                    QRectF(self.originPos.x(), self.originPos.y(), 0, 0)
+                )
+            else:
+                rx = abs(self.originPos.x() - self.currentPos.x())
+                ry = abs(self.originPos.y() - self.currentPos.y())
+                self.ellipseItem.setRect(
+                    QRectF(
+                        self.originPos.x() - rx, self.originPos.y() - ry, 2 * rx, 2 * ry
+                    )
+                )
         else:
-            self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+            if self.boxItem is None:
+                self.boxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+            else:
+                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def mouseMoveLine(self, event):
         """Update the line as the mouse is moved. This
@@ -499,15 +525,16 @@ class PageScene(QGraphicsScene):
     def mouseReleaseBox(self, event):
         """Remove the temp boxitem (which was needed for animation)
         and create a command for either a highlighted box or opaque box
-        depending on whether or not the whiteflag was set.
+        depending on whether or not the ellipseflag was set.
         Push the resulting command onto the undo stack
         """
-        self.removeItem(self.boxItem)
-        if self.whiteFlag == 0:
+        if self.ellipseFlag == 0:
+            self.removeItem(self.boxItem)
             command = CommandBox(self, QRectF(self.originPos, self.currentPos))
         else:
-            command = CommandWhiteBox(self, QRectF(self.originPos, self.currentPos))
-        self.whiteFlag = 0
+            self.removeItem(self.ellipseItem)
+            command = CommandEllipse(self, self.ellipseItem.rect())
+        self.ellipseFlag = 0
         self.undoStack.push(command)
 
     def mouseReleaseLine(self, event):

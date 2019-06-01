@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt, QLineF, QPointF, pyqtProperty, QPropertyAnimation, 
 from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainterPath, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QGraphicsItem,
+    QGraphicsEllipseItem,
     QGraphicsLineItem,
     QGraphicsPathItem,
     QGraphicsRectItem,
@@ -328,6 +329,23 @@ class CommandWhiteBox(QUndoCommand):
         QTimer.singleShot(500, lambda: self.scene.removeItem(self.whiteBoxItem.wbi))
 
 
+class CommandEllipse(QUndoCommand):
+    # Very similar to CommandArrow
+    def __init__(self, scene, rect):
+        super(CommandEllipse, self).__init__()
+        self.scene = scene
+        self.rect = rect
+        self.ellipseItem = EllipseItemObject(self.rect)
+
+    def redo(self):
+        self.ellipseItem.flash_redo()
+        self.scene.addItem(self.ellipseItem.ei)
+
+    def undo(self):
+        self.ellipseItem.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.ellipseItem.ei))
+
+
 # ################################
 # Graphics Items
 # These are the underlying graphicsitems that get put in the
@@ -550,6 +568,24 @@ class WhiteBoxItem(QGraphicsRectItem):
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsRectItem.itemChange(self, change, value)
+
+
+class EllipseItem(QGraphicsEllipseItem):
+    # Very similar to the arrowitem
+    def __init__(self, rect):
+        super(EllipseItem, self).__init__()
+        self.rect = rect
+        self.setRect(self.rect)
+        self.setPen(QPen(Qt.red, 2))
+        self.setBrush(QBrush(QColor(255, 255, 0, 16)))
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            command = CommandMoveItem(self, value)
+            self.scene().undoStack.push(command)
+        return QGraphicsEllipseItem.itemChange(self, change, value)
 
 
 class TextItem(QGraphicsTextItem):
@@ -1029,3 +1065,33 @@ class WhiteBoxItemObject(QGraphicsObject):
     @thickness.setter
     def thickness(self, value):
         self.wbi.setPen(QPen(Qt.red, value))
+
+
+class EllipseItemObject(QGraphicsObject):
+    # As per the ArrowItemObject - animate thickness of boundary
+    def __init__(self, rect):
+        super(EllipseItemObject, self).__init__()
+        self.ei = EllipseItem(rect)
+        self.anim = QPropertyAnimation(self, b"thickness")
+
+    def flash_undo(self):
+        self.anim.setDuration(500)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        self.anim.setDuration(250)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 6)
+        self.anim.setEndValue(2)
+        self.anim.start()
+
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.ei.pen().width()
+
+    @thickness.setter
+    def thickness(self, value):
+        self.ei.setPen(QPen(Qt.red, value))
