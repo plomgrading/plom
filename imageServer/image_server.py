@@ -120,6 +120,7 @@ servCmd = {
     "mGGI": "MgetGroupImages",
     "mDWF": "MdoneWithFile",
     "mGWP": "MgetWholePaper",
+    "mLTT": "MlatexThisText",
     "mRCF": "MreturnCommentFile",
     "tGMM": "TgetMaxMark",
     "tGTP": "TgotTest",
@@ -636,6 +637,18 @@ class Server(object):
         msg = ["ACK"]
         for f in files:
             msg.append(self.provideFile(f))
+        return msg
+
+    def MlatexThisText(self, user, token, fragmentFile):
+        fragment = os.path.join(davDirectory, fragmentFile)
+        tfn = tempfile.NamedTemporaryFile()
+        if (
+            subprocess.run(["python3", "latex2png.py", fragment, tfn.name]).returncode
+            == 0
+        ):
+            msg = ["ACK", True, self.provideFile(tfn.name)]
+        else:
+            msg = ["ACK", False]
         return msg
 
     def TgetMaxMark(self, user, token):

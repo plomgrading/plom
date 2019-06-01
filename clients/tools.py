@@ -5,7 +5,7 @@ __license__ = "GPLv3"
 
 from math import sqrt
 from PyQt5.QtCore import Qt, QLineF, QPointF, pyqtProperty, QPropertyAnimation, QTimer
-from PyQt5.QtGui import QBrush, QColor, QFont, QPainterPath, QPen
+from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainterPath, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QGraphicsItem,
     QGraphicsLineItem,
@@ -558,13 +558,15 @@ class TextItem(QGraphicsTextItem):
     # Shift-return ends the editor
     def __init__(self, parent, fontsize=10):
         super(TextItem, self).__init__()
+        self.parent = parent
         # Thick is thickness of bounding box hightlight used
         # to highlight the object when undo / redo happens.
         self.thick = 0
         self.setDefaultTextColor(Qt.red)
         self.setPlainText("")
+        self.contents = ""
         self.font = QFont("Helvetica")
-        self.font.setPointSizeF(min(24, fontsize*2.5))
+        self.font.setPointSizeF(min(24, fontsize * 2.5))
         self.setFont(self.font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
@@ -572,13 +574,20 @@ class TextItem(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.TextEditorInteraction)
         # Undo/redo animates via the thickness property
         self.anim = QPropertyAnimation(self, b"thickness")
+        # for latex png
+        self.state = "TXT"
 
     def mouseDoubleClickEvent(self, event):
         # On double-click start the text-editor
+        self.pngToText()
         self.setTextInteractionFlags(Qt.TextEditorInteraction)
         self.setFocus()
 
     def focusInEvent(self, event):
+        if self.state == "PNG":
+            self.pngToText()
+        else:
+            self.contents = self.toPlainText()
         super(TextItem, self).focusInEvent(event)
 
     def focusOutEvent(self, event):
@@ -591,6 +600,19 @@ class TextItem(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         super(TextItem, self).focusOutEvent(event)
 
+    def textToPng(self):
+        self.contents = self.toPlainText()
+        if self.parent.latexAFragment(self.contents):
+            self.setPlainText("")
+            tc = self.textCursor()
+            qi = QImage("frag.png")
+            tc.insertImage(qi)
+            self.state = "PNG"
+
+    def pngToText(self):
+        self.setPlainText(self.contents)
+        self.state = "TXT"
+
     def keyPressEvent(self, event):
         # Shift-return ends the editor and releases the object
         if event.modifiers() == Qt.ShiftModifier and event.key() == Qt.Key_Return:
@@ -599,6 +621,16 @@ class TextItem(QGraphicsTextItem):
             tc.clearSelection()
             self.setTextCursor(tc)
             self.setTextInteractionFlags(Qt.NoTextInteraction)
+            self.contents = self.toPlainText()
+        # control-return latexs the comment and replaces the text with the resulting image.
+        # ends the editor.
+        if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Return:
+            self.textToPng()
+            tc = self.textCursor()
+            tc.clearSelection()
+            self.setTextCursor(tc)
+            self.setTextInteractionFlags(Qt.NoTextInteraction)
+
         super(TextItem, self).keyPressEvent(event)
 
     def paint(self, painter, option, widget):
@@ -659,7 +691,7 @@ class DeltaItem(QGraphicsTextItem):
             self.setPlainText(" {} ".format(self.delta))
         self.font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        self.font.setPointSize(min(30, fontsize*3))
+        self.font.setPointSize(min(30, fontsize * 3))
         self.setFont(self.font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)

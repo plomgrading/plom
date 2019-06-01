@@ -172,7 +172,7 @@ class PageScene(QGraphicsScene):
         comments = []
         for X in self.items():
             if type(X) is TextItem:
-                comments.append(X.toPlainText())
+                comments.append(X.contents)
         # image file is <blah>.png, save comments as <blah>.json
         with open(self.imageName[:-3] + "json", "w") as commentFile:
             json.dump(comments, commentFile)
@@ -577,3 +577,6 @@ class PageScene(QGraphicsScene):
             pass
         # After the drop event make sure pageview has the focus.
         self.parent().setFocus(Qt.TabFocusReason)
+
+    def latexAFragment(self, txt):
+        return self.parent().latexAFragment(txt)

@@ -79,6 +79,7 @@ files += [
     "imageServer/identify_reverter.py",
     "imageServer/id_storage.py",
     "imageServer/image_server.py",
+    "imageServer/latex2png.py",
     "imageServer/mark_manager.py",
     "imageServer/mark_reverter.py",
     "imageServer/mark_storage.py",
