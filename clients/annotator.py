@@ -27,7 +27,7 @@ from uiFiles.ui_annotator_rhm import Ui_annotator_rhm
 
 # Short descriptions of each tool to display to user.
 modeLines = {
-    "box": "L: highlighted box. R: opaque white box.",
+    "box": "L: highlighted box. R: highlighted ellipse.",
     "comment": "L: paste comment and associated mark.",
     "cross": "L: cross. M: ?-mark. R: checkmark.",
     "delta": "L: paste mark. M: ?-mark. R: checkmark/cross.",
