@@ -19,12 +19,12 @@ docker run --name=plom0 --detach --init --env=LC_ALL=C.UTF-8 --volume=$PWD:/plom
 
 #install:
 docker exec plom0 apt-get update
+# prevent some interactive nonsense about timezones
+docker exec plom0 env DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 docker exec plom0 apt-get --no-install-recommends --yes install  \
     parallel zbar-tools \
     python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
     python3-pyqt5.qtsql python3-peewee python3-pyqrcode python3-png
-# TODO: `dpkg` is whinging and trying to interactively configure timezones (how to do this unattended?)
-# something like `sudo docker exec plom0 dpkg --configure -a`
 
 # TODO: cmake dep missing in lapsolver: file upstream?
 docker exec plom0 pip3 install wsgidav easywebdav2 pymupdf \
