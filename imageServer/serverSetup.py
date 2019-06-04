@@ -21,7 +21,7 @@ def import_canvas_csv(canvas_fromfile):
     df = pandas.read_csv(canvas_fromfile, dtype='object')
     print('Loading from Canvas csv file: "{0}"'.format(canvas_fromfile))
 
-    # TODO: talk to @andrewr about "SIS User ID" versus "Student Number"
+    # Note: Canvas idoicy whereby "SIS User ID" is same as "Student Number"
     cols = ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', 'Student Number']
     assert all([c in df.columns for c in cols]), "CSV file missing columns?  We need:\n  " + str(cols)
 
