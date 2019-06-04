@@ -14,10 +14,9 @@ from ui_server_setup import Ui_ServerInfo
 # TODO: move this function out of finishing... TO WHERE?
 #sys.path.append("..")
 #from finishing.return_tools import import_canvas_csv
-
-# above import didn't work (complains about utils.py)
-# instead, TEMPORARILY copy-paste it here...
-
+# This import didn't work (because it depends on finishing/utils.py)
+#
+# TODO: as a workaorund we copy-paste the entire function here:
 def import_canvas_csv(canvas_fromfile):
     df = pandas.read_csv(canvas_fromfile, dtype='object')
     print('Loading from Canvas csv file: "{0}"'.format(canvas_fromfile))
