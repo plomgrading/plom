@@ -2,8 +2,7 @@
 
 block_cipher = None
 
-a = Analysis(['mlp_client.py'],
-             pathex=['/Users/andrew/Documents/MLP/clients'],
+a = Analysis(['client.py'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -16,7 +15,7 @@ a = Analysis(['mlp_client.py'],
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
-for icon in ['cross', 'delete', 'line', 'move', 'pan', 'pen', 'rectangle', 'redo', 'text', 'tick', 'undo', 'zoom']:
+for icon in ['cross', 'delete', 'line', 'move', 'pan', 'pen', 'rectangle', 'redo', 'text', 'tick', 'undo', 'zoom', 'comment', 'comment_up', 'comment_down']:
   a.datas += [('{}.svg'.format(icon), 'icons/{}.svg'.format(icon), 'DATA')]
 
 exe = EXE(pyz,
@@ -24,7 +23,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='mlp_client',
+          name='client',
           debug=False,
           strip=False,
           onefile=True,
