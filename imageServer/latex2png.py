@@ -32,7 +32,9 @@ with open("frag.tex".format(td.name), "w") as fh:
     fh.write(frag)
     fh.write(foot)
 
-texit = subprocess.run(["latex", "-interaction=nonstopmode", "frag.tex"])
+texit = subprocess.run(
+    ["latex", "-interaction=nonstopmode", "-no-shell-escape", "frag.tex"]
+)
 if texit.returncode != 0:
     sys.exit(textit.returncode)
 
