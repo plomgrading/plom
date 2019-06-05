@@ -26,6 +26,7 @@ from authenticate import Authority
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
 
+__version__ = "0.0.0+"
 
 # default server values and location of grouped-scans.
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
@@ -789,6 +790,7 @@ def checkPorts():
         exit()
 
 
+print("PLOM v{0}: image server starting...".format(__version__))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
