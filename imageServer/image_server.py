@@ -803,7 +803,7 @@ davDirectory = tempDirectory.name
 os.system("chmod o-r {}".format(davDirectory))
 SLogger.info("Webdav directory = {}".format(davDirectory))
 # Fire up the webdav server.
-cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.conf".format(
+cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.yaml".format(
     serverInfo["server"], serverInfo["wport"], davDirectory
 )
 davproc = subprocess.Popen(shlex.split(cmd))
