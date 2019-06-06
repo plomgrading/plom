@@ -1,21 +1,24 @@
 #!/bin/sh
 
+# Instructions: must run this in the directory above "plom"
+
 export BRANCH=master
+#export BASEIMG=ubuntu:18.04
+export BASEIMG=mtmiller/octave
 
 #before_install:
 # TODO: on gitlab CI, we would have the appropriate commit checked out in `MLP`?
 git clone https://gitlab.math.ubc.ca/andrewr/MLP.git plom
 cd plom
 git checkout $BRANCH
+cd ..
 
-# TODO: use `ubuntu:latest` or `ubuntu:18.04` instead
-# TODO: mtmiller/octave has some our deps already, so faster pull
-docker pull ubuntu:18.04
-docker run --name=plom0 --detach --init --env=LC_ALL=C.UTF-8 --volume=$PWD:/plom:z mtmiller/octave sleep inf
+docker pull ${BASEIMG}
+docker run --name=plom0 --detach --init --env=LC_ALL=C.UTF-8 --volume=$PWD/plom:/plom:z ${BASEIMG} sleep inf
 
 # TODO: could also clone within the docker image:
-#docker exec plom0 git clone https://gitlab.math.ubc.ca/andrewr/MLP.git
-#docker exec plom0 cd MLP; git check dev
+#docker exec plom0 git clone https://gitlab.math.ubc.ca/andrewr/MLP.git plom
+#docker exec plom0 bash -c "cd plom; git check ${BRANCH}"
 
 #install:
 docker exec plom0 apt-get update
