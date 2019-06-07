@@ -6,21 +6,27 @@
 # First, build plomdockerbuild by running:
 #   `sudo docker build . --tag plomdockerbuild`
 # in whatever directory has the `Dockerfile` in it.
+# (for example, inside your git clone)
 #
-# Then run this script in the directory above "plom"
+# Next, copy this script somewhere
+#   `cp plomdock.sh ${HOME}/plomdock/`
+#   `cd ${HOME}/plomdock`
+#
+# Run this script
 
 export BRANCH=master
-# export BASEIMG=mtmiller/octave
 export BASEIMG=plomdockerbuild
 export MINTESTDATA=${HOME}/tmp/dockerHack/minTestServerData
 export UID=`id -u`
 
 #before_install:
-# TODO: on gitlab CI, we would have the appropriate commit checked out in `MLP`?
-git clone https://gitlab.math.ubc.ca/andrewr/MLP.git plom
-cd plom
+git clone https://gitlab.math.ubc.ca/andrewr/MLP.git plomsrc
+cd plomsrc
 git checkout $BRANCH
 cd ..
+# make fresh copy
+rm -rf plom
+/bin/cp -ra plomsrc plom
 
 # docker pull ${BASEIMG}
 docker run -p 41984:41984 -p 41985:41985 --name=plom0 --detach --init --env=LC_ALL=C.UTF-8 --volume=$PWD/plom:/plom:z ${BASEIMG} sleep inf
