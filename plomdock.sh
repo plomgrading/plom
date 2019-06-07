@@ -1,11 +1,19 @@
 #!/bin/sh
 
-# Instructions: must run this in the directory above "plom"
+# Instructions
+# ------------
+#
+# First, build plomdockerbuild by running:
+#   `sudo docker build . --tag plomdockerbuild`
+# in whatever directory has the `Dockerfile` in it.
+#
+# Then run this script in the directory above "plom"
 
 export BRANCH=master
-export BASEIMG=mtmiller/octave
-export MINTESTDATA=/home/andrew/tmp/dockerHack/minTestServerData
-export GID=`id -g`
+# export BASEIMG=mtmiller/octave
+export BASEIMG=plomdockerbuild
+export MINTESTDATA=${HOME}/tmp/dockerHack/minTestServerData
+export UID=`id -u`
 
 #before_install:
 # TODO: on gitlab CI, we would have the appropriate commit checked out in `MLP`?
@@ -14,7 +22,7 @@ cd plom
 git checkout $BRANCH
 cd ..
 
-docker pull ${BASEIMG}
+# docker pull ${BASEIMG}
 docker run -p 41984:41984 -p 41985:41985 --name=plom0 --detach --init --env=LC_ALL=C.UTF-8 --volume=$PWD/plom:/plom:z ${BASEIMG} sleep inf
 docker exec plom0 adduser -u $UID --no-create-home --disabled-password --gecos "" $USER
 
@@ -23,19 +31,19 @@ docker exec plom0 adduser -u $UID --no-create-home --disabled-password --gecos "
 #docker exec plom0 bash -c "cd plom; git check ${BRANCH}"
 
 #install:
-docker exec plom0 apt-get update
-# prevent some interactive nonsense about timezones
-docker exec plom0 env DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
-docker exec plom0 apt-get --no-install-recommends --yes install  \
-    parallel zbar-tools cmake \
-    python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
-    python3-pyqt5.qtsql python3-pyqrcode python3-png \
-    python3-pip python3-setuptools imagemagick \
-    texlive-latex-extra dvipng
-
-docker exec plom0 pip3 install --upgrade \
-       wsgidav easywebdav2 pymupdf weasyprint imutils \
-       lapsolver peewee cheroot
+# docker exec plom0 apt-get update
+# # prevent some interactive nonsense about timezones
+# docker exec plom0 env DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+# docker exec plom0 apt-get --no-install-recommends --yes install  \
+#     parallel zbar-tools cmake \
+#     python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
+#     python3-pyqt5.qtsql python3-pyqrcode python3-png \
+#     python3-pip python3-setuptools python3-wheel imagemagick \
+#     texlive-latex-extra dvipng g++ make python3-dev
+#
+# docker exec plom0 pip3 install --upgrade \
+#        wsgidav easywebdav2 pymupdf weasyprint imutils \
+#        lapsolver peewee cheroot
 
 #script:
 mkdir plom/scanAndGroup/scannedExams/
