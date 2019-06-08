@@ -32,17 +32,19 @@ with open("frag.tex".format(td.name), "w") as fh:
     fh.write(frag)
     fh.write(foot)
 
-texit = subprocess.run(
-    ["latex", "-interaction=nonstopmode", "-no-shell-escape", "frag.tex"]
+latexIt = subprocess.run(
+    ["latex", "-interaction=nonstopmode", "-no-shell-escape", "frag.tex"],
+    stdout=subprocess.DEVNULL,
 )
-if texit.returncode != 0:
-    sys.exit(textit.returncode)
+if latexIt.returncode != 0:
+    sys.exit(latexIt.returncode)
 
-convit = subprocess.run(
-    ["dvipng", "-q", "-D", "225", "-bg", "transparent", "frag.dvi", "-o" "frag.png"]
+convertIt = subprocess.run(
+    ["dvipng", "-q", "-D", "225", "-bg", "transparent", "frag.dvi", "-o" "frag.png"],
+    stdout=subprocess.DEVNULL,
 )
-if convit.returncode != 0:
-    sys.exit(convit.returncode)
+if convertIt.returncode != 0:
+    sys.exit(convertIt.returncode)
 
 os.system("cp frag.png {}".format(sys.argv[2]))
 os.chdir(cdir)
