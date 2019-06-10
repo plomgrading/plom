@@ -210,6 +210,9 @@ class IDClient(QDialog):
         # make sure exam view window's view is reset....
         # very slight delay to ensure things loaded first
         QTimer.singleShot(100, self.testImg.view.resetView)
+        # Create variable to store ID/Name conf window position
+        # Initially set to top-left corner of window
+        self.msgGeometry = None
 
     def requestToken(self):
         """Send authorisation request (AUTH) to server. The request sends name and
@@ -561,11 +564,11 @@ class IDClient(QDialog):
         if status == "identified":
             msg = SimpleMessage("Do you want to change the ID?")
             # Put message popup on top-corner of idenfier window
-            msg.move(self.pos())
             if msg.exec_() == QMessageBox.No:
                 return
             else:
                 alreadyIDd = True
+
         # Check if the entered ID is in the list from the classlist.
         if self.ui.idEdit.text() in self.studentNumbersToNames:
             # If so then fill in the name-edit with the corresponding name.
@@ -576,11 +579,16 @@ class IDClient(QDialog):
                     self.ui.idEdit.text(), self.ui.nameEdit.text()
                 )
             )
-            # Put message popup on top-corner of idenfier window
-            msg.move(self.pos())
+            # Put message popup in its last location
+            if self.msgGeometry is not None:
+                msg.setGeometry(self.msgGeometry)
+
             # If user says "no" then just return from function.
             if msg.exec_() == QMessageBox.No:
+                self.msgGeometry = msg.geometry()
                 return
+            self.msgGeometry = msg.geometry()
+
         else:
             # Number is not in class list - ask user if they really want to
             # enter that number.
@@ -593,7 +601,9 @@ class IDClient(QDialog):
             msg.move(self.pos())
             # If no then return from function.
             if msg.exec_() == QMessageBox.No:
+                self.msgPosition = msg.pos()
                 return
+            self.msgPosition = msg.pos()
             # Otherwise get a name from the user (and the okay)
             name, ok = QInputDialog.getText(self, "Enter name", "Enter student name:")
             # If okay, then set name accordingly, else set name to "unknown"
@@ -649,6 +659,10 @@ class IDClient(QDialog):
             )
             # Put message popup on top-corner of idenfier window
             msg.move(self.pos())
+            # Put message popup in its last location
+            if self.msgGeometry is not None:
+                msg.setGeometry(self.msgGeometry)
+            self.msgGeometry = msg.geometry()
             # If user says "no" then just return from function.
             if msg.exec_() == QMessageBox.No:
                 return
