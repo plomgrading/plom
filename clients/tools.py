@@ -638,7 +638,12 @@ class TextItem(QGraphicsTextItem):
 
     def textToPng(self):
         self.contents = self.toPlainText()
-        if self.parent.latexAFragment(self.contents):
+        if self.contents[:3].upper() == "TEX":
+            texIt = self.contents[3:]
+        else:
+            texIt = self.contents
+
+        if self.parent.latexAFragment(texIt):
             self.setPlainText("")
             tc = self.textCursor()
             qi = QImage("frag.png")
@@ -658,6 +663,9 @@ class TextItem(QGraphicsTextItem):
             self.setTextCursor(tc)
             self.setTextInteractionFlags(Qt.NoTextInteraction)
             self.contents = self.toPlainText()
+            if self.contents[:3].upper() == "TEX":
+                self.textToPng()
+
         # control-return latexs the comment and replaces the text with the resulting image.
         # ends the editor.
         if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Return:
