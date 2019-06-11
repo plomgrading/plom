@@ -40,7 +40,7 @@ if latexIt.returncode != 0:
     sys.exit(latexIt.returncode)
 
 convertIt = subprocess.run(
-    ["dvipng", "-q", "-D", "225", "-bg", "transparent", "frag.dvi", "-o" "frag.png"],
+    ["dvipng", "-q", "-D", "225", "-bg", "transparent", "frag.dvi", "-o", "frag.png"],
     stdout=subprocess.DEVNULL,
 )
 if convertIt.returncode != 0:
