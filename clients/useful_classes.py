@@ -222,7 +222,9 @@ class commentRowModel(QStandardItemModel):
                 value = "0"  # failed, so set to 0.
         # If its column 1 then convert '\n' into actual newline in the string
         elif index.column() == 1:
-            value = value.replace("\\n", "\n")
+            value = value.replace(
+                "\\n ", "\n"
+            )  # so we can latex commands that start with \n
         return super().setData(index, value, role)
 
 
