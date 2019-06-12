@@ -638,8 +638,8 @@ class TextItem(QGraphicsTextItem):
 
     def textToPng(self):
         self.contents = self.toPlainText()
-        if self.contents[:3].upper() == "TEX":
-            texIt = self.contents[3:]
+        if self.contents[:4].upper() == "TEX:":
+            texIt = self.contents[4:]
         else:
             texIt = self.contents
 
@@ -663,7 +663,7 @@ class TextItem(QGraphicsTextItem):
             self.setTextCursor(tc)
             self.setTextInteractionFlags(Qt.NoTextInteraction)
             self.contents = self.toPlainText()
-            if self.contents[:3].upper() == "TEX":
+            if self.contents[:4].upper() == "TEX:":
                 self.textToPng()
 
         # control-return latexs the comment and replaces the text with the resulting image.

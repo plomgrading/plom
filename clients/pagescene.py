@@ -318,7 +318,7 @@ class PageScene(QGraphicsScene):
         self.blurb.setPlainText(self.commentText)
         # Put in a check to see if comment starts with TEX
         # If it does then tex-ify it.
-        if self.commentText[:3].upper() == "TEX":
+        if self.commentText[:4].upper() == "TEX:":
             self.blurb.textToPng()
 
         command = CommandText(self, self.blurb, self.ink)
