@@ -88,4 +88,8 @@ class PageView(QGraphicsView):
         self.scale(0.8, 0.8)
 
     def latexAFragment(self, txt):
-        return self.parent.latexAFragment(txt)
+        cur = self.cursor()
+        self.setCursor(Qt.WaitCursor)
+        ret = self.parent.latexAFragment(txt)
+        self.setCursor(cur)
+        return ret
