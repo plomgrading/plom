@@ -487,6 +487,12 @@ class PageIdentifier(QWidget):
     def initUI(self):
         """Set up the interface, the table and the image-view"""
         grid = QGridLayout()
+        # Add some instructions at top
+        self.doThisL = QLabel(
+            "Select from the table and hit enter or double-click\nIf extra-page click the extra-page button"
+        )
+        grid.addWidget(self.doThisL, 0, 1, 1, 4)
+
         # The list of pageimages to identify
         self.imageT = ImageTable()
         grid.addWidget(self.imageT, 1, 1, 4, 3)
@@ -522,6 +528,8 @@ class PageIdentifier(QWidget):
         self.setLayout(grid)
         self.setWindowTitle("Identify Page Images")
         self.show()
+        # Connect double-click
+        self.imageT.doubleClicked.connect(self.identifyIt)
 
     def selChanged(self, selnew, selold):
         """When current selection changes in the table
