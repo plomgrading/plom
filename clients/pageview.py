@@ -4,11 +4,12 @@ __credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"
 __license__ = "GPLv3"
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QBrush, QPainter
-from PyQt5.QtWidgets import QGraphicsView
+from PyQt5.QtGui import QBrush, QPainter, QCursor
+from PyQt5.QtWidgets import QGraphicsView, QApplication
 
 # Import the pagescene class.
 from pagescene import PageScene
+import time
 
 
 class PageView(QGraphicsView):
@@ -89,7 +90,8 @@ class PageView(QGraphicsView):
 
     def latexAFragment(self, txt):
         cur = self.cursor()
-        self.setCursor(Qt.WaitCursor)
+        self.setCursor(QCursor(Qt.WaitCursor))
+        QApplication.processEvents() # this triggers a cursor update
         ret = self.parent.latexAFragment(txt)
         self.setCursor(cur)
         return ret
