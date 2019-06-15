@@ -444,10 +444,18 @@ class PageScene(QGraphicsScene):
         if isinstance(under, TextItem) and self.mode != "move":
             under.setTextInteractionFlags(Qt.TextEditorInteraction)
             self.setFocusItem(under, Qt.MouseFocusReason)
+            super(PageScene, self).mousePressEvent(event)
             return
-        # Otherwise we construct a text object, give it focus
+
+        # check if a textitem currently has focus and clear it.
+        under = self.focusItem()
+        if isinstance(under, TextItem):
+            under.clearFocus()
+
+        # Now we construct a text object, give it focus
         # (which fires up the editor on that object), and
         # then push it onto the undo-stack.
+
         self.originPos = event.scenePos() + QPointF(0, -12)
         # also needs updating for differing font sizes
         self.blurb = TextItem(self, self.fontSize)
