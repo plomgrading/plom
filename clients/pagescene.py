@@ -620,3 +620,12 @@ class PageScene(QGraphicsScene):
 
     def latexAFragment(self, txt):
         return self.parent().latexAFragment(txt)
+
+    # A fix (hopefully) for misread touchpad events on mac
+    def event(self, event):
+        if event.type() in [QEvent.TouchBegin, QEvent.TouchEnd]:
+            # ignore the event
+            event.accept()
+            return True
+        else:
+            return super(PageScene, self).event(event)
