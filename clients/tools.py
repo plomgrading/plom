@@ -618,6 +618,7 @@ class TextItem(QGraphicsTextItem):
         self.pngToText()
         self.setTextInteractionFlags(Qt.TextEditorInteraction)
         self.setFocus()
+        super(TextItem, self).mouseDoubleClickEvent(event)
 
     def focusInEvent(self, event):
         if self.state == "PNG":
@@ -651,7 +652,8 @@ class TextItem(QGraphicsTextItem):
             self.state = "PNG"
 
     def pngToText(self):
-        self.setPlainText(self.contents)
+        if self.contents != "":
+            self.setPlainText(self.contents)
         self.state = "TXT"
 
     def keyPressEvent(self, event):
