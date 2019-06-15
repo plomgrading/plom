@@ -5,7 +5,7 @@ __license__ = "GPLv3"
 
 import json
 
-from PyQt5.QtCore import Qt, QLineF, QPointF, QRectF, pyqtSignal
+from PyQt5.QtCore import Qt, QEvent, QLineF, QPointF, QRectF, pyqtSignal
 from PyQt5.QtGui import (
     QBrush,
     QColor,
@@ -623,7 +623,7 @@ class PageScene(QGraphicsScene):
 
     # A fix (hopefully) for misread touchpad events on mac
     def event(self, event):
-        if event.type() in [QEvent.TouchBegin, QEvent.TouchEnd]:
+        if event.type() in [QEvent.TouchBegin, QEvent.TouchEnd, QEvent.TouchUpdate, QEvent.TouchCancel]:
             # ignore the event
             event.accept()
             return True
