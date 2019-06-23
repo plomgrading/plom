@@ -41,6 +41,7 @@ from tools import (
     CommandQMark,
     CommandText,
     CommandTick,
+    CommandGDT,
     TextItem,
     CommandWhiteBox,
 )
@@ -297,6 +298,45 @@ class PageScene(QGraphicsScene):
         # grab the location of the mouse-click
         pt = event.scenePos()
         # a small offset to place delta/text under mouse
+        # offset = QPointF(0, -24)
+        # self.originPos = event.scenePos() + offset
+        # build the textitem
+        self.blurb = TextItem(self, self.fontSize)
+        self.blurb.setPos(pt)  # update pos after if needed
+        self.blurb.setPlainText(self.commentText)
+        # Put in a check to see if comment starts with TEX
+        # If it does then tex-ify it.
+        if self.commentText[:4].upper() == "TEX:":
+            self.blurb.textToPng()
+        # If the mark-delta of the comment is non-zero then
+        # create a delta-object with a different offset.
+        # else just place the comment.
+        if self.commentDelta == 0:
+            command = CommandText(self, self.blurb, self.ink)
+            self.undoStack.push(command)
+        else:
+            command = CommandGDT(self, pt, self.commentDelta, self.blurb, self.fontSize)
+            # push the delta onto the undo stack.
+            self.undoStack.push(command)
+
+    def mousePressCommentBak(self, event):
+        """Create a marked-comment-item from whatever is the currently
+        selected comment. This creates a Delta-object and then also
+        a text-object. They should be side-by-side with the delta
+        appearing roughly at the mouse-click.
+        """
+        # Find the object under the mouseclick.
+        under = self.itemAt(event.scenePos(), QTransform())
+        # If it is a textitem and this is not the move-tool
+        # then fire up the editor.
+        if isinstance(under, TextItem) and self.mode != "move":
+            under.setTextInteractionFlags(Qt.TextEditorInteraction)
+            self.setFocusItem(under, Qt.MouseFocusReason)
+            return
+
+        # grab the location of the mouse-click
+        pt = event.scenePos()
+        # a small offset to place delta/text under mouse
         offset = QPointF(0, -24)
         # needs updating for differing font sizes
         # If the mark-delta of the comment is non-zero then
@@ -356,6 +396,11 @@ class PageScene(QGraphicsScene):
         if self.deleteItem == self.imageItem:
             self.deleteItem = None
             return
+        # check if the delete item is part of a group
+        dg = self.deleteItem.group()
+        print(dg)
+        if dg is not None:
+            self.deleteItem = dg
         command = CommandDelete(self, self.deleteItem)
         self.undoStack.push(command)
 
@@ -475,7 +520,7 @@ class PageScene(QGraphicsScene):
         elif event.button() == Qt.MiddleButton:
             command = CommandQMark(self, pt)
         else:
-            command = CommandTick(self, pt)
+            command = CommandGTick(self, pt)
         self.undoStack.push(command)
 
     def mousePressZoom(self, event):
@@ -623,7 +668,12 @@ class PageScene(QGraphicsScene):
 
     # A fix (hopefully) for misread touchpad events on mac
     def event(self, event):
-        if event.type() in [QEvent.TouchBegin, QEvent.TouchEnd, QEvent.TouchUpdate, QEvent.TouchCancel]:
+        if event.type() in [
+            QEvent.TouchBegin,
+            QEvent.TouchEnd,
+            QEvent.TouchUpdate,
+            QEvent.TouchCancel,
+        ]:
             # ignore the event
             event.accept()
             return True

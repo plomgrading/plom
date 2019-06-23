@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QGraphicsLineItem,
     QGraphicsPathItem,
     QGraphicsRectItem,
+    QGraphicsItemGroup,
     QGraphicsObject,
     QGraphicsTextItem,
     QUndoCommand,
@@ -1105,3 +1106,63 @@ class EllipseItemObject(QGraphicsObject):
     @thickness.setter
     def thickness(self, value):
         self.ei.setPen(QPen(Qt.red, value))
+
+
+class CommandGDT(QUndoCommand):
+    # GDT = group of delta and text
+    # Command to do a delta and a textitem (ie a standard comment)
+    # Must send a "the total mark has changed" signal
+    def __init__(self, scene, pt, delta, blurb, fontsize):
+        super(CommandGDT, self).__init__()
+        self.scene = scene
+        self.delta = delta
+        self.blurb = blurb
+        self.gdt = GroupDTItem(pt, self.delta, self.blurb, fontsize)
+
+    def redo(self):
+        self.gdt.di.flash_redo()
+        self.gdt.blurb.flash_redo()
+        self.scene.addItem(self.gdt)
+        # Emit a markChangedSignal for the marker to pick up and change total.
+        # Mark increased by delta
+        self.scene.markChangedSignal.emit(self.delta)
+
+    def undo(self):
+        self.gdt.di.flash_undo()
+        self.gdt.blurb.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.gdt))
+        # Emit a markChangedSignal for the marker to pick up and change total.
+        # Mark decreased by delta
+        self.scene.markChangedSignal.emit(-self.delta)
+
+
+class GroupDTItem(QGraphicsItemGroup):
+    def __init__(self, pt, delta, blurb, fontsize):
+        super(GroupDTItem, self).__init__()
+        self.pt = pt
+        self.di = DeltaItem(pt, delta, fontsize)  # positioned so centre under click
+        self.blurb = blurb  # is a textitem already
+        # move blurb so that its top-left corner is next to top-right corner of delta.
+        cr = self.di.boundingRect()
+        self.blurb.moveBy(
+            (cr.right() + cr.left()) / 2 + 5, -(cr.top() + cr.bottom()) / 2
+        )
+        self.addToGroup(self.di)
+        self.addToGroup(self.blurb)
+
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            command = CommandMoveItem(self, value)
+            self.scene().undoStack.push(command)
+        return QGraphicsItemGroup.itemChange(self, change, value)
+
+    def paint(self, painter, option, widget):
+        # paint a bounding rectangle for undo/redo highlighting
+        painter.setPen(QPen(Qt.red, 0.5))
+        painter.setPen(Qt.DotLine)
+        painter.drawRoundedRect(option.rect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(GroupDTItem, self).paint(painter, option, widget)
