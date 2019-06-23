@@ -297,9 +297,6 @@ class PageScene(QGraphicsScene):
 
         # grab the location of the mouse-click
         pt = event.scenePos()
-        # a small offset to place delta/text under mouse
-        # offset = QPointF(0, -24)
-        # self.originPos = event.scenePos() + offset
         # build the textitem
         self.blurb = TextItem(self, self.fontSize)
         self.blurb.setPos(pt)  # update pos after if needed
@@ -318,51 +315,6 @@ class PageScene(QGraphicsScene):
             command = CommandGDT(self, pt, self.commentDelta, self.blurb, self.fontSize)
             # push the delta onto the undo stack.
             self.undoStack.push(command)
-
-    def mousePressCommentBak(self, event):
-        """Create a marked-comment-item from whatever is the currently
-        selected comment. This creates a Delta-object and then also
-        a text-object. They should be side-by-side with the delta
-        appearing roughly at the mouse-click.
-        """
-        # Find the object under the mouseclick.
-        under = self.itemAt(event.scenePos(), QTransform())
-        # If it is a textitem and this is not the move-tool
-        # then fire up the editor.
-        if isinstance(under, TextItem) and self.mode != "move":
-            under.setTextInteractionFlags(Qt.TextEditorInteraction)
-            self.setFocusItem(under, Qt.MouseFocusReason)
-            return
-
-        # grab the location of the mouse-click
-        pt = event.scenePos()
-        # a small offset to place delta/text under mouse
-        offset = QPointF(0, -24)
-        # needs updating for differing font sizes
-        # If the mark-delta of the comment is non-zero then
-        # create a delta-object with a different offset.
-        # else just place the comment.
-        if self.commentDelta != 0:
-            # push the delta onto the undo stack.
-            command = CommandDelta(self, pt, self.commentDelta, self.fontSize)
-            self.undoStack.push(command)
-            # digits in the delta, and a (rough) corresponding offset.
-            x = len(str(abs(int(self.commentDelta))))
-            offset = QPointF(26 + 15 * x, -24)
-            # the above needs updating for differing font sizes
-        # position of text.
-        self.originPos = event.scenePos() + offset
-        # create the textitem, and push onto the undo stack
-        self.blurb = TextItem(self, self.fontSize)
-        self.blurb.setPos(self.originPos)
-        self.blurb.setPlainText(self.commentText)
-        # Put in a check to see if comment starts with TEX
-        # If it does then tex-ify it.
-        if self.commentText[:4].upper() == "TEX:":
-            self.blurb.textToPng()
-
-        command = CommandText(self, self.blurb, self.ink)
-        self.undoStack.push(command)
 
     def mousePressCross(self, event):
         """Create a cross/?-mark/tick object under the mouse click

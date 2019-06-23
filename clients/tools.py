@@ -1166,3 +1166,13 @@ class GroupDTItem(QGraphicsItemGroup):
         painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
         super(GroupDTItem, self).paint(painter, option, widget)
+
+    # def keyPressEvent(self, event):
+    #     # passes typing on to the underlying textitem
+    #     self.blurb.keyPressEvent(event)
+    #
+    # def mouseDoubleClickEvent(self, event):
+    #     self.blurb.mouseDoubleClickEvent(event)
+    #
+    # def mousePressEvent(self, event):
+    #     self.blurb.mousePressEvent(event)
