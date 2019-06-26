@@ -1,3 +1,8 @@
+__author__ = "Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald"]
+__license__ = "AGPLv3"
+
 # https://www.digitalocean.com/community/tutorials/how-to-build-a-neural-network-to-recognize-handwritten-digits-with-tensorflow
 # and https://www.tensorflow.org/api_docs/python/tf/keras/datasets/mnist/load_data
 # https://www.tensorflow.org/tutorials/estimators/cnn

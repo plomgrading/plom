@@ -1,3 +1,8 @@
+__author__ = "Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__credits__ = ["Andrew Rechnitzer", "Colin MacDonald"]
+__license__ = "AGPLv3"
+
 import glob
 import sys
 import os

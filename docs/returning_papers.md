@@ -1,3 +1,9 @@
+<!--
+__author__ = "Andrew Rechnitzer, Colin B Macdonald"
+__copyright__ = "Copyright (C) 2018-9 Andrew Rechnitzer"
+__license__ = "GFDL"
+ -->
+
 # Returning papers
 
 ## Canvas limitations
