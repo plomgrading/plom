@@ -1,7 +1,7 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
-__license__ = "GPLv3"
+__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
+__license__ = "AGPLv3"
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QPainter, QCursor
@@ -91,7 +91,7 @@ class PageView(QGraphicsView):
     def latexAFragment(self, txt):
         cur = self.cursor()
         self.setCursor(QCursor(Qt.WaitCursor))
-        QApplication.processEvents() # this triggers a cursor update
+        QApplication.processEvents()  # this triggers a cursor update
         ret = self.parent.latexAFragment(txt)
         self.setCursor(cur)
         return ret

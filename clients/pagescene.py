@@ -1,7 +1,7 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai", "Matt Coles"]
-__license__ = "GPLv3"
+__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
+__license__ = "AGPLv3"
 
 import json
 
@@ -623,7 +623,12 @@ class PageScene(QGraphicsScene):
 
     # A fix (hopefully) for misread touchpad events on mac
     def event(self, event):
-        if event.type() in [QEvent.TouchBegin, QEvent.TouchEnd, QEvent.TouchUpdate, QEvent.TouchCancel]:
+        if event.type() in [
+            QEvent.TouchBegin,
+            QEvent.TouchEnd,
+            QEvent.TouchUpdate,
+            QEvent.TouchCancel,
+        ]:
             # ignore the event
             event.accept()
             return True

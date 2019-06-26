@@ -1,7 +1,7 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer"]
-__license__ = "GPLv3"
+__license__ = "AGPLv3"
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QWidget
@@ -31,18 +31,18 @@ class TestView(QWidget):
     def buildTabs(self):
         for k in range(0, self.numberGroups):
             self.tabs[k] = ExamViewWindow(self.groupList[k])
-            self.ui.groupViewTabWidget.addTab(self.tabs[k], "Group {}".format(k+1))
+            self.ui.groupViewTabWidget.addTab(self.tabs[k], "Group {}".format(k + 1))
 
     def nextTab(self):
-        t = self.ui.groupViewTabWidget.currentIndex()+1
+        t = self.ui.groupViewTabWidget.currentIndex() + 1
         if t >= self.ui.groupViewTabWidget.count():
             t = 0
         self.ui.groupViewTabWidget.setCurrentIndex(t)
 
     def previousTab(self):
-        t = self.ui.groupViewTabWidget.currentIndex()-1
+        t = self.ui.groupViewTabWidget.currentIndex() - 1
         if t < 0:
-            t = self.ui.groupViewTabWidget.count()-1
+            t = self.ui.groupViewTabWidget.count() - 1
         self.ui.groupViewTabWidget.setCurrentIndex(t)
 
     def swapMaxNorm(self):
