@@ -1,7 +1,7 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
-__license__ = "GPLv3"
+__license__ = "AGPLv3"
 
 import csv
 import json
@@ -12,27 +12,36 @@ from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
 from ui_server_setup import Ui_ServerInfo
 
 # TODO: move this function out of finishing... TO WHERE?
-#sys.path.append("..")
-#from finishing.return_tools import import_canvas_csv
+# sys.path.append("..")
+# from finishing.return_tools import import_canvas_csv
 # This import didn't work (because it depends on finishing/utils.py)
 #
 # TODO: as a workaorund we copy-paste the entire function here:
 def import_canvas_csv(canvas_fromfile):
-    df = pandas.read_csv(canvas_fromfile, dtype='object')
+    df = pandas.read_csv(canvas_fromfile, dtype="object")
     print('Loading from Canvas csv file: "{0}"'.format(canvas_fromfile))
 
     # Note: Canvas idoicy whereby "SIS User ID" is same as "Student Number"
-    cols = ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', 'Student Number']
-    assert all([c in df.columns for c in cols]), "CSV file missing columns?  We need:\n  " + str(cols)
+    cols = ["Student", "ID", "SIS User ID", "SIS Login ID", "Section", "Student Number"]
+    assert all(
+        [c in df.columns for c in cols]
+    ), "CSV file missing columns?  We need:\n  " + str(cols)
 
-    print('Carefully filtering rows w/o "Student Number" including:\n'
-          '  almost blank rows, "Points Possible" and "Test Student"s')
+    print(
+        'Carefully filtering rows w/o "Student Number" including:\n'
+        '  almost blank rows, "Points Possible" and "Test Student"s'
+    )
     isbad = df.apply(
-        lambda x: (pandas.isnull(x['Student Number']) and
-                   (pandas.isnull(x['Student'])
-                    or x['Student'].strip().lower().startswith('points possible')
-                    or x['Student'].strip().lower().startswith('test student'))),
-        axis=1)
+        lambda x: (
+            pandas.isnull(x["Student Number"])
+            and (
+                pandas.isnull(x["Student"])
+                or x["Student"].strip().lower().startswith("points possible")
+                or x["Student"].strip().lower().startswith("test student")
+            )
+        ),
+        axis=1,
+    )
     df = df[isbad == False]
 
     return df
@@ -98,8 +107,9 @@ class SetUp(QWidget):
         QMessageBox.question(
             self,
             "Class list format",
-            "Class list must be a CSV with column" ' headers "id", "surname", "name".'
-            '\nAlternatively, give csv exported from Canvas.',
+            "Class list must be a CSV with column"
+            ' headers "id", "surname", "name".'
+            "\nAlternatively, give csv exported from Canvas.",
             QMessageBox.Ok,
         )
         # Pop up a file dialog to pick a .csv
@@ -114,7 +124,9 @@ class SetUp(QWidget):
             print("Class list headers = {}".format(fields))
 
             # First check if this is Canvas output
-            if all(x in fields for x in ("Student", "ID", "SIS User ID", "SIS Login ID")):
+            if all(
+                x in fields for x in ("Student", "ID", "SIS User ID", "SIS Login ID")
+            ):
                 print("This looks like it was exported from Canvas")
                 df = import_canvas_csv(fname)
                 print("Extracting columns from Canvas data and renaming")
