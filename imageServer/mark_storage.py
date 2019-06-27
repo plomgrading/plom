@@ -1,7 +1,7 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
-__license__ = "GPLv3"
+__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
+__license__ = "AGPLv3"
 
 from collections import defaultdict
 from datetime import datetime
@@ -293,7 +293,7 @@ class MarkDatabase:
             GroupImage.select()
             .where(GroupImage.number == int(number))
             .order_by(GroupImage.pageGroup)
-            )
+        )
         for x in query:
             lst.append(x.originalFile)
-        return(lst)
+        return lst

@@ -1,6 +1,6 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__license__ = "GPLv3"
+__license__ = "AGPLv3"
 
 import json
 import os

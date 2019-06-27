@@ -1,3 +1,8 @@
+__author__ = "Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
+__license__ = "AGPLv3"
+
 ## https://www.pyimagesearch.com/2017/02/13/recognizing-digits-with-opencv-and-python/
 import csv
 import cv2

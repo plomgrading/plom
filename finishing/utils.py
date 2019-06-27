@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; -*-
 #
-# Copyright (C) 2018 Colin B. Macdonald <cbm@m.fsf.org>
+# Copyright (C) 2018-9 Colin B. Macdonald <cbm@m.fsf.org>
 #
 # This file is part of MLP.
 #
@@ -23,7 +23,7 @@ import hashlib
 # If you know the salt string and you know someone's student
 # number, you can determine their code.  You should set this
 # per course (not per test).  TODO: move into the spec file?
-SALTSTR = 'salt'
+SALTSTR = "salt"
 
 
 def myhash(s, salt=None):
@@ -35,13 +35,13 @@ def myhash(s, salt=None):
     """
     salt = SALTSTR if salt is None else salt
     hashthis = s + salt
-    h = hashlib.md5(hashthis.encode('utf-8')).hexdigest()
+    h = hashlib.md5(hashthis.encode("utf-8")).hexdigest()
     b = 899_999_999_999
     l = 100_000_000_000
     return str(int(h, 16) % b + l)
 
 
 def test_hash():
-    assert myhash('12345678', salt='salt') == '351525727036'
-    assert myhash('12345678', salt='salty') == '782385405730'
-    assert myhash('12345679', salt='salt') == '909470548567'
+    assert myhash("12345678", salt="salt") == "351525727036"
+    assert myhash("12345678", salt="salty") == "782385405730"
+    assert myhash("12345679", salt="salt") == "909470548567"

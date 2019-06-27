@@ -1,7 +1,7 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin MacDonald", "Elvis Cai"]
-__license__ = "GPLv3"
+__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
+__license__ = "AGPLv3"
 
 import asyncio
 import datetime
@@ -26,7 +26,7 @@ from authenticate import Authority
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
 
-__version__ = "0.0.0+"
+__version__ = "0.1.0"
 
 # default server values and location of grouped-scans.
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
