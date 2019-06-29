@@ -10,13 +10,20 @@ from PyQt5.QtGui import QDropEvent, QIcon, QPixmap, QStandardItem, QStandardItem
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
     QGridLayout,
+    QItemDelegate,
+    QLineEdit,
     QMessageBox,
     QPushButton,
+    QSpinBox,
     QTableView,
     QToolButton,
+    QVBoxLayout,
     QWidget,
-    QItemDelegate,
 )
 
 
@@ -123,7 +130,17 @@ class CommentWidget(QWidget):
         self.mehB.clicked.connect(self.getTextList)
 
     def getTextList(self):
+        # text items in scene.
         lst = self.parent.getTextList()
+        # text items already in comment list
+        clist = []
+        for r in range(self.CL.cmodel.rowCount()):
+            clist.append(self.CL.cmodel.index(r, 1).data())
+        # text items in scene not in comment list
+        alist = [X for X in lst if X not in clist]
+
+        meh = AddCommentBox(self, alist)
+        meh.exec_()
         print(lst)
 
     def setStyle(self, markStyle):
@@ -452,3 +469,30 @@ class SimpleCommentTable(QTableView):
             self.selectRow(0)
         else:
             self.selectRow((sel[0].row() - 1) % self.cmodel.rowCount())
+
+
+class AddCommentBox(QDialog):
+    def __init__(self, parent, lst):
+        super(QDialog, self).__init__()
+        self.parent = parent
+        self.CB = QComboBox()
+        self.LE = QLineEdit()
+        self.SB = QSpinBox()
+
+        flay = QFormLayout()
+        flay.addRow("Enter text", self.LE)
+        flay.addRow("Choose text", self.CB)
+        flay.addRow("Set delta", self.SB)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+
+        # set up widgets
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.CB.addItem("")
+        self.CB.addItems(lst)
