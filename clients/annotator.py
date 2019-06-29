@@ -87,7 +87,7 @@ class Annotator(QDialog):
         self.view = None
         self.setView()
         # Create the comment list widget and put into gui.
-        self.commentW = CommentWidget()
+        self.commentW = CommentWidget(self)
         self.ui.commentGrid.addWidget(self.commentW, 1, 1)
         # pass the marking style to the mark entry widget.
         # also when we set this up we have to connect various
@@ -744,3 +744,6 @@ class Annotator(QDialog):
 
     def latexAFragment(self, txt):
         return self.parent.latexAFragment(txt)
+
+    def getTextList(self):
+        return self.view.scene.getTextList()

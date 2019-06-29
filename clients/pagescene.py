@@ -472,7 +472,7 @@ class PageScene(QGraphicsScene):
         elif event.button() == Qt.MiddleButton:
             command = CommandQMark(self, pt)
         else:
-            command = CommandGTick(self, pt)
+            command = CommandTick(self, pt)
         self.undoStack.push(command)
 
     def mousePressZoom(self, event):
@@ -631,3 +631,10 @@ class PageScene(QGraphicsScene):
             return True
         else:
             return super(PageScene, self).event(event)
+
+    def getTextList(self):
+        lst = []
+        for X in self.items():
+            if isinstance(X, TextItem):
+                lst.append(X.getContents())
+        return lst

@@ -3,6 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+import json
 from math import sqrt
 from PyQt5.QtCore import Qt, QLineF, QPointF, pyqtProperty, QPropertyAnimation, QTimer
 from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainterPath, QPen, QPixmap
@@ -39,6 +40,7 @@ class CommandArrow(QUndoCommand):
         # arrow item knows how to highlight on undo and redo.
         self.arrowItem.flash_redo()
         self.scene.addItem(self.arrowItem.ai)
+        print("Created arrow {} {}".format(self.pti, self.ptf))
 
     def undo(self):
         # the undo animation takes 0.5s
@@ -58,6 +60,7 @@ class CommandBox(QUndoCommand):
     def redo(self):
         self.boxItem.flash_redo()
         self.scene.addItem(self.boxItem.bi)
+        print("Created box {}".format(self.rect))
 
     def undo(self):
         self.boxItem.flash_undo()
@@ -75,6 +78,7 @@ class CommandCross(QUndoCommand):
     def redo(self):
         self.crossItem.flash_redo()
         self.scene.addItem(self.crossItem.ci)
+        print("Created cross {}".format(self.pt))
 
     def undo(self):
         self.crossItem.flash_undo()
@@ -96,6 +100,7 @@ class CommandDelta(QUndoCommand):
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
         self.scene.markChangedSignal.emit(self.delta)
+        print("Created delta {} {}".format(pt, self.delta))
 
     def undo(self):
         self.delItem.flash_undo()
@@ -119,6 +124,7 @@ class CommandDelete(QUndoCommand):
             # Mark decreases by delta
             self.scene.markChangedSignal.emit(-self.deleteItem.delta)
         self.scene.removeItem(self.deleteItem)
+        print("Deleted item {}".format(self.deleteItem))
 
     def undo(self):
         # If the object is a DeltaItem then emit a mark-changed signal.
@@ -139,6 +145,7 @@ class CommandHighlight(QUndoCommand):
     def redo(self):
         self.highLightItem.flash_redo()
         self.scene.addItem(self.highLightItem.hli)
+        print("Created highlight {}".format(self.path))
 
     def undo(self):
         self.highLightItem.flash_undo()
@@ -443,12 +450,17 @@ class CrossItem(QGraphicsPathItem):
         self.setPen(QPen(Qt.red, 3))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        # self.dump()
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
+
+    def dump(self):
+        lst = ["cross", self.pt]
+        print(json.dumps(lst))
 
 
 class HighLightItem(QGraphicsPathItem):
@@ -460,12 +472,17 @@ class HighLightItem(QGraphicsPathItem):
         self.setPen(QPen(QColor(255, 255, 0, 64), 50))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        # self.dump()
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
+
+    def dump(self):
+        lst = ["highlight", self.path]
+        print(json.dumps(lst))
 
 
 class LineItem(QGraphicsLineItem):
@@ -613,6 +630,12 @@ class TextItem(QGraphicsTextItem):
         self.anim = QPropertyAnimation(self, b"thickness")
         # for latex png
         self.state = "TXT"
+
+    def getContents(self):
+        if len(self.contents) == 0:
+            return self.toPlainText()
+        else:
+            return self.contents
 
     def mouseDoubleClickEvent(self, event):
         # On double-click start the text-editor

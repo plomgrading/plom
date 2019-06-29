@@ -102,21 +102,29 @@ class SimpleToolButton(QToolButton):
 class CommentWidget(QWidget):
     """A widget wrapper around the marked-comment table."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         # layout the widget - a table and add/delete buttons.
         super(CommentWidget, self).__init__()
+        self.parent = parent
         grid = QGridLayout()
         # the table has 2 cols, delta&comment.
         self.CL = SimpleCommentTable(self)
         grid.addWidget(self.CL, 1, 1, 2, 3)
         self.addB = QPushButton("Add")
         self.delB = QPushButton("Delete")
+        self.mehB = QPushButton("Meh")
         grid.addWidget(self.addB, 3, 1)
+        grid.addWidget(self.mehB, 3, 2)
         grid.addWidget(self.delB, 3, 3)
         self.setLayout(grid)
         # connect the buttons to functions.
         self.addB.clicked.connect(self.addItem)
         self.delB.clicked.connect(self.deleteItem)
+        self.mehB.clicked.connect(self.getTextList)
+
+    def getTextList(self):
+        lst = self.parent.getTextList()
+        print(lst)
 
     def setStyle(self, markStyle):
         # The list needs a style-delegate because the display
