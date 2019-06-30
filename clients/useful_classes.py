@@ -187,11 +187,14 @@ class CommentWidget(QWidget):
         alist = [X for X in lst if X not in clist]
 
         acb = AddCommentBox(self, alist)
-        if acb.exec_() is QMessageBox.No:
-            return
-        dlt = acb.SB.value()
-        txt = acb.TE.toPlainText()
-        self.CL.insertItem(dlt, txt)
+        v = acb.exec_()
+        print("Ret val = ", v)
+        if v == QDialog.Accepted:
+            dlt = acb.SB.value()
+            txt = acb.TE.toPlainText().strip()
+            # check if txt has any content
+            if len(txt) > 0:
+                self.CL.insertItem(dlt, txt)
 
 
 class commentDelegate(QItemDelegate):
