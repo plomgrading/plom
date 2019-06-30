@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QSpinBox,
     QTableView,
+    QTextEdit,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -83,6 +84,8 @@ class SimpleTableView(QTableView):
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # Resize to fit the contents
+        self.resizeRowsToContents()
 
     def keyPressEvent(self, event):
         # If user hits enter or return, then fire off
@@ -119,29 +122,15 @@ class CommentWidget(QWidget):
         grid.addWidget(self.CL, 1, 1, 2, 3)
         self.addB = QPushButton("Add")
         self.delB = QPushButton("Delete")
-        self.mehB = QPushButton("Meh")
+        self.cbmB = QPushButton("CBM")
         grid.addWidget(self.addB, 3, 1)
-        grid.addWidget(self.mehB, 3, 2)
+        grid.addWidget(self.cbmB, 3, 2)
         grid.addWidget(self.delB, 3, 3)
         self.setLayout(grid)
         # connect the buttons to functions.
         self.addB.clicked.connect(self.addItem)
         self.delB.clicked.connect(self.deleteItem)
-        self.mehB.clicked.connect(self.getTextList)
-
-    def getTextList(self):
-        # text items in scene.
-        lst = self.parent.getTextList()
-        # text items already in comment list
-        clist = []
-        for r in range(self.CL.cmodel.rowCount()):
-            clist.append(self.CL.cmodel.index(r, 1).data())
-        # text items in scene not in comment list
-        alist = [X for X in lst if X not in clist]
-
-        meh = AddCommentBox(self, alist)
-        meh.exec_()
-        print(lst)
+        self.cbmB.clicked.connect(self.getTextList)
 
     def setStyle(self, markStyle):
         # The list needs a style-delegate because the display
@@ -186,6 +175,23 @@ class CommentWidget(QWidget):
         # in the comment list
         self.CL.previousItem()
         self.setFocus()
+
+    def getTextList(self):
+        # text items in scene.
+        lst = self.parent.getTextList()
+        # text items already in comment list
+        clist = []
+        for r in range(self.CL.cmodel.rowCount()):
+            clist.append(self.CL.cmodel.index(r, 1).data())
+        # text items in scene not in comment list
+        alist = [X for X in lst if X not in clist]
+
+        acb = AddCommentBox(self, alist)
+        if acb.exec_() is QMessageBox.No:
+            return
+        dlt = acb.SB.value()
+        txt = acb.TE.toPlainText()
+        self.CL.insertItem(dlt, txt)
 
 
 class commentDelegate(QItemDelegate):
@@ -470,17 +476,32 @@ class SimpleCommentTable(QTableView):
         else:
             self.selectRow((sel[0].row() - 1) % self.cmodel.rowCount())
 
+    def insertItem(self, dlt, txt):
+        # Create a [delta, comment] pair for user to edit
+        # and append to end of table.
+        txti = QStandardItem(txt)
+        txti.setEditable(True)
+        txti.setDropEnabled(False)
+        delti = QStandardItem("{}".format(dlt))
+        delti.setEditable(True)
+        delti.setDropEnabled(False)
+        delti.setTextAlignment(Qt.AlignCenter)
+        self.cmodel.appendRow([delti, txti])
+        # select the new row and resize
+        self.selectRow(self.cmodel.rowCount() - 1)
+        self.resizeRowToContents(self.cmodel.rowCount() - 1)
+
 
 class AddCommentBox(QDialog):
     def __init__(self, parent, lst):
         super(QDialog, self).__init__()
         self.parent = parent
         self.CB = QComboBox()
-        self.LE = QLineEdit()
+        self.TE = QTextEdit()
         self.SB = QSpinBox()
 
         flay = QFormLayout()
-        flay.addRow("Enter text", self.LE)
+        flay.addRow("Enter text", self.TE)
         flay.addRow("Choose text", self.CB)
         flay.addRow("Set delta", self.SB)
 
@@ -496,3 +517,9 @@ class AddCommentBox(QDialog):
         buttons.rejected.connect(self.reject)
         self.CB.addItem("")
         self.CB.addItems(lst)
+        # Set up TE and CB so that when CB changed, text is updated
+        self.CB.currentTextChanged.connect(self.changedCB)
+
+    def changedCB(self):
+        self.TE.clear()
+        self.TE.insertPlainText(self.CB.currentText())
