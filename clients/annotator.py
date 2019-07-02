@@ -444,6 +444,8 @@ class Annotator(QDialog):
         self.endShortCutc.activated.connect(self.endAndRelaunch)
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
         self.endShortCutd.activated.connect(self.endAndRelaunch)
+        self.endShortCutd = QShortcut(QKeySequence("Alt+p"), self)
+        self.endShortCutd.activated.connect(self.pickleIt)
 
     # Simple mode change functions
     def boxMode(self):
@@ -744,3 +746,7 @@ class Annotator(QDialog):
 
     def latexAFragment(self, txt):
         return self.parent.latexAFragment(txt)
+
+    def pickleIt(self):
+        lst = self.view.scene.pickleSceneItems()
+        print("PickleStuff\n{}".format(lst))

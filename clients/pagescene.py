@@ -42,7 +42,6 @@ from tools import (
     CommandText,
     CommandTick,
     TextItem,
-    CommandWhiteBox,
 )
 
 
@@ -145,7 +144,7 @@ class PageScene(QGraphicsScene):
         self.lightBrush = QBrush(QColor(255, 255, 0, 16))
         # Flags to indicate if drawing an arrow (vs line),
         # highlight (vs regular pen),
-        # whitebox (vs regular box) --- now ellipse vs box
+        # box (vs ellipse)
         self.arrowFlag = 0
         self.highlightFlag = 0
         self.ellipseFlag = 0
@@ -356,7 +355,7 @@ class PageScene(QGraphicsScene):
         if self.deleteItem == self.imageItem:
             self.deleteItem = None
             return
-        command = CommandDelete(self, self.deleteItem)
+        command = CommandDelete(self, self.deleteItem, self.originPos)
         self.undoStack.push(command)
 
     def mousePressDelta(self, event):
@@ -634,3 +633,16 @@ class PageScene(QGraphicsScene):
             return True
         else:
             return super(PageScene, self).event(event)
+
+    def printUndoStack(self):
+        c = self.undoStack.count()
+        for k in range(c):
+            print(k, self.undoStack.text(k))
+
+    def pickleSceneItems(self):
+        lst = []
+        for X in self.items():
+            if isinstance(X, ScoreBox) or isinstance(X, QGraphicsPixmapItem):
+                continue
+            lst.append(X.pickle())
+        return lst.reverse()

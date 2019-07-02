@@ -33,6 +33,7 @@ class CommandArrow(QUndoCommand):
         self.ptf = ptf
         # create an arrow item
         self.arrowItem = ArrowItemObject(self.pti, self.ptf)
+        self.setText("Arrow")
 
     def redo(self):
         # arrow item knows how to highlight on undo and redo.
@@ -53,6 +54,7 @@ class CommandBox(QUndoCommand):
         self.scene = scene
         self.rect = rect
         self.boxItem = BoxItemObject(self.rect)
+        self.setText("Box")
 
     def redo(self):
         self.boxItem.flash_redo()
@@ -70,6 +72,7 @@ class CommandCross(QUndoCommand):
         self.scene = scene
         self.pt = pt
         self.crossItem = CrossItemObject(self.pt)
+        self.setText("Cross")
 
     def redo(self):
         self.crossItem.flash_redo()
@@ -87,7 +90,9 @@ class CommandDelta(QUndoCommand):
         super(CommandDelta, self).__init__()
         self.scene = scene
         self.delta = delta
+        self.pt = pt
         self.delItem = DeltaItem(pt, self.delta, fontsize)
+        self.setText("Delta")
 
     def redo(self):
         self.delItem.flash_redo()
@@ -107,10 +112,12 @@ class CommandDelta(QUndoCommand):
 class CommandDelete(QUndoCommand):
     # Deletes the graphicsitem. Have to be careful when it is
     # a delta-item which changes the current mark
-    def __init__(self, scene, deleteItem):
+    def __init__(self, scene, deleteItem, pt):
         super(CommandDelete, self).__init__()
         self.scene = scene
         self.deleteItem = deleteItem
+        self.pt = pt
+        self.setText("Delete")
 
     def redo(self):
         # If the object is a DeltaItem then emit a mark-changed signal.
@@ -134,6 +141,7 @@ class CommandHighlight(QUndoCommand):
         self.scene = scene
         self.path = path
         self.highLightItem = HighLightItemObject(self.path)
+        self.setText("Highlight")
 
     def redo(self):
         self.highLightItem.flash_redo()
@@ -153,6 +161,7 @@ class CommandLine(QUndoCommand):
         self.ptf = ptf
         # A line from pti(nitial) to ptf(inal)
         self.lineItem = LineItemObject(self.pti, self.ptf)
+        self.setText("Line")
 
     def redo(self):
         self.lineItem.flash_redo()
@@ -174,6 +183,7 @@ class CommandMoveItem(QUndoCommand):
         self.xitem = xitem
         # The delta-position of that item.
         self.delta = delta
+        self.setText("Move")
 
     def id(self):
         # Give it an id number for merging of undo/redo commands
@@ -214,6 +224,7 @@ class CommandMoveText(QUndoCommand):
         self.xitem = xitem
         self.old_pos = xitem.pos()
         self.new_pos = new_pos
+        self.setText("MoveText")
 
     def id(self):
         # Give it an id number for merging of undo/redo commands
@@ -251,6 +262,7 @@ class CommandPen(QUndoCommand):
         self.scene = scene
         self.path = path
         self.penItem = PenItemObject(self.path)
+        self.setText("Pen")
 
     def redo(self):
         self.penItem.flash_redo()
@@ -268,6 +280,7 @@ class CommandQMark(QUndoCommand):
         self.scene = scene
         self.pt = pt
         self.qm = QMarkItemObject(self.pt)
+        self.setText("QMark")
 
     def redo(self):
         self.qm.flash_redo()
@@ -285,6 +298,7 @@ class CommandText(QUndoCommand):
         super(CommandText, self).__init__()
         self.scene = scene
         self.blurb = blurb
+        self.setText("Text")
 
     def redo(self):
         self.blurb.flash_redo()
@@ -302,6 +316,7 @@ class CommandTick(QUndoCommand):
         self.scene = scene
         self.pt = pt
         self.tickItem = TickItemObject(self.pt)
+        self.setText("Tick")
 
     def redo(self):
         self.tickItem.flash_redo()
@@ -312,23 +327,6 @@ class CommandTick(QUndoCommand):
         QTimer.singleShot(500, lambda: self.scene.removeItem(self.tickItem.ti))
 
 
-class CommandWhiteBox(QUndoCommand):
-    # Very similar to CommandArrow
-    def __init__(self, scene, rect):
-        super(CommandWhiteBox, self).__init__()
-        self.scene = scene
-        self.rect = rect
-        self.whiteBoxItem = WhiteBoxItemObject(self.rect)
-
-    def redo(self):
-        self.whiteBoxItem.flash_redo()
-        self.scene.addItem(self.whiteBoxItem.wbi)
-
-    def undo(self):
-        self.whiteBoxItem.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.whiteBoxItem.wbi))
-
-
 class CommandEllipse(QUndoCommand):
     # Very similar to CommandArrow
     def __init__(self, scene, rect):
@@ -336,6 +334,7 @@ class CommandEllipse(QUndoCommand):
         self.scene = scene
         self.rect = rect
         self.ellipseItem = EllipseItemObject(self.rect)
+        self.setText("Ellipse")
 
     def redo(self):
         self.ellipseItem.flash_redo()
@@ -408,6 +407,9 @@ class ArrowItem(QGraphicsPathItem):
         # Exec the parent class change command.
         return QGraphicsPathItem.itemChange(self, change, value)
 
+    def pickle(self):
+        return ["arrow", self.pti.x(), self.pti.y(), self.ptf.x(), self.ptf.y()]
+
 
 class BoxItem(QGraphicsRectItem):
     # Very similar to the arrowitem but simpler to draw the box.
@@ -425,6 +427,15 @@ class BoxItem(QGraphicsRectItem):
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsRectItem.itemChange(self, change, value)
+
+    def pickle(self):
+        return [
+            "box",
+            self.rect.left(),
+            self.rect.top(),
+            self.rect.width(),
+            self.rect.height(),
+        ]
 
 
 class CrossItem(QGraphicsPathItem):
@@ -449,6 +460,9 @@ class CrossItem(QGraphicsPathItem):
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
 
+    def pickle(self):
+        return ["cross", self.pt.x(), self.pt.y()]
+
 
 class HighLightItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but much simpler
@@ -465,6 +479,20 @@ class HighLightItem(QGraphicsPathItem):
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
+
+    def pickle(self):
+        pth = []
+        for k in range(self.path.elementCount()):
+            # e should be either a moveTo or a lineTo
+            e = self.path.elementAt(k)
+            if e.isMoveTo():
+                pth.append(["m", e.x, e.y])
+            else:
+                if e.isLineTo():
+                    pth.append(["l", e.x, e.y])
+                else:
+                    print("EEK")
+        return ["highlight", pth]
 
 
 class LineItem(QGraphicsLineItem):
@@ -484,6 +512,9 @@ class LineItem(QGraphicsLineItem):
             self.scene().undoStack.push(command)
         return QGraphicsLineItem.itemChange(self, change, value)
 
+    def pickle(self):
+        return ["line", self.pti.x(), self.pti.y(), self.ptf.x(), self.ptf.y()]
+
 
 class PenItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but much simpler
@@ -501,6 +532,20 @@ class PenItem(QGraphicsPathItem):
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
+
+    def pickle(self):
+        pth = []
+        for k in range(self.path.elementCount()):
+            # e should be either a moveTo or a lineTo
+            e = self.path.elementAt(k)
+            if e.isMoveTo():
+                pth.append(["m", e.x, e.y])
+            else:
+                if e.isLineTo():
+                    pth.append(["l", e.x, e.y])
+                else:
+                    print("EEK")
+        return ["pen", pth]
 
 
 class QMarkItem(QGraphicsPathItem):
@@ -529,6 +574,9 @@ class QMarkItem(QGraphicsPathItem):
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
 
+    def pickle(self):
+        return ["questionMark", self.pt.x(), self.pt.y()]
+
 
 class TickItem(QGraphicsPathItem):
     # Very similar to the arrowitem
@@ -551,23 +599,8 @@ class TickItem(QGraphicsPathItem):
             self.scene().undoStack.push(command)
         return QGraphicsPathItem.itemChange(self, change, value)
 
-
-class WhiteBoxItem(QGraphicsRectItem):
-    # Very similar to the arrowitem
-    def __init__(self, rect):
-        super(WhiteBoxItem, self).__init__()
-        self.rect = rect
-        self.setRect(self.rect)
-        self.setPen(QPen(Qt.red, 2))
-        self.setBrush(QBrush(QColor(255, 255, 255)))
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            command = CommandMoveItem(self, value)
-            self.scene().undoStack.push(command)
-        return QGraphicsRectItem.itemChange(self, change, value)
+    def pickle(self):
+        return ["tick", self.pt.x(), self.pt.y()]
 
 
 class EllipseItem(QGraphicsEllipseItem):
@@ -586,6 +619,15 @@ class EllipseItem(QGraphicsEllipseItem):
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsEllipseItem.itemChange(self, change, value)
+
+    def pickle(self):
+        return [
+            "ellipse",
+            self.rect.left(),
+            self.rect.top(),
+            self.rect.width(),
+            self.rect.height(),
+        ]
 
 
 class TextItem(QGraphicsTextItem):
@@ -710,6 +752,11 @@ class TextItem(QGraphicsTextItem):
         self.anim.setEndValue(0)
         self.anim.start()
 
+    def pickle(self):
+        if len(self.contents) == 0:
+            self.contents = self.toPlainText()
+        return ["text", self.contents, self.pos().x(), self.pos().y()]
+
     # For the animation of border
     @pyqtProperty(int)
     def thickness(self):
@@ -778,6 +825,9 @@ class DeltaItem(QGraphicsTextItem):
         self.anim.setKeyValueAt(0.5, 4)
         self.anim.setEndValue(2)
         self.anim.start()
+
+    def pickle(self):
+        return ["delta", self.delta, self.pos().x(), self.pos().y()]
 
     # For the animation of border
     @pyqtProperty(int)
