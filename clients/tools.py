@@ -408,7 +408,7 @@ class ArrowItem(QGraphicsPathItem):
         return QGraphicsPathItem.itemChange(self, change, value)
 
     def pickle(self):
-        return ["arrow", self.pti.x(), self.pti.y(), self.ptf.x(), self.ptf.y()]
+        return ["Arrow", self.pti.x(), self.pti.y(), self.ptf.x(), self.ptf.y()]
 
 
 class BoxItem(QGraphicsRectItem):
@@ -430,11 +430,11 @@ class BoxItem(QGraphicsRectItem):
 
     def pickle(self):
         return [
-            "box",
+            "Box",
             self.rect.left(),
             self.rect.top(),
-            self.rect.width(),
-            self.rect.height(),
+            self.rect.right(),
+            self.rect.bottom(),
         ]
 
 
@@ -461,7 +461,7 @@ class CrossItem(QGraphicsPathItem):
         return QGraphicsPathItem.itemChange(self, change, value)
 
     def pickle(self):
-        return ["cross", self.pt.x(), self.pt.y()]
+        return ["Cross", self.pt.x(), self.pt.y()]
 
 
 class HighLightItem(QGraphicsPathItem):
@@ -492,7 +492,7 @@ class HighLightItem(QGraphicsPathItem):
                     pth.append(["l", e.x, e.y])
                 else:
                     print("EEK")
-        return ["highlight", pth]
+        return ["Highlight", pth]
 
 
 class LineItem(QGraphicsLineItem):
@@ -513,7 +513,7 @@ class LineItem(QGraphicsLineItem):
         return QGraphicsLineItem.itemChange(self, change, value)
 
     def pickle(self):
-        return ["line", self.pti.x(), self.pti.y(), self.ptf.x(), self.ptf.y()]
+        return ["Line", self.pti.x(), self.pti.y(), self.ptf.x(), self.ptf.y()]
 
 
 class PenItem(QGraphicsPathItem):
@@ -545,7 +545,7 @@ class PenItem(QGraphicsPathItem):
                     pth.append(["l", e.x, e.y])
                 else:
                     print("EEK")
-        return ["pen", pth]
+        return ["Pen", pth]
 
 
 class QMarkItem(QGraphicsPathItem):
@@ -575,7 +575,7 @@ class QMarkItem(QGraphicsPathItem):
         return QGraphicsPathItem.itemChange(self, change, value)
 
     def pickle(self):
-        return ["questionMark", self.pt.x(), self.pt.y()]
+        return ["QMark", self.pt.x(), self.pt.y()]
 
 
 class TickItem(QGraphicsPathItem):
@@ -600,7 +600,7 @@ class TickItem(QGraphicsPathItem):
         return QGraphicsPathItem.itemChange(self, change, value)
 
     def pickle(self):
-        return ["tick", self.pt.x(), self.pt.y()]
+        return ["Tick", self.pt.x(), self.pt.y()]
 
 
 class EllipseItem(QGraphicsEllipseItem):
@@ -622,11 +622,11 @@ class EllipseItem(QGraphicsEllipseItem):
 
     def pickle(self):
         return [
-            "ellipse",
+            "Ellipse",
             self.rect.left(),
             self.rect.top(),
-            self.rect.width(),
-            self.rect.height(),
+            self.rect.right(),
+            self.rect.bottom(),
         ]
 
 
@@ -755,7 +755,7 @@ class TextItem(QGraphicsTextItem):
     def pickle(self):
         if len(self.contents) == 0:
             self.contents = self.toPlainText()
-        return ["text", self.contents, self.pos().x(), self.pos().y()]
+        return ["Text", self.contents, self.pos().x(), self.pos().y()]
 
     # For the animation of border
     @pyqtProperty(int)
@@ -827,7 +827,7 @@ class DeltaItem(QGraphicsTextItem):
         self.anim.start()
 
     def pickle(self):
-        return ["delta", self.delta, self.pos().x(), self.pos().y()]
+        return ["Delta", self.delta, self.pos().x(), self.pos().y()]
 
     # For the animation of border
     @pyqtProperty(int)

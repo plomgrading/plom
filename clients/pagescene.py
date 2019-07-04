@@ -645,4 +645,76 @@ class PageScene(QGraphicsScene):
             if isinstance(X, ScoreBox) or isinstance(X, QGraphicsPixmapItem):
                 continue
             lst.append(X.pickle())
-        return lst.reverse()
+        return lst
+
+    def unpickleSceneItems(self, lst):
+        print("Unpickle")
+        print(lst)
+        # clear all items from scene.
+        for X in self.items():
+            if isinstance(X, ScoreBox) or isinstance(X, QGraphicsPixmapItem):
+                continue
+            else:
+                command = CommandDelete(self, X, QPointF(0, 0))
+                self.undoStack.push(command)
+        # now load up the new items
+        for X in lst:
+            functionName = "unpickle{}".format(X[0])
+            print("Trying to call {}".format(functionName))
+            getattr(self, functionName, self.unpickleError)(X[1:])
+
+    def unpickleError(self, X):
+        print("What is {}".format(X))
+
+    def unpickleCross(self, X):
+        print("Unpickle cross {}".format(X))
+        if len(X) == 1:
+            self.undoStack.push(CommandCross(self, X[0]))
+
+    def unpickleQMark(self, X):
+        print("Unpickle qmark {}".format(X))
+        if len(X) == 1:
+            self.undoStack.push(CommandQMark(self, X[0]))
+
+    def unpickleTick(self, X):
+        print("Unpickle tick {}".format(X))
+        if len(X) == 1:
+            self.undoStack.push(CommandTick(self, X[0]))
+
+    def unpickleArrow(self, X):
+        print("Unpickle arrow {}".format(X))
+        if len(X) == 2:
+            self.undoStack.push(CommandArrow(self, X[0], X[1]))
+
+    def unpickleLine(self, X):
+        print("Unpickle line {}".format(X))
+        if len(X) == 2:
+            self.undoStack.push(CommandLine(self, X[0], X[1]))
+
+    def unpickleBox(self, X):
+        print("Unpickle box {}".format(X))
+        if len(X) == 4:
+            self.undoStack.push(
+                CommandBox(self, QRectF(QPointF(X[0], X[1]), QPointF(X[2], X[3])))
+            )
+
+    def unpickleEllipse(self, X):
+        print("Unpickle ellipse {}".format(X))
+        if len(X) == 4:
+            self.undoStack.push(
+                CommandEllipse(self, QRectF(QPointF(X[0], X[1]), QPointF(X[2], X[3])))
+            )
+
+    def unpickleText(self, X):
+        print("Unpickle text {}".format(X))
+        if len(X) == 3:
+            self.blurb.setPlainText(X[0])
+            self.blurb.setPos(QPointF(X[1], X[2]))
+            self.undoStack.push(CommandText(self, self.blurb, self.ink))
+
+    def unpickleDelta(self, X):
+        print("Unpickle delta {}".format(X))
+        if len(X) == 3:
+            self.undoStack.push(
+                CommandDelta(self, QPointF(X[1], X[2]), X[0], self.fontSize)
+            )

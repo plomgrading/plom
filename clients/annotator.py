@@ -3,6 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+import json
 import sys
 
 from PyQt5.QtCore import Qt, QSettings, QSize, pyqtSlot
@@ -444,8 +445,10 @@ class Annotator(QDialog):
         self.endShortCutc.activated.connect(self.endAndRelaunch)
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
         self.endShortCutd.activated.connect(self.endAndRelaunch)
-        self.endShortCutd = QShortcut(QKeySequence("Alt+p"), self)
+        self.endShortCutd = QShortcut(QKeySequence("Alt+s"), self)
         self.endShortCutd.activated.connect(self.pickleIt)
+        self.endShortCutd = QShortcut(QKeySequence("Alt+l"), self)
+        self.endShortCutd.activated.connect(self.unpickleIt)
 
     # Simple mode change functions
     def boxMode(self):
@@ -748,5 +751,12 @@ class Annotator(QDialog):
         return self.parent.latexAFragment(txt)
 
     def pickleIt(self):
-        lst = self.view.scene.pickleSceneItems()
-        print("PickleStuff\n{}".format(lst))
+        lst = self.view.scene.pickleSceneItems()  # newest items first
+        lst.reverse()  # so newest items last
+        with open("argh.plom", "w") as fh:
+            json.dump(lst, fh)
+
+    def unpickleIt(self):
+        with open("argh.plom", "r") as fh:
+            lst = json.load(fh)
+            self.view.scene.unpickleSceneItems(lst)
