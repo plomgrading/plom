@@ -433,8 +433,8 @@ class BoxItem(QGraphicsRectItem):
             "Box",
             self.rect.left(),
             self.rect.top(),
-            self.rect.right(),
-            self.rect.bottom(),
+            self.rect.width(),
+            self.rect.height(),
         ]
 
 
@@ -625,8 +625,8 @@ class EllipseItem(QGraphicsEllipseItem):
             "Ellipse",
             self.rect.left(),
             self.rect.top(),
-            self.rect.right(),
-            self.rect.bottom(),
+            self.rect.width(),
+            self.rect.height(),
         ]
 
 
@@ -755,7 +755,7 @@ class TextItem(QGraphicsTextItem):
     def pickle(self):
         if len(self.contents) == 0:
             self.contents = self.toPlainText()
-        return ["Text", self.contents, self.pos().x(), self.pos().y()]
+        return ["Text", self.contents, self.x(), self.y()]
 
     # For the animation of border
     @pyqtProperty(int)

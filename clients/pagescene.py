@@ -542,7 +542,7 @@ class PageScene(QGraphicsScene):
         """
         if self.ellipseFlag == 0:
             self.removeItem(self.boxItem)
-            command = CommandBox(self, QRectF(self.originPos, self.currentPos))
+            command = CommandBox(self, self.boxItem.rect())
         else:
             self.removeItem(self.ellipseItem)
             command = CommandEllipse(self, self.ellipseItem.rect())
@@ -668,42 +668,42 @@ class PageScene(QGraphicsScene):
 
     def unpickleCross(self, X):
         print("Unpickle cross {}".format(X))
-        if len(X) == 1:
-            self.undoStack.push(CommandCross(self, X[0]))
+        if len(X) == 2:
+            self.undoStack.push(CommandCross(self, QPointF(X[0], X[1])))
 
     def unpickleQMark(self, X):
         print("Unpickle qmark {}".format(X))
-        if len(X) == 1:
-            self.undoStack.push(CommandQMark(self, X[0]))
+        if len(X) == 2:
+            self.undoStack.push(CommandQMark(self, QPointF(X[0], X[1])))
 
     def unpickleTick(self, X):
         print("Unpickle tick {}".format(X))
-        if len(X) == 1:
-            self.undoStack.push(CommandTick(self, X[0]))
+        if len(X) == 2:
+            self.undoStack.push(CommandTick(self, QPointF(X[0], X[1])))
 
     def unpickleArrow(self, X):
         print("Unpickle arrow {}".format(X))
-        if len(X) == 2:
-            self.undoStack.push(CommandArrow(self, X[0], X[1]))
+        if len(X) == 4:
+            self.undoStack.push(
+                CommandArrow(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
+            )
 
     def unpickleLine(self, X):
         print("Unpickle line {}".format(X))
-        if len(X) == 2:
-            self.undoStack.push(CommandLine(self, X[0], X[1]))
+        if len(X) == 4:
+            self.undoStack.push(
+                CommandLine(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
+            )
 
     def unpickleBox(self, X):
         print("Unpickle box {}".format(X))
         if len(X) == 4:
-            self.undoStack.push(
-                CommandBox(self, QRectF(QPointF(X[0], X[1]), QPointF(X[2], X[3])))
-            )
+            self.undoStack.push(CommandBox(self, QRectF(X[0], X[1], X[2], X[3])))
 
     def unpickleEllipse(self, X):
         print("Unpickle ellipse {}".format(X))
         if len(X) == 4:
-            self.undoStack.push(
-                CommandEllipse(self, QRectF(QPointF(X[0], X[1]), QPointF(X[2], X[3])))
-            )
+            self.undoStack.push(CommandEllipse(self, QRectF(X[0], X[1], X[2], X[3])))
 
     def unpickleText(self, X):
         print("Unpickle text {}".format(X))
