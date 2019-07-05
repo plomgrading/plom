@@ -408,7 +408,13 @@ class ArrowItem(QGraphicsPathItem):
         return QGraphicsPathItem.itemChange(self, change, value)
 
     def pickle(self):
-        return ["Arrow", self.pti.x(), self.pti.y(), self.ptf.x(), self.ptf.y()]
+        return [
+            "Arrow",
+            self.pti.x() + self.x(),
+            self.pti.y() + self.y(),
+            self.ptf.x() + self.x(),
+            self.ptf.y() + self.y(),
+        ]
 
 
 class BoxItem(QGraphicsRectItem):
@@ -431,8 +437,8 @@ class BoxItem(QGraphicsRectItem):
     def pickle(self):
         return [
             "Box",
-            self.rect.left(),
-            self.rect.top(),
+            self.rect.left() + self.x(),
+            self.rect.top() + self.y(),
             self.rect.width(),
             self.rect.height(),
         ]
@@ -461,7 +467,7 @@ class CrossItem(QGraphicsPathItem):
         return QGraphicsPathItem.itemChange(self, change, value)
 
     def pickle(self):
-        return ["Cross", self.pt.x(), self.pt.y()]
+        return ["Cross", self.pt.x() + self.x(), self.pt.y() + self.y()]
 
 
 class HighLightItem(QGraphicsPathItem):
@@ -513,7 +519,13 @@ class LineItem(QGraphicsLineItem):
         return QGraphicsLineItem.itemChange(self, change, value)
 
     def pickle(self):
-        return ["Line", self.pti.x(), self.pti.y(), self.ptf.x(), self.ptf.y()]
+        return [
+            "Line",
+            self.pti.x() + self.x(),
+            self.pti.y() + self.y(),
+            self.ptf.x() + self.x(),
+            self.ptf.y() + self.y(),
+        ]
 
 
 class PenItem(QGraphicsPathItem):
@@ -575,7 +587,7 @@ class QMarkItem(QGraphicsPathItem):
         return QGraphicsPathItem.itemChange(self, change, value)
 
     def pickle(self):
-        return ["QMark", self.pt.x(), self.pt.y()]
+        return ["QMark", self.pt.x() + self.x(), self.pt.y() + self.y()]
 
 
 class TickItem(QGraphicsPathItem):
@@ -600,7 +612,7 @@ class TickItem(QGraphicsPathItem):
         return QGraphicsPathItem.itemChange(self, change, value)
 
     def pickle(self):
-        return ["Tick", self.pt.x(), self.pt.y()]
+        return ["Tick", self.pt.x() + self.x(), self.pt.y() + self.y()]
 
 
 class EllipseItem(QGraphicsEllipseItem):
@@ -623,8 +635,8 @@ class EllipseItem(QGraphicsEllipseItem):
     def pickle(self):
         return [
             "Ellipse",
-            self.rect.left(),
-            self.rect.top(),
+            self.rect.left() + self.x(),
+            self.rect.top() + self.y(),
             self.rect.width(),
             self.rect.height(),
         ]
@@ -755,7 +767,7 @@ class TextItem(QGraphicsTextItem):
     def pickle(self):
         if len(self.contents) == 0:
             self.contents = self.toPlainText()
-        return ["Text", self.contents, self.x(), self.y()]
+        return ["Text", self.contents, self.scenePos().x(), self.scenePos().y()]
 
     # For the animation of border
     @pyqtProperty(int)
@@ -790,12 +802,14 @@ class DeltaItem(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-        self.setPos(pt)
         # Has an animated border for undo/redo.
         self.anim = QPropertyAnimation(self, b"thickness")
-        cr = self.boundingRect()
         # centre under the mouse-click.
-        self.moveBy(-(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2)
+        cr = self.boundingRect()
+        self.offset = QPointF(
+            -(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2
+        )
+        self.setPos(pt + self.offset)
 
     def paint(self, painter, option, widget):
         # paint the background
@@ -827,7 +841,12 @@ class DeltaItem(QGraphicsTextItem):
         self.anim.start()
 
     def pickle(self):
-        return ["Delta", self.delta, self.pos().x(), self.pos().y()]
+        return [
+            "Delta",
+            self.delta,
+            self.scenePos().x() - self.offset.x(),
+            self.scenePos().y() - self.offset.y(),
+        ]
 
     # For the animation of border
     @pyqtProperty(int)
