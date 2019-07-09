@@ -492,10 +492,10 @@ class HighLightItem(QGraphicsPathItem):
             # e should be either a moveTo or a lineTo
             e = self.path.elementAt(k)
             if e.isMoveTo():
-                pth.append(["m", e.x, e.y])
+                pth.append(["m", e.x + self.x(), e.y + self.y()])
             else:
                 if e.isLineTo():
-                    pth.append(["l", e.x, e.y])
+                    pth.append(["l", e.x + self.x(), e.y + self.y()])
                 else:
                     print("EEK")
         return ["Highlight", pth]
@@ -551,10 +551,10 @@ class PenItem(QGraphicsPathItem):
             # e should be either a moveTo or a lineTo
             e = self.path.elementAt(k)
             if e.isMoveTo():
-                pth.append(["m", e.x, e.y])
+                pth.append(["m", e.x + self.x(), e.y + self.y()])
             else:
                 if e.isLineTo():
-                    pth.append(["l", e.x, e.y])
+                    pth.append(["l", e.x + self.x(), e.y + self.y()])
                 else:
                     print("EEK")
         return ["Pen", pth]
