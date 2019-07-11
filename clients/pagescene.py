@@ -423,7 +423,9 @@ class PageScene(QGraphicsScene):
         # set highlightflag so correct object created on mouse-release
         if event.button() == Qt.LeftButton:
             self.pathItem.setPen(self.ink)
-            self.highlightFlag = 0
+            self.highlightFlag = (
+                2
+            )  # non-zero value so we don't add to path after mouse-release
         else:
             self.pathItem.setPen(self.highlight)
             self.highlightFlag = 1
@@ -527,9 +529,11 @@ class PageScene(QGraphicsScene):
         """Update the pen-path as the mouse is moved. This
         animates the drawing for the user.
         """
-        self.currentPos = event.scenePos()
-        self.path.lineTo(self.currentPos)
-        self.pathItem.setPath(self.path)
+        if self.highlightFlag != 0:
+            self.currentPos = event.scenePos()
+            self.path.lineTo(self.currentPos)
+            self.pathItem.setPath(self.path)
+        # do not add to path when flag is zero.
 
     # Mouse release tool functions.
     # Most of these delete the temp-object (eg box / line)
@@ -575,9 +579,9 @@ class PageScene(QGraphicsScene):
         Push the resulting command onto the undo stack
         """
         self.removeItem(self.pathItem)
-        if self.highlightFlag == 0:
+        if self.highlightFlag == 2:
             command = CommandPen(self, self.path)
-        else:
+        elif self.highlightFlag == 1:
             command = CommandHighlight(self, self.path)
         self.highlightFlag = 0
         self.undoStack.push(command)
@@ -648,8 +652,7 @@ class PageScene(QGraphicsScene):
         return lst
 
     def unpickleSceneItems(self, lst):
-        print("Unpickle")
-        print(lst)
+        print("Unpickling")
         # clear all items from scene.
         for X in self.items():
             if isinstance(X, ScoreBox) or isinstance(X, QGraphicsPixmapItem):
@@ -660,61 +663,75 @@ class PageScene(QGraphicsScene):
         # now load up the new items
         for X in lst:
             functionName = "unpickle{}".format(X[0])
-            print("Trying to call {}".format(functionName))
             getattr(self, functionName, self.unpickleError)(X[1:])
 
     def unpickleError(self, X):
-        print("What is {}".format(X))
+        print("Unpickle error - What is {}".format(X))
 
     def unpickleCross(self, X):
-        print("Unpickle cross {}".format(X))
         if len(X) == 2:
             self.undoStack.push(CommandCross(self, QPointF(X[0], X[1])))
 
     def unpickleQMark(self, X):
-        print("Unpickle qmark {}".format(X))
         if len(X) == 2:
             self.undoStack.push(CommandQMark(self, QPointF(X[0], X[1])))
 
     def unpickleTick(self, X):
-        print("Unpickle tick {}".format(X))
         if len(X) == 2:
             self.undoStack.push(CommandTick(self, QPointF(X[0], X[1])))
 
     def unpickleArrow(self, X):
-        print("Unpickle arrow {}".format(X))
         if len(X) == 4:
             self.undoStack.push(
                 CommandArrow(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
             )
 
     def unpickleLine(self, X):
-        print("Unpickle line {}".format(X))
         if len(X) == 4:
             self.undoStack.push(
                 CommandLine(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
             )
 
     def unpickleBox(self, X):
-        print("Unpickle box {}".format(X))
         if len(X) == 4:
             self.undoStack.push(CommandBox(self, QRectF(X[0], X[1], X[2], X[3])))
 
     def unpickleEllipse(self, X):
-        print("Unpickle ellipse {}".format(X))
         if len(X) == 4:
             self.undoStack.push(CommandEllipse(self, QRectF(X[0], X[1], X[2], X[3])))
 
     def unpickleText(self, X):
-        print("Unpickle text {}".format(X))
         if len(X) == 3:
             self.blurb.setPlainText(X[0])
             self.blurb.setPos(QPointF(X[1], X[2]))
             self.undoStack.push(CommandText(self, self.blurb, self.ink))
 
     def unpickleDelta(self, X):
-        print("Unpickle delta {}".format(X))
         if len(X) == 3:
             self.undoStack.push(
                 CommandDelta(self, QPointF(X[1], X[2]), X[0], self.fontSize)
             )
+
+    def unpicklePen(self, X):
+        if len(X) == 1:
+            # Format is X = [ [['m',x,y], ['l',x,y], ['l',x,y],....] ]
+            # Just assume (for moment) the above format - ie no format checks.
+            pth = QPainterPath()
+            # ['m',x,y]
+            pth.moveTo(QPointF(X[0][0][1], X[0][0][2]))
+            for Y in X[0][1:]:
+                # ['l',x,y]
+                pth.lineTo(QPointF(Y[1], Y[2]))
+            self.undoStack.push(CommandPen(self, pth))
+
+    def unpickleHighlight(self, X):
+        if len(X) == 1:
+            # Format is X = [ [['m',x,y], ['l',x,y], ['l',x,y],....] ]
+            # Just assume (for moment) the above format.
+            pth = QPainterPath()
+            # ['m',x,y]
+            pth.moveTo(QPointF(X[0][0][1], X[0][0][2]))
+            for Y in X[0][1:]:
+                # ['l',x,y]
+                pth.lineTo(QPointF(Y[1], Y[2]))
+            self.undoStack.push(CommandHighlight(self, pth))

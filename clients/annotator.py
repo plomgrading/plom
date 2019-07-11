@@ -4,6 +4,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPLv3"
 
 import json
+import os
 import sys
 
 from PyQt5.QtCore import Qt, QSettings, QSize, pyqtSlot
@@ -48,7 +49,9 @@ class Annotator(QDialog):
     and assigning marks.
     """
 
-    def __init__(self, fname, maxMark, markStyle, mouseHand, parent=None):
+    def __init__(
+        self, fname, maxMark, markStyle, mouseHand, parent=None, plomDict=None
+    ):
         super(Annotator, self).__init__(parent)
         # remember parent
         self.parent = parent
@@ -742,6 +745,8 @@ class Annotator(QDialog):
             self.view.save()
             # Save the comments
             self.view.saveComments()
+            # Pickle the scene as a PLOM-file
+            self.pickleIt()
             # Save the window settings
             self.saveWindowSettings()
             # Close the annotator(QDialog) with an 'accept'.
@@ -753,10 +758,20 @@ class Annotator(QDialog):
     def pickleIt(self):
         lst = self.view.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
-        with open("argh.plom", "w") as fh:
-            json.dump(lst, fh)
+        plomDict = {
+            "fileName": os.path.basename(self.imageFile),
+            "markStyle": self.markStyle,
+            "maxMark": self.maxMark,
+            "currentMark": self.score,
+            "sceneItems": lst,
+        }
+        # save pickled file as <blah>.plom
+        plomFile = self.imageFile[:-3] + "plom"
+        with open(plomFile, "w") as fh:
+            json.dump(plomDict, fh)
 
     def unpickleIt(self):
-        with open("argh.plom", "r") as fh:
-            lst = json.load(fh)
-            self.view.scene.unpickleSceneItems(lst)
+        pass
+        # with open("argh.plom", "r") as fh:
+        #     lst = json.load(fh)
+        #     self.view.scene.unpickleSceneItems(lst)

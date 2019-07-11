@@ -592,7 +592,14 @@ class MarkerClient(QDialog):
             self.ui.mProgressBar.setValue(msg[1])
             self.ui.mProgressBar.setMaximum(msg[2])
 
-        # copy annotated file to webdav
+        self.uploadCommentPlomFiles(aname)
+
+        # Check if no unmarked test, then request one.
+        if self.moveToNextUnmarkedTest() is False:
+            self.requestNext(launchAgain)
+
+    def uploadCommentPlomFiles(self, aname):
+        # copy comment file to webdav
         cfile = aname[:-3] + "json"
         dname = os.path.basename(cfile)
         messenger.putFileDav(cfile, dname)
@@ -604,9 +611,18 @@ class MarkerClient(QDialog):
             # all good so can remove the comment file from local.
             os.unlink(cfile)
 
-        # Check if no unmarked test, then request one.
-        if self.moveToNextUnmarkedTest() is False:
-            self.requestNext(launchAgain)
+        # copy plom file to webdav
+        pfile = aname[:-3] + "plom"
+        pname = os.path.basename(pfile)
+        messenger.putFileDav(pfile, pname)
+        print("About to upload {} to {}".format(pfile, pname))
+        # Send PLOM-file back to server
+        msg = messenger.SRMsg(
+            ["mRPF", self.userName, self.token, self.pageGroup, self.version, pname]
+        )
+        if msg[0] == "ACK":
+            # all good so can remove the comment plom file from local.
+            os.unlink(pfile)
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image

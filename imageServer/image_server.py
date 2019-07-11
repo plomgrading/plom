@@ -123,6 +123,7 @@ servCmd = {
     "mGWP": "MgetWholePaper",
     "mLTT": "MlatexThisText",
     "mRCF": "MreturnCommentFile",
+    "mRPF": "MreturnPlomFile",
     "tGMM": "TgetMaxMark",
     "tGTP": "TgotTest",
     "tPRC": "TprogressCount",
@@ -380,6 +381,22 @@ class Server(object):
         shutil.move(srcfile, dstfile)
         # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
 
+    def claimPlomFile(self, fname):
+        """The file containing the graphical objects made by the marker gets copied into the markedPapers directory and then removed from the webdav.
+        """
+        srcfile = os.path.join(davDirectory, fname)
+        dstfile = os.path.join("markedPapers", fname)
+        # Check if file already exists
+        if os.path.isfile(dstfile):
+            # backup the older file with a timestamp
+            os.rename(
+                dstfile,
+                dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
+            )
+        # This should really use path-join.
+        shutil.move(srcfile, dstfile)
+        # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
+
     def removeFile(self, davfn):
         """Once a file has been grabbed by the client, delete it from the webdav.
         """
@@ -583,6 +600,13 @@ class Server(object):
         contains the comments made by the marker.
         """
         self.claimCommentFile(fname)
+        return ["ACK"]
+
+    def MreturnPlomFile(self, user, token, pg, v, fname):
+        """After client has marked pageimage it sends back a plom file which
+        contains the graphical objects pickled for later use.
+        """
+        self.claimPlomFile(fname)
         return ["ACK"]
 
     def recordMark(self, user, mark, fname, mtime):
