@@ -652,7 +652,7 @@ class Server(object):
                     give,
                     self.provideFile(fname),
                     self.provideFile("markedPapers/" + aname),
-                    self.provideFile("markedPapers/" + pname[:-3] + "plom"),
+                    self.provideFile("markedPapers/" + aname[:-3] + "plom"),
                 ]
             else:
                 return ["ACK", give, self.provideFile(fname), None]

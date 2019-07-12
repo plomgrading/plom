@@ -288,10 +288,10 @@ class MarkDatabase:
         try:
             with markdb.atomic():
                 x = GroupImage.get(tgv=code, user=username)
-                return (x.tgv, x.originalFile, x.annotatedFile, x.plomFile)
+                return (x.tgv, x.originalFile, x.annotatedFile)
         except GroupImage.DoesNotExist:
             print("Request for non-existant tgv={}".format(code))
-            return (None, None, None)
+            return (None, None)
 
     def getTestAll(self, number):
         lst = []
