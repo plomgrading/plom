@@ -59,6 +59,8 @@ class TestPageGroup:
         self.originalFile = fname
         # The filename for the (future) annotated image
         self.annotatedFile = ""
+        # The filename for the (future) plom file
+        self.plomFile = ""
         # The time spent marking the image.
         self.markingTime = mtime
 
@@ -70,14 +72,16 @@ class TestPageGroup:
         self.status = "reverted"
         self.mark = "-1"
         self.annotatedFile = ""
+        self.plomFile = ""
         self.markingTime = "0"
 
-    def setmark(self, mrk, afname, mtime):
+    def setmark(self, mrk, afname, pfname, mtime):
         # User has annotated + marked image. Record the mark,
         # the filename of the annotated image,  and the marking time.
         self.status = "marked"
         self.mark = mrk
         self.annotatedFile = afname
+        self.plomFile = pfname
         self.markingTime = mtime
 
 
@@ -123,20 +127,26 @@ class ExamModel(QAbstractTableModel):
         # This data is stored but not displayed in table
         return self.paperList[r].annotatedFile
 
-    def setAnnotatedFile(self, r, aname):
+    def getPlomFile(self, r):
+        # Return the filename of the plom file
+        # This data is stored but not displayed in table
+        return self.paperList[r].plomFile
+
+    def setAnnotatedFile(self, r, aname, pname):
         # Set the annotated image filename
         # This data is stored but not displayed in table
         self.paperList[r].annotatedFile = aname
+        self.paperList[r].plomFile = pname
 
-    def markPaper(self, index, mrk, aname, mtime):
-        # When marked, set the annotated filename, the mark,
+    def markPaper(self, index, mrk, aname, pname, mtime):
+        # When marked, set the annotated filename, the plomfile, the mark,
         # and the total marking time (in case it was annotated earlier)
         mt = self.data(index[3])
         # total elapsed time.
         self.setData(index[3], mtime + mt)
         self.setData(index[1], "marked")
         self.setData(index[2], mrk)
-        self.setAnnotatedFile(index[0].row(), aname)
+        self.setAnnotatedFile(index[0].row(), aname, pname)
 
     def revertPaper(self, index):
         # When user reverts to original image, set status to "reverted"
@@ -147,6 +157,7 @@ class ExamModel(QAbstractTableModel):
         self.setData(index[3], 0)
         # remove annotated picture
         os.remove("{}".format(self.getAnnotatedFile(index[0].row())))
+        os.remove("{}".format(self.getPlomFile(index[0].row())))
 
     def deferPaper(self, index):
         # When user defers paper, it must be unmarked or reverted already. Set status to "deferred"
@@ -349,8 +360,11 @@ class MarkerClient(QDialog):
             return
         fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
         aname = os.path.join(self.workingDirectory, "G{}.png".format(msg[1][1:]))
+        pname = os.path.join(self.workingDirectory, "G{}.plom".format(msg[1][1:]))
+
         tfname = msg[2]  # the temp original image file on webdav
         taname = msg[3]  # the temp annotated image file on webdav
+        tpname = msg[4]  # the temp plom file on webdav
         messenger.getFileDav(tfname, fname)
         # got original file so ask server to remove it.
         msg = messenger.SRMsg(["mDWF", self.userName, self.token, tfname])
@@ -359,9 +373,12 @@ class MarkerClient(QDialog):
         if taname is None:
             return
         messenger.getFileDav(taname, aname)
-        # got annotated image so ask server to remove it.
+        messenger.getFileDav(tpname, pname)
+        # got annotated image / plom file so ask server to remove it.
         msg = messenger.SRMsg(["mDWF", self.userName, self.token, taname])
+        msg = messenger.SRMsg(["mDWF", self.userName, self.token, tpname])
         self.exM.paperList[r].annotatedFile = aname
+        self.exM.paperList[r].plomFile = pname
 
     def updateImage(self, r=0):
         # Here the system should check if imagefiles exist and grab if needed.
@@ -548,11 +565,13 @@ class MarkerClient(QDialog):
             msg = ErrorMessage("You must revert image before remarking.")
             msg.exec_()
             return
-        # Create annotated filename. If original tXXXXgYYvZ.png, then
+        # Create annotated, plom and comment files. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
         aname = os.path.join(
             self.workingDirectory, "G" + self.exM.data(index[0])[1:] + ".png"
         )
+        pname = aname[:-3] + "plom"
+        cname = aname[:-3] + "json"
         # If paper is untouched, reverted or deferred, copy the original image to
         # the annotated filename. (so if already annotated, we use that).
         if self.exM.data(index[1]) in ["untouched", "reverted", "deferred"]:
@@ -565,10 +584,16 @@ class MarkerClient(QDialog):
         if gr is None:
             return
         # Copy the mark, annotated filename and the markingtime into the table
-        self.exM.markPaper(index, gr, aname, mtime)
+        self.exM.markPaper(index, gr, aname, pname, mtime)
         # copy annotated file to webdav
-        dname = os.path.basename(aname)
-        messenger.putFileDav(aname, dname)
+        afile = os.path.basename(aname)
+        messenger.putFileDav(aname, afile)
+        # copy plom file to webdav
+        pfile = os.path.basename(pname)
+        messenger.putFileDav(pname, pfile)
+        # copy comment file to webdav
+        cfile = os.path.basename(cname)
+        messenger.putFileDav(cname, cfile)
         # Send 'returning marked image' (mRMD) to server.
         # Pass it test-code, mark, location of annotated file on webdav
         # and the marking time.
@@ -581,7 +606,9 @@ class MarkerClient(QDialog):
                 self.token,
                 self.exM.data(index[0]),
                 gr,
-                dname,
+                afile,
+                pfile,
+                cfile,
                 mtime,
                 self.pageGroup,
                 self.version,
@@ -592,37 +619,9 @@ class MarkerClient(QDialog):
             self.ui.mProgressBar.setValue(msg[1])
             self.ui.mProgressBar.setMaximum(msg[2])
 
-        self.uploadCommentPlomFiles(aname)
-
         # Check if no unmarked test, then request one.
         if self.moveToNextUnmarkedTest() is False:
             self.requestNext(launchAgain)
-
-    def uploadCommentPlomFiles(self, aname):
-        # copy comment file to webdav
-        cfile = aname[:-3] + "json"
-        dname = os.path.basename(cfile)
-        messenger.putFileDav(cfile, dname)
-        # Send comment file back to server
-        msg = messenger.SRMsg(
-            ["mRCF", self.userName, self.token, self.pageGroup, self.version, dname]
-        )
-        if msg[0] == "ACK":
-            # all good so can remove the comment file from local.
-            os.unlink(cfile)
-
-        # copy plom file to webdav
-        pfile = aname[:-3] + "plom"
-        pname = os.path.basename(pfile)
-        messenger.putFileDav(pfile, pname)
-        print("About to upload {} to {}".format(pfile, pname))
-        # Send PLOM-file back to server
-        msg = messenger.SRMsg(
-            ["mRPF", self.userName, self.token, self.pageGroup, self.version, pname]
-        )
-        if msg[0] == "ACK":
-            # all good so can remove the comment plom file from local.
-            os.unlink(pfile)
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image

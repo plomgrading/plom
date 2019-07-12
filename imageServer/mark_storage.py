@@ -23,6 +23,8 @@ class GroupImage(Model):
     pageGroup = IntegerField()
     version = IntegerField()
     annotatedFile = CharField()
+    plomFile = CharField()
+    commentFile = CharField()
     status = CharField()
     user = CharField()
     time = DateTimeField()
@@ -145,6 +147,8 @@ class MarkDatabase:
                     tgv=code,
                     originalFile=fname,
                     annotatedFile="",
+                    plomFile="",
+                    commentFile="",
                     status="ToDo",
                     user="None",
                     time=datetime.now(),
@@ -175,7 +179,7 @@ class MarkDatabase:
             self.logging.info("Nothing left on To-Do pile")
             return (None, None)
 
-    def takeGroupImageFromClient(self, code, username, mark, fname, mt):
+    def takeGroupImageFromClient(self, code, username, mark, fname, pname, cname, mt):
         """Get marked image back from client and update the record
         in the database.
         """
@@ -188,6 +192,8 @@ class MarkDatabase:
                 x.status = "Marked"
                 x.mark = mark
                 x.annotatedFile = fname
+                x.plomFile = pname
+                x.commentFile = cname
                 x.time = datetime.now()
                 x.markingTime = mt
                 x.save()
@@ -282,7 +288,7 @@ class MarkDatabase:
         try:
             with markdb.atomic():
                 x = GroupImage.get(tgv=code, user=username)
-                return (x.tgv, x.originalFile, x.annotatedFile)
+                return (x.tgv, x.originalFile, x.annotatedFile, x.plomFile)
         except GroupImage.DoesNotExist:
             print("Request for non-existant tgv={}".format(code))
             return (None, None, None)

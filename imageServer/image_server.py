@@ -144,7 +144,7 @@ async def handle_messaging(reader, writer):
     Converts message[0] to the server command using the servCmd dictionary
     Server, peon, then runs command and we send back the return message.
     """
-    data = await reader.read(128)
+    data = await reader.read(1024)
     terminate = data.endswith(b"\x00")
     data = data.rstrip(b"\x00")
     message = json.loads(data.decode())
@@ -365,37 +365,37 @@ class Server(object):
         shutil.move(srcfile, dstfile)
         # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
 
-    def claimCommentFile(self, fname):
-        """The file containing the comments made by the marker gets copied into the markingComments directory and then removed from the webdav.
-        """
-        srcfile = os.path.join(davDirectory, fname)
-        dstfile = os.path.join("markingComments", fname)
-        # Check if file already exists
-        if os.path.isfile(dstfile):
-            # backup the older file with a timestamp
-            os.rename(
-                dstfile,
-                dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
-            )
-        # This should really use path-join.
-        shutil.move(srcfile, dstfile)
-        # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
-
-    def claimPlomFile(self, fname):
-        """The file containing the graphical objects made by the marker gets copied into the markedPapers directory and then removed from the webdav.
-        """
-        srcfile = os.path.join(davDirectory, fname)
-        dstfile = os.path.join("markedPapers", fname)
-        # Check if file already exists
-        if os.path.isfile(dstfile):
-            # backup the older file with a timestamp
-            os.rename(
-                dstfile,
-                dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
-            )
-        # This should really use path-join.
-        shutil.move(srcfile, dstfile)
-        # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
+    # def claimCommentFile(self, fname):
+    #     """The file containing the comments made by the marker gets copied into the markingComments directory and then removed from the webdav.
+    #     """
+    #     srcfile = os.path.join(davDirectory, fname)
+    #     dstfile = os.path.join("markingComments", fname)
+    #     # Check if file already exists
+    #     if os.path.isfile(dstfile):
+    #         # backup the older file with a timestamp
+    #         os.rename(
+    #             dstfile,
+    #             dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
+    #         )
+    #     # This should really use path-join.
+    #     shutil.move(srcfile, dstfile)
+    #     # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
+    #
+    # def claimPlomFile(self, fname):
+    #     """The file containing the graphical objects made by the marker gets copied into the markedPapers directory and then removed from the webdav.
+    #     """
+    #     srcfile = os.path.join(davDirectory, fname)
+    #     dstfile = os.path.join("markedPapers", fname)
+    #     # Check if file already exists
+    #     if os.path.isfile(dstfile):
+    #         # backup the older file with a timestamp
+    #         os.rename(
+    #             dstfile,
+    #             dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
+    #         )
+    #     # This should really use path-join.
+    #     shutil.move(srcfile, dstfile)
+    #     # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
 
     def removeFile(self, davfn):
         """Once a file has been grabbed by the client, delete it from the webdav.
@@ -583,15 +583,17 @@ class Server(object):
         self.removeFile(filename)
         return ["ACK"]
 
-    def MreturnMarked(self, user, token, code, mark, fname, mtime, pg, v):
+    def MreturnMarked(self, user, token, code, mark, fname, pname, cname, mtime, pg, v):
         """Client has marked the pageimage with code, mark, annotated-file-name
         (which the client has uploaded to webdav), and spent mtime marking it.
         Send the information to the database and send an ack.
         """
         # move annoted file to right place with new filename
-        self.MDB.takeGroupImageFromClient(code, user, mark, fname, mtime)
+        self.MDB.takeGroupImageFromClient(code, user, mark, fname, pname, cname, mtime)
         self.recordMark(user, mark, fname, mtime)
         self.claimFile(fname)
+        self.claimFile(pname)
+        self.claimFile(cname)
         # return ack with current counts.
         return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
@@ -644,11 +646,13 @@ class Server(object):
         give, fname, aname = self.MDB.getGroupImage(user, tgv)
         if fname is not None:
             if aname is not None:
+                # plom file is same as annotated file just with suffix plom
                 return [
                     "ACK",
                     give,
                     self.provideFile(fname),
                     self.provideFile("markedPapers/" + aname),
+                    self.provideFile("markedPapers/" + pname[:-3] + "plom"),
                 ]
             else:
                 return ["ACK", give, self.provideFile(fname), None]
