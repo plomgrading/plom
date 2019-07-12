@@ -448,10 +448,6 @@ class Annotator(QDialog):
         self.endShortCutc.activated.connect(self.endAndRelaunch)
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
         self.endShortCutd.activated.connect(self.endAndRelaunch)
-        self.endShortCutd = QShortcut(QKeySequence("Alt+s"), self)
-        self.endShortCutd.activated.connect(self.pickleIt)
-        self.endShortCutd = QShortcut(QKeySequence("Alt+l"), self)
-        self.endShortCutd.activated.connect(self.unpickleIt)
 
     # Simple mode change functions
     def boxMode(self):
