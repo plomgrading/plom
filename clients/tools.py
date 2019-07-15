@@ -41,7 +41,6 @@ class CommandArrow(QUndoCommand):
         # arrow item knows how to highlight on undo and redo.
         self.arrowItem.flash_redo()
         self.scene.addItem(self.arrowItem.ai)
-        print("Created arrow {} {}".format(self.pti, self.ptf))
 
     def undo(self):
         # the undo animation takes 0.5s
@@ -62,7 +61,6 @@ class CommandBox(QUndoCommand):
     def redo(self):
         self.boxItem.flash_redo()
         self.scene.addItem(self.boxItem.bi)
-        print("Created box {}".format(self.rect))
 
     def undo(self):
         self.boxItem.flash_undo()
@@ -81,7 +79,6 @@ class CommandCross(QUndoCommand):
     def redo(self):
         self.crossItem.flash_redo()
         self.scene.addItem(self.crossItem.ci)
-        print("Created cross {}".format(self.pt))
 
     def undo(self):
         self.crossItem.flash_undo()
@@ -105,7 +102,6 @@ class CommandDelta(QUndoCommand):
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
         self.scene.markChangedSignal.emit(self.delta)
-        print("Created delta {} {}".format(pt, self.delta))
 
     def undo(self):
         self.delItem.flash_undo()
@@ -131,7 +127,6 @@ class CommandDelete(QUndoCommand):
             # Mark decreases by delta
             self.scene.markChangedSignal.emit(-self.deleteItem.delta)
         self.scene.removeItem(self.deleteItem)
-        print("Deleted item {}".format(self.deleteItem))
 
     def undo(self):
         # If the object is a DeltaItem then emit a mark-changed signal.
@@ -153,7 +148,6 @@ class CommandHighlight(QUndoCommand):
     def redo(self):
         self.highLightItem.flash_redo()
         self.scene.addItem(self.highLightItem.hli)
-        print("Created highlight {}".format(self.path))
 
     def undo(self):
         self.highLightItem.flash_undo()
@@ -507,7 +501,7 @@ class HighLightItem(QGraphicsPathItem):
                 if e.isLineTo():
                     pth.append(["l", e.x + self.x(), e.y + self.y()])
                 else:
-                    print("EEK")
+                    print("Problem pickling highlightitem path {}".format(self.path))
         return ["Highlight", pth]
 
 
@@ -566,7 +560,7 @@ class PenItem(QGraphicsPathItem):
                 if e.isLineTo():
                     pth.append(["l", e.x + self.x(), e.y + self.y()])
                 else:
-                    print("EEK")
+                    print("Problem pickling penitem path {}".format(self.path))
         return ["Pen", pth]
 
 
@@ -1202,6 +1196,7 @@ class CommandGDT(QUndoCommand):
         self.delta = delta
         self.blurb = blurb
         self.gdt = GroupDTItem(pt, self.delta, self.blurb, fontsize)
+        self.setText("GroupDeltaText")
 
     def redo(self):
         self.gdt.di.flash_redo()
@@ -1251,12 +1246,11 @@ class GroupDTItem(QGraphicsItemGroup):
         # paint the normal item with the default 'paint' method
         super(GroupDTItem, self).paint(painter, option, widget)
 
-    # def keyPressEvent(self, event):
-    #     # passes typing on to the underlying textitem
-    #     self.blurb.keyPressEvent(event)
-    #
-    # def mouseDoubleClickEvent(self, event):
-    #     self.blurb.mouseDoubleClickEvent(event)
-    #
-    # def mousePressEvent(self, event):
-    #     self.blurb.mousePressEvent(event)
+    def pickle(self):
+        return [
+            "GroupDeltaText",
+            self.pt.x() + self.x(),
+            self.pt.y() + self.y(),
+            self.di.delta,
+            self.blurb.contents,
+        ]

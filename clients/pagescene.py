@@ -42,6 +42,7 @@ from tools import (
     CommandText,
     CommandTick,
     CommandGDT,
+    DeltaItem,
     TextItem,
 )
 
@@ -638,6 +639,10 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             if isinstance(X, ScoreBox) or isinstance(X, QGraphicsPixmapItem):
                 continue
+            # If text or delta, check if part of GroupDeltaText
+            if isinstance(X, DeltaItem) or isinstance(X, TextItem):
+                if X.group() is not None:  # object part of GroupDeltaText
+                    continue
             lst.append(X.pickle())
         return lst
 
@@ -702,6 +707,16 @@ class PageScene(QGraphicsScene):
         if len(X) == 3:
             self.undoStack.push(
                 CommandDelta(self, QPointF(X[1], X[2]), X[0], self.fontSize)
+            )
+
+    def unpickleGroupDeltaText(self, X):
+        if len(X) == 5:
+            self.blurb = TextItem(self, self.fontSize)
+            self.blurb.setPlainText(X[4])
+            self.blurb.contents = X[4]
+            self.blurb.setPos(QPointF(X[1], X[2]))
+            self.undoStack.push(
+                CommandGDT(self, QPointF(X[1], X[2]), X[3], self.blurb, self.fontSize)
             )
 
     def unpicklePen(self, X):

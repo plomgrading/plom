@@ -176,7 +176,7 @@ class CommentWidget(QWidget):
 
     def addFromTextList(self):
         # text items in scene.
-        lst = self.parent.getTextList()
+        lst = self.parent.getComments()
         # text items already in comment list
         clist = []
         for r in range(self.CL.cmodel.rowCount()):
