@@ -59,7 +59,12 @@ class Annotator(QDialog):
         # and mouse-hand (left/right)
         self.imageFile = fname
         self.maxMark = maxMark
-        self.markStyle = markStyle
+        # get markstyle from plomDict
+        if plomDict is None:
+            self.markStyle = markStyle
+        else:
+            self.markStyle = plomDict["markStyle"]
+
         # Show warnings or not
         self.markWarn = True
         self.commentWarn = True
@@ -195,6 +200,9 @@ class Annotator(QDialog):
             # view whole paper
             Qt.Key_F1: lambda: self.viewWholePaper(),
         }
+        # Very last thing = unpickle scene from plomDict
+        if plomDict is not None:
+            self.unpickleIt(plomDict)
 
     def toggleTools(self):
         # Show / hide all the tools and so more space for the group-image
@@ -766,8 +774,6 @@ class Annotator(QDialog):
         with open(plomFile, "w") as fh:
             json.dump(plomDict, fh)
 
-    def unpickleIt(self):
-        pass
-        # with open("argh.plom", "r") as fh:
-        #     lst = json.load(fh)
-        #     self.view.scene.unpickleSceneItems(lst)
+    def unpickleIt(self, plomDict):
+        self.view.scene.unpickleSceneItems(plomDict["sceneItems"])
+        # do some sanity checks here?

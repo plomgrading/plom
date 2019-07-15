@@ -504,42 +504,47 @@ class MarkerClient(QDialog):
             return
         self.exM.deferPaper(index)
 
-    def waitForAnnotator(self, fname):
+    def waitForAnnotator(self, fname, pname=None):
         """This fires up the annotation window for user annotation + maring.
         Set a timer to record the time spend marking (for manager to see what
         questions are taking a long time or are quick).
         """
-        # Start a timer to record time spend annotating
-        timer = QElapsedTimer()
-        timer.start()
         # Set marking style total/up/down - will pass to annotator
         self.markStyle = self.ui.markStyleGroup.checkedId()
         # Set mousehand left/right - will pass to annotator
         self.mouseHand = self.ui.mouseHandGroup.checkedId()
+        # Set plom-dictionary to none
+        pdict = None
+        # check if given a plom-file and set markstyle + pdict accordingly
+        if pname is not None:
+            with open(pname, "r") as fh:
+                pdict = json.load(fh)
+            self.markStyle = pdict["markStyle"]
+            # there should be a filename sanity check here to
+            # make sure plom file matches current image-file
+
+        # Start a timer to record time spend annotating
+        timer = QElapsedTimer()
+        timer.start()
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
-            fname, self.maxScore, self.markStyle, self.mouseHand, self
+            fname,
+            self.maxScore,
+            self.markStyle,
+            self.mouseHand,
+            parent=self,
+            plomDict=pdict,
         )
         # run the annotator
         if annotator.exec_():
             # If annotator returns "accept"
-            # if the mark is >=0 then pass back the mark, time spent marking
+            # then pass back the mark, time spent marking
             # (timer measures millisec, so divide by 1000)
             # and a flag as to whether or not we should relaunch the annotator
             # with the next page-image. In relaunch, then we will need to
             # ask server for next image.
-            if annotator.score >= 0:
-                ret = [
-                    str(annotator.score),
-                    timer.elapsed() // 1000,
-                    annotator.launchAgain,
-                ]
-            else:
-                # No score back from annotator, so relaunch.
-                msg = ErrorMessage("You have to give a mark.")
-                msg.exec_()
-                ret = self.waitForAnnotator(fname)
+            ret = [str(annotator.score), timer.elapsed() // 1000, annotator.launchAgain]
         else:
             # If annotator returns "reject", then pop up error
             msg = ErrorMessage("mark not recorded")
@@ -559,29 +564,35 @@ class MarkerClient(QDialog):
             return
         # Grab the currently selected row.
         index = self.ui.tableView.selectedIndexes()
-        # If image has been marked confirm with user if they want
-        # to annotate further.
-        if self.exM.data(index[1]) == "marked":
-            msg = ErrorMessage("You must revert image before remarking.")
-            msg.exec_()
-            return
         # Create annotated, plom and comment files. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
         aname = os.path.join(
             self.workingDirectory, "G" + self.exM.data(index[0])[1:] + ".png"
         )
-        pname = aname[:-3] + "plom"
         cname = aname[:-3] + "json"
-        # If paper is untouched, reverted or deferred, copy the original image to
-        # the annotated filename. (so if already annotated, we use that).
-        if self.exM.data(index[1]) in ["untouched", "reverted", "deferred"]:
-            shutil.copyfile(
-                "{}".format(self.exM.getOriginalFile(index[0].row())), aname
-            )
+        # initially pname set to none, and only changed if plomfile exists (ie paper already marked)
+        pname = None
+        # If image has been marked confirm with user if they want
+        # to annotate further.
+        if self.exM.data(index[1]) == "marked":
+            msg = SimpleMessage("Continue marking paper?")
+            if msg.exec_() == QMessageBox.Yes:
+                pname = aname[:-3] + "plom"
+                # Copy the current annotated filename to backup file in case
+                # user cancels their annotations.
+                shutil.copyfile(aname, aname + ".bak")
+            else:
+                return
+        # Copy the original image to the annotated filename.
+        shutil.copyfile("{}".format(self.exM.getOriginalFile(index[0].row())), aname)
+
         # Get mark, markingtime, and launch-again flag from 'waitForAnnotator'
-        [gr, mtime, launchAgain] = self.waitForAnnotator(aname)
+        [gr, mtime, launchAgain] = self.waitForAnnotator(aname, pname)
         # Exited annotator with 'cancel', so don't save anything.
         if gr is None:
+            # if there is a plomfile then move backup annotated file back.
+            if pname is not None:
+                shutil.move(aname + ".bak", aname)
             return
         # Copy the mark, annotated filename and the markingtime into the table
         self.exM.markPaper(index, gr, aname, pname, mtime)
