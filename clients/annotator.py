@@ -96,7 +96,7 @@ class Annotator(QDialog):
         self.view = None
         self.setView()
         # Create the comment list widget and put into gui.
-        self.commentW = CommentWidget()
+        self.commentW = CommentWidget(self, self.maxMark)
         self.ui.commentGrid.addWidget(self.commentW, 1, 1)
         # pass the marking style to the mark entry widget.
         # also when we set this up we have to connect various
@@ -116,7 +116,7 @@ class Annotator(QDialog):
         # pass this to the comment table too - it needs to know if we are
         # marking up/down/total to correctly shade deltas.
         self.commentW.setStyle(self.markStyle)
-        self.commentW.changeMark(self.maxMark, self.score)
+        self.commentW.changeMark(self.score)
         # Make sure window has min/max buttons.
         self.setWindowFlags(
             self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint
@@ -626,7 +626,7 @@ class Annotator(QDialog):
         # Set the total mark and pass that info to the comment list
         # so it can shade over deltas that are no longer applicable.
         self.score = tm
-        self.commentW.changeMark(self.maxMark, self.score)
+        self.commentW.changeMark(self.score)
         # also tell the scorebox in the top-left of the image what the
         # new total mark is.
         self.view.scene.scoreBox.changeScore(self.score)

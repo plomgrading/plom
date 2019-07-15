@@ -3,6 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+import json
 from math import sqrt
 from PyQt5.QtCore import Qt, QLineF, QPointF, pyqtProperty, QPropertyAnimation, QTimer
 from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainterPath, QPen, QPixmap
@@ -12,6 +13,7 @@ from PyQt5.QtWidgets import (
     QGraphicsLineItem,
     QGraphicsPathItem,
     QGraphicsRectItem,
+    QGraphicsItemGroup,
     QGraphicsObject,
     QGraphicsTextItem,
     QUndoCommand,
@@ -39,6 +41,7 @@ class CommandArrow(QUndoCommand):
         # arrow item knows how to highlight on undo and redo.
         self.arrowItem.flash_redo()
         self.scene.addItem(self.arrowItem.ai)
+        print("Created arrow {} {}".format(self.pti, self.ptf))
 
     def undo(self):
         # the undo animation takes 0.5s
@@ -59,6 +62,7 @@ class CommandBox(QUndoCommand):
     def redo(self):
         self.boxItem.flash_redo()
         self.scene.addItem(self.boxItem.bi)
+        print("Created box {}".format(self.rect))
 
     def undo(self):
         self.boxItem.flash_undo()
@@ -77,6 +81,7 @@ class CommandCross(QUndoCommand):
     def redo(self):
         self.crossItem.flash_redo()
         self.scene.addItem(self.crossItem.ci)
+        print("Created cross {}".format(self.pt))
 
     def undo(self):
         self.crossItem.flash_undo()
@@ -100,6 +105,7 @@ class CommandDelta(QUndoCommand):
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
         self.scene.markChangedSignal.emit(self.delta)
+        print("Created delta {} {}".format(pt, self.delta))
 
     def undo(self):
         self.delItem.flash_undo()
@@ -125,6 +131,7 @@ class CommandDelete(QUndoCommand):
             # Mark decreases by delta
             self.scene.markChangedSignal.emit(-self.deleteItem.delta)
         self.scene.removeItem(self.deleteItem)
+        print("Deleted item {}".format(self.deleteItem))
 
     def undo(self):
         # If the object is a DeltaItem then emit a mark-changed signal.
@@ -146,6 +153,7 @@ class CommandHighlight(QUndoCommand):
     def redo(self):
         self.highLightItem.flash_redo()
         self.scene.addItem(self.highLightItem.hli)
+        print("Created highlight {}".format(self.path))
 
     def undo(self):
         self.highLightItem.flash_undo()
@@ -459,6 +467,7 @@ class CrossItem(QGraphicsPathItem):
         self.setPen(QPen(Qt.red, 3))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        # self.dump()
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
@@ -479,6 +488,7 @@ class HighLightItem(QGraphicsPathItem):
         self.setPen(QPen(QColor(255, 255, 0, 64), 50))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        # self.dump()
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
@@ -666,6 +676,12 @@ class TextItem(QGraphicsTextItem):
         self.anim = QPropertyAnimation(self, b"thickness")
         # for latex png
         self.state = "TXT"
+
+    def getContents(self):
+        if len(self.contents) == 0:
+            return self.toPlainText()
+        else:
+            return self.contents
 
     def mouseDoubleClickEvent(self, event):
         # On double-click start the text-editor
@@ -1174,3 +1190,73 @@ class EllipseItemObject(QGraphicsObject):
     @thickness.setter
     def thickness(self, value):
         self.ei.setPen(QPen(Qt.red, value))
+
+
+class CommandGDT(QUndoCommand):
+    # GDT = group of delta and text
+    # Command to do a delta and a textitem (ie a standard comment)
+    # Must send a "the total mark has changed" signal
+    def __init__(self, scene, pt, delta, blurb, fontsize):
+        super(CommandGDT, self).__init__()
+        self.scene = scene
+        self.delta = delta
+        self.blurb = blurb
+        self.gdt = GroupDTItem(pt, self.delta, self.blurb, fontsize)
+
+    def redo(self):
+        self.gdt.di.flash_redo()
+        self.gdt.blurb.flash_redo()
+        self.scene.addItem(self.gdt)
+        # Emit a markChangedSignal for the marker to pick up and change total.
+        # Mark increased by delta
+        self.scene.markChangedSignal.emit(self.delta)
+
+    def undo(self):
+        self.gdt.di.flash_undo()
+        self.gdt.blurb.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.gdt))
+        # Emit a markChangedSignal for the marker to pick up and change total.
+        # Mark decreased by delta
+        self.scene.markChangedSignal.emit(-self.delta)
+
+
+class GroupDTItem(QGraphicsItemGroup):
+    def __init__(self, pt, delta, blurb, fontsize):
+        super(GroupDTItem, self).__init__()
+        self.pt = pt
+        self.di = DeltaItem(pt, delta, fontsize)  # positioned so centre under click
+        self.blurb = blurb  # is a textitem already
+        # move blurb so that its top-left corner is next to top-right corner of delta.
+        cr = self.di.boundingRect()
+        self.blurb.moveBy(
+            (cr.right() + cr.left()) / 2 + 5, -(cr.top() + cr.bottom()) / 2
+        )
+        self.addToGroup(self.di)
+        self.addToGroup(self.blurb)
+
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            command = CommandMoveItem(self, value)
+            self.scene().undoStack.push(command)
+        return QGraphicsItemGroup.itemChange(self, change, value)
+
+    def paint(self, painter, option, widget):
+        # paint a bounding rectangle for undo/redo highlighting
+        painter.setPen(QPen(Qt.red, 0.5))
+        painter.setPen(Qt.DotLine)
+        painter.drawRoundedRect(option.rect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(GroupDTItem, self).paint(painter, option, widget)
+
+    # def keyPressEvent(self, event):
+    #     # passes typing on to the underlying textitem
+    #     self.blurb.keyPressEvent(event)
+    #
+    # def mouseDoubleClickEvent(self, event):
+    #     self.blurb.mouseDoubleClickEvent(event)
+    #
+    # def mousePressEvent(self, event):
+    #     self.blurb.mousePressEvent(event)
