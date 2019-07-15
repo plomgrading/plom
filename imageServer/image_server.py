@@ -348,12 +348,13 @@ class Server(object):
         shutil.copy(fname, tfn.name)
         return os.path.basename(tfn.name)
 
-    def claimFile(self, fname):
+    def claimFile(self, fname, subdir):
         """Once an image has been marked, the server copies the image
-        back from the webdav and into markedPapers.
+        back from the webdav and into markedPapers or appropriate
+        subdirectory.
         """
         srcfile = os.path.join(davDirectory, fname)
-        dstfile = os.path.join("markedPapers", fname)
+        dstfile = os.path.join("markedPapers", subdir, fname)
         # Check if file already exists
         if os.path.isfile(dstfile):
             # backup the older file with a timestamp
@@ -364,38 +365,6 @@ class Server(object):
         # This should really use path-join.
         shutil.move(srcfile, dstfile)
         # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
-
-    # def claimCommentFile(self, fname):
-    #     """The file containing the comments made by the marker gets copied into the markingComments directory and then removed from the webdav.
-    #     """
-    #     srcfile = os.path.join(davDirectory, fname)
-    #     dstfile = os.path.join("markingComments", fname)
-    #     # Check if file already exists
-    #     if os.path.isfile(dstfile):
-    #         # backup the older file with a timestamp
-    #         os.rename(
-    #             dstfile,
-    #             dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
-    #         )
-    #     # This should really use path-join.
-    #     shutil.move(srcfile, dstfile)
-    #     # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
-    #
-    # def claimPlomFile(self, fname):
-    #     """The file containing the graphical objects made by the marker gets copied into the markedPapers directory and then removed from the webdav.
-    #     """
-    #     srcfile = os.path.join(davDirectory, fname)
-    #     dstfile = os.path.join("markedPapers", fname)
-    #     # Check if file already exists
-    #     if os.path.isfile(dstfile):
-    #         # backup the older file with a timestamp
-    #         os.rename(
-    #             dstfile,
-    #             dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
-    #         )
-    #     # This should really use path-join.
-    #     shutil.move(srcfile, dstfile)
-    #     # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
 
     def removeFile(self, davfn):
         """Once a file has been grabbed by the client, delete it from the webdav.
@@ -591,25 +560,11 @@ class Server(object):
         # move annoted file to right place with new filename
         self.MDB.takeGroupImageFromClient(code, user, mark, fname, pname, cname, mtime)
         self.recordMark(user, mark, fname, mtime)
-        self.claimFile(fname)
-        self.claimFile(pname)
-        self.claimFile(cname)
+        self.claimFile(fname, "")
+        self.claimFile(pname, "plomFiles")
+        self.claimFile(cname, "commentFiles")
         # return ack with current counts.
         return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
-
-    def MreturnCommentFile(self, user, token, pg, v, fname):
-        """After client has marked pageimage it sends back a json file which
-        contains the comments made by the marker.
-        """
-        self.claimCommentFile(fname)
-        return ["ACK"]
-
-    def MreturnPlomFile(self, user, token, pg, v, fname):
-        """After client has marked pageimage it sends back a plom file which
-        contains the graphical objects pickled for later use.
-        """
-        self.claimPlomFile(fname)
-        return ["ACK"]
 
     def recordMark(self, user, mark, fname, mtime):
         """For test blah.png, we record, in blah.png.txt, as a backup
@@ -652,7 +607,7 @@ class Server(object):
                     give,
                     self.provideFile(fname),
                     self.provideFile("markedPapers/" + aname),
-                    self.provideFile("markedPapers/" + aname[:-3] + "plom"),
+                    self.provideFile("markedPapers/plomFiles/" + aname[:-3] + "plom"),
                 ]
             else:
                 return ["ACK", give, self.provideFile(fname), None]

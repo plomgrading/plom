@@ -170,14 +170,12 @@ class PageScene(QGraphicsScene):
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
 
-    def saveComments(self):
+    def getComments(self):
         comments = []
         for X in self.items():
             if type(X) is TextItem:
                 comments.append(X.contents)
-        # image file is <blah>.png, save comments as <blah>.json
-        with open(self.imageName[:-3] + "json", "w") as commentFile:
-            json.dump(comments, commentFile)
+        return comments
 
     def countComments(self):
         count = 0
@@ -702,7 +700,9 @@ class PageScene(QGraphicsScene):
 
     def unpickleText(self, X):
         if len(X) == 3:
+            self.blurb = TextItem(self, self.fontSize)
             self.blurb.setPlainText(X[0])
+            self.blurb.contents = X[0]
             self.blurb.setPos(QPointF(X[1], X[2]))
             self.undoStack.push(CommandText(self, self.blurb, self.ink))
 

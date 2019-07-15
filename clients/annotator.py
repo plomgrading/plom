@@ -747,14 +747,20 @@ class Annotator(QDialog):
                 self.launchAgain = False
             # Save the view/scene to file.
             self.view.save()
-            # Save the comments
-            self.view.saveComments()
+            # Save the marker's comments
+            self.saveMarkerComments()
             # Pickle the scene as a PLOM-file
             self.pickleIt()
             # Save the window settings
             self.saveWindowSettings()
             # Close the annotator(QDialog) with an 'accept'.
             self.accept()
+
+    def saveMarkerComments(self):
+        commentList = self.view.getComments()
+        # image file is <blah>.png, save comments as <blah>.json
+        with open(self.imageFile[:-3] + "json", "w") as commentFile:
+            json.dump(commentList, commentFile)
 
     def latexAFragment(self, txt):
         return self.parent.latexAFragment(txt)

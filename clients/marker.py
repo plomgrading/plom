@@ -570,28 +570,31 @@ class MarkerClient(QDialog):
             self.workingDirectory, "G" + self.exM.data(index[0])[1:] + ".png"
         )
         cname = aname[:-3] + "json"
-        # initially pname set to none, and only changed if plomfile exists (ie paper already marked)
-        pname = None
+        pname = aname[:-3] + "plom"
         # If image has been marked confirm with user if they want
         # to annotate further.
+        remarkFlag = False
         if self.exM.data(index[1]) == "marked":
             msg = SimpleMessage("Continue marking paper?")
             if msg.exec_() == QMessageBox.Yes:
-                pname = aname[:-3] + "plom"
                 # Copy the current annotated filename to backup file in case
                 # user cancels their annotations.
                 shutil.copyfile(aname, aname + ".bak")
+                remarkFlag = True
             else:
                 return
         # Copy the original image to the annotated filename.
         shutil.copyfile("{}".format(self.exM.getOriginalFile(index[0].row())), aname)
 
         # Get mark, markingtime, and launch-again flag from 'waitForAnnotator'
-        [gr, mtime, launchAgain] = self.waitForAnnotator(aname, pname)
+        if remarkFlag:
+            [gr, mtime, launchAgain] = self.waitForAnnotator(aname, pname)
+        else:
+            [gr, mtime, launchAgain] = self.waitForAnnotator(aname, None)
         # Exited annotator with 'cancel', so don't save anything.
         if gr is None:
-            # if there is a plomfile then move backup annotated file back.
-            if pname is not None:
+            # if remarking then move backup annotated file back.
+            if remarkFlag:
                 shutil.move(aname + ".bak", aname)
             return
         # Copy the mark, annotated filename and the markingtime into the table
