@@ -96,6 +96,8 @@ class Annotator(QDialog):
         # set alt-enter / alt-return as shortcut to finish annotating
         # also set ctrl-n and ctrl-b as same shortcut.
         self.setEndShortCuts()
+        # set ctrl-+ as zoom cycle shortcut
+        self.setZoomShortCuts()
         # Set the tool icons
         self.setIcons()
         # Connect all the buttons to relevant functions
@@ -440,10 +442,16 @@ class Annotator(QDialog):
         self.endShortCut.activated.connect(self.endAndRelaunch)
         self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
         self.endShortCutb.activated.connect(self.endAndRelaunch)
+        # shortcuts for next paper
         self.endShortCutc = QShortcut(QKeySequence("Ctrl+n"), self)
         self.endShortCutc.activated.connect(self.endAndRelaunch)
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
         self.endShortCutd.activated.connect(self.endAndRelaunch)
+
+    def setZoomShortCuts(self):
+        # shortcuts for zoom-states
+        self.zoomCycleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
+        self.zoomCycleShortCut.activated.connect(self.view.zoomCycle)
 
     # Simple mode change functions
     def boxMode(self):
