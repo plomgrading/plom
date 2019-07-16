@@ -46,6 +46,7 @@ class PageView(QGraphicsView):
     def resizeEvent(self, e):
         # On resize used to resize the image to keep it all in view
         self.fitInView(self.scene.imageItem, Qt.KeepAspectRatio)
+        self.vrect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         super(PageView, self).resizeEvent(e)
 
     def setMode(self, mode):
@@ -118,26 +119,24 @@ class PageView(QGraphicsView):
             self.zoomHeight()
 
     def zoomHeight(self):
-        # current rectangle
+        # scale to full height, but move center to user-zoomed center
         crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         nrect = crect
         rat = self.scene.height() / crect.height()
         nrect.setHeight(self.scene.height())
         nrect.setWidth(crect.width() * rat)
-        nrect.moveCenter(crect.center())
+        nrect.moveCenter(self.vrect.center())
         self.fitInView(nrect)
 
     def zoomWidth(self):
-        # keep current centre but zoom so full width included
-        # current rectangle
+        # scale to full width, but move center to user-zoomed center
         crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         nrect = crect
         rat = self.scene.width() / crect.width()
         nrect.setWidth(self.scene.width())
         nrect.setHeight(crect.height() * rat)
-        nrect.moveCenter(crect.center())
+        nrect.moveCenter(self.vrect.center())
         self.fitInView(nrect)
 
     def zoomPrevious(self):
         self.fitInView(self.vrect)
-        pass
