@@ -140,3 +140,7 @@ class PageView(QGraphicsView):
 
     def zoomPrevious(self):
         self.fitInView(self.vrect)
+
+    def initialZoom(self, initRect):
+        self.fitInView(initRect)
+        self.zoomNull()
