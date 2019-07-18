@@ -42,7 +42,6 @@ from tools import (
     CommandText,
     CommandTick,
     TextItem,
-    CommandWhiteBox,
 )
 
 
