@@ -299,6 +299,7 @@ class PageScene(QGraphicsScene):
         self.blurb = TextItem(self, self.fontSize)
         self.blurb.setPos(pt)  # update pos after if needed
         self.blurb.setPlainText(self.commentText)
+        self.blurb.contents = self.commentText  # for pickling
         # Put in a check to see if comment starts with TEX
         # If it does then tex-ify it.
         if self.commentText[:4].upper() == "TEX:":
@@ -710,13 +711,13 @@ class PageScene(QGraphicsScene):
             )
 
     def unpickleGroupDeltaText(self, X):
-        if len(X) == 5:
+        if len(X) == 4:
             self.blurb = TextItem(self, self.fontSize)
-            self.blurb.setPlainText(X[4])
-            self.blurb.contents = X[4]
-            self.blurb.setPos(QPointF(X[1], X[2]))
+            self.blurb.setPlainText(X[3])
+            self.blurb.contents = X[3]
+            self.blurb.setPos(QPointF(X[0], X[1]))
             self.undoStack.push(
-                CommandGDT(self, QPointF(X[1], X[2]), X[3], self.blurb, self.fontSize)
+                CommandGDT(self, QPointF(X[0], X[1]), X[2], self.blurb, self.fontSize)
             )
 
     def unpicklePen(self, X):
