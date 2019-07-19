@@ -275,6 +275,24 @@ class CommandPen(QUndoCommand):
         QTimer.singleShot(500, lambda: self.scene.removeItem(self.penItem.pi))
 
 
+class CommandPenArrow(QUndoCommand):
+    # Very similar to CommandArrow
+    def __init__(self, scene, path):
+        super(CommandPenArrow, self).__init__()
+        self.scene = scene
+        self.path = path
+        self.penItem = PenArrowItemObject(self.path)
+        self.setText("PenArrow")
+
+    def redo(self):
+        self.penItem.flash_redo()
+        self.scene.addItem(self.penItem.pi)
+
+    def undo(self):
+        self.penItem.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.penItem.pi))
+
+
 class CommandQMark(QUndoCommand):
     # Very similar to CommandArrow
     def __init__(self, scene, pt):
@@ -536,7 +554,6 @@ class PenItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but much simpler
     def __init__(self, path):
         super(PenItem, self).__init__()
-        self.pi = QGraphicsPathItem()
         self.path = path
         self.setPath(self.path)
         self.setPen(QPen(Qt.red, 2))
@@ -562,6 +579,54 @@ class PenItem(QGraphicsPathItem):
                 else:
                     print("Problem pickling penitem path {}".format(self.path))
         return ["Pen", pth]
+
+
+class PenArrowItem(QGraphicsItemGroup):
+    def __init__(self, path):
+        super(PenArrowItem, self).__init__()
+        self.pi = QGraphicsPathItem()
+        self.path = path
+
+        # set decorations
+        ei = self.path.elementAt(0)
+        ef = self.path.elementAt(self.path.elementCount() - 1)
+        self.pti = QPointF(ei.x, ei.y)
+        self.endi = QGraphicsEllipseItem(self.pti.x() - 6, self.pti.y() - 6, 12, 12)
+        self.ptf = QPointF(ef.x, ef.y)
+        self.endf = QGraphicsEllipseItem(self.ptf.x() - 6, self.ptf.y() - 6, 12, 12)
+
+        self.pi.setPath(self.path)
+        self.pi.setPen(QPen(Qt.red, 2))
+        self.endi.setPen(QPen(Qt.red, 2))
+        self.endi.setBrush(QBrush(Qt.red))
+        self.endf.setPen(QPen(Qt.red, 2))
+        self.endf.setBrush(QBrush(Qt.red))
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.addToGroup(self.pi)
+        self.addToGroup(self.endi)
+        self.addToGroup(self.endf)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            command = CommandMoveItem(self, value)
+            self.scene().undoStack.push(command)
+        return QGraphicsPathItem.itemChange(self, change, value)
+
+    def pickle(self):
+        return
+        pth = []
+        for k in range(self.path.elementCount()):
+            # e should be either a moveTo or a lineTo
+            e = self.path.elementAt(k)
+            if e.isMoveTo():
+                pth.append(["m", e.x + self.x(), e.y + self.y()])
+            else:
+                if e.isLineTo():
+                    pth.append(["l", e.x + self.x(), e.y + self.y()])
+                else:
+                    break  # last elements of path are decorations.
+        return ["PenArrow", pth]
 
 
 class QMarkItem(QGraphicsPathItem):
@@ -1064,6 +1129,38 @@ class PenItemObject(QGraphicsObject):
     @thickness.setter
     def thickness(self, value):
         self.pi.setPen(QPen(Qt.red, value))
+
+
+class PenArrowItemObject(QGraphicsObject):
+    # As per the ArrowItemObject
+    def __init__(self, path):
+        super(PenArrowItemObject, self).__init__()
+        self.pi = PenArrowItem(path)
+        self.anim = QPropertyAnimation(self, b"thickness")
+
+    def flash_undo(self):
+        self.anim.setDuration(500)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 6)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        self.anim.setDuration(250)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 4)
+        self.anim.setEndValue(2)
+        self.anim.start()
+
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.pi.pi.pen().width()
+
+    @thickness.setter
+    def thickness(self, value):
+        self.pi.pi.setPen(QPen(Qt.red, value))
+        self.pi.endi.setPen(QPen(Qt.red, value))
+        self.pi.endf.setPen(QPen(Qt.red, value))
 
 
 class QMarkItemObject(QGraphicsObject):

@@ -38,6 +38,7 @@ from tools import (
     CommandHighlight,
     CommandLine,
     CommandPen,
+    CommandPenArrow,
     CommandQMark,
     CommandText,
     CommandTick,
@@ -415,12 +416,14 @@ class PageScene(QGraphicsScene):
         # set highlightflag so correct object created on mouse-release
         if event.button() == Qt.LeftButton:
             self.pathItem.setPen(self.ink)
-            self.highlightFlag = (
-                2
-            )  # non-zero value so we don't add to path after mouse-release
-        else:
-            self.pathItem.setPen(self.highlight)
             self.highlightFlag = 1
+            # non-zero value so we don't add to path after mouse-release
+        elif event.button() == Qt.RightButton:
+            self.pathItem.setPen(self.highlight)
+            self.highlightFlag = 2
+        else:  # middle button is pen-path with arrows at both ends
+            self.pathItem.setPen(self.ink)
+            self.highlightFlag = 4
         # Note - command not pushed onto stack until path is finished on
         # mouse-release.
         self.addItem(self.pathItem)
@@ -571,10 +574,12 @@ class PageScene(QGraphicsScene):
         Push the resulting command onto the undo stack
         """
         self.removeItem(self.pathItem)
-        if self.highlightFlag == 2:
+        if self.highlightFlag == 1:
             command = CommandPen(self, self.path)
-        elif self.highlightFlag == 1:
+        elif self.highlightFlag == 2:
             command = CommandHighlight(self, self.path)
+        elif self.highlightFlag == 4:
+            command = CommandPenArrow(self, self.path)
         self.highlightFlag = 0
         self.undoStack.push(command)
 
