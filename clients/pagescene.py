@@ -30,6 +30,7 @@ from PyQt5.QtWidgets import (
 # Import all the tool commands for undo/redo stack.
 from tools import (
     CommandArrow,
+    CommandArrowDouble,
     CommandBox,
     CommandCross,
     CommandDelete,
@@ -379,9 +380,11 @@ class PageScene(QGraphicsScene):
         """
         # Set arrow flag to tell mouseReleaseLine to draw line or arrow
         if event.button() == Qt.LeftButton:
-            self.arrowFlag = 0
-        else:
             self.arrowFlag = 1
+        elif event.button() == Qt.RightButton:
+            self.arrowFlag = 2
+        else:
+            self.arrowFlag = 4
         # Create a temp line which is updated as mouse moves.
         # Do not push command onto undoStack until drawing finished.
         self.originPos = event.scenePos()
@@ -555,10 +558,12 @@ class PageScene(QGraphicsScene):
         Push the resulting command onto the undo stack
         """
         self.removeItem(self.lineItem)
-        if self.arrowFlag == 0:
+        if self.arrowFlag == 1:
             command = CommandLine(self, self.originPos, self.currentPos)
-        else:
+        elif self.arrowFlag == 2:
             command = CommandArrow(self, self.originPos, self.currentPos)
+        else:
+            command = CommandArrowDouble(self, self.originPos, self.currentPos)
         self.arrowFlag = 0
         self.undoStack.push(command)
 
@@ -649,11 +654,13 @@ class PageScene(QGraphicsScene):
             if isinstance(X, DeltaItem) or isinstance(X, TextItem):
                 if X.group() is not None:  # object part of GroupDeltaText
                     continue
+            if isinstance(X, QGraphicsPathItem):
+                if X.group() is not None:  # object part of penarrowitem
+                    continue
             lst.append(X.pickle())
         return lst
 
     def unpickleSceneItems(self, lst):
-        print("Unpickling")
         # clear all items from scene.
         for X in self.items():
             if isinstance(X, ScoreBox) or isinstance(X, QGraphicsPixmapItem):
@@ -685,6 +692,12 @@ class PageScene(QGraphicsScene):
         if len(X) == 4:
             self.undoStack.push(
                 CommandArrow(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
+            )
+
+    def unpickleArrowDouble(self, X):
+        if len(X) == 4:
+            self.undoStack.push(
+                CommandArrowDouble(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
             )
 
     def unpickleLine(self, X):
@@ -736,6 +749,18 @@ class PageScene(QGraphicsScene):
                 # ['l',x,y]
                 pth.lineTo(QPointF(Y[1], Y[2]))
             self.undoStack.push(CommandPen(self, pth))
+
+    def unpicklePenArrow(self, X):
+        if len(X) == 1:
+            # Format is X = [ [['m',x,y], ['l',x,y], ['l',x,y],....] ]
+            # Just assume (for moment) the above format - ie no format checks.
+            pth = QPainterPath()
+            # ['m',x,y]
+            pth.moveTo(QPointF(X[0][0][1], X[0][0][2]))
+            for Y in X[0][1:]:
+                # ['l',x,y]
+                pth.lineTo(QPointF(Y[1], Y[2]))
+            self.undoStack.push(CommandPenArrow(self, pth))
 
     def unpickleHighlight(self, X):
         if len(X) == 1:

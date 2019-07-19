@@ -49,6 +49,30 @@ class CommandArrow(QUndoCommand):
         QTimer.singleShot(500, lambda: self.scene.removeItem(self.arrowItem.ai))
 
 
+class CommandArrowDouble(QUndoCommand):
+    # Command to create/remove an arrow object
+    def __init__(self, scene, pti, ptf):
+        super(CommandArrowDouble, self).__init__()
+        self.scene = scene
+        # line starts at pti(nitial) and ends at ptf(inal).
+        self.pti = pti
+        self.ptf = ptf
+        # create an arrow item
+        self.arrowItem = ArrowDoubleItemObject(self.pti, self.ptf)
+        self.setText("ArrowDouble")
+
+    def redo(self):
+        # arrow item knows how to highlight on undo and redo.
+        self.arrowItem.flash_redo()
+        self.scene.addItem(self.arrowItem.ai)
+
+    def undo(self):
+        # the undo animation takes 0.5s
+        # so trigger its removal after 0.5s.
+        self.arrowItem.flash_undo()
+        QTimer.singleShot(500, lambda: self.scene.removeItem(self.arrowItem.ai))
+
+
 class CommandBox(QUndoCommand):
     # Very similar to CommandArrow.
     def __init__(self, scene, rect):
@@ -379,8 +403,8 @@ class ArrowItem(QGraphicsPathItem):
         Some manipulations required to draw the arrow head.
         """
         super(ArrowItem, self).__init__()
-        self.pti = pti
         self.ptf = ptf
+        self.pti = pti
         # vector direction of line
         delta = ptf - pti
         # length of the line
@@ -430,6 +454,72 @@ class ArrowItem(QGraphicsPathItem):
     def pickle(self):
         return [
             "Arrow",
+            self.pti.x() + self.x(),
+            self.pti.y() + self.y(),
+            self.ptf.x() + self.x(),
+            self.ptf.y() + self.y(),
+        ]
+
+
+class ArrowDoubleItem(QGraphicsPathItem):
+    def __init__(self, pti, ptf):
+        """Creates an double-headed arrow from pti to ptf.
+        Some manipulations required to draw the arrow head.
+        """
+        super(ArrowDoubleItem, self).__init__()
+        self.ptf = ptf
+        self.pti = pti
+        self.path = QPainterPath()
+        # Some vectors:
+        delta = ptf - pti
+        el = sqrt(delta.x() ** 2 + delta.y() ** 2)
+        ndelta = delta / el
+        northog = QPointF(-ndelta.y(), ndelta.x())
+        # build arrow
+        arBase = pti + 16 * ndelta
+        arTip = pti - 8 * ndelta
+        arLeft = arBase + 10 * northog + 4 * ndelta
+        arRight = arBase - 10 * northog + 4 * ndelta
+        # draw first arrow.
+        self.path.moveTo(self.pti)
+        self.path.lineTo(arLeft)
+        self.path.lineTo(arBase)
+        self.path.lineTo(arRight)
+        self.path.lineTo(self.pti)
+        # draw line from pti to ptf
+        self.path.lineTo(self.ptf)
+        # other arrowhead
+        arBase = ptf - 16 * ndelta
+        arTip = ptf + 8 * ndelta
+        arLeft = arBase - 10 * northog - 4 * ndelta
+        arRight = arBase + 10 * northog - 4 * ndelta
+        # line to left-barb then to base of arrowhead, then to right barb
+        self.path.lineTo(arLeft)
+        self.path.lineTo(arBase)
+        self.path.lineTo(arRight)
+        # then back to the end of the line.
+        self.path.lineTo(self.ptf)
+        self.setPath(self.path)
+        # style the line.
+        self.setPen(QPen(Qt.red, 2, cap=Qt.RoundCap, join=Qt.RoundJoin))
+        # fill in the arrow with a red brush
+        self.setBrush(QBrush(Qt.red))
+        # The line is moveable and should signal any changes
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            # If the position changes then do so with an redo/undo command
+            command = CommandMoveItem(self, value)
+            # Push the command onto the stack.
+            self.scene().undoStack.push(command)
+        # Exec the parent class change command.
+        return QGraphicsPathItem.itemChange(self, change, value)
+
+    def pickle(self):
+        return [
+            "ArrowDouble",
             self.pti.x() + self.x(),
             self.pti.y() + self.y(),
             self.ptf.x() + self.x(),
@@ -587,14 +677,49 @@ class PenArrowItem(QGraphicsItemGroup):
         self.pi = QGraphicsPathItem()
         self.path = path
 
-        # set decorations
-        ei = self.path.elementAt(0)
-        ef = self.path.elementAt(self.path.elementCount() - 1)
-        self.pti = QPointF(ei.x, ei.y)
-        self.endi = QGraphicsEllipseItem(self.pti.x() - 6, self.pti.y() - 6, 12, 12)
-        self.ptf = QPointF(ef.x, ef.y)
-        self.endf = QGraphicsEllipseItem(self.ptf.x() - 6, self.ptf.y() - 6, 12, 12)
-
+        # set arrowhead initial
+        e0 = self.path.elementAt(0)
+        e1 = self.path.elementAt(1)
+        pti = QPointF(e1.x, e1.y)
+        ptf = QPointF(e0.x, e0.y)
+        delta = ptf - pti
+        el = sqrt(delta.x() ** 2 + delta.y() ** 2)
+        ndelta = delta / el
+        northog = QPointF(-ndelta.y(), ndelta.x())
+        arBase = ptf - 16 * ndelta
+        arTip = ptf + 8 * ndelta
+        arLeft = arBase - 10 * northog - 4 * ndelta
+        arRight = arBase + 10 * northog - 4 * ndelta
+        self.ari = QPainterPath()
+        self.ari.moveTo(ptf)
+        self.ari.lineTo(arLeft)
+        self.ari.lineTo(arBase)
+        self.ari.lineTo(arRight)
+        self.ari.lineTo(ptf)
+        self.endi = QGraphicsPathItem()
+        self.endi.setPath(self.ari)
+        # set arrowhead final
+        e2 = self.path.elementAt(self.path.elementCount() - 2)
+        e3 = self.path.elementAt(self.path.elementCount() - 1)
+        pti = QPointF(e2.x, e2.y)
+        ptf = QPointF(e3.x, e3.y)
+        delta = ptf - pti
+        el = sqrt(delta.x() ** 2 + delta.y() ** 2)
+        ndelta = delta / el
+        northog = QPointF(-ndelta.y(), ndelta.x())
+        arBase = ptf - 16 * ndelta
+        arTip = ptf + 8 * ndelta
+        arLeft = arBase - 10 * northog - 4 * ndelta
+        arRight = arBase + 10 * northog - 4 * ndelta
+        self.arf = QPainterPath()
+        self.arf.moveTo(ptf)
+        self.arf.lineTo(arLeft)
+        self.arf.lineTo(arBase)
+        self.arf.lineTo(arRight)
+        self.arf.lineTo(ptf)
+        self.endf = QGraphicsPathItem()
+        self.endf.setPath(self.arf)
+        # put everything together
         self.pi.setPath(self.path)
         self.pi.setPen(QPen(Qt.red, 2))
         self.endi.setPen(QPen(Qt.red, 2))
@@ -614,7 +739,6 @@ class PenArrowItem(QGraphicsItemGroup):
         return QGraphicsPathItem.itemChange(self, change, value)
 
     def pickle(self):
-        return
         pth = []
         for k in range(self.path.elementCount()):
             # e should be either a moveTo or a lineTo
@@ -625,7 +749,7 @@ class PenArrowItem(QGraphicsItemGroup):
                 if e.isLineTo():
                     pth.append(["l", e.x + self.x(), e.y + self.y()])
                 else:
-                    break  # last elements of path are decorations.
+                    print("Problem pickling penarrowitem path {}".format(self.path))
         return ["PenArrow", pth]
 
 
@@ -950,6 +1074,40 @@ class ArrowItemObject(QGraphicsObject):
     def __init__(self, pti, ptf):
         super(ArrowItemObject, self).__init__()
         self.ai = ArrowItem(pti, ptf)
+        self.anim = QPropertyAnimation(self, b"thickness")
+
+    def flash_undo(self):
+        # thin -> thick -> none.
+        self.anim.setDuration(500)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 6)
+        self.anim.setEndValue(0)
+        self.anim.start()
+
+    def flash_redo(self):
+        # thin -> med -> thin.
+        self.anim.setDuration(250)
+        self.anim.setStartValue(2)
+        self.anim.setKeyValueAt(0.5, 4)
+        self.anim.setEndValue(2)
+        self.anim.start()
+
+    # Set and get thickness of the pen to draw the arrow.
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.ai.pen().width()
+
+    @thickness.setter
+    def thickness(self, value):
+        self.ai.setPen(QPen(Qt.red, value))
+
+
+class ArrowDoubleItemObject(QGraphicsObject):
+    # An object wrapper around the arrowitem to handle the
+    # animation of its thickness
+    def __init__(self, pti, ptf):
+        super(ArrowDoubleItemObject, self).__init__()
+        self.ai = ArrowDoubleItem(pti, ptf)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
