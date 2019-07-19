@@ -62,7 +62,7 @@ class MarkDatabase:
     def printGroupImageWithCode(self, code):
         """Print every record with given code"""
         query = (
-            GroupImage.select().where(GroupImage.tgz == code).order_by(GroupImage.tgv)
+            GroupImage.select().where(GroupImage.tgv == code).order_by(GroupImage.tgv)
         )
         for x in query:
             print(x.tgv, x.status, x.user, x.time, x.mark, x.markingTime)
