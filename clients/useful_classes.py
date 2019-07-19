@@ -10,11 +10,17 @@ from PyQt5.QtGui import QDropEvent, QIcon, QPixmap, QStandardItem, QStandardItem
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
     QGridLayout,
     QMessageBox,
     QPushButton,
     QTableView,
+    QTextEdit,
     QToolButton,
+    QVBoxLayout,
     QWidget,
     QItemDelegate,
 )
@@ -76,6 +82,7 @@ class SimpleTableView(QTableView):
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.horizontalHeader().setStretchLastSection(True)
 
     def keyPressEvent(self, event):
         # If user hits enter or return, then fire off
@@ -444,3 +451,39 @@ class SimpleCommentTable(QTableView):
             self.selectRow(0)
         else:
             self.selectRow((sel[0].row() - 1) % self.cmodel.rowCount())
+
+
+class AddTagBox(QDialog):
+    def __init__(self, parent, currentTag, tagList=[]):
+        super(QDialog, self).__init__()
+        self.parent = parent
+        self.CB = QComboBox()
+        self.TE = QTextEdit()
+
+        flay = QFormLayout()
+        flay.addRow("Enter tag", self.TE)
+        flay.addRow("Choose tag", self.CB)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+
+        # set up widgets
+        buttons.accepted.connect(self.accept)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.CB.addItem("")
+        self.CB.addItems(tagList)
+        # Set up TE and CB so that when CB changed, text is updated
+        self.CB.currentTextChanged.connect(self.changedCB)
+        # If supplied with current text/delta then set them
+        if currentTag is not None:
+            self.TE.clear()
+            self.TE.insertPlainText(currentTag)
+
+    def changedCB(self):
+        self.TE.clear()
+        self.TE.insertPlainText(self.CB.currentText())

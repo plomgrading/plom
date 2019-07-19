@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton
 from examviewwindow import ExamViewWindow
 import messenger
 from annotator import Annotator
-from useful_classes import ErrorMessage, SimpleMessage
+from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
 
@@ -141,6 +141,14 @@ class ProxyModel(QSortFilterProxyModel):
 
     def __init__(self, parent=None):
         QSortFilterProxyModel.__init__(self, parent)
+        self.setFilterKeyColumn(4)
+        self.filterString = None
+
+    def setFilterString(self, flt):
+        self.filterString = flt
+
+    def filterTags(self):
+        self.setFilterFixedString(self.filterString)
 
     def addPaper(self, rho):
         # Append new groupimage to list and append new row to table.
@@ -250,6 +258,8 @@ class MarkerClient(QDialog):
         self.prxM = ProxyModel()
         self.prxM.setSourceModel(self.exM)
         self.ui.tableView.setModel(self.prxM)
+        self.ui.tableView.hideColumn(5)  # hide original filename
+        self.ui.tableView.hideColumn(6)  # hide annotated filename
         # Double-click or signale fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
@@ -267,6 +277,9 @@ class MarkerClient(QDialog):
         self.ui.revertButton.clicked.connect(self.revertTest)
         self.ui.deferButton.clicked.connect(self.deferTest)
         self.ui.tagButton.clicked.connect(self.tagTest)
+        self.ui.filterButton.clicked.connect(self.setFilter)
+        self.ui.filterLE.returnPressed.connect(self.setFilter)
+        # self.ui.filterLE.focusInEvent.connect(lambda: self.ui.filterButton.setFocus())
         # Give IDs to the radio-buttons which select the marking style
         # 1 = mark total = user clicks the total-mark
         # 2 = mark-up = mark starts at 0 and user increments it
@@ -296,6 +309,11 @@ class MarkerClient(QDialog):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         # Get a pagegroup to mark from the server
         self.requestNext()
+
+    def resizeEvent(self, e):
+        # On resize used to resize the image to keep it all in view
+        self.testImg.resetB.animateClick()
+        super(MarkerClient, self).resizeEvent(e)
 
     def requestToken(self):
         """Send authorisation request (AUTH) to server.
@@ -412,9 +430,6 @@ class MarkerClient(QDialog):
         message [ACK, test-code, temp-filename]. Get file from webdav, add to
         the list of papers and update the image.
         """
-        # update count.
-        # self.updateCount()
-
         # Ask server for next unmarked paper
         msg = messenger.SRMsg(
             ["mNUM", self.userName, self.token, self.pageGroup, self.version]
@@ -487,11 +502,6 @@ class MarkerClient(QDialog):
             msg.exec_()
             return
         self.prxM.deferPaper(index)
-
-    def tagTest(self):
-        msg = ErrorMessage("Tag feature coming soon")
-        msg.exec_()
-        return
 
     def waitForAnnotator(self, fname):
         """This fires up the annotation window for user annotation + maring.
@@ -616,7 +626,9 @@ class MarkerClient(QDialog):
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image
-        self.updateImage(selnew.indexes()[0].row())
+        idx = selnew.indexes()
+        if len(idx) > 0:
+            self.updateImage(idx[0].row())
 
     def shutDown(self):
         # When shutting down, first alert server of any images that were
@@ -688,3 +700,23 @@ class MarkerClient(QDialog):
             return True
         else:
             return False
+
+    def tagTest(self):
+        index = self.ui.tableView.selectedIndexes()
+        tagSet = set()
+        currentTag = self.prxM.data(index[4])
+
+        for r in range(self.exM.rowCount()):
+            v = self.exM.data(self.exM.index(r, 4))
+            if len(v) > 0:
+                tagSet.add(v)
+
+        atb = AddTagBox(self, currentTag, list(tagSet))
+        if atb.exec_() == QDialog.Accepted:
+            txt = atb.TE.toPlainText().strip()
+            self.prxM.setData(index[4], txt)
+        return
+
+    def setFilter(self):
+        self.prxM.setFilterString(self.ui.filterLE.text().strip())
+        self.prxM.filterTags()
