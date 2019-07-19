@@ -372,16 +372,16 @@ class ArrowItem(QGraphicsPathItem):
         # orthogonal unit vector to line.
         northog = QPointF(-ndelta.y(), ndelta.x())
         # base of arrowhead
-        self.arBase = ptf - 8 * ndelta
+        self.arBase = ptf - 16 * ndelta
         # point of arrowhead
-        self.arTip = ptf + 4 * ndelta
+        self.arTip = ptf + 8 * ndelta
         # left-barb of the arrowhead
-        self.arLeft = self.arBase - 5 * northog - 2 * ndelta
+        self.arLeft = self.arBase - 10 * northog - 4 * ndelta
         # right-barb of the arrowhead
-        self.arRight = self.arBase + 5 * northog - 2 * ndelta
+        self.arRight = self.arBase + 10 * northog - 4 * ndelta
         self.path = QPainterPath()
         # put a small ball at start of arrow.
-        self.path.addEllipse(self.pti.x() - 3, self.pti.y() - 3, 6, 6)
+        self.path.addEllipse(self.pti.x() - 6, self.pti.y() - 6, 12, 12)
         # draw line from pti to ptf
         self.path.moveTo(self.pti)
         self.path.lineTo(self.ptf)
