@@ -461,7 +461,7 @@ class AddTagBox(QDialog):
         self.TE = QTextEdit()
 
         flay = QFormLayout()
-        flay.addRow("Enter tag", self.TE)
+        flay.addRow("Enter tag\n(max 256 char)", self.TE)
         flay.addRow("Choose tag", self.CB)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)

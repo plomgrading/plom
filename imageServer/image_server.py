@@ -123,6 +123,7 @@ servCmd = {
     "mGWP": "MgetWholePaper",
     "mLTT": "MlatexThisText",
     "mRCF": "MreturnCommentFile",
+    "mTAG": "MsetTag",
     "tGMM": "TgetMaxMark",
     "tGTP": "TgotTest",
     "tPRC": "TprogressCount",
@@ -143,7 +144,7 @@ async def handle_messaging(reader, writer):
     Converts message[0] to the server command using the servCmd dictionary
     Server, peon, then runs command and we send back the return message.
     """
-    data = await reader.read(128)
+    data = await reader.read(1024)
     terminate = data.endswith(b"\x00")
     data = data.rstrip(b"\x00")
     message = json.loads(data.decode())
@@ -540,7 +541,7 @@ class Server(object):
         if fname is not None:
             return ["ACK", give, self.provideFile(fname), None]
         else:
-            return ["Err", "User {} is not authorised for tgv={}".format(user, tgv)]
+            return ["ERR", "User {} is not authorised for tgv={}".format(user, tgv)]
 
     def MnextUnmarked(self, user, token, pg, v):
         """The client has asked for the next unmarked image (with
@@ -548,12 +549,12 @@ class Server(object):
         then copy the appropriate file into the webdav and send code
         and the temp-webdav path back to the client.
         """
-        give, fname = self.MDB.giveGroupImageToClient(user, pg, v)
+        give, fname, tag = self.MDB.giveGroupImageToClient(user, pg, v)
         if give is None:
             return ["ERR", "Nothing left on todo pile"]
         else:
             # copy the file into the webdav and tell client code / path.
-            return ["ACK", give, self.provideFile(fname)]
+            return ["ACK", give, self.provideFile(fname), tag]
 
     def MprogressCount(self, user, token, pg, v):
         """Send back current marking progress counts to the client"""
@@ -566,14 +567,14 @@ class Server(object):
         self.removeFile(filename)
         return ["ACK"]
 
-    def MreturnMarked(self, user, token, code, mark, fname, mtime, pg, v):
+    def MreturnMarked(self, user, token, code, mark, fname, mtime, pg, v, tags):
         """Client has marked the pageimage with code, mark, annotated-file-name
         (which the client has uploaded to webdav), and spent mtime marking it.
         Send the information to the database and send an ack.
         """
         # move annoted file to right place with new filename
-        self.MDB.takeGroupImageFromClient(code, user, mark, fname, mtime)
-        self.recordMark(user, mark, fname, mtime)
+        self.MDB.takeGroupImageFromClient(code, user, mark, fname, mtime, tags)
+        self.recordMark(user, mark, fname, mtime, tags)
         self.claimFile(fname)
         # return ack with current counts.
         return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
@@ -585,15 +586,20 @@ class Server(object):
         self.claimCommentFile(fname)
         return ["ACK"]
 
-    def recordMark(self, user, mark, fname, mtime):
+    def recordMark(self, user, mark, fname, mtime, tags):
         """For test blah.png, we record, in blah.png.txt, as a backup
-        the filename, mark, user, time and marking time.
+        the filename, mark, user, time, marking time and any tags.
         This is not used.
         """
         fh = open("./markedPapers/{}.txt".format(fname), "w")
         fh.write(
-            "{}\t{}\t{}\t{}\t{}".format(
-                fname, mark, user, datetime.now().strftime("%Y-%m-%d,%H:%M"), mtime
+            "{}\t{}\t{}\t{}\t{}\t{}".format(
+                fname,
+                mark,
+                user,
+                datetime.now().strftime("%Y-%m-%d,%H:%M"),
+                mtime,
+                tags,
             )
         )
         fh.close()
@@ -629,7 +635,13 @@ class Server(object):
             else:
                 return ["ACK", give, self.provideFile(fname), None]
         else:
-            return ["Err", "Non-existant tgv={}".format(tgv)]
+            return ["ERR", "Non-existant tgv={}".format(tgv)]
+
+    def MsetTag(self, user, token, tgv, tag):
+        if self.MDB.setTag(user, tgv, tag):
+            return ["ACK"]
+        else:
+            return ["ERR", "Non-existant tgv={}".format(tgv)]
 
     def MgetWholePaper(self, user, token, testNumber):
         # client passes the tgv code of their current group image.
@@ -721,7 +733,7 @@ class Server(object):
         if fname is not None:
             return ["ACK", give, self.provideFile(fname), None]
         else:
-            return ["Err", "User {} is not authorised for tgv={}".format(user, tgv)]
+            return ["ERR", "User {} is not authorised for tgv={}".format(user, tgv)]
 
 
 # # # # # # # # # # # #

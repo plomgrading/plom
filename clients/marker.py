@@ -77,18 +77,6 @@ class ExamModel(QStandardItemModel):
             ["TGV", "Status", "Mark", "Time", "Tag", "OriginalFile", "AnnotatedFile"]
         )
 
-    def getOriginalFile(self, r):
-        # Return the filename of the original un-annotated image
-        return self.item(r, 5).data()
-
-    def getAnnotatedFile(self, r):
-        # Return the filename of the annotated image
-        return self.item(r, 6).data()
-
-    def setAnnotatedFile(self, r, aname):
-        # Set the annotated image filename
-        self.item(r, 6).setData(aname)
-
     def markPaper(self, index, mrk, aname, mtime):
         # When marked, set the annotated filename, the mark,
         # and the total marking time (in case it was annotated earlier)
@@ -98,21 +86,6 @@ class ExamModel(QStandardItemModel):
         self.setData(index[1], "marked")
         self.setData(index[2], mrk)
         self.setData(index[6], aname)
-
-    def revertPaper(self, index):
-        # When user reverts to original image, set status to "reverted"
-        # mark back to -1, and marking time to zero.
-        # remove the annotated image file.
-        self.setData(index[1], "reverted")
-        self.setData(index[2], "-1")
-        self.setData(index[3], "0")
-        # remove annotated picture
-        aname = self.itemData(index[6])
-        os.remove("{}".format(aname))
-
-    def deferPaper(self, index):
-        # When user defers paper, it must be unmarked or reverted already. Set status to "deferred"
-        self.setData(index[1], "deferred")
 
     def addPaper(self, paper):
         # Append new groupimage to list and append new row to table.
@@ -129,10 +102,6 @@ class ExamModel(QStandardItemModel):
             ]
         )
         return r
-
-    def tagPaper(self, index, txt):
-        # Set user-tag/comment
-        self.setData(index[3], txt)
 
 
 ##########################
@@ -363,7 +332,9 @@ class MarkerClient(QDialog):
             markedList = json.load(json_file)
             for x in markedList:
                 self.addTGVToList(
-                    TestPageGroup(x[0], fname="", stat="marked", mrk=x[2], mtime=x[3]),
+                    TestPageGroup(
+                        x[0], fname="", stat="marked", mrk=x[2], mtime=x[3], tags=x[4]
+                    ),
                     update=False,
                 )
 
@@ -436,14 +407,14 @@ class MarkerClient(QDialog):
         )
         if msg[0] == "ERR":
             return
-        # Return message should be [ACK, code, temp-filename]
+        # Return message should be [ACK, code, temp-filename, tags]
         # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
         fname = os.path.join(self.workingDirectory, msg[1] + ".png")
         # Get file from the tempfilename in the webdav
         tname = msg[2]
         messenger.getFileDav(tname, fname)
         # Add the page-group to the list of things to mark
-        self.addTGVToList(TestPageGroup(msg[1], fname))
+        self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]))
         # Ack that test received - server then deletes it from webdav
         msg = messenger.SRMsg(["mDWF", self.userName, self.token, tname])
         # Clean up the table
@@ -601,6 +572,7 @@ class MarkerClient(QDialog):
                 mtime,
                 self.pageGroup,
                 self.version,
+                self.prxM.data(index[4]),  # send the tags back too
             ]
         )
         # returns [ACK, #marked, #total]
@@ -714,7 +686,25 @@ class MarkerClient(QDialog):
         atb = AddTagBox(self, currentTag, list(tagSet))
         if atb.exec_() == QDialog.Accepted:
             txt = atb.TE.toPlainText().strip()
+            # truncate at 256 characters.
+            if len(txt) > 256:
+                txt = txt[:256]
+
             self.prxM.setData(index[4], txt)
+            # resize view too
+            self.ui.tableView.resizeRowsToContents()
+
+            # send updated tag back to server.
+            msg = messenger.SRMsg(
+                [
+                    "mTAG",
+                    self.userName,
+                    self.token,
+                    self.prxM.data(index[0]),
+                    self.prxM.data(index[4]),  # send the tags back too
+                ]
+            )
+
         return
 
     def setFilter(self):
