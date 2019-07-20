@@ -42,7 +42,6 @@ from tools import (
     CommandText,
     CommandTick,
     TextItem,
-    CommandWhiteBox,
 )
 
 
@@ -103,9 +102,15 @@ mousePress = {
     "tick": "mousePressTick",
     "zoom": "mousePressZoom",
 }
-mouseMove = {"box": "mouseMoveBox", "line": "mouseMoveLine", "pen": "mouseMovePen"}
+mouseMove = {
+    "box": "mouseMoveBox",
+    "delete": "mouseMoveDelete",
+    "line": "mouseMoveLine",
+    "pen": "mouseMovePen",
+}
 mouseRelease = {
     "box": "mouseReleaseBox",
+    "delete": "mouseReleaseDelete",
     "line": "mouseReleaseLine",
     "move": "mouseReleaseMove",
     "pen": "mouseReleasePen",
@@ -143,12 +148,14 @@ class PageScene(QGraphicsScene):
         self.highlight = QPen(QColor(255, 255, 0, 64), 50)
         self.brush = QBrush(self.ink.color())
         self.lightBrush = QBrush(QColor(255, 255, 0, 16))
+        self.deleteBrush = QBrush(QColor(255, 0, 0, 16))
         # Flags to indicate if drawing an arrow (vs line),
         # highlight (vs regular pen),
         # whitebox (vs regular box) --- now ellipse vs box
         self.arrowFlag = 0
         self.highlightFlag = 0
         self.ellipseFlag = 0
+        self.areaDelete = 0  # rmb drag deletes area
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
         self.currentPos = QPointF(0, 0)
@@ -343,6 +350,17 @@ class PageScene(QGraphicsScene):
         """Create a delete-command acting on the object
         under the mouse UNLESS it is the underlying group-image.
         """
+        if event.button() == Qt.RightButton:
+            self.areaDelete = 1
+            self.originPos = event.scenePos()
+            self.currentPos = self.originPos
+            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem.setPen(self.ink)
+            self.boxItem.setBrush(self.deleteBrush)
+            self.addItem(self.boxItem)
+            return
+
+        self.areaDelete = 0
         self.originPos = event.scenePos()
         # grab list of items in rectangle around click
         delItems = self.items(
@@ -517,6 +535,19 @@ class PageScene(QGraphicsScene):
             else:
                 self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
 
+    def mouseMoveDelete(self, event):
+        """Update the box as the mouse is moved. This
+        animates the drawing of the box for the user.
+        """
+        self.currentPos = event.scenePos()
+        if self.areaDelete == 1:
+            if self.boxItem is None:
+                self.boxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+            else:
+                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+
     def mouseMoveLine(self, event):
         """Update the line as the mouse is moved. This
         animates the drawing of the line for the user.
@@ -549,6 +580,21 @@ class PageScene(QGraphicsScene):
             command = CommandEllipse(self, self.ellipseItem.rect())
         self.ellipseFlag = 0
         self.undoStack.push(command)
+
+    def mouseReleaseDelete(self, event):
+        """Remove the temp boxitem (which was needed for animation)
+        and then delete all objects that lie within the box.
+        Push the resulting commands onto the undo stack
+        """
+        self.areaDelete = 0  # put flag back.
+        for delItem in self.boxItem.collidingItems(mode=Qt.IntersectsItemShape):
+            # for each colliding item, check that box contains it, then delete
+            if delItem is not self.imageItem and delItem.collidesWithItem(
+                self.boxItem, mode=Qt.ContainsItemShape
+            ):
+                command = CommandDelete(self, delItem)
+                self.undoStack.push(command)
+        self.removeItem(self.boxItem)
 
     def mouseReleaseLine(self, event):
         """Remove the temp lineitem (which was needed for animation)

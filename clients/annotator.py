@@ -31,7 +31,7 @@ modeLines = {
     "comment": "L: paste comment and associated mark.",
     "cross": "L: cross. M: ?-mark. R: checkmark.",
     "delta": "L: paste mark. M: ?-mark. R: checkmark/cross.",
-    "delete": "Delete object.",
+    "delete": "L: Delete object. R: delete area.",
     "line": "L: straight line. R: arrow.",
     "move": "Move object.",
     "pan": "Pan view.",
