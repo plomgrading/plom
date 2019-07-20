@@ -113,3 +113,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# backups
+~
+
+# mac detritus
+.DS_Store
