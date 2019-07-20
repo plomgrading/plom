@@ -236,6 +236,7 @@ class Annotator(QDialog):
             "\\": "Maximize Window",
             "-": "Zoom Out",
             "=": "Zoom In",
+            "ctrl-=": "Zoom Cycle",
             "`": "Set Mark 0",
             "0": "Set Mark 0",
             "1": "Set Mark 1",
