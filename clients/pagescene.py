@@ -114,6 +114,7 @@ mouseRelease = {
     "line": "mouseReleaseLine",
     "move": "mouseReleaseMove",
     "pen": "mouseReleasePen",
+    "pan": "mouseReleasePan",
 }
 
 
@@ -505,6 +506,7 @@ class PageScene(QGraphicsScene):
         else:
             self.parent().scale(1.25, 1.25)
         self.parent().centerOn(event.scenePos())
+        self.parent().zoomNull()
 
     # Mouse move tool functions.
     # Not relevant for most tools
@@ -614,6 +616,11 @@ class PageScene(QGraphicsScene):
         """Sets the cursor back to an open hand."""
         self.parent().setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
+
+    def mouseReleasePan(self, event):
+        """Update the current stored view rectangle."""
+        super(PageScene, self).mouseReleaseEvent(event)
+        self.parent().zoomNull()
 
     def mouseReleasePen(self, event):
         """Remove the temp pen-path (which was needed for animation)
