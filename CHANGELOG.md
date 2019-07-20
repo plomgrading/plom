@@ -9,8 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Client: right-mouse button with delete tool sweeps out a rectangle
+* Client: (annotator) right-mouse button with delete tool sweeps out a rectangle
   and deletes its contents.
+  
+* Client: (annotator) "ctrl-=" cycles through zooms (user, fit-width, fit-height).
 
 ### Changed
 
