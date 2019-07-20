@@ -7,7 +7,7 @@ import json
 import os
 import sys
 
-from PyQt5.QtCore import Qt, QSettings, QSize, pyqtSlot
+from PyQt5.QtCore import Qt, QSettings, QSize, QTimer, pyqtSlot
 from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap, QCloseEvent
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -33,7 +33,7 @@ modeLines = {
     "comment": "L: paste comment and associated mark.",
     "cross": "L: cross. M: ?-mark. R: checkmark.",
     "delta": "L: paste mark. M: ?-mark. R: checkmark/cross.",
-    "delete": "Delete object.",
+    "delete": "L: Delete object. R: delete area.",
     "line": "L: straight line. R: arrow. M: double-arrow",
     "move": "Move object.",
     "pan": "Pan view.",
@@ -105,6 +105,8 @@ class Annotator(QDialog):
         # set alt-enter / alt-return as shortcut to finish annotating
         # also set ctrl-n and ctrl-b as same shortcut.
         self.setEndShortCuts()
+        # set ctrl-+ as zoom cycle shortcut
+        self.setZoomShortCuts()
         # Set the tool icons
         self.setIcons()
         # Connect all the buttons to relevant functions
@@ -246,6 +248,7 @@ class Annotator(QDialog):
             "\\": "Maximize Window",
             "-": "Zoom Out",
             "=": "Zoom In",
+            "ctrl-=": "Zoom Cycle",
             "`": "Set Mark 0",
             "0": "Set Mark 0",
             "1": "Set Mark 1",
@@ -452,10 +455,16 @@ class Annotator(QDialog):
         self.endShortCut.activated.connect(self.endAndRelaunch)
         self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
         self.endShortCutb.activated.connect(self.endAndRelaunch)
+        # shortcuts for next paper
         self.endShortCutc = QShortcut(QKeySequence("Ctrl+n"), self)
         self.endShortCutc.activated.connect(self.endAndRelaunch)
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
         self.endShortCutd.activated.connect(self.endAndRelaunch)
+
+    def setZoomShortCuts(self):
+        # shortcuts for zoom-states
+        self.zoomCycleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
+        self.zoomCycleShortCut.activated.connect(self.view.zoomCycle)
 
     # Simple mode change functions
     def boxMode(self):
@@ -681,12 +690,17 @@ class Annotator(QDialog):
             self.commentWarn = self.parent.annotatorSettings.value("commentWarnings")
         if self.parent.annotatorSettings.value("tool") is not None:
             self.loadModeFromBefore(self.parent.annotatorSettings.value("tool"))
+        if self.parent.annotatorSettings.value("viewRectangle") is not None:
+            initRect = self.parent.annotatorSettings.value("viewRectangle")
+            # put in slight delay so that any resize events are done.
+            QTimer.singleShot(200, lambda: self.view.initialZoom(initRect))
 
     def saveWindowSettings(self):
         self.parent.annotatorSettings.setValue("geometry", self.saveGeometry())
         self.parent.annotatorSettings.setValue("markWarnings", self.markWarn)
         self.parent.annotatorSettings.setValue("commentWarnings", self.commentWarn)
         self.parent.annotatorSettings.setValue("tool", self.view.scene.mode)
+        self.parent.annotatorSettings.setValue("viewRectangle", self.view.vrect)
 
     def closeEvent(self, relaunch):
         """When the user closes the window - either by clicking on the

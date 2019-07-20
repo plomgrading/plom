@@ -290,6 +290,8 @@ class MarkerClient(QDialog):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         # Get a pagegroup to mark from the server
         self.requestNext()
+        # reset the view so whole exam shown.
+        self.testImg.resetB.animateClick()
 
     def requestToken(self):
         """Send authorisation request (AUTH) to server.

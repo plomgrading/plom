@@ -150,14 +150,22 @@ class CommandDelete(QUndoCommand):
         if isinstance(self.deleteItem, DeltaItem):
             # Mark decreases by delta
             self.scene.markChangedSignal.emit(-self.deleteItem.delta)
-        self.scene.removeItem(self.deleteItem)
+        # nicely animate the deletion
+        if self.deleteItem.animator is not None:
+            self.deleteItem.animator.flash_undo()
+            QTimer.singleShot(500, lambda: self.scene.removeItem(self.deleteItem))
+        else:
+            self.scene.removeItem(self.deleteItem)
 
     def undo(self):
         # If the object is a DeltaItem then emit a mark-changed signal.
         if isinstance(self.deleteItem, DeltaItem):
             # Mark increases by delta
             self.scene.markChangedSignal.emit(self.deleteItem.delta)
+        # nicely animate the undo of deletion
         self.scene.addItem(self.deleteItem)
+        if self.deleteItem.animator is not None:
+            self.deleteItem.animator.flash_redo()
 
 
 class CommandHighlight(QUndoCommand):
@@ -398,7 +406,7 @@ class CommandEllipse(QUndoCommand):
 # properties like width and colour. Hence the extra layer
 # of classes.
 class ArrowItem(QGraphicsPathItem):
-    def __init__(self, pti, ptf):
+    def __init__(self, pti, ptf, parent=None):
         """Creates an arrow from pti to ptf.
         Some manipulations required to draw the arrow head.
         """
@@ -529,8 +537,9 @@ class ArrowDoubleItem(QGraphicsPathItem):
 
 class BoxItem(QGraphicsRectItem):
     # Very similar to the arrowitem but simpler to draw the box.
-    def __init__(self, rect):
-        super(BoxItem, self).__init__()
+    def __init__(self, rect, parent=None):
+        super(BoxItem, self).__init__(parent)
+        self.animator = parent
         self.rect = rect
         self.setRect(self.rect)
         self.setPen(QPen(Qt.red, 2))
@@ -556,8 +565,9 @@ class BoxItem(QGraphicsRectItem):
 
 class CrossItem(QGraphicsPathItem):
     # Very similar to the arrowitem.
-    def __init__(self, pt):
-        super(CrossItem, self).__init__()
+    def __init__(self, pt, parent=None):
+        super(CrossItem, self).__init__(parent)
+        self.animator = parent
         self.pt = pt
         self.path = QPainterPath()
         # Draw a cross whose vertex is at pt (under mouse click)
@@ -583,8 +593,9 @@ class CrossItem(QGraphicsPathItem):
 
 class HighLightItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but much simpler
-    def __init__(self, path):
-        super(HighLightItem, self).__init__()
+    def __init__(self, path, parent=None):
+        super(HighLightItem, self).__init__(parent)
+        self.animator = parent
         self.path = path
         self.setPath(self.path)
         self.setPen(QPen(QColor(255, 255, 0, 64), 50))
@@ -615,8 +626,9 @@ class HighLightItem(QGraphicsPathItem):
 
 class LineItem(QGraphicsLineItem):
     # Very similar to the arrowitem, but no arrowhead
-    def __init__(self, pti, ptf):
-        super(LineItem, self).__init__()
+    def __init__(self, pti, ptf, parent=None):
+        super(LineItem, self).__init__(parent)
+        self.animator = parent
         self.pti = pti
         self.ptf = ptf
         self.setLine(QLineF(self.pti, self.ptf))
@@ -642,8 +654,9 @@ class LineItem(QGraphicsLineItem):
 
 class PenItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but much simpler
-    def __init__(self, path):
-        super(PenItem, self).__init__()
+    def __init__(self, path, parent=None):
+        super(PenItem, self).__init__(parent)
+        self.animator = parent
         self.path = path
         self.setPath(self.path)
         self.setPen(QPen(Qt.red, 2))
@@ -755,8 +768,9 @@ class PenArrowItem(QGraphicsItemGroup):
 
 class QMarkItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but careful drawing the "?"
-    def __init__(self, pt):
-        super(QMarkItem, self).__init__()
+    def __init__(self, pt, parent=None):
+        super(QMarkItem, self).__init__(parent)
+        self.animator = parent
         self.pt = pt
         self.path = QPainterPath()
         # Draw a ?-mark with barycentre under mouseclick
@@ -785,8 +799,9 @@ class QMarkItem(QGraphicsPathItem):
 
 class TickItem(QGraphicsPathItem):
     # Very similar to the arrowitem
-    def __init__(self, pt):
-        super(TickItem, self).__init__()
+    def __init__(self, pt, parent=None):
+        super(TickItem, self).__init__(parent)
+        self.animator = parent
         self.pt = pt
         self.path = QPainterPath()
         # Draw the checkmark with barycentre under mouseclick.
@@ -810,8 +825,9 @@ class TickItem(QGraphicsPathItem):
 
 class EllipseItem(QGraphicsEllipseItem):
     # Very similar to the arrowitem
-    def __init__(self, rect):
-        super(EllipseItem, self).__init__()
+    def __init__(self, rect, parent=None):
+        super(EllipseItem, self).__init__(parent)
+        self.animator = parent
         self.rect = rect
         self.setRect(self.rect)
         self.setPen(QPen(Qt.red, 2))
@@ -841,6 +857,7 @@ class TextItem(QGraphicsTextItem):
     # Shift-return ends the editor
     def __init__(self, parent, fontsize=10):
         super(TextItem, self).__init__()
+        self.animator = self
         self.parent = parent
         # Thick is thickness of bounding box hightlight used
         # to highlight the object when undo / redo happens.
@@ -984,6 +1001,7 @@ class DeltaItem(QGraphicsTextItem):
     # Similar to textitem above
     def __init__(self, pt, delta, fontsize=10):
         super(DeltaItem, self).__init__()
+        self.animator = self
         self.thick = 2
         self.delta = delta
         self.setDefaultTextColor(Qt.red)
@@ -1073,7 +1091,7 @@ class ArrowItemObject(QGraphicsObject):
     # animation of its thickness
     def __init__(self, pti, ptf):
         super(ArrowItemObject, self).__init__()
-        self.ai = ArrowItem(pti, ptf)
+        self.ai = ArrowItem(pti, ptf, self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -1140,7 +1158,7 @@ class BoxItemObject(QGraphicsObject):
     # As per the ArrowItemObject, except animate the opacity of the box.
     def __init__(self, rect):
         super(BoxItemObject, self).__init__()
-        self.bi = BoxItem(rect)
+        self.bi = BoxItem(rect, self)
         self.anim = QPropertyAnimation(self, b"opacity")
 
     def flash_undo(self):
@@ -1172,7 +1190,7 @@ class CrossItemObject(QGraphicsObject):
     # As per the ArrowItemObject
     def __init__(self, pt):
         super(CrossItemObject, self).__init__()
-        self.ci = CrossItem(pt)
+        self.ci = CrossItem(pt, self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -1203,7 +1221,7 @@ class HighLightItemObject(QGraphicsObject):
     # the highlighter path
     def __init__(self, path):
         super(HighLightItemObject, self).__init__()
-        self.hli = HighLightItem(path)
+        self.hli = HighLightItem(path, self)
         self.anim = QPropertyAnimation(self, b"opacity")
 
     def flash_undo(self):
@@ -1233,7 +1251,7 @@ class LineItemObject(QGraphicsObject):
     # As per the ArrowItemObject
     def __init__(self, pti, ptf):
         super(LineItemObject, self).__init__()
-        self.li = LineItem(pti, ptf)
+        self.li = LineItem(pti, ptf, self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -1263,7 +1281,7 @@ class PenItemObject(QGraphicsObject):
     # As per the ArrowItemObject
     def __init__(self, path):
         super(PenItemObject, self).__init__()
-        self.pi = PenItem(path)
+        self.pi = PenItem(path, self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -1325,7 +1343,7 @@ class QMarkItemObject(QGraphicsObject):
     # As per the ArrowItemObject
     def __init__(self, pt):
         super(QMarkItemObject, self).__init__()
-        self.qmi = QMarkItem(pt)
+        self.qmi = QMarkItem(pt, self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -1355,7 +1373,7 @@ class TickItemObject(QGraphicsObject):
     # As per the ArrowItemObject
     def __init__(self, pt):
         super(TickItemObject, self).__init__()
-        self.ti = TickItem(pt)
+        self.ti = TickItem(pt, self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -1381,41 +1399,11 @@ class TickItemObject(QGraphicsObject):
         self.ti.setPen(QPen(Qt.red, value))
 
 
-class WhiteBoxItemObject(QGraphicsObject):
-    # As per the ArrowItemObject - animate thickness of boundary
-    def __init__(self, rect):
-        super(WhiteBoxItemObject, self).__init__()
-        self.wbi = WhiteBoxItem(rect)
-        self.anim = QPropertyAnimation(self, b"thickness")
-
-    def flash_undo(self):
-        self.anim.setDuration(500)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 8)
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        self.anim.setDuration(250)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 6)
-        self.anim.setEndValue(2)
-        self.anim.start()
-
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.wbi.pen().width()
-
-    @thickness.setter
-    def thickness(self, value):
-        self.wbi.setPen(QPen(Qt.red, value))
-
-
 class EllipseItemObject(QGraphicsObject):
     # As per the ArrowItemObject - animate thickness of boundary
     def __init__(self, rect):
         super(EllipseItemObject, self).__init__()
-        self.ei = EllipseItem(rect)
+        self.ei = EllipseItem(rect, self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):

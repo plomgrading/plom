@@ -26,7 +26,7 @@ from authenticate import Authority
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
 
-__version__ = "0.1.0"
+__version__ = "0.1.0+"
 
 # default server values and location of grouped-scans.
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
