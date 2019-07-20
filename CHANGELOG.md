@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Client: right-mouse button with delete tool sweeps out a rectangle
+  and deletes its contents.
+
 ### Changed
 
 ### Fixed
