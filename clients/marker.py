@@ -349,7 +349,7 @@ class MarkerClient(QDialog):
 
     def checkFiles(self, pr):
         tgv = self.prxM.getPrefix(pr)
-        if self.prxM.getOriginalFile(pr) is not "":
+        if self.prxM.getOriginalFile(pr) != "":
             return
         msg = messenger.SRMsg(["mGGI", self.userName, self.token, tgv])
         if msg[0] == "ERR":
@@ -466,9 +466,9 @@ class MarkerClient(QDialog):
         # if no test then return
         if len(index) == 0:
             return
-        if self.prxM.data(index[1]) is "deferred":
+        if self.prxM.data(index[1]) == "deferred":
             return
-        if self.prxM.data(index[1]) is "marked":
+        if self.prxM.data(index[1]) == "marked":
             msg = ErrorMessage("Paper is already marked - revert it before deferring.")
             msg.exec_()
             return
