@@ -29,17 +29,17 @@ from uiFiles.ui_annotator_rhm import Ui_annotator_rhm
 
 # Short descriptions of each tool to display to user.
 modeLines = {
-    "box": "L: highlighted box. R: highlighted ellipse.",
+    "box": "L: highlighted box. R/Shift: highlighted ellipse.",
     "comment": "L: paste comment and associated mark.",
-    "cross": "L: cross. M: ?-mark. R: checkmark.",
-    "delta": "L: paste mark. M: ?-mark. R: checkmark/cross.",
-    "delete": "L: Delete object. R: delete area.",
-    "line": "L: straight line. R: arrow. M: double-arrow",
+    "cross": "L: cross. M/Ctrl: ?-mark. R/Shift: checkmark.",
+    "delta": "L: paste mark. M/Ctrl: ?-mark. R/Shift: checkmark/cross.",
+    "delete": "L: Delete object. R/Shift: delete area.",
+    "line": "L: straight line. M/Ctrl: double-arrow. R/Shift: arrow.",
     "move": "Move object.",
     "pan": "Pan view.",
-    "pen": "L: freehand pen. R: freehand highlighter. M: pen with arrows.",
+    "pen": "L: freehand pen. M/Ctrl: pen with arrows. R/Shift: freehand highlighter.",
     "text": "Text. Enter: newline, Shift-Enter/ESC: finish.",
-    "tick": "L: checkmark. M: ?-mark. R: cross.",
+    "tick": "L: checkmark. M/Ctrl: ?-mark. R/Shift: cross.",
     "zoom": "L: Zoom in. R: zoom out.",
 }
 

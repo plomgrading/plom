@@ -9,6 +9,7 @@ from PyQt5.QtCore import Qt, QEvent, QLineF, QPointF, QRectF, pyqtSignal
 from PyQt5.QtGui import (
     QBrush,
     QColor,
+    QGuiApplication,
     QPainter,
     QPainterPath,
     QPen,
@@ -271,7 +272,17 @@ class PageScene(QGraphicsScene):
         self.currentPos = self.originPos
         # If left-click then a highlight box, else an ellipse.
         # Set a flag to tell the mouseReleaseBox function which.
-        if event.button() == Qt.LeftButton:
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
+            self.ellipseFlag = 1
+            self.ellipseItem = QGraphicsEllipseItem(
+                QRectF(self.originPos.x(), self.originPos.y(), 0, 0)
+            )
+            self.ellipseItem.setPen(self.ink)
+            self.ellipseItem.setBrush(self.lightBrush)
+            self.addItem(self.ellipseItem)
+        else:
             self.ellipseFlag = 0
             # Create a temp box item for animating the drawing as the
             # user moves the mouse.
@@ -280,14 +291,6 @@ class PageScene(QGraphicsScene):
             self.boxItem.setPen(self.ink)
             self.boxItem.setBrush(self.lightBrush)
             self.addItem(self.boxItem)
-        else:
-            self.ellipseFlag = 1
-            self.ellipseItem = QGraphicsEllipseItem(
-                QRectF(self.originPos.x(), self.originPos.y(), 0, 0)
-            )
-            self.ellipseItem.setPen(self.ink)
-            self.ellipseItem.setBrush(self.lightBrush)
-            self.addItem(self.ellipseItem)
 
     def mousePressComment(self, event):
         """Create a marked-comment-item from whatever is the currently
@@ -332,9 +335,13 @@ class PageScene(QGraphicsScene):
         """
         # Grab the mouseclick location and create command.
         pt = event.scenePos()
-        if event.button() == Qt.RightButton:
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
             command = CommandTick(self, pt)
-        elif event.button() == Qt.MiddleButton:
+        elif (event.button() == Qt.MiddleButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+        ):
             command = CommandQMark(self, pt)
         else:
             command = CommandCross(self, pt)
@@ -345,7 +352,9 @@ class PageScene(QGraphicsScene):
         """Create a delete-command acting on the object
         under the mouse UNLESS it is the underlying group-image.
         """
-        if event.button() == Qt.RightButton:
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
             self.areaDelete = 1
             self.originPos = event.scenePos()
             self.currentPos = self.originPos
@@ -380,15 +389,20 @@ class PageScene(QGraphicsScene):
         """
         # Grab mouse click location and create command.
         pt = event.scenePos()
-        if event.button() == Qt.LeftButton:
-            command = CommandDelta(self, pt, self.markDelta, self.fontSize)
-        elif event.button() == Qt.MiddleButton:
-            command = CommandQMark(self, pt)
-        else:
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
             if self.markDelta > 0:
                 command = CommandCross(self, pt)
             else:
                 command = CommandTick(self, pt)
+        elif (event.button() == Qt.MiddleButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+        ):
+            command = CommandQMark(self, pt)
+        else:
+            command = CommandDelta(self, pt, self.markDelta, self.fontSize)
+
         # push command onto undoStack.
         self.undoStack.push(command)
 
@@ -399,12 +413,16 @@ class PageScene(QGraphicsScene):
         else an arrow is drawn at finish.
         """
         # Set arrow flag to tell mouseReleaseLine to draw line or arrow
-        if event.button() == Qt.LeftButton:
-            self.arrowFlag = 1
-        elif event.button() == Qt.RightButton:
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
             self.arrowFlag = 2
-        else:
+        elif (event.button() == Qt.MiddleButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+        ):
             self.arrowFlag = 4
+        else:
+            self.arrowFlag = 1
         # Create a temp line which is updated as mouse moves.
         # Do not push command onto undoStack until drawing finished.
         self.originPos = event.scenePos()
@@ -435,18 +453,23 @@ class PageScene(QGraphicsScene):
         self.path.lineTo(self.currentPos)
         self.pathItem = QGraphicsPathItem(self.path)
         # If left-click then setPen to the standard thin-red
-        # Else set to the highlighter.
+        # Else set to the highlighter or pen with arrows.
         # set highlightflag so correct object created on mouse-release
-        if event.button() == Qt.LeftButton:
-            self.pathItem.setPen(self.ink)
-            self.highlightFlag = 1
-            # non-zero value so we don't add to path after mouse-release
-        elif event.button() == Qt.RightButton:
+        # non-zero value so we don't add to path after mouse-release
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
             self.pathItem.setPen(self.highlight)
             self.highlightFlag = 2
-        else:  # middle button is pen-path with arrows at both ends
+        elif (event.button() == Qt.MiddleButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+        ):
+            # middle button is pen-path with arrows at both ends
             self.pathItem.setPen(self.ink)
             self.highlightFlag = 4
+        else:
+            self.pathItem.setPen(self.ink)
+            self.highlightFlag = 1
         # Note - command not pushed onto stack until path is finished on
         # mouse-release.
         self.addItem(self.pathItem)
@@ -489,9 +512,13 @@ class PageScene(QGraphicsScene):
         """
         # See mouse press cross function.
         pt = event.scenePos()
-        if event.button() == Qt.RightButton:
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
             command = CommandCross(self, pt)
-        elif event.button() == Qt.MiddleButton:
+        elif (event.button() == Qt.MiddleButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+        ):
             command = CommandQMark(self, pt)
         else:
             command = CommandTick(self, pt)
@@ -501,7 +528,9 @@ class PageScene(QGraphicsScene):
         """Mouse-click changes the view-scale on the parent
         qgraphicsview. left zooms in, right zooms out.
         """
-        if event.button() == Qt.RightButton:
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
             self.parent().scale(0.8, 0.8)
         else:
             self.parent().scale(1.25, 1.25)
