@@ -810,6 +810,9 @@ class PageScene(QGraphicsScene):
             self.blurb = TextItem(self, self.fontSize)
             self.blurb.setPlainText(X[0])
             self.blurb.contents = X[0]
+            # latex it if needed.
+            if self.blurb.contents[:4].upper() == "TEX:":
+                self.blurb.textToPng()
             self.blurb.setPos(QPointF(X[1], X[2]))
             self.undoStack.push(CommandText(self, self.blurb, self.ink))
 
@@ -824,6 +827,9 @@ class PageScene(QGraphicsScene):
             self.blurb = TextItem(self, self.fontSize)
             self.blurb.setPlainText(X[3])
             self.blurb.contents = X[3]
+            # latex it if needed.
+            if self.blurb.contents[:4].upper() == "TEX:":
+                self.blurb.textToPng()
             self.blurb.setPos(QPointF(X[0], X[1]))
             self.undoStack.push(
                 CommandGDT(self, QPointF(X[0], X[1]), X[2], self.blurb, self.fontSize)
