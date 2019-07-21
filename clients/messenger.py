@@ -68,7 +68,7 @@ def SRMsg(msg):
         msg.exec_()
         return rmsg
     else:
-        print(">>> Error I didn't expect. Return message was {}".rmsg)
+        print(">>> Error I didn't expect. Return message was {}".format(rmsg))
         msg = ErrorMessage("Something really wrong has happened.")
 
 

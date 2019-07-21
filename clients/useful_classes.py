@@ -86,6 +86,7 @@ class SimpleTableView(QTableView):
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         # Resize to fit the contents
         self.resizeRowsToContents()
+        self.horizontalHeader().setStretchLastSection(True)
 
     def keyPressEvent(self, event):
         # If user hits enter or return, then fire off
@@ -524,12 +525,10 @@ class AddCommentBox(QDialog):
         self.parent = parent
         self.CB = QComboBox()
         self.TE = QTextEdit()
-        self.SB = QSpinBox()
 
         flay = QFormLayout()
-        flay.addRow("Enter text", self.TE)
-        flay.addRow("Choose text", self.CB)
-        flay.addRow("Set delta", self.SB)
+        flay.addRow("Enter tag\n(max 256 char)", self.TE)
+        flay.addRow("Choose tag", self.CB)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -552,6 +551,42 @@ class AddCommentBox(QDialog):
             self.TE.insertPlainText(curText)
         if curDelta is not None:
             self.SB.setValue(int(curDelta))
+
+    def changedCB(self):
+        self.TE.clear()
+        self.TE.insertPlainText(self.CB.currentText())
+
+
+class AddTagBox(QDialog):
+    def __init__(self, parent, currentTag, tagList=[]):
+        super(QDialog, self).__init__()
+        self.parent = parent
+        self.CB = QComboBox()
+        self.TE = QTextEdit()
+
+        flay = QFormLayout()
+        flay.addRow("Enter tag\n(max 256 char)", self.TE)
+        flay.addRow("Choose tag", self.CB)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+
+        # set up widgets
+        buttons.accepted.connect(self.accept)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.CB.addItem("")
+        self.CB.addItems(tagList)
+        # Set up TE and CB so that when CB changed, text is updated
+        self.CB.currentTextChanged.connect(self.changedCB)
+        # If supplied with current text/delta then set them
+        if currentTag is not None:
+            self.TE.clear()
+            self.TE.insertPlainText(currentTag)
 
     def changedCB(self):
         self.TE.clear()

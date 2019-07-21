@@ -30,6 +30,7 @@ class GroupImage(Model):
     time = DateTimeField()
     mark = IntegerField()
     markingTime = IntegerField()
+    tags = CharField()
 
     class Meta:
         database = markdb
@@ -64,10 +65,10 @@ class MarkDatabase:
     def printGroupImageWithCode(self, code):
         """Print every record with given code"""
         query = (
-            GroupImage.select().where(GroupImage.tgz == code).order_by(GroupImage.tgv)
+            GroupImage.select().where(GroupImage.tgv == code).order_by(GroupImage.tgv)
         )
         for x in query:
-            print(x.tgv, x.status, x.user, x.time, x.mark, x.markingTime)
+            print(x.tgv, x.status, x.user, x.time, x.mark, x.markingTime, x.tags)
 
     def printToDo(self):
         """Print every record that is still ToDo"""
@@ -97,7 +98,7 @@ class MarkDatabase:
             .order_by(GroupImage.tgv)
         )
         for x in query:
-            print(x.tgv, x.status, x.user, x.time, x.mark, x.markingTime)
+            print(x.tgv, x.status, x.user, x.time, x.mark, x.markingTime, x.tags)
 
     def printAllGroupImages(self):
         """Print all records"""
@@ -154,6 +155,7 @@ class MarkDatabase:
                     time=datetime.now(),
                     mark=-1,
                     markingTime=0,
+                    tags="",
                 )
         except IntegrityError:
             self.logging.info("GroupImage {} {} already exists.".format(t, code))
@@ -174,12 +176,14 @@ class MarkDatabase:
                 x.time = datetime.now()
                 x.save()
                 # return the tgv and filename
-                return (x.tgv, x.originalFile)
+                return (x.tgv, x.originalFile, x.tags)
         except GroupImage.DoesNotExist:
             self.logging.info("Nothing left on To-Do pile")
             return (None, None)
 
-    def takeGroupImageFromClient(self, code, username, mark, fname, pname, cname, mt):
+    def takeGroupImageFromClient(
+        self, code, username, mark, fname, pname, cname, mt, tag
+    ):
         """Get marked image back from client and update the record
         in the database.
         """
@@ -196,6 +200,7 @@ class MarkDatabase:
                 x.commentFile = cname
                 x.time = datetime.now()
                 x.markingTime = mt
+                x.tags = tag
                 x.save()
                 self.logging.info(
                     "GroupImage {} marked {} by user {} and placed at {}".format(
@@ -209,6 +214,30 @@ class MarkDatabase:
                     code, username
                 )
             )
+
+    def setTag(self, username, code, tag):
+        """Get marked image back from client and update the record
+        in the database.
+        """
+        try:
+            with markdb.atomic():
+                # get the record by code and username
+                x = GroupImage.get(tgv=code, user=username)
+                # update tag
+                x.tags = tag
+                x.save()
+                self.logging.info(
+                    "GroupImage {} tagged {} by user {}".format(code, tag, username)
+                )
+                return True
+        except GroupImage.DoesNotExist:
+            self.printGroupImageWithCode(code)
+            self.logging.info(
+                "That GroupImage number {} / username {} pair not known".format(
+                    code, username
+                )
+            )
+        return False
 
     def didntFinish(self, username, code):
         """When user logs off, any images they have still out should be put
@@ -229,6 +258,7 @@ class MarkDatabase:
                 x.user = "None"
                 x.time = datetime.now()
                 x.markingTime = 0
+                # x.tags = "" tags are not cleared
                 x.save()
                 self.logging.info(
                     ">>> Returning GroupImage {} from user {}".format(x.tgv, username)
@@ -265,6 +295,7 @@ class MarkDatabase:
             x.user = "None"
             x.time = datetime.now()
             x.markingTime = 0
+            # x.tags = "" # tag is not cleared
             x.save()
             self.logging.info(
                 ">>> Returning GroupImage {} from {} to the ToDo pile".format(
@@ -281,7 +312,7 @@ class MarkDatabase:
         markedList = []
         for x in query:
             if x.status == "Marked":
-                markedList.append([x.tgv, x.status, x.mark, x.markingTime])
+                markedList.append([x.tgv, x.status, x.mark, x.markingTime, x.tags])
         return markedList
 
     def getGroupImage(self, username, code):
