@@ -194,7 +194,7 @@ class CommentWidget(QWidget):
 
     def editCurrent(self, curDelta, curText):
         # text items in scene.
-        lst = self.parent.getTextList()
+        lst = self.parent.getComments()
         # text items already in comment list
         clist = []
         for r in range(self.CL.cmodel.rowCount()):
