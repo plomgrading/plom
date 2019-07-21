@@ -138,11 +138,10 @@ class CommandDelta(QUndoCommand):
 class CommandDelete(QUndoCommand):
     # Deletes the graphicsitem. Have to be careful when it is
     # a delta-item which changes the current mark
-    def __init__(self, scene, deleteItem, pt):
+    def __init__(self, scene, deleteItem):
         super(CommandDelete, self).__init__()
         self.scene = scene
         self.deleteItem = deleteItem
-        self.pt = pt
         self.setText("Delete")
 
     def redo(self):
@@ -152,7 +151,8 @@ class CommandDelete(QUndoCommand):
             self.scene.markChangedSignal.emit(-self.deleteItem.delta)
         # nicely animate the deletion
         if self.deleteItem.animator is not None:
-            self.deleteItem.animator.flash_undo()
+            for X in self.deleteItem.animator:
+                X.flash_undo()
             QTimer.singleShot(500, lambda: self.scene.removeItem(self.deleteItem))
         else:
             self.scene.removeItem(self.deleteItem)
@@ -165,7 +165,8 @@ class CommandDelete(QUndoCommand):
         # nicely animate the undo of deletion
         self.scene.addItem(self.deleteItem)
         if self.deleteItem.animator is not None:
-            self.deleteItem.animator.flash_redo()
+            for X in self.deleteItem.animator:
+                X.flash_redo()
 
 
 class CommandHighlight(QUndoCommand):
@@ -539,7 +540,7 @@ class BoxItem(QGraphicsRectItem):
     # Very similar to the arrowitem but simpler to draw the box.
     def __init__(self, rect, parent=None):
         super(BoxItem, self).__init__(parent)
-        self.animator = parent
+        self.animator = [parent]
         self.rect = rect
         self.setRect(self.rect)
         self.setPen(QPen(Qt.red, 2))
@@ -567,7 +568,7 @@ class CrossItem(QGraphicsPathItem):
     # Very similar to the arrowitem.
     def __init__(self, pt, parent=None):
         super(CrossItem, self).__init__(parent)
-        self.animator = parent
+        self.animator = [parent]
         self.pt = pt
         self.path = QPainterPath()
         # Draw a cross whose vertex is at pt (under mouse click)
@@ -595,7 +596,7 @@ class HighLightItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but much simpler
     def __init__(self, path, parent=None):
         super(HighLightItem, self).__init__(parent)
-        self.animator = parent
+        self.animator = [parent]
         self.path = path
         self.setPath(self.path)
         self.setPen(QPen(QColor(255, 255, 0, 64), 50))
@@ -628,7 +629,7 @@ class LineItem(QGraphicsLineItem):
     # Very similar to the arrowitem, but no arrowhead
     def __init__(self, pti, ptf, parent=None):
         super(LineItem, self).__init__(parent)
-        self.animator = parent
+        self.animator = [parent]
         self.pti = pti
         self.ptf = ptf
         self.setLine(QLineF(self.pti, self.ptf))
@@ -656,7 +657,7 @@ class PenItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but much simpler
     def __init__(self, path, parent=None):
         super(PenItem, self).__init__(parent)
-        self.animator = parent
+        self.animator = [parent]
         self.path = path
         self.setPath(self.path)
         self.setPen(QPen(Qt.red, 2))
@@ -770,7 +771,7 @@ class QMarkItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but careful drawing the "?"
     def __init__(self, pt, parent=None):
         super(QMarkItem, self).__init__(parent)
-        self.animator = parent
+        self.animator = [parent]
         self.pt = pt
         self.path = QPainterPath()
         # Draw a ?-mark with barycentre under mouseclick
@@ -801,7 +802,7 @@ class TickItem(QGraphicsPathItem):
     # Very similar to the arrowitem
     def __init__(self, pt, parent=None):
         super(TickItem, self).__init__(parent)
-        self.animator = parent
+        self.animator = [parent]
         self.pt = pt
         self.path = QPainterPath()
         # Draw the checkmark with barycentre under mouseclick.
@@ -827,7 +828,7 @@ class EllipseItem(QGraphicsEllipseItem):
     # Very similar to the arrowitem
     def __init__(self, rect, parent=None):
         super(EllipseItem, self).__init__(parent)
-        self.animator = parent
+        self.animator = [parent]
         self.rect = rect
         self.setRect(self.rect)
         self.setPen(QPen(Qt.red, 2))
@@ -857,7 +858,7 @@ class TextItem(QGraphicsTextItem):
     # Shift-return ends the editor
     def __init__(self, parent, fontsize=10):
         super(TextItem, self).__init__()
-        self.animator = self
+        self.animator = [self]
         self.parent = parent
         # Thick is thickness of bounding box hightlight used
         # to highlight the object when undo / redo happens.
@@ -1001,7 +1002,7 @@ class DeltaItem(QGraphicsTextItem):
     # Similar to textitem above
     def __init__(self, pt, delta, fontsize=10):
         super(DeltaItem, self).__init__()
-        self.animator = self
+        self.animator = [self]
         self.thick = 2
         self.delta = delta
         self.setDefaultTextColor(Qt.red)
@@ -1442,16 +1443,14 @@ class CommandGDT(QUndoCommand):
         self.setText("GroupDeltaText")
 
     def redo(self):
-        self.gdt.di.flash_redo()
-        self.gdt.blurb.flash_redo()
+        # self.gdt.flash_redo()
         self.scene.addItem(self.gdt)
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
         self.scene.markChangedSignal.emit(self.delta)
 
     def undo(self):
-        self.gdt.di.flash_undo()
-        self.gdt.blurb.flash_undo()
+        # self.gdt.flash_undo()
         QTimer.singleShot(500, lambda: self.scene.removeItem(self.gdt))
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark decreased by delta
@@ -1464,6 +1463,9 @@ class GroupDTItem(QGraphicsItemGroup):
         self.pt = pt
         self.di = DeltaItem(pt, delta, fontsize)  # positioned so centre under click
         self.blurb = blurb  # is a textitem already
+        # set up animators for delete
+        self.animator = [self.di, self.blurb]
+
         # move blurb so that its top-left corner is next to top-right corner of delta.
         cr = self.di.boundingRect()
         self.blurb.moveBy(
@@ -1471,7 +1473,6 @@ class GroupDTItem(QGraphicsItemGroup):
         )
         self.addToGroup(self.di)
         self.addToGroup(self.blurb)
-
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
@@ -1483,8 +1484,7 @@ class GroupDTItem(QGraphicsItemGroup):
 
     def paint(self, painter, option, widget):
         # paint a bounding rectangle for undo/redo highlighting
-        painter.setPen(QPen(Qt.red, 0.5))
-        painter.setPen(Qt.DotLine)
+        painter.setPen(QPen(Qt.red, 0.5, style=Qt.DotLine))
         painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
         super(GroupDTItem, self).paint(painter, option, widget)

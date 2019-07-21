@@ -378,7 +378,14 @@ class PageScene(QGraphicsScene):
         if self.deleteItem == self.imageItem:
             self.deleteItem = None
             return
-        command = CommandDelete(self, self.deleteItem, self.originPos)
+
+        if isinstance(self.deleteItem, DeltaItem) or isinstance(
+            self.deleteItem, TextItem
+        ):
+            if self.deleteItem.group() is not None:  # object part of GroupDeltaText
+                self.deleteItem = self.deleteItem.group()
+
+        command = CommandDelete(self, self.deleteItem)
         self.undoStack.push(command)
 
     def mousePressDelta(self, event):
@@ -625,8 +632,9 @@ class PageScene(QGraphicsScene):
             if delItem is not self.imageItem and delItem.collidesWithItem(
                 self.boxItem, mode=Qt.ContainsItemShape
             ):
-                command = CommandDelete(self, delItem)
-                self.undoStack.push(command)
+                if delItem.group() is None:  # object not part of GroupDeltaText
+                    command = CommandDelete(self, delItem)
+                    self.undoStack.push(command)
         self.removeItem(self.boxItem)
 
     def mouseReleaseLine(self, event):
