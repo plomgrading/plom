@@ -583,12 +583,8 @@ class MarkerClient(QDialog):
                 remarkFlag = True
             else:
                 return
-        # If paper is untouched or reverted copy the original image to
-        # the annotated filename.
-        if self.prxM.data(index[1]) in ["untouched", "reverted"]:
-            shutil.copyfile(
-                "{}".format(self.prxM.getOriginalFile(index[0].row())), aname
-            )
+        # Copy the original image to the annotated filename.
+        shutil.copyfile("{}".format(self.prxM.getOriginalFile(index[0].row())), aname)
 
         # Get mark, markingtime, and launch-again flag from 'waitForAnnotator'
         if remarkFlag:
