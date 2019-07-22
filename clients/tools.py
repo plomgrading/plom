@@ -149,6 +149,10 @@ class CommandDelete(QUndoCommand):
         if isinstance(self.deleteItem, DeltaItem):
             # Mark decreases by delta
             self.scene.markChangedSignal.emit(-self.deleteItem.delta)
+        # If the object is a GroupTextDeltaItem then emit a mark-changed signal.
+        if isinstance(self.deleteItem, GroupDTItem):
+            # Mark decreases by delta
+            self.scene.markChangedSignal.emit(-self.deleteItem.di.delta)
         # nicely animate the deletion
         if self.deleteItem.animator is not None:
             for X in self.deleteItem.animator:
@@ -162,6 +166,10 @@ class CommandDelete(QUndoCommand):
         if isinstance(self.deleteItem, DeltaItem):
             # Mark increases by delta
             self.scene.markChangedSignal.emit(self.deleteItem.delta)
+        # If the object is a GroupTextDeltaItem then emit a mark-changed signal.
+        if isinstance(self.deleteItem, GroupDTItem):
+            # Mark decreases by delta
+            self.scene.markChangedSignal.emit(self.deleteItem.di.delta)
         # nicely animate the undo of deletion
         self.scene.addItem(self.deleteItem)
         if self.deleteItem.animator is not None:
