@@ -244,6 +244,9 @@ class commentDelegate(QItemDelegate):
                 # mark down - shade positive, or if goes below 0
                 if delta >= 0 or delta + self.currentMark < 0:
                     flag = False
+            elif self.style == 1:
+                # mark-total - do not show deltas.
+                flag = False
         if flag:
             QItemDelegate.paint(self, painter, option, index)
 

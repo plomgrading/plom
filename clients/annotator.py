@@ -600,8 +600,8 @@ class Annotator(QDialog):
         else:
             # Remaining possibility = mark total - no restrictions
             # since user has to set total mark manually - the deltas do not
-            # change the mark.
-            self.view.makeComment(dlt_txt[0], dlt_txt[1])
+            # change the mark, so are not displayed or used.
+            self.view.makeComment(0, dlt_txt[1])
             return
 
     def setMarkHandler(self, markStyle):
