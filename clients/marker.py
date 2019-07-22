@@ -190,12 +190,6 @@ class ProxyModel(QSortFilterProxyModel):
         self.setData(index[2], -1)
         self.setData(index[3], 0)
         # remove annotated picture and plom file
-        print(
-            "About to remove files {} and {}".format(
-                self.data(index[0].siblingAtColumn(6)),
-                self.data(index[0].siblingAtColumn(7)),
-            )
-        )
         os.remove("{}".format(self.data(index[0].siblingAtColumn(6))))
         os.remove("{}".format(self.data(index[0].siblingAtColumn(7))))
 
@@ -306,10 +300,14 @@ class MarkerClient(QDialog):
         self.requestNext()
         # reset the view so whole exam shown.
         self.testImg.resetB.animateClick()
+        # resize the table too.
+        QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
 
     def resizeEvent(self, e):
         # On resize used to resize the image to keep it all in view
         self.testImg.resetB.animateClick()
+        # resize the table too.
+        self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(e)
 
     def requestToken(self):

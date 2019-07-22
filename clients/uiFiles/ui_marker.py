@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../qtCreatorFiles/ui_marker.ui'
+# Form implementation generated from reading ui file './ui_marker.ui'
 #
 # Created by: PyQt5 UI code generator 5.12.1
 #
@@ -13,7 +13,7 @@ class Ui_MarkerWindow(object):
     def setupUi(self, MarkerWindow):
         MarkerWindow.setObjectName("MarkerWindow")
         MarkerWindow.setWindowModality(QtCore.Qt.WindowModal)
-        MarkerWindow.resize(1024, 798)
+        MarkerWindow.resize(1024, 768)
         self.gridLayout_3 = QtWidgets.QGridLayout(MarkerWindow)
         self.gridLayout_3.setObjectName("gridLayout_3")
         self.horizontalLayout = QtWidgets.QHBoxLayout()
