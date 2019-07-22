@@ -18,6 +18,7 @@ Annotator:
 * shift-click and control-click should now emulate right-click and middle-click in annotation.
 * middle-button (or ctrl-click) in line/pen tools creates line/path with arrow-heads at both ends.
 * Annotator can save / load ".plom" files and so "pickle" the graphical objects on the page. This function is handled by the marker-window not the annotator window (see below).
+* When mark-total, the comment-delta's are suppressed and will not be pasted into the page.
 
 Marker:
 * Annotated papers are now "pickled" as ".plom" files - these are kept locally and also uploaded to server.
