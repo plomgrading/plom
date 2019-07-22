@@ -2,11 +2,12 @@
 
 # Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator_lefthandmouse.ui'
 #
-# Created by: PyQt5 UI code generator 5.10.1
+# Created by: PyQt5 UI code generator 5.12.1
 #
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_annotator_lhm(object):
     def setupUi(self, annotator_lhm):
@@ -200,7 +201,7 @@ class Ui_annotator_lhm(object):
         self.penButton.setText(_translate("annotator_lhm", "..."))
         self.commentUpButton.setToolTip(_translate("annotator_lhm", "press u"))
         self.commentUpButton.setText(_translate("annotator_lhm", "..."))
-        self.markBox.setTitle(_translate("annotator_lhm", "Enter Mark"))
+        self.markBox.setTitle(_translate("annotator_lhm", "Modify mark"))
         self.groupBox_3.setTitle(_translate("annotator_lhm", "Comment list"))
         self.finishedButton.setText(_translate("annotator_lhm", "End && \n"
 " Next"))
@@ -208,4 +209,5 @@ class Ui_annotator_lhm(object):
         self.finishNoRelaunchButton.setText(_translate("annotator_lhm", "End && \n"
 " Return"))
         self.hideButton.setText(_translate("annotator_lhm", "Hide"))
+
 

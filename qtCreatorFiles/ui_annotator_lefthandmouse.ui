@@ -297,7 +297,7 @@
          </sizepolicy>
         </property>
         <property name="title">
-         <string>Enter Mark</string>
+         <string>Modify mark</string>
         </property>
         <layout class="QGridLayout" name="markGrid">
          <property name="leftMargin">
