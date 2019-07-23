@@ -372,10 +372,10 @@ class PageScene(QGraphicsScene):
             mode=Qt.IntersectsItemShape,
             deviceTransform=QTransform(),
         )
-        if delItems is None:
+        if len(delItems) == 0:
             return
         self.deleteItem = delItems[0]  # delete first item in list.
-        if self.deleteItem == self.imageItem:
+        if self.deleteItem in [self.imageItem, self.scoreBox]:
             self.deleteItem = None
             return
 
@@ -626,6 +626,8 @@ class PageScene(QGraphicsScene):
         and then delete all objects that lie within the box.
         Push the resulting commands onto the undo stack
         """
+        if self.areaDelete == 0:
+            return
         self.areaDelete = 0  # put flag back.
         for delItem in self.boxItem.collidingItems(mode=Qt.IntersectsItemShape):
             # for each colliding item, check that box contains it, then delete
