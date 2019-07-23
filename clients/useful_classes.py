@@ -528,10 +528,12 @@ class AddCommentBox(QDialog):
         self.parent = parent
         self.CB = QComboBox()
         self.TE = QTextEdit()
+        self.SB = QSpinBox()
 
         flay = QFormLayout()
-        flay.addRow("Enter tag\n(max 256 char)", self.TE)
-        flay.addRow("Choose tag", self.CB)
+        flay.addRow("Enter text", self.TE)
+        flay.addRow("Choose text", self.CB)
+        flay.addRow("Set delta", self.SB)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
