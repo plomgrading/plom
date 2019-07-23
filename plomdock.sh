@@ -71,7 +71,6 @@ sudo docker exec --user $USER plom0 bash -c "cd plom/scanAndGroup; python3 06_gr
 IP=`sudo docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" plom0`
 sed -i "s/127.0.0.1/${IP}/" plom/resources/serverDetails.json
 # TODO: chmod 644 mlp.key?
-# TODO: permission error on server.log on 18k1-cbm1.math.ubc.ca
 echo "Server IP is ${IP}"
 sudo docker exec --user $USER plom0 bash -c "cd plom/imageServer; python3 image_server.py"
 
