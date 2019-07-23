@@ -29,8 +29,8 @@ rm -rf plom
 /bin/cp -ra plomsrc plom
 
 # docker pull ${BASEIMG}
-docker run -p 41984:41984 -p 41985:41985 --name=plom0 --detach --init --env=LC_ALL=C.UTF-8 --volume=$PWD/plom:/plom:z ${BASEIMG} sleep inf
-docker exec plom0 adduser -u $UID --no-create-home --disabled-password --gecos "" $USER
+sudo docker run -p 41984:41984 -p 41985:41985 --name=plom0 --detach --init --env=LC_ALL=C.UTF-8 --volume=$PWD/plom:/plom:z ${BASEIMG} sleep inf
+sudo docker exec plom0 adduser -u $UID --no-create-home --disabled-password --gecos "" $USER
 
 # TODO: could also clone within the docker image:
 #docker exec plom0 git clone https://gitlab.math.ubc.ca/andrewr/MLP.git plom
@@ -57,20 +57,20 @@ mkdir plom/imageServer/markingComments
 mkdir plom/imageServer/markedPapers
 /bin/cp -fa $MINTESTDATA/resources/* plom/resources/
 /bin/cp -a $MINTESTDATA/*.pdf plom/scanAndGroup/scannedExams/
-docker exec --user $USER plom0 bash -c "cd plom/scanAndGroup; python3 03_scans_to_page_images.py"
-docker exec --user $USER plom0 bash -c "cd plom/scanAndGroup; python3 04_decode_images.py"
-docker exec --user $USER plom0 bash -c "cd plom/scanAndGroup; python3 05_missing_pages.py"
-docker exec --user $USER plom0 bash -c "cd plom/scanAndGroup; python3 06_group_pages.py"
+sudo docker exec --user $USER plom0 bash -c "cd plom/scanAndGroup; python3 03_scans_to_page_images.py"
+sudo docker exec --user $USER plom0 bash -c "cd plom/scanAndGroup; python3 04_decode_images.py"
+sudo docker exec --user $USER plom0 bash -c "cd plom/scanAndGroup; python3 05_missing_pages.py"
+sudo docker exec --user $USER plom0 bash -c "cd plom/scanAndGroup; python3 06_group_pages.py"
 # TODO: add IDing NN later?  this replaces prediction list and classlist
 
 # Server stuff
-IP=`docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" plom0`
+IP=`sudo docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" plom0`
 sed -i "s/127.0.0.1/${IP}/" plom/resources/serverDetails.json
 # TODO: chmod 644 mlp.key?
 # TODO: permission error on server.log on 18k1-cbm1.math.ubc.ca
 echo "Server IP is ${IP}"
-docker exec --user $USER plom0 bash -c "cd plom/imageServer; python3 image_server.py"
+sudo docker exec --user $USER plom0 bash -c "cd plom/imageServer; python3 image_server.py"
 
 #after_script:
-# docker stop plom0
-# docker rm plom0
+# sudo docker stop plom0
+# sudo docker rm plom0
