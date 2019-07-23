@@ -12,6 +12,10 @@
 #   `cp plomdock.sh ${HOME}/plomdock/`
 #   `cd ${HOME}/plomdock`
 #
+# Get the `minTestServerData` from... somewhere and place
+# it as specified below.
+# TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/221
+#
 # Run this script
 
 export BRANCH=master
