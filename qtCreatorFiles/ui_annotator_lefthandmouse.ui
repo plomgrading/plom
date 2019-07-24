@@ -127,7 +127,7 @@
           <widget class="QToolButton" name="textButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -143,7 +143,7 @@
           <widget class="QToolButton" name="undoButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -159,7 +159,7 @@
           <widget class="QToolButton" name="tickButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -178,7 +178,7 @@
           <widget class="QToolButton" name="panButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -194,7 +194,7 @@
           <widget class="QToolButton" name="boxButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -210,7 +210,7 @@
           <widget class="QToolButton" name="zoomButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -226,7 +226,7 @@
           <widget class="QToolButton" name="moveButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -242,7 +242,7 @@
           <widget class="QToolButton" name="deleteButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -258,7 +258,7 @@
           <widget class="QToolButton" name="commentDownButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -277,7 +277,7 @@
           <widget class="QToolButton" name="commentButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -296,7 +296,7 @@
           <widget class="QToolButton" name="crossButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -312,7 +312,7 @@
           <widget class="QToolButton" name="redoButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -328,7 +328,7 @@
           <widget class="QToolButton" name="lineButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -344,7 +344,7 @@
           <widget class="QToolButton" name="penButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
@@ -360,7 +360,7 @@
           <widget class="QToolButton" name="commentUpButton">
            <property name="minimumSize">
             <size>
-             <width>40</width>
+             <width>45</width>
              <height>0</height>
             </size>
            </property>
