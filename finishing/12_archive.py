@@ -42,7 +42,7 @@ $ ./12_archive course year term
 for example:
 $ ./12_archive math253 2019 S1
 """)
-        sys.exit()
+        sys.exit(1)
     archivename = archivename.replace('{COURSE}', sys.argv[1])
     archivename = archivename.replace('{YEAR}', sys.argv[2])
     archivename = archivename.replace('{TERM}', sys.argv[3])
@@ -64,7 +64,7 @@ entire directory structure.
         os.mkdir(archivename)
     except FileExistsError:
         print('Directory "{0}" already exists: if you want to re-run this script, try deleting it first.'.format(archivename))
-        sys.exit()
+        sys.exit(1)
 
 
     print('Archiving source pdf files')
