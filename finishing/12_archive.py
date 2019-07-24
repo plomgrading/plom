@@ -90,7 +90,24 @@ entire directory structure.
     shutil.copy2(os.path.join('..', 'resources', 'examsIdentified.json'), archivename)
 
 
-    # TODO: should we insert a README.txt w/ explanation of these files?
+    with open(os.path.join(archivename, 'README.txt'), 'w') as file:
+        file.write(
+"""Plom Archive File
+=================
+
+Explanations:
+
+  * codedReturn: these are the final pdf files returned to students.  The
+    format is "<shortname>_<student_number>_<unique_code>.pdf".
+
+  * sourceVersions: the original blank pdfs for the test/exam.  Each
+    student's test is some combination of these.
+
+  * scannedExams: the raw unmarked files directly from the scanner.
+
+  * The various .json files can be used to find students' papers in the raw
+    scans.
+""")
 
 
     print('Creating zip file')
