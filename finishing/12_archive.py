@@ -18,7 +18,7 @@
 
 import os, sys, shutil
 
-archivename = 'math123_1971S3_{SHORTNAME}'
+archivename = '{COURSE}_{YEAR}{TERM}_{SHORTNAME}'
 
 
 if __name__ == '__main__':
@@ -30,6 +30,22 @@ if __name__ == '__main__':
     spec.readSpec()
     basename = spec.Name
     archivename = archivename.replace('{SHORTNAME}', basename)
+
+    # TODO: someday we can get this from spec file?
+    # https://gitlab.math.ubc.ca/andrewr/MLP/issues/94
+    if not len(sys.argv) == 4:
+        print("""ERROR: Incorrect command line
+
+Usage:
+$ ./12_archive course year term
+
+for example:
+$ ./12_archive math253 2019 S1
+""")
+        sys.exit()
+    archivename = archivename.replace('{COURSE}', sys.argv[1])
+    archivename = archivename.replace('{YEAR}', sys.argv[2])
+    archivename = archivename.replace('{TERM}', sys.argv[3])
 
     print("""
 This script tries to produce a minimal archive of your test:
