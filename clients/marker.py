@@ -574,7 +574,7 @@ class MarkerClient(QDialog):
         # If image has been marked confirm with user if they want
         # to annotate further.
         remarkFlag = False
-        if self.prxM.data(index[1]) in ["marked", "deferred"]:
+        if self.prxM.data(index[1]) in ["marked"]:
             msg = SimpleMessage("Continue marking paper?")
             if msg.exec_() == QMessageBox.Yes:
                 # Copy the current annotated filename to backup file in case
