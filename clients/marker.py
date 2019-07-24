@@ -221,7 +221,8 @@ class MarkerClient(QDialog):
         messenger.startMessenger()
         # Ping to see if server is up.
         if not messenger.pingTest():
-            self.deleteLater()
+            QTimer.singleShot(100, self.reject)
+            self.testImg = None  # so that resize event doesn't throw error
             return
         # Save username, password, and path the local temp directory for
         # image files and the class list.
@@ -304,6 +305,9 @@ class MarkerClient(QDialog):
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
 
     def resizeEvent(self, e):
+        if self.testImg is None:
+            # pingtest must have failed, so do nothing.
+            return
         # On resize used to resize the image to keep it all in view
         self.testImg.resetB.animateClick()
         # resize the table too.
