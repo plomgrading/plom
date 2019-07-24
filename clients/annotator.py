@@ -694,6 +694,8 @@ class Annotator(QDialog):
             initRect = self.parent.annotatorSettings.value("viewRectangle")
             # put in slight delay so that any resize events are done.
             QTimer.singleShot(200, lambda: self.view.initialZoom(initRect))
+        else:
+            QTimer.singleShot(200, lambda: self.view.initialZoom(None))
 
     def saveWindowSettings(self):
         self.parent.annotatorSettings.setValue("geometry", self.saveGeometry())

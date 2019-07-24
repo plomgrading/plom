@@ -141,5 +141,8 @@ class PageView(QGraphicsView):
         self.fitInView(self.vrect)
 
     def initialZoom(self, initRect):
-        self.fitInView(initRect)
+        if initRect is None:
+            self.fitInView(self.scene.imageItem, Qt.KeepAspectRatio)
+        else:
+            self.fitInView(initRect)
         self.zoomNull()
