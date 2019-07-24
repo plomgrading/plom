@@ -179,7 +179,7 @@ class MarkDatabase:
                 return (x.tgv, x.originalFile, x.tags)
         except GroupImage.DoesNotExist:
             self.logging.info("Nothing left on To-Do pile")
-            return (None, None)
+            return (None, None, None)
 
     def takeGroupImageFromClient(
         self, code, username, mark, fname, pname, cname, mt, tag
