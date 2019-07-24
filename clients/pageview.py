@@ -44,8 +44,7 @@ class PageView(QGraphicsView):
         self.vrect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
 
     def resizeEvent(self, e):
-        # On resize used to resize the image to keep it all in view
-        self.fitInView(self.scene.imageItem, Qt.KeepAspectRatio)
+        # On resize keep redefine view-rect
         self.vrect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         super(PageView, self).resizeEvent(e)
 
