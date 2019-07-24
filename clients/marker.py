@@ -259,6 +259,7 @@ class MarkerClient(QDialog):
         self.ui.gridLayout_6.addWidget(self.testImg, 0, 0)
         # create a settings variable for saving annotator window settings
         self.annotatorSettings = QSettings()
+        self.annotatorSettings.clear()  # do not remember between sessions.
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
