@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Client: (annotator) "ctrl-=" cycles through zooms (user, fit-width, fit-height). Also added this shortcut to the key-help list.
 
+* Server: the new `12_archive` script makes a minimal zip file for archiving.
+  It is not suitable for later editing in Plom.
+
 ### Changed
 
 ### Fixed
