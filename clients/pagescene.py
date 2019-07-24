@@ -629,11 +629,18 @@ class PageScene(QGraphicsScene):
         if self.areaDelete == 0:
             return
         self.areaDelete = 0  # put flag back.
-        for delItem in self.boxItem.collidingItems(mode=Qt.IntersectsItemShape):
-            # for each colliding item, check that box contains it, then delete
-            if delItem is not self.imageItem and delItem.collidesWithItem(
-                self.boxItem, mode=Qt.ContainsItemShape
+
+        # check all items against the delete-box - this is a little clumsy, but works and there are not so many items typically.
+        for delItem in self.items():
+            # make sure is not background image or the scorebox, or the delbox itself.
+            if (
+                (delItem is self.imageItem)
+                or (delItem is self.scoreBox)
+                or (delItem is self.boxItem)
             ):
+                continue
+            # for each colliding item, check that box contains it, then delete
+            if delItem.collidesWithItem(self.boxItem, mode=Qt.ContainsItemShape):
                 if delItem.group() is None:  # object not part of GroupDeltaText
                     command = CommandDelete(self, delItem)
                     self.undoStack.push(command)
