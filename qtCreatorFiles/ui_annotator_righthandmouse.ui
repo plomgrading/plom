@@ -64,6 +64,12 @@
         <layout class="QGridLayout" name="gridLayout_3">
          <item row="0" column="4">
           <widget class="QToolButton" name="crossButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press e</string>
            </property>
@@ -74,6 +80,12 @@
          </item>
          <item row="0" column="5">
           <widget class="QToolButton" name="commentUpButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press r</string>
            </property>
@@ -87,6 +99,12 @@
          </item>
          <item row="2" column="4">
           <widget class="QToolButton" name="tickButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press d</string>
            </property>
@@ -100,6 +118,12 @@
          </item>
          <item row="2" column="5">
           <widget class="QToolButton" name="commentButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press f</string>
            </property>
@@ -113,6 +137,12 @@
          </item>
          <item row="3" column="4">
           <widget class="QToolButton" name="boxButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press c</string>
            </property>
@@ -123,6 +153,12 @@
          </item>
          <item row="3" column="5">
           <widget class="QToolButton" name="commentDownButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press v</string>
            </property>
@@ -136,6 +172,12 @@
          </item>
          <item row="0" column="6">
           <widget class="QToolButton" name="penButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press t</string>
            </property>
@@ -146,6 +188,12 @@
          </item>
          <item row="2" column="6">
           <widget class="QToolButton" name="textButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press g</string>
            </property>
@@ -156,6 +204,12 @@
          </item>
          <item row="3" column="6">
           <widget class="QToolButton" name="lineButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press b</string>
            </property>
@@ -166,6 +220,12 @@
          </item>
          <item row="3" column="3">
           <widget class="QToolButton" name="deleteButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press x</string>
            </property>
@@ -176,6 +236,12 @@
          </item>
          <item row="2" column="3">
           <widget class="QToolButton" name="undoButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press s</string>
            </property>
@@ -186,6 +252,12 @@
          </item>
          <item row="0" column="3">
           <widget class="QToolButton" name="redoButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press w</string>
            </property>
@@ -196,6 +268,12 @@
          </item>
          <item row="0" column="2">
           <widget class="QToolButton" name="panButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press q</string>
            </property>
@@ -206,6 +284,12 @@
          </item>
          <item row="2" column="2">
           <widget class="QToolButton" name="zoomButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press a</string>
            </property>
@@ -216,6 +300,12 @@
          </item>
          <item row="3" column="2">
           <widget class="QToolButton" name="moveButton">
+           <property name="minimumSize">
+            <size>
+             <width>40</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string>press z</string>
            </property>

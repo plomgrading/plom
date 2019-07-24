@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator_righthandmouse.ui'
+# Form implementation generated from reading ui file './ui_annotator_righthandmouse.ui'
 #
-# Created by: PyQt5 UI code generator 5.12.1
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
+
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -43,52 +44,67 @@ class Ui_annotator_rhm(object):
         self.gridLayout_3 = QtWidgets.QGridLayout(self.groupBox)
         self.gridLayout_3.setObjectName("gridLayout_3")
         self.crossButton = QtWidgets.QToolButton(self.groupBox)
+        self.crossButton.setMinimumSize(QtCore.QSize(40, 0))
         self.crossButton.setObjectName("crossButton")
         self.gridLayout_3.addWidget(self.crossButton, 0, 4, 1, 1)
         self.commentUpButton = QtWidgets.QToolButton(self.groupBox)
+        self.commentUpButton.setMinimumSize(QtCore.QSize(40, 0))
         self.commentUpButton.setToolTipDuration(-1)
         self.commentUpButton.setObjectName("commentUpButton")
         self.gridLayout_3.addWidget(self.commentUpButton, 0, 5, 1, 1)
         self.tickButton = QtWidgets.QToolButton(self.groupBox)
+        self.tickButton.setMinimumSize(QtCore.QSize(40, 0))
         self.tickButton.setToolTipDuration(-1)
         self.tickButton.setObjectName("tickButton")
         self.gridLayout_3.addWidget(self.tickButton, 2, 4, 1, 1)
         self.commentButton = QtWidgets.QToolButton(self.groupBox)
+        self.commentButton.setMinimumSize(QtCore.QSize(40, 0))
         self.commentButton.setToolTipDuration(-1)
         self.commentButton.setObjectName("commentButton")
         self.gridLayout_3.addWidget(self.commentButton, 2, 5, 1, 1)
         self.boxButton = QtWidgets.QToolButton(self.groupBox)
+        self.boxButton.setMinimumSize(QtCore.QSize(40, 0))
         self.boxButton.setObjectName("boxButton")
         self.gridLayout_3.addWidget(self.boxButton, 3, 4, 1, 1)
         self.commentDownButton = QtWidgets.QToolButton(self.groupBox)
+        self.commentDownButton.setMinimumSize(QtCore.QSize(40, 0))
         self.commentDownButton.setToolTipDuration(-1)
         self.commentDownButton.setObjectName("commentDownButton")
         self.gridLayout_3.addWidget(self.commentDownButton, 3, 5, 1, 1)
         self.penButton = QtWidgets.QToolButton(self.groupBox)
+        self.penButton.setMinimumSize(QtCore.QSize(40, 0))
         self.penButton.setObjectName("penButton")
         self.gridLayout_3.addWidget(self.penButton, 0, 6, 1, 1)
         self.textButton = QtWidgets.QToolButton(self.groupBox)
+        self.textButton.setMinimumSize(QtCore.QSize(40, 0))
         self.textButton.setObjectName("textButton")
         self.gridLayout_3.addWidget(self.textButton, 2, 6, 1, 1)
         self.lineButton = QtWidgets.QToolButton(self.groupBox)
+        self.lineButton.setMinimumSize(QtCore.QSize(40, 0))
         self.lineButton.setObjectName("lineButton")
         self.gridLayout_3.addWidget(self.lineButton, 3, 6, 1, 1)
         self.deleteButton = QtWidgets.QToolButton(self.groupBox)
+        self.deleteButton.setMinimumSize(QtCore.QSize(40, 0))
         self.deleteButton.setObjectName("deleteButton")
         self.gridLayout_3.addWidget(self.deleteButton, 3, 3, 1, 1)
         self.undoButton = QtWidgets.QToolButton(self.groupBox)
+        self.undoButton.setMinimumSize(QtCore.QSize(40, 0))
         self.undoButton.setObjectName("undoButton")
         self.gridLayout_3.addWidget(self.undoButton, 2, 3, 1, 1)
         self.redoButton = QtWidgets.QToolButton(self.groupBox)
+        self.redoButton.setMinimumSize(QtCore.QSize(40, 0))
         self.redoButton.setObjectName("redoButton")
         self.gridLayout_3.addWidget(self.redoButton, 0, 3, 1, 1)
         self.panButton = QtWidgets.QToolButton(self.groupBox)
+        self.panButton.setMinimumSize(QtCore.QSize(40, 0))
         self.panButton.setObjectName("panButton")
         self.gridLayout_3.addWidget(self.panButton, 0, 2, 1, 1)
         self.zoomButton = QtWidgets.QToolButton(self.groupBox)
+        self.zoomButton.setMinimumSize(QtCore.QSize(40, 0))
         self.zoomButton.setObjectName("zoomButton")
         self.gridLayout_3.addWidget(self.zoomButton, 2, 2, 1, 1)
         self.moveButton = QtWidgets.QToolButton(self.groupBox)
+        self.moveButton.setMinimumSize(QtCore.QSize(40, 0))
         self.moveButton.setObjectName("moveButton")
         self.gridLayout_3.addWidget(self.moveButton, 3, 2, 1, 1)
         self.frame = QtWidgets.QFrame(self.groupBox)
@@ -207,5 +223,3 @@ class Ui_annotator_rhm(object):
         self.finishedButton.setText(_translate("annotator_rhm", "End && \n"
 " Next"))
         self.hideButton.setText(_translate("annotator_rhm", "Hide"))
-
-
