@@ -1035,6 +1035,9 @@ class TextItem(QGraphicsTextItem):
         tc.clearSelection()
         self.setTextCursor(tc)
         self.setTextInteractionFlags(Qt.NoTextInteraction)
+        # if not PNG then update contents
+        if self.state != "PNG":
+            self.contents = self.toPlainText()
         super(TextItem, self).focusOutEvent(event)
 
     def textToPng(self):

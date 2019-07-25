@@ -188,7 +188,7 @@ class PageScene(QGraphicsScene):
     def getComments(self):
         comments = []
         for X in self.items():
-            if type(X) is TextItem:
+            if isinstance(X, TextItem):
                 comments.append(X.contents)
         return comments
 
