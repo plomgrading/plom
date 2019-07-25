@@ -65,6 +65,8 @@ Ubuntu 16.04 also needs:
 
 ```
 
+Ubuntu 16.04: running python3 maps to python3.5 by default - for script 11 run python3.6 explicitly
+
 It also may be useful to install `x2goserver`.
 
 Finally: it has been noted that ImageMagick doesn't allow hacking
