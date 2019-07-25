@@ -349,44 +349,16 @@ class PageScene(QGraphicsScene):
         self.undoStack.push(command)
 
     def mousePressDelete(self, event):
-        """Create a delete-command acting on the object
-        under the mouse UNLESS it is the underlying group-image.
+        """Start drawing a delete-box. Nothing happens until button is released.
         """
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-        ):
-            self.areaDelete = 1
-            self.originPos = event.scenePos()
-            self.currentPos = self.originPos
-            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-            self.boxItem.setPen(self.ink)
-            self.boxItem.setBrush(self.deleteBrush)
-            self.addItem(self.boxItem)
-            return
 
         self.areaDelete = 0
         self.originPos = event.scenePos()
-        # grab list of items in rectangle around click
-        delItems = self.items(
-            QRectF(self.originPos.x() - 5, self.originPos.y() - 5, 8, 8),
-            mode=Qt.IntersectsItemShape,
-            deviceTransform=QTransform(),
-        )
-        if len(delItems) == 0:
-            return
-        self.deleteItem = delItems[0]  # delete first item in list.
-        if self.deleteItem in [self.imageItem, self.scoreBox]:
-            self.deleteItem = None
-            return
-
-        if isinstance(self.deleteItem, DeltaItem) or isinstance(
-            self.deleteItem, TextItem
-        ):
-            if self.deleteItem.group() is not None:  # object part of GroupDeltaText
-                self.deleteItem = self.deleteItem.group()
-
-        command = CommandDelete(self, self.deleteItem)
-        self.undoStack.push(command)
+        self.currentPos = self.originPos
+        self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.boxItem.setPen(self.ink)
+        self.boxItem.setBrush(self.deleteBrush)
+        self.addItem(self.boxItem)
 
     def mousePressDelta(self, event):
         """Create the mark-delta object or ?-mark or cross/tick object
@@ -579,14 +551,12 @@ class PageScene(QGraphicsScene):
         """Update the box as the mouse is moved. This
         animates the drawing of the box for the user.
         """
+
+        self.areaDelete = 1  # drag started.
         self.currentPos = event.scenePos()
-        if self.areaDelete == 1:
-            if self.boxItem is None:
-                self.boxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
-            else:
-                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+        if self.boxItem is None:
+            self.boxItem = QGraphicsRectItem()
+        self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def mouseMoveLine(self, event):
         """Update the line as the mouse is moved. This
@@ -632,25 +602,47 @@ class PageScene(QGraphicsScene):
         and then delete all objects that lie within the box.
         Push the resulting commands onto the undo stack
         """
-        if self.areaDelete == 0:
-            return
-        self.areaDelete = 0  # put flag back.
 
-        # check all items against the delete-box - this is a little clumsy, but works and there are not so many items typically.
-        for delItem in self.items():
-            # make sure is not background image or the scorebox, or the delbox itself.
-            if (
-                (delItem is self.imageItem)
-                or (delItem is self.scoreBox)
-                or (delItem is self.boxItem)
-            ):
-                continue
-            # for each colliding item, check that box contains it, then delete
-            if delItem.collidesWithItem(self.boxItem, mode=Qt.ContainsItemShape):
-                if delItem.group() is None:  # object not part of GroupDeltaText
-                    command = CommandDelete(self, delItem)
-                    self.undoStack.push(command)
         self.removeItem(self.boxItem)
+        if self.areaDelete == 0:
+            self.originPos = event.scenePos()
+            # grab list of items in rectangle around click
+            delItems = self.items(
+                QRectF(self.originPos.x() - 5, self.originPos.y() - 5, 8, 8),
+                mode=Qt.IntersectsItemShape,
+                deviceTransform=QTransform(),
+            )
+            if len(delItems) == 0:
+                return
+            self.deleteItem = delItems[0]  # delete first item in list.
+            if self.deleteItem in [self.imageItem, self.scoreBox]:
+                self.deleteItem = None
+                return
+
+            if isinstance(self.deleteItem, DeltaItem) or isinstance(
+                self.deleteItem, TextItem
+            ):
+                if self.deleteItem.group() is not None:  # object part of GroupDeltaText
+                    self.deleteItem = self.deleteItem.group()
+
+            command = CommandDelete(self, self.deleteItem)
+            self.undoStack.push(command)
+        else:
+            self.areaDelete = 0  # put flag back.
+            # check all items against the delete-box - this is a little clumsy, but works and there are not so many items typically.
+            for delItem in self.items():
+                # make sure is not background image or the scorebox, or the delbox itself.
+                if (
+                    (delItem is self.imageItem)
+                    or (delItem is self.scoreBox)
+                    or (delItem is self.boxItem)
+                ):
+                    continue
+                # for each colliding item, check that box contains it, then delete
+                if delItem.collidesWithItem(self.boxItem, mode=Qt.ContainsItemShape):
+                    if delItem.group() is None:  # object not part of GroupDeltaText
+                        command = CommandDelete(self, delItem)
+                        self.undoStack.push(command)
 
     def mouseReleaseLine(self, event):
         """Remove the temp lineitem (which was needed for animation)
