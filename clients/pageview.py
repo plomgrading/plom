@@ -48,7 +48,9 @@ class PageView(QGraphicsView):
         self.vrect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         # then zoom appropriately
         if self.zoomState == 0:
-            self.zoomPrevious()
+            # this avoids weird resizing issues
+            # self.viewport().contentsRect()
+            pass
         elif self.zoomState == 1:
             self.zoomWidth()
         else:
