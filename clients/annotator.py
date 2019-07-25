@@ -8,7 +8,14 @@ import os
 import sys
 
 from PyQt5.QtCore import Qt, QSettings, QSize, QTimer, pyqtSlot
-from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QPixmap, QCloseEvent
+from PyQt5.QtGui import (
+    QCursor,
+    QGuiApplication,
+    QIcon,
+    QKeySequence,
+    QPixmap,
+    QCloseEvent,
+)
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -105,7 +112,7 @@ class Annotator(QDialog):
         # set alt-enter / alt-return as shortcut to finish annotating
         # also set ctrl-n and ctrl-b as same shortcut.
         self.setEndShortCuts()
-        # set ctrl-+ as zoom cycle shortcut
+        # set ctrl-+ as zoom toggle shortcut
         self.setZoomShortCuts()
         # set the zoom combobox
         self.setZoomComboBox()
@@ -349,9 +356,11 @@ class Annotator(QDialog):
         appropriate. Also captures the escape-key since this would
         normally close a qdialog.
         """
+        # Check to see if no mousebutton pressed
         # If a key-press detected use the keycodes dict to translate
         # the press into a function call (if exists)
-        self.keycodes.get(event.key(), lambda *args: None)()
+        if QGuiApplication.mouseButtons() == Qt.NoButton:
+            self.keycodes.get(event.key(), lambda *args: None)()
         # If escape key pressed then do not process it because
         # esc in a qdialog closes the window as a "reject".
         if event.key() != Qt.Key_Escape:
@@ -494,8 +503,8 @@ class Annotator(QDialog):
 
     def setZoomShortCuts(self):
         # shortcuts for zoom-states
-        self.zoomCycleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
-        self.zoomCycleShortCut.activated.connect(self.view.zoomCycle)
+        self.zoomToggleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
+        self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
 
     # Simple mode change functions
     def boxMode(self):

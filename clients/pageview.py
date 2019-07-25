@@ -49,11 +49,10 @@ class PageView(QGraphicsView):
         # then zoom appropriately
         if self.zoomState == 0:
             # this avoids weird resizing issues
-            # self.viewport().contentsRect()
             pass
         elif self.zoomState == 1:
             self.zoomWidth()
-        else:
+        elif self.zoomState == 2:
             self.zoomHeight()
         # then any other stuff needed by parent class
         super(PageView, self).resizeEvent(e)
@@ -119,14 +118,19 @@ class PageView(QGraphicsView):
         self.zoomNull()
         self.parent.changeCBZoom(0)
 
-    def zoomCycle(self):
+    def zoomToggle(self):
         # cycle the zoom state setting between width and height
-        if self.zoomState == 2:
-            self.zoomHeight()
-            self.zoomState = 1
-        else:
+        nzs = 0
+        if self.zoomState == 0:
             self.zoomWidth()
-            self.zoomState = 2
+            nzs = 1
+        elif self.zoomState == 1:
+            self.zoomHeight()
+            nzs = 2
+        elif self.zoomState == 2:
+            self.zoomWidth()
+            nzs = 1
+        self.zoomState = nzs
 
     def zoomHeight(self, update=True):
         # scale to full height, but move center to user-zoomed center

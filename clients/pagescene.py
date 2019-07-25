@@ -261,37 +261,6 @@ class PageScene(QGraphicsScene):
     # more permanent graphics item.
     ###########
 
-    # Mouse press tool functions
-    def mousePressBox(self, event):
-        """Creates a temp box which is updated as the mouse moves
-        and replaced with a boxitem when the drawing is finished.
-        If left-click then a highlight box will be drawn at finish,
-        else an ellipse is drawn
-        """
-        self.originPos = event.scenePos()
-        self.currentPos = self.originPos
-        # If left-click then a highlight box, else an ellipse.
-        # Set a flag to tell the mouseReleaseBox function which.
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-        ):
-            self.boxFlag = 2
-            self.ellipseItem = QGraphicsEllipseItem(
-                QRectF(self.originPos.x(), self.originPos.y(), 0, 0)
-            )
-            self.ellipseItem.setPen(self.ink)
-            self.ellipseItem.setBrush(self.lightBrush)
-            self.addItem(self.ellipseItem)
-        else:
-            self.boxFlag = 1
-            # Create a temp box item for animating the drawing as the
-            # user moves the mouse.
-            # Do not push command onto undoStack until drawing finished.
-            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-            self.boxItem.setPen(self.ink)
-            self.boxItem.setBrush(self.lightBrush)
-            self.addItem(self.boxItem)
-
     def mousePressComment(self, event):
         """Create a marked-comment-item from whatever is the currently
         selected comment. This creates a Delta-object and then also
@@ -519,34 +488,6 @@ class PageScene(QGraphicsScene):
 
     # Mouse move tool functions.
     # Not relevant for most tools
-    def mouseMoveBox(self, event):
-        """Update the box as the mouse is moved. This
-        animates the drawing of the box for the user.
-        """
-        self.currentPos = event.scenePos()
-        if self.boxFlag == 2:
-            if self.ellipseItem is None:
-
-                self.ellipseItem = QGraphicsEllipseItem(
-                    QRectF(self.originPos.x(), self.originPos.y(), 0, 0)
-                )
-            else:
-                rx = abs(self.originPos.x() - self.currentPos.x())
-                ry = abs(self.originPos.y() - self.currentPos.y())
-                self.ellipseItem.setRect(
-                    QRectF(
-                        self.originPos.x() - rx, self.originPos.y() - ry, 2 * rx, 2 * ry
-                    )
-                )
-        elif self.boxFlag == 1:
-            if self.boxItem is None:
-                self.boxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
-            else:
-                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
-        else:
-            return
 
     def mouseMoveDelete(self, event):
         """Update the box as the mouse is moved. This
@@ -580,23 +521,6 @@ class PageScene(QGraphicsScene):
     # Mouse release tool functions.
     # Most of these delete the temp-object (eg box / line)
     # and replaces it with the (more) permanent graphics object.
-    def mouseReleaseBox(self, event):
-        """Remove the temp boxitem (which was needed for animation)
-        and create a command for either a highlighted box or opaque box
-        depending on whether or not the boxflag was set.
-        Push the resulting command onto the undo stack
-        """
-        if self.boxFlag == 0:
-            return
-        elif self.boxFlag == 1:
-            self.removeItem(self.boxItem)
-            command = CommandBox(self, self.boxItem.rect())
-        else:
-            self.removeItem(self.ellipseItem)
-            command = CommandEllipse(self, self.ellipseItem.rect())
-
-        self.undoStack.push(command)
-        self.boxFlag = 0
 
     def mouseReleaseDelete(self, event):
         """Remove the temp boxitem (which was needed for animation)
@@ -880,3 +804,81 @@ class PageScene(QGraphicsScene):
                 # ['l',x,y]
                 pth.lineTo(QPointF(Y[1], Y[2]))
             self.undoStack.push(CommandHighlight(self, pth))
+
+    # Mouse press tool functions
+    def mousePressBox(self, event):
+        """Creates a temp box which is updated as the mouse moves
+        and replaced with a boxitem when the drawing is finished.
+        If left-click then a highlight box will be drawn at finish,
+        else an ellipse is drawn
+        """
+        self.originPos = event.scenePos()
+        self.currentPos = self.originPos
+        # If left-click then a highlight box, else an ellipse.
+        # Set a flag to tell the mouseReleaseBox function which.
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
+            self.boxFlag = 2
+            self.ellipseItem = QGraphicsEllipseItem(
+                QRectF(self.originPos.x(), self.originPos.y(), 0, 0)
+            )
+            self.ellipseItem.setPen(self.ink)
+            self.ellipseItem.setBrush(self.lightBrush)
+            self.addItem(self.ellipseItem)
+        else:
+            self.boxFlag = 1
+            # Create a temp box item for animating the drawing as the
+            # user moves the mouse.
+            # Do not push command onto undoStack until drawing finished.
+            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem.setPen(self.ink)
+            self.boxItem.setBrush(self.lightBrush)
+            self.addItem(self.boxItem)
+
+    def mouseMoveBox(self, event):
+        """Update the box as the mouse is moved. This
+        animates the drawing of the box for the user.
+        """
+        self.currentPos = event.scenePos()
+        if self.boxFlag == 2:
+            if self.ellipseItem is None:
+
+                self.ellipseItem = QGraphicsEllipseItem(
+                    QRectF(self.originPos.x(), self.originPos.y(), 0, 0)
+                )
+            else:
+                rx = abs(self.originPos.x() - self.currentPos.x())
+                ry = abs(self.originPos.y() - self.currentPos.y())
+                self.ellipseItem.setRect(
+                    QRectF(
+                        self.originPos.x() - rx, self.originPos.y() - ry, 2 * rx, 2 * ry
+                    )
+                )
+        elif self.boxFlag == 1:
+            if self.boxItem is None:
+                self.boxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+            else:
+                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+        else:
+            return
+
+    def mouseReleaseBox(self, event):
+        """Remove the temp boxitem (which was needed for animation)
+        and create a command for either a highlighted box or opaque box
+        depending on whether or not the boxflag was set.
+        Push the resulting command onto the undo stack
+        """
+        if self.boxFlag == 0:
+            return
+        elif self.boxFlag == 1:
+            self.removeItem(self.boxItem)
+            command = CommandBox(self, self.boxItem.rect())
+        else:
+            self.removeItem(self.ellipseItem)
+            command = CommandEllipse(self, self.ellipseItem.rect())
+
+        self.undoStack.push(command)
+        self.boxFlag = 0
