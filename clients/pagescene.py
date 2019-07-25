@@ -157,11 +157,11 @@ class PageScene(QGraphicsScene):
         self.deleteBrush = QBrush(QColor(255, 0, 0, 16))
         # Flags to indicate if drawing an arrow (vs line),
         # highlight (vs regular pen),
-        # box (vs ellipse)
+        # box (vs ellipse), area-delete vs point.
         self.arrowFlag = 0
         self.penFlag = 0
         self.boxFlag = 0
-        self.areaDelete = 0  # rmb drag deletes area
+        self.deleteFlag = 0
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
         self.currentPos = QPointF(0, 0)
@@ -170,6 +170,7 @@ class PageScene(QGraphicsScene):
         self.path = QPainterPath()
         self.pathItem = QGraphicsPathItem()
         self.boxItem = QGraphicsRectItem()
+        self.delBoxItem = QGraphicsRectItem()
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
         self.blurb = TextItem(self, self.fontSize)
@@ -317,19 +318,6 @@ class PageScene(QGraphicsScene):
         # push onto the stack.
         self.undoStack.push(command)
 
-    def mousePressDelete(self, event):
-        """Start drawing a delete-box. Nothing happens until button is released.
-        """
-        if event.button() != Qt.LeftButton:
-            return
-        self.areaDelete = 0
-        self.originPos = event.scenePos()
-        self.currentPos = self.originPos
-        self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
-        self.boxItem.setPen(self.ink)
-        self.boxItem.setBrush(self.deleteBrush)
-        self.addItem(self.boxItem)
-
     def mousePressDelta(self, event):
         """Create the mark-delta object or ?-mark or cross/tick object
         under the mouse click if left/middle/right mouse button.
@@ -427,72 +415,9 @@ class PageScene(QGraphicsScene):
         self.parent().centerOn(event.scenePos())
         self.parent().zoomNull()
 
-    # Mouse move tool functions.
-    # Not relevant for most tools
-
-    def mouseMoveDelete(self, event):
-        """Update the box as the mouse is moved. This
-        animates the drawing of the box for the user.
-        """
-
-        self.areaDelete = 1  # drag started.
-        self.currentPos = event.scenePos()
-        if self.boxItem is None:
-            self.boxItem = QGraphicsRectItem()
-        self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
-
     # Mouse release tool functions.
     # Most of these delete the temp-object (eg box / line)
     # and replaces it with the (more) permanent graphics object.
-
-    def mouseReleaseDelete(self, event):
-        """Remove the temp boxitem (which was needed for animation)
-        and then delete all objects that lie within the box.
-        Push the resulting commands onto the undo stack
-        """
-        if event.button() != Qt.LeftButton:
-            return
-
-        self.removeItem(self.boxItem)
-        if self.areaDelete == 0:
-            self.originPos = event.scenePos()
-            # grab list of items in rectangle around click
-            delItems = self.items(
-                QRectF(self.originPos.x() - 5, self.originPos.y() - 5, 8, 8),
-                mode=Qt.IntersectsItemShape,
-                deviceTransform=QTransform(),
-            )
-            if len(delItems) == 0:
-                return
-            self.deleteItem = delItems[0]  # delete first item in list.
-            if self.deleteItem in [self.imageItem, self.scoreBox]:
-                self.deleteItem = None
-                return
-
-            if isinstance(self.deleteItem, DeltaItem) or isinstance(
-                self.deleteItem, TextItem
-            ):
-                if self.deleteItem.group() is not None:  # object part of GroupDeltaText
-                    self.deleteItem = self.deleteItem.group()
-
-            command = CommandDelete(self, self.deleteItem)
-            self.undoStack.push(command)
-        else:
-            self.areaDelete = 0  # put flag back.
-            # check all items against the delete-box - this is a little clumsy, but works and there are not so many items typically.
-            for delItem in self.items():
-                # make sure is not background image or the scorebox, or the delbox itself.
-                if (
-                    (delItem is self.imageItem)
-                    or (delItem is self.scoreBox)
-                    or (delItem is self.boxItem)
-                ):
-                    continue
-                # for each colliding item, check that box contains it, then delete
-                if delItem.collidesWithItem(self.boxItem, mode=Qt.ContainsItemShape):
-                    if delItem.group() is None:  # object not part of GroupDeltaText
-                        command = CommandDelete(self, delItem)
-                        self.undoStack.push(command)
 
     def mouseReleaseMove(self, event):
         """Sets the cursor back to an open hand."""
@@ -897,3 +822,89 @@ class PageScene(QGraphicsScene):
         self.penFlag = 0
         self.removeItem(self.pathItem)
         self.undoStack.push(command)
+
+    def mousePressDelete(self, event):
+        """Start drawing a delete-box. Nothing happens until button is released.
+        """
+        if self.deleteFlag is not 0:
+            return
+
+        self.deleteFlag = 1
+        self.originPos = event.scenePos()
+        self.currentPos = self.originPos
+        self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.delBoxItem.setPen(self.ink)
+        self.delBoxItem.setBrush(self.deleteBrush)
+        self.addItem(self.delBoxItem)
+
+    def mouseMoveDelete(self, event):
+        """Update the box as the mouse is moved. This
+        animates the drawing of the box for the user.
+        """
+        if self.deleteFlag is not 0:
+            self.deleteFlag = 2  # drag started.
+            self.currentPos = event.scenePos()
+            if self.delBoxItem is None:
+                print("EEK - should not be here")
+                # somehow missed the mouse-press
+                self.delBoxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+                self.delBoxItem.setPen(self.ink)
+                self.delBoxItem.setBrush(self.deleteBrush)
+                self.addItem(self.delBoxItem)
+            else:
+                self.delBoxItem.setRect(QRectF(self.originPos, self.currentPos))
+
+    def deleteIfLegal(self, item):
+        if (
+            (item is self.imageItem)
+            or (item is self.scoreBox)
+            or (item is self.delBoxItem)
+        ):
+            return
+        else:
+            command = CommandDelete(self, item)
+            self.undoStack.push(command)
+
+    def mouseReleaseDelete(self, event):
+        """Remove the temp boxitem (which was needed for animation)
+        and then delete all objects that lie within the box.
+        Push the resulting commands onto the undo stack
+        """
+        if self.deleteFlag == 0:
+            return
+        # check to see if box is quite small (since very hard
+        # to click button without moving a little)
+        # if small then set flag to 1 and treat like a click
+        if self.delBoxItem.rect().height() < 8 and self.delBoxItem.rect().width() < 8:
+            self.deleteFlag = 1
+
+        if self.deleteFlag == 1:
+            self.originPos = event.scenePos()
+            # grab list of items in rectangle around click
+            nearby = self.items(
+                QRectF(self.originPos.x() - 5, self.originPos.y() - 5, 8, 8),
+                mode=Qt.IntersectsItemShape,
+                deviceTransform=QTransform(),
+            )
+            if len(nearby) == 0:
+                return
+            else:
+                # delete the zeroth element of the list
+                if nearby[0].group() is not None:  # object part of GroupDeltaText
+                    self.deleteIfLegal(nearby[0].group())  # delete the group
+                else:
+                    self.deleteIfLegal(nearby[0])
+        elif self.deleteFlag == 2:
+            # check all items against the delete-box - this is a little clumsy, but works and there are not so many items typically.
+            for X in self.items():
+                # make sure is not background image or the scorebox, or the delbox itself.
+                if X.collidesWithItem(self.delBoxItem, mode=Qt.ContainsItemShape):
+                    if X.group() is None:
+                        self.deleteIfLegal(X)
+                    else:
+                        pass  # is part of a group
+
+        self.removeItem(self.delBoxItem)
+        self.deleteFlag = 0  # put flag back.
