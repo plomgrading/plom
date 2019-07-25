@@ -160,7 +160,7 @@ class PageScene(QGraphicsScene):
         # box (vs ellipse)
         self.arrowFlag = 0
         self.highlightFlag = 0
-        self.ellipseFlag = 0
+        self.boxFlag = 0
         self.areaDelete = 0  # rmb drag deletes area
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
@@ -275,7 +275,7 @@ class PageScene(QGraphicsScene):
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
-            self.ellipseFlag = 1
+            self.boxFlag = 2
             self.ellipseItem = QGraphicsEllipseItem(
                 QRectF(self.originPos.x(), self.originPos.y(), 0, 0)
             )
@@ -283,7 +283,7 @@ class PageScene(QGraphicsScene):
             self.ellipseItem.setBrush(self.lightBrush)
             self.addItem(self.ellipseItem)
         else:
-            self.ellipseFlag = 0
+            self.boxFlag = 1
             # Create a temp box item for animating the drawing as the
             # user moves the mouse.
             # Do not push command onto undoStack until drawing finished.
@@ -551,7 +551,7 @@ class PageScene(QGraphicsScene):
         animates the drawing of the box for the user.
         """
         self.currentPos = event.scenePos()
-        if self.ellipseFlag:
+        if self.boxFlag == 2:
             if self.ellipseItem is None:
 
                 self.ellipseItem = QGraphicsEllipseItem(
@@ -565,13 +565,15 @@ class PageScene(QGraphicsScene):
                         self.originPos.x() - rx, self.originPos.y() - ry, 2 * rx, 2 * ry
                     )
                 )
-        else:
+        elif self.boxFlag == 1:
             if self.boxItem is None:
                 self.boxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
                 )
             else:
                 self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+        else:
+            return
 
     def mouseMoveDelete(self, event):
         """Update the box as the mouse is moved. This
@@ -590,14 +592,15 @@ class PageScene(QGraphicsScene):
         """Update the line as the mouse is moved. This
         animates the drawing of the line for the user.
         """
-        self.currentPos = event.scenePos()
-        self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
+        if self.arrowFlag is not 0:
+            self.currentPos = event.scenePos()
+            self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
 
     def mouseMovePen(self, event):
         """Update the pen-path as the mouse is moved. This
         animates the drawing for the user.
         """
-        if self.highlightFlag != 0:
+        if self.highlightFlag is not 0:
             self.currentPos = event.scenePos()
             self.path.lineTo(self.currentPos)
             self.pathItem.setPath(self.path)
@@ -609,17 +612,20 @@ class PageScene(QGraphicsScene):
     def mouseReleaseBox(self, event):
         """Remove the temp boxitem (which was needed for animation)
         and create a command for either a highlighted box or opaque box
-        depending on whether or not the ellipseflag was set.
+        depending on whether or not the boxflag was set.
         Push the resulting command onto the undo stack
         """
-        if self.ellipseFlag == 0:
+        if self.boxFlag == 0:
+            return
+        elif self.boxFlag == 1:
             self.removeItem(self.boxItem)
             command = CommandBox(self, self.boxItem.rect())
         else:
             self.removeItem(self.ellipseItem)
             command = CommandEllipse(self, self.ellipseItem.rect())
-        self.ellipseFlag = 0
+
         self.undoStack.push(command)
+        self.boxFlag = 0
 
     def mouseReleaseDelete(self, event):
         """Remove the temp boxitem (which was needed for animation)
