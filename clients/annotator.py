@@ -848,8 +848,10 @@ class Annotator(QDialog):
         self.ui.zoomCB.addItem("Fit Width")
         self.ui.zoomCB.addItem("Fit Height")
         self.ui.zoomCB.addItem("200%")
+        self.ui.zoomCB.addItem("150%")
         self.ui.zoomCB.addItem("100%")
         self.ui.zoomCB.addItem("50%")
+        self.ui.zoomCB.addItem("33%")
         self.ui.zoomCB.currentIndexChanged.connect(self.zoomCBChanged)
 
     def changeCBZoom(self, v):
@@ -864,7 +866,12 @@ class Annotator(QDialog):
             self.view.zoomHeight()
         elif self.ui.zoomCB.currentText() == "100%":
             self.view.zoomReset(1)
+        elif self.ui.zoomCB.currentText() == "150%":
+            self.view.zoomReset(1.5)
         elif self.ui.zoomCB.currentText() == "200%":
             self.view.zoomReset(2)
         elif self.ui.zoomCB.currentText() == "50%":
             self.view.zoomReset(0.5)
+        elif self.ui.zoomCB.currentText() == "33%":
+            self.view.zoomReset(0.33)
+        self.view.setFocus()
