@@ -423,6 +423,8 @@ class PageScene(QGraphicsScene):
         """Sets the cursor back to an open hand."""
         self.parent().setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
+        # refresh view after moving objects
+        self.update()
 
     def mouseReleasePan(self, event):
         """Update the current stored view rectangle."""

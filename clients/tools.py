@@ -477,6 +477,17 @@ class ArrowItem(QGraphicsPathItem):
             self.ptf.y() + self.y(),
         ]
 
+    def paint(self, painter, option, widget):
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            # paint a bounding rectangle out-of-bounds warning
+            warnRect = option.rect
+            warnRect.adjust(-10, -10, 10, 10)
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(warnRect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(ArrowItem, self).paint(painter, option, widget)
+
 
 class ArrowDoubleItem(QGraphicsPathItem):
     def __init__(self, pti, ptf):
@@ -543,6 +554,17 @@ class ArrowDoubleItem(QGraphicsPathItem):
             self.ptf.y() + self.y(),
         ]
 
+    def paint(self, painter, option, widget):
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            # paint a bounding rectangle out-of-bounds warning
+            warnRect = option.rect
+            warnRect.adjust(-10, -10, 10, 10)
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(warnRect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(ArrowDoubleItem, self).paint(painter, option, widget)
+
 
 class BoxItem(QGraphicsRectItem):
     # Very similar to the arrowitem but simpler to draw the box.
@@ -570,6 +592,17 @@ class BoxItem(QGraphicsRectItem):
             self.rect.width(),
             self.rect.height(),
         ]
+
+    def paint(self, painter, option, widget):
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            # paint a bounding rectangle out-of-bounds warning
+            warnRect = option.rect
+            warnRect.adjust(-10, -10, 10, 10)
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(warnRect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(BoxItem, self).paint(painter, option, widget)
 
 
 class CrossItem(QGraphicsPathItem):
@@ -601,10 +634,12 @@ class CrossItem(QGraphicsPathItem):
 
     def paint(self, painter, option, widget):
         if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
-            # paint a bounding rectangle for undo/redo highlighting
+            # paint a bounding rectangle out-of-bounds warning
+            warnRect = option.rect
+            warnRect.adjust(-10, -10, 10, 10)
             painter.setPen(QPen(QColor(255, 165, 0), 3))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
-            painter.drawRoundedRect(option.rect, 10, 10)
+            painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
         super(CrossItem, self).paint(painter, option, widget)
 
@@ -641,6 +676,17 @@ class HighLightItem(QGraphicsPathItem):
                     print("Problem pickling highlightitem path {}".format(self.path))
         return ["Highlight", pth]
 
+    def paint(self, painter, option, widget):
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            # paint a bounding rectangle out-of-bounds warning
+            warnRect = option.rect
+            warnRect.adjust(-10, -10, 10, 10)
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(warnRect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(HighLightItem, self).paint(painter, option, widget)
+
 
 class LineItem(QGraphicsLineItem):
     # Very similar to the arrowitem, but no arrowhead
@@ -668,6 +714,17 @@ class LineItem(QGraphicsLineItem):
             self.ptf.x() + self.x(),
             self.ptf.y() + self.y(),
         ]
+
+    def paint(self, painter, option, widget):
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            # paint a bounding rectangle out-of-bounds warning
+            warnRect = option.rect
+            warnRect.adjust(-10, -10, 10, 10)
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(warnRect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(LineItem, self).paint(painter, option, widget)
 
 
 class PenItem(QGraphicsPathItem):
@@ -700,6 +757,17 @@ class PenItem(QGraphicsPathItem):
                 else:
                     print("Problem pickling penitem path {}".format(self.path))
         return ["Pen", pth]
+
+    def paint(self, painter, option, widget):
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            # paint a bounding rectangle out-of-bounds warning
+            warnRect = option.rect
+            warnRect.adjust(-10, -10, 10, 10)
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(warnRect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(PenItem, self).paint(painter, option, widget)
 
 
 class PenArrowItem(QGraphicsItemGroup):
@@ -783,6 +851,17 @@ class PenArrowItem(QGraphicsItemGroup):
                     print("Problem pickling penarrowitem path {}".format(self.path))
         return ["PenArrow", pth]
 
+    def paint(self, painter, option, widget):
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            # paint a bounding rectangle out-of-bounds warning
+            warnRect = option.rect
+            warnRect.adjust(-10, -10, 10, 10)
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(warnRect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(PenArrowItem, self).paint(painter, option, widget)
+
 
 class QMarkItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but careful drawing the "?"
@@ -814,6 +893,17 @@ class QMarkItem(QGraphicsPathItem):
     def pickle(self):
         return ["QMark", self.pt.x() + self.x(), self.pt.y() + self.y()]
 
+    def paint(self, painter, option, widget):
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            # paint a bounding rectangle out-of-bounds warning
+            warnRect = option.rect
+            warnRect.adjust(-10, -10, 10, 10)
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(warnRect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(QMarkItem, self).paint(painter, option, widget)
+
 
 class TickItem(QGraphicsPathItem):
     # Very similar to the arrowitem
@@ -839,6 +929,17 @@ class TickItem(QGraphicsPathItem):
 
     def pickle(self):
         return ["Tick", self.pt.x() + self.x(), self.pt.y() + self.y()]
+
+    def paint(self, painter, option, widget):
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            # paint a bounding rectangle out-of-bounds warning
+            warnRect = option.rect
+            warnRect.adjust(-10, -10, 10, 10)
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(warnRect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(TickItem, self).paint(painter, option, widget)
 
 
 class EllipseItem(QGraphicsEllipseItem):
@@ -867,6 +968,17 @@ class EllipseItem(QGraphicsEllipseItem):
             self.rect.width(),
             self.rect.height(),
         ]
+
+    def paint(self, painter, option, widget):
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            # paint a bounding rectangle out-of-bounds warning
+            warnRect = option.rect
+            warnRect.adjust(-10, -10, 10, 10)
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(warnRect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(EllipseItem, self).paint(painter, option, widget)
 
 
 class TextItem(QGraphicsTextItem):
@@ -968,10 +1080,18 @@ class TextItem(QGraphicsTextItem):
         super(TextItem, self).keyPressEvent(event)
 
     def paint(self, painter, option, widget):
-        # paint a bounding rectangle for undo/redo highlighting
-        if self.thick > 0:
-            painter.setPen(QPen(Qt.red, self.thick))
-            painter.drawRoundedRect(option.rect, 10, 10)
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            if self.group() is None:
+                warnRect = option.rect
+                warnRect.adjust(-10, -10, 10, 10)
+                painter.setPen(QPen(QColor(255, 165, 0), 3))
+                painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+                painter.drawRoundedRect(warnRect, 10, 10)
+        else:
+            # paint a bounding rectangle for undo/redo highlighting
+            if self.thick > 0:
+                painter.setPen(QPen(Qt.red, self.thick))
+                painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
         super(TextItem, self).paint(painter, option, widget)
 
@@ -1047,9 +1167,17 @@ class DeltaItem(QGraphicsTextItem):
         self.setPos(pt + self.offset)
 
     def paint(self, painter, option, widget):
-        # paint the background
-        painter.setPen(QPen(Qt.red, self.thick))
-        painter.drawRoundedRect(option.rect, 10, 10)
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            if self.group() is None:
+                warnRect = option.rect
+                warnRect.adjust(-10, -10, 10, 10)
+                painter.setPen(QPen(QColor(255, 165, 0), 3))
+                painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+                painter.drawRoundedRect(warnRect, 10, 10)
+        else:
+            # paint the background
+            painter.setPen(QPen(Qt.red, self.thick))
+            painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
         super(DeltaItem, self).paint(painter, option, widget)
 
@@ -1517,9 +1645,15 @@ class GroupDTItem(QGraphicsItemGroup):
 
     def paint(self, painter, option, widget):
         if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
-            # paint a bounding rectangle for undo/redo highlighting
+            warnRect = option.rect
+            warnRect.adjust(-10, -10, 10, 10)
             painter.setPen(QPen(QColor(255, 165, 0), 3))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
-            painter.drawRoundedRect(option.rect, 10, 10)
+            painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
+        else:
+            # paint a bounding rectangle for undo/redo highlighting
+            painter.setPen(QPen(QColor(255, 0, 0), 1, style=Qt.DotLine))
+            painter.drawRoundedRect(option.rect, 10, 10)
+            pass
         super(GroupDTItem, self).paint(painter, option, widget)
