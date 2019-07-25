@@ -77,19 +77,6 @@
             <enum>QFrame::Raised</enum>
            </property>
            <layout class="QGridLayout" name="gridLayout_4">
-            <item row="1" column="0">
-             <spacer name="horizontalSpacer">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
             <item row="1" column="1">
              <widget class="QPushButton" name="keyHelpButton">
               <property name="text">
@@ -110,7 +97,10 @@
               </property>
              </spacer>
             </item>
-            <item row="0" column="0" colspan="3">
+            <item row="1" column="3">
+             <widget class="QComboBox" name="zoomCB"/>
+            </item>
+            <item row="0" column="0" colspan="4">
              <widget class="QLineEdit" name="toolLineEdit">
               <property name="alignment">
                <set>Qt::AlignCenter</set>

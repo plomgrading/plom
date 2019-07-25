@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator_righthandmouse.ui'
+# Form implementation generated from reading ui file './ui_annotator_righthandmouse.ui'
 #
 # Created by: PyQt5 UI code generator 5.13.0
 #
@@ -114,12 +114,13 @@ class Ui_annotator_rhm(object):
         self.gridLayout_4 = QtWidgets.QGridLayout(self.frame)
         self.gridLayout_4.setObjectName("gridLayout_4")
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_4.addItem(spacerItem, 1, 0, 1, 1)
+        self.gridLayout_4.addItem(spacerItem, 1, 1, 1, 1)
+        self.zoomCB = QtWidgets.QComboBox(self.frame)
+        self.zoomCB.setObjectName("zoomCB")
+        self.gridLayout_4.addWidget(self.zoomCB, 1, 2, 1, 1)
         self.keyHelpButton = QtWidgets.QPushButton(self.frame)
         self.keyHelpButton.setObjectName("keyHelpButton")
-        self.gridLayout_4.addWidget(self.keyHelpButton, 1, 1, 1, 1)
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_4.addItem(spacerItem1, 1, 2, 1, 1)
+        self.gridLayout_4.addWidget(self.keyHelpButton, 1, 0, 1, 1)
         self.toolLineEdit = QtWidgets.QLineEdit(self.frame)
         self.toolLineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.toolLineEdit.setReadOnly(True)
@@ -166,10 +167,10 @@ class Ui_annotator_rhm(object):
         self.finishedButton = QtWidgets.QPushButton(self.frame_2)
         self.finishedButton.setObjectName("finishedButton")
         self.gridLayout_2.addWidget(self.finishedButton, 0, 0, 1, 1)
+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.gridLayout_2.addItem(spacerItem1, 0, 1, 1, 1)
         spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_2.addItem(spacerItem2, 0, 1, 1, 1)
-        spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_2.addItem(spacerItem3, 0, 3, 1, 1)
+        self.gridLayout_2.addItem(spacerItem2, 0, 3, 1, 1)
         self.verticalLayout.addWidget(self.frame_2)
         self.gridLayout.addWidget(self.hideableBox, 1, 1, 5, 1)
         self.hideButton = QtWidgets.QPushButton(annotator_rhm)

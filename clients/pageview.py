@@ -112,10 +112,12 @@ class PageView(QGraphicsView):
     def zoomIn(self):
         self.scale(1.25, 1.25)
         self.zoomNull()
+        self.parent.changeCBZoom(0)
 
     def zoomOut(self):
         self.scale(0.8, 0.8)
         self.zoomNull()
+        self.parent.changeCBZoom(0)
 
     def zoomCycle(self):
         # cycle the zoom state setting between width and height
@@ -126,22 +128,34 @@ class PageView(QGraphicsView):
             self.zoomWidth()
             self.zoomState = 2
 
-    def zoomHeight(self):
+    def zoomHeight(self, update=True):
         # scale to full height, but move center to user-zoomed center
         crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         rat = crect.height() / self.scene.height()
         self.scale(rat, rat)
         self.centerOn(self.vrect.center())
+        if update:
+            self.parent.changeCBZoom(2)
 
-    def zoomWidth(self):
+    def zoomWidth(self, update=True):
         # scale to full width, but move center to user-zoomed center
         crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         rat = crect.width() / self.scene.width()
         self.scale(rat, rat)
         self.centerOn(self.vrect.center())
+        if update:
+            self.parent.changeCBZoom(1)
+
+    def zoomReset(self, rat):
+        # reset the view to 1:1 but center on current vrect
+        self.resetTransform()
+        self.scale(rat, rat)
+        self.centerOn(self.vrect.center())
+        self.zoomNull()
 
     def zoomPrevious(self):
         self.fitInView(self.vrect, Qt.KeepAspectRatio)
+        self.parent.changeCBZoom(0)
 
     def initialZoom(self, initRect):
         if initRect is None:

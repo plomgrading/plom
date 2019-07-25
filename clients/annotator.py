@@ -107,6 +107,8 @@ class Annotator(QDialog):
         self.setEndShortCuts()
         # set ctrl-+ as zoom cycle shortcut
         self.setZoomShortCuts()
+        # set the zoom combobox
+        self.setZoomComboBox()
         # Set the tool icons
         self.setIcons()
         # Connect all the buttons to relevant functions
@@ -831,3 +833,29 @@ class Annotator(QDialog):
     def unpickleIt(self, plomDict):
         self.view.scene.unpickleSceneItems(plomDict["sceneItems"])
         # do some sanity checks here?
+
+    def setZoomComboBox(self):
+        self.ui.zoomCB.addItem("User")
+        self.ui.zoomCB.addItem("Fit Width")
+        self.ui.zoomCB.addItem("Fit Height")
+        self.ui.zoomCB.addItem("200%")
+        self.ui.zoomCB.addItem("100%")
+        self.ui.zoomCB.addItem("50%")
+        self.ui.zoomCB.currentIndexChanged.connect(self.zoomCBChanged)
+
+    def changeCBZoom(self, v):
+        old = self.ui.zoomCB.blockSignals(True)
+        self.ui.zoomCB.setCurrentIndex(v)
+        self.ui.zoomCB.blockSignals(old)
+
+    def zoomCBChanged(self):
+        if self.ui.zoomCB.currentText() == "Fit Width":
+            self.view.zoomWidth()
+        elif self.ui.zoomCB.currentText() == "Fit Height":
+            self.view.zoomHeight()
+        elif self.ui.zoomCB.currentText() == "100%":
+            self.view.zoomReset(1)
+        elif self.ui.zoomCB.currentText() == "200%":
+            self.view.zoomReset(2)
+        elif self.ui.zoomCB.currentText() == "50%":
+            self.view.zoomReset(0.5)
