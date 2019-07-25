@@ -120,29 +120,23 @@ class PageView(QGraphicsView):
     def zoomHeight(self):
         # scale to full height, but move center to user-zoomed center
         crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
-        nrect = crect
-        rat = self.scene.height() / crect.height()
-        nrect.setHeight(self.scene.height())
-        nrect.setWidth(crect.width() * rat)
-        nrect.moveCenter(self.vrect.center())
-        self.fitInView(nrect)
+        rat = crect.height() / self.scene.height()
+        self.scale(rat, rat)
+        self.centerOn(self.vrect.center())
 
     def zoomWidth(self):
         # scale to full width, but move center to user-zoomed center
         crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
-        nrect = crect
-        rat = self.scene.width() / crect.width()
-        nrect.setWidth(self.scene.width())
-        nrect.setHeight(crect.height() * rat)
-        nrect.moveCenter(self.vrect.center())
-        self.fitInView(nrect)
+        rat = crect.width() / self.scene.width()
+        self.scale(rat, rat)
+        self.centerOn(self.vrect.center())
 
     def zoomPrevious(self):
-        self.fitInView(self.vrect)
+        self.fitInView(self.vrect, Qt.KeepAspectRatio)
 
     def initialZoom(self, initRect):
         if initRect is None:
             self.fitInView(self.scene.imageItem, Qt.KeepAspectRatio)
         else:
-            self.fitInView(initRect)
+            self.fitInView(initRect, Qt.KeepAspectRatio)
         self.zoomNull()
