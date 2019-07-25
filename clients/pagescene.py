@@ -159,7 +159,7 @@ class PageScene(QGraphicsScene):
         # highlight (vs regular pen),
         # box (vs ellipse)
         self.arrowFlag = 0
-        self.highlightFlag = 0
+        self.penFlag = 0
         self.boxFlag = 0
         self.areaDelete = 0  # rmb drag deletes area
         # Will need origin, current position, last position points.
@@ -355,31 +355,6 @@ class PageScene(QGraphicsScene):
         # push command onto undoStack.
         self.undoStack.push(command)
 
-    def mousePressLine(self, event):
-        """Creates a temp line which is updated as the mouse moves
-        and replaced with a line or arrow when the drawing is finished.
-        If left-click then a line will be drawn at finish,
-        else an arrow is drawn at finish.
-        """
-        # Set arrow flag to tell mouseReleaseLine to draw line or arrow
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-        ):
-            self.arrowFlag = 2
-        elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
-        ):
-            self.arrowFlag = 4
-        else:
-            self.arrowFlag = 1
-        # Create a temp line which is updated as mouse moves.
-        # Do not push command onto undoStack until drawing finished.
-        self.originPos = event.scenePos()
-        self.currentPos = self.originPos
-        self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
-        self.lineItem.setPen(self.ink)
-        self.addItem(self.lineItem)
-
     def mousePressMove(self, event):
         """The mouse press while move-tool selected changes the cursor to
         a closed hand, but otherwise does not do much.
@@ -388,40 +363,6 @@ class PageScene(QGraphicsScene):
         """
         self.parent().setCursor(Qt.ClosedHandCursor)
         super(PageScene, self).mousePressEvent(event)
-
-    def mousePressPen(self, event):
-        """Start drawing either a pen-path (left-click) or
-        highlight path (right-click).
-        Set the path-pen accordingly.
-        """
-        self.originPos = event.scenePos()
-        self.currentPos = self.originPos
-        # create the path.
-        self.path = QPainterPath()
-        self.path.moveTo(self.originPos)
-        self.path.lineTo(self.currentPos)
-        self.pathItem = QGraphicsPathItem(self.path)
-        # If left-click then setPen to the standard thin-red
-        # Else set to the highlighter or pen with arrows.
-        # set highlightflag so correct object created on mouse-release
-        # non-zero value so we don't add to path after mouse-release
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-        ):
-            self.pathItem.setPen(self.highlight)
-            self.highlightFlag = 2
-        elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
-        ):
-            # middle button is pen-path with arrows at both ends
-            self.pathItem.setPen(self.ink)
-            self.highlightFlag = 4
-        else:
-            self.pathItem.setPen(self.ink)
-            self.highlightFlag = 1
-        # Note - command not pushed onto stack until path is finished on
-        # mouse-release.
-        self.addItem(self.pathItem)
 
     def mousePressText(self, event):
         """Create a textobject under the mouse click, unless there
@@ -500,24 +441,6 @@ class PageScene(QGraphicsScene):
             self.boxItem = QGraphicsRectItem()
         self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
 
-    def mouseMoveLine(self, event):
-        """Update the line as the mouse is moved. This
-        animates the drawing of the line for the user.
-        """
-        if self.arrowFlag is not 0:
-            self.currentPos = event.scenePos()
-            self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
-
-    def mouseMovePen(self, event):
-        """Update the pen-path as the mouse is moved. This
-        animates the drawing for the user.
-        """
-        if self.highlightFlag is not 0:
-            self.currentPos = event.scenePos()
-            self.path.lineTo(self.currentPos)
-            self.pathItem.setPath(self.path)
-        # do not add to path when flag is zero.
-
     # Mouse release tool functions.
     # Most of these delete the temp-object (eg box / line)
     # and replaces it with the (more) permanent graphics object.
@@ -571,22 +494,6 @@ class PageScene(QGraphicsScene):
                         command = CommandDelete(self, delItem)
                         self.undoStack.push(command)
 
-    def mouseReleaseLine(self, event):
-        """Remove the temp lineitem (which was needed for animation)
-        and create a command for either a line or an arrow
-        depending on whether or not the arrow flag was set.
-        Push the resulting command onto the undo stack
-        """
-        self.removeItem(self.lineItem)
-        if self.arrowFlag == 1:
-            command = CommandLine(self, self.originPos, self.currentPos)
-        elif self.arrowFlag == 2:
-            command = CommandArrow(self, self.originPos, self.currentPos)
-        else:
-            command = CommandArrowDouble(self, self.originPos, self.currentPos)
-        self.arrowFlag = 0
-        self.undoStack.push(command)
-
     def mouseReleaseMove(self, event):
         """Sets the cursor back to an open hand."""
         self.parent().setCursor(Qt.OpenHandCursor)
@@ -596,22 +503,6 @@ class PageScene(QGraphicsScene):
         """Update the current stored view rectangle."""
         super(PageScene, self).mouseReleaseEvent(event)
         self.parent().zoomNull()
-
-    def mouseReleasePen(self, event):
-        """Remove the temp pen-path (which was needed for animation)
-        and create a command for either the pen-path or highlight
-        path depending on whether or not the highlight flag was set.
-        Push the resulting command onto the undo stack
-        """
-        self.removeItem(self.pathItem)
-        if self.highlightFlag == 1:
-            command = CommandPen(self, self.path)
-        elif self.highlightFlag == 2:
-            command = CommandHighlight(self, self.path)
-        elif self.highlightFlag == 4:
-            command = CommandPenArrow(self, self.path)
-        self.highlightFlag = 0
-        self.undoStack.push(command)
 
     # Handle drag / drop events
     def dragEnterEvent(self, e):
@@ -812,6 +703,10 @@ class PageScene(QGraphicsScene):
         If left-click then a highlight box will be drawn at finish,
         else an ellipse is drawn
         """
+        if self.boxFlag != 0:
+            # in middle of drawing a box, so ignore the new press
+            return
+
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
         # If left-click then a highlight box, else an ellipse.
@@ -882,3 +777,123 @@ class PageScene(QGraphicsScene):
 
         self.undoStack.push(command)
         self.boxFlag = 0
+
+    def mousePressLine(self, event):
+        """Creates a temp line which is updated as the mouse moves
+        and replaced with a line or arrow when the drawing is finished.
+        If left-click then a line will be drawn at finish,
+        else an arrow is drawn at finish.
+        """
+        # Set arrow flag to tell mouseReleaseLine to draw line or arrow
+        if self.arrowFlag != 0:
+            # mid line draw so ignore press
+            return
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
+            self.arrowFlag = 2
+        elif (event.button() == Qt.MiddleButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+        ):
+            self.arrowFlag = 4
+        else:
+            self.arrowFlag = 1
+        # Create a temp line which is updated as mouse moves.
+        # Do not push command onto undoStack until drawing finished.
+        self.originPos = event.scenePos()
+        self.currentPos = self.originPos
+        self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
+        self.lineItem.setPen(self.ink)
+        self.addItem(self.lineItem)
+
+    def mouseMoveLine(self, event):
+        """Update the line as the mouse is moved. This
+        animates the drawing of the line for the user.
+        """
+        if self.arrowFlag is not 0:
+            self.currentPos = event.scenePos()
+            self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
+
+    def mouseReleaseLine(self, event):
+        """Remove the temp lineitem (which was needed for animation)
+        and create a command for either a line or an arrow
+        depending on whether or not the arrow flag was set.
+        Push the resulting command onto the undo stack
+        """
+        if self.arrowFlag == 0:
+            return
+        elif self.arrowFlag == 1:
+            command = CommandLine(self, self.originPos, self.currentPos)
+        elif self.arrowFlag == 2:
+            command = CommandArrow(self, self.originPos, self.currentPos)
+        elif self.arrowFlag == 4:
+            command = CommandArrowDouble(self, self.originPos, self.currentPos)
+        self.arrowFlag = 0
+        self.removeItem(self.lineItem)
+        self.undoStack.push(command)
+
+    def mousePressPen(self, event):
+        """Start drawing either a pen-path (left-click) or
+        highlight path (right-click).
+        Set the path-pen accordingly.
+        """
+        if self.penFlag != 0:
+            # in middle of drawing a path, so ignore
+            return
+
+        self.originPos = event.scenePos()
+        self.currentPos = self.originPos
+        # create the path.
+        self.path = QPainterPath()
+        self.path.moveTo(self.originPos)
+        self.path.lineTo(self.currentPos)
+        self.pathItem = QGraphicsPathItem(self.path)
+        # If left-click then setPen to the standard thin-red
+        # Else set to the highlighter or pen with arrows.
+        # set penFlag so correct object created on mouse-release
+        # non-zero value so we don't add to path after mouse-release
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
+            self.pathItem.setPen(self.highlight)
+            self.penFlag = 2
+        elif (event.button() == Qt.MiddleButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+        ):
+            # middle button is pen-path with arrows at both ends
+            self.pathItem.setPen(self.ink)
+            self.penFlag = 4
+        else:
+            self.pathItem.setPen(self.ink)
+            self.penFlag = 1
+        # Note - command not pushed onto stack until path is finished on
+        # mouse-release.
+        self.addItem(self.pathItem)
+
+    def mouseMovePen(self, event):
+        """Update the pen-path as the mouse is moved. This
+        animates the drawing for the user.
+        """
+        if self.penFlag is not 0:
+            self.currentPos = event.scenePos()
+            self.path.lineTo(self.currentPos)
+            self.pathItem.setPath(self.path)
+        # do not add to path when flag is zero.
+
+    def mouseReleasePen(self, event):
+        """Remove the temp pen-path (which was needed for animation)
+        and create a command for either the pen-path or highlight
+        path depending on whether or not the highlight flag was set.
+        Push the resulting command onto the undo stack
+        """
+        if self.penFlag == 0:
+            return
+        elif self.penFlag == 1:
+            command = CommandPen(self, self.path)
+        elif self.penFlag == 2:
+            command = CommandHighlight(self, self.path)
+        elif self.penFlag == 4:
+            command = CommandPenArrow(self, self.path)
+        self.penFlag = 0
+        self.removeItem(self.pathItem)
+        self.undoStack.push(command)
