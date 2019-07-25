@@ -599,6 +599,15 @@ class CrossItem(QGraphicsPathItem):
     def pickle(self):
         return ["Cross", self.pt.x() + self.x(), self.pt.y() + self.y()]
 
+    def paint(self, painter, option, widget):
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            # paint a bounding rectangle for undo/redo highlighting
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(option.rect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(CrossItem, self).paint(painter, option, widget)
+
 
 class HighLightItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but much simpler
@@ -1505,3 +1514,12 @@ class GroupDTItem(QGraphicsItemGroup):
             self.di.delta,
             self.blurb.contents,
         ]
+
+    def paint(self, painter, option, widget):
+        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+            # paint a bounding rectangle for undo/redo highlighting
+            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(option.rect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(GroupDTItem, self).paint(painter, option, widget)
