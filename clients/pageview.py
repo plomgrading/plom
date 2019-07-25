@@ -46,6 +46,14 @@ class PageView(QGraphicsView):
     def resizeEvent(self, e):
         # On resize keep redefine view-rect
         self.vrect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
+        # then zoom appropriately
+        if self.zoomState == 0:
+            self.zoomPrevious()
+        elif self.zoomState == 1:
+            self.zoomWidth()
+        else:
+            self.zoomHeight()
+        # then any other stuff needed by parent class
         super(PageView, self).resizeEvent(e)
 
     def setMode(self, mode):
