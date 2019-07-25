@@ -403,7 +403,7 @@ class Annotator(QDialog):
         # sets the short help/description of the current tool
         self.ui.toolLineEdit.setText("{}".format(modeLines.get(newMode, newMode)))
 
-    def setIcon(self, tb, txt, iconFile):
+    def setIcon(self, tb, txt, iconFile, w=None):
         # Helper command for setIcons - sets the text, loads the icon
         # and formats things nicely.
         tb.setText(txt)
@@ -411,6 +411,11 @@ class Annotator(QDialog):
         tb.setIcon(QIcon(QPixmap(iconFile)))
         tb.setIconSize(QSize(24, 24))
         tb.setMinimumWidth(60)
+        if w is not None:
+            tb.setMinimumWidth(w)
+        else:
+            # return the width of the resulting button
+            return tb.width()
 
     def setIcons(self):
         """Set up the icons for the tools.
@@ -424,25 +429,44 @@ class Annotator(QDialog):
         except Exception:
             base_path = "./icons"
 
-        self.setIcon(self.ui.boxButton, "box", "{}/rectangle.svg".format(base_path))
-        self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
-        self.setIcon(
-            self.ui.commentDownButton, "com dn", "{}/comment_down.svg".format(base_path)
+        # set delete button, comup,comdown buttons first and get max width
+        w = self.setIcon(
+            self.ui.deleteButton, "delete", "{}/delete.svg".format(base_path)
         )
-        self.setIcon(
-            self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path)
+        w = max(
+            w,
+            self.setIcon(
+                self.ui.commentDownButton,
+                "com dn",
+                "{}/comment_down.svg".format(base_path),
+            ),
         )
-        self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
-        self.setIcon(self.ui.deleteButton, "delete", "{}/delete.svg".format(base_path))
-        self.setIcon(self.ui.lineButton, "line", "{}/line.svg".format(base_path))
-        self.setIcon(self.ui.moveButton, "move", "{}/move.svg".format(base_path))
-        self.setIcon(self.ui.panButton, "pan", "{}/pan.svg".format(base_path))
-        self.setIcon(self.ui.penButton, "pen", "{}/pen.svg".format(base_path))
-        self.setIcon(self.ui.redoButton, "redo", "{}/redo.svg".format(base_path))
-        self.setIcon(self.ui.textButton, "text", "{}/text.svg".format(base_path))
-        self.setIcon(self.ui.tickButton, "tick", "{}/tick.svg".format(base_path))
-        self.setIcon(self.ui.undoButton, "undo", "{}/undo.svg".format(base_path))
-        self.setIcon(self.ui.zoomButton, "zoom", "{}/zoom.svg".format(base_path))
+        w = max(
+            w,
+            self.setIcon(
+                self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path)
+            ),
+        )
+        # make sure those buttons have that min width
+        self.ui.deleteButton.setMinimumWidth(w)
+        self.ui.commentUpButton.setMinimumWidth(w)
+        self.ui.commentDownButton.setMinimumWidth(w)
+
+        # now set rest of buttons with that width
+        self.setIcon(self.ui.boxButton, "box", "{}/rectangle.svg".format(base_path), w)
+        self.setIcon(
+            self.ui.commentButton, "com", "{}/comment.svg".format(base_path), w
+        )
+        self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path), w)
+        self.setIcon(self.ui.lineButton, "line", "{}/line.svg".format(base_path), w)
+        self.setIcon(self.ui.moveButton, "move", "{}/move.svg".format(base_path), w)
+        self.setIcon(self.ui.panButton, "pan", "{}/pan.svg".format(base_path), w)
+        self.setIcon(self.ui.penButton, "pen", "{}/pen.svg".format(base_path), w)
+        self.setIcon(self.ui.redoButton, "redo", "{}/redo.svg".format(base_path), w)
+        self.setIcon(self.ui.textButton, "text", "{}/text.svg".format(base_path), w)
+        self.setIcon(self.ui.tickButton, "tick", "{}/tick.svg".format(base_path), w)
+        self.setIcon(self.ui.undoButton, "undo", "{}/undo.svg".format(base_path), w)
+        self.setIcon(self.ui.zoomButton, "zoom", "{}/zoom.svg".format(base_path), w)
 
     # The 'endAndRelaunch' slot - this saves the comment-list, closes
     # the annotator. The marker window then asks the server for the next
