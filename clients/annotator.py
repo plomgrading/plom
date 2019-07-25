@@ -183,10 +183,11 @@ class Annotator(QDialog):
             Qt.Key_O: lambda: self.ui.redoButton.animateClick(),
             Qt.Key_P: lambda: self.ui.panButton.animateClick(),
             # Then maximize and mark buttons
-            Qt.Key_Plus: lambda: self.swapMaxNorm(),
             Qt.Key_Backslash: lambda: self.swapMaxNorm(),
-            Qt.Key_Minus: lambda: self.view.zoomOut(),
+            Qt.Key_Plus: lambda: self.view.zoomIn(),
             Qt.Key_Equal: lambda: self.view.zoomIn(),
+            Qt.Key_Minus: lambda: self.view.zoomOut(),
+            Qt.Key_Underscore: lambda: self.view.zoomOut(),
             # Only change-mark shortcuts 0-5.
             Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
             Qt.Key_0: lambda: self.keyToChangeMark(0),
@@ -236,19 +237,20 @@ class Annotator(QDialog):
             "g": "Text",
             "z": "Move",
             "x": "Delete",
-            "c": "Box/Whitebox",
+            "c": "Box/Ellipse",
             "v": "Next Comment",
-            "b": "Line/Arrow",
+            "b": "Line/DoubleArrow/Arrow",
             "q": "Pan",
             "w": "Redo",
             "e": "Cross/QMark/Tick",
             "r": "Previous Comment",
-            "t": "Pen/Highlighter",
-            "+": "Maximize Window",
+            "t": "Pen/DoubleArrow/Highlighter",
             "\\": "Maximize Window",
             "-": "Zoom Out",
+            "_": "Zoom Out",
+            "+": "Zoom In",
             "=": "Zoom In",
-            "ctrl-=": "Zoom Cycle",
+            "ctrl-=": "Toggle Zoom",
             "`": "Set Mark 0",
             "0": "Set Mark 0",
             "1": "Set Mark 1",
@@ -263,14 +265,14 @@ class Annotator(QDialog):
             "h": "Text",
             "/": "Move",
             ".": "Delete",
-            ",": "Box/Whitebox",
+            ",": "Box/Ellipse",
             "m": "Next Comment",
-            "n": "Line/Arrow",
+            "n": "Line/DoubleArrow/Arrow",
             "p": "Pan",
             "o": "Redo",
             "i": "Cross/QMark/Tick",
             "u": "Previous Comment",
-            "y": "Pen/Highlighter",
+            "y": "Pen/DoubleArrow/Highlighter",
             "?": "Key Help",
         }
         # build KeyPress shortcuts dialog
@@ -296,6 +298,9 @@ class Annotator(QDialog):
         grid.addWidget(kt, 1, 1, 3, 3)
         grid.addWidget(cb, 4, 3)
         kp.setLayout(grid)
+        # Resize items to fit
+        kt.resizeColumnsToContents()
+        kt.resizeRowsToContents()
         # Pop it up.
         kp.exec_()
 
