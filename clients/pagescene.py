@@ -351,11 +351,12 @@ class PageScene(QGraphicsScene):
     def mousePressDelete(self, event):
         """Start drawing a delete-box. Nothing happens until button is released.
         """
-
+        if event.button() != Qt.LeftButton:
+            return
         self.areaDelete = 0
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
-        self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
         self.boxItem.setPen(self.ink)
         self.boxItem.setBrush(self.deleteBrush)
         self.addItem(self.boxItem)
@@ -602,6 +603,8 @@ class PageScene(QGraphicsScene):
         and then delete all objects that lie within the box.
         Push the resulting commands onto the undo stack
         """
+        if event.button() != Qt.LeftButton:
+            return
 
         self.removeItem(self.boxItem)
         if self.areaDelete == 0:
