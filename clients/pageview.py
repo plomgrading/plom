@@ -116,14 +116,13 @@ class PageView(QGraphicsView):
         self.zoomNull()
 
     def zoomCycle(self):
-        # cycle the zoom state setting
-        self.zoomState = (self.zoomState + 1) % 3
-        if self.zoomState == 0:
-            self.zoomPrevious()
-        elif self.zoomState == 1:
-            self.zoomWidth()
-        else:
+        # cycle the zoom state setting between width and height
+        if self.zoomState == 2:
             self.zoomHeight()
+            self.zoomState = 1
+        else:
+            self.zoomWidth()
+            self.zoomState = 2
 
     def zoomHeight(self):
         # scale to full height, but move center to user-zoomed center
