@@ -790,11 +790,22 @@ def checkPorts():
         exit()
 
 
+def checkDirectories():
+    if not os.path.isfile("markedPapers"):
+        os.mkdir("markedPapers")
+    if not os.path.isfile("markedPapers/plomFiles"):
+        os.mkdir("markedPapers/plomFiles")
+    if not os.path.isfile("markedPapers/commentFiles"):
+        os.mkdir("markedPapers/commentFiles")
+
+
 print("PLOM v{0}: image server starting...".format(__version__))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
 checkPorts()
+# check that markedPapers and subdirectories exist
+checkDirectories()
 
 # Create a temp directory for the webdav
 tempDirectory = tempfile.TemporaryDirectory()
