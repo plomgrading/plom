@@ -417,16 +417,22 @@ class Annotator(QDialog):
     def setIcon(self, tb, txt, iconFile, w=None):
         # Helper command for setIcons - sets the text, loads the icon
         # and formats things nicely.
-        tb.setText(txt)
-        tb.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        # tb.setText(txt)
+        # tb.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        tb.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        tb.setToolTip(txt)
         tb.setIcon(QIcon(QPixmap(iconFile)))
-        tb.setIconSize(QSize(24, 24))
-        tb.setMinimumWidth(60)
+        tb.setIconSize(QSize(40, 40))
+
+        # tb.setIconSize(QSize(24, 24))
+        # tb.setMinimumWidth(60)
         if w is not None:
-            tb.setMinimumWidth(w)
+            pass
+            # tb.setMinimumWidth(w)
         else:
             # return the width of the resulting button
-            return tb.width()
+            return 0
+            # return tb.width()
 
     def setIcons(self):
         """Set up the icons for the tools.
