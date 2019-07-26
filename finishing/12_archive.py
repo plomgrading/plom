@@ -90,9 +90,8 @@ entire directory structure.
         all_ok = False
 
 
-    print('Archiving return pdf files ("codedReturn")')
-    # TODO: do we want this or "reassembled"?
-    shutil.copytree('codedReturn', os.path.join(archivename, 'codedReturn'), symlinks=False)
+    print('Archiving final graded pdf files ("reassembled")')
+    shutil.copytree('reassembled', os.path.join(archivename, 'reassembled'), symlinks=False)
 
 
     print('Archiving metadata and miscellanea')
@@ -113,8 +112,7 @@ entire directory structure.
 
 Explanations:
 
-  * codedReturn: these are the final pdf files returned to students.  The
-    format is "<shortname>_<student_number>_<unique_code>.pdf".
+  * reassembled: these are the final graded pdf files, by student number.
 
   * sourceVersions: the original blank pdfs for the test/exam.  Each
     student's test is some combination of these.
