@@ -145,6 +145,10 @@ class CommandDelete(QUndoCommand):
         self.setText("Delete")
 
     def redo(self):
+        # check to see if mid-delete
+        if self.deleteItem.animateFlag:
+            return  # this avoids user deleting same object mid-delete animation.
+
         # If the object is a DeltaItem then emit a mark-changed signal.
         if isinstance(self.deleteItem, DeltaItem):
             # Mark decreases by delta
@@ -154,6 +158,7 @@ class CommandDelete(QUndoCommand):
             # Mark decreases by delta
             self.scene.markChangedSignal.emit(-self.deleteItem.di.delta)
         # nicely animate the deletion
+        self.deleteItem.animateFlag = True
         if self.deleteItem.animator is not None:
             for X in self.deleteItem.animator:
                 X.flash_undo()
@@ -171,6 +176,7 @@ class CommandDelete(QUndoCommand):
             # Mark decreases by delta
             self.scene.markChangedSignal.emit(self.deleteItem.di.delta)
         # nicely animate the undo of deletion
+        self.deleteItem.animateFlag = False
         self.scene.addItem(self.deleteItem)
         if self.deleteItem.animator is not None:
             for X in self.deleteItem.animator:
@@ -571,6 +577,7 @@ class BoxItem(QGraphicsRectItem):
     def __init__(self, rect, parent=None):
         super(BoxItem, self).__init__(parent)
         self.animator = [parent]
+        self.animateFlag = False
         self.rect = rect
         self.setRect(self.rect)
         self.setPen(QPen(Qt.red, 2))
@@ -610,6 +617,7 @@ class CrossItem(QGraphicsPathItem):
     def __init__(self, pt, parent=None):
         super(CrossItem, self).__init__(parent)
         self.animator = [parent]
+        self.animateFlag = False
         self.pt = pt
         self.path = QPainterPath()
         # Draw a cross whose vertex is at pt (under mouse click)
@@ -649,6 +657,7 @@ class HighLightItem(QGraphicsPathItem):
     def __init__(self, path, parent=None):
         super(HighLightItem, self).__init__(parent)
         self.animator = [parent]
+        self.animateFlag = False
         self.path = path
         self.setPath(self.path)
         self.setPen(QPen(QColor(255, 255, 0, 64), 50))
@@ -693,6 +702,7 @@ class LineItem(QGraphicsLineItem):
     def __init__(self, pti, ptf, parent=None):
         super(LineItem, self).__init__(parent)
         self.animator = [parent]
+        self.animateFlag = False
         self.pti = pti
         self.ptf = ptf
         self.setLine(QLineF(self.pti, self.ptf))
@@ -732,6 +742,7 @@ class PenItem(QGraphicsPathItem):
     def __init__(self, path, parent=None):
         super(PenItem, self).__init__(parent)
         self.animator = [parent]
+        self.animateFlag = False
         self.path = path
         self.setPath(self.path)
         self.setPen(QPen(Qt.red, 2))
@@ -868,6 +879,7 @@ class QMarkItem(QGraphicsPathItem):
     def __init__(self, pt, parent=None):
         super(QMarkItem, self).__init__(parent)
         self.animator = [parent]
+        self.animateFlag = False
         self.pt = pt
         self.path = QPainterPath()
         # Draw a ?-mark with barycentre under mouseclick
@@ -910,6 +922,7 @@ class TickItem(QGraphicsPathItem):
     def __init__(self, pt, parent=None):
         super(TickItem, self).__init__(parent)
         self.animator = [parent]
+        self.animateFlag = False
         self.pt = pt
         self.path = QPainterPath()
         # Draw the checkmark with barycentre under mouseclick.
@@ -988,6 +1001,7 @@ class TextItem(QGraphicsTextItem):
     def __init__(self, parent, fontsize=10):
         super(TextItem, self).__init__()
         self.animator = [self]
+        self.animateFlag = False
         self.parent = parent
         # Thick is thickness of bounding box hightlight used
         # to highlight the object when undo / redo happens.
@@ -1143,6 +1157,7 @@ class DeltaItem(QGraphicsTextItem):
     def __init__(self, pt, delta, fontsize=10):
         super(DeltaItem, self).__init__()
         self.animator = [self]
+        self.animateFlag = False
         self.thick = 2
         self.delta = delta
         self.setDefaultTextColor(Qt.red)
@@ -1613,6 +1628,7 @@ class GroupDTItem(QGraphicsItemGroup):
         self.blurb = blurb  # is a textitem already
         # set up animators for delete
         self.animator = [self.di, self.blurb]
+        self.animateFlag = False
 
         # move blurb so that its top-left corner is next to top-right corner of delta.
         cr = self.di.boundingRect()
