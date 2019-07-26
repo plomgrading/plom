@@ -103,6 +103,9 @@ entire directory structure.
     shutil.copy2(os.path.join('..', 'resources', 'examsScanned.json'), archivename)
     # the mapping b/w paper number and student
     shutil.copy2(os.path.join('..', 'resources', 'examsIdentified.json'), archivename)
+    # who did the marking
+    shutil.copy2(os.path.join('..', 'resources', 'groupImagesMarked.json'), archivename)
+    # TODO: information about grading times?
 
 
     with open(os.path.join(archivename, 'README.txt'), 'w') as file:
