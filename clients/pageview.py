@@ -167,3 +167,6 @@ class PageView(QGraphicsView):
         else:
             self.fitInView(initRect, Qt.KeepAspectRatio)
         self.zoomNull()
+
+    def checkAllObjectsInside(self):
+        return self.scene.checkAllObjectsInside()

@@ -482,7 +482,7 @@ class ArrowItem(QGraphicsPathItem):
             # paint a bounding rectangle out-of-bounds warning
             warnRect = option.rect
             warnRect.adjust(-10, -10, 10, 10)
-            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -559,7 +559,7 @@ class ArrowDoubleItem(QGraphicsPathItem):
             # paint a bounding rectangle out-of-bounds warning
             warnRect = option.rect
             warnRect.adjust(-10, -10, 10, 10)
-            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -598,7 +598,7 @@ class BoxItem(QGraphicsRectItem):
             # paint a bounding rectangle out-of-bounds warning
             warnRect = option.rect
             warnRect.adjust(-10, -10, 10, 10)
-            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -637,7 +637,7 @@ class CrossItem(QGraphicsPathItem):
             # paint a bounding rectangle out-of-bounds warning
             warnRect = option.rect
             warnRect.adjust(-10, -10, 10, 10)
-            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -681,7 +681,7 @@ class HighLightItem(QGraphicsPathItem):
             # paint a bounding rectangle out-of-bounds warning
             warnRect = option.rect
             warnRect.adjust(-10, -10, 10, 10)
-            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -720,7 +720,7 @@ class LineItem(QGraphicsLineItem):
             # paint a bounding rectangle out-of-bounds warning
             warnRect = option.rect
             warnRect.adjust(-10, -10, 10, 10)
-            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -763,7 +763,7 @@ class PenItem(QGraphicsPathItem):
             # paint a bounding rectangle out-of-bounds warning
             warnRect = option.rect
             warnRect.adjust(-10, -10, 10, 10)
-            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -856,7 +856,7 @@ class PenArrowItem(QGraphicsItemGroup):
             # paint a bounding rectangle out-of-bounds warning
             warnRect = option.rect
             warnRect.adjust(-10, -10, 10, 10)
-            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -898,7 +898,7 @@ class QMarkItem(QGraphicsPathItem):
             # paint a bounding rectangle out-of-bounds warning
             warnRect = option.rect
             warnRect.adjust(-10, -10, 10, 10)
-            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -935,7 +935,7 @@ class TickItem(QGraphicsPathItem):
             # paint a bounding rectangle out-of-bounds warning
             warnRect = option.rect
             warnRect.adjust(-10, -10, 10, 10)
-            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -974,7 +974,7 @@ class EllipseItem(QGraphicsEllipseItem):
             # paint a bounding rectangle out-of-bounds warning
             warnRect = option.rect
             warnRect.adjust(-10, -10, 10, 10)
-            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method
@@ -1087,7 +1087,7 @@ class TextItem(QGraphicsTextItem):
             if self.group() is None:
                 warnRect = option.rect
                 warnRect.adjust(-10, -10, 10, 10)
-                painter.setPen(QPen(QColor(255, 165, 0), 3))
+                painter.setPen(QPen(QColor(255, 165, 0), 4))
                 painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
                 painter.drawRoundedRect(warnRect, 10, 10)
         else:
@@ -1174,7 +1174,7 @@ class DeltaItem(QGraphicsTextItem):
             if self.group() is None:
                 warnRect = option.rect
                 warnRect.adjust(-10, -10, 10, 10)
-                painter.setPen(QPen(QColor(255, 165, 0), 3))
+                painter.setPen(QPen(QColor(255, 165, 0), 4))
                 painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
                 painter.drawRoundedRect(warnRect, 10, 10)
         else:
@@ -1650,7 +1650,7 @@ class GroupDTItem(QGraphicsItemGroup):
         if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
             warnRect = option.rect
             warnRect.adjust(-10, -10, 10, 10)
-            painter.setPen(QPen(QColor(255, 165, 0), 3))
+            painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(warnRect, 10, 10)
         # paint the normal item with the default 'paint' method

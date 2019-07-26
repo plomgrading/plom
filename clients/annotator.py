@@ -801,6 +801,10 @@ class Annotator(QDialog):
                 self.launchAgain = True
             else:
                 self.launchAgain = False
+
+            if not self.checkAllObjectsInside():
+                return
+
             # Save the view/scene to file.
             self.view.save()
             # Save the marker's comments
@@ -811,6 +815,19 @@ class Annotator(QDialog):
             self.saveWindowSettings()
             # Close the annotator(QDialog) with an 'accept'.
             self.accept()
+
+    def checkAllObjectsInside(self):
+        if self.view.checkAllObjectsInside():
+            return True
+        else:
+            # some objects outside the image, check if user really wants to finish
+            msg = SimpleMessage(
+                "Some annotations outside pageimage. Do you really want to finish?"
+            )
+            if msg.exec_() == QMessageBox.No:
+                return False
+            else:
+                return True
 
     def getComments(self):
         return self.view.getComments()

@@ -910,3 +910,13 @@ class PageScene(QGraphicsScene):
 
         self.removeItem(self.delBoxItem)
         self.deleteFlag = 0  # put flag back.
+
+    def checkAllObjectsInside(self):
+        for X in self.items():
+            # check all items that are not the image or scorebox
+            if (X is self.imageItem) or (X is self.scoreBox):
+                continue
+            # make sure is inside image
+            if not X.collidesWithItem(self.imageItem, mode=Qt.ContainsItemShape):
+                return False
+        return True
