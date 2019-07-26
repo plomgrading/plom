@@ -731,11 +731,26 @@ class Annotator(QDialog):
         if self.parent.annotatorSettings.value("tool") is not None:
             self.loadModeFromBefore(self.parent.annotatorSettings.value("tool"))
         if self.parent.annotatorSettings.value("viewRectangle") is not None:
-            initRect = self.parent.annotatorSettings.value("viewRectangle")
             # put in slight delay so that any resize events are done.
-            QTimer.singleShot(200, lambda: self.view.initialZoom(initRect))
+            QTimer.singleShot(
+                150,
+                lambda: self.view.initialZoom(
+                    self.parent.annotatorSettings.value("viewRectangle")
+                ),
+            )
         else:
-            QTimer.singleShot(200, lambda: self.view.initialZoom(None))
+            QTimer.singleShot(150, lambda: self.view.initialZoom(None))
+        # there is some redundancy between the above and the below.
+        if self.parent.annotatorSettings.value("zoomState") is not None:
+            # put in slight delay so that any resize events are done.
+            QTimer.singleShot(
+                200,
+                lambda: self.ui.zoomCB.setCurrentIndex(
+                    self.parent.annotatorSettings.value("zoomState")
+                ),
+            )
+        else:
+            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
 
     def saveWindowSettings(self):
         self.parent.annotatorSettings.setValue("geometry", self.saveGeometry())
@@ -743,6 +758,9 @@ class Annotator(QDialog):
         self.parent.annotatorSettings.setValue("commentWarnings", self.commentWarn)
         self.parent.annotatorSettings.setValue("tool", self.view.scene.mode)
         self.parent.annotatorSettings.setValue("viewRectangle", self.view.vrect)
+        self.parent.annotatorSettings.setValue(
+            "zoomState", self.ui.zoomCB.currentIndex()
+        )
 
     def closeEvent(self, relaunch):
         """When the user closes the window - either by clicking on the
@@ -862,6 +880,7 @@ class Annotator(QDialog):
 
     def setZoomComboBox(self):
         self.ui.zoomCB.addItem("User")
+        self.ui.zoomCB.addItem("Fit Page")
         self.ui.zoomCB.addItem("Fit Width")
         self.ui.zoomCB.addItem("Fit Height")
         self.ui.zoomCB.addItem("200%")
@@ -877,7 +896,9 @@ class Annotator(QDialog):
         self.ui.zoomCB.blockSignals(old)
 
     def zoomCBChanged(self):
-        if self.ui.zoomCB.currentText() == "Fit Width":
+        if self.ui.zoomCB.currentText() == "Fit Page":
+            self.view.zoomAll()
+        elif self.ui.zoomCB.currentText() == "Fit Width":
             self.view.zoomWidth()
         elif self.ui.zoomCB.currentText() == "Fit Height":
             self.view.zoomHeight()

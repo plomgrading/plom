@@ -132,6 +132,14 @@ class PageView(QGraphicsView):
             nzs = 1
         self.zoomState = nzs
 
+    def zoomAll(self, update=False):
+        if self.scene.height() > self.scene.width():
+            self.zoomHeight(False)
+        else:
+            self.zoomWidth(False)
+        if update:
+            self.parent.changeCBZoom(1)
+
     def zoomHeight(self, update=True):
         # scale to full height, but move center to user-zoomed center
         crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
@@ -139,7 +147,7 @@ class PageView(QGraphicsView):
         self.scale(rat, rat)
         self.centerOn(self.vrect.center())
         if update:
-            self.parent.changeCBZoom(2)
+            self.parent.changeCBZoom(3)
 
     def zoomWidth(self, update=True):
         # scale to full width, but move center to user-zoomed center
@@ -148,7 +156,7 @@ class PageView(QGraphicsView):
         self.scale(rat, rat)
         self.centerOn(self.vrect.center())
         if update:
-            self.parent.changeCBZoom(1)
+            self.parent.changeCBZoom(2)
 
     def zoomReset(self, rat):
         # reset the view to 1:1 but center on current vrect
