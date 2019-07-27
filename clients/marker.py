@@ -124,13 +124,23 @@ class ProxyModel(QSortFilterProxyModel):
     def __init__(self, parent=None):
         QSortFilterProxyModel.__init__(self, parent)
         self.setFilterKeyColumn(4)
-        self.filterString = None
+        self.filterString = ""
 
     def setFilterString(self, flt):
         self.filterString = flt
 
     def filterTags(self):
         self.setFilterFixedString(self.filterString)
+
+    def filterAcceptsRow(self, pos, index):
+        if len(self.filterString) == 0:
+            return True
+        if (
+            self.filterString.casefold()
+            in self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
+        ):
+            return True
+        return False
 
     def addPaper(self, rho):
         # Append new groupimage to list and append new row to table.
