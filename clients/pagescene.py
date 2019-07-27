@@ -413,7 +413,9 @@ class PageScene(QGraphicsScene):
         else:
             self.parent().scale(1.25, 1.25)
         self.parent().centerOn(event.scenePos())
-        self.parent().zoomNull()
+        self.parent().zoomNull(
+            True
+        )  # sets the view rectangle and updates zoom-dropdown.
 
     # Mouse release tool functions.
     # Most of these delete the temp-object (eg box / line)

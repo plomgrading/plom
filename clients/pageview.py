@@ -39,21 +39,12 @@ class PageView(QGraphicsView):
         # Set the starting mode to pan
         self.setMode("pan")
 
-        # set flag so can cycle through zoom states
-        self.zoomState = 0  # this is user-chosen view
+        # the current view
         self.vrect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
 
     def resizeEvent(self, e):
-        # On resize keep redefine view-rect
-        self.vrect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
-        # then zoom appropriately
-        if self.zoomState == 0:
-            # this avoids weird resizing issues
-            pass
-        elif self.zoomState == 1:
-            self.zoomWidth()
-        elif self.zoomState == 2:
-            self.zoomHeight()
+        # re-zoom
+        self.parent.zoomCBChanged()
         # then any other stuff needed by parent class
         super(PageView, self).resizeEvent(e)
 
@@ -104,36 +95,32 @@ class PageView(QGraphicsView):
         self.setCursor(cur)
         return ret
 
-    def zoomNull(self):
-        self.zoomState = 0
+    def zoomNull(self, update=False):
+        # sets the current view rect
         self.vrect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
+        if update:
+            self.parent.changeCBZoom(0)
 
     def zoomIn(self):
         self.scale(1.25, 1.25)
-        self.zoomNull()
-        self.parent.changeCBZoom(0)
+        self.zoomNull(True)
 
     def zoomOut(self):
         self.scale(0.8, 0.8)
-        self.zoomNull()
-        self.parent.changeCBZoom(0)
+        self.zoomNull(True)
 
     def zoomToggle(self):
         # cycle the zoom state setting between width and height
-        nzs = 0
-        if self.zoomState == 0:
-            self.zoomWidth()
-            nzs = 1
-        elif self.zoomState == 1:
-            self.zoomHeight()
-            nzs = 2
-        elif self.zoomState == 2:
-            self.zoomWidth()
-            nzs = 1
-        self.zoomState = nzs
+        if self.parent.ui.zoomCB.currentText() == "Fit Width":
+            self.zoomHeight(True)
+        elif self.parent.ui.zoomCB.currentText() == "Fit Height":
+            self.zoomWidth(True)
+        else:
+            self.zoomWidth(True)
 
     def zoomAll(self, update=False):
-        if self.scene.height() > self.scene.width():
+        crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
+        if self.scene.height() / crect.height() > self.scene.width() / crect.width():
             self.zoomHeight(False)
         else:
             self.zoomWidth(False)
@@ -163,7 +150,7 @@ class PageView(QGraphicsView):
         self.resetTransform()
         self.scale(rat, rat)
         self.centerOn(self.vrect.center())
-        self.zoomNull()
+        self.zoomNull(False)
 
     def zoomPrevious(self):
         self.fitInView(self.vrect, Qt.KeepAspectRatio)
