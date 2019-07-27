@@ -4,7 +4,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPLv3"
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QPixmap
+from PyQt5.QtGui import QGuiApplication, QPainter, QPixmap
 from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
     QGraphicsScene,
@@ -89,7 +89,9 @@ class ExamView(QGraphicsView):
 
     def mouseReleaseEvent(self, event):
         """Left/right click to zoom in and out"""
-        if event.button() == Qt.RightButton:
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
             self.scale(0.8, 0.8)
         else:
             self.scale(1.25, 1.25)
