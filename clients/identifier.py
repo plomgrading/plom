@@ -8,6 +8,7 @@ import csv
 import json
 import os
 import tempfile
+from io import StringIO, BytesIO
 from PyQt5.QtCore import (
     Qt,
     QAbstractTableModel,
@@ -245,20 +246,22 @@ class IDClient(QDialog):
             quit()
         # Get the filename from the message.
         dfn = msg[1]
-        fname = os.path.join(self.workingDirectory, "cl.csv")
-        # Get file from dav and copy into local temp working dir as cl.csv
-        messenger.getFileDav(dfn, fname)
+        fileobj = BytesIO(b'')
+        # Get file from dav and copy into memory
+        messenger.getFileDav(dfn, fileobj)
+        fileobj.seek(0)
+        # TODO: very wasteful, why can't csv.DictReader use the binary?
+        csvfile = StringIO(fileobj.getvalue().decode())
         # create dictionaries to store the classlist
         self.studentNamesToNumbers = defaultdict(int)
         self.studentNumbersToNames = defaultdict(str)
         # Read cl.csv into those dictionaries
-        with open(fname) as csvfile:
-            reader = csv.DictReader(csvfile, skipinitialspace=True)
-            for row in reader:
-                # Merge names into single field
-                sn = row["surname"] + ", " + row["name"]
-                self.studentNamesToNumbers[sn] = str(row["id"])
-                self.studentNumbersToNames[str(row["id"])] = sn
+        reader = csv.DictReader(csvfile, skipinitialspace=True)
+        for row in reader:
+            # Merge names into single field
+            sn = row["surname"] + ", " + row["name"]
+            self.studentNamesToNumbers[sn] = str(row["id"])
+            self.studentNumbersToNames[str(row["id"])] = sn
         # Now that we've read in the classlist - tell server we got it
         # Server will remove it from the webdav server.
         msg = messenger.SRMsg(["iDWF", self.userName, self.token, dfn])
