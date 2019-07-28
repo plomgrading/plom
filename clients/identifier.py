@@ -8,7 +8,7 @@ import csv
 import json
 import os
 import tempfile
-from io import StringIO, BytesIO
+from io import StringIO, BytesIO, TextIOWrapper
 from PyQt5.QtCore import (
     Qt,
     QAbstractTableModel,
@@ -250,8 +250,9 @@ class IDClient(QDialog):
         # Get file from dav and copy into memory
         messenger.getFileDav(dfn, fileobj)
         fileobj.seek(0)
-        # TODO: very wasteful, why can't csv.DictReader use the binary?
-        csvfile = StringIO(fileobj.getvalue().decode())
+        # csv reader needs file in text mode: this chokes on non-utf8?
+        csvfile = TextIOWrapper(fileobj)
+        #csvfile = TextIOWrapper(fileobj, errors='backslashreplace')
         # create dictionaries to store the classlist
         self.studentNamesToNumbers = defaultdict(int)
         self.studentNumbersToNames = defaultdict(str)
