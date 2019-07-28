@@ -249,6 +249,7 @@ class IDClient(QDialog):
         fileobj = BytesIO(b'')
         # Get file from dav and copy into memory
         messenger.getFileDav(dfn, fileobj)
+        # rewind after reading
         fileobj.seek(0)
         # csv reader needs file in text mode: this chokes on non-utf8?
         csvfile = TextIOWrapper(fileobj)
