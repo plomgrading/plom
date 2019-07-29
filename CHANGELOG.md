@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Server: the new `12_archive` script makes a minimal zip file for archiving.
   It is not suitable for later editing in Plom.
 
+* Server: support running the server on Docker.
+
 ### Changed
 
 ### Fixed
