@@ -232,6 +232,7 @@ class IDClient(QDialog):
         else:
             self.token = msg[1]
 
+
     def getClassList(self):
         """Send request for classlist (iRCL) to server. The server then sends
         back the CSV of the classlist.
@@ -239,19 +240,24 @@ class IDClient(QDialog):
         of either two fields = FamilyName+GivenName or a single Name field.
         """
         # Send request for classlist (iRCL) to server
-        msg = messenger.SRMsg(["iRCL", self.userName, self.token])
-        # Return should be [ACK, path/filename]
-        if msg[0] == "ERR":
+        msg, remotefile = messenger.SRMsg(["iRCL", self.userName, self.token])
+        if not msg == "ACK":
             ErrorMessage("Classlist problem")
             quit()
-        # Get the filename from the message.
-        dfn = msg[1]
         fileobj = BytesIO(b"")
-        messenger.getFileDav(dfn, fileobj)
+        messenger.getFileDav(remotefile, fileobj)
         fileobj.seek(0)  # rewind
+
+        # We have list, server can clean up (e.g., remove from webdav server)
+        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        if not msg == "ACK":
+            ErrorMessage("Classlist problem")
+            quit()
+
         # csv reader needs file in text mode: this chokes on non-utf8?
         csvfile = TextIOWrapper(fileobj)
         # csvfile = TextIOWrapper(fileobj, errors='backslashreplace')
+
         # create dictionaries from the classlist
         self.studentNamesToNumbers = defaultdict(int)
         self.studentNumbersToNames = defaultdict(str)
@@ -261,41 +267,36 @@ class IDClient(QDialog):
             sn = row["surname"] + ", " + row["name"]
             self.studentNamesToNumbers[sn] = str(row["id"])
             self.studentNumbersToNames[str(row["id"])] = sn
-        # Now that we've read in the classlist - tell server we got it
-        # Server will remove it from the webdav server.
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, dfn])
-        if msg[0] == "ERR":
-            ErrorMessage("Classlist problem")
-            quit()
         return True
+
 
     def getPredictions(self):
         """Send request for prediction list (iRPL) to server. The server then sends
         back the CSV of the predictions testnumber -> studentID.
         """
         # Send request for prediction list to server
-        msg = messenger.SRMsg(["iRPL", self.userName, self.token])
-        # Return should be [ACK, path/filename]
-        if msg[0] == "ERR":
+        msg, remotefile = messenger.SRMsg(["iRPL", self.userName, self.token])
+        if not msg == "ACK":
             ErrorMessage("Prediction list problem")
             quit()
-        # Get the filename from the message.
-        dfn = msg[1]
         fileobj = BytesIO(b"")
-        messenger.getFileDav(dfn, fileobj)
+        messenger.getFileDav(remotefile, fileobj)
         fileobj.seek(0)  # rewind
+
+        # We have list, server can clean up (e.g., remove from webdav server)
+        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        if not msg == "ACK":
+            ErrorMessage("Classlist problem")
+            quit()
+
         csvfile = TextIOWrapper(fileobj)
-        # create dictionaries to store the classlist
+
+        # create dictionary from the prediction list
         self.predictedTestToNumbers = defaultdict(int)
         reader = csv.DictReader(csvfile, skipinitialspace=True)
         for row in reader:
             self.predictedTestToNumbers[int(row["test"])] = str(row["id"])
-        # Now that we've read in the classlist - tell server we got it
-        # Server will remove it from the webdav server.
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, dfn])
-        if msg[0] == "ERR":
-            ErrorMessage("Prediction list problem")
-            quit()
+
         # Also tweak font size
         fnt = self.font()
         fnt.setPointSize(fnt.pointSize() * 2)
@@ -307,6 +308,7 @@ class IDClient(QDialog):
             self.ui.predictionBox.hide()
 
         return True
+
 
     def setCompleters(self):
         """Set up the studentname + studentnumber line-edit completers.
