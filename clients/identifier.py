@@ -241,18 +241,14 @@ class IDClient(QDialog):
         """
         # Send request for classlist (iRCL) to server
         msg, remotefile = messenger.SRMsg(["iRCL", self.userName, self.token])
-        if not msg == "ACK":
-            ErrorMessage("Classlist problem")
-            quit()
+        assert msg == "ACK", "Classlist problem"
         fileobj = BytesIO(b"")
         messenger.getFileDav(remotefile, fileobj)
         fileobj.seek(0)  # rewind
 
         # We have list, server can clean up (e.g., remove from webdav server)
         msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
-        if not msg == "ACK":
-            ErrorMessage("Classlist problem")
-            quit()
+        assert msg == "ACK"
 
         # csv reader needs file in text mode: this chokes on non-utf8?
         csvfile = TextIOWrapper(fileobj)
@@ -276,18 +272,14 @@ class IDClient(QDialog):
         """
         # Send request for prediction list to server
         msg, remotefile = messenger.SRMsg(["iRPL", self.userName, self.token])
-        if not msg == "ACK":
-            ErrorMessage("Prediction list problem")
-            quit()
+        assert msg == "ACK", "Prediction list problem"
         fileobj = BytesIO(b"")
         messenger.getFileDav(remotefile, fileobj)
         fileobj.seek(0)  # rewind
 
         # We have list, server can clean up (e.g., remove from webdav server)
         msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
-        if not msg == "ACK":
-            ErrorMessage("Prediction list problem")
-            quit()
+        assert msg == "ACK"
 
         csvfile = TextIOWrapper(fileobj)
 
@@ -380,7 +372,8 @@ class IDClient(QDialog):
         fileobj = BytesIO(b"")
         messenger.getFileDav(msg[1], fileobj)
         # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, msg[1]])
+        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, msg[1]])
+        assert msg == "ACK"
 
         # rewind the stream
         fileobj.seek(0)
