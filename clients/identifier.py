@@ -286,7 +286,7 @@ class IDClient(QDialog):
         # We have list, server can clean up (e.g., remove from webdav server)
         msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
         if not msg == "ACK":
-            ErrorMessage("Classlist problem")
+            ErrorMessage("Prediction list problem")
             quit()
 
         csvfile = TextIOWrapper(fileobj)
