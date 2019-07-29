@@ -370,8 +370,9 @@ class IDClient(QDialog):
                     ]
                 )
 
+
     def getAlreadyIDList(self):
-        # Ask server for list of previously marked papers
+        # Ask server for list of previously ID'd papers
         msg = messenger.SRMsg(["iGAL", self.userName, self.token])
         if msg[0] == "ERR":
             return
@@ -389,6 +390,7 @@ class IDClient(QDialog):
                 Paper(x[0], fname="", stat="identified", id=x[2], name=x[3]),
                 update=False,
             )
+
 
     def selChanged(self, selnew, selold):
         # When the selection changes, update the ID and name line-edit boxes
