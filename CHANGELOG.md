@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Client: (annotator) "ctrl-=" cycles through zooms (user, fit-width, fit-height). Also added this shortcut to the key-help list.
 
+* Server: support running the server on Docker.
+
 ### Changed
 
 ### Fixed
