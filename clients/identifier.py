@@ -273,10 +273,10 @@ class IDClient(QDialog):
         return True
 
     def getPredictions(self):
-        """Send request for classlist (iRPL) to server. The server then sends
+        """Send request for prediction list (iRPL) to server. The server then sends
         back the CSV of the predictions testnumber -> studentID.
         """
-        # Send request for classlist (iRCL) to server
+        # Send request for prediction list to server
         msg = messenger.SRMsg(["iRPL", self.userName, self.token])
         # Return should be [ACK, path/filename]
         if msg[0] == "ERR":
