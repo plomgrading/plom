@@ -247,17 +247,14 @@ class IDClient(QDialog):
         # Get the filename from the message.
         dfn = msg[1]
         fileobj = BytesIO(b'')
-        # Get file from dav and copy into memory
         messenger.getFileDav(dfn, fileobj)
-        # rewind after reading
-        fileobj.seek(0)
+        fileobj.seek(0)  # rewind
         # csv reader needs file in text mode: this chokes on non-utf8?
         csvfile = TextIOWrapper(fileobj)
         #csvfile = TextIOWrapper(fileobj, errors='backslashreplace')
-        # create dictionaries to store the classlist
+        # create dictionaries from the classlist
         self.studentNamesToNumbers = defaultdict(int)
         self.studentNumbersToNames = defaultdict(str)
-        # Read cl.csv into those dictionaries
         reader = csv.DictReader(csvfile, skipinitialspace=True)
         for row in reader:
             # Merge names into single field
