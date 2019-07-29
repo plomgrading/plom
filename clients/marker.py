@@ -470,7 +470,9 @@ class MarkerClient(QDialog):
         # the next test and get annotating directly.
         # When false the user stays at the marker window
         if msg[0] != "ERR" and launchAgain:
-            self.annotateTest()
+            # do not recurse, instead animate click
+            # self.annotateTest()
+            self.ui.annButton.animateClick()
 
     def moveToNextUnmarkedTest(self):
         # Move to the next unmarked test in the table.
@@ -478,12 +480,17 @@ class MarkerClient(QDialog):
         prt = self.prxM.rowCount()
         if prt == 0:
             return
-        prstart = self.ui.tableView.selectedIndexes()[0].row()
+        # back up one row because before this is called we have
+        # added a row in the background, so the current row is actually
+        # one too far forward.
+        prstart = (self.ui.tableView.selectedIndexes()[0].row() - 1) % prt
         pr = (prstart + 1) % prt
         while self.prxM.getStatus(pr) in ["marked", "deferred"] and pr != prstart:
             pr = (pr + 1) % prt
         self.ui.tableView.selectRow(pr)
         if pr == prstart:
+            # gone right round, so select prstart+1
+            self.ui.tableView.selectRow((pr + 1) % prt)
             return False
         return True
 
@@ -551,6 +558,9 @@ class MarkerClient(QDialog):
             parent=self,
             plomDict=pdict,
         )
+        # while annotator is firing up request next paper in background
+        # after giving system a moment to do `annotator.exec_()`
+        QTimer.singleShot(50, self.requestNext)
         # run the annotator
         if annotator.exec_():
             # If annotator returns "accept"
@@ -650,8 +660,11 @@ class MarkerClient(QDialog):
             self.ui.mProgressBar.setMaximum(msg[2])
 
         # Check if no unmarked test, then request one.
-        if self.moveToNextUnmarkedTest() is False:
-            self.requestNext(launchAgain)
+        if launchAgain is False:
+            return
+        if self.moveToNextUnmarkedTest():
+            # self.annotateTest()
+            self.ui.annButton.animateClick()
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image
