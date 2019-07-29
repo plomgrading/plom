@@ -246,12 +246,12 @@ class IDClient(QDialog):
             quit()
         # Get the filename from the message.
         dfn = msg[1]
-        fileobj = BytesIO(b'')
+        fileobj = BytesIO(b"")
         messenger.getFileDav(dfn, fileobj)
         fileobj.seek(0)  # rewind
         # csv reader needs file in text mode: this chokes on non-utf8?
         csvfile = TextIOWrapper(fileobj)
-        #csvfile = TextIOWrapper(fileobj, errors='backslashreplace')
+        # csvfile = TextIOWrapper(fileobj, errors='backslashreplace')
         # create dictionaries from the classlist
         self.studentNamesToNumbers = defaultdict(int)
         self.studentNumbersToNames = defaultdict(str)
@@ -281,7 +281,7 @@ class IDClient(QDialog):
             quit()
         # Get the filename from the message.
         dfn = msg[1]
-        fileobj = BytesIO(b'')
+        fileobj = BytesIO(b"")
         messenger.getFileDav(dfn, fileobj)
         fileobj.seek(0)  # rewind
         csvfile = TextIOWrapper(fileobj)
@@ -373,7 +373,7 @@ class IDClient(QDialog):
         msg = messenger.SRMsg(["iGAL", self.userName, self.token])
         if msg[0] == "ERR":
             return
-        fileobj = BytesIO(b'')
+        fileobj = BytesIO(b"")
         messenger.getFileDav(msg[1], fileobj)
         # Ack that test received - server then deletes it from webdav
         msg = messenger.SRMsg(["iDWF", self.userName, self.token, msg[1]])
