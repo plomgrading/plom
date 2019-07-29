@@ -13,13 +13,16 @@ from PyQt5.QtCore import (
     QAbstractTableModel,
     QElapsedTimer,
     QModelIndex,
+    QObject,
     QSettings,
     QSortFilterProxyModel,
     QTimer,
-    QVariant,
+    QThread,
+    pyqtSignal,
 )
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton
+
 
 from examviewwindow import ExamViewWindow
 import messenger
@@ -40,6 +43,24 @@ if platform.system() == "Darwin":
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
 directoryPath = tempDirectory.name
+
+# Read https://mayaposch.wordpress.com/2011/11/01/how-to-really-truly-use-qthreads-the-full-explanation/
+# and https://stackoverflow.com/questions/6783194/background-thread-with-qthread-in-pyqt
+# and finally https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
+# I'll do it the simpler subclassing way
+class BackgroundDownloader(QThread):
+    downloaded = pyqtSignal(str)
+
+    def setFiles(self, tname, fname):
+        self.tname = tname
+        self.fname = fname
+
+    def run(self):
+        messenger.getFileDav(self.tname, self.fname)
+        # needed to send "please delete" back to server
+        self.downloaded.emit(self.tname)
+        # then exit
+        self.quit()
 
 
 class TestPageGroup:
@@ -314,6 +335,11 @@ class MarkerClient(QDialog):
         self.testImg.resetB.animateClick()
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
+        # A thread for downloading in the background
+        # see https://stackoverflow.com/questions/6783194/background-thread-with-qthread-in-pyqt
+        # and https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
+        self.backgroundDownloader = BackgroundDownloader()
+        self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
 
     def resizeEvent(self, e):
         if self.testImg is None:
@@ -474,6 +500,31 @@ class MarkerClient(QDialog):
             # self.annotateTest()
             self.ui.annButton.animateClick()
 
+    def requestNextInBackgroundStart(self):
+        # Ask server for next unmarked paper
+        msg = messenger.SRMsg(
+            ["mNUM", self.userName, self.token, self.pageGroup, self.version]
+        )
+        if msg[0] == "ERR":
+            return
+        # Return message should be [ACK, code, temp-filename, tags]
+        # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
+        fname = os.path.join(self.workingDirectory, msg[1] + ".png")
+        # Get file from the tempfilename in the webdav
+        tname = msg[2]
+        # Do this `messenger.getFileDav(tname, fname)` in another thread
+        self.backgroundDownloader.setFiles(tname, fname)
+        self.backgroundDownloader.start()
+        # Add the page-group to the list of things to mark
+        self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]))
+
+    def requestNextInBackgroundFinish(self, tname):
+        # Ack that test received - server then deletes it from webdav
+        msg = messenger.SRMsg(["mDWF", self.userName, self.token, tname])
+        # Clean up the table
+        self.ui.tableView.resizeColumnsToContents()
+        self.ui.tableView.resizeRowsToContents()
+
     def moveToNextUnmarkedTest(self):
         # Move to the next unmarked test in the table.
         # Be careful not to get stuck in a loop if all marked
@@ -560,7 +611,7 @@ class MarkerClient(QDialog):
         )
         # while annotator is firing up request next paper in background
         # after giving system a moment to do `annotator.exec_()`
-        QTimer.singleShot(50, self.requestNext)
+        self.requestNextInBackgroundStart()
         # run the annotator
         if annotator.exec_():
             # If annotator returns "accept"
@@ -621,9 +672,14 @@ class MarkerClient(QDialog):
             # if remarking then move backup annotated file back.
             if remarkFlag:
                 shutil.move(aname + ".bak", aname)
+            # reselect the row we were working on
+            self.ui.tableView.selectRow(index[1].row())
             return
         # Copy the mark, annotated filename and the markingtime into the table
         self.prxM.markPaper(index, gr, aname, pname, mtime)
+        # Update the currently displayed image
+        self.updateImage(index[1].row())
+
         # copy annotated file to webdav
         afile = os.path.basename(aname)
         messenger.putFileDav(aname, afile)
