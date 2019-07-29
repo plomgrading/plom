@@ -202,7 +202,7 @@ def test_csv():
     *** Running tests ***
 
     Its normal for some verbose output to appear below.  But there should be
-    no Exceptions and it should ens with "All tests passed".
+    no Exceptions and it should end with "All tests passed".
     """)
 
     # general test
