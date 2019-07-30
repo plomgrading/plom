@@ -8,10 +8,10 @@ import os
 import sys
 import tempfile
 
-# takes StudentID and list of group image files as args.
+# takes testname StudentID and list of group image files as args.
 # 0th item on list is the coverpage.
 # other items are the groupimage files.
-shortName = eval(sys.argv[1])
+shortName = sys.argv[1]
 sid = eval(sys.argv[2])
 imgl = eval(sys.argv[3])
 # output as test_<StudentID>.pdf
