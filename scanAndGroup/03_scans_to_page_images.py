@@ -48,26 +48,28 @@ def buildDirectories():
 def processFileToPng(fname):
     """Convert each page of pdf into png using ghostscript"""
     scan, fext = os.path.splitext(fname)
-    # commandstring = (
-    #     "gs -dNumRenderingThreads=4 -dNOPAUSE -sDEVICE=png256 "
-    #     "-o ./png/" + scan + "-%d.png -r200 " + fname
-    # )
-    # os.system(commandstring)
-    # replace os.system with subprocess - should also fix
     # issue #126 - spaces in names
     safeScan = scan.replace(" ", "_")  # replace space with underscore in outputnames
-    subprocess.run(
-        [
-            "gs",
-            "-dNumRenderingThreads=4",
-            "-dNOPAUSE",
-            "-sDEVICE=png256",
-            "-o",
-            "./png/" + safeScan + "-%d.png",
-            "-r200",
-            fname,
-        ]
-    )
+    #     "gs -dNumRenderingThreads=4 -dNOPAUSE -sDEVICE=png256 "
+    #     "-o ./png/" + scan + "-%d.png -r200 " + fname
+    try:
+        subprocess.run(
+            [
+                "gs",
+                "-dNumRenderingThreads=4",
+                "-dNOPAUSE",
+                "-sDEVICE=png256",
+                "-o",
+                "./png/" + safeScan + "-%d.png",
+                "-r200",
+                fname,
+            ],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
+    except subprocess.CalledProcessError as suberror:
+        print("Error running gs: {}".format(suberror.stdout.decode("utf-8")))
 
 
 def processScans():
@@ -101,8 +103,20 @@ def processScans():
         # run the command list through parallel then delete
 
         # replace os.system with subprocess
-        # os.system("parallel --bar <commandlist.txt")
-        subprocess.run(["parallel", "--bar", "-a", "commandlist.txt"])
+        try:
+            subprocess.run(
+                ["parallel", "--bar", "-a", "commandlist.txt"],
+                stderr=subprocess.STDOUT,
+                shell=False,
+                check=True,
+            )
+        except:
+            print(
+                "Error running post-processing mogrify: {}".format(
+                    suberror.stdout.decode("utf-8")
+                )
+            )
+
         os.unlink("commandlist.txt")
 
         # move all the pngs into pageimages directory
