@@ -48,10 +48,8 @@ def buildDirectories():
 def processFileToPng(fname):
     """Convert each page of pdf into png using ghostscript"""
     scan, fext = os.path.splitext(fname)
-    # issue #126 - spaces in names
-    safeScan = scan.replace(" ", "_")  # replace space with underscore in outputnames
-    #     "gs -dNumRenderingThreads=4 -dNOPAUSE -sDEVICE=png256 "
-    #     "-o ./png/" + scan + "-%d.png -r200 " + fname
+    # issue #126 - replace spaces in names with underscores for output names.
+    safeScan = scan.replace(" ", "_")
     try:
         subprocess.run(
             [
@@ -101,8 +99,6 @@ def processScans():
             fh.write("mogrify -quiet -gamma 0.5 -quality 100 " + fn + "\n")
         fh.close()
         # run the command list through parallel then delete
-
-        # replace os.system with subprocess
         try:
             subprocess.run(
                 ["parallel", "--bar", "-a", "commandlist.txt"],
