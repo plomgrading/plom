@@ -35,17 +35,13 @@ def buildDirectories():
     # in decoded pages
     for p in range(1, spec.Length + 1):
         for v in range(1, spec.Versions + 1):
-            dir = "mkdir -p decodedPages/page_{:s}/version_{:d}".format(
-                str(p).zfill(2), v
-            )
+            dir = "decodedPages/page_{:s}/version_{:d}".format(str(p).zfill(2), v)
             os.makedirs(dir, exist_ok=True)
     # For each pagegroup/version we need a pg/v dir
     # in readformarking. the image server reads from there.
     for pg in range(1, spec.getNumberOfGroups() + 1):
         for v in range(1, spec.Versions + 1):
-            dir = "mkdir -p readyForMarking/group_{:s}/version_{:d}".format(
-                str(pg).zfill(2), v
-            )
+            dir = "readyForMarking/group_{:s}/version_{:d}".format(str(pg).zfill(2), v)
             os.makedirs(dir, exist_ok=True)
 
 
@@ -59,7 +55,7 @@ def processFileToPng(fname):
     # os.system(commandstring)
     # replace os.system with subprocess - should also fix
     # issue #126 - spaces in names
-    scan.replace(" ", "_")  # replace space with underscore in outputnames
+    safeScan = scan.replace(" ", "_")  # replace space with underscore in outputnames
     subprocess.run(
         [
             "gs",
@@ -67,8 +63,8 @@ def processFileToPng(fname):
             "-dNOPAUSE",
             "-sDEVICE=png256",
             "-o",
-            "./png" + scan + "-%d.png",
-            -r200,
+            "./png/" + safeScan + "-%d.png",
+            "-r200",
             fname,
         ]
     )
