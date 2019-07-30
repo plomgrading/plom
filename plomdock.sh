@@ -55,8 +55,6 @@ sudo docker exec $PD adduser -u $UID --no-create-home --disabled-password --geco
 
 #script:
 mkdir plom/scanAndGroup/scannedExams/
-mkdir plom/imageServer/markingComments
-mkdir plom/imageServer/markedPapers
 /bin/cp -fa plommintestdata/resources/* plom/resources/
 /bin/cp -a plommintestdata/*.pdf plom/scanAndGroup/scannedExams/
 sudo docker exec --user $USER $PD bash -c "cd plom/scanAndGroup; python3 03_scans_to_page_images.py"
