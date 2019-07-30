@@ -790,8 +790,6 @@ def checkPorts():
 
 
 def checkDirectories():
-    if not os.path.isdir("markingComments"):
-        os.mkdir("markingComments")
     if not os.path.isdir("markedPapers"):
         os.mkdir("markedPapers")
     if not os.path.isdir("markedPapers/plomFiles"):
