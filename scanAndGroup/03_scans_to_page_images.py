@@ -106,7 +106,7 @@ def processScans():
                 shell=False,
                 check=True,
             )
-        except:
+        except subprocess.CalledProcessError as suberror:
             print(
                 "Error running post-processing mogrify: {}".format(
                     suberror.stdout.decode("utf-8")
