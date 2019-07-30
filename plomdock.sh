@@ -12,17 +12,14 @@
 #   `cp plomdock.sh ${HOME}/plomdock/`
 #   `cd ${HOME}/plomdock`
 #
-# Get the `minTestServerData` from... somewhere and place
-# it as specified below.
-# TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/221
-#
 # Run this script
 
 export BRANCH=master
 export BASEIMG=plomdockerbuild
 export PD=plom0
-export MINTESTDATA=${HOME}/tmp/dockerHack/minTestServerData
 export UID=`id -u`
+
+git clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
 
 #before_install:
 git clone https://gitlab.math.ubc.ca/andrewr/MLP.git plomsrc
@@ -58,10 +55,8 @@ sudo docker exec $PD adduser -u $UID --no-create-home --disabled-password --geco
 
 #script:
 mkdir plom/scanAndGroup/scannedExams/
-mkdir plom/imageServer/markingComments
-mkdir plom/imageServer/markedPapers
-/bin/cp -fa $MINTESTDATA/resources/* plom/resources/
-/bin/cp -a $MINTESTDATA/*.pdf plom/scanAndGroup/scannedExams/
+/bin/cp -fa plommintestdata/resources/* plom/resources/
+/bin/cp -a plommintestdata/*.pdf plom/scanAndGroup/scannedExams/
 sudo docker exec --user $USER $PD bash -c "cd plom/scanAndGroup; python3 03_scans_to_page_images.py"
 sudo docker exec --user $USER $PD bash -c "cd plom/scanAndGroup; python3 04_decode_images.py"
 sudo docker exec --user $USER $PD bash -c "cd plom/scanAndGroup; python3 05_missing_pages.py"
