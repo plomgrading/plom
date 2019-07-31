@@ -239,19 +239,20 @@ class IDClient(QDialog):
         of either two fields = FamilyName+GivenName or a single Name field.
         """
         # Send request for classlist (iRCL) to server
-        msg = messenger.SRMsg(["iRCL", self.userName, self.token])
-        # Return should be [ACK, path/filename]
-        if msg[0] == "ERR":
-            ErrorMessage("Classlist problem")
-            quit()
-        # Get the filename from the message.
-        dfn = msg[1]
+        msg, remotefile = messenger.SRMsg(["iRCL", self.userName, self.token])
+        assert msg == "ACK", "Classlist problem"
         fileobj = BytesIO(b"")
-        messenger.getFileDav(dfn, fileobj)
+        messenger.getFileDav(remotefile, fileobj)
         fileobj.seek(0)  # rewind
+
+        # We have list, server can clean up (e.g., remove from webdav server)
+        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        assert msg == "ACK"
+
         # csv reader needs file in text mode: this chokes on non-utf8?
         csvfile = TextIOWrapper(fileobj)
         # csvfile = TextIOWrapper(fileobj, errors='backslashreplace')
+
         # create dictionaries from the classlist
         self.studentNamesToNumbers = defaultdict(int)
         self.studentNumbersToNames = defaultdict(str)
@@ -261,12 +262,6 @@ class IDClient(QDialog):
             sn = row["surname"] + ", " + row["name"]
             self.studentNamesToNumbers[sn] = str(row["id"])
             self.studentNumbersToNames[str(row["id"])] = sn
-        # Now that we've read in the classlist - tell server we got it
-        # Server will remove it from the webdav server.
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, dfn])
-        if msg[0] == "ERR":
-            ErrorMessage("Classlist problem")
-            quit()
         return True
 
     def getPredictions(self):
@@ -274,28 +269,24 @@ class IDClient(QDialog):
         back the CSV of the predictions testnumber -> studentID.
         """
         # Send request for prediction list to server
-        msg = messenger.SRMsg(["iRPL", self.userName, self.token])
-        # Return should be [ACK, path/filename]
-        if msg[0] == "ERR":
-            ErrorMessage("Prediction list problem")
-            quit()
-        # Get the filename from the message.
-        dfn = msg[1]
+        msg, remotefile = messenger.SRMsg(["iRPL", self.userName, self.token])
+        assert msg == "ACK", "Prediction list problem"
         fileobj = BytesIO(b"")
-        messenger.getFileDav(dfn, fileobj)
+        messenger.getFileDav(remotefile, fileobj)
         fileobj.seek(0)  # rewind
+
+        # We have list, server can clean up (e.g., remove from webdav server)
+        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        assert msg == "ACK"
+
         csvfile = TextIOWrapper(fileobj)
-        # create dictionaries to store the classlist
+
+        # create dictionary from the prediction list
         self.predictedTestToNumbers = defaultdict(int)
         reader = csv.DictReader(csvfile, skipinitialspace=True)
         for row in reader:
             self.predictedTestToNumbers[int(row["test"])] = str(row["id"])
-        # Now that we've read in the classlist - tell server we got it
-        # Server will remove it from the webdav server.
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, dfn])
-        if msg[0] == "ERR":
-            ErrorMessage("Prediction list problem")
-            quit()
+
         # Also tweak font size
         fnt = self.font()
         fnt.setPointSize(fnt.pointSize() * 2)
@@ -369,14 +360,15 @@ class IDClient(QDialog):
                 )
 
     def getAlreadyIDList(self):
-        # Ask server for list of previously marked papers
-        msg = messenger.SRMsg(["iGAL", self.userName, self.token])
-        if msg[0] == "ERR":
-            return
+        # Ask server for list of previously ID'd papers
+        msg, remotefile = messenger.SRMsg(["iGAL", self.userName, self.token])
+        assert msg == "ACK", "problem getting previously IDed list from server"
         fileobj = BytesIO(b"")
-        messenger.getFileDav(msg[1], fileobj)
+        messenger.getFileDav(remotefile, fileobj)
         # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, msg[1]])
+        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        assert msg == "ACK"
+
         # rewind the stream
         fileobj.seek(0)
         json_file = TextIOWrapper(fileobj)
