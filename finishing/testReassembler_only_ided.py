@@ -9,7 +9,6 @@ import sys
 import tempfile
 
 # takes testname, StudentID and list of group image files as args.
-print("Called with {}".format(sys.argv))
 shortName = sys.argv[1]
 sid = eval(sys.argv[2])
 imgl = eval(sys.argv[3])
