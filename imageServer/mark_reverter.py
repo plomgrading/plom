@@ -163,6 +163,19 @@ class examTable(QWidget):
         shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/" + fname)
         # now safe to set the annotatedFile value in the record
         rec.setValue("annotatedFile", "")
+        # move the plomFile and commentFile too
+        fname = rec.value("plomFile")
+        shutil.move(
+            "markedPapers/plomFiles" + fname, "markedPapers/revertedPapers/" + fname
+        )
+        rec.setValue("plomFile", "")
+        fname = rec.value("commentFile")
+        shutil.move(
+            "markedPapers/commentFiles" + fname, "markedPapers/revertedPapers/" + fname
+        )
+        rec.setValue("commentFile", "")
+        # clear the tags
+        rec.setValue("tags", "")
         # update the row
         self.exM.setRecord(currentRow, rec)
         # and update the database
@@ -177,7 +190,12 @@ class examTable(QWidget):
         return sorted(list(lst))
 
     def loadData(self):
-        for c in [0, 2, 3, 6]:
+        # A row of the table in the Mark DB is
+        # 0=index, 1=TGV, 2=originalFile, 3=testnumber, 4=pageGroup
+        # 5=version, 6=annotatedFile, 7=plomFile, 8=commentFile,
+        # 9=status, 10=user, 11=time, 12=mark, 13=timeSpentMarking,
+        # 14=tags
+        for c in [0, 2, 3, 6, 7, 8]:
             self.exV.hideColumn(c)
         self.exV.resizeColumnsToContents()
         self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
