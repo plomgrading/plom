@@ -26,15 +26,16 @@ from utils import myhash, SALTSTR as saltstr
 longname = 'Math Exam'  # bland default for now
 
 
-def do_renaming(fromdir, todir, basename):
+def do_renaming(fromdir, todir):
     print('Searching for foo_<studentnumber>.pdf files in {0}...'.format(fromdir))
     numfiles = 0
     for file in os.scandir(fromdir):
         if file.name.endswith(".pdf"):
-            sn = file.name.partition('_')[2].partition('.')[0]
+            oldname = file.name.partition('.')[0]
+            sn = oldname[-8:]
             assert len(sn) == 8
             code = myhash(sn)
-            newname = '{0}_{1}_{2}.pdf'.format(basename, sn, code)
+            newname = '{0}_{1}.pdf'.format(oldname, code)
             newname = os.path.join(todir, newname)
             print('  found SN {0}: code {1}, copying "{2}" to "{3}"'.format( \
                 sn, code, file.name, newname))
@@ -77,7 +78,7 @@ if __name__ == '__main__':
         print('Directory "codedReturn" already exists: if you want to re-run this script, try deleting it first.')
         sys.exit()
 
-    numfiles = do_renaming(fromdir, 'codedReturn', basename)
+    numfiles = do_renaming(fromdir, 'codedReturn')
     if numfiles > 0:
         print('renamed and copied {0} files'.format(numfiles))
     else:
