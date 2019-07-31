@@ -577,10 +577,10 @@ class MarkerClient(QDialog):
             return
         self.prxM.deferPaper(index)
 
-    def countUnmarkedDeferred(self):
+    def countUnmarkedReverted(self):
         count = 0
         for pr in range(self.prxM.rowCount()):
-            if self.prxM.getStatus(pr) in ["untouched", "deferred"]:
+            if self.prxM.getStatus(pr) in ["untouched", "reverted"]:
                 count += 1
         return count
 
@@ -619,7 +619,7 @@ class MarkerClient(QDialog):
         # while annotator is firing up request next paper in background
         # after giving system a moment to do `annotator.exec_()`
         # but check if unmarked papers already in list.
-        if self.countUnmarkedDeferred() == 0:
+        if self.countUnmarkedReverted() == 0:
             self.requestNextInBackgroundStart()
         # run the annotator
         if annotator.exec_():
