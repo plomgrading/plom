@@ -361,10 +361,10 @@ class IDClient(QDialog):
 
     def getAlreadyIDList(self):
         # Ask server for list of previously ID'd papers
-        msg, = messenger.SRMsg(["iGAL", self.userName, self.token])
+        msg, remotefile = messenger.SRMsg(["iGAL", self.userName, self.token])
         assert msg == "ACK", "problem getting previously IDed list from server"
         fileobj = BytesIO(b"")
-        messenger.getFileDav(msg[1], fileobj)
+        messenger.getFileDav(remotefile, fileobj)
         # Ack that test received - server then deletes it from webdav
         msg, = messenger.SRMsg(["iDWF", self.userName, self.token, msg[1]])
         assert msg == "ACK"
