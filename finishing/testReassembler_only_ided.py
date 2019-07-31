@@ -3,12 +3,13 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
+import fitz
 import os
 import sys
 import tempfile
-import shutil
 
 # takes testname, StudentID and list of group image files as args.
+print("Called with {}".format(sys.argv))
 shortName = sys.argv[1]
 sid = eval(sys.argv[2])
 imgl = eval(sys.argv[3])
@@ -22,9 +23,11 @@ with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
     for X in imgl[0:]:
         cmd += " {}".format(X)
     cmd += " {}".format(tf.name)
-    # Unfortunately imagemagick does not allow us to set the
-    # metadata for pdf. need a fix
     # run the command
     os.system(cmd)
-    # copy the tempfile into place.
-    shutil.copyfile(tf.name, outname)
+    # open with fitz/pymupdf and update the metadata
+    exam = fitz.open(tf.name)
+    # title of PDF is "<testname> <sid>"
+    exam.setMetadata({"title": "{} {}".format(shortName, sid), "producer": "PLOM"})
+    # save the output.
+    exam.save(outname)
