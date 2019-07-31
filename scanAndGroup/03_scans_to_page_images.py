@@ -6,6 +6,7 @@ __license__ = "AGPLv3"
 import glob
 import os
 import shutil
+import subprocess
 import sys
 
 sys.path.append("..")  # this allows us to import from ../resources
@@ -34,30 +35,39 @@ def buildDirectories():
     # in decoded pages
     for p in range(1, spec.Length + 1):
         for v in range(1, spec.Versions + 1):
-            os.system(
-                "mkdir -p decodedPages/page_{:s}/version_{:d}".format(
-                    str(p).zfill(2), v
-                )
-            )
+            dir = "decodedPages/page_{:s}/version_{:d}".format(str(p).zfill(2), v)
+            os.makedirs(dir, exist_ok=True)
     # For each pagegroup/version we need a pg/v dir
     # in readformarking. the image server reads from there.
     for pg in range(1, spec.getNumberOfGroups() + 1):
         for v in range(1, spec.Versions + 1):
-            os.system(
-                "mkdir -p readyForMarking/group_{:s}/version_{:d}".format(
-                    str(pg).zfill(2), v
-                )
-            )
+            dir = "readyForMarking/group_{:s}/version_{:d}".format(str(pg).zfill(2), v)
+            os.makedirs(dir, exist_ok=True)
 
 
 def processFileToPng(fname):
     """Convert each page of pdf into png using ghostscript"""
     scan, fext = os.path.splitext(fname)
-    commandstring = (
-        "gs -dNumRenderingThreads=4 -dNOPAUSE -sDEVICE=png256 "
-        "-o ./png/" + scan + "-%d.png -r200 " + fname
-    )
-    os.system(commandstring)
+    # issue #126 - replace spaces in names with underscores for output names.
+    safeScan = scan.replace(" ", "_")
+    try:
+        subprocess.run(
+            [
+                "gs",
+                "-dNumRenderingThreads=4",
+                "-dNOPAUSE",
+                "-sDEVICE=png256",
+                "-o",
+                "./png/" + safeScan + "-%d.png",
+                "-r200",
+                fname,
+            ],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
+    except subprocess.CalledProcessError as suberror:
+        print("Error running gs: {}".format(suberror.stdout.decode("utf-8")))
 
 
 def processScans():
@@ -89,8 +99,22 @@ def processScans():
             fh.write("mogrify -quiet -gamma 0.5 -quality 100 " + fn + "\n")
         fh.close()
         # run the command list through parallel then delete
-        os.system("parallel --bar <commandlist.txt")
+        try:
+            subprocess.run(
+                ["parallel", "--bar", "-a", "commandlist.txt"],
+                stderr=subprocess.STDOUT,
+                shell=False,
+                check=True,
+            )
+        except subprocess.CalledProcessError as suberror:
+            print(
+                "Error running post-processing mogrify: {}".format(
+                    suberror.stdout.decode("utf-8")
+                )
+            )
+
         os.unlink("commandlist.txt")
+
         # move all the pngs into pageimages directory
         for pngfile in glob.glob("*.png"):
             shutil.move(pngfile, "../../pageImages")
