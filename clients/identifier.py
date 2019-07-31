@@ -366,7 +366,7 @@ class IDClient(QDialog):
         fileobj = BytesIO(b"")
         messenger.getFileDav(remotefile, fileobj)
         # Ack that test received - server then deletes it from webdav
-        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, msg[1]])
+        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
         assert msg == "ACK"
 
         # rewind the stream
