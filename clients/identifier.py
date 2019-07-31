@@ -232,7 +232,6 @@ class IDClient(QDialog):
         else:
             self.token = msg[1]
 
-
     def getClassList(self):
         """Send request for classlist (iRCL) to server. The server then sends
         back the CSV of the classlist.
@@ -264,7 +263,6 @@ class IDClient(QDialog):
             self.studentNamesToNumbers[sn] = str(row["id"])
             self.studentNumbersToNames[str(row["id"])] = sn
         return True
-
 
     def getPredictions(self):
         """Send request for prediction list (iRPL) to server. The server then sends
@@ -300,7 +298,6 @@ class IDClient(QDialog):
             self.ui.predictionBox.hide()
 
         return True
-
 
     def setCompleters(self):
         """Set up the studentname + studentnumber line-edit completers.
@@ -362,11 +359,10 @@ class IDClient(QDialog):
                     ]
                 )
 
-
     def getAlreadyIDList(self):
         # Ask server for list of previously ID'd papers
         msg = messenger.SRMsg(["iGAL", self.userName, self.token])
-        assert msg == "ACK", "problem getting previously IDed list from server"
+        assert msg[0] == "ACK", "problem getting previously IDed list from server"
         fileobj = BytesIO(b"")
         messenger.getFileDav(msg[1], fileobj)
         # Ack that test received - server then deletes it from webdav
@@ -383,7 +379,6 @@ class IDClient(QDialog):
                 Paper(x[0], fname="", stat="identified", id=x[2], name=x[3]),
                 update=False,
             )
-
 
     def selChanged(self, selnew, selold):
         # When the selection changes, update the ID and name line-edit boxes
