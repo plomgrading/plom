@@ -53,8 +53,7 @@ if __name__ == '__main__':
 
     spec = TestSpecification()
     spec.readSpec()
-
-    basename = spec.Name
+    shortname = spec.Name
 
     # TODO: but "reassembed" is created even if I use 09alt
     reassembles = ['reassembled', 'reassembled_ID_but_not_marked']
@@ -89,7 +88,7 @@ if __name__ == '__main__':
     with open('view_test_template.html', 'r') as htmlfile:
         html = htmlfile.read()
     html = html.replace('__COURSENAME__', longname)
-    html = html.replace('__TESTNAME__', basename)
+    html = html.replace('__TESTNAME__', shortname)
 
     newname = os.path.join('codedReturn', 'index.html')
     with open(newname, 'w') as htmlfile:
