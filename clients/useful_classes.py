@@ -33,6 +33,9 @@ class ErrorMessage(QMessageBox):
 
     def __init__(self, txt):
         super(ErrorMessage, self).__init__()
+        fnt = self.font()
+        fnt.setPointSize((fnt.pointSize() * 3) // 2)
+        self.setFont(fnt)
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Ok)
 

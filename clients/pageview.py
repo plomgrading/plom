@@ -84,6 +84,9 @@ class PageView(QGraphicsView):
     def countComments(self):
         return self.scene.countComments()
 
+    def areThereAnnotations(self):
+        return self.scene.areThereAnnotations()
+
     def save(self):
         self.scene.save()
 

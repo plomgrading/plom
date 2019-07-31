@@ -29,7 +29,12 @@ from PyQt5.QtWidgets import (
 
 from mark_handler import MarkHandler
 from pageview import PageView
-from useful_classes import CommentWidget, SimpleMessage, SimpleMessageCheckBox
+from useful_classes import (
+    CommentWidget,
+    ErrorMessage,
+    SimpleMessage,
+    SimpleMessageCheckBox,
+)
 from test_view import TestView
 from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
 from uiFiles.ui_annotator_rhm import Ui_annotator_rhm
@@ -754,57 +759,62 @@ class Annotator(QDialog):
         if type(relaunch) == QCloseEvent:
             self.launchAgain = False
             self.reject()
-        else:
-            # check if comments have been left.
-            if self.view.countComments() == 0:
-                # error message if total is not 0 or full
-                if self.score > 0 and self.score < self.maxMark and self.commentWarn:
-                    msg = SimpleMessageCheckBox(
-                        "You have given no comments.\n Please confirm."
-                    )
-                    if msg.exec_() == QMessageBox.No:
-                        return
-                    if msg.cb.checkState() == Qt.Checked:
-                        self.commentWarn = False
+        # do some checks before accepting things
+        if not self.view.areThereAnnotations():
+            msg = ErrorMessage("Please annotate even if blank.")
+            msg.exec_()
+            return
 
-            # if marking total or up, be careful when giving 0-marks
-            if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
-                msg = SimpleMessageCheckBox("You have given 0 - please confirm")
-                if msg.exec_() == QMessageBox.No:
-                    return
-                if msg.cb.checkState() == Qt.Checked:
-                    self.markWarn = False
-            # if marking down, be careful of giving max-marks
-            if (
-                self.score == self.maxMark
-                and self.markHandler.style == "Down"
-                and self.markWarn
-            ):
+        # check if comments have been left.
+        if self.view.countComments() == 0:
+            # error message if total is not 0 or full
+            if self.score > 0 and self.score < self.maxMark and self.commentWarn:
                 msg = SimpleMessageCheckBox(
-                    "You have given {} - please confirm".format(self.maxMark)
+                    "You have given no comments.\n Please confirm."
                 )
                 if msg.exec_() == QMessageBox.No:
                     return
                 if msg.cb.checkState() == Qt.Checked:
-                    self.markWarn = False
-            if relaunch:
-                self.launchAgain = True
-            else:
-                self.launchAgain = False
+                    self.commentWarn = False
 
-            if not self.checkAllObjectsInside():
+        # if marking total or up, be careful when giving 0-marks
+        if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
+            msg = SimpleMessageCheckBox("You have given 0 - please confirm")
+            if msg.exec_() == QMessageBox.No:
                 return
+            if msg.cb.checkState() == Qt.Checked:
+                self.markWarn = False
+        # if marking down, be careful of giving max-marks
+        if (
+            self.score == self.maxMark
+            and self.markHandler.style == "Down"
+            and self.markWarn
+        ):
+            msg = SimpleMessageCheckBox(
+                "You have given {} - please confirm".format(self.maxMark)
+            )
+            if msg.exec_() == QMessageBox.No:
+                return
+            if msg.cb.checkState() == Qt.Checked:
+                self.markWarn = False
+        if relaunch:
+            self.launchAgain = True
+        else:
+            self.launchAgain = False
 
-            # Save the view/scene to file.
-            self.view.save()
-            # Save the marker's comments
-            self.saveMarkerComments()
-            # Pickle the scene as a PLOM-file
-            self.pickleIt()
-            # Save the window settings
-            self.saveWindowSettings()
-            # Close the annotator(QDialog) with an 'accept'.
-            self.accept()
+        if not self.checkAllObjectsInside():
+            return
+
+        # Save the view/scene to file.
+        self.view.save()
+        # Save the marker's comments
+        self.saveMarkerComments()
+        # Pickle the scene as a PLOM-file
+        self.pickleIt()
+        # Save the window settings
+        self.saveWindowSettings()
+        # Close the annotator(QDialog) with an 'accept'.
+        self.accept()
 
     def checkAllObjectsInside(self):
         if self.view.checkAllObjectsInside():

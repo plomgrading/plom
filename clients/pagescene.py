@@ -199,6 +199,11 @@ class PageScene(QGraphicsScene):
                 count += 1
         return count
 
+    def areThereAnnotations(self):
+        # there are at least 2 items = the pageimage and the scorebox
+        # there must be more than 2 items for there to be any annotations
+        return len(self.items()) > 2
+
     def save(self):
         """ Save the annotated group-image.
         That is, overwrite the imagefile with a dump of the current
