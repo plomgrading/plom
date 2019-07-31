@@ -34,6 +34,7 @@ def do_renaming(fromdir, todir):
             oldname = file.name.partition('.')[0]
             sn = oldname[-8:]
             assert len(sn) == 8
+            assert sn.isdigit()
             code = myhash(sn)
             newname = '{0}_{1}.pdf'.format(oldname, code)
             newname = os.path.join(todir, newname)
