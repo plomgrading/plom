@@ -577,6 +577,13 @@ class MarkerClient(QDialog):
             return
         self.prxM.deferPaper(index)
 
+    def countUnmarkedDeferred(self):
+        count = 0
+        for pr in range(self.prxM.rowCount()):
+            if self.prxM.getStatus(pr) in ["untouched", "deferred"]:
+                count += 1
+        return count
+
     def waitForAnnotator(self, fname, pname=None):
         """This fires up the annotation window for user annotation + maring.
         Set a timer to record the time spend marking (for manager to see what
@@ -611,7 +618,9 @@ class MarkerClient(QDialog):
         )
         # while annotator is firing up request next paper in background
         # after giving system a moment to do `annotator.exec_()`
-        self.requestNextInBackgroundStart()
+        # but check if unmarked papers already in list.
+        if self.countUnmarkedDeferred() == 0:
+            self.requestNextInBackgroundStart()
         # run the annotator
         if annotator.exec_():
             # If annotator returns "accept"
@@ -663,6 +672,8 @@ class MarkerClient(QDialog):
         shutil.copyfile("{}".format(self.prxM.getOriginalFile(index[0].row())), aname)
 
         # Get mark, markingtime, and launch-again flag from 'waitForAnnotator'
+        prevState = self.prxM.data(index[1])
+        self.prxM.setData(index[1], "annotating")
         if remarkFlag:
             [gr, mtime, launchAgain] = self.waitForAnnotator(aname, pname)
         else:
@@ -673,6 +684,7 @@ class MarkerClient(QDialog):
             if remarkFlag:
                 shutil.move(aname + ".bak", aname)
             # reselect the row we were working on
+            self.prxM.setData(index[1], prevState)
             self.ui.tableView.selectRow(index[1].row())
             return
         # Copy the mark, annotated filename and the markingtime into the table
