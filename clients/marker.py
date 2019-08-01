@@ -21,7 +21,7 @@ from PyQt5.QtCore import (
     pyqtSignal,
 )
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton
+from PyQt5.QtWidgets import QDialog, QWidget, QMainWindow, QMessageBox, QPushButton
 
 
 from examviewwindow import ExamViewWindow
@@ -232,7 +232,9 @@ class ProxyModel(QSortFilterProxyModel):
 ##########################
 
 
-class MarkerClient(QDialog):
+# TODO: should be a QMainWindow but at any rate not a Dialog
+# TODO: should this be parented by the QApplication?
+class MarkerClient(QWidget):
     def __init__(
         self,
         userName,
@@ -242,11 +244,11 @@ class MarkerClient(QDialog):
         web_port,
         pageGroup,
         version,
-        parent=None,
+        hackydialog,
     ):
         # Init the client with username, password, server and port data,
         # and which group/version is being marked.
-        super(MarkerClient, self).__init__(parent)
+        super(MarkerClient, self).__init__()
         # Fire up the messenger with server data.
         messenger.setServerDetails(server, message_port, web_port)
         messenger.startMessenger()
@@ -340,6 +342,7 @@ class MarkerClient(QDialog):
         # and https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
         self.backgroundDownloader = BackgroundDownloader()
         self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
+        self._hackyTrackyDialog = hackydialog
 
     def resizeEvent(self, e):
         if self.testImg is None:
@@ -749,6 +752,7 @@ class MarkerClient(QDialog):
         # authentication token.
         msg = messenger.SRMsg(["UCL", self.userName, self.token])
         # then close
+        self._hackyTrackyDialog._YoWakeUp()
         self.close()
 
     def DNF(self):

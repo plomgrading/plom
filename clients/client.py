@@ -104,13 +104,13 @@ class Chooser(QDialog):
             self.marker = marker.MarkerClient(
                 user, pwd, server, mport, wport, pg, v, self
             )
-            self.marker.exec_()
+            window.hide()
+            self.marker.show()
         elif self.runIt == "IDer":
             # Run the ID client.
-            self.identifier = identifier.IDClient(user, pwd, server, mport, wport)
+            self.identifier = identifier.IDClient(user, pwd, server, mport, wport, self)
             window.hide()
-            self.identifier.exec_()
-            window.show()
+            self.identifier.show()
         else:
             # Run the Total client.
             self.totaler = totaler.TotalClient(user, pwd, server, mport, wport)
@@ -146,6 +146,10 @@ class Chooser(QDialog):
         fnt = self.parent.font()
         fnt.setPointSize(v)
         self.parent.setFont(fnt)
+
+    def _YoWakeUp(self):
+        # Colin aggressively avoiding learning signals
+        window.show()
 
 
 # Pop up a dialog for unhandled exceptions and then exit

@@ -18,7 +18,7 @@ from PyQt5.QtCore import (
     QVariant,
 )
 from PyQt5.QtGui import QIntValidator
-from PyQt5.QtWidgets import QCompleter, QDialog, QInputDialog, QMessageBox
+from PyQt5.QtWidgets import QCompleter, QDialog, QWidget, QMainWindow, QInputDialog, QMessageBox
 from examviewwindow import ExamViewWindow
 import messenger
 from useful_classes import ErrorMessage, SimpleMessage
@@ -151,8 +151,10 @@ class ExamModel(QAbstractTableModel):
         return c
 
 
-class IDClient(QDialog):
-    def __init__(self, userName, password, server, message_port, web_port):
+# TODO: should be a QMainWindow but at any rate not a Dialog
+# TODO: should this be parented by the QApplication?
+class IDClient(QWidget):
+    def __init__(self, userName, password, server, message_port, web_port, hackydialog):
         # Init the client with username, password, server and port data.
         super(IDClient, self).__init__()
         # Init the messenger with server and port data.
@@ -214,6 +216,7 @@ class IDClient(QDialog):
         # Create variable to store ID/Name conf window position
         # Initially set to top-left corner of window
         self.msgGeometry = None
+        self._hackyTrackyDialog = hackydialog
 
     def requestToken(self):
         """Send authorisation request (AUTH) to server. The request sends name and
@@ -337,6 +340,7 @@ class IDClient(QDialog):
         """
         self.DNF()
         msg = messenger.SRMsg(["UCL", self.userName, self.token])
+        self._hackyTrackyDialog._YoWakeUp()
         self.close()
 
     def DNF(self):
