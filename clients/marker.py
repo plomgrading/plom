@@ -750,8 +750,8 @@ class MarkerClient(QWidget):
         self.DNF()
         # Then send a 'user closing' message - server will revoke
         # authentication token.
-        msg = messenger.SRMsg(["UCL", self.userName, self.token])
-        # then close
+        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        assert msg == "ACK"
         self._hackyTrackyDialog._YoWakeUp()
         self.close()
 

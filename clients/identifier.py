@@ -339,7 +339,8 @@ class IDClient(QWidget):
         authorisation token is removed. Then finally close.
         """
         self.DNF()
-        msg = messenger.SRMsg(["UCL", self.userName, self.token])
+        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        assert msg == "ACK"
         self._hackyTrackyDialog._YoWakeUp()
         self.close()
 
