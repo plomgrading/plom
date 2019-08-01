@@ -224,6 +224,9 @@ class examTable(QWidget):
             flts = " AND ".join(flt)
         else:
             flts = ""
+            # reset filter options
+            self.setFilterOptions()
+
         self.exM.setFilter(flts)
         self.exV.resizeColumnsToContents()
         self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
