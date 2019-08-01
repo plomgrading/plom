@@ -10,6 +10,7 @@ import identifier
 import totaler
 import sys
 import traceback as tblib
+from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
@@ -53,10 +54,6 @@ class Chooser(QDialog):
         self.parent = parent
         # runit = either marker or identifier clients.
         self.runIt = None
-        # will be the marker-widget
-        self.marker = None
-        # will be the id-widget
-        self.identifier = None
 
         self.ui = Ui_Chooser()
         self.ui.setupUi(self)
@@ -101,16 +98,19 @@ class Chooser(QDialog):
             # Run the marker client.
             pg = str(self.ui.pgSB.value()).zfill(2)
             v = str(self.ui.vSB.value())
-            self.marker = marker.MarkerClient(
-                user, pwd, server, mport, wport, pg, v, self
-            )
-            window.hide()
-            self.marker.show()
+            self.hide()
+            markerwin = marker.MarkerClient(
+                user, pwd, server, mport, wport, pg, v)
+            markerwin.my_shutdown_signal.connect(self.on_other_window_close)
+            markerwin.show()
+            self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
-            self.identifier = identifier.IDClient(user, pwd, server, mport, wport, self)
-            window.hide()
-            self.identifier.show()
+            self.hide()
+            idwin = identifier.IDClient(user, pwd, server, mport, wport)
+            idwin.my_shutdown_signal.connect(self.on_other_window_close)
+            idwin.show()
+            self.parent.identifier = idwin
         else:
             # Run the Total client.
             self.totaler = totaler.TotalClient(user, pwd, server, mport, wport)
@@ -147,9 +147,11 @@ class Chooser(QDialog):
         fnt.setPointSize(v)
         self.parent.setFont(fnt)
 
-    def _YoWakeUp(self):
-        # Colin aggressively avoiding learning signals
-        window.show()
+    @pyqtSlot(int)
+    def on_other_window_close(self, value):
+        assert isinstance(value, int)
+        self.show()
+
 
 
 # Pop up a dialog for unhandled exceptions and then exit

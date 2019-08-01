@@ -235,6 +235,8 @@ class ProxyModel(QSortFilterProxyModel):
 # TODO: should be a QMainWindow but at any rate not a Dialog
 # TODO: should this be parented by the QApplication?
 class MarkerClient(QWidget):
+    my_shutdown_signal = pyqtSignal(int)
+
     def __init__(
         self,
         userName,
@@ -244,7 +246,6 @@ class MarkerClient(QWidget):
         web_port,
         pageGroup,
         version,
-        hackydialog,
     ):
         # Init the client with username, password, server and port data,
         # and which group/version is being marked.
@@ -342,7 +343,6 @@ class MarkerClient(QWidget):
         # and https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
         self.backgroundDownloader = BackgroundDownloader()
         self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
-        self._hackyTrackyDialog = hackydialog
 
     def resizeEvent(self, e):
         if self.testImg is None:
@@ -752,7 +752,7 @@ class MarkerClient(QWidget):
         # authentication token.
         msg, = messenger.SRMsg(["UCL", self.userName, self.token])
         assert msg == "ACK"
-        self._hackyTrackyDialog._YoWakeUp()
+        self.my_shutdown_signal.emit(2)
         self.close()
 
     def DNF(self):
