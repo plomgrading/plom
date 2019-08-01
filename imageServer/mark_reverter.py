@@ -166,12 +166,12 @@ class examTable(QWidget):
         # move the plomFile and commentFile too
         fname = rec.value("plomFile")
         shutil.move(
-            "markedPapers/plomFiles" + fname, "markedPapers/revertedPapers/" + fname
+            "markedPapers/plomFiles/" + fname, "markedPapers/revertedPapers/" + fname
         )
         rec.setValue("plomFile", "")
         fname = rec.value("commentFile")
         shutil.move(
-            "markedPapers/commentFiles" + fname, "markedPapers/revertedPapers/" + fname
+            "markedPapers/commentFiles/" + fname, "markedPapers/revertedPapers/" + fname
         )
         rec.setValue("commentFile", "")
         # clear the tags
