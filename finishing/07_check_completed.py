@@ -26,14 +26,15 @@ def checkMarked(n):
     # Extract all marked images from test n from the mark database
     # A row of the table in the Mark DB is
     # 0=index, 1=TGV, 2=originalFile, 3=testnumber, 4=pageGroup
-    # 5=version, 6=annotatedFile, 7=status, 8=user,
-    # 9=time, 10=mark, 11=timeSpentMarking
+    # 5=version, 6=annotatedFile, 7=plomFile, 8=commentFile,
+    # 9=status, 10=user, 11=time, 12=mark, 13=timeSpentMarking,
+    # 14=tags
     for row in curMark.execute("SELECT * FROM groupimage WHERE number='{}'".format(n)):
-        if row[7] != "Marked":
+        if row[9] != "Marked":
             return False
         else:
             # Save the version and mark in the dictionary.
-            groupImagesMarked[n][row[4]] = [row[5], row[10]]
+            groupImagesMarked[n][row[4]] = [row[5], row[12]]
     return True
 
 
@@ -165,13 +166,15 @@ def writeExamsMarked():
     It contains, version, mark and user who marked it.
     """
     exmarked = defaultdict(lambda: defaultdict(list))
+    # Extract all marked images from test n from the mark database
     # A row of the table in the Mark DB is
     # 0=index, 1=TGV, 2=originalFile, 3=testnumber, 4=pageGroup
-    # 5=version, 6=annotatedFile, 7=status, 8=user,
-    # 9=time, 10=mark, 11=timeSpentMarking
+    # 5=version, 6=annotatedFile, 7=plomFile, 8=commentFile,
+    # 9=status, 10=user, 11=time, 12=mark, 13=timeSpentMarking,
+    # 14=tags
     for row in curMark.execute("SELECT * FROM groupimage"):
-        if row[7] == "Marked":
-            exmarked[row[3]][row[4]] = [row[5], row[10], row[8]]
+        if row[9] == "Marked":
+            exmarked[row[3]][row[4]] = [row[5], row[12], row[10]]
     # dump to json in resources directory.
     eg = open("../resources/groupImagesMarked.json", "w")
     eg.write(json.dumps(exmarked, indent=2, sort_keys=True))
