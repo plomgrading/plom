@@ -9,8 +9,9 @@ import marker
 import identifier
 import totaler
 import sys
+import traceback as tblib
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory
+from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
 
 # set up variables to store paths for marker and id clients
@@ -143,6 +144,21 @@ class Chooser(QWidget):
         fnt = self.parent.font()
         fnt.setPointSize(v)
         self.parent.setFont(fnt)
+
+
+# Pop up a dialog for unhandled exceptions and then exit
+sys._excepthook = sys.excepthook
+def _exception_hook(exctype, value, traceback):
+    s = "".join(tblib.format_exception(exctype, value, traceback))
+    mb = QMessageBox()
+    mb.setText("Something unexpected has happened!\n\n"
+               "Please file a bug and copy-paste the following:\n\n"
+               "{0}".format(s))
+    mb.setStandardButtons(QMessageBox.Ok)
+    mb.exec_()
+    sys._excepthook(exctype, value, traceback)
+    sys.exit(1)
+sys.excepthook = _exception_hook
 
 
 app = QApplication(sys.argv)
