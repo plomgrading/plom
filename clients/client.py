@@ -98,6 +98,7 @@ class Chooser(QDialog):
             # Run the marker client.
             pg = str(self.ui.pgSB.value()).zfill(2)
             v = str(self.ui.vSB.value())
+            self.setEnabled(False)
             self.hide()
             markerwin = marker.MarkerClient(
                 user, pwd, server, mport, wport, pg, v)
@@ -106,6 +107,7 @@ class Chooser(QDialog):
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
+            self.setEnabled(False)
             self.hide()
             idwin = identifier.IDClient(user, pwd, server, mport, wport)
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
@@ -151,6 +153,8 @@ class Chooser(QDialog):
     def on_other_window_close(self, value):
         assert isinstance(value, int)
         self.show()
+        self.setEnabled(True)
+
 
 
 
