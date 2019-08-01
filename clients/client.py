@@ -11,7 +11,7 @@ import totaler
 import sys
 import traceback as tblib
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory, QMessageBox
+from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
 
 # set up variables to store paths for marker and id clients
@@ -47,7 +47,7 @@ def writeLastTime():
     fh.close()
 
 
-class Chooser(QWidget):
+class Chooser(QDialog):
     def __init__(self, parent):
         super(Chooser, self).__init__()
         self.parent = parent
@@ -108,7 +108,9 @@ class Chooser(QWidget):
         elif self.runIt == "IDer":
             # Run the ID client.
             self.identifier = identifier.IDClient(user, pwd, server, mport, wport)
+            window.hide()
             self.identifier.exec_()
+            window.show()
         else:
             # Run the Total client.
             self.totaler = totaler.TotalClient(user, pwd, server, mport, wport)
