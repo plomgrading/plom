@@ -295,6 +295,9 @@ class ProxyModel(QSortFilterProxyModel):
         # self.setFilterKeyColumn(4)
         # self.filterString = ""
 
+    def filterAcceptsRow(self, pos, index):
+        return True
+
     # def setFilterString(self, flt):
     #     self.filterString = flt
     #
@@ -329,10 +332,11 @@ class examTable(QWidget):
         self.exM = QSqlTableModel(self, self.db)
         self.exM.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.exM.setTable("groupimage")
+        self.exV = simpleTableView(self.exM)
 
-        self.prxM = ProxyModel()
-        self.prxM.setSourceModel(self.exM)
-        self.exV = simpleTableView(self.prxM)
+        # self.prxM = ProxyModel()
+        # self.prxM.setSourceModel(self.exM)
+        # self.exV = simpleTableView(self.prxM)
 
         grid.addWidget(self.exV, 0, 0, 4, 7)
 
@@ -481,12 +485,13 @@ class examTable(QWidget):
         # and filter on tag
         txt = self.flT.text().strip()
         if len(txt) > 0:
-            flt.append("tags LIKE %{}%".format(txt))
+            flt.append("tags LIKE '%{}%'".format(txt))
 
         if len(flt) > 0:
             flts = " AND ".join(flt)
         else:
             flts = ""
+
         self.exM.setFilter(flts)
         self.exV.resizeColumnsToContents()
         self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
