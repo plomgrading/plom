@@ -15,7 +15,7 @@ shortName = sys.argv[1]
 sid = eval(sys.argv[2])
 imgl = eval(sys.argv[3])
 # output as test_<StudentID>.pdf
-# note we know the shortname is alphanumeric with no strings
+# note we know the shortname is alphanumeric with no spaces
 # so this is safe.
 outname = "reassembled/{}_{}.pdf".format(shortName, sid)
 # work on a tempfile
