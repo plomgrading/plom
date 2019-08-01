@@ -69,8 +69,8 @@ readExamsGrouped()
 fh = open("./commandlist.txt", "w")
 for n in sorted(examsIDed.keys()):
     fh.write(
-        'python3 testReassembler_only_ided.py {} "{}"\n'.format(
-            examsIDed[n][1], imageList(n)
+        'python3 testReassembler_only_ided.py {} {} "{}"\n'.format(
+            spec.Name, examsIDed[n][1], imageList(n)
         )
     )
 fh.close()

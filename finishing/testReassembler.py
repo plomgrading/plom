@@ -8,13 +8,16 @@ import os
 import sys
 import tempfile
 
-# takes StudentID and list of group image files as args.
+# takes testname StudentID and list of group image files as args.
 # 0th item on list is the coverpage.
 # other items are the groupimage files.
-sid = eval(sys.argv[1])
-imgl = eval(sys.argv[2])
+shortName = sys.argv[1]
+sid = eval(sys.argv[2])
+imgl = eval(sys.argv[3])
 # output as test_<StudentID>.pdf
-outname = "reassembled/test_{}.pdf".format(sid)
+# note we know the shortname is alphanumeric with no spaces
+# so this is safe.
+outname = "reassembled/{}_{}.pdf".format(shortName, sid)
 # work on a tempfile
 with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
     # use imagemagick to glob the group-images together into a pdf.
@@ -31,5 +34,7 @@ with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
     cover = fitz.open(imgl[0])
     # insert the coverpage as the 0th page.
     exam.insertPDF(cover, from_page=0, to_page=0, start_at=0)
+    # title of PDF is "<testname> <sid>"
+    exam.setMetadata({"title": "{} {}".format(shortName, sid), "producer": "PLOM"})
     # save the output.
     exam.save(outname)
