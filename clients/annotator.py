@@ -7,7 +7,7 @@ import json
 import os
 import sys
 
-from PyQt5.QtCore import Qt, QSettings, QSize, QTimer, pyqtSlot
+from PyQt5.QtCore import Qt, QSettings, QSize, QTimer, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import (
     QCursor,
     QGuiApplication,
@@ -19,6 +19,8 @@ from PyQt5.QtGui import (
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
+    QWidget,
+    QMainWindow,
     QMessageBox,
     QPushButton,
     QShortcut,
@@ -60,15 +62,20 @@ tipText = {
 }
 
 
-class Annotator(QDialog):
+class Annotator(QWidget):
     """The main annotation window for annotating group-images
     and assigning marks.
     """
 
+    # TODO: double check that timer is int
+    ann_shutdown_signal = pyqtSignal(bool, int, bool)  # acc/rej, gr, again
+
     def __init__(
         self, fname, maxMark, markStyle, mouseHand, parent=None, plomDict=None
     ):
-        super(Annotator, self).__init__(parent)
+        super(Annotator, self).__init__()
+        # Temporary hack: None means "just close", can be True/False
+        self._relaunch = None
         # remember parent
         self.parent = parent
         # Grab filename of image, max mark, mark style (total/up/down)
@@ -362,18 +369,14 @@ class Annotator(QDialog):
 
     def keyPressEvent(self, event):
         """Translates key-presses into tool-button presses if
-        appropriate. Also captures the escape-key since this would
-        normally close a qdialog.
+        appropriate.
         """
         # Check to see if no mousebutton pressed
         # If a key-press detected use the keycodes dict to translate
         # the press into a function call (if exists)
         if QGuiApplication.mouseButtons() == Qt.NoButton:
             self.keycodes.get(event.key(), lambda *args: None)()
-        # If escape key pressed then do not process it because
-        # esc in a qdialog closes the window as a "reject".
-        if event.key() != Qt.Key_Escape:
-            super(Annotator, self).keyPressEvent(event)
+        super(Annotator, self).keyPressEvent(event)
 
     def setMode(self, newMode, newCursor):
         """Change the current tool mode.
@@ -461,8 +464,9 @@ class Annotator(QDialog):
     # unmarked image and fires up the annotator on that.
     @pyqtSlot()
     def endAndRelaunch(self):
+        self._relaunch = True
         self.commentW.saveComments()
-        self.closeEvent(True)
+        self.close()
 
     def setEndShortCuts(self):
         # Set alt-enter or alt-return to end the annotator
@@ -555,8 +559,8 @@ class Annotator(QDialog):
         self.ui.redoButton.clicked.connect(self.view.redo)
         # The key-help button connects to the keyPopUp command.
         self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
-        # Cancel button closes annotator(QDialog) with a 'reject'
-        self.ui.cancelButton.clicked.connect(self.reject)
+        # Cancel button closes annotator with a reject/do not save
+        self.ui.cancelButton.clicked.connect(self.close)
         # Hide button connects to the toggleTools command
         self.ui.hideButton.clicked.connect(self.toggleTools)
 
@@ -693,10 +697,12 @@ class Annotator(QDialog):
             self.ui.moveButton.animateClick()
 
     def closeEventRelaunch(self):
-        self.closeEvent(True)
+        self._relaunch = True
+        self.close()
 
     def closeEventNoRelaunch(self):
-        self.closeEvent(False)
+        self._relaunch = False
+        self.close()
 
     def loadWindowSettings(self):
         if self.parent.annotatorSettings.value("geometry") is not None:
@@ -739,7 +745,7 @@ class Annotator(QDialog):
             "zoomState", self.ui.zoomCB.currentIndex()
         )
 
-    def closeEvent(self, relaunch):
+    def closeEvent(self, ce):
         """When the user closes the window - either by clicking on the
         little standard all windows have them close icon in the titlebar
         or by clicking on 'finished' - do some basic checks.
@@ -751,18 +757,22 @@ class Annotator(QDialog):
         Be careful of max-score when marking down.
         In either case - get user to confirm the score before closing.
         """
+        relaunch = self._relaunch
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
 
-        # If the titlebar close clicked then don't relauch and close the
-        # annotator (QDialog) with a 'reject'
-        if type(relaunch) == QCloseEvent:
-            self.launchAgain = False
-            self.reject()
+        # Close button/titlebar: reject (do not save) result, do not launch again
+        if relaunch is None:
+            print('ann emitted signal: REJECT')
+            self.ann_shutdown_signal.emit(False, -1, False)
+            print('ann closeEvent: closing window')
+            ce.accept()
+            return
         # do some checks before accepting things
         if not self.view.areThereAnnotations():
             msg = ErrorMessage("Please annotate even if blank.")
             msg.exec_()
+            ce.ignore()
             return
 
         # check if comments have been left.
@@ -773,6 +783,7 @@ class Annotator(QDialog):
                     "You have given no comments.\n Please confirm."
                 )
                 if msg.exec_() == QMessageBox.No:
+                    ce.ignore()
                     return
                 if msg.cb.checkState() == Qt.Checked:
                     self.commentWarn = False
@@ -781,6 +792,7 @@ class Annotator(QDialog):
         if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
             msg = SimpleMessageCheckBox("You have given 0 - please confirm")
             if msg.exec_() == QMessageBox.No:
+                ce.ignore()
                 return
             if msg.cb.checkState() == Qt.Checked:
                 self.markWarn = False
@@ -794,15 +806,13 @@ class Annotator(QDialog):
                 "You have given {} - please confirm".format(self.maxMark)
             )
             if msg.exec_() == QMessageBox.No:
+                ce.ignore()
                 return
             if msg.cb.checkState() == Qt.Checked:
                 self.markWarn = False
-        if relaunch:
-            self.launchAgain = True
-        else:
-            self.launchAgain = False
 
         if not self.checkAllObjectsInside():
+            ce.ignore()
             return
 
         # Save the view/scene to file.
@@ -814,7 +824,11 @@ class Annotator(QDialog):
         # Save the window settings
         self.saveWindowSettings()
         # Close the annotator(QDialog) with an 'accept'.
-        self.accept()
+        print('ann emitted signal: ACCEPT')
+        self.ann_shutdown_signal.emit(True, self.score, relaunch)
+        print('ann closeEvent: closing window')
+        ce.accept()
+
 
     def checkAllObjectsInside(self):
         if self.view.checkAllObjectsInside():

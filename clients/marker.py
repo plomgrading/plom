@@ -18,6 +18,7 @@ from PyQt5.QtCore import (
     QSortFilterProxyModel,
     QTimer,
     QThread,
+    pyqtSlot,
     pyqtSignal,
 )
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
@@ -587,7 +588,7 @@ class MarkerClient(QWidget):
                 count += 1
         return count
 
-    def waitForAnnotator(self, fname, pname=None):
+    def startTheAnnotator(self, fname, pname=None):
         """This fires up the annotation window for user annotation + maring.
         Set a timer to record the time spend marking (for manager to see what
         questions are taking a long time or are quick).
@@ -609,6 +610,7 @@ class MarkerClient(QWidget):
         # Start a timer to record time spend annotating
         timer = QElapsedTimer()
         timer.start()
+        self._wtfCantAnnotatorSaveItsOwnTimer = timer
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
@@ -621,28 +623,41 @@ class MarkerClient(QWidget):
         )
         # while annotator is firing up request next paper in background
         # after giving system a moment to do `annotator.exec_()`
-        # but check if unmarked papers already in list.
         if self.countUnmarkedReverted() == 0:
             self.requestNextInBackgroundStart()
         # run the annotator
-        if annotator.exec_():
+        annotator.ann_shutdown_signal.connect(self.callbackAnnIsDone)
+        self.setEnabled(False)
+        annotator.show()
+
+
+    # when the annotator is done, we end up here...
+    @pyqtSlot(bool, int, bool)
+    def callbackAnnIsDone(self, accept, grade, launchAgain):
+        self.setEnabled(True)
+        if accept:
+            print("accepting callback")
             # If annotator returns "accept"
             # then pass back the mark, time spent marking
             # (timer measures millisec, so divide by 1000)
             # and a flag as to whether or not we should relaunch the annotator
             # with the next page-image. In relaunch, then we will need to
             # ask server for next image.
-            ret = [str(annotator.score), timer.elapsed() // 1000, annotator.launchAgain]
+            timer = self._wtfCantAnnotatorSaveItsOwnTimer
+            tim = timer.elapsed() // 1000
         else:
+            print("rejecting callback")
             # If annotator returns "reject", then pop up error
             msg = ErrorMessage("mark not recorded")
             msg.exec_()
-            ret = [None, timer.elapsed(), False]
-        return ret
+            tim = 0
+            grade = None
+        self.afterAnnotator(grade, tim, launchAgain)
+
 
     def annotateTest(self):
         """Command grabs current test from table and (after checks) passes it
-        to 'waitForAnnotator' which fires up the actual annotator.
+        to 'startTheAnnotator' which fires up the actual annotator.
         Checks if current test has been marked already
         Saves the annotated file, mark, marking time etc in the table.
         Sends file and data back to server.
@@ -674,13 +689,23 @@ class MarkerClient(QWidget):
         # Copy the original image to the annotated filename.
         shutil.copyfile("{}".format(self.prxM.getOriginalFile(index[0].row())), aname)
 
-        # Get mark, markingtime, and launch-again flag from 'waitForAnnotator'
+
         prevState = self.prxM.data(index[1])
         self.prxM.setData(index[1], "annotating")
+
+        self._holyhack = [aname, pname, cname, remarkFlag, index, prevState]
+
         if remarkFlag:
-            [gr, mtime, launchAgain] = self.waitForAnnotator(aname, pname)
+            self.startTheAnnotator(aname, pname)
         else:
-            [gr, mtime, launchAgain] = self.waitForAnnotator(aname, None)
+            self.startTheAnnotator(aname, None)
+        # we started the annotator...
+
+
+    # ... and eventually return here
+    def afterAnnotator(self, gr, mtime, launchAgain):
+        aname, pname, cname, remarkFlag, index, prevState = self._holyhack
+        print((gr, mtime, launchAgain))
         # Exited annotator with 'cancel', so don't save anything.
         if gr is None:
             # if remarking then move backup annotated file back.
