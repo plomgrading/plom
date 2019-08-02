@@ -44,6 +44,7 @@ from tools import (
     CommandQMark,
     CommandText,
     CommandTick,
+    CommandTotal,
     CommandGDT,
     DeltaItem,
     TextItem,
@@ -203,6 +204,13 @@ class PageScene(QGraphicsScene):
         # there are at least 2 items = the pageimage and the scorebox
         # there must be more than 2 items for there to be any annotations
         return len(self.items()) > 2
+
+    def updateTotal(self, newScore, prevScore):
+        command = CommandTotal(self, newScore, prevScore)
+        self.undoStack.push(command)
+
+    def sendNewTotalToAnnotator(self, newScore):
+        self.parent().parent.markHandler.loadNewTotal(newScore)
 
     def save(self):
         """ Save the annotated group-image.

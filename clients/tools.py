@@ -151,6 +151,23 @@ class CommandMoveText(QUndoCommand):
         return True
 
 
+class CommandTotal(QUndoCommand):
+    # Command to create/remove an arrow object
+    def __init__(self, scene, newScore, prevScore):
+        super(CommandTotal, self).__init__()
+        self.scene = scene
+        self.newScore = newScore
+        self.prevScore = prevScore
+
+    def redo(self):
+        self.scene.scoreBox.changeScore(self.newScore)
+        self.scene.sendNewTotalToAnnotator(self.newScore)
+
+    def undo(self):
+        self.scene.scoreBox.changeScore(self.prevScore)
+        self.scene.sendNewTotalToAnnotator(self.prevScore)
+
+
 # Arrow stuff
 class CommandArrow(QUndoCommand):
     # Command to create/remove an arrow object

@@ -655,11 +655,11 @@ class Annotator(QDialog):
     def totalMarkSet(self, tm):
         # Set the total mark and pass that info to the comment list
         # so it can shade over deltas that are no longer applicable.
+        prevScore = self.score
         self.score = tm
         self.commentW.changeMark(self.score)
-        # also tell the scorebox in the top-left of the image what the
-        # new total mark is.
-        self.view.scene.scoreBox.changeScore(self.score)
+        # also tell the scene what new total mark is.
+        self.view.scene.updateTotal(self.score, prevScore)
 
     def deltaMarkSet(self, dm):
         """When a delta-mark button is clicked, or a comment selected

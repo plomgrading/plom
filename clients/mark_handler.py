@@ -50,6 +50,9 @@ class MarkHandler(QWidget):
         self.scoreL.setSizePolicy(
             QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
         )
+        # some buttons for carrying previous button used
+        self.ptmb = QPushButton()
+        self.pdmb = QPushButton()
 
     def setStyle(self, markStyle):
         """Sets the mark entry style - either total, up or down
@@ -160,3 +163,9 @@ class MarkHandler(QWidget):
             pass  # don't clear the styling when marking total.
         else:
             self.pdmb.setStyleSheet("")
+
+    def loadNewTotal(self, score):
+        # for when this gets set by an undo/redo
+        self.ptmb.setStyleSheet("")
+        self.ptmb = self.markButtons["{}".format(score)]
+        self.ptmb.setStyleSheet(self.redStyle)
