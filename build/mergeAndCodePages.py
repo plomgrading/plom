@@ -10,15 +10,17 @@ import tempfile
 
 # Take command line parameters
 # 1 = name
-# 2 = length (ie number of pages)
-# 3 = number of versions
-# 4 = the test test number
-# 5 = list of the version number for each page
+# 2 = code
+# 3 = length (ie number of pages)
+# 4 = number of versions
+# 5 = the test test number
+# 6 = list of the version number for each page
 name = sys.argv[1]
-length = int(sys.argv[2])
-versions = int(sys.argv[3])
-test = sys.argv[4].zfill(4)
-pageVersions = eval(sys.argv[5])
+code = sys.argv[2]
+length = int(sys.argv[3])
+versions = int(sys.argv[4])
+test = sys.argv[5].zfill(4)
+pageVersions = eval(sys.argv[6])
 
 # Command line parameters to imagemagick's mogrify
 # puts a frame around the image.
@@ -59,12 +61,6 @@ with tempfile.TemporaryDirectory() as tmpDir:
     nameFile = os.path.join(tmpDir, "name.png")
     dnw0File = os.path.join(tmpDir, "dnw0.png")
     dnw1File = os.path.join(tmpDir, "dnw1.png")
-    # create the testname QR
-    nameQR = pyqrcode.create("N.{}".format(name), error="H")
-    # write it to png
-    nameQR.png(nameFile, scale=4)
-    # put a nice border around it.
-    os.system("mogrify {} {}".format(mogParams, nameFile))
     # make a little grey triangle with the test name
     # put this in corner where staple is
     cmd = (
@@ -86,9 +82,13 @@ with tempfile.TemporaryDirectory() as tmpDir:
     pageFile = {}
     tpFile = {}
     for p in range(1, length + 1):
-        # the TPV code for each test/page/version
-        tpv = "t{}p{}v{}".format(
-            str(test).zfill(4), str(p).zfill(2), pageVersions[str(p)]
+        # the TPV code for each test/page/version/code
+        # with a 10digit code this is the most info before ticking over to a larger qr.
+        tpv = "{}{}{}{}".format(
+            str(test).zfill(4),
+            str(p).zfill(2),
+            str(pageVersions[str(p)]).zfill(2),
+            code,
         )
         # the corresponing QR code
         pageQRs[p] = pyqrcode.create(tpv, error="H")
@@ -109,8 +109,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
         )
     # After creating all of the QRcodes etc we can put them onto
     # the actual pdf pages as pixmaps using pymupdf
-    # read the test-name QR and DNW triangles in to pymupdf
-    qrName = fitz.Pixmap(nameFile)
+    # read the DNW triangles in to pymupdf
     dnw0 = fitz.Pixmap(dnw0File)
     dnw1 = fitz.Pixmap(dnw1File)
     for p in range(length):
@@ -123,19 +122,15 @@ with tempfile.TemporaryDirectory() as tmpDir:
         if p % 2 == 0:
             # if even page then stamp DNW near staple
             exam[p].insertImage(rDNW0, pixmap=dnw0, overlay=True)
-            # put QR-codes on east-side
             exam[p].insertImage(rNE, pixmap=qrPage, overlay=True)
             exam[p].insertImage(rSE, pixmap=qrPage, overlay=True)
-            # put test name on SW corner
-            exam[p].insertImage(rSW, pixmap=qrName, overlay=True)
+            exam[p].insertImage(rSW, pixmap=qrPage, overlay=True)
         else:
             # odd page - put DNW stamp near staple
             exam[p].insertImage(rDNW1, pixmap=dnw1, overlay=True)
-            # put QR-codes on west-side
             exam[p].insertImage(rNW, pixmap=qrPage, overlay=True)
             exam[p].insertImage(rSW, pixmap=qrPage, overlay=True)
-            # put test-name on SE corner
-            exam[p].insertImage(rSE, pixmap=qrName, overlay=True)
+            exam[p].insertImage(rSE, pixmap=qrPage, overlay=True)
 
 # Finally save the resulint pdf.
 exam.save("examsToPrint/exam_{}.pdf".format(str(test).zfill(4)))

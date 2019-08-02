@@ -3,6 +3,8 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer and Elvis Cai"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
+import datetime
+import random
 import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
@@ -41,6 +43,10 @@ class SpecBuilder(QWidget):
         self.ui.setupUi(self)
         self.setupTable()
 
+        random.seed(str(datetime.datetime.now()))
+        self.magicCode = random.randint(10 ** 9, 10 ** 10)
+        self.ui.codeLabel.setText("Magic code: {}".format(self.magicCode))
+
         self.ui.confirmButton.clicked.connect(self.basicSetup)
         self.ui.addRowButton.clicked.connect(self.addRow)
         self.ui.deleteRowButton.clicked.connect(self.deleteRow)
@@ -67,6 +73,7 @@ class SpecBuilder(QWidget):
         elif nameTest.isalnum() is False:
             self.errorManager(11)
         else:
+            spec.setCode(self.magicCode)
             spec.setNumberOfPages(numPages)
             spec.setNumberOfVersions(numVersions)
             spec.Name = nameTest

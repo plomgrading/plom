@@ -60,44 +60,49 @@ def writeExamsScanned():
     es.close()
 
 
+def isTGVCCode(qr):
+    # check output length matches expectation
+    if len(qr) != len("QR-Code:TTTTPPVVCCCCCCCCCC"):
+        return False
+    # if preamble is not "QR-Code:" then reject
+    if qr[:8] != "QR-Code:":
+        print("Preamble wrong")
+        return False
+    # tail must be numeric
+    return qr[9:].isnumeric()
+
+
 def checkQRsValid():
     """Check that the QRcodes in each pageimage are valid.
     When each png is scanned a png.qr is produced.
-    Those should have 3 lines each - 2x tpv and 1x name.
-    Valid lines are either "QR-Code:tXpYvZ" or "QR-Code:N:X"
+    Those should have 3 lines each all are tpvc (test,page,version,code)
+    Valid lines are "QR-Code:TTTTPPVVCCCCCCCCC" ie 17 digits
+    0123 = Test number, 45 = page number, 67 = version, 89...7 are code
     """
     # Build regular expressions for checking the QR codes.
     patternCode = re.compile(r"QR-Code:(t\d+)(p\d+)(v\d+)")
-    patternName = re.compile(r"QR-Code:N.\w+")
     # go into page image directory and look at each .qr file.
     os.chdir("pageImages/")
     for fname in glob.glob("*.qr"):
         fin = open(fname, "r")
-        lines = []
-        codeFlag = 0
-        nameFlag = 0
+        lines = set()
+        problemFlag = False
         # check each line in the .qr file
         for line in fin:
             line = line.rstrip("\n")
-            lines.append(line)
-            # check if is test-name code N.blah and extract name
-            if patternName.match(line):
-                nameFlag += 1
-                testName = line[10:]
-            # check if is tpv code tXpYvZ
-            if patternCode.match(line):
-                # a valid line will be "QR-Code:tXpYvZ"
-                # store as code=[0,X,Y,Z]
-                code = re.split(r"\D", line[8:])
-                codeFlag += 1
-        # If we found a name and a tpv file, and the name matches the
-        # name in the test-specification then store the tpv in examsScannedNow
-        # later we check that list against those produced during build
-        if nameFlag == 1 and codeFlag == 1 and testName == spec.Name:
-            # Convert X,Y,Z to ints and make note it has been scanned.
-            # store as esn[testnumber][pagenumber] = [version, blah.png]
-            examsScannedNow[int(code[1])][int(code[2])] = (int(code[3]), fname[:-3])
+            if isTGVCCode(line):
+                lines.add(line[8:])
+        codes = list(lines)
+        if len(codes) != 1:
+            problemFlag = True
         else:
+            tn = int(codes[0][0:4])
+            pn = int(codes[0][4:6])
+            vn = int(codes[0][6:8])
+            cn = int(codes[0][8:18])
+            if int(cn) != spec.Code:
+                problemFlag = True
+        if problemFlag:
             # Difficulty scanning this pageimage so move it
             # to problemimages
             print(
@@ -107,6 +112,11 @@ def checkQRsValid():
             shutil.move(fname, "problemImages")
             # move blah.png
             shutil.move(fname[:-3], "problemImages")
+        else:
+            # we have a valide TGVC and the code matches.
+            # store the tpv in examsScannedNow
+            examsScannedNow[tn][pn] = (vn, fname[:-3])
+            # later we check that list against those produced during build
     os.chdir("../")
 
 
