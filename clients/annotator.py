@@ -608,18 +608,22 @@ class Annotator(QDialog):
         if self.markStyle == 2:  # mark up - disable negative
             if delta <= 0 or delta + self.score > self.maxMark:
                 self.view.makeComment(0, dlt_txt[1])
+                self.view.scene.legalDelta = False
                 return
             else:
                 self.view.makeComment(dlt_txt[0], dlt_txt[1])
+                self.view.scene.legalDelta = True
                 return
         # If marking down, then keep delta if negative, and if applying it
         # doesn't push mark down past zero.
         elif self.markStyle == 3:
             if delta >= 0 or delta + self.score < 0:
                 self.view.makeComment(0, dlt_txt[1])
+                self.view.scene.legalDelta = False
                 return
             else:
                 self.view.makeComment(dlt_txt[0], dlt_txt[1])
+                self.view.scene.legalDelta = True
                 return
         else:
             # Remaining possibility = mark total - no restrictions
@@ -680,6 +684,7 @@ class Annotator(QDialog):
         # which it, in turn, passes on to the pagescene.
         self.setMode("delta", QCursor(Qt.ArrowCursor))
         self.view.markDelta(dm)
+        self.view.scene.legalDelta = True
 
     def changeMark(self, dm):
         """The mark has been changed by delta=dm. Update the mark-handler
@@ -693,6 +698,13 @@ class Annotator(QDialog):
         self.markHandler.repaint()
         # Tell the view (and scene) what the current mark is.
         self.view.scene.scoreBox.changeScore(self.score)
+        # Look ahead to see if this delta can be used again while keeping
+        # the mark within range. If not, then set a "dont paste" flag
+        lookingAhead = self.score + dm
+        if lookingAhead < 0 or lookingAhead > self.maxMark:
+            self.view.scene.legalDelta = False
+        else:
+            self.view.scene.legalDelta = True
 
     def closeEventRelaunch(self):
         self.closeEvent(True)

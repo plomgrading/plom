@@ -180,6 +180,7 @@ class PageScene(QGraphicsScene):
         self.markDelta = 0
         self.commentText = ""
         self.commentDelta = 0
+        self.legalDelta = True
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
         self.scoreBox = ScoreBox(self.fontSize)
@@ -297,7 +298,7 @@ class PageScene(QGraphicsScene):
         # If the mark-delta of the comment is non-zero then
         # create a delta-object with a different offset.
         # else just place the comment.
-        if self.commentDelta == 0:
+        if self.commentDelta == 0 or not self.legalDelta:
             command = CommandText(self, self.blurb, self.ink)
             self.undoStack.push(command)
         else:
@@ -344,10 +345,7 @@ class PageScene(QGraphicsScene):
         ):
             command = CommandQMark(self, pt)
         else:
-            # Look ahead to see if this delta can be used again while keeping
-            # the mark within range.
-            lookingAhead = self.parent.parent.score + self.markDelta
-            if lookingAhead >= 0 and lookingAhead <= self.parent.parent.maxMark:
+            if self.legalDelta:
                 command = CommandDelta(self, pt, self.markDelta, self.fontSize)
             else:
                 # don't do anything
