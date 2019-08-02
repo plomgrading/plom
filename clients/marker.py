@@ -7,6 +7,7 @@ import os
 import json
 import shutil
 import tempfile
+import time
 
 from PyQt5.QtCore import (
     Qt,
@@ -59,6 +60,36 @@ class BackgroundDownloader(QThread):
         messenger.getFileDav(self.tname, self.fname)
         # needed to send "please delete" back to server
         self.downloaded.emit(self.tname)
+        # then exit
+        self.quit()
+
+
+class BackgroundUploader(QThread):
+    uploaded = pyqtSignal(str, str, str, str, str, int, str)
+
+    def setUploadInfo(self, code, gr, aname, pname, cname, mtime, tags):
+        self.code = code
+        self.gr = gr
+        self.aname = aname
+        self.pname = pname
+        self.cname = cname
+        self.mtime = mtime
+        self.tags = tags
+
+    def run(self):
+        afile = os.path.basename(self.aname)
+        messenger.putFileDav(self.aname, afile)
+        # copy plom file to webdav
+        pfile = os.path.basename(self.pname)
+        messenger.putFileDav(self.pname, pfile)
+        # copy comment file to webdav
+        cfile = os.path.basename(self.cname)
+        messenger.putFileDav(self.cname, cfile)
+
+        # needed to send "please delete" back to server
+        self.uploaded.emit(
+            self.code, self.gr, afile, pfile, cfile, self.mtime, self.tags
+        )
         # then exit
         self.quit()
 
@@ -340,6 +371,8 @@ class MarkerClient(QDialog):
         # and https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
         self.backgroundDownloader = BackgroundDownloader()
         self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
+        self.backgroundUploader = BackgroundUploader()
+        self.backgroundUploader.uploaded.connect(self.uploadInBackgroundFinish)
 
     def resizeEvent(self, e):
         if self.testImg is None:
@@ -692,40 +725,25 @@ class MarkerClient(QDialog):
         # Update the currently displayed image
         self.updateImage(index[1].row())
 
-        # copy annotated file to webdav
-        afile = os.path.basename(aname)
-        messenger.putFileDav(aname, afile)
-        # copy plom file to webdav
-        pfile = os.path.basename(pname)
-        messenger.putFileDav(pname, pfile)
-        # copy comment file to webdav
-        cfile = os.path.basename(cname)
-        messenger.putFileDav(cname, cfile)
-        # Send 'returning marked image' (mRMD) to server.
-        # Pass it test-code, mark, location of annotated file on webdav
-        # and the marking time.
-        # Server will save data and copy the annotated file, then delete it
-        # from the webdav
+        # these need to happen in another thread - but that requires
+        # us to check with server to make sure user is still authorised
+        # to upload this particular pageimage - this may have changed
+        # depending on what else is going on.
+
         msg = messenger.SRMsg(
-            [
-                "mRMD",
-                self.userName,
-                self.token,
-                self.prxM.data(index[0]),
-                gr,
-                afile,
-                pfile,
-                cfile,
-                mtime,
-                self.pageGroup,
-                self.version,
-                self.prxM.data(index[4]),  # send the tags back too
-            ]
+            ["mUSO", self.userName, self.token, self.prxM.data(index[0])]
         )
-        # returns [ACK, #marked, #total]
         if msg[0] == "ACK":
-            self.ui.mProgressBar.setValue(msg[1])
-            self.ui.mProgressBar.setMaximum(msg[2])
+            # upload in background
+            self.uploadInBackgroundStart(
+                self.prxM.data(index[0]),  # current tgv
+                gr,  # grade
+                aname,  # annotated file
+                pname,  # plom file
+                cname,  # comment file
+                mtime,  # marking time
+                self.prxM.data(index[4]),  # tags
+            )
 
         # Check if no unmarked test, then request one.
         if launchAgain is False:
@@ -733,6 +751,36 @@ class MarkerClient(QDialog):
         if self.moveToNextUnmarkedTest():
             # self.annotateTest()
             self.ui.annButton.animateClick()
+
+    def uploadInBackgroundStart(self, code, gr, aname, pname, cname, mtime, tags):
+        self.backgroundUploader.setUploadInfo(
+            code, gr, aname, pname, cname, mtime, tags
+        )
+        self.backgroundUploader.start()
+
+    def uploadInBackgroundFinish(self, code, gr, afile, pfile, cfile, mtime, tags):
+        # Server will save data and copy the annotated file, then delete it
+        # from the webdav
+        msg = messenger.SRMsg(
+            [
+                "mRMD",
+                self.userName,
+                self.token,
+                code,
+                gr,
+                afile,
+                pfile,
+                cfile,
+                mtime,
+                self.pageGroup,
+                self.version,
+                tags,
+            ]
+        )
+        if msg[0] == "ACK":
+            # returns [ACK, #done, #total]
+            self.ui.mProgressBar.setValue(msg[1])
+            self.ui.mProgressBar.setMaximum(msg[2])
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image
