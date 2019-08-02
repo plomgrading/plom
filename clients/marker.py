@@ -549,7 +549,7 @@ class MarkerClient(QDialog):
         self.backgroundDownloader.setFiles(tname, fname)
         self.backgroundDownloader.start()
         # Add the page-group to the list of things to mark
-        self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]))
+        self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]), update=True)
 
     def requestNextInBackgroundFinish(self, tname):
         # Ack that test received - server then deletes it from webdav
