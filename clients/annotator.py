@@ -765,7 +765,7 @@ class Annotator(QDialog):
             self.reject()
         # do some checks before accepting things
         if not self.view.areThereAnnotations():
-            msg = ErrorMessage("Please annotate even if blank.")
+            msg = ErrorMessage("Please make an annotation, even if the page is blank.")
             msg.exec_()
             return
 
