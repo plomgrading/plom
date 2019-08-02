@@ -5,6 +5,22 @@ These are example templates you can use for preparing a test or exam
 for using with Plom.
 
 
+LaTeX templates
+---------------
+
+We provide `latexTemplate.tex`, an example with good margins that work
+well with our QR code placement.
+
+
+Using a word processor
+----------------------
+
+Of course, you do not need to use LaTeX to prepare your test.  The
+included `idBox.pdf` should be used as a template for students to
+enter their name and student number.  This standard template will help
+with the automated optical character recongnition of student numbers.
+
+
 Extra sheets
 ------------
 
