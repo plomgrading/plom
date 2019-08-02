@@ -479,9 +479,9 @@ class MarkerClient(QDialog):
         self.checkFiles(pr)
 
         # Grab the group-image from file and display in the examviewwindow
-        # If group has been marked or annotated then display the annotated file
+        # If group has been marked then display the annotated file
         # Else display the original group image
-        if self.prxM.getStatus(pr) in ["marked", "annotated"]:
+        if self.prxM.getStatus(pr) == "marked":
             self.testImg.updateImage(self.prxM.getAnnotatedFile(pr))
         else:
             self.testImg.updateImage(self.prxM.getOriginalFile(pr))
@@ -549,7 +549,8 @@ class MarkerClient(QDialog):
         self.backgroundDownloader.setFiles(tname, fname)
         self.backgroundDownloader.start()
         # Add the page-group to the list of things to mark
-        self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]))
+        # do not update the displayed image with this new paper
+        self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]), update=False)
 
     def requestNextInBackgroundFinish(self, tname):
         # Ack that test received - server then deletes it from webdav
@@ -557,10 +558,6 @@ class MarkerClient(QDialog):
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
-        # should force a reload of image of currently selected (ie the new) paper
-        si = self.ui.tableView.selectedIndexes()
-        if si is not None:
-            self.updateImage(si[0].row())
 
     def moveToNextUnmarkedTest(self):
         # Move to the next unmarked test in the table.
@@ -726,8 +723,8 @@ class MarkerClient(QDialog):
             return
         # Copy the mark, annotated filename and the markingtime into the table
         self.prxM.markPaper(index, gr, aname, pname, mtime)
-        # Update the currently displayed image
-        self.updateImage(index[1].row())
+        # Update the currently displayed image by selecting that row
+        self.ui.tableView.selectRow(index[1].row())
 
         # these need to happen in another thread - but that requires
         # us to check with server to make sure user is still authorised
