@@ -120,9 +120,10 @@ class Annotator(QDialog):
         self.setMarkHandler(self.markStyle)
         # set alt-enter / alt-return as shortcut to finish annotating
         # also set ctrl-n and ctrl-b as same shortcut.
-        self.setEndShortCuts()
         # set ctrl-+ as zoom toggle shortcut
-        self.setZoomShortCuts()
+        # set ctrl-z / ctrl-y as undo/redo shortcuts
+        self.setMiscShortCuts()
+
         # set the zoom combobox
         self.setZoomComboBox()
         # Set the tool icons
@@ -464,7 +465,7 @@ class Annotator(QDialog):
         self.commentW.saveComments()
         self.closeEvent(True)
 
-    def setEndShortCuts(self):
+    def setMiscShortCuts(self):
         # Set alt-enter or alt-return to end the annotator
         # The key-shortcuts fire a signal, which triggers the
         # endAndRelaunch slot.
@@ -477,11 +478,14 @@ class Annotator(QDialog):
         self.endShortCutc.activated.connect(self.endAndRelaunch)
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
         self.endShortCutd.activated.connect(self.endAndRelaunch)
-
-    def setZoomShortCuts(self):
         # shortcuts for zoom-states
         self.zoomToggleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
         self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
+        # shortcuts for undo/redo
+        self.undoShortCut = QShortcut(QKeySequence("Ctrl+z"), self)
+        self.undoShortCut.activated.connect(self.view.undo)
+        self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
+        self.redoShortCut.activated.connect(self.view.redo)
 
     # Simple mode change functions
     def boxMode(self):
