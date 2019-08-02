@@ -8,6 +8,12 @@ import fitz
 import pyqrcode
 import tempfile
 
+# to make sure data in the qr code is formatted the way we think
+# TTTTPPVVEECCCCCCCC is version 01 and EE=01
+# 17 digits is as much as can be packed into this size qr.
+# beyond that the qr needs to be more dense.
+_DataInQrFormatVersion_ = "01"
+
 # Take command line parameters
 # 1 = name
 # 2 = code
@@ -82,12 +88,13 @@ with tempfile.TemporaryDirectory() as tmpDir:
     pageFile = {}
     tpFile = {}
     for p in range(1, length + 1):
-        # the TPV code for each test/page/version/code
-        # with a 10digit code this is the most info before ticking over to a larger qr.
-        tpv = "{}{}{}{}".format(
+        # the TPV code for each test/page/version/api/code
+        # with a 8digit code this is the most info before ticking over to a larger qr.
+        tpv = "{}{}{}{}{}".format(
             str(test).zfill(4),
             str(p).zfill(2),
             str(pageVersions[str(p)]).zfill(2),
+            _DataInQrFormatVersion_,
             code,
         )
         # the corresponing QR code
