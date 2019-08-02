@@ -549,7 +549,7 @@ class MarkerClient(QDialog):
         self.backgroundDownloader.setFiles(tname, fname)
         self.backgroundDownloader.start()
         # Add the page-group to the list of things to mark
-        self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]), update=True)
+        self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]))
 
     def requestNextInBackgroundFinish(self, tname):
         # Ack that test received - server then deletes it from webdav
@@ -557,6 +557,10 @@ class MarkerClient(QDialog):
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
+        # should force a reload of image of currently selected (ie the new) paper
+        si = self.ui.tableView.selectedIndexes()
+        if si is not None:
+            self.updateImage(si[0].row())
 
     def moveToNextUnmarkedTest(self):
         # Move to the next unmarked test in the table.
