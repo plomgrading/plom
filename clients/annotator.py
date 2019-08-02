@@ -597,14 +597,18 @@ class Annotator(QDialog):
         # Set the model to text and change cursor.
         self.setMode("text", QCursor(Qt.IBeamCursor))
         # Grab the delta from the arguments
-        delta = int(dlt_txt[0])
+        # check if delta is "." or an int. if "." then just text.
+        if dlt_txt[0] == ".":
+            self.view.makeComment(".", dlt_txt[1])
+            return
         # We only paste the delta if it is appropriate - this depends on
         # the marking style.
+        delta = int(dlt_txt[0])
         # If marking-up then keep delta if positive, and if applying it
         # will not push mark past maximium possible
         if self.markStyle == 2:  # mark up - disable negative
-            if delta <= 0 or delta + self.score > self.maxMark:
-                self.view.makeComment(0, dlt_txt[1])
+            if delta < 0 or delta + self.score > self.maxMark:
+                self.view.makeComment(".", dlt_txt[1])
                 return
             else:
                 self.view.makeComment(dlt_txt[0], dlt_txt[1])
@@ -612,8 +616,8 @@ class Annotator(QDialog):
         # If marking down, then keep delta if negative, and if applying it
         # doesn't push mark down past zero.
         elif self.markStyle == 3:
-            if delta >= 0 or delta + self.score < 0:
-                self.view.makeComment(0, dlt_txt[1])
+            if delta > 0 or delta + self.score < 0:
+                self.view.makeComment(".", dlt_txt[1])
                 return
             else:
                 self.view.makeComment(dlt_txt[0], dlt_txt[1])
@@ -622,7 +626,7 @@ class Annotator(QDialog):
             # Remaining possibility = mark total - no restrictions
             # since user has to set total mark manually - the deltas do not
             # change the mark, so are not displayed or used.
-            self.view.makeComment(0, dlt_txt[1])
+            self.view.makeComment(".", dlt_txt[1])
             return
 
     def setMarkHandler(self, markStyle):

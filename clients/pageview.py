@@ -63,7 +63,7 @@ class PageView(QGraphicsView):
         self.setDragMode(0)
         # Pass the comment and delta on to the pagescene.
         self.scene.mode = "comment"
-        self.scene.commentDelta = int(dlt)
+        self.scene.commentDelta = dlt  # note is string still
         self.scene.commentText = text
 
     def markDelta(self, delta):

@@ -178,7 +178,7 @@ class PageScene(QGraphicsScene):
         # Set a mark-delta, comment-text and comment-delta.
         self.markDelta = 0
         self.commentText = ""
-        self.commentDelta = 0
+        self.commentDelta = "0"
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
         self.scoreBox = ScoreBox(self.fontSize)
@@ -296,7 +296,7 @@ class PageScene(QGraphicsScene):
         # If the mark-delta of the comment is non-zero then
         # create a delta-object with a different offset.
         # else just place the comment.
-        if self.commentDelta == 0:
+        if self.commentDelta == ".":
             command = CommandText(self, self.blurb, self.ink)
             self.undoStack.push(command)
         else:
@@ -458,7 +458,7 @@ class PageScene(QGraphicsScene):
         if e.mimeData().hasFormat("text/plain"):
             # Simulate a comment click.
             self.commentText = e.mimeData().text()
-            self.commentDelta = 0
+            self.commentDelta = "0"
             self.mousePressComment(e)
 
         elif e.mimeData().hasFormat(
