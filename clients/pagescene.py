@@ -210,7 +210,9 @@ class PageScene(QGraphicsScene):
         self.undoStack.push(command)
 
     def sendNewTotalToAnnotator(self, newScore):
-        self.parent().parent.markHandler.loadNewTotal(newScore)
+        # update score in annotator
+        self.parent().parent.setTotalFromScene(newScore)
+        # pass that score
 
     def save(self):
         """ Save the annotated group-image.
@@ -533,6 +535,10 @@ class PageScene(QGraphicsScene):
 
     def unpickleError(self, X):
         print("Unpickle error - What is {}".format(X))
+
+    def unpickleTotal(self, X):
+        if len(X) == 1:
+            self.undoStack.push(CommandTotal(self, X[0], 0))
 
     def unpickleCross(self, X):
         if len(X) == 2:

@@ -165,7 +165,9 @@ class MarkHandler(QWidget):
             self.pdmb.setStyleSheet("")
 
     def loadNewTotal(self, score):
-        # for when this gets set by an undo/redo
-        self.ptmb.setStyleSheet("")
-        self.ptmb = self.markButtons["{}".format(score)]
-        self.ptmb.setStyleSheet(self.redStyle)
+        # check in total mode
+        if self.style == "Total":
+            # for when this gets set by an undo/redo
+            self.ptmb.setStyleSheet("")
+            self.ptmb = self.markButtons["{}".format(score)]
+            self.ptmb.setStyleSheet(self.redStyle)

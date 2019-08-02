@@ -661,6 +661,11 @@ class Annotator(QDialog):
         # also tell the scene what new total mark is.
         self.view.scene.updateTotal(self.score, prevScore)
 
+    def setTotalFromScene(self, newScore):
+        self.score = newScore
+        # pass that score to the mark-handler
+        self.markHandler.loadNewTotal(newScore)
+
     def deltaMarkSet(self, dm):
         """When a delta-mark button is clicked, or a comment selected
         the view (and scene) need to know what the current delta is so
@@ -847,6 +852,9 @@ class Annotator(QDialog):
 
     def pickleIt(self):
         lst = self.view.scene.pickleSceneItems()  # newest items first
+        # if in totalling model then append a total-change
+        if self.markStyle == 1:
+            lst.append(["Total", self.score])
         lst.reverse()  # so newest items last
         plomDict = {
             "fileName": os.path.basename(self.imageFile),
