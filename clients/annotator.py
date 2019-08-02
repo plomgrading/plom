@@ -689,11 +689,15 @@ class Annotator(QDialog):
         self.view.markDelta(dm)
         self.view.scene.legalDelta = True
 
-    def changeMark(self, dm):
-        """The mark has been changed by delta=dm. Update the mark-handler
-        and the scorebox and check if the user can use this delta again
-        while keeping the mark between 0 and the max possible.
+    def changeMark(self, dm, ru):
+        """The mark has been changed by delta=dm, as redo(+1) or undo(-1)
+        Update the mark-handler and the scorebox and check if the user can
+        use this delta again while keeping the mark between 0 and the max
+        possible.
         """
+        # Notice that this dm may result from an "undo" in which case its sign
+        # is reversed. Need to check for this.
+
         # Update the current mark
         self.score += dm
         # Tell the mark-handler what the new mark is and force a repaint.
@@ -703,7 +707,12 @@ class Annotator(QDialog):
         self.view.scene.scoreBox.changeScore(self.score)
         # Look ahead to see if this delta can be used again while keeping
         # the mark within range. If not, then set a "dont paste" flag
-        lookingAhead = self.score + dm
+        # note - take into account whether last score-change was
+        # result of an undo or a redo
+        if ru == 1:
+            lookingAhead = self.score + dm
+        elif ru == -1:
+            lookingAhead = self.score - dm
         if lookingAhead < 0 or lookingAhead > self.maxMark:
             self.view.scene.legalDelta = False
         else:

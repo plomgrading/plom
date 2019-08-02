@@ -37,11 +37,11 @@ class CommandDelete(QUndoCommand):
         # If the object is a DeltaItem then emit a mark-changed signal.
         if isinstance(self.deleteItem, DeltaItem):
             # Mark decreases by delta
-            self.scene.markChangedSignal.emit(-self.deleteItem.delta)
+            self.scene.markChangedSignal.emit(-self.deleteItem.delta, 1)
         # If the object is a GroupTextDeltaItem then emit a mark-changed signal.
         if isinstance(self.deleteItem, GroupDTItem):
             # Mark decreases by delta
-            self.scene.markChangedSignal.emit(-self.deleteItem.di.delta)
+            self.scene.markChangedSignal.emit(-self.deleteItem.di.delta, 1)
         # nicely animate the deletion
         self.deleteItem.animateFlag = True
         if self.deleteItem.animator is not None:
@@ -55,11 +55,11 @@ class CommandDelete(QUndoCommand):
         # If the object is a DeltaItem then emit a mark-changed signal.
         if isinstance(self.deleteItem, DeltaItem):
             # Mark increases by delta
-            self.scene.markChangedSignal.emit(self.deleteItem.delta)
+            self.scene.markChangedSignal.emit(self.deleteItem.delta, -1)
         # If the object is a GroupTextDeltaItem then emit a mark-changed signal.
         if isinstance(self.deleteItem, GroupDTItem):
             # Mark decreases by delta
-            self.scene.markChangedSignal.emit(self.deleteItem.di.delta)
+            self.scene.markChangedSignal.emit(self.deleteItem.di.delta, -1)
         # nicely animate the undo of deletion
         self.deleteItem.animateFlag = False
         self.scene.addItem(self.deleteItem)
@@ -617,14 +617,14 @@ class CommandDelta(QUndoCommand):
         self.scene.addItem(self.delItem)
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
-        self.scene.markChangedSignal.emit(self.delta)
+        self.scene.markChangedSignal.emit(self.delta, 1)
 
     def undo(self):
         self.delItem.flash_undo()
         QTimer.singleShot(500, lambda: self.scene.removeItem(self.delItem))
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark decreased by delta
-        self.scene.markChangedSignal.emit(-self.delta)
+        self.scene.markChangedSignal.emit(-self.delta, -1)
 
 
 class DeltaItem(QGraphicsTextItem):
@@ -1588,14 +1588,14 @@ class CommandGDT(QUndoCommand):
         self.scene.addItem(self.gdt)
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
-        self.scene.markChangedSignal.emit(self.delta)
+        self.scene.markChangedSignal.emit(self.delta, 1)
 
     def undo(self):
         # self.gdt.flash_undo()
         QTimer.singleShot(500, lambda: self.scene.removeItem(self.gdt))
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark decreased by delta
-        self.scene.markChangedSignal.emit(-self.delta)
+        self.scene.markChangedSignal.emit(-self.delta, -1)
 
 
 class GroupDTItem(QGraphicsItemGroup):

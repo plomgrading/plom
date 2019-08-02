@@ -131,7 +131,8 @@ class PageScene(QGraphicsScene):
 
     # When a delta is created or deleted, need to emit a markChangedSignal
     # which will be picked up by the annotation widget to update
-    markChangedSignal = pyqtSignal(int)
+    # signal passes [delta, +/- 1] the second shows if +1 redo, -1 undo
+    markChangedSignal = pyqtSignal(int, int)
 
     def __init__(self, parent, imgName):
         super(PageScene, self).__init__(parent)
