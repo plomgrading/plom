@@ -15,6 +15,10 @@ import sys
 sys.path.append("..")
 from resources.testspecification import TestSpecification
 
+# to make sure data in the qr code is formatted the way we think
+# TTTTPPVVEECCCCCCC is version 01 and EE=01
+_DataInQrFormatVersion_ = "01"
+
 
 def decodeQRs():
     """Go into pageimage directory
@@ -62,7 +66,7 @@ def writeExamsScanned():
 
 def isTGVCCode(qr):
     # check output length matches expectation
-    if len(qr) != len("QR-Code:TTTTPPVVCCCCCCCCCC"):
+    if len(qr) != len("QR-Code:TTTTPPVVEECCCCCCC"):
         return False
     # if preamble is not "QR-Code:" then reject
     if qr[:8] != "QR-Code:":
@@ -76,11 +80,9 @@ def checkQRsValid():
     """Check that the QRcodes in each pageimage are valid.
     When each png is scanned a png.qr is produced.
     Those should have 3 lines each all are tpvc (test,page,version,code)
-    Valid lines are "QR-Code:TTTTPPVVCCCCCCCCC" ie 17 digits
-    0123 = Test number, 45 = page number, 67 = version, 89...7 are code
+    Valid lines are "QR-Code:TTTTPPVVEECCCCCCC" ie 17 digits
+    0123 = Test number, 45 = page number, 67 = version, 89 = API, 0...7 are code
     """
-    # Build regular expressions for checking the QR codes.
-    patternCode = re.compile(r"QR-Code:(t\d+)(p\d+)(v\d+)")
     # go into page image directory and look at each .qr file.
     os.chdir("pageImages/")
     for fname in glob.glob("*.qr"):
@@ -99,15 +101,21 @@ def checkQRsValid():
             tn = int(codes[0][0:4])
             pn = int(codes[0][4:6])
             vn = int(codes[0][6:8])
-            cn = int(codes[0][8:18])
-            if int(cn) != spec.Code:
+            en = codes[0][8:10]  # treat as string
+            cn = codes[0][10:17]  # treat as string
+            if cn != spec.Code:  # treat as strings
+                problemFlag = True
+            if en != _DataInQrFormatVersion_:
+                print(
+                    "File {} has different qr-code formatting. Legacy issue?".format(
+                        fname
+                    )
+                )
                 problemFlag = True
         if problemFlag:
             # Difficulty scanning this pageimage so move it
             # to problemimages
-            print(
-                "A problem with codes in {} and " "testname {}".format(fname, testName)
-            )
+            print("A problem with codes in {}".format(fname))
             # move blah.png.qr
             shutil.move(fname, "problemImages")
             # move blah.png

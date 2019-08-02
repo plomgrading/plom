@@ -185,6 +185,13 @@ class ImageTable(QTableWidget):
         else:
             super(ImageTable, self).keyPressEvent(event)
 
+    def moveToNext(self):
+        cr = self.rowCount()
+        if cr == 0:
+            return
+        nr = (1 + self.currentRow()) % cr
+        self.selectRow(nr)
+
     def reloadImageList(self):
         """Reload the list of images from the problemimage directory"""
         self.imageList = []
@@ -373,11 +380,14 @@ class PageIDDialog(QDialog):
         grid.addWidget(self.versionSB, 4, 2)
         # add a validate button and connect to command
         self.validateB = QPushButton("Validate")
+        self.validateB.setAutoDefault(False)
         grid.addWidget(self.validateB, 5, 1)
         self.validateB.clicked.connect(self.validate)
         # Fix the layout and unset modal.
         self.setLayout(grid)
         self.setModal(False)
+        # put focus on test number
+        self.testSB.setFocus()
 
     def checkIsValid(self):
         """Check that the entered values match the TPV
@@ -569,6 +579,7 @@ class PageIdentifier(QWidget):
             v = str(pidd.versionSB.value())
             self.imageT.setTPV(t, p, v)
             self.imageT.setFocus()
+            self.imageT.moveToNext()
 
 
 def main():
