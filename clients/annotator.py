@@ -527,7 +527,7 @@ class Annotator(QDialog):
     def zoomMode(self):
         self.setMode("zoom", Qt.SizeFDiagCursor)
 
-    def loadModeFromBefore(self, mode):
+    def loadModeFromBefore(self, mode, dlt=None):
         self.loadModes = {
             "box": lambda: self.ui.boxButton.animateClick(),
             "comment": lambda: self.commentMode(),
@@ -537,7 +537,10 @@ class Annotator(QDialog):
             "text": lambda: self.ui.textButton.animateClick(),
             "tick": lambda: self.ui.tickButton.animateClick(),
         }
-        self.loadModes.get(mode, lambda *args: None)()
+        if mode == "delta" and dlt is not None:
+            self.markHandler.loadDeltaValue(dlt)
+        else:
+            self.loadModes.get(mode, lambda *args: None)()
 
     def setButtons(self):
         """Connect buttons to functions.
@@ -690,11 +693,6 @@ class Annotator(QDialog):
         self.markHandler.repaint()
         # Tell the view (and scene) what the current mark is.
         self.view.scene.scoreBox.changeScore(self.score)
-        # Look ahead to see if this delta can be used again while keeping
-        # the mark within range. If not, then set mode to 'move'.
-        lookingAhead = self.score + dm
-        if lookingAhead < 0 or lookingAhead > self.maxMark:
-            self.ui.moveButton.animateClick()
 
     def closeEventRelaunch(self):
         self.closeEvent(True)
@@ -710,7 +708,12 @@ class Annotator(QDialog):
         if self.parent.annotatorSettings.value("commentWarnings") is not None:
             self.commentWarn = self.parent.annotatorSettings.value("commentWarnings")
         if self.parent.annotatorSettings.value("tool") is not None:
-            self.loadModeFromBefore(self.parent.annotatorSettings.value("tool"))
+            if self.parent.annotatorSettings.value("tool") == "delta":
+                dlt = self.parent.annotatorSettings.value("delta")
+                self.loadModeFromBefore("delta", dlt)
+            else:
+                self.loadModeFromBefore(self.parent.annotatorSettings.value("tool"))
+
         if self.parent.annotatorSettings.value("viewRectangle") is not None:
             # put in slight delay so that any resize events are done.
             QTimer.singleShot(
@@ -738,6 +741,8 @@ class Annotator(QDialog):
         self.parent.annotatorSettings.setValue("markWarnings", self.markWarn)
         self.parent.annotatorSettings.setValue("commentWarnings", self.commentWarn)
         self.parent.annotatorSettings.setValue("tool", self.view.scene.mode)
+        if self.view.scene.mode == "delta":
+            self.parent.annotatorSettings.setValue("delta", self.view.scene.markDelta)
         self.parent.annotatorSettings.setValue("viewRectangle", self.view.vrect)
         self.parent.annotatorSettings.setValue(
             "zoomState", self.ui.zoomCB.currentIndex()

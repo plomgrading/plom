@@ -135,6 +135,7 @@ class PageScene(QGraphicsScene):
 
     def __init__(self, parent, imgName):
         super(PageScene, self).__init__(parent)
+        self.parent = parent
         # Grab filename of groupimage, build pixmap and graphicsitem.
         self.imageName = imgName
         self.image = QPixmap(imgName)
@@ -343,8 +344,14 @@ class PageScene(QGraphicsScene):
         ):
             command = CommandQMark(self, pt)
         else:
-            command = CommandDelta(self, pt, self.markDelta, self.fontSize)
-
+            # Look ahead to see if this delta can be used again while keeping
+            # the mark within range.
+            lookingAhead = self.parent.parent.score + self.markDelta
+            if lookingAhead >= 0 and lookingAhead <= self.parent.parent.maxMark:
+                command = CommandDelta(self, pt, self.markDelta, self.fontSize)
+            else:
+                # don't do anything
+                return
         # push command onto undoStack.
         self.undoStack.push(command)
 
@@ -354,7 +361,7 @@ class PageScene(QGraphicsScene):
         The actual moving of objects is handled by themselves since they
         know how to handle the ItemPositionChange signal as a move-command.
         """
-        self.parent().setCursor(Qt.ClosedHandCursor)
+        self.parent.setCursor(Qt.ClosedHandCursor)
         super(PageScene, self).mousePressEvent(event)
 
     def mousePressText(self, event):
@@ -414,13 +421,11 @@ class PageScene(QGraphicsScene):
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
-            self.parent().scale(0.8, 0.8)
+            self.parent.scale(0.8, 0.8)
         else:
-            self.parent().scale(1.25, 1.25)
-        self.parent().centerOn(event.scenePos())
-        self.parent().zoomNull(
-            True
-        )  # sets the view rectangle and updates zoom-dropdown.
+            self.parent.scale(1.25, 1.25)
+        self.parent.centerOn(event.scenePos())
+        self.parent.zoomNull(True)  # sets the view rectangle and updates zoom-dropdown.
 
     # Mouse release tool functions.
     # Most of these delete the temp-object (eg box / line)
@@ -428,7 +433,7 @@ class PageScene(QGraphicsScene):
 
     def mouseReleaseMove(self, event):
         """Sets the cursor back to an open hand."""
-        self.parent().setCursor(Qt.OpenHandCursor)
+        self.parent.setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
         # refresh view after moving objects
         self.update()
@@ -436,7 +441,7 @@ class PageScene(QGraphicsScene):
     def mouseReleasePan(self, event):
         """Update the current stored view rectangle."""
         super(PageScene, self).mouseReleaseEvent(event)
-        self.parent().zoomNull()
+        self.parent.zoomNull()
 
     # Handle drag / drop events
     def dragEnterEvent(self, e):
@@ -471,10 +476,10 @@ class PageScene(QGraphicsScene):
         else:
             pass
         # After the drop event make sure pageview has the focus.
-        self.parent().setFocus(Qt.TabFocusReason)
+        self.parent.setFocus(Qt.TabFocusReason)
 
     def latexAFragment(self, txt):
-        return self.parent().latexAFragment(txt)
+        return self.parent.latexAFragment(txt)
 
     # A fix (hopefully) for misread touchpad events on mac
     def event(self, event):
