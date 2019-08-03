@@ -1403,6 +1403,9 @@ class CommandText(QUndoCommand):
         self.scene = scene
         self.blurb = blurb
         if len(self.blurb.toPlainText()) > 0:
+            # quickly grab focus and then clear focus.
+            # needs slight delay.
+            # this correctly sets the text interaction flags
             QTimer.singleShot(1, self.blurb.setFocus)
             QTimer.singleShot(10, self.blurb.clearFocus)
         self.setText("Text")
