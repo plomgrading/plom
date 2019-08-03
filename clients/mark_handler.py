@@ -170,3 +170,7 @@ class MarkHandler(QWidget):
             self.markButtons["m{}".format(-dlt)].animateClick()
         elif dlt >= 0 and self.style == "Up":
             self.markButtons["p{}".format(dlt)].animateClick()
+
+    def unpickleTotal(self, score):
+        if (score <= self.maxScore) and (score >= 0) and (self.style == "Total"):
+            self.markButtons["{}".format(score)].animateClick()

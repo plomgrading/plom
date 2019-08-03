@@ -898,7 +898,9 @@ class Annotator(QDialog):
 
     def unpickleIt(self, plomDict):
         self.view.scene.unpickleSceneItems(plomDict["sceneItems"])
-        # do some sanity checks here?
+        # if markstyle is "Total", then click appropriate button
+        if self.markStyle == 1:
+            self.markHandler.unpickleTotal(plomDict["currentMark"])
 
     def setZoomComboBox(self):
         self.ui.zoomCB.addItem("User")
