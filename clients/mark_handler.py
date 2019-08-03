@@ -41,6 +41,8 @@ class MarkHandler(QWidget):
         )
         # By default we set style to marking-UP.
         self.style = "Up"
+        # Keep last delta used
+        self.lastDelta = 0
         # Set up a current-score/mark label at top of widget.
         self.scoreL = QLabel("")
         fnt = self.scoreL.font()
@@ -171,3 +173,11 @@ class MarkHandler(QWidget):
             self.ptmb.setStyleSheet("")
             self.ptmb = self.markButtons["{}".format(score)]
             self.ptmb.setStyleSheet(self.redStyle)
+
+    def loadDeltaValue(self, dlt):
+        if abs(dlt) > self.maxScore or self.style == "Total":
+            return
+        if dlt < 0 and self.style == "Down":
+            self.markButtons["m{}".format(-dlt)].animateClick()
+        elif dlt >= 0 and self.style == "Up":
+            self.markButtons["p{}".format(dlt)].animateClick()
