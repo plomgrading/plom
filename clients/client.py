@@ -3,6 +3,8 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+_PLOM_API_VERSION_ = "Pickle 0.2"
+
 import json
 import os
 import marker
@@ -148,16 +150,22 @@ class Chooser(QWidget):
 
 # Pop up a dialog for unhandled exceptions and then exit
 sys._excepthook = sys.excepthook
+
+
 def _exception_hook(exctype, value, traceback):
     s = "".join(tblib.format_exception(exctype, value, traceback))
     mb = QMessageBox()
-    mb.setText("Something unexpected has happened!\n\n"
-               "Please file a bug and copy-paste the following:\n\n"
-               "{0}".format(s))
+    mb.setText(
+        "Something unexpected has happened!\n\n"
+        "Please file a bug and copy-paste the following:\n\n"
+        "{0}".format(s)
+    )
     mb.setStandardButtons(QMessageBox.Ok)
     mb.exec_()
     sys._excepthook(exctype, value, traceback)
     sys.exit(1)
+
+
 sys.excepthook = _exception_hook
 
 

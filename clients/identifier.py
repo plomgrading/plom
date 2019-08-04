@@ -3,6 +3,8 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+_PLOM_API_VERSION_ = "Pickle 0.2"
+
 from collections import defaultdict
 import csv
 import json
@@ -23,6 +25,7 @@ from examviewwindow import ExamViewWindow
 import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_identify import Ui_IdentifyWindow
+
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
@@ -222,8 +225,12 @@ class IDClient(QDialog):
         token. The token is then used to authenticate future transactions with
         the server (since password hashing is slow).
         """
+        # print("I'm version {}".format(_PLOM_API_VERSION_))
+
         # Send and return message with messenger.
-        msg = messenger.SRMsg(["AUTH", self.userName, self.password])
+        msg = messenger.SRMsg(
+            ["AUTH", self.userName, self.password, _PLOM_API_VERSION_]
+        )
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":

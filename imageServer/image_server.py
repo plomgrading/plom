@@ -3,6 +3,8 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
+_PLOM_API_VERSION_ = "Pickle 0.2"
+
 import asyncio
 import datetime
 import errno
@@ -298,7 +300,7 @@ class Server(object):
                 print("Attempt by non-user to {}".format(message))
                 return ["ERR", "You are not an authorised user"]
 
-    def authoriseUser(self, user, password):
+    def authoriseUser(self, user, password, clientAPI):
         """When a user requests authorisation
         They have sent their name and password
         first check if they are a valid user
@@ -307,6 +309,10 @@ class Server(object):
         Then pass them back the authorisation token
         (the password is only checked on first authorisation - since slow)
         """
+        if clientAPI != _PLOM_API_VERSION_:
+            HERE!!!!
+
+
         if self.authority.authoriseUser(user, password):
             # On token request also make sure anything "out" with that user is reset as todo.
             self.IDDB.resetUsersToDo(user)
