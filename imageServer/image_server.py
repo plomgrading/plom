@@ -310,8 +310,12 @@ class Server(object):
         (the password is only checked on first authorisation - since slow)
         """
         if clientAPI != _PLOM_API_VERSION_:
-            HERE!!!!
-
+            return [
+                "ERR",
+                'PLOM API version mismatch: client "{}" =/= sever "{}". Please check you have the right client.'.format(
+                    clientAPI, _PLOM_API_VERSION_
+                ),
+            ]
 
         if self.authority.authoriseUser(user, password):
             # On token request also make sure anything "out" with that user is reset as todo.

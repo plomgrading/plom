@@ -3,8 +3,6 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
-_PLOM_API_VERSION_ = "Pickle 0.2"
-
 import os
 import json
 import shutil
@@ -246,6 +244,7 @@ class MarkerClient(QDialog):
         version,
         parent=None,
     ):
+        self.parent = parent
         # Init the client with username, password, server and port data,
         # and which group/version is being marked.
         super(MarkerClient, self).__init__(parent)
@@ -364,12 +363,12 @@ class MarkerClient(QDialog):
         """
         # Send and return message with messenger.
         msg = messenger.SRMsg(
-            ["AUTH", self.userName, self.password, _PLOM_API_VERSION_]
+            ["AUTH", self.userName, self.password, self.parent.APIVersion]
         )
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":
-            ErrorMessage("Password problem")
+            ErrorMessage(msg[1])
             quit()
         else:
             self.token = msg[1]

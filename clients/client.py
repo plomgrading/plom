@@ -51,8 +51,10 @@ def writeLastTime():
 
 class Chooser(QWidget):
     def __init__(self, parent):
+        self.APIVersion = _PLOM_API_VERSION_
         super(Chooser, self).__init__()
         self.parent = parent
+        print("PLOM api = {}".format(self.APIVersion))
         # runit = either marker or identifier clients.
         self.runIt = None
         # will be the marker-widget
@@ -109,11 +111,11 @@ class Chooser(QWidget):
             self.marker.exec_()
         elif self.runIt == "IDer":
             # Run the ID client.
-            self.identifier = identifier.IDClient(user, pwd, server, mport, wport)
+            self.identifier = identifier.IDClient(user, pwd, server, mport, wport, self)
             self.identifier.exec_()
         else:
             # Run the Total client.
-            self.totaler = totaler.TotalClient(user, pwd, server, mport, wport)
+            self.totaler = totaler.TotalClient(user, pwd, server, mport, wport, self)
             self.totaler.exec_()
 
     def runMarker(self):
@@ -167,6 +169,11 @@ def _exception_hook(exctype, value, traceback):
 
 
 sys.excepthook = _exception_hook
+
+
+class PLOM(QApplication):
+    def __init__(self, argv):
+        super(PLOM, self).__init__(argv)
 
 
 app = QApplication(sys.argv)

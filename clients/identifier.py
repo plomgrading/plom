@@ -155,9 +155,10 @@ class ExamModel(QAbstractTableModel):
 
 
 class IDClient(QDialog):
-    def __init__(self, userName, password, server, message_port, web_port):
+    def __init__(self, userName, password, server, message_port, web_port, parent=None):
+        self.parent = parent
         # Init the client with username, password, server and port data.
-        super(IDClient, self).__init__()
+        super(IDClient, self).__init__(parent)
         # Init the messenger with server and port data.
         messenger.setServerDetails(server, message_port, web_port)
         messenger.startMessenger()
@@ -229,12 +230,12 @@ class IDClient(QDialog):
 
         # Send and return message with messenger.
         msg = messenger.SRMsg(
-            ["AUTH", self.userName, self.password, _PLOM_API_VERSION_]
+            ["AUTH", self.userName, self.password, self.parent.APIVersion]
         )
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":
-            ErrorMessage("Password problem")
+            ErrorMessage(msg[1])
             quit()
         else:
             self.token = msg[1]
