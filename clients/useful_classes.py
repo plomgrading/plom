@@ -178,6 +178,12 @@ class CommentWidget(QWidget):
         self.CL.previousItem()
         self.setFocus()
 
+    def getCurrentItemRow(self):
+        return self.CL.getCurrentItemRow()
+
+    def setCurrentItemRow(self, r):
+        self.CL.selectRow(r)
+
     def addFromTextList(self):
         # text items in scene.
         lst = self.parent.getComments()
@@ -402,6 +408,8 @@ class SimpleCommentTable(QTableView):
             txti = QStandardItem(txt)
             txti.setEditable(True)
             txti.setDropEnabled(False)
+            if dlt == ".":  # temp compatibility with future fix for #253
+                dlt = 0
             # If delta>0 then should be "+n"
             if int(dlt) > 0:
                 delti = QStandardItem("+{}".format(int(dlt)))
@@ -483,6 +491,12 @@ class SimpleCommentTable(QTableView):
             self.selectRow(0)
         else:
             self.selectRow(sel[0].row())
+
+    def getCurrentItemRow(self):
+        return self.selectedIndexes()[0].row()
+
+    def setCurrentItemRow(self, r):
+        self.selectRow(r)
 
     def nextItem(self):
         # Select next row (wraps around)

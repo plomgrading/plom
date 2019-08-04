@@ -120,9 +120,10 @@ class Annotator(QDialog):
         self.setMarkHandler(self.markStyle)
         # set alt-enter / alt-return as shortcut to finish annotating
         # also set ctrl-n and ctrl-b as same shortcut.
-        self.setEndShortCuts()
         # set ctrl-+ as zoom toggle shortcut
-        self.setZoomShortCuts()
+        # set ctrl-z / ctrl-y as undo/redo shortcuts
+        self.setMiscShortCuts()
+
         # set the zoom combobox
         self.setZoomComboBox()
         # Set the tool icons
@@ -464,7 +465,7 @@ class Annotator(QDialog):
         self.commentW.saveComments()
         self.closeEvent(True)
 
-    def setEndShortCuts(self):
+    def setMiscShortCuts(self):
         # Set alt-enter or alt-return to end the annotator
         # The key-shortcuts fire a signal, which triggers the
         # endAndRelaunch slot.
@@ -477,11 +478,14 @@ class Annotator(QDialog):
         self.endShortCutc.activated.connect(self.endAndRelaunch)
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
         self.endShortCutd.activated.connect(self.endAndRelaunch)
-
-    def setZoomShortCuts(self):
         # shortcuts for zoom-states
         self.zoomToggleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
         self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
+        # shortcuts for undo/redo
+        self.undoShortCut = QShortcut(QKeySequence("Ctrl+z"), self)
+        self.undoShortCut.activated.connect(self.view.undo)
+        self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
+        self.redoShortCut.activated.connect(self.view.redo)
 
     # Simple mode change functions
     def boxMode(self):
@@ -523,7 +527,7 @@ class Annotator(QDialog):
     def zoomMode(self):
         self.setMode("zoom", Qt.SizeFDiagCursor)
 
-    def loadModeFromBefore(self, mode):
+    def loadModeFromBefore(self, mode, aux=None):
         self.loadModes = {
             "box": lambda: self.ui.boxButton.animateClick(),
             "comment": lambda: self.commentMode(),
@@ -533,7 +537,13 @@ class Annotator(QDialog):
             "text": lambda: self.ui.textButton.animateClick(),
             "tick": lambda: self.ui.tickButton.animateClick(),
         }
-        self.loadModes.get(mode, lambda *args: None)()
+        if mode == "delta" and aux is not None:
+            self.markHandler.loadDeltaValue(aux)
+        elif mode == "comment" and aux is not None:
+            self.commentW.setCurrentItemRow(aux)
+            self.ui.commentButton.animateClick()
+        else:
+            self.loadModes.get(mode, lambda *args: None)()
 
     def setButtons(self):
         """Connect buttons to functions.
@@ -601,18 +611,22 @@ class Annotator(QDialog):
         if self.markStyle == 2:  # mark up - disable negative
             if delta <= 0 or delta + self.score > self.maxMark:
                 self.view.makeComment(0, dlt_txt[1])
+                self.view.scene.legalDelta = False
                 return
             else:
                 self.view.makeComment(dlt_txt[0], dlt_txt[1])
+                self.view.scene.legalDelta = True
                 return
         # If marking down, then keep delta if negative, and if applying it
         # doesn't push mark down past zero.
         elif self.markStyle == 3:
             if delta >= 0 or delta + self.score < 0:
                 self.view.makeComment(0, dlt_txt[1])
+                self.view.scene.legalDelta = False
                 return
             else:
                 self.view.makeComment(dlt_txt[0], dlt_txt[1])
+                self.view.scene.legalDelta = True
                 return
         else:
             # Remaining possibility = mark total - no restrictions
@@ -673,12 +687,17 @@ class Annotator(QDialog):
         # which it, in turn, passes on to the pagescene.
         self.setMode("delta", QCursor(Qt.ArrowCursor))
         self.view.markDelta(dm)
+        self.view.scene.legalDelta = True
 
-    def changeMark(self, dm):
-        """The mark has been changed by delta=dm. Update the mark-handler
-        and the scorebox and check if the user can use this delta again
-        while keeping the mark between 0 and the max possible.
+    def changeMark(self, dm, ru):
+        """The mark has been changed by delta=dm, as redo(+1) or undo(-1)
+        Update the mark-handler and the scorebox and check if the user can
+        use this delta again while keeping the mark between 0 and the max
+        possible.
         """
+        # Notice that this dm may result from an "undo" in which case its sign
+        # is reversed. Need to check for this.
+
         # Update the current mark
         self.score += dm
         # Tell the mark-handler what the new mark is and force a repaint.
@@ -687,10 +706,17 @@ class Annotator(QDialog):
         # Tell the view (and scene) what the current mark is.
         self.view.scene.scoreBox.changeScore(self.score)
         # Look ahead to see if this delta can be used again while keeping
-        # the mark within range. If not, then set mode to 'move'.
-        lookingAhead = self.score + dm
+        # the mark within range. If not, then set a "dont paste" flag
+        # note - take into account whether last score-change was
+        # result of an undo or a redo
+        if ru == 1:
+            lookingAhead = self.score + dm
+        elif ru == -1:
+            lookingAhead = self.score - dm
         if lookingAhead < 0 or lookingAhead > self.maxMark:
-            self.ui.moveButton.animateClick()
+            self.view.scene.legalDelta = False
+        else:
+            self.view.scene.legalDelta = True
 
     def closeEventRelaunch(self):
         self.closeEvent(True)
@@ -706,7 +732,15 @@ class Annotator(QDialog):
         if self.parent.annotatorSettings.value("commentWarnings") is not None:
             self.commentWarn = self.parent.annotatorSettings.value("commentWarnings")
         if self.parent.annotatorSettings.value("tool") is not None:
-            self.loadModeFromBefore(self.parent.annotatorSettings.value("tool"))
+            if self.parent.annotatorSettings.value("tool") == "delta":
+                dlt = self.parent.annotatorSettings.value("delta")
+                self.loadModeFromBefore("delta", dlt)
+            elif self.parent.annotatorSettings.value("tool") == "comment":
+                cmt = self.parent.annotatorSettings.value("comment")
+                self.loadModeFromBefore("comment", cmt)
+            else:
+                self.loadModeFromBefore(self.parent.annotatorSettings.value("tool"))
+
         if self.parent.annotatorSettings.value("viewRectangle") is not None:
             # put in slight delay so that any resize events are done.
             QTimer.singleShot(
@@ -733,11 +767,17 @@ class Annotator(QDialog):
         self.parent.annotatorSettings.setValue("geometry", self.saveGeometry())
         self.parent.annotatorSettings.setValue("markWarnings", self.markWarn)
         self.parent.annotatorSettings.setValue("commentWarnings", self.commentWarn)
-        self.parent.annotatorSettings.setValue("tool", self.view.scene.mode)
         self.parent.annotatorSettings.setValue("viewRectangle", self.view.vrect)
         self.parent.annotatorSettings.setValue(
             "zoomState", self.ui.zoomCB.currentIndex()
         )
+        self.parent.annotatorSettings.setValue("tool", self.view.scene.mode)
+        if self.view.scene.mode == "delta":
+            self.parent.annotatorSettings.setValue("delta", self.view.scene.markDelta)
+        if self.view.scene.mode == "comment":
+            self.parent.annotatorSettings.setValue(
+                "comment", self.commentW.getCurrentItemRow()
+            )
 
     def closeEvent(self, relaunch):
         """When the user closes the window - either by clicking on the
@@ -761,7 +801,7 @@ class Annotator(QDialog):
             self.reject()
         # do some checks before accepting things
         if not self.view.areThereAnnotations():
-            msg = ErrorMessage("Please annotate even if blank.")
+            msg = ErrorMessage("Please make an annotation, even if the page is blank.")
             msg.exec_()
             return
 
@@ -858,7 +898,9 @@ class Annotator(QDialog):
 
     def unpickleIt(self, plomDict):
         self.view.scene.unpickleSceneItems(plomDict["sceneItems"])
-        # do some sanity checks here?
+        # if markstyle is "Total", then click appropriate button
+        if self.markStyle == 1:
+            self.markHandler.unpickleTotal(plomDict["currentMark"])
 
     def setZoomComboBox(self):
         self.ui.zoomCB.addItem("User")
