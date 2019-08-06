@@ -78,8 +78,8 @@ def checkQRsValid():
     """Check that the QRcodes in each pageimage are valid.
     When each png is scanned a png.qr is produced.
     Those should have 3 lines each all are tpvc (test,page,version,code)
-    Valid lines are "QR-Code:TTTTPPVVEECCCCCCC" ie 17 digits
-    0123 = Test number, 45 = page number, 67 = version, 89 = API, 0...7 are code
+    Valid lines are "QR-Code:TTTTPPVVEECCCCCCC" i.e., 17 digits
+    0123 = Test number, 45 = page number, 67 = version, 89 = API, 0123456 = code
     """
     # go into page image directory and look at each .qr file.
     os.chdir("pageImages/")
