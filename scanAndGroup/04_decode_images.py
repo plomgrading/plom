@@ -105,15 +105,15 @@ def checkQRsValid():
     # go into page image directory and look at each .qr file.
     os.chdir("pageImages/")
     for fname in glob.glob("*.qr"):
-        fin = open(fname, "r")
         lines = set()
-        problemFlag = False
-        # check each line in the .qr file
-        for line in fin:
-            line = line.rstrip("\n")
-            if isTGVCCode(line):
-                lines.add(line.lstrip('QR-Code:'))
+        with open(fname, "r") as qrfile:
+            for line in qrfile:
+                line = line.rstrip("\n")
+                if isTGVCCode(line):
+                    lines.add(line.lstrip('QR-Code:'))
         codes = list(lines)
+
+        problemFlag = False
         if len(codes) != 1:
             problemFlag = True
         else:
