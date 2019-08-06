@@ -105,38 +105,73 @@ def checkQRsValid():
     # go into page image directory and look at each .qr file.
     os.chdir("pageImages/")
     for fname in glob.glob("*.qr"):
-        tgvs = set()
+        tgvs = []
         with open(fname, "r") as qrfile:
             for line in qrfile:
                 line = line.rstrip("\n")
                 if isTGVCCode(line):
-                    tgvs.add(line.lstrip('QR-Code:'))
-        tgvs = list(tgvs)
+                    tgvs.append(line.lstrip('Qr-Code:'))
 
         problemFlag = False
-        if len(codes) != 1:
+        warnFlag = False
+
+        if not tgvs:
+            msg = "No QR codes were decoded."
             problemFlag = True
-        else:
-            tn, pn, vn, en, cn = parseTGV(tgvs[0])
-            if cn != spec.Code:  # treat as strings
+        elif not len(set(tgvs)) == 1:
+            # Decoder either gives the correct code or no code at all
+            msg = "Multiple different QR codes! (very rare in theory)"
+            problemFlag = True
+
+        if not problemFlag:
+            if len(tgvs) == 1:
+                msg = "Only one of three QR codes decoded."
+                # TODO: in principle could proceed, albeit dangerously
+                warnFlag = True
+                riskiness = 10
+                tgv = tgvs[0]
+            elif len(tgvs) == 2:
+                msg = "Only two of three QR codes decoded."
+                warnFlag = True
+                riskiness = 1
+                tgv = tgvs[0]
+            elif len(tgvs) == 3:
+                # full consensus
+                tgv = tgvs[0]
+            else:  #len > 3:
+                msg = "Too many QR codes on the page!"
                 problemFlag = True
+
+        if warnFlag:
+            # TODO: for now we need this for page orientation
+            # https://gitlab.math.ubc.ca/andrewr/MLP/issues/272
+            problemFlag = True
+
+        if not problemFlag:
+            tn, pn, vn, en, cn = parseTGV(tgv)
             if en != _DataInQrFormatVersion_:
-                print(
-                    "File {} has different qr-code formatting. Legacy issue?".format(
-                        fname
-                    )
-                )
+                msg = "API code '{0}' did not match {1}: wrong API.  " +
+                      "Legacy issue?".format(en, _DataInQrFormatVersion_)
                 problemFlag = True
+            if cn != spec.Code:
+                msg = "Magic code '{0}' did not match {1}.  " +
+                      "Scanned wrong test?".format(cn, spec.Code)
+                problemFlag = True
+
         if problemFlag:
             # Difficulty scanning this pageimage so move it
             # to problemimages
-            print("A problem with codes in {}".format(fname))
+            print("[E] {0} {1}".format(fname, msg))
+            print("    Flagging for manual inspection.")
             # move blah.png.qr
             shutil.move(fname, "problemImages")
             # move blah.png
             shutil.move(fname[:-3], "problemImages")
         else:
             # we have a valid TGVC and the code matches.
+            if warnFlag:
+                print("[W] {0} {1}".format(fname, msg))
+                print("   (high occurences of these warnings may mean printer/scanner problems)")
             # store the tpv in examsScannedNow
             examsScannedNow[tn][pn] = (vn, fname[:-3])
             # later we check that list against those produced during build

@@ -81,7 +81,17 @@ with tempfile.TemporaryDirectory() as tmpDir:
     with open("{}.qr".format(imgName), "w") as fh:
         for X in both:
             fh.write("{}\n".format(X))
+
     # there should be 1 qr code in top half and 2 in bottom half
-    # if not then flip the image.
-    if len(up) > len(down):
+    if len(up) == 1 and len(down) == 2:
+        pass
+    elif len(up) == 2:
+        # if its opposite then flip the image.
         os.system("mogrify -quiet -rotate 180 {}".format(imgName))
+    else:
+        # TODO: should mark orientation as "unknown", for
+        # manualPageIdentifier to deal with.  For now, the incorrect
+        # number of QR codes will cause this to be flagged for manual
+        # processing.  But later that will be merely a warning.
+        # https://gitlab.math.ubc.ca/andrewr/MLP/issues/272
+        pass
