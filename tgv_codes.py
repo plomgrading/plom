@@ -67,13 +67,11 @@ def parseTGV(tgv):
 def encodeTGV(test, p, v, code):
     """Encode some values as a TGV code
 
-    TODO: should we allow a string for ``code``?
-
     Args:
-       test (int/str): the test number
-       p (int/str): page group number
-       v (int/str): version number
-       code (str): magic code
+       test (int/str): the test number, 0 ≤ test ≤ 9999
+       p (int/str): page group number, 0 ≤ p ≤ 99
+       v (int/str): version number, 0 ≤ v ≤ 99
+       code (int/str): magic code, 0 ≤ code ≤ 9999999
 
     Returns:
        str: the tgv code
@@ -81,6 +79,7 @@ def encodeTGV(test, p, v, code):
     test = str(test).zfill(4)
     p = str(p).zfill(2)
     v = str(v).zfill(2)
+    code = str(code).zfill(7)
     assert test.isnumeric()
     assert p.isnumeric()
     assert v.isnumeric()
