@@ -44,7 +44,7 @@ class SpecBuilder(QWidget):
         self.setupTable()
 
         random.seed(str(datetime.datetime.now()))
-        self.magicCode = str(random.randint(0, 10 ** 7)).zfill(7)
+        self.magicCode = str(random.randrange(0, 10**7)).zfill(7)
         # this length chosen to ensure resulting qr-code is as small as possible
         # given the info we need to store. Any more digits and the code goes up
         # to the next size.
