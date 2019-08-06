@@ -46,6 +46,7 @@ tipText = {
     "com up": "Comment up: Select previous comment in list",
     "com down": "Comment down: Select next comment in list",
     "cross": "Cross: L = cross, M/Ctrl = ?-mark, R/Shift = checkmark.",
+    "crossDown": "CrossDown: L = cross(-1), M/Ctrl = ?-mark, R/Shift = checkmark.",
     "delta": "Delta: L = paste mark, M/Ctrl = ?-mark, R/Shift = checkmark/cross.",
     "delete": "Delete: L = Delete object, L-drag = delete area.",
     "line": "Line: L = straight line, M/Ctrl = double-arrow, R/Shift = arrow.",
@@ -55,6 +56,7 @@ tipText = {
     "redo": "Redo: Redo last action",
     "text": "Text: Enter = newline, Shift-Enter/ESC = finish.",
     "tick": "Tick: L = checkmark, M/Ctrl = ?-mark, R/Shift = cross.",
+    "tickUp": "TickUp: L = checkmark(+1), M/Ctrl = ?-mark, R/Shift = cross.",
     "undo": "Undo: Undo last action",
     "zoom": "Zoom: L = Zoom in, R = zoom out.",
 }
@@ -261,7 +263,7 @@ class Annotator(QDialog):
             "b": "Line/DoubleArrow/Arrow",
             "q": "Pan",
             "w": "Redo",
-            "e": "Cross/QMark/Tick",
+            "e": "TickUp or CrossDown/QMark/Cross or Tick",
             "r": "Previous Comment",
             "t": "Pen/DoubleArrow/Highlighter",
             "\\": "Maximize Window",
@@ -289,7 +291,7 @@ class Annotator(QDialog):
             "n": "Line/DoubleArrow/Arrow",
             "p": "Pan",
             "o": "Redo",
-            "i": "Cross/QMark/Tick",
+            "e": "TickUp or CrossDown/QMark/Cross or Tick",
             "u": "Previous Comment",
             "y": "Pen/DoubleArrow/Highlighter",
             "?": "Key Help",
@@ -445,7 +447,6 @@ class Annotator(QDialog):
         self.setIcon(
             self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path)
         )
-        self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
         self.setIcon(self.ui.deleteButton, "delete", "{}/delete.svg".format(base_path))
         self.setIcon(self.ui.lineButton, "line", "{}/line.svg".format(base_path))
         self.setIcon(self.ui.moveButton, "move", "{}/move.svg".format(base_path))
@@ -453,9 +454,21 @@ class Annotator(QDialog):
         self.setIcon(self.ui.penButton, "pen", "{}/pen.svg".format(base_path))
         self.setIcon(self.ui.redoButton, "redo", "{}/redo.svg".format(base_path))
         self.setIcon(self.ui.textButton, "text", "{}/text.svg".format(base_path))
-        self.setIcon(self.ui.tickButton, "tick", "{}/tick.svg".format(base_path))
         self.setIcon(self.ui.undoButton, "undo", "{}/undo.svg".format(base_path))
         self.setIcon(self.ui.zoomButton, "zoom", "{}/zoom.svg".format(base_path))
+        if self.markStyle == 1:  # mark total
+            self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
+            self.setIcon(self.ui.tickButton, "tick", "{}/tick.svg".format(base_path))
+        elif self.markStyle == 2:  # mark up
+            self.setIcon(
+                self.ui.tickButton, "tickUp", "{}/tickUp.svg".format(base_path)
+            )
+            self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
+        else:  # mark down
+            self.setIcon(
+                self.ui.crossButton, "crossDown", "{}/crossDown.svg".format(base_path)
+            )
+            self.setIcon(self.ui.tickButton, "tick", "{}/tick.svg".format(base_path))
 
     # The 'endAndRelaunch' slot - this saves the comment-list, closes
     # the annotator. The marker window then asks the server for the next
@@ -501,6 +514,9 @@ class Annotator(QDialog):
     def crossMode(self):
         self.setMode("cross", Qt.ArrowCursor)
 
+    def crossDownMode(self):
+        self.setMode("cross", Qt.ArrowCursor)
+
     def deleteMode(self):
         self.setMode("delete", Qt.ForbiddenCursor)
 
@@ -522,6 +538,9 @@ class Annotator(QDialog):
         self.setMode("text", Qt.IBeamCursor)
 
     def tickMode(self):
+        self.setMode("tick", Qt.ArrowCursor)
+
+    def tickUpMode(self):
         self.setMode("tick", Qt.ArrowCursor)
 
     def zoomMode(self):
@@ -550,15 +569,23 @@ class Annotator(QDialog):
         """
         # List of tool buttons, the corresponding modes and cursor shapes
         self.ui.boxButton.clicked.connect(self.boxMode)
-        self.ui.crossButton.clicked.connect(self.crossMode)
         self.ui.deleteButton.clicked.connect(self.deleteMode)
         self.ui.lineButton.clicked.connect(self.lineMode)
         self.ui.moveButton.clicked.connect(self.moveMode)
         self.ui.panButton.clicked.connect(self.panMode)
         self.ui.penButton.clicked.connect(self.penMode)
         self.ui.textButton.clicked.connect(self.textMode)
-        self.ui.tickButton.clicked.connect(self.tickMode)
         self.ui.zoomButton.clicked.connect(self.zoomMode)
+        # tick and cross buttons depend on mark-style
+        if self.markStyle == 1:  # mark total
+            self.ui.crossButton.clicked.connect(self.crossMode)
+            self.ui.tickButton.clicked.connect(self.tickMode)
+        elif self.markStyle == 2:  # mark up
+            self.ui.crossButton.clicked.connect(self.crossMode)
+            self.ui.tickButton.clicked.connect(self.tickUpMode)
+        else:  # mark down
+            self.ui.crossButton.clicked.connect(self.crossDownMode)
+            self.ui.tickButton.clicked.connect(self.tickMode)
 
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.view.undo)
