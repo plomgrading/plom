@@ -136,7 +136,7 @@ def checkQRsValid():
             # move blah.png
             shutil.move(fname[:-3], "problemImages")
         else:
-            # we have a valide TGVC and the code matches.
+            # we have a valid TGVC and the code matches.
             # store the tpv in examsScannedNow
             examsScannedNow[tn][pn] = (vn, fname[:-3])
             # later we check that list against those produced during build
