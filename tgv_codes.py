@@ -27,15 +27,20 @@ __license__ = "AGPLv3"
 _API = "01"
 
 
+def isValidTGV(tgv):
+    """Is the input a valid TGV+ code?
+    """
+    if len(tgv) != len("TTTTPPVVEECCCCCCC"):
+        return False
+    return qr.isnumeric()
+
+
 def isQRCodeWithValidTGV(qr):
     """Valid lines are "QR-Code:TTTTPPVVEECCCCCCC"
     """
-    if len(qr) != len("QR-Code:TTTTPPVVEECCCCCCC"):
-        return False
     if not qr.startswith("QR-Code:"):
         return False
-    # tail must be numeric
-    return qr[9:].isnumeric()
+    return isValidTGV(qr[9:])
 
 
 def parseTGV(tgv):
