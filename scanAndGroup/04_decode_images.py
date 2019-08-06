@@ -15,9 +15,7 @@ import sys
 sys.path.append("..")
 from resources.testspecification import TestSpecification
 
-# to make sure data in the qr code is formatted the way we think
-# TTTTPPVVEECCCCCCC is version 01 and EE=01
-_DataInQrFormatVersion_ = "01"
+from tgv_codes import parseTGV, isQRCodeWithValidTGV
 
 
 def decodeQRs():
@@ -64,43 +62,10 @@ def writeExamsScanned():
     es.close()
 
 
-def isTGVCCode(qr):
-    # check output length matches expectation
-    if len(qr) != len("QR-Code:TTTTPPVVEECCCCCCC"):
-        return False
-    if not qr.startswith("QR-Code:"):
-        return False
-    # tail must be numeric
-    return qr[9:].isnumeric()
-
-
-def parseTGV(tgv):
-    """Parse a TGV+ string (typically from a QR-code)
-
-    Args: tgv (str): a TGV+ code, typically from a QR-code, with the
-       prefix "QR-Code:" stripped.
-
-    Returns:
-       tn (int): test number, up to 4 digits
-       pn (int): page group number, up to 2 digits
-       vn (int): version number, up to 2 digits
-       en (str): the API number, 2 digits zero padded
-       cn (str): the "magic code", 7 digits zero padded
-    """
-    tn = int(tgv[0:4])
-    pn = int(tgv[4:6])
-    vn = int(tgv[6:8])
-    en = tgv[8:10]
-    cn = tgv[10:]
-    return tn, pn, vn, en, cn
-
-
 def checkQRsValid():
     """Check that the QRcodes in each pageimage are valid.
     When each png is scanned a png.qr is produced.
-    Those should have 3 lines each all are tpvc (test,page,version,code)
-    Valid lines are "QR-Code:TTTTPPVVEECCCCCCC" i.e., 17 digits
-    0123 = Test number, 45 = page number, 67 = version, 89 = API, 0123456 = code
+    Those should have 3 lines each all are TGV+ codes
     """
     # go into page image directory and look at each .qr file.
     os.chdir("pageImages/")
@@ -109,7 +74,7 @@ def checkQRsValid():
         with open(fname, "r") as qrfile:
             for line in qrfile:
                 line = line.rstrip("\n")
-                if isTGVCCode(line):
+                if isQRCodeWithValidTGV(line):
                     tgvs.append(line.lstrip('Qr-Code:'))
 
         problemFlag = False
