@@ -47,6 +47,7 @@ from tools import (
     CommandGDT,
     DeltaItem,
     TextItem,
+    GhostComment,
 )
 
 
@@ -112,6 +113,7 @@ mouseMove = {
     "delete": "mouseMoveDelete",
     "line": "mouseMoveLine",
     "pen": "mouseMovePen",
+    "comment": "mouseMoveComment",
 }
 mouseRelease = {
     "box": "mouseReleaseBox",
@@ -176,6 +178,7 @@ class PageScene(QGraphicsScene):
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
         self.blurb = TextItem(self, self.fontSize)
+        self.ghostItem = GhostComment(QPointF(0, 0), "1", "blah", self.fontSize)
         self.deleteItem = None
         # Set a mark-delta, comment-text and comment-delta.
         self.markDelta = 0
@@ -931,3 +934,15 @@ class PageScene(QGraphicsScene):
             if not X.collidesWithItem(self.imageItem, mode=Qt.ContainsItemShape):
                 return False
         return True
+
+    def updateGhost(self, dlt, txt):
+        self.ghostItem.changeComment(dlt, txt)
+
+    def hideGhost(self):
+        if self.ghostItem.scene() is not None:
+            self.removeItem(self.ghostItem)
+
+    def mouseMoveComment(self, event):
+        if self.ghostItem.scene() is None:
+            self.addItem(self.ghostItem)
+        self.ghostItem.setPos(event.scenePos())

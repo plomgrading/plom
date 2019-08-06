@@ -1656,3 +1656,110 @@ class GroupDTItem(QGraphicsItemGroup):
             painter.drawRoundedRect(option.rect, 10, 10)
             pass
         super(GroupDTItem, self).paint(painter, option, widget)
+
+
+class GhostComment(QGraphicsItemGroup):
+    def __init__(self, pt, dlt, txt, fontsize):
+        super(GhostComment, self).__init__()
+        self.pt = pt
+        self.di = GhostDelta(pt, dlt, fontsize)
+        self.blurb = GhostText(txt, fontsize)
+        # always add the text, but only add delta if non-zero
+        self.addToGroup(self.blurb)
+        if int(dlt) != 0:
+            self.addToGroup(self.di)
+            # move blurb so that its top-left corner is next to top-right corner of delta.
+            cr = self.di.boundingRect()
+            self.blurb.moveBy(
+                (cr.right() + cr.left()) / 2 + 5, -(cr.top() + cr.bottom()) / 2
+            )
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+
+    def changeComment(self, dlt, txt):
+        self.di.changeDelta(self.pt, dlt)
+        self.blurb.changeText(txt)
+        self.blurb.setPos(QPointF(0, 0))
+        # need to force a bounding-rect update by removing an item and adding it back
+        self.removeFromGroup(self.di)
+        self.removeFromGroup(self.blurb)
+        if int(dlt) != 0:
+            cr = self.di.boundingRect()
+            self.blurb.moveBy(
+                (cr.right() + cr.left()) / 2 + 5, -(cr.top() + cr.bottom()) / 2
+            )
+            self.addToGroup(self.di)
+        self.addToGroup(self.blurb)
+
+    def paint(self, painter, option, widget):
+        # paint a bounding rectangle for undo/redo highlighting
+        painter.setPen(QPen(Qt.blue, 0.5, style=Qt.DotLine))
+        painter.drawRoundedRect(option.rect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(GhostComment, self).paint(painter, option, widget)
+
+
+class GhostDelta(QGraphicsTextItem):
+    # Similar to textitem
+    def __init__(self, pt, delta, fontsize=10):
+        super(GhostDelta, self).__init__()
+        print("Delta is '{}' {}".format(delta, type(delta)))
+        self.delta = int(delta)
+        self.setDefaultTextColor(Qt.blue)
+        # If positive mark then starts with a "+"-sign
+        if self.delta > 0:
+            self.setPlainText(" +{} ".format(self.delta))
+        else:
+            # else starts with a "-"-sign (unless zero).
+            self.setPlainText(" {} ".format(self.delta))
+        self.font = QFont("Helvetica")
+        # Slightly larger font than regular textitem.
+        self.font.setPointSize(min(30, fontsize * 3))
+        self.setFont(self.font)
+        # Is not editable.
+        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        # centre under the mouse-click.
+        cr = self.boundingRect()
+        self.offset = QPointF(
+            -(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2
+        )
+        self.setPos(pt + self.offset)
+
+    def changeDelta(self, pt, dlt):
+        self.delta = int(dlt)
+        if self.delta > 0:
+            self.setPlainText(" +{} ".format(self.delta))
+        else:
+            # else starts with a "-"-sign (unless zero).
+            self.setPlainText(" {} ".format(self.delta))
+        cr = self.boundingRect()
+        self.offset = QPointF(
+            -(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2
+        )
+        self.setPos(pt + self.offset)
+
+    def paint(self, painter, option, widget):
+        # paint the background
+        painter.setPen(QPen(Qt.blue, 1))
+        painter.drawRoundedRect(option.rect, 10, 10)
+        # paint the normal TextItem with the default 'paint' method
+        super(GhostDelta, self).paint(painter, option, widget)
+
+
+class GhostText(QGraphicsTextItem):
+    # Textitem is a qgraphicstextitem, has to handle
+    # textinput and double-click to start editing etc.
+    # Shift-return ends the editor
+    def __init__(self, txt, fontsize=10):
+        super(GhostText, self).__init__()
+        self.setDefaultTextColor(Qt.blue)
+        self.setPlainText(txt)
+        self.font = QFont("Helvetica")
+        self.font.setPointSizeF(min(24, fontsize * 2.5))
+        self.setFont(self.font)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        # Set it as editably with the text-editor
+        self.setTextInteractionFlags(Qt.NoTextInteraction)
+
+    def changeText(self, txt):
+        self.setPlainText(txt)

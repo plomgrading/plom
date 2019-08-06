@@ -601,7 +601,7 @@ class Annotator(QDialog):
         then pasted into place.
         """
         # Set the model to text and change cursor.
-        self.setMode("text", QCursor(Qt.IBeamCursor))
+        self.setMode("comment", QCursor(Qt.IBeamCursor))
         # Grab the delta from the arguments
         delta = int(dlt_txt[0])
         # We only paste the delta if it is appropriate - this depends on

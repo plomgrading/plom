@@ -51,6 +51,10 @@ class PageView(QGraphicsView):
     def setMode(self, mode):
         # Set the mode in the pagescene.
         self.scene.mode = mode
+        # if current mode is not comment, make sure the ghostcomment is
+        # removed from the scene.
+        if mode != "comment":
+            self.scene.hideGhost()
         # If mode is pan, then that is handled in the view
         # by turning on drag-mode.
         # remember to turn it off when leaving pan-mode.
@@ -65,6 +69,7 @@ class PageView(QGraphicsView):
         self.scene.mode = "comment"
         self.scene.commentDelta = int(dlt)
         self.scene.commentText = text
+        self.scene.updateGhost(dlt, text)
 
     def markDelta(self, delta):
         self.setDragMode(0)
