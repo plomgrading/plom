@@ -1,29 +1,35 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019 Andrew Rechnitzer"
+"""Utilities for dealing with TGV codes
+
+A TGV code is a string of 17 digits of the form
+
+  TTTTPPVVEECCCCCCC
+  01234567890123456
+
+This is as much as can be packed into a QR code without
+increasing its size.
+
+The format consists of:
+  * 0123 = test number
+  * 45 = page number
+  * 67 = version
+  * 89 = API
+  * 0123456 = magic code
+"""
+
+__author__ = "Colin Macdonald"
+__copyright__ = "Copyright (C) 2019 Colin Macdonald"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
-from collections import defaultdict
-import glob
-import json
-import os
-import re
-import shutil
-import sys
 
-
-# to make sure data in the qr code is formatted the way we think
-# TTTTPPVVEECCCCCCC is version 01 and EE=01
-# 17 digits is as much as can be packed into this size qr.
-# beyond that the qr needs to be more dense.
-_DataInQrFormatVersion_ = "01"
+# Changes to this format should bump this.  Possibly changes
+# to the layout of QR codes on the page should too.
+_API = "01"
 
 
 def isQRCodeWithValidTGV(qr):
+    """Valid lines are "QR-Code:TTTTPPVVEECCCCCCC"
     """
-    Valid lines are "QR-Code:TTTTPPVVEECCCCCCC"
-    i.e., 17 digits in the form:
-    0123 = Test number, 45 = page number, 67 = version, 89 = API, 0123456 = code"""
     if len(qr) != len("QR-Code:TTTTPPVVEECCCCCCC"):
         return False
     if not qr.startswith("QR-Code:"):
@@ -35,8 +41,8 @@ def isQRCodeWithValidTGV(qr):
 def parseTGV(tgv):
     """Parse a TGV+ string (typically from a QR-code)
 
-    Args: tgv (str): a TGV+ code, typically from a QR-code, with the
-       prefix "QR-Code:" stripped.
+    Args: tgv (str): a TGV+ code of the form "TTTTPPVVEECCCCCCC",
+       typically from a QR-code, with the prefix "QR-Code:" stripped.
 
     Returns:
        tn (int): test number, up to 4 digits
@@ -56,21 +62,44 @@ def parseTGV(tgv):
 def encodeTGV(test, p, v, code):
     """Encode some values as a TGV code
 
-    TODO: should this assert the constraints are satified?
+    TODO: should we allow a string for ``code``?
 
     Args:
-       test (int): the test number
-       p (int): page group number
-       v (int): version number
-       code (str): magic code (should this be an int or string?)
+       test (int/str): the test number
+       p (int/str): page group number
+       v (int/str): version number
+       code (str): magic code
 
     Returns:
-       tgv (str)
+       str: the tgv code
     """
-    tgv = "{}{}{}{}{}".format(
-        str(test).zfill(4),
-        str(p).zfill(2),
-        str(v).zfill(2),
-        _DataInQrFormatVersion_,
-        code,
-    )
+    test = str(test).zfill(4)
+    p = str(p).zfill(2)
+    v = str(v).zfill(2)
+    assert test.isnumeric()
+    assert p.isnumeric()
+    assert v.isnumeric()
+    assert code.isnumeric()
+    assert len(test) == 4
+    assert len(p) == 2
+    assert len(v) == 2
+    assert len(code) == 7
+    tgv = "{}{}{}{}{}".format(test, p, v, _API, code)
+    assert len(tgv) == 17
+    return tgv
+
+
+def newMagicCode(seed=None):
+    """Generate a new random magic code"
+
+    Args:
+       seed: seed for the random number generator, or ``None`` for
+             something reasonable (i.e.., current time).
+
+    Returns:
+       str: the magic code
+    """
+    random.seed(seed)
+    magic = str(random.randrange(0, 10**7)).zfill(7)
+    assert len(magic) == 7
+    return magic
