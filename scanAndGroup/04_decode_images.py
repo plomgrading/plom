@@ -74,6 +74,27 @@ def isTGVCCode(qr):
     return qr[9:].isnumeric()
 
 
+def parseTGV(tgv):
+    """Parse a TGV+ string (typically from a QR-code)
+
+    Args: tgv (str): a TGV+ code, typically from a QR-code, with the
+       prefix "QR-Code:" stripped.
+
+    Returns:
+       tn (int): test number, up to 4 digits
+       pn (int): page group number, up to 2 digits
+       vn (int): version number, up to 2 digits
+       en (str): the API number, 2 digits zero padded
+       cn (str): the "magic code", 7 digits zero padded
+    """
+    tn = int(tgv[0:4])
+    pn = int(tgv[4:6])
+    vn = int(tgv[6:8])
+    en = tgv[8:10]
+    cn = tgv[10:]
+    return tn, pn, vn, en, cn
+
+
 def checkQRsValid():
     """Check that the QRcodes in each pageimage are valid.
     When each png is scanned a png.qr is produced.
@@ -96,11 +117,7 @@ def checkQRsValid():
         if len(codes) != 1:
             problemFlag = True
         else:
-            tn = int(codes[0][0:4])
-            pn = int(codes[0][4:6])
-            vn = int(codes[0][6:8])
-            en = codes[0][8:10]  # treat as string
-            cn = codes[0][10:17]  # treat as string
+            tn, pn, vn, en, cn = parseTGV(codes[0])
             if cn != spec.Code:  # treat as strings
                 problemFlag = True
             if en != _DataInQrFormatVersion_:
