@@ -89,6 +89,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
     tpFile = {}
     for p in range(1, length + 1):
         # the TPV code for each test/page/version/api/code
+        # TODO: splitoff to encodeTGV
         tpv = "{}{}{}{}{}".format(
             str(test).zfill(4),
             str(p).zfill(2),
