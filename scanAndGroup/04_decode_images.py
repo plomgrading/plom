@@ -68,9 +68,7 @@ def isTGVCCode(qr):
     # check output length matches expectation
     if len(qr) != len("QR-Code:TTTTPPVVEECCCCCCC"):
         return False
-    # if preamble is not "QR-Code:" then reject
-    if qr[:8] != "QR-Code:":
-        print("Preamble wrong")
+    if not qr.startswith("QR-Code:"):
         return False
     # tail must be numeric
     return qr[9:].isnumeric()
