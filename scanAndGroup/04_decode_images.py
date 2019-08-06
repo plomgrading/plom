@@ -91,7 +91,7 @@ def checkQRsValid():
         for line in fin:
             line = line.rstrip("\n")
             if isTGVCCode(line):
-                lines.add(line[8:])
+                lines.add(line.lstrip('QR-Code:'))
         codes = list(lines)
         if len(codes) != 1:
             problemFlag = True
