@@ -292,9 +292,10 @@ class PageScene(QGraphicsScene):
         pt = event.scenePos()
         # build the textitem
         self.blurb = TextItem(self, self.fontSize)
-        self.blurb.setPos(pt)  # update pos after if needed
         self.blurb.setPlainText(self.commentText)
         self.blurb.contents = self.commentText  # for pickling
+        # move to correct point - update if only text no delta
+        self.blurb.setPos(pt)
         # Put in a check to see if comment starts with TEX
         # If it does then tex-ify it.
         if self.commentText[:4].upper() == "TEX:":
@@ -303,6 +304,8 @@ class PageScene(QGraphicsScene):
         # create a delta-object with a different offset.
         # else just place the comment.
         if self.commentDelta == 0 or not self.legalDelta:
+            # Update position of text
+            self.blurb.moveBy(0, -self.blurb.boundingRect().height() / 2)
             command = CommandText(self, self.blurb, self.ink)
             self.undoStack.push(command)
         else:
@@ -390,9 +393,10 @@ class PageScene(QGraphicsScene):
         # (which fires up the editor on that object), and
         # then push it onto the undo-stack.
 
-        self.originPos = event.scenePos() + QPointF(0, -12)
-        # also needs updating for differing font sizes
+        self.originPos = event.scenePos()
         self.blurb = TextItem(self, self.fontSize)
+        # move so centred under cursor
+        self.originPos -= QPointF(0, self.blurb.boundingRect().height() / 2)
         self.blurb.setPos(self.originPos)
         self.blurb.setFocus()
         command = CommandText(self, self.blurb, self.ink)

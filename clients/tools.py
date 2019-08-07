@@ -1439,6 +1439,10 @@ class TextItem(QGraphicsTextItem):
         self.anim = QPropertyAnimation(self, b"thickness")
         # for latex png
         self.state = "TXT"
+        # position
+        print("Position = {}".format(self.scenePos()))
+        self.moveBy(0, -20)
+        print("And now = {}".format(self.scenePos()))
 
     def getContents(self):
         if len(self.contents) == 0:
@@ -1664,31 +1668,41 @@ class GhostComment(QGraphicsItemGroup):
         self.pt = pt
         self.di = GhostDelta(pt, dlt, fontsize)
         self.blurb = GhostText(txt, fontsize)
-        # always add the text, but only add delta if non-zero
-        self.addToGroup(self.blurb)
-        if int(dlt) != 0:
-            self.addToGroup(self.di)
-            # move blurb so that its top-left corner is next to top-right corner of delta.
+        self.changeComment(dlt, txt)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+
+    def tweakPositions(self, dlt):
+        self.blurb.setPos(self.pos())
+        self.di.setPos(self.pos())
+        if int(dlt) == 0:
+            cr = self.blurb.boundingRect()
+            self.blurb.moveBy(0, -(cr.top() + cr.bottom()) / 2)
+        else:
             cr = self.di.boundingRect()
+            self.di.moveBy(-(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2)
             self.blurb.moveBy(
                 (cr.right() + cr.left()) / 2 + 5, -(cr.top() + cr.bottom()) / 2
             )
-        self.setFlag(QGraphicsItem.ItemIsMovable)
 
     def changeComment(self, dlt, txt):
-        self.di.changeDelta(self.pt, dlt)
-        self.blurb.changeText(txt)
-        self.blurb.setPos(QPointF(0, 0))
+        print("Removing things.")
         # need to force a bounding-rect update by removing an item and adding it back
         self.removeFromGroup(self.di)
         self.removeFromGroup(self.blurb)
-        if int(dlt) != 0:
-            cr = self.di.boundingRect()
-            self.blurb.moveBy(
-                (cr.right() + cr.left()) / 2 + 5, -(cr.top() + cr.bottom()) / 2
-            )
-            self.addToGroup(self.di)
+        # change things
+        print("Setting things {} {}".format(dlt, txt))
+        self.di.changeDelta(dlt)
+        self.blurb.changeText(txt)
+        # move to correct positions
+        self.tweakPositions(dlt)
         self.addToGroup(self.blurb)
+        if int(dlt) == 0:
+            self.di.setVisible(False)
+        else:
+            self.di.setVisible(True)
+            self.addToGroup(self.di)
+
+        print("Added things back {}".format(self.di.group()))
 
     def paint(self, painter, option, widget):
         # paint a bounding rectangle for undo/redo highlighting
@@ -1718,25 +1732,15 @@ class GhostDelta(QGraphicsTextItem):
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
-        # centre under the mouse-click.
-        cr = self.boundingRect()
-        self.offset = QPointF(
-            -(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2
-        )
-        self.setPos(pt + self.offset)
 
-    def changeDelta(self, pt, dlt):
+    def changeDelta(self, dlt):
+        print("Changing delta from {} to {}".format(self.delta, dlt))
         self.delta = int(dlt)
         if self.delta > 0:
             self.setPlainText(" +{} ".format(self.delta))
         else:
             # else starts with a "-"-sign (unless zero).
             self.setPlainText(" {} ".format(self.delta))
-        cr = self.boundingRect()
-        self.offset = QPointF(
-            -(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2
-        )
-        self.setPos(pt + self.offset)
 
     def paint(self, painter, option, widget):
         # paint the background
