@@ -68,14 +68,17 @@ def encodeTGV(test, p, v, code):
     """Encode some values as a TGV code
 
     Args:
-       test (int/str): the test number, 0 ≤ test ≤ 9999
-       p (int/str): page group number, 0 ≤ p ≤ 99
-       v (int/str): version number, 0 ≤ v ≤ 99
+       test (int/str): the test number, 1 ≤ test ≤ 9999
+       p (int/str): page number, 1 ≤ p ≤ 99
+       v (int/str): version number, 1 ≤ v ≤ 99
        code (int/str): magic code, 0 ≤ code ≤ 9999999
 
     Returns:
        str: the tgv code
     """
+    assert int(test) >= 1
+    assert int(v) >= 1
+    assert int(p) >= 1
     test = str(test).zfill(4)
     p = str(p).zfill(2)
     v = str(v).zfill(2)
