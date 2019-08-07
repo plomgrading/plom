@@ -40,7 +40,7 @@ __license__ = "AGPLv3"
 
 # Changes to this format should bump this.  Possibly changes
 # to the layout of QR codes on the page should too.
-_API = "01"
+_API = "00"
 
 
 def isValidTPV(tpv):
