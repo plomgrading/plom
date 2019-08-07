@@ -14,7 +14,7 @@ import sys
 # this allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
-from resources.tpv_utils import parseTPV, isQRCodeWithValidTPV, isValidTPV
+from resources.tpv_utils import parseTPV, isValidTPV, hasCurrentAPI, getCode
 
 
 def decodeQRs():
@@ -72,7 +72,7 @@ def checkQRsValid():
         lines = []
         with open(fname, "r") as qrfile:
             for line in qrfile:
-                lines.append(line.rstrip("\n").lstrip('Qr-Code:'))
+                lines.append(line.rstrip("\n"))
 
         problemFlag = False
         warnFlag = False
@@ -89,9 +89,9 @@ def checkQRsValid():
                 elif not hasCurrentAPI(tpvc):
                     msg = "TPV '{}' does not match API.  Legacy issue?".format(tpvc)
                     problemFlag = True
-                elif getCode(tpvc) != spec.Code:
-                    msg = "Magic code '{0}' did not match {1}.  " \
-                          "Did you scan the wrong test?".format(getCode(tpvc), spec.Code)
+                elif str(getCode(tpvc)) != str(spec.MagicCode):
+                    msg = "Magic code '{0}' did not match spec '{1}'.  " \
+                          "Did you scan the wrong test?".format(getCode(tpvc), spec.MagicCode)
                     problemFlag = True
 
         if not problemFlag:

@@ -16,6 +16,10 @@ The format consists of:
   * 0 = position/orientation code
   * 123456 = magic code
 
+A TPV code can be optionally prefixed with "QR-Code:"
+
+  QR-Code:EETTTTPPVVOCCCCCC
+
 Orientation code:
   * 0 no position information (reserved, unused)
   * 1 NE
@@ -42,24 +46,17 @@ _API = "01"
 def isValidTPV(tpv):
     """Is this a valid TPV code?
     """
+    tpv = tpv.lstrip('QR-Code:')
     if len(tpv) != len("EETTTTPPVVOCCCCCC"):
         return False
-    return qr.isnumeric()
-
-
-def isQRCodeWithValidTPV(qr):
-    """Is this a valid TPV code prefixed with "QR-Code:"
-    """
-    if not qr.startswith("QR-Code:"):
-        return False
-    return isValidTPV(qr[9:])
+    return tpv.isnumeric()
 
 
 def parseTPV(tpv):
     """Parse a TPV string (typically from a QR-code)
 
     Args: tpv (str): a TPV string of the form "EETTTTPPVVOCCCCCC",
-       typically from a QR-code, with the prefix "QR-Code:" stripped.
+       typically from a QR-code, possibly with the prefix "QR-Code:".
 
     Returns:
        tn (int): test number, up to 4 digits
@@ -69,6 +66,7 @@ def parseTPV(tpv):
        cn (str): the "magic code", 6 digits zero padded
        o (str): the orientation code, TODO
     """
+    tpv = tpv.lstrip("QR-Code:")
     #en = tpv[0:2]
     tn = int(tpv[2:6])
     pn = int(tpv[6:8])
@@ -78,14 +76,18 @@ def parseTPV(tpv):
     return tn, pn, vn, cn, o
 
 
+def getAPI(tpv):
+    tpv = tpv.lstrip("QR-Code:")
+    return tpv[0:2]
+
+
 def hasCurrentAPI(tpv):
     """does tpv have the current API?
 
     Args: tpv (str): a TPV string of the form "EETTTTPPVVOCCCCCC",
-       typically from a QR-code, with the prefix "QR-Code:" stripped.
+       typically from a QR-code.
     """
-    en = parseTPV(tpv)[0]
-    return en == _API
+    return getAPI(tpv) == _API
 
 
 def getCode(tpv):
