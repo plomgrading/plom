@@ -3,8 +3,6 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer and Elvis Cai"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
-import datetime
-import random
 import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
@@ -22,7 +20,7 @@ from ui_builder import Ui_SpecBuilder
 # the following allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
-
+from resources.tpv_utils newMagicCode
 
 global spec
 spec = TestSpecification()
@@ -43,8 +41,7 @@ class SpecBuilder(QWidget):
         self.ui.setupUi(self)
         self.setupTable()
 
-        random.seed(str(datetime.datetime.now()))
-        self.magicCode = str(random.randrange(0, 10**7)).zfill(7)
+        self.magicCode = newMagicCode()
         # this length chosen to ensure resulting qr-code is as small as possible
         # given the info we need to store. Any more digits and the code goes up
         # to the next size.

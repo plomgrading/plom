@@ -8,11 +8,10 @@ import fitz
 import pyqrcode
 import tempfile
 
-# to make sure data in the qr code is formatted the way we think
-# TTTTPPVVEECCCCCCC is version 01 and EE=01
-# 17 digits is as much as can be packed into this size qr.
-# beyond that the qr needs to be more dense.
-_DataInQrFormatVersion_ = "01"
+# this allows us to import from ../resources
+sys.path.append("..")
+from resources.tpv_utils import encodeTPV
+
 
 # Take command line parameters
 # 1 = name
@@ -88,15 +87,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
     pageFile = {}
     tpFile = {}
     for p in range(1, length + 1):
-        # the TPV code for each test/page/version/api/code
-        # TODO: splitoff to encodeTGV
-        tpv = "{}{}{}{}{}".format(
-            str(test).zfill(4),
-            str(p).zfill(2),
-            str(pageVersions[str(p)]).zfill(2),
-            _DataInQrFormatVersion_,
-            code,
-        )
+        tpv = encodeTPV(test, p, pageVersions[str(p)], 0, code)
         # the corresponing QR code
         pageQRs[p] = pyqrcode.create(tpv, error="H")
         # save it in the associated file

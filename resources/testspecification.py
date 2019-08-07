@@ -22,6 +22,7 @@ class TestSpecification:
         self.PageGroups = []
         self.FixCycleRandom = []
         self.Marks = []
+        self.MagicCode = []
 
     def printSpec(self):
         """Print out the specification provided it is valid"""
@@ -60,6 +61,9 @@ class TestSpecification:
     def getNumberOfGroups(self):
         # return the number of pagegroups excluding the IDgroup
         return len(self.PageGroups) - 1
+
+    def setCode(self, code):
+        self.MagicCode = code
 
     def setIDPages(self, pages):
         # take a list of pages and set it as the idgroup
@@ -156,6 +160,7 @@ class TestSpecification:
         testSpec["PageGroups"] = self.PageGroups
         testSpec["FixCycleRandom"] = self.FixCycleRandom
         testSpec["Marks"] = self.Marks
+        testSpec["MagicCode"] = self.MagicCode
         # Write it to file.
         tsFH = open("../resources/testSpec.json", "w")
         tsFH.write(json.dumps(testSpec, indent=4, sort_keys=True))
@@ -178,6 +183,8 @@ class TestSpecification:
         self.PageGroups = testSpec["PageGroups"]
         self.FixCycleRandom = testSpec["FixCycleRandom"]
         self.Marks = testSpec["Marks"]
+        self.MagicCode = testSpec["MagicCode"]
+
         # Then check it is valid
         print("Test read - checking is valid")
         if self.checkSpec():
