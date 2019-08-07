@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
@@ -251,15 +253,16 @@ def addCurrentScansToExamsScanned():
     os.chdir("../")
 
 
-examsProduced = {}
-examsScanned = defaultdict(dict)
-examsScannedNow = defaultdict(dict)
-spec = TestSpecification()
-spec.readSpec()
-readExamsProduced()
-readExamsScanned()
-decodeQRs()
-checkQRsValid()
-validateQRsAgainstProduction()
-addCurrentScansToExamsScanned()
-writeExamsScanned()
+if __name__ == '__main__':
+    examsProduced = {}
+    examsScanned = defaultdict(dict)
+    examsScannedNow = defaultdict(dict)
+    spec = TestSpecification()
+    spec.readSpec()
+    readExamsProduced()
+    readExamsScanned()
+    decodeQRs()
+    checkQRsValid()
+    validateQRsAgainstProduction()
+    addCurrentScansToExamsScanned()
+    writeExamsScanned()
