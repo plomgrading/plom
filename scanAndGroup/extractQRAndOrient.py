@@ -41,8 +41,8 @@ with tempfile.TemporaryDirectory() as tmpDir:
 
     # Use zbarimg to extract QR codes from some tiles
     # There may not be any (e.g., DNW area, folded corner, poor quality)
-    cornerQR = []
-    # order here is NE, NW, SW, SE, must match other places :(
+    cornerQR = {}
+    cornerKeys = ['NE', 'NW', 'SW', 'SE']
     cornerTiles = ['tile_3.png', 'tile_0.png', 'tile_16.png', 'tile_19.png']
     for i in range(0, 4):
         # Apply a slight blur filter to make reading codes easier (typically)
@@ -59,27 +59,23 @@ with tempfile.TemporaryDirectory() as tmpDir:
             )
         except subprocess.CalledProcessError as zberr:
             if zberr.returncode == 4:  # means no codes found
-                this = ['']
+                this = []
             else:
                 raise
-        if len(this) == 1:
-            cornerQR.append(this[0])
-        else:
-            # TODO: hack, eventually gets to manual, better to flag here?
-            cornerQR.append(this)
+        cornerQR[cornerKeys[i]] = this
 
     # go back to original directory
     os.chdir(curDir)
     # dump the output of zbarimg into blah.png.qr
     with open("{}.qr".format(imgName), "w") as fh:
-        for X in cornerQR:
-            fh.write("{}\n".format(X))
+        # TODO: or pickle or json
+        fh.write(repr(cornerQR))
 
     # TODO: refactor later to just keep cornerQR: info in the ordering
     # TODO: we should orient after we are sure these are the correct QR
     # there should be 1 qr code in top half and 2 in bottom half
-    up = cornerQR[0] + cornerQR[1]
-    down = cornerQR[2] + cornerQR[3]
+    up = cornerQR['NE'] + cornerQR['NW']
+    down = cornerQR['SW'] + cornerQR['SE']
     if len(up) == 1 and len(down) == 2:
         pass
     elif len(up) == 2:

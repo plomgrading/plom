@@ -65,28 +65,42 @@ def writeExamsScanned():
 
 def checkQRsValid():
     """Check that the QRcodes in each pageimage are valid.
-    When each png is scanned a png.qr is produced.
-    Those should have 3 lines each all are TGV+ codes
+
+    When each png is scanned a png.qr is produced.  Load the dict of
+    QR codes from that file and do some sanity checks.
     """
     # go into page image directory and look at each .qr file.
     os.chdir("pageImages/")
     for fname in glob.glob("*.qr"):
-        lines = []
         with open(fname, "r") as qrfile:
-            for line in qrfile:
-                line = line.rstrip("\n")
-                if line:
-                    lines.append(line)
+            content = qrfile.read()
+        qrs = eval(content)  # unpickle
 
         problemFlag = False
         warnFlag = False
 
-        if not lines:
+
+        # Flag papers that have too many QR codes in some corner
+        # TODO: untested?
+        if any(len(x) > 1 for x in qrs.values()):
+            msg = "Too many QR codes in {} corner".format(d)
+            problemFlag = True
+
+        # Unpack the lists of QRs, building a new dict with only the
+        # the corners with exactly one QR code.
+        tmp = {}
+        for (d, qr) in qrs.items():
+            if len(qr) == 1:
+                tmp[d] = qr[0]
+        qrs = tmp
+        del tmp
+
+        if len(qrs) == 0:
             msg = "No QR codes were decoded."
             problemFlag = True
 
         if not problemFlag:
-            for tpvc in lines:
+            for tpvc in qrs.values():
                 if not isValidTPV(tpvc):
                     msg = "TPV '{}' is not a valid format".format(tpvc)
                     problemFlag = True
@@ -98,9 +112,10 @@ def checkQRsValid():
                           "Did you scan the wrong test?".format(getCode(tpvc), spec.MagicCode)
                     problemFlag = True
 
+        # Make sure all (t,p,v) on this page are the same
         if not problemFlag:
             tgvs = []
-            for tpvc in lines:
+            for tpvc in qrs.values():
                 tn, pn, vn, cn, o = parseTPV(tpvc)
                 tgvs.append((tn, pn, vn))
 
@@ -110,6 +125,10 @@ def checkQRsValid():
                 msg = "Multiple different QR codes! (rare in theory)"
                 problemFlag = True
 
+        # TODO: I think we could orient here?
+        # TODO: but maybe should split this function up a bit!
+
+        # Decide in which cases we can be confident we know this papers (t,p,v)
         if not problemFlag:
             if len(tgvs) == 1:
                 msg = "Only one of three QR codes decoded."
@@ -125,7 +144,7 @@ def checkQRsValid():
             elif len(tgvs) == 3:
                 # full consensus
                 tgv = tgvs[0]
-            else:  #len > 3:
+            else:  #len > 3, shouldn't be possible now
                 msg = "Too many QR codes on the page!"
                 problemFlag = True
 
