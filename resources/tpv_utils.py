@@ -84,8 +84,16 @@ def hasCurrentAPI(tpv):
     Args: tpv (str): a TPV string of the form "EETTTTPPVVOCCCCCC",
        typically from a QR-code, with the prefix "QR-Code:" stripped.
     """
-    en = tpv[0:2]
+    en = parseTPV(tpv)[0]
     return en == _API
+
+
+def getCode(tpv):
+    """return the magic code for tpv
+
+    Args: tpv (str): a TPV string.
+    """
+    return parseTPV(tpv)[3]
 
 
 def encodeTPV(test, p, v, o, code):

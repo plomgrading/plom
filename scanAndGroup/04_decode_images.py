@@ -14,7 +14,7 @@ import sys
 # this allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
-from resources.tpv_utils import parseTPV, isQRCodeWithValidTPV
+from resources.tpv_utils import parseTPV, isQRCodeWithValidTPV, isValidTPV
 
 
 def decodeQRs():
@@ -69,23 +69,42 @@ def checkQRsValid():
     # go into page image directory and look at each .qr file.
     os.chdir("pageImages/")
     for fname in glob.glob("*.qr"):
-        tgvs = []
+        lines = []
         with open(fname, "r") as qrfile:
             for line in qrfile:
-                line = line.rstrip("\n")
-                if isQRCodeWithValidTPV(line):
-                    tgvs.append(line.lstrip('Qr-Code:'))
+                lines.append(line.rstrip("\n").lstrip('Qr-Code:'))
 
         problemFlag = False
         warnFlag = False
 
-        if not tgvs:
+        if not lines:
             msg = "No QR codes were decoded."
             problemFlag = True
-        elif not len(set(tgvs)) == 1:
-            # Decoder either gives the correct code or no code at all
-            msg = "Multiple different QR codes! (very rare in theory)"
-            problemFlag = True
+
+        if not problemFlag:
+            for tpvc in lines:
+                if not isValidTPV(tpvc):
+                    msg = "TPV '{}' is not a valid format".format(tpvc)
+                    problemFlag = True
+                elif not hasCurrentAPI(tpvc):
+                    msg = "TPV '{}' does not match API.  Legacy issue?".format(tpvc)
+                    problemFlag = True
+                elif getCode(tpvc) != spec.Code:
+                    msg = "Magic code '{0}' did not match {1}.  " \
+                          "Did you scan the wrong test?".format(getCode(tpvc), spec.Code)
+                    problemFlag = True
+
+        if not problemFlag:
+            tgvs = []
+            for tpvc in lines:
+                tn, pn, vn, cn, o = parseTPV(tpvc)
+                tgvs.append((tn, pn, vn))
+
+            if not len(set(tgvs)) == 1:
+                # Decoder either gives the correct code or no code at all
+                # Perhaps if you see this, its a folded page
+                msg = "Multiple different QR codes! (rare in theory)"
+                problemFlag = True
 
         if not problemFlag:
             if len(tgvs) == 1:
@@ -111,15 +130,6 @@ def checkQRsValid():
             # https://gitlab.math.ubc.ca/andrewr/MLP/issues/272
             problemFlag = True
 
-        if not problemFlag:
-            if not hasCurrentAPI(tgv):
-                msg = "TPV '{}' does not match API.  Legacy issue?".format(tgv)
-                problemFlag = True
-            tn, pn, vn, cn, o = parseTPV(tgv)
-            if cn != spec.Code:
-                msg = "Magic code '{0}' did not match {1}.  " +
-                      "Scanned wrong test?".format(cn, spec.Code)
-                problemFlag = True
 
         if problemFlag:
             # Difficulty scanning this pageimage so move it
