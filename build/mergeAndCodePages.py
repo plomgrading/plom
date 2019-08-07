@@ -87,7 +87,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
     pageFile = {}
     tpFile = {}
     for p in range(1, length + 1):
-        tpv = encodeTPV(test, p, pageVersions[str(p)], code)
+        tpv = encodeTPV(test, p, pageVersions[str(p)], 0, code)
         # the corresponing QR code
         pageQRs[p] = pyqrcode.create(tpv, error="H")
         # save it in the associated file

@@ -112,11 +112,12 @@ def checkQRsValid():
             problemFlag = True
 
         if not problemFlag:
-            tn, pn, vn, en, cn = parseTPV(tgv)
+            tn, pn, vn, en, cn, o = parseTPV(tgv)
             if en != _DataInQrFormatVersion_:
                 msg = "API code '{0}' did not match {1}: wrong API.  " +
                       "Legacy issue?".format(en, _DataInQrFormatVersion_)
                 problemFlag = True
+
             if cn != spec.Code:
                 msg = "Magic code '{0}' did not match {1}.  " +
                       "Scanned wrong test?".format(cn, spec.Code)
