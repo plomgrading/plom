@@ -193,7 +193,7 @@ def validateQRsAgainstProduction():
             ps = str(p)
             # the version of that test/page
             v = examsScannedNow[t][p][0]
-            # the corresponding page imge file name
+            # the corresponding page image file name
             fn = examsScannedNow[t][p][1]
             # if the tpv's match then all good.
             if examsProduced[ts][ps] == v:
