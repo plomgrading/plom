@@ -1767,3 +1767,10 @@ class GhostText(QGraphicsTextItem):
 
     def changeText(self, txt):
         self.setPlainText(txt)
+        if self.scene() is not None and txt[:4].upper() == "TEX:":
+            texIt = "\\color{blue}\n" + txt[4:]  # make color blue for ghost rendering
+            if self.scene().latexAFragment(texIt):
+                self.setPlainText("")
+                tc = self.textCursor()
+                qi = QImage("frag.png")
+                tc.insertImage(qi)
