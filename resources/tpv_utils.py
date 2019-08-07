@@ -58,13 +58,23 @@ def parseTPV(tpv):
        cn (str): the "magic code", 6 digits zero padded
        o (str): the orientation code, TODO
     """
-    en = tpv[0:2]
+    #en = tpv[0:2]
     tn = int(tpv[2:6])
     pn = int(tpv[6:8])
     vn = int(tpv[8:10])
     o = tpv[10]
     cn = tpv[11:]
-    return tn, pn, vn, en, cn, o
+    return tn, pn, vn, cn, o
+
+
+def hasCurrentAPI(tpv):
+    """does api have a current API?
+
+    Args: tpv (str): a TPV string of the form "EETTTTPPVVOCCCCCC",
+       typically from a QR-code, with the prefix "QR-Code:" stripped.
+    """
+    en = tpv[0:2]
+    return en == _API
 
 
 def encodeTPV(test, p, v, o, code):

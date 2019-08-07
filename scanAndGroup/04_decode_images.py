@@ -112,11 +112,10 @@ def checkQRsValid():
             problemFlag = True
 
         if not problemFlag:
-            tn, pn, vn, en, cn, o = parseTPV(tgv)
-            if en != tpv_utils._API:  # TODO: leaks private abstraction
-                msg = "API code '{0}' did not match {1}: wrong API.  " +
-                      "Legacy issue?".format(en, tpv_utils._API)
+            if not hasCurrentAPI(tgv):
+                msg = "TPV '{}' does not match API.  Legacy issue?".format(tgv)
                 problemFlag = True
+            tn, pn, vn, cn, o = parseTPV(tgv)
             if cn != spec.Code:
                 msg = "Magic code '{0}' did not match {1}.  " +
                       "Scanned wrong test?".format(cn, spec.Code)
