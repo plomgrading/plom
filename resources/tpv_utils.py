@@ -47,7 +47,7 @@ def isValidTPV(tpv):
     return qr.isnumeric()
 
 
-def isValidTPVinQR(qr):
+def isQRCodeWithValidTPV(qr):
     """Is this a valid TPV code prefixed with "QR-Code:"
     """
     if not qr.startswith("QR-Code:"):
@@ -79,7 +79,7 @@ def parseTPV(tpv):
 
 
 def hasCurrentAPI(tpv):
-    """does api have a current API?
+    """does tpv have the current API?
 
     Args: tpv (str): a TPV string of the form "EETTTTPPVVOCCCCCC",
        typically from a QR-code, with the prefix "QR-Code:" stripped.
