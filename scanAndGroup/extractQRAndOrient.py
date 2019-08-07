@@ -50,8 +50,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
             ["mogrify", "-quiet", cornerTiles[i], "-blur", "0", "-quality", "100"],
             stderr=subprocess.STDOUT, shell=False, check=True)
         try:
-            cornerQR.append(
-                subprocess.check_output(
+            this = (subprocess.check_output(
                     ["zbarimg", "-q", "-Sdisable", "-Sqr.enable", cornerTiles[i]]
                 )
                 .decode()
@@ -60,21 +59,27 @@ with tempfile.TemporaryDirectory() as tmpDir:
             )
         except subprocess.CalledProcessError as zberr:
             if zberr.returncode == 4:  # means no codes found
-                cornerQR.append([])
-            else:  # some other error
-                print("Zbarimg error processing file {}".format(imgName))
-    # TODO: refactor later to just keep cornerQR: info in the ordering
-    up = cornerQR[0] + cornerQR[1]
-    down = cornerQR[2] + cornerQR[3]
-    both = set(up + down)
+                this = ['']
+            else:
+                raise
+        if len(this) == 1:
+            cornerQR.append(this[0])
+        else:
+            # TODO: hack, eventually gets to manual, better to flag here?
+            cornerQR.append(this)
+
     # go back to original directory
     os.chdir(curDir)
     # dump the output of zbarimg into blah.png.qr
     with open("{}.qr".format(imgName), "w") as fh:
-        for X in both:
+        for X in cornerQR:
             fh.write("{}\n".format(X))
 
+    # TODO: refactor later to just keep cornerQR: info in the ordering
+    # TODO: we should orient after we are sure these are the correct QR
     # there should be 1 qr code in top half and 2 in bottom half
+    up = cornerQR[0] + cornerQR[1]
+    down = cornerQR[2] + cornerQR[3]
     if len(up) == 1 and len(down) == 2:
         pass
     elif len(up) == 2:

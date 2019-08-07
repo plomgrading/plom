@@ -74,7 +74,9 @@ def checkQRsValid():
         lines = []
         with open(fname, "r") as qrfile:
             for line in qrfile:
-                lines.append(line.rstrip("\n"))
+                line = line.rstrip("\n")
+                if line:
+                    lines.append(line)
 
         problemFlag = False
         warnFlag = False
