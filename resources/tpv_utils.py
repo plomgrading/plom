@@ -1,6 +1,6 @@
-"""Utilities for dealing with TGV codes
+"""Utilities for dealing with TPV codes
 
-A TGV code is a string of 17 digits of the form
+A TPV code is a string of 17 digits of the form
 
   TTTTPPVVEECCCCCCC
   01234567890123456
@@ -27,26 +27,26 @@ __license__ = "AGPLv3"
 _API = "01"
 
 
-def isValidTGV(tgv):
-    """Is the input a valid TGV+ code?
+def isValidTPV(tpv):
+    """Is this a valid TPV code?
     """
-    if len(tgv) != len("TTTTPPVVEECCCCCCC"):
+    if len(tpv) != len("TTTTPPVVEECCCCCCC"):
         return False
     return qr.isnumeric()
 
 
-def isQRCodeWithValidTGV(qr):
-    """Valid lines are "QR-Code:TTTTPPVVEECCCCCCC"
+def isValidTPVinQR(qr):
+    """Is this a valid TPV code prefixed with "QR-Code:"
     """
     if not qr.startswith("QR-Code:"):
         return False
-    return isValidTGV(qr[9:])
+    return isValidTPV(qr[9:])
 
 
-def parseTGV(tgv):
-    """Parse a TGV+ string (typically from a QR-code)
+def parseTPV(tpv):
+    """Parse a TPV string (typically from a QR-code)
 
-    Args: tgv (str): a TGV+ code of the form "TTTTPPVVEECCCCCCC",
+    Args: tpv (str): a TPV string of the form "TTTTPPVVEECCCCCCC",
        typically from a QR-code, with the prefix "QR-Code:" stripped.
 
     Returns:
@@ -56,16 +56,16 @@ def parseTGV(tgv):
        en (str): the API number, 2 digits zero padded
        cn (str): the "magic code", 7 digits zero padded
     """
-    tn = int(tgv[0:4])
-    pn = int(tgv[4:6])
-    vn = int(tgv[6:8])
-    en = tgv[8:10]
-    cn = tgv[10:]
+    tn = int(tpv[0:4])
+    pn = int(tpv[4:6])
+    vn = int(tpv[6:8])
+    en = tpv[8:10]
+    cn = tpv[10:]
     return tn, pn, vn, en, cn
 
 
-def encodeTGV(test, p, v, code):
-    """Encode some values as a TGV code
+def encodeTPV(test, p, v, code):
+    """Encode some values as a TPV code
 
     Args:
        test (int/str): the test number, 1 ≤ test ≤ 9999
@@ -74,7 +74,7 @@ def encodeTGV(test, p, v, code):
        code (int/str): magic code, 0 ≤ code ≤ 9999999
 
     Returns:
-       str: the tgv code
+       str: the tpv code
     """
     assert int(test) >= 1
     assert int(v) >= 1
@@ -91,9 +91,9 @@ def encodeTGV(test, p, v, code):
     assert len(p) == 2
     assert len(v) == 2
     assert len(code) == 7
-    tgv = "{}{}{}{}{}".format(test, p, v, _API, code)
-    assert len(tgv) == 17
-    return tgv
+    tpv = "{}{}{}{}{}".format(test, p, v, _API, code)
+    assert len(tpv) == 17
+    return tpv
 
 
 def newMagicCode(seed=None):
