@@ -24,7 +24,7 @@ name = sys.argv[1]
 code = sys.argv[2]
 length = int(sys.argv[3])
 versions = int(sys.argv[4])
-test = sys.argv[5].zfill(4)
+test = int(sys.argv[5])
 pageVersions = eval(sys.argv[6])
 
 # Command line parameters to imagemagick's mogrify
