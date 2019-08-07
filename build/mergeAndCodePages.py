@@ -83,18 +83,20 @@ with tempfile.TemporaryDirectory() as tmpDir:
     os.system(cmd)
 
     # create QR codes and other stamps for each test/page/version
-    pageQRs = {}
-    pageFile = {}
+    qrFile = {}
     tpFile = {}
     for p in range(1, length + 1):
-        tpv = encodeTPV(test, p, pageVersions[str(p)], 0, code)
-        # the corresponing QR code
-        pageQRs[p] = pyqrcode.create(tpv, error="H")
-        # save it in the associated file
-        pageFile[p] = os.path.join(tmpDir, "page{}.png".format(p))
-        pageQRs[p].png(pageFile[p], scale=4)
-        # put a border around it
-        os.system("mogrify {} {}".format(mogParams, pageFile[p]))
+        # 4 qr codes for the corners (one will be omitted for the staple)
+        qrFile[p] = {}
+        for i in range(1, 5):
+            tpv = encodeTPV(test, p, pageVersions[str(p)], i, code)
+            qr = pyqrcode.create(tpv, error="H")
+            # save it in the associated file
+            qrFile[p][i] = os.path.join(tmpDir, "page{}_{}.png".format(p, i))
+            qr.png(qrFile[p][i], scale=4)
+            # put a border around it
+            os.system("mogrify {} {}".format(mogParams, qrFile[p][i]))
+
         # a file for the test/page stamp in top-centre of page
         tpFile[p] = os.path.join(
             tmpDir, "t{}p{}.png".format(str(test).zfill(4), str(p).zfill(2))
@@ -115,20 +117,22 @@ with tempfile.TemporaryDirectory() as tmpDir:
         testnumber = fitz.Pixmap(tpFile[p + 1])
         # put it at centre top each page
         exam[p].insertImage(rTC, pixmap=testnumber, overlay=True, keep_proportion=False)
-        # grab the tpv QRcode for current page
-        qrPage = fitz.Pixmap(pageFile[p + 1])
+        # grab the tpv QRcodes for current page
+        qr = {}
+        for i in range(1, 5):
+            qr[i] = fitz.Pixmap(qrFile[p + 1][i])
         if p % 2 == 0:
             # if even page then stamp DNW near staple
             exam[p].insertImage(rDNW0, pixmap=dnw0, overlay=True)
-            exam[p].insertImage(rNE, pixmap=qrPage, overlay=True)
-            exam[p].insertImage(rSE, pixmap=qrPage, overlay=True)
-            exam[p].insertImage(rSW, pixmap=qrPage, overlay=True)
+            exam[p].insertImage(rNE, pixmap=qr[1], overlay=True)
+            exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
+            exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
         else:
             # odd page - put DNW stamp near staple
             exam[p].insertImage(rDNW1, pixmap=dnw1, overlay=True)
-            exam[p].insertImage(rNW, pixmap=qrPage, overlay=True)
-            exam[p].insertImage(rSW, pixmap=qrPage, overlay=True)
-            exam[p].insertImage(rSE, pixmap=qrPage, overlay=True)
+            exam[p].insertImage(rNW, pixmap=qr[2], overlay=True)
+            exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
+            exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
 
 # Finally save the resulting pdf.
 exam.save("examsToPrint/exam_{}.pdf".format(str(test).zfill(4)))

@@ -15,6 +15,17 @@ The format consists of:
   * 89 = version
   * 0 = position/orientation code
   * 123456 = magic code
+
+Orientation code:
+  * 0 no position information (reserved, unused)
+  * 1 NE
+  * 2 NW
+  * 3 SW
+  * 4 SE
+  * 5-9 (currently unused)
+
+TODO: might encapsulate position code, have ``getPosition`` return
+e.g., the string `"NE"`
 """
 
 __author__ = "Colin Macdonald"
