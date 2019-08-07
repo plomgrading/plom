@@ -40,7 +40,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
     os.system("convert -quiet {} -crop 4x5@ tile_%d.png".format(imgName))
 
     # Use zbarimg to extract QR codes from some tiles
-    # There may not be any (e.g., DNW area, folded corn, poor quality)
+    # There may not be any (e.g., DNW area, folded corner, poor quality)
     cornerQR = []
     # order here is NE, NW, SW, SE, must match other places :(
     cornerTiles = ['tile_3.png', 'tile_0.png', 'tile_16.png', 'tile_19.png']
