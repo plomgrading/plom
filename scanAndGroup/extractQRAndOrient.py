@@ -34,46 +34,38 @@ with tempfile.TemporaryDirectory() as tmpDir:
     shutil.copy(imgName, tmpDir)
     os.chdir(tmpDir)
 
-    # split image into five pieces, then extract qr codes from top and bottom.
+    # split image into pieces, then extract qr codes from corners
     # this helps to determine the orientation
-    os.system("convert -quiet {} -crop 1x5@ tile_%d.png".format(imgName))
-    # We only care about the top and bottom fifths
-    # There should not be QR codes near the middle.
-    # Apply a slight blur filter to make reading codes easier (typically)
-    os.system("mogrify -quiet tile_0.png -blur 0 -quality 100")
-    os.system("mogrify -quiet tile_4.png -blur 0 -quality 100")
-    try:
-        # Run zbarimg on top fifth
-        # Extract the output (if any) and store in "up"
-        up = (
-            subprocess.check_output(
-                ["zbarimg", "-q", "-Sdisable", "-Sqr.enable", "tile_0.png"]
+    # TODO: can tell diff b/w odd/even: doc somewhere?
+    os.system("convert -quiet {} -crop 4x5@ tile_%d.png".format(imgName))
+
+    # Use zbarimg to extract QR codes from some tiles
+    # There may not be any (e.g., DNW area, folded corn, poor quality)
+    cornerQR = []
+    # order here is NE, NW, SW, SE, must match other places :(
+    cornerTiles = ['tile_3.png', 'tile_0.png', 'tile_16.png', 'tile_19.png']
+    for i in range(0, 4):
+        # Apply a slight blur filter to make reading codes easier (typically)
+        subprocess.run(
+            ["mogrify", "-quiet", cornerTiles[i], "-blur", "0", "-quality", "100"],
+            stderr=subprocess.STDOUT, shell=False, check=True)
+        try:
+            cornerQR.append(
+                subprocess.check_output(
+                    ["zbarimg", "-q", "-Sdisable", "-Sqr.enable", cornerTiles[i]]
+                )
+                .decode()
+                .rstrip()
+                .split("\n")
             )
-            .decode()
-            .rstrip()
-            .split("\n")
-        )
-    except subprocess.CalledProcessError as zberr:
-        if zberr.returncode == 4:  # means no codes found
-            up = []
-        else:  # some other error
-            print("Zbarimg error processing file {}".format(imgName))
-        # Run zbarimg on bottom fifth
-        # Extract the output (if any) and store in "down"
-    try:
-        down = (
-            subprocess.check_output(
-                ["zbarimg", "-q", "-Sdisable", "-Sqr.enable", "tile_4.png"]
-            )
-            .decode()
-            .rstrip()
-            .split("\n")
-        )
-    except subprocess.CalledProcessError as zberr:
-        if zberr.returncode == 4:  # means no codes found
-            down = []
-        else:  # some other error
-            print("Zbarimg error processing file {}".format(imgName))
+        except subprocess.CalledProcessError as zberr:
+            if zberr.returncode == 4:  # means no codes found
+                cornerQR.append([])
+            else:  # some other error
+                print("Zbarimg error processing file {}".format(imgName))
+    # TODO: refactor later to just keep cornerQR: info in the ordering
+    up = cornerQR[0] + cornerQR[1]
+    down = cornerQR[2] + cornerQR[3]
     both = set(up + down)
     # go back to original directory
     os.chdir(curDir)
