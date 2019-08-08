@@ -242,12 +242,12 @@ class MarkerClient(QDialog):
         web_port,
         pageGroup,
         version,
-        parent=None,
+        parentAPI,
     ):
-        self.parent = parent
+        self.parentAPI = parentAPI
         # Init the client with username, password, server and port data,
         # and which group/version is being marked.
-        super(MarkerClient, self).__init__(parent)
+        super(MarkerClient, self).__init__()
         # Fire up the messenger with server data.
         messenger.setServerDetails(server, message_port, web_port)
         messenger.startMessenger()
@@ -362,9 +362,7 @@ class MarkerClient(QDialog):
         hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(
-            ["AUTH", self.userName, self.password, self.parent.APIVersion]
-        )
+        msg = messenger.SRMsg(["AUTH", self.userName, self.password, self.parentAPI])
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":

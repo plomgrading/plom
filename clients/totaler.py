@@ -140,10 +140,10 @@ class ExamModel(QAbstractTableModel):
 
 
 class TotalClient(QDialog):
-    def __init__(self, userName, password, server, message_port, web_port, parent=None):
-        self.parent = parent
+    def __init__(self, userName, password, server, message_port, web_port, parentAPI):
+        self.parentAPI = parentAPI
         # Init the client with username, password, server and port data.
-        super(TotalClient, self).__init__(parent)
+        super(TotalClient, self).__init__()
         # Init the messenger with server and port data.
         messenger.setServerDetails(server, message_port, web_port)
         messenger.startMessenger()
@@ -207,9 +207,7 @@ class TotalClient(QDialog):
         the server (since password hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(
-            ["AUTH", self.userName, self.password, self.parent.APIVersion]
-        )
+        msg = messenger.SRMsg(["AUTH", self.userName, self.password, self.parentAPI])
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":
