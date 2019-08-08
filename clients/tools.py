@@ -1402,6 +1402,12 @@ class CommandText(QUndoCommand):
         super(CommandText, self).__init__()
         self.scene = scene
         self.blurb = blurb
+        if len(self.blurb.toPlainText()) > 0:
+            # quickly grab focus and then clear focus.
+            # needs slight delay.
+            # this correctly sets the text interaction flags
+            QTimer.singleShot(1, self.blurb.setFocus)
+            QTimer.singleShot(10, self.blurb.clearFocus)
         self.setText("Text")
 
     def redo(self):
@@ -1447,13 +1453,6 @@ class TextItem(QGraphicsTextItem):
             return self.toPlainText()
         else:
             return self.contents
-
-    def mouseDoubleClickEvent(self, event):
-        # On double-click start the text-editor
-        self.pngToText()
-        self.setTextInteractionFlags(Qt.TextEditorInteraction)
-        self.setFocus()
-        super(TextItem, self).mouseDoubleClickEvent(event)
 
     def focusInEvent(self, event):
         if self.state == "PNG":
@@ -1608,6 +1607,7 @@ class GroupDTItem(QGraphicsItemGroup):
         self.pt = pt
         self.di = DeltaItem(pt, delta, fontsize)  # positioned so centre under click
         self.blurb = blurb  # is a textitem already
+        self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
         # set up animators for delete
         self.animator = [self.di, self.blurb]
         self.animateFlag = False
