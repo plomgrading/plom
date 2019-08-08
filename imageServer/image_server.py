@@ -312,7 +312,7 @@ class Server(object):
         if clientAPI != _PLOM_API_VERSION_:
             return [
                 "ERR",
-                'PLOM API version mismatch: client "{}" =/= sever "{}". Please check you have the right client.'.format(
+                'PLOM API version mismatch: client "{}" =/= server "{}". Please check you have the right client.'.format(
                     clientAPI, _PLOM_API_VERSION_
                 ),
             ]
