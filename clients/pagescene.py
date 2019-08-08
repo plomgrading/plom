@@ -299,7 +299,7 @@ class PageScene(QGraphicsScene):
         # Put in a check to see if comment starts with TEX
         # If it does then tex-ify it.
         if self.commentText[:4].upper() == "TEX:":
-            self.blurb.textToPng()
+            self.blurb.textToPng(checkCache=True)
         # If the mark-delta of the comment is non-zero then
         # create a delta-object with a different offset.
         # else just place the comment.
@@ -484,8 +484,8 @@ class PageScene(QGraphicsScene):
         # After the drop event make sure pageview has the focus.
         self.parent.setFocus(Qt.TabFocusReason)
 
-    def latexAFragment(self, txt):
-        return self.parent.latexAFragment(txt)
+    def latexAFragment(self, txt, checkCache=False):
+        return self.parent.latexAFragment(txt, checkCache)
 
     # A fix (hopefully) for misread touchpad events on mac
     def event(self, event):

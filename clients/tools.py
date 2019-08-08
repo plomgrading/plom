@@ -1475,14 +1475,14 @@ class TextItem(QGraphicsTextItem):
             self.contents = self.toPlainText()
         super(TextItem, self).focusOutEvent(event)
 
-    def textToPng(self):
+    def textToPng(self, checkCache=False):
         self.contents = self.toPlainText()
         if self.contents[:4].upper() == "TEX:":
             texIt = self.contents[4:]
         else:
             texIt = self.contents
 
-        if self.parent.latexAFragment(texIt):
+        if self.parent.latexAFragment(texIt, checkCache):
             self.setPlainText("")
             tc = self.textCursor()
             qi = QImage("frag.png")
@@ -1761,7 +1761,7 @@ class GhostText(QGraphicsTextItem):
         self.setPlainText(txt)
         if self.scene() is not None and txt[:4].upper() == "TEX:":
             texIt = "\\color{blue}\n" + txt[4:]  # make color blue for ghost rendering
-            if self.scene().latexAFragment(texIt):
+            if self.scene().latexAFragment(texIt, checkCache=True):
                 self.setPlainText("")
                 tc = self.textCursor()
                 qi = QImage("frag.png")
