@@ -181,7 +181,7 @@ def checkQRsValid():
         if not problemFlag:
             # we have a valid TGVC and the code matches.
             if warnFlag:
-                print("[W] {0} {1}".format(fname, msg))
+                print("[W] {0}: {1}".format(fname, msg))
                 print("   (high occurences of these warnings may mean printer/scanner problems)")
             # store the tpv in examsScannedNow
             examsScannedNow[tn][pn] = (vn, fname[:-3])
@@ -196,8 +196,7 @@ def checkQRsValid():
         if problemFlag:
             # Difficulty scanning this pageimage so move it
             # to problemimages
-            print("[E] {0} {1}".format(fname, msg))
-            print("    Flagging for manual inspection.")
+            print("[F] {0}: {1}".format(fname, msg))
             # move blah.png.qr
             shutil.move(fname, "problemImages")
             # move blah.png
