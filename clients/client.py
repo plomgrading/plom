@@ -108,21 +108,15 @@ class Chooser(QWidget):
             # Run the marker client.
             pg = str(self.ui.pgSB.value()).zfill(2)
             v = str(self.ui.vSB.value())
-            self.marker = marker.MarkerClient(
-                user, pwd, server, mport, wport, pg, v, self.APIVersion
-            )
+            self.marker = marker.MarkerClient(user, pwd, server, mport, wport, pg, v)
             self.marker.exec_()
         elif self.runIt == "IDer":
             # Run the ID client.
-            self.identifier = identifier.IDClient(
-                user, pwd, server, mport, wport, self.APIVersion
-            )
+            self.identifier = identifier.IDClient(user, pwd, server, mport, wport)
             self.identifier.exec_()
         else:
             # Run the Total client.
-            self.totaler = totaler.TotalClient(
-                user, pwd, server, mport, wport, self.APIVersion
-            )
+            self.totaler = totaler.TotalClient(user, pwd, server, mport, wport)
             self.totaler.exec_()
 
     def runMarker(self):

@@ -6,6 +6,7 @@ __license__ = "AGPLv3"
 import os
 import json
 import shutil
+import sys
 import tempfile
 
 from PyQt5.QtCore import (
@@ -39,6 +40,9 @@ if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
 
     qt_set_sequence_auto_mnemonic(True)
+
+sys.path.append("..")  # this allows us to import from ../resources
+from resources import version
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
@@ -234,17 +238,8 @@ class ProxyModel(QSortFilterProxyModel):
 
 class MarkerClient(QDialog):
     def __init__(
-        self,
-        userName,
-        password,
-        server,
-        message_port,
-        web_port,
-        pageGroup,
-        version,
-        parentAPI,
+        self, userName, password, server, message_port, web_port, pageGroup, version
     ):
-        self.parentAPI = parentAPI
         # Init the client with username, password, server and port data,
         # and which group/version is being marked.
         super(MarkerClient, self).__init__()
@@ -364,7 +359,9 @@ class MarkerClient(QDialog):
         hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(["AUTH", self.userName, self.password, self.parentAPI])
+        msg = messenger.SRMsg(
+            ["AUTH", self.userName, self.password, version.PLOM_API_Version]
+        )
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":

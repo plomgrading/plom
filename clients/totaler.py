@@ -7,6 +7,7 @@ from collections import defaultdict
 import csv
 import json
 import os
+import sys
 import tempfile
 from PyQt5.QtCore import (
     Qt,
@@ -22,6 +23,9 @@ from examviewwindow import ExamViewWindow
 import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_totaler import Ui_TotalWindow
+
+sys.path.append("..")  # this allows us to import from ../resources
+from resources import version
 
 # set up variables to store paths for marker, id clients and total
 tempDirectory = tempfile.TemporaryDirectory()
@@ -140,8 +144,7 @@ class ExamModel(QAbstractTableModel):
 
 
 class TotalClient(QDialog):
-    def __init__(self, userName, password, server, message_port, web_port, parentAPI):
-        self.parentAPI = parentAPI
+    def __init__(self, userName, password, server, message_port, web_port):
         # Init the client with username, password, server and port data.
         super(TotalClient, self).__init__()
         # Init the messenger with server and port data.
@@ -207,7 +210,9 @@ class TotalClient(QDialog):
         the server (since password hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(["AUTH", self.userName, self.password, self.parentAPI])
+        msg = messenger.SRMsg(
+            ["AUTH", self.userName, self.password, version.PLOM_API_Version]
+        )
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":

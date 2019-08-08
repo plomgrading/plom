@@ -3,12 +3,11 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
-_PLOM_API_VERSION_ = "Pickle 0.2"
-
 from collections import defaultdict
 import csv
 import json
 import os
+import sys
 import tempfile
 from io import StringIO, BytesIO, TextIOWrapper
 from PyQt5.QtCore import (
@@ -26,6 +25,8 @@ import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_identify import Ui_IdentifyWindow
 
+sys.path.append("..")  # this allows us to import from ../resources
+from resources import version
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
@@ -155,8 +156,7 @@ class ExamModel(QAbstractTableModel):
 
 
 class IDClient(QDialog):
-    def __init__(self, userName, password, server, message_port, web_port, parentAPI):
-        self.parentAPI = parentAPI
+    def __init__(self, userName, password, server, message_port, web_port):
         # Init the client with username, password, server and port data.
         super(IDClient, self).__init__()
         # Init the messenger with server and port data.
@@ -229,7 +229,9 @@ class IDClient(QDialog):
         # print("I'm version {}".format(_PLOM_API_VERSION_))
 
         # Send and return message with messenger.
-        msg = messenger.SRMsg(["AUTH", self.userName, self.password, self.parentAPI])
+        msg = messenger.SRMsg(
+            ["AUTH", self.userName, self.password, version.PLOM_API_Version]
+        )
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":
