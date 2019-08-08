@@ -47,6 +47,7 @@ from tools import (
     CommandGDT,
     DeltaItem,
     TextItem,
+    GroupDTItem,
     GhostComment,
 )
 
@@ -281,11 +282,12 @@ class PageScene(QGraphicsScene):
         """
         # Find the object under the mouseclick.
         under = self.itemAt(event.scenePos(), QTransform())
-        # If it is a textitem and this is not the move-tool
-        # then fire up the editor.
-        if isinstance(under, TextItem) and self.mode != "move":
-            under.setTextInteractionFlags(Qt.TextEditorInteraction)
-            self.setFocusItem(under, Qt.MouseFocusReason)
+        # If it is a Delta or Text or GDT then do nothing.
+        if (
+            isinstance(under, DeltaItem)
+            or isinstance(under, TextItem)
+            or isinstance(under, GroupDTItem)
+        ):
             return
 
         # grab the location of the mouse-click
@@ -304,10 +306,15 @@ class PageScene(QGraphicsScene):
         # create a delta-object with a different offset.
         # else just place the comment.
         if self.commentDelta == 0 or not self.legalDelta:
+            # make sure blurb has text interaction turned off
+            prevState = self.blurb.textInteractionFlags()
+            self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
             # Update position of text
             self.blurb.moveBy(0, -self.blurb.boundingRect().height() / 2)
             command = CommandText(self, self.blurb, self.ink)
             self.undoStack.push(command)
+            # return blurb to previous state
+            self.blurb.setTextInteractionFlags(prevState)
         else:
             command = CommandGDT(self, pt, self.commentDelta, self.blurb, self.fontSize)
             # push the delta onto the undo stack.
@@ -376,9 +383,11 @@ class PageScene(QGraphicsScene):
         """
         # Find the object under the mouseclick.
         under = self.itemAt(event.scenePos(), QTransform())
-        # If it is a textitem and this is not the move-tool
-        # then fire up the editor.
-        if isinstance(under, TextItem) and self.mode != "move":
+        # If it is part of groupDTitem then do nothing
+        if isinstance(under.group(), GroupDTItem):
+            return
+        # If it is a textitem then fire up the editor.
+        if isinstance(under, TextItem):
             under.setTextInteractionFlags(Qt.TextEditorInteraction)
             self.setFocusItem(under, Qt.MouseFocusReason)
             super(PageScene, self).mousePressEvent(event)
