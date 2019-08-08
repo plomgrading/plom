@@ -65,7 +65,7 @@ class Chooser(QWidget):
         self.ui.setupUi(self)
         # Append version to window title
         self.setWindowTitle(
-            "{}: {}".format(self.windowTitle(), version._Release_Version_)
+            "{} {}".format(self.windowTitle(), version._Release_Version_)
         )
         # load in the login etc from last time (if exists)
         self.setLastTime()
