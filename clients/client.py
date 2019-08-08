@@ -14,6 +14,9 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
 
+sys.path.append("..")  # this allows us to import from ../resources
+from resources import version
+
 # set up variables to store paths for marker and id clients
 global tempDirectory, directoryPath
 # to store login + options for next run of client.
@@ -60,6 +63,10 @@ class Chooser(QWidget):
 
         self.ui = Ui_Chooser()
         self.ui.setupUi(self)
+        # Append version to window title
+        self.setWindowTitle(
+            "{}: {}".format(self.windowTitle(), version._Release_Version_)
+        )
         # load in the login etc from last time (if exists)
         self.setLastTime()
         # connect buttons to functions.
@@ -148,16 +155,22 @@ class Chooser(QWidget):
 
 # Pop up a dialog for unhandled exceptions and then exit
 sys._excepthook = sys.excepthook
+
+
 def _exception_hook(exctype, value, traceback):
     s = "".join(tblib.format_exception(exctype, value, traceback))
     mb = QMessageBox()
-    mb.setText("Something unexpected has happened!\n\n"
-               "Please file a bug and copy-paste the following:\n\n"
-               "{0}".format(s))
+    mb.setText(
+        "Something unexpected has happened!\n\n"
+        "Please file a bug and copy-paste the following:\n\n"
+        "{0}".format(s)
+    )
     mb.setStandardButtons(QMessageBox.Ok)
     mb.exec_()
     sys._excepthook(exctype, value, traceback)
     sys.exit(1)
+
+
 sys.excepthook = _exception_hook
 
 
