@@ -48,6 +48,7 @@ from tools import (
     DeltaItem,
     TextItem,
     GroupDTItem,
+    GhostComment,
 )
 
 
@@ -113,6 +114,7 @@ mouseMove = {
     "delete": "mouseMoveDelete",
     "line": "mouseMoveLine",
     "pen": "mouseMovePen",
+    "comment": "mouseMoveComment",
 }
 mouseRelease = {
     "box": "mouseReleaseBox",
@@ -177,6 +179,7 @@ class PageScene(QGraphicsScene):
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
         self.blurb = TextItem(self, self.fontSize)
+        self.ghostItem = GhostComment(QPointF(0, 0), "1", "blah", self.fontSize)
         self.deleteItem = None
         # Set a mark-delta, comment-text and comment-delta.
         self.markDelta = 0
@@ -291,13 +294,14 @@ class PageScene(QGraphicsScene):
         pt = event.scenePos()
         # build the textitem
         self.blurb = TextItem(self, self.fontSize)
-        self.blurb.setPos(pt)  # update pos after if needed
         self.blurb.setPlainText(self.commentText)
         self.blurb.contents = self.commentText  # for pickling
+        # move to correct point - update if only text no delta
+        self.blurb.setPos(pt)
         # Put in a check to see if comment starts with TEX
         # If it does then tex-ify it.
         if self.commentText[:4].upper() == "TEX:":
-            self.blurb.textToPng()
+            self.blurb.textToPng(checkCache=True)
         # If the mark-delta of the comment is non-zero then
         # create a delta-object with a different offset.
         # else just place the comment.
@@ -305,6 +309,8 @@ class PageScene(QGraphicsScene):
             # make sure blurb has text interaction turned off
             prevState = self.blurb.textInteractionFlags()
             self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+            # Update position of text
+            self.blurb.moveBy(0, -self.blurb.boundingRect().height() / 2)
             command = CommandText(self, self.blurb, self.ink)
             self.undoStack.push(command)
             # return blurb to previous state
@@ -396,9 +402,10 @@ class PageScene(QGraphicsScene):
         # (which fires up the editor on that object), and
         # then push it onto the undo-stack.
 
-        self.originPos = event.scenePos() + QPointF(0, -12)
-        # also needs updating for differing font sizes
+        self.originPos = event.scenePos()
         self.blurb = TextItem(self, self.fontSize)
+        # move so centred under cursor
+        self.originPos -= QPointF(0, self.blurb.boundingRect().height() / 2)
         self.blurb.setPos(self.originPos)
         self.blurb.setFocus()
         command = CommandText(self, self.blurb, self.ink)
@@ -486,8 +493,8 @@ class PageScene(QGraphicsScene):
         # After the drop event make sure pageview has the focus.
         self.parent.setFocus(Qt.TabFocusReason)
 
-    def latexAFragment(self, txt):
-        return self.parent.latexAFragment(txt)
+    def latexAFragment(self, txt, checkCache=False):
+        return self.parent.latexAFragment(txt, checkCache)
 
     # A fix (hopefully) for misread touchpad events on mac
     def event(self, event):
@@ -940,3 +947,15 @@ class PageScene(QGraphicsScene):
             if not X.collidesWithItem(self.imageItem, mode=Qt.ContainsItemShape):
                 return False
         return True
+
+    def updateGhost(self, dlt, txt):
+        self.ghostItem.changeComment(dlt, txt)
+
+    def hideGhost(self):
+        if self.ghostItem.scene() is not None:
+            self.removeItem(self.ghostItem)
+
+    def mouseMoveComment(self, event):
+        if self.ghostItem.scene() is None:
+            self.addItem(self.ghostItem)
+        self.ghostItem.setPos(event.scenePos())
