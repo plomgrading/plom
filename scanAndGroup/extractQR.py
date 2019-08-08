@@ -70,21 +70,3 @@ with tempfile.TemporaryDirectory() as tmpDir:
     with open("{}.qr".format(imgName), "w") as fh:
         # TODO: or pickle or json
         fh.write(repr(cornerQR))
-
-    # TODO: refactor later to just keep cornerQR: info in the ordering
-    # TODO: we should orient after we are sure these are the correct QR
-    # there should be 1 qr code in top half and 2 in bottom half
-    up = cornerQR['NE'] + cornerQR['NW']
-    down = cornerQR['SW'] + cornerQR['SE']
-    if len(up) == 1 and len(down) == 2:
-        pass
-    elif len(up) == 2:
-        # if its opposite then flip the image.
-        os.system("mogrify -quiet -rotate 180 {}".format(imgName))
-    else:
-        # TODO: should mark orientation as "unknown", for
-        # manualPageIdentifier to deal with.  For now, the incorrect
-        # number of QR codes will cause this to be flagged for manual
-        # processing.  But later that will be merely a warning.
-        # https://gitlab.math.ubc.ca/andrewr/MLP/issues/272
-        pass

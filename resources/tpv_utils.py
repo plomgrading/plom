@@ -76,6 +76,10 @@ def parseTPV(tpv):
     return tn, pn, vn, cn, o
 
 
+def getPosition(tpv):
+    return int(parseTPV(tpv)[4])
+
+
 def getAPI(tpv):
     tpv = tpv.lstrip("QR-Code:")
     return tpv[0:2]

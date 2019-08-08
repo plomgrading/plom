@@ -11,19 +11,20 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 
 # this allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
-from resources.tpv_utils import parseTPV, isValidTPV, hasCurrentAPI, getCode
+from resources.tpv_utils import parseTPV, isValidTPV, hasCurrentAPI, getCode, getPosition
 
 
 def decodeQRs():
     """Go into pageimage directory
     Look at all the png files
     If their QRcodes have not been successfully decoded previously
-    then decode them using extractQRAndOrient script.
+    then decode them using another script.
     The results are stored in blah.png.qr files.
     Commands piped through gnu-parallel.
     """
@@ -33,7 +34,7 @@ def decodeQRs():
         # If the .qr file does not exist, or if it has length 0
         # then run extract/orient script on that png.
         if (not os.path.exists(fname + ".qr")) or os.path.getsize(fname + ".qr") == 0:
-            fh.write("python3 ../extractQRAndOrient.py {}\n".format(fname))
+            fh.write("python3 ../extractQR.py {}\n".format(fname))
     fh.close()
     # run those commands through gnu-parallel then delete.
     os.system("parallel --bar < commandlist.txt")
@@ -63,11 +64,35 @@ def writeExamsScanned():
     es.close()
 
 
+def reOrientPage(fname, qrs):
+    """Re-orient this page if needed or fail
+
+    TODO: would two be good enough?  Just one?
+    """
+    # fake a default_dict
+    g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else -1
+    if g('NE') == 1 and g('SW') == 3 and g('SE') == 4:
+        pass
+    elif g('NW') == 2 and g('SW') == 3 and g('SE') == 4:
+        pass
+    elif g('NE') == 3 and g('NW') == 4 and (g('SW') == 1 or g('SE') == 2):
+        print(" .  {}: reorienting: 180 degree rotation".format(fname))
+        subprocess.run(["mogrify", "-quiet", "-rotate", "180", fname],
+                    stderr=subprocess.STDOUT, shell=False, check=True)
+    else:
+        return False
+    return True
+
+
 def checkQRsValid():
     """Check that the QRcodes in each pageimage are valid.
 
     When each png is scanned a png.qr is produced.  Load the dict of
     QR codes from that file and do some sanity checks.
+
+    Rotate any images that we can.
+
+    TODO: maybe we should split this function up a bit!
     """
     # go into page image directory and look at each .qr file.
     os.chdir("pageImages/")
@@ -125,8 +150,9 @@ def checkQRsValid():
                 msg = "Multiple different QR codes! (rare in theory)"
                 problemFlag = True
 
-        # TODO: I think we could orient here?
-        # TODO: but maybe should split this function up a bit!
+        orientationKnown = None
+        if not problemFlag:
+            orientationKnown = reOrientPage(fname[:-3], qrs)
 
         # Decide in which cases we can be confident we know this papers (t,p,v)
         if not problemFlag:
@@ -148,11 +174,20 @@ def checkQRsValid():
                 msg = "Too many QR codes on the page!"
                 problemFlag = True
 
-        if warnFlag:
-            # TODO: for now we need this for page orientation
-            # https://gitlab.math.ubc.ca/andrewr/MLP/issues/272
-            problemFlag = True
+        if not problemFlag:
+            # we have a valid TGVC and the code matches.
+            if warnFlag:
+                print("[W] {0} {1}".format(fname, msg))
+                print("   (high occurences of these warnings may mean printer/scanner problems)")
+            # store the tpv in examsScannedNow
+            examsScannedNow[tn][pn] = (vn, fname[:-3])
+            # later we check that list against those produced during build
 
+        if orientationKnown is False:
+            # set this after recording the tpv
+            # TODO: later this should set some other flag so manual knows
+            problemFlag = True
+            msg = 'Orientation not known'
 
         if problemFlag:
             # Difficulty scanning this pageimage so move it
@@ -163,14 +198,7 @@ def checkQRsValid():
             shutil.move(fname, "problemImages")
             # move blah.png
             shutil.move(fname[:-3], "problemImages")
-        else:
-            # we have a valid TGVC and the code matches.
-            if warnFlag:
-                print("[W] {0} {1}".format(fname, msg))
-                print("   (high occurences of these warnings may mean printer/scanner problems)")
-            # store the tpv in examsScannedNow
-            examsScannedNow[tn][pn] = (vn, fname[:-3])
-            # later we check that list against those produced during build
+
     os.chdir("../")
 
 
