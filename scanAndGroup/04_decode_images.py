@@ -147,7 +147,7 @@ def checkQRsValid():
             if not len(set(tgvs)) == 1:
                 # Decoder either gives the correct code or no code at all
                 # Perhaps if you see this, its a folded page
-                msg = "Multiple different QR codes! (rare in theory)"
+                msg = "Multiple different QR codes! (rare in theory: folded page?)"
                 problemFlag = True
 
         if not problemFlag:
