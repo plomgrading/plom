@@ -27,8 +27,7 @@ from authenticate import Authority
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
-
-__version__ = "0.1.0+"
+from resources import version
 
 # default server values and location of grouped-scans.
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
@@ -808,7 +807,7 @@ def checkDirectories():
         os.mkdir("markedPapers/commentFiles")
 
 
-print("PLOM v{0}: image server starting...".format(__version__))
+print("PLOM version {0}: image server starting...".format(version._Release_Version_))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
