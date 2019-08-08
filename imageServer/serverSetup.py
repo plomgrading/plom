@@ -107,9 +107,11 @@ class SetUp(QWidget):
         QMessageBox.question(
             self,
             "Class list format",
-            "Class list must be a CSV with column"
-            ' headers "id", "surname", "name".'
-            "\nAlternatively, give csv exported from Canvas.",
+            "Class list must be a CSV with column headers"
+            '\n(*) "id" - student ID number'
+            '\n(*) "fullName" - student full name, *or*'
+            '\n(*) "surname" / "familyName" and "name" / "givenName" - student name split in two fields.'
+            "\n\nAlternatively, give csv exported from Canvas.",
             QMessageBox.Ok,
         )
         # Pop up a file dialog to pick a .csv
@@ -130,8 +132,8 @@ class SetUp(QWidget):
                 print("This looks like it was exported from Canvas")
                 df = import_canvas_csv(fname)
                 print("Extracting columns from Canvas data and renaming")
-                df = df[["Student Number", "Student", "Student"]]
-                df.columns = ["id", "surname", "name"]
+                df = df[["Student Number", "Student"]]
+                df.columns = ["id", "fullName"]
                 print("Saving to classlist.csv")
                 df.to_csv("../resources/classlist.csv", index=False)
                 return
