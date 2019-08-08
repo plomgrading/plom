@@ -1440,9 +1440,7 @@ class TextItem(QGraphicsTextItem):
         # for latex png
         self.state = "TXT"
         # position
-        print("Position = {}".format(self.scenePos()))
         self.moveBy(0, -20)
-        print("And now = {}".format(self.scenePos()))
 
     def getContents(self):
         if len(self.contents) == 0:
@@ -1685,12 +1683,10 @@ class GhostComment(QGraphicsItemGroup):
             )
 
     def changeComment(self, dlt, txt):
-        print("Removing things.")
         # need to force a bounding-rect update by removing an item and adding it back
         self.removeFromGroup(self.di)
         self.removeFromGroup(self.blurb)
         # change things
-        print("Setting things {} {}".format(dlt, txt))
         self.di.changeDelta(dlt)
         self.blurb.changeText(txt)
         # move to correct positions
@@ -1701,8 +1697,6 @@ class GhostComment(QGraphicsItemGroup):
         else:
             self.di.setVisible(True)
             self.addToGroup(self.di)
-
-        print("Added things back {}".format(self.di.group()))
 
     def paint(self, painter, option, widget):
         # paint a bounding rectangle for undo/redo highlighting
@@ -1716,7 +1710,6 @@ class GhostDelta(QGraphicsTextItem):
     # Similar to textitem
     def __init__(self, pt, delta, fontsize=10):
         super(GhostDelta, self).__init__()
-        print("Delta is '{}' {}".format(delta, type(delta)))
         self.delta = int(delta)
         self.setDefaultTextColor(Qt.blue)
         # If positive mark then starts with a "+"-sign
@@ -1734,7 +1727,6 @@ class GhostDelta(QGraphicsTextItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
     def changeDelta(self, dlt):
-        print("Changing delta from {} to {}".format(self.delta, dlt))
         self.delta = int(dlt)
         if self.delta > 0:
             self.setPlainText(" +{} ".format(self.delta))
