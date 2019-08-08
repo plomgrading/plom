@@ -665,6 +665,7 @@ class MarkerClient(QDialog):
                 # Copy the current annotated filename to backup file in case
                 # user cancels their annotations.
                 shutil.copyfile(aname, aname + ".bak")
+                shutil.copyfile(pname, pname + ".bak")
                 remarkFlag = True
             else:
                 return
@@ -683,6 +684,7 @@ class MarkerClient(QDialog):
             # if remarking then move backup annotated file back.
             if remarkFlag:
                 shutil.move(aname + ".bak", aname)
+                shutil.move(pname + ".bak", pname)
             # reselect the row we were working on
             self.prxM.setData(index[1], prevState)
             self.ui.tableView.selectRow(index[1].row())
@@ -726,6 +728,17 @@ class MarkerClient(QDialog):
         if msg[0] == "ACK":
             self.ui.mProgressBar.setValue(msg[1])
             self.ui.mProgressBar.setMaximum(msg[2])
+        else:
+            # This should not happen!
+            # if remarking then move backup annotated file back.
+            if remarkFlag:
+                shutil.move(aname + ".bak", aname)
+                shutil.move(pname + ".bak", pname)
+            # reselect the row we were working on
+            self.prxM.setData(index[1], prevState)
+            self.ui.tableView.selectRow(index[1].row())
+            self.updateImage(index[1].row())
+            return
 
         # Check if no unmarked test, then request one.
         if launchAgain is False:
