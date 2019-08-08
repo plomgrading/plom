@@ -3,8 +3,6 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
-_PLOM_API_VERSION_ = "Pickle 0.2"
-
 import json
 import os
 import marker
@@ -54,7 +52,7 @@ def writeLastTime():
 
 class Chooser(QWidget):
     def __init__(self, parent):
-        self.APIVersion = _PLOM_API_VERSION_
+        self.APIVersion = version.PLOM_API_Version
         super(Chooser, self).__init__()
         self.parent = parent
         print("PLOM api = {}".format(self.APIVersion))
@@ -68,9 +66,7 @@ class Chooser(QWidget):
         self.ui = Ui_Chooser()
         self.ui.setupUi(self)
         # Append version to window title
-        self.setWindowTitle(
-            "{} {}".format(self.windowTitle(), version._Release_Version_)
-        )
+        self.setWindowTitle("{} {}".format(self.windowTitle(), version.Release_Version))
         # load in the login etc from last time (if exists)
         self.setLastTime()
         # connect buttons to functions.

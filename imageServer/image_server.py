@@ -3,8 +3,6 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
-_PLOM_API_VERSION_ = "Pickle 0.2"
-
 import asyncio
 import datetime
 import errno
@@ -308,11 +306,11 @@ class Server(object):
         Then pass them back the authorisation token
         (the password is only checked on first authorisation - since slow)
         """
-        if clientAPI != _PLOM_API_VERSION_:
+        if clientAPI != version.PLOM_API_Version:
             return [
                 "ERR",
                 'PLOM API version mismatch: client "{}" =/= server "{}". Please check you have the right client.'.format(
-                    clientAPI, _PLOM_API_VERSION_
+                    clientAPI, version.PLOM_API_Version
                 ),
             ]
 
@@ -807,7 +805,7 @@ def checkDirectories():
         os.mkdir("markedPapers/commentFiles")
 
 
-print("PLOM version {0}: image server starting...".format(version._Release_Version_))
+print("PLOM version {0}: image server starting...".format(version.Release_Version))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
