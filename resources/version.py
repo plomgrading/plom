@@ -5,4 +5,7 @@ __license__ = "AGPLv3"
 
 
 Release_Version = "0.1.0+"
-PLOM_API_Version = "Pickle 0.2"
+# I'm going to assume the very initial pre 0.1 was "0"
+# and that 0.1 was "1"... and that we are now somewhere
+# around 2
+PLOM_API_Version = "2"
