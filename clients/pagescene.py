@@ -49,6 +49,8 @@ from tools import (
     TextItem,
     GroupDTItem,
     GhostComment,
+    GhostDelta,
+    GhostText,
 )
 
 
@@ -518,7 +520,15 @@ class PageScene(QGraphicsScene):
     def pickleSceneItems(self):
         lst = []
         for X in self.items():
+            # don't pickle the scorebox or background image
             if isinstance(X, ScoreBox) or isinstance(X, QGraphicsPixmapItem):
+                continue
+            # And be careful - there might be a GhostComment floating about
+            if (
+                isinstance(X, GhostComment)
+                or isinstance(X, GhostDelta)
+                or isinstance(X, GhostText)
+            ):
                 continue
             # If text or delta, check if part of GroupDeltaText
             if isinstance(X, DeltaItem) or isinstance(X, TextItem):
@@ -942,6 +952,13 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             # check all items that are not the image or scorebox
             if (X is self.imageItem) or (X is self.scoreBox):
+                continue
+            # And be careful - there might be a GhostComment floating about
+            if (
+                isinstance(X, GhostComment)
+                or isinstance(X, GhostDelta)
+                or isinstance(X, GhostText)
+            ):
                 continue
             # make sure is inside image
             if not X.collidesWithItem(self.imageItem, mode=Qt.ContainsItemShape):
