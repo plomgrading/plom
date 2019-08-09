@@ -37,17 +37,17 @@ class CommandDelete(QUndoCommand):
         # If the object is a DeltaItem then emit a mark-changed signal.
         if isinstance(self.deleteItem, DeltaItem):
             # Mark decreases by delta
-            self.scene.markChangedSignal.emit(-self.deleteItem.delta)
+            self.scene.markChangedSignal.emit(-self.deleteItem.delta, 1)
         # If the object is a GroupTextDeltaItem then emit a mark-changed signal.
         if isinstance(self.deleteItem, GroupDTItem):
             # Mark decreases by delta
-            self.scene.markChangedSignal.emit(-self.deleteItem.di.delta)
+            self.scene.markChangedSignal.emit(-self.deleteItem.di.delta, 1)
         # nicely animate the deletion
         self.deleteItem.animateFlag = True
         if self.deleteItem.animator is not None:
             for X in self.deleteItem.animator:
                 X.flash_undo()
-            QTimer.singleShot(500, lambda: self.scene.removeItem(self.deleteItem))
+            QTimer.singleShot(200, lambda: self.scene.removeItem(self.deleteItem))
         else:
             self.scene.removeItem(self.deleteItem)
 
@@ -55,11 +55,11 @@ class CommandDelete(QUndoCommand):
         # If the object is a DeltaItem then emit a mark-changed signal.
         if isinstance(self.deleteItem, DeltaItem):
             # Mark increases by delta
-            self.scene.markChangedSignal.emit(self.deleteItem.delta)
+            self.scene.markChangedSignal.emit(self.deleteItem.delta, -1)
         # If the object is a GroupTextDeltaItem then emit a mark-changed signal.
         if isinstance(self.deleteItem, GroupDTItem):
             # Mark decreases by delta
-            self.scene.markChangedSignal.emit(self.deleteItem.di.delta)
+            self.scene.markChangedSignal.emit(self.deleteItem.di.delta, -1)
         # nicely animate the undo of deletion
         self.deleteItem.animateFlag = False
         self.scene.addItem(self.deleteItem)
@@ -173,7 +173,7 @@ class CommandArrow(QUndoCommand):
         # the undo animation takes 0.5s
         # so trigger its removal after 0.5s.
         self.arrowItem.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.arrowItem.ai))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.arrowItem.ai))
 
 
 class ArrowItemObject(QGraphicsObject):
@@ -186,7 +186,7 @@ class ArrowItemObject(QGraphicsObject):
 
     def flash_undo(self):
         # thin -> thick -> none.
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 6)
         self.anim.setEndValue(0)
@@ -194,7 +194,7 @@ class ArrowItemObject(QGraphicsObject):
 
     def flash_redo(self):
         # thin -> med -> thin.
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 4)
         self.anim.setEndValue(2)
@@ -307,7 +307,7 @@ class CommandArrowDouble(QUndoCommand):
         # the undo animation takes 0.5s
         # so trigger its removal after 0.5s.
         self.arrowItem.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.arrowItem.ai))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.arrowItem.ai))
 
 
 class ArrowDoubleItemObject(QGraphicsObject):
@@ -320,7 +320,7 @@ class ArrowDoubleItemObject(QGraphicsObject):
 
     def flash_undo(self):
         # thin -> thick -> none.
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 6)
         self.anim.setEndValue(0)
@@ -328,7 +328,7 @@ class ArrowDoubleItemObject(QGraphicsObject):
 
     def flash_redo(self):
         # thin -> med -> thin.
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 4)
         self.anim.setEndValue(2)
@@ -437,7 +437,7 @@ class CommandBox(QUndoCommand):
 
     def undo(self):
         self.boxItem.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.boxItem.bi))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.boxItem.bi))
 
 
 class BoxItemObject(QGraphicsObject):
@@ -449,7 +449,7 @@ class BoxItemObject(QGraphicsObject):
 
     def flash_undo(self):
         # translucent -> opaque -> clear.
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(16)
         self.anim.setKeyValueAt(0.5, 192)
         self.anim.setEndValue(0)
@@ -457,7 +457,7 @@ class BoxItemObject(QGraphicsObject):
 
     def flash_redo(self):
         # translucent -> opaque -> translucent.
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(16)
         self.anim.setKeyValueAt(0.5, 64)
         self.anim.setEndValue(16)
@@ -529,7 +529,7 @@ class CommandCross(QUndoCommand):
 
     def undo(self):
         self.crossItem.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.crossItem.ci))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.crossItem.ci))
 
 
 class CrossItemObject(QGraphicsObject):
@@ -540,14 +540,14 @@ class CrossItemObject(QGraphicsObject):
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(3)
         self.anim.setKeyValueAt(0.5, 8)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(3)
         self.anim.setKeyValueAt(0.5, 6)
         self.anim.setEndValue(3)
@@ -617,14 +617,14 @@ class CommandDelta(QUndoCommand):
         self.scene.addItem(self.delItem)
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
-        self.scene.markChangedSignal.emit(self.delta)
+        self.scene.markChangedSignal.emit(self.delta, 1)
 
     def undo(self):
         self.delItem.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.delItem))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.delItem))
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark decreased by delta
-        self.scene.markChangedSignal.emit(-self.delta)
+        self.scene.markChangedSignal.emit(-self.delta, -1)
 
 
 class DeltaItem(QGraphicsTextItem):
@@ -682,7 +682,7 @@ class DeltaItem(QGraphicsTextItem):
 
     def flash_undo(self):
         # Animate border when undo thin->thick->none
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 8)
         self.anim.setEndValue(0)
@@ -690,7 +690,7 @@ class DeltaItem(QGraphicsTextItem):
 
     def flash_redo(self):
         # Animate border when undo thin->med->thin
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 4)
         self.anim.setEndValue(2)
@@ -732,7 +732,7 @@ class CommandEllipse(QUndoCommand):
 
     def undo(self):
         self.ellipseItem.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.ellipseItem.ei))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.ellipseItem.ei))
 
 
 class EllipseItemObject(QGraphicsObject):
@@ -743,14 +743,14 @@ class EllipseItemObject(QGraphicsObject):
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 8)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 6)
         self.anim.setEndValue(2)
@@ -821,7 +821,7 @@ class CommandHighlight(QUndoCommand):
 
     def undo(self):
         self.highLightItem.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.highLightItem.hli))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.highLightItem.hli))
 
 
 class HighLightItemObject(QGraphicsObject):
@@ -833,14 +833,14 @@ class HighLightItemObject(QGraphicsObject):
         self.anim = QPropertyAnimation(self, b"opacity")
 
     def flash_undo(self):
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(64)
         self.anim.setKeyValueAt(0.5, 192)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(64)
         self.anim.setKeyValueAt(0.5, 96)
         self.anim.setEndValue(64)
@@ -916,7 +916,7 @@ class CommandLine(QUndoCommand):
 
     def undo(self):
         self.lineItem.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.lineItem.li))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.lineItem.li))
 
 
 class LineItemObject(QGraphicsObject):
@@ -927,14 +927,14 @@ class LineItemObject(QGraphicsObject):
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 6)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 4)
         self.anim.setEndValue(2)
@@ -1002,7 +1002,7 @@ class CommandPen(QUndoCommand):
 
     def undo(self):
         self.penItem.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.penItem.pi))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.penItem.pi))
 
 
 class PenItemObject(QGraphicsObject):
@@ -1013,14 +1013,14 @@ class PenItemObject(QGraphicsObject):
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 6)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 4)
         self.anim.setEndValue(2)
@@ -1093,7 +1093,7 @@ class CommandPenArrow(QUndoCommand):
 
     def undo(self):
         self.penItem.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.penItem.pi))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.penItem.pi))
 
 
 class PenArrowItemObject(QGraphicsObject):
@@ -1104,14 +1104,14 @@ class PenArrowItemObject(QGraphicsObject):
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 6)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 4)
         self.anim.setEndValue(2)
@@ -1237,7 +1237,7 @@ class CommandQMark(QUndoCommand):
 
     def undo(self):
         self.qm.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.qm.qmi))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.qm.qmi))
 
 
 class QMarkItemObject(QGraphicsObject):
@@ -1248,14 +1248,14 @@ class QMarkItemObject(QGraphicsObject):
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(3)
         self.anim.setKeyValueAt(0.5, 8)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(3)
         self.anim.setKeyValueAt(0.5, 6)
         self.anim.setEndValue(3)
@@ -1327,7 +1327,7 @@ class CommandTick(QUndoCommand):
 
     def undo(self):
         self.tickItem.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.tickItem.ti))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.tickItem.ti))
 
 
 class TickItemObject(QGraphicsObject):
@@ -1338,14 +1338,14 @@ class TickItemObject(QGraphicsObject):
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(3)
         self.anim.setKeyValueAt(0.5, 8)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(3)
         self.anim.setKeyValueAt(0.5, 6)
         self.anim.setEndValue(3)
@@ -1402,6 +1402,12 @@ class CommandText(QUndoCommand):
         super(CommandText, self).__init__()
         self.scene = scene
         self.blurb = blurb
+        if len(self.blurb.toPlainText()) > 0:
+            # quickly grab focus and then clear focus.
+            # needs slight delay.
+            # this correctly sets the text interaction flags
+            QTimer.singleShot(1, self.blurb.setFocus)
+            QTimer.singleShot(10, self.blurb.clearFocus)
         self.setText("Text")
 
     def redo(self):
@@ -1410,7 +1416,7 @@ class CommandText(QUndoCommand):
 
     def undo(self):
         self.blurb.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.blurb))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.blurb))
 
 
 class TextItem(QGraphicsTextItem):
@@ -1439,19 +1445,14 @@ class TextItem(QGraphicsTextItem):
         self.anim = QPropertyAnimation(self, b"thickness")
         # for latex png
         self.state = "TXT"
+        # position
+        self.moveBy(0, -20)
 
     def getContents(self):
         if len(self.contents) == 0:
             return self.toPlainText()
         else:
             return self.contents
-
-    def mouseDoubleClickEvent(self, event):
-        # On double-click start the text-editor
-        self.pngToText()
-        self.setTextInteractionFlags(Qt.TextEditorInteraction)
-        self.setFocus()
-        super(TextItem, self).mouseDoubleClickEvent(event)
 
     def focusInEvent(self, event):
         if self.state == "PNG":
@@ -1473,14 +1474,14 @@ class TextItem(QGraphicsTextItem):
             self.contents = self.toPlainText()
         super(TextItem, self).focusOutEvent(event)
 
-    def textToPng(self):
+    def textToPng(self, checkCache=False):
         self.contents = self.toPlainText()
         if self.contents[:4].upper() == "TEX:":
             texIt = self.contents[4:]
         else:
             texIt = self.contents
 
-        if self.parent.latexAFragment(texIt):
+        if self.parent.latexAFragment(texIt, checkCache):
             self.setPlainText("")
             tc = self.textCursor()
             qi = QImage("frag.png")
@@ -1540,7 +1541,7 @@ class TextItem(QGraphicsTextItem):
 
     def flash_undo(self):
         # When undo-ing, draw a none->thick->none border around text.
-        self.anim.setDuration(500)
+        self.anim.setDuration(200)
         self.anim.setStartValue(0)
         self.anim.setKeyValueAt(0.5, 8)
         self.anim.setEndValue(0)
@@ -1548,7 +1549,7 @@ class TextItem(QGraphicsTextItem):
 
     def flash_redo(self):
         # When redo-ing, draw a none->med->none border around text.
-        self.anim.setDuration(250)
+        self.anim.setDuration(200)
         self.anim.setStartValue(0)
         self.anim.setKeyValueAt(0.5, 4)
         self.anim.setEndValue(0)
@@ -1584,18 +1585,20 @@ class CommandGDT(QUndoCommand):
         self.setText("GroupDeltaText")
 
     def redo(self):
-        # self.gdt.flash_redo()
+        self.gdt.blurb.flash_redo()
+        self.gdt.di.flash_redo()
         self.scene.addItem(self.gdt)
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
-        self.scene.markChangedSignal.emit(self.delta)
+        self.scene.markChangedSignal.emit(self.delta, 1)
 
     def undo(self):
-        # self.gdt.flash_undo()
-        QTimer.singleShot(500, lambda: self.scene.removeItem(self.gdt))
+        self.gdt.blurb.flash_undo()
+        self.gdt.di.flash_undo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark decreased by delta
-        self.scene.markChangedSignal.emit(-self.delta)
+        self.scene.markChangedSignal.emit(-self.delta, -1)
 
 
 class GroupDTItem(QGraphicsItemGroup):
@@ -1604,6 +1607,7 @@ class GroupDTItem(QGraphicsItemGroup):
         self.pt = pt
         self.di = DeltaItem(pt, delta, fontsize)  # positioned so centre under click
         self.blurb = blurb  # is a textitem already
+        self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
         # set up animators for delete
         self.animator = [self.di, self.blurb]
         self.animateFlag = False
@@ -1654,3 +1658,111 @@ class GroupDTItem(QGraphicsItemGroup):
             painter.drawRoundedRect(option.rect, 10, 10)
             pass
         super(GroupDTItem, self).paint(painter, option, widget)
+
+
+class GhostComment(QGraphicsItemGroup):
+    def __init__(self, pt, dlt, txt, fontsize):
+        super(GhostComment, self).__init__()
+        self.pt = pt
+        self.di = GhostDelta(pt, dlt, fontsize)
+        self.blurb = GhostText(txt, fontsize)
+        self.changeComment(dlt, txt)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+
+    def tweakPositions(self, dlt):
+        self.blurb.setPos(self.pos())
+        self.di.setPos(self.pos())
+        if int(dlt) == 0:
+            cr = self.blurb.boundingRect()
+            self.blurb.moveBy(0, -(cr.top() + cr.bottom()) / 2)
+        else:
+            cr = self.di.boundingRect()
+            self.di.moveBy(-(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2)
+            self.blurb.moveBy(
+                (cr.right() + cr.left()) / 2 + 5, -(cr.top() + cr.bottom()) / 2
+            )
+
+    def changeComment(self, dlt, txt):
+        # need to force a bounding-rect update by removing an item and adding it back
+        self.removeFromGroup(self.di)
+        self.removeFromGroup(self.blurb)
+        # change things
+        self.di.changeDelta(dlt)
+        self.blurb.changeText(txt)
+        # move to correct positions
+        self.tweakPositions(dlt)
+        self.addToGroup(self.blurb)
+        if int(dlt) == 0:
+            self.di.setVisible(False)
+        else:
+            self.di.setVisible(True)
+            self.addToGroup(self.di)
+
+    def paint(self, painter, option, widget):
+        # paint a bounding rectangle for undo/redo highlighting
+        painter.setPen(QPen(Qt.blue, 0.5, style=Qt.DotLine))
+        painter.drawRoundedRect(option.rect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(GhostComment, self).paint(painter, option, widget)
+
+
+class GhostDelta(QGraphicsTextItem):
+    # Similar to textitem
+    def __init__(self, pt, delta, fontsize=10):
+        super(GhostDelta, self).__init__()
+        self.delta = int(delta)
+        self.setDefaultTextColor(Qt.blue)
+        # If positive mark then starts with a "+"-sign
+        if self.delta > 0:
+            self.setPlainText(" +{} ".format(self.delta))
+        else:
+            # else starts with a "-"-sign (unless zero).
+            self.setPlainText(" {} ".format(self.delta))
+        self.font = QFont("Helvetica")
+        # Slightly larger font than regular textitem.
+        self.font.setPointSize(min(30, fontsize * 3))
+        self.setFont(self.font)
+        # Is not editable.
+        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+
+    def changeDelta(self, dlt):
+        self.delta = int(dlt)
+        if self.delta > 0:
+            self.setPlainText(" +{} ".format(self.delta))
+        else:
+            # else starts with a "-"-sign (unless zero).
+            self.setPlainText(" {} ".format(self.delta))
+
+    def paint(self, painter, option, widget):
+        # paint the background
+        painter.setPen(QPen(Qt.blue, 1))
+        painter.drawRoundedRect(option.rect, 10, 10)
+        # paint the normal TextItem with the default 'paint' method
+        super(GhostDelta, self).paint(painter, option, widget)
+
+
+class GhostText(QGraphicsTextItem):
+    # Textitem is a qgraphicstextitem, has to handle
+    # textinput and double-click to start editing etc.
+    # Shift-return ends the editor
+    def __init__(self, txt, fontsize=10):
+        super(GhostText, self).__init__()
+        self.setDefaultTextColor(Qt.blue)
+        self.setPlainText(txt)
+        self.font = QFont("Helvetica")
+        self.font.setPointSizeF(min(24, fontsize * 2.5))
+        self.setFont(self.font)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        # Set it as editably with the text-editor
+        self.setTextInteractionFlags(Qt.NoTextInteraction)
+
+    def changeText(self, txt):
+        self.setPlainText(txt)
+        if self.scene() is not None and txt[:4].upper() == "TEX:":
+            texIt = "\\color{blue}\n" + txt[4:]  # make color blue for ghost rendering
+            if self.scene().latexAFragment(texIt, checkCache=True):
+                self.setPlainText("")
+                tc = self.textCursor()
+                qi = QImage("frag.png")
+                tc.insertImage(qi)

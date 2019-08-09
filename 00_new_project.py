@@ -53,6 +53,7 @@ files = [
     "resources/davconf.conf",
     "resources/davconf.yaml",
     "resources/predictionlist.csv",
+    "resources/version.py",
 ]
 
 files += [

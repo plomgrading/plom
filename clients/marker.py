@@ -21,7 +21,7 @@ from PyQt5.QtCore import (
     pyqtSignal,
 )
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton
+from PyQt5.QtWidgets import QDialog, QWidget, QMainWindow, QMessageBox, QPushButton
 
 
 from examviewwindow import ExamViewWindow
@@ -232,7 +232,11 @@ class ProxyModel(QSortFilterProxyModel):
 ##########################
 
 
-class MarkerClient(QDialog):
+# TODO: should be a QMainWindow but at any rate not a Dialog
+# TODO: should this be parented by the QApplication?
+class MarkerClient(QWidget):
+    my_shutdown_signal = pyqtSignal(int)
+
     def __init__(
         self,
         userName,
@@ -242,11 +246,10 @@ class MarkerClient(QDialog):
         web_port,
         pageGroup,
         version,
-        parent=None,
     ):
         # Init the client with username, password, server and port data,
         # and which group/version is being marked.
-        super(MarkerClient, self).__init__(parent)
+        super(MarkerClient, self).__init__()
         # Fire up the messenger with server data.
         messenger.setServerDetails(server, message_port, web_port)
         messenger.startMessenger()
@@ -329,6 +332,8 @@ class MarkerClient(QDialog):
         # Connect the view **after** list updated.
         # Connect the table-model's selection change to appropriate function
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
+        # A simple cache table for latex'd comments
+        self.commentCache = {}
         # Get a pagegroup to mark from the server
         self.requestNext()
         # reset the view so whole exam shown.
@@ -747,8 +752,9 @@ class MarkerClient(QDialog):
         self.DNF()
         # Then send a 'user closing' message - server will revoke
         # authentication token.
-        msg = messenger.SRMsg(["UCL", self.userName, self.token])
-        # then close
+        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        assert msg == "ACK"
+        self.my_shutdown_signal.emit(2)
         self.close()
 
     def DNF(self):
@@ -792,7 +798,13 @@ class MarkerClient(QDialog):
             os.unlink(f)
         self.viewFiles = []
 
-    def latexAFragment(self, txt):
+    def latexAFragment(self, txt, checkCache):
+        if checkCache:
+            return self.latexCachedFragment(txt)
+        else:
+            return self.latexUncachedFragment(txt)
+
+    def latexUncachedFragment(self, txt):
         # create a tempfile
         fname = os.path.join(self.workingDirectory, "fragment")
         dname = (
@@ -810,6 +822,37 @@ class MarkerClient(QDialog):
             return True
         else:
             return False
+
+    def latexCachedFragment(self, txt):
+        if txt in self.commentCache:
+            # have already latex'd this comment
+            shutil.copyfile(self.commentCache[txt], "frag.png")
+            return True
+
+        # not yet present, so have to build it
+        # create a tempfile
+        fname = os.path.join(self.workingDirectory, "fragment")
+        dname = (
+            self.userName
+        )  # call fragment file just the username to avoid collisions
+        # write the latex text to that file
+        with open(fname, "w") as fh:
+            fh.write(txt)
+        messenger.putFileDav(fname, dname)
+
+        msg = messenger.SRMsg(["mLTT", self.userName, self.token, dname])
+        if msg[1] == False:
+            return False
+
+        messenger.getFileDav(msg[2], "frag.png")
+        messenger.SRMsg(["mDWF", self.userName, self.token, msg[2]])
+        # now keep copy of frag.png for later use and update commentCache
+        fragFile = tempfile.NamedTemporaryFile(
+            delete=False, dir=self.workingDirectory
+        ).name
+        shutil.copyfile("frag.png", fragFile)
+        self.commentCache[txt] = fragFile
+        return True
 
     def tagTest(self):
         index = self.ui.tableView.selectedIndexes()

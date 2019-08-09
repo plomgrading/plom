@@ -47,6 +47,10 @@ from tools import (
     CommandGDT,
     DeltaItem,
     TextItem,
+    GroupDTItem,
+    GhostComment,
+    GhostDelta,
+    GhostText,
 )
 
 
@@ -112,6 +116,7 @@ mouseMove = {
     "delete": "mouseMoveDelete",
     "line": "mouseMoveLine",
     "pen": "mouseMovePen",
+    "comment": "mouseMoveComment",
 }
 mouseRelease = {
     "box": "mouseReleaseBox",
@@ -131,10 +136,12 @@ class PageScene(QGraphicsScene):
 
     # When a delta is created or deleted, need to emit a markChangedSignal
     # which will be picked up by the annotation widget to update
-    markChangedSignal = pyqtSignal(int)
+    # signal passes [delta, +/- 1] the second shows if +1 redo, -1 undo
+    markChangedSignal = pyqtSignal(int, int)
 
     def __init__(self, parent, imgName):
         super(PageScene, self).__init__(parent)
+        self.parent = parent
         # Grab filename of groupimage, build pixmap and graphicsitem.
         self.imageName = imgName
         self.image = QPixmap(imgName)
@@ -174,11 +181,13 @@ class PageScene(QGraphicsScene):
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
         self.blurb = TextItem(self, self.fontSize)
+        self.ghostItem = GhostComment(QPointF(0, 0), "1", "blah", self.fontSize)
         self.deleteItem = None
         # Set a mark-delta, comment-text and comment-delta.
         self.markDelta = 0
         self.commentText = ""
         self.commentDelta = 0
+        self.legalDelta = True
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
         self.scoreBox = ScoreBox(self.fontSize)
@@ -275,30 +284,39 @@ class PageScene(QGraphicsScene):
         """
         # Find the object under the mouseclick.
         under = self.itemAt(event.scenePos(), QTransform())
-        # If it is a textitem and this is not the move-tool
-        # then fire up the editor.
-        if isinstance(under, TextItem) and self.mode != "move":
-            under.setTextInteractionFlags(Qt.TextEditorInteraction)
-            self.setFocusItem(under, Qt.MouseFocusReason)
+        # If it is a Delta or Text or GDT then do nothing.
+        if (
+            isinstance(under, DeltaItem)
+            or isinstance(under, TextItem)
+            or isinstance(under, GroupDTItem)
+        ):
             return
 
         # grab the location of the mouse-click
         pt = event.scenePos()
         # build the textitem
         self.blurb = TextItem(self, self.fontSize)
-        self.blurb.setPos(pt)  # update pos after if needed
         self.blurb.setPlainText(self.commentText)
         self.blurb.contents = self.commentText  # for pickling
+        # move to correct point - update if only text no delta
+        self.blurb.setPos(pt)
         # Put in a check to see if comment starts with TEX
         # If it does then tex-ify it.
         if self.commentText[:4].upper() == "TEX:":
-            self.blurb.textToPng()
+            self.blurb.textToPng(checkCache=True)
         # If the mark-delta of the comment is non-zero then
         # create a delta-object with a different offset.
         # else just place the comment.
-        if self.commentDelta == 0:
+        if self.commentDelta == 0 or not self.legalDelta:
+            # make sure blurb has text interaction turned off
+            prevState = self.blurb.textInteractionFlags()
+            self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+            # Update position of text
+            self.blurb.moveBy(0, -self.blurb.boundingRect().height() / 2)
             command = CommandText(self, self.blurb, self.ink)
             self.undoStack.push(command)
+            # return blurb to previous state
+            self.blurb.setTextInteractionFlags(prevState)
         else:
             command = CommandGDT(self, pt, self.commentDelta, self.blurb, self.fontSize)
             # push the delta onto the undo stack.
@@ -343,8 +361,11 @@ class PageScene(QGraphicsScene):
         ):
             command = CommandQMark(self, pt)
         else:
-            command = CommandDelta(self, pt, self.markDelta, self.fontSize)
-
+            if self.legalDelta:
+                command = CommandDelta(self, pt, self.markDelta, self.fontSize)
+            else:
+                # don't do anything
+                return
         # push command onto undoStack.
         self.undoStack.push(command)
 
@@ -354,7 +375,7 @@ class PageScene(QGraphicsScene):
         The actual moving of objects is handled by themselves since they
         know how to handle the ItemPositionChange signal as a move-command.
         """
-        self.parent().setCursor(Qt.ClosedHandCursor)
+        self.parent.setCursor(Qt.ClosedHandCursor)
         super(PageScene, self).mousePressEvent(event)
 
     def mousePressText(self, event):
@@ -364,9 +385,11 @@ class PageScene(QGraphicsScene):
         """
         # Find the object under the mouseclick.
         under = self.itemAt(event.scenePos(), QTransform())
-        # If it is a textitem and this is not the move-tool
-        # then fire up the editor.
-        if isinstance(under, TextItem) and self.mode != "move":
+        # If it is part of groupDTitem then do nothing
+        if isinstance(under.group(), GroupDTItem):
+            return
+        # If it is a textitem then fire up the editor.
+        if isinstance(under, TextItem):
             under.setTextInteractionFlags(Qt.TextEditorInteraction)
             self.setFocusItem(under, Qt.MouseFocusReason)
             super(PageScene, self).mousePressEvent(event)
@@ -381,9 +404,10 @@ class PageScene(QGraphicsScene):
         # (which fires up the editor on that object), and
         # then push it onto the undo-stack.
 
-        self.originPos = event.scenePos() + QPointF(0, -12)
-        # also needs updating for differing font sizes
+        self.originPos = event.scenePos()
         self.blurb = TextItem(self, self.fontSize)
+        # move so centred under cursor
+        self.originPos -= QPointF(0, self.blurb.boundingRect().height() / 2)
         self.blurb.setPos(self.originPos)
         self.blurb.setFocus()
         command = CommandText(self, self.blurb, self.ink)
@@ -414,13 +438,11 @@ class PageScene(QGraphicsScene):
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
-            self.parent().scale(0.8, 0.8)
+            self.parent.scale(0.8, 0.8)
         else:
-            self.parent().scale(1.25, 1.25)
-        self.parent().centerOn(event.scenePos())
-        self.parent().zoomNull(
-            True
-        )  # sets the view rectangle and updates zoom-dropdown.
+            self.parent.scale(1.25, 1.25)
+        self.parent.centerOn(event.scenePos())
+        self.parent.zoomNull(True)  # sets the view rectangle and updates zoom-dropdown.
 
     # Mouse release tool functions.
     # Most of these delete the temp-object (eg box / line)
@@ -428,7 +450,7 @@ class PageScene(QGraphicsScene):
 
     def mouseReleaseMove(self, event):
         """Sets the cursor back to an open hand."""
-        self.parent().setCursor(Qt.OpenHandCursor)
+        self.parent.setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
         # refresh view after moving objects
         self.update()
@@ -436,7 +458,7 @@ class PageScene(QGraphicsScene):
     def mouseReleasePan(self, event):
         """Update the current stored view rectangle."""
         super(PageScene, self).mouseReleaseEvent(event)
-        self.parent().zoomNull()
+        self.parent.zoomNull()
 
     # Handle drag / drop events
     def dragEnterEvent(self, e):
@@ -471,10 +493,10 @@ class PageScene(QGraphicsScene):
         else:
             pass
         # After the drop event make sure pageview has the focus.
-        self.parent().setFocus(Qt.TabFocusReason)
+        self.parent.setFocus(Qt.TabFocusReason)
 
-    def latexAFragment(self, txt):
-        return self.parent().latexAFragment(txt)
+    def latexAFragment(self, txt, checkCache=False):
+        return self.parent.latexAFragment(txt, checkCache)
 
     # A fix (hopefully) for misread touchpad events on mac
     def event(self, event):
@@ -498,7 +520,15 @@ class PageScene(QGraphicsScene):
     def pickleSceneItems(self):
         lst = []
         for X in self.items():
+            # don't pickle the scorebox or background image
             if isinstance(X, ScoreBox) or isinstance(X, QGraphicsPixmapItem):
+                continue
+            # And be careful - there might be a GhostComment floating about
+            if (
+                isinstance(X, GhostComment)
+                or isinstance(X, GhostDelta)
+                or isinstance(X, GhostText)
+            ):
                 continue
             # If text or delta, check if part of GroupDeltaText
             if isinstance(X, DeltaItem) or isinstance(X, TextItem):
@@ -923,7 +953,26 @@ class PageScene(QGraphicsScene):
             # check all items that are not the image or scorebox
             if (X is self.imageItem) or (X is self.scoreBox):
                 continue
+            # And be careful - there might be a GhostComment floating about
+            if (
+                isinstance(X, GhostComment)
+                or isinstance(X, GhostDelta)
+                or isinstance(X, GhostText)
+            ):
+                continue
             # make sure is inside image
             if not X.collidesWithItem(self.imageItem, mode=Qt.ContainsItemShape):
                 return False
         return True
+
+    def updateGhost(self, dlt, txt):
+        self.ghostItem.changeComment(dlt, txt)
+
+    def hideGhost(self):
+        if self.ghostItem.scene() is not None:
+            self.removeItem(self.ghostItem)
+
+    def mouseMoveComment(self, event):
+        if self.ghostItem.scene() is None:
+            self.addItem(self.ghostItem)
+        self.ghostItem.setPos(event.scenePos())

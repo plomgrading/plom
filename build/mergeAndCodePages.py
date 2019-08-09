@@ -135,4 +135,6 @@ with tempfile.TemporaryDirectory() as tmpDir:
             exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
 
 # Finally save the resulting pdf.
-exam.save("examsToPrint/exam_{}.pdf".format(str(test).zfill(4)))
+# Add the deflate option to compress the embedded pngs
+# see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
+exam.save("examsToPrint/exam_{}.pdf".format(str(test).zfill(4)), deflate=True)
