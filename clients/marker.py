@@ -22,7 +22,7 @@ from PyQt5.QtCore import (
     pyqtSignal,
 )
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton
+from PyQt5.QtWidgets import QDialog, QWidget, QMainWindow, QMessageBox, QPushButton
 
 
 from examviewwindow import ExamViewWindow
@@ -236,9 +236,20 @@ class ProxyModel(QSortFilterProxyModel):
 ##########################
 
 
-class MarkerClient(QDialog):
+# TODO: should be a QMainWindow but at any rate not a Dialog
+# TODO: should this be parented by the QApplication?
+class MarkerClient(QWidget):
+    my_shutdown_signal = pyqtSignal(int)
+
     def __init__(
-        self, userName, password, server, message_port, web_port, pageGroup, version
+        self,
+        userName,
+        password,
+        server,
+        message_port,
+        web_port,
+        pageGroup,
+        version,
     ):
         # Init the client with username, password, server and port data,
         # and which group/version is being marked.
@@ -747,8 +758,9 @@ class MarkerClient(QDialog):
         self.DNF()
         # Then send a 'user closing' message - server will revoke
         # authentication token.
-        msg = messenger.SRMsg(["UCL", self.userName, self.token])
-        # then close
+        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        assert msg == "ACK"
+        self.my_shutdown_signal.emit(2)
         self.close()
 
     def DNF(self):

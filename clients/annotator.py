@@ -292,6 +292,7 @@ class Annotator(QDialog):
             "i": "Cross/QMark/Tick",
             "u": "Previous Comment",
             "y": "Pen/DoubleArrow/Highlighter",
+            "f1": "View whole paper (may be fn-f1 depending on your system)",
             "?": "Key Help",
         }
         # build KeyPress shortcuts dialog
