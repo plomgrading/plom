@@ -70,11 +70,37 @@ def writeExamsScanned():
     es.close()
 
 
-def adrHackOrient(fname, qrs):
-    # 21
-    # 34
-    # build [NE,NW,SW,SE] = [1,2,3,4] or [3,4,1,2]
-    upright = [1, 2, 3, 4]
+def reOrientPage(fname, qrs):
+    """Re-orient this page if needed
+
+    If a page is upright, a subset of the QR codes 1 through 4 are on
+    the corners:
+
+        2---1   NW---NE
+        |   |    |   |
+        |   |    |   |
+        3---4   SW---SE
+
+    We use this known configuration to recognize rotations.  Either 1
+    or 2 is missing (because of the staple area) and we could be
+    missing others.
+
+    Assuming reflection combined with missing QR codes is an unlikely
+    scenario, we can orient even if we know only one corner.
+
+    Args:
+       fname (str): the png filename of this page.  Either its the FQN
+                    or we are currently in the right directory.
+       qrs (dict): the QR codes of the four corners.  Some or all may
+                   be missing.
+
+    Returns:
+       bool: True if the image was already upright or has now been
+             made upright.  False if the image is in unknown
+             orientation or we have contradictory information.
+
+    """
+    upright = [1, 2, 3, 4]  # [NE, NW, SW, SE]
     flipped = [3, 4, 1, 2]
     # fake a default_dict
     g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else -1
@@ -106,30 +132,6 @@ def adrHackOrient(fname, qrs):
     else:
         # either not enough info or conflicting info
         return False
-
-
-def reOrientPage(fname, qrs):
-    """Re-orient this page if needed or fail
-
-    TODO: would two be good enough?  Just one?
-    """
-    # fake a default_dict
-    g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else -1
-    if g("NE") == 1 and g("SW") == 3 and g("SE") == 4:
-        pass
-    elif g("NW") == 2 and g("SW") == 3 and g("SE") == 4:
-        pass
-    elif g("NE") == 3 and g("NW") == 4 and (g("SW") == 1 or g("SE") == 2):
-        print(" .  {}: reorienting: 180 degree rotation".format(fname))
-        subprocess.run(
-            ["mogrify", "-quiet", "-rotate", "180", fname],
-            stderr=subprocess.STDOUT,
-            shell=False,
-            check=True,
-        )
-    else:
-        return False
-    return True
 
 
 def checkQRsValid():
@@ -202,8 +204,7 @@ def checkQRsValid():
                 problemFlag = True
 
         if not problemFlag:
-            # orientationKnown = reOrientPage(fname[:-3], qrs)
-            orientationKnown = adrHackOrient(fname[:-3], qrs)
+            orientationKnown = reOrientPage(fname[:-3], qrs)
             # TODO: future improvement: could keep going, its possible
             # we can go on to find the (t,p,v) in many cases.
             if not orientationKnown:
