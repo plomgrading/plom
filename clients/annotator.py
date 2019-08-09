@@ -898,10 +898,12 @@ class Annotator(QDialog):
             json.dump(plomDict, fh)
 
     def unpickleIt(self, plomDict):
+        self.view.setHidden(True)
         self.view.scene.unpickleSceneItems(plomDict["sceneItems"])
         # if markstyle is "Total", then click appropriate button
         if self.markStyle == 1:
             self.markHandler.unpickleTotal(plomDict["currentMark"])
+        self.view.setHidden(False)
 
     def setZoomComboBox(self):
         self.ui.zoomCB.addItem("User")

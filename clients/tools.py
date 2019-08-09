@@ -1395,14 +1395,16 @@ class CommandText(QUndoCommand):
         super(CommandText, self).__init__()
         self.scene = scene
         self.blurb = blurb
+        # if the textitem has contents already then we
+        # have to do some cleanup - give it focus and then
+        # latex-it if needed and then drop focus
+        # this correctly sets the text interaction flags
         if len(self.blurb.toPlainText()) > 0:
-            # quickly grab focus and then clear focus.
-            # needs slight delay.
-            # this correctly sets the text interaction flags
             QTimer.singleShot(1, self.blurb.setFocus)
-            QTimer.singleShot(5, self.blurb.clearFocus)
-            # then convert tex -> latex if required
-            QTimer.singleShot(10, lambda: self.blurb.textToPng(checkCache))
+            # convert tex -> latex if required
+            QTimer.singleShot(5, lambda: self.blurb.textToPng(checkCache))
+            # And now clear focus
+            QTimer.singleShot(10, self.blurb.clearFocus)
         self.setText("Text")
 
     def redo(self):
@@ -1472,7 +1474,8 @@ class TextItem(QGraphicsTextItem):
         if self.contents[:4].upper() == "TEX:":
             texIt = self.contents[4:]
         else:
-            texIt = self.contents
+            # is not latex so we don't have to PNG-it
+            return
 
         if self.parent.latexAFragment(texIt, checkCache):
             self.setPlainText("")
