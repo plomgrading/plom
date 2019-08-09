@@ -17,7 +17,13 @@ import sys
 # this allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
-from resources.tpv_utils import parseTPV, isValidTPV, hasCurrentAPI, getCode, getPosition
+from resources.tpv_utils import (
+    parseTPV,
+    isValidTPV,
+    hasCurrentAPI,
+    getCode,
+    getPosition,
+)
 
 
 def decodeQRs():
@@ -64,6 +70,44 @@ def writeExamsScanned():
     es.close()
 
 
+def adrHackOrient(fname, qrs):
+    # 21
+    # 34
+    # build [NE,NW,SW,SE] = [1,2,3,4] or [3,4,1,2]
+    upright = [1, 2, 3, 4]
+    flipped = [3, 4, 1, 2]
+    # fake a default_dict
+    g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else 0
+    current = [g("NE"), g("NW"), g("SW"), g("SE")]
+    # now compare as much as possible of current against upright/flipped ignoring 0s
+    upFlag = True
+    flipFlag = True
+    for k in range(4):
+        if current[k] == 0:
+            continue
+        if upright[k] == current[k]:
+            flipFlag = False
+        if flipped[k] == current[k]:
+            upFlag = False
+
+    if upFlag and not flipFlag:
+        # is upright, no rotation needed
+        return True
+    if flipFlag and not upFlag:
+        # is flipped, so rotate 180
+        print(" .  {}: reorienting: 180 degree rotation".format(fname))
+        subprocess.run(
+            ["mogrify", "-quiet", "-rotate", "180", fname],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
+        return True
+    else:
+        # either not enough info or conflicting info
+        return False
+
+
 def reOrientPage(fname, qrs):
     """Re-orient this page if needed or fail
 
@@ -71,14 +115,18 @@ def reOrientPage(fname, qrs):
     """
     # fake a default_dict
     g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else -1
-    if g('NE') == 1 and g('SW') == 3 and g('SE') == 4:
+    if g("NE") == 1 and g("SW") == 3 and g("SE") == 4:
         pass
-    elif g('NW') == 2 and g('SW') == 3 and g('SE') == 4:
+    elif g("NW") == 2 and g("SW") == 3 and g("SE") == 4:
         pass
-    elif g('NE') == 3 and g('NW') == 4 and (g('SW') == 1 or g('SE') == 2):
+    elif g("NE") == 3 and g("NW") == 4 and (g("SW") == 1 or g("SE") == 2):
         print(" .  {}: reorienting: 180 degree rotation".format(fname))
-        subprocess.run(["mogrify", "-quiet", "-rotate", "180", fname],
-                    stderr=subprocess.STDOUT, shell=False, check=True)
+        subprocess.run(
+            ["mogrify", "-quiet", "-rotate", "180", fname],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
     else:
         return False
     return True
@@ -103,7 +151,6 @@ def checkQRsValid():
 
         problemFlag = False
         warnFlag = False
-
 
         # Flag papers that have too many QR codes in some corner
         # TODO: untested?
@@ -133,8 +180,12 @@ def checkQRsValid():
                     msg = "TPV '{}' does not match API.  Legacy issue?".format(tpvc)
                     problemFlag = True
                 elif str(getCode(tpvc)) != str(spec.MagicCode):
-                    msg = "Magic code '{0}' did not match spec '{1}'.  " \
-                          "Did you scan the wrong test?".format(getCode(tpvc), spec.MagicCode)
+                    msg = (
+                        "Magic code '{0}' did not match spec '{1}'.  "
+                        "Did you scan the wrong test?".format(
+                            getCode(tpvc), spec.MagicCode
+                        )
+                    )
                     problemFlag = True
 
         # Make sure all (t,p,v) on this page are the same
@@ -151,11 +202,12 @@ def checkQRsValid():
                 problemFlag = True
 
         if not problemFlag:
-            orientationKnown = reOrientPage(fname[:-3], qrs)
+            # orientationKnown = reOrientPage(fname[:-3], qrs)
+            orientationKnown = adrHackOrient(fname[:-3], qrs)
             # TODO: future improvement: could keep going, its possible
             # we can go on to find the (t,p,v) in many cases.
             if not orientationKnown:
-                msg = 'Orientation not known'
+                msg = "Orientation not known"
                 problemFlag = True
 
         # Decide in which cases we can be confident we know this papers (t,p,v)
@@ -174,7 +226,7 @@ def checkQRsValid():
             elif len(tgvs) == 3:
                 # full consensus
                 tgv = tgvs[0]
-            else:  #len > 3, shouldn't be possible now
+            else:  # len > 3, shouldn't be possible now
                 msg = "Too many QR codes on the page!"
                 problemFlag = True
 
@@ -182,13 +234,15 @@ def checkQRsValid():
             # we have a valid TGVC and the code matches.
             if warnFlag:
                 print("[W] {0}: {1}".format(fname, msg))
-                print("   (high occurences of these warnings may mean printer/scanner problems)")
+                print(
+                    "   (high occurences of these warnings may mean printer/scanner problems)"
+                )
             # store the tpv in examsScannedNow
             examsScannedNow[tn][pn] = (vn, fname[:-3])
             # later we check that list against those produced during build
 
         # TODO:
-        #if orientationKnown is False:
+        # if orientationKnown is False:
         #    # set this after recording the tpv
         #    problemFlag = True
         #    msg = 'Orientation not known'
@@ -305,7 +359,7 @@ def addCurrentScansToExamsScanned():
     os.chdir("../")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     examsProduced = {}
     examsScanned = defaultdict(dict)
     examsScannedNow = defaultdict(dict)
