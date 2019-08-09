@@ -363,9 +363,7 @@ class MarkerClient(QWidget):
         hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(
-            ["AUTH", self.userName, self.password, PLOM_API_Version]
-        )
+        msg = messenger.SRMsg(["AUTH", self.userName, self.password, PLOM_API_Version])
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":

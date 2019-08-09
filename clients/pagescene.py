@@ -492,7 +492,7 @@ class PageScene(QGraphicsScene):
         self.parent.setFocus(Qt.TabFocusReason)
 
     def latexAFragment(self, txt, checkCache=False):
-        return self.parent.latexAFragment(txt, checkCache)
+        return self.parent.latexAFragment(txt.strip(), checkCache)
 
     # A fix (hopefully) for misread touchpad events on mac
     def event(self, event):
@@ -548,6 +548,9 @@ class PageScene(QGraphicsScene):
         for X in lst:
             functionName = "unpickle{}".format(X[0])
             getattr(self, functionName, self.unpickleError)(X[1:])
+        # now make sure focus is cleared from every item
+        for X in self.items():
+            X.setFocus(False)
 
     def unpickleError(self, X):
         print("Unpickle error - What is {}".format(X))
@@ -595,11 +598,11 @@ class PageScene(QGraphicsScene):
             self.blurb = TextItem(self, self.fontSize)
             self.blurb.setPlainText(X[0])
             self.blurb.contents = X[0]
-            # latex it if needed.
-            if self.blurb.contents[:4].upper() == "TEX:":
-                self.blurb.textToPng()
             self.blurb.setPos(QPointF(X[1], X[2]))
-            self.undoStack.push(CommandText(self, self.blurb, self.ink))
+            # knows to latex it if needed.
+            self.undoStack.push(
+                CommandText(self, self.blurb, self.ink, checkCache=True)
+            )
 
     def unpickleDelta(self, X):
         if len(X) == 3:
@@ -612,10 +615,8 @@ class PageScene(QGraphicsScene):
             self.blurb = TextItem(self, self.fontSize)
             self.blurb.setPlainText(X[3])
             self.blurb.contents = X[3]
-            # latex it if needed.
-            if self.blurb.contents[:4].upper() == "TEX:":
-                self.blurb.textToPng()
             self.blurb.setPos(QPointF(X[0], X[1]))
+            # knows to latex it if needed.
             self.undoStack.push(
                 CommandGDT(self, QPointF(X[0], X[1]), X[2], self.blurb, self.fontSize)
             )
