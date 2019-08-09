@@ -4,4 +4,5 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
 
-_Release_Version_ = "0.1.0+"
+__version__ = "0.1.0+"
+PLOM_API_Version = "2"

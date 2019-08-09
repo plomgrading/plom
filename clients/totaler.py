@@ -7,6 +7,7 @@ from collections import defaultdict
 import csv
 import json
 import os
+import sys
 import tempfile
 from PyQt5.QtCore import (
     Qt,
@@ -23,6 +24,9 @@ from examviewwindow import ExamViewWindow
 import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_totaler import Ui_TotalWindow
+
+sys.path.append("..")  # this allows us to import from ../resources
+from resources.version import PLOM_API_Version
 
 # set up variables to store paths for marker, id clients and total
 tempDirectory = tempfile.TemporaryDirectory()
@@ -211,11 +215,13 @@ class TotalClient(QWidget):
         the server (since password hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(["AUTH", self.userName, self.password])
+        msg = messenger.SRMsg(
+            ["AUTH", self.userName, self.password, PLOM_API_Version]
+        )
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":
-            ErrorMessage("Password problem")
+            ErrorMessage(msg[1])
             quit()
         else:
             self.token = msg[1]

@@ -16,7 +16,8 @@ from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
 
 sys.path.append("..")  # this allows us to import from ../resources
-from resources import version
+from resources.version import __version__
+from resources.version import PLOM_API_Version
 
 # set up variables to store paths for marker and id clients
 global tempDirectory, directoryPath
@@ -53,17 +54,17 @@ def writeLastTime():
 
 class Chooser(QDialog):
     def __init__(self, parent):
+        self.APIVersion = PLOM_API_Version
         super(Chooser, self).__init__()
         self.parent = parent
+        print("PLOM Client {} (communicates with api {})".format(__version__, self.APIVersion))
         # runit = either marker or identifier clients.
         self.runIt = None
 
         self.ui = Ui_Chooser()
         self.ui.setupUi(self)
         # Append version to window title
-        self.setWindowTitle(
-            "{} {}".format(self.windowTitle(), version._Release_Version_)
-        )
+        self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         # load in the login etc from last time (if exists)
         self.setLastTime()
         # connect buttons to functions.
@@ -187,6 +188,11 @@ def _exception_hook(exctype, value, traceback):
 
 
 sys.excepthook = _exception_hook
+
+
+class PLOM(QApplication):
+    def __init__(self, argv):
+        super(PLOM, self).__init__(argv)
 
 
 app = QApplication(sys.argv)
