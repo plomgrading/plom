@@ -607,9 +607,9 @@ class CommandDelta(QUndoCommand):
     def __init__(self, scene, pt, delta, fontsize):
         super(CommandDelta, self).__init__()
         self.scene = scene
-        self.delta = delta
         self.pt = pt
-        self.delItem = DeltaItem(pt, self.delta, fontsize)
+        self.delta = delta
+        self.delItem = DeltaItem(self.pt, self.delta, fontsize)
         self.setText("Delta")
 
     def redo(self):
@@ -648,11 +648,9 @@ class DeltaItem(QGraphicsTextItem):
         # Has an animated border for undo/redo.
         self.anim = QPropertyAnimation(self, b"thickness")
         # centre under the mouse-click.
+        self.setPos(pt)
         cr = self.boundingRect()
-        self.offset = QPointF(
-            -(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2
-        )
-        self.setPos(pt + self.offset)
+        self.moveBy(-(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2)
 
     def paint(self, painter, option, widget):
         if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
@@ -1393,10 +1391,18 @@ class TickItem(QGraphicsPathItem):
 
 # Text
 class CommandText(QUndoCommand):
-    def __init__(self, scene, blurb, ink):
+    def __init__(self, scene, blurb, ink, checkCache=False):
         super(CommandText, self).__init__()
         self.scene = scene
         self.blurb = blurb
+        if len(self.blurb.toPlainText()) > 0:
+            # quickly grab focus and then clear focus.
+            # needs slight delay.
+            # this correctly sets the text interaction flags
+            QTimer.singleShot(1, self.blurb.setFocus)
+            QTimer.singleShot(5, self.blurb.clearFocus)
+            # then convert tex -> latex if required
+            QTimer.singleShot(10, lambda: self.blurb.textToPng(checkCache))
         self.setText("Text")
 
     def redo(self):
@@ -1441,13 +1447,6 @@ class TextItem(QGraphicsTextItem):
         else:
             return self.contents
 
-    def mouseDoubleClickEvent(self, event):
-        # On double-click start the text-editor
-        self.pngToText()
-        self.setTextInteractionFlags(Qt.TextEditorInteraction)
-        self.setFocus()
-        super(TextItem, self).mouseDoubleClickEvent(event)
-
     def focusInEvent(self, event):
         if self.state == "PNG":
             self.pngToText()
@@ -1468,14 +1467,14 @@ class TextItem(QGraphicsTextItem):
             self.contents = self.toPlainText()
         super(TextItem, self).focusOutEvent(event)
 
-    def textToPng(self):
+    def textToPng(self, checkCache=False):
         self.contents = self.toPlainText()
         if self.contents[:4].upper() == "TEX:":
             texIt = self.contents[4:]
         else:
             texIt = self.contents
 
-        if self.parent.latexAFragment(texIt):
+        if self.parent.latexAFragment(texIt, checkCache):
             self.setPlainText("")
             tc = self.textCursor()
             qi = QImage("frag.png")
@@ -1573,23 +1572,25 @@ class CommandGDT(QUndoCommand):
     def __init__(self, scene, pt, delta, blurb, fontsize):
         super(CommandGDT, self).__init__()
         self.scene = scene
+        self.pt = pt
         self.delta = delta
         self.blurb = blurb
-        self.gdt = GroupDTItem(pt, self.delta, self.blurb, fontsize)
+        self.gdt = GroupDTItem(self.pt, self.delta, self.blurb, fontsize)
         self.setText("GroupDeltaText")
 
     def redo(self):
+        self.scene.addItem(self.gdt)
         self.gdt.blurb.flash_redo()
         self.gdt.di.flash_redo()
-        self.scene.addItem(self.gdt)
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
         self.scene.markChangedSignal.emit(int(self.delta), 1)
 
     def undo(self):
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
         self.gdt.blurb.flash_undo()
         self.gdt.di.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
+
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark decreased by delta
         self.scene.markChangedSignal.emit(-int(self.delta), -1)
@@ -1599,17 +1600,24 @@ class GroupDTItem(QGraphicsItemGroup):
     def __init__(self, pt, delta, blurb, fontsize):
         super(GroupDTItem, self).__init__()
         self.pt = pt
-        self.di = DeltaItem(pt, delta, fontsize)  # positioned so centre under click
+        self.di = DeltaItem(
+            self.pt, delta, fontsize
+        )  # positioned so centre under click
         self.blurb = blurb  # is a textitem already
+        self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+        # check if needs tex->latex
+        self.blurb.textToPng(checkCache=True)
+
         # set up animators for delete
         self.animator = [self.di, self.blurb]
         self.animateFlag = False
+        self.thick = 1
 
         # move blurb so that its top-left corner is next to top-right corner of delta.
         cr = self.di.boundingRect()
-        self.blurb.moveBy(
-            (cr.right() + cr.left()) / 2 + 5, -(cr.top() + cr.bottom()) / 2
-        )
+        self.blurb.setPos(self.di.pos())
+        self.blurb.moveBy(cr.width() + 5, 0)
+
         self.addToGroup(self.di)
         self.addToGroup(self.blurb)
         self.setFlag(QGraphicsItem.ItemIsMovable)
@@ -1620,13 +1628,6 @@ class GroupDTItem(QGraphicsItemGroup):
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsItemGroup.itemChange(self, change, value)
-
-    def paint(self, painter, option, widget):
-        # paint a bounding rectangle for undo/redo highlighting
-        painter.setPen(QPen(Qt.red, 0.5, style=Qt.DotLine))
-        painter.drawRoundedRect(option.rect, 10, 10)
-        # paint the normal item with the default 'paint' method
-        super(GroupDTItem, self).paint(painter, option, widget)
 
     def pickle(self):
         return [
@@ -1647,7 +1648,115 @@ class GroupDTItem(QGraphicsItemGroup):
         # paint the normal item with the default 'paint' method
         else:
             # paint a bounding rectangle for undo/redo highlighting
-            painter.setPen(QPen(QColor(255, 0, 0), 1, style=Qt.DotLine))
+            painter.setPen(QPen(QColor(255, 0, 0), self.thick, style=Qt.DotLine))
             painter.drawRoundedRect(option.rect, 10, 10)
             pass
         super(GroupDTItem, self).paint(painter, option, widget)
+
+
+class GhostComment(QGraphicsItemGroup):
+    def __init__(self, dlt, txt, fontsize):
+        super(GhostComment, self).__init__()
+        self.di = GhostDelta(dlt, fontsize)
+        self.blurb = GhostText(txt, fontsize)
+        self.changeComment(dlt, txt)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+
+    def tweakPositions(self, dlt):
+        pt = self.pos()
+        self.blurb.setPos(pt)
+        self.di.setPos(pt)
+        if int(dlt) == 0:
+            cr = self.blurb.boundingRect()
+            self.blurb.moveBy(0, -(cr.top() + cr.bottom()) / 2)
+        else:
+            cr = self.di.boundingRect()
+            self.di.moveBy(-(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2)
+            self.blurb.moveBy(
+                (cr.right() + cr.left()) / 2 + 5, -(cr.top() + cr.bottom()) / 2
+            )
+
+    def changeComment(self, dlt, txt):
+        # need to force a bounding-rect update by removing an item and adding it back
+        self.removeFromGroup(self.di)
+        self.removeFromGroup(self.blurb)
+        # change things
+        self.di.changeDelta(dlt)
+        self.blurb.changeText(txt)
+        # move to correct positions
+        self.tweakPositions(dlt)
+        self.addToGroup(self.blurb)
+        if int(dlt) == 0:
+            self.di.setVisible(False)
+        else:
+            self.di.setVisible(True)
+            self.addToGroup(self.di)
+
+    def paint(self, painter, option, widget):
+        # paint a bounding rectangle for undo/redo highlighting
+        painter.setPen(QPen(Qt.blue, 0.5, style=Qt.DotLine))
+        painter.drawRoundedRect(option.rect, 10, 10)
+        # paint the normal item with the default 'paint' method
+        super(GhostComment, self).paint(painter, option, widget)
+
+
+class GhostDelta(QGraphicsTextItem):
+    # Similar to textitem
+    def __init__(self, delta, fontsize=10):
+        super(GhostDelta, self).__init__()
+        self.delta = int(delta)
+        self.setDefaultTextColor(Qt.blue)
+        # If positive mark then starts with a "+"-sign
+        if self.delta > 0:
+            self.setPlainText(" +{} ".format(self.delta))
+        else:
+            # else starts with a "-"-sign (unless zero).
+            self.setPlainText(" {} ".format(self.delta))
+        self.font = QFont("Helvetica")
+        # Slightly larger font than regular textitem.
+        self.font.setPointSize(min(30, fontsize * 3))
+        self.setFont(self.font)
+        # Is not editable.
+        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+
+    def changeDelta(self, dlt):
+        self.delta = int(dlt)
+        if self.delta > 0:
+            self.setPlainText(" +{} ".format(self.delta))
+        else:
+            # else starts with a "-"-sign (unless zero).
+            self.setPlainText(" {} ".format(self.delta))
+
+    def paint(self, painter, option, widget):
+        # paint the background
+        painter.setPen(QPen(Qt.blue, 1))
+        painter.drawRoundedRect(option.rect, 10, 10)
+        # paint the normal TextItem with the default 'paint' method
+        super(GhostDelta, self).paint(painter, option, widget)
+
+
+class GhostText(QGraphicsTextItem):
+    # Textitem is a qgraphicstextitem, has to handle
+    # textinput and double-click to start editing etc.
+    # Shift-return ends the editor
+    def __init__(self, txt, fontsize=10):
+        super(GhostText, self).__init__()
+        self.setDefaultTextColor(Qt.blue)
+        self.setPlainText(txt)
+        self.font = QFont("Helvetica")
+        self.font.setPointSizeF(min(24, fontsize * 2.5))
+        self.setFont(self.font)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        # Set it as editably with the text-editor
+        self.setTextInteractionFlags(Qt.NoTextInteraction)
+
+    def changeText(self, txt):
+        self.setPlainText(txt)
+        if self.scene() is not None and txt[:4].upper() == "TEX:":
+            texIt = "\\color{blue}\n" + txt[4:]  # make color blue for ghost rendering
+            if self.scene().latexAFragment(texIt, checkCache=True):
+                self.setPlainText("")
+                tc = self.textCursor()
+                qi = QImage("frag.png")
+                tc.insertImage(qi)

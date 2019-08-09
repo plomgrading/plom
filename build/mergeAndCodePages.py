@@ -8,17 +8,24 @@ import fitz
 import pyqrcode
 import tempfile
 
+# this allows us to import from ../resources
+sys.path.append("..")
+from resources.tpv_utils import encodeTPV
+
+
 # Take command line parameters
 # 1 = name
-# 2 = length (ie number of pages)
-# 3 = number of versions
-# 4 = the test test number
-# 5 = list of the version number for each page
+# 2 = code
+# 3 = length (ie number of pages)
+# 4 = number of versions
+# 5 = the test test number
+# 6 = list of the version number for each page
 name = sys.argv[1]
-length = int(sys.argv[2])
-versions = int(sys.argv[3])
-test = sys.argv[4].zfill(4)
-pageVersions = eval(sys.argv[5])
+code = sys.argv[2]
+length = int(sys.argv[3])
+versions = int(sys.argv[4])
+test = int(sys.argv[5])
+pageVersions = eval(sys.argv[6])
 
 # Command line parameters to imagemagick's mogrify
 # puts a frame around the image.
@@ -59,44 +66,37 @@ with tempfile.TemporaryDirectory() as tmpDir:
     nameFile = os.path.join(tmpDir, "name.png")
     dnw0File = os.path.join(tmpDir, "dnw0.png")
     dnw1File = os.path.join(tmpDir, "dnw1.png")
-    # create the testname QR
-    nameQR = pyqrcode.create("N.{}".format(name), error="H")
-    # write it to png
-    nameQR.png(nameFile, scale=4)
-    # put a nice border around it.
-    os.system("mogrify {} {}".format(mogParams, nameFile))
     # make a little grey triangle with the test name
     # put this in corner where staple is
     cmd = (
-        'convert -size 116x58 xc:white -draw "stroke black fill grey '
-        "path 'M 57,0  L 0,57  L 114,57 L 57,0 Z'\"  -gravity south "
-        "-annotate +0+4 '{}' -rotate -45 -trim {}".format(name, dnw0File)
+        'convert -pointsize 18 -antialias -size 232x116 xc:white -draw "stroke black fill grey '
+        "path 'M 114,0  L 0,114  L 228,114 L 114,0 Z'\"  -gravity south "
+        "-annotate +0+8 '{}' -rotate -45 -trim {}".format(name, dnw0File)
     )
     os.system(cmd)
     # and one for the other corner (back of page) in other orientation
     cmd = (
-        'convert -size 116x58 xc:white -draw "stroke black fill grey '
-        "path 'M 57,0  L 0,57  L 114,57 L 57,0 Z'\"  -gravity south "
-        "-annotate +0+4 '{}' -rotate +45 -trim {}".format(name, dnw1File)
+        'convert -pointsize 18 -size 232x116 xc:white -draw "stroke black fill grey '
+        "path 'M 114,0  L 0,114  L 228,114 L 114,0 Z'\"  -gravity south "
+        "-annotate +0+8 '{}' -rotate +45 -trim {}".format(name, dnw1File)
     )
     os.system(cmd)
 
     # create QR codes and other stamps for each test/page/version
-    pageQRs = {}
-    pageFile = {}
+    qrFile = {}
     tpFile = {}
     for p in range(1, length + 1):
-        # the TPV code for each test/page/version
-        tpv = "t{}p{}v{}".format(
-            str(test).zfill(4), str(p).zfill(2), pageVersions[str(p)]
-        )
-        # the corresponing QR code
-        pageQRs[p] = pyqrcode.create(tpv, error="H")
-        # save it in the associated file
-        pageFile[p] = os.path.join(tmpDir, "page{}.png".format(p))
-        pageQRs[p].png(pageFile[p], scale=4)
-        # put a border around it
-        os.system("mogrify {} {}".format(mogParams, pageFile[p]))
+        # 4 qr codes for the corners (one will be omitted for the staple)
+        qrFile[p] = {}
+        for i in range(1, 5):
+            tpv = encodeTPV(test, p, pageVersions[str(p)], i, code)
+            qr = pyqrcode.create(tpv, error="H")
+            # save it in the associated file
+            qrFile[p][i] = os.path.join(tmpDir, "page{}_{}.png".format(p, i))
+            qr.png(qrFile[p][i], scale=4)
+            # put a border around it
+            os.system("mogrify {} {}".format(mogParams, qrFile[p][i]))
+
         # a file for the test/page stamp in top-centre of page
         tpFile[p] = os.path.join(
             tmpDir, "t{}p{}.png".format(str(test).zfill(4), str(p).zfill(2))
@@ -109,8 +109,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
         )
     # After creating all of the QRcodes etc we can put them onto
     # the actual pdf pages as pixmaps using pymupdf
-    # read the test-name QR and DNW triangles in to pymupdf
-    qrName = fitz.Pixmap(nameFile)
+    # read the DNW triangles in to pymupdf
     dnw0 = fitz.Pixmap(dnw0File)
     dnw1 = fitz.Pixmap(dnw1File)
     for p in range(length):
@@ -118,24 +117,33 @@ with tempfile.TemporaryDirectory() as tmpDir:
         testnumber = fitz.Pixmap(tpFile[p + 1])
         # put it at centre top each page
         exam[p].insertImage(rTC, pixmap=testnumber, overlay=True, keep_proportion=False)
-        # grab the tpv QRcode for current page
-        qrPage = fitz.Pixmap(pageFile[p + 1])
+        # grab the tpv QRcodes for current page
+        qr = {}
+        for i in range(1, 5):
+            qr[i] = fitz.Pixmap(qrFile[p + 1][i])
         if p % 2 == 0:
             # if even page then stamp DNW near staple
             exam[p].insertImage(rDNW0, pixmap=dnw0, overlay=True)
-            # put QR-codes on east-side
-            exam[p].insertImage(rNE, pixmap=qrPage, overlay=True)
-            exam[p].insertImage(rSE, pixmap=qrPage, overlay=True)
-            # put test name on SW corner
-            exam[p].insertImage(rSW, pixmap=qrName, overlay=True)
+            exam[p].insertImage(rNE, pixmap=qr[1], overlay=True)
+            exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
+            exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
         else:
             # odd page - put DNW stamp near staple
             exam[p].insertImage(rDNW1, pixmap=dnw1, overlay=True)
-            # put QR-codes on west-side
-            exam[p].insertImage(rNW, pixmap=qrPage, overlay=True)
-            exam[p].insertImage(rSW, pixmap=qrPage, overlay=True)
-            # put test-name on SE corner
-            exam[p].insertImage(rSE, pixmap=qrName, overlay=True)
+            exam[p].insertImage(rNW, pixmap=qr[2], overlay=True)
+            exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
+            exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
 
-# Finally save the resulint pdf.
-exam.save("examsToPrint/exam_{}.pdf".format(str(test).zfill(4)))
+# Finally save the resulting pdf.
+# Add the deflate option to compress the embedded pngs
+# see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
+# also do garbage collection to remove duplications within pdf
+# try to clean up as much as possible and
+# then linearise - hopefully makes printers happier
+exam.save(
+    "examsToPrint/exam_{}.pdf".format(str(test).zfill(4)),
+    garbage=4,
+    deflate=True,
+    clean=True,
+    linear=True,
+)

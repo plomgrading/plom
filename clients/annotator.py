@@ -292,6 +292,7 @@ class Annotator(QDialog):
             "i": "Cross/QMark/Tick",
             "u": "Previous Comment",
             "y": "Pen/DoubleArrow/Highlighter",
+            "f1": "View whole paper (may be fn-f1 depending on your system)",
             "?": "Key Help",
         }
         # build KeyPress shortcuts dialog
@@ -601,7 +602,7 @@ class Annotator(QDialog):
         then pasted into place.
         """
         # Set the model to text and change cursor.
-        self.setMode("text", QCursor(Qt.IBeamCursor))
+        self.setMode("comment", QCursor(Qt.IBeamCursor))
         # Grab the delta from the arguments
         # check if delta is "." or an int. if "." then just text.
         if dlt_txt[0] == ".":
@@ -614,23 +615,23 @@ class Annotator(QDialog):
         # will not push mark past maximium possible
         if self.markStyle == 2:  # mark up - disable negative
             if delta < 0 or delta + self.score > self.maxMark:
-                self.view.makeComment(".", dlt_txt[1])
                 self.view.scene.legalDelta = False
+                self.view.makeComment(".", dlt_txt[1])
                 return
             else:
-                self.view.makeComment(dlt_txt[0], dlt_txt[1])
                 self.view.scene.legalDelta = True
+                self.view.makeComment(dlt_txt[0], dlt_txt[1])
                 return
         # If marking down, then keep delta if negative, and if applying it
         # doesn't push mark down past zero.
         elif self.markStyle == 3:
             if delta > 0 or delta + self.score < 0:
-                self.view.makeComment(".", dlt_txt[1])
                 self.view.scene.legalDelta = False
+                self.view.makeComment(".", dlt_txt[1])
                 return
             else:
-                self.view.makeComment(dlt_txt[0], dlt_txt[1])
                 self.view.scene.legalDelta = True
+                self.view.makeComment(dlt_txt[0], dlt_txt[1])
                 return
         else:
             # Remaining possibility = mark total - no restrictions
@@ -729,59 +730,55 @@ class Annotator(QDialog):
         self.closeEvent(False)
 
     def loadWindowSettings(self):
-        if self.parent.annotatorSettings.value("geometry") is not None:
-            self.restoreGeometry(self.parent.annotatorSettings.value("geometry"))
-        if self.parent.annotatorSettings.value("markWarnings") is not None:
-            self.markWarn = self.parent.annotatorSettings.value("markWarnings")
-        if self.parent.annotatorSettings.value("commentWarnings") is not None:
-            self.commentWarn = self.parent.annotatorSettings.value("commentWarnings")
-        if self.parent.annotatorSettings.value("tool") is not None:
-            if self.parent.annotatorSettings.value("tool") == "delta":
-                dlt = self.parent.annotatorSettings.value("delta")
+        if self.parent.annotatorSettings["geometry"] is not None:
+            self.restoreGeometry(self.parent.annotatorSettings["geometry"])
+        if self.parent.annotatorSettings["markWarnings"] is not None:
+            self.markWarn = self.parent.annotatorSettings["markWarnings"]
+        if self.parent.annotatorSettings["commentWarnings"] is not None:
+            self.commentWarn = self.parent.annotatorSettings["commentWarnings"]
+        if self.parent.annotatorSettings["tool"] is not None:
+            if self.parent.annotatorSettings["tool"] == "delta":
+                dlt = self.parent.annotatorSettings["delta"]
                 self.loadModeFromBefore("delta", dlt)
-            elif self.parent.annotatorSettings.value("tool") == "comment":
-                cmt = self.parent.annotatorSettings.value("comment")
+            elif self.parent.annotatorSettings["tool"] == "comment":
+                cmt = self.parent.annotatorSettings["comment"]
                 self.loadModeFromBefore("comment", cmt)
             else:
-                self.loadModeFromBefore(self.parent.annotatorSettings.value("tool"))
+                self.loadModeFromBefore(self.parent.annotatorSettings["tool"])
 
-        if self.parent.annotatorSettings.value("viewRectangle") is not None:
+        if self.parent.annotatorSettings["viewRectangle"] is not None:
             # put in slight delay so that any resize events are done.
             QTimer.singleShot(
                 150,
                 lambda: self.view.initialZoom(
-                    self.parent.annotatorSettings.value("viewRectangle")
+                    self.parent.annotatorSettings["viewRectangle"]
                 ),
             )
         else:
             QTimer.singleShot(150, lambda: self.view.initialZoom(None))
         # there is some redundancy between the above and the below.
-        if self.parent.annotatorSettings.value("zoomState") is not None:
+        if self.parent.annotatorSettings["zoomState"] is not None:
             # put in slight delay so that any resize events are done.
             QTimer.singleShot(
                 200,
                 lambda: self.ui.zoomCB.setCurrentIndex(
-                    self.parent.annotatorSettings.value("zoomState")
+                    self.parent.annotatorSettings["zoomState"]
                 ),
             )
         else:
             QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
 
     def saveWindowSettings(self):
-        self.parent.annotatorSettings.setValue("geometry", self.saveGeometry())
-        self.parent.annotatorSettings.setValue("markWarnings", self.markWarn)
-        self.parent.annotatorSettings.setValue("commentWarnings", self.commentWarn)
-        self.parent.annotatorSettings.setValue("viewRectangle", self.view.vrect)
-        self.parent.annotatorSettings.setValue(
-            "zoomState", self.ui.zoomCB.currentIndex()
-        )
-        self.parent.annotatorSettings.setValue("tool", self.view.scene.mode)
+        self.parent.annotatorSettings["geometry"] = self.saveGeometry()
+        self.parent.annotatorSettings["markWarnings"] = self.markWarn
+        self.parent.annotatorSettings["commentWarnings"] = self.commentWarn
+        self.parent.annotatorSettings["viewRectangle"] = self.view.vrect
+        self.parent.annotatorSettings["zoomState"] = self.ui.zoomCB.currentIndex()
+        self.parent.annotatorSettings["tool"] = self.view.scene.mode
         if self.view.scene.mode == "delta":
-            self.parent.annotatorSettings.setValue("delta", self.view.scene.markDelta)
+            self.parent.annotatorSettings["delta"] = self.view.scene.markDelta
         if self.view.scene.mode == "comment":
-            self.parent.annotatorSettings.setValue(
-                "comment", self.commentW.getCurrentItemRow()
-            )
+            self.parent.annotatorSettings["comment"] = self.commentW.getCurrentItemRow()
 
     def closeEvent(self, relaunch):
         """When the user closes the window - either by clicking on the
@@ -882,8 +879,8 @@ class Annotator(QDialog):
         with open(self.imageFile[:-3] + "json", "w") as commentFile:
             json.dump(commentList, commentFile)
 
-    def latexAFragment(self, txt):
-        return self.parent.latexAFragment(txt)
+    def latexAFragment(self, txt, checkCache):
+        return self.parent.latexAFragment(txt, checkCache)
 
     def pickleIt(self):
         lst = self.view.scene.pickleSceneItems()  # newest items first

@@ -1,5 +1,8 @@
+#!/usr/bin/env python3
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
 from collections import defaultdict
@@ -58,9 +61,10 @@ def writeExamLog():
     elFH.close()
 
 
-spec = TestSpecification()
-spec.readSpec()
-buildDirectories()
-buildExamPages(spec)
-writeExamLog()
-os.system("python3 buildTestPDFs.py")
+if __name__ == '__main__':
+    spec = TestSpecification()
+    spec.readSpec()
+    buildDirectories()
+    buildExamPages(spec)
+    writeExamLog()
+    os.system("python3 buildTestPDFs.py")

@@ -204,6 +204,9 @@ class CommentWidget(QWidget):
             # check if txt has any content
             if len(txt) > 0:
                 self.CL.insertItem(dlt, txt)
+                self.currentItem()
+                # send a click to the comment button to force updates
+                self.parent.ui.commentButton.animateClick()
 
     def editCurrent(self, curDelta, curText):
         # text items in scene.
@@ -415,6 +418,8 @@ class SimpleCommentTable(QTableView):
             txti = QStandardItem(txt)
             txti.setEditable(True)
             txti.setDropEnabled(False)
+            if dlt == ".":  # temp compatibility with future fix for #253
+                dlt = 0
             # If delta>0 then should be "+n"
             if dlt == ".":
                 delti = QStandardItem(".")

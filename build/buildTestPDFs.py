@@ -26,8 +26,8 @@ def scriptBuild():
     fh = open("./commandlist.txt", "w")
     for x in exams:
         fh.write(
-            'python3 mergeAndCodePages.py {} {} {} {} "{}"\n'.format(
-                spec.Name, spec.Length, spec.Versions, x, exams[x]
+            'python3 mergeAndCodePages.py {} {} {} {} {} "{}"\n'.format(
+                spec.Name, spec.MagicCode, spec.Length, spec.Versions, x, exams[x]
             )
         )
     fh.close()

@@ -13,6 +13,7 @@ from PyQt5.QtGui import QPainter, QPixmap
 from PyQt5.QtWidgets import (
     QApplication,
     QAbstractItemView,
+    QCheckBox,
     QDialog,
     QErrorMessage,
     QGraphicsPixmapItem,
@@ -184,6 +185,13 @@ class ImageTable(QTableWidget):
         else:
             super(ImageTable, self).keyPressEvent(event)
 
+    def moveToNext(self):
+        cr = self.rowCount()
+        if cr == 0:
+            return
+        nr = (1 + self.currentRow()) % cr
+        self.selectRow(nr)
+
     def reloadImageList(self):
         """Reload the list of images from the problemimage directory"""
         self.imageList = []
@@ -200,7 +208,7 @@ class ImageTable(QTableWidget):
         # Columns are filename, testnumber, pagenumber, version, and
         # a name field which will be 'valid' if the testname matches
         # the one in the spec, or 'extra' if it is an extra page
-        self.setHorizontalHeaderLabels(["file", "t", "p", "v", "name"])
+        self.setHorizontalHeaderLabels(["file", "t", "p", "v", "valid?"])
         for r in range(len(self.imageList)):
             fItem = QTableWidgetItem(os.path.basename(self.imageList[r]))
             tItem = QTableWidgetItem(".")
@@ -346,10 +354,9 @@ class PageIDDialog(QDialog):
         grid = QGridLayout()
         # set name label + line edit
         # auto-populate with correct test-name.
-        self.nameL = QLabel("Name:")
-        self.nameLE = QLineEdit("{}".format(spec.Name))
-        grid.addWidget(self.nameL, 1, 1)
-        grid.addWidget(self.nameLE, 1, 2)
+        self.ctCB = QCheckBox("Correct test")
+        self.ctCB.setCheckState(Qt.Checked)
+        grid.addWidget(self.ctCB, 1, 2)
         # set test label + spinbox
         self.testL = QLabel("Test number")
         self.testSB = QSpinBox()
@@ -373,11 +380,14 @@ class PageIDDialog(QDialog):
         grid.addWidget(self.versionSB, 4, 2)
         # add a validate button and connect to command
         self.validateB = QPushButton("Validate")
+        self.validateB.setAutoDefault(False)
         grid.addWidget(self.validateB, 5, 1)
         self.validateB.clicked.connect(self.validate)
         # Fix the layout and unset modal.
         self.setLayout(grid)
         self.setModal(False)
+        # put focus on test number
+        self.testSB.setFocus()
 
     def checkIsValid(self):
         """Check that the entered values match the TPV
@@ -398,10 +408,10 @@ class PageIDDialog(QDialog):
             # reset the version spinbox to 0.
             self.versionSB.setValue(0)
             return False
-        # If testname wrong then pop-up error.
-        if self.nameLE.text() != spec.Name:
+        # If not right test then pop-up error.
+        if self.ctCB.checkState() != Qt.Checked:
             msg = QErrorMessage(self)
-            msg.showMessage('Name should be "{}"'.format(spec.Name))
+            msg.showMessage("If wrong test then please move to next")
             msg.exec_()
             return False
         # If TPV is valid, but already scanned then pop-up an error
@@ -569,6 +579,7 @@ class PageIdentifier(QWidget):
             v = str(pidd.versionSB.value())
             self.imageT.setTPV(t, p, v)
             self.imageT.setFocus()
+            self.imageT.moveToNext()
 
 
 def main():
