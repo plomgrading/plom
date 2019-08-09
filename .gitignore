@@ -119,3 +119,16 @@ dmypy.json
 
 # mac detritus
 .DS_Store
+
+# pdf files: you can still force them when needed
+*.pdf
+
+# latex junk
+*.aux
+*.log
+*.toc
+*.out
+*.snm
+*.nav
+*.blg
+*.thm
