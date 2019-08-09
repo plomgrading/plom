@@ -49,6 +49,7 @@ directories += [
 
 files = [
     "resources/testspecification.py",
+    "resources/tpv_utils.py",
     "resources/davconf.conf",
     "resources/davconf.yaml",
     "resources/predictionlist.csv",
@@ -70,7 +71,7 @@ files += [
     "scanAndGroup/03_scans_to_page_images.py",
     "scanAndGroup/cleanAll.py",
     "scanAndGroup/04_decode_images.py",
-    "scanAndGroup/extractQRAndOrient.py",
+    "scanAndGroup/extractQR.py",
     "scanAndGroup/05_missing_pages.py",
     "scanAndGroup/manualPageIdentifier.py",
     "scanAndGroup/06_group_pages.py",

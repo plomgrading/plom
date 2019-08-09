@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../qtCreatorFiles/ui_builder.ui'
+# Form implementation generated from reading ui file './ui_builder.ui'
 #
-# Created by: PyQt5 UI code generator 5.10.1
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
+
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -16,14 +17,10 @@ class Ui_SpecBuilder(object):
         self.verticalLayout = QtWidgets.QVBoxLayout(SpecBuilder)
         self.verticalLayout.setObjectName("verticalLayout")
         self.nameVersionGB = QtWidgets.QGroupBox(SpecBuilder)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(
-            self.nameVersionGB.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy.setHeightForWidth(self.nameVersionGB.sizePolicy().hasHeightForWidth())
         self.nameVersionGB.setSizePolicy(sizePolicy)
         self.nameVersionGB.setObjectName("nameVersionGB")
         self.gridLayout_2 = QtWidgets.QGridLayout(self.nameVersionGB)
@@ -32,9 +29,7 @@ class Ui_SpecBuilder(object):
         self.testNameLabel.setObjectName("testNameLabel")
         self.gridLayout_2.addWidget(self.testNameLabel, 0, 0, 1, 1)
         self.testNameLE = QtWidgets.QLineEdit(self.nameVersionGB)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.testNameLE.sizePolicy().hasHeightForWidth())
@@ -53,20 +48,18 @@ class Ui_SpecBuilder(object):
         self.pageSB = QtWidgets.QSpinBox(self.nameVersionGB)
         self.pageSB.setObjectName("pageSB")
         self.gridLayout_2.addWidget(self.pageSB, 2, 1, 1, 1)
-        spacerItem = QtWidgets.QSpacerItem(
-            189, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem = QtWidgets.QSpacerItem(189, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout_2.addItem(spacerItem, 2, 2, 1, 1)
         self.confirmButton = QtWidgets.QPushButton(self.nameVersionGB)
         self.confirmButton.setObjectName("confirmButton")
         self.gridLayout_2.addWidget(self.confirmButton, 2, 3, 1, 1)
+        self.codeLabel = QtWidgets.QLabel(self.nameVersionGB)
+        self.codeLabel.setObjectName("codeLabel")
+        self.gridLayout_2.addWidget(self.codeLabel, 1, 3, 1, 1)
         self.verticalLayout.addWidget(self.nameVersionGB)
         self.pageGroupGB = QtWidgets.QGroupBox(SpecBuilder)
         self.pageGroupGB.setEnabled(False)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.MinimumExpanding,
-            QtWidgets.QSizePolicy.MinimumExpanding,
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(1)
         sizePolicy.setHeightForWidth(self.pageGroupGB.sizePolicy().hasHeightForWidth())
@@ -82,13 +75,9 @@ class Ui_SpecBuilder(object):
         self.addRowButton = QtWidgets.QPushButton(self.pageGroupGB)
         self.addRowButton.setObjectName("addRowButton")
         self.gridLayout.addWidget(self.addRowButton, 0, 3, 1, 1)
-        spacerItem1 = QtWidgets.QSpacerItem(
-            20, 173, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
-        )
+        spacerItem1 = QtWidgets.QSpacerItem(20, 173, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout.addItem(spacerItem1, 1, 3, 1, 1)
-        spacerItem2 = QtWidgets.QSpacerItem(
-            20, 172, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
-        )
+        spacerItem2 = QtWidgets.QSpacerItem(20, 172, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout.addItem(spacerItem2, 3, 3, 1, 1)
         self.totalLabel = QtWidgets.QLabel(self.pageGroupGB)
         self.totalLabel.setObjectName("totalLabel")
@@ -99,10 +88,7 @@ class Ui_SpecBuilder(object):
         self.verticalLayout.addWidget(self.pageGroupGB)
         self.numberGB = QtWidgets.QGroupBox(SpecBuilder)
         self.numberGB.setEnabled(False)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.MinimumExpanding,
-            QtWidgets.QSizePolicy.MinimumExpanding,
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.numberGB.sizePolicy().hasHeightForWidth())
@@ -114,21 +100,15 @@ class Ui_SpecBuilder(object):
         self.numberTestLabel.setObjectName("numberTestLabel")
         self.horizontalLayout_2.addWidget(self.numberTestLabel)
         self.numberOfTestSB = QtWidgets.QSpinBox(self.numberGB)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Fixed
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(
-            self.numberOfTestSB.sizePolicy().hasHeightForWidth()
-        )
+        sizePolicy.setHeightForWidth(self.numberOfTestSB.sizePolicy().hasHeightForWidth())
         self.numberOfTestSB.setSizePolicy(sizePolicy)
         self.numberOfTestSB.setMaximum(9999)
         self.numberOfTestSB.setObjectName("numberOfTestSB")
         self.horizontalLayout_2.addWidget(self.numberOfTestSB)
-        spacerItem3 = QtWidgets.QSpacerItem(
-            320, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem3 = QtWidgets.QSpacerItem(320, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem3)
         self.buildButton = QtWidgets.QPushButton(self.numberGB)
         self.buildButton.setObjectName("buildButton")
@@ -140,14 +120,13 @@ class Ui_SpecBuilder(object):
 
     def retranslateUi(self, SpecBuilder):
         _translate = QtCore.QCoreApplication.translate
-        SpecBuilder.setWindowTitle(
-            _translate("SpecBuilder", "Build a test specification")
-        )
+        SpecBuilder.setWindowTitle(_translate("SpecBuilder", "Build a test specification"))
         self.nameVersionGB.setTitle(_translate("SpecBuilder", "Name and versions"))
         self.testNameLabel.setText(_translate("SpecBuilder", "Test Name"))
         self.versionLabel.setText(_translate("SpecBuilder", "# versions"))
         self.pagesLabel.setText(_translate("SpecBuilder", "# pages"))
-        self.confirmButton.setText(_translate("SpecBuilder", "Confirm"))
+        self.confirmButton.setText(_translate("SpecBuilder", "Confrm"))
+        self.codeLabel.setText(_translate("SpecBuilder", "Magic Code:"))
         self.pageGroupGB.setTitle(_translate("SpecBuilder", "Page groups"))
         self.addRowButton.setText(_translate("SpecBuilder", "Add row"))
         self.totalLabel.setText(_translate("SpecBuilder", "Total mark = 0"))
