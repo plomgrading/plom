@@ -57,7 +57,7 @@ class Chooser(QDialog):
         self.APIVersion = PLOM_API_Version
         super(Chooser, self).__init__()
         self.parent = parent
-        print("PLOM api = {}".format(self.APIVersion))
+        print("PLOM Client {} (communicates with api {})".format(__version__, self.APIVersion))
         # runit = either marker or identifier clients.
         self.runIt = None
 
