@@ -310,8 +310,8 @@ class Server(object):
         if clientAPI != serverAPI:
             return [
                 "ERR",
-                'PLOM API version mismatch: client "{}" =/= server "{}". Please check you have the right client.'.format(
-                    clientAPI, serverAPI
+                'PLOM API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
+                    clientAPI, serverAPI, Release_Version
                 ),
             ]
 
