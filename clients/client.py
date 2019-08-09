@@ -10,8 +10,9 @@ import identifier
 import totaler
 import sys
 import traceback as tblib
+from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory, QMessageBox
+from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
 
 sys.path.append("..")  # this allows us to import from ../resources
@@ -50,16 +51,12 @@ def writeLastTime():
     fh.close()
 
 
-class Chooser(QWidget):
+class Chooser(QDialog):
     def __init__(self, parent):
         super(Chooser, self).__init__()
         self.parent = parent
         # runit = either marker or identifier clients.
         self.runIt = None
-        # will be the marker-widget
-        self.marker = None
-        # will be the id-widget
-        self.identifier = None
 
         self.ui = Ui_Chooser()
         self.ui.setupUi(self)
@@ -108,18 +105,30 @@ class Chooser(QWidget):
             # Run the marker client.
             pg = str(self.ui.pgSB.value()).zfill(2)
             v = str(self.ui.vSB.value())
-            self.marker = marker.MarkerClient(
-                user, pwd, server, mport, wport, pg, v, self
-            )
-            self.marker.exec_()
+            self.setEnabled(False)
+            self.hide()
+            markerwin = marker.MarkerClient(
+                user, pwd, server, mport, wport, pg, v)
+            markerwin.my_shutdown_signal.connect(self.on_other_window_close)
+            markerwin.show()
+            self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
-            self.identifier = identifier.IDClient(user, pwd, server, mport, wport)
-            self.identifier.exec_()
+            self.setEnabled(False)
+            self.hide()
+            idwin = identifier.IDClient(user, pwd, server, mport, wport)
+            idwin.my_shutdown_signal.connect(self.on_other_window_close)
+            idwin.show()
+            self.parent.identifier = idwin
         else:
             # Run the Total client.
-            self.totaler = totaler.TotalClient(user, pwd, server, mport, wport)
-            self.totaler.exec_()
+            self.setEnabled(False)
+            self.hide()
+            totalerwin = totaler.TotalClient(user, pwd, server, mport, wport)
+            totalerwin.my_shutdown_signal.connect(self.on_other_window_close)
+            totalerwin.show()
+            self.parent.totaler = totalerwin
+
 
     def runMarker(self):
         self.runIt = "Marker"
@@ -151,6 +160,12 @@ class Chooser(QWidget):
         fnt = self.parent.font()
         fnt.setPointSize(v)
         self.parent.setFont(fnt)
+
+    @pyqtSlot(int)
+    def on_other_window_close(self, value):
+        assert isinstance(value, int)
+        self.show()
+        self.setEnabled(True)
 
 
 # Pop up a dialog for unhandled exceptions and then exit

@@ -15,9 +15,10 @@ from PyQt5.QtCore import (
     QStringListModel,
     QTimer,
     QVariant,
+    pyqtSignal,
 )
 from PyQt5.QtGui import QIntValidator
-from PyQt5.QtWidgets import QCompleter, QDialog, QInputDialog, QMessageBox
+from PyQt5.QtWidgets import QCompleter, QWidget, QMainWindow, QInputDialog, QMessageBox
 from examviewwindow import ExamViewWindow
 import messenger
 from useful_classes import ErrorMessage, SimpleMessage
@@ -139,7 +140,11 @@ class ExamModel(QAbstractTableModel):
         return c
 
 
-class TotalClient(QDialog):
+# TODO: should be a QMainWindow but at any rate not a QDialog
+# TODO: should this be parented by the QApplication?
+class TotalClient(QWidget):
+    my_shutdown_signal = pyqtSignal(int)
+
     def __init__(self, userName, password, server, message_port, web_port):
         # Init the client with username, password, server and port data.
         super(TotalClient, self).__init__()
@@ -237,7 +242,9 @@ class TotalClient(QDialog):
         authorisation token is removed. Then finally close.
         """
         self.DNF()
-        msg = messenger.SRMsg(["UCL", self.userName, self.token])
+        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        assert msg == "ACK"
+        self.my_shutdown_signal.emit(2)
         self.close()
 
     def DNF(self):
