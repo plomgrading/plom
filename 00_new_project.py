@@ -49,6 +49,7 @@ directories += [
 
 files = [
     "resources/testspecification.py",
+    "resources/tpv_utils.py",
     "resources/davconf.conf",
     "resources/davconf.yaml",
     "resources/predictionlist.csv",

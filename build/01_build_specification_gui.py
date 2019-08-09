@@ -20,7 +20,7 @@ from ui_builder import Ui_SpecBuilder
 # the following allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
-from resources.tpv_utils newMagicCode
+from resources.tpv_utils import newMagicCode
 
 global spec
 spec = TestSpecification()

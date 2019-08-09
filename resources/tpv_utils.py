@@ -37,6 +37,7 @@ __copyright__ = "Copyright (C) 2019 Colin Macdonald"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
+import random
 
 # Changes to this format should bump this.  Possibly changes
 # to the layout of QR codes on the page should too.
@@ -46,7 +47,7 @@ _API = "00"
 def isValidTPV(tpv):
     """Is this a valid TPV code?
     """
-    tpv = tpv.lstrip('QR-Code:')
+    tpv = tpv.lstrip("QR-Code:")
     if len(tpv) != len("EETTTTPPVVOCCCCCC"):
         return False
     return tpv.isnumeric()
@@ -67,7 +68,7 @@ def parseTPV(tpv):
        o (str): the orientation code, TODO
     """
     tpv = tpv.lstrip("QR-Code:")
-    #en = tpv[0:2]
+    # en = tpv[0:2]
     tn = int(tpv[2:6])
     pn = int(tpv[6:8])
     vn = int(tpv[8:10])
@@ -150,6 +151,6 @@ def newMagicCode(seed=None):
        str: the magic code
     """
     random.seed(seed)
-    magic = str(random.randrange(0, 10**6)).zfill(6)
+    magic = str(random.randrange(0, 10 ** 6)).zfill(6)
     assert len(magic) == 6
     return magic
