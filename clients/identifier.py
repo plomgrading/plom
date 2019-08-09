@@ -27,7 +27,7 @@ from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_identify import Ui_IdentifyWindow
 
 sys.path.append("..")  # this allows us to import from ../resources
-from resources import version
+from resources.version import PLOM_API_Version
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
@@ -231,11 +231,9 @@ class IDClient(QWidget):
         token. The token is then used to authenticate future transactions with
         the server (since password hashing is slow).
         """
-        # print("I'm version {}".format(_PLOM_API_VERSION_))
-
         # Send and return message with messenger.
         msg = messenger.SRMsg(
-            ["AUTH", self.userName, self.password, version.PLOM_API_Version]
+            ["AUTH", self.userName, self.password, PLOM_API_Version]
         )
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.

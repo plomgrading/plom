@@ -26,7 +26,7 @@ from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_totaler import Ui_TotalWindow
 
 sys.path.append("..")  # this allows us to import from ../resources
-from resources import version
+from resources.version import PLOM_API_Version
 
 # set up variables to store paths for marker, id clients and total
 tempDirectory = tempfile.TemporaryDirectory()
@@ -216,7 +216,7 @@ class TotalClient(QWidget):
         """
         # Send and return message with messenger.
         msg = messenger.SRMsg(
-            ["AUTH", self.userName, self.password, version.PLOM_API_Version]
+            ["AUTH", self.userName, self.password, PLOM_API_Version]
         )
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
