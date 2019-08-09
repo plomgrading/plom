@@ -77,13 +77,13 @@ def adrHackOrient(fname, qrs):
     upright = [1, 2, 3, 4]
     flipped = [3, 4, 1, 2]
     # fake a default_dict
-    g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else 0
+    g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else -1
     current = [g("NE"), g("NW"), g("SW"), g("SE")]
-    # now compare as much as possible of current against upright/flipped ignoring 0s
+    # now compare as much as possible of current against upright/flipped ignoring -1s
     upFlag = True
     flipFlag = True
     for k in range(4):
-        if current[k] == 0:
+        if current[k] == -1:
             continue
         if upright[k] == current[k]:
             flipFlag = False
