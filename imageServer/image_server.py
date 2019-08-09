@@ -25,7 +25,7 @@ from authenticate import Authority
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
-from resources.version import Release_Version
+from resources.version import __version__
 from resources.version import PLOM_API_Version as serverAPI
 
 # default server values and location of grouped-scans.
@@ -311,7 +311,7 @@ class Server(object):
             return [
                 "ERR",
                 'PLOM API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
-                    clientAPI, serverAPI, Release_Version
+                    clientAPI, serverAPI, __version__
                 ),
             ]
 
@@ -806,7 +806,7 @@ def checkDirectories():
         os.mkdir("markedPapers/commentFiles")
 
 
-print("PLOM version {0}: image server starting...".format(Release_Version))
+print("PLOM version {0}: image server starting...".format(__version__))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
