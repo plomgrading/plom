@@ -69,16 +69,16 @@ with tempfile.TemporaryDirectory() as tmpDir:
     # make a little grey triangle with the test name
     # put this in corner where staple is
     cmd = (
-        'convert -size 116x58 xc:white -draw "stroke black fill grey '
-        "path 'M 57,0  L 0,57  L 114,57 L 57,0 Z'\"  -gravity south "
-        "-annotate +0+4 '{}' -rotate -45 -trim {}".format(name, dnw0File)
+        'convert -pointsize 18 -antialias -size 232x116 xc:white -draw "stroke black fill grey '
+        "path 'M 114,0  L 0,114  L 228,114 L 114,0 Z'\"  -gravity south "
+        "-annotate +0+8 '{}' -rotate -45 -trim {}".format(name, dnw0File)
     )
     os.system(cmd)
     # and one for the other corner (back of page) in other orientation
     cmd = (
-        'convert -size 116x58 xc:white -draw "stroke black fill grey '
-        "path 'M 57,0  L 0,57  L 114,57 L 57,0 Z'\"  -gravity south "
-        "-annotate +0+4 '{}' -rotate +45 -trim {}".format(name, dnw1File)
+        'convert -pointsize 18 -size 232x116 xc:white -draw "stroke black fill grey '
+        "path 'M 114,0  L 0,114  L 228,114 L 114,0 Z'\"  -gravity south "
+        "-annotate +0+8 '{}' -rotate +45 -trim {}".format(name, dnw1File)
     )
     os.system(cmd)
 
@@ -137,4 +137,13 @@ with tempfile.TemporaryDirectory() as tmpDir:
 # Finally save the resulting pdf.
 # Add the deflate option to compress the embedded pngs
 # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
-exam.save("examsToPrint/exam_{}.pdf".format(str(test).zfill(4)), deflate=True)
+# also do garbage collection to remove duplications within pdf
+# try to clean up as much as possible and
+# then linearise - hopefully makes printers happier
+exam.save(
+    "examsToPrint/exam_{}.pdf".format(str(test).zfill(4)),
+    garbage=4,
+    deflate=True,
+    clean=True,
+    linear=True,
+)
