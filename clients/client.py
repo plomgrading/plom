@@ -115,8 +115,13 @@ class Chooser(QDialog):
             self.parent.identifier = idwin
         else:
             # Run the Total client.
-            self.totaler = totaler.TotalClient(user, pwd, server, mport, wport)
-            self.totaler.exec_()
+            self.setEnabled(False)
+            self.hide()
+            totalerwin = totaler.TotalClient(user, pwd, server, mport, wport)
+            totalerwin.my_shutdown_signal.connect(self.on_other_window_close)
+            totalerwin.show()
+            self.parent.totaler = totalerwin
+
 
     def runMarker(self):
         self.runIt = "Marker"
