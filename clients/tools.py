@@ -1666,7 +1666,7 @@ class GhostComment(QGraphicsItemGroup):
         pt = self.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
-        if int(dlt) == 0:
+        if dlt == ".":
             cr = self.blurb.boundingRect()
             self.blurb.moveBy(0, -(cr.top() + cr.bottom()) / 2)
         else:
@@ -1686,7 +1686,7 @@ class GhostComment(QGraphicsItemGroup):
         # move to correct positions
         self.tweakPositions(dlt)
         self.addToGroup(self.blurb)
-        if int(dlt) == 0:
+        if dlt == ".":
             self.di.setVisible(False)
         else:
             self.di.setVisible(True)
@@ -1721,7 +1721,10 @@ class GhostDelta(QGraphicsTextItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
     def changeDelta(self, dlt):
-        self.delta = int(dlt)
+        if dlt == ".":
+            self.delta = 0
+        else:
+            self.delta = int(dlt)
         if self.delta > 0:
             self.setPlainText(" +{} ".format(self.delta))
         else:
