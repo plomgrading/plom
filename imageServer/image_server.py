@@ -25,7 +25,8 @@ from authenticate import Authority
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
-from resources import version
+from resources.version import Release_Version
+from resources.version import PLOM_API_Version as serverAPI
 
 # default server values and location of grouped-scans.
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
@@ -306,11 +307,11 @@ class Server(object):
         Then pass them back the authorisation token
         (the password is only checked on first authorisation - since slow)
         """
-        if clientAPI != version.PLOM_API_Version:
+        if clientAPI != serverAPI:
             return [
                 "ERR",
                 'PLOM API version mismatch: client "{}" =/= server "{}". Please check you have the right client.'.format(
-                    clientAPI, version.PLOM_API_Version
+                    clientAPI, serverAPI
                 ),
             ]
 
@@ -805,7 +806,7 @@ def checkDirectories():
         os.mkdir("markedPapers/commentFiles")
 
 
-print("PLOM version {0}: image server starting...".format(version.Release_Version))
+print("PLOM version {0}: image server starting...".format(Release_Version))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
