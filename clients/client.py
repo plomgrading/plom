@@ -156,8 +156,6 @@ class Chooser(QDialog):
         self.setEnabled(True)
 
 
-
-
 # Pop up a dialog for unhandled exceptions and then exit
 sys._excepthook = sys.excepthook
 def _exception_hook(exctype, value, traceback):

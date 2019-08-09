@@ -16,10 +16,10 @@ from PyQt5.QtCore import (
     QStringListModel,
     QTimer,
     QVariant,
-    pyqtSignal
+    pyqtSignal,
 )
 from PyQt5.QtGui import QIntValidator
-from PyQt5.QtWidgets import QCompleter, QDialog, QWidget, QMainWindow, QInputDialog, QMessageBox
+from PyQt5.QtWidgets import QCompleter, QWidget, QMainWindow, QInputDialog, QMessageBox
 from examviewwindow import ExamViewWindow
 import messenger
 from useful_classes import ErrorMessage, SimpleMessage
