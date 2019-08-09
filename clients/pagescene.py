@@ -181,7 +181,7 @@ class PageScene(QGraphicsScene):
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
         self.blurb = TextItem(self, self.fontSize)
-        self.ghostItem = GhostComment(QPointF(0, 0), "1", "blah", self.fontSize)
+        self.ghostItem = GhostComment("1", "blah", self.fontSize)
         self.deleteItem = None
         # Set a mark-delta, comment-text and comment-delta.
         self.markDelta = 0
@@ -300,10 +300,6 @@ class PageScene(QGraphicsScene):
         self.blurb.contents = self.commentText  # for pickling
         # move to correct point - update if only text no delta
         self.blurb.setPos(pt)
-        # Put in a check to see if comment starts with TEX
-        # If it does then tex-ify it.
-        if self.commentText[:4].upper() == "TEX:":
-            self.blurb.textToPng(checkCache=True)
         # If the mark-delta of the comment is non-zero then
         # create a delta-object with a different offset.
         # else just place the comment.
@@ -313,7 +309,7 @@ class PageScene(QGraphicsScene):
             self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
             # Update position of text
             self.blurb.moveBy(0, -self.blurb.boundingRect().height() / 2)
-            command = CommandText(self, self.blurb, self.ink)
+            command = CommandText(self, self.blurb, self.ink, checkCache=True)
             self.undoStack.push(command)
             # return blurb to previous state
             self.blurb.setTextInteractionFlags(prevState)

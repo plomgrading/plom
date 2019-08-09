@@ -607,9 +607,9 @@ class CommandDelta(QUndoCommand):
     def __init__(self, scene, pt, delta, fontsize):
         super(CommandDelta, self).__init__()
         self.scene = scene
-        self.delta = delta
         self.pt = pt
-        self.delItem = DeltaItem(pt, self.delta, fontsize)
+        self.delta = delta
+        self.delItem = DeltaItem(self.pt, self.delta, fontsize)
         self.setText("Delta")
 
     def redo(self):
@@ -653,11 +653,9 @@ class DeltaItem(QGraphicsTextItem):
         # Has an animated border for undo/redo.
         self.anim = QPropertyAnimation(self, b"thickness")
         # centre under the mouse-click.
+        self.setPos(pt)
         cr = self.boundingRect()
-        self.offset = QPointF(
-            -(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2
-        )
-        self.setPos(pt + self.offset)
+        self.moveBy(-(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2)
 
     def paint(self, painter, option, widget):
         if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
@@ -1398,7 +1396,7 @@ class TickItem(QGraphicsPathItem):
 
 # Text
 class CommandText(QUndoCommand):
-    def __init__(self, scene, blurb, ink):
+    def __init__(self, scene, blurb, ink, checkCache=False):
         super(CommandText, self).__init__()
         self.scene = scene
         self.blurb = blurb
@@ -1407,7 +1405,9 @@ class CommandText(QUndoCommand):
             # needs slight delay.
             # this correctly sets the text interaction flags
             QTimer.singleShot(1, self.blurb.setFocus)
-            QTimer.singleShot(10, self.blurb.clearFocus)
+            QTimer.singleShot(5, self.blurb.clearFocus)
+            # then convert tex -> latex if required
+            QTimer.singleShot(10, lambda: self.blurb.textToPng(checkCache))
         self.setText("Text")
 
     def redo(self):
@@ -1445,8 +1445,6 @@ class TextItem(QGraphicsTextItem):
         self.anim = QPropertyAnimation(self, b"thickness")
         # for latex png
         self.state = "TXT"
-        # position
-        self.moveBy(0, -20)
 
     def getContents(self):
         if len(self.contents) == 0:
@@ -1579,23 +1577,25 @@ class CommandGDT(QUndoCommand):
     def __init__(self, scene, pt, delta, blurb, fontsize):
         super(CommandGDT, self).__init__()
         self.scene = scene
+        self.pt = pt
         self.delta = delta
         self.blurb = blurb
-        self.gdt = GroupDTItem(pt, self.delta, self.blurb, fontsize)
+        self.gdt = GroupDTItem(self.pt, self.delta, self.blurb, fontsize)
         self.setText("GroupDeltaText")
 
     def redo(self):
+        self.scene.addItem(self.gdt)
         self.gdt.blurb.flash_redo()
         self.gdt.di.flash_redo()
-        self.scene.addItem(self.gdt)
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
         self.scene.markChangedSignal.emit(self.delta, 1)
 
     def undo(self):
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
         self.gdt.blurb.flash_undo()
         self.gdt.di.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
+
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark decreased by delta
         self.scene.markChangedSignal.emit(-self.delta, -1)
@@ -1605,18 +1605,24 @@ class GroupDTItem(QGraphicsItemGroup):
     def __init__(self, pt, delta, blurb, fontsize):
         super(GroupDTItem, self).__init__()
         self.pt = pt
-        self.di = DeltaItem(pt, delta, fontsize)  # positioned so centre under click
+        self.di = DeltaItem(
+            self.pt, delta, fontsize
+        )  # positioned so centre under click
         self.blurb = blurb  # is a textitem already
         self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+        # check if needs tex->latex
+        self.blurb.textToPng(checkCache=True)
+
         # set up animators for delete
         self.animator = [self.di, self.blurb]
         self.animateFlag = False
+        self.thick = 1
 
         # move blurb so that its top-left corner is next to top-right corner of delta.
         cr = self.di.boundingRect()
-        self.blurb.moveBy(
-            (cr.right() + cr.left()) / 2 + 5, -(cr.top() + cr.bottom()) / 2
-        )
+        self.blurb.setPos(self.di.pos())
+        self.blurb.moveBy(cr.width() + 5, 0)
+
         self.addToGroup(self.di)
         self.addToGroup(self.blurb)
         self.setFlag(QGraphicsItem.ItemIsMovable)
@@ -1627,13 +1633,6 @@ class GroupDTItem(QGraphicsItemGroup):
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
         return QGraphicsItemGroup.itemChange(self, change, value)
-
-    def paint(self, painter, option, widget):
-        # paint a bounding rectangle for undo/redo highlighting
-        painter.setPen(QPen(Qt.red, 0.5, style=Qt.DotLine))
-        painter.drawRoundedRect(option.rect, 10, 10)
-        # paint the normal item with the default 'paint' method
-        super(GroupDTItem, self).paint(painter, option, widget)
 
     def pickle(self):
         return [
@@ -1654,24 +1653,24 @@ class GroupDTItem(QGraphicsItemGroup):
         # paint the normal item with the default 'paint' method
         else:
             # paint a bounding rectangle for undo/redo highlighting
-            painter.setPen(QPen(QColor(255, 0, 0), 1, style=Qt.DotLine))
+            painter.setPen(QPen(QColor(255, 0, 0), self.thick, style=Qt.DotLine))
             painter.drawRoundedRect(option.rect, 10, 10)
             pass
         super(GroupDTItem, self).paint(painter, option, widget)
 
 
 class GhostComment(QGraphicsItemGroup):
-    def __init__(self, pt, dlt, txt, fontsize):
+    def __init__(self, dlt, txt, fontsize):
         super(GhostComment, self).__init__()
-        self.pt = pt
-        self.di = GhostDelta(pt, dlt, fontsize)
+        self.di = GhostDelta(dlt, fontsize)
         self.blurb = GhostText(txt, fontsize)
         self.changeComment(dlt, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
     def tweakPositions(self, dlt):
-        self.blurb.setPos(self.pos())
-        self.di.setPos(self.pos())
+        pt = self.pos()
+        self.blurb.setPos(pt)
+        self.di.setPos(pt)
         if int(dlt) == 0:
             cr = self.blurb.boundingRect()
             self.blurb.moveBy(0, -(cr.top() + cr.bottom()) / 2)
@@ -1708,7 +1707,7 @@ class GhostComment(QGraphicsItemGroup):
 
 class GhostDelta(QGraphicsTextItem):
     # Similar to textitem
-    def __init__(self, pt, delta, fontsize=10):
+    def __init__(self, delta, fontsize=10):
         super(GhostDelta, self).__init__()
         self.delta = int(delta)
         self.setDefaultTextColor(Qt.blue)

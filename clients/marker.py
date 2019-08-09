@@ -238,14 +238,7 @@ class MarkerClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
     def __init__(
-        self,
-        userName,
-        password,
-        server,
-        message_port,
-        web_port,
-        pageGroup,
-        version,
+        self, userName, password, server, message_port, web_port, pageGroup, version
     ):
         # Init the client with username, password, server and port data,
         # and which group/version is being marked.

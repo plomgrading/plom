@@ -611,23 +611,23 @@ class Annotator(QDialog):
         # will not push mark past maximium possible
         if self.markStyle == 2:  # mark up - disable negative
             if delta <= 0 or delta + self.score > self.maxMark:
-                self.view.makeComment(0, dlt_txt[1])
                 self.view.scene.legalDelta = False
+                self.view.makeComment(0, dlt_txt[1])
                 return
             else:
-                self.view.makeComment(dlt_txt[0], dlt_txt[1])
                 self.view.scene.legalDelta = True
+                self.view.makeComment(dlt_txt[0], dlt_txt[1])
                 return
         # If marking down, then keep delta if negative, and if applying it
         # doesn't push mark down past zero.
         elif self.markStyle == 3:
             if delta >= 0 or delta + self.score < 0:
-                self.view.makeComment(0, dlt_txt[1])
                 self.view.scene.legalDelta = False
+                self.view.makeComment(0, dlt_txt[1])
                 return
             else:
-                self.view.makeComment(dlt_txt[0], dlt_txt[1])
                 self.view.scene.legalDelta = True
+                self.view.makeComment(dlt_txt[0], dlt_txt[1])
                 return
         else:
             # Remaining possibility = mark total - no restrictions
