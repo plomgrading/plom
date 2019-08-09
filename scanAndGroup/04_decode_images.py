@@ -206,7 +206,7 @@ def checkQRsValid():
         if not problemFlag:
             orientationKnown = reOrientPage(fname[:-3], qrs)
             # TODO: future improvement: could keep going, its possible
-            # we can go on to find the (t,p,v) in many cases.
+            # we can go on to find the (t,p,v) in some cases.
             if not orientationKnown:
                 msg = "Orientation not known"
                 problemFlag = True
@@ -241,12 +241,6 @@ def checkQRsValid():
             # store the tpv in examsScannedNow
             examsScannedNow[tn][pn] = (vn, fname[:-3])
             # later we check that list against those produced during build
-
-        # TODO:
-        # if orientationKnown is False:
-        #    # set this after recording the tpv
-        #    problemFlag = True
-        #    msg = 'Orientation not known'
 
         if problemFlag:
             # Difficulty scanning this pageimage so move it
