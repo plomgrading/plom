@@ -50,9 +50,9 @@ def import_canvas_csv(canvas_fromfile):
 def checkNonCanvasCSV(fname):
     """Read in a csv and check it has ID column.
     Must also have either
-    (*) fullName column or
-    (*) [surname/familyName] and [name/givenName] columns
-    In the latter case it creates a fullName column
+    (*) studentName column or
+    (*) [surname/familyName/lastName] and [name/givenName(s)/preferredName(s)/firstName/nickName(s)] columns
+    In the latter case it creates a studentName column
     """
     df = pandas.read_csv(fname, dtype="object")
     print('Loading from non-Canvas csv file: "{0}"'.format(fname))
@@ -69,34 +69,46 @@ def checkNonCanvasCSV(fname):
         print("Columns present = {}".format(df.columns))
         return None
     # if we have fullname then we are good to go.
-    if "fullName" in df.columns:
-        print('"fullName" column present')
-        df["fullName"].apply(lambda X: X.strip())
+    if "studentName" in df.columns:
+        print('"studentName" column present')
+        df["studentName"].apply(lambda X: X.strip())
         return df
 
-    # we need one of surname/familyName
-    if "surname" in df.columns:
-        print('"surname" column present')
-        name0 = "surname"
-    elif "familyName" in df.columns:
-        print('"familyName" column present')
-        name0 = "familyName"
-    else:
-        print('Cannot find "surname" or "familyName" columns')
+    # we need one of some approx of last-name field
+    name0list = ["surname", "familyName", "lastName"]
+    name0 = None
+    for X in name0list:
+        if X in df.columns:
+            print('"{}" column present'.format(X))
+            name0 = X
+            break
+    if name0 is None:
+        print("Cannot find {} columns".format(name0list))
         print("Columns present = {}".format(df.columns))
         return None
     # strip the excess whitespace
     df[name0].apply(lambda X: X.strip())
 
-    # we need one of name/givenName
-    if "name" in df.columns:
-        print('"name" column present')
-        name1 = "name"
-    elif "givenName" in df.columns:
-        print('"givenName" column present')
-        name1 = "givenName"
-    else:
-        print('Cannot find "name" or "givenName" columns')
+    # we need one of some approx of given-name field
+    name1list = [
+        "name",
+        "givenName",
+        "firstName",
+        "givenNames",
+        "firstNames",
+        "preferredName",
+        "preferredNames",
+        "nickName",
+        "nickNames",
+    ]
+    name1 = None
+    for X in name1list:
+        if X in df.columns:
+            print('"{}" column present'.format(X))
+            name1 = X
+            break
+    if name1 is None:
+        print("Cannot find {} columns".format(name1list))
         print("Columns present = {}".format(df.columns))
         return None
     # strip the excess whitespace
@@ -104,7 +116,7 @@ def checkNonCanvasCSV(fname):
 
     # concat name0 and name1 fields into fullName field
     # strip excess whitespace from those fields
-    df["fullName"] = df[name0] + ", " + df[name1]
+    df["studentName"] = df[name0] + ", " + df[name1]
     return df
 
 
@@ -170,8 +182,10 @@ class SetUp(QWidget):
             "Class list format",
             "Class list must be a CSV with column headers"
             '\n(*) "id" - student ID number'
-            '\n(*) "fullName" - student full name, *or*'
-            '\n(*) "surname" / "familyName" and "name" / "givenName" - student name split in two fields.'
+            '\n(*) student name in a single field = "studentName"  *or*'
+            "\n(*) student name split in two fields:"
+            '\n--->["surname" or "familyName" or "lastName"] *and*'
+            '\n--->["name" or "firstName" or "givenName" or "nickName" or "preferredName"].'
             "\n\nAlternatively, give csv exported from Canvas.",
             QMessageBox.Ok,
         )
@@ -194,7 +208,7 @@ class SetUp(QWidget):
                 df = import_canvas_csv(fname)
                 print("Extracting columns from Canvas data and renaming")
                 df = df[["Student Number", "Student"]]
-                df.columns = ["id", "fullName"]
+                df.columns = ["id", "studentName"]
                 print("Saving to classlist.csv")
                 df.to_csv("../resources/classlist.csv", index=False)
                 return
@@ -208,7 +222,7 @@ class SetUp(QWidget):
                         buttons=QMessageBox.Ok,
                     )
                     return
-                df = df[["id", "fullName"]]
+                df = df[["id", "studentName"]]
                 print("Saving to classlist.csv")
                 df.to_csv("../resources/classlist.csv", index=False)
                 return
