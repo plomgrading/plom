@@ -49,6 +49,7 @@ def import_canvas_csv(canvas_fromfile):
 
 def checkNonCanvasCSV(fname):
     """Read in a csv and check it has ID column.
+
     Must also have either
     (*) studentName column or
     (*) [surname/familyName/lastName] and [name/givenName(s)/preferredName(s)/firstName/nickName(s)] columns
@@ -172,9 +173,14 @@ class SetUp(QWidget):
         os.system("python3 ./userManager.py")
 
     def getClassList(self):
-        """Grab the classlist from a csv file. It must contain student numbers, family name
-        and given name. The headers must be 'id', 'surname', 'name'.  Alternatively, a
-        csv file exported from Canvas can be provided.
+        """Grab list of student numbers and names from a csv file.
+
+        Student numbers come from an `id` column.  There is some
+        flexibility about student names: most straightforward is a
+        column named `studentNames`.  Otherwise, various columns such as
+        `surname` and `name` are tried.
+
+        Alternatively, a csv file exported from Canvas can be provided.
         """
         # Pop up a message box with instructions
         QMessageBox.question(
