@@ -23,7 +23,14 @@ from PyQt5.QtCore import (
     pyqtSignal,
 )
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QDialog, QWidget, QMainWindow, QMessageBox, QPushButton
+from PyQt5.QtWidgets import (
+    QDialog,
+    QMainWindow,
+    QMessageBox,
+    QProgressDialog,
+    QPushButton,
+    QWidget,
+)
 
 
 from examviewwindow import ExamViewWindow
@@ -343,6 +350,8 @@ class MarkerClient(QWidget):
         # and https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
         self.backgroundDownloader = BackgroundDownloader()
         self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
+        # Now cache latex for comments:
+        self.cacheLatexComments()
 
     def resizeEvent(self, e):
         if self.testImg is None:
@@ -808,6 +817,35 @@ class MarkerClient(QWidget):
         for f in self.localViewFiles:
             os.unlink(f)
         self.viewFiles = []
+
+    def cacheLatexComments(self):
+        # grab the list of comments from disk
+        if not os.path.exists("signedCommentList.json"):
+            return
+        clist = json.load(open("signedCommentList.json"))
+        # Build a progress dialog to warn user
+        pd = QProgressDialog("Caching latex comments", None, 0, 2 * len(clist), self)
+        pd.setWindowModality(Qt.WindowModal)
+        pd.setMinimumDuration(0)
+        pd.setAutoClose(True)
+        # Start caching.
+        c = 0
+        for X in clist:
+            if X[1][:4].upper() == "TEX:":
+                txt = X[1][4:].strip()
+                pd.setLabelText("Caching:\n'{}'".format(txt))
+                # latex the red version
+                self.latexAFragment(txt)
+                c += 1
+                pd.setValue(c)
+                # and latex the preview
+                txtp = "\\color{blue}\n" + txt  # make color blue for ghost rendering
+                self.latexAFragment(txtp)
+                c += 1
+                pd.setValue(c)
+            else:
+                c += 2
+                pd.setValue(c)
 
     def latexAFragment(self, txt):
         if txt in self.commentCache:

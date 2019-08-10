@@ -181,8 +181,11 @@ class PageScene(QGraphicsScene):
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
         self.blurb = TextItem(self, self.fontSize)
-        self.ghostItem = GhostComment("1", "blah", self.fontSize)
         self.deleteItem = None
+        # Add a ghost comment to scene, but make it invisible
+        self.ghostItem = GhostComment("1", "blah", self.fontSize)
+        self.ghostItem.setVisible(False)
+        self.addItem(self.ghostItem)
         # Set a mark-delta, comment-text and comment-delta.
         self.markDelta = 0
         self.commentText = ""
@@ -964,10 +967,9 @@ class PageScene(QGraphicsScene):
         self.ghostItem.changeComment(dlt, txt)
 
     def hideGhost(self):
-        if self.ghostItem.scene() is not None:
-            self.removeItem(self.ghostItem)
+        self.ghostItem.setVisible(False)
 
     def mouseMoveComment(self, event):
-        if self.ghostItem.scene() is None:
-            self.addItem(self.ghostItem)
+        if not self.ghostItem.isVisible():
+            self.ghostItem.setVisible(True)
         self.ghostItem.setPos(event.scenePos())
