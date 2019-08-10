@@ -7,6 +7,7 @@ import asyncio
 import datetime
 import errno
 import glob
+import imghdr
 import json
 import logging
 import os
@@ -568,14 +569,23 @@ class Server(object):
         (which the client has uploaded to webdav), and spent mtime marking it.
         Send the information to the database and send an ack.
         """
+        # sanity check that mark lies in [0,..,max]
+        if int(mark) < 0 or int(mark) > self.testSpec.Marks[int(pg)]:
+            # this should never happen.
+            return ["ERR", "Assigned mark out of range. Contact administrator."]
+
         # move annoted file to right place with new filename
+        self.claimFile(fname, "")
+        self.claimFile(pname, "plomFiles")
+        self.claimFile(cname, "commentFiles")
+        # Should check the fname is valid png - just check header presently
+        if imghdr.what(os.path.join("markedPapers", fname)) != "png":
+            return ["ERR", "Misformed image file. Try again."]
+        # now update the database
         self.MDB.takeGroupImageFromClient(
             code, user, mark, fname, pname, cname, mtime, tags
         )
         self.recordMark(user, mark, fname, mtime, tags)
-        self.claimFile(fname, "")
-        self.claimFile(pname, "plomFiles")
-        self.claimFile(cname, "commentFiles")
         # return ack with current counts.
         return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
