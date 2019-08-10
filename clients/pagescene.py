@@ -309,7 +309,7 @@ class PageScene(QGraphicsScene):
             self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
             # Update position of text
             self.blurb.moveBy(0, -self.blurb.boundingRect().height() / 2)
-            command = CommandText(self, self.blurb, self.ink, checkCache=True)
+            command = CommandText(self, self.blurb, self.ink)
             self.undoStack.push(command)
             # return blurb to previous state
             self.blurb.setTextInteractionFlags(prevState)
@@ -491,8 +491,8 @@ class PageScene(QGraphicsScene):
         # After the drop event make sure pageview has the focus.
         self.parent.setFocus(Qt.TabFocusReason)
 
-    def latexAFragment(self, txt, checkCache=False):
-        return self.parent.latexAFragment(txt.strip(), checkCache)
+    def latexAFragment(self, txt):
+        return self.parent.latexAFragment(txt.strip())
 
     # A fix (hopefully) for misread touchpad events on mac
     def event(self, event):
@@ -600,9 +600,7 @@ class PageScene(QGraphicsScene):
             self.blurb.contents = X[0]
             self.blurb.setPos(QPointF(X[1], X[2]))
             # knows to latex it if needed.
-            self.undoStack.push(
-                CommandText(self, self.blurb, self.ink, checkCache=True)
-            )
+            self.undoStack.push(CommandText(self, self.blurb, self.ink))
 
     def unpickleDelta(self, X):
         if len(X) == 3:

@@ -809,32 +809,7 @@ class MarkerClient(QWidget):
             os.unlink(f)
         self.viewFiles = []
 
-    def latexAFragment(self, txt, checkCache):
-        if checkCache:
-            return self.latexCachedFragment(txt)
-        else:
-            return self.latexUncachedFragment(txt)
-
-    def latexUncachedFragment(self, txt):
-        # create a tempfile
-        fname = os.path.join(self.workingDirectory, "fragment")
-        dname = (
-            self.userName
-        )  # call fragment file just the username to avoid collisions
-        # write the latex text to that file
-        with open(fname, "w") as fh:
-            fh.write(txt)
-        messenger.putFileDav(fname, dname)
-
-        msg = messenger.SRMsg(["mLTT", self.userName, self.token, dname])
-        if msg[1] == True:
-            messenger.getFileDav(msg[2], "frag.png")
-            messenger.SRMsg(["mDWF", self.userName, self.token, msg[2]])
-            return True
-        else:
-            return False
-
-    def latexCachedFragment(self, txt):
+    def latexAFragment(self, txt):
         if txt in self.commentCache:
             # have already latex'd this comment
             shutil.copyfile(self.commentCache[txt], "frag.png")

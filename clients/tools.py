@@ -1399,7 +1399,7 @@ class TickItem(QGraphicsPathItem):
 
 # Text
 class CommandText(QUndoCommand):
-    def __init__(self, scene, blurb, ink, checkCache=False):
+    def __init__(self, scene, blurb, ink):
         super(CommandText, self).__init__()
         self.scene = scene
         self.blurb = blurb
@@ -1410,7 +1410,7 @@ class CommandText(QUndoCommand):
         if len(self.blurb.toPlainText()) > 0:
             QTimer.singleShot(1, self.blurb.setFocus)
             # convert tex -> latex if required
-            QTimer.singleShot(5, lambda: self.blurb.textToPng(checkCache))
+            QTimer.singleShot(5, self.blurb.textToPng)
             # And now clear focus
             QTimer.singleShot(10, self.blurb.clearFocus)
         self.setText("Text")
@@ -1477,7 +1477,7 @@ class TextItem(QGraphicsTextItem):
             self.contents = self.toPlainText()
         super(TextItem, self).focusOutEvent(event)
 
-    def textToPng(self, checkCache=False):
+    def textToPng(self):
         self.contents = self.toPlainText()
         if self.contents[:4].upper() == "TEX:":
             texIt = self.contents[4:]
@@ -1485,7 +1485,7 @@ class TextItem(QGraphicsTextItem):
             # is not latex so we don't have to PNG-it
             return
 
-        if self.parent.latexAFragment(texIt, checkCache):
+        if self.parent.latexAFragment(texIt):
             self.setPlainText("")
             tc = self.textCursor()
             qi = QImage("frag.png")
@@ -1617,7 +1617,7 @@ class GroupDTItem(QGraphicsItemGroup):
         self.blurb = blurb  # is a textitem already
         self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
         # check if needs tex->latex
-        self.blurb.textToPng(checkCache=True)
+        self.blurb.textToPng()
 
         # set up animators for delete
         self.animator = [self.di, self.blurb]
@@ -1766,7 +1766,7 @@ class GhostText(QGraphicsTextItem):
         self.setPlainText(txt)
         if self.scene() is not None and txt[:4].upper() == "TEX:":
             texIt = "\\color{blue}\n" + txt[4:]  # make color blue for ghost rendering
-            if self.scene().latexAFragment(texIt, checkCache=True):
+            if self.scene().latexAFragment(texIt):
                 self.setPlainText("")
                 tc = self.textCursor()
                 qi = QImage("frag.png")

@@ -95,11 +95,11 @@ class PageView(QGraphicsView):
     def save(self):
         self.scene.save()
 
-    def latexAFragment(self, txt, checkCache):
+    def latexAFragment(self, txt):
         cur = self.cursor()
         self.setCursor(QCursor(Qt.WaitCursor))
         QApplication.processEvents()  # this triggers a cursor update
-        ret = self.parent.latexAFragment(txt, checkCache)
+        ret = self.parent.latexAFragment(txt)
         self.setCursor(cur)
         return ret
 

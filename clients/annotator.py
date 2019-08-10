@@ -875,8 +875,8 @@ class Annotator(QDialog):
         with open(self.imageFile[:-3] + "json", "w") as commentFile:
             json.dump(commentList, commentFile)
 
-    def latexAFragment(self, txt, checkCache):
-        return self.parent.latexAFragment(txt, checkCache)
+    def latexAFragment(self, txt):
+        return self.parent.latexAFragment(txt)
 
     def pickleIt(self):
         lst = self.view.scene.pickleSceneItems()  # newest items first
