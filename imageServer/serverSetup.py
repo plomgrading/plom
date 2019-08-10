@@ -47,6 +47,79 @@ def import_canvas_csv(canvas_fromfile):
     return df
 
 
+def checkNonCanvasCSV(fname):
+    """Read in a csv and check it has ID column.
+    Must also have either
+    (*) studentName column or
+    (*) [surname/familyName/lastName] and [name/givenName(s)/preferredName(s)/firstName/nickName(s)] columns
+    In the latter case it creates a studentName column
+    """
+    df = pandas.read_csv(fname, dtype="object")
+    print('Loading from non-Canvas csv file: "{0}"'.format(fname))
+    # strip excess whitespace from column names
+    df.rename(columns=lambda x: x.strip(), inplace=True)
+
+    # now check we have the columns needed
+    if "id" in df.columns:
+        print('"id" column present')
+        # strip excess whitespace
+        df["id"].apply(lambda X: X.strip())
+    else:
+        print('Cannot find "id" column')
+        print("Columns present = {}".format(df.columns))
+        return None
+    # if we have fullname then we are good to go.
+    if "studentName" in df.columns:
+        print('"studentName" column present')
+        df["studentName"].apply(lambda X: X.strip())
+        return df
+
+    # we need one of some approx of last-name field
+    name0list = ["surname", "familyName", "lastName"]
+    name0 = None
+    for X in name0list:
+        if X in df.columns:
+            print('"{}" column present'.format(X))
+            name0 = X
+            break
+    if name0 is None:
+        print("Cannot find {} columns".format(name0list))
+        print("Columns present = {}".format(df.columns))
+        return None
+    # strip the excess whitespace
+    df[name0].apply(lambda X: X.strip())
+
+    # we need one of some approx of given-name field
+    name1list = [
+        "name",
+        "givenName",
+        "firstName",
+        "givenNames",
+        "firstNames",
+        "preferredName",
+        "preferredNames",
+        "nickName",
+        "nickNames",
+    ]
+    name1 = None
+    for X in name1list:
+        if X in df.columns:
+            print('"{}" column present'.format(X))
+            name1 = X
+            break
+    if name1 is None:
+        print("Cannot find {} columns".format(name1list))
+        print("Columns present = {}".format(df.columns))
+        return None
+    # strip the excess whitespace
+    df[name1].apply(lambda X: X.strip())
+
+    # concat name0 and name1 fields into fullName field
+    # strip excess whitespace from those fields
+    df["studentName"] = df[name0] + ", " + df[name1]
+    return df
+
+
 class SetUp(QWidget):
     def __init__(self):
         """Init the UI and connect buttons to the relevant functions
@@ -107,9 +180,13 @@ class SetUp(QWidget):
         QMessageBox.question(
             self,
             "Class list format",
-            "Class list must be a CSV with column"
-            ' headers "id", "surname", "name".'
-            "\nAlternatively, give csv exported from Canvas.",
+            "Class list must be a CSV with column headers"
+            '\n(*) "id" - student ID number'
+            '\n(*) student name in a single field = "studentName"  *or*'
+            "\n(*) student name split in two fields:"
+            '\n--->["surname" or "familyName" or "lastName"] *and*'
+            '\n--->["name" or "firstName" or "givenName" or "nickName" or "preferredName"].'
+            "\n\nAlternatively, give csv exported from Canvas.",
             QMessageBox.Ok,
         )
         # Pop up a file dialog to pick a .csv
@@ -130,27 +207,25 @@ class SetUp(QWidget):
                 print("This looks like it was exported from Canvas")
                 df = import_canvas_csv(fname)
                 print("Extracting columns from Canvas data and renaming")
-                df = df[["Student Number", "Student", "Student"]]
-                df.columns = ["id", "surname", "name"]
+                df = df[["Student Number", "Student"]]
+                df.columns = ["id", "studentName"]
                 print("Saving to classlist.csv")
                 df.to_csv("../resources/classlist.csv", index=False)
                 return
-
-            # If each required header is there print a message to user.
-            for hd in ["id", "surname", "name"]:
-                if hd in fields:
-                    print("{} is present".format(hd))
-                else:
-                    # Otherwise popup a warning and return.
+            else:  # Is not canvas so check we have required headers
+                df = checkNonCanvasCSV(fname)
+                if df is None:
                     QMessageBox.question(
                         self,
-                        "Class list header error",
-                        'The field "{}" is not present in the csv file.'.format(hd),
-                        QMessageBox.Ok,
+                        "Classlist error",
+                        "Problems with the classlist you supplied. See console output.",
+                        buttons=QMessageBox.Ok,
                     )
                     return
-            # Copy the csv into place.
-            os.system("cp {} ../resources/classlist.csv".format(fname))
+                df = df[["id", "studentName"]]
+                print("Saving to classlist.csv")
+                df.to_csv("../resources/classlist.csv", index=False)
+                return
 
 
 app = QApplication(sys.argv)
