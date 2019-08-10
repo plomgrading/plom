@@ -655,7 +655,10 @@ class DeltaItem(QGraphicsTextItem):
         # centre under the mouse-click.
         self.setPos(pt)
         cr = self.boundingRect()
-        self.moveBy(-(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2)
+        self.offset = QPointF(
+            -(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2
+        )
+        self.moveBy(self.offset.x(), self.offset.y())
 
     def paint(self, painter, option, widget):
         if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
