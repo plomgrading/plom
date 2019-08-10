@@ -269,8 +269,7 @@ class IDClient(QWidget):
         self.studentNumbersToNames = defaultdict(str)
         reader = csv.DictReader(csvfile, skipinitialspace=True)
         for row in reader:
-            # Name was is a single field
-            sn = row["fullName"]
+            sn = row["studentName"]
             self.studentNamesToNumbers[sn] = str(row["id"])
             self.studentNumbersToNames[str(row["id"])] = sn
         return True
