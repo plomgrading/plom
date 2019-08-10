@@ -726,59 +726,55 @@ class Annotator(QDialog):
         self.closeEvent(False)
 
     def loadWindowSettings(self):
-        if self.parent.annotatorSettings.value("geometry") is not None:
-            self.restoreGeometry(self.parent.annotatorSettings.value("geometry"))
-        if self.parent.annotatorSettings.value("markWarnings") is not None:
-            self.markWarn = self.parent.annotatorSettings.value("markWarnings")
-        if self.parent.annotatorSettings.value("commentWarnings") is not None:
-            self.commentWarn = self.parent.annotatorSettings.value("commentWarnings")
-        if self.parent.annotatorSettings.value("tool") is not None:
-            if self.parent.annotatorSettings.value("tool") == "delta":
-                dlt = self.parent.annotatorSettings.value("delta")
+        if self.parent.annotatorSettings["geometry"] is not None:
+            self.restoreGeometry(self.parent.annotatorSettings["geometry"])
+        if self.parent.annotatorSettings["markWarnings"] is not None:
+            self.markWarn = self.parent.annotatorSettings["markWarnings"]
+        if self.parent.annotatorSettings["commentWarnings"] is not None:
+            self.commentWarn = self.parent.annotatorSettings["commentWarnings"]
+        if self.parent.annotatorSettings["tool"] is not None:
+            if self.parent.annotatorSettings["tool"] == "delta":
+                dlt = self.parent.annotatorSettings["delta"]
                 self.loadModeFromBefore("delta", dlt)
-            elif self.parent.annotatorSettings.value("tool") == "comment":
-                cmt = self.parent.annotatorSettings.value("comment")
+            elif self.parent.annotatorSettings["tool"] == "comment":
+                cmt = self.parent.annotatorSettings["comment"]
                 self.loadModeFromBefore("comment", cmt)
             else:
-                self.loadModeFromBefore(self.parent.annotatorSettings.value("tool"))
+                self.loadModeFromBefore(self.parent.annotatorSettings["tool"])
 
-        if self.parent.annotatorSettings.value("viewRectangle") is not None:
+        if self.parent.annotatorSettings["viewRectangle"] is not None:
             # put in slight delay so that any resize events are done.
             QTimer.singleShot(
                 150,
                 lambda: self.view.initialZoom(
-                    self.parent.annotatorSettings.value("viewRectangle")
+                    self.parent.annotatorSettings["viewRectangle"]
                 ),
             )
         else:
             QTimer.singleShot(150, lambda: self.view.initialZoom(None))
         # there is some redundancy between the above and the below.
-        if self.parent.annotatorSettings.value("zoomState") is not None:
+        if self.parent.annotatorSettings["zoomState"] is not None:
             # put in slight delay so that any resize events are done.
             QTimer.singleShot(
                 200,
                 lambda: self.ui.zoomCB.setCurrentIndex(
-                    self.parent.annotatorSettings.value("zoomState")
+                    self.parent.annotatorSettings["zoomState"]
                 ),
             )
         else:
             QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
 
     def saveWindowSettings(self):
-        self.parent.annotatorSettings.setValue("geometry", self.saveGeometry())
-        self.parent.annotatorSettings.setValue("markWarnings", self.markWarn)
-        self.parent.annotatorSettings.setValue("commentWarnings", self.commentWarn)
-        self.parent.annotatorSettings.setValue("viewRectangle", self.view.vrect)
-        self.parent.annotatorSettings.setValue(
-            "zoomState", self.ui.zoomCB.currentIndex()
-        )
-        self.parent.annotatorSettings.setValue("tool", self.view.scene.mode)
+        self.parent.annotatorSettings["geometry"] = self.saveGeometry()
+        self.parent.annotatorSettings["markWarnings"] = self.markWarn
+        self.parent.annotatorSettings["commentWarnings"] = self.commentWarn
+        self.parent.annotatorSettings["viewRectangle"] = self.view.vrect
+        self.parent.annotatorSettings["zoomState"] = self.ui.zoomCB.currentIndex()
+        self.parent.annotatorSettings["tool"] = self.view.scene.mode
         if self.view.scene.mode == "delta":
-            self.parent.annotatorSettings.setValue("delta", self.view.scene.markDelta)
+            self.parent.annotatorSettings["delta"] = self.view.scene.markDelta
         if self.view.scene.mode == "comment":
-            self.parent.annotatorSettings.setValue(
-                "comment", self.commentW.getCurrentItemRow()
-            )
+            self.parent.annotatorSettings["comment"] = self.commentW.getCurrentItemRow()
 
     def closeEvent(self, relaunch):
         """When the user closes the window - either by clicking on the

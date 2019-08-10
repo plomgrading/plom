@@ -3,6 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+from collections import defaultdict
 import os
 import json
 import shutil
@@ -15,10 +16,10 @@ from PyQt5.QtCore import (
     QElapsedTimer,
     QModelIndex,
     QObject,
-    QSettings,
     QSortFilterProxyModel,
     QTimer,
     QThread,
+    QVariant,
     pyqtSignal,
 )
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
@@ -289,8 +290,8 @@ class MarkerClient(QWidget):
         self.testImg = ExamViewWindow()
         self.ui.gridLayout_6.addWidget(self.testImg, 0, 0)
         # create a settings variable for saving annotator window settings
-        self.annotatorSettings = QSettings()
-        self.annotatorSettings.clear()  # do not remember between sessions.
+        # initially all settings are "none"
+        self.annotatorSettings = defaultdict(lambda: None)
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
