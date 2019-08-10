@@ -26,8 +26,8 @@ from authenticate import Authority
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
-
-__version__ = "0.1.0+"
+from resources.version import __version__
+from resources.version import PLOM_API_Version as serverAPI
 
 # default server values and location of grouped-scans.
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
@@ -299,7 +299,7 @@ class Server(object):
                 print("Attempt by non-user to {}".format(message))
                 return ["ERR", "You are not an authorised user"]
 
-    def authoriseUser(self, user, password):
+    def authoriseUser(self, user, password, clientAPI):
         """When a user requests authorisation
         They have sent their name and password
         first check if they are a valid user
@@ -308,6 +308,14 @@ class Server(object):
         Then pass them back the authorisation token
         (the password is only checked on first authorisation - since slow)
         """
+        if clientAPI != serverAPI:
+            return [
+                "ERR",
+                'PLOM API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
+                    clientAPI, serverAPI, __version__
+                ),
+            ]
+
         if self.authority.authoriseUser(user, password):
             # On token request also make sure anything "out" with that user is reset as todo.
             self.IDDB.resetUsersToDo(user)
@@ -808,7 +816,7 @@ def checkDirectories():
         os.mkdir("markedPapers/commentFiles")
 
 
-print("PLOM v{0}: image server starting...".format(__version__))
+print("PLOM version {0}: image server starting...".format(__version__))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free

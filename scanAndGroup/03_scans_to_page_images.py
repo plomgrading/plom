@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
@@ -97,17 +99,18 @@ def processScans():
         os.chdir("../")
 
 
-# Look for pdfs in scanned exams.
-counter = 0
-for fname in os.listdir("./scannedExams"):
-    if fname.endswith(".pdf"):
-        counter = counter + 1
-# If there are some then process them else return a warning.
-if not counter == 0:
-    spec = TestSpecification()
-    spec.readSpec()
-    buildDirectories()
-    processScans()
-    print("Successfully converted scans to page images")
-else:
-    print("Warning: please put scanned exams in scannedExams directory")
+if __name__ == '__main__':
+    # Look for pdfs in scanned exams.
+    counter = 0
+    for fname in os.listdir("./scannedExams"):
+        if fname.endswith(".pdf"):
+            counter = counter + 1
+    # If there are some then process them else return a warning.
+    if not counter == 0:
+        spec = TestSpecification()
+        spec.readSpec()
+        buildDirectories()
+        processScans()
+        print("Successfully converted scans to page images")
+    else:
+        print("Warning: please put scanned exams in scannedExams directory")
