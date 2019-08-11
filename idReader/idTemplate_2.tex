@@ -12,9 +12,12 @@
 \begin{center}
 \begin{tikzpicture}[scale=1.25, background rectangle/.style={line width=4pt, draw=black}, show background rectangle]
 
-  \draw (0,1) rectangle (3,3) node[pos=0.5] {\large Name};
-  \draw[loosely dotted] (3.2,2) -- (10.8,2); 
-  \draw (3,1) rectangle (11,3);
+  \draw (0,1) rectangle (3,2) node[pos=0.5] {\large Signature};
+  \draw (3,1) rectangle (11,2);
+
+  \draw (0,2) rectangle (3,4) node[pos=0.5] {\large Name};
+  \draw[loosely dotted] (3.2,3) -- (10.8,3);
+  \draw (3,2) rectangle (11,4);
 
   \draw (0,4) rectangle (3,5) node[pos=0.5] {\large Section};
   \foreach \x in {0,...,2} {
