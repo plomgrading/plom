@@ -5,7 +5,7 @@ __license__ = "AGPLv3"
 
 import json
 
-from PyQt5.QtCore import Qt, QEvent, QLineF, QPointF, QRectF, pyqtSignal
+from PyQt5.QtCore import Qt, QElapsedTimer, QEvent, QLineF, QPointF, QRectF, pyqtSignal
 from PyQt5.QtGui import (
     QBrush,
     QColor,
@@ -150,6 +150,9 @@ class PageScene(QGraphicsScene):
         # Build scene rectangle to fit the image, and place image into it.
         self.setSceneRect(0, 0, self.image.width(), self.image.height())
         self.addItem(self.imageItem)
+        # Add a timer to prevent button-mashing
+        self.masher = QElapsedTimer()
+        self.masher.start()
         # initialise the undo-stack
         self.undoStack = QUndoStack()
         # Starting mode is move.
@@ -234,6 +237,11 @@ class PageScene(QGraphicsScene):
         oimg.save(self.imageName)
 
     def keyPressEvent(self, event):
+        # Check time since last press
+        # if too short then don't do anything (unless typing text)
+        if self.masher.restart() < 50 and self.mode != "text":
+            print("Colin - please don't mash keys")
+            return
         # The escape key removes focus from the graphicsscene.
         # Other key press events are passed on.
         if event.key() == Qt.Key_Escape:
@@ -245,6 +253,12 @@ class PageScene(QGraphicsScene):
     # These events use the dictionaries defined above to
     # translate the current tool-mode into function calls
     def mousePressEvent(self, event):
+        # Check time since last press
+        # if too short then don't do anything
+        if self.masher.restart() < 50:
+            print("Colin - please don't mash buttons")
+            return
+
         # Get the function name from the dictionary based on current mode.
         functionName = mousePress.get(self.mode, None)
         if functionName:

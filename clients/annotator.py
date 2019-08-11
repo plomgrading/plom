@@ -701,11 +701,6 @@ class Annotator(QDialog):
 
         # Update the current mark
         self.score += dm
-        # Tell the mark-handler what the new mark is and force a repaint.
-        self.markHandler.setMark(self.score)
-        self.markHandler.repaint()
-        # Tell the view (and scene) what the current mark is.
-        self.view.scene.scoreBox.changeScore(self.score)
         # Look ahead to see if this delta can be used again while keeping
         # the mark within range. If not, then set a "dont paste" flag
         # note - take into account whether last score-change was
@@ -718,6 +713,11 @@ class Annotator(QDialog):
             self.view.scene.legalDelta = False
         else:
             self.view.scene.legalDelta = True
+        # Tell the view (and scene) what the current mark is.
+        self.view.scene.scoreBox.changeScore(self.score)
+        # Tell the mark-handler what the new mark is and force a repaint.
+        self.markHandler.setMark(self.score)
+        self.markHandler.repaint()
 
     def closeEventRelaunch(self):
         self.closeEvent(True)

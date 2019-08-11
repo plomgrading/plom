@@ -613,18 +613,18 @@ class CommandDelta(QUndoCommand):
         self.setText("Delta")
 
     def redo(self):
-        self.delItem.flash_redo()
-        self.scene.addItem(self.delItem)
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
         self.scene.markChangedSignal.emit(self.delta, 1)
+        self.delItem.flash_redo()
+        self.scene.addItem(self.delItem)
 
     def undo(self):
-        self.delItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.delItem))
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark decreased by delta
         self.scene.markChangedSignal.emit(-self.delta, -1)
+        self.delItem.flash_undo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.delItem))
 
 
 class DeltaItem(QGraphicsTextItem):
@@ -1402,17 +1402,21 @@ class CommandText(QUndoCommand):
     def __init__(self, scene, blurb, ink):
         super(CommandText, self).__init__()
         self.scene = scene
+        # set no interaction on scene's textitem - this avoids button-mashing
+        # issues where text can be added during pasting in of text
+        iflags = blurb.textInteractionFlags()
+        blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+        # copy that textitem to one for this comment
         self.blurb = blurb
+        # set the interaction flags back
+        blurb.setTextInteractionFlags(iflags)
         # if the textitem has contents already then we
         # have to do some cleanup - give it focus and then
-        # latex-it if needed and then drop focus
-        # this correctly sets the text interaction flags
+        # drop focus - correctly sets the text interaction flags
         if len(self.blurb.toPlainText()) > 0:
             QTimer.singleShot(1, self.blurb.setFocus)
-            # convert tex -> latex if required
+            QTimer.singleShot(2, self.blurb.clearFocus)
             QTimer.singleShot(5, self.blurb.textToPng)
-            # And now clear focus
-            QTimer.singleShot(10, self.blurb.clearFocus)
         self.setText("Text")
 
     def redo(self):
@@ -1590,21 +1594,20 @@ class CommandGDT(QUndoCommand):
         self.setText("GroupDeltaText")
 
     def redo(self):
-        self.scene.addItem(self.gdt)
-        self.gdt.blurb.flash_redo()
-        self.gdt.di.flash_redo()
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
         self.scene.markChangedSignal.emit(self.delta, 1)
+        self.scene.addItem(self.gdt)
+        self.gdt.blurb.flash_redo()
+        self.gdt.di.flash_redo()
 
     def undo(self):
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
-        self.gdt.blurb.flash_undo()
-        self.gdt.di.flash_undo()
-
         # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark decreased by delta
         self.scene.markChangedSignal.emit(-self.delta, -1)
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
+        self.gdt.blurb.flash_undo()
+        self.gdt.di.flash_undo()
 
 
 class GroupDTItem(QGraphicsItemGroup):
