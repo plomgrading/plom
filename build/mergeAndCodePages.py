@@ -138,12 +138,11 @@ with tempfile.TemporaryDirectory() as tmpDir:
 # Add the deflate option to compress the embedded pngs
 # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
 # also do garbage collection to remove duplications within pdf
-# try to clean up as much as possible and
-# then linearise - hopefully makes printers happier
+# and try to clean up as much as possible.
+# `linear=True` causes https://gitlab.math.ubc.ca/andrewr/MLP/issues/284
 exam.save(
     "examsToPrint/exam_{}.pdf".format(str(test).zfill(4)),
     garbage=4,
     deflate=True,
     clean=True,
-    linear=True,
 )
