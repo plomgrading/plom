@@ -80,13 +80,13 @@ def checkNonCanvasCSV(fname):
     # we need one of some approx of last-name field
     name0list = ["surname", "familyName", "lastName"]
     name0 = None
-    for X in name0list:
-        if X in df.columns:
+    for X in df.columns:
+        if X.casefold() in (n.casefold() for n in name0list):
             print('"{}" column present'.format(X))
             name0 = X
             break
     if name0 is None:
-        print("Cannot find {} columns".format(name0list))
+        print('Cannot find column to use for "surname", tried {}'.format(name0list))
         print("Columns present = {}".format(df.columns))
         return None
     # strip the excess whitespace
@@ -105,13 +105,13 @@ def checkNonCanvasCSV(fname):
         "nickNames",
     ]
     name1 = None
-    for X in name1list:
-        if X in df.columns:
+    for X in df.columns:
+        if X.casefold() in (n.casefold() for n in name1list):
             print('"{}" column present'.format(X))
             name1 = X
             break
     if name1 is None:
-        print("Cannot find {} columns".format(name1list))
+        print('Cannot find column to use for "given name", tried {}'.format(name1list))
         print("Columns present = {}".format(df.columns))
         return None
     # strip the excess whitespace
