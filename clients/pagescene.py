@@ -920,11 +920,15 @@ class PageScene(QGraphicsScene):
                 self.delBoxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def deleteIfLegal(self, item):
-        if (
-            (item is self.imageItem)
-            or (item is self.scoreBox)
-            or (item is self.delBoxItem)
-        ):
+        # can't delete the pageimage, scorebox, delete-box, ghostitem and its constituents
+        if item in [
+            self.imageItem,
+            self.scoreBox,
+            self.delBoxItem,
+            self.ghostItem,
+            self.ghostItem.di,
+            self.ghostItem.blurb,
+        ]:
             return
         else:
             command = CommandDelete(self, item)
