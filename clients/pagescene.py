@@ -192,7 +192,7 @@ class PageScene(QGraphicsScene):
         # Set a mark-delta, comment-text and comment-delta.
         self.markDelta = 0
         self.commentText = ""
-        self.commentDelta = 0
+        self.commentDelta = "0"
         self.legalDelta = True
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
@@ -332,7 +332,8 @@ class PageScene(QGraphicsScene):
         # If the mark-delta of the comment is non-zero then
         # create a delta-object with a different offset.
         # else just place the comment.
-        if self.commentDelta == 0 or not self.legalDelta:
+
+        if self.commentDelta == "." or not self.legalDelta:
             # make sure blurb has text interaction turned off
             prevState = self.blurb.textInteractionFlags()
             self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
@@ -506,7 +507,7 @@ class PageScene(QGraphicsScene):
         if e.mimeData().hasFormat("text/plain"):
             # Simulate a comment click.
             self.commentText = e.mimeData().text()
-            self.commentDelta = 0
+            self.commentDelta = "0"
             self.mousePressComment(e)
 
         elif e.mimeData().hasFormat(
