@@ -820,8 +820,11 @@ class Annotator(QDialog):
             else:
                 return True
 
+    def getComments(self):
+        return self.scene.getComments()
+
     def saveMarkerComments(self):
-        commentList = self.scene.getComments()
+        commentList = self.getComments()
         # image file is <blah>.png, save comments as <blah>.json
         with open(self.imageFile[:-3] + "json", "w") as commentFile:
             json.dump(commentList, commentFile)

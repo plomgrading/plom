@@ -251,9 +251,9 @@ class PageScene(QGraphicsScene):
     def keyPressEvent(self, event):
         # Check time since last press
         # if too short then don't do anything (unless typing text)
-        if self.masher.restart() < 50 and self.mode != "text":
-            print("Colin - please don't mash keys")
-            return
+        # if self.masher.restart() < 50 and self.mode != "text":
+        #     print("Colin - please don't mash keys")
+        #     return
         # The escape key removes focus from the graphicsscene.
         # Other key press events are passed on.
         if event.key() == Qt.Key_Escape:
@@ -267,9 +267,9 @@ class PageScene(QGraphicsScene):
     def mousePressEvent(self, event):
         # Check time since last press
         # if too short then don't do anything
-        if self.masher.restart() < 50:
-            print("Colin - please don't mash buttons")
-            return
+        # if self.masher.restart() < 50:
+        #     print("Colin - please don't mash buttons")
+        #     return
 
         # Get the function name from the dictionary based on current mode.
         functionName = mousePress.get(self.mode, None)
@@ -1060,22 +1060,21 @@ class PageScene(QGraphicsScene):
         if annotatorUpdate:
             self.markDelta = delta
             self.setMode("comment")
-            # unhide the ghostitem
-            self.exposeGhost()
-        # make sure the ghost item stays hidden unless needed
-        # if self.mode != "comment":
-        # self.hideGhost()
-        if self.markStyle == 2:  # mark up
-            # if delta is too positive, set to 0
-            if delta < 0 or self.score + delta > self.maxMark:
-                delta = 0
-        elif self.markStyle == 3:  # mark down
-            # if delta is too negative, set to 0
-            if delta > 0 or self.score + delta < 0:
-                delta = 0
-        else:  # mark total
-            # no delta is used, so set it to 0.
-            delta = 0
+            self.exposeGhost()  # unhide the ghostitem
+        # if we have passed ".", then we don't need to do any
+        # delta calcs, the ghost item knows how to handle it.
+        if isinstance(delta, int):
+            if self.markStyle == 2:  # mark up
+                # if delta is too positive, set to "."
+                if delta < 0 or self.score + delta > self.maxMark:
+                    delta = "."
+            elif self.markStyle == 3:  # mark down
+                # if delta is too negative, set to "."
+                if delta > 0 or self.score + delta < 0:
+                    delta = "."
+            else:  # mark total
+                # no delta is used, so set it to ".".
+                delta = "."
         self.commentDelta = delta
         self.commentText = text
         self.updateGhost(delta, text)
