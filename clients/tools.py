@@ -36,11 +36,11 @@ class CommandDelete(QUndoCommand):
 
         # If the object is a DeltaItem then change mark
         if isinstance(self.deleteItem, DeltaItem):
-            # Mark decreases by delta
-            self.scene.changeTheMark(-self.deleteItem.delta, undo=False)
+            # Mark decreases by delta - since deleting, this is like an "undo"
+            self.scene.changeTheMark(self.deleteItem.delta, undo=True)
         if isinstance(self.deleteItem, GroupDTItem):
-            self.scene.changeTheMark(-self.deleteItem.di.delta, undo=False)
-        # nicely animate the deletion
+            self.scene.changeTheMark(self.deleteItem.di.delta, undo=True)
+        # nicely animate the deletion - since deleting, this is like an "undo"
         self.deleteItem.animateFlag = True
         if self.deleteItem.animator is not None:
             for X in self.deleteItem.animator:
@@ -52,12 +52,12 @@ class CommandDelete(QUndoCommand):
     def undo(self):
         # If the object is a DeltaItem then change mark.
         if isinstance(self.deleteItem, DeltaItem):
-            # Mark increases by delta - handled by the undo-flag
-            self.scene.changeTheMark(-self.deleteItem.delta, undo=True)
+            # Mark increases by delta  - since deleting, this is like an "redo"
+            self.scene.changeTheMark(self.deleteItem.delta, undo=False)
         # If the object is a GroupTextDeltaItem then change mark
         if isinstance(self.deleteItem, GroupDTItem):
-            # Mark decreases by delta - handled by the undo flag
-            self.scene.changeTheMark(-self.deleteItem.di.delta, undo=True)
+            # Mark decreases by delta -  - since deleting, this is like an "redo"
+            self.scene.changeTheMark(self.deleteItem.di.delta, undo=False)
         # nicely animate the undo of deletion
         self.deleteItem.animateFlag = False
         self.scene.addItem(self.deleteItem)
@@ -1670,7 +1670,7 @@ class GhostComment(QGraphicsItemGroup):
         self.changeComment(dlt, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
-    def tweakPositions(self, dlt):
+    def tweakPositions(self, dlt, txt):
         pt = self.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
@@ -1680,7 +1680,11 @@ class GhostComment(QGraphicsItemGroup):
         else:
             cr = self.di.boundingRect()
             self.di.moveBy(0, -cr.height() / 2)
-            self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
+            # check if blurb is empty, move accordingly to hide it
+            if txt == "":
+                self.blurb.moveBy(0, -cr.height() / 2)
+            else:
+                self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
     def changeComment(self, dlt, txt):
         # need to force a bounding-rect update by removing an item and adding it back
@@ -1690,7 +1694,7 @@ class GhostComment(QGraphicsItemGroup):
         self.di.changeDelta(dlt)
         self.blurb.changeText(txt)
         # move to correct positions
-        self.tweakPositions(dlt)
+        self.tweakPositions(dlt, txt)
         self.addToGroup(self.blurb)
         if dlt == ".":
             self.di.setVisible(False)

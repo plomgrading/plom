@@ -117,6 +117,7 @@ mouseMove = {
     "line": "mouseMoveLine",
     "pen": "mouseMovePen",
     "comment": "mouseMoveComment",
+    "delta": "mouseMoveDelta",
 }
 mouseRelease = {
     "box": "mouseReleaseBox",
@@ -1002,6 +1003,11 @@ class PageScene(QGraphicsScene):
             self.ghostItem.setVisible(True)
         self.ghostItem.setPos(event.scenePos())
 
+    def mouseMoveDelta(self, event):
+        if not self.ghostItem.isVisible():
+            self.ghostItem.setVisible(True)
+        self.ghostItem.setPos(event.scenePos())
+
     def setTheMark(self, newMark):
         self.score = newMark
         self.scoreBox.changeScore(self.score)
@@ -1036,6 +1042,12 @@ class PageScene(QGraphicsScene):
             self.legalDelta = False
         else:
             self.legalDelta = True
+
+        self.commentDelta = self.markDelta
+        self.commentText = ""
+        self.updateGhost(self.commentDelta, self.commentText)
+        self.exposeGhost()
+
         return self.legalDelta
 
     def undo(self):
