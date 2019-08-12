@@ -5,7 +5,7 @@ __license__ = "AGPLv3"
 
 import json
 
-from PyQt5.QtCore import Qt, QElapsedTimer, QEvent, QLineF, QPointF, QRectF, pyqtSignal
+from PyQt5.QtCore import Qt, QElapsedTimer, QEvent, QLineF, QPointF, QRectF
 from PyQt5.QtGui import (
     QBrush,
     QColor,
@@ -60,10 +60,10 @@ class ScoreBox(QGraphicsTextItem):
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self, fontsize=10):
+    def __init__(self, fontsize=10, maxScore=1, score=0):
         super(ScoreBox, self).__init__()
-        self.score = 0
-        self.maxScore = 0
+        self.score = score
+        self.maxScore = maxScore
         self.setDefaultTextColor(Qt.red)
         self.font = QFont("Helvetica")
         self.fontSize = min(fontsize * 3.5, 36)
@@ -134,16 +134,16 @@ class PageScene(QGraphicsScene):
     textitems.
     """
 
-    # When a delta is created or deleted, need to emit a markChangedSignal
-    # which will be picked up by the annotation widget to update
-    # signal passes [delta, +/- 1] the second shows if +1 redo, -1 undo
-    markChangedSignal = pyqtSignal(int, int)
-
-    def __init__(self, parent, imgName):
+    def __init__(self, parent, imgName, maxMark, score):
         super(PageScene, self).__init__(parent)
         self.parent = parent
-        # Grab filename of groupimage, build pixmap and graphicsitem.
+        # Grab filename of groupimage,
         self.imageName = imgName
+        self.maxMark = maxMark
+        self.score = score
+        # Tool mode - initially set it to "move"
+        self.mode = "move"
+        # build pixmap and graphicsitem.
         self.image = QPixmap(imgName)
         self.imageItem = QGraphicsPixmapItem(self.image)
         self.imageItem.setTransformationMode(Qt.SmoothTransformation)
@@ -155,8 +155,7 @@ class PageScene(QGraphicsScene):
         self.masher.start()
         # initialise the undo-stack
         self.undoStack = QUndoStack()
-        # Starting mode is move.
-        self.mode = "move"
+
         # Get current font size to use as base for size of comments etc.
         self.fontSize = self.font().pointSizeF()
         # Define standard pen, highlight, fill, light-fill
@@ -196,9 +195,21 @@ class PageScene(QGraphicsScene):
         self.legalDelta = True
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
-        self.scoreBox = ScoreBox(self.fontSize)
+        # set up "k out of n" where k=current score, n = max score.
+        self.scoreBox = ScoreBox(self.fontSize, self.maxMark, self.score)
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
+
+    def setMode(self, mode):
+        self.mode = mode
+        # if current mode is not comment, make sure the ghostcomment is hidden
+        if self.mode != "comment":
+            self.hideGhost()
+        # if mode is "pan", set the view to be able to drag about, else turn that off
+        if self.mode == "pan":
+            self.views()[0].setDragMode(1)
+        else:
+            self.views()[0].setDragMode(0)
 
     def getComments(self):
         comments = []
@@ -388,7 +399,7 @@ class PageScene(QGraphicsScene):
         The actual moving of objects is handled by themselves since they
         know how to handle the ItemPositionChange signal as a move-command.
         """
-        self.parent.setCursor(Qt.ClosedHandCursor)
+        self.views()[0].setCursor(Qt.ClosedHandCursor)
         super(PageScene, self).mousePressEvent(event)
 
     def mousePressText(self, event):
@@ -451,11 +462,12 @@ class PageScene(QGraphicsScene):
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
-            self.parent.scale(0.8, 0.8)
+            self.views()[0].scale(0.8, 0.8)
         else:
-            self.parent.scale(1.25, 1.25)
-        self.parent.centerOn(event.scenePos())
-        self.parent.zoomNull(True)  # sets the view rectangle and updates zoom-dropdown.
+            self.views()[0].scale(1.25, 1.25)
+        self.views()[0].centerOn(event.scenePos())
+        # sets the view rectangle and updates zoom-dropdown.
+        self.views()[0].zoomNull(True)
 
     # Mouse release tool functions.
     # Most of these delete the temp-object (eg box / line)
@@ -463,7 +475,7 @@ class PageScene(QGraphicsScene):
 
     def mouseReleaseMove(self, event):
         """Sets the cursor back to an open hand."""
-        self.parent.setCursor(Qt.OpenHandCursor)
+        self.views()[0].setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
         # refresh view after moving objects
         self.update()
@@ -471,7 +483,7 @@ class PageScene(QGraphicsScene):
     def mouseReleasePan(self, event):
         """Update the current stored view rectangle."""
         super(PageScene, self).mouseReleaseEvent(event)
-        self.parent.zoomNull()
+        self.views()[0].zoomNull()
 
     # Handle drag / drop events
     def dragEnterEvent(self, e):
@@ -506,7 +518,7 @@ class PageScene(QGraphicsScene):
         else:
             pass
         # After the drop event make sure pageview has the focus.
-        self.parent.setFocus(Qt.TabFocusReason)
+        self.views()[0].setFocus(Qt.TabFocusReason)
 
     def latexAFragment(self, txt):
         return self.parent.latexAFragment(txt.strip())
@@ -533,14 +545,16 @@ class PageScene(QGraphicsScene):
     def pickleSceneItems(self):
         lst = []
         for X in self.items():
-            # don't pickle the scorebox or background image
-            if isinstance(X, ScoreBox) or isinstance(X, QGraphicsPixmapItem):
-                continue
-            # And be careful - there might be a GhostComment floating about
-            if (
-                isinstance(X, GhostComment)
-                or isinstance(X, GhostDelta)
-                or isinstance(X, GhostText)
+            # don't pickle the scorebox or background image, or ghostcomment
+            if any(
+                isinstance(X, Y)
+                for Y in [
+                    ScoreBox,
+                    QGraphicsPixmapItem,
+                    GhostComment,
+                    GhostDelta,
+                    GhostText,
+                ]
             ):
                 continue
             # If text or delta, check if part of GroupDeltaText
@@ -556,10 +570,19 @@ class PageScene(QGraphicsScene):
     def unpickleSceneItems(self, lst):
         # clear all items from scene.
         for X in self.items():
-            if isinstance(X, ScoreBox) or isinstance(X, QGraphicsPixmapItem):
+            if any(
+                isinstance(X, Y)
+                for Y in [
+                    ScoreBox,
+                    QGraphicsPixmapItem,
+                    GhostComment,
+                    GhostDelta,
+                    GhostText,
+                ]
+            ):
                 continue
             else:
-                command = CommandDelete(self, X, QPointF(0, 0))
+                command = CommandDelete(self, X)
                 self.undoStack.push(command)
         # now load up the new items
         for X in lst:
@@ -987,3 +1010,20 @@ class PageScene(QGraphicsScene):
         if not self.ghostItem.isVisible():
             self.ghostItem.setVisible(True)
         self.ghostItem.setPos(event.scenePos())
+
+    def setTheMark(self, newMark):
+        self.score = newMark
+        self.scoreBox.changeScore(self.score)
+
+    def changeTheMark(self, deltaMark, undo=False):
+        self.score += deltaMark
+        self.scoreBox.changeScore(self.score)
+        if undo:
+            lookingAhead = self.score - deltaMark
+        else:
+            lookingAhead = self.score + deltaMark
+        if lookingAhead < 0 or lookingAhead > self.maxMark:
+            self.legalDelta = False
+        else:
+            self.legalDelta = True
+        self.parent.changeMark()
