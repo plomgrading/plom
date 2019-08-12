@@ -619,13 +619,7 @@ class Annotator(QDialog):
         # Set the model to text and change cursor.
         self.setMode("comment", QCursor(Qt.IBeamCursor))
         # Grab the delta from the arguments
-        # check if delta is "." or an int. if "." then just text.
-        if dlt_txt[0] == ".":
-            self.scene.changeTheComment(".", dlt_txt[1], annotatorUpdate=True)
-        else:
-            self.scene.changeTheComment(
-                int(dlt_txt[0]), dlt_txt[1], annotatorUpdate=True
-            )
+        self.scene.changeTheComment(dlt_txt[0], dlt_txt[1], annotatorUpdate=True)
 
     def setMarkHandler(self, markStyle):
         """Set up the mark handling widget inside the annotator gui.
@@ -661,7 +655,7 @@ class Annotator(QDialog):
             self.ui.moveButton.animateClick()
             return
         # Else, the delta is now set, so now change the mode here.
-        self.setMode("delta", QCursor(Qt.ArrowCursor))
+        self.setMode("delta", QCursor(Qt.IBeamCursor))
 
     def changeMark(self, score):
         """The mark has been changed. Update the mark-handler.

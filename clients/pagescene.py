@@ -187,7 +187,7 @@ class PageScene(QGraphicsScene):
         self.ghostItem.setVisible(False)
         self.addItem(self.ghostItem)
         # Set a mark-delta, comment-text and comment-delta.
-        self.markDelta = 0
+        self.markDelta = "0"
         self.commentText = ""
         self.commentDelta = "0"
         self.legalDelta = True
@@ -364,7 +364,7 @@ class PageScene(QGraphicsScene):
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
-            if self.markDelta > 0:
+            if int(self.markDelta) > 0:
                 command = CommandCross(self, pt)
             else:
                 command = CommandTick(self, pt)
@@ -1006,9 +1006,11 @@ class PageScene(QGraphicsScene):
         self.score = newMark
         self.scoreBox.changeScore(self.score)
 
-    def changeTheMark(self, deltaMark, undo=False):
+    def changeTheMark(self, deltaMarkString, undo=False):
         # if is an undo then we need a minus-sign here
         # because we are undoing the delta.
+        # note that this command is passed a string
+        deltaMark = int(deltaMarkString)
         if undo:
             self.score -= deltaMark
         else:
@@ -1022,11 +1024,14 @@ class PageScene(QGraphicsScene):
             self.legalDelta = True
         self.parent.changeMark(self.score)
         # if we are in comment mode then the comment might need updating
-        self.changeTheComment(self.markDelta, self.commentText, annotatorUpdate=False)
+        if self.mode == "comment":
+            self.changeTheComment(
+                self.markDelta, self.commentText, annotatorUpdate=False
+            )
 
     def changeTheDelta(self, newDelta):
         self.markDelta = newDelta
-        lookingAhead = self.score + self.markDelta
+        lookingAhead = self.score + int(self.markDelta)
         if lookingAhead < 0 or lookingAhead > self.maxMark:
             self.legalDelta = False
         else:
@@ -1049,14 +1054,15 @@ class PageScene(QGraphicsScene):
             self.exposeGhost()  # unhide the ghostitem
         # if we have passed ".", then we don't need to do any
         # delta calcs, the ghost item knows how to handle it.
-        if isinstance(delta, int):
+        if delta != ".":
+            id = int(delta)
             if self.markStyle == 2:  # mark up
                 # if delta is too positive, set to "."
-                if delta < 0 or self.score + delta > self.maxMark:
+                if id < 0 or self.score + id > self.maxMark:
                     delta = "."
             elif self.markStyle == 3:  # mark down
                 # if delta is too negative, set to "."
-                if delta > 0 or self.score + delta < 0:
+                if id > 0 or self.score + id < 0:
                     delta = "."
             else:  # mark total
                 # no delta is used, so set it to ".".

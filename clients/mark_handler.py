@@ -139,7 +139,7 @@ class MarkHandler(QWidget):
         self.pdmb.setStyleSheet("")
         self.pdmb = self.sender()
         self.pdmb.setStyleSheet(self.greenStyle)
-        self.currentDelta = int(self.sender().text().replace("&", ""))
+        self.currentDelta = self.sender().text().replace("&", "")
         self.parent.deltaMarkSet(self.currentDelta)
 
     def setTotalMark(self):
