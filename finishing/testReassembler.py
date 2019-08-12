@@ -27,7 +27,7 @@ if __name__ == '__main__':
     # takes StudentID and list of group image files as args.
     # 0th item on list is the coverpage.
     # other items are the groupimage files.
-    sid = eval(sys.argv[1])
+    sid = sys.argv[1]
     imgl = eval(sys.argv[2])
     coverfname, imgl = imgl[0], imgl[1:]
     # output as test_<StudentID>.pdf
