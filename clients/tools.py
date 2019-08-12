@@ -34,14 +34,12 @@ class CommandDelete(QUndoCommand):
         if self.deleteItem.animateFlag:
             return  # this avoids user deleting same object mid-delete animation.
 
-        # If the object is a DeltaItem then emit a mark-changed signal.
+        # If the object is a DeltaItem then change mark
         if isinstance(self.deleteItem, DeltaItem):
             # Mark decreases by delta
-            self.scene.markChangedSignal.emit(-self.deleteItem.delta, 1)
-        # If the object is a GroupTextDeltaItem then emit a mark-changed signal.
+            self.scene.changeTheMark(-self.deleteItem.delta, undo=False)
         if isinstance(self.deleteItem, GroupDTItem):
-            # Mark decreases by delta
-            self.scene.markChangedSignal.emit(-self.deleteItem.di.delta, 1)
+            self.scene.changeTheMark(-self.deleteItem.di.delta, undo=False)
         # nicely animate the deletion
         self.deleteItem.animateFlag = True
         if self.deleteItem.animator is not None:
@@ -52,14 +50,14 @@ class CommandDelete(QUndoCommand):
             self.scene.removeItem(self.deleteItem)
 
     def undo(self):
-        # If the object is a DeltaItem then emit a mark-changed signal.
+        # If the object is a DeltaItem then change mark.
         if isinstance(self.deleteItem, DeltaItem):
-            # Mark increases by delta
-            self.scene.markChangedSignal.emit(self.deleteItem.delta, -1)
-        # If the object is a GroupTextDeltaItem then emit a mark-changed signal.
+            # Mark increases by delta - handled by the undo-flag
+            self.scene.changeTheMark(-self.deleteItem.delta, undo=True)
+        # If the object is a GroupTextDeltaItem then change mark
         if isinstance(self.deleteItem, GroupDTItem):
-            # Mark decreases by delta
-            self.scene.markChangedSignal.emit(self.deleteItem.di.delta, -1)
+            # Mark decreases by delta - handled by the undo flag
+            self.scene.changeTheMark(-self.deleteItem.di.delta, undo=True)
         # nicely animate the undo of deletion
         self.deleteItem.animateFlag = False
         self.scene.addItem(self.deleteItem)
@@ -603,7 +601,7 @@ class CrossItem(QGraphicsPathItem):
 # Delta stuff
 class CommandDelta(QUndoCommand):
     # Very similar to CommandArrow
-    # But must send a "the total mark has changed" signal
+    # But must send new mark to scene
     def __init__(self, scene, pt, delta, fontsize):
         super(CommandDelta, self).__init__()
         self.scene = scene
@@ -613,16 +611,14 @@ class CommandDelta(QUndoCommand):
         self.setText("Delta")
 
     def redo(self):
-        # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
-        self.scene.markChangedSignal.emit(self.delta, 1)
+        self.scene.changeTheMark(self.delta, undo=False)
         self.delItem.flash_redo()
         self.scene.addItem(self.delItem)
 
     def undo(self):
-        # Emit a markChangedSignal for the marker to pick up and change total.
-        # Mark decreased by delta
-        self.scene.markChangedSignal.emit(-self.delta, -1)
+        # Mark decreased by delta - handled by undo flag
+        self.scene.changeTheMark(self.delta, undo=True)
         self.delItem.flash_undo()
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.delItem))
 
@@ -636,12 +632,7 @@ class DeltaItem(QGraphicsTextItem):
         self.thick = 2
         self.delta = delta
         self.setDefaultTextColor(Qt.red)
-        # If positive mark then starts with a "+"-sign
-        if self.delta > 0:
-            self.setPlainText(" +{} ".format(self.delta))
-        else:
-            # else starts with a "-"-sign (unless zero).
-            self.setPlainText(" {} ".format(self.delta))
+        self.setPlainText(" {} ".format(self.delta))
         self.font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
         self.font.setPointSize(min(30, fontsize * 3))
@@ -1583,7 +1574,7 @@ class TextItem(QGraphicsTextItem):
 class CommandGDT(QUndoCommand):
     # GDT = group of delta and text
     # Command to do a delta and a textitem (ie a standard comment)
-    # Must send a "the total mark has changed" signal
+    # Must change mark
     def __init__(self, scene, pt, delta, blurb, fontsize):
         super(CommandGDT, self).__init__()
         self.scene = scene
@@ -1594,17 +1585,15 @@ class CommandGDT(QUndoCommand):
         self.setText("GroupDeltaText")
 
     def redo(self):
-        # Emit a markChangedSignal for the marker to pick up and change total.
         # Mark increased by delta
-        self.scene.markChangedSignal.emit(self.delta, 1)
+        self.scene.changeTheMark(self.delta, undo=False)
         self.scene.addItem(self.gdt)
         self.gdt.blurb.flash_redo()
         self.gdt.di.flash_redo()
 
     def undo(self):
-        # Emit a markChangedSignal for the marker to pick up and change total.
-        # Mark decreased by delta
-        self.scene.markChangedSignal.emit(-self.delta, -1)
+        # Mark decreased by delta - handled by undo flag
+        self.scene.changeTheMark(self.delta, undo=True)
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
         self.gdt.blurb.flash_undo()
         self.gdt.di.flash_undo()
@@ -1680,7 +1669,7 @@ class GhostComment(QGraphicsItemGroup):
         pt = self.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
-        if int(dlt) == 0:
+        if dlt == ".":
             cr = self.blurb.boundingRect()
             self.blurb.moveBy(0, -(cr.top() + cr.bottom()) / 2)
         else:
@@ -1700,7 +1689,7 @@ class GhostComment(QGraphicsItemGroup):
         # move to correct positions
         self.tweakPositions(dlt)
         self.addToGroup(self.blurb)
-        if int(dlt) == 0:
+        if dlt == ".":
             self.di.setVisible(False)
         else:
             self.di.setVisible(True)
@@ -1735,7 +1724,10 @@ class GhostDelta(QGraphicsTextItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
     def changeDelta(self, dlt):
-        self.delta = int(dlt)
+        if dlt == ".":
+            self.delta = 0
+        else:
+            self.delta = int(dlt)
         if self.delta > 0:
             self.setPlainText(" +{} ".format(self.delta))
         else:

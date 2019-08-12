@@ -11,16 +11,13 @@ from PyQt5.QtWidgets import (
     QLabel,
     QSizePolicy,
 )
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import Qt
 
 
 class MarkHandler(QWidget):
-    # When a mark or delta is set, these signals will be emitted.
-    markSetSignal = pyqtSignal(int)
-    deltaSetSignal = pyqtSignal(int)
-
-    def __init__(self, maxScore):
+    def __init__(self, parent, maxScore):
         super(MarkHandler, self).__init__()
+        self.parent = parent
         # Set max score/mark
         self.maxScore = maxScore
         # Set current score/mark.
@@ -114,7 +111,7 @@ class MarkHandler(QWidget):
             )
 
         self.setLayout(grid)
-        self.markSetSignal.emit(self.currentScore)
+        self.parent.totalMarkSet(self.currentScore)
         self.style = "Down"
 
     def setMarkingTotal(self):
@@ -135,7 +132,7 @@ class MarkHandler(QWidget):
             )
 
         self.setLayout(grid)
-        self.markSetSignal.emit(self.currentScore)
+        self.parent.totalMarkSet(self.currentScore)
         self.style = "Total"
 
     def setDeltaMark(self):
@@ -143,19 +140,19 @@ class MarkHandler(QWidget):
         self.pdmb = self.sender()
         self.pdmb.setStyleSheet(self.greenStyle)
         self.currentDelta = int(self.sender().text().replace("&", ""))
-        self.deltaSetSignal.emit(self.currentDelta)
+        self.parent.deltaMarkSet(self.currentDelta)
 
     def setTotalMark(self):
         self.ptmb.setStyleSheet("")
         self.ptmb = self.sender()
         self.ptmb.setStyleSheet(self.redStyle)
         self.currentScore = int(self.sender().text().replace("&", ""))
-        self.markSetSignal.emit(self.currentScore)
+        self.parent.totalMarkSet(self.currentScore)
 
     def setMark(self, newScore):
         self.currentScore = newScore
         self.scoreL.setText("{} / {}".format(self.currentScore, self.maxScore))
-        self.markSetSignal.emit(self.currentScore)
+        self.parent.totalMarkSet(self.currentScore)
 
     def clearButtonStyle(self):
         if self.style == "Total":
