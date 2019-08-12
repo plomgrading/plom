@@ -418,8 +418,6 @@ class SimpleCommentTable(QTableView):
             txti = QStandardItem(txt)
             txti.setEditable(True)
             txti.setDropEnabled(False)
-            if dlt == ".":  # temp compatibility with future fix for #253
-                dlt = 0
             # If delta>0 then should be "+n"
             if dlt == ".":
                 delti = QStandardItem(".")
