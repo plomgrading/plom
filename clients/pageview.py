@@ -44,38 +44,6 @@ class PageView(QGraphicsView):
         # then any other stuff needed by parent class
         super(PageView, self).resizeEvent(e)
 
-    def makeComment(self, dlt, text):
-        self.setDragMode(0)
-        # Pass the comment and delta on to the pagescene.
-        self.scene().mode = "comment"
-        self.scene().commentDelta = int(dlt)
-        self.scene().commentText = text
-        self.scene().updateGhost(dlt, text)
-
-    def markDelta(self, delta):
-        self.setDragMode(0)
-        # Pass the delta on to the pagescene.
-        self.scene().mode = "delta"
-        self.scene().markDelta = delta
-
-    def undo(self):
-        self.scene().undoStack.undo()
-
-    def redo(self):
-        self.scene().undoStack.redo()
-
-    def getComments(self):
-        return self.scene().getComments()
-
-    def countComments(self):
-        return self.scene().countComments()
-
-    def areThereAnnotations(self):
-        return self.scene().areThereAnnotations()
-
-    def save(self):
-        self.scene().save()
-
     def latexAFragment(self, txt):
         cur = self.cursor()
         self.setCursor(QCursor(Qt.WaitCursor))
@@ -154,6 +122,3 @@ class PageView(QGraphicsView):
         else:
             self.fitInView(initRect, Qt.KeepAspectRatio)
         self.zoomNull()
-
-    def checkAllObjectsInside(self):
-        return self.scene().checkAllObjectsInside()

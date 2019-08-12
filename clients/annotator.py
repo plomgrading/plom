@@ -342,7 +342,9 @@ class Annotator(QDialog):
         # Start the pageview - pass it this widget (so it can communicate
         # back to us) and the filename of the image.
         self.view = PageView(self)
-        self.scene = PageScene(self, self.imageFile, self.maxMark, self.score)
+        self.scene = PageScene(
+            self, self.imageFile, self.maxMark, self.score, self.markStyle
+        )
         # connect view to scene
         self.view.connectScene(self.scene)
         # scene knows which views are connected via self.views()
@@ -397,21 +399,24 @@ class Annotator(QDialog):
         also the cursor.
         """
         # Clear styling of the what was until now the current button
-        if self.currentButton is None:
-            pass
-        else:
+        if self.currentButton is not None:
             self.currentButton.setStyleSheet("")
+
         # We change currentbutton to which ever widget sent us
         # to this function. We have to be a little careful since
         # not all widgets get the styling in the same way.
         # If the mark-handler widget sent us here, it takes care
         # of its own styling - so we update the little tool-tip
         # and set current button to none.
-        if self.sender() == self.markHandler:
+        if isinstance(self.sender(), QPushButton):
+            # has come from mark-change button in handler, so
             # set button=none, since markHandler does its own styling
             self.currentButton = None
         else:
-            # otherwise the button = whoever sent us here.
+            # Clear the style of the mark-handler (this will mostly not do
+            # anything, but saves us testing if we had styled it)
+            self.markHandler.clearButtonStyle()
+            # the current button = whoever sent us here.
             self.currentButton = self.sender()
             # Set the style of that button - be careful of the
             # comment list - since it needs different styling
@@ -422,12 +427,8 @@ class Annotator(QDialog):
                 self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
                 # make sure comment button style is cleared
                 self.ui.commentButton.setStyleSheet("")
-            # Clear the style of the mark-handler (this will mostly not do
-            # anything, but saves us testing if we had styled it)
-            self.markHandler.clearButtonStyle()
-        # pass the new mode to the graphicsview
+        # pass the new mode to the graphicsview, and set the cursor in view
         self.scene.setMode(newMode)
-        # set the mouse cursor
         self.view.setCursor(newCursor)
         # refresh everything.
         self.repaint()
@@ -498,9 +499,9 @@ class Annotator(QDialog):
         self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
         # shortcuts for undo/redo
         self.undoShortCut = QShortcut(QKeySequence("Ctrl+z"), self)
-        self.undoShortCut.activated.connect(self.view.undo)
+        self.undoShortCut.activated.connect(self.scene.undo)
         self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
-        self.redoShortCut.activated.connect(self.view.redo)
+        self.redoShortCut.activated.connect(self.scene.redo)
 
     # Simple mode change functions
     def boxMode(self):
@@ -576,8 +577,8 @@ class Annotator(QDialog):
         self.ui.zoomButton.clicked.connect(self.zoomMode)
 
         # Pass the undo/redo button clicks on to the view
-        self.ui.undoButton.clicked.connect(self.view.undo)
-        self.ui.redoButton.clicked.connect(self.view.redo)
+        self.ui.undoButton.clicked.connect(self.scene.undo)
+        self.ui.redoButton.clicked.connect(self.scene.redo)
         # The key-help button connects to the keyPopUp command.
         self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
         # Cancel button closes annotator(QDialog) with a 'reject'
@@ -617,38 +618,7 @@ class Annotator(QDialog):
         """
         # Set the model to text and change cursor.
         self.setMode("comment", QCursor(Qt.IBeamCursor))
-        # Grab the delta from the arguments
-        delta = int(dlt_txt[0])
-        # We only paste the delta if it is appropriate - this depends on
-        # the marking style.
-        # If marking-up then keep delta if positive, and if applying it
-        # will not push mark past maximium possible
-        if self.markStyle == 2:  # mark up - disable negative
-            if delta <= 0 or delta + self.score > self.maxMark:
-                self.scene.legalDelta = False
-                self.view.makeComment(0, dlt_txt[1])
-                return
-            else:
-                self.scene.legalDelta = True
-                self.view.makeComment(dlt_txt[0], dlt_txt[1])
-                return
-        # If marking down, then keep delta if negative, and if applying it
-        # doesn't push mark down past zero.
-        elif self.markStyle == 3:
-            if delta >= 0 or delta + self.score < 0:
-                self.scene.legalDelta = False
-                self.view.makeComment(0, dlt_txt[1])
-                return
-            else:
-                self.scene.legalDelta = True
-                self.view.makeComment(dlt_txt[0], dlt_txt[1])
-                return
-        else:
-            # Remaining possibility = mark total - no restrictions
-            # since user has to set total mark manually - the deltas do not
-            # change the mark, so are not displayed or used.
-            self.view.makeComment(0, dlt_txt[1])
-            return
+        self.scene.changeTheComment(int(dlt_txt[0]), dlt_txt[1], annotatorUpdate=True)
 
     def setMarkHandler(self, markStyle):
         """Set up the mark handling widget inside the annotator gui.
@@ -677,18 +647,14 @@ class Annotator(QDialog):
         the view (and scene) need to know what the current delta is so
         that it can be pasted in correctly (when user clicks on image).
         """
-        # Compute mark if delta is applied = current mark + delta
-        lookingAhead = self.score + dm
-        # If it is out of range then change mode to "move" so that
-        # the user cannot paste in that delta.
-        if lookingAhead < 0 or lookingAhead > self.maxMark:
+        # Try changing the delta in the scene
+        if not self.scene.changeTheDelta(dm):
+            # If it is out of range then change mode to "move" so that
+            # the user cannot paste in that delta.
             self.ui.moveButton.animateClick()
             return
-        # Otherwise set the mode and tell the view the current delta value.
-        # which it, in turn, passes on to the pagescene.
+        # Else, the delta is now set, so now change the mode here.
         self.setMode("delta", QCursor(Qt.ArrowCursor))
-        self.view.markDelta(dm)
-        self.scene.legalDelta = True
 
     def changeMark(self, score):
         """The mark has been changed. Update the mark-handler.
@@ -778,13 +744,13 @@ class Annotator(QDialog):
             self.launchAgain = False
             self.reject()
         # do some checks before accepting things
-        if not self.view.areThereAnnotations():
+        if not self.scene.areThereAnnotations():
             msg = ErrorMessage("Please make an annotation, even if the page is blank.")
             msg.exec_()
             return
 
         # check if comments have been left.
-        if self.view.countComments() == 0:
+        if self.scene.countComments() == 0:
             # error message if total is not 0 or full
             if self.score > 0 and self.score < self.maxMark and self.commentWarn:
                 msg = SimpleMessageCheckBox(
@@ -823,8 +789,8 @@ class Annotator(QDialog):
         if not self.checkAllObjectsInside():
             return
 
-        # Save the view/scene to file.
-        self.view.save()
+        # Save the scene to file.
+        self.scene.save()
         # Save the marker's comments
         self.saveMarkerComments()
         # Pickle the scene as a PLOM-file
@@ -835,7 +801,7 @@ class Annotator(QDialog):
         self.accept()
 
     def checkAllObjectsInside(self):
-        if self.view.checkAllObjectsInside():
+        if self.scene.checkAllObjectsInside():
             return True
         else:
             # some objects outside the image, check if user really wants to finish
@@ -847,11 +813,8 @@ class Annotator(QDialog):
             else:
                 return True
 
-    def getComments(self):
-        return self.view.getComments()
-
     def saveMarkerComments(self):
-        commentList = self.getComments()
+        commentList = self.scene.getComments()
         # image file is <blah>.png, save comments as <blah>.json
         with open(self.imageFile[:-3] + "json", "w") as commentFile:
             json.dump(commentList, commentFile)

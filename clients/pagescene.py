@@ -134,13 +134,14 @@ class PageScene(QGraphicsScene):
     textitems.
     """
 
-    def __init__(self, parent, imgName, maxMark, score):
+    def __init__(self, parent, imgName, maxMark, score, markStyle):
         super(PageScene, self).__init__(parent)
         self.parent = parent
         # Grab filename of groupimage,
         self.imageName = imgName
         self.maxMark = maxMark
         self.score = score
+        self.markStyle = markStyle
         # Tool mode - initially set it to "move"
         self.mode = "move"
         # build pixmap and graphicsitem.
@@ -1003,6 +1004,9 @@ class PageScene(QGraphicsScene):
     def updateGhost(self, dlt, txt):
         self.ghostItem.changeComment(dlt, txt)
 
+    def exposeGhost(self):
+        self.ghostItem.setVisible(True)
+
     def hideGhost(self):
         self.ghostItem.setVisible(False)
 
@@ -1016,14 +1020,61 @@ class PageScene(QGraphicsScene):
         self.scoreBox.changeScore(self.score)
 
     def changeTheMark(self, deltaMark, undo=False):
-        self.score += deltaMark
-        self.scoreBox.changeScore(self.score)
+        # if is an undo then we need a minus-sign here
+        # because we are undoing the delta.
         if undo:
-            lookingAhead = self.score - deltaMark
+            self.score -= deltaMark
         else:
-            lookingAhead = self.score + deltaMark
+            self.score += deltaMark
+        self.scoreBox.changeScore(self.score)
+        # now look ahead to see what happens if we redo this delta
+        lookingAhead = self.score + deltaMark
         if lookingAhead < 0 or lookingAhead > self.maxMark:
             self.legalDelta = False
         else:
             self.legalDelta = True
-        self.parent.changeMark()
+        self.parent.changeMark(self.score)
+        # if we are in comment mode then the comment might need updating
+        self.changeTheComment(self.markDelta, self.commentText, annotatorUpdate=False)
+
+    def changeTheDelta(self, newDelta):
+        self.markDelta = newDelta
+        lookingAhead = self.score + self.markDelta
+        if lookingAhead < 0 or lookingAhead > self.maxMark:
+            self.legalDelta = False
+        else:
+            self.legalDelta = True
+        return self.legalDelta
+
+    def undo(self):
+        self.undoStack.undo()
+
+    def redo(self):
+        self.undoStack.redo()
+
+    def changeTheComment(self, delta, text, annotatorUpdate=True):
+        # if this update comes from the annotator, then
+        # we need to store a copy of the mark-delta for future
+        # and also set the mode.
+        if annotatorUpdate:
+            self.markDelta = delta
+            self.setMode("comment")
+            # unhide the ghostitem
+            self.exposeGhost()
+        # make sure the ghost item stays hidden unless needed
+        # if self.mode != "comment":
+        # self.hideGhost()
+        if self.markStyle == 2:  # mark up
+            # if delta is too positive, set to 0
+            if delta < 0 or self.score + delta > self.maxMark:
+                delta = 0
+        elif self.markStyle == 3:  # mark down
+            # if delta is too negative, set to 0
+            if delta > 0 or self.score + delta < 0:
+                delta = 0
+        else:  # mark total
+            # no delta is used, so set it to 0.
+            delta = 0
+        self.commentDelta = delta
+        self.commentText = text
+        self.updateGhost(delta, text)
