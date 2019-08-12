@@ -323,8 +323,8 @@ class PageScene(QGraphicsScene):
             # make sure blurb has text interaction turned off
             prevState = self.blurb.textInteractionFlags()
             self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
-            # Update position of text
-            self.blurb.moveBy(0, -self.blurb.boundingRect().height() / 2)
+            # Update position of text - the ghostitem has it right
+            self.blurb.moveBy(0, self.ghostItem.blurb.pos().y())
             command = CommandText(self, self.blurb, self.ink)
             self.undoStack.push(command)
             # return blurb to previous state

@@ -646,10 +646,8 @@ class DeltaItem(QGraphicsTextItem):
         # centre under the mouse-click.
         self.setPos(pt)
         cr = self.boundingRect()
-        self.offset = QPointF(
-            -(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2
-        )
-        self.moveBy(self.offset.x(), self.offset.y())
+        self.offset = -cr.height() / 2
+        self.moveBy(0, self.offset)
 
     def paint(self, painter, option, widget):
         if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
@@ -692,8 +690,8 @@ class DeltaItem(QGraphicsTextItem):
         return [
             "Delta",
             self.delta,
-            self.scenePos().x() - self.offset.x(),
-            self.scenePos().y() - self.offset.y(),
+            self.scenePos().x(),
+            self.scenePos().y() - self.offset,
         ]
 
     # For the animation of border
@@ -1608,23 +1606,30 @@ class GroupDTItem(QGraphicsItemGroup):
         )  # positioned so centre under click
         self.blurb = blurb  # is a textitem already
         self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+
         # check if needs tex->latex
         self.blurb.textToPng()
+
+        # move blurb so that its top-left corner is next to top-right corner of delta.
+        self.tweakPositions(delta)
 
         # set up animators for delete
         self.animator = [self.di, self.blurb]
         self.animateFlag = False
         self.thick = 1
 
-        # move blurb so that its top-left corner is next to top-right corner of delta.
-        cr = self.di.boundingRect()
-        self.blurb.setPos(self.di.pos())
-        self.blurb.moveBy(cr.width() + 5, 0)
-
         self.addToGroup(self.di)
         self.addToGroup(self.blurb)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def tweakPositions(self, dlt):
+        pt = self.di.pos()
+        self.blurb.setPos(pt)
+        self.di.setPos(pt)
+        if dlt != ".":
+            cr = self.di.boundingRect()
+            self.blurb.moveBy(cr.width() + 5, 0)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
@@ -1671,13 +1676,11 @@ class GhostComment(QGraphicsItemGroup):
         self.di.setPos(pt)
         if dlt == ".":
             cr = self.blurb.boundingRect()
-            self.blurb.moveBy(0, -(cr.top() + cr.bottom()) / 2)
+            self.blurb.moveBy(0, -cr.height() / 2)
         else:
             cr = self.di.boundingRect()
-            self.di.moveBy(-(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2)
-            self.blurb.moveBy(
-                (cr.right() + cr.left()) / 2 + 5, -(cr.top() + cr.bottom()) / 2
-            )
+            self.di.moveBy(0, -cr.height() / 2)
+            self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
     def changeComment(self, dlt, txt):
         # need to force a bounding-rect update by removing an item and adding it back
@@ -1709,12 +1712,7 @@ class GhostDelta(QGraphicsTextItem):
         super(GhostDelta, self).__init__()
         self.delta = int(delta)
         self.setDefaultTextColor(Qt.blue)
-        # If positive mark then starts with a "+"-sign
-        if self.delta > 0:
-            self.setPlainText(" +{} ".format(self.delta))
-        else:
-            # else starts with a "-"-sign (unless zero).
-            self.setPlainText(" {} ".format(self.delta))
+        self.setPlainText(" {} ".format(self.delta))
         self.font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
         self.font.setPointSize(min(30, fontsize * 3))
@@ -1724,15 +1722,8 @@ class GhostDelta(QGraphicsTextItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
     def changeDelta(self, dlt):
-        if dlt == ".":
-            self.delta = 0
-        else:
-            self.delta = int(dlt)
-        if self.delta > 0:
-            self.setPlainText(" +{} ".format(self.delta))
-        else:
-            # else starts with a "-"-sign (unless zero).
-            self.setPlainText(" {} ".format(self.delta))
+        self.delta = dlt
+        self.setPlainText(" {} ".format(self.delta))
 
     def paint(self, painter, option, widget):
         # paint the background
