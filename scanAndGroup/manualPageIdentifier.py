@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
@@ -8,14 +10,15 @@ import json
 import os
 import shutil
 import sys
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QPixmap
+from PyQt5.QtCore import Qt, QPointF, QRectF
+from PyQt5.QtGui import QBrush, QColor, QGuiApplication, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QApplication,
     QAbstractItemView,
     QCheckBox,
     QDialog,
     QErrorMessage,
+    QGraphicsRectItem,
     QGraphicsPixmapItem,
     QGraphicsScene,
     QGraphicsView,
@@ -77,6 +80,8 @@ class PageView(QGraphicsView):
         """Init the interface. Load and display the filename."""
         # create a graphicsscene
         self.scene = QGraphicsScene()
+        # set a nice background.
+        self.setBackgroundBrush(QBrush(Qt.darkCyan))
         # create image from the filename and imageitem from that
         self.image = QPixmap(fname)
         self.imageItem = QGraphicsPixmapItem(self.image)
@@ -88,6 +93,13 @@ class PageView(QGraphicsView):
         )
         # put image into scene
         self.scene.addItem(self.imageItem)
+        # A rectangle for blanking out name
+        self.boxFlag = False
+        self.originPos = QPointF(0, 0)
+        self.currentPos = self.originPos
+        self.boxItem = QGraphicsRectItem()
+        self.boxItem.setPen(QPen(Qt.red, 1))
+        self.boxItem.setBrush(QBrush(QColor(200, 200, 200, 255)))
         # assign scene to the view
         self.setScene(self.scene)
         # fit all of the image into the current view
@@ -100,13 +112,46 @@ class PageView(QGraphicsView):
         self.scene.setSceneRect(0, 0, self.image.width(), self.image.height())
         self.fitInView(self.imageItem, Qt.KeepAspectRatio)
 
+    def mousePressEvent(self, event):
+        if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
+            self.originPos = self.mapToScene(event.pos())
+            self.currentPos = self.originPos
+            self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+            if self.boxItem.scene() is None:
+                self.scene.addItem(self.boxItem)
+            self.boxFlag = True
+        else:
+            super(PageView, self).mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self.boxFlag:
+            self.currentPos = self.mapToScene(event.pos())
+            if self.boxItem is None:
+                return
+            else:
+                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+        else:
+            super(PageView, self).mousePressEvent(event)
+
     def mouseReleaseEvent(self, event):
         """On release of mouse zoom in or out by scaling the view"""
-        if event.button() == Qt.RightButton:
+        if self.boxFlag:
+            self.boxFlag = False
+            return
+
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
             self.scale(0.8, 0.8)
         else:
             self.scale(1.25, 1.25)
         self.centerOn(event.pos())
+
+    def removeRect(self):
+        if self.boxItem.scene() is None:
+            return
+        else:
+            self.scene.removeItem(self.boxItem)
 
     def resetView(self):
         """Reset the view to include all of the image"""
@@ -151,6 +196,9 @@ class PageViewWindow(QWidget):
     def updateImage(self, fname):
         """Update the image with the given filename"""
         self.view.updateImage(fname)
+
+    def removeRect(self):
+        self.view.removeRect()
 
 
 class ImageTable(QTableWidget):
@@ -526,6 +574,11 @@ class PageIdentifier(QWidget):
         self.rotateitB = QPushButton("Rotate image")
         self.rotateitB.clicked.connect(self.rotateCurrent)
         grid.addWidget(self.rotateitB, 6, 1)
+        # Remove rectangle button and connect to removeRect command:
+        self.remRectB = QPushButton("Remove Rectangle")
+        self.remRectB.clicked.connect(self.remRect)
+        grid.addWidget(self.remRectB, 5, 3)
+
         # Save all entered data and close
         self.closeB = QPushButton("Save && Close")
         self.closeB.clicked.connect(self.saveValid)
@@ -540,6 +593,9 @@ class PageIdentifier(QWidget):
         self.show()
         # Connect double-click
         self.imageT.doubleClicked.connect(self.identifyIt)
+
+    def remRect(self):
+        self.pageImg.removeRect()
 
     def selChanged(self, selnew, selold):
         """When current selection changes in the table
