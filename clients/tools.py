@@ -34,14 +34,12 @@ class CommandDelete(QUndoCommand):
         if self.deleteItem.animateFlag:
             return  # this avoids user deleting same object mid-delete animation.
 
-        # If the object is a DeltaItem then emit a mark-changed signal.
+        # If the object is a DeltaItem then change mark
         if isinstance(self.deleteItem, DeltaItem):
             # Mark decreases by delta
-            self.scene.markChangedSignal.emit(-self.deleteItem.delta, 1)
-        # If the object is a GroupTextDeltaItem then emit a mark-changed signal.
+            self.scene.changeTheMark(-self.deleteItem.delta, undo=False)
         if isinstance(self.deleteItem, GroupDTItem):
-            # Mark decreases by delta
-            self.scene.markChangedSignal.emit(-self.deleteItem.di.delta, 1)
+            self.scene.changeTheMark(-self.deleteItem.di.delta, undo=False)
         # nicely animate the deletion
         self.deleteItem.animateFlag = True
         if self.deleteItem.animator is not None:
@@ -52,14 +50,14 @@ class CommandDelete(QUndoCommand):
             self.scene.removeItem(self.deleteItem)
 
     def undo(self):
-        # If the object is a DeltaItem then emit a mark-changed signal.
+        # If the object is a DeltaItem then change mark.
         if isinstance(self.deleteItem, DeltaItem):
-            # Mark increases by delta
-            self.scene.markChangedSignal.emit(self.deleteItem.delta, -1)
-        # If the object is a GroupTextDeltaItem then emit a mark-changed signal.
+            # Mark increases by delta - handled by the undo-flag
+            self.scene.changeTheMark(-self.deleteItem.delta, undo=True)
+        # If the object is a GroupTextDeltaItem then change mark
         if isinstance(self.deleteItem, GroupDTItem):
-            # Mark decreases by delta
-            self.scene.markChangedSignal.emit(self.deleteItem.di.delta, -1)
+            # Mark decreases by delta - handled by the undo flag
+            self.scene.changeTheMark(-self.deleteItem.di.delta, undo=True)
         # nicely animate the undo of deletion
         self.deleteItem.animateFlag = False
         self.scene.addItem(self.deleteItem)
@@ -603,7 +601,7 @@ class CrossItem(QGraphicsPathItem):
 # Delta stuff
 class CommandDelta(QUndoCommand):
     # Very similar to CommandArrow
-    # But must send a "the total mark has changed" signal
+    # But must send new mark to scene
     def __init__(self, scene, pt, delta, fontsize):
         super(CommandDelta, self).__init__()
         self.scene = scene
@@ -613,18 +611,16 @@ class CommandDelta(QUndoCommand):
         self.setText("Delta")
 
     def redo(self):
+        # Mark increased by delta
+        self.scene.changeTheMark(self.delta, undo=False)
         self.delItem.flash_redo()
         self.scene.addItem(self.delItem)
-        # Emit a markChangedSignal for the marker to pick up and change total.
-        # Mark increased by delta
-        self.scene.markChangedSignal.emit(self.delta, 1)
 
     def undo(self):
+        # Mark decreased by delta - handled by undo flag
+        self.scene.changeTheMark(self.delta, undo=True)
         self.delItem.flash_undo()
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.delItem))
-        # Emit a markChangedSignal for the marker to pick up and change total.
-        # Mark decreased by delta
-        self.scene.markChangedSignal.emit(-self.delta, -1)
 
 
 class DeltaItem(QGraphicsTextItem):
@@ -636,12 +632,7 @@ class DeltaItem(QGraphicsTextItem):
         self.thick = 2
         self.delta = delta
         self.setDefaultTextColor(Qt.red)
-        # If positive mark then starts with a "+"-sign
-        if self.delta > 0:
-            self.setPlainText(" +{} ".format(self.delta))
-        else:
-            # else starts with a "-"-sign (unless zero).
-            self.setPlainText(" {} ".format(self.delta))
+        self.setPlainText(" {} ".format(self.delta))
         self.font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
         self.font.setPointSize(min(30, fontsize * 3))
@@ -655,7 +646,10 @@ class DeltaItem(QGraphicsTextItem):
         # centre under the mouse-click.
         self.setPos(pt)
         cr = self.boundingRect()
-        self.moveBy(-(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2)
+        self.offset = QPointF(
+            -(cr.right() + cr.left()) / 2, -(cr.top() + cr.bottom()) / 2
+        )
+        self.moveBy(self.offset.x(), self.offset.y())
 
     def paint(self, painter, option, widget):
         if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
@@ -1396,18 +1390,24 @@ class TickItem(QGraphicsPathItem):
 
 # Text
 class CommandText(QUndoCommand):
-    def __init__(self, scene, blurb, ink, checkCache=False):
+    def __init__(self, scene, blurb, ink):
         super(CommandText, self).__init__()
         self.scene = scene
+        # set no interaction on scene's textitem - this avoids button-mashing
+        # issues where text can be added during pasting in of text
+        iflags = blurb.textInteractionFlags()
+        blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+        # copy that textitem to one for this comment
         self.blurb = blurb
+        # set the interaction flags back
+        blurb.setTextInteractionFlags(iflags)
+        # if the textitem has contents already then we
+        # have to do some cleanup - give it focus and then
+        # drop focus - correctly sets the text interaction flags
         if len(self.blurb.toPlainText()) > 0:
-            # quickly grab focus and then clear focus.
-            # needs slight delay.
-            # this correctly sets the text interaction flags
             QTimer.singleShot(1, self.blurb.setFocus)
-            QTimer.singleShot(5, self.blurb.clearFocus)
-            # then convert tex -> latex if required
-            QTimer.singleShot(10, lambda: self.blurb.textToPng(checkCache))
+            QTimer.singleShot(2, self.blurb.clearFocus)
+            QTimer.singleShot(5, self.blurb.textToPng)
         self.setText("Text")
 
     def redo(self):
@@ -1472,14 +1472,15 @@ class TextItem(QGraphicsTextItem):
             self.contents = self.toPlainText()
         super(TextItem, self).focusOutEvent(event)
 
-    def textToPng(self, checkCache=False):
+    def textToPng(self):
         self.contents = self.toPlainText()
         if self.contents[:4].upper() == "TEX:":
             texIt = self.contents[4:]
         else:
-            texIt = self.contents
+            # is not latex so we don't have to PNG-it
+            return
 
-        if self.parent.latexAFragment(texIt, checkCache):
+        if self.parent.latexAFragment(texIt):
             self.setPlainText("")
             tc = self.textCursor()
             qi = QImage("frag.png")
@@ -1573,7 +1574,7 @@ class TextItem(QGraphicsTextItem):
 class CommandGDT(QUndoCommand):
     # GDT = group of delta and text
     # Command to do a delta and a textitem (ie a standard comment)
-    # Must send a "the total mark has changed" signal
+    # Must change mark
     def __init__(self, scene, pt, delta, blurb, fontsize):
         super(CommandGDT, self).__init__()
         self.scene = scene
@@ -1584,21 +1585,18 @@ class CommandGDT(QUndoCommand):
         self.setText("GroupDeltaText")
 
     def redo(self):
+        # Mark increased by delta
+        self.scene.changeTheMark(self.delta, undo=False)
         self.scene.addItem(self.gdt)
         self.gdt.blurb.flash_redo()
         self.gdt.di.flash_redo()
-        # Emit a markChangedSignal for the marker to pick up and change total.
-        # Mark increased by delta
-        self.scene.markChangedSignal.emit(self.delta, 1)
 
     def undo(self):
+        # Mark decreased by delta - handled by undo flag
+        self.scene.changeTheMark(self.delta, undo=True)
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
         self.gdt.blurb.flash_undo()
         self.gdt.di.flash_undo()
-
-        # Emit a markChangedSignal for the marker to pick up and change total.
-        # Mark decreased by delta
-        self.scene.markChangedSignal.emit(-self.delta, -1)
 
 
 class GroupDTItem(QGraphicsItemGroup):
@@ -1611,7 +1609,7 @@ class GroupDTItem(QGraphicsItemGroup):
         self.blurb = blurb  # is a textitem already
         self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
         # check if needs tex->latex
-        self.blurb.textToPng(checkCache=True)
+        self.blurb.textToPng()
 
         # set up animators for delete
         self.animator = [self.di, self.blurb]
@@ -1671,7 +1669,7 @@ class GhostComment(QGraphicsItemGroup):
         pt = self.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
-        if int(dlt) == 0:
+        if dlt == ".":
             cr = self.blurb.boundingRect()
             self.blurb.moveBy(0, -(cr.top() + cr.bottom()) / 2)
         else:
@@ -1691,7 +1689,7 @@ class GhostComment(QGraphicsItemGroup):
         # move to correct positions
         self.tweakPositions(dlt)
         self.addToGroup(self.blurb)
-        if int(dlt) == 0:
+        if dlt == ".":
             self.di.setVisible(False)
         else:
             self.di.setVisible(True)
@@ -1726,7 +1724,10 @@ class GhostDelta(QGraphicsTextItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
     def changeDelta(self, dlt):
-        self.delta = int(dlt)
+        if dlt == ".":
+            self.delta = 0
+        else:
+            self.delta = int(dlt)
         if self.delta > 0:
             self.setPlainText(" +{} ".format(self.delta))
         else:
@@ -1759,8 +1760,10 @@ class GhostText(QGraphicsTextItem):
     def changeText(self, txt):
         self.setPlainText(txt)
         if self.scene() is not None and txt[:4].upper() == "TEX:":
-            texIt = "\\color{blue}\n" + txt[4:]  # make color blue for ghost rendering
-            if self.scene().latexAFragment(texIt, checkCache=True):
+            texIt = (
+                "\\color{blue}\n" + txt[4:].strip()
+            )  # make color blue for ghost rendering
+            if self.scene().latexAFragment(texIt):
                 self.setPlainText("")
                 tc = self.textCursor()
                 qi = QImage("frag.png")
