@@ -40,7 +40,7 @@ Ubuntu
 
 Some stuff from the package manager:
 ```
-  # sudo apt-get install parallel zbar-tools \
+  # sudo apt-get install parallel zbar-tools cmake \
                          python3-passlib python3-seaborn python3-pandas \
                          python3-pyqt5 python3-pyqt5.qtsql \
                          python3-peewee python3-pyqrcode python3-png
@@ -64,6 +64,8 @@ Ubuntu 16.04 also needs:
   # pip3 install --user opencv-python peewee pyqrcode pypng
 
 ```
+
+Ubuntu 16.04: running python3 maps to python3.5 by default - for script 11 run python3.6 explicitly
 
 It also may be useful to install `x2goserver`.
 

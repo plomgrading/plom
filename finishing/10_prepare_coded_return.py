@@ -26,15 +26,17 @@ from utils import myhash, SALTSTR as saltstr
 longname = 'Math Exam'  # bland default for now
 
 
-def do_renaming(fromdir, todir, basename):
+def do_renaming(fromdir, todir):
     print('Searching for foo_<studentnumber>.pdf files in {0}...'.format(fromdir))
     numfiles = 0
     for file in os.scandir(fromdir):
         if file.name.endswith(".pdf"):
-            sn = file.name.partition('_')[2].partition('.')[0]
+            oldname = file.name.partition('.')[0]
+            sn = oldname[-8:]
             assert len(sn) == 8
+            assert sn.isdigit()
             code = myhash(sn)
-            newname = '{0}_{1}_{2}.pdf'.format(basename, sn, code)
+            newname = '{0}_{1}.pdf'.format(oldname, code)
             newname = os.path.join(todir, newname)
             print('  found SN {0}: code {1}, copying "{2}" to "{3}"'.format( \
                 sn, code, file.name, newname))
@@ -52,8 +54,7 @@ if __name__ == '__main__':
 
     spec = TestSpecification()
     spec.readSpec()
-
-    basename = spec.Name
+    shortname = spec.Name
 
     # TODO: but "reassembed" is created even if I use 09alt
     reassembles = ['reassembled', 'reassembled_ID_but_not_marked']
@@ -77,7 +78,7 @@ if __name__ == '__main__':
         print('Directory "codedReturn" already exists: if you want to re-run this script, try deleting it first.')
         sys.exit()
 
-    numfiles = do_renaming(fromdir, 'codedReturn', basename)
+    numfiles = do_renaming(fromdir, 'codedReturn')
     if numfiles > 0:
         print('renamed and copied {0} files'.format(numfiles))
     else:
@@ -88,7 +89,7 @@ if __name__ == '__main__':
     with open('view_test_template.html', 'r') as htmlfile:
         html = htmlfile.read()
     html = html.replace('__COURSENAME__', longname)
-    html = html.replace('__TESTNAME__', basename)
+    html = html.replace('__TESTNAME__', shortname)
 
     newname = os.path.join('codedReturn', 'index.html')
     with open(newname, 'w') as htmlfile:
