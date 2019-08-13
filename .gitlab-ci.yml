@@ -9,8 +9,19 @@ variables:
   ROLLOUT_RESOURCE_TYPE: deployment
 
 stages:
+  - build
   - test
+
+build:
+  script:
+    - pwd
+    - ls
+    - docker ls
+    - docker build . --tag plomdockerbuild
+
 
 test:
   script:
+    - pwd
+    - ls
     - echo "Hello World"
