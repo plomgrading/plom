@@ -53,7 +53,7 @@ job ScanAndGroup:
     - python3 06_group_pages.py
     - cd ..
 
-job serverStarts:
+job ScanAndGroup:
   stage: test2
   script:
     - cd imageServer
