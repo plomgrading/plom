@@ -36,8 +36,10 @@ default:
 stages:
   - build
   - test
+  - test2
 
-build:
+job ScanAndGroup:
+  stage: test
   script:
     - mkdir scanAndGroup/scannedExams/
     # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
@@ -51,6 +53,10 @@ build:
     - python3 05_missing_pages.py
     - python3 06_group_pages.py
     - cd ..
+
+job serverStarts:
+  stage: test2
+  script:
     - cd imageServer
     - ip addr
     - python3 image_server.py &
@@ -68,15 +74,11 @@ build:
     - sleep 1
     - echo "Should be no jobs and this should succeed"
     - jobs -l
+    - cd ..
 
-test:
-  script:
-    # TODO: why doesn't this wait until build is done?
-    - pwd
-    - ls
-    - echo "Hello World"
-
-testbackground:
+job backgroundTest:
+  before_script:
+  stage: test
   script:
     - sleep 60 &
     - jobs -l
@@ -90,7 +92,8 @@ testbackground:
     - echo "Should be no jobs and this should succeed"
     - jobs -p
 
-testsomeunits:
+job someUnitTests:
+  stage: test
   script:
     - cd finishing
     - ./run_unit_tests.sh
