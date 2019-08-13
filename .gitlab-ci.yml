@@ -19,12 +19,8 @@ variables:
 
   ROLLOUT_RESOURCE_TYPE: deployment
 
-stages:
-  - build
-  - test
-
-build:
-  script:
+default:
+  before_script:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
     - apt-get --no-install-recommends --yes install
@@ -36,6 +32,13 @@ build:
       netcat-openbsd iproute2 psmisc
     - pip3 install wsgidav easywebdav2 pymupdf weasyprint imutils
       lapsolver peewee cheroot
+
+stages:
+  - build
+  - test
+
+build:
+  script:
     - mkdir scanAndGroup/scannedExams/
     # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
     - curl https://www.math.ubc.ca/~cbm/tmp/namesAdded.pdf > scanAndGroup/scannedExams/foo.pdf
