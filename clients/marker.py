@@ -3,9 +3,11 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+from collections import defaultdict
 import os
 import json
 import shutil
+import sys
 import tempfile
 import time
 
@@ -15,14 +17,21 @@ from PyQt5.QtCore import (
     QElapsedTimer,
     QModelIndex,
     QObject,
-    QSettings,
     QSortFilterProxyModel,
     QTimer,
     QThread,
+    QVariant,
     pyqtSignal,
 )
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton
+from PyQt5.QtWidgets import (
+    QDialog,
+    QMainWindow,
+    QMessageBox,
+    QProgressDialog,
+    QPushButton,
+    QWidget,
+)
 
 
 from examviewwindow import ExamViewWindow
@@ -40,6 +49,9 @@ if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
 
     qt_set_sequence_auto_mnemonic(True)
+
+sys.path.append("..")  # this allows us to import from ../resources
+from resources.version import PLOM_API_Version
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
@@ -263,27 +275,23 @@ class ProxyModel(QSortFilterProxyModel):
 ##########################
 
 
-class MarkerClient(QDialog):
+# TODO: should be a QMainWindow but at any rate not a Dialog
+# TODO: should this be parented by the QApplication?
+class MarkerClient(QWidget):
+    my_shutdown_signal = pyqtSignal(int)
+
     def __init__(
-        self,
-        userName,
-        password,
-        server,
-        message_port,
-        web_port,
-        pageGroup,
-        version,
-        parent=None,
+        self, userName, password, server, message_port, web_port, pageGroup, version
     ):
         # Init the client with username, password, server and port data,
         # and which group/version is being marked.
-        super(MarkerClient, self).__init__(parent)
+        super(MarkerClient, self).__init__()
         # Fire up the messenger with server data.
         messenger.setServerDetails(server, message_port, web_port)
         messenger.startMessenger()
         # Ping to see if server is up.
         if not messenger.pingTest():
-            QTimer.singleShot(100, self.reject)
+            QTimer.singleShot(100, self.close)
             self.testImg = None  # so that resize event doesn't throw error
             return
         # Save username, password, and path the local temp directory for
@@ -320,8 +328,8 @@ class MarkerClient(QDialog):
         self.testImg = ExamViewWindow()
         self.ui.gridLayout_6.addWidget(self.testImg, 0, 0)
         # create a settings variable for saving annotator window settings
-        self.annotatorSettings = QSettings()
-        self.annotatorSettings.clear()  # do not remember between sessions.
+        # initially all settings are "none"
+        self.annotatorSettings = defaultdict(lambda: None)
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -360,6 +368,8 @@ class MarkerClient(QDialog):
         # Connect the view **after** list updated.
         # Connect the table-model's selection change to appropriate function
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
+        # A simple cache table for latex'd comments
+        self.commentCache = {}
         # Get a pagegroup to mark from the server
         self.requestNext()
         # reset the view so whole exam shown.
@@ -371,8 +381,11 @@ class MarkerClient(QDialog):
         # and https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
         self.backgroundDownloader = BackgroundDownloader()
         self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
+        # and another for uploading
         self.backgroundUploader = BackgroundUploader()
         self.backgroundUploader.uploaded.connect(self.uploadInBackgroundFinish)
+        # Now cache latex for comments:
+        self.cacheLatexComments()
 
     def resizeEvent(self, e):
         if self.testImg is None:
@@ -394,11 +407,11 @@ class MarkerClient(QDialog):
         hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(["AUTH", self.userName, self.password])
+        msg = messenger.SRMsg(["AUTH", self.userName, self.password, PLOM_API_Version])
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":
-            ErrorMessage("Password problem")
+            ErrorMessage(msg[1])
             quit()
         else:
             self.token = msg[1]
@@ -699,6 +712,7 @@ class MarkerClient(QDialog):
                 # Copy the current annotated filename to backup file in case
                 # user cancels their annotations.
                 shutil.copyfile(aname, aname + ".bak")
+                shutil.copyfile(pname, pname + ".bak")
                 remarkFlag = True
             else:
                 return
@@ -717,6 +731,7 @@ class MarkerClient(QDialog):
             # if remarking then move backup annotated file back.
             if remarkFlag:
                 shutil.move(aname + ".bak", aname)
+                shutil.move(pname + ".bak", pname)
             # reselect the row we were working on
             self.prxM.setData(index[1], prevState)
             self.ui.tableView.selectRow(index[1].row())
@@ -782,6 +797,17 @@ class MarkerClient(QDialog):
             # returns [ACK, #done, #total]
             self.ui.mProgressBar.setValue(msg[1])
             self.ui.mProgressBar.setMaximum(msg[2])
+        else:
+            # This should not happen!
+            # if remarking then move backup annotated file back.
+            if remarkFlag:
+                shutil.move(aname + ".bak", aname)
+                shutil.move(pname + ".bak", pname)
+            # reselect the row we were working on
+            self.prxM.setData(index[1], prevState)
+            self.ui.tableView.selectRow(index[1].row())
+            self.updateImage(index[1].row())
+            return
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image
@@ -796,8 +822,9 @@ class MarkerClient(QDialog):
         self.DNF()
         # Then send a 'user closing' message - server will revoke
         # authentication token.
-        msg = messenger.SRMsg(["UCL", self.userName, self.token])
-        # then close
+        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        assert msg == "ACK"
+        self.my_shutdown_signal.emit(2)
         self.close()
 
     def DNF(self):
@@ -841,7 +868,42 @@ class MarkerClient(QDialog):
             os.unlink(f)
         self.viewFiles = []
 
+    def cacheLatexComments(self):
+        # grab the list of comments from disk
+        if not os.path.exists("signedCommentList.json"):
+            return
+        clist = json.load(open("signedCommentList.json"))
+        # Build a progress dialog to warn user
+        pd = QProgressDialog("Caching latex comments", None, 0, 2 * len(clist), self)
+        pd.setWindowModality(Qt.WindowModal)
+        pd.setMinimumDuration(0)
+        pd.setAutoClose(True)
+        # Start caching.
+        c = 0
+        for X in clist:
+            if X[1][:4].upper() == "TEX:":
+                txt = X[1][4:].strip()
+                pd.setLabelText("Caching:\n'{}'".format(txt))
+                # latex the red version
+                self.latexAFragment(txt)
+                c += 1
+                pd.setValue(c)
+                # and latex the preview
+                txtp = "\\color{blue}\n" + txt  # make color blue for ghost rendering
+                self.latexAFragment(txtp)
+                c += 1
+                pd.setValue(c)
+            else:
+                c += 2
+                pd.setValue(c)
+
     def latexAFragment(self, txt):
+        if txt in self.commentCache:
+            # have already latex'd this comment
+            shutil.copyfile(self.commentCache[txt], "frag.png")
+            return True
+
+        # not yet present, so have to build it
         # create a tempfile
         fname = os.path.join(self.workingDirectory, "fragment")
         dname = (
@@ -853,12 +915,18 @@ class MarkerClient(QDialog):
         messenger.putFileDav(fname, dname)
 
         msg = messenger.SRMsg(["mLTT", self.userName, self.token, dname])
-        if msg[1] == True:
-            messenger.getFileDav(msg[2], "frag.png")
-            messenger.SRMsg(["mDWF", self.userName, self.token, msg[2]])
-            return True
-        else:
+        if msg[1] == False:
             return False
+
+        messenger.getFileDav(msg[2], "frag.png")
+        messenger.SRMsg(["mDWF", self.userName, self.token, msg[2]])
+        # now keep copy of frag.png for later use and update commentCache
+        fragFile = tempfile.NamedTemporaryFile(
+            delete=False, dir=self.workingDirectory
+        ).name
+        shutil.copyfile("frag.png", fragFile)
+        self.commentCache[txt] = fragFile
+        return True
 
     def tagTest(self):
         index = self.ui.tableView.selectedIndexes()

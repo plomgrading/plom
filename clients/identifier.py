@@ -7,6 +7,7 @@ from collections import defaultdict
 import csv
 import json
 import os
+import sys
 import tempfile
 from io import StringIO, BytesIO, TextIOWrapper
 from PyQt5.QtCore import (
@@ -16,13 +17,17 @@ from PyQt5.QtCore import (
     QStringListModel,
     QTimer,
     QVariant,
+    pyqtSignal,
 )
 from PyQt5.QtGui import QIntValidator
-from PyQt5.QtWidgets import QCompleter, QDialog, QInputDialog, QMessageBox
+from PyQt5.QtWidgets import QCompleter, QWidget, QMainWindow, QInputDialog, QMessageBox
 from examviewwindow import ExamViewWindow
 import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_identify import Ui_IdentifyWindow
+
+sys.path.append("..")  # this allows us to import from ../resources
+from resources.version import PLOM_API_Version
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
@@ -151,7 +156,11 @@ class ExamModel(QAbstractTableModel):
         return c
 
 
-class IDClient(QDialog):
+# TODO: should be a QMainWindow but at any rate not a Dialog
+# TODO: should this be parented by the QApplication?
+class IDClient(QWidget):
+    my_shutdown_signal = pyqtSignal(int)
+
     def __init__(self, userName, password, server, message_port, web_port):
         # Init the client with username, password, server and port data.
         super(IDClient, self).__init__()
@@ -223,11 +232,13 @@ class IDClient(QDialog):
         the server (since password hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(["AUTH", self.userName, self.password])
+        msg = messenger.SRMsg(
+            ["AUTH", self.userName, self.password, PLOM_API_Version]
+        )
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":
-            ErrorMessage("Password problem")
+            ErrorMessage(msg[1])
             quit()
         else:
             self.token = msg[1]
@@ -258,8 +269,7 @@ class IDClient(QDialog):
         self.studentNumbersToNames = defaultdict(str)
         reader = csv.DictReader(csvfile, skipinitialspace=True)
         for row in reader:
-            # Merge names into single field
-            sn = row["surname"] + ", " + row["name"]
+            sn = row["studentName"]
             self.studentNamesToNumbers[sn] = str(row["id"])
             self.studentNumbersToNames[str(row["id"])] = sn
         return True
@@ -336,7 +346,9 @@ class IDClient(QDialog):
         authorisation token is removed. Then finally close.
         """
         self.DNF()
-        msg = messenger.SRMsg(["UCL", self.userName, self.token])
+        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        assert msg == "ACK"
+        self.my_shutdown_signal.emit(1)
         self.close()
 
     def DNF(self):

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
@@ -8,13 +10,15 @@ import json
 import os
 import shutil
 import sys
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QPixmap
+from PyQt5.QtCore import Qt, QPointF, QRectF
+from PyQt5.QtGui import QBrush, QColor, QGuiApplication, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QApplication,
     QAbstractItemView,
+    QCheckBox,
     QDialog,
     QErrorMessage,
+    QGraphicsRectItem,
     QGraphicsPixmapItem,
     QGraphicsScene,
     QGraphicsView,
@@ -76,6 +80,8 @@ class PageView(QGraphicsView):
         """Init the interface. Load and display the filename."""
         # create a graphicsscene
         self.scene = QGraphicsScene()
+        # set a nice background.
+        self.setBackgroundBrush(QBrush(Qt.darkCyan))
         # create image from the filename and imageitem from that
         self.image = QPixmap(fname)
         self.imageItem = QGraphicsPixmapItem(self.image)
@@ -87,6 +93,13 @@ class PageView(QGraphicsView):
         )
         # put image into scene
         self.scene.addItem(self.imageItem)
+        # A rectangle for blanking out name
+        self.boxFlag = False
+        self.originPos = QPointF(0, 0)
+        self.currentPos = self.originPos
+        self.boxItem = QGraphicsRectItem()
+        self.boxItem.setPen(QPen(Qt.red, 1))
+        self.boxItem.setBrush(QBrush(QColor(200, 200, 200, 255)))
         # assign scene to the view
         self.setScene(self.scene)
         # fit all of the image into the current view
@@ -99,13 +112,46 @@ class PageView(QGraphicsView):
         self.scene.setSceneRect(0, 0, self.image.width(), self.image.height())
         self.fitInView(self.imageItem, Qt.KeepAspectRatio)
 
+    def mousePressEvent(self, event):
+        if QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier:
+            self.originPos = self.mapToScene(event.pos())
+            self.currentPos = self.originPos
+            self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+            if self.boxItem.scene() is None:
+                self.scene.addItem(self.boxItem)
+            self.boxFlag = True
+        else:
+            super(PageView, self).mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self.boxFlag:
+            self.currentPos = self.mapToScene(event.pos())
+            if self.boxItem is None:
+                return
+            else:
+                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+        else:
+            super(PageView, self).mousePressEvent(event)
+
     def mouseReleaseEvent(self, event):
         """On release of mouse zoom in or out by scaling the view"""
-        if event.button() == Qt.RightButton:
+        if self.boxFlag:
+            self.boxFlag = False
+            return
+
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
             self.scale(0.8, 0.8)
         else:
             self.scale(1.25, 1.25)
         self.centerOn(event.pos())
+
+    def removeRect(self):
+        if self.boxItem.scene() is None:
+            return
+        else:
+            self.scene.removeItem(self.boxItem)
 
     def resetView(self):
         """Reset the view to include all of the image"""
@@ -151,6 +197,9 @@ class PageViewWindow(QWidget):
         """Update the image with the given filename"""
         self.view.updateImage(fname)
 
+    def removeRect(self):
+        self.view.removeRect()
+
 
 class ImageTable(QTableWidget):
     """A simple table with the images we need to ID,
@@ -184,6 +233,13 @@ class ImageTable(QTableWidget):
         else:
             super(ImageTable, self).keyPressEvent(event)
 
+    def moveToNext(self):
+        cr = self.rowCount()
+        if cr == 0:
+            return
+        nr = (1 + self.currentRow()) % cr
+        self.selectRow(nr)
+
     def reloadImageList(self):
         """Reload the list of images from the problemimage directory"""
         self.imageList = []
@@ -200,7 +256,7 @@ class ImageTable(QTableWidget):
         # Columns are filename, testnumber, pagenumber, version, and
         # a name field which will be 'valid' if the testname matches
         # the one in the spec, or 'extra' if it is an extra page
-        self.setHorizontalHeaderLabels(["file", "t", "p", "v", "name"])
+        self.setHorizontalHeaderLabels(["file", "t", "p", "v", "valid?"])
         for r in range(len(self.imageList)):
             fItem = QTableWidgetItem(os.path.basename(self.imageList[r]))
             tItem = QTableWidgetItem(".")
@@ -346,10 +402,9 @@ class PageIDDialog(QDialog):
         grid = QGridLayout()
         # set name label + line edit
         # auto-populate with correct test-name.
-        self.nameL = QLabel("Name:")
-        self.nameLE = QLineEdit("{}".format(spec.Name))
-        grid.addWidget(self.nameL, 1, 1)
-        grid.addWidget(self.nameLE, 1, 2)
+        self.ctCB = QCheckBox("Correct test")
+        self.ctCB.setCheckState(Qt.Checked)
+        grid.addWidget(self.ctCB, 1, 2)
         # set test label + spinbox
         self.testL = QLabel("Test number")
         self.testSB = QSpinBox()
@@ -373,11 +428,14 @@ class PageIDDialog(QDialog):
         grid.addWidget(self.versionSB, 4, 2)
         # add a validate button and connect to command
         self.validateB = QPushButton("Validate")
+        self.validateB.setAutoDefault(False)
         grid.addWidget(self.validateB, 5, 1)
         self.validateB.clicked.connect(self.validate)
         # Fix the layout and unset modal.
         self.setLayout(grid)
         self.setModal(False)
+        # put focus on test number
+        self.testSB.setFocus()
 
     def checkIsValid(self):
         """Check that the entered values match the TPV
@@ -398,10 +456,10 @@ class PageIDDialog(QDialog):
             # reset the version spinbox to 0.
             self.versionSB.setValue(0)
             return False
-        # If testname wrong then pop-up error.
-        if self.nameLE.text() != spec.Name:
+        # If not right test then pop-up error.
+        if self.ctCB.checkState() != Qt.Checked:
             msg = QErrorMessage(self)
-            msg.showMessage('Name should be "{}"'.format(spec.Name))
+            msg.showMessage("If wrong test then please move to next")
             msg.exec_()
             return False
         # If TPV is valid, but already scanned then pop-up an error
@@ -516,6 +574,11 @@ class PageIdentifier(QWidget):
         self.rotateitB = QPushButton("Rotate image")
         self.rotateitB.clicked.connect(self.rotateCurrent)
         grid.addWidget(self.rotateitB, 6, 1)
+        # Remove rectangle button and connect to removeRect command:
+        self.remRectB = QPushButton("Remove Rectangle")
+        self.remRectB.clicked.connect(self.remRect)
+        grid.addWidget(self.remRectB, 5, 3)
+
         # Save all entered data and close
         self.closeB = QPushButton("Save && Close")
         self.closeB.clicked.connect(self.saveValid)
@@ -530,6 +593,9 @@ class PageIdentifier(QWidget):
         self.show()
         # Connect double-click
         self.imageT.doubleClicked.connect(self.identifyIt)
+
+    def remRect(self):
+        self.pageImg.removeRect()
 
     def selChanged(self, selnew, selold):
         """When current selection changes in the table
@@ -569,6 +635,7 @@ class PageIdentifier(QWidget):
             v = str(pidd.versionSB.value())
             self.imageT.setTPV(t, p, v)
             self.imageT.setFocus()
+            self.imageT.moveToNext()
 
 
 def main():

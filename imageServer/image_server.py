@@ -7,6 +7,7 @@ import asyncio
 import datetime
 import errno
 import glob
+import imghdr
 import json
 import logging
 import os
@@ -25,8 +26,8 @@ from authenticate import Authority
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
-
-__version__ = "0.1.0+"
+from resources.version import __version__
+from resources.version import PLOM_API_Version as serverAPI
 
 # default server values and location of grouped-scans.
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
@@ -298,7 +299,7 @@ class Server(object):
                 print("Attempt by non-user to {}".format(message))
                 return ["ERR", "You are not an authorised user"]
 
-    def authoriseUser(self, user, password):
+    def authoriseUser(self, user, password, clientAPI):
         """When a user requests authorisation
         They have sent their name and password
         first check if they are a valid user
@@ -307,6 +308,14 @@ class Server(object):
         Then pass them back the authorisation token
         (the password is only checked on first authorisation - since slow)
         """
+        if clientAPI != serverAPI:
+            return [
+                "ERR",
+                'PLOM API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
+                    clientAPI, serverAPI, __version__
+                ),
+            ]
+
         if self.authority.authoriseUser(user, password):
             # On token request also make sure anything "out" with that user is reset as todo.
             self.IDDB.resetUsersToDo(user)
@@ -567,14 +576,23 @@ class Server(object):
         (which the client has uploaded to webdav), and spent mtime marking it.
         Send the information to the database and send an ack.
         """
+        # sanity check that mark lies in [0,..,max]
+        if int(mark) < 0 or int(mark) > self.testSpec.Marks[int(pg)]:
+            # this should never happen.
+            return ["ERR", "Assigned mark out of range. Contact administrator."]
+
         # move annoted file to right place with new filename
+        self.claimFile(fname, "")
+        self.claimFile(pname, "plomFiles")
+        self.claimFile(cname, "commentFiles")
+        # Should check the fname is valid png - just check header presently
+        if imghdr.what(os.path.join("markedPapers", fname)) != "png":
+            return ["ERR", "Misformed image file. Try again."]
+        # now update the database
         self.MDB.takeGroupImageFromClient(
             code, user, mark, fname, pname, cname, mtime, tags
         )
         self.recordMark(user, mark, fname, mtime, tags)
-        self.claimFile(fname, "")
-        self.claimFile(pname, "plomFiles")
-        self.claimFile(cname, "commentFiles")
         # return ack with current counts.
         return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
@@ -805,7 +823,7 @@ def checkDirectories():
         os.mkdir("markedPapers/commentFiles")
 
 
-print("PLOM v{0}: image server starting...".format(__version__))
+print("PLOM version {0}: image server starting...".format(__version__))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free

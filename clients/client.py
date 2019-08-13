@@ -3,16 +3,23 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+
 import json
 import os
 import marker
 import identifier
 import totaler
+import signal
 import sys
 import traceback as tblib
+from PyQt5.QtCore import pyqtSlot, QTimer
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QWidget, QStyleFactory, QMessageBox
+from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
+
+sys.path.append("..")  # this allows us to import from ../resources
+from resources.version import __version__
+from resources.version import PLOM_API_Version
 
 # set up variables to store paths for marker and id clients
 global tempDirectory, directoryPath
@@ -47,19 +54,23 @@ def writeLastTime():
     fh.close()
 
 
-class Chooser(QWidget):
+class Chooser(QDialog):
     def __init__(self, parent):
+        self.APIVersion = PLOM_API_Version
         super(Chooser, self).__init__()
         self.parent = parent
+        print(
+            "PLOM Client {} (communicates with api {})".format(
+                __version__, self.APIVersion
+            )
+        )
         # runit = either marker or identifier clients.
         self.runIt = None
-        # will be the marker-widget
-        self.marker = None
-        # will be the id-widget
-        self.identifier = None
 
         self.ui = Ui_Chooser()
         self.ui.setupUi(self)
+        # Append version to window title
+        self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         # load in the login etc from last time (if exists)
         self.setLastTime()
         # connect buttons to functions.
@@ -101,18 +112,28 @@ class Chooser(QWidget):
             # Run the marker client.
             pg = str(self.ui.pgSB.value()).zfill(2)
             v = str(self.ui.vSB.value())
-            self.marker = marker.MarkerClient(
-                user, pwd, server, mport, wport, pg, v, self
-            )
-            self.marker.exec_()
+            self.setEnabled(False)
+            self.hide()
+            markerwin = marker.MarkerClient(user, pwd, server, mport, wport, pg, v)
+            markerwin.my_shutdown_signal.connect(self.on_other_window_close)
+            markerwin.show()
+            self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
-            self.identifier = identifier.IDClient(user, pwd, server, mport, wport)
-            self.identifier.exec_()
+            self.setEnabled(False)
+            self.hide()
+            idwin = identifier.IDClient(user, pwd, server, mport, wport)
+            idwin.my_shutdown_signal.connect(self.on_other_window_close)
+            idwin.show()
+            self.parent.identifier = idwin
         else:
             # Run the Total client.
-            self.totaler = totaler.TotalClient(user, pwd, server, mport, wport)
-            self.totaler.exec_()
+            self.setEnabled(False)
+            self.hide()
+            totalerwin = totaler.TotalClient(user, pwd, server, mport, wport)
+            totalerwin.my_shutdown_signal.connect(self.on_other_window_close)
+            totalerwin.show()
+            self.parent.totaler = totalerwin
 
     def runMarker(self):
         self.runIt = "Marker"
@@ -136,7 +157,6 @@ class Chooser(QWidget):
         lastTime["fontSize"] = self.ui.fontSB.value()
 
         writeLastTime()
-
         self.close()
 
     def setFont(self):
@@ -145,26 +165,71 @@ class Chooser(QWidget):
         fnt.setPointSize(v)
         self.parent.setFont(fnt)
 
+    @pyqtSlot(int)
+    def on_other_window_close(self, value):
+        assert isinstance(value, int)
+        self.show()
+        self.setEnabled(True)
+
 
 # Pop up a dialog for unhandled exceptions and then exit
 sys._excepthook = sys.excepthook
+
+
 def _exception_hook(exctype, value, traceback):
     s = "".join(tblib.format_exception(exctype, value, traceback))
     mb = QMessageBox()
-    mb.setText("Something unexpected has happened!\n\n"
-               "Please file a bug and copy-paste the following:\n\n"
-               "{0}".format(s))
+    mb.setText(
+        "Something unexpected has happened!\n\n"
+        "Please file a bug and copy-paste the following:\n\n"
+        "{0}".format(s)
+    )
     mb.setStandardButtons(QMessageBox.Ok)
     mb.exec_()
     sys._excepthook(exctype, value, traceback)
     sys.exit(1)
+
+
 sys.excepthook = _exception_hook
 
 
-app = QApplication(sys.argv)
-app.setStyle(QStyleFactory.create("Fusion"))
+class PLOM(QApplication):
+    def __init__(self, argv):
+        super(PLOM, self).__init__(argv)
 
-window = Chooser(app)
-window.show()
-rv = app.exec_()
-sys.exit(rv)
+
+# in order to have a graceful exit on control-c
+# https://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co?noredirect=1&lq=1
+def sigint_handler(*args):
+    """Handler for the SIGINT signal."""
+    sys.stderr.write("\r")
+    if (
+        QMessageBox.question(
+            None,
+            "",
+            "Are you sure you want to force-quit?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        == QMessageBox.Yes
+    ):
+        QApplication.quit()
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    app.setStyle(QStyleFactory.create("Fusion"))
+
+    signal.signal(signal.SIGINT, sigint_handler)
+
+    # create a small timer here, so that we can
+    # kill the app with ctrl-c.
+    timer = QTimer()
+    timer.timeout.connect(lambda: None)
+    timer.start(1000)
+    # got this solution from
+    # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
+
+    window = Chooser(app)
+    window.show()
+    sys.exit(app.exec_())
