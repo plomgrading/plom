@@ -19,6 +19,7 @@ from PyQt5.QtGui import (
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
+    QLabel,
     QMessageBox,
     QPushButton,
     QShortcut,
@@ -130,7 +131,6 @@ class Annotator(QDialog):
         # set ctrl-+ as zoom toggle shortcut
         # set ctrl-z / ctrl-y as undo/redo shortcuts
         self.setMiscShortCuts()
-
         # set the zoom combobox
         self.setZoomComboBox()
         # Set the tool icons
@@ -153,12 +153,29 @@ class Annotator(QDialog):
         # Keyboard shortcuts.
         self.keycodes = self.getKeyCodes()
 
+        # create current-mark / current-mode label
+        # actually - make it a button, but we'll disable clicking
+        self.cMarkMode = QPushButton()
+        self.setCurrentMarkMode()
+
         # Connect various key-presses to associated tool-button clicks
         # Allows us to translate a key-press into a button-press.
         # Key layout (mostly) matches tool-button layout
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
             self.unpickleIt(plomDict)
+
+    def setCurrentMarkMode(self):
+        self.cMarkMode.setText(
+            "{} out of {}\nmode: {}".format(self.score, self.maxMark, self.scene.mode)
+        )
+        # give it twice the size of the key-help button
+        self.cMarkMode.setFixedSize(self.ui.keyHelpButton.size() * 2)
+        # give it same style-sheet
+        # self.cMarkMode.setStyleSheet("border: 2px solid #ff0000;")
+
+        # put the view into the gui.
+        self.ui.gridLayout.addWidget(self.cMarkMode, 0, 2, 1, 1)
 
     def getKeyCodes(self):
         return {
