@@ -44,13 +44,37 @@ build:
     - ip addr
     - python3 image_server.py &
     - sleep 4
+    - echo "Image_server should be in background"
     - jobs -l
+    - echo "We should be able to connect to it"
     - nc -zv localhost 41984-41985
     - jobs -l
-    - kill %1
+    - echo "Now take down the server"
+    # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
+    - kill -9 %1
+    - echo "Should be no jobs and this should succeed"
+    - jobs -l
 
 test:
   script:
     - pwd
     - ls
     - echo "Hello World"
+    - apt-get update
+    - apt-get --no-install-recommends --yes install netcat-openbsd
+    - echo "This should fail"
+    - nc -zv localhost 41984-41985
+
+testbackground:
+  script:
+    - sleep 60 &
+    - jobs -l
+    - jobs -p
+    - echo "Sleep job has started"
+    - sleep 2
+    - jobs -l
+    - jobs -p
+    - echo "We will kill it"
+    - kill -9 %1
+    - echo "Should be no jobs and this should succeed"
+    - jobs -p
