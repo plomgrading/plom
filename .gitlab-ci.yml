@@ -14,18 +14,31 @@ stages:
 
 build:
   script:
-    - pwd
-    - ls
     - apt-get update
-    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
     - apt-get --no-install-recommends --yes install
       parallel zbar-tools cmake
       python3-passlib python3-seaborn python3-pandas python3-pyqt5
       python3-pyqt5.qtsql python3-pyqrcode python3-png
       python3-pip python3-setuptools python3-wheel imagemagick
       texlive-latex-extra dvipng g++ make python3-dev
-    - pip3 install wsgidav
-
+    - pip3 install wsgidav easywebdav2 pymupdf weasyprint imutils
+      lapsolver peewee cheroot
+    - pwd
+    - ls
+    - ls scanAndGroup
+    - mkdir scanAndGroup/scannedExams/
+    - ls scanAndGroup
+    - curl https://www.math.ubc.ca/~cbm/tmp/namesAdded.pdf > scanAndGroup/scannedExams/foo.pdf
+    - curl https://www.math.ubc.ca/~cbm/tmp/resources.tar.gz | tar -zx
+    - ls resources
+    - ls scanAndGroup/scannedExams
+    - cd scanAndGroup
+    - python3 03_scans_to_page_images.py
+    - python3 04_decode_images.py
+    - python3 05_missing_pages.py
+    - python3 06_group_pages.py
+    - cd ..
 
 test:
   script:
