@@ -5,7 +5,7 @@ __license__ = "AGPLv3"
 import os
 import json
 
-from PyQt5.QtCore import Qt, pyqtSignal, QSize
+from PyQt5.QtCore import Qt, pyqtSignal, QSize, QTimer
 from PyQt5.QtGui import QDropEvent, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -351,8 +351,9 @@ class SimpleCommentTable(QTableView):
         # Load in from file (if it exists) and populate table.
         self.loadCommentList()
         self.populateTable()
-        self.resizeRowsToContents()
-        self.resizeColumnToContents(0)
+        # put these in a timer(0) so they exec when other stuff done
+        QTimer.singleShot(0, self.resizeRowsToContents)
+        QTimer.singleShot(0, self.resizeColumnsToContents)
         # If an item is changed resize things appropriately.
         self.cmodel.itemChanged.connect(self.resizeRowsToContents)
 
@@ -548,6 +549,11 @@ class SimpleCommentTable(QTableView):
         if dt is not None:
             self.cmodel.setData(tableIndex.siblingAtColumn(0), dt[0])
             self.cmodel.setData(tableIndex.siblingAtColumn(1), dt[1])
+
+    def focusInEvent(self, event):
+        super(SimpleCommentTable, self).focusInEvent(event)
+        # Now give focus back to the annotator
+        self.parent.setFocus()
 
 
 class AddCommentBox(QDialog):
