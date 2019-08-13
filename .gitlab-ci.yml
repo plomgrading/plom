@@ -22,7 +22,7 @@ build:
       python3-pyqt5.qtsql python3-pyqrcode python3-png
       python3-pip python3-setuptools python3-wheel imagemagick
       texlive-latex-extra dvipng g++ make python3-dev
-      netcat-openbsd iproute2
+      netcat-openbsd iproute2 psmisc
     - pip3 install wsgidav easywebdav2 pymupdf weasyprint imutils
       lapsolver peewee cheroot
     - pwd
@@ -48,10 +48,13 @@ build:
     - jobs -l
     - echo "We should be able to connect to it"
     - nc -zv localhost 41984-41985
-    - jobs -l
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
+    - jobs -l
+    - killall -9 wsgidav
+    - sleep 1
     - kill -9 %1
+    - sleep 1
     - echo "Should be no jobs and this should succeed"
     - jobs -l
 
