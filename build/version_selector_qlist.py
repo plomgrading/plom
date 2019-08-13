@@ -1,20 +1,15 @@
-# -*- coding: utf-8 -*-
+__author__ = "Andrew Rechnitzer and Elvis Cai"
+__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer and Elvis Cai"
+__credits__ = ["Andrew Rechnitzer", "Elvis Cai"]
+__license__ = "AGPLv3"
 
-# Form implementation generated from reading ui file 'version_selector_qlist.ui'
-#
-# Created by: PyQt5 UI code generator 5.6
-#
-# WARNING! All changes made in this file will be lost!
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import QWidget, QFileDialog
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-
-from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
-from PyQt5.QtGui import QIcon
+# from PyQt5.QtGui import QIcon
 import sys
 import os
 import shutil
-# from testspecification import TestSpecification
-
 
 
 class errorMessage(QtWidgets.QMessageBox):
@@ -26,14 +21,8 @@ class errorMessage(QtWidgets.QMessageBox):
 
 
 class Ui_MainWindow(object):
-    ################ assign global version to verNum #####################
-    # spec = TestSpecification()
-    # spec.readSpec()
-    # self.numV
-
     global versions
     versions = {}
-    #####################################################################
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -56,18 +45,16 @@ class Ui_MainWindow(object):
             item = QtWidgets.QListWidgetItem()
             self.listWidget.addItem(item)
 
-
         self.verticalLayout_3.addWidget(self.listWidget)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.horizontalLayout.addItem(spacerItem)
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setObjectName("label")
         self.horizontalLayout.addWidget(self.label)
-        # self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
-        # self.lineEdit.setObjectName("lineEdit")
-        # self.horizontalLayout.addWidget(self.lineEdit)
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setObjectName("pushButton")
         self.horizontalLayout.addWidget(self.pushButton)
@@ -99,31 +86,32 @@ class Ui_MainWindow(object):
         __sortingEnabled = self.listWidget.isSortingEnabled()
         self.listWidget.setSortingEnabled(False)
 
-        for r in range(0,self.verNum):
+        for r in range(0, self.verNum):
             item = self.listWidget.item(r)
-            item.setText(_translate("MainWindow", "version "+str(r+1)))
+            item.setText(_translate("MainWindow", "version " + str(r + 1)))
 
         self.listWidget.setCurrentItem(self.listWidget.item(0))
 
         self.listWidget.setSortingEnabled(__sortingEnabled)
-        # self.label.setText(_translate("MainWindow", "file path"))
         self.pushButton.setText(_translate("MainWindow", "select.."))
         self.pushButton_2.setText(_translate("MainWindow", "confirm versions"))
 
-        #functionalities
         self.pushButton.clicked.connect(self.openFileBrowser)
-        self.pushButton_2.clicked.connect(lambda : self.confirm(MainWindow))
-
-
+        self.pushButton_2.clicked.connect(lambda: self.confirm(MainWindow))
 
     def openFileBrowser(self):
-
         myBrowser = QFileDialog()
-        myBrowser.setWindowTitle("Elvis's super file browser")
-        myBrowser.setGeometry(10,10,640,480)
+        myBrowser.setWindowTitle("File browser")
+        myBrowser.setGeometry(10, 10, 640, 480)
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fname,_ = QFileDialog.getOpenFileName(myBrowser,"QFileDialog.getOpenFileName()", "","Pdf Files (*.pdf)", options=options)
+        fname, _ = QFileDialog.getOpenFileName(
+            myBrowser,
+            "QFileDialog.getOpenFileName()",
+            "",
+            "Pdf Files (*.pdf)",
+            options=options,
+        )
         if fname:
             oldText = self.listWidget.currentItem().text()[0:9]
             for x in versions.values():
@@ -135,37 +123,30 @@ class Ui_MainWindow(object):
             newText = oldText + ": " + fname
             self.listWidget.currentItem().setText(newText)
 
-            if(self.listWidget.currentRow() < self.verNum):
-                newRow = self.listWidget.currentRow()+1
+            if self.listWidget.currentRow() < self.verNum:
+                newRow = self.listWidget.currentRow() + 1
                 self.listWidget.setCurrentRow(newRow)
 
-
-
-
-    def errorManager(self,num):
+    def errorManager(self, num):
         print("in error manager")
         switcher = {
-        1: "Please do not use the same file twice",
-        2: "Please match all files"
+            1: "Please do not use the same file twice",
+            2: "Please match all files",
         }
         errormsg = switcher.get(num, "Invalid")
         error = errorMessage(errormsg)
         error.exec_()
 
-
-
-
-
     def confirm(self, MainWindow):
         if len(versions) != self.verNum:
             self.errorManager(2)
         else:
-            for i in range(0,self.verNum):
+            for i in range(0, self.verNum):
                 item = self.listWidget.item(i)
                 thisItemText = item.text()
-                this_old_name_loc = thisItemText.split(' ')[2]
-                #### now rename the file ###
-                newFileName = "version" + str(i+1) + ".pdf"
+                this_old_name_loc = thisItemText.split(" ")[2]
+                # now rename the file
+                newFileName = "version" + str(i + 1) + ".pdf"
                 newPathName = os.path.join("sourceVersions", newFileName)
                 try:
                     shutil.copy2(this_old_name_loc, newPathName)
@@ -182,7 +163,6 @@ class Chooser(QWidget):
 
 
 if __name__ == "__main__":
-    import sys
     app = QtWidgets.QApplication(sys.argv)
     window = Chooser()
     window.show()

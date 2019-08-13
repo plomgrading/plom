@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<!--  Copyright (C) 2018 Colin B. Macdonald <cbm@m.fsf.org>
+Released under AGPLv3
+ -->
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<title>__COURSENAME__ - Online Return</title>
+
+<meta charset="UTF-8" />
+<style>
+body {
+	padding: 2em;
+}
+
+label {
+    font-weight: bold;
+    font-style: italic;
+	font-size: medium;
+    width: 12em;
+    display: inline-block;
+}
+
+button {
+	font-weight: bold;
+	margin-top: 1em;
+	line-height: 2;
+}
+
+</style>
+
+<script>
+	function retrieveMidterm() {
+		var id = document.getElementById('studentID').value;
+		if( !id || id.length!=8 ) {
+			alert("Invalid student number!");
+			return;
+		}
+		var code = document.getElementById('studentCode').value;
+		code = code.replace(/,/g,'')
+		if( !code || code.length!=12 ) {
+			alert("Invalid code!");
+			return;
+		}
+		var which = '__TESTNAME__'
+		window.location.href = which+"_"+id+"_"+code+".pdf";
+	}
+</script>
+</head>
+
+
+
+<body>
+<hr>
+<h1>__COURSENAME__ - Online Return</h1>
+
+<p>This form can be used to retrieve an electronic copy of your paper.</p>
+
+<hr>
+
+<p>In order to access your midterm you need to fill in your student number and your 12-digit &ldquo;return code&rdquo; from <a href="http://canvas.ubc.ca">canvas</a>.</p>
+
+
+<p><i>NOTE:</i> the request will fail if incorrect information is entered.<p>
+
+<div>
+	<label class="label" for="studentID">Student number: </label>
+	<input id="studentID" name="studentID" type="text" maxlength="8" />
+</div>
+<br>
+<div>
+	<label class="label" for="studentCode">Code: </label>
+	<input id="studentCode" name="studentCode" type="text" />
+</div>
+<br>
+<div>
+	<label class="label" for="retrieve"></label>
+	<button id="retrieve" name="retrieve" onclick="retrieveMidterm()" type="button">Retrieve paper</button>
+</div>
+<div>
+
+<hr>
+</body>
+</html>

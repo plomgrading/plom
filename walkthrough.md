@@ -1,3 +1,9 @@
+<!--
+__author__ = "Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-9 Andrew Rechnitzer"
+__license__ = "GFDL"
+ -->
+
 # Walk through the process
 
 ## Build
@@ -22,6 +28,8 @@
 * Run the 03_scans_to_page_images.py script - this takes each pdf of scans and decomposes them into a single image for each page. The results are saved in the pageImages directory
 * Run the 04_decode_images.py script - this looks at the QR codes on each page image and works out which 'tpv' code the page has - ie which **T** est, which **P** age and which **V** ersion. The results are moved into an appropriately named subdirectory of the decodedPages directory.
 * Now run 05_missing_pages.py - this looks to see that for each test we either have all the pages (ie a student sat it and we got all their pages back and into the system) or none of the pages (ie the test pdf wasn't used, or hasn't been scanned yet). This is to make sure we have no half-processed papers.
+  * If some incomplete papers are noted, run `manualPageIdentifier.py`.
+  * Then rerun 05_missing_pages.py
 * Finally run 06_group_pages.py. This script puts the page images together into the desired page groups. The results are save in various appropriately named subdirectories of the readyForGrading directory. Each groupImage is named either tXidg.png (id-group pages from test X) or tXgYvZ.png (test X, pagegroup Y, version Z).
 * Now we are ready to move onto servers and clients.
 
@@ -29,6 +37,8 @@
 * The server is (presently) configured to serve files at 'localhost' - this would need to be tweaked if you want to serve files to other machines, but it works just fine for local testing.
 * There are 2 relevant ports - one for message passing (to and from the clients) and one for the webdav server (which is how all files are passed to and from clients - they are just copied into the webdav and appropriate messages passed (on the other port) letting client or server know things are there). The default ports were chosen because one is the backup ssh port (and so our IT lads have it open on the departmental firewall) and I asked them to open one more for me (so it is open on my work desktop = hinge). If you want to play around with these ports (and serve files to other machines) you might need to ask the IT lads to open a port for you. Though if you are doing things on UBC wireless it might be different. Experiment.
 * Before you run the server, first run userManager.py and put in a couple of users with passwords. (this is not yet ready to be done while the server is running, but it shouldnt be too hard to get that working)
+    - If you want to re-use a user list from previous exam, copy
+      the `resources/userList.json` file from the old test.
 * When you run image_server.py, it reads all the relevant page group images and indexes them in 2 databases (in ../resources) - one for identifying and one for marks. It also loads in the user list you have generated so that it can authenticate clients.
 * Not much else to do while things are being id'd or marked.
 * There are two other manager scripts = identify_manager.py and mark_manager.py which allow the IIC to look at how things are going and do some simple stats on the fly.

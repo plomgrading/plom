@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../qtCreatorFiles/ui_builder.ui'
+# Form implementation generated from reading ui file './ui_builder.ui'
 #
-# Created by: PyQt5 UI code generator 5.10.1
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_SpecBuilder(object):
     def setupUi(self, SpecBuilder):
@@ -51,6 +53,9 @@ class Ui_SpecBuilder(object):
         self.confirmButton = QtWidgets.QPushButton(self.nameVersionGB)
         self.confirmButton.setObjectName("confirmButton")
         self.gridLayout_2.addWidget(self.confirmButton, 2, 3, 1, 1)
+        self.codeLabel = QtWidgets.QLabel(self.nameVersionGB)
+        self.codeLabel.setObjectName("codeLabel")
+        self.gridLayout_2.addWidget(self.codeLabel, 1, 3, 1, 1)
         self.verticalLayout.addWidget(self.nameVersionGB)
         self.pageGroupGB = QtWidgets.QGroupBox(SpecBuilder)
         self.pageGroupGB.setEnabled(False)
@@ -121,6 +126,7 @@ class Ui_SpecBuilder(object):
         self.versionLabel.setText(_translate("SpecBuilder", "# versions"))
         self.pagesLabel.setText(_translate("SpecBuilder", "# pages"))
         self.confirmButton.setText(_translate("SpecBuilder", "Confrm"))
+        self.codeLabel.setText(_translate("SpecBuilder", "Magic Code:"))
         self.pageGroupGB.setTitle(_translate("SpecBuilder", "Page groups"))
         self.addRowButton.setText(_translate("SpecBuilder", "Add row"))
         self.totalLabel.setText(_translate("SpecBuilder", "Total mark = 0"))
@@ -128,4 +134,3 @@ class Ui_SpecBuilder(object):
         self.numberGB.setTitle(_translate("SpecBuilder", "Number of tests to build"))
         self.numberTestLabel.setText(_translate("SpecBuilder", "Number of tests"))
         self.buildButton.setText(_translate("SpecBuilder", "Build Specification"))
-
