@@ -64,7 +64,7 @@ def SRMsg(msg):
     if rmsg[0] == "ACK":
         return rmsg
     elif rmsg[0] == "ERR":
-        msg = ErrorMessage(rmsg[1])
+        msg = ErrorMessage("Server says: " + rmsg[1])
         msg.exec_()
         return rmsg
     else:

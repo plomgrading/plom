@@ -30,6 +30,11 @@ Marker:
 #### Server
 * New server needed to handle upload/download of plom files. Not backward compatible with v0.1.0
 
+* Server: the new `12_archive` script makes a minimal zip file for archiving.
+  It is not suitable for later editing in Plom.
+
+* Server: support running the server on Docker.
+
 ### Changed
 
 ### Fixed
