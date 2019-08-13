@@ -86,3 +86,8 @@ testbackground:
     - kill -9 %1
     - echo "Should be no jobs and this should succeed"
     - jobs -p
+
+testsomeunits:
+  script:
+    - cd finishing
+    - ./run_unit_tests.sh
