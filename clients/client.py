@@ -3,14 +3,16 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+
 import json
 import os
 import marker
 import identifier
 import totaler
+import signal
 import sys
 import traceback as tblib
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import pyqtSlot, QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
@@ -57,7 +59,11 @@ class Chooser(QDialog):
         self.APIVersion = PLOM_API_Version
         super(Chooser, self).__init__()
         self.parent = parent
-        print("PLOM Client {} (communicates with api {})".format(__version__, self.APIVersion))
+        print(
+            "PLOM Client {} (communicates with api {})".format(
+                __version__, self.APIVersion
+            )
+        )
         # runit = either marker or identifier clients.
         self.runIt = None
 
@@ -108,8 +114,7 @@ class Chooser(QDialog):
             v = str(self.ui.vSB.value())
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient(
-                user, pwd, server, mport, wport, pg, v)
+            markerwin = marker.MarkerClient(user, pwd, server, mport, wport, pg, v)
             markerwin.my_shutdown_signal.connect(self.on_other_window_close)
             markerwin.show()
             self.parent.marker = markerwin
@@ -129,7 +134,6 @@ class Chooser(QDialog):
             totalerwin.my_shutdown_signal.connect(self.on_other_window_close)
             totalerwin.show()
             self.parent.totaler = totalerwin
-
 
     def runMarker(self):
         self.runIt = "Marker"
@@ -153,7 +157,6 @@ class Chooser(QDialog):
         lastTime["fontSize"] = self.ui.fontSB.value()
 
         writeLastTime()
-
         self.close()
 
     def setFont(self):
@@ -195,10 +198,38 @@ class PLOM(QApplication):
         super(PLOM, self).__init__(argv)
 
 
-app = QApplication(sys.argv)
-app.setStyle(QStyleFactory.create("Fusion"))
+# in order to have a graceful exit on control-c
+# https://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co?noredirect=1&lq=1
+def sigint_handler(*args):
+    """Handler for the SIGINT signal."""
+    sys.stderr.write("\r")
+    if (
+        QMessageBox.question(
+            None,
+            "",
+            "Are you sure you want to force-quit?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        == QMessageBox.Yes
+    ):
+        QApplication.quit()
 
-window = Chooser(app)
-window.show()
-rv = app.exec_()
-sys.exit(rv)
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    app.setStyle(QStyleFactory.create("Fusion"))
+
+    signal.signal(signal.SIGINT, sigint_handler)
+
+    # create a small timer here, so that we can
+    # kill the app with ctrl-c.
+    timer = QTimer()
+    timer.timeout.connect(lambda: None)
+    timer.start(1000)
+    # got this solution from
+    # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
+
+    window = Chooser(app)
+    window.show()
+    sys.exit(app.exec_())

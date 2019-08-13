@@ -260,7 +260,7 @@ class MarkerClient(QWidget):
         messenger.startMessenger()
         # Ping to see if server is up.
         if not messenger.pingTest():
-            QTimer.singleShot(100, self.reject)
+            QTimer.singleShot(100, self.close)
             self.testImg = None  # so that resize event doesn't throw error
             return
         # Save username, password, and path the local temp directory for
