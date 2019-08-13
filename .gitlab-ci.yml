@@ -22,6 +22,7 @@ build:
       python3-pyqt5.qtsql python3-pyqrcode python3-png
       python3-pip python3-setuptools python3-wheel imagemagick
       texlive-latex-extra dvipng g++ make python3-dev
+      netcat iproute2
     - pip3 install wsgidav easywebdav2 pymupdf weasyprint imutils
       lapsolver peewee cheroot
     - pwd
@@ -39,6 +40,14 @@ build:
     - python3 05_missing_pages.py
     - python3 06_group_pages.py
     - cd ..
+    - cd imageServer
+    - ip addr
+    - python3 image_server.py &
+    - sleep 4
+    - jobs -l
+    - nc -zv localhost 41984-41985
+    - jobs -l
+    - kill %1
 
 test:
   script:
