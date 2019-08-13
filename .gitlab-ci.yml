@@ -57,13 +57,10 @@ build:
 
 test:
   script:
+    # TODO: why doesn't this wait until build is done?
     - pwd
     - ls
     - echo "Hello World"
-    - apt-get update
-    - apt-get --no-install-recommends --yes install netcat-openbsd
-    - echo "This should fail"
-    - nc -zv localhost 41984-41985
 
 testbackground:
   script:
