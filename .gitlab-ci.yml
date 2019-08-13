@@ -35,9 +35,8 @@ before_script:
 stages:
   - build
   - test
-  - test2
 
-job ScanAndGroup:
+job imageServerStarts:
   stage: test
   script:
     - mkdir scanAndGroup/scannedExams/
@@ -52,10 +51,6 @@ job ScanAndGroup:
     - python3 05_missing_pages.py
     - python3 06_group_pages.py
     - cd ..
-
-job ScanAndGroup:
-  stage: test2
-  script:
     - cd imageServer
     - ip addr
     - python3 image_server.py &
@@ -77,6 +72,7 @@ job ScanAndGroup:
 
 job backgroundTest:
   before_script:
+    - echo "Overriding before_script"
   stage: test
   script:
     - sleep 60 &
