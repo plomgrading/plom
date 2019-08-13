@@ -5,4 +5,4 @@ __license__ = "AGPLv3"
 
 
 __version__ = "0.1.0+"
-PLOM_API_Version = "2"
+PLOM_API_Version = "3"
