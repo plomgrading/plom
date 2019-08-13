@@ -81,7 +81,9 @@ fh = open("./commandlist.txt", "w")
 for n in sorted(examsCompleted.keys()):
     if examsCompleted[n]:
         fh.write(
-            'python3 testReassembler.py {} "{}"\n'.format(examsIDed[n][1], imageList(n))
+            'python3 testReassembler.py {} {} "{}"\n'.format(
+                spec.Name, examsIDed[n][1], imageList(n)
+            )
         )
 fh.close()
 # pipe commands through gnu-parallel

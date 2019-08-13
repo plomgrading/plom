@@ -23,7 +23,14 @@ from PyQt5.QtCore import (
     pyqtSignal,
 )
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QDialog, QWidget, QMainWindow, QMessageBox, QPushButton
+from PyQt5.QtWidgets import (
+    QDialog,
+    QMainWindow,
+    QMessageBox,
+    QProgressDialog,
+    QPushButton,
+    QWidget,
+)
 
 
 from examviewwindow import ExamViewWindow
@@ -253,7 +260,7 @@ class MarkerClient(QWidget):
         messenger.startMessenger()
         # Ping to see if server is up.
         if not messenger.pingTest():
-            QTimer.singleShot(100, self.reject)
+            QTimer.singleShot(100, self.close)
             self.testImg = None  # so that resize event doesn't throw error
             return
         # Save username, password, and path the local temp directory for
@@ -343,6 +350,8 @@ class MarkerClient(QWidget):
         # and https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
         self.backgroundDownloader = BackgroundDownloader()
         self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
+        # Now cache latex for comments:
+        self.cacheLatexComments()
 
     def resizeEvent(self, e):
         if self.testImg is None:
@@ -809,32 +818,36 @@ class MarkerClient(QWidget):
             os.unlink(f)
         self.viewFiles = []
 
-    def latexAFragment(self, txt, checkCache):
-        if checkCache:
-            return self.latexCachedFragment(txt)
-        else:
-            return self.latexUncachedFragment(txt)
+    def cacheLatexComments(self):
+        # grab the list of comments from disk
+        if not os.path.exists("signedCommentList.json"):
+            return
+        clist = json.load(open("signedCommentList.json"))
+        # Build a progress dialog to warn user
+        pd = QProgressDialog("Caching latex comments", None, 0, 2 * len(clist), self)
+        pd.setWindowModality(Qt.WindowModal)
+        pd.setMinimumDuration(0)
+        pd.setAutoClose(True)
+        # Start caching.
+        c = 0
+        for X in clist:
+            if X[1][:4].upper() == "TEX:":
+                txt = X[1][4:].strip()
+                pd.setLabelText("Caching:\n'{}'".format(txt))
+                # latex the red version
+                self.latexAFragment(txt)
+                c += 1
+                pd.setValue(c)
+                # and latex the preview
+                txtp = "\\color{blue}\n" + txt  # make color blue for ghost rendering
+                self.latexAFragment(txtp)
+                c += 1
+                pd.setValue(c)
+            else:
+                c += 2
+                pd.setValue(c)
 
-    def latexUncachedFragment(self, txt):
-        # create a tempfile
-        fname = os.path.join(self.workingDirectory, "fragment")
-        dname = (
-            self.userName
-        )  # call fragment file just the username to avoid collisions
-        # write the latex text to that file
-        with open(fname, "w") as fh:
-            fh.write(txt)
-        messenger.putFileDav(fname, dname)
-
-        msg = messenger.SRMsg(["mLTT", self.userName, self.token, dname])
-        if msg[1] == True:
-            messenger.getFileDav(msg[2], "frag.png")
-            messenger.SRMsg(["mDWF", self.userName, self.token, msg[2]])
-            return True
-        else:
-            return False
-
-    def latexCachedFragment(self, txt):
+    def latexAFragment(self, txt):
         if txt in self.commentCache:
             # have already latex'd this comment
             shutil.copyfile(self.commentCache[txt], "frag.png")

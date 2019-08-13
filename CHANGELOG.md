@@ -19,6 +19,8 @@ Annotator:
 * middle-button (or ctrl-click) in line/pen tools creates line/path with arrow-heads at both ends.
 * Annotator can save / load ".plom" files and so "pickle" the graphical objects on the page. This function is handled by the marker-window not the annotator window (see below).
 * When mark-total, the comment-delta's are suppressed and will not be pasted into the page.
+* User can now make 0-point comments (for which the zero is pasted). User can also make no-point comments which are pasted as just text. The add/edit comment box is updated accordingly with an enable/disable delta checkbox.
+
 
 Marker:
 * Annotated papers are now "pickled" as ".plom" files - these are kept locally and also uploaded to server.
@@ -27,6 +29,11 @@ Marker:
 
 #### Server
 * New server needed to handle upload/download of plom files. Not backward compatible with v0.1.0
+
+* Server: the new `12_archive` script makes a minimal zip file for archiving.
+  It is not suitable for later editing in Plom.
+
+* Server: support running the server on Docker.
 
 ### Changed
 

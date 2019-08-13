@@ -72,6 +72,8 @@ We have a secret code for each student.  We want to upload these numbers to Canv
    * If you kept the same salt, you may be able to upload just the
      grades.
 
+    * Note: This script requires python 3.6 (on Ubuntu 16.04 call python3.6 explicity)
+
 
 ## Sharing with students
 

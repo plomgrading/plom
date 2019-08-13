@@ -5,7 +5,7 @@ __license__ = "AGPLv3"
 
 import json
 
-from PyQt5.QtCore import Qt, QEvent, QLineF, QPointF, QRectF, pyqtSignal
+from PyQt5.QtCore import Qt, QElapsedTimer, QEvent, QLineF, QPointF, QRectF
 from PyQt5.QtGui import (
     QBrush,
     QColor,
@@ -60,10 +60,10 @@ class ScoreBox(QGraphicsTextItem):
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self, fontsize=10):
+    def __init__(self, fontsize=10, maxScore=1, score=0):
         super(ScoreBox, self).__init__()
-        self.score = 0
-        self.maxScore = 0
+        self.score = score
+        self.maxScore = maxScore
         self.setDefaultTextColor(Qt.red)
         self.font = QFont("Helvetica")
         self.fontSize = min(fontsize * 3.5, 36)
@@ -117,6 +117,7 @@ mouseMove = {
     "line": "mouseMoveLine",
     "pen": "mouseMovePen",
     "comment": "mouseMoveComment",
+    "delta": "mouseMoveDelta",
 }
 mouseRelease = {
     "box": "mouseReleaseBox",
@@ -134,16 +135,17 @@ class PageScene(QGraphicsScene):
     textitems.
     """
 
-    # When a delta is created or deleted, need to emit a markChangedSignal
-    # which will be picked up by the annotation widget to update
-    # signal passes [delta, +/- 1] the second shows if +1 redo, -1 undo
-    markChangedSignal = pyqtSignal(int, int)
-
-    def __init__(self, parent, imgName):
+    def __init__(self, parent, imgName, maxMark, score, markStyle):
         super(PageScene, self).__init__(parent)
         self.parent = parent
-        # Grab filename of groupimage, build pixmap and graphicsitem.
+        # Grab filename of groupimage,
         self.imageName = imgName
+        self.maxMark = maxMark
+        self.score = score
+        self.markStyle = markStyle
+        # Tool mode - initially set it to "move"
+        self.mode = "move"
+        # build pixmap and graphicsitem.
         self.image = QPixmap(imgName)
         self.imageItem = QGraphicsPixmapItem(self.image)
         self.imageItem.setTransformationMode(Qt.SmoothTransformation)
@@ -152,8 +154,7 @@ class PageScene(QGraphicsScene):
         self.addItem(self.imageItem)
         # initialise the undo-stack
         self.undoStack = QUndoStack()
-        # Starting mode is move.
-        self.mode = "move"
+
         # Get current font size to use as base for size of comments etc.
         self.fontSize = self.font().pointSizeF()
         # Define standard pen, highlight, fill, light-fill
@@ -181,18 +182,33 @@ class PageScene(QGraphicsScene):
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
         self.blurb = TextItem(self, self.fontSize)
-        self.ghostItem = GhostComment("1", "blah", self.fontSize)
         self.deleteItem = None
+        # Add a ghost comment to scene, but make it invisible
+        self.ghostItem = GhostComment("1", "blah", self.fontSize)
+        self.ghostItem.setVisible(False)
+        self.addItem(self.ghostItem)
         # Set a mark-delta, comment-text and comment-delta.
-        self.markDelta = 0
+        self.markDelta = "0"
         self.commentText = ""
-        self.commentDelta = 0
+        self.commentDelta = "0"
         self.legalDelta = True
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
-        self.scoreBox = ScoreBox(self.fontSize)
+        # set up "k out of n" where k=current score, n = max score.
+        self.scoreBox = ScoreBox(self.fontSize, self.maxMark, self.score)
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
+
+    def setMode(self, mode):
+        self.mode = mode
+        # if current mode is not comment, make sure the ghostcomment is hidden
+        if self.mode != "comment":
+            self.hideGhost()
+        # if mode is "pan", set the view to be able to drag about, else turn that off
+        if self.mode == "pan":
+            self.views()[0].setDragMode(1)
+        else:
+            self.views()[0].setDragMode(0)
 
     def getComments(self):
         comments = []
@@ -303,13 +319,14 @@ class PageScene(QGraphicsScene):
         # If the mark-delta of the comment is non-zero then
         # create a delta-object with a different offset.
         # else just place the comment.
-        if self.commentDelta == 0 or not self.legalDelta:
+
+        if self.commentDelta == "." or not self.legalDelta:
             # make sure blurb has text interaction turned off
             prevState = self.blurb.textInteractionFlags()
             self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
-            # Update position of text
-            self.blurb.moveBy(0, -self.blurb.boundingRect().height() / 2)
-            command = CommandText(self, self.blurb, self.ink, checkCache=True)
+            # Update position of text - the ghostitem has it right
+            self.blurb.moveBy(0, self.ghostItem.blurb.pos().y())
+            command = CommandText(self, self.blurb, self.ink)
             self.undoStack.push(command)
             # return blurb to previous state
             self.blurb.setTextInteractionFlags(prevState)
@@ -348,7 +365,7 @@ class PageScene(QGraphicsScene):
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
-            if self.markDelta > 0:
+            if int(self.markDelta) > 0:
                 command = CommandCross(self, pt)
             else:
                 command = CommandTick(self, pt)
@@ -371,7 +388,7 @@ class PageScene(QGraphicsScene):
         The actual moving of objects is handled by themselves since they
         know how to handle the ItemPositionChange signal as a move-command.
         """
-        self.parent.setCursor(Qt.ClosedHandCursor)
+        self.views()[0].setCursor(Qt.ClosedHandCursor)
         super(PageScene, self).mousePressEvent(event)
 
     def mousePressText(self, event):
@@ -434,11 +451,12 @@ class PageScene(QGraphicsScene):
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
-            self.parent.scale(0.8, 0.8)
+            self.views()[0].scale(0.8, 0.8)
         else:
-            self.parent.scale(1.25, 1.25)
-        self.parent.centerOn(event.scenePos())
-        self.parent.zoomNull(True)  # sets the view rectangle and updates zoom-dropdown.
+            self.views()[0].scale(1.25, 1.25)
+        self.views()[0].centerOn(event.scenePos())
+        # sets the view rectangle and updates zoom-dropdown.
+        self.views()[0].zoomNull(True)
 
     # Mouse release tool functions.
     # Most of these delete the temp-object (eg box / line)
@@ -446,7 +464,7 @@ class PageScene(QGraphicsScene):
 
     def mouseReleaseMove(self, event):
         """Sets the cursor back to an open hand."""
-        self.parent.setCursor(Qt.OpenHandCursor)
+        self.views()[0].setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
         # refresh view after moving objects
         self.update()
@@ -454,7 +472,7 @@ class PageScene(QGraphicsScene):
     def mouseReleasePan(self, event):
         """Update the current stored view rectangle."""
         super(PageScene, self).mouseReleaseEvent(event)
-        self.parent.zoomNull()
+        self.views()[0].zoomNull()
 
     # Handle drag / drop events
     def dragEnterEvent(self, e):
@@ -476,7 +494,7 @@ class PageScene(QGraphicsScene):
         if e.mimeData().hasFormat("text/plain"):
             # Simulate a comment click.
             self.commentText = e.mimeData().text()
-            self.commentDelta = 0
+            self.commentDelta = "0"
             self.mousePressComment(e)
 
         elif e.mimeData().hasFormat(
@@ -489,10 +507,10 @@ class PageScene(QGraphicsScene):
         else:
             pass
         # After the drop event make sure pageview has the focus.
-        self.parent.setFocus(Qt.TabFocusReason)
+        self.views()[0].setFocus(Qt.TabFocusReason)
 
-    def latexAFragment(self, txt, checkCache=False):
-        return self.parent.latexAFragment(txt, checkCache)
+    def latexAFragment(self, txt):
+        return self.parent.latexAFragment(txt.strip())
 
     # A fix (hopefully) for misread touchpad events on mac
     def event(self, event):
@@ -516,14 +534,16 @@ class PageScene(QGraphicsScene):
     def pickleSceneItems(self):
         lst = []
         for X in self.items():
-            # don't pickle the scorebox or background image
-            if isinstance(X, ScoreBox) or isinstance(X, QGraphicsPixmapItem):
-                continue
-            # And be careful - there might be a GhostComment floating about
-            if (
-                isinstance(X, GhostComment)
-                or isinstance(X, GhostDelta)
-                or isinstance(X, GhostText)
+            # don't pickle the scorebox or background image, or ghostcomment
+            if any(
+                isinstance(X, Y)
+                for Y in [
+                    ScoreBox,
+                    QGraphicsPixmapItem,
+                    GhostComment,
+                    GhostDelta,
+                    GhostText,
+                ]
             ):
                 continue
             # If text or delta, check if part of GroupDeltaText
@@ -539,15 +559,27 @@ class PageScene(QGraphicsScene):
     def unpickleSceneItems(self, lst):
         # clear all items from scene.
         for X in self.items():
-            if isinstance(X, ScoreBox) or isinstance(X, QGraphicsPixmapItem):
+            if any(
+                isinstance(X, Y)
+                for Y in [
+                    ScoreBox,
+                    QGraphicsPixmapItem,
+                    GhostComment,
+                    GhostDelta,
+                    GhostText,
+                ]
+            ):
                 continue
             else:
-                command = CommandDelete(self, X, QPointF(0, 0))
+                command = CommandDelete(self, X)
                 self.undoStack.push(command)
         # now load up the new items
         for X in lst:
             functionName = "unpickle{}".format(X[0])
             getattr(self, functionName, self.unpickleError)(X[1:])
+        # now make sure focus is cleared from every item
+        for X in self.items():
+            X.setFocus(False)
 
     def unpickleError(self, X):
         print("Unpickle error - What is {}".format(X))
@@ -595,10 +627,8 @@ class PageScene(QGraphicsScene):
             self.blurb = TextItem(self, self.fontSize)
             self.blurb.setPlainText(X[0])
             self.blurb.contents = X[0]
-            # latex it if needed.
-            if self.blurb.contents[:4].upper() == "TEX:":
-                self.blurb.textToPng()
             self.blurb.setPos(QPointF(X[1], X[2]))
+            # knows to latex it if needed.
             self.undoStack.push(CommandText(self, self.blurb, self.ink))
 
     def unpickleDelta(self, X):
@@ -612,10 +642,8 @@ class PageScene(QGraphicsScene):
             self.blurb = TextItem(self, self.fontSize)
             self.blurb.setPlainText(X[3])
             self.blurb.contents = X[3]
-            # latex it if needed.
-            if self.blurb.contents[:4].upper() == "TEX:":
-                self.blurb.textToPng()
             self.blurb.setPos(QPointF(X[0], X[1]))
+            # knows to latex it if needed.
             self.undoStack.push(
                 CommandGDT(self, QPointF(X[0], X[1]), X[2], self.blurb, self.fontSize)
             )
@@ -892,11 +920,15 @@ class PageScene(QGraphicsScene):
                 self.delBoxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def deleteIfLegal(self, item):
-        if (
-            (item is self.imageItem)
-            or (item is self.scoreBox)
-            or (item is self.delBoxItem)
-        ):
+        # can't delete the pageimage, scorebox, delete-box, ghostitem and its constituents
+        if item in [
+            self.imageItem,
+            self.scoreBox,
+            self.delBoxItem,
+            self.ghostItem,
+            self.ghostItem.di,
+            self.ghostItem.blurb,
+        ]:
             return
         else:
             command = CommandDelete(self, item)
@@ -964,11 +996,93 @@ class PageScene(QGraphicsScene):
     def updateGhost(self, dlt, txt):
         self.ghostItem.changeComment(dlt, txt)
 
+    def exposeGhost(self):
+        self.ghostItem.setVisible(True)
+
     def hideGhost(self):
-        if self.ghostItem.scene() is not None:
-            self.removeItem(self.ghostItem)
+        self.ghostItem.setVisible(False)
 
     def mouseMoveComment(self, event):
-        if self.ghostItem.scene() is None:
-            self.addItem(self.ghostItem)
+        if not self.ghostItem.isVisible():
+            self.ghostItem.setVisible(True)
         self.ghostItem.setPos(event.scenePos())
+
+    def mouseMoveDelta(self, event):
+        if not self.ghostItem.isVisible():
+            self.ghostItem.setVisible(True)
+        self.ghostItem.setPos(event.scenePos())
+
+    def setTheMark(self, newMark):
+        self.score = newMark
+        self.scoreBox.changeScore(self.score)
+
+    def changeTheMark(self, deltaMarkString, undo=False):
+        # if is an undo then we need a minus-sign here
+        # because we are undoing the delta.
+        # note that this command is passed a string
+        deltaMark = int(deltaMarkString)
+        if undo:
+            self.score -= deltaMark
+        else:
+            self.score += deltaMark
+        self.scoreBox.changeScore(self.score)
+        # now look ahead to see what happens if we redo this delta
+        lookingAhead = self.score + deltaMark
+        if lookingAhead < 0 or lookingAhead > self.maxMark:
+            self.legalDelta = False
+        else:
+            self.legalDelta = True
+        self.parent.changeMark(self.score)
+        # if we are in comment mode then the comment might need updating
+        if self.mode == "comment":
+            self.changeTheComment(
+                self.markDelta, self.commentText, annotatorUpdate=False
+            )
+
+    def changeTheDelta(self, newDelta):
+        self.markDelta = newDelta
+        lookingAhead = self.score + int(self.markDelta)
+        if lookingAhead < 0 or lookingAhead > self.maxMark:
+            self.legalDelta = False
+        else:
+            self.legalDelta = True
+
+        self.commentDelta = self.markDelta
+        self.commentText = ""
+        self.updateGhost(self.commentDelta, self.commentText)
+        self.exposeGhost()
+
+        return self.legalDelta
+
+    def undo(self):
+        self.undoStack.undo()
+
+    def redo(self):
+        self.undoStack.redo()
+
+    def changeTheComment(self, delta, text, annotatorUpdate=True):
+        # if this update comes from the annotator, then
+        # we need to store a copy of the mark-delta for future
+        # and also set the mode.
+        if annotatorUpdate:
+            self.markDelta = delta
+            self.setMode("comment")
+            self.exposeGhost()  # unhide the ghostitem
+        # if we have passed ".", then we don't need to do any
+        # delta calcs, the ghost item knows how to handle it.
+        if delta != ".":
+            id = int(delta)
+            if self.markStyle == 2:  # mark up
+                # if delta is too positive, set to "."
+                if id < 0 or self.score + id > self.maxMark:
+                    delta = "."
+            elif self.markStyle == 3:  # mark down
+                # if delta is too negative, set to "."
+                if id > 0 or self.score + id < 0:
+                    delta = "."
+            else:  # mark total
+                # no delta is used, so set it to ".".
+                delta = "."
+        self.commentDelta = delta
+        self.commentText = text
+        self.updateGhost(delta, text)

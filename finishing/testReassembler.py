@@ -27,12 +27,13 @@ if __name__ == '__main__':
     # takes StudentID and list of group image files as args.
     # 0th item on list is the coverpage.
     # other items are the groupimage files.
-    sid = sys.argv[1]
-    imgl = eval(sys.argv[2])
+    shortName = sys.argv[1]
+    sid = sys.argv[2]
+    imgl = eval(sys.argv[3])
     coverfname, imgl = imgl[0], imgl[1:]
-    # output as test_<StudentID>.pdf
-    outname = "reassembled/test_{}.pdf".format(sid)
-
+    # note we know the shortname is alphanumeric with no strings
+    # so this is safe.
+    outname = "reassembled/{}_{}.pdf".format(shortName, sid)
 
     # use imagemagick to convert each group-image into a temporary pdf.
     pdfpages = [tempfile.NamedTemporaryFile(suffix=".pdf") for x in imgl]
@@ -56,6 +57,9 @@ if __name__ == '__main__':
     # clean up temp files
     for pg in pdfpages:
         pg.close()
+
+    # title of PDF is "<testname> <sid>"
+    exam.setMetadata({"title": "{} {}".format(shortName, sid), "producer": "PLOM"})
 
     with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
         exam.save(outname)

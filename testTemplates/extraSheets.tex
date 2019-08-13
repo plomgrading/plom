@@ -1,0 +1,91 @@
+\documentclass[12pt,letterpaper]{article}
+
+\usepackage[letterpaper,left=28mm,right=22mm,top=8mm,bottom=7mm]{geometry}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{amsmath}
+
+%%%%%%%%%%%%%
+
+\newcommand{\digitbox}{%
+  \fbox{
+  \rule[-1.5ex]{0pt}{4ex}
+  \hspace{2ex}}}
+
+\newcommand{\bigdigitbox}{%
+  \fbox{
+  \rule[-2ex]{0pt}{5ex}
+  \hspace{3ex}}}
+
+
+\begin{document}
+
+
+% \begin{flushleft}
+%   \begin{tabular}{rlrl}
+%     Test \# & \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
+%     &
+%     Student \#:& \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
+%                     \digitbox\,\digitbox\,\digitbox\,\digitbox} \\[4ex]
+%     Q.\# & \fbox{\bigdigitbox\,\bigdigitbox} &
+%     Name: & \fbox{ \rule[-2ex]{0pt}{5ex}\hspace{40ex} }
+%     \end{tabular}
+% \end{flushleft}
+
+
+\begin{flushleft}
+\noindent
+Test \# \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
+  \quad
+Student \# \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
+                    \digitbox\,\digitbox\,\digitbox\,\digitbox}
+   \\[4ex]
+\noindent
+\phantom{est}Q.\#  \fbox{\bigdigitbox\,\bigdigitbox}
+\quad
+Name: \fbox{ \rule[-2.5ex]{0pt}{6ex}\hspace{52ex} }
+\end{flushleft}
+
+\begin{center}
+  \textbf{Only 1 question per page! If you need more space, use back or another sheet.}
+\end{center}
+
+\hrule
+
+\vfill
+
+\hrule
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+% Now same again to help ensure people print it double-sided
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{flushleft}
+\noindent
+Test \# \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
+  \quad
+Student \# \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
+                    \digitbox\,\digitbox\,\digitbox\,\digitbox}
+   \\[4ex]
+\noindent
+\phantom{est}Q.\#  \fbox{\bigdigitbox\,\bigdigitbox}
+\quad
+Name: \fbox{ \rule[-2.5ex]{0pt}{6ex}\hspace{52ex} }
+\end{flushleft}
+
+\begin{center}
+  \textbf{Only 1 question per page! If you need more space, use back or another sheet.}
+\end{center}
+
+\hrule
+
+\vfill
+
+\hrule
+
+
+\end{document}
