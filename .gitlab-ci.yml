@@ -1,4 +1,4 @@
-image: alpine:latest
+image: ubuntu:18.04
 
 variables:
   KUBERNETES_VERSION: 1.11.7
@@ -16,8 +16,15 @@ build:
   script:
     - pwd
     - ls
-    - docker ls
-    - docker build . --tag plomdockerbuild
+    - apt-get update
+    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+    - apt-get --no-install-recommends --yes install
+      parallel zbar-tools cmake
+      python3-passlib python3-seaborn python3-pandas python3-pyqt5
+      python3-pyqt5.qtsql python3-pyqrcode python3-png
+      python3-pip python3-setuptools python3-wheel imagemagick
+      texlive-latex-extra dvipng g++ make python3-dev
+    - pip3 install wsgidav
 
 
 test:
