@@ -786,7 +786,7 @@ def checkPorts():
                 serverInfo["mport"], serverInfo["server"]
             )
         )
-        exit()
+        exit(1)
 
     if checkPortFree(serverInfo["server"], serverInfo["wport"]):
         SLogger.info("Webdav port is free and working.")
@@ -804,7 +804,7 @@ def checkPorts():
                 serverInfo["wport"], serverInfo["server"]
             )
         )
-        exit()
+        exit(1)
 
 
 def checkDirectories():
@@ -878,7 +878,7 @@ except OSError:
     )
     subprocess.Popen.kill(davproc)
     loop.close()
-    exit()
+    exit(1)
 
 SLogger.info("Serving messages on {}".format(server.sockets[0].getsockname()))
 print("Serving messages on {}".format(server.sockets[0].getsockname()))
