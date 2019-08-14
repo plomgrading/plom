@@ -1049,7 +1049,7 @@ class Annotator(QDialog):
                 )
         elif self.markStyle == 3:
             # set to mark down
-            for k in range(1, self.maxMark + 1):
+            for k in range(0, self.maxMark + 1):
                 self.deltaActions[k] = self.ui.deltaMenu.addAction("-{}".format(k))
                 self.deltaActions[k].triggered.connect(
                     self.markHandler.markButtons["m{}".format(k)].animateClick
