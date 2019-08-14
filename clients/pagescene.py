@@ -760,12 +760,17 @@ class PageScene(QGraphicsScene):
             return
         elif self.boxFlag == 1:
             self.removeItem(self.boxItem)
-            command = CommandBox(self, self.boxItem.rect())
+            # check if rect has some area
+            if self.boxItem.rect().width() + self.boxItem.rect().height() > 32:
+                command = CommandBox(self, self.boxItem.rect())
+                self.undoStack.push(command)
         else:
             self.removeItem(self.ellipseItem)
-            command = CommandEllipse(self, self.ellipseItem.rect())
+            # check if rect has some area
+            if self.ellipseItem.rect().width() + self.ellipseItem.rect().height() > 32:
+                command = CommandEllipse(self, self.ellipseItem.rect())
+                self.undoStack.push(command)
 
-        self.undoStack.push(command)
         self.boxFlag = 0
 
     def mousePressLine(self, event):
@@ -820,7 +825,9 @@ class PageScene(QGraphicsScene):
             command = CommandArrowDouble(self, self.originPos, self.currentPos)
         self.arrowFlag = 0
         self.removeItem(self.lineItem)
-        self.undoStack.push(command)
+        # don't add if too short
+        if (self.originPos - self.currentPos).manhattanLength() > 32:
+            self.undoStack.push(command)
 
     def mousePressPen(self, event):
         """Start drawing either a pen-path (left-click) or
@@ -886,7 +893,13 @@ class PageScene(QGraphicsScene):
             command = CommandPenArrow(self, self.path)
         self.penFlag = 0
         self.removeItem(self.pathItem)
-        self.undoStack.push(command)
+        # don't add if too short - check by boundingRect
+        if (
+            self.pathItem.boundingRect().height() + self.pathItem.boundingRect().width()
+            > 32
+        ):
+            print(self.pathItem.boundingRect())
+            self.undoStack.push(command)
 
     def mousePressDelete(self, event):
         """Start drawing a delete-box. Nothing happens until button is released.
