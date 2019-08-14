@@ -63,27 +63,39 @@
           <widget class="QPushButton" name="hideButton">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Compact</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="modeLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Hide</string>
+            <string>mode: move</string>
            </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="modeLine">
            <property name="alignment">
             <set>Qt::AlignCenter</set>
-           </property>
-           <property name="readOnly">
-            <bool>true</bool>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QLineEdit" name="markLine">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
            </property>

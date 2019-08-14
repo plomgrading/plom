@@ -171,9 +171,8 @@ class Annotator(QDialog):
             self.unpickleIt(plomDict)
 
     def setCurrentMarkMode(self):
-        self.ui.modeLine.setStyleSheet("color: #ff0000; font: bold;")
         self.ui.markLine.setStyleSheet("color: #ff0000; font: bold;")
-        self.ui.modeLine.setText("mode: {}".format(self.scene.mode))
+        self.ui.modeLabel.setText("mode: {}".format(self.scene.mode))
         self.ui.markLine.setText(
             "{} out of {}".format(self.scene.score, self.scene.maxMark)
         )
@@ -263,10 +262,10 @@ class Annotator(QDialog):
         self.ui.revealBox.show()
         self.ui.revealBox2.show()
         self.ui.hideableBox.hide()
-        self.ui.hideButton.setText("reveal")
+        self.ui.hideButton.setText("Wide")
         self.ui.revealLayout.addWidget(self.ui.hideButton, 1, 1, 1, 2)
         self.ui.revealLayout.addWidget(self.ui.markLine, 2, 1, 1, 2)
-        self.ui.revealLayout.addWidget(self.ui.modeLine, 3, 1, 1, 2)
+        self.ui.revealLayout.addWidget(self.ui.modeLabel, 3, 1, 1, 2)
 
         self.ui.revealLayout.addWidget(self.ui.penButton, 4, 1)
         self.ui.revealLayout.addWidget(self.ui.lineButton, 4, 2)
@@ -300,9 +299,9 @@ class Annotator(QDialog):
         self.ui.hideableBox.show()
         self.ui.revealBox.hide()
         self.ui.revealBox2.hide()
-        self.ui.hideButton.setText("Hide")
+        self.ui.hideButton.setText("Compact")
         self.ui.modeLayout.addWidget(self.ui.hideButton)
-        self.ui.modeLayout.addWidget(self.ui.modeLine)
+        self.ui.modeLayout.addWidget(self.ui.modeLabel)
         self.ui.modeLayout.addWidget(self.ui.markLine)
         # right-hand mouse = 0, left-hand mouse = 1
         if self.mouseHand == 0:
@@ -517,8 +516,8 @@ class Annotator(QDialog):
         # pass the new mode to the graphicsview, and set the cursor in view
         self.scene.setMode(newMode)
         self.view.setCursor(newCursor)
-        # set the modeline
-        self.ui.modeLine.setText("mode: {}".format(self.scene.mode))
+        # set the modelabel
+        self.ui.modeLabel.setText("mode: {}".format(self.scene.mode))
         # refresh everything.
         self.repaint()
 
@@ -771,6 +770,8 @@ class Annotator(QDialog):
         )
         self.markHandler.setMark(self.score)
         self.markHandler.repaint()
+        # update the delta-mark-menu
+        self.updateDeltaMarkMenu()
 
     def closeEventRelaunch(self):
         self.closeEvent(True)
@@ -997,19 +998,36 @@ class Annotator(QDialog):
             # mark total - don't set anything
             return
         self.ui.deltaMenu = QMenu("Set Delta")
-        act = {}
+        self.deltaActions = {}
         if self.markStyle == 2:
             # set to mark up
             for k in range(0, self.maxMark + 1):
-                act[k] = self.ui.deltaMenu.addAction("+{}".format(k))
-                act[k].triggered.connect(
+                self.deltaActions[k] = self.ui.deltaMenu.addAction("+{}".format(k))
+                self.deltaActions[k].triggered.connect(
                     self.markHandler.markButtons["p{}".format(k)].animateClick
                 )
         elif self.markStyle == 3:
             # set to mark down
             for k in range(1, self.maxMark + 1):
-                act[k] = self.ui.deltaMenu.addAction("-{}".format(k))
-                act[k].triggered.connect(
+                self.deltaActions[k] = self.ui.deltaMenu.addAction("-{}".format(k))
+                self.deltaActions[k].triggered.connect(
                     self.markHandler.markButtons["m{}".format(k)].animateClick
                 )
         self.ui.deltaButton.setMenu(self.ui.deltaMenu)
+        self.updateDeltaMarkMenu()
+
+    def updateDeltaMarkMenu(self):
+        if self.markStyle == 1:
+            return
+        elif self.markStyle == 2:
+            for k in range(0, self.maxMark + 1):
+                if self.score + k <= self.maxMark:
+                    self.deltaActions[k].setEnabled(True)
+                else:
+                    self.deltaActions[k].setEnabled(False)
+        elif self.markStyle == 3:
+            for k in range(0, self.maxMark + 1):
+                if self.score >= k:
+                    self.deltaActions[k].setEnabled(True)
+                else:
+                    self.deltaActions[k].setEnabled(False)
