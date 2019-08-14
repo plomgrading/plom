@@ -285,9 +285,8 @@ class Annotator(QDialog):
 
         self.ui.revealLayout.addWidget(self.ui.zoomButton, 9, 1)
         self.ui.revealLayout.addWidget(self.ui.moveButton, 9, 2)
-
-        # self.ui.revealLayout.addWidget(self.ui.commentUpButton)
-        # self.ui.revealLayout.addWidget(self.ui.commentDownButton)
+        # dropdown zoom menu thing
+        self.ui.revealLayout.addWidget(self.ui.zoomCB, 10, 1, 1, 2)
 
         # end buttons
         self.ui.revealLayout2.addWidget(self.ui.finishedButton)
@@ -320,6 +319,9 @@ class Annotator(QDialog):
             self.ui.toolLayout.addWidget(self.ui.panButton, 0, 2, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 2, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 2, 1, 1)
+            # zoom QComboBox
+            self.ui.gridLayout_4.addWidget(self.ui.zoomCB, 0, 2, 1, 1)
+
             # end buttons
             self.ui.ebLayout.addWidget(self.ui.finishedButton, 0, 0, 1, 1)
             self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton, 0, 2, 1, 1)
@@ -512,6 +514,8 @@ class Annotator(QDialog):
         # pass the new mode to the graphicsview, and set the cursor in view
         self.scene.setMode(newMode)
         self.view.setCursor(newCursor)
+        # set the modeline
+        self.ui.modeLine.setText("mode: {}".format(self.scene.mode))
         # refresh everything.
         self.repaint()
 
@@ -605,6 +609,13 @@ class Annotator(QDialog):
     def deleteMode(self):
         self.setMode("delete", Qt.ForbiddenCursor)
 
+    def deltaButtonMode(self):
+        if self.scene.mode == "delta":
+            self.markHandler.incrementDelta(self.scene.markDelta)
+        else:
+            self.markHandler.clickDelta(self.scene.markDelta)
+        self.setMode("delta", Qt.IBeamCursor)
+
     def lineMode(self):
         self.setMode("line", Qt.CrossCursor)
 
@@ -660,6 +671,8 @@ class Annotator(QDialog):
         self.ui.textButton.clicked.connect(self.textMode)
         self.ui.tickButton.clicked.connect(self.tickMode)
         self.ui.zoomButton.clicked.connect(self.zoomMode)
+        # Also the "hidden" delta-button
+        self.ui.deltaButton.clicked.connect(self.deltaButtonMode)
 
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.scene.undo)
@@ -749,6 +762,10 @@ class Annotator(QDialog):
         assert self.markStyle != 1, "Should not be called if mark-total"
 
         self.score = score
+        # update the markline
+        self.ui.markLine.setText(
+            "{} out of {}".format(self.scene.score, self.scene.maxMark)
+        )
         self.markHandler.setMark(self.score)
         self.markHandler.repaint()
 

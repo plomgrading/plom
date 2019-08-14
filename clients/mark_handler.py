@@ -171,3 +171,35 @@ class MarkHandler(QWidget):
     def unpickleTotal(self, score):
         if (score <= self.maxScore) and (score >= 0) and (self.style == "Total"):
             self.markButtons["{}".format(score)].animateClick()
+
+    def incrementDelta(self, dlt):
+        # dlt is a string, so make int(delta)
+        delta = int(dlt)
+        if self.style == "Up":
+            if delta < 0:
+                delta = 0
+            else:
+                delta += 1
+            if delta > self.maxScore:
+                delta = 0
+            self.markButtons["p{}".format(delta)].animateClick()
+        elif self.style == "Down":
+            if delta >= 0:
+                delta = -1
+            else:
+                delta -= 1
+            if abs(delta) > self.maxScore:
+                delta = -1
+            self.markButtons["m{}".format(-delta)].animateClick()
+
+    def clickDelta(self, dlt):
+        # dlt is a string, so make int(delta)
+        delta = int(dlt)
+        if self.style == "Up":
+            if delta < 0:
+                delta = 0
+            self.markButtons["p{}".format(delta)].animateClick()
+        elif self.style == "Down":
+            if delta >= 0:
+                delta = -1
+            self.markButtons["m{}".format(-delta)].animateClick()
