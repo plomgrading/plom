@@ -194,7 +194,11 @@ class MarkHandler(QWidget):
 
     def clickDelta(self, dlt):
         # dlt is a string, so make int(delta)
-        delta = int(dlt)
+        # be careful if this has been set by a no-delta comment.
+        if dlt == ".":
+            delta = 0
+        else:
+            delta = int(dlt)
         if self.style == "Up":
             if delta < 0:
                 delta = 0

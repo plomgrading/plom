@@ -117,8 +117,7 @@ class Annotator(QDialog):
         # Set up the gui.
         self.ui.setupUi(self)
         # hide the "revealbox" which is revealed when the hideBox is hidden.
-        self.ui.revealBox.setHidden(True)
-        self.ui.revealBox2.setHidden(True)
+        self.ui.revealBox0.setHidden(True)
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
         self.view = None
@@ -171,9 +170,9 @@ class Annotator(QDialog):
             self.unpickleIt(plomDict)
 
     def setCurrentMarkMode(self):
-        self.ui.markLine.setStyleSheet("color: #ff0000; font: bold;")
-        self.ui.modeLabel.setText("mode: {}".format(self.scene.mode))
-        self.ui.markLine.setText(
+        self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
+        self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
+        self.ui.markLabel.setText(
             "{} out of {}".format(self.scene.score, self.scene.maxMark)
         )
 
@@ -259,36 +258,71 @@ class Annotator(QDialog):
             self.narrowLayout()
 
     def narrowLayout(self):
-        self.ui.revealBox.show()
-        self.ui.revealBox2.show()
+        self.ui.revealBox0.show()
         self.ui.hideableBox.hide()
         self.ui.hideButton.setText("Wide")
-        self.ui.revealLayout.addWidget(self.ui.hideButton, 1, 1, 1, 2)
-        self.ui.revealLayout.addWidget(self.ui.markLine, 2, 1, 1, 2)
-        self.ui.revealLayout.addWidget(self.ui.modeLabel, 3, 1, 1, 2)
+        self.ui.revealLayout.addWidget(
+            self.ui.hideButton, 1, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.markLabel, 2, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.modeLabel, 3, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
 
-        self.ui.revealLayout.addWidget(self.ui.penButton, 4, 1)
-        self.ui.revealLayout.addWidget(self.ui.lineButton, 4, 2)
+        self.ui.revealLayout.addWidget(
+            self.ui.penButton, 4, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.lineButton, 4, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
 
-        self.ui.revealLayout.addWidget(self.ui.tickButton, 5, 1)
-        self.ui.revealLayout.addWidget(self.ui.crossButton, 5, 2)
+        self.ui.revealLayout.addWidget(
+            self.ui.tickButton, 5, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.crossButton, 5, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
 
-        self.ui.revealLayout.addWidget(self.ui.textButton, 6, 1)
-        self.ui.revealLayout.addWidget(self.ui.commentButton, 6, 2)
+        self.ui.revealLayout.addWidget(
+            self.ui.textButton, 6, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.commentButton, 6, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
 
-        self.ui.revealLayout.addWidget(self.ui.boxButton, 7, 1)
-        self.ui.revealLayout.addWidget(self.ui.deltaButton, 7, 2)
+        self.ui.revealLayout.addWidget(
+            self.ui.boxButton, 7, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.deltaButton, 7, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
 
-        self.ui.revealLayout.addWidget(self.ui.deleteButton, 8, 1)
-        self.ui.revealLayout.addWidget(self.ui.panButton, 8, 2)
+        self.ui.revealLayout.addWidget(
+            self.ui.deleteButton, 8, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.panButton, 8, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
 
-        self.ui.revealLayout.addWidget(self.ui.undoButton, 8, 1)
-        self.ui.revealLayout.addWidget(self.ui.redoButton, 8, 2)
+        self.ui.revealLayout.addWidget(
+            self.ui.undoButton, 8, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.redoButton, 8, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
 
-        self.ui.revealLayout.addWidget(self.ui.zoomButton, 9, 1)
-        self.ui.revealLayout.addWidget(self.ui.moveButton, 9, 2)
+        self.ui.revealLayout.addWidget(
+            self.ui.zoomButton, 9, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.moveButton, 9, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
         # dropdown zoom menu thing
-        self.ui.revealLayout.addWidget(self.ui.zoomCB, 10, 1, 1, 2)
+        self.ui.revealLayout.addWidget(
+            self.ui.zoomCB, 10, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
 
         # end buttons
         self.ui.revealLayout2.addWidget(self.ui.finishedButton)
@@ -297,12 +331,11 @@ class Annotator(QDialog):
 
     def wideLayout(self):
         self.ui.hideableBox.show()
-        self.ui.revealBox.hide()
-        self.ui.revealBox2.hide()
+        self.ui.revealBox0.hide()
         self.ui.hideButton.setText("Compact")
         self.ui.modeLayout.addWidget(self.ui.hideButton)
         self.ui.modeLayout.addWidget(self.ui.modeLabel)
-        self.ui.modeLayout.addWidget(self.ui.markLine)
+        self.ui.modeLayout.addWidget(self.ui.markLabel)
         # right-hand mouse = 0, left-hand mouse = 1
         if self.mouseHand == 0:
             # tools
@@ -517,7 +550,7 @@ class Annotator(QDialog):
         self.scene.setMode(newMode)
         self.view.setCursor(newCursor)
         # set the modelabel
-        self.ui.modeLabel.setText("mode: {}".format(self.scene.mode))
+        self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
         # refresh everything.
         self.repaint()
 
