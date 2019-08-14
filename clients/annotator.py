@@ -106,12 +106,15 @@ class Annotator(QDialog):
         self.currentButton = None
         # Window depends on mouse-hand - si
         # right-hand mouse = 0, left-hand mouse = 1
-        if mouseHand == 0:
+        self.mouseHand = mouseHand
+        if self.mouseHand == 0:
             self.ui = Ui_annotator_rhm()
         else:
             self.ui = Ui_annotator_lhm()
         # Set up the gui.
         self.ui.setupUi(self)
+        # hide the "revealbox" which is revealed when the hideBox is hidden.
+        self.ui.revealBox.setHidden(True)
 
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
@@ -153,9 +156,7 @@ class Annotator(QDialog):
         # Keyboard shortcuts.
         self.keycodes = self.getKeyCodes()
 
-        # create current-mark / current-mode label
-        # actually - make it a button, but we'll disable clicking
-        self.cMarkMode = QPushButton()
+        # set up current-mark / current-mode label
         self.setCurrentMarkMode()
 
         # Connect various key-presses to associated tool-button clicks
@@ -166,16 +167,12 @@ class Annotator(QDialog):
             self.unpickleIt(plomDict)
 
     def setCurrentMarkMode(self):
-        self.cMarkMode.setText(
-            "{} out of {}\nmode: {}".format(self.score, self.maxMark, self.scene.mode)
+        self.ui.modeLine.setStyleSheet("color: #ff0000; font: bold;")
+        self.ui.markLine.setStyleSheet("color: #ff0000; font: bold;")
+        self.ui.modeLine.setText("mode: {}".format(self.scene.mode))
+        self.ui.markLine.setText(
+            "{} out of {}".format(self.scene.score, self.scene.maxMark)
         )
-        # give it twice the size of the key-help button
-        self.cMarkMode.setFixedSize(self.ui.keyHelpButton.size() * 2)
-        # give it same style-sheet
-        # self.cMarkMode.setStyleSheet("border: 2px solid #ff0000;")
-
-        # put the view into the gui.
-        self.ui.gridLayout.addWidget(self.cMarkMode, 0, 2, 1, 1)
 
     def getKeyCodes(self):
         return {
@@ -254,11 +251,62 @@ class Annotator(QDialog):
         # Show / hide all the tools and so more space for the group-image
         # All tools in gui inside 'hideablebox' - so easily shown/hidden
         if self.ui.hideableBox.isHidden():
-            self.ui.hideableBox.show()
-            self.ui.hideButton.setText("Hide")
+            self.wideLayout()
         else:
-            self.ui.hideableBox.hide()
-            self.ui.hideButton.setText("Reveal")
+            self.narrowLayout()
+
+    def narrowLayout(self):
+        self.ui.revealBox.show()
+        self.ui.hideableBox.hide()
+        self.ui.hideButton.setText("Reveal")
+        self.ui.revealLayout.addWidget(self.ui.hideButton)
+        self.ui.revealLayout.addWidget(self.ui.markLine)
+        self.ui.revealLayout.addWidget(self.ui.modeLine)
+
+        self.ui.revealLayout.addWidget(self.ui.penButton)
+        self.ui.revealLayout.addWidget(self.ui.textButton)
+        self.ui.revealLayout.addWidget(self.ui.lineButton)
+
+        self.ui.revealLayout.addWidget(self.ui.commentUpButton)
+        self.ui.revealLayout.addWidget(self.ui.commentButton)
+        self.ui.revealLayout.addWidget(self.ui.commentDownButton)
+
+        self.ui.revealLayout.addWidget(self.ui.tickButton)
+        self.ui.revealLayout.addWidget(self.ui.crossButton)
+        self.ui.revealLayout.addWidget(self.ui.boxButton)
+
+        self.ui.revealLayout.addWidget(self.ui.undoButton)
+        self.ui.revealLayout.addWidget(self.ui.redoButton)
+        self.ui.revealLayout.addWidget(self.ui.deleteButton)
+
+        self.ui.revealLayout.addWidget(self.ui.panButton)
+        self.ui.revealLayout.addWidget(self.ui.zoomButton)
+        self.ui.revealLayout.addWidget(self.ui.moveButton)
+
+    def wideLayout(self):
+        self.ui.hideableBox.show()
+        self.ui.revealBox.hide()
+        self.ui.hideButton.setText("Hide")
+        self.ui.modeLayout.addWidget(self.ui.hideButton)
+        self.ui.modeLayout.addWidget(self.ui.modeLine)
+        self.ui.modeLayout.addWidget(self.ui.markLine)
+        # right-hand mouse = 0, left-hand mouse = 1
+        if self.mouseHand == 0:
+            self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 4, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 5, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.tickButton, 2, 4, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.commentButton, 2, 5, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.boxButton, 3, 4, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.commentDownButton, 3, 5, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.penButton, 0, 6, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.textButton, 2, 6, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.lineButton, 3, 6, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.deleteButton, 3, 3, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.undoButton, 2, 3, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 3, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.panButton, 0, 2, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 2, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 2, 1, 1)
 
     def viewWholePaper(self):
         files = self.parent.viewWholePaper()
