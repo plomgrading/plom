@@ -115,6 +115,7 @@ class Annotator(QDialog):
         self.ui.setupUi(self)
         # hide the "revealbox" which is revealed when the hideBox is hidden.
         self.ui.revealBox.setHidden(True)
+        self.ui.revealBox2.setHidden(True)
 
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
@@ -257,41 +258,53 @@ class Annotator(QDialog):
 
     def narrowLayout(self):
         self.ui.revealBox.show()
+        self.ui.revealBox2.show()
         self.ui.hideableBox.hide()
-        self.ui.hideButton.setText("Reveal")
-        self.ui.revealLayout.addWidget(self.ui.hideButton)
-        self.ui.revealLayout.addWidget(self.ui.markLine)
-        self.ui.revealLayout.addWidget(self.ui.modeLine)
+        self.ui.hideButton.setText("reveal")
+        self.ui.revealLayout.addWidget(self.ui.hideButton, 1, 1, 1, 2)
+        self.ui.revealLayout.addWidget(self.ui.markLine, 2, 1, 1, 2)
+        self.ui.revealLayout.addWidget(self.ui.modeLine, 3, 1, 1, 2)
 
-        self.ui.revealLayout.addWidget(self.ui.penButton)
-        self.ui.revealLayout.addWidget(self.ui.textButton)
-        self.ui.revealLayout.addWidget(self.ui.lineButton)
+        self.ui.revealLayout.addWidget(self.ui.penButton, 4, 1)
+        self.ui.revealLayout.addWidget(self.ui.lineButton, 4, 2)
 
-        self.ui.revealLayout.addWidget(self.ui.commentUpButton)
-        self.ui.revealLayout.addWidget(self.ui.commentButton)
-        self.ui.revealLayout.addWidget(self.ui.commentDownButton)
+        self.ui.revealLayout.addWidget(self.ui.tickButton, 5, 1)
+        self.ui.revealLayout.addWidget(self.ui.crossButton, 5, 2)
 
-        self.ui.revealLayout.addWidget(self.ui.tickButton)
-        self.ui.revealLayout.addWidget(self.ui.crossButton)
-        self.ui.revealLayout.addWidget(self.ui.boxButton)
+        self.ui.revealLayout.addWidget(self.ui.textButton, 6, 1)
+        self.ui.revealLayout.addWidget(self.ui.commentButton, 6, 2)
 
-        self.ui.revealLayout.addWidget(self.ui.undoButton)
-        self.ui.revealLayout.addWidget(self.ui.redoButton)
-        self.ui.revealLayout.addWidget(self.ui.deleteButton)
+        self.ui.revealLayout.addWidget(self.ui.boxButton, 7, 1)
+        self.ui.revealLayout.addWidget(self.ui.deltaButton, 7, 2)
 
-        self.ui.revealLayout.addWidget(self.ui.panButton)
-        self.ui.revealLayout.addWidget(self.ui.zoomButton)
-        self.ui.revealLayout.addWidget(self.ui.moveButton)
+        self.ui.revealLayout.addWidget(self.ui.deleteButton, 8, 1)
+        self.ui.revealLayout.addWidget(self.ui.panButton, 8, 2)
+
+        self.ui.revealLayout.addWidget(self.ui.undoButton, 8, 1)
+        self.ui.revealLayout.addWidget(self.ui.redoButton, 8, 2)
+
+        self.ui.revealLayout.addWidget(self.ui.zoomButton, 9, 1)
+        self.ui.revealLayout.addWidget(self.ui.moveButton, 9, 2)
+
+        # self.ui.revealLayout.addWidget(self.ui.commentUpButton)
+        # self.ui.revealLayout.addWidget(self.ui.commentDownButton)
+
+        # end buttons
+        self.ui.revealLayout2.addWidget(self.ui.finishedButton)
+        self.ui.revealLayout2.addWidget(self.ui.finishNoRelaunchButton)
+        self.ui.revealLayout2.addWidget(self.ui.cancelButton)
 
     def wideLayout(self):
         self.ui.hideableBox.show()
         self.ui.revealBox.hide()
+        self.ui.revealBox2.hide()
         self.ui.hideButton.setText("Hide")
         self.ui.modeLayout.addWidget(self.ui.hideButton)
         self.ui.modeLayout.addWidget(self.ui.modeLine)
         self.ui.modeLayout.addWidget(self.ui.markLine)
         # right-hand mouse = 0, left-hand mouse = 1
         if self.mouseHand == 0:
+            # tools
             self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 4, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 5, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.tickButton, 2, 4, 1, 1)
@@ -307,6 +320,10 @@ class Annotator(QDialog):
             self.ui.toolLayout.addWidget(self.ui.panButton, 0, 2, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 2, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 2, 1, 1)
+            # end buttons
+            self.ui.ebLayout.addWidget(self.ui.finishedButton, 0, 0, 1, 1)
+            self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton, 0, 2, 1, 1)
+            self.ui.ebLayout.addWidget(self.ui.cancelButton, 0, 4, 1, 1)
 
     def viewWholePaper(self):
         files = self.parent.viewWholePaper()
@@ -528,6 +545,7 @@ class Annotator(QDialog):
         )
         self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
         self.setIcon(self.ui.deleteButton, "delete", "{}/delete.svg".format(base_path))
+        self.setIcon(self.ui.deltaButton, "delta", "{}/delta.svg".format(base_path))
         self.setIcon(self.ui.lineButton, "line", "{}/line.svg".format(base_path))
         self.setIcon(self.ui.moveButton, "move", "{}/move.svg".format(base_path))
         self.setIcon(self.ui.panButton, "pan", "{}/pan.svg".format(base_path))
@@ -559,6 +577,8 @@ class Annotator(QDialog):
         self.endShortCutc.activated.connect(self.endAndRelaunch)
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
         self.endShortCutd.activated.connect(self.endAndRelaunch)
+        self.cancelShortCut = QShortcut(QKeySequence("Ctrl+c"), self)
+        self.cancelShortCut.activated.connect(self.reject)
         # shortcuts for zoom-states
         self.zoomToggleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
         self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
