@@ -993,8 +993,23 @@ class Annotator(QDialog):
         self.view.setFocus()
 
     def setDeltaButtonMenu(self):
+        if self.markStyle == 1:
+            # mark total - don't set anything
+            return
         self.ui.deltaMenu = QMenu("Set Delta")
         act = {}
-        for k in range(3):
-            act[k] = self.ui.deltaMenu.addAction("+{}".format(k))
+        if self.markStyle == 2:
+            # set to mark up
+            for k in range(0, self.maxMark + 1):
+                act[k] = self.ui.deltaMenu.addAction("+{}".format(k))
+                act[k].triggered.connect(
+                    self.markHandler.markButtons["p{}".format(k)].animateClick
+                )
+        elif self.markStyle == 3:
+            # set to mark down
+            for k in range(1, self.maxMark + 1):
+                act[k] = self.ui.deltaMenu.addAction("-{}".format(k))
+                act[k].triggered.connect(
+                    self.markHandler.markButtons["m{}".format(k)].animateClick
+                )
         self.ui.deltaButton.setMenu(self.ui.deltaMenu)
