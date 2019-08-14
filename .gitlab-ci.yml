@@ -69,6 +69,10 @@ job imageServerStarts:
     - echo "Should be no jobs and this should succeed"
     - jobs -l
     - cd ..
+    - pushd finishing
+    - echo "The 07 script should fail as we did not grade and ID"
+    - if (python3 07_check_completed.py); then false; else true; fi
+    - popd
 
 job backgroundTest:
   before_script:

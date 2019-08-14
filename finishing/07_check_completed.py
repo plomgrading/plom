@@ -209,3 +209,4 @@ writeExamsMarked()
 # close up the databases.
 markdb.close()
 iddb.close()
+exit(1)  # TODO or 0 if it worked!
