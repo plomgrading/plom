@@ -816,7 +816,7 @@ def checkDirectories():
         os.mkdir("markedPapers/commentFiles")
 
 
-print("PLOM version {0}: image server starting...".format(__version__))
+print("PLOM Server v{}: this is free software without warranty".format(__version__))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
