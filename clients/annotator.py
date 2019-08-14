@@ -517,10 +517,16 @@ class Annotator(QDialog):
         Changes the styling of the corresponding button, and
         also the cursor.
         """
+        # TODO: clean up this function. Is a bit of a mess
+
         # Clear styling of the what was until now the current button
         if self.currentButton is not None:
             self.currentButton.setStyleSheet("")
-
+        # A bit of a hack to take care of comment-mode and delta-mode
+        if self.scene.mode == "comment" and newMode != "comment":
+            self.ui.commentButton.setStyleSheet("")
+        if self.scene.mode == "delta" and newMode != "delta":
+            self.ui.deltaButton.setStyleSheet("")
         # We change currentbutton to which ever widget sent us
         # to this function. We have to be a little careful since
         # not all widgets get the styling in the same way.
@@ -645,10 +651,10 @@ class Annotator(QDialog):
         self.setMode("delete", Qt.ForbiddenCursor)
 
     def deltaButtonMode(self):
-        if self.scene.mode == "delta":
-            self.markHandler.incrementDelta(self.scene.markDelta)
-        else:
-            self.markHandler.clickDelta(self.scene.markDelta)
+        # if self.scene.mode == "delta":
+        #     self.markHandler.incrementDelta(self.scene.markDelta)
+        # else:
+        #     self.markHandler.clickDelta(self.scene.markDelta)
         self.setMode("delta", Qt.IBeamCursor)
 
     def lineMode(self):
@@ -789,6 +795,8 @@ class Annotator(QDialog):
             return
         # Else, the delta is now set, so now change the mode here.
         self.setMode("delta", QCursor(Qt.IBeamCursor))
+        # and set style of the delta-button
+        self.ui.deltaButton.setStyleSheet(self.currentButtonStyleBackground)
 
     def changeMark(self, score):
         """The mark has been changed. Update the mark-handler.
@@ -798,7 +806,7 @@ class Annotator(QDialog):
 
         self.score = score
         # update the markline
-        self.ui.markLine.setText(
+        self.ui.markLabel.setText(
             "{} out of {}".format(self.scene.score, self.scene.maxMark)
         )
         self.markHandler.setMark(self.score)
