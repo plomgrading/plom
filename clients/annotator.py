@@ -18,14 +18,17 @@ from PyQt5.QtGui import (
 )
 from PyQt5.QtWidgets import (
     QAbstractItemView,
+    QAction,
     QDialog,
+    QGridLayout,
     QLabel,
+    QMenu,
     QMessageBox,
     QPushButton,
     QShortcut,
     QTableWidget,
     QTableWidgetItem,
-    QGridLayout,
+    QToolButton,
 )
 
 from mark_handler import MarkHandler
@@ -116,7 +119,6 @@ class Annotator(QDialog):
         # hide the "revealbox" which is revealed when the hideBox is hidden.
         self.ui.revealBox.setHidden(True)
         self.ui.revealBox2.setHidden(True)
-
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
         self.view = None
@@ -130,6 +132,7 @@ class Annotator(QDialog):
         # also when we set this up we have to connect various
         # mark set, delta-set, mark change functions
         self.setMarkHandler(self.markStyle)
+        self.setDeltaButtonMenu()
         # set alt-enter / alt-return as shortcut to finish annotating
         # also set ctrl-n and ctrl-b as same shortcut.
         # set ctrl-+ as zoom toggle shortcut
@@ -988,3 +991,10 @@ class Annotator(QDialog):
         else:
             pass
         self.view.setFocus()
+
+    def setDeltaButtonMenu(self):
+        self.ui.deltaMenu = QMenu("Set Delta")
+        act = {}
+        for k in range(3):
+            act[k] = self.ui.deltaMenu.addAction("+{}".format(k))
+        self.ui.deltaButton.setMenu(self.ui.deltaMenu)
