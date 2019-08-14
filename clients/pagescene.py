@@ -760,14 +760,17 @@ class PageScene(QGraphicsScene):
             return
         elif self.boxFlag == 1:
             self.removeItem(self.boxItem)
-            # check if rect has some area
+            # check if rect has some perimeter (allow long/thin)
             if self.boxItem.rect().width() + self.boxItem.rect().height() > 32:
                 command = CommandBox(self, self.boxItem.rect())
                 self.undoStack.push(command)
         else:
             self.removeItem(self.ellipseItem)
-            # check if rect has some area
-            if self.ellipseItem.rect().width() + self.ellipseItem.rect().height() > 32:
+            # check if ellipse has some area (don't allow long/thin)
+            if (
+                self.ellipseItem.rect().width() > 16
+                and self.ellipseItem.rect().height() > 16
+            ):
                 command = CommandEllipse(self, self.ellipseItem.rect())
                 self.undoStack.push(command)
 
