@@ -74,6 +74,7 @@ readExamsCompleted()
 readExamsIDed()
 readExamsGrouped()
 outdir = "reassembled"
+os.makedirs(outdir, exist_ok=True)
 # Open a file for a list of commands to process to reassemble papers.
 fh = open("./commandlist.txt", "w")
 # Look at all the successfully completed exams

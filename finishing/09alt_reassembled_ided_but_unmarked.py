@@ -65,6 +65,7 @@ spec.readSpec()
 readExamsIDed()
 readExamsGrouped()
 outdir = "reassembled_ID_but_not_marked"
+os.makedirs(outdir, exist_ok=True)
 # Open a file for the list of commands to process to reassemble papers
 fh = open("./commandlist.txt", "w")
 for n in sorted(examsIDed.keys()):
