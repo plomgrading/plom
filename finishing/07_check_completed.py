@@ -55,7 +55,7 @@ def displayMarked(n):
 def printPGStatus(totalPapers):
     global pgStatus
     for pg in range(1, spec.getNumberOfGroups() + 1):
-        print("Group {} = {} of {}".format(pg, pgStatus[pg], totalPapers))
+        print("Group {}: {} of {} completed".format(pg, pgStatus[pg], totalPapers))
 
 
 def checkIDed(n):
