@@ -9,6 +9,7 @@ from PyQt5.QtCore import Qt, QElapsedTimer, QEvent, QLineF, QPointF, QRectF
 from PyQt5.QtGui import (
     QBrush,
     QColor,
+    QCursor,
     QGuiApplication,
     QPainter,
     QPainterPath,
@@ -1046,13 +1047,19 @@ class PageScene(QGraphicsScene):
                 self.markDelta, self.commentText, annotatorUpdate=False
             )
 
-    def changeTheDelta(self, newDelta):
+    def changeTheDelta(self, newDelta, annotatorUpdate=False):
         self.markDelta = newDelta
         lookingAhead = self.score + int(self.markDelta)
         if lookingAhead < 0 or lookingAhead > self.maxMark:
             self.legalDelta = False
         else:
             self.legalDelta = True
+
+        if annotatorUpdate:
+            gpt = QCursor.pos()  # global mouse pos
+            vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
+            spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
+            self.ghostItem.setPos(spt)
 
         self.commentDelta = self.markDelta
         self.commentText = ""
@@ -1072,6 +1079,10 @@ class PageScene(QGraphicsScene):
         # we need to store a copy of the mark-delta for future
         # and also set the mode.
         if annotatorUpdate:
+            gpt = QCursor.pos()  # global mouse pos
+            vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
+            spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
+            self.ghostItem.setPos(spt)
             self.markDelta = delta
             self.setMode("comment")
             self.exposeGhost()  # unhide the ghostitem

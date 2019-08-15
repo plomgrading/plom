@@ -783,8 +783,10 @@ class Annotator(QDialog):
         the view (and scene) need to know what the current delta is so
         that it can be pasted in correctly (when user clicks on image).
         """
+        # Change the mode to delta
+        self.setMode("delta", QCursor(Qt.IBeamCursor))
         # Try changing the delta in the scene
-        if not self.scene.changeTheDelta(dm):
+        if not self.scene.changeTheDelta(dm, annotatorUpdate=True):
             # If it is out of range then change mode to "move" so that
             # the user cannot paste in that delta.
             self.ui.moveButton.animateClick()
