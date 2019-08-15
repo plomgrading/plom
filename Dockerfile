@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 RUN apt-get update
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
 RUN apt-get --no-install-recommends --yes install  \
     parallel zbar-tools cmake \
     python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
