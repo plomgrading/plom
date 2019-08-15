@@ -39,9 +39,8 @@ def imageList(n):
     and identified (but not marked) paper.
     This will be passed to the reassembly script.
     """
-    # list of image files for the reassembly
     imgl = []
-    # zeroth is the ID-group
+    # the ID-group pages
     imgl.append(
         "../scanAndGroup/readyForMarking/idgroup/{}.png".format(examsGrouped[n][0])
     )
@@ -65,12 +64,13 @@ spec.readSpec()
 # read the ID'd and grouped exams.
 readExamsIDed()
 readExamsGrouped()
+outdir = "reassembled_ID_but_not_marked"
 # Open a file for the list of commands to process to reassemble papers
 fh = open("./commandlist.txt", "w")
 for n in sorted(examsIDed.keys()):
     fh.write(
-        'python3 testReassembler_only_ided.py {} {} "{}"\n'.format(
-            spec.Name, examsIDed[n][1], imageList(n)
+        'python3 testReassembler.py {} {} {} "" "{}"\n'.format(
+            spec.Name, examsIDed[n][1], outdir, imageList(n)
         )
     )
 fh.close()

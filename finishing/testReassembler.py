@@ -24,16 +24,15 @@ def iswider(f):
 
 
 if __name__ == '__main__':
-    # takes StudentID and list of group image files as args.
-    # 0th item on list is the coverpage.
-    # other items are the groupimage files.
     shortName = sys.argv[1]
     sid = sys.argv[2]
-    imgl = eval(sys.argv[3])
-    coverfname, imgl = imgl[0], imgl[1:]
+    outdir = sys.argv[3]
+    coverfname = sys.argv[4]
+    # the groupimage files
+    imgl = eval(sys.argv[5])
     # note we know the shortname is alphanumeric with no strings
     # so this is safe.
-    outname = "reassembled/{}_{}.pdf".format(shortName, sid)
+    outname = os.path.join(outdir, "{}_{}.pdf".format(shortName, sid))
 
     # use imagemagick to convert each group-image into a temporary pdf.
     pdfpages = [tempfile.NamedTemporaryFile(suffix=".pdf") for x in imgl]
@@ -49,8 +48,9 @@ if __name__ == '__main__':
         cmd += ["pdf:{}".format(TF.name)]
         subprocess.check_call(cmd)
 
-    # open the coverpage and append the temporary pdf pages
-    exam = fitz.open(coverfname)
+    exam = fitz.open()
+    if coverfname:
+        exam.insertPDF(fitz.open(coverfname))
     for pg in pdfpages:
         exam.insertPDF(fitz.open(pg.name))
 

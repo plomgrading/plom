@@ -46,13 +46,11 @@ def readExamsIDed():
 def imageList(n):
     """
     Creates a list of the image files to be reassembled into
-    a completed testpaper with coversheet.
+    a completed testpaper.
     This will be passed to the reassembly script.
     """
-    # list of image files for the reassembly
-    # zeroth = the coverpage.
-    imgl = ["coverPages/cover_{}.pdf".format(n.zfill(4))]
-    # then the ID-group pages
+    imgl = []
+    # the ID-group pages
     imgl.append(
         "../scanAndGroup/readyForMarking/idgroup/{}.png".format(examsGrouped[n][0])
     )
@@ -75,14 +73,16 @@ spec.readSpec()
 readExamsCompleted()
 readExamsIDed()
 readExamsGrouped()
+outdir = "reassembled"
 # Open a file for a list of commands to process to reassemble papers.
 fh = open("./commandlist.txt", "w")
 # Look at all the successfully completed exams
 for n in sorted(examsCompleted.keys()):
     if examsCompleted[n]:
+        cover = "coverPages/cover_{}.pdf".format(n.zfill(4))
         fh.write(
-            'python3 testReassembler.py {} {} "{}"\n'.format(
-                spec.Name, examsIDed[n][1], imageList(n)
+            'python3 testReassembler.py {} {} {} {} "{}"\n'.format(
+                spec.Name, examsIDed[n][1], outdir, cover, imageList(n)
             )
         )
 fh.close()
