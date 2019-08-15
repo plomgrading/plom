@@ -573,13 +573,11 @@ class MarkerClient(QWidget):
         self.ui.tableView.resizeRowsToContents()
 
     def moveToNextUnmarkedTest(self):
-        print("ARGH0")
         # Move to the next unmarked test in the table.
         # Be careful not to get stuck in a loop if all marked
         prt = self.prxM.rowCount()
         if prt == 0:
             return
-        print("ARGH1")
 
         # back up one row because before this is called we have
         # added a row in the background, so the current row is actually
@@ -587,14 +585,10 @@ class MarkerClient(QWidget):
         prstart = self.ui.tableView.selectedIndexes()[0].row()
         pr = prstart
         while self.prxM.getStatus(pr) in ["marked", "deferred"]:
-            print("At {} {}".format(pr, self.prxM.getStatus(pr)))
             pr = (pr + 1) % prt
-            print("Now at {} {}".format(pr, self.prxM.getStatus(pr)))
             if pr == prstart:
                 break
-        print("ARGH2")
         self.ui.tableView.selectRow(pr)
-        print("ARGH3")
         if pr == prstart:
             # gone right round, so select prstart+1
             self.ui.tableView.selectRow((pr + 1) % prt)
@@ -705,7 +699,7 @@ class MarkerClient(QWidget):
             return
         # Grab the currently selected row.
         index = self.ui.tableView.selectedIndexes()
-        # make sure something selected
+        # mark sure something is selected
         if len(index) == 0:
             return
         # Create annotated filename. If original tXXXXgYYvZ.png, then
