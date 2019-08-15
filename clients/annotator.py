@@ -651,10 +651,6 @@ class Annotator(QDialog):
         self.setMode("delete", Qt.ForbiddenCursor)
 
     def deltaButtonMode(self):
-        # if self.scene.mode == "delta":
-        #     self.markHandler.incrementDelta(self.scene.markDelta)
-        # else:
-        #     self.markHandler.clickDelta(self.scene.markDelta)
         self.setMode("delta", Qt.IBeamCursor)
 
     def lineMode(self):

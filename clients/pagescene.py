@@ -201,8 +201,13 @@ class PageScene(QGraphicsScene):
 
     def setMode(self, mode):
         self.mode = mode
-        # if current mode is not comment, make sure the ghostcomment is hidden
-        if self.mode != "comment":
+        # if current mode is not comment or delta, make sure the ghostcomment is hidden
+        if self.mode == "delta":
+            # make sure the ghost is updated - fixes #307
+            self.updateGhost(self.markDelta, "")
+        elif self.mode == "comment":
+            pass
+        else:
             self.hideGhost()
         # if mode is "pan", set the view to be able to drag about, else turn that off
         if self.mode == "pan":
