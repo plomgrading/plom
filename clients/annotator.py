@@ -794,7 +794,7 @@ class Annotator(QDialog):
         self.scene.save()
         # Save the marker's comments
         self.saveMarkerComments()
-        # Pickle the scene as a PLOM-file
+        # Pickle the scene as a plom-file
         self.pickleIt()
         # Save the window settings
         self.saveWindowSettings()

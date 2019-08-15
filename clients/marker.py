@@ -50,7 +50,7 @@ if platform.system() == "Darwin":
     qt_set_sequence_auto_mnemonic(True)
 
 sys.path.append("..")  # this allows us to import from ../resources
-from resources.version import PLOM_API_Version
+from resources.version import Plom_API_Version
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
@@ -373,7 +373,7 @@ class MarkerClient(QWidget):
         hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(["AUTH", self.userName, self.password, PLOM_API_Version])
+        msg = messenger.SRMsg(["AUTH", self.userName, self.password, Plom_API_Version])
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":

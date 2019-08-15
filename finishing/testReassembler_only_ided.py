@@ -27,6 +27,6 @@ with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
     # open with fitz/pymupdf and update the metadata
     exam = fitz.open(tf.name)
     # title of PDF is "<testname> <sid>"
-    exam.setMetadata({"title": "{} {}".format(shortName, sid), "producer": "PLOM"})
+    exam.setMetadata({"title": "{} {}".format(shortName, sid), "producer": "Plom"})
     # save the output.
     exam.save(outname)

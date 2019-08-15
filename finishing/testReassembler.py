@@ -35,6 +35,6 @@ with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
     # insert the coverpage as the 0th page.
     exam.insertPDF(cover, from_page=0, to_page=0, start_at=0)
     # title of PDF is "<testname> <sid>"
-    exam.setMetadata({"title": "{} {}".format(shortName, sid), "producer": "PLOM"})
+    exam.setMetadata({"title": "{} {}".format(shortName, sid), "producer": "Plom"})
     # save the output.
     exam.save(outname)
