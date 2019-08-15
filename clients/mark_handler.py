@@ -148,8 +148,10 @@ class MarkHandler(QWidget):
         else:
             self.pdmb.setStyleSheet("")
 
-    def loadDeltaValue(self, dlt):
-        if abs(dlt) > self.maxScore or self.style == "Total":
+    def loadDeltaValue(self, delta):
+        # delta is a string
+        idelta = int(delta)
+        if abs(idelta) > self.maxScore or self.style == "Total":
             return
         if dlt <= 0 and self.style == "Down":
             self.markButtons["m{}".format(-dlt)].animateClick()

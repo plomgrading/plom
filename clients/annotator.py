@@ -867,7 +867,7 @@ class Annotator(QDialog):
         self.parent.annotatorSettings["zoomState"] = self.ui.zoomCB.currentIndex()
         self.parent.annotatorSettings["tool"] = self.scene.mode
         if self.scene.mode == "delta":
-            self.parent.annotatorSettings["delta"] = self.view.markDelta
+            self.parent.annotatorSettings["delta"] = self.scene.markDelta
         if self.scene.mode == "comment":
             self.parent.annotatorSettings["comment"] = self.commentW.getCurrentItemRow()
 

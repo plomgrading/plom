@@ -234,6 +234,8 @@ class PageScene(QGraphicsScene):
         That is, overwrite the imagefile with a dump of the current
         scene and all its graphics items.
         """
+        # Make sure the ghostComment is hidden
+        self.ghostItem.hide()
         # Get the width and height of the image
         w = self.image.width()
         h = self.image.height()
