@@ -166,12 +166,10 @@ class Annotator(QDialog):
     def loadCursors(self):
         # load pixmaps for cursors and set the hotspots
         self.cursorBox = QCursor(QPixmap("cursors/box.png"), 4, 4)
-        self.cursorComment = QCursor(
-            QPixmap("cursors/text-comment.png"), 20, -1
-        )  # centre
+        self.cursorComment = QCursor(QPixmap("cursors/text.png"), 20, -1)  # centre
         self.cursorCross = QCursor(QPixmap("cursors/cross.png"), 4, 4)
         self.cursorDelete = QCursor(QPixmap("cursors/delete.png"), 4, 4)
-        self.cursorDelta = QCursor(QPixmap("cursors/text-delta.png"), -1, -1)  # centre
+        self.cursorDelta = QCursor(QPixmap("cursors/text.png"), -1, -1)  # centre
         self.cursorLine = QCursor(QPixmap("cursors/line.png"), 4, 4)
         self.cursorPen = QCursor(QPixmap("cursors/pen.png"), 4, 4)
         self.cursorText = QCursor(QPixmap("cursors/text.png"), -1, -1)  # centre
