@@ -11,6 +11,9 @@ import sys
 import tempfile
 import subprocess
 
+sys.path.append("..")  # this allows us to import from ../resources
+from resources.version import __version__
+
 # hardcoded for letter, https://gitlab.math.ubc.ca/andrewr/MLP/issues/276
 sizeportrait = "612x792"
 sizelandscape = "792x612"
@@ -59,7 +62,8 @@ if __name__ == '__main__':
         pg.close()
 
     # title of PDF is "<testname> <sid>"
-    exam.setMetadata({"title": "{} {}".format(shortName, sid), "producer": "PLOM"})
+    exam.setMetadata({"title": "{} {}".format(shortName, sid),
+                      "producer": "Plom {}".format(__version__)})
 
     with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
         exam.save(outname)
