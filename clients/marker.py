@@ -705,6 +705,9 @@ class MarkerClient(QWidget):
             return
         # Grab the currently selected row.
         index = self.ui.tableView.selectedIndexes()
+        # make sure something selected
+        if len(index) == 0:
+            return
         # Create annotated filename. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
         aname = os.path.join(

@@ -43,8 +43,6 @@ directories += ["clients", "clients/uiFiles", "clients/icons"]
 directories += [
     "finishing/frontPages",
     "finishing/coverPages",
-    "finishing/reassembled/",
-    "finishing/reassembled_ID_but_not_marked",
 ]
 
 files = [

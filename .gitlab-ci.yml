@@ -19,23 +19,26 @@ variables:
 
   ROLLOUT_RESOURCE_TYPE: deployment
 
+before_script:
+  - apt-get update
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
+  - apt-get --no-install-recommends --yes install
+    parallel zbar-tools cmake
+    python3-passlib python3-seaborn python3-pandas python3-pyqt5
+    python3-pyqt5.qtsql python3-pyqrcode python3-png
+    python3-pip python3-setuptools python3-wheel imagemagick
+    texlive-latex-extra dvipng g++ make python3-dev
+    netcat-openbsd iproute2 psmisc
+  - pip3 install wsgidav easywebdav2 pymupdf weasyprint imutils
+    lapsolver peewee cheroot
+
 stages:
   - build
   - test
 
-build:
+job imageServerStarts:
+  stage: test
   script:
-    - apt-get update
-    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
-    - apt-get --no-install-recommends --yes install
-      parallel zbar-tools cmake
-      python3-passlib python3-seaborn python3-pandas python3-pyqt5
-      python3-pyqt5.qtsql python3-pyqrcode python3-png
-      python3-pip python3-setuptools python3-wheel imagemagick
-      texlive-latex-extra dvipng g++ make python3-dev
-      netcat-openbsd iproute2 psmisc
-    - pip3 install wsgidav easywebdav2 pymupdf weasyprint imutils
-      lapsolver peewee cheroot
     - mkdir scanAndGroup/scannedExams/
     # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
     - curl https://www.math.ubc.ca/~cbm/tmp/namesAdded.pdf > scanAndGroup/scannedExams/foo.pdf
@@ -65,15 +68,12 @@ build:
     - sleep 1
     - echo "Should be no jobs and this should succeed"
     - jobs -l
+    - cd ..
 
-test:
-  script:
-    # TODO: why doesn't this wait until build is done?
-    - pwd
-    - ls
-    - echo "Hello World"
-
-testbackground:
+job backgroundTest:
+  before_script:
+    - echo "Overriding before_script"
+  stage: test
   script:
     - sleep 60 &
     - jobs -l
@@ -86,3 +86,9 @@ testbackground:
     - kill -9 %1
     - echo "Should be no jobs and this should succeed"
     - jobs -p
+
+job someUnitTests:
+  stage: test
+  script:
+    - cd finishing
+    - ./run_unit_tests.sh
