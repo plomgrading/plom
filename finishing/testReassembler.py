@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
@@ -7,34 +9,61 @@ import fitz
 import os
 import sys
 import tempfile
+import subprocess
 
-# takes testname StudentID and list of group image files as args.
-# 0th item on list is the coverpage.
-# other items are the groupimage files.
-shortName = sys.argv[1]
-sid = eval(sys.argv[2])
-imgl = eval(sys.argv[3])
-# output as test_<StudentID>.pdf
-# note we know the shortname is alphanumeric with no spaces
-# so this is safe.
-outname = "reassembled/{}_{}.pdf".format(shortName, sid)
-# work on a tempfile
-with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
-    # use imagemagick to glob the group-images together into a pdf.
-    # first build the imagemagick command.
-    cmd = "convert -quality 100"
-    for X in imgl[1:]:
-        cmd += " {}".format(X)
-    cmd += " {}".format(tf.name)
-    # run the command.
-    os.system(cmd)
-    # Now attach the coverpage to the front using fitz / pymupdf
-    exam = fitz.open(tf.name)
-    # grab the coverpage
-    cover = fitz.open(imgl[0])
-    # insert the coverpage as the 0th page.
-    exam.insertPDF(cover, from_page=0, to_page=0, start_at=0)
+sys.path.append("..")  # this allows us to import from ../resources
+from resources.version import __version__
+
+# hardcoded for letter, https://gitlab.math.ubc.ca/andrewr/MLP/issues/276
+sizeportrait = "612x792"
+sizelandscape = "792x612"
+
+
+def iswider(f):
+    """True if image is wider than it is high"""
+    ratio = subprocess.check_output(["identify", "-format",
+                                     "%[fx:w/h]", f]).decode().rstrip()
+    return float(ratio) > 1
+
+
+if __name__ == '__main__':
+    shortName = sys.argv[1]
+    sid = sys.argv[2]
+    outdir = sys.argv[3]
+    coverfname = sys.argv[4]
+    # the groupimage files
+    imgl = eval(sys.argv[5])
+    # note we know the shortname is alphanumeric with no strings
+    # so this is safe.
+    outname = os.path.join(outdir, "{}_{}.pdf".format(shortName, sid))
+
+    # use imagemagick to convert each group-image into a temporary pdf.
+    pdfpages = [tempfile.NamedTemporaryFile(suffix=".pdf") for x in imgl]
+    for img, TF in zip(imgl, pdfpages):
+        cmd = ["convert", img, "-quality", "100"]
+        # TODO: want to center the image but then it doesn't fit page
+        #cmd += ["-gravity", "center", "-background", "white"]
+        # Rotate page not the image: we want landscape on screen
+        if iswider(img):
+            cmd += ["-page", sizelandscape]
+        else:
+            cmd += ["-page", sizeportrait]
+        cmd += ["pdf:{}".format(TF.name)]
+        subprocess.check_call(cmd)
+
+    exam = fitz.open()
+    if coverfname:
+        exam.insertPDF(fitz.open(coverfname))
+    for pg in pdfpages:
+        exam.insertPDF(fitz.open(pg.name))
+
+    # clean up temp files
+    for pg in pdfpages:
+        pg.close()
+
     # title of PDF is "<testname> <sid>"
-    exam.setMetadata({"title": "{} {}".format(shortName, sid), "producer": "PLOM"})
-    # save the output.
-    exam.save(outname)
+    exam.setMetadata({"title": "{} {}".format(shortName, sid),
+                      "producer": "Plom {}".format(__version__)})
+
+    with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
+        exam.save(outname)

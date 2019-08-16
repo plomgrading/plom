@@ -181,6 +181,15 @@ class MarkDatabase:
             self.logging.info("Nothing left on To-Do pile")
             return (None, None, None)
 
+    def userStillOwnsTGV(self, code, username):
+        try:
+            with markdb.atomic():
+                # get the record by code and username
+                x = GroupImage.get(tgv=code, user=username)
+            return True
+        except GroupImage.DoesNotExist:
+            return False
+
     def takeGroupImageFromClient(
         self, code, username, mark, fname, pname, cname, mt, tag
     ):
