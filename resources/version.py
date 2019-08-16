@@ -5,4 +5,4 @@ __license__ = "AGPLv3"
 
 
 __version__ = "0.1.0+"
-PLOM_API_Version = "3"  # updated for background upload/download
+Plom_API_Version = "3"  # updated for background upload/download
