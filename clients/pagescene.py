@@ -766,12 +766,20 @@ class PageScene(QGraphicsScene):
             return
         elif self.boxFlag == 1:
             self.removeItem(self.boxItem)
-            command = CommandBox(self, self.boxItem.rect())
+            # check if rect has some perimeter (allow long/thin)
+            if self.boxItem.rect().width() + self.boxItem.rect().height() > 24:
+                command = CommandBox(self, self.boxItem.rect())
+                self.undoStack.push(command)
         else:
             self.removeItem(self.ellipseItem)
-            command = CommandEllipse(self, self.ellipseItem.rect())
+            # check if ellipse has some area (don't allow long/thin)
+            if (
+                self.ellipseItem.rect().width() > 16
+                and self.ellipseItem.rect().height() > 16
+            ):
+                command = CommandEllipse(self, self.ellipseItem.rect())
+                self.undoStack.push(command)
 
-        self.undoStack.push(command)
         self.boxFlag = 0
 
     def mousePressLine(self, event):
@@ -826,7 +834,9 @@ class PageScene(QGraphicsScene):
             command = CommandArrowDouble(self, self.originPos, self.currentPos)
         self.arrowFlag = 0
         self.removeItem(self.lineItem)
-        self.undoStack.push(command)
+        # don't add if too short
+        if (self.originPos - self.currentPos).manhattanLength() > 24:
+            self.undoStack.push(command)
 
     def mousePressPen(self, event):
         """Start drawing either a pen-path (left-click) or
@@ -893,6 +903,13 @@ class PageScene(QGraphicsScene):
         self.penFlag = 0
         self.removeItem(self.pathItem)
         self.undoStack.push(command)
+        # don't add if too short - check by boundingRect
+        # TODO: decide threshold for pen annotation size
+        # if (
+        #     self.pathItem.boundingRect().height() + self.pathItem.boundingRect().width()
+        #     > 8
+        # ):
+        #     self.undoStack.push(command)
 
     def mousePressDelete(self, event):
         """Start drawing a delete-box. Nothing happens until button is released.

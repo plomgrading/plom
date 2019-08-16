@@ -18,6 +18,10 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 for icon in ['cross', 'delete', 'line', 'move', 'pan', 'pen', 'rectangle', 'redo', 'text', 'tick', 'undo', 'zoom', 'comment', 'comment_up', 'comment_down']:
   a.datas += [('{}.svg'.format(icon), 'icons/{}.svg'.format(icon), 'DATA')]
+
+for cursor in ['box', 'cross', 'delete', 'line', 'pen', 'tick',]:
+    a.datas += [('{}.png'.format(cursor), 'cursors/{}.png'.format(cursor), 'DATA')]
+
 a.datas += [('../resources/version.py', '../resources/version.py', 'DATA')]
 
 # to fix duplication of "version.py" warning

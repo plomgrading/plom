@@ -9,6 +9,7 @@ import json
 import shutil
 import sys
 import tempfile
+import time
 
 from PyQt5.QtCore import (
     Qt,
@@ -50,7 +51,7 @@ if platform.system() == "Darwin":
     qt_set_sequence_auto_mnemonic(True)
 
 sys.path.append("..")  # this allows us to import from ../resources
-from resources.version import PLOM_API_Version
+from resources.version import Plom_API_Version
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
@@ -71,6 +72,36 @@ class BackgroundDownloader(QThread):
         messenger.getFileDav(self.tname, self.fname)
         # needed to send "please delete" back to server
         self.downloaded.emit(self.tname)
+        # then exit
+        self.quit()
+
+
+class BackgroundUploader(QThread):
+    uploaded = pyqtSignal(str, str, str, str, str, int, str)
+
+    def setUploadInfo(self, code, gr, aname, pname, cname, mtime, tags):
+        self.code = code
+        self.gr = gr
+        self.aname = aname
+        self.pname = pname
+        self.cname = cname
+        self.mtime = mtime
+        self.tags = tags
+
+    def run(self):
+        afile = os.path.basename(self.aname)
+        messenger.putFileDav(self.aname, afile)
+        # copy plom file to webdav
+        pfile = os.path.basename(self.pname)
+        messenger.putFileDav(self.pname, pfile)
+        # copy comment file to webdav
+        cfile = os.path.basename(self.cname)
+        messenger.putFileDav(self.cname, cfile)
+
+        # needed to send "please delete" back to server
+        self.uploaded.emit(
+            self.code, self.gr, afile, pfile, cfile, self.mtime, self.tags
+        )
         # then exit
         self.quit()
 
@@ -350,6 +381,9 @@ class MarkerClient(QWidget):
         # and https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
         self.backgroundDownloader = BackgroundDownloader()
         self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
+        # and another for uploading
+        self.backgroundUploader = BackgroundUploader()
+        self.backgroundUploader.uploaded.connect(self.uploadInBackgroundFinish)
         # Now cache latex for comments:
         self.cacheLatexComments()
 
@@ -373,7 +407,7 @@ class MarkerClient(QWidget):
         hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(["AUTH", self.userName, self.password, PLOM_API_Version])
+        msg = messenger.SRMsg(["AUTH", self.userName, self.password, Plom_API_Version])
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":
@@ -458,9 +492,9 @@ class MarkerClient(QWidget):
         self.checkFiles(pr)
 
         # Grab the group-image from file and display in the examviewwindow
-        # If group has been marked or annotated then display the annotated file
+        # If group has been marked then display the annotated file
         # Else display the original group image
-        if self.prxM.getStatus(pr) in ["marked", "annotated"]:
+        if self.prxM.getStatus(pr) == "marked":
             self.testImg.updateImage(self.prxM.getAnnotatedFile(pr))
         else:
             self.testImg.updateImage(self.prxM.getOriginalFile(pr))
@@ -528,7 +562,8 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.setFiles(tname, fname)
         self.backgroundDownloader.start()
         # Add the page-group to the list of things to mark
-        self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]))
+        # do not update the displayed image with this new paper
+        self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]), update=False)
 
     def requestNextInBackgroundFinish(self, tname):
         # Ack that test received - server then deletes it from webdav
@@ -543,13 +578,16 @@ class MarkerClient(QWidget):
         prt = self.prxM.rowCount()
         if prt == 0:
             return
+
         # back up one row because before this is called we have
         # added a row in the background, so the current row is actually
         # one too far forward.
-        prstart = (self.ui.tableView.selectedIndexes()[0].row() - 1) % prt
-        pr = (prstart + 1) % prt
-        while self.prxM.getStatus(pr) in ["marked", "deferred"] and pr != prstart:
+        prstart = self.ui.tableView.selectedIndexes()[0].row()
+        pr = prstart
+        while self.prxM.getStatus(pr) in ["marked", "deferred"]:
             pr = (pr + 1) % prt
+            if pr == prstart:
+                break
         self.ui.tableView.selectRow(pr)
         if pr == prstart:
             # gone right round, so select prstart+1
@@ -661,7 +699,7 @@ class MarkerClient(QWidget):
             return
         # Grab the currently selected row.
         index = self.ui.tableView.selectedIndexes()
-        # make sure something selected
+        # mark sure something is selected
         if len(index) == 0:
             return
         # Create annotated filename. If original tXXXXgYYvZ.png, then
@@ -706,21 +744,43 @@ class MarkerClient(QWidget):
             return
         # Copy the mark, annotated filename and the markingtime into the table
         self.prxM.markPaper(index, gr, aname, pname, mtime)
-        # Update the currently displayed image
-        self.updateImage(index[1].row())
+        # Update the currently displayed image by selecting that row
+        self.ui.tableView.selectRow(index[1].row())
 
-        # copy annotated file to webdav
-        afile = os.path.basename(aname)
-        messenger.putFileDav(aname, afile)
-        # copy plom file to webdav
-        pfile = os.path.basename(pname)
-        messenger.putFileDav(pname, pfile)
-        # copy comment file to webdav
-        cfile = os.path.basename(cname)
-        messenger.putFileDav(cname, cfile)
-        # Send 'returning marked image' (mRMD) to server.
-        # Pass it test-code, mark, location of annotated file on webdav
-        # and the marking time.
+        # these need to happen in another thread - but that requires
+        # us to check with server to make sure user is still authorised
+        # to upload this particular pageimage - this may have changed
+        # depending on what else is going on.
+
+        msg = messenger.SRMsg(
+            ["mUSO", self.userName, self.token, self.prxM.data(index[0])]
+        )
+        if msg[0] == "ACK":
+            # upload in background
+            self.uploadInBackgroundStart(
+                self.prxM.data(index[0]),  # current tgv
+                gr,  # grade
+                aname,  # annotated file
+                pname,  # plom file
+                cname,  # comment file
+                mtime,  # marking time
+                self.prxM.data(index[4]),  # tags
+            )
+
+        # Check if no unmarked test, then request one.
+        if launchAgain is False:
+            return
+        if self.moveToNextUnmarkedTest():
+            # self.annotateTest()
+            self.ui.annButton.animateClick()
+
+    def uploadInBackgroundStart(self, code, gr, aname, pname, cname, mtime, tags):
+        self.backgroundUploader.setUploadInfo(
+            code, gr, aname, pname, cname, mtime, tags
+        )
+        self.backgroundUploader.start()
+
+    def uploadInBackgroundFinish(self, code, gr, afile, pfile, cfile, mtime, tags):
         # Server will save data and copy the annotated file, then delete it
         # from the webdav
         msg = messenger.SRMsg(
@@ -728,7 +788,7 @@ class MarkerClient(QWidget):
                 "mRMD",
                 self.userName,
                 self.token,
-                self.prxM.data(index[0]),
+                code,
                 gr,
                 afile,
                 pfile,
@@ -736,11 +796,11 @@ class MarkerClient(QWidget):
                 mtime,
                 self.pageGroup,
                 self.version,
-                self.prxM.data(index[4]),  # send the tags back too
+                tags,
             ]
         )
-        # returns [ACK, #marked, #total]
         if msg[0] == "ACK":
+            # returns [ACK, #done, #total]
             self.ui.mProgressBar.setValue(msg[1])
             self.ui.mProgressBar.setMaximum(msg[2])
         else:
@@ -754,13 +814,6 @@ class MarkerClient(QWidget):
             self.ui.tableView.selectRow(index[1].row())
             self.updateImage(index[1].row())
             return
-
-        # Check if no unmarked test, then request one.
-        if launchAgain is False:
-            return
-        if self.moveToNextUnmarkedTest():
-            # self.annotateTest()
-            self.ui.annButton.animateClick()
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image
