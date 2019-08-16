@@ -897,13 +897,14 @@ class PageScene(QGraphicsScene):
             command = CommandPenArrow(self, self.path)
         self.penFlag = 0
         self.removeItem(self.pathItem)
+        self.undoStack.push(command)
         # don't add if too short - check by boundingRect
-        if (
-            self.pathItem.boundingRect().height() + self.pathItem.boundingRect().width()
-            > 12
-        ):
-            print(self.pathItem.boundingRect())
-            self.undoStack.push(command)
+        # TODO: decide threshold for pen annotation size
+        # if (
+        #     self.pathItem.boundingRect().height() + self.pathItem.boundingRect().width()
+        #     > 8
+        # ):
+        #     self.undoStack.push(command)
 
     def mousePressDelete(self, event):
         """Start drawing a delete-box. Nothing happens until button is released.
