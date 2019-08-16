@@ -135,6 +135,9 @@ class Annotator(QDialog):
         self.setZoomComboBox()
         # Set the tool icons
         self.setIcons()
+        # Set up cursors
+        self.loadCursors()
+
         # Connect all the buttons to relevant functions
         self.setButtons()
         # pass this to the comment table too - it needs to know if we are
@@ -159,6 +162,22 @@ class Annotator(QDialog):
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
             self.unpickleIt(plomDict)
+
+    def loadCursors(self):
+        # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
+        # pyinstaller creates a temp folder and stores path in _MEIPASS
+        try:
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = "./cursors"
+
+        # load pixmaps for cursors and set the hotspots
+        self.cursorBox = QCursor(QPixmap("{}/box.png".format(base_path)), 4, 4)
+        self.cursorCross = QCursor(QPixmap("{}/cross.png".format(base_path)), 4, 4)
+        self.cursorDelete = QCursor(QPixmap("{}/delete.png".format(base_path)), 4, 4)
+        self.cursorLine = QCursor(QPixmap("{}/line.png".format(base_path)), 4, 4)
+        self.cursorPen = QCursor(QPixmap("{}/pen.png".format(base_path)), 4, 4)
+        self.cursorTick = QCursor(QPixmap("{}/tick.png".format(base_path)), 4, 4)
 
     def getKeyCodes(self):
         return {
@@ -505,7 +524,7 @@ class Annotator(QDialog):
 
     # Simple mode change functions
     def boxMode(self):
-        self.setMode("box", Qt.ArrowCursor)
+        self.setMode("box", self.cursorBox)
 
     def commentMode(self):
         if self.currentButton == self.commentW.CL:
@@ -515,13 +534,13 @@ class Annotator(QDialog):
         self.commentW.CL.handleClick()
 
     def crossMode(self):
-        self.setMode("cross", Qt.ArrowCursor)
+        self.setMode("cross", self.cursorCross)
 
     def deleteMode(self):
-        self.setMode("delete", Qt.ForbiddenCursor)
+        self.setMode("delete", self.cursorDelete)
 
     def lineMode(self):
-        self.setMode("line", Qt.CrossCursor)
+        self.setMode("line", self.cursorLine)
 
     def moveMode(self):
         self.setMode("move", Qt.OpenHandCursor)
@@ -532,13 +551,13 @@ class Annotator(QDialog):
         self.view.setDragMode(1)
 
     def penMode(self):
-        self.setMode("pen", Qt.ArrowCursor)
+        self.setMode("pen", self.cursorPen)
 
     def textMode(self):
         self.setMode("text", Qt.IBeamCursor)
 
     def tickMode(self):
-        self.setMode("tick", Qt.ArrowCursor)
+        self.setMode("tick", self.cursorTick)
 
     def zoomMode(self):
         self.setMode("zoom", Qt.SizeFDiagCursor)
@@ -617,6 +636,7 @@ class Annotator(QDialog):
         then pasted into place.
         """
         # Set the model to text and change cursor.
+        # self.setMode("comment", self.cursorComment)
         self.setMode("comment", QCursor(Qt.IBeamCursor))
         # Grab the delta from the arguments
         self.scene.changeTheComment(dlt_txt[0], dlt_txt[1], annotatorUpdate=True)
