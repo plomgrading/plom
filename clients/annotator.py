@@ -164,16 +164,20 @@ class Annotator(QDialog):
             self.unpickleIt(plomDict)
 
     def loadCursors(self):
+        # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
+        # pyinstaller creates a temp folder and stores path in _MEIPASS
+        try:
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = "./cursors"
+
         # load pixmaps for cursors and set the hotspots
-        self.cursorBox = QCursor(QPixmap("cursors/box.png"), 4, 4)
-        # self.cursorComment = QCursor(QPixmap("cursors/text.png"), 20, -1)  # centre
-        self.cursorCross = QCursor(QPixmap("cursors/cross.png"), 4, 4)
-        self.cursorDelete = QCursor(QPixmap("cursors/delete.png"), 4, 4)
-        # self.cursorDelta = QCursor(QPixmap("cursors/text.png"), -1, -1)  # centre
-        self.cursorLine = QCursor(QPixmap("cursors/line.png"), 4, 4)
-        self.cursorPen = QCursor(QPixmap("cursors/pen.png"), 4, 4)
-        # self.cursorText = QCursor(QPixmap("cursors/text.png"), -1, -1)  # centre
-        self.cursorTick = QCursor(QPixmap("cursors/tick.png"), 4, 4)
+        self.cursorBox = QCursor(QPixmap("{}/box.png".format(base_path)), 4, 4)
+        self.cursorCross = QCursor(QPixmap("{}/cross.png".format(base_path)), 4, 4)
+        self.cursorDelete = QCursor(QPixmap("{}/delete.png".format(base_path)), 4, 4)
+        self.cursorLine = QCursor(QPixmap("{}/line.png".format(base_path)), 4, 4)
+        self.cursorPen = QCursor(QPixmap("{}/pen.png".format(base_path)), 4, 4)
+        self.cursorTick = QCursor(QPixmap("{}/tick.png".format(base_path)), 4, 4)
 
     def getKeyCodes(self):
         return {
