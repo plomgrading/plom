@@ -166,15 +166,15 @@ class Annotator(QDialog):
     def loadCursors(self):
         # load pixmaps for cursors and set the hotspots
         self.cursorBox = QCursor(QPixmap("cursors/box.png"), 4, 4)
-        self.cursorComment = QCursor(
-            QPixmap("cursors/text-comment.png"), 20, -1
-        )  # centre
+        # self.cursorComment = QCursor(
+        # QPixmap("cursors/text-comment.png"), 20, -1
+        # )  # centre
         self.cursorCross = QCursor(QPixmap("cursors/cross.png"), 4, 4)
         self.cursorDelete = QCursor(QPixmap("cursors/delete.png"), 4, 4)
-        self.cursorDelta = QCursor(QPixmap("cursors/text-delta.png"), -1, -1)  # centre
+        # self.cursorDelta = QCursor(QPixmap("cursors/text-delta.png"), -1, -1)  # centre
         self.cursorLine = QCursor(QPixmap("cursors/line.png"), 4, 4)
         self.cursorPen = QCursor(QPixmap("cursors/pen.png"), 4, 4)
-        self.cursorText = QCursor(QPixmap("cursors/text.png"), -1, -1)  # centre
+        # self.cursorText = QCursor(QPixmap("cursors/text.png"), -1, -1)  # centre
         self.cursorTick = QCursor(QPixmap("cursors/tick.png"), 4, 4)
 
     def getKeyCodes(self):
@@ -532,7 +532,6 @@ class Annotator(QDialog):
         self.commentW.CL.handleClick()
 
     def crossMode(self):
-        # self.setMode("cross", Qt.ArrowCursor)
         self.setMode("cross", self.cursorCross)
 
     def deleteMode(self):
@@ -553,11 +552,9 @@ class Annotator(QDialog):
         self.setMode("pen", self.cursorPen)
 
     def textMode(self):
-        # self.setMode("text", Qt.IBeamCursor)
-        self.setMode("text", self.cursorText)
+        self.setMode("text", Qt.IBeamCursor)
 
     def tickMode(self):
-        # self.setMode("tick", Qt.ArrowCursor)
         self.setMode("tick", self.cursorTick)
 
     def zoomMode(self):
@@ -637,7 +634,8 @@ class Annotator(QDialog):
         then pasted into place.
         """
         # Set the model to text and change cursor.
-        self.setMode("comment", self.cursorComment)
+        # self.setMode("comment", self.cursorComment)
+        self.setMode("comment", QCursor(Qt.IBeamCursor))
         # Grab the delta from the arguments
         self.scene.changeTheComment(dlt_txt[0], dlt_txt[1], annotatorUpdate=True)
 
@@ -675,8 +673,7 @@ class Annotator(QDialog):
             self.ui.moveButton.animateClick()
             return
         # Else, the delta is now set, so now change the mode here.
-        # self.setMode("delta", QCursor(Qt.IBeamCursor))
-        self.setMode("delta", self.cursorDelta)
+        self.setMode("delta", QCursor(Qt.IBeamCursor))
 
     def changeMark(self, score):
         """The mark has been changed. Update the mark-handler.
