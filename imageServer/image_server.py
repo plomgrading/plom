@@ -793,7 +793,7 @@ def checkPorts():
                 serverInfo["mport"], serverInfo["server"]
             )
         )
-        exit()
+        exit(1)
 
     if checkPortFree(serverInfo["server"], serverInfo["wport"]):
         SLogger.info("Webdav port is free and working.")
@@ -811,7 +811,7 @@ def checkPorts():
                 serverInfo["wport"], serverInfo["server"]
             )
         )
-        exit()
+        exit(1)
 
 
 def checkDirectories():
@@ -823,7 +823,7 @@ def checkDirectories():
         os.mkdir("markedPapers/commentFiles")
 
 
-print("Plom version {0}: image server starting...".format(__version__))
+print("Plom Server v{}: this is free software without warranty".format(__version__))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
@@ -885,7 +885,7 @@ except OSError:
     )
     subprocess.Popen.kill(davproc)
     loop.close()
-    exit()
+    exit(1)
 
 SLogger.info("Serving messages on {}".format(server.sockets[0].getsockname()))
 print("Serving messages on {}".format(server.sockets[0].getsockname()))
