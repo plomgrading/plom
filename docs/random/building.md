@@ -17,7 +17,7 @@
 
 * ID-page = page(s) on which student will write their name / student number / section number / course number etc etc. This will typically (but not always) be the front page of the test.
 
-* DNM-page = "do not mark"-page = these are pages which will not be marked under any circumstances. Typically these might be "Instructions to students" or "Formula sheet" or even just "Scrap paper". **Not yet implemented in PLOM but would be good to add**
+* DNM-page = "do not mark"-page = these are pages which will not be marked under any circumstances. Typically these might be "Instructions to students" or "Formula sheet" or even just "Scrap paper". **Not yet implemented in Plom but would be good to add**
 
 * Question = A group of one or more contiguous pages. When grouped together this is what an individual TA will mark (as a whole). Typically (but not always) these pages will form a single question on the test/quiz. Eg - a question might contain several parts which will be spread out across several pages. Similarly, one question might require a non-trivial calculation and the instructor might place the question itself on one page and supply another page (or two or three or...) for the student's workings.
 
@@ -36,7 +36,7 @@
 * Version = One of the source versions. Typically we will cut the source versions up into individual questions and then recombine them. Because of this it is critical that all tests have the same structure.
 
 
-* Paper = the generated pdf/paper-copy that is put in front of an individual student for assessment. Traditionally the papers in an exam would all be printed from the same PDF. In PLOM all tests are necessarily different. Since the system needs to be able to reconstruct scans, each page of each paper needs a unique identifier (qt-code) and so each paper will be a separate PDF.
+* Paper = the generated pdf/paper-copy that is put in front of an individual student for assessment. Traditionally the papers in an exam would all be printed from the same PDF. In Plom all tests are necessarily different. Since the system needs to be able to reconstruct scans, each page of each paper needs a unique identifier (qt-code) and so each paper will be a separate PDF.
 
 
 
@@ -54,7 +54,7 @@ We'll define the blueprint via an example.
 | Question 3 | 7,8 |10| Two-part question|
 | Question 4 | 9,10| 8 | Room for calculation |
 
-* When building individual papers the PLOM system will pull questions from the different versions and glue them together. So we might have a sequence of papers
+* When building individual papers the Plom system will pull questions from the different versions and glue them together. So we might have a sequence of papers
 
 |Question| Paper 1 | Paper 2 | Paper 3 | Paper 4 |
 |--------|---------|---------|---------|---------|
@@ -78,7 +78,7 @@ We'll define the blueprint via an example.
   * the Q3 version is chosen randomly in each paper, and
   * the Q4 version is fixed for all paper.
 
-* The blueprint must specify all of the above to the PLOM system.
+* The blueprint must specify all of the above to the Plom system.
 
 So the blueprint needs:
 * A name for the exam.
