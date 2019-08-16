@@ -27,7 +27,7 @@ from authenticate import Authority
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
 from resources.version import __version__
-from resources.version import PLOM_API_Version as serverAPI
+from resources.version import Plom_API_Version as serverAPI
 
 # default server values and location of grouped-scans.
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
@@ -115,8 +115,8 @@ servCmd = {
     "mDNF": "MdidntFinish",
     "mNUM": "MnextUnmarked",
     "mPRC": "MprogressCount",
+    "mUSO": "MuserStillOwns",
     "mRMD": "MreturnMarked",
-    "mRAM": "MreturnAlreadyMarked",
     "mGMX": "MgetPageGroupMax",
     "mGML": "MgetMarkedPaperList",
     "mGGI": "MgetGroupImages",
@@ -311,7 +311,7 @@ class Server(object):
         if clientAPI != serverAPI:
             return [
                 "ERR",
-                'PLOM API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
+                'Plom API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
                     clientAPI, serverAPI, __version__
                 ),
             ]
@@ -561,6 +561,13 @@ class Server(object):
         """
         self.removeFile(filename)
         return ["ACK"]
+
+    def MuserStillOwns(self, user, token, code):
+        """Check that user still 'owns' the tgv = code"""
+        if self.MDB.userStillOwnsTGV(code, user):
+            return ["ACK"]
+        else:
+            return ["ERR", "You are no longer authorised to upload that tgv"]
 
     def MreturnMarked(
         self, user, token, code, mark, fname, pname, cname, mtime, pg, v, tags
@@ -816,7 +823,7 @@ def checkDirectories():
         os.mkdir("markedPapers/commentFiles")
 
 
-print("PLOM version {0}: image server starting...".format(__version__))
+print("Plom version {0}: image server starting...".format(__version__))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
