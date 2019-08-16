@@ -762,7 +762,7 @@ class PageScene(QGraphicsScene):
         elif self.boxFlag == 1:
             self.removeItem(self.boxItem)
             # check if rect has some perimeter (allow long/thin)
-            if self.boxItem.rect().width() + self.boxItem.rect().height() > 32:
+            if self.boxItem.rect().width() + self.boxItem.rect().height() > 24:
                 command = CommandBox(self, self.boxItem.rect())
                 self.undoStack.push(command)
         else:
@@ -830,7 +830,7 @@ class PageScene(QGraphicsScene):
         self.arrowFlag = 0
         self.removeItem(self.lineItem)
         # don't add if too short
-        if (self.originPos - self.currentPos).manhattanLength() > 32:
+        if (self.originPos - self.currentPos).manhattanLength() > 24:
             self.undoStack.push(command)
 
     def mousePressPen(self, event):
@@ -900,7 +900,7 @@ class PageScene(QGraphicsScene):
         # don't add if too short - check by boundingRect
         if (
             self.pathItem.boundingRect().height() + self.pathItem.boundingRect().width()
-            > 32
+            > 12
         ):
             print(self.pathItem.boundingRect())
             self.undoStack.push(command)
