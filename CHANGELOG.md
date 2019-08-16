@@ -1,4 +1,4 @@
-# PLOM Changelog
+# Plom Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -43,7 +43,7 @@ Marker:
 
 ## 0.1.0 - 2019-06-26
 
-This is the first release of PLOM, PaperLessOpenMarking.
+This is the first release of Plom, PaperLessOpenMarking.
 
 
 [Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.1.0...master
