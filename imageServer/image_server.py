@@ -115,8 +115,8 @@ servCmd = {
     "mDNF": "MdidntFinish",
     "mNUM": "MnextUnmarked",
     "mPRC": "MprogressCount",
+    "mUSO": "MuserStillOwns",
     "mRMD": "MreturnMarked",
-    "mRAM": "MreturnAlreadyMarked",
     "mGMX": "MgetPageGroupMax",
     "mGML": "MgetMarkedPaperList",
     "mGGI": "MgetGroupImages",
@@ -561,6 +561,13 @@ class Server(object):
         """
         self.removeFile(filename)
         return ["ACK"]
+
+    def MuserStillOwns(self, user, token, code):
+        """Check that user still 'owns' the tgv = code"""
+        if self.MDB.userStillOwnsTGV(code, user):
+            return ["ACK"]
+        else:
+            return ["ERR", "You are no longer authorised to upload that tgv"]
 
     def MreturnMarked(
         self, user, token, code, mark, fname, pname, cname, mtime, pg, v, tags

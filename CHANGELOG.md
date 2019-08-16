@@ -26,6 +26,7 @@ Marker:
 * Annotated papers are now "pickled" as ".plom" files - these are kept locally and also uploaded to server.
 * Consequently no longer compatible with v0.1.0
 * User can now select an already marked paper (either from this instance or earlier marking) and select "annotate". They will be prompted by a "Do you want to keep editing" window. If "yes" then the annotator is fired-up and "unpickles" the required graphical objects so that the user can continue editing where they left off.
+* Marker now uploads/downloads papers in the background. User should notice speedup but (hopefully) not much else.
 
 #### Server
 * New server needed to handle upload/download of plom files. Not backward compatible with v0.1.0
