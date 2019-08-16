@@ -20,8 +20,8 @@ for icon in ['cross', 'delete', 'line', 'move', 'pan', 'pen', 'rectangle', 'redo
   a.datas += [('{}.svg'.format(icon), 'icons/{}.svg'.format(icon), 'DATA')]
 
 for cursor in ['box', 'cross', 'delete', 'line', 'pen', 'tick',]:
-    a.datas += [('{}.svg'.format(cursor), 'cursors/{}.svg'.format(cursor), 'DATA')]
-    
+    a.datas += [('{}.png'.format(cursor), 'cursors/{}.png'.format(cursor), 'DATA')]
+
 a.datas += [('../resources/version.py', '../resources/version.py', 'DATA')]
 
 # to fix duplication of "version.py" warning
