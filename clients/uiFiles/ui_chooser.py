@@ -159,7 +159,7 @@ class Ui_Chooser(object):
 
     def retranslateUi(self, Chooser):
         _translate = QtCore.QCoreApplication.translate
-        Chooser.setWindowTitle(_translate("Chooser", "PLOM Client"))
+        Chooser.setWindowTitle(_translate("Chooser", "Plom Client"))
         self.userGBox.setTitle(_translate("Chooser", "User Information"))
         self.label.setText(_translate("Chooser", "Username"))
         self.label_2.setText(_translate("Chooser", "Password"))

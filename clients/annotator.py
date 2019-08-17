@@ -352,11 +352,11 @@ class Annotator(QDialog):
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
         self.ui.hideButton.setText("Compact")
-        self.ui.modeLayout.addWidget(self.ui.hideButton)
-        self.ui.modeLayout.addWidget(self.ui.modeLabel)
-        self.ui.modeLayout.addWidget(self.ui.markLabel)
         # right-hand mouse = 0, left-hand mouse = 1
         if self.mouseHand == 0:
+            self.ui.modeLayout.addWidget(self.ui.hideButton)
+            self.ui.modeLayout.addWidget(self.ui.modeLabel)
+            self.ui.modeLayout.addWidget(self.ui.markLabel)
             # tools
             self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 4, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 5, 1, 1)
@@ -375,6 +375,30 @@ class Annotator(QDialog):
             self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 2, 1, 1)
             # zoom QComboBox
             self.ui.toolLayout.addWidget(self.ui.zoomCB, 4, 5, 1, 2)
+
+            # end buttons
+            self.ui.ebLayout.addWidget(self.ui.finishedButton)
+            self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
+            self.ui.ebLayout.addWidget(self.ui.cancelButton)
+        else:  # left-hand mouse
+            self.ui.modeLayout.addWidget(self.ui.markLabel)
+            self.ui.modeLayout.addWidget(self.ui.modeLabel)
+            self.ui.modeLayout.addWidget(self.ui.hideButton)
+
+            self.ui.toolLayout.addWidget(self.ui.commentButton, 2, 5, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.penButton, 0, 2, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.undoButton, 2, 7, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 8, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 8, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.panButton, 0, 8, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.lineButton, 3, 2, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.zoomCB, 4, 7, 1, 2)
+            self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 7, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.deleteButton, 3, 7, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.textButton, 2, 2, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 6, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.tickButton, 2, 6, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.boxButton, 3, 6, 1, 1)
 
             # end buttons
             self.ui.ebLayout.addWidget(self.ui.finishedButton)
