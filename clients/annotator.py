@@ -344,9 +344,9 @@ class Annotator(QDialog):
         )
 
         # end buttons
-        self.ui.revealLayout2.addWidget(self.ui.finishedButton)
-        self.ui.revealLayout2.addWidget(self.ui.finishNoRelaunchButton)
-        self.ui.revealLayout2.addWidget(self.ui.cancelButton)
+        self.ui.revealLayout2.addWidget(self.ui.finishedButton, Qt.AlignHCenter)
+        self.ui.revealLayout2.addWidget(self.ui.finishNoRelaunchButton, Qt.AlignHCenter)
+        self.ui.revealLayout2.addWidget(self.ui.cancelButton, Qt.AlignHCenter)
 
     def wideLayout(self):
         self.ui.hideableBox.show()
@@ -374,12 +374,12 @@ class Annotator(QDialog):
             self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 2, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 2, 1, 1)
             # zoom QComboBox
-            self.ui.gridLayout_4.addWidget(self.ui.zoomCB, 0, 2, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.zoomCB, 4, 5, 1, 2)
 
             # end buttons
-            self.ui.ebLayout.addWidget(self.ui.finishedButton, 0, 0, 1, 1)
-            self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton, 0, 2, 1, 1)
-            self.ui.ebLayout.addWidget(self.ui.cancelButton, 0, 4, 1, 1)
+            self.ui.ebLayout.addWidget(self.ui.finishedButton)
+            self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
+            self.ui.ebLayout.addWidget(self.ui.cancelButton)
 
     def viewWholePaper(self):
         files = self.parent.viewWholePaper()
