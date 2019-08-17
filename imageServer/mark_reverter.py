@@ -106,6 +106,11 @@ class examTable(QWidget):
         grid.addWidget(self.flU, 5, 5)
         self.flM = filterComboBox("Mark")
         grid.addWidget(self.flM, 5, 6)
+        self.flT = QLineEdit()
+        self.flT.setMaxLength(256)
+        self.flT.setPlaceholderText("Filter on tag text")
+        self.flT.setClearButtonEnabled(True)
+        grid.addWidget(self.flT, 6, 5, 1, 2)
 
         self.revertB = QPushButton("Revert")
         self.revertB.clicked.connect(lambda: self.revertCurrent())
@@ -163,6 +168,19 @@ class examTable(QWidget):
         shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/" + fname)
         # now safe to set the annotatedFile value in the record
         rec.setValue("annotatedFile", "")
+        # move the plomFile and commentFile too
+        fname = rec.value("plomFile")
+        shutil.move(
+            "markedPapers/plomFiles/" + fname, "markedPapers/revertedPapers/" + fname
+        )
+        rec.setValue("plomFile", "")
+        fname = rec.value("commentFile")
+        shutil.move(
+            "markedPapers/commentFiles/" + fname, "markedPapers/revertedPapers/" + fname
+        )
+        rec.setValue("commentFile", "")
+        # clear the tags
+        rec.setValue("tags", "")
         # update the row
         self.exM.setRecord(currentRow, rec)
         # and update the database
@@ -177,7 +195,12 @@ class examTable(QWidget):
         return sorted(list(lst))
 
     def loadData(self):
-        for c in [0, 2, 3, 6]:
+        # A row of the table in the Mark DB is
+        # 0=index, 1=TGV, 2=originalFile, 3=testnumber, 4=pageGroup
+        # 5=version, 6=annotatedFile, 7=plomFile, 8=commentFile,
+        # 9=status, 10=user, 11=time, 12=mark, 13=timeSpentMarking,
+        # 14=tags
+        for c in [0, 2, 3, 6, 7, 8]:
             self.exV.hideColumn(c)
         self.exV.resizeColumnsToContents()
         self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
@@ -201,11 +224,18 @@ class examTable(QWidget):
             flt.append("user='{}'".format(self.flU.currentText()))
         if self.flM.currentText() != "Mark":
             flt.append("mark='{}'".format(self.flM.currentText()))
+        # and filter on tag
+        txt = self.flT.text().strip()
+        if len(txt) > 0:
+            flt.append("tags LIKE '%{}%'".format(txt))
 
         if len(flt) > 0:
             flts = " AND ".join(flt)
         else:
             flts = ""
+            # reset filter options
+            self.setFilterOptions()
+
         self.exM.setFilter(flts)
         self.exV.resizeColumnsToContents()
         self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)

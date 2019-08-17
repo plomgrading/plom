@@ -23,18 +23,39 @@ def checkMarked(n):
     marked and record in a dictionary
     """
     global groupImagesMarked
+    global pgStatus
     # Extract all marked images from test n from the mark database
     # A row of the table in the Mark DB is
     # 0=index, 1=TGV, 2=originalFile, 3=testnumber, 4=pageGroup
-    # 5=version, 6=annotatedFile, 7=status, 8=user,
-    # 9=time, 10=mark, 11=timeSpentMarking
+    # 5=version, 6=annotatedFile, 7=plomFile, 8=commentFile,
+    # 9=status, 10=user, 11=time, 12=mark, 13=timeSpentMarking,
+    # 14=tags
+    unmarked = True
     for row in curMark.execute("SELECT * FROM groupimage WHERE number='{}'".format(n)):
-        if row[7] != "Marked":
-            return False
+        if row[9] != "Marked":
+            unmarked = False
         else:
             # Save the version and mark in the dictionary.
-            groupImagesMarked[n][row[4]] = [row[5], row[10]]
-    return True
+            groupImagesMarked[n][row[4]] = [row[5], row[12]]
+            pgStatus[row[4]] += 1
+    return unmarked
+
+
+def displayMarked(n):
+    s = "["
+    for pg in range(1, spec.getNumberOfGroups() + 1):
+        if len(groupImagesMarked[n][pg]) > 0:
+            s += "x"
+        else:
+            s += "."
+    s += "]"
+    return s
+
+
+def printPGStatus(totalPapers):
+    global pgStatus
+    for pg in range(1, spec.getNumberOfGroups() + 1):
+        print("Group {}: {} of {} completed".format(pg, pgStatus[pg], totalPapers))
 
 
 def checkIDed(n):
@@ -74,18 +95,21 @@ def checkExam(n):
     ci = checkIDed(n)
     if cm:
         if ci:
+            completeTests.append(n)
             print("\tComplete - build front page and reassemble.")
             return True
         else:
             print("\tMarked but not ID'd")
             return False
     else:
+        unmarkedTests.append(n)
         if ci:
-            print("\tID'd but not marked")
-            return False
+            print("\tID'd but not marked", end="")
         else:
-            print("\tNeither ID'd nor marked")
-            return False
+            print("\tNeither ID'd nor marked", end="")
+        # now print a diagnostic of what is actually marked/not
+        print("\t{}".format(displayMarked(n)))
+        return False
 
 
 def writeExamsCompleted():
@@ -165,13 +189,15 @@ def writeExamsMarked():
     It contains, version, mark and user who marked it.
     """
     exmarked = defaultdict(lambda: defaultdict(list))
+    # Extract all marked images from test n from the mark database
     # A row of the table in the Mark DB is
     # 0=index, 1=TGV, 2=originalFile, 3=testnumber, 4=pageGroup
-    # 5=version, 6=annotatedFile, 7=status, 8=user,
-    # 9=time, 10=mark, 11=timeSpentMarking
+    # 5=version, 6=annotatedFile, 7=plomFile, 8=commentFile,
+    # 9=status, 10=user, 11=time, 12=mark, 13=timeSpentMarking,
+    # 14=tags
     for row in curMark.execute("SELECT * FROM groupimage"):
-        if row[7] == "Marked":
-            exmarked[row[3]][row[4]] = [row[5], row[10], row[8]]
+        if row[9] == "Marked":
+            exmarked[row[3]][row[4]] = [row[5], row[12], row[10]]
     # dump to json in resources directory.
     eg = open("../resources/groupImagesMarked.json", "w")
     eg.write(json.dumps(exmarked, indent=2, sort_keys=True))
@@ -194,9 +220,23 @@ curID = iddb.cursor()
 groupImagesMarked = defaultdict(lambda: defaultdict(list))
 examsIDed = {}
 examsCompleted = {}
+# lists for complete / incomplete tests
+completeTests = []
+unmarkedTests = []
+pgStatus = defaultdict(int)
 # check each of the grouped exams.
 for n in sorted(examsGrouped.keys(), key=int):
     examsCompleted[int(n)] = checkExam(n)
+# print summary
+print("###################### ")
+print("Complete papers are: ", completeTests)
+print("###################### ")
+print("Not completely marked papers are: ", unmarkedTests)
+print("###################### ")
+print("Pagegroup status: ")
+printPGStatus(len(examsGrouped))
+print("###################### ")
+
 # write the json of exams completed, the CSV of marks.
 writeExamsCompleted()
 writeMarkCSV()

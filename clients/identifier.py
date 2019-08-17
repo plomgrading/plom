@@ -7,7 +7,9 @@ from collections import defaultdict
 import csv
 import json
 import os
+import sys
 import tempfile
+from io import StringIO, BytesIO, TextIOWrapper
 from PyQt5.QtCore import (
     Qt,
     QAbstractTableModel,
@@ -15,13 +17,17 @@ from PyQt5.QtCore import (
     QStringListModel,
     QTimer,
     QVariant,
+    pyqtSignal,
 )
 from PyQt5.QtGui import QIntValidator
-from PyQt5.QtWidgets import QCompleter, QDialog, QInputDialog, QMessageBox
+from PyQt5.QtWidgets import QCompleter, QWidget, QMainWindow, QInputDialog, QMessageBox
 from examviewwindow import ExamViewWindow
 import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_identify import Ui_IdentifyWindow
+
+sys.path.append("..")  # this allows us to import from ../resources
+from resources.version import Plom_API_Version
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
@@ -150,7 +156,11 @@ class ExamModel(QAbstractTableModel):
         return c
 
 
-class IDClient(QDialog):
+# TODO: should be a QMainWindow but at any rate not a Dialog
+# TODO: should this be parented by the QApplication?
+class IDClient(QWidget):
+    my_shutdown_signal = pyqtSignal(int)
+
     def __init__(self, userName, password, server, message_port, web_port):
         # Init the client with username, password, server and port data.
         super(IDClient, self).__init__()
@@ -222,11 +232,13 @@ class IDClient(QDialog):
         the server (since password hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(["AUTH", self.userName, self.password])
+        msg = messenger.SRMsg(
+            ["AUTH", self.userName, self.password, Plom_API_Version]
+        )
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":
-            ErrorMessage("Password problem")
+            ErrorMessage(msg[1])
             quit()
         else:
             self.token = msg[1]
@@ -238,63 +250,53 @@ class IDClient(QDialog):
         of either two fields = FamilyName+GivenName or a single Name field.
         """
         # Send request for classlist (iRCL) to server
-        msg = messenger.SRMsg(["iRCL", self.userName, self.token])
-        # Return should be [ACK, path/filename]
-        if msg[0] == "ERR":
-            ErrorMessage("Classlist problem")
-            quit()
-        # Get the filename from the message.
-        dfn = msg[1]
-        fname = os.path.join(self.workingDirectory, "cl.csv")
-        # Get file from dav and copy into local temp working dir as cl.csv
-        messenger.getFileDav(dfn, fname)
-        # create dictionaries to store the classlist
+        msg, remotefile = messenger.SRMsg(["iRCL", self.userName, self.token])
+        assert msg == "ACK", "Classlist problem"
+        fileobj = BytesIO(b"")
+        messenger.getFileDav(remotefile, fileobj)
+        fileobj.seek(0)  # rewind
+
+        # We have list, server can clean up (e.g., remove from webdav server)
+        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        assert msg == "ACK"
+
+        # csv reader needs file in text mode: this chokes on non-utf8?
+        csvfile = TextIOWrapper(fileobj)
+        # csvfile = TextIOWrapper(fileobj, errors='backslashreplace')
+
+        # create dictionaries from the classlist
         self.studentNamesToNumbers = defaultdict(int)
         self.studentNumbersToNames = defaultdict(str)
-        # Read cl.csv into those dictionaries
-        with open(fname) as csvfile:
-            reader = csv.DictReader(csvfile, skipinitialspace=True)
-            for row in reader:
-                # Merge names into single field
-                sn = row["surname"] + ", " + row["name"]
-                self.studentNamesToNumbers[sn] = str(row["id"])
-                self.studentNumbersToNames[str(row["id"])] = sn
-        # Now that we've read in the classlist - tell server we got it
-        # Server will remove it from the webdav server.
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, dfn])
-        if msg[0] == "ERR":
-            ErrorMessage("Classlist problem")
-            quit()
+        reader = csv.DictReader(csvfile, skipinitialspace=True)
+        for row in reader:
+            sn = row["studentName"]
+            self.studentNamesToNumbers[sn] = str(row["id"])
+            self.studentNumbersToNames[str(row["id"])] = sn
         return True
 
     def getPredictions(self):
-        """Send request for classlist (iRPL) to server. The server then sends
+        """Send request for prediction list (iRPL) to server. The server then sends
         back the CSV of the predictions testnumber -> studentID.
         """
-        # Send request for classlist (iRCL) to server
-        msg = messenger.SRMsg(["iRPL", self.userName, self.token])
-        # Return should be [ACK, path/filename]
-        if msg[0] == "ERR":
-            ErrorMessage("Prediction list problem")
-            quit()
-        # Get the filename from the message.
-        dfn = msg[1]
-        fname = os.path.join(self.workingDirectory, "pl.csv")
-        # Get file from dav and copy into local temp working dir as cl.csv
-        messenger.getFileDav(dfn, fname)
-        # create dictionaries to store the classlist
+        # Send request for prediction list to server
+        msg, remotefile = messenger.SRMsg(["iRPL", self.userName, self.token])
+        assert msg == "ACK", "Prediction list problem"
+        fileobj = BytesIO(b"")
+        messenger.getFileDav(remotefile, fileobj)
+        fileobj.seek(0)  # rewind
+
+        # We have list, server can clean up (e.g., remove from webdav server)
+        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        assert msg == "ACK"
+
+        csvfile = TextIOWrapper(fileobj)
+
+        # create dictionary from the prediction list
         self.predictedTestToNumbers = defaultdict(int)
-        # Read pl.csv into those dictionaries
-        with open(fname) as csvfile:
-            reader = csv.DictReader(csvfile, skipinitialspace=True)
-            for row in reader:
-                self.predictedTestToNumbers[int(row["test"])] = str(row["id"])
-        # Now that we've read in the classlist - tell server we got it
-        # Server will remove it from the webdav server.
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, dfn])
-        if msg[0] == "ERR":
-            ErrorMessage("Prediction list problem")
-            quit()
+        reader = csv.DictReader(csvfile, skipinitialspace=True)
+        for row in reader:
+            self.predictedTestToNumbers[int(row["test"])] = str(row["id"])
+
         # Also tweak font size
         fnt = self.font()
         fnt.setPointSize(fnt.pointSize() * 2)
@@ -344,7 +346,9 @@ class IDClient(QDialog):
         authorisation token is removed. Then finally close.
         """
         self.DNF()
-        msg = messenger.SRMsg(["UCL", self.userName, self.token])
+        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        assert msg == "ACK"
+        self.my_shutdown_signal.emit(1)
         self.close()
 
     def DNF(self):
@@ -368,22 +372,25 @@ class IDClient(QDialog):
                 )
 
     def getAlreadyIDList(self):
-        # Ask server for list of previously marked papers
-        msg = messenger.SRMsg(["iGAL", self.userName, self.token])
-        if msg[0] == "ERR":
-            return
-        fname = os.path.join(self.workingDirectory, "idList.txt")
-        messenger.getFileDav(msg[1], fname)
+        # Ask server for list of previously ID'd papers
+        msg, remotefile = messenger.SRMsg(["iGAL", self.userName, self.token])
+        assert msg == "ACK", "problem getting previously IDed list from server"
+        fileobj = BytesIO(b"")
+        messenger.getFileDav(remotefile, fileobj)
         # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, msg[1]])
+        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        assert msg == "ACK"
+
+        # rewind the stream
+        fileobj.seek(0)
+        json_file = TextIOWrapper(fileobj)
         # Add those marked papers to our paper-list
-        with open(fname) as json_file:
-            idList = json.load(json_file)
-            for x in idList:
-                self.addPaperToList(
-                    Paper(x[0], fname="", stat="identified", id=x[2], name=x[3]),
-                    update=False,
-                )
+        idList = json.load(json_file)
+        for x in idList:
+            self.addPaperToList(
+                Paper(x[0], fname="", stat="identified", id=x[2], name=x[3]),
+                update=False,
+            )
 
     def selChanged(self, selnew, selold):
         # When the selection changes, update the ID and name line-edit boxes

@@ -7,6 +7,7 @@ import asyncio
 import datetime
 import errno
 import glob
+import imghdr
 import json
 import logging
 import os
@@ -25,8 +26,8 @@ from authenticate import Authority
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
-
-__version__ = "0.1.0+"
+from resources.version import __version__
+from resources.version import Plom_API_Version as serverAPI
 
 # default server values and location of grouped-scans.
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
@@ -114,8 +115,8 @@ servCmd = {
     "mDNF": "MdidntFinish",
     "mNUM": "MnextUnmarked",
     "mPRC": "MprogressCount",
+    "mUSO": "MuserStillOwns",
     "mRMD": "MreturnMarked",
-    "mRAM": "MreturnAlreadyMarked",
     "mGMX": "MgetPageGroupMax",
     "mGML": "MgetMarkedPaperList",
     "mGGI": "MgetGroupImages",
@@ -123,6 +124,8 @@ servCmd = {
     "mGWP": "MgetWholePaper",
     "mLTT": "MlatexThisText",
     "mRCF": "MreturnCommentFile",
+    "mRPF": "MreturnPlomFile",
+    "mTAG": "MsetTag",
     "tGMM": "TgetMaxMark",
     "tGTP": "TgotTest",
     "tPRC": "TprogressCount",
@@ -143,7 +146,7 @@ async def handle_messaging(reader, writer):
     Converts message[0] to the server command using the servCmd dictionary
     Server, peon, then runs command and we send back the return message.
     """
-    data = await reader.read(128)
+    data = await reader.read(1024)
     terminate = data.endswith(b"\x00")
     data = data.rstrip(b"\x00")
     message = json.loads(data.decode())
@@ -296,7 +299,7 @@ class Server(object):
                 print("Attempt by non-user to {}".format(message))
                 return ["ERR", "You are not an authorised user"]
 
-    def authoriseUser(self, user, password):
+    def authoriseUser(self, user, password, clientAPI):
         """When a user requests authorisation
         They have sent their name and password
         first check if they are a valid user
@@ -305,6 +308,14 @@ class Server(object):
         Then pass them back the authorisation token
         (the password is only checked on first authorisation - since slow)
         """
+        if clientAPI != serverAPI:
+            return [
+                "ERR",
+                'Plom API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
+                    clientAPI, serverAPI, __version__
+                ),
+            ]
+
         if self.authority.authoriseUser(user, password):
             # On token request also make sure anything "out" with that user is reset as todo.
             self.IDDB.resetUsersToDo(user)
@@ -347,28 +358,13 @@ class Server(object):
         shutil.copy(fname, tfn.name)
         return os.path.basename(tfn.name)
 
-    def claimFile(self, fname):
+    def claimFile(self, fname, subdir):
         """Once an image has been marked, the server copies the image
-        back from the webdav and into markedPapers.
+        back from the webdav and into markedPapers or appropriate
+        subdirectory.
         """
         srcfile = os.path.join(davDirectory, fname)
-        dstfile = os.path.join("markedPapers", fname)
-        # Check if file already exists
-        if os.path.isfile(dstfile):
-            # backup the older file with a timestamp
-            os.rename(
-                dstfile,
-                dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
-            )
-        # This should really use path-join.
-        shutil.move(srcfile, dstfile)
-        # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
-
-    def claimCommentFile(self, fname):
-        """The file containing the comments made by the marker gets copied into the markingComments directory and then removed from the webdav.
-        """
-        srcfile = os.path.join(davDirectory, fname)
-        dstfile = os.path.join("markingComments", fname)
+        dstfile = os.path.join("markedPapers", subdir, fname)
         # Check if file already exists
         if os.path.isfile(dstfile):
             # backup the older file with a timestamp
@@ -540,7 +536,7 @@ class Server(object):
         if fname is not None:
             return ["ACK", give, self.provideFile(fname), None]
         else:
-            return ["Err", "User {} is not authorised for tgv={}".format(user, tgv)]
+            return ["ERR", "User {} is not authorised for tgv={}".format(user, tgv)]
 
     def MnextUnmarked(self, user, token, pg, v):
         """The client has asked for the next unmarked image (with
@@ -548,12 +544,12 @@ class Server(object):
         then copy the appropriate file into the webdav and send code
         and the temp-webdav path back to the client.
         """
-        give, fname = self.MDB.giveGroupImageToClient(user, pg, v)
+        give, fname, tag = self.MDB.giveGroupImageToClient(user, pg, v)
         if give is None:
             return ["ERR", "Nothing left on todo pile"]
         else:
             # copy the file into the webdav and tell client code / path.
-            return ["ACK", give, self.provideFile(fname)]
+            return ["ACK", give, self.provideFile(fname), tag]
 
     def MprogressCount(self, user, token, pg, v):
         """Send back current marking progress counts to the client"""
@@ -566,34 +562,54 @@ class Server(object):
         self.removeFile(filename)
         return ["ACK"]
 
-    def MreturnMarked(self, user, token, code, mark, fname, mtime, pg, v):
+    def MuserStillOwns(self, user, token, code):
+        """Check that user still 'owns' the tgv = code"""
+        if self.MDB.userStillOwnsTGV(code, user):
+            return ["ACK"]
+        else:
+            return ["ERR", "You are no longer authorised to upload that tgv"]
+
+    def MreturnMarked(
+        self, user, token, code, mark, fname, pname, cname, mtime, pg, v, tags
+    ):
         """Client has marked the pageimage with code, mark, annotated-file-name
         (which the client has uploaded to webdav), and spent mtime marking it.
         Send the information to the database and send an ack.
         """
+        # sanity check that mark lies in [0,..,max]
+        if int(mark) < 0 or int(mark) > self.testSpec.Marks[int(pg)]:
+            # this should never happen.
+            return ["ERR", "Assigned mark out of range. Contact administrator."]
+
         # move annoted file to right place with new filename
-        self.MDB.takeGroupImageFromClient(code, user, mark, fname, mtime)
-        self.recordMark(user, mark, fname, mtime)
-        self.claimFile(fname)
+        self.claimFile(fname, "")
+        self.claimFile(pname, "plomFiles")
+        self.claimFile(cname, "commentFiles")
+        # Should check the fname is valid png - just check header presently
+        if imghdr.what(os.path.join("markedPapers", fname)) != "png":
+            return ["ERR", "Misformed image file. Try again."]
+        # now update the database
+        self.MDB.takeGroupImageFromClient(
+            code, user, mark, fname, pname, cname, mtime, tags
+        )
+        self.recordMark(user, mark, fname, mtime, tags)
         # return ack with current counts.
         return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
-    def MreturnCommentFile(self, user, token, pg, v, fname):
-        """After client has marked pageimage it sends back a json file which
-        contains the comments made by the marker.
-        """
-        self.claimCommentFile(fname)
-        return ["ACK"]
-
-    def recordMark(self, user, mark, fname, mtime):
+    def recordMark(self, user, mark, fname, mtime, tags):
         """For test blah.png, we record, in blah.png.txt, as a backup
-        the filename, mark, user, time and marking time.
+        the filename, mark, user, time, marking time and any tags.
         This is not used.
         """
         fh = open("./markedPapers/{}.txt".format(fname), "w")
         fh.write(
-            "{}\t{}\t{}\t{}\t{}".format(
-                fname, mark, user, datetime.now().strftime("%Y-%m-%d,%H:%M"), mtime
+            "{}\t{}\t{}\t{}\t{}\t{}".format(
+                fname,
+                mark,
+                user,
+                datetime.now().strftime("%Y-%m-%d,%H:%M"),
+                mtime,
+                tags,
             )
         )
         fh.close()
@@ -620,16 +636,24 @@ class Server(object):
         give, fname, aname = self.MDB.getGroupImage(user, tgv)
         if fname is not None:
             if aname is not None:
+                # plom file is same as annotated file just with suffix plom
                 return [
                     "ACK",
                     give,
                     self.provideFile(fname),
                     self.provideFile("markedPapers/" + aname),
+                    self.provideFile("markedPapers/plomFiles/" + aname[:-3] + "plom"),
                 ]
             else:
                 return ["ACK", give, self.provideFile(fname), None]
         else:
-            return ["Err", "Non-existant tgv={}".format(tgv)]
+            return ["ERR", "Non-existant tgv={}".format(tgv)]
+
+    def MsetTag(self, user, token, tgv, tag):
+        if self.MDB.setTag(user, tgv, tag):
+            return ["ACK"]
+        else:
+            return ["ERR", "Non-existant tgv={}".format(tgv)]
 
     def MgetWholePaper(self, user, token, testNumber):
         # client passes the tgv code of their current group image.
@@ -721,7 +745,7 @@ class Server(object):
         if fname is not None:
             return ["ACK", give, self.provideFile(fname), None]
         else:
-            return ["Err", "User {} is not authorised for tgv={}".format(user, tgv)]
+            return ["ERR", "User {} is not authorised for tgv={}".format(user, tgv)]
 
 
 # # # # # # # # # # # #
@@ -769,7 +793,7 @@ def checkPorts():
                 serverInfo["mport"], serverInfo["server"]
             )
         )
-        exit()
+        exit(1)
 
     if checkPortFree(serverInfo["server"], serverInfo["wport"]):
         SLogger.info("Webdav port is free and working.")
@@ -787,12 +811,10 @@ def checkPorts():
                 serverInfo["wport"], serverInfo["server"]
             )
         )
-        exit()
+        exit(1)
 
 
 def checkDirectories():
-    if not os.path.isdir("markingComments"):
-        os.mkdir("markingComments")
     if not os.path.isdir("markedPapers"):
         os.mkdir("markedPapers")
     if not os.path.isdir("markedPapers/plomFiles"):
@@ -801,7 +823,7 @@ def checkDirectories():
         os.mkdir("markedPapers/commentFiles")
 
 
-print("PLOM v{0}: image server starting...".format(__version__))
+print("Plom Server v{}: this is free software without warranty".format(__version__))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
@@ -863,7 +885,7 @@ except OSError:
     )
     subprocess.Popen.kill(davproc)
     loop.close()
-    exit()
+    exit(1)
 
 SLogger.info("Serving messages on {}".format(server.sockets[0].getsockname()))
 print("Serving messages on {}".format(server.sockets[0].getsockname()))

@@ -10,7 +10,7 @@ import asyncio
 import ssl
 from collections import defaultdict
 from examviewwindow import ExamViewWindow
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QAbstractScrollArea,
@@ -287,6 +287,34 @@ class filterComboBox(QComboBox):
         self.addItem(txt)
 
 
+class ProxyModel(QSortFilterProxyModel):
+    """A proxymodel wrapper to put around the table model to handle filtering and sorting."""
+
+    def __init__(self, parent=None):
+        QSortFilterProxyModel.__init__(self, parent)
+        # self.setFilterKeyColumn(4)
+        # self.filterString = ""
+
+    def filterAcceptsRow(self, pos, index):
+        return True
+
+    # def setFilterString(self, flt):
+    #     self.filterString = flt
+    #
+    # def filterTags(self):
+    #     self.setFilterFixedString(self.filterString)
+
+    # def filterAcceptsRow(self, pos, index):
+    #     if len(self.filterString) == 0:
+    #         return True
+    #     if (
+    #         self.filterString.casefold()
+    #         in self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
+    #     ):
+    #         return True
+    #     return False
+
+
 class examTable(QWidget):
     def __init__(self):
         QWidget.__init__(self)
@@ -306,6 +334,10 @@ class examTable(QWidget):
         self.exM.setTable("groupimage")
         self.exV = simpleTableView(self.exM)
 
+        # self.prxM = ProxyModel()
+        # self.prxM.setSourceModel(self.exM)
+        # self.exV = simpleTableView(self.prxM)
+
         grid.addWidget(self.exV, 0, 0, 4, 7)
 
         self.filterGo = QPushButton("Filter Now")
@@ -321,6 +353,11 @@ class examTable(QWidget):
         grid.addWidget(self.flU, 5, 5)
         self.flM = filterComboBox("Mark")
         grid.addWidget(self.flM, 5, 6)
+        self.flT = QLineEdit()
+        self.flT.setMaxLength(256)
+        self.flT.setPlaceholderText("Filter on tag text")
+        self.flT.setClearButtonEnabled(True)
+        grid.addWidget(self.flT, 6, 5, 1, 2)
 
         self.pgprogB = QPushButton("PG progress")
         self.pgprogB.clicked.connect(lambda: self.computePageGroupProgress())
@@ -416,7 +453,12 @@ class examTable(QWidget):
         return sorted(list(lst))
 
     def loadData(self):
-        for c in [0, 2, 3, 6]:
+        # A row of the table in the Mark DB is
+        # 0=index, 1=TGV, 2=originalFile, 3=testnumber, 4=pageGroup
+        # 5=version, 6=annotatedFile, 7=plomFile, 8=commentFile,
+        # 9=status, 10=user, 11=time, 12=mark, 13=timeSpentMarking,
+        # 14=tags
+        for c in [0, 2, 3, 6, 7, 8]:
             self.exV.hideColumn(c)
         self.exV.resizeColumnsToContents()
         self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
@@ -440,11 +482,16 @@ class examTable(QWidget):
             flt.append("user='{}'".format(self.flU.currentText()))
         if self.flM.currentText() != "Mark":
             flt.append("mark='{}'".format(self.flM.currentText()))
+        # and filter on tag
+        txt = self.flT.text().strip()
+        if len(txt) > 0:
+            flt.append("tags LIKE '%{}%'".format(txt))
 
         if len(flt) > 0:
             flts = " AND ".join(flt)
         else:
             flts = ""
+
         self.exM.setFilter(flts)
         self.exV.resizeColumnsToContents()
         self.exV.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)

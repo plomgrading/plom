@@ -5,18 +5,26 @@ __license__ = "AGPLv3"
 import os
 import json
 
-from PyQt5.QtCore import Qt, pyqtSignal, QSize
+from PyQt5.QtCore import Qt, pyqtSignal, QSize, QTimer
 from PyQt5.QtGui import QDropEvent, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
     QGridLayout,
+    QItemDelegate,
+    QLineEdit,
     QMessageBox,
     QPushButton,
+    QSpinBox,
     QTableView,
+    QTextEdit,
     QToolButton,
+    QVBoxLayout,
     QWidget,
-    QItemDelegate,
 )
 
 
@@ -25,6 +33,9 @@ class ErrorMessage(QMessageBox):
 
     def __init__(self, txt):
         super(ErrorMessage, self).__init__()
+        fnt = self.font()
+        fnt.setPointSize((fnt.pointSize() * 3) // 2)
+        self.setFont(fnt)
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Ok)
 
@@ -76,6 +87,9 @@ class SimpleTableView(QTableView):
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # Resize to fit the contents
+        self.resizeRowsToContents()
+        self.horizontalHeader().setStretchLastSection(True)
 
     def keyPressEvent(self, event):
         # If user hits enter or return, then fire off
@@ -102,9 +116,11 @@ class SimpleToolButton(QToolButton):
 class CommentWidget(QWidget):
     """A widget wrapper around the marked-comment table."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent, maxMark):
         # layout the widget - a table and add/delete buttons.
         super(CommentWidget, self).__init__()
+        self.parent = parent
+        self.maxMark = maxMark
         grid = QGridLayout()
         # the table has 2 cols, delta&comment.
         self.CL = SimpleCommentTable(self)
@@ -115,7 +131,7 @@ class CommentWidget(QWidget):
         grid.addWidget(self.delB, 3, 3)
         self.setLayout(grid)
         # connect the buttons to functions.
-        self.addB.clicked.connect(self.addItem)
+        self.addB.clicked.connect(self.addFromTextList)
         self.delB.clicked.connect(self.deleteItem)
 
     def setStyle(self, markStyle):
@@ -127,11 +143,11 @@ class CommentWidget(QWidget):
         # they will not be pasted into the window.
         self.CL.delegate.style = markStyle
 
-    def changeMark(self, maxMark, currentMark):
+    def changeMark(self, currentMark):
         # Update the current and max mark for the lists's
         # delegate so that it knows how to display the comments
         # and deltas when the mark changes.
-        self.CL.delegate.maxMark = maxMark
+        self.CL.delegate.maxMark = self.maxMark
         self.CL.delegate.currentMark = currentMark
         self.CL.viewport().update()
 
@@ -162,6 +178,56 @@ class CommentWidget(QWidget):
         self.CL.previousItem()
         self.setFocus()
 
+    def getCurrentItemRow(self):
+        return self.CL.getCurrentItemRow()
+
+    def setCurrentItemRow(self, r):
+        self.CL.selectRow(r)
+
+    def addFromTextList(self):
+        # text items in scene.
+        lst = self.parent.getComments()
+        # text items already in comment list
+        clist = []
+        for r in range(self.CL.cmodel.rowCount()):
+            clist.append(self.CL.cmodel.index(r, 1).data())
+        # text items in scene not in comment list
+        alist = [X for X in lst if X not in clist]
+
+        acb = AddCommentBox(self, self.maxMark, alist)
+        if acb.exec_() == QDialog.Accepted:
+            if acb.DE.checkState() == Qt.Checked:
+                dlt = acb.SB.value()
+            else:
+                dlt = "."
+            txt = acb.TE.toPlainText().strip()
+            # check if txt has any content
+            if len(txt) > 0:
+                self.CL.insertItem(dlt, txt)
+                self.currentItem()
+                # send a click to the comment button to force updates
+                self.parent.ui.commentButton.animateClick()
+
+    def editCurrent(self, curDelta, curText):
+        # text items in scene.
+        lst = self.parent.getComments()
+        # text items already in comment list
+        clist = []
+        for r in range(self.CL.cmodel.rowCount()):
+            clist.append(self.CL.cmodel.index(r, 1).data())
+        # text items in scene not in comment list
+        alist = [X for X in lst if X not in clist]
+        acb = AddCommentBox(self, self.maxMark, alist, curDelta, curText)
+        if acb.exec_() == QDialog.Accepted:
+            if acb.DE.checkState() == Qt.Checked:
+                dlt = str(acb.SB.value())
+            else:
+                dlt = "."
+            txt = acb.TE.toPlainText().strip()
+            return [dlt, txt]
+        else:
+            return None
+
 
 class commentDelegate(QItemDelegate):
     """A style delegate that changes how rows of the
@@ -186,15 +252,20 @@ class commentDelegate(QItemDelegate):
         # Only shade the deltas which are in col 0.
         if index.column() == 0:
             # Grab the delta value.
-            delta = int(index.model().data(index, Qt.EditRole))
-            if self.style == 2:
+            delta = index.model().data(index, Qt.EditRole)
+            if delta == ".":
+                flag = True
+            elif self.style == 2:
                 # mark up - shade negative, or if goes past max mark
-                if delta <= 0 or delta + self.currentMark > self.maxMark:
+                if int(delta) < 0 or int(delta) + self.currentMark > self.maxMark:
                     flag = False
             elif self.style == 3:
                 # mark down - shade positive, or if goes below 0
-                if delta >= 0 or delta + self.currentMark < 0:
+                if int(delta) > 0 or int(delta) + self.currentMark < 0:
                     flag = False
+            elif self.style == 1:
+                # mark-total - do not show deltas.
+                flag = False
         if flag:
             QItemDelegate.paint(self, painter, option, index)
 
@@ -219,7 +290,7 @@ class commentRowModel(QStandardItemModel):
                     value = "+{}".format(v)
                 # otherwise the current value is "0" or "-n".
             except ValueError:
-                value = "0"  # failed, so set to 0.
+                value = "."  # failed, so set to "."
         # If its column 1 then convert '\n' into actual newline in the string
         elif index.column() == 1:
             value = value.replace(
@@ -245,6 +316,7 @@ class SimpleCommentTable(QTableView):
 
     def __init__(self, parent):
         super(SimpleCommentTable, self).__init__()
+        self.parent = parent
         # No numbers down the left-side
         self.verticalHeader().hide()
         # The comment column should be as wide as possible
@@ -279,15 +351,15 @@ class SimpleCommentTable(QTableView):
         # Load in from file (if it exists) and populate table.
         self.loadCommentList()
         self.populateTable()
-        self.resizeRowsToContents()
-        self.resizeColumnToContents(0)
+        # put these in a timer(0) so they exec when other stuff done
+        QTimer.singleShot(0, self.resizeRowsToContents)
+        QTimer.singleShot(0, self.resizeColumnsToContents)
         # If an item is changed resize things appropriately.
         self.cmodel.itemChanged.connect(self.resizeRowsToContents)
 
-        # set these so that double-click enables edits, but not keypress.
-        self.setEditTriggers(
-            QAbstractItemView.NoEditTriggers | QAbstractItemView.DoubleClicked
-        )
+        # set this so no (native) edit. Instead we'll hijack double-click
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.doubleClicked.connect(self.editRow)
 
     def dropEvent(self, event: QDropEvent):
         # If drag and drop from self to self.
@@ -348,7 +420,9 @@ class SimpleCommentTable(QTableView):
             txti.setEditable(True)
             txti.setDropEnabled(False)
             # If delta>0 then should be "+n"
-            if int(dlt) > 0:
+            if dlt == ".":
+                delti = QStandardItem(".")
+            elif int(dlt) > 0:
                 delti = QStandardItem("+{}".format(int(dlt)))
             else:
                 # is zero or negative - is "0" or "-n"
@@ -380,6 +454,8 @@ class SimpleCommentTable(QTableView):
                 (-1, "algebra"),
                 (-1, "arithmetic"),
                 (-1, "huh?"),
+                (".", "meh"),
+                (0, "tex: you can write latex $e^{i\pi}+1=0$"),
                 (0, "be careful"),
                 (1, "good"),
                 (1, "very nice"),
@@ -429,6 +505,12 @@ class SimpleCommentTable(QTableView):
         else:
             self.selectRow(sel[0].row())
 
+    def getCurrentItemRow(self):
+        return self.selectedIndexes()[0].row()
+
+    def setCurrentItemRow(self, r):
+        self.selectRow(r)
+
     def nextItem(self):
         # Select next row (wraps around)
         sel = self.selectedIndexes()
@@ -444,3 +526,122 @@ class SimpleCommentTable(QTableView):
             self.selectRow(0)
         else:
             self.selectRow((sel[0].row() - 1) % self.cmodel.rowCount())
+
+    def insertItem(self, dlt, txt):
+        # Create a [delta, comment] pair for user to edit
+        # and append to end of table.
+        txti = QStandardItem(txt)
+        txti.setEditable(True)
+        txti.setDropEnabled(False)
+        delti = QStandardItem("{}".format(dlt))
+        delti.setEditable(True)
+        delti.setDropEnabled(False)
+        delti.setTextAlignment(Qt.AlignCenter)
+        self.cmodel.appendRow([delti, txti])
+        # select the new row and resize
+        self.selectRow(self.cmodel.rowCount() - 1)
+        self.resizeRowToContents(self.cmodel.rowCount() - 1)
+
+    def editRow(self, tableIndex):
+        r = tableIndex.row()
+        dt = self.parent.editCurrent(
+            self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()
+        )
+        if dt is not None:
+            self.cmodel.setData(tableIndex.siblingAtColumn(0), dt[0])
+            self.cmodel.setData(tableIndex.siblingAtColumn(1), dt[1])
+
+    def focusInEvent(self, event):
+        super(SimpleCommentTable, self).focusInEvent(event)
+        # Now give focus back to the annotator
+        self.parent.setFocus()
+
+
+class AddCommentBox(QDialog):
+    def __init__(self, parent, maxMark, lst, curDelta=None, curText=None):
+        super(QDialog, self).__init__()
+        self.parent = parent
+        self.CB = QComboBox()
+        self.TE = QTextEdit()
+        self.SB = QSpinBox()
+        self.DE = QCheckBox("Delta-mark enabled")
+        self.DE.setCheckState(Qt.Checked)
+        self.DE.stateChanged.connect(self.toggleSB)
+
+        flay = QFormLayout()
+        flay.addRow("Enter text", self.TE)
+        flay.addRow("Choose text", self.CB)
+        flay.addRow("Set delta", self.SB)
+        flay.addRow("", self.DE)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+
+        # set up widgets
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.SB.setRange(-maxMark, maxMark)
+        self.CB.addItem("")
+        self.CB.addItems(lst)
+        # Set up TE and CB so that when CB changed, text is updated
+        self.CB.currentTextChanged.connect(self.changedCB)
+        # If supplied with current text/delta then set them
+        if curText is not None:
+            self.TE.clear()
+            self.TE.insertPlainText(curText)
+        if curDelta is not None:
+            if curDelta == ".":
+                self.SB.setValue(0)
+                self.DE.setCheckState(Qt.Unchecked)
+            else:
+                self.SB.setValue(int(curDelta))
+
+    def changedCB(self):
+        self.TE.clear()
+        self.TE.insertPlainText(self.CB.currentText())
+
+    def toggleSB(self):
+        if self.DE.checkState() == Qt.Checked:
+            self.SB.setEnabled(True)
+        else:
+            self.SB.setEnabled(False)
+
+
+class AddTagBox(QDialog):
+    def __init__(self, parent, currentTag, tagList=[]):
+        super(QDialog, self).__init__()
+        self.parent = parent
+        self.CB = QComboBox()
+        self.TE = QTextEdit()
+
+        flay = QFormLayout()
+        flay.addRow("Enter tag\n(max 256 char)", self.TE)
+        flay.addRow("Choose tag", self.CB)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+
+        # set up widgets
+        buttons.accepted.connect(self.accept)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.CB.addItem("")
+        self.CB.addItems(tagList)
+        # Set up TE and CB so that when CB changed, text is updated
+        self.CB.currentTextChanged.connect(self.changedCB)
+        # If supplied with current text/delta then set them
+        if currentTag is not None:
+            self.TE.clear()
+            self.TE.insertPlainText(currentTag)
+
+    def changedCB(self):
+        self.TE.clear()
+        self.TE.insertPlainText(self.CB.currentText())

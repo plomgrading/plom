@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui_chooser.ui'
+# Form implementation generated from reading ui file '../qtCreatorFiles/ui_chooser.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.3
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_Chooser(object):
     def setupUi(self, Chooser):
@@ -157,7 +159,7 @@ class Ui_Chooser(object):
 
     def retranslateUi(self, Chooser):
         _translate = QtCore.QCoreApplication.translate
-        Chooser.setWindowTitle(_translate("Chooser", "Choose your task"))
+        Chooser.setWindowTitle(_translate("Chooser", "Plom Client"))
         self.userGBox.setTitle(_translate("Chooser", "User Information"))
         self.label.setText(_translate("Chooser", "Username"))
         self.label_2.setText(_translate("Chooser", "Password"))
@@ -177,4 +179,3 @@ class Ui_Chooser(object):
         self.identifyButton.setText(_translate("Chooser", "&Identify"))
         self.totalButton.setText(_translate("Chooser", "&Total"))
         self.closeButton.setText(_translate("Chooser", "&Close"))
-

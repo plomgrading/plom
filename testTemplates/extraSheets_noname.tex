@@ -1,0 +1,83 @@
+\documentclass[12pt,letterpaper]{article}
+
+\usepackage[letterpaper,left=28mm,right=22mm,top=8mm,bottom=7mm]{geometry}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{amsmath}
+
+%%%%%%%%%%%%%
+
+\newcommand{\digitbox}{%
+  \fbox{
+  \rule[-1.5ex]{0pt}{4ex}
+  \hspace{2ex}}}
+
+\newcommand{\bigdigitbox}{%
+  \fbox{
+  \rule[-2ex]{0pt}{5ex}
+  \hspace{3ex}}}
+
+
+\begin{document}
+
+
+
+\centerline{%
+  \begin{tabular}{lll}
+    Q.\#  &
+    Test \#  &
+    Student \#  \\
+    \fbox{\digitbox\,\digitbox}
+    \qquad\qquad &
+    \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
+    \qquad\qquad &
+    \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
+      \digitbox\,\digitbox\,\digitbox\,\digitbox}
+  \end{tabular}
+}
+
+
+\begin{center}
+  \textbf{Only 1 question per page! If you need more space, use back or another sheet.}
+\end{center}
+
+\hrule
+
+\vfill
+
+\hrule
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+% Now same again to help ensure people print it double-sided
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\centerline{%
+  \begin{tabular}{lll}
+    Q.\#  &
+    Test \#  &
+    Student \#  \\
+    \fbox{\digitbox\,\digitbox}
+    \qquad\qquad &
+    \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
+    \qquad\qquad &
+    \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
+      \digitbox\,\digitbox\,\digitbox\,\digitbox}
+  \end{tabular}
+}
+
+
+\begin{center}
+  \textbf{Only 1 question per page! If you need more space, use back or another sheet.}
+\end{center}
+
+\hrule
+
+\vfill
+
+\hrule
+
+
+\end{document}
