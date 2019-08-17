@@ -345,7 +345,12 @@ class MarkerClient(QWidget):
         # 1 = mark total = user clicks the total-mark
         # 2 = mark-up = mark starts at 0 and user increments it
         # 3 = mark-down = mark starts at max and user decrements it
+        # TODO: remove the total-radiobutton, but
+        # for the timebeing we hide the totalrb from the user.
         self.ui.markStyleGroup.setId(self.ui.markTotalRB, 1)
+        self.ui.markTotalRB.hide()
+        self.ui.markTotalRB.setEnabled(False)
+        # continue with the other buttons
         self.ui.markStyleGroup.setId(self.ui.markUpRB, 2)
         self.ui.markStyleGroup.setId(self.ui.markDownRB, 3)
         # Give IDs to the radio buttons which select which mouse-hand is used
