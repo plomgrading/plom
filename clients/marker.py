@@ -884,6 +884,9 @@ class MarkerClient(QWidget):
         if not os.path.exists("signedCommentList.json"):
             return
         clist = json.load(open("signedCommentList.json"))
+        # sort list in order of longest comment to shortest comment
+        clist.sort(key=lambda C: -len(C[1]))
+
         # Build a progress dialog to warn user
         pd = QProgressDialog("Caching latex comments", None, 0, 2 * len(clist), self)
         pd.setWindowModality(Qt.WindowModal)
@@ -894,7 +897,7 @@ class MarkerClient(QWidget):
         for X in clist:
             if X[1][:4].upper() == "TEX:":
                 txt = X[1][4:].strip()
-                pd.setLabelText("Caching:\n'{}'".format(txt))
+                pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version
                 self.latexAFragment(txt)
                 c += 1
