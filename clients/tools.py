@@ -1185,7 +1185,7 @@ class PenArrowItem(QGraphicsItemGroup):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsPathItem.itemChange(self, change, value)
+        return QGraphicsItemGroup.itemChange(self, change, value)
 
     def pickle(self):
         pth = []
