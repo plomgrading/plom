@@ -2,6 +2,9 @@
 
 block_cipher = None
 
+# added paths to datas as per https://github.com/pyinstaller/pyinstaller/issues/4293#issuecomment-516265192
+# hopefully fixes dll include issue on windows #325
+
 a = Analysis(['client.py'],
              pathex=['../'],
              binaries=[],
