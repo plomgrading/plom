@@ -81,6 +81,7 @@ examScores = defaultdict(list)
 readExamsCompleted()
 readExamsIDed()
 readGroupImagesMarked()
+os.makedirs("coverPages", exist_ok=True)
 # Build a list of command to pipe into gnu-parallel.
 fh = open("./commandlist.txt", "w")
 for n in sorted(examsCompleted.keys()):

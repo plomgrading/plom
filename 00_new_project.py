@@ -42,7 +42,6 @@ directories += ["clients", "clients/uiFiles", "clients/icons"]
 
 directories += [
     "finishing/frontPages",
-    "finishing/coverPages",
 ]
 
 files = [
