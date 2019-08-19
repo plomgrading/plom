@@ -406,20 +406,21 @@ class PageScene(QGraphicsScene):
         """
         # Find the object under the mouseclick.
         under = self.itemAt(event.scenePos(), QTransform())
-        # If it is part of groupDTitem then do nothing
-        if isinstance(under.group(), GroupDTItem):
-            return
-        # If it is a textitem then fire up the editor.
-        if isinstance(under, TextItem):
-            under.setTextInteractionFlags(Qt.TextEditorInteraction)
-            self.setFocusItem(under, Qt.MouseFocusReason)
-            super(PageScene, self).mousePressEvent(event)
-            return
-
-        # check if a textitem currently has focus and clear it.
-        under = self.focusItem()
-        if isinstance(under, TextItem):
-            under.clearFocus()
+        # If something is there... (fixes bug reported by MattC)
+        if under is not None:
+            # If it is part of groupDTitem then do nothing
+            if isinstance(under.group(), GroupDTItem):
+                return
+            # If it is a textitem then fire up the editor.
+            if isinstance(under, TextItem):
+                under.setTextInteractionFlags(Qt.TextEditorInteraction)
+                self.setFocusItem(under, Qt.MouseFocusReason)
+                super(PageScene, self).mousePressEvent(event)
+                return
+            # check if a textitem currently has focus and clear it.
+            under = self.focusItem()
+            if isinstance(under, TextItem):
+                under.clearFocus()
 
         # Now we construct a text object, give it focus
         # (which fires up the editor on that object), and
