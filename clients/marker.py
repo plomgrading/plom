@@ -877,6 +877,7 @@ class MarkerClient(QWidget):
             msg = messenger.SRMsg(["mDWF", self.userName, self.token, f])
         for f in self.localViewFiles:
             os.unlink(f)
+        self.localViewFiles = []
         self.viewFiles = []
 
     def cacheLatexComments(self):
