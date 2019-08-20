@@ -40,11 +40,6 @@ directories += [
 
 directories += ["clients", "clients/uiFiles", "clients/icons"]
 
-directories += [
-    "finishing/frontPages",
-    "finishing/coverPages",
-]
-
 files = [
     "resources/testspecification.py",
     "resources/tpv_utils.py",

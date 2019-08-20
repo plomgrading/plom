@@ -122,7 +122,7 @@ System to generate tests from a small number of similar source versions
 * Run the 07 script to check which tests have been completely graded and identified.
   * It also outputs "testMarks.csv" for processing in a spreadsheet, and eventually uploading to Canvas.
 
-* The 08 script then builds coverpages for those tests which include the student's information, their scores on the various page-groups, and which version of each pagegroup they did. These coverpages are placed in the "frontPages" subdirectory
+* The 08 script then builds coverpages for those tests which include the student's information, their scores on the various page-groups, and which version of each pagegroup they did. These are placed in the "coverPages" subdirectory.
 
 * The 09 script then reassembles the identified / marked test from its constituent pagegroups and puts the coverpage on the front. The result is a pdf that is placed in the 'reassembled' subdirectory. At present the resulting pdf is renamed as exam_X.pdf where X is the student number.
 
