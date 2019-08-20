@@ -933,6 +933,7 @@ class Annotator(QDialog):
         if type(relaunch) == QCloseEvent:
             self.launchAgain = False
             self.reject()
+            return
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
             msg = ErrorMessage("Please make an annotation, even if the page is blank.")
