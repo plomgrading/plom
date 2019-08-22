@@ -53,7 +53,7 @@ class TestView(QWidget):
             self.setWindowState(Qt.WindowNoState)
 
     def closeEvent(self, event):
-        print("close event ".format(event))
+        print("close event {}".format(event))
         self.closeWindow()
 
     def closeWindow(self):
