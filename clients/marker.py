@@ -883,6 +883,7 @@ class MarkerClient(QWidget):
                 os.unlink(f)
             else:
                 print("not there {}".format(f))
+        print("Done with deleting things")
         self.localViewFiles = []
         self.viewFiles = []
 
