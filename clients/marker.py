@@ -886,6 +886,8 @@ class MarkerClient(QWidget):
         print("Done with deleting things")
         self.localViewFiles = []
         self.viewFiles = []
+        print("leaving doneWithViewFiles")
+
 
     def cacheLatexComments(self):
         # grab the list of comments from disk

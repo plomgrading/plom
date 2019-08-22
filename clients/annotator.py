@@ -412,7 +412,9 @@ class Annotator(QDialog):
 
     def doneViewingPaper(self):
         self.testView = None
+        print("calling doneWithViewFiles")
         self.parent.doneWithViewFiles()
+        print("back from doneWithViewFiles")
 
     def keyPopUp(self):
         # Pops up a little window which containts table of

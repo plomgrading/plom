@@ -55,8 +55,12 @@ class TestView(QWidget):
     def closeEvent(self, event):
         print("close event {}".format(event))
         self.closeWindow()
+        print("close event {}: back from .closeWindow".format(event))
+
 
     def closeWindow(self):
-        print("close window")
+        print("close window: off to doneViewingPaper")
         self.parent.doneViewingPaper()
+        print("close window: back from doneViewingPaper")
         self.close()
+        print("close window: after .close()?")
