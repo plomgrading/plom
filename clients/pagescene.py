@@ -896,8 +896,18 @@ class PageScene(QGraphicsScene):
         if self.penFlag == 0:
             return
         elif self.penFlag == 1:
+            if self.path.length() <= 1:  # path is very short, so add a little blob.
+                self.path.lineTo(event.scenePos() + QPointF(2, 0))
+                self.path.lineTo(event.scenePos() + QPointF(2, 2))
+                self.path.lineTo(event.scenePos() + QPointF(0, 2))
+                self.path.lineTo(event.scenePos())
             command = CommandPen(self, self.path)
         elif self.penFlag == 2:
+            if self.path.length() <= 1:  # path is very short, so add a blob.
+                self.path.lineTo(event.scenePos() + QPointF(4, 0))
+                self.path.lineTo(event.scenePos() + QPointF(4, 4))
+                self.path.lineTo(event.scenePos() + QPointF(0, 4))
+                self.path.lineTo(event.scenePos())
             command = CommandHighlight(self, self.path)
         elif self.penFlag == 4:
             command = CommandPenArrow(self, self.path)
