@@ -35,6 +35,9 @@ from mark_handler import MarkHandler
 from pageview import PageView
 from pagescene import PageScene
 
+# import the key-help popup window class
+from key_help import KeyHelp
+
 from useful_classes import (
     CommentWidget,
     ErrorMessage,
@@ -415,81 +418,8 @@ class Annotator(QDialog):
         self.parent.doneWithViewFiles()
 
     def keyPopUp(self):
-        # Pops up a little window which containts table of
-        # keys and associated tools.
-        keylist = {
-            "a": "Zoom",
-            "s": "Undo",
-            "d": "Tick/QMark/Cross",
-            "f": "Current Comment",
-            "g": "Text",
-            "z": "Move",
-            "x": "Delete",
-            "c": "Box/Ellipse",
-            "v": "Next Comment",
-            "b": "Line/DoubleArrow/Arrow",
-            "q": "Pan",
-            "w": "Redo",
-            "e": "Cross/QMark/Tick",
-            "r": "Previous Comment",
-            "t": "Pen/DoubleArrow/Highlighter",
-            "\\": "Maximize Window",
-            "-": "Zoom Out",
-            "_": "Zoom Out",
-            "+": "Zoom In",
-            "=": "Zoom In",
-            "ctrl-=": "Toggle Zoom",
-            "`": "Set Mark 0",
-            "0": "Set Mark 0",
-            "1": "Set Mark 1",
-            "2": "Set Mark 2",
-            "3": "Set Mark 3",
-            "4": "Set Mark 4",
-            "5": "Set Mark 5",
-            ";": "Zoom",
-            "l": "Undo",
-            "k": "Tick/QMark/Cross",
-            "j": "Current Comment",
-            "h": "Text",
-            "/": "Move",
-            ".": "Delete",
-            ",": "Box/Ellipse",
-            "m": "Next Comment",
-            "n": "Line/DoubleArrow/Arrow",
-            "p": "Pan",
-            "o": "Redo",
-            "i": "Cross/QMark/Tick",
-            "u": "Previous Comment",
-            "y": "Pen/DoubleArrow/Highlighter",
-            "f1": "View whole paper (may be fn-f1 depending on your system)",
-            "?": "Key Help",
-        }
         # build KeyPress shortcuts dialog
-        kp = QDialog()
-        grid = QGridLayout()
-        # Sortable table to display [key, description] pairs
-        kt = QTableWidget()
-        kt.setColumnCount(2)
-        # Set headers - not editable.
-        kt.setHorizontalHeaderLabels(["key", "function"])
-        kt.verticalHeader().hide()
-        kt.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        kt.setSortingEnabled(True)
-        # Read through the keys and put into table.
-        for a in keylist.keys():
-            r = kt.rowCount()
-            kt.setRowCount(r + 1)
-            kt.setItem(r, 0, QTableWidgetItem(a))
-            kt.setItem(r, 1, QTableWidgetItem("{}".format(keylist[a])))
-        # Give it a close-button.
-        cb = QPushButton("&close")
-        cb.clicked.connect(kp.accept)
-        grid.addWidget(kt, 1, 1, 3, 3)
-        grid.addWidget(cb, 4, 3)
-        kp.setLayout(grid)
-        # Resize items to fit
-        kt.resizeColumnsToContents()
-        kt.resizeRowsToContents()
+        kp = KeyHelp()
         # Pop it up.
         kp.exec_()
 
