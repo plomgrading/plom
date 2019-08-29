@@ -673,7 +673,7 @@ class Annotator(QDialog):
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
         self.endShortCutd.activated.connect(self.endAndRelaunch)
         self.cancelShortCut = QShortcut(QKeySequence("Ctrl+c"), self)
-        self.cancelShortCut.activated.connect(self.reject)
+        self.cancelShortCut.activated.connect(self.cleanUpCancel)
         # shortcuts for zoom-states
         self.zoomToggleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
         self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
@@ -766,8 +766,8 @@ class Annotator(QDialog):
         self.ui.redoButton.clicked.connect(self.scene.redo)
         # The key-help button connects to the keyPopUp command.
         self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
-        # Cancel button closes annotator(QDialog) with a 'reject'
-        self.ui.cancelButton.clicked.connect(self.reject)
+        # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
+        self.ui.cancelButton.clicked.connect(self.cleanUpCancel)
         # Hide button connects to the toggleTools command
         self.ui.hideButton.clicked.connect(self.toggleTools)
 
@@ -920,6 +920,12 @@ class Annotator(QDialog):
         if self.scene.mode == "comment":
             self.parent.annotatorSettings["comment"] = self.commentW.getCurrentItemRow()
 
+    def cleanUpCancel(self):
+        # clean up after a testview
+        self.doneViewingPaper()
+        self.reject()
+        return
+
     def closeEvent(self, relaunch):
         """When the user closes the window - either by clicking on the
         little standard all windows have them close icon in the titlebar
@@ -939,9 +945,9 @@ class Annotator(QDialog):
         # annotator (QDialog) with a 'reject'
         if type(relaunch) == QCloseEvent:
             self.launchAgain = False
-            self.reject()
             # clean up after a testview
             self.doneViewingPaper()
+            self.reject()
             return
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
