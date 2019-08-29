@@ -56,5 +56,4 @@ class TestView(QWidget):
         self.closeWindow()
 
     def closeWindow(self):
-        self.parent.doneViewingPaper()
         self.close()

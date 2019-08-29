@@ -876,7 +876,8 @@ class MarkerClient(QWidget):
         for f in self.viewFiles:
             msg = messenger.SRMsg(["mDWF", self.userName, self.token, f])
         for f in self.localViewFiles:
-            os.unlink(f)
+            if os.path.isfile(f):
+                os.unlink(f)
         self.localViewFiles = []
         self.viewFiles = []
 
