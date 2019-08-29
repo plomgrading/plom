@@ -94,6 +94,7 @@ class Annotator(QDialog):
         # a test view pop-up window - initially set to None
         # for viewing whole paper
         self.testView = None
+        self.testViewFiles = None
         # Set current mark to 0.
         self.score = 0
         # make styling of currently selected button/tool.
@@ -406,15 +407,19 @@ class Annotator(QDialog):
             self.ui.ebLayout.addWidget(self.ui.cancelButton)
 
     def viewWholePaper(self):
-        files = self.parent.viewWholePaper()
+        # grab the files if needed.
+        if self.testViewFiles is None:
+            self.testViewFiles = self.parent.viewWholePaper()
+        # if we haven't built a testview, built it now
         if self.testView is None:
-            self.testView = TestView(self, files)
+            self.testView = TestView(self, self.testViewFiles)
+        else:
+            # must have closed it, so re-show it.
+            self.testView.show()
 
     def doneViewingPaper(self):
-        self.testView = None
-        print("calling doneWithViewFiles")
         self.parent.doneWithViewFiles()
-        print("back from doneWithViewFiles")
+        self.testView.close()
 
     def keyPopUp(self):
         # Pops up a little window which containts table of
@@ -935,6 +940,8 @@ class Annotator(QDialog):
         if type(relaunch) == QCloseEvent:
             self.launchAgain = False
             self.reject()
+            # clean up after a testview
+            self.doneViewingPaper()
             return
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
@@ -981,6 +988,9 @@ class Annotator(QDialog):
 
         if not self.checkAllObjectsInside():
             return
+
+        # clean up after a testview
+        self.doneViewingPaper()
 
         # Save the scene to file.
         self.scene.save()
