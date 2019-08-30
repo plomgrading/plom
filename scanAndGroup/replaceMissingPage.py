@@ -5,6 +5,7 @@ __license__ = "AGPLv3"
 import fitz
 import json
 import os
+import shutil
 import sys
 import tempfile
 
@@ -16,8 +17,10 @@ from resources.testspecification import TestSpecification
 # 1 = test
 # 2 = page
 
-test = int(sys.argv[1])
-page = int(sys.argv[2])
+stest = sys.argv[1]
+spage = sys.argv[2]
+test = int(stest)
+page = int(spage)
 
 
 # load in the list of produced pages to check the version number.
@@ -35,6 +38,14 @@ def readExamsScanned():
     if os.path.exists("../resources/examsScanned.json"):
         with open("../resources/examsScanned.json") as data_file:
             examsScanned = json.load(data_file)
+
+
+# write the updated list of scanned papers
+def writeExamsScanned():
+    """Update the list of test/page/versions that have been scanned"""
+    es = open("../resources/examsScanned.json", "w")
+    es.write(json.dumps(examsScanned, indent=2, sort_keys=True))
+    es.close()
 
 
 # If all is good then build a substitute page and save it in the correct place
@@ -57,7 +68,19 @@ def buildSubstitute():
     testnumber = fitz.Pixmap(tpImage.name)
     DNS[0].insertImage(rTC, pixmap=testnumber, overlay=True, keep_proportion=False)
 
-    DNS.save("argh.pdf", garbage=4, deflate=True, clean=True)
+    DNS.save("pns.pdf", garbage=4, deflate=True, clean=True)
+    os.system("convert -density 200 pns.pdf pns.png")
+    os.unlink("pns.pdf")
+
+
+def moveSubstitute(version):
+    shutil.move(
+        "pns.png",
+        "decodedPages/page_{}/version_{}/t{}p{}v{}.png".format(
+            spage.zfill(2), version, stest.zfill(4), spage.zfill(2), version
+        ),
+    )
+    examsScanned[stest][spage] = [version, "pns.png"]
 
 
 spec = TestSpecification()
@@ -74,6 +97,27 @@ if page < 1 or page > spec.Length:
     exit()
 
 # get the version of the test/page from the examsProduced list
-version = int(examsProduced[str(test)][str(page)])
+version = int(examsProduced[stest][spage])
 
 print("Looking for test {} page {} version {}".format(test, page, version))
+if stest not in examsScanned:
+    print("Have not scanned any pages from test {}".format(test))
+    print("Quitting")
+    quit()
+
+if spage in examsScanned[stest]:
+    res = examsScanned[stest][spage]
+    print(
+        "Already scanned page {} from test {} as pageImage file {}".format(
+            page, test, res[1]
+        )
+    )
+    print("Quitting")
+    quit()
+
+print("Building substitute page")
+buildSubstitute()
+print("Copying substitute page into place")
+moveSubstitute(version)
+print("Updated examsScanned list")
+writeExamsScanned()
