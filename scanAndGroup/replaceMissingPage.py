@@ -2,9 +2,10 @@ __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2019 Andrew Rechnitzer"
 __license__ = "AGPLv3"
 
-import sys
-import os
 import fitz
+import json
+import os
+import sys
 import tempfile
 
 # this allows us to import from ../resources
@@ -74,3 +75,5 @@ if page < 1 or page > spec.Length:
 
 # get the version of the test/page from the examsProduced list
 version = int(examsProduced[str(test)][str(page)])
+
+print("Looking for test {} page {} version {}".format(test, page, version))
