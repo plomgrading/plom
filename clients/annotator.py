@@ -422,7 +422,8 @@ class Annotator(QDialog):
 
     def doneViewingPaper(self):
         self.parent.doneWithViewFiles()
-        self.testView.close()
+        if self.testView is not None:
+            self.testView.close()
 
     def keyPopUp(self):
         # build KeyPress shortcuts dialog

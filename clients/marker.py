@@ -304,6 +304,9 @@ class MarkerClient(QWidget):
         self.version = version
         # create max-mark, but not set until we get info from server
         self.maxScore = -1
+        # For viewing the whole paper we'll need these two lists.
+        self.viewFiles = []
+        self.localViewFiles = []
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
