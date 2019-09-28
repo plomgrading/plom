@@ -97,6 +97,7 @@ files += [
     "clients/client.spec",
     "clients/examviewwindow.py",
     "clients/identifier.py",
+    "clients/key_help.py",
     "clients/marker.py",
     "clients/mark_handler.py",
     "clients/messenger.py",
