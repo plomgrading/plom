@@ -65,7 +65,7 @@ for gname in mergeFiles.keys():
 # Then copy the merged files back into place
 for gname in mergeFiles.keys():
     print("Copying merged {} back into place".format(gname))
-    shutil.copy(gname, fullPath[gname])
+    shutil.copy("merged/" + gname, fullPath[gname])
 
 # Finally move the extra-page images into alreadyProcessed
 for gname in mergeFiles.keys():
