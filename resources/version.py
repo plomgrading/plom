@@ -4,5 +4,5 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
 
-__version__ = "0.2.0rc1"
+__version__ = "0.2.0"
 Plom_API_Version = "3"  # updated for background upload/download
