@@ -75,5 +75,5 @@ names = names.split()
 
 
 for n in names:
-    p = secrets.choice(words) + str(secrets.randbelow(10)) + secrets.choice(words)
-    print([n, p])
+    p = secrets.choice(words) + str(secrets.randbelow(100)) + secrets.choice(words)
+    print("{}\t{}".format(n, p))
