@@ -291,7 +291,7 @@ class MarkerClient(QWidget):
         messenger.startMessenger()
         # Ping to see if server is up.
         if not messenger.pingTest():
-            QTimer.singleShot(100, self.close)
+            QTimer.singleShot(100, self.shutDownError)
             self.testImg = None  # so that resize event doesn't throw error
             return
         # Save username, password, and path the local temp directory for
@@ -364,9 +364,15 @@ class MarkerClient(QWidget):
         self.ui.mouseHandGroup.setId(self.ui.leftMouseRB, 1)
         # Start using connection to serverself.
         # Ask server to authenticate user and return the authentication token
-        self.requestToken()
+        if self.requestToken() == False:
+            print("HERE")
+            QTimer.singleShot(100, self.shutDownError)
+            return
         # Get the max-mark for the question from the server.
-        self.getRubric()
+        if self.getRubric() == False:
+            print("THERE")
+            QTimer.singleShot(100, self.shutDownError)
+            return
         # Paste the max-mark into the gui.
         self.ui.scoreLabel.setText(str(self.maxScore))
         # Get list of papers already marked and add to table.
@@ -420,9 +426,10 @@ class MarkerClient(QWidget):
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":
             ErrorMessage(msg[1])
-            quit()
+            return False
         else:
             self.token = msg[1]
+            return True
 
     def getRubric(self):
         """Send request for the max mark (mGMX) to server.
@@ -434,8 +441,9 @@ class MarkerClient(QWidget):
         )
         # Return should be [ACK, maxmark]
         if msg[0] == "ERR":
-            quit()
+            return False
         self.maxScore = msg[1]
+        return True
 
     def getMarkedList(self):
         # Ask server for list of previously marked papers
@@ -828,6 +836,10 @@ class MarkerClient(QWidget):
         idx = selnew.indexes()
         if len(idx) > 0:
             self.updateImage(idx[0].row())
+
+    def shutDownError(self):
+        self.my_shutdown_signal.emit(2)
+        self.close()
 
     def shutDown(self):
         # When shutting down, first alert server of any images that were

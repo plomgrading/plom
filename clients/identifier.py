@@ -193,7 +193,10 @@ class IDClient(QWidget):
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
         # Start using connection to server.
         # Ask server to authenticate user and return the authentication token.
-        self.requestToken()
+        if self.requestToken() == False:
+            print("HERE")
+            QTimer.singleShot(100, self.shutDownError)
+            return
         # Get the classlist from server for name/ID completion.
         self.getClassList()
         # Init the name/ID completers and a validator for ID
@@ -232,16 +235,15 @@ class IDClient(QWidget):
         the server (since password hashing is slow).
         """
         # Send and return message with messenger.
-        msg = messenger.SRMsg(
-            ["AUTH", self.userName, self.password, Plom_API_Version]
-        )
+        msg = messenger.SRMsg(["AUTH", self.userName, self.password, Plom_API_Version])
         # Return should be [ACK, token]
         # Either a problem or store the resulting token.
         if msg[0] == "ERR":
             ErrorMessage(msg[1])
-            quit()
+            return False
         else:
             self.token = msg[1]
+            return True
 
     def getClassList(self):
         """Send request for classlist (iRCL) to server. The server then sends
@@ -338,6 +340,10 @@ class IDClient(QWidget):
         # the id-line edit needs a validator to make sure that only 8 digit numbers entered
         self.idValidator = QIntValidator(10000000, 10 ** 8 - 1)
         self.ui.idEdit.setValidator(self.idValidator)
+
+    def shutDownError(self):
+        self.my_shutdown_signal.emit(1)
+        self.close()
 
     def shutDown(self):
         """Send the server a DNF (did not finish) message so it knows to
