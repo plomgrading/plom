@@ -193,7 +193,7 @@ class IDClient(QWidget):
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
         # Start using connection to server.
         # Ask server to authenticate user and return the authentication token.
-        if self.requestToken() == False:
+        if not self.requestToken():
             print("HERE")
             QTimer.singleShot(100, self.shutDownError)
             return
@@ -233,6 +233,8 @@ class IDClient(QWidget):
         on file, then the server sends back an "ACK" and an authentication
         token. The token is then used to authenticate future transactions with
         the server (since password hashing is slow).
+
+        Return True if successfully logged in, else False
         """
         # Send and return message with messenger.
         msg = messenger.SRMsg(["AUTH", self.userName, self.password, Plom_API_Version])
