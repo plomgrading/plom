@@ -230,7 +230,7 @@ class IDClient(QWidget):
     def requestToken(self):
         """Send authorisation request (AUTH) to server. The request sends name and
         password (over ssl) to the server. If hash of password matches the one
-        of file, then the server sends back an "ACK" and an authentication
+        on file, then the server sends back an "ACK" and an authentication
         token. The token is then used to authenticate future transactions with
         the server (since password hashing is slow).
         """
