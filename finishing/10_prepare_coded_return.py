@@ -3,7 +3,7 @@
 #
 # Copyright (C) 2018-2019 Colin B. Macdonald <cbm@m.fsf.org>
 #
-# This file is part of MLP.
+# This file is part of Plom.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
