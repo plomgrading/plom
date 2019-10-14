@@ -163,7 +163,6 @@ class Chooser(QDialog):
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):
-        print('DEBUG: ...and back here')
         assert isinstance(value, int)
         self.show()
         self.setEnabled(True)
