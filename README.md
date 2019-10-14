@@ -4,7 +4,8 @@ __copyright__ = "Copyright (C) 2018-9 Andrew Rechnitzer"
 __license__ = "GFDL"
  -->
 
-# MLP
+# Plom --- PaperLessOpenMarking
+
 System to generate tests from a small number of similar source versions
 
 ## Preliminaries
@@ -59,7 +60,7 @@ System to generate tests from a small number of similar source versions
   * The resulting pagegroup images may consist of more than 1 page and so are tiled together using imagemagick. eg if a question goes over pages 4,5,6, then the script will tile pages 4,5,6 into a single (wide) page group image.
   * At present the scripts have some simple methods to avoid processing files many times (eg if you scan in the first 50 tests and then later scan in another 100) - but this definitely needs improving.
 
-* Its now time to fire up the image server and clients - these are really the guts of MLP.
+* Its now time to fire up the image server and clients - these are really the guts of Plom.
 
 ## Image server
 
@@ -85,7 +86,7 @@ System to generate tests from a small number of similar source versions
   * reenter the student information
   * probably a few more things when we think of them.
 
-## MLP Client - Marking and identifing.
+## Plom Client - Marking and identifing.
 * The client consists of 3 parts.
   * a start up page - where the client chooses whether to mark or identify. They need to enter some server infor, their username / password and (if marking) the pagegroup and version they are marking.
   * the identifier - where the user is shown the id page(s) of tests and enters names and / or student numbers.

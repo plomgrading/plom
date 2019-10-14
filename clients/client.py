@@ -104,6 +104,9 @@ class Chooser(QDialog):
         server = self.ui.serverLE.text()
         mport = self.ui.mportSB.value()
         wport = self.ui.wportSB.value()
+        # save those settings
+        self.saveDetails()
+        # Now run the appropriate client sub-application
         if self.runIt == "Marker":
             # Run the marker client.
             pg = str(self.ui.pgSB.value()).zfill(2)
@@ -143,7 +146,7 @@ class Chooser(QDialog):
         self.runIt = "Totaler"
         self.validate()
 
-    def closeWindow(self):
+    def saveDetails(self):
         lastTime["user"] = self.ui.userLE.text()
         lastTime["server"] = self.ui.serverLE.text()
         lastTime["mport"] = self.ui.mportSB.value()
@@ -151,8 +154,10 @@ class Chooser(QDialog):
         lastTime["pg"] = self.ui.pgSB.value()
         lastTime["v"] = self.ui.vSB.value()
         lastTime["fontSize"] = self.ui.fontSB.value()
-
         writeLastTime()
+
+    def closeWindow(self):
+        self.saveDetails()
         self.close()
 
     def setFont(self):
