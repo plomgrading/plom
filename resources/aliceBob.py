@@ -74,6 +74,9 @@ names = """aiden azami basia bob caris carol dave duska erin evander fatima fran
 names = names.split()
 
 
+userList = []
 for n in names:
     p = secrets.choice(words) + str(secrets.randbelow(100)) + secrets.choice(words)
-    print("{}\t{}".format(n, p))
+    userList.append([n, p])
+
+print(userList)
