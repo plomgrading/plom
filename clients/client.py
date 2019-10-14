@@ -104,9 +104,6 @@ class Chooser(QDialog):
         server = self.ui.serverLE.text()
         mport = self.ui.mportSB.value()
         wport = self.ui.wportSB.value()
-        # Now disable the server / user data entry
-        self.ui.serverGBox.setEnabled(False)
-        self.ui.userGBox.setEnabled(False)
         if self.runIt == "Marker":
             # Run the marker client.
             pg = str(self.ui.pgSB.value()).zfill(2)
@@ -166,6 +163,7 @@ class Chooser(QDialog):
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):
+        print('DEBUG: ...and back here')
         assert isinstance(value, int)
         self.show()
         self.setEnabled(True)
