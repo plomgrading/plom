@@ -77,8 +77,10 @@ def moveSubstitute(test, page, version):
     )
     examsScanned[stest][spage] = [version, "pns.png"]
 
+
 def print_usage():
     print(main.__doc__)
+
 
 def main():
     """Replace missing (not scanned) pages with placeholders.
@@ -97,7 +99,6 @@ def main():
     spage = sys.argv[2]
     test = int(stest)
     page = int(spage)
-
 
     spec = TestSpecification()
     spec.readSpec()
