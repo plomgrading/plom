@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2019 Andrew Rechnitzer"
 __license__ = "AGPLv3"
@@ -12,15 +14,6 @@ import tempfile
 # this allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
-
-# Take command line parameters
-# 1 = test
-# 2 = page
-
-stest = sys.argv[1]
-spage = sys.argv[2]
-test = int(stest)
-page = int(spage)
 
 
 # load in the list of produced pages to check the version number.
@@ -49,7 +42,7 @@ def writeExamsScanned():
 
 
 # If all is good then build a substitute page and save it in the correct place
-def buildSubstitute():
+def buildSubstitute(test, page):
     tpImage = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
     # create the test/page stamp using imagemagick
     os.system(
@@ -73,7 +66,7 @@ def buildSubstitute():
     os.unlink("pns.pdf")
 
 
-def moveSubstitute(version):
+def moveSubstitute(stest, spage, version):
     shutil.move(
         "pns.png",
         "decodedPages/page_{}/version_{}/t{}p{}v{}.png".format(
@@ -82,42 +75,67 @@ def moveSubstitute(version):
     )
     examsScanned[stest][spage] = [version, "pns.png"]
 
+def print_usage():
+    print(main.__doc__)
 
-spec = TestSpecification()
-spec.readSpec()
-readExamsProduced()
-readExamsScanned()
+def main():
+    """Replace missing (not scanned) pages with placeholders.
 
-if test < 1 or test > spec.Tests:
-    print("Test {} out of valid range".format(test))
-    exit()
+    Call this like:
+    ./replaceMissingPage.py t p
 
-if page < 1 or page > spec.Length:
-    print("Page {} out of valid range".format(page))
-    exit()
+    where `t` is the test number and `p` is the page number
 
-# get the version of the test/page from the examsProduced list
-version = int(examsProduced[stest][spage])
+    This is dangerous stuff: we do some sanity checks but be careful!
+    """
+    if len(sys.argv) != 3:
+        print_usage()
+        sys.exit(1)
+    stest = sys.argv[1]
+    spage = sys.argv[2]
+    test = int(stest)
+    page = int(spage)
 
-print("Looking for test {} page {} version {}".format(test, page, version))
-if stest not in examsScanned:
-    print("Have not scanned any pages from test {}".format(test))
-    print("Quitting")
-    quit()
 
-if spage in examsScanned[stest]:
-    res = examsScanned[stest][spage]
-    print(
-        "Already scanned page {} from test {} as pageImage file {}".format(
-            page, test, res[1]
+    spec = TestSpecification()
+    spec.readSpec()
+    readExamsProduced()
+    readExamsScanned()
+
+    if test < 1 or test > spec.Tests:
+        print("Test {} out of valid range".format(test))
+        exit()
+
+    if page < 1 or page > spec.Length:
+        print("Page {} out of valid range".format(page))
+        exit()
+
+    # get the version of the test/page from the examsProduced list
+    version = int(examsProduced[stest][spage])
+
+    print("Looking for test {} page {} version {}".format(test, page, version))
+    if stest not in examsScanned:
+        print("Have not scanned any pages from test {}".format(test))
+        print("Quitting")
+        quit()
+
+    if spage in examsScanned[stest]:
+        res = examsScanned[stest][spage]
+        print(
+            "Already scanned page {} from test {} as pageImage file {}".format(
+                page, test, res[1]
+            )
         )
-    )
-    print("Quitting")
-    quit()
+        print("Quitting")
+        quit()
 
-print("Building substitute page")
-buildSubstitute()
-print("Copying substitute page into place")
-moveSubstitute(version)
-print("Updated examsScanned list")
-writeExamsScanned()
+    print("Building substitute page")
+    buildSubstitute(test, page)
+    print("Copying substitute page into place")
+    moveSubstitute(stest, spage, version)
+    print("Updated examsScanned list")
+    writeExamsScanned()
+
+
+if __name__ == "__main__":
+    main()
