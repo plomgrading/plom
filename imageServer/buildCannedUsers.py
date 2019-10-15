@@ -9,6 +9,7 @@ import random
 import subprocess
 import sys
 
+from aliceBob import aliceBob
 
 # Stuff for hashing and verifying passwords
 from passlib.hash import pbkdf2_sha256
@@ -18,11 +19,8 @@ from passlib.context import CryptContext
 mlpctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
 # get canned user list
-lst = eval(
-    subprocess.run(
-        ["python3", "../resources/aliceBob.py"], stdout=subprocess.PIPE
-    ).stdout.decode("utf-8")
-)
+ab = aliceBob()
+lst = ab.getNewList()
 
 for (n, p) in lst:
     print(n + "\t" + p)

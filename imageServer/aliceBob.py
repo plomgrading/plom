@@ -74,9 +74,30 @@ names = """aiden azami basia bob caris carol dave duska erin evander fatima fran
 names = names.split()
 
 
-userList = []
-for n in names:
-    p = secrets.choice(words) + str(secrets.randbelow(100)) + secrets.choice(words)
-    userList.append([n, p])
+class aliceBob:
+    def __init__(self):
+        self.userList = []
+        for n in names:
+            p = (
+                secrets.choice(words)
+                + str(secrets.randbelow(100))
+                + secrets.choice(words)
+            )
+            self.userList.append([n, p])
 
-print(userList)
+    def generate(self):
+        self.userList = []
+        for n in names:
+            p = (
+                secrets.choice(words)
+                + str(secrets.randbelow(100))
+                + secrets.choice(words)
+            )
+            self.userList.append([n, p])
+
+    def getList(self):
+        return self.userList
+
+    def getNewList(self):
+        self.generate()
+        return self.userList
