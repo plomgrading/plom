@@ -48,7 +48,7 @@ quite radio rain rainy raise reach read ready real really receive record red
 remember remind remove rent repair repeat reply report rest result return rice
 rich ride right ring rise road rob rock room round rubber rude rule ruler run
 rush sad safe sail salt same sand save say school science scissors search seat
-second see seem sell send sentence serve seven several sex shade shadow shake
+second see seem sell send sentence serve seven several shade shadow shake
 shape share sharp she sheep sheet shelf shine ship shirt shoe shoot shop short
 should shoulder shout show sick side signal silence silly silver similar simple
 single since sing sink sister sit six size skill skin skirt sky sleep slip slow
