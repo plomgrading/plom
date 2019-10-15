@@ -66,7 +66,9 @@ def buildSubstitute(test, page):
     os.unlink("pns.pdf")
 
 
-def moveSubstitute(stest, spage, version):
+def moveSubstitute(test, page, version):
+    stest = str(test)
+    spage = str(page)
     shutil.move(
         "pns.png",
         "decodedPages/page_{}/version_{}/t{}p{}v{}.png".format(
@@ -132,7 +134,7 @@ def main():
     print("Building substitute page")
     buildSubstitute(test, page)
     print("Copying substitute page into place")
-    moveSubstitute(stest, spage, version)
+    moveSubstitute(test, page, version)
     print("Updated examsScanned list")
     writeExamsScanned()
 
