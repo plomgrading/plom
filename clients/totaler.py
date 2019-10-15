@@ -158,7 +158,7 @@ class TotalClient(QWidget):
         messenger.startMessenger()
         # Ping to see if server is up.
         if not messenger.pingTest():
-            self.deleteLater()
+            QTimer.singleShot(100, self.shutDownError)
             return
         # Save username, password, and path the local temp directory for
         # image files and the class list.
@@ -211,7 +211,6 @@ class TotalClient(QWidget):
         # make sure exam view window's view is reset....
         # very slight delay to ensure things loaded first
         QTimer.singleShot(100, self.testImg.view.resetView)
-
 
     def getMaxMark(self):
         """Send request for maximum mark (tGMM) to server. The server then sends

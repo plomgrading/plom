@@ -170,7 +170,7 @@ class IDClient(QWidget):
         messenger.startMessenger()
         # Ping to see if server is up.
         if not messenger.pingTest():
-            self.deleteLater()
+            QTimer.singleShot(100, self.shutDownError)
             return
         # Save username, password, and path the local temp directory for
         # image files and the class list.
@@ -228,7 +228,6 @@ class IDClient(QWidget):
         # Create variable to store ID/Name conf window position
         # Initially set to top-left corner of window
         self.msgGeometry = None
-
 
     def getClassList(self):
         """Send request for classlist (iRCL) to server. The server then sends
