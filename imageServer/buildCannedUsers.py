@@ -25,4 +25,6 @@ lst = eval(
 )
 
 for (n, p) in lst:
-    print(n, p, mlpctx.encrypt(p))
+    print(n + "\t" + p)
+for (n, p) in lst:
+    print('  "{}": "{}",'.format(n, mlpctx.encrypt(p)))
