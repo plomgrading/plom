@@ -104,11 +104,11 @@ def main():
 
     if test < 1 or test > spec.Tests:
         print("Test {} out of valid range".format(test))
-        exit()
+        sys.exit(2)
 
     if page < 1 or page > spec.Length:
         print("Page {} out of valid range".format(page))
-        exit()
+        sys.exit(3)
 
     # get the version of the test/page from the examsProduced list
     version = int(examsProduced[stest][spage])
@@ -117,7 +117,7 @@ def main():
     if stest not in examsScanned:
         print("Have not scanned any pages from test {}".format(test))
         print("Quitting")
-        quit()
+        sys.exit(4)
 
     if spage in examsScanned[stest]:
         res = examsScanned[stest][spage]
@@ -127,7 +127,7 @@ def main():
             )
         )
         print("Quitting")
-        quit()
+        sys.exit(5)
 
     print("Building substitute page")
     buildSubstitute(test, page)
