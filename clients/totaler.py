@@ -24,6 +24,7 @@ from examviewwindow import ExamViewWindow
 import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_totaler import Ui_TotalWindow
+from client_utils import requestToken
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
@@ -183,8 +184,12 @@ class TotalClient(QWidget):
         self.testImg.resetB.setAutoDefault(False)
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
         # Start using connection to server.
-        # Ask server to authenticate user and return the authentication token.
-        self.requestToken()
+        try:
+            self.token = requestToken(self.userName, self.password)
+        except ValueError as e:
+            ErrorMessage(str(e))
+            QTimer.singleShot(100, self.shutDownError)
+            return
         # Get the max mark from server
         self.getMaxMark()
         self.markValidator = QIntValidator(0, self.maxMark)
@@ -207,24 +212,6 @@ class TotalClient(QWidget):
         # very slight delay to ensure things loaded first
         QTimer.singleShot(100, self.testImg.view.resetView)
 
-    def requestToken(self):
-        """Send authorisation request (AUTH) to server. The request sends name and
-        password (over ssl) to the server. If hash of password matches the one
-        of file, then the server sends back an "ACK" and an authentication
-        token. The token is then used to authenticate future transactions with
-        the server (since password hashing is slow).
-        """
-        # Send and return message with messenger.
-        msg = messenger.SRMsg(
-            ["AUTH", self.userName, self.password, Plom_API_Version]
-        )
-        # Return should be [ACK, token]
-        # Either a problem or store the resulting token.
-        if msg[0] == "ERR":
-            ErrorMessage(msg[1])
-            quit()
-        else:
-            self.token = msg[1]
 
     def getMaxMark(self):
         """Send request for maximum mark (tGMM) to server. The server then sends
@@ -240,6 +227,10 @@ class TotalClient(QWidget):
         self.maxMark = int(msg[1])
         # Update the groupbox label
         self.ui.totalBox.setTitle("Enter total out of {}".format(self.maxMark))
+
+    def shutDownError(self):
+        self.my_shutdown_signal.emit(2)
+        self.close()
 
     def shutDown(self):
         """Send the server a DNF (did not finish) message so it knows to

@@ -40,6 +40,7 @@ from annotator import Annotator
 from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
+from client_utils import requestToken
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -363,9 +364,10 @@ class MarkerClient(QWidget):
         self.ui.mouseHandGroup.setId(self.ui.rightMouseRB, 0)
         self.ui.mouseHandGroup.setId(self.ui.leftMouseRB, 1)
         # Start using connection to serverself.
-        # Ask server to authenticate user and return the authentication token
-        if self.requestToken() == False:
-            print("HERE")
+        try:
+            self.token = requestToken(self.userName, self.password)
+        except ValueError as e:
+            ErrorMessage(str(e))
             QTimer.singleShot(100, self.shutDownError)
             return
         # Get the max-mark for the question from the server.
@@ -411,25 +413,6 @@ class MarkerClient(QWidget):
         self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(e)
 
-    def requestToken(self):
-        """Send authorisation request (AUTH) to server.
-
-        The request sends name and password (over ssl) to the server. If hash
-        of password matches the one of file, then the server sends back an
-        "ACK" and an authentication token. The token is then used to
-        authenticate future transactions with the server (since password
-        hashing is slow).
-        """
-        # Send and return message with messenger.
-        msg = messenger.SRMsg(["AUTH", self.userName, self.password, Plom_API_Version])
-        # Return should be [ACK, token]
-        # Either a problem or store the resulting token.
-        if msg[0] == "ERR":
-            ErrorMessage(msg[1])
-            return False
-        else:
-            self.token = msg[1]
-            return True
 
     def getRubric(self):
         """Send request for the max mark (mGMX) to server.
