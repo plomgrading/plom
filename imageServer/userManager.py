@@ -6,11 +6,12 @@ __license__ = "AGPLv3"
 import asyncio
 import json
 import os
+import random
 import ssl
 import sys
 
 # Grab required Qt stuff
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QAbstractScrollArea,
@@ -20,10 +21,9 @@ from PyQt5.QtWidgets import (
     QInputDialog,
     QLabel,
     QLineEdit,
-    QListWidget,
-    QListWidgetItem,
     QMessageBox,
     QPushButton,
+    QSpinBox,
     QTableWidget,
     QTableWidgetItem,
     QWidget,
@@ -49,29 +49,48 @@ from aliceBob import aliceBob
 class UserCheckList(QDialog):
     def __init__(self, lst):
         super(UserCheckList, self).__init__()
+        random.shuffle(lst)
         self.npList = lst
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle("Which users do you want to add?")
         self.okB = QPushButton("Accept")
-        self.okB.clicked.connect(self.accept)
+        self.okB.clicked.connect(self.validate)
         self.cnB = QPushButton("Cancel")
         self.cnB.clicked.connect(self.reject)
-        self.userList = QListWidget()
+        self.userList = QTableWidget()
+        self.howManyL = QLabel("Add how many?")
+        self.howManySB = QSpinBox()
         self.setList()
 
         grid = QGridLayout()
         grid.addWidget(self.userList, 1, 1, 3, 3)
-        grid.addWidget(self.okB, 4, 3)
-        grid.addWidget(self.cnB, 4, 1)
+        grid.addWidget(self.howManyL, 4, 1)
+        grid.addWidget(self.howManySB, 4, 2)
+        grid.addWidget(self.okB, 6, 3)
+        grid.addWidget(self.cnB, 6, 1)
 
         self.setLayout(grid)
         self.show()
 
     def setList(self):
+        self.userList.setColumnCount(2)
+        self.userList.setHorizontalHeaderLabels(["User", "Password"])
         for (n, p) in self.npList:
-            self.userList.addItem("{}\t{}".format(n, p))
+            r = self.userList.rowCount()
+            self.userList.insertRow(r)
+            self.userList.setItem(r, 0, QTableWidgetItem(n))
+            self.userList.setItem(r, 1, QTableWidgetItem(p))
+        self.userList.resizeColumnsToContents()
+        self.userList.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.userList.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.howManySB.setMaximum(len(self.npList))
+
+    def validate(self):
+        doList = self.npList[: self.howManySB.value()]
+
+        print(doList)
 
 
 def getServerInfo():
