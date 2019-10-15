@@ -20,6 +20,8 @@ from PyQt5.QtWidgets import (
     QInputDialog,
     QLabel,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMessageBox,
     QPushButton,
     QTableWidget,
@@ -38,6 +40,38 @@ sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 # Server info defaults
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
+
+
+# aliceBob to build canned userlist with passwords
+from aliceBob import aliceBob
+
+
+class UserCheckList(QDialog):
+    def __init__(self, lst):
+        super(UserCheckList, self).__init__()
+        self.npList = lst
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Which users do you want to add?")
+        self.okB = QPushButton("Accept")
+        self.okB.clicked.connect(self.accept)
+        self.cnB = QPushButton("Cancel")
+        self.cnB.clicked.connect(self.reject)
+        self.userList = QListWidget()
+        self.setList()
+
+        grid = QGridLayout()
+        grid.addWidget(self.userList, 1, 1, 3, 3)
+        grid.addWidget(self.okB, 4, 3)
+        grid.addWidget(self.cnB, 4, 1)
+
+        self.setLayout(grid)
+        self.show()
+
+    def setList(self):
+        for (n, p) in self.npList:
+            self.userList.addItem("{}\t{}".format(n, p))
 
 
 def getServerInfo():
@@ -258,7 +292,7 @@ class userManager(QWidget):
 
         self.addB = QPushButton("manager setup")
         self.addB.clicked.connect(lambda: self.setManager())
-        grid.addWidget(self.addB, 6, 2)
+        grid.addWidget(self.addB, 6, 1)
 
         self.addB = QPushButton("add user")
         self.addB.clicked.connect(lambda: self.addUser())
@@ -275,6 +309,10 @@ class userManager(QWidget):
         self.urB = QPushButton("RequestReload")
         self.urB.clicked.connect(self.contactServerReload)
         grid.addWidget(self.urB, 7, 4)
+
+        self.addB = QPushButton("build canned users")
+        self.addB.clicked.connect(lambda: self.buildCannedUsers())
+        grid.addWidget(self.addB, 7, 1)
 
         self.setLayout(grid)
         self.setWindowTitle("User list")
@@ -335,6 +373,16 @@ class userManager(QWidget):
             if ok:
                 # Fire off reload request
                 requestUserReload(serverInfo["server"], serverInfo["mport"], pwd)
+
+    def buildCannedUsers(self):
+        # get canned user list
+        ab = aliceBob()
+        lst = ab.getNewList()
+        tmp = UserCheckList(lst)
+        if tmp.exec_() == QMessageBox.Yes:
+            pass
+        else:
+            pass
 
 
 # Set asycio event loop running for communication with server.
