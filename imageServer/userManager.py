@@ -46,17 +46,16 @@ serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
 from aliceBob import aliceBob
 
 
-class UserCheckList(QDialog):
+class CannedUserList(QDialog):
     def __init__(self, lst):
-        super(UserCheckList, self).__init__()
-        random.shuffle(lst)
+        super(CannedUserList, self).__init__()
         self.npList = lst
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle("Which users do you want to add?")
         self.okB = QPushButton("Accept")
-        self.okB.clicked.connect(self.validate)
+        self.okB.clicked.connect(self.accept)
         self.cnB = QPushButton("Cancel")
         self.cnB.clicked.connect(self.reject)
         self.userList = QTableWidget()
@@ -86,11 +85,6 @@ class UserCheckList(QDialog):
         self.userList.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.userList.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.howManySB.setMaximum(len(self.npList))
-
-    def validate(self):
-        doList = self.npList[: self.howManySB.value()]
-
-        print(doList)
 
 
 def getServerInfo():
@@ -397,11 +391,22 @@ class userManager(QWidget):
         # get canned user list
         ab = aliceBob()
         lst = ab.getNewList()
-        tmp = UserCheckList(lst)
-        if tmp.exec_() == QMessageBox.Yes:
-            pass
-        else:
-            pass
+        # shuffle list into random order
+        random.shuffle(lst)
+        tmp = CannedUserList(lst)
+        if tmp.exec_() != QDialog.Accepted:
+            return
+
+        doList = lst[: tmp.howManySB.value()]
+        with open("../resources/cannedUserList.txt", "a+") as fh:
+            for (n, p) in doList:
+                if n not in self.users:
+                    self.users.update({n: mlpctx.encrypt(p)})
+                    fh.write("{}\t{}\n".format(n, p))
+                else:
+                    print("User {} already present".format(n))
+        self.saveUsers()
+        self.refreshUserList()
 
 
 # Set asycio event loop running for communication with server.

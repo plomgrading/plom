@@ -21,7 +21,7 @@ down draw dream dress drink drive drop dry duck dust duty each ear early earn
 earth east easy eat effect egg eight either electric elephant else empty end
 enemy enjoy enough enter equal entrance escape even evening event ever every
 everyone exact example except excited exercise expect explain eye face fact fail
-fall false family famous far farm father fast fat fault fear feed feel female
+fall false family famous far farm father fast fat fault fear feed feel 
 fever few fight fill film find fine finger finish fire first fish fit five fix
 flag flat float floor flour flower fly fold food fool foot football for force
 foreign forest forget forgive fork form fox four free freedom freeze fresh
