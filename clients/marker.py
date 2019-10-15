@@ -367,7 +367,7 @@ class MarkerClient(QWidget):
         try:
             self.token = requestToken(self.userName, self.password)
         except ValueError as e:
-            ErrorMessage(str(e))
+            print("DEBUG: token fail: {}".format(e))
             QTimer.singleShot(100, self.shutDownError)
             return
         # Get the max-mark for the question from the server.
