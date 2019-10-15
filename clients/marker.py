@@ -371,8 +371,10 @@ class MarkerClient(QWidget):
             QTimer.singleShot(100, self.shutDownError)
             return
         # Get the max-mark for the question from the server.
-        if self.getRubric() == False:
-            print("THERE")
+        try:
+            self.getMaxMark()
+        except ValueError as e:
+            print("DEBUG: max-mark fail: {}".format(e))
             QTimer.singleShot(100, self.shutDownError)
             return
         # Paste the max-mark into the gui.
@@ -414,19 +416,17 @@ class MarkerClient(QWidget):
         super(MarkerClient, self).resizeEvent(e)
 
 
-    def getRubric(self):
-        """Send request for the max mark (mGMX) to server.
-        The server then sends back [ACK, maxmark].
-        """
+    def getMaxMark(self):
+        """Return the max mark or raise ValueError."""
         # Send max-mark request (mGMX) to server
         msg = messenger.SRMsg(
             ["mGMX", self.userName, self.token, self.pageGroup, self.version]
         )
         # Return should be [ACK, maxmark]
-        if msg[0] == "ERR":
-            return False
+        if not msg[0] == "ACK":
+            raise ValueError(msg[1])
         self.maxScore = msg[1]
-        return True
+
 
     def getMarkedList(self):
         # Ask server for list of previously marked papers
