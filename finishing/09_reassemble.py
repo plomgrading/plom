@@ -95,7 +95,5 @@ if __name__ == '__main__':
                 )
             )
     fh.close()
-    # pipe commands through gnu-parallel
     os.system("parallel --bar <commandlist.txt")
-    # then delete command file.
     os.unlink("commandlist.txt")
