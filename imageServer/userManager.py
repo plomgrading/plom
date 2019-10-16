@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QAbstractScrollArea,
     QApplication,
+    QCheckBox,
     QDialog,
     QGridLayout,
     QInputDialog,
@@ -159,10 +160,10 @@ class ManagerDialog(QDialog):
         grid = QGridLayout()
         grid.addWidget(self.pwL, 2, 1)
         grid.addWidget(self.pwLE, 2, 2)
+        grid.addWidget(self.pwCB, 4, 4)
         grid.addWidget(self.pwL2, 3, 1)
         grid.addWidget(self.pwLE2, 3, 2)
         grid.addWidget(self.okB, 4, 3)
-        grid.addWidget(self.cnB, 4, 1)
 
         self.setLayout(grid)
         self.show()
@@ -198,9 +199,10 @@ class UserDialog(QDialog):
         self.userL = QLabel("Username:")
         self.pwL = QLabel("Password:")
         self.pwL2 = QLabel("and again:")
+        ab = aliceBob()
         self.userLE = QLineEdit("")
-        self.pwLE = QLineEdit("")
-        self.pwLE.setEchoMode(QLineEdit.Password)
+        self.pwLE = QLineEdit(ab.simplePassword())
+        # self.pwLE.setEchoMode(QLineEdit.Password)
         self.pwLE2 = QLineEdit("")
         self.pwLE2.setEchoMode(QLineEdit.Password)
         self.okB = QPushButton("Accept")
@@ -208,11 +210,16 @@ class UserDialog(QDialog):
         self.cnB = QPushButton("Cancel")
         self.cnB.clicked.connect(self.reject)
 
+        self.pwCB = QCheckBox("(hide/show)")
+        self.pwCB.setCheckState(Qt.Unchecked)
+        self.pwCB.stateChanged.connect(self.togglePWShow)
+
         grid = QGridLayout()
         grid.addWidget(self.userL, 1, 1)
         grid.addWidget(self.userLE, 1, 2)
         grid.addWidget(self.pwL, 2, 1)
         grid.addWidget(self.pwLE, 2, 2)
+        grid.addWidget(self.pwCB, 2, 3)
         grid.addWidget(self.pwL2, 3, 1)
         grid.addWidget(self.pwLE2, 3, 2)
         grid.addWidget(self.okB, 4, 3)
@@ -220,6 +227,12 @@ class UserDialog(QDialog):
 
         self.setLayout(grid)
         self.show()
+
+    def togglePWShow(self):
+        if self.pwCB.checkState() == Qt.Checked:
+            self.pwLE.setEchoMode(QLineEdit.Password)
+        else:
+            self.pwLE.setEchoMode(QLineEdit.Normal)
 
     def validate(self):
         """Check that password is at least 4 char long
