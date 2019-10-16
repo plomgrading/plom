@@ -25,6 +25,7 @@ from examviewwindow import ExamViewWindow
 import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_identify import Ui_IdentifyWindow
+from client_utils import requestToken
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
@@ -169,7 +170,7 @@ class IDClient(QWidget):
         messenger.startMessenger()
         # Ping to see if server is up.
         if not messenger.pingTest():
-            self.deleteLater()
+            QTimer.singleShot(100, self.shutDownError)
             return
         # Save username, password, and path the local temp directory for
         # image files and the class list.
@@ -192,8 +193,12 @@ class IDClient(QWidget):
         self.testImg = ExamViewWindow()
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
         # Start using connection to server.
-        # Ask server to authenticate user and return the authentication token.
-        self.requestToken()
+        try:
+            self.token = requestToken(self.userName, self.password)
+        except ValueError as e:
+            print("DEBUG: token fail: {}".format(e))
+            QTimer.singleShot(100, self.shutDownError)
+            return
         # Get the classlist from server for name/ID completion.
         self.getClassList()
         # Init the name/ID completers and a validator for ID
@@ -223,25 +228,6 @@ class IDClient(QWidget):
         # Create variable to store ID/Name conf window position
         # Initially set to top-left corner of window
         self.msgGeometry = None
-
-    def requestToken(self):
-        """Send authorisation request (AUTH) to server. The request sends name and
-        password (over ssl) to the server. If hash of password matches the one
-        of file, then the server sends back an "ACK" and an authentication
-        token. The token is then used to authenticate future transactions with
-        the server (since password hashing is slow).
-        """
-        # Send and return message with messenger.
-        msg = messenger.SRMsg(
-            ["AUTH", self.userName, self.password, Plom_API_Version]
-        )
-        # Return should be [ACK, token]
-        # Either a problem or store the resulting token.
-        if msg[0] == "ERR":
-            ErrorMessage(msg[1])
-            quit()
-        else:
-            self.token = msg[1]
 
     def getClassList(self):
         """Send request for classlist (iRCL) to server. The server then sends
@@ -338,6 +324,10 @@ class IDClient(QWidget):
         # the id-line edit needs a validator to make sure that only 8 digit numbers entered
         self.idValidator = QIntValidator(10000000, 10 ** 8 - 1)
         self.ui.idEdit.setValidator(self.idValidator)
+
+    def shutDownError(self):
+        self.my_shutdown_signal.emit(1)
+        self.close()
 
     def shutDown(self):
         """Send the server a DNF (did not finish) message so it knows to

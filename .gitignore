@@ -132,3 +132,8 @@ dmypy.json
 *.nav
 *.blg
 *.thm
+
+# misc
+*.json
+*.csv
+*.db

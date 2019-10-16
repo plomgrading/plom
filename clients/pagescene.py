@@ -202,8 +202,13 @@ class PageScene(QGraphicsScene):
 
     def setMode(self, mode):
         self.mode = mode
-        # if current mode is not comment, make sure the ghostcomment is hidden
-        if self.mode != "comment":
+        # if current mode is not comment or delta, make sure the ghostcomment is hidden
+        if self.mode == "delta":
+            # make sure the ghost is updated - fixes #307
+            self.updateGhost(self.markDelta, "")
+        elif self.mode == "comment":
+            pass
+        else:
             self.hideGhost()
         # if mode is "pan", set the view to be able to drag about, else turn that off
         if self.mode == "pan":
@@ -401,20 +406,21 @@ class PageScene(QGraphicsScene):
         """
         # Find the object under the mouseclick.
         under = self.itemAt(event.scenePos(), QTransform())
-        # If it is part of groupDTitem then do nothing
-        if isinstance(under.group(), GroupDTItem):
-            return
-        # If it is a textitem then fire up the editor.
-        if isinstance(under, TextItem):
-            under.setTextInteractionFlags(Qt.TextEditorInteraction)
-            self.setFocusItem(under, Qt.MouseFocusReason)
-            super(PageScene, self).mousePressEvent(event)
-            return
-
-        # check if a textitem currently has focus and clear it.
-        under = self.focusItem()
-        if isinstance(under, TextItem):
-            under.clearFocus()
+        # If something is there... (fixes bug reported by MattC)
+        if under is not None:
+            # If it is part of groupDTitem then do nothing
+            if isinstance(under.group(), GroupDTItem):
+                return
+            # If it is a textitem then fire up the editor.
+            if isinstance(under, TextItem):
+                under.setTextInteractionFlags(Qt.TextEditorInteraction)
+                self.setFocusItem(under, Qt.MouseFocusReason)
+                super(PageScene, self).mousePressEvent(event)
+                return
+            # check if a textitem currently has focus and clear it.
+            under = self.focusItem()
+            if isinstance(under, TextItem):
+                under.clearFocus()
 
         # Now we construct a text object, give it focus
         # (which fires up the editor on that object), and
@@ -761,12 +767,20 @@ class PageScene(QGraphicsScene):
             return
         elif self.boxFlag == 1:
             self.removeItem(self.boxItem)
-            command = CommandBox(self, self.boxItem.rect())
+            # check if rect has some perimeter (allow long/thin)
+            if self.boxItem.rect().width() + self.boxItem.rect().height() > 24:
+                command = CommandBox(self, self.boxItem.rect())
+                self.undoStack.push(command)
         else:
             self.removeItem(self.ellipseItem)
-            command = CommandEllipse(self, self.ellipseItem.rect())
+            # check if ellipse has some area (don't allow long/thin)
+            if (
+                self.ellipseItem.rect().width() > 16
+                and self.ellipseItem.rect().height() > 16
+            ):
+                command = CommandEllipse(self, self.ellipseItem.rect())
+                self.undoStack.push(command)
 
-        self.undoStack.push(command)
         self.boxFlag = 0
 
     def mousePressLine(self, event):
@@ -821,7 +835,9 @@ class PageScene(QGraphicsScene):
             command = CommandArrowDouble(self, self.originPos, self.currentPos)
         self.arrowFlag = 0
         self.removeItem(self.lineItem)
-        self.undoStack.push(command)
+        # don't add if too short
+        if (self.originPos - self.currentPos).manhattanLength() > 24:
+            self.undoStack.push(command)
 
     def mousePressPen(self, event):
         """Start drawing either a pen-path (left-click) or
@@ -880,14 +896,31 @@ class PageScene(QGraphicsScene):
         if self.penFlag == 0:
             return
         elif self.penFlag == 1:
+            if self.path.length() <= 1:  # path is very short, so add a little blob.
+                self.path.lineTo(event.scenePos() + QPointF(2, 0))
+                self.path.lineTo(event.scenePos() + QPointF(2, 2))
+                self.path.lineTo(event.scenePos() + QPointF(0, 2))
+                self.path.lineTo(event.scenePos())
             command = CommandPen(self, self.path)
         elif self.penFlag == 2:
+            if self.path.length() <= 1:  # path is very short, so add a blob.
+                self.path.lineTo(event.scenePos() + QPointF(4, 0))
+                self.path.lineTo(event.scenePos() + QPointF(4, 4))
+                self.path.lineTo(event.scenePos() + QPointF(0, 4))
+                self.path.lineTo(event.scenePos())
             command = CommandHighlight(self, self.path)
         elif self.penFlag == 4:
             command = CommandPenArrow(self, self.path)
         self.penFlag = 0
         self.removeItem(self.pathItem)
         self.undoStack.push(command)
+        # don't add if too short - check by boundingRect
+        # TODO: decide threshold for pen annotation size
+        # if (
+        #     self.pathItem.boundingRect().height() + self.pathItem.boundingRect().width()
+        #     > 8
+        # ):
+        #     self.undoStack.push(command)
 
     def mousePressDelete(self, event):
         """Start drawing a delete-box. Nothing happens until button is released.

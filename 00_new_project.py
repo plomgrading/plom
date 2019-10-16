@@ -40,17 +40,13 @@ directories += [
 
 directories += ["clients", "clients/uiFiles", "clients/icons"]
 
-directories += [
-    "finishing/frontPages",
-    "finishing/coverPages",
-]
-
 files = [
     "resources/testspecification.py",
     "resources/tpv_utils.py",
     "resources/davconf.conf",
     "resources/davconf.yaml",
     "resources/predictionlist.csv",
+    "resources/pageNotSubmitted.pdf",
     "resources/version.py",
 ]
 
@@ -102,6 +98,7 @@ files += [
     "clients/client.spec",
     "clients/examviewwindow.py",
     "clients/identifier.py",
+    "clients/key_help.py",
     "clients/marker.py",
     "clients/mark_handler.py",
     "clients/messenger.py",

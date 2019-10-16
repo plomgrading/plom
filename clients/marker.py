@@ -40,6 +40,7 @@ from annotator import Annotator
 from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
+from client_utils import requestToken
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -291,7 +292,7 @@ class MarkerClient(QWidget):
         messenger.startMessenger()
         # Ping to see if server is up.
         if not messenger.pingTest():
-            QTimer.singleShot(100, self.close)
+            QTimer.singleShot(100, self.shutDownError)
             self.testImg = None  # so that resize event doesn't throw error
             return
         # Save username, password, and path the local temp directory for
@@ -304,6 +305,9 @@ class MarkerClient(QWidget):
         self.version = version
         # create max-mark, but not set until we get info from server
         self.maxScore = -1
+        # For viewing the whole paper we'll need these two lists.
+        self.viewFiles = []
+        self.localViewFiles = []
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
@@ -345,7 +349,12 @@ class MarkerClient(QWidget):
         # 1 = mark total = user clicks the total-mark
         # 2 = mark-up = mark starts at 0 and user increments it
         # 3 = mark-down = mark starts at max and user decrements it
+        # TODO: remove the total-radiobutton, but
+        # for the timebeing we hide the totalrb from the user.
         self.ui.markStyleGroup.setId(self.ui.markTotalRB, 1)
+        self.ui.markTotalRB.hide()
+        self.ui.markTotalRB.setEnabled(False)
+        # continue with the other buttons
         self.ui.markStyleGroup.setId(self.ui.markUpRB, 2)
         self.ui.markStyleGroup.setId(self.ui.markDownRB, 3)
         # Give IDs to the radio buttons which select which mouse-hand is used
@@ -355,10 +364,19 @@ class MarkerClient(QWidget):
         self.ui.mouseHandGroup.setId(self.ui.rightMouseRB, 0)
         self.ui.mouseHandGroup.setId(self.ui.leftMouseRB, 1)
         # Start using connection to serverself.
-        # Ask server to authenticate user and return the authentication token
-        self.requestToken()
+        try:
+            self.token = requestToken(self.userName, self.password)
+        except ValueError as e:
+            print("DEBUG: token fail: {}".format(e))
+            QTimer.singleShot(100, self.shutDownError)
+            return
         # Get the max-mark for the question from the server.
-        self.getRubric()
+        try:
+            self.getMaxMark()
+        except ValueError as e:
+            print("DEBUG: max-mark fail: {}".format(e))
+            QTimer.singleShot(100, self.shutDownError)
+            return
         # Paste the max-mark into the gui.
         self.ui.scoreLabel.setText(str(self.maxScore))
         # Get list of papers already marked and add to table.
@@ -397,37 +415,18 @@ class MarkerClient(QWidget):
         self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(e)
 
-    def requestToken(self):
-        """Send authorisation request (AUTH) to server.
 
-        The request sends name and password (over ssl) to the server. If hash
-        of password matches the one of file, then the server sends back an
-        "ACK" and an authentication token. The token is then used to
-        authenticate future transactions with the server (since password
-        hashing is slow).
-        """
-        # Send and return message with messenger.
-        msg = messenger.SRMsg(["AUTH", self.userName, self.password, Plom_API_Version])
-        # Return should be [ACK, token]
-        # Either a problem or store the resulting token.
-        if msg[0] == "ERR":
-            ErrorMessage(msg[1])
-            quit()
-        else:
-            self.token = msg[1]
-
-    def getRubric(self):
-        """Send request for the max mark (mGMX) to server.
-        The server then sends back [ACK, maxmark].
-        """
+    def getMaxMark(self):
+        """Return the max mark or raise ValueError."""
         # Send max-mark request (mGMX) to server
         msg = messenger.SRMsg(
             ["mGMX", self.userName, self.token, self.pageGroup, self.version]
         )
         # Return should be [ACK, maxmark]
-        if msg[0] == "ERR":
-            quit()
+        if not msg[0] == "ACK":
+            raise ValueError(msg[1])
         self.maxScore = msg[1]
+
 
     def getMarkedList(self):
         # Ask server for list of previously marked papers
@@ -821,6 +820,10 @@ class MarkerClient(QWidget):
         if len(idx) > 0:
             self.updateImage(idx[0].row())
 
+    def shutDownError(self):
+        self.my_shutdown_signal.emit(2)
+        self.close()
+
     def shutDown(self):
         # When shutting down, first alert server of any images that were
         # not marked - using 'DNF' (did not finish). Sever will put
@@ -871,7 +874,9 @@ class MarkerClient(QWidget):
         for f in self.viewFiles:
             msg = messenger.SRMsg(["mDWF", self.userName, self.token, f])
         for f in self.localViewFiles:
-            os.unlink(f)
+            if os.path.isfile(f):
+                os.unlink(f)
+        self.localViewFiles = []
         self.viewFiles = []
 
     def cacheLatexComments(self):
@@ -879,6 +884,9 @@ class MarkerClient(QWidget):
         if not os.path.exists("signedCommentList.json"):
             return
         clist = json.load(open("signedCommentList.json"))
+        # sort list in order of longest comment to shortest comment
+        clist.sort(key=lambda C: -len(C[1]))
+
         # Build a progress dialog to warn user
         pd = QProgressDialog("Caching latex comments", None, 0, 2 * len(clist), self)
         pd.setWindowModality(Qt.WindowModal)
@@ -889,7 +897,7 @@ class MarkerClient(QWidget):
         for X in clist:
             if X[1][:4].upper() == "TEX:":
                 txt = X[1][4:].strip()
-                pd.setLabelText("Caching:\n'{}'".format(txt))
+                pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version
                 self.latexAFragment(txt)
                 c += 1

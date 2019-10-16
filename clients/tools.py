@@ -1185,7 +1185,7 @@ class PenArrowItem(QGraphicsItemGroup):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsPathItem.itemChange(self, change, value)
+        return QGraphicsItemGroup.itemChange(self, change, value)
 
     def pickle(self):
         pth = []
@@ -1359,9 +1359,9 @@ class TickItem(QGraphicsPathItem):
         self.pt = pt
         self.path = QPainterPath()
         # Draw the checkmark with barycentre under mouseclick.
-        self.path.moveTo(pt.x() - 10, pt.y())
-        self.path.lineTo(pt.x(), pt.y() + 10)
-        self.path.lineTo(pt.x() + 20, pt.y() - 10)
+        self.path.moveTo(pt.x() - 10, pt.y() - 10)
+        self.path.lineTo(pt.x(), pt.y())
+        self.path.lineTo(pt.x() + 20, pt.y() - 20)
         self.setPath(self.path)
         self.setPen(QPen(Qt.red, 3))
         self.setFlag(QGraphicsItem.ItemIsMovable)
