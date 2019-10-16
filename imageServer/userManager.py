@@ -273,7 +273,6 @@ class userManager(QWidget):
         if os.path.exists("../resources/userList.json"):
             with open("../resources/userList.json") as data_file:
                 self.users = json.load(data_file)
-                print("Users = {}".format(self.users))
         else:
             self.users = {}
 
