@@ -42,9 +42,7 @@ sslContext.check_hostname = False
 # Server info defaults
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
 
-
-# aliceBob to build canned userlist with passwords
-from aliceBob import aliceBob
+from aliceBob import simplePassword, makeRandomUserList
 
 
 class CannedUserList(QDialog):
@@ -199,9 +197,8 @@ class UserDialog(QDialog):
         self.userL = QLabel("Username:")
         self.pwL = QLabel("Password:")
         self.pwL2 = QLabel("and again:")
-        ab = aliceBob()
         self.userLE = QLineEdit("")
-        self.pwLE = QLineEdit(ab.simplePassword())
+        self.pwLE = QLineEdit(simplePassword())
         # self.pwLE.setEchoMode(QLineEdit.Password)
         self.pwLE2 = QLineEdit("")
         self.pwLE2.setEchoMode(QLineEdit.Password)
@@ -402,8 +399,7 @@ class userManager(QWidget):
 
     def buildCannedUsers(self):
         # get canned user list
-        ab = aliceBob()
-        lst = ab.getNewList()
+        lst = makeRandomUserList()
         # shuffle list into random order
         random.shuffle(lst)
         tmp = CannedUserList(lst)
