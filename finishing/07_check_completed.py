@@ -204,46 +204,47 @@ def writeExamsMarked():
     eg.close()
 
 
-# load the test specification
-spec = TestSpecification()
-spec.readSpec()
-# read the list of exams grouped after scanning.
-readExamsGrouped()
-# Access the databases
-# Open the marks database (readonly)
-markdb = sqlite3.connect("file:../resources/test_marks.db?mode=ro", uri=True)
-curMark = markdb.cursor()
-# Open the ID database (readonly)
-iddb = sqlite3.connect("file:../resources/identity.db?mode=ro", uri=True)
-curID = iddb.cursor()
-# Create dictionaries for the marked groups, ID'd papers and completed tests.
-groupImagesMarked = defaultdict(lambda: defaultdict(list))
-examsIDed = {}
-examsCompleted = {}
-# lists for complete / incomplete tests
-completeTests = []
-unmarkedTests = []
-pgStatus = defaultdict(int)
-# check each of the grouped exams.
-for n in sorted(examsGrouped.keys(), key=int):
-    examsCompleted[int(n)] = checkExam(n)
-# print summary
-print("###################### ")
-print("Complete papers are: ", completeTests)
-print("###################### ")
-print("Not completely marked papers are: ", unmarkedTests)
-print("###################### ")
-print("Pagegroup status: ")
-printPGStatus(len(examsGrouped))
-print("###################### ")
+if __name__ == '__main__':
+    # load the test specification
+    spec = TestSpecification()
+    spec.readSpec()
+    # read the list of exams grouped after scanning.
+    readExamsGrouped()
+    # Access the databases
+    # Open the marks database (readonly)
+    markdb = sqlite3.connect("file:../resources/test_marks.db?mode=ro", uri=True)
+    curMark = markdb.cursor()
+    # Open the ID database (readonly)
+    iddb = sqlite3.connect("file:../resources/identity.db?mode=ro", uri=True)
+    curID = iddb.cursor()
+    # Create dictionaries for the marked groups, ID'd papers and completed tests.
+    groupImagesMarked = defaultdict(lambda: defaultdict(list))
+    examsIDed = {}
+    examsCompleted = {}
+    # lists for complete / incomplete tests
+    completeTests = []
+    unmarkedTests = []
+    pgStatus = defaultdict(int)
+    # check each of the grouped exams.
+    for n in sorted(examsGrouped.keys(), key=int):
+        examsCompleted[int(n)] = checkExam(n)
+    # print summary
+    print("###################### ")
+    print("Complete papers are: ", completeTests)
+    print("###################### ")
+    print("Not completely marked papers are: ", unmarkedTests)
+    print("###################### ")
+    print("Pagegroup status: ")
+    printPGStatus(len(examsGrouped))
+    print("###################### ")
 
-# write the json of exams completed, the CSV of marks.
-writeExamsCompleted()
-writeMarkCSV()
-# write json of exams ID'd and groups marked.
-writeExamsIdentified()
-writeExamsMarked()
-# close up the databases.
-markdb.close()
-iddb.close()
-exit(1)  # TODO or 0 if it worked!
+    # write the json of exams completed, the CSV of marks.
+    writeExamsCompleted()
+    writeMarkCSV()
+    # write json of exams ID'd and groups marked.
+    writeExamsIdentified()
+    writeExamsMarked()
+    # close up the databases.
+    markdb.close()
+    iddb.close()
+    exit(1)   # TODO or 0 if it worked!
