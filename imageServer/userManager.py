@@ -6,15 +6,17 @@ __license__ = "AGPLv3"
 import asyncio
 import json
 import os
+import random
 import ssl
 import sys
 
 # Grab required Qt stuff
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QAbstractScrollArea,
     QApplication,
+    QCheckBox,
     QDialog,
     QGridLayout,
     QInputDialog,
@@ -22,6 +24,7 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QSpinBox,
     QTableWidget,
     QTableWidgetItem,
     QWidget,
@@ -38,6 +41,51 @@ sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 # Server info defaults
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
+
+
+# aliceBob to build canned userlist with passwords
+from aliceBob import aliceBob
+
+
+class CannedUserList(QDialog):
+    def __init__(self, lst):
+        super(CannedUserList, self).__init__()
+        self.npList = lst
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Which users do you want to add?")
+        self.okB = QPushButton("Accept")
+        self.okB.clicked.connect(self.accept)
+        self.cnB = QPushButton("Cancel")
+        self.cnB.clicked.connect(self.reject)
+        self.userList = QTableWidget()
+        self.howManyL = QLabel("Add how many?")
+        self.howManySB = QSpinBox()
+        self.setList()
+
+        grid = QGridLayout()
+        grid.addWidget(self.userList, 1, 1, 3, 3)
+        grid.addWidget(self.howManyL, 4, 1)
+        grid.addWidget(self.howManySB, 4, 2)
+        grid.addWidget(self.okB, 6, 3)
+        grid.addWidget(self.cnB, 6, 1)
+
+        self.setLayout(grid)
+        self.show()
+
+    def setList(self):
+        self.userList.setColumnCount(2)
+        self.userList.setHorizontalHeaderLabels(["User", "Password"])
+        for (n, p) in self.npList:
+            r = self.userList.rowCount()
+            self.userList.insertRow(r)
+            self.userList.setItem(r, 0, QTableWidgetItem(n))
+            self.userList.setItem(r, 1, QTableWidgetItem(p))
+        self.userList.resizeColumnsToContents()
+        self.userList.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.userList.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.howManySB.setMaximum(len(self.npList))
 
 
 def getServerInfo():
@@ -112,10 +160,10 @@ class ManagerDialog(QDialog):
         grid = QGridLayout()
         grid.addWidget(self.pwL, 2, 1)
         grid.addWidget(self.pwLE, 2, 2)
+        grid.addWidget(self.pwCB, 4, 4)
         grid.addWidget(self.pwL2, 3, 1)
         grid.addWidget(self.pwLE2, 3, 2)
         grid.addWidget(self.okB, 4, 3)
-        grid.addWidget(self.cnB, 4, 1)
 
         self.setLayout(grid)
         self.show()
@@ -151,9 +199,10 @@ class UserDialog(QDialog):
         self.userL = QLabel("Username:")
         self.pwL = QLabel("Password:")
         self.pwL2 = QLabel("and again:")
+        ab = aliceBob()
         self.userLE = QLineEdit("")
-        self.pwLE = QLineEdit("")
-        self.pwLE.setEchoMode(QLineEdit.Password)
+        self.pwLE = QLineEdit(ab.simplePassword())
+        # self.pwLE.setEchoMode(QLineEdit.Password)
         self.pwLE2 = QLineEdit("")
         self.pwLE2.setEchoMode(QLineEdit.Password)
         self.okB = QPushButton("Accept")
@@ -161,11 +210,16 @@ class UserDialog(QDialog):
         self.cnB = QPushButton("Cancel")
         self.cnB.clicked.connect(self.reject)
 
+        self.pwCB = QCheckBox("(hide/show)")
+        self.pwCB.setCheckState(Qt.Unchecked)
+        self.pwCB.stateChanged.connect(self.togglePWShow)
+
         grid = QGridLayout()
         grid.addWidget(self.userL, 1, 1)
         grid.addWidget(self.userLE, 1, 2)
         grid.addWidget(self.pwL, 2, 1)
         grid.addWidget(self.pwLE, 2, 2)
+        grid.addWidget(self.pwCB, 2, 3)
         grid.addWidget(self.pwL2, 3, 1)
         grid.addWidget(self.pwLE2, 3, 2)
         grid.addWidget(self.okB, 4, 3)
@@ -173,6 +227,12 @@ class UserDialog(QDialog):
 
         self.setLayout(grid)
         self.show()
+
+    def togglePWShow(self):
+        if self.pwCB.checkState() == Qt.Checked:
+            self.pwLE.setEchoMode(QLineEdit.Password)
+        else:
+            self.pwLE.setEchoMode(QLineEdit.Normal)
 
     def validate(self):
         """Check that password is at least 4 char long
@@ -258,7 +318,7 @@ class userManager(QWidget):
 
         self.addB = QPushButton("manager setup")
         self.addB.clicked.connect(lambda: self.setManager())
-        grid.addWidget(self.addB, 6, 2)
+        grid.addWidget(self.addB, 6, 1)
 
         self.addB = QPushButton("add user")
         self.addB.clicked.connect(lambda: self.addUser())
@@ -275,6 +335,10 @@ class userManager(QWidget):
         self.urB = QPushButton("RequestReload")
         self.urB.clicked.connect(self.contactServerReload)
         grid.addWidget(self.urB, 7, 4)
+
+        self.addB = QPushButton("build canned users")
+        self.addB.clicked.connect(lambda: self.buildCannedUsers())
+        grid.addWidget(self.addB, 7, 1)
 
         self.setLayout(grid)
         self.setWindowTitle("User list")
@@ -335,6 +399,27 @@ class userManager(QWidget):
             if ok:
                 # Fire off reload request
                 requestUserReload(serverInfo["server"], serverInfo["mport"], pwd)
+
+    def buildCannedUsers(self):
+        # get canned user list
+        ab = aliceBob()
+        lst = ab.getNewList()
+        # shuffle list into random order
+        random.shuffle(lst)
+        tmp = CannedUserList(lst)
+        if tmp.exec_() != QDialog.Accepted:
+            return
+
+        doList = lst[: tmp.howManySB.value()]
+        with open("../resources/cannedUserList.txt", "a+") as fh:
+            for (n, p) in doList:
+                if n not in self.users:
+                    self.users.update({n: mlpctx.encrypt(p)})
+                    fh.write("{}\t{}\n".format(n, p))
+                else:
+                    print("User {} already present".format(n))
+        self.saveUsers()
+        self.refreshUserList()
 
 
 # Set asycio event loop running for communication with server.

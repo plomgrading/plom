@@ -21,7 +21,7 @@ down draw dream dress drink drive drop dry duck dust duty each ear early earn
 earth east easy eat effect egg eight either electric elephant else empty end
 enemy enjoy enough enter equal entrance escape even evening event ever every
 everyone exact example except excited exercise expect explain eye face fact fail
-fall false family famous far farm father fast fat fault fear feed feel female
+fall false family famous far farm father fast fat fault fear feed feel
 fever few fight fill film find fine finger finish fire first fish fit five fix
 flag flat float floor flour flower fly fold food fool foot football for force
 foreign forest forget forgive fork form fox four free freedom freeze fresh
@@ -48,7 +48,7 @@ quite radio rain rainy raise reach read ready real really receive record red
 remember remind remove rent repair repeat reply report rest result return rice
 rich ride right ring rise road rob rock room round rubber rude rule ruler run
 rush sad safe sail salt same sand save say school science scissors search seat
-second see seem sell send sentence serve seven several sex shade shadow shake
+second see seem sell send sentence serve seven several shade shadow shake
 shape share sharp she sheep sheet shelf shine ship shirt shoe shoot shop short
 should shoulder shout show sick side signal silence silly silver similar simple
 single since sing sink sister sit six size skill skin skirt sky sleep slip slow
@@ -74,6 +74,31 @@ names = """aiden azami basia bob caris carol dave duska erin evander fatima fran
 names = names.split()
 
 
-for n in names:
-    p = secrets.choice(words) + str(secrets.randbelow(100)) + secrets.choice(words)
-    print("{}\t{}".format(n, p))
+class aliceBob:
+    def __init__(self):
+        self.userList = []
+        for n in names:
+            p = self.simplePassword()
+            self.userList.append([n, p])
+
+    def simplePassword(self):
+        return (
+            secrets.choice(words) + str(secrets.randbelow(100)) + secrets.choice(words)
+        )
+
+    def generate(self):
+        self.userList = []
+        for n in names:
+            p = (
+                secrets.choice(words)
+                + str(secrets.randbelow(100))
+                + secrets.choice(words)
+            )
+            self.userList.append([n, p])
+
+    def getList(self):
+        return self.userList
+
+    def getNewList(self):
+        self.generate()
+        return self.userList
