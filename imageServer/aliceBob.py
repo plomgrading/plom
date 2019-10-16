@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+
+"""
+Utilities for canned users and auto-generated (poor) passwords
+"""
+
+__author__ = "Colin B. Macdonald, Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2019 Colin B. Macdonald, Andrew Rechnitzer"
+__license__ = "AGPLv3"
+
+
 import secrets
 
 words = """
