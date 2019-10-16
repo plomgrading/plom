@@ -104,9 +104,6 @@ class Chooser(QDialog):
         server = self.ui.serverLE.text()
         mport = self.ui.mportSB.value()
         wport = self.ui.wportSB.value()
-        # Now disable the server / user data entry
-        self.ui.serverGBox.setEnabled(False)
-        self.ui.userGBox.setEnabled(False)
         # save those settings
         self.saveDetails()
         # Now run the appropriate client sub-application
