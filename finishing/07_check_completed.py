@@ -234,9 +234,9 @@ if __name__ == '__main__':
         examsCompleted[int(n)] = checkExam(n)
     # print summary
     print("###################### ")
-    print("Complete papers are: ", completeTests)
+    print("Complete papers are: " + ",".join(completeTests))
     print("###################### ")
-    print("Not completely marked papers are: ", unmarkedTests)
+    print("Not completely marked papers are: " + ",".join(unmarkedTests))
     print("###################### ")
     print("Pagegroup status: ")
     printPGStatus(len(examsGrouped))
