@@ -230,9 +230,11 @@ for n in sorted(examsGrouped.keys(), key=int):
     examsCompleted[int(n)] = checkExam(n)
 # print summary
 print("###################### ")
-print("Complete papers are: " + format_int_list_with_runs(completeTests))
+s = format_int_list_with_runs(completeTests) if completeTests else u"None 🙁"
+print("Complete papers are: " + s)
 print("###################### ")
-print("Not completely marked papers are: " + format_int_list_with_runs(unmarkedTests))
+s = format_int_list_with_runs(unmarkedTests) if unmarkedTests else u"None 😀"
+print("Not completely marked papers are: " + s)
 print("###################### ")
 print("Pagegroup status: ")
 printPGStatus(len(examsGrouped))
