@@ -400,10 +400,10 @@ class userManager(QWidget):
     def buildCannedUsers(self):
         # get canned user list
         # TODO: make this chooesable somehow
-        #lst = makeRandomUserList()
+        # lst = makeRandomUserList()
         lst = makeNumberedUserList()
-        # shuffle list into random order
-        random.shuffle(lst)
+        # uncomment the below to shuffle list into random order
+        # random.shuffle(lst)
         tmp = CannedUserList(lst)
         if tmp.exec_() != QDialog.Accepted:
             return
