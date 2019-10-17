@@ -10,6 +10,7 @@ import os
 import sqlite3
 import sys
 
+from utils import format_int_list_with_runs
 # this allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
@@ -229,9 +230,9 @@ for n in sorted(examsGrouped.keys(), key=int):
     examsCompleted[int(n)] = checkExam(n)
 # print summary
 print("###################### ")
-print("Complete papers are: ", completeTests)
+print("Complete papers are: " + format_int_list_with_runs(completeTests))
 print("###################### ")
-print("Not completely marked papers are: ", unmarkedTests)
+print("Not completely marked papers are: " + format_int_list_with_runs(unmarkedTests))
 print("###################### ")
 print("Pagegroup status: ")
 printPGStatus(len(examsGrouped))
