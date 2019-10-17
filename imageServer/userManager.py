@@ -42,7 +42,7 @@ sslContext.check_hostname = False
 # Server info defaults
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
 
-from aliceBob import simplePassword, makeRandomUserList
+from aliceBob import simplePassword, makeRandomUserList, makeNumberedUserList
 
 
 class CannedUserList(QDialog):
@@ -399,7 +399,9 @@ class userManager(QWidget):
 
     def buildCannedUsers(self):
         # get canned user list
-        lst = makeRandomUserList()
+        # TODO: make this chooesable somehow
+        #lst = makeRandomUserList()
+        lst = makeNumberedUserList()
         # shuffle list into random order
         random.shuffle(lst)
         tmp = CannedUserList(lst)
