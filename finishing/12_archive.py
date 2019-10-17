@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8; -*-
-#
-# Copyright (C) 2019 Colin B. Macdonald <cbm@m.fsf.org>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+
+"""
+Produce a minimal archive of your test.
+
+This is intended for archival purposes.  Note it would not be easy to
+regrade a question within Plom using this archive.  If you ever
+anticipate revisiting the grading of this test, you should backup the
+entire directory structure.
+
+Usage:
+$ ./12_archive course year term
+
+for example:
+$ ./12_archive math253 2019 S1
+"""
+
+__author__ = "Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2019 Colin B. Macdonald"
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import os, sys, shutil
 
@@ -34,14 +39,8 @@ if __name__ == '__main__':
     # TODO: someday we can get this from spec file?
     # https://gitlab.math.ubc.ca/andrewr/MLP/issues/94
     if not len(sys.argv) == 4:
-        print("""ERROR: Incorrect command line
-
-Usage:
-$ ./12_archive course year term
-
-for example:
-$ ./12_archive math253 2019 S1
-""")
+        print("ERROR: Incorrect command line...")
+        print(__doc__)
         sys.exit(1)
     archivename = archivename.replace('{COURSE}', sys.argv[1])
     archivename = archivename.replace('{YEAR}', sys.argv[2])

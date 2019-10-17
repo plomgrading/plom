@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Reassemble tests from completed marked questions.
+"""
 
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
-__license__ = "AGPLv3"
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 from collections import defaultdict
 import json
@@ -89,7 +95,5 @@ if __name__ == '__main__':
                 )
             )
     fh.close()
-    # pipe commands through gnu-parallel
     os.system("parallel --bar <commandlist.txt")
-    # then delete command file.
     os.unlink("commandlist.txt")
