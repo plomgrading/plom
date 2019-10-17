@@ -9,6 +9,14 @@
 #
 # This the CI configuration for Plom
 
+# TODO list
+# ---------
+#   * use our Dockerfile instead of apt-get
+#       - I think this is "dind"
+#   * prepare an sql dump and some pngs so
+#     we can fake the grading.
+#   * test scripts 08 through 12
+
 image: ubuntu:18.04
 
 variables:
@@ -45,13 +53,13 @@ job imageServerStarts:
     - curl https://www.math.ubc.ca/~cbm/tmp/resources.tar.gz | tar -zx
     - ls resources
     - ls scanAndGroup/scannedExams
-    - cd scanAndGroup
+    - pushd scanAndGroup
     - python3 03_scans_to_page_images.py
     - python3 04_decode_images.py
     - python3 05_missing_pages.py
     - python3 06_group_pages.py
-    - cd ..
-    - cd imageServer
+    - popd
+    - pushd imageServer
     - ip addr
     - python3 image_server.py &
     - sleep 4
@@ -68,7 +76,11 @@ job imageServerStarts:
     - sleep 1
     - echo "Should be no jobs and this should succeed"
     - jobs -l
-    - cd ..
+    - popd
+    - pushd finishing
+    - echo "The 07 script should fail as we did not grade and ID"
+    - if (python3 07_check_completed.py); then false; else true; fi
+    - popd
 
 job backgroundTest:
   before_script:
