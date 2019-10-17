@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+
+"""
+Utilities for canned users and auto-generated (poor) passwords
+"""
+
+__author__ = "Colin B. Macdonald, Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2019 Colin B. Macdonald, Andrew Rechnitzer"
+__license__ = "AGPLv3"
+
+
 import secrets
 
 words = """
@@ -74,31 +85,13 @@ names = """aiden azami basia bob caris carol dave duska erin evander fatima fran
 names = names.split()
 
 
-class aliceBob:
-    def __init__(self):
-        self.userList = []
-        for n in names:
-            p = self.simplePassword()
-            self.userList.append([n, p])
+def simplePassword():
+    return secrets.choice(words) + str(secrets.randbelow(100)) + secrets.choice(words)
 
-    def simplePassword(self):
-        return (
-            secrets.choice(words) + str(secrets.randbelow(100)) + secrets.choice(words)
-        )
 
-    def generate(self):
-        self.userList = []
-        for n in names:
-            p = (
-                secrets.choice(words)
-                + str(secrets.randbelow(100))
-                + secrets.choice(words)
-            )
-            self.userList.append([n, p])
-
-    def getList(self):
-        return self.userList
-
-    def getNewList(self):
-        self.generate()
-        return self.userList
+def makeRandomUserList():
+    lst = []
+    for n in names:
+        p = simplePassword()
+        lst.append([n, p])
+    return lst
