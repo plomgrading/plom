@@ -95,3 +95,12 @@ def makeRandomUserList():
         p = simplePassword()
         lst.append([n, p])
     return lst
+
+
+def makeNumberedUserList():
+    lst = []
+    for i in range(0, len(names)):
+        n = "user{}".format(i)
+        p = simplePassword()
+        lst.append([n, p])
+    return lst
