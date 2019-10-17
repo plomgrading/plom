@@ -48,7 +48,7 @@ def format_int_list_with_runs(L):
             r = r + str(i)
         elif start is not None and i not in L:  # run ended
             if i > start + 1:
-                r = r + str(1 - i)
+                r = r + "–" + str(i - 1)
             if i < M:  # not last run
                 r = r + ", "
             start = None
