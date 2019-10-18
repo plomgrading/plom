@@ -121,7 +121,7 @@ def reOrientPage(fname, qrs):
         return True
     if flipFlag and not upFlag:
         # is flipped, so rotate 180
-        print(" .  {}: reorienting: 180 degree rotation".format(fname))
+        #print(" .  {}: reorienting: 180 degree rotation".format(fname))
         subprocess.run(
             ["mogrify", "-quiet", "-rotate", "180", fname],
             stderr=subprocess.STDOUT,
