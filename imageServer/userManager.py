@@ -158,7 +158,6 @@ class ManagerDialog(QDialog):
         grid = QGridLayout()
         grid.addWidget(self.pwL, 2, 1)
         grid.addWidget(self.pwLE, 2, 2)
-        grid.addWidget(self.pwCB, 4, 4)
         grid.addWidget(self.pwL2, 3, 1)
         grid.addWidget(self.pwLE2, 3, 2)
         grid.addWidget(self.okB, 4, 3)
