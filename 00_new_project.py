@@ -74,6 +74,7 @@ files += [
 ]
 
 files += [
+    "imageServer/aliceBob.py",
     "imageServer/authenticate.py",
     "imageServer/examviewwindow.py",
     "imageServer/identify_manager.py",
