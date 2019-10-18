@@ -14,10 +14,10 @@ import os
 import sqlite3
 import sys
 
-from utils import format_int_list_with_runs
 # this allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
+from resources.misc_utils import format_int_list_with_runs
 
 # Do we need this?
 # sys.path.append("../imageServer")
