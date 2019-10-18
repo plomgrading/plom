@@ -42,9 +42,7 @@ sslContext.check_hostname = False
 # Server info defaults
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
 
-
-# aliceBob to build canned userlist with passwords
-from aliceBob import aliceBob
+from aliceBob import simplePassword, makeRandomUserList, makeNumberedUserList
 
 
 class CannedUserList(QDialog):
@@ -199,11 +197,11 @@ class UserDialog(QDialog):
         self.userL = QLabel("Username:")
         self.pwL = QLabel("Password:")
         self.pwL2 = QLabel("and again:")
-        ab = aliceBob()
         self.userLE = QLineEdit("")
-        self.pwLE = QLineEdit(ab.simplePassword())
+        initialpw = simplePassword()
+        self.pwLE = QLineEdit(initialpw)
         # self.pwLE.setEchoMode(QLineEdit.Password)
-        self.pwLE2 = QLineEdit("")
+        self.pwLE2 = QLineEdit(initialpw)
         self.pwLE2.setEchoMode(QLineEdit.Password)
         self.okB = QPushButton("Accept")
         self.okB.clicked.connect(self.validate)
@@ -275,7 +273,6 @@ class userManager(QWidget):
         if os.path.exists("../resources/userList.json"):
             with open("../resources/userList.json") as data_file:
                 self.users = json.load(data_file)
-                print("Users = {}".format(self.users))
         else:
             self.users = {}
 
@@ -402,10 +399,11 @@ class userManager(QWidget):
 
     def buildCannedUsers(self):
         # get canned user list
-        ab = aliceBob()
-        lst = ab.getNewList()
-        # shuffle list into random order
-        random.shuffle(lst)
+        # TODO: make this chooesable somehow
+        # lst = makeRandomUserList()
+        lst = makeNumberedUserList()
+        # uncomment the below to shuffle list into random order
+        # random.shuffle(lst)
         tmp = CannedUserList(lst)
         if tmp.exec_() != QDialog.Accepted:
             return
