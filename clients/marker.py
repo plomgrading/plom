@@ -80,31 +80,50 @@ class BackgroundDownloader(QThread):
 class BackgroundUploader(QThread):
     uploaded = pyqtSignal(str, str, str, str, str, int, str)
 
-    def setUploadInfo(self, code, gr, aname, pname, cname, mtime, tags):
-        self.code = code
-        self.gr = gr
-        self.aname = aname
-        self.pname = pname
-        self.cname = cname
-        self.mtime = mtime
-        self.tags = tags
+    def start_me_up(self):
+        # TODO: combine with init!  or into run below?
+        from queue import SimpleQueue
+        self.q = SimpleQueue()
+        print('Q: starting with new empty queue')
+    #def __init__(self):
+    #    QThread.__init__(self, parent)
 
-    def run(self):
-        afile = os.path.basename(self.aname)
-        messenger.putFileDav(self.aname, afile)
+    def addNewUpload(self, code, gr, aname, pname, cname, mtime, tags):
+        self.q.put((code, gr, aname, pname, cname, mtime, tags))
+
+    def tryToUpload(self):
+        if self.q.empty():
+            print('Q: empty, no-op')
+            return
+        print('Q: we have something in the queue, trying to upload it')
+        # TODO: get versus get_nowait(), use try except insread of above
+        code, gr, aname, pname, cname, mtime, tags = self.q.get()
+        print("Q: we're about to upload code {}".format(code))
+        print((code, gr, aname, pname, cname, mtime, tags))
+        print('Q: doing DAV')
+        afile = os.path.basename(aname)
+        messenger.putFileDav(aname, afile)
         # copy plom file to webdav
-        pfile = os.path.basename(self.pname)
-        messenger.putFileDav(self.pname, pfile)
+        pfile = os.path.basename(pname)
+        messenger.putFileDav(pname, pfile)
         # copy comment file to webdav
-        cfile = os.path.basename(self.cname)
-        messenger.putFileDav(self.cname, cfile)
+        cfile = os.path.basename(cname)
+        messenger.putFileDav(cname, cfile)
 
         # needed to send "please delete" back to server
+        # TODO: for now, Marker must do this (knows token etc)
+        print('Q: emitting')
         self.uploaded.emit(
-            self.code, self.gr, afile, pfile, cfile, self.mtime, self.tags
+            code, gr, afile, pfile, cfile, mtime, tags
         )
-        # then exit
-        self.quit()
+        print('Q: done with upload')
+
+    def run(self):
+        import time
+        while True:
+            time.sleep(2)
+            self.tryToUpload()
+        self.exit()
 
 
 class TestPageGroup:
@@ -401,7 +420,10 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
         # and another for uploading
         self.backgroundUploader = BackgroundUploader()
+        self.backgroundUploader.start_me_up()
+        # TODO: this connects the message send stuff (here in Marker)
         self.backgroundUploader.uploaded.connect(self.uploadInBackgroundFinish)
+        self.backgroundUploader.start()
         # Now cache latex for comments:
         self.cacheLatexComments()
 
@@ -756,7 +778,7 @@ class MarkerClient(QWidget):
         )
         if msg[0] == "ACK":
             # upload in background
-            self.uploadInBackgroundStart(
+            self.uploadInBackgroundEnqueue(
                 self.prxM.data(index[0]),  # current tgv
                 gr,  # grade
                 aname,  # annotated file
@@ -773,11 +795,10 @@ class MarkerClient(QWidget):
             # self.annotateTest()
             self.ui.annButton.animateClick()
 
-    def uploadInBackgroundStart(self, code, gr, aname, pname, cname, mtime, tags):
-        self.backgroundUploader.setUploadInfo(
+    def uploadInBackgroundEnqueue(self, code, gr, aname, pname, cname, mtime, tags):
+        self.backgroundUploader.addNewUpload(
             code, gr, aname, pname, cname, mtime, tags
         )
-        self.backgroundUploader.start()
 
     def uploadInBackgroundFinish(self, code, gr, afile, pfile, cfile, mtime, tags):
         # Server will save data and copy the annotated file, then delete it
@@ -793,7 +814,7 @@ class MarkerClient(QWidget):
                 pfile,
                 cfile,
                 mtime,
-                self.pageGroup,
+                self.pageGroup,   # Suspicious: should come from Q not self!!
                 self.version,
                 tags,
             ]
@@ -805,6 +826,7 @@ class MarkerClient(QWidget):
         else:
             # This should not happen!
             # if remarking then move backup annotated file back.
+            print('oh no, not this!')
             if remarkFlag:
                 shutil.move(aname + ".bak", aname)
                 shutil.move(pname + ".bak", pname)
