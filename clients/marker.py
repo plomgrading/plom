@@ -773,6 +773,7 @@ class MarkerClient(QWidget):
         # to upload this particular pageimage - this may have changed
         # depending on what else is going on.
 
+        # TODO: this can't be here: we don't know for sure the upload will happen "NOW"
         msg = messenger.SRMsg(
             ["mUSO", self.userName, self.token, self.prxM.data(index[0])]
         )
