@@ -80,14 +80,6 @@ class BackgroundDownloader(QThread):
 class BackgroundUploader(QThread):
     uploaded = pyqtSignal(str, str, str, str, str, int, str)
 
-    def start_me_up(self):
-        # TODO: combine with init!  or into run below?
-        from queue import SimpleQueue
-        self.q = SimpleQueue()
-        print('Q: starting with new empty queue')
-    #def __init__(self):
-    #    QThread.__init__(self, parent)
-
     def addNewUpload(self, code, gr, aname, pname, cname, mtime, tags):
         self.q.put((code, gr, aname, pname, cname, mtime, tags))
 
@@ -119,7 +111,9 @@ class BackgroundUploader(QThread):
         print('Q: done with upload')
 
     def run(self):
-        import time
+        from queue import SimpleQueue
+        self.q = SimpleQueue()
+        print('Q: starting with new empty queue')
         while True:
             time.sleep(2)
             self.tryToUpload()
@@ -420,7 +414,6 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
         # and another for uploading
         self.backgroundUploader = BackgroundUploader()
-        self.backgroundUploader.start_me_up()
         # TODO: this connects the message send stuff (here in Marker)
         self.backgroundUploader.uploaded.connect(self.uploadInBackgroundFinish)
         self.backgroundUploader.start()
