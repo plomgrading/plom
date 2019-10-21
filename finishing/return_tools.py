@@ -119,7 +119,7 @@ def canvas_csv_add_return_codes(csvin, csvout):
 
 
         assert len(name) > 0, "Student name is empty"
-        assert len(sn) == 8, "Student number is not 8 characters"
+        assert len(sn) == 8, "Student number is not 8 characters: row = " + str(row)
 
         code = myhash(sn)
 
