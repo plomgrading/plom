@@ -114,7 +114,7 @@ def canvas_csv_add_return_codes(csvin, csvout):
         sn_ = str(row['Student Number'])
         # as of 2019-10 we don't really dare use Student Number but let's ensure its not insane if it is there...
         if not sn_ == 'nan':
-            assert sn == sn_, "Canvas has misleading student numbers: " + str((sn,sn_)) ", for row = " + str(row)
+            assert sn == sn_, "Canvas has misleading student numbers: " + str((sn,sn_)) + ", for row = " + str(row)
 
 
         assert len(name) > 0, "Student name is empty"
