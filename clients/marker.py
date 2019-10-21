@@ -718,32 +718,36 @@ class MarkerClient(QWidget):
             return
         # Create annotated filename. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
-        tmpdir = tempfile.mkdtemp(prefix=self.prxM.data(index[0])[1:] + "_", dir=self.workingDirectory)
+        thingy = self.prxM.data(index[0])[1:]
+        tmpdir = tempfile.mkdtemp(prefix=thingy + "_", dir=self.workingDirectory)
         # TODO: careful with TemporaryDirectory, probably deleted by GC
         print(tmpdir)
         os.system('ls ' + tmpdir)
         print(tmpdir)
         #directoryPath = tempDirectory.name
-        aname = os.path.join(
-            tmpdir, "G" + self.prxM.data(index[0])[1:] + ".png"
-        )
+        aname = os.path.join(tmpdir, "G" + thingy + ".png")
         cname = aname[:-3] + "json"
         pname = aname[:-3] + "plom"
+
         # If image has been marked confirm with user if they want
         # to annotate further.
         remarkFlag = False
         if self.prxM.data(index[1]) in ["marked"]:
             msg = SimpleMessage("Continue marking paper?")
-            if msg.exec_() == QMessageBox.Yes:
-                # Copy the current annotated filename to backup file in case
-                # user cancels their annotations.
-                shutil.copyfile(aname, aname + ".bak")
-                shutil.copyfile(pname, pname + ".bak")
-                remarkFlag = True
-            else:
+            if not msg.exec_() == QMessageBox.Yes:
                 return
-        # Copy the original image to the annotated filename.
-        shutil.copyfile("{}".format(self.prxM.getOriginalFile(index[0].row())), aname)
+            remarkFlag = True
+            oldtmpdir = "TODOozy"  # WIP from saved data
+            oldaname = os.path.join(oldname, 'G' + thingy + ".png")
+            oldcname = os.path.join(oldname, 'G' + thingy + ".json")
+            oldpname = os.path.join(oldname, 'G' + thingy + ".plom")
+            shutil.copyfile(oldaname, aname)
+            shutil.copyfile(oldcname, cname)
+            shutil.copyfile(oldpname, pname)
+
+        if not remarkFlag:
+            # Copy the original image to the annotated filename.
+            shutil.copyfile("{}".format(self.prxM.getOriginalFile(index[0].row())), aname)
 
         # Get mark, markingtime, and launch-again flag from 'waitForAnnotator'
         prevState = self.prxM.data(index[1])
@@ -754,10 +758,7 @@ class MarkerClient(QWidget):
             [gr, mtime, launchAgain] = self.waitForAnnotator(aname, None)
         # Exited annotator with 'cancel', so don't save anything.
         if gr is None:
-            # if remarking then move backup annotated file back.
-            if remarkFlag:
-                shutil.move(aname + ".bak", aname)
-                shutil.move(pname + ".bak", pname)
+            # TODO: kill the tmpdir?
             # reselect the row we were working on
             self.prxM.setData(index[1], prevState)
             self.ui.tableView.selectRow(index[1].row())
