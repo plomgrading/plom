@@ -92,13 +92,13 @@ class BackgroundUploader(QThread):
         self.q.put((code, gr, aname, pname, cname, mtime, tags))
 
     def tryToUpload(self):
-        if self.q.empty():
+        from queue import Empty as EmptyQueueException
+        try:
+            code, gr, aname, pname, cname, mtime, tags = self.q.get_nowait()
+        except EmptyQueueException:
             print('Q: empty, no-op')
             return
-        print('Q: we have something in the queue, trying to upload it')
-        # TODO: get versus get_nowait(), use try except insread of above
-        code, gr, aname, pname, cname, mtime, tags = self.q.get()
-        print("Q: we're about to upload code {}".format(code))
+        print("Q: we just popped code {} from queue, uploading...".format(code))
         print((code, gr, aname, pname, cname, mtime, tags))
         print('Q: doing DAV')
         afile = os.path.basename(aname)
