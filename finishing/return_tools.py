@@ -111,6 +111,12 @@ def canvas_csv_add_return_codes(csvin, csvout):
     for i, row in df.iterrows():
         name = row['Student']
         sn = str(row['Student Number'])
+        sn_ = str(row['SIS User ID'])
+        if sn == 'nan':
+            sn = sn_
+        else:
+            assert sn == sn_, "Canvas is fucking with us!" + str((sn,sn_))
+
 
         assert len(name) > 0, "Student name is empty"
         assert len(sn) == 8, "Student number is not 8 characters"
