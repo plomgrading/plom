@@ -718,8 +718,14 @@ class MarkerClient(QWidget):
             return
         # Create annotated filename. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
+        tmpdir = tempfile.mkdtemp(prefix=self.prxM.data(index[0])[1:] + "_", dir=self.workingDirectory)
+        # TODO: careful with TemporaryDirectory, probably deleted by GC
+        print(tmpdir)
+        os.system('ls ' + tmpdir)
+        print(tmpdir)
+        #directoryPath = tempDirectory.name
         aname = os.path.join(
-            self.workingDirectory, "G" + self.prxM.data(index[0])[1:] + ".png"
+            tmpdir, "G" + self.prxM.data(index[0])[1:] + ".png"
         )
         cname = aname[:-3] + "json"
         pname = aname[:-3] + "plom"
