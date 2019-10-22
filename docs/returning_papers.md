@@ -74,7 +74,7 @@ We have a secret code for each student.  We want to upload these numbers to Canv
    * If you kept the same salt, you may be able to upload just the
      grades.
 
-    * Note: This script requires python 3.6 (on Ubuntu 16.04 call python3.6 explicity)
+   * Note: This script requires python 3.6 (on Ubuntu 16.04 call python3.6 explicity)
 
 
 ## Sharing with students
@@ -92,12 +92,12 @@ We have a secret code for each student.  We want to upload these numbers to Canv
     > your grade, please fill out the Grade Change Request Form at
     > SOME URL.
 
-   * Make sure you give them a https:// link.  Double check this.
+  * Make sure you give them a https:// link.  Double check this.
 
-   * Post the URL somewhere secure like Canvas, not on the open
-     internet.  We want to minimize brute-force attempts to get
-     other peoples' exams.
+  * Post the URL somewhere secure like Canvas, not on the open
+    internet.  We want to minimize brute-force attempts to get
+    other peoples' exams.
 
-   * Unmute the return code.
+  * Unmute the return code.
 
-   * Unmute the test.
+  * Unmute the test.
