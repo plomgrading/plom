@@ -85,7 +85,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     # TODO: could 'left' lose someone who is in Plom, but missing in Canvas?
     # https://gitlab.math.ubc.ca/andrewr/MLP/issues/159
     df = pandas.merge(df, marks, how='left',
-                      left_on='SIS Login ID', right_on='StudentID')
+                      left_on='SIS User ID', right_on='StudentID')
     df[testheader] = df['Total']
     df = df[cols]  # discard again (e.g., PG specific stuff)
 
