@@ -55,7 +55,7 @@ sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
 
 # set up variables to store paths for marker and id clients
-tempDirectory = tempfile.TemporaryDirectory()
+tempDirectory = tempfile.TemporaryDirectory(prefix='plom_')
 directoryPath = tempDirectory.name
 
 # Read https://mayaposch.wordpress.com/2011/11/01/how-to-really-truly-use-qthreads-the-full-explanation/
