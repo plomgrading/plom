@@ -77,8 +77,18 @@ We have a secret code for each student.  We want to upload these numbers to Canv
 
 ## Sharing with students
 
-   * Make a Canvas announcement or similar explaing what they need
-     to do: TODO: add suggested text here:
+  * Make a Canvas announcement or similar explaing what they need
+    to do: for example:
+
+    > Midterm return link: https://amcweb.math.ubc.ca/~your/path
+    >
+    > You can obtain your Midterm by visiting the link given above.  You
+    > will need your student number and your 12-digit "return code" from
+    > the Canvas grade sheet.
+    >
+    > If you've reviewed the solutions and would like someone to reconsider
+    > your grade, please fill out the Grade Change Request Form at
+    > SOME URL.
 
    * Make sure you give them a https:// link.  Double check this.
 
