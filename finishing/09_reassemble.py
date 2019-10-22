@@ -88,6 +88,8 @@ if __name__ == '__main__':
     # Look at all the successfully completed exams
     for n in sorted(examsCompleted.keys()):
         if examsCompleted[n]:
+            # TODO: check if anything changed (either here or in testReassember)
+            # https://gitlab.math.ubc.ca/andrewr/MLP/issues/392
             cover = "coverPages/cover_{}.pdf".format(n.zfill(4))
             fh.write(
                 'python3 testReassembler.py {} {} {} {} "{}"\n'.format(
