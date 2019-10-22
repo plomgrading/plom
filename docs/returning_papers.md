@@ -59,6 +59,8 @@ We have a secret code for each student.  We want to upload these numbers to Canv
      csv file as `canvas_from_export.csv` and move it `finishing/`.
      Possibly need to select "All Sections".
 
+  * TODO: new Canvas gradebook doesn't use "mute", update these...
+
 
 ## Generated the files
 
