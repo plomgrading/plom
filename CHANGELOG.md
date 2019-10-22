@@ -8,10 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* preliminary support for a canned user list.
+* autogenerate password suggestions for new users.
 
 ### Changed
+* make 04 script less verbose.
 
 ### Fixed
+* userManager was failing to start.
+* return to greeter dialog on e.g., wrong server or pagegroup/version out of range.
 
 
 ## [0.2.0] - 2019-10-11
