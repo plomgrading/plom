@@ -486,15 +486,14 @@ class IDClient(QWidget):
         self.ui.idEdit.setFocus()
         return True
 
-    def identifyStudent(self, index, alreadyIDd=False):
+    def identifyStudent(self, index, sid, sname, alreadyIDd=False):
         """User ID's the student of the current paper. Some care around whether
         or not the paper was ID'd previously. Not called directly - instead
         is called by "enterID" or "enterName" when user hits return on either
         of those lineedits.
         """
-        # Pass the contents of the ID-lineedit and Name-lineedit to the exam
-        # model to put data into the table.
-        self.exM.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text())
+        # Pass the info to the exam model to put data into the table.
+        self.exM.identifyStudent(index, sid, sname)
         code = self.exM.data(index[0])
         # If the paper was ID'd previously send return-already-ID'd (iRAD)
         # If the paper was not ID'd previously send return-ID'd (iRID)
@@ -505,23 +504,19 @@ class IDClient(QWidget):
                 self.userName,
                 self.token,
                 code,
-                self.ui.idEdit.text(),
-                self.ui.nameEdit.text(),
+                sid,
+                sname,
             ]
         )
         if msg[0] == "ERR":
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
-            # Use timer to avoid conflict between completer and
-            # clearing the line-edit. Very annoying but this fixes it.
-            QTimer.singleShot(0, self.ui.idEdit.clear)
-            QTimer.singleShot(0, self.ui.nameEdit.clear)
+            self.ui.idEdit.clear()
+            self.ui.nameEdit.clear()
             return False
         else:
-            # Use timer to avoid conflict between completer and
-            # clearing the line-edit. Very annoying but this fixes it.
-            QTimer.singleShot(0, self.ui.idEdit.clear)
-            QTimer.singleShot(0, self.ui.nameEdit.clear)
+            self.ui.idEdit.clear()
+            self.ui.nameEdit.clear()
             # Update un-id'd count.
             if not alreadyIDd:
                 self.unidCount -= 1
@@ -608,7 +603,7 @@ class IDClient(QWidget):
             else:
                 self.ui.nameEdit.setText("Unknown")
         # Run identify student command (which talks to server)
-        if self.identifyStudent(index, alreadyIDd):
+        if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text(), alreadyIDd):
             if alreadyIDd:
                 self.moveToNextUnID()
                 return
@@ -689,7 +684,7 @@ class IDClient(QWidget):
                 msg.exec_()
                 return
         # Run identify student command (which talks to server)
-        if self.identifyStudent(index, alreadyIDd):
+        if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text(), alreadyIDd):
             if alreadyIDd:
                 self.moveToNextUnID()
                 return
