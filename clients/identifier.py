@@ -619,7 +619,7 @@ class IDClient(QWidget):
             if last_row_highlighted:
                 if self.requestNext():
                     return
-                self.moveToNextUnID()
+            self.moveToNextUnID()
 
 
     def enterName(self):
@@ -700,4 +700,4 @@ class IDClient(QWidget):
             if last_row_highlighted:
                 if self.requestNext():
                     return
-                self.moveToNextUnID()
+            self.moveToNextUnID()
