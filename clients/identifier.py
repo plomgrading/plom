@@ -209,6 +209,7 @@ class IDClient(QWidget):
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nameEdit.returnPressed.connect(self.enterName)
         self.ui.closeButton.clicked.connect(self.shutDown)
+        self.ui.nextButton.setText("&Skip (for now)")  # TODO: Andrew do properly
         self.ui.nextButton.clicked.connect(self.requestNext)
         # Make sure no button is clicked by a return-press
         self.ui.nextButton.setAutoDefault(False)
@@ -455,7 +456,7 @@ class IDClient(QWidget):
         # ask server for next unid'd paper
         msg = messenger.SRMsg(["iNID", self.userName, self.token])
         if msg[0] == "ERR":
-            return
+            return False   # TODO: does this always mean "no more"?
         # return message is [ACK, code, filename]
         test = msg[1]
         fname = msg[2]
@@ -473,6 +474,7 @@ class IDClient(QWidget):
         # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()
         self.ui.idEdit.setFocus()
+        return True
 
     def identifyStudent(self, index, alreadyIDd=False):
         """User ID's the student of the current paper. Some care around whether
@@ -610,13 +612,15 @@ class IDClient(QWidget):
                 self.ui.nameEdit.setText("Unknown")
         # Run identify student command (which talks to server)
         if self.identifyStudent(index, alreadyIDd):
-            # if successful, and everything local has been ID'd get next
-            if alreadyIDd is False and self.unidCount == 0:
-                self.requestNext()
-            else:
-                # otherwise move to the next unidentified paper.
+            if alreadyIDd:
                 self.moveToNextUnID()
-        return
+                return
+            last_row_highlighted = True  # TODO: how to check this?
+            if last_row_highlighted:
+                if self.requestNext():
+                    return
+                self.moveToNextUnID()
+
 
     def enterName(self):
         """Triggered when user hits return in the name-lineedit.. that is
@@ -689,10 +693,11 @@ class IDClient(QWidget):
                 return
         # Run identify student command (which talks to server)
         if self.identifyStudent(index, alreadyIDd):
-            # if successful, and everything local has been ID'd get next
-            if alreadyIDd is False and self.unidCount == 0:
-                self.requestNext()
-            else:
-                # otherwise move to the next unidentified paper.
+            if alreadyIDd:
                 self.moveToNextUnID()
-        return
+                return
+            last_row_highlighted = True  # TODO: how to check this?
+            if last_row_highlighted:
+                if self.requestNext():
+                    return
+                self.moveToNextUnID()
