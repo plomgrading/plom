@@ -162,15 +162,17 @@ class ExamModel(QAbstractTableModel):
 class IDClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
-    def __init__(self, userName, password, server, message_port, web_port):
+    def __init__(self):
         # Init the client with username, password, server and port data.
         super(IDClient, self).__init__()
+
+    def getToWork(self, userName, password, server, message_port, web_port):
         # Init the messenger with server and port data.
         messenger.setServerDetails(server, message_port, web_port)
         messenger.startMessenger()
         # Ping to see if server is up.
         if not messenger.pingTest():
-            QTimer.singleShot(100, self.shutDownError)
+            self.shutDownError()
             return
         # Save username, password, and path the local temp directory for
         # image files and the class list.
@@ -197,7 +199,7 @@ class IDClient(QWidget):
             self.token = requestToken(self.userName, self.password)
         except ValueError as e:
             print("DEBUG: token fail: {}".format(e))
-            QTimer.singleShot(100, self.shutDownError)
+            self.shutDownError()
             return
         # Get the classlist from server for name/ID completion.
         self.getClassList()

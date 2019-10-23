@@ -121,9 +121,10 @@ class Chooser(QDialog):
             # Run the ID client.
             self.setEnabled(False)
             self.hide()
-            idwin = identifier.IDClient(user, pwd, server, mport, wport)
+            idwin = identifier.IDClient()
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
+            idwin.getToWork(user, pwd, server, mport, wport)
             self.parent.identifier = idwin
         else:
             # Run the Total client.
