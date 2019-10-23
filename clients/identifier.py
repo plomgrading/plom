@@ -508,19 +508,15 @@ class IDClient(QWidget):
                 sname,
             ]
         )
+        self.ui.idEdit.clear()
+        self.ui.nameEdit.clear()
         if msg[0] == "ERR":
-            # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
-            self.ui.idEdit.clear()
-            self.ui.nameEdit.clear()
             return False
-        else:
-            self.ui.idEdit.clear()
-            self.ui.nameEdit.clear()
-            # Update un-id'd count.
-            if not alreadyIDd:
-                self.unidCount -= 1
-            return True
+        # Update un-id'd count.
+        if not alreadyIDd:
+            self.unidCount -= 1
+        return True
 
     def moveToNextUnID(self):
         # Move to the next test in table which is not ID'd.
