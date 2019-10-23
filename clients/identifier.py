@@ -210,7 +210,7 @@ class IDClient(QWidget):
         self.ui.nameEdit.returnPressed.connect(self.enterName)
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.nextButton.setText("&Skip (for now)")  # TODO: Andrew do properly
-        self.ui.nextButton.clicked.connect(self.requestNext)
+        self.ui.nextButton.clicked.connect(self.skipOnClick)
         # Make sure no button is clicked by a return-press
         self.ui.nextButton.setAutoDefault(False)
         self.ui.closeButton.setAutoDefault(False)
@@ -229,6 +229,16 @@ class IDClient(QWidget):
         # Create variable to store ID/Name conf window position
         # Initially set to top-left corner of window
         self.msgGeometry = None
+
+
+    def skipOnClick(self):
+        """Skip the current, moving to the next or loading a new one"""
+        last_row_is_highlighted = True  # TODO: how to check this?
+        if last_row_is_highlighted:
+            if self.requestNext():
+                return
+        self.moveToNextUnID()
+
 
     def getClassList(self):
         """Send request for classlist (iRCL) to server. The server then sends
