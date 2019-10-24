@@ -16,6 +16,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
 
+import messenger
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
 from resources.version import Plom_API_Version
@@ -106,6 +107,21 @@ class Chooser(QDialog):
         wport = self.ui.wportSB.value()
         # save those settings
         self.saveDetails()
+
+        # Have Messenger login into to server
+        messenger.setServerDetails(server, mport, wport)
+        messenger.startMessenger()
+        # First ping to see if server is available
+        if not messenger.pingTest():
+            print("TODO: should pop up dialog here?")
+            return
+        try:
+            messenger.requestAndSaveToken(user, pwd)
+        except ValueError as e:
+            print("DEBUG: token fail: {}".format(e))
+            print("TODO: should pop up dialog here?")
+            return
+
         # Now run the appropriate client sub-application
         if self.runIt == "Marker":
             # Run the marker client.
@@ -124,7 +140,7 @@ class Chooser(QDialog):
             idwin = identifier.IDClient()
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
-            idwin.getToWork(user, pwd, server, mport, wport)
+            idwin.getToWork(messenger)
             self.parent.identifier = idwin
         else:
             # Run the Total client.

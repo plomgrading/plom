@@ -29,7 +29,6 @@ from PyQt5.QtCore import (
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QCompleter, QWidget, QMainWindow, QInputDialog, QMessageBox
 from examviewwindow import ExamViewWindow
-import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_identify import Ui_IdentifyWindow
 
@@ -171,14 +170,9 @@ class IDClient(QWidget):
     def __init__(self):
         super(IDClient, self).__init__()
 
-    def getToWork(self, userName, password, server, message_port, web_port):
-        # Init the messenger with server and port data.
-        messenger.setServerDetails(server, message_port, web_port)
-        messenger.startMessenger()
-        # Ping to see if server is up.
-        if not messenger.pingTest():
-            self.shutDownError()
-            return
+    def getToWork(self, mess):
+        global messenger
+        messenger = mess
         # Save the local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # List of papers we have to ID.
@@ -188,7 +182,7 @@ class IDClient(QWidget):
         self.ui = Ui_IdentifyWindow()
         self.ui.setupUi(self)
         # Paste username into the GUI.
-        self.ui.userLabel.setText(userName)
+        self.ui.userLabel.setText("Who Cares?")
         # Exam model for the table of papers - associate to table in GUI.
         self.exM = ExamModel()
         self.ui.tableView.setModel(self.exM)
@@ -196,13 +190,7 @@ class IDClient(QWidget):
         # Paste into appropriate location in gui.
         self.testImg = ExamViewWindow()
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
-        # Start using connection to server.
-        try:
-            messenger.requestAndSaveToken(userName, password)
-        except ValueError as e:
-            print("DEBUG: token fail: {}".format(e))
-            self.shutDownError()
-            return
+
         # Get the classlist from server for name/ID completion.
         self.getClassList()
         # Init the name/ID completers and a validator for ID
