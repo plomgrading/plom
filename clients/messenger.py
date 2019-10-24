@@ -3,6 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+import sys
 import asyncio
 import easywebdav2
 import json
@@ -10,6 +11,9 @@ import ssl
 from PyQt5.QtWidgets import QMessageBox
 import urllib3
 from useful_classes import ErrorMessage
+
+sys.path.append("..")  # this allows us to import from ../resources
+from resources.version import Plom_API_Version
 
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.
@@ -56,6 +60,27 @@ async def handle_messaging(msg):
     rmesg = json.loads(data.decode())  # message should be a list [ACK, arg1, arg2, etc]
     writer.close()
     return rmesg
+
+
+def requestAndSaveToken(user, pw):
+    """Get a authorisation token from the server
+
+    The request sends name and password (over ssl) to the server. If
+    hash of password matches the one on file, then the server sends
+    back an "ACK" and an authentication token. The token is then used
+    to authenticate future transactions with the server (since
+    password hashing is slow).
+
+    Raise a ValueError with message from the server.
+
+    TODO: what happens on timeout?
+    """
+    global _userName, _token
+    msg, token = SRMsg(["AUTH", user, pw, Plom_API_Version])
+    if not msg == "ACK":
+        raise ValueError(token)
+    _userName = user
+    _token = token
 
 
 def msg(msgcode, *args):

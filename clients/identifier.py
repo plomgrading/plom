@@ -25,7 +25,6 @@ from examviewwindow import ExamViewWindow
 import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_identify import Ui_IdentifyWindow
-from client_utils import requestToken
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
@@ -163,7 +162,6 @@ class IDClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
     def __init__(self):
-        # Init the client with username, password, server and port data.
         super(IDClient, self).__init__()
 
     def getToWork(self, userName, password, server, message_port, web_port):
@@ -174,10 +172,7 @@ class IDClient(QWidget):
         if not messenger.pingTest():
             self.shutDownError()
             return
-        # Save username, password, and path the local temp directory for
-        # image files and the class list.
-        self.userName = userName
-        self.password = password
+        # Save the local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # List of papers we have to ID.
         self.paperList = []
@@ -186,7 +181,7 @@ class IDClient(QWidget):
         self.ui = Ui_IdentifyWindow()
         self.ui.setupUi(self)
         # Paste username into the GUI.
-        self.ui.userLabel.setText(self.userName)
+        self.ui.userLabel.setText(userName)
         # Exam model for the table of papers - associate to table in GUI.
         self.exM = ExamModel()
         self.ui.tableView.setModel(self.exM)
@@ -196,14 +191,11 @@ class IDClient(QWidget):
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
         # Start using connection to server.
         try:
-            self.token = requestToken(self.userName, self.password)
+            messenger.requestAndSaveToken(userName, password)
         except ValueError as e:
             print("DEBUG: token fail: {}".format(e))
             self.shutDownError()
             return
-        # TODO: HACK HACK HACK, do elsewhere
-        messenger._userName = self.userName
-        messenger._token = self.token
         # Get the classlist from server for name/ID completion.
         self.getClassList()
         # Init the name/ID completers and a validator for ID
@@ -339,6 +331,7 @@ class IDClient(QWidget):
         take anything that this user has out-for-id-ing and return it to
         the todo pile. Then send a user-closing message so that the
         authorisation token is removed. Then finally close.
+        TODO: messenger needs to drop token here?
         """
         self.DNF()
         msg, = messenger.msg("UCL")
