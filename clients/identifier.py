@@ -201,6 +201,9 @@ class IDClient(QWidget):
             print("DEBUG: token fail: {}".format(e))
             self.shutDownError()
             return
+        # TODO: HACK HACK HACK, do elsewhere
+        messenger._userName = self.userName
+        messenger._token = self.token
         # Get the classlist from server for name/ID completion.
         self.getClassList()
         # Init the name/ID completers and a validator for ID
@@ -238,14 +241,14 @@ class IDClient(QWidget):
         of either two fields = FamilyName+GivenName or a single Name field.
         """
         # Send request for classlist (iRCL) to server
-        msg, remotefile = messenger.SRMsg(["iRCL", self.userName, self.token])
+        msg, remotefile = messenger.msg("iRCL")
         assert msg == "ACK", "Classlist problem"
         fileobj = BytesIO(b"")
         messenger.getFileDav(remotefile, fileobj)
         fileobj.seek(0)  # rewind
 
         # We have list, server can clean up (e.g., remove from webdav server)
-        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        msg, = messenger.msg("iDWF", remotefile)
         assert msg == "ACK"
 
         # csv reader needs file in text mode: this chokes on non-utf8?
@@ -267,14 +270,14 @@ class IDClient(QWidget):
         back the CSV of the predictions testnumber -> studentID.
         """
         # Send request for prediction list to server
-        msg, remotefile = messenger.SRMsg(["iRPL", self.userName, self.token])
+        msg, remotefile = messenger.msg("iRPL")
         assert msg == "ACK", "Prediction list problem"
         fileobj = BytesIO(b"")
         messenger.getFileDav(remotefile, fileobj)
         fileobj.seek(0)  # rewind
 
         # We have list, server can clean up (e.g., remove from webdav server)
-        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        msg, = messenger.msg("iDWF", remotefile)
         assert msg == "ACK"
 
         csvfile = TextIOWrapper(fileobj)
@@ -338,7 +341,7 @@ class IDClient(QWidget):
         authorisation token is removed. Then finally close.
         """
         self.DNF()
-        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        msg, = messenger.msg("UCL")
         assert msg == "ACK"
         self.my_shutdown_signal.emit(1)
         self.close()
@@ -354,23 +357,17 @@ class IDClient(QWidget):
         for r in range(rc):
             if self.exM.data(self.exM.index(r, 1)) != "identified":
                 # Tell user DNF, user, auth-token, and paper's code.
-                msg = messenger.SRMsg(
-                    [
-                        "iDNF",
-                        self.userName,
-                        self.token,
-                        self.exM.data(self.exM.index(r, 0)),
-                    ]
-                )
+                msg = messenger.msg("iDNF", self.exM.data(self.exM.index(r, 0)))
+
 
     def getAlreadyIDList(self):
         # Ask server for list of previously ID'd papers
-        msg, remotefile = messenger.SRMsg(["iGAL", self.userName, self.token])
+        msg, remotefile = messenger.msg("iGAL")
         assert msg == "ACK", "problem getting previously IDed list from server"
         fileobj = BytesIO(b"")
         messenger.getFileDav(remotefile, fileobj)
         # Ack that test received - server then deletes it from webdav
-        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        msg, = messenger.msg("iDWF", remotefile)
         assert msg == "ACK"
 
         # rewind the stream
@@ -396,14 +393,14 @@ class IDClient(QWidget):
         tgv = self.exM.paperList[r].prefix
         if self.exM.paperList[r].originalFile is not "":
             return
-        msg = messenger.SRMsg(["iGGI", self.userName, self.token, tgv])
+        msg = messenger.msg("iGGI", tgv)
         if msg[0] == "ERR":
             return
         fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
         tfname = msg[2]  # the temp original image file on webdav
         messenger.getFileDav(tfname, fname)
         # got original file so ask server to remove it.
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, tfname])
+        msg = messenger.msg("iDWF", tfname)
         self.exM.paperList[r].originalFile = fname
 
     def updateImage(self, r=0):
@@ -448,14 +445,14 @@ class IDClient(QWidget):
         list of papers and update the image.
         """
         # ask server for id-count update
-        msg = messenger.SRMsg(["iPRC", self.userName, self.token])
+        msg = messenger.msg("iPRC")
         # returns [ACK, #id'd, #total]
         if msg[0] == "ACK":
             self.ui.idProgressBar.setMaximum(msg[2])
             self.ui.idProgressBar.setValue(msg[1])
 
         # ask server for next unid'd paper
-        msg = messenger.SRMsg(["iNID", self.userName, self.token])
+        msg = messenger.msg("iNID")
         if msg[0] == "ERR":
             return
         # return message is [ACK, code, filename]
@@ -470,7 +467,7 @@ class IDClient(QWidget):
         # Add the paper [code, filename, etc] to the list
         self.addPaperToList(Paper(test, iname))
         # Tell server we got the image (iGTP) - the server then deletes it.
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, fname])
+        msg = messenger.msg("iDWF", fname)
         # Clean up table - and set focus on the ID-lineedit so user can
         # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()
@@ -489,29 +486,11 @@ class IDClient(QWidget):
         if alreadyIDd:
             # If the paper was ID'd previously send return-already-ID'd (iRAD)
             # with the code, ID, name.
-            msg = messenger.SRMsg(
-                [
-                    "iRAD",
-                    self.userName,
-                    self.token,
-                    code,
-                    self.ui.idEdit.text(),
-                    self.ui.nameEdit.text(),
-                ]
-            )
+            msg = messenger.msg("iRAD", code, self.ui.idEdit.text(), self.ui.nameEdit.text())
         else:
             # If the paper was not ID'd previously send return-ID'd (iRID)
             # with the code, ID, name.
-            msg = messenger.SRMsg(
-                [
-                    "iRID",
-                    self.userName,
-                    self.token,
-                    code,
-                    self.ui.idEdit.text(),
-                    self.ui.nameEdit.text(),
-                ]
-            )
+            msg = messenger.msg("iRID", code, self.ui.idEdit.text(), self.ui.nameEdit.text())
         if msg[0] == "ERR":
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)

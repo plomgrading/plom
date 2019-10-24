@@ -20,6 +20,8 @@ sslContext.check_hostname = False
 server = "127.0.0.1"
 message_port = 41984
 webdav_port = 41985
+_userName = None
+_token = None
 
 
 def setServerDetails(s, mp, dp):
@@ -54,6 +56,12 @@ async def handle_messaging(msg):
     rmesg = json.loads(data.decode())  # message should be a list [ACK, arg1, arg2, etc]
     writer.close()
     return rmesg
+
+
+def msg(msgcode, *args):
+    """Send message to server and get back a reply"""
+    a = (msgcode, _userName, _token, *args)
+    return SRMsg(a)
 
 
 def SRMsg(msg):
