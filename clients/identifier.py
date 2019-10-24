@@ -1,7 +1,14 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+# -*- coding: utf-8 -*-
+
+"""
+Identifier Tool
+"""
+
+__author__ = "Andrew Rechnitzer, Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer, Colin B. Macdonald"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 from collections import defaultdict
 import csv
