@@ -466,7 +466,7 @@ class IDClient(QWidget):
         # ask server for next unid'd paper
         msg = messenger.SRMsg(["iNID", self.userName, self.token])
         if msg[0] == "ERR":
-            return False   # TODO: does this always mean "no more"?
+            return False
         # return message is [ACK, code, filename]
         test = msg[1]
         fname = msg[2]
