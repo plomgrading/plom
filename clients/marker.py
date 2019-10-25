@@ -277,7 +277,7 @@ class ProxyModel(QSortFilterProxyModel):
         mt = int(self.data(index[3]))
         # total elapsed time.
         self.setData(index[3], mtime + mt)
-        self.setData(index[1], "marked")
+        self.setData(index[1], "uploading...")  # TODO: or "queued"?
         self.setData(index[2], mrk)
         self.setData(index[0].siblingAtColumn(6), aname)
         self.setData(index[0].siblingAtColumn(7), pname)
@@ -524,7 +524,7 @@ class MarkerClient(QWidget):
         # Grab the group-image from file and display in the examviewwindow
         # If group has been marked then display the annotated file
         # Else display the original group image
-        if self.prxM.getStatus(pr) == "marked":
+        if self.prxM.getStatus(pr) in ("marked", "uploading..."):
             self.testImg.updateImage(self.prxM.getAnnotatedFile(pr))
         else:
             self.testImg.updateImage(self.prxM.getOriginalFile(pr))
@@ -614,7 +614,7 @@ class MarkerClient(QWidget):
         # one too far forward.
         prstart = self.ui.tableView.selectedIndexes()[0].row()
         pr = prstart
-        while self.prxM.getStatus(pr) in ["marked", "deferred"]:
+        while self.prxM.getStatus(pr) in ["marked", "uploading...", "deferred"]:
             pr = (pr + 1) % prt
             if pr == prstart:
                 break
@@ -653,7 +653,7 @@ class MarkerClient(QWidget):
             return
         if self.prxM.data(index[1]) == "deferred":
             return
-        if self.prxM.data(index[1]) == "marked":
+        if self.prxM.data(index[1]) in ("marked", "uploading..."):
             msg = ErrorMessage("Paper is already marked - revert it before deferring.")
             msg.exec_()
             return
@@ -746,7 +746,7 @@ class MarkerClient(QWidget):
         # If image has been marked confirm with user if they want
         # to annotate further.
         remarkFlag = False
-        if self.prxM.data(index[1]) in ["marked"]:
+        if self.prxM.data(index[1]) in ("marked", "uploading..."):
             msg = SimpleMessage("Continue marking paper?")
             if not msg.exec_() == QMessageBox.Yes:
                 return
@@ -842,6 +842,10 @@ class MarkerClient(QWidget):
             # returns [ACK, #done, #total]
             self.ui.mProgressBar.setValue(msg[1])
             self.ui.mProgressBar.setMaximum(msg[2])
+            # TODO: prxM or exM?
+            for r in range(self.prxM.rowCount()):
+                if self.prxM.getPrefix(r) == code:
+                    self.prxM.setStatus(r, "marked")
         else:
             # User has already seen a specific error from server:
             # misformed png, assignment mark out of range, etc
@@ -879,6 +883,7 @@ class MarkerClient(QWidget):
         # that is not marked.
         # Note - do this for everything, not just the proxy-model
         for r in range(self.exM.rowCount()):
+            # TODO: what to do for "uploading..."?
             if self.exM.data(self.exM.index(r, 1)) != "marked":
                 # Tell server the code fo any paper that is not marked.
                 # server will put that back on the todo-pile.
