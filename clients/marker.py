@@ -252,6 +252,9 @@ class ProxyModel(QSortFilterProxyModel):
         # Set the temporary directory for this grading
         self.setData(self.index(r, 8), tdir)
 
+    def clearPaperDir(self, r):
+        self.setPaperDir(r, None)
+
     def getPaperDir(self, r):
         return self.data(self.index(r, 8))
 
@@ -283,14 +286,12 @@ class ProxyModel(QSortFilterProxyModel):
     def revertPaper(self, index):
         # When user reverts to original image, set status to "reverted"
         # mark back to -1, and marking time to zero.
-        # remove the annotated image file.
+        # Do not erase any files: could still be uploading
         self.setData(index[1], "reverted")
         self.setData(index[2], -1)
         self.setData(index[3], 0)
-        # remove annotated picture and plom file
-        os.remove("{}".format(self.data(index[0].siblingAtColumn(6))))
-        os.remove("{}".format(self.data(index[0].siblingAtColumn(7))))
-        # TODO: delete the directory?  Maybe none of this: what if still uploading?
+        # TODO: WTF, how to call clearPaperDir instead?
+        self.setData(index[0].siblingAtColumn(8), None)
 
     def deferPaper(self, index):
         # When user defers paper, it must be unmarked or reverted already. Set status to "deferred"
@@ -625,7 +626,9 @@ class MarkerClient(QWidget):
         return True
 
     def revertTest(self):
-        # Get rid of any annotations or marks and go back to unmarked original
+        """Get rid of any annotations or marks and go back to unmarked original"""
+        # TODO: shouldn't the server be informed?
+        # https://gitlab.math.ubc.ca/andrewr/MLP/issues/406
         prIndex = self.ui.tableView.selectedIndexes()
         # if no test then return
         if len(prIndex) == 0:
@@ -749,7 +752,8 @@ class MarkerClient(QWidget):
                 return
             remarkFlag = True
             oldpaperdir = self.prxM.getPaperDir(index[0].row())
-            print("oldpaperdir: " + oldpaperdir)
+            print("Debug: oldpaperdir is " + oldpaperdir)
+            assert oldpaperdir is not None
             oldaname = os.path.join(oldpaperdir, 'G' + tgv + ".png")
             oldpname = os.path.join(oldpaperdir, 'G' + tgv + ".plom")
             #oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
