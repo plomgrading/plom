@@ -163,6 +163,7 @@ class ExamModel(QStandardItemModel):
                 "OriginalFile",
                 "AnnotatedFile",
                 "PlomFile",
+                "PaperDir",
             ]
         )
 
@@ -246,6 +247,9 @@ class ProxyModel(QSortFilterProxyModel):
         # Set the original image filename
         self.setData(self.index(r, 5), fname)
 
+    def getPaperDir(self, r):
+        return self.data(self.index(r, 8))
+
     def getAnnotatedFile(self, r):
         # Return the filename of the annotated image
         return self.data(self.index(r, 6))
@@ -259,7 +263,7 @@ class ProxyModel(QSortFilterProxyModel):
         # Return the filename of the plom file
         return self.data(self.index(r, 7))
 
-    def markPaper(self, index, mrk, aname, pname, mtime):
+    def markPaper(self, index, mrk, aname, pname, mtime, tdir):
         # When marked, set the annotated filename, the plomfile, the mark,
         # and the total marking time (in case it was annotated earlier)
         mt = int(self.data(index[3]))
@@ -269,6 +273,7 @@ class ProxyModel(QSortFilterProxyModel):
         self.setData(index[2], mrk)
         self.setData(index[0].siblingAtColumn(6), aname)
         self.setData(index[0].siblingAtColumn(7), pname)
+        self.setData(index[0].siblingAtColumn(8), tdir)
 
     def revertPaper(self, index):
         # When user reverts to original image, set status to "reverted"
@@ -337,6 +342,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.hideColumn(5)  # hide original filename
         self.ui.tableView.hideColumn(6)  # hide annotated filename
         self.ui.tableView.hideColumn(7)  # hide plom filename
+        self.ui.tableView.hideColumn(8)  # hide paperdir
         # Double-click or signale fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
@@ -737,10 +743,11 @@ class MarkerClient(QWidget):
             if not msg.exec_() == QMessageBox.Yes:
                 return
             remarkFlag = True
-            oldtmpdir = "TODOozy"  # WIP from saved data
-            oldaname = os.path.join(oldname, 'G' + thingy + ".png")
-            oldcname = os.path.join(oldname, 'G' + thingy + ".json")
-            oldpname = os.path.join(oldname, 'G' + thingy + ".plom")
+            oldpaperdir = self.prxM.getPaperDir(index[0].row())
+            print("oldpaperdir: " + oldpaperdir)
+            oldaname = os.path.join(oldpaperdir, 'G' + thingy + ".png")
+            oldcname = os.path.join(oldpaperdir, 'G' + thingy + ".json")
+            oldpname = os.path.join(oldpaperdir, 'G' + thingy + ".plom")
             shutil.copyfile(oldaname, aname)
             shutil.copyfile(oldcname, cname)
             shutil.copyfile(oldpname, pname)
@@ -764,7 +771,7 @@ class MarkerClient(QWidget):
             self.ui.tableView.selectRow(index[1].row())
             return
         # Copy the mark, annotated filename and the markingtime into the table
-        self.prxM.markPaper(index, gr, aname, pname, mtime)
+        self.prxM.markPaper(index, gr, aname, pname, mtime, tmpdir)
         # Update the currently displayed image by selecting that row
         self.ui.tableView.selectRow(index[1].row())
 
