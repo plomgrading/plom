@@ -843,17 +843,14 @@ class MarkerClient(QWidget):
             self.ui.mProgressBar.setValue(msg[1])
             self.ui.mProgressBar.setMaximum(msg[2])
         else:
-            # This should not happen!
-            # if remarking then move backup annotated file back.
-            print('oh no, not this!')
-            if remarkFlag:
-                shutil.move(aname + ".bak", aname)
-                shutil.move(pname + ".bak", pname)
-            # reselect the row we were working on
-            self.prxM.setData(index[1], prevState)
-            self.ui.tableView.selectRow(index[1].row())
-            self.updateImage(index[1].row())
-            return
+            # User has already seen a specific error from server:
+            # misformed png, assignment mark out of range, etc
+            ErrorMessage("Unfortunately, there was an unexpected problem and "
+                         "we never got server acknowledgement of our marked "
+                         "paper return {}.\n\n"
+                         "Server said: \"{}\"\n\n"
+                         "Perhaps you could try annotating that paper "
+                         "again?".format(code, msg[1])).exec_()
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image
