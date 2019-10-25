@@ -1,7 +1,14 @@
+# -*- coding: utf-8 -*-
+
+"""
+The Plom Marker client
+"""
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 from collections import defaultdict
 import os
@@ -83,23 +90,17 @@ class BackgroundUploader(QThread):
     # TODO: temporary stuff, eventually Messenger will know it
     _userName = None
     _token = None
-    # TODO: temporary stuff, eventually put in queue data
-    _pg = None
-    _ver = None
 
-    def addNewUpload(self, code, gr, aname, pname, cname, mtime, tags):
-        self.q.put((code, gr, aname, pname, cname, mtime, tags))
+    def enqueueNewUpload(self, *args):
+        self.q.put(args)
 
     def tryToUpload(self):
         from queue import Empty as EmptyQueueException
         try:
-            code, gr, aname, pname, cname, mtime, tags = self.q.get_nowait()
+            code, gr, aname, pname, cname, mtime, pg, ver, tags = self.q.get_nowait()
         except EmptyQueueException:
-            print('Q: empty, no-op')
             return
-        print("Q: we just popped code {} from queue, uploading...".format(code))
-        print((code, gr, aname, pname, cname, mtime, tags))
-        print('Q: doing DAV')
+        print("Debug: upQ: popped code {} from queue, uploading with webdav...".format(code))
         afile = os.path.basename(aname)
         messenger.putFileDav(aname, afile)
         # copy plom file to webdav
@@ -109,26 +110,24 @@ class BackgroundUploader(QThread):
         cfile = os.path.basename(cname)
         messenger.putFileDav(cname, cfile)
 
-        print("Debug: UpQ: sending marks via mRMD cmd server...")
-        pg = self._pg
-        ver = self._ver
+        print("Debug: upQ: sending marks for {} via mRMD cmd server...".format(code))
         msg = messenger.SRMsg_nopopup(["mRMD", self._userName, self._token,
                 code, gr, afile, pfile, cfile, mtime, pg, ver, tags])
         if msg[0] == "ACK":
             numdone = msg[1]
             numtotal = msg[2]
-            print('Debug: upQ: emitting SUCCESS signal for Marker')
+            print('Debug: upQ: emitting SUCCESS signal for {}'.format(code))
             self.uploadSuccess.emit(code, numdone, numtotal)
         else:
             errmsg = msg[1]
-            print('Debug: upQ: emitting FAILED signal for Marker')
+            print('Debug: upQ: emitting FAILED signal for {}'.format(code))
             self.uploadFail.emit(code, errmsg)
 
 
     def run(self):
         from queue import SimpleQueue
         self.q = SimpleQueue()
-        print('Q: starting with new empty queue')
+        print('Debug: upQ: starting with new empty queue')
         while True:
             time.sleep(2)
             self.tryToUpload()
@@ -447,8 +446,6 @@ class MarkerClient(QWidget):
         # TODO: temporary hacks of stuff into the uploader
         self.backgroundUploader._userName = self.userName
         self.backgroundUploader._token = self.token
-        self.backgroundUploader._pg = self.pageGroup
-        self.backgroundUploader._ver = self.version
         self.backgroundUploader.start()
         # Now cache latex for comments:
         self.cacheLatexComments()
@@ -817,13 +814,15 @@ class MarkerClient(QWidget):
         )
         # On failure, SRMsg will have shown user "no longer authorised..."
         if msg[0] == "ACK":
-            self.uploadInBackgroundEnqueue(
+            self.backgroundUploader.enqueueNewUpload(
                 "t" + tgv, # current tgv
                 gr,  # grade
                 aname,  # annotated file
                 pname,  # plom file
                 cname,  # comment file
                 mtime,  # marking time
+                self.pageGroup,
+                self.version,
                 self.prxM.data(index[4]),  # tags
             )
 
@@ -833,11 +832,6 @@ class MarkerClient(QWidget):
         if self.moveToNextUnmarkedTest():
             # self.annotateTest()
             self.ui.annButton.animateClick()
-
-    def uploadInBackgroundEnqueue(self, code, gr, aname, pname, cname, mtime, tags):
-        self.backgroundUploader.addNewUpload(
-            code, gr, aname, pname, cname, mtime, tags
-        )
 
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
