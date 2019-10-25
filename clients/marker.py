@@ -791,12 +791,12 @@ class MarkerClient(QWidget):
         # to upload this particular pageimage - this may have changed
         # depending on what else is going on.
 
-        # TODO: this can't be here: we don't know for sure the upload will happen "NOW"
+        # TODO: should this check happen later?  we don't know for sure the upload will happen "NOW"
         msg = messenger.SRMsg(
             ["mUSO", self.userName, self.token, self.prxM.data(index[0])]
         )
+        # On failure, SRMsg will have shown user "no longer authorised..."
         if msg[0] == "ACK":
-            # upload in background
             self.uploadInBackgroundEnqueue(
                 self.prxM.data(index[0]),  # current tgv
                 gr,  # grade
