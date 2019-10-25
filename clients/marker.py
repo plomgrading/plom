@@ -494,7 +494,7 @@ class MarkerClient(QWidget):
         if msg[0] == "ERR":
             return
         paperdir = tempfile.mkdtemp(prefix=tgv + "_", dir=self.workingDirectory)
-        print("Debug: paperdir {} created for already-graded download".format(paperdir))
+        print("Debug: create paperdir {} for already-graded download".format(paperdir))
         fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
         aname = os.path.join(paperdir, "G{}.png".format(msg[1][1:]))
         pname = os.path.join(paperdir, "G{}.plom".format(msg[1][1:]))
@@ -735,7 +735,7 @@ class MarkerClient(QWidget):
         # annotated version is GXXXXgYYvZ (G=graded).
         tgv = self.prxM.data(index[0])[1:]
         paperdir = tempfile.mkdtemp(prefix=tgv + "_", dir=self.workingDirectory)
-        print("Debug: paperdir {} created for annotating".format(paperdir))
+        print("Debug: create paperdir {} for annotating".format(paperdir))
         aname = os.path.join(paperdir, "G" + tgv + ".png")
         cname = os.path.join(paperdir, "G" + tgv + ".json")
         pname = os.path.join(paperdir, "G" + tgv + ".plom")
