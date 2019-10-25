@@ -779,10 +779,11 @@ class MarkerClient(QWidget):
             shutil.copyfile(oldpname, pname)
             #shutil.copyfile(oldcname, cname)
 
-        if not remarkFlag:
-            oname = "{}".format(self.prxM.getOriginalFile(index[0].row()))
-            print("Debug: original image {} copy to paperdir {}".format(oname, paperdir))
-            shutil.copyfile(oname, aname)
+        # Yes do this even for a regrade!  We will recreate the annotations
+        # (using the plom file) on top of the original file.
+        fname = "{}".format(self.prxM.getOriginalFile(index[0].row()))
+        print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
+        shutil.copyfile(fname, aname)
 
         # Get mark, markingtime, and launch-again flag from 'waitForAnnotator'
         prevState = self.prxM.data(index[1])
