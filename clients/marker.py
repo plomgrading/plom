@@ -247,6 +247,10 @@ class ProxyModel(QSortFilterProxyModel):
         # Set the original image filename
         self.setData(self.index(r, 5), fname)
 
+    def setPaperDir(self, r, tdir):
+        # Set the temporary directory for this grading
+        self.setData(self.index(r, 8), tdir)
+
     def getPaperDir(self, r):
         return self.data(self.index(r, 8))
 
@@ -487,9 +491,12 @@ class MarkerClient(QWidget):
         msg = messenger.SRMsg(["mGGI", self.userName, self.token, tgv])
         if msg[0] == "ERR":
             return
+        paperdir = tempfile.mkdtemp(prefix=tgv + "_", dir=self.workingDirectory)
+        print("Debug: paperdir {} created for already-graded download".format(paperdir))
         fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
-        aname = os.path.join(self.workingDirectory, "G{}.png".format(msg[1][1:]))
-        pname = os.path.join(self.workingDirectory, "G{}.plom".format(msg[1][1:]))
+        aname = os.path.join(paperdir, "G{}.png".format(msg[1][1:]))
+        pname = os.path.join(paperdir, "G{}.plom".format(msg[1][1:]))
+        self.prxM.setPaperDir(pr, paperdir)
 
         tfname = msg[2]  # the temp original image file on webdav
         taname = msg[3]  # the temp annotated image file on webdav
@@ -742,11 +749,12 @@ class MarkerClient(QWidget):
             oldpaperdir = self.prxM.getPaperDir(index[0].row())
             print("oldpaperdir: " + oldpaperdir)
             oldaname = os.path.join(oldpaperdir, 'G' + tgv + ".png")
-            oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
             oldpname = os.path.join(oldpaperdir, 'G' + tgv + ".plom")
+            #oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
+            # TODO: json file not downloaded... double-check why
             shutil.copyfile(oldaname, aname)
-            shutil.copyfile(oldcname, cname)
             shutil.copyfile(oldpname, pname)
+            #shutil.copyfile(oldcname, cname)
 
         if not remarkFlag:
             # Copy the original image to the annotated filename.
