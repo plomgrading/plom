@@ -798,7 +798,7 @@ class MarkerClient(QWidget):
         # On failure, SRMsg will have shown user "no longer authorised..."
         if msg[0] == "ACK":
             self.uploadInBackgroundEnqueue(
-                self.prxM.data(index[0]),  # current tgv
+                "t" + tgv, # current tgv
                 gr,  # grade
                 aname,  # annotated file
                 pname,  # plom file
