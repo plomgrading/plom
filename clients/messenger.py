@@ -70,6 +70,7 @@ def SRMsg(msg):
     else:
         print(">>> Error I didn't expect. Return message was {}".format(rmsg))
         msg = ErrorMessage("Something really wrong has happened.")
+        msg.exec_()
 
 
 def getFileDav(dfn, lfn):
