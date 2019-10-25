@@ -78,7 +78,14 @@ class BackgroundDownloader(QThread):
 
 
 class BackgroundUploader(QThread):
-    uploaded = pyqtSignal(str, str, str, str, str, int, str)
+    uploadSuccess = pyqtSignal(str, int, int)
+    uploadFail = pyqtSignal(str, str)
+    # TODO: temporary stuff, eventually Messenger will know it
+    _userName = None
+    _token = None
+    # TODO: temporary stuff, eventually put in queue data
+    _pg = None
+    _ver = None
 
     def addNewUpload(self, code, gr, aname, pname, cname, mtime, tags):
         self.q.put((code, gr, aname, pname, cname, mtime, tags))
@@ -102,13 +109,21 @@ class BackgroundUploader(QThread):
         cfile = os.path.basename(cname)
         messenger.putFileDav(cname, cfile)
 
-        # needed to send "please delete" back to server
-        # TODO: for now, Marker must do this (knows token etc)
-        print('Q: emitting')
-        self.uploaded.emit(
-            code, gr, afile, pfile, cfile, mtime, tags
-        )
-        print('Q: done with upload')
+        print("Debug: UpQ: sending marks via mRMD cmd server...")
+        pg = self._pg
+        ver = self._ver
+        msg = messenger.SRMsg_nopopup(["mRMD", self._userName, self._token,
+                code, gr, afile, pfile, cfile, mtime, pg, ver, tags])
+        if msg[0] == "ACK":
+            numdone = msg[1]
+            numtotal = msg[2]
+            print('Debug: upQ: emitting SUCCESS signal for Marker')
+            self.uploadSuccess.emit(code, numdone, numtotal)
+        else:
+            errmsg = msg[1]
+            print('Debug: upQ: emitting FAILED signal for Marker')
+            self.uploadFail.emit(code, errmsg)
+
 
     def run(self):
         from queue import SimpleQueue
@@ -427,8 +442,13 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
         # and another for uploading
         self.backgroundUploader = BackgroundUploader()
-        # TODO: this connects the message send stuff (here in Marker)
-        self.backgroundUploader.uploaded.connect(self.uploadInBackgroundFinish)
+        self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
+        self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
+        # TODO: temporary hacks of stuff into the uploader
+        self.backgroundUploader._userName = self.userName
+        self.backgroundUploader._token = self.token
+        self.backgroundUploader._pg = self.pageGroup
+        self.backgroundUploader._ver = self.version
         self.backgroundUploader.start()
         # Now cache latex for comments:
         self.cacheLatexComments()
@@ -819,45 +839,31 @@ class MarkerClient(QWidget):
             code, gr, aname, pname, cname, mtime, tags
         )
 
-    def uploadInBackgroundFinish(self, code, gr, afile, pfile, cfile, mtime, tags):
-        # Server will save data and copy the annotated file, then delete it
-        # from the webdav
-        msg = messenger.SRMsg(
-            [
-                "mRMD",
-                self.userName,
-                self.token,
-                code,
-                gr,
-                afile,
-                pfile,
-                cfile,
-                mtime,
-                self.pageGroup,   # Suspicious: should come from Q not self!!
-                self.version,
-                tags,
-            ]
-        )
-        if msg[0] == "ACK":
-            # returns [ACK, #done, #total]
-            self.ui.mProgressBar.setValue(msg[1])
-            self.ui.mProgressBar.setMaximum(msg[2])
-            # TODO: prxM or exM?
-            for r in range(self.prxM.rowCount()):
-                if self.prxM.getPrefix(r) == code:
-                    self.prxM.setStatus(r, "marked")
-        else:
-            # User has already seen a specific error from server:
-            # misformed png, assignment mark out of range, etc
-            for r in range(self.prxM.rowCount()):
-                if self.prxM.getPrefix(r) == code:
-                    self.prxM.setStatus(r, "???")
-            ErrorMessage("Unfortunately, there was an unexpected problem and "
-                         "we never got server acknowledgement of our marked "
-                         "paper return {}.\n\n"
-                         "Server said: \"{}\"\n\n"
-                         "Perhaps you could try annotating that paper "
-                         "again?".format(code, msg[1])).exec_()
+
+    def backgroundUploadFinished(self, code, numdone, numtotal):
+        """An upload has finished, do appropriate UI updates"""
+        # TODO: prxM or exM?
+        for r in range(self.prxM.rowCount()):
+            if self.prxM.getPrefix(r) == code:
+                self.prxM.setStatus(r, "marked")
+        # TODO: negative used as invalid instead of None because the signal is typed
+        if numdone > 0 and numtotal > 0:
+            self.ui.mProgressBar.setValue(numdone)
+            self.ui.mProgressBar.setMaximum(numtotal)
+
+
+    def backgroundUploadFailed(self, code, errmsg):
+        """An upload has failed, not sure what to do but do to it LOADLY"""
+        # TODO: prxM or exM?
+        for r in range(self.prxM.rowCount()):
+            if self.prxM.getPrefix(r) == code:
+                self.prxM.setStatus(r, "???")
+        ErrorMessage("Unfortunately, there was an unexpected error; server did "
+                     "not accept our marked paper {}.\n\n"
+                     "Server said: \"{}\"\n\n"
+                     "Please consider filing an issue?  Perhaps you could try "
+                     "annotating that paper again?".format(code, errmsg)).exec_()
+
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image

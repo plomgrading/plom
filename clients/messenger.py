@@ -1,7 +1,14 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+# -*- coding: utf-8 -*-
+
+"""
+Backend bits n bobs to talk to the server
+"""
+
+__author__ = "Andrew Rechnitzer, Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer, Colin B. Macdonald"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import asyncio
 import easywebdav2
@@ -71,6 +78,17 @@ def SRMsg(msg):
         print(">>> Error I didn't expect. Return message was {}".format(rmsg))
         msg = ErrorMessage("Something really wrong has happened.")
         msg.exec_()
+
+
+def SRMsg_nopopup(msg):
+    """Send message using the asyncio message handler and get back
+    return message.
+    """
+    rmsg = loop.run_until_complete(handle_messaging(msg))
+    if rmsg[0] in ("ACK", "ERR"):
+        return rmsg
+    else:
+        raise RuntimeError("Unexpected response from server.  Consider filing a bug?  The return from the server was:\n\n" + str(rmsg))
 
 
 def getFileDav(dfn, lfn):
