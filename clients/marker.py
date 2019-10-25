@@ -724,16 +724,12 @@ class MarkerClient(QWidget):
             return
         # Create annotated filename. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
-        thingy = self.prxM.data(index[0])[1:]
-        tmpdir = tempfile.mkdtemp(prefix=thingy + "_", dir=self.workingDirectory)
-        # TODO: careful with TemporaryDirectory, probably deleted by GC
-        print(tmpdir)
-        os.system('ls ' + tmpdir)
-        print(tmpdir)
-        #directoryPath = tempDirectory.name
-        aname = os.path.join(tmpdir, "G" + thingy + ".png")
-        cname = aname[:-3] + "json"
-        pname = aname[:-3] + "plom"
+        tgv = self.prxM.data(index[0])[1:]
+        paperdir = tempfile.mkdtemp(prefix=tgv + "_", dir=self.workingDirectory)
+        print("Debug: paperdir {} created for annotating".format(paperdir))
+        aname = os.path.join(paperdir, "G" + tgv + ".png")
+        cname = os.path.join(paperdir, "G" + tgv + ".json")
+        pname = os.path.join(paperdir, "G" + tgv + ".plom")
 
         # If image has been marked confirm with user if they want
         # to annotate further.
@@ -745,9 +741,9 @@ class MarkerClient(QWidget):
             remarkFlag = True
             oldpaperdir = self.prxM.getPaperDir(index[0].row())
             print("oldpaperdir: " + oldpaperdir)
-            oldaname = os.path.join(oldpaperdir, 'G' + thingy + ".png")
-            oldcname = os.path.join(oldpaperdir, 'G' + thingy + ".json")
-            oldpname = os.path.join(oldpaperdir, 'G' + thingy + ".plom")
+            oldaname = os.path.join(oldpaperdir, 'G' + tgv + ".png")
+            oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
+            oldpname = os.path.join(oldpaperdir, 'G' + tgv + ".plom")
             shutil.copyfile(oldaname, aname)
             shutil.copyfile(oldcname, cname)
             shutil.copyfile(oldpname, pname)
@@ -765,13 +761,13 @@ class MarkerClient(QWidget):
             [gr, mtime, launchAgain] = self.waitForAnnotator(aname, None)
         # Exited annotator with 'cancel', so don't save anything.
         if gr is None:
-            # TODO: kill the tmpdir?
+            # TODO: could also erase the paperdir?
             # reselect the row we were working on
             self.prxM.setData(index[1], prevState)
             self.ui.tableView.selectRow(index[1].row())
             return
         # Copy the mark, annotated filename and the markingtime into the table
-        self.prxM.markPaper(index, gr, aname, pname, mtime, tmpdir)
+        self.prxM.markPaper(index, gr, aname, pname, mtime, paperdir)
         # Update the currently displayed image by selecting that row
         self.ui.tableView.selectRow(index[1].row())
 
