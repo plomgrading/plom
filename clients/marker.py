@@ -94,6 +94,9 @@ class BackgroundUploader(QThread):
     def enqueueNewUpload(self, *args):
         self.q.put(args)
 
+    def empty(self):
+        return self.q.empty()
+
     def tryToUpload(self):
         from queue import Empty as EmptyQueueException
         try:
@@ -871,6 +874,14 @@ class MarkerClient(QWidget):
         self.close()
 
     def shutDown(self):
+        while not self.backgroundUploader.empty():
+            print("Debug: upQ nonempty, waiting 0.5sec")
+            time.sleep(0.5)
+        # sleep a little longer for the final upload to actually finish...
+        # TODO: maybe we need a numUploading counter that get decremented when its actually done, not just when the queue emptied
+        print("Debug: upQ: dumb 5 second wait (TODO)")
+        time.sleep(5)
+
         # When shutting down, first alert server of any images that were
         # not marked - using 'DNF' (did not finish). Sever will put
         # those files back on the todo pile.
