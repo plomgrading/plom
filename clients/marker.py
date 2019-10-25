@@ -167,6 +167,7 @@ class ExamModel(QStandardItemModel):
             ]
         )
 
+    # TODO: old undead code?  mtime/pname swapped?!
     def markPaper(self, index, mrk, aname, mtime, pname):
         # When marked, set the annotated filename, the mark,
         # and the total marking time (in case it was annotated earlier)
@@ -289,6 +290,7 @@ class ProxyModel(QSortFilterProxyModel):
         # remove annotated picture and plom file
         os.remove("{}".format(self.data(index[0].siblingAtColumn(6))))
         os.remove("{}".format(self.data(index[0].siblingAtColumn(7))))
+        # TODO: delete the directory?  Maybe none of this: what if still uploading?
 
     def deferPaper(self, index):
         # When user defers paper, it must be unmarked or reverted already. Set status to "deferred"
@@ -677,7 +679,7 @@ class MarkerClient(QWidget):
             with open(pname, "r") as fh:
                 pdict = json.load(fh)
             self.markStyle = pdict["markStyle"]
-            # there should be a filename sanity check here to
+            # TODO: there should be a filename sanity check here to
             # make sure plom file matches current image-file
 
         # Start a timer to record time spend annotating
@@ -757,8 +759,9 @@ class MarkerClient(QWidget):
             #shutil.copyfile(oldcname, cname)
 
         if not remarkFlag:
-            # Copy the original image to the annotated filename.
-            shutil.copyfile("{}".format(self.prxM.getOriginalFile(index[0].row())), aname)
+            oname = "{}".format(self.prxM.getOriginalFile(index[0].row()))
+            print("Debug: original image {} copy to paperdir {}".format(oname, paperdir))
+            shutil.copyfile(oname, aname)
 
         # Get mark, markingtime, and launch-again flag from 'waitForAnnotator'
         prevState = self.prxM.data(index[1])
