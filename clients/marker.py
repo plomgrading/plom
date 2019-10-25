@@ -524,7 +524,7 @@ class MarkerClient(QWidget):
         # Grab the group-image from file and display in the examviewwindow
         # If group has been marked then display the annotated file
         # Else display the original group image
-        if self.prxM.getStatus(pr) in ("marked", "uploading..."):
+        if self.prxM.getStatus(pr) in ("marked", "uploading...", "???"):
             self.testImg.updateImage(self.prxM.getAnnotatedFile(pr))
         else:
             self.testImg.updateImage(self.prxM.getOriginalFile(pr))
@@ -614,7 +614,7 @@ class MarkerClient(QWidget):
         # one too far forward.
         prstart = self.ui.tableView.selectedIndexes()[0].row()
         pr = prstart
-        while self.prxM.getStatus(pr) in ["marked", "uploading...", "deferred"]:
+        while self.prxM.getStatus(pr) in ["marked", "uploading...", "deferred", "???"]:
             pr = (pr + 1) % prt
             if pr == prstart:
                 break
@@ -653,7 +653,7 @@ class MarkerClient(QWidget):
             return
         if self.prxM.data(index[1]) == "deferred":
             return
-        if self.prxM.data(index[1]) in ("marked", "uploading..."):
+        if self.prxM.data(index[1]) in ("marked", "uploading...", "???"):
             msg = ErrorMessage("Paper is already marked - revert it before deferring.")
             msg.exec_()
             return
@@ -746,7 +746,7 @@ class MarkerClient(QWidget):
         # If image has been marked confirm with user if they want
         # to annotate further.
         remarkFlag = False
-        if self.prxM.data(index[1]) in ("marked", "uploading..."):
+        if self.prxM.data(index[1]) in ("marked", "uploading...", "???"):
             msg = SimpleMessage("Continue marking paper?")
             if not msg.exec_() == QMessageBox.Yes:
                 return
@@ -849,6 +849,9 @@ class MarkerClient(QWidget):
         else:
             # User has already seen a specific error from server:
             # misformed png, assignment mark out of range, etc
+            for r in range(self.prxM.rowCount()):
+                if self.prxM.getPrefix(r) == code:
+                    self.prxM.setStatus(r, "???")
             ErrorMessage("Unfortunately, there was an unexpected problem and "
                          "we never got server acknowledgement of our marked "
                          "paper return {}.\n\n"
