@@ -17,6 +17,7 @@ import shutil
 import sys
 import tempfile
 import time
+import threading
 
 from PyQt5.QtCore import (
     Qt,
@@ -92,49 +93,62 @@ class BackgroundUploader(QThread):
     _token = None
 
     def enqueueNewUpload(self, *args):
+        """Place something in the upload queue
+
+        Note: if you call this from the main thread, this code runs in the
+        main thread.  That is ok b/c SimpleQueue is threadsafe.  But its
+        important to be aware, not all code in this object runs in the new
+        thread: it depends where that code is called!
+        """
+        print("Debug: upQ enqueing new in thread " + str(threading.get_ident()))
         self.q.put(args)
 
     def empty(self):
         return self.q.empty()
 
-    def tryToUpload(self):
-        from queue import Empty as EmptyQueueException
-        try:
-            code, gr, aname, pname, cname, mtime, pg, ver, tags = self.q.get_nowait()
-        except EmptyQueueException:
-            return
-        print("Debug: upQ: popped code {} from queue, uploading with webdav...".format(code))
-        afile = os.path.basename(aname)
-        messenger.putFileDav(aname, afile)
-        # copy plom file to webdav
-        pfile = os.path.basename(pname)
-        messenger.putFileDav(pname, pfile)
-        # copy comment file to webdav
-        cfile = os.path.basename(cname)
-        messenger.putFileDav(cname, cfile)
-
-        print("Debug: upQ: sending marks for {} via mRMD cmd server...".format(code))
-        msg = messenger.SRMsg_nopopup(["mRMD", self._userName, self._token,
-                code, gr, afile, pfile, cfile, mtime, pg, ver, tags])
-        if msg[0] == "ACK":
-            numdone = msg[1]
-            numtotal = msg[2]
-            print('Debug: upQ: emitting SUCCESS signal for {}'.format(code))
-            self.uploadSuccess.emit(code, numdone, numtotal)
-        else:
-            errmsg = msg[1]
-            print('Debug: upQ: emitting FAILED signal for {}'.format(code))
-            self.uploadFail.emit(code, errmsg)
-
-
     def run(self):
+        def tryToUpload():
+            # define this inside run so it will run in the new thread
+            # https://stackoverflow.com/questions/52036021/qtimer-on-a-qthread
+            from queue import Empty as EmptyQueueException
+            try:
+                code, gr, aname, pname, cname, mtime, pg, ver, tags = self.q.get_nowait()
+            except EmptyQueueException:
+                return
+            print("Debug: upQ (thread {}): popped code {} from queue, uploading "
+                  "with webdav...".format(str(threading.get_ident()), code))
+            afile = os.path.basename(aname)
+            messenger.putFileDav(aname, afile)
+            # copy plom file to webdav
+            pfile = os.path.basename(pname)
+            messenger.putFileDav(pname, pfile)
+            # copy comment file to webdav
+            cfile = os.path.basename(cname)
+            messenger.putFileDav(cname, cfile)
+
+            print("Debug: upQ: sending marks for {} via mRMD cmd server...".format(code))
+            msg = messenger.SRMsg_nopopup(["mRMD", self._userName, self._token,
+                    code, int(gr) + 3, afile, pfile, cfile, mtime, pg, ver, tags])
+            self.sleep(4)  # TODO: pretend actual upload took longer
+            if msg[0] == "ACK":
+                numdone = msg[1]
+                numtotal = msg[2]
+                print('Debug: upQ: emitting SUCCESS signal for {}'.format(code))
+                self.uploadSuccess.emit(code, numdone, numtotal)
+            else:
+                errmsg = msg[1]
+                print('Debug: upQ: emitting FAILED signal for {}'.format(code))
+                self.uploadFail.emit(code, errmsg)
+
+        print("upQ.run: thread " + str(threading.get_ident()))
         from queue import SimpleQueue
         self.q = SimpleQueue()
-        print('Debug: upQ: starting with new empty queue')
-        while True:
-            time.sleep(2)
-            self.tryToUpload()
-        self.exit()
+        print('Debug: upQ: starting with new empty queue and starting timer')
+        timer = QTimer()
+        timer.timeout.connect(tryToUpload)
+        timer.start(10000)  # TODO: shorten
+        print(timer)
+        self.exec_()
 
 
 class TestPageGroup:
@@ -440,6 +454,7 @@ class MarkerClient(QWidget):
         # A thread for downloading in the background
         # see https://stackoverflow.com/questions/6783194/background-thread-with-qthread-in-pyqt
         # and https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
+        print("Debug: Marker main thread: " + str(threading.get_ident()))
         self.backgroundDownloader = BackgroundDownloader()
         self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
         # and another for uploading
@@ -874,13 +889,13 @@ class MarkerClient(QWidget):
         self.close()
 
     def shutDown(self):
+        print("Debug: Marker shutdown from thread " + str(threading.get_ident()))
         while not self.backgroundUploader.empty():
             print("Debug: upQ nonempty, waiting 0.5sec")
             time.sleep(0.5)
-        # sleep a little longer for the final upload to actually finish...
-        # TODO: maybe we need a numUploading counter that get decremented when its actually done, not just when the queue emptied
-        print("Debug: upQ: dumb 5 second wait (TODO)")
-        time.sleep(5)
+        # TODO: send some signal so it can take down the timer etc?
+        self.backgroundUploader.quit()  # quit once current event finished
+        self.backgroundUploader.wait()
 
         # When shutting down, first alert server of any images that were
         # not marked - using 'DNF' (did not finish). Sever will put
