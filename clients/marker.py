@@ -144,6 +144,8 @@ class BackgroundUploader(QThread):
         from queue import SimpleQueue
         self.q = SimpleQueue()
         print('Debug: upQ: starting with new empty queue and starting timer')
+        # TODO: Probably don't need the timer: after each enqueue, signal the
+        # QThread (in the new thread's event loop) to call tryToUpload.
         timer = QTimer()
         timer.timeout.connect(tryToUpload)
         timer.start(10000)  # TODO: shorten
