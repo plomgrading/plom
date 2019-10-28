@@ -164,7 +164,7 @@ class examTable(QWidget):
         # Move the png file
         fname = rec.value("annotatedFile")
         try:
-            shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/")
+            shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/" + fname)
         except FileNotFoundError:
             print('failed to move png file')
         # and any old .png.regraded files
@@ -176,7 +176,7 @@ class examTable(QWidget):
         # And move the associated textfile.
         fname += ".txt"
         try:
-            shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/")
+            shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/" + fname)
         except FileNotFoundError:
             print('failed to move txt file')
 
@@ -185,13 +185,13 @@ class examTable(QWidget):
         # move the plomFile and commentFile too
         fname = rec.value("plomFile")
         try:
-            shutil.move("markedPapers/plomFiles/" + fname, "markedPapers/revertedPapers/")
+            shutil.move("markedPapers/plomFiles/" + fname, "markedPapers/revertedPapers/" + fname)
         except FileNotFoundError:
             print('failed to move plom file')
         rec.setValue("plomFile", "")
         fname = rec.value("commentFile")
         try:
-            shutil.move("markedPapers/commentFiles/" + fname, "markedPapers/revertedPapers/")
+            shutil.move("markedPapers/commentFiles/" + fname, "markedPapers/revertedPapers/" + fname)
         except FileNotFoundError:
             print('failed to move comment file')
         rec.setValue("commentFile", "")
