@@ -17,6 +17,8 @@ import ssl
 from PyQt5.QtWidgets import QMessageBox
 import urllib3
 from useful_classes import ErrorMessage
+import time
+import threading
 
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.
@@ -27,6 +29,7 @@ sslContext.check_hostname = False
 server = "127.0.0.1"
 message_port = 41984
 webdav_port = 41985
+SRmutex = threading.Lock()
 
 
 def setServerDetails(s, mp, dp):
@@ -67,7 +70,17 @@ def SRMsg(msg):
     """Send message using the asyncio message handler and get back
     return message. If error then pop-up an error message.
     """
-    rmsg = loop.run_until_complete(handle_messaging(msg))
+    #N = 0.5
+    #print("Messenger [{}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
+    SRmutex.acquire()
+    try:
+        #print("Messenger: got mutex, pretending to work for {}s, then talking to server".format(N))
+
+        #time.sleep(N)
+        rmsg = loop.run_until_complete(handle_messaging(msg))
+    finally:
+        SRmutex.release()
+    #print("Messenger [{}]: got rmsg = {}".format(str(threading.get_ident()), str(rmsg)))
     if rmsg[0] == "ACK":
         return rmsg
     elif rmsg[0] == "ERR":
@@ -84,7 +97,16 @@ def SRMsg_nopopup(msg):
     """Send message using the asyncio message handler and get back
     return message.
     """
-    rmsg = loop.run_until_complete(handle_messaging(msg))
+    #N = 15
+    #print("Messenger [nopop, {}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
+    SRmutex.acquire()
+    try:
+        #print("Messenger [nopop]: got mutex, pretending to work for {}s, then talking to server".format(N))
+        #time.sleep(N)
+        rmsg = loop.run_until_complete(handle_messaging(msg))
+    finally:
+        SRmutex.release()
+    #print("Messenger [nopop, {}]: got rmsg = {}".format(str(threading.get_ident()), str(rmsg)))
     if rmsg[0] in ("ACK", "ERR"):
         return rmsg
     else:
