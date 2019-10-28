@@ -237,4 +237,16 @@ if __name__ == "__main__":
 
     window = Chooser(app)
     window.show()
+    # undocumented feature: `./client.py user:pass@url:port`
+    if len(sys.argv) >= 2:
+        stuff = sys.argv[1]
+        user, server = stuff.split('@')
+        user, pwd = user.split(':')
+        server, port = server.split(':')
+        print("got from cli: {}".format((user, pwd, server, port)))
+        window.ui.userLE.setText(user)
+        window.ui.passwordLE.setText(pwd)
+        window.ui.serverLE.setText(server)
+        window.ui.mportSB.setValue(int(port))
+        window.ui.wportSB.setValue(int(port)+1)
     sys.exit(app.exec_())
