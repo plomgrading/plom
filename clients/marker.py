@@ -128,8 +128,8 @@ class BackgroundUploader(QThread):
 
             print("Debug: upQ: sending marks for {} via mRMD cmd server...".format(code))
             msg = messenger.SRMsg_nopopup(["mRMD", self._userName, self._token,
-                    code, int(gr) + 3, afile, pfile, cfile, mtime, pg, ver, tags])
-            self.sleep(4)  # TODO: pretend actual upload took longer
+                    code, int(gr) + 3, afile, pfile, cfile, mtime, pg, ver, tags])  # TODO: just "gr" here!
+            self.sleep(4)  # TODO: pretend actual upload took longer, remove!
             if msg[0] == "ACK":
                 numdone = msg[1]
                 numtotal = msg[2]
@@ -148,7 +148,8 @@ class BackgroundUploader(QThread):
         # QThread (in the new thread's event loop) to call tryToUpload.
         timer = QTimer()
         timer.timeout.connect(tryToUpload)
-        timer.start(10000)  # TODO: shorten
+        #timer.start(500)
+        timer.start(10000)  # TODO: remove! use above 500
         print(timer)
         self.exec_()
 
