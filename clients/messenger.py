@@ -4,6 +4,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPLv3"
 
 import asyncio
+import requests
 import easywebdav2
 import json
 import ssl
@@ -28,6 +29,28 @@ def setServerDetails(s, mp, dp):
     server = s
     message_port = mp
     webdav_port = dp
+
+
+def http_messaging(msg):
+    response = session.put("{}/".format(SERVER), data=msg, verify=False)
+    return response.json()
+
+
+def SRMsgHTTPS(msg):
+    """Send message using https and get back return message.
+    If error then pop-up an error message.
+    """
+    rmsg = http_messaging(msg)
+    if rmsg[0] == "ACK":
+        return rmsg
+    elif rmsg[0] == "ERR":
+        msg = ErrorMessage("Server says: " + rmsg[1])
+        msg.exec_()
+        return rmsg
+    else:
+        print(">>> Error I didn't expect. Return message was {}".format(rmsg))
+        msg = ErrorMessage("Something really wrong has happened.")
+        msg.exec_()
 
 
 async def handle_messaging(msg):
@@ -135,14 +158,22 @@ def pingTest():
     return rmsg
 
 
+session = None
+
+
 def startMessenger():
     """Start the asyncio event loop"""
     global loop
     print("Starting asyncio loop")
     loop = asyncio.get_event_loop()
 
+    global session
+    session = requests.Session()
+    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=5))
+
 
 def stopMessenger():
     """Stop the asyncio event loop"""
     loop.close()
     print("Stopped asyncio loop")
+    session.close()
