@@ -169,8 +169,9 @@ class examTable(QWidget):
             print('failed to move png file')
         # and any old .png.regraded files
         for f in glob.glob("markedPapers/" + fname + '.regrade*'):
+            f2 = f.lstrip("markedPapers/")
             try:
-                shutil.move(f, "markedPapers/revertedPapers/")
+                shutil.move(f, "markedPapers/revertedPapers/" + f2)
             except FileNotFoundError:
                 print('failed to move .png.regrade file: ' + f)
         # And move the associated textfile.
