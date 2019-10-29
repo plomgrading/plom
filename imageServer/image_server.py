@@ -61,6 +61,7 @@ async def hello(request):
         # Run the command on the server and get the return message.
         # peon will be the instance of the server when it runs.
         rmesg = peon.proc_cmd(message)
+        print("Returning message {}".format(rmesg))
         SLogger.info("Returning message {}".format(rmesg))
         return web.json_response({"rmsg": rmesg}, status=200)
     #

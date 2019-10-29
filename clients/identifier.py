@@ -374,6 +374,7 @@ class IDClient(QWidget):
         # rewind the stream
         fileobj.seek(0)
         json_file = TextIOWrapper(fileobj)
+        print("JSONFILE = {}".format(json_file))
         # Add those marked papers to our paper-list
         idList = json.load(json_file)
         for x in idList:
