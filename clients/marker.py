@@ -18,6 +18,7 @@ import sys
 import tempfile
 import time
 import threading
+import queue
 
 from PyQt5.QtCore import (
     Qt,
@@ -96,7 +97,7 @@ class BackgroundUploader(QThread):
         """Place something in the upload queue
 
         Note: if you call this from the main thread, this code runs in the
-        main thread.  That is ok b/c SimpleQueue is threadsafe.  But its
+        main thread.  That is ok b/c queue.Queue is threadsafe.  But its
         important to be aware, not all code in this object runs in the new
         thread: it depends where that code is called!
         """
@@ -141,8 +142,7 @@ class BackgroundUploader(QThread):
                 self.uploadFail.emit(code, errmsg)
 
         print("upQ.run: thread " + str(threading.get_ident()))
-        from queue import SimpleQueue
-        self.q = SimpleQueue()
+        self.q = queue.Queue()
         print('Debug: upQ: starting with new empty queue and starting timer')
         # TODO: Probably don't need the timer: after each enqueue, signal the
         # QThread (in the new thread's event loop) to call tryToUpload.
