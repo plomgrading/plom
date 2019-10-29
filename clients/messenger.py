@@ -32,7 +32,11 @@ def setServerDetails(s, mp, dp):
 
 
 def http_messaging(msg):
-    response = session.put("localhost:{}/".format(message_port), data=msg, verify=False)
+    print("HERE", msg, type(msg))
+    response = session.get(
+        "https://localhost:{}/".format(message_port), data={"msg": msg}, verify=False
+    )
+    print("THERE")
     return response.json()
 
 
@@ -40,6 +44,7 @@ def SRMsgHTTPS(msg):
     """Send message using https and get back return message.
     If error then pop-up an error message.
     """
+    print("HERE1")
     rmsg = http_messaging(msg)
     if rmsg[0] == "ACK":
         return rmsg
@@ -164,11 +169,12 @@ session = None
 
 
 def startMessenger():
-    """Start the asyncio event loop"""
-    global loop
-    print("Starting asyncio loop")
-    loop = asyncio.get_event_loop()
+    # """Start the asyncio event loop"""
+    # global loop
+    # print("Starting asyncio loop")
+    # loop = asyncio.get_event_loop()
 
+    print("Starting a requests-session")
     global session
     session = requests.Session()
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=5))
