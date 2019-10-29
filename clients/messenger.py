@@ -32,7 +32,7 @@ def setServerDetails(s, mp, dp):
 
 
 def http_messaging(msg):
-    response = session.put("{}/".format(SERVER), data=msg, verify=False)
+    response = session.put("localhost:{}/".format(message_port), data=msg, verify=False)
     return response.json()
 
 
@@ -83,6 +83,8 @@ def SRMsg(msg):
     """Send message using the asyncio message handler and get back
     return message. If error then pop-up an error message.
     """
+    return SRMsgHTTPS(msg)
+
     rmsg = loop.run_until_complete(handle_messaging(msg))
     if rmsg[0] == "ACK":
         return rmsg
