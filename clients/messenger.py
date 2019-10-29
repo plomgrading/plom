@@ -33,16 +33,16 @@ def setServerDetails(s, mp, dp):
 
 def http_messaging(msg):
     response = session.put(
-        "https://localhost:{}/".format(message_port), data={"msg": msg}, verify=False
+        "https://localhost:{}/".format(message_port), json={"msg": msg}, verify=False
     )
-    return response.json()
+    print(response.text)
+    return response.json()["rmsg"]
 
 
 def SRMsgHTTPS(msg):
     """Send message using https and get back return message.
     If error then pop-up an error message.
     """
-    print("HERE1")
     rmsg = http_messaging(msg)
     if rmsg[0] == "ACK":
         return rmsg
@@ -175,7 +175,7 @@ def startMessenger():
     print("Starting a requests-session")
     global session
     session = requests.Session()
-    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=5))
+    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
 
 
 def stopMessenger():

@@ -3,6 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
+from aiohttp import web
 import asyncio
 import datetime
 import errno
@@ -38,6 +39,44 @@ sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.key")
 
+# aiohttp-ificiation of things
+routes = web.RouteTableDef()
+
+
+@routes.put("/")
+async def hello(request):
+    data = await request.json()
+    message = data["msg"]
+    print("Got message {}".format(message))
+
+    # message should be a list [cmd, user, password, arg1, arg2, etc]
+    if not isinstance(message, list):
+        SLogger.info(">>> Got strange message - not a list. {}".format(message))
+    else:
+        if message[0] == "AUTH":
+            # do not log the password - just auth and username
+            SLogger.info("Got auth request: {}".format(message[:2]))
+        else:
+            SLogger.info("Got message: {}".format(message))
+        # Run the command on the server and get the return message.
+        # peon will be the instance of the server when it runs.
+        rmesg = peon.proc_cmd(message)
+        SLogger.info("Returning message {}".format(rmesg))
+        return web.json_response({"rmsg": rmesg}, status=200)
+    #
+    # addr = writer.get_extra_info("peername")
+    # # convert message to json
+    # jdm = json.dumps(rmesg)
+    # # send encoded-json'd message back over connection.
+    # writer.write(jdm.encode())
+    # # SSL does not support EOF, so send a null byte
+    # # to indicate the end of the message.
+    # writer.write(b"\x00")
+    # await writer.drain()
+    # writer.close()
+
+
+# ----------------------
 
 # Set up loggers for server, marking and ID-ing
 def setupLogger(name, log_file, level=logging.INFO):
@@ -891,7 +930,10 @@ SLogger.info("Serving messages on {}".format(server.sockets[0].getsockname()))
 print("Serving messages on {}".format(server.sockets[0].getsockname()))
 try:
     # Run the event loop until it is killed off.
-    loop.run_forever()
+    app = web.Application()
+    app.add_routes(routes)
+    web.run_app(app, ssl_context=sslContext)
+    # loop.run_forever()
 except KeyboardInterrupt:
     pass
 
