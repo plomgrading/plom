@@ -32,11 +32,9 @@ def setServerDetails(s, mp, dp):
 
 
 def http_messaging(msg):
-    print("HERE", msg, type(msg))
-    response = session.get(
+    response = session.put(
         "https://localhost:{}/".format(message_port), data={"msg": msg}, verify=False
     )
-    print("THERE")
     return response.json()
 
 
