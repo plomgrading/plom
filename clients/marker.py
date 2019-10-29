@@ -74,13 +74,18 @@ directoryPath = tempDirectory.name
 class BackgroundDownloader(QThread):
     downloaded = pyqtSignal(str)
 
-    def setFiles(self, tname, fname):
+    def __init__(self, tname, fname):
+        QThread.__init__(self)
         self.tname = tname
         self.fname = fname
 
     def run(self):
+        print("Debug: downloader thread {}: downloading {}, {}".format(threading.get_ident(), self.tname, self.fname))
+        #time.sleep(5)
         messenger.getFileDav(self.tname, self.fname)
-        # needed to send "please delete" back to server
+        #time.sleep(5)
+        # needed to send "please delete" back to server (TODO: do it here instead?)
+        print("Debug: downloader thread {}: got tname, fname={},{}".format(threading.get_ident(), self.tname, self.fname))
         self.downloaded.emit(self.tname)
         # then exit
         self.quit()
@@ -454,13 +459,7 @@ class MarkerClient(QWidget):
         self.testImg.resetB.animateClick()
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
-        # A thread for downloading in the background
-        # see https://stackoverflow.com/questions/6783194/background-thread-with-qthread-in-pyqt
-        # and https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
         print("Debug: Marker main thread: " + str(threading.get_ident()))
-        self.backgroundDownloader = BackgroundDownloader()
-        self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
-        # and another for uploading
         self.backgroundUploader = BackgroundUploader()
         self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
         self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
@@ -627,7 +626,8 @@ class MarkerClient(QWidget):
         # Get file from the tempfilename in the webdav
         tname = msg[2]
         # Do this `messenger.getFileDav(tname, fname)` in another thread
-        self.backgroundDownloader.setFiles(tname, fname)
+        self.backgroundDownloader = BackgroundDownloader(tname, fname)
+        self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
         self.backgroundDownloader.start()
         # Add the page-group to the list of things to mark
         # do not update the displayed image with this new paper
