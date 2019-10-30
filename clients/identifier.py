@@ -231,8 +231,11 @@ class IDClient(QWidget):
 
     def skipOnClick(self):
         """Skip the current, moving to the next or loading a new one"""
-        last_row_is_highlighted = True  # TODO: how to check this?
-        if last_row_is_highlighted:
+        index = self.ui.tableView.selectedIndexes()
+        if len(index) == 0:
+            return
+        r = index[0].row()  # which row is selected
+        if r == self.exM.rowCount() - 1:  # the last row is selected.
             if self.requestNext():
                 return
         self.moveToNextUnID()
@@ -622,8 +625,7 @@ class IDClient(QWidget):
             if alreadyIDd:
                 self.moveToNextUnID()
                 return
-            last_row_highlighted = True  # TODO: how to check this?
-            if last_row_highlighted:
+            if index[0].row() == self.exM.rowCount() - 1:  # last row is highlighted
                 if self.requestNext():
                     return
             self.moveToNextUnID()
@@ -702,8 +704,7 @@ class IDClient(QWidget):
             if alreadyIDd:
                 self.moveToNextUnID()
                 return
-            last_row_highlighted = True  # TODO: how to check this?
-            if last_row_highlighted:
+            if index[0].row() == self.exM.rowCount() - 1:  # last row is highlighted
                 if self.requestNext():
                     return
             self.moveToNextUnID()
