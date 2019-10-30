@@ -55,7 +55,7 @@ sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
 
 # set up variables to store paths for marker and id clients
-tempDirectory = tempfile.TemporaryDirectory(prefix='plom_')
+tempDirectory = tempfile.TemporaryDirectory(prefix="plom_")
 directoryPath = tempDirectory.name
 
 # Read https://mayaposch.wordpress.com/2011/11/01/how-to-really-truly-use-qthreads-the-full-explanation/
@@ -290,11 +290,7 @@ class MarkerClient(QWidget):
         # Fire up the messenger with server data.
         messenger.setServerDetails(server, message_port, web_port)
         messenger.startMessenger()
-        # Ping to see if server is up.
-        if not messenger.pingTest():
-            QTimer.singleShot(100, self.shutDownError)
-            self.testImg = None  # so that resize event doesn't throw error
-            return
+
         # Save username, password, and path the local temp directory for
         # image files and the class list.
         self.userName = userName
@@ -415,7 +411,6 @@ class MarkerClient(QWidget):
         self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(e)
 
-
     def getMaxMark(self):
         """Return the max mark or raise ValueError."""
         # Send max-mark request (mGMX) to server
@@ -426,7 +421,6 @@ class MarkerClient(QWidget):
         if not msg[0] == "ACK":
             raise ValueError(msg[1])
         self.maxScore = msg[1]
-
 
     def getMarkedList(self):
         # Ask server for list of previously marked papers

@@ -168,10 +168,7 @@ class IDClient(QWidget):
         # Init the messenger with server and port data.
         messenger.setServerDetails(server, message_port, web_port)
         messenger.startMessenger()
-        # Ping to see if server is up.
-        # if not messenger.pingTest():
-        # QTimer.singleShot(100, self.shutDownError)
-        # return
+
         # Save username, password, and path the local temp directory for
         # image files and the class list.
         self.userName = userName
