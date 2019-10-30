@@ -933,7 +933,7 @@ try:
     # Run the event loop until it is killed off.
     app = web.Application()
     app.add_routes(routes)
-    web.run_app(app, ssl_context=sslContext)
+    web.run_app(app, port=serverInfo["mport"], ssl_context=sslContext)
     # loop.run_forever()
 except KeyboardInterrupt:
     pass
