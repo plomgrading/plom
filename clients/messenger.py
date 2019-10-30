@@ -137,11 +137,7 @@ session = None
 
 
 def startMessenger():
-    # """Start the asyncio event loop"""
-    # global loop
-    # print("Starting asyncio loop")
-    # loop = asyncio.get_event_loop()
-
+    """Start the asyncio event loop"""
     print("Starting a requests-session")
     global session
     session = requests.Session()
