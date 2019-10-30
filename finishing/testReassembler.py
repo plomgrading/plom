@@ -36,6 +36,10 @@ if __name__ == '__main__':
     # note we know the shortname is alphanumeric with no strings
     # so this is safe.
     outname = os.path.join(outdir, "{}_{}.pdf".format(shortName, sid))
+    # TODO: check if anything changed (either here or in 09/08)
+    # https://gitlab.math.ubc.ca/andrewr/MLP/issues/392
+    if os.path.isfile(outname):
+        exit(0)
 
     # use imagemagick to convert each group-image into a temporary pdf.
     pdfpages = [tempfile.NamedTemporaryFile(suffix=".pdf") for x in imgl]

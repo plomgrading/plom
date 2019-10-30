@@ -88,6 +88,8 @@ for n in sorted(examsCompleted.keys()):
     s = "" + n
     if examsCompleted[n]:
         # If coverpage hasn't been built before
+        # TODO: should check if anything actually changed...
+        # https://gitlab.math.ubc.ca/andrewr/MLP/issues/392
         if not os.path.isfile("./coverPages/cover_{}.pdf".format(str(n).zfill(4))):
             # extract the info for test n
             extractMarks(n)

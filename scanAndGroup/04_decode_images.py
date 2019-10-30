@@ -277,12 +277,12 @@ def validateQRsAgainstProduction():
             fn = examsScannedNow[t][p][1]
             # if the tpv's match then all good.
             if examsProduced[ts][ps] == v:
-                # print success and thats all.
-                print(
-                    "Valid scan of t{:s} p{:s} v{:d} from file {:s}".format(
-                        ts, ps, v, fn
-                    )
-                )
+                pass
+                #print(
+                #    "Valid scan of t{:s} p{:s} v{:d} from file {:s}".format(
+                #        ts, ps, v, fn
+                #    )
+                #)
             else:
                 # print mismatch warning and move file to problem-images
                 print(">> Mismatch between exam scanned and exam produced")
