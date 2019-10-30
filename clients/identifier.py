@@ -210,6 +210,7 @@ class IDClient(QWidget):
         self.ui.nameEdit.returnPressed.connect(self.enterName)
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.nextButton.clicked.connect(self.requestNext)
+        self.ui.predButton.clicked.connect(self.acceptPrediction)
         # Make sure no button is clicked by a return-press
         self.ui.nextButton.setAutoDefault(False)
         self.ui.closeButton.setAutoDefault(False)
@@ -418,9 +419,13 @@ class IDClient(QWidget):
         elif tn in self.predictedTestToNumbers:
             psid = self.predictedTestToNumbers[tn]
             pname = self.studentNumbersToNames[psid]
-            self.ui.pSIDLabel.setText(psid)
-            self.ui.pNameLabel.setText(pname)
-            QTimer.singleShot(0, self.setuiedit)
+            if pname == "":
+                self.ui.predictionBox.hide()
+            else:
+                self.ui.predictionBox.show()
+                self.ui.pSIDLabel.setText(psid)
+                self.ui.pNameLabel.setText(pname)
+                QTimer.singleShot(0, self.setuiedit)
         else:
             self.ui.pSIDLabel.setText("")
             self.ui.pNameLabel.setText("")
@@ -473,6 +478,41 @@ class IDClient(QWidget):
         # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()
         self.ui.idEdit.setFocus()
+
+    def acceptPrediction(self):
+        # first check currently selected paper is unidentified - else do nothing
+        index = self.ui.tableView.selectedIndexes()
+        status = self.exM.data(index[1])
+        if status != "unidentified":
+            return
+        code = self.exM.data(index[0])
+        sname = self.ui.pNameLabel.text()
+        sid = self.ui.pSIDLabel.text()
+        msg = messenger.SRMsg(["iRID", self.userName, self.token, code, sid, sname])
+        if msg[0] == "ERR":
+            # If an error, revert the student and clear things.
+            self.exM.revertStudent(index)
+            # Use timer to avoid conflict between completer and
+            # clearing the line-edit. Very annoying but this fixes it.
+            QTimer.singleShot(0, self.ui.idEdit.clear)
+            QTimer.singleShot(0, self.ui.nameEdit.clear)
+            return
+        else:
+            self.exM.identifyStudent(index, sid, sname)
+            # Use timer to avoid conflict between completer and
+            # clearing the line-edit. Very annoying but this fixes it.
+            QTimer.singleShot(0, self.ui.idEdit.clear)
+            QTimer.singleShot(0, self.ui.nameEdit.clear)
+            # Update un-id'd count.
+            self.unidCount -= 1
+
+        if self.unidCount == 0:
+            # if there are no unID'd papers
+            self.requestNext()
+        else:
+            # otherwise move to the next unidentified paper.
+            self.moveToNextUnID()
+        return
 
     def identifyStudent(self, index, alreadyIDd=False):
         """User ID's the student of the current paper. Some care around whether
