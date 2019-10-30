@@ -32,10 +32,18 @@ def setServerDetails(s, mp, dp):
 
 
 def http_messaging(msg):
-    response = session.put(
-        "https://localhost:{}/".format(message_port), json={"msg": msg}, verify=False
-    )
-    print(response.text)
+    try:
+        response = session.put(
+            "https://localhost:{}/".format(message_port),
+            json={"msg": msg},
+            verify=False,
+        )
+    except:
+        return [
+            "ERR",
+            "Something went seriously wrong. Check connection details and try again.",
+        ]
+    # print("Response = {}".format(response.status_code))
     return response.json()["rmsg"]
 
 
@@ -56,49 +64,11 @@ def SRMsgHTTPS(msg):
         msg.exec_()
 
 
-async def handle_messaging(msg):
-    """Asyncio messager handler.
-    Sends message over the connection.
-    Message should be a list [cmd, user, password, arg1, arg2, etc]
-    Reads return message from the stream - usually ['ACK', arg1, arg2,...]
-    """
-    reader, writer = await asyncio.open_connection(
-        server, message_port, loop=loop, ssl=sslContext
-    )
-    # Message should be  [cmd, user, password, arg1, arg2, etc]
-    jm = json.dumps(msg)
-    writer.write(jm.encode())
-    # SSL does not support EOF, so send a null byte to indicate the end
-    # of the message.
-    writer.write(b"\x00")
-    await writer.drain()
-
-    # data = await reader.read(100)
-    data = await reader.readline()
-    terminate = data.endswith(b"\x00")
-    data = data.rstrip(b"\x00")
-    rmesg = json.loads(data.decode())  # message should be a list [ACK, arg1, arg2, etc]
-    writer.close()
-    return rmesg
-
-
 def SRMsg(msg):
     """Send message using the asyncio message handler and get back
     return message. If error then pop-up an error message.
     """
     return SRMsgHTTPS(msg)
-
-    rmsg = loop.run_until_complete(handle_messaging(msg))
-    if rmsg[0] == "ACK":
-        return rmsg
-    elif rmsg[0] == "ERR":
-        msg = ErrorMessage("Server says: " + rmsg[1])
-        msg.exec_()
-        return rmsg
-    else:
-        print(">>> Error I didn't expect. Return message was {}".format(rmsg))
-        msg = ErrorMessage("Something really wrong has happened.")
-        msg.exec_()
 
 
 def getFileDav(dfn, lfn):

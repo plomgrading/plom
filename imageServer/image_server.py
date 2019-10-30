@@ -179,43 +179,43 @@ servCmd = {
 }
 
 
-async def handle_messaging(reader, writer):
-    """Asyncio messager handler.
-    Reads message from the stream.
-    Message should be a list [cmd, user, password, arg1, arg2, etc]
-    Converts message[0] to the server command using the servCmd dictionary
-    Server, peon, then runs command and we send back the return message.
-    """
-    data = await reader.read(1024)
-    terminate = data.endswith(b"\x00")
-    data = data.rstrip(b"\x00")
-    message = json.loads(data.decode())
-    # print("Got message {}".format(message))
-
-    # message should be a list [cmd, user, password, arg1, arg2, etc]
-    if not isinstance(message, list):
-        SLogger.info(">>> Got strange message - not a list. {}".format(message))
-    else:
-        if message[0] == "AUTH":
-            # do not log the password - just auth and username
-            SLogger.info("Got auth request: {}".format(message[:2]))
-        else:
-            SLogger.info("Got message: {}".format(message))
-        # Run the command on the server and get the return message.
-        # peon will be the instance of the server when it runs.
-        rmesg = peon.proc_cmd(message)
-        SLogger.info("Returning message {}".format(rmesg))
-
-    addr = writer.get_extra_info("peername")
-    # convert message to json
-    jdm = json.dumps(rmesg)
-    # send encoded-json'd message back over connection.
-    writer.write(jdm.encode())
-    # SSL does not support EOF, so send a null byte
-    # to indicate the end of the message.
-    writer.write(b"\x00")
-    await writer.drain()
-    writer.close()
+# async def handle_messaging(reader, writer):
+#     """Asyncio messager handler.
+#     Reads message from the stream.
+#     Message should be a list [cmd, user, password, arg1, arg2, etc]
+#     Converts message[0] to the server command using the servCmd dictionary
+#     Server, peon, then runs command and we send back the return message.
+#     """
+#     data = await reader.read(1024)
+#     terminate = data.endswith(b"\x00")
+#     data = data.rstrip(b"\x00")
+#     message = json.loads(data.decode())
+#     # print("Got message {}".format(message))
+#
+#     # message should be a list [cmd, user, password, arg1, arg2, etc]
+#     if not isinstance(message, list):
+#         SLogger.info(">>> Got strange message - not a list. {}".format(message))
+#     else:
+#         if message[0] == "AUTH":
+#             # do not log the password - just auth and username
+#             SLogger.info("Got auth request: {}".format(message[:2]))
+#         else:
+#             SLogger.info("Got message: {}".format(message))
+#         # Run the command on the server and get the return message.
+#         # peon will be the instance of the server when it runs.
+#         rmesg = peon.proc_cmd(message)
+#         SLogger.info("Returning message {}".format(rmesg))
+#
+#     addr = writer.get_extra_info("peername")
+#     # convert message to json
+#     jdm = json.dumps(rmesg)
+#     # send encoded-json'd message back over connection.
+#     writer.write(jdm.encode())
+#     # SSL does not support EOF, so send a null byte
+#     # to indicate the end of the message.
+#     writer.write(b"\x00")
+#     await writer.drain()
+#     writer.close()
 
 
 # # # # # # # # # # # #
@@ -902,46 +902,13 @@ theTotalDB = TotalDatabase(TotalLogger)
 # Fire up the server with both database client classes and the test-spec.
 peon = Server(theIDDB, theMarkDB, theTotalDB, spec, SLogger)
 
-# # # # # # # # # # # #
-# Fire up the asyncio event loop.
-loop = asyncio.get_event_loop()
-coro = asyncio.start_server(
-    handle_messaging,
-    serverInfo["server"],
-    serverInfo["mport"],
-    loop=loop,
-    ssl=sslContext,
-)
 try:
-    server = loop.run_until_complete(coro)
-except OSError:
-    SLogger.info(
-        "There is a problem running the socket-listening loop. "
-        "Check if port {} is free and try again.".format(serverInfo["mport"])
-    )
-    print(
-        "There is a problem running the socket-listening loop. "
-        "Check if port {} is free and try again.".format(serverInfo["mport"])
-    )
-    subprocess.Popen.kill(davproc)
-    loop.close()
-    exit(1)
-
-SLogger.info("Serving messages on {}".format(server.sockets[0].getsockname()))
-print("Serving messages on {}".format(server.sockets[0].getsockname()))
-try:
-    # Run the event loop until it is killed off.
+    # Run the server
     app = web.Application()
     app.add_routes(routes)
-    web.run_app(app, ssl_context=sslContext)
-    # loop.run_forever()
+    web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
 except KeyboardInterrupt:
     pass
-
-# Close down the event loop.
-server.close()
-loop.run_until_complete(server.wait_closed())
-loop.close()
 
 # # # # # # # # # # # #
 # Close the webdav server
