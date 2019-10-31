@@ -201,18 +201,6 @@ class ExamModel(QStandardItemModel):
             ]
         )
 
-    # TODO: old undead code?  mtime/pname swapped?!
-    def markPaper(self, index, mrk, aname, mtime, pname):
-        # When marked, set the annotated filename, the mark,
-        # and the total marking time (in case it was annotated earlier)
-        mt = self.itemData(index[3])
-        # total elapsed time.
-        self.setData(index[3], mtime + mt)
-        self.setData(index[1], "marked")
-        self.setData(index[2], mrk)
-        self.setData(index[6], aname)
-        self.setData(index[7], pname)
-
     def addPaper(self, paper):
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
