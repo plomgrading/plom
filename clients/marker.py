@@ -312,8 +312,7 @@ class ProxyModel(QSortFilterProxyModel):
         self.setData(index[1], "reverted")
         self.setData(index[2], -1)
         self.setData(index[3], 0)
-        # TODO: WTF, how to call clearPaperDir instead?
-        self.setData(index[0].siblingAtColumn(8), None)
+        self.clearPaperDir(index[0].row())
 
     def deferPaper(self, index):
         # When user defers paper, it must be unmarked or reverted already. Set status to "deferred"
