@@ -34,7 +34,7 @@ def setServerDetails(s, mp, dp):
 def http_messaging(msg):
     try:
         response = session.put(
-            "https://localhost:{}/".format(message_port),
+            "https://{}:{}/".format(server, message_port),
             json={"msg": msg},
             verify=False,
         )
