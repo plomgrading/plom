@@ -803,7 +803,7 @@ class MarkerClient(QWidget):
             [gr, mtime, launchAgain] = self.waitForAnnotator(aname, None)
         # Exited annotator with 'cancel', so don't save anything.
         if gr is None:
-            # TODO: could also erase the paperdir?
+            # TODO: could also erase the paperdir
             # reselect the row we were working on
             self.prxM.setData(index[1], prevState)
             self.ui.tableView.selectRow(index[1].row())
