@@ -299,7 +299,7 @@ class ProxyModel(QSortFilterProxyModel):
         mt = int(self.data(index[3]))
         # total elapsed time.
         self.setData(index[3], mtime + mt)
-        self.setData(index[1], "uploading...")  # TODO: or "queued"?
+        self.setData(index[1], "uploading...")
         self.setData(index[2], mrk)
         self.setData(index[0].siblingAtColumn(6), aname)
         self.setData(index[0].siblingAtColumn(7), pname)
