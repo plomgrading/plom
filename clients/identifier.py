@@ -449,6 +449,12 @@ class IDClient(QWidget):
             self.ui.idProgressBar.setMaximum(msg[2])
             self.ui.idProgressBar.setValue(msg[1])
 
+        # ask server for ID of next task
+        msg = messenger.SRMsg(["iANT", self.userName, self.token])
+        if msg[0] == "ERR":
+            return
+        print(msg)
+
         # ask server for next unid'd paper
         msg = messenger.SRMsg(["iNID", self.userName, self.token])
         if msg[0] == "ERR":

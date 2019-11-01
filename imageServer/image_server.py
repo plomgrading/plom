@@ -131,6 +131,7 @@ def getServerInfo():
 servCmd = {
     "AUTH": "authoriseUser",
     "UCL": "userClosing",
+    "iANT": "IDaskNextTask",
     "iDNF": "IDdidntFinish",
     "iNID": "IDnextUnIDd",
     "iPRC": "IDprogressCount",
@@ -465,6 +466,20 @@ class Server(object):
         """
         self.authority.detoken(user)
         return ["ACK"]
+
+    def IDaskNextTask(self, user, token):
+        """The client has asked for the next unidentified paper, so
+        ask the database for its code and then copy the appropriate file
+        into the webdav and send code and the temp-webdav path back to the
+        client.
+        """
+        # Get code of next unidentified image from the database
+        give = self.IDDB.askNextTask(user)
+        if give is None:
+            return ["ERR", "No more papers"]
+        else:
+            # Send to the client
+            return ["ACK", give]
 
     def IDnextUnIDd(self, user, token):
         """The client has asked for the next unidentified paper, so

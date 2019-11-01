@@ -119,6 +119,23 @@ class IDDatabase:
         except IntegrityError:
             self.logging.info("IDImage {} {} already exists.".format(t, code))
 
+    def askNextTask(self, username):
+        """Find unid'd test and send tgv to client"""
+        try:
+            with iddb.atomic():
+                # Grab image from todo pile
+                x = IDImage.get(status="ToDo")
+                # log it.
+                self.logging.info(
+                    "Client asked for next task - passing number {} {} to client {}".format(
+                        x.number, x.tgv, username
+                    )
+                )
+                # return tgv.
+                return x.tgv
+        except IDImage.DoesNotExist:
+            self.logging.info("Nothing left on To-Do pile")
+
     def giveIDImageToClient(self, username):
         """Find unid'd test and send to client"""
         try:
