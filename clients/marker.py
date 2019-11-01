@@ -808,6 +808,10 @@ class MarkerClient(QWidget):
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
         fname = "{}".format(self.prxM.getOriginalFile(index[0].row()))
+        while not os.path.exists(fname):
+            # TODO: might be an endless loop, wait some maxium number before popping a dialog?
+            print("Debug: file {} does not exist yet, wait for downloader (?)".format(fname))
+            time.sleep(0.1)
         print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
         shutil.copyfile(fname, aname)
 
