@@ -128,6 +128,14 @@ class BackgroundUploader(QThread):
             messenger.putFileDav(cname, cfile)
 
             print("Debug: upQ: sending marks for {} via mRMD cmd server...".format(code))
+            # ensure user is still authorised to upload this particular pageimage -
+            # this may have changed depending on what else is going on.
+            # TODO: remove, either rRMD will succeed or fail: don't precheck
+            msg = messenger.SRMsg_nopopup(["mUSO", self._userName, self._token, code])
+            if msg[0] != "ACK":
+                errmsg = msg[1]
+                print('Debug: upQ: emitting FAILED signal for {}'.format(code))
+                self.uploadFail.emit(code, errmsg)
             msg = messenger.SRMsg_nopopup(["mRMD", self._userName, self._token,
                     code, int(gr) + 3, afile, pfile, cfile, mtime, pg, ver, tags])  # TODO: just "gr" here!
             self.sleep(4)  # TODO: pretend actual upload took longer, remove!
@@ -813,18 +821,8 @@ class MarkerClient(QWidget):
         # Update the currently displayed image by selecting that row
         self.ui.tableView.selectRow(index[1].row())
 
-        # these need to happen in another thread - but that requires
-        # us to check with server to make sure user is still authorised
-        # to upload this particular pageimage - this may have changed
-        # depending on what else is going on.
-
-        # TODO: should this check happen later?  we don't know for sure the upload will happen "NOW"
-        msg = messenger.SRMsg(
-            ["mUSO", self.userName, self.token, self.prxM.data(index[0])]
-        )
-        # On failure, SRMsg will have shown user "no longer authorised..."
-        if msg[0] == "ACK":
-            self.backgroundUploader.enqueueNewUpload(
+        # the actual upload will happen in another thread
+        self.backgroundUploader.enqueueNewUpload(
                 "t" + tgv, # current tgv
                 gr,  # grade
                 aname,  # annotated file
@@ -834,7 +832,7 @@ class MarkerClient(QWidget):
                 self.pageGroup,
                 self.version,
                 self.prxM.data(index[4]),  # tags
-            )
+        )
 
         # Check if no unmarked test, then request one.
         if launchAgain is False:
