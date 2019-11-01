@@ -158,7 +158,6 @@ class BackgroundUploader(QThread):
         timer.timeout.connect(tryToUpload)
         #timer.start(500)
         timer.start(10000)  # TODO: remove! use above 500
-        print(timer)
         self.exec_()
 
 
