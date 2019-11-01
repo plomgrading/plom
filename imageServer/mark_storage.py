@@ -182,7 +182,7 @@ class MarkDatabase:
         try:
             with markdb.atomic():
                 # get the record by code
-                x = GroupImage.get(status="ToDo", tgv=code)
+                x = GroupImage.get(tgv=code)
                 # check either unclaimed or belongs to user.
                 # TODO check logic solid here - is this idempotent.
                 if x.user == "None" or x.user == username:

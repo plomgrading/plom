@@ -144,9 +144,7 @@ servCmd = {
     #####
     "mANT": "MaskNextTask",
     "mCST": "MclaimSpecificTask",
-    ##
     "mDNF": "MdidntFinish",
-    "mNUM": "MnextUnmarked",
     "mPRC": "MprogressCount",
     "mUSO": "MuserStillOwns",
     "mRMD": "MreturnMarked",
@@ -379,7 +377,7 @@ class Server(object):
                 dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
             )
         # This should really use path-join.
-        shutil.move(srcfile, dstfile)
+        shutil.copy(srcfile, dstfile)
         # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
 
     def removeFile(self, davfn):
@@ -568,19 +566,6 @@ class Server(object):
         else:
             # return a fail claim - client will try again.
             return ["ACK", False]
-
-    def MnextUnmarked(self, user, token, pg, v):
-        """The client has asked for the next unmarked image (with
-        group pg, and version v), so ask the database for its code and
-        then copy the appropriate file into the webdav and send code
-        and the temp-webdav path back to the client.
-        """
-        give, fname, tag = self.MDB.giveGroupImageToClient(user, pg, v)
-        if give is None:
-            return ["ERR", "Nothing left on todo pile"]
-        else:
-            # copy the file into the webdav and tell client code / path.
-            return ["ACK", give, self.provideFile(fname), tag]
 
     def MprogressCount(self, user, token, pg, v):
         """Send back current marking progress counts to the client"""

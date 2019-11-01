@@ -43,7 +43,6 @@ def http_messaging(msg):
             "ERR",
             "Something went seriously wrong. Check connection details and try again.",
         ]
-    # print("Response = {}".format(response.status_code))
     return response.json()["rmsg"]
 
 
