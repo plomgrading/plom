@@ -72,7 +72,10 @@ directoryPath = tempDirectory.name
 # and finally https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
 # I'll do it the simpler subclassing way
 class BackgroundDownloader(QThread):
-    downloaded = pyqtSignal(str)
+    downloadSuccess = pyqtSignal(str)
+    # TODO: temporary stuff, eventually Messenger will know it
+    _userName = None
+    _token = None
 
     def __init__(self, tname, fname):
         QThread.__init__(self)
@@ -84,10 +87,12 @@ class BackgroundDownloader(QThread):
         #time.sleep(5)
         messenger.getFileDav(self.tname, self.fname)
         #time.sleep(5)
-        # needed to send "please delete" back to server (TODO: do it here instead?)
+        # Ack that test received - server then deletes it from webdav
+        msg = messenger.SRMsg_nopopup(["mDWF", self._userName, self._token, self.tname])
+        assert msg[0] == "ACK"
+
         print("Debug: downloader thread {}: got tname, fname={},{}".format(threading.get_ident(), self.tname, self.fname))
-        self.downloaded.emit(self.tname)
-        # then exit
+        self.downloadSuccess.emit(self.tname)
         self.quit()
 
 
@@ -600,7 +605,7 @@ class MarkerClient(QWidget):
         messenger.getFileDav(tname, fname)
         # Add the page-group to the list of things to mark
         self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]))
-        # Ack that test received - server then deletes it from webdav
+        # Ack that test received - server can then delete it from webdav
         msg = messenger.SRMsg(["mDWF", self.userName, self.token, tname])
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
@@ -632,15 +637,15 @@ class MarkerClient(QWidget):
             # if prev downloader still going than wait.  might block the gui
             self.backgroundDownloader.wait()
         self.backgroundDownloader = BackgroundDownloader(tname, fname)
-        self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
+        self.backgroundDownloader._userName = self.userName
+        self.backgroundDownloader._token = self.token
+        self.backgroundDownloader.downloadSuccess.connect(self.requestNextInBackgroundFinished)
         self.backgroundDownloader.start()
         # Add the page-group to the list of things to mark
         # do not update the displayed image with this new paper
         self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]), update=False)
 
-    def requestNextInBackgroundFinish(self, tname):
-        # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg(["mDWF", self.userName, self.token, tname])
+    def requestNextInBackgroundFinished(self, tname):
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
