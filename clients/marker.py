@@ -453,6 +453,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         # A simple cache table for latex'd comments
         self.commentCache = {}
+        self.backgroundDownloader = None
         # Get a pagegroup to mark from the server
         self.requestNext()
         # reset the view so whole exam shown.
@@ -626,6 +627,10 @@ class MarkerClient(QWidget):
         # Get file from the tempfilename in the webdav
         tname = msg[2]
         # Do this `messenger.getFileDav(tname, fname)` in another thread
+        if self.backgroundDownloader:
+            print("Previous Downloader: " + str(self.backgroundDownloader))
+            # if prev downloader still going than wait.  might block the gui
+            self.backgroundDownloader.wait()
         self.backgroundDownloader = BackgroundDownloader(tname, fname)
         self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
         self.backgroundDownloader.start()
