@@ -661,6 +661,7 @@ class MarkerClient(QWidget):
         """Get rid of any annotations or marks and go back to unmarked original"""
         # TODO: shouldn't the server be informed?
         # https://gitlab.math.ubc.ca/andrewr/MLP/issues/406
+        # TODO: In particular, reverting the paper must not jump queue!
         prIndex = self.ui.tableView.selectedIndexes()
         # if no test then return
         if len(prIndex) == 0:
