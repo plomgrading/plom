@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * make 04 script less verbose.
+* Increase timeout on server ping test.
 
 ### Fixed
 * userManager was failing to start.
