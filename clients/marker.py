@@ -846,7 +846,9 @@ class MarkerClient(QWidget):
         """An upload has finished, do appropriate UI updates"""
         for r in range(self.prxM.rowCount()):
             if self.prxM.getPrefix(r) == code:
-                self.prxM.setStatus(r, "marked")
+                # maybe it changed while we waited for the upload
+                if self.prxM.getStatus(r) == "uploading...":
+                    self.prxM.setStatus(r, "marked")
         # TODO: negative used as invalid instead of None because the signal is typed
         if numdone > 0 and numtotal > 0:
             self.ui.mProgressBar.setValue(numdone)
