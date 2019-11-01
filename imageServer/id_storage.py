@@ -142,6 +142,7 @@ class IDDatabase:
                 # get the record by code
                 x = IDImage.get(tgv=code)
                 # check either unclaimed or belongs to user.
+                # TODO check logic solid here - is this idempotent.
                 if x.user == "None" or x.user == username:
                     # update status, Student-number, name, id-time.
                     x.status = "OutForIDing"

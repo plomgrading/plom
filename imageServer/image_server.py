@@ -286,6 +286,17 @@ class Server(object):
                 # user is authorised, so run their requested function
                 return getattr(self, pcmd)(*message[1:])
             else:
+                user = message[1]
+                # only exception here is if user is closing.
+                # if unauth'd user tries this, just ignore.
+                if message[0] == "UCL":
+                    self.logger.info(
+                        ">>> User {} appears to be closing out more than once.".format(
+                            user
+                        )
+                    )
+                    return ["ACK"]
+                # otherwise throw an "Unauth error" to client.
                 self.logger.info(">>> Unauthorised attempt by user {}".format(user))
                 print("Attempt by non-user to {}".format(message))
                 return ["ERR", "You are not an authorised user"]
@@ -370,7 +381,10 @@ class Server(object):
     def removeFile(self, davfn):
         """Once a file has been grabbed by the client, delete it from the webdav.
         """
-        os.unlink(davDirectory + "/" + davfn)
+        # delete file if present.
+        fname = davDirectory + "/" + davfn
+        if os.path.isfile(davDirectory + "/" + davfn):
+            os.unlink(fname)
 
     def printToDo(self):
         """Ask each database to print the images that are still on
