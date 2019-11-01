@@ -562,9 +562,9 @@ class Server(object):
     def MclaimSpecificTask(self, user, token, code):
         retval = self.MDB.giveSpecificTaskToClient(user, code)
         # retval is either [False] or [True, give, fname, tag]
-        if retval[0] is None:
+        if retval[0] is True:
             # copy the file into the webdav and tell client code / path.
-            return ["ACK", retval[1], self.provideFile(retval[2]), retval[3]]
+            return ["ACK", True, retval[1], self.provideFile(retval[2]), retval[3]]
         else:
             # return a fail claim - client will try again.
             return ["ACK", False]

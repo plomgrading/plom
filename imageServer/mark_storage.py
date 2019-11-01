@@ -174,7 +174,7 @@ class MarkDatabase:
                 )
                 # return the tgv
                 return x.tgv
-        except IDImage.DoesNotExist:
+        except GroupImage.DoesNotExist:
             self.logging.info("Nothing left on To-Do pile")
             return None
 
@@ -182,7 +182,7 @@ class MarkDatabase:
         try:
             with markdb.atomic():
                 # get the record by code
-                x = GroupImage.get(status="ToDo", pageGroup=pg, version=v)
+                x = GroupImage.get(status="ToDo", tgv=code)
                 # check either unclaimed or belongs to user.
                 # TODO check logic solid here - is this idempotent.
                 if x.user == "None" or x.user == username:
@@ -200,8 +200,8 @@ class MarkDatabase:
                 else:
                     # has been claimed by someone else.
                     return [False]
-        except IDImage.DoesNotExist:
-            self.logging.info("That IDImage number {} not known".format(code))
+        except GroupImage.DoesNotExist:
+            self.logging.info("That GroupImage number {} not known".format(code))
             return [False]
 
     def giveGroupImageToClient(self, username, pg, v):

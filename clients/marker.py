@@ -511,28 +511,36 @@ class MarkerClient(QWidget):
         message [ACK, test-code, temp-filename]. Get file from webdav, add to
         the list of papers and update the image.
         """
-        msg = messenger.SRMsg(
-            ["mANT", self.userName, self.token, self.pageGroup, self.version]
-        )
-        if msg[0] == "ERR":
-            return
-        else:
-            print("Next task = {}".format(msg[1]))
+        attempts = 0
+        while True:
+            attempts += 1
+            # little sanity check - shouldn't be needed.
+            # TODO remove.
+            if attempts > 5:
+                return
+            # ask server for tgv of next task
+            msg = messenger.SRMsg(
+                ["mANT", self.userName, self.token, self.pageGroup, self.version]
+            )
+            if msg[0] == "ERR":
+                return
+            # grab the test-code
+            code = msg[1]
+            msg = messenger.SRMsg(["mCST", self.userName, self.token, code])
+            # return message is [ACK, True, code, filename] or [ACK, False] or [ERR, reason]
+            if msg[0] == "ERR":
+                return
+            if msg[1] == True:
+                break
 
-        # Ask server for next unmarked paper
-        msg = messenger.SRMsg(
-            ["mNUM", self.userName, self.token, self.pageGroup, self.version]
-        )
-        if msg[0] == "ERR":
-            return
-        # Return message should be [ACK, code, temp-filename, tags]
+        # Return message should be [ACK, True, code, temp-filename, tags]
         # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
-        fname = os.path.join(self.workingDirectory, msg[1] + ".png")
+        fname = os.path.join(self.workingDirectory, msg[2] + ".png")
         # Get file from the tempfilename in the webdav
-        tname = msg[2]
+        tname = msg[3]
         messenger.getFileDav(tname, fname)
         # Add the page-group to the list of things to mark
-        self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]))
+        self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]))
         # Ack that test received - server then deletes it from webdav
         msg = messenger.SRMsg(["mDWF", self.userName, self.token, tname])
         # Clean up the table
@@ -548,31 +556,39 @@ class MarkerClient(QWidget):
             self.ui.annButton.animateClick()
 
     def requestNextInBackgroundStart(self):
-        msg = messenger.SRMsg(
-            ["mANT", self.userName, self.token, self.pageGroup, self.version]
-        )
-        if msg[0] == "ERR":
-            return
-        else:
-            print("Next task = {}".format(msg[1]))
+        attempts = 0
+        while True:
+            attempts += 1
+            # little sanity check - shouldn't be needed.
+            # TODO remove.
+            if attempts > 5:
+                return
+            # ask server for tgv of next task
+            msg = messenger.SRMsg(
+                ["mANT", self.userName, self.token, self.pageGroup, self.version]
+            )
+            if msg[0] == "ERR":
+                return
+            # grab the test-code
+            code = msg[1]
+            msg = messenger.SRMsg(["mCST", self.userName, self.token, code])
+            # return message is [ACK, True, code, filename] or [ACK, False] or [ERR, reason]
+            if msg[0] == "ERR":
+                return
+            if msg[1] == True:
+                break
 
-        # Ask server for next unmarked paper
-        msg = messenger.SRMsg(
-            ["mNUM", self.userName, self.token, self.pageGroup, self.version]
-        )
-        if msg[0] == "ERR":
-            return
-        # Return message should be [ACK, code, temp-filename, tags]
+        # Return message should be [ACK, True, code, temp-filename, tags]
         # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
-        fname = os.path.join(self.workingDirectory, msg[1] + ".png")
+        fname = os.path.join(self.workingDirectory, msg[2] + ".png")
         # Get file from the tempfilename in the webdav
-        tname = msg[2]
+        tname = msg[3]
         # Do this `messenger.getFileDav(tname, fname)` in another thread
         self.backgroundDownloader.setFiles(tname, fname)
         self.backgroundDownloader.start()
         # Add the page-group to the list of things to mark
         # do not update the displayed image with this new paper
-        self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]), update=False)
+        self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
 
     def requestNextInBackgroundFinish(self, tname):
         # Ack that test received - server then deletes it from webdav
