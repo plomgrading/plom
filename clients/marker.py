@@ -73,6 +73,7 @@ directoryPath = tempDirectory.name
 # I'll do it the simpler subclassing way
 class BackgroundDownloader(QThread):
     downloadSuccess = pyqtSignal(str)
+    downloadFail = pyqtSignal(str, str)
     # TODO: temporary stuff, eventually Messenger will know it
     _userName = None
     _token = None
@@ -85,14 +86,19 @@ class BackgroundDownloader(QThread):
     def run(self):
         print("Debug: downloader thread {}: downloading {}, {}".format(threading.get_ident(), self.tname, self.fname))
         #time.sleep(5)
+        # TODO: let this fail and feed to downloadFail below...
+        # https://gitlab.math.ubc.ca/andrewr/MLP/issues/417
         messenger.getFileDav(self.tname, self.fname)
         #time.sleep(5)
         # Ack that test received - server then deletes it from webdav
         msg = messenger.SRMsg_nopopup(["mDWF", self._userName, self._token, self.tname])
-        assert msg[0] == "ACK"
-
-        print("Debug: downloader thread {}: got tname, fname={},{}".format(threading.get_ident(), self.tname, self.fname))
-        self.downloadSuccess.emit(self.tname)
+        if msg[0] == "ACK":
+            print("Debug: downloader thread {}: got tname, fname={},{}".format(threading.get_ident(), self.tname, self.fname))
+            self.downloadSuccess.emit(self.tname)
+        else:
+            errmsg = msg[1]
+            print("Debug: downloader thread {}: FAILED to get tname, fname={},{}".format(threading.get_ident(), self.tname, self.fname))
+            self.downloadFail.emit(self.tname, errmsg)
         self.quit()
 
 
@@ -640,6 +646,7 @@ class MarkerClient(QWidget):
         self.backgroundDownloader._userName = self.userName
         self.backgroundDownloader._token = self.token
         self.backgroundDownloader.downloadSuccess.connect(self.requestNextInBackgroundFinished)
+        self.backgroundDownloader.downloadFail.connect(self.requestNextInBackgroundFailed)
         self.backgroundDownloader.start()
         # Add the page-group to the list of things to mark
         # do not update the displayed image with this new paper
@@ -649,6 +656,15 @@ class MarkerClient(QWidget):
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
+
+    def requestNextInBackgroundFailed(self, code, errmsg):
+        # TODO what should we do?  Is there a realistic way forward
+        # or should we just die with an exception?
+        ErrorMessage("Unfortunately, there was an unexpected error download "
+                     "paper {}.\n\n"
+                     "Server said: \"{}\"\n\n"
+                     "Please consider filing an issue?  I don't know if its "
+                     "safe to continue from here...".format(code, errmsg)).exec_()
 
     def moveToNextUnmarkedTest(self):
         # Move to the next unmarked test in the table.
