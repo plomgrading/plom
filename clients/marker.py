@@ -782,7 +782,8 @@ class MarkerClient(QWidget):
             oldaname = os.path.join(oldpaperdir, 'G' + tgv + ".png")
             oldpname = os.path.join(oldpaperdir, 'G' + tgv + ".plom")
             #oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
-            # TODO: json file not downloaded... double-check why
+            # TODO: json file not downloaded
+            # https://gitlab.math.ubc.ca/andrewr/MLP/issues/415
             shutil.copyfile(oldaname, aname)
             shutil.copyfile(oldpname, pname)
             #shutil.copyfile(oldcname, cname)
