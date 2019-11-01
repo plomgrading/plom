@@ -105,7 +105,7 @@ async def handle_ping_test():
     """
     ptest = asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
     try:
-        reader, writer = await asyncio.wait_for(ptest, timeout=5)
+        reader, writer = await asyncio.wait_for(ptest, timeout=6)
         jm = json.dumps(["PING"])
         writer.write(jm.encode())
         writer.write(b"\x00")
