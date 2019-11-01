@@ -135,6 +135,7 @@ class IDDatabase:
                 return x.tgv
         except IDImage.DoesNotExist:
             self.logging.info("Nothing left on To-Do pile")
+            return None
 
     def giveSpecificTaskToClient(self, username, code):
         try:

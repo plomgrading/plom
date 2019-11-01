@@ -160,6 +160,24 @@ class MarkDatabase:
         except IntegrityError:
             self.logging.info("GroupImage {} {} already exists.".format(t, code))
 
+    def askNextTask(self, username, pg, v):
+        """Find unmarked test and send tgv to client"""
+        try:
+            with markdb.atomic():
+                # grab image from ToDo pile with required group,version
+                x = GroupImage.get(status="ToDo", pageGroup=pg, version=v)
+                # log it
+                self.logging.info(
+                    "Client asked for next task - passing {} to user {}".format(
+                        x.tgv, username
+                    )
+                )
+                # return the tgv
+                return x.tgv
+        except IDImage.DoesNotExist:
+            self.logging.info("Nothing left on To-Do pile")
+            return None
+
     def giveGroupImageToClient(self, username, pg, v):
         """Find unmarked image with (group,version) and give to client"""
         try:

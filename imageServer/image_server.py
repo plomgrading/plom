@@ -141,6 +141,10 @@ servCmd = {
     "iGAL": "IDgetAlreadyIDList",
     "iGGI": "IDgetGroupImage",
     "iDWF": "IDdoneWithFile",
+    #####
+    "mANT": "MaskNextTask",
+    "mCST": "MclaimSpecificTask",
+    ##
     "mDNF": "MdidntFinish",
     "mNUM": "MnextUnmarked",
     "mPRC": "MprogressCount",
@@ -155,6 +159,7 @@ servCmd = {
     "mRCF": "MreturnCommentFile",
     "mRPF": "MreturnPlomFile",
     "mTAG": "MsetTag",
+    #####
     "tGMM": "TgetMaxMark",
     "tGTP": "TgotTest",
     "tPRC": "TprogressCount",
@@ -482,8 +487,7 @@ class Server(object):
 
     def IDaskNextTask(self, user, token):
         """The client has asked for the next unidentified paper, so
-        ask the database for its code and then copy the appropriate file
-        into the webdav and send code and the temp-webdav path back to the
+        ask the database for its code and send back to the
         client.
         """
         # Get code of next unidentified image from the database
@@ -541,6 +545,19 @@ class Server(object):
             return ["ACK", give, self.provideFile(fname), None]
         else:
             return ["ERR", "User {} is not authorised for tgv={}".format(user, tgv)]
+
+    def MaskNextTask(self, user, token, pg, v):
+        """The client has asked for the next unmarked paper, so
+        ask the database for its code and send back to the
+        client.
+        """
+        # Get code of next unidentified image from the database
+        give = self.MDB.askNextTask(user, pg, v)
+        if give is None:
+            return ["ERR", "No more papers"]
+        else:
+            # Send to the client
+            return ["ACK", give]
 
     def MnextUnmarked(self, user, token, pg, v):
         """The client has asked for the next unmarked image (with

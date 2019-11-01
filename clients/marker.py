@@ -511,6 +511,14 @@ class MarkerClient(QWidget):
         message [ACK, test-code, temp-filename]. Get file from webdav, add to
         the list of papers and update the image.
         """
+        msg = messenger.SRMsg(
+            ["mANT", self.userName, self.token, self.pageGroup, self.version]
+        )
+        if msg[0] == "ERR":
+            return
+        else:
+            print("Next task = {}".format(msg[1]))
+
         # Ask server for next unmarked paper
         msg = messenger.SRMsg(
             ["mNUM", self.userName, self.token, self.pageGroup, self.version]
@@ -540,6 +548,14 @@ class MarkerClient(QWidget):
             self.ui.annButton.animateClick()
 
     def requestNextInBackgroundStart(self):
+        msg = messenger.SRMsg(
+            ["mANT", self.userName, self.token, self.pageGroup, self.version]
+        )
+        if msg[0] == "ERR":
+            return
+        else:
+            print("Next task = {}".format(msg[1]))
+
         # Ask server for next unmarked paper
         msg = messenger.SRMsg(
             ["mNUM", self.userName, self.token, self.pageGroup, self.version]
