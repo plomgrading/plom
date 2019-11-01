@@ -136,7 +136,6 @@ servCmd = {
     "iDNF": "IDdidntFinish",
     "iPRC": "IDprogressCount",
     "iRID": "IDreturnIDd",
-    "iRAD": "IDreturnAlreadyIDd",
     "iRCL": "IDrequestClassList",
     "iRPL": "IDrequestPredictionList",
     "iGAL": "IDgetAlreadyIDList",
@@ -522,15 +521,6 @@ class Server(object):
             return ["ACK"]
         else:
             return ["ERR", "That student number already used."]
-
-    def IDreturnAlreadyIDd(self, user, token, ret, sid, sname):
-        """Client has re-ID'd the pageimage with code=ret, student-number=sid,
-        and student-name=sname. Send the information to the database (which
-        checks if that number has been used previously). If okay then send
-        and ACK, else send an error that the number has been used.
-        """
-        self.IDDB.takeIDImageFromClient(ret, user, sid, sname)
-        return ["ACK"]
 
     def IDgetAlreadyIDList(self, user, token):
         """When a id-client logs on they request a list of papers they have already IDd.

@@ -497,32 +497,17 @@ class IDClient(QWidget):
         # model to put data into the table.
         self.exM.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text())
         code = self.exM.data(index[0])
-        if alreadyIDd:
-            # If the paper was ID'd previously send return-already-ID'd (iRAD)
-            # with the code, ID, name.
-            msg = messenger.SRMsg(
-                [
-                    "iRAD",
-                    self.userName,
-                    self.token,
-                    code,
-                    self.ui.idEdit.text(),
-                    self.ui.nameEdit.text(),
-                ]
-            )
-        else:
-            # If the paper was not ID'd previously send return-ID'd (iRID)
-            # with the code, ID, name.
-            msg = messenger.SRMsg(
-                [
-                    "iRID",
-                    self.userName,
-                    self.token,
-                    code,
-                    self.ui.idEdit.text(),
-                    self.ui.nameEdit.text(),
-                ]
-            )
+        # Return paper to server with the code, ID, name.
+        msg = messenger.SRMsg(
+            [
+                "iRID",
+                self.userName,
+                self.token,
+                code,
+                self.ui.idEdit.text(),
+                self.ui.nameEdit.text(),
+            ]
+        )
         if msg[0] == "ERR":
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
