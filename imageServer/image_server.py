@@ -559,6 +559,16 @@ class Server(object):
             # Send to the client
             return ["ACK", give]
 
+    def MclaimSpecificTask(self, user, token, code):
+        retval = self.MDB.giveSpecificTaskToClient(user, code)
+        # retval is either [False] or [True, give, fname, tag]
+        if retval[0] is None:
+            # copy the file into the webdav and tell client code / path.
+            return ["ACK", retval[1], self.provideFile(retval[2]), retval[3]]
+        else:
+            # return a fail claim - client will try again.
+            return ["ACK", False]
+
     def MnextUnmarked(self, user, token, pg, v):
         """The client has asked for the next unmarked image (with
         group pg, and version v), so ask the database for its code and

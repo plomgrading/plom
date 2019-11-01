@@ -178,6 +178,32 @@ class MarkDatabase:
             self.logging.info("Nothing left on To-Do pile")
             return None
 
+    def giveSpecificTaskToClient(self, username, code):
+        try:
+            with markdb.atomic():
+                # get the record by code
+                x = GroupImage.get(status="ToDo", pageGroup=pg, version=v)
+                # check either unclaimed or belongs to user.
+                # TODO check logic solid here - is this idempotent.
+                if x.user == "None" or x.user == username:
+                    # update status, Student-number, name, id-time.
+                    self.logging.info(
+                        "User {} claiming GroupImage {}".format(username, x.tgv)
+                    )
+                    # update status, user, time
+                    x.status = "OutForMarking"
+                    x.user = username
+                    x.time = datetime.now()
+                    x.save()
+                    # return the tgv and filename
+                    return [True, x.tgv, x.originalFile, x.tags]
+                else:
+                    # has been claimed by someone else.
+                    return [False]
+        except IDImage.DoesNotExist:
+            self.logging.info("That IDImage number {} not known".format(code))
+            return [False]
+
     def giveGroupImageToClient(self, username, pg, v):
         """Find unmarked image with (group,version) and give to client"""
         try:
