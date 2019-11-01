@@ -449,19 +449,29 @@ class IDClient(QWidget):
             self.ui.idProgressBar.setMaximum(msg[2])
             self.ui.idProgressBar.setValue(msg[1])
 
-        # ask server for ID of next task
-        msg = messenger.SRMsg(["iANT", self.userName, self.token])
-        if msg[0] == "ERR":
-            return
-        print(msg)
+        attempts = 0
+        while True:
+            attempts += 1
+            # little sanity check - shouldn't be needed.
+            # TODO remove.
+            if attempts > 5:
+                return
+            # ask server for ID of next task
+            msg = messenger.SRMsg(["iANT", self.userName, self.token])
+            if msg[0] == "ERR":
+                return
+            # grab returned test-code
+            test = msg[1]
+            # claim that test
+            msg = messenger.SRMsg(["iCST", self.userName, self.token, test])
+            # return message is [ACK, True, code, filename] or [ACK, False]
+            if msg[0] == "ERR":
+                return
+            if msg[1] == True:
+                break
 
-        # ask server for next unid'd paper
-        msg = messenger.SRMsg(["iNID", self.userName, self.token])
-        if msg[0] == "ERR":
-            return
-        # return message is [ACK, code, filename]
-        test = msg[1]
-        fname = msg[2]
+        test = msg[2]
+        fname = msg[3]
         # Image name will be <code>.png
         iname = os.path.join(
             self.workingDirectory, test + ".png"

@@ -132,8 +132,8 @@ servCmd = {
     "AUTH": "authoriseUser",
     "UCL": "userClosing",
     "iANT": "IDaskNextTask",
+    "iCST": "IDclaimSpecificTask",
     "iDNF": "IDdidntFinish",
-    "iNID": "IDnextUnIDd",
     "iPRC": "IDprogressCount",
     "iRID": "IDreturnIDd",
     "iRAD": "IDreturnAlreadyIDd",
@@ -481,23 +481,18 @@ class Server(object):
             # Send to the client
             return ["ACK", give]
 
-    def IDnextUnIDd(self, user, token):
-        """The client has asked for the next unidentified paper, so
-        ask the database for its code and then copy the appropriate file
-        into the webdav and send code and the temp-webdav path back to the
-        client.
-        """
-        # Get code of next unidentified image from the database
-        give = self.IDDB.giveIDImageToClient(user)
-        if give is None:
-            return ["ERR", "No more papers"]
-        else:
-            # copy the file into the webdav and tell client the code and path
+    def IDclaimSpecificTask(self, user, token, code):
+        if self.IDDB.giveSpecificTaskToClient(user, code):
+            # return a successful claim
             return [
                 "ACK",
-                give,
-                self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give)),
+                True,
+                code,
+                self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, code)),
             ]
+        else:
+            # return a fail claim - client will try again.
+            return ["ACK", False]
 
     def IDprogressCount(self, user, token):
         """Send back current ID progress counts to the client"""

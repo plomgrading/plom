@@ -136,27 +136,26 @@ class IDDatabase:
         except IDImage.DoesNotExist:
             self.logging.info("Nothing left on To-Do pile")
 
-    def giveIDImageToClient(self, username):
-        """Find unid'd test and send to client"""
+    def giveSpecificTaskToClient(self, username, code):
         try:
             with iddb.atomic():
-                # Grab image from todo pile
-                x = IDImage.get(status="ToDo")
-                # log it.
-                self.logging.info(
-                    "Passing IDImage {} {} to client {}".format(
-                        x.number, x.tgv, username
-                    )
-                )
-                # Update status, user, time.
-                x.status = "OutForIDing"
-                x.user = username
-                x.time = datetime.now()
-                x.save()
-                # return tgv.
-                return x.tgv
+                # get the record by code
+                x = IDImage.get(tgv=code)
+                # check either unclaimed or belongs to user.
+                if x.user == "None" or x.user == username:
+                    # update status, Student-number, name, id-time.
+                    x.status = "OutForIDing"
+                    x.user = username
+                    x.time = datetime.now()
+                    x.save()
+                    return True
+                    # return tgv.
+                else:
+                    # has been claimed by someone else.
+                    return False
         except IDImage.DoesNotExist:
-            self.logging.info("Nothing left on To-Do pile")
+            self.logging.info("That IDImage number {} not known".format(code))
+            return False
 
     def takeIDImageFromClient(self, code, username, sid, sname):
         """Get ID'dimage back from client - update record in database."""
