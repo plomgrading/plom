@@ -459,7 +459,6 @@ class MarkerClient(QWidget):
         self.backgroundUploader = BackgroundUploader()
         self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
         self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
-        # TODO: temporary hacks of stuff into the uploader
         self.backgroundUploader._userName = self.userName
         self.backgroundUploader._token = self.token
         self.backgroundUploader.start()
@@ -900,7 +899,6 @@ class MarkerClient(QWidget):
         # that is not marked.
         # Note - do this for everything, not just the proxy-model
         for r in range(self.exM.rowCount()):
-            # TODO: what to do for "uploading..."?
             if self.exM.data(self.exM.index(r, 1)) != "marked":
                 # Tell server the code fo any paper that is not marked.
                 # server will put that back on the todo-pile.
