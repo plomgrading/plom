@@ -7,7 +7,7 @@ import json
 import os
 import sys
 
-from PyQt5.QtCore import Qt, QSettings, QSize, QTimer, pyqtSlot
+from PyQt5.QtCore import Qt, QByteArray, QRectF, QSettings, QSize, QTimer, pyqtSlot
 from PyQt5.QtGui import (
     QCursor,
     QGuiApplication,
@@ -802,7 +802,12 @@ class Annotator(QDialog):
 
     def loadWindowSettings(self):
         if self.parent.annotatorSettings["geometry"] is not None:
-            self.restoreGeometry(self.parent.annotatorSettings["geometry"])
+            # since we can't directly jsonify QByteArray:
+            self.restoreGeometry(
+                QByteArray.fromBase64(
+                    self.parent.annotatorSettings["geometry"].encode()
+                )
+            )
         if self.parent.annotatorSettings["markWarnings"] is not None:
             self.markWarn = self.parent.annotatorSettings["markWarnings"]
         if self.parent.annotatorSettings["commentWarnings"] is not None:
@@ -819,10 +824,11 @@ class Annotator(QDialog):
 
         if self.parent.annotatorSettings["viewRectangle"] is not None:
             # put in slight delay so that any resize events are done.
+            # since we can't directly jsonify QRectF:
             QTimer.singleShot(
                 150,
                 lambda: self.view.initialZoom(
-                    self.parent.annotatorSettings["viewRectangle"]
+                    QRectF(*self.parent.annotatorSettings["viewRectangle"])
                 ),
             )
         else:
@@ -840,10 +846,20 @@ class Annotator(QDialog):
             QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
 
     def saveWindowSettings(self):
-        self.parent.annotatorSettings["geometry"] = self.saveGeometry()
+        # since we can't directly jsonify QByteArray:
+        self.parent.annotatorSettings["geometry"] = (
+            self.saveGeometry().toBase64().data().decode()
+        )
         self.parent.annotatorSettings["markWarnings"] = self.markWarn
         self.parent.annotatorSettings["commentWarnings"] = self.commentWarn
-        self.parent.annotatorSettings["viewRectangle"] = self.view.vrect
+        # since we can't directly jsonify qrectf:
+        jsrect = self.view.vrect
+        self.parent.annotatorSettings["viewRectangle"] = [
+            jsrect.x(),
+            jsrect.y(),
+            jsrect.width(),
+            jsrect.height(),
+        ]
         self.parent.annotatorSettings["zoomState"] = self.ui.zoomCB.currentIndex()
         self.parent.annotatorSettings["tool"] = self.scene.mode
         if self.scene.mode == "delta":
