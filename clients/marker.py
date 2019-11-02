@@ -604,7 +604,7 @@ class MarkerClient(QWidget):
         messenger.getFileDav(tname, fname)
         # Add the page-group to the list of things to mark
         self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]))
-        # Ack that test received - server can then delete it from webdav
+        # Ack that test received - server then deletes it from webdav
         msg = messenger.SRMsg(["mDWF", self.userName, self.token, tname])
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
