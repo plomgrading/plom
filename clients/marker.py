@@ -19,6 +19,7 @@ import tempfile
 import time
 import threading
 import queue
+import math
 
 from PyQt5.QtCore import (
     Qt,
@@ -823,10 +824,23 @@ class MarkerClient(QWidget):
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
         fname = "{}".format(self.prxM.getOriginalFile(index[0].row()))
-        while not os.path.exists(fname):
-            # TODO: might be an endless loop, wait some maxium number before popping a dialog?
-            print("Debug: file {} does not exist yet, wait for downloader (?)".format(fname))
-            time.sleep(0.1)
+        if self.backgroundDownloader:
+            count = 0
+            # Notes: we could check using `while not os.path.exists(fname):`
+            # Or we can wait on the downloader, which works when there is only
+            # one download thread.  Better yet might be a dict/database that
+            # we update on downloadFinished signal.
+            while self.backgroundDownloader.isRunning():
+                time.sleep(0.1)
+                count += 1
+                if math.remainder(count, 10) == 0:
+                    print("Debug: waiting for downloader: {}".format(fname))
+                if count >= 40:
+                    msg = SimpleMessage("Still waiting for download.  Do you want to wait a bit longer?")
+                    if msg.exec_() == QMessageBox.No:
+                        return
+                    count = 0
+
         print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
         shutil.copyfile(fname, aname)
 
