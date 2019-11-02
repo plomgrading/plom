@@ -88,7 +88,12 @@ class BackgroundDownloader(QThread):
         #time.sleep(5)
         # TODO: let this fail and feed to downloadFail below...
         # https://gitlab.math.ubc.ca/andrewr/MLP/issues/417
-        messenger.getFileDav(self.tname, self.fname)
+
+        # TODO: DO NOT MERGE: this makes 40% of downloads fail FOR TESTING
+        import random
+        farkup = "" if random.random() > 0.4 else "youllneverfindme"
+        messenger.getFileDav(self.tname + farkup, self.fname)
+
         #time.sleep(5)
         # Ack that test received - server then deletes it from webdav
         msg = messenger.SRMsg_nopopup(["mDWF", self._userName, self._token, self.tname])
