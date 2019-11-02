@@ -1,7 +1,14 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+# -*- coding: utf-8 -*-
+
+"""
+Backend bits n bobs to talk to the server
+"""
+
+__author__ = "Andrew Rechnitzer, Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer, Colin B. Macdonald"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import asyncio
 import easywebdav2
@@ -10,6 +17,8 @@ import ssl
 from PyQt5.QtWidgets import QMessageBox
 import urllib3
 from useful_classes import ErrorMessage
+import time
+import threading
 
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.
@@ -20,6 +29,7 @@ sslContext.check_hostname = False
 server = "127.0.0.1"
 message_port = 41984
 webdav_port = 41985
+SRmutex = threading.Lock()
 
 
 def setServerDetails(s, mp, dp):
@@ -60,7 +70,17 @@ def SRMsg(msg):
     """Send message using the asyncio message handler and get back
     return message. If error then pop-up an error message.
     """
-    rmsg = loop.run_until_complete(handle_messaging(msg))
+    #N = 0.5
+    #print("Messenger [{}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
+    SRmutex.acquire()
+    try:
+        #print("Messenger: got mutex, pretending to work for {}s, then talking to server".format(N))
+
+        #time.sleep(N)
+        rmsg = loop.run_until_complete(handle_messaging(msg))
+    finally:
+        SRmutex.release()
+    #print("Messenger [{}]: got rmsg = {}".format(str(threading.get_ident()), str(rmsg)))
     if rmsg[0] == "ACK":
         return rmsg
     elif rmsg[0] == "ERR":
@@ -71,6 +91,26 @@ def SRMsg(msg):
         print(">>> Error I didn't expect. Return message was {}".format(rmsg))
         msg = ErrorMessage("Something really wrong has happened.")
         msg.exec_()
+
+
+def SRMsg_nopopup(msg):
+    """Send message using the asyncio message handler and get back
+    return message.
+    """
+    #N = 15
+    #print("Messenger [nopop, {}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
+    SRmutex.acquire()
+    try:
+        #print("Messenger [nopop]: got mutex, pretending to work for {}s, then talking to server".format(N))
+        #time.sleep(N)
+        rmsg = loop.run_until_complete(handle_messaging(msg))
+    finally:
+        SRmutex.release()
+    #print("Messenger [nopop, {}]: got rmsg = {}".format(str(threading.get_ident()), str(rmsg)))
+    if rmsg[0] in ("ACK", "ERR"):
+        return rmsg
+    else:
+        raise RuntimeError("Unexpected response from server.  Consider filing a bug?  The return from the server was:\n\n" + str(rmsg))
 
 
 def getFileDav(dfn, lfn):
@@ -101,13 +141,12 @@ def putFileDav(lfn, dfn):
 
 async def handle_ping_test():
     """ A simple ping to test if the server is up and running.
-    If nothing back after 2 seconds then assume the server is
+    If nothing back after a few seconds then assume the server is
     down and tell the user, then exit.
     """
     ptest = asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
     try:
-        # Wait for 2 seconds, then raise TimeoutError
-        reader, writer = await asyncio.wait_for(ptest, timeout=2)
+        reader, writer = await asyncio.wait_for(ptest, timeout=6)
         jm = json.dumps(["PING"])
         writer.write(jm.encode())
         writer.write(b"\x00")
@@ -119,9 +158,19 @@ async def handle_ping_test():
         rmesg = json.loads(data.decode())  # message should be ['ACK']
         writer.close()
         return True
-    except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
+    except asyncio.TimeoutError as e:
+        # TODO: str(e) does nothing useful to keep separate from below
         msg = ErrorMessage(
-            "Server does not return ping." " Please double check details and try again."
+            "Server timed out.  " \
+            "Please double check details and try again."
+        )
+        msg.exec_()
+        return False
+    except (ConnectionRefusedError, OSError) as e:
+        msg = ErrorMessage(
+            "Server does not return ping.  " \
+            "Please double check details and try again.\n\n" \
+            "Details:\n" + str(e)
         )
         msg.exec_()
         return False

@@ -580,6 +580,12 @@ class Server(object):
         if int(mark) < 0 or int(mark) > self.testSpec.Marks[int(pg)]:
             # this should never happen.
             return ["ERR", "Assigned mark out of range. Contact administrator."]
+        if not (code.startswith("t") and
+                fname == "G{}.png".format(code[1:]) and
+                pname == "G{}.plom".format(code[1:]) and
+                cname == "G{}.json".format(code[1:])):
+            SLogger.info("Rejected mismatched files from buggy client (user {}) for {}".format(user, code))
+            return ["ERR", "Buggy client gave me the wrong files!  File a bug."]
 
         # move annoted file to right place with new filename
         self.claimFile(fname, "")
