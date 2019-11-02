@@ -181,8 +181,8 @@ class IDClient(QWidget):
         # Fire up the interface.
         self.ui = Ui_IdentifyWindow()
         self.ui.setupUi(self)
-        # Paste username into the GUI.
-        self.ui.userLabel.setText("Who Cares?")
+        # Paste username into the GUI (TODO: but why?)
+        self.ui.userLabel.setText(mess._userName)
         # Exam model for the table of papers - associate to table in GUI.
         self.exM = ExamModel()
         self.ui.tableView.setModel(self.exM)
