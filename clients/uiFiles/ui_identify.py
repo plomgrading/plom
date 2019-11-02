@@ -2,11 +2,13 @@
 
 # Form implementation generated from reading ui file '../qtCreatorFiles/ui_identify.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.3
+# Created by: PyQt5 UI code generator 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_IdentifyWindow(object):
     def setupUi(self, IdentifyWindow):
@@ -161,10 +163,9 @@ class Ui_IdentifyWindow(object):
         self.studentBox.setTitle(_translate("IdentifyWindow", "Enter student details"))
         self.idLabel.setText(_translate("IdentifyWindow", "Student ID"))
         self.nameLabel.setText(_translate("IdentifyWindow", "Student Name"))
-        self.nextButton.setText(_translate("IdentifyWindow", "&Get next"))
+        self.nextButton.setText(_translate("IdentifyWindow", "Skip (for now) and &get next"))
         self.userBox.setTitle(_translate("IdentifyWindow", "User"))
         self.userLabel.setText(_translate("IdentifyWindow", "Username"))
         self.tableBox.setTitle(_translate("IdentifyWindow", "Table of papers"))
         self.progressGroupBox.setTitle(_translate("IdentifyWindow", "Progress"))
         self.idProgressBar.setFormat(_translate("IdentifyWindow", "%v of %m"))
-
