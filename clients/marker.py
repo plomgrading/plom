@@ -92,7 +92,15 @@ class BackgroundDownloader(QThread):
         # TODO: DO NOT MERGE: this makes 40% of downloads fail FOR TESTING
         import random
         farkup = "" if random.random() > 0.4 else "youllneverfindme"
-        messenger.getFileDav(self.tname + farkup, self.fname)
+        try:
+            messenger.getFileDav_woInsanity(self.tname + farkup, self.fname)
+        except Exception as ex:
+            # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
+            # TODO: its not really "Server Says" in the popup...
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            errmsg = template.format(type(ex).__name__, ex.args)
+            self.downloadFail.emit(self.tname, errmsg)
+            self.quit()
 
         #time.sleep(5)
         # Ack that test received - server then deletes it from webdav
