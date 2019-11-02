@@ -46,6 +46,11 @@ def setServerDetails(s, mp, dp):
     webdav_port = dp
 
 
+def whoami():
+    global _userName
+    return _userName
+
+
 async def handle_messaging(msg):
     """Asyncio messager handler.
     Sends message over the connection.
