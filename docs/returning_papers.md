@@ -59,6 +59,8 @@ We have a secret code for each student.  We want to upload these numbers to Canv
      csv file as `canvas_from_export.csv` and move it `finishing/`.
      Possibly need to select "All Sections".
 
+  * TODO: new Canvas gradebook doesn't use "mute", update these...
+
 
 ## Generated the files
 
@@ -72,20 +74,30 @@ We have a secret code for each student.  We want to upload these numbers to Canv
    * If you kept the same salt, you may be able to upload just the
      grades.
 
-    * Note: This script requires python 3.6 (on Ubuntu 16.04 call python3.6 explicity)
+   * Note: This script requires python 3.6 (on Ubuntu 16.04 call python3.6 explicity)
 
 
 ## Sharing with students
 
-   * Make a Canvas announcement or similar explaing what they need
-     to do: TODO: add suggested text here:
+  * Make a Canvas announcement or similar explaing what they need
+    to do: for example:
 
-   * Make sure you give them a https:// link.  Double check this.
+    > Midterm return link: https://amcweb.math.ubc.ca/~your/path
+    >
+    > You can obtain your Midterm by visiting the link given above.  You
+    > will need your student number and your 12-digit "return code" from
+    > the Canvas grade sheet.
+    >
+    > If you've reviewed the solutions and would like someone to reconsider
+    > your grade, please fill out the Grade Change Request Form at
+    > SOME URL.
 
-   * Post the URL somewhere secure like Canvas, not on the open
-     internet.  We want to minimize brute-force attempts to get
-     other peoples' exams.
+  * Make sure you give them a https:// link.  Double check this.
 
-   * Unmute the return code.
+  * Post the URL somewhere secure like Canvas, not on the open
+    internet.  We want to minimize brute-force attempts to get
+    other peoples' exams.
 
-   * Unmute the test.
+  * Unmute the return code.
+
+  * Unmute the test.

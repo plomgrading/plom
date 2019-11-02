@@ -27,7 +27,7 @@ def import_canvas_csv(canvas_fromfile):
     print('Carefully filtering rows w/o "Student Number" including:\n'
           '  almost blank rows, "Points Possible" and "Test Student"s')
     isbad = df.apply(
-        lambda x: (pandas.isnull(x['Student Number']) and
+        lambda x: (pandas.isnull(x['SIS User ID']) and
                    (pandas.isnull(x['Student'])
                     or x['Student'].strip().lower().startswith('points possible')
                     or x['Student'].strip().lower().startswith('test student'))),
@@ -85,7 +85,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     # TODO: could 'left' lose someone who is in Plom, but missing in Canvas?
     # https://gitlab.math.ubc.ca/andrewr/MLP/issues/159
     df = pandas.merge(df, marks, how='left',
-                      left_on='Student Number', right_on='StudentID')
+                      left_on='SIS User ID', right_on='StudentID')
     df[testheader] = df['Total']
     df = df[cols]  # discard again (e.g., PG specific stuff)
 
@@ -110,10 +110,15 @@ def canvas_csv_add_return_codes(csvin, csvout):
     sns = {}
     for i, row in df.iterrows():
         name = row['Student']
-        sn = str(row['Student Number'])
+        sn = str(row['SIS User ID'])
+        sn_ = str(row['Student Number'])
+        # as of 2019-10 we don't really dare use Student Number but let's ensure its not insane if it is there...
+        if not sn_ == 'nan':
+            assert sn == sn_, "Canvas has misleading student numbers: " + str((sn,sn_)) + ", for row = " + str(row)
+
 
         assert len(name) > 0, "Student name is empty"
-        assert len(sn) == 8, "Student number is not 8 characters"
+        assert len(sn) == 8, "Student number is not 8 characters: row = " + str(row)
 
         code = myhash(sn)
 

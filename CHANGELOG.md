@@ -13,11 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * make 04 script less verbose.
+* Increase timeout on server ping test.
 
 ### Fixed
+* Fixed a race condition where regarding very quickly could result in incorrect uploads.
 * userManager was failing to start.
 * return to greeter dialog on e.g., wrong server or pagegroup/version out of range.
 * `mark_reverter` less fragile if files DNE.
+* if you skip identifying a test, the client will defer it until the end.
 
 
 ## [0.2.0] - 2019-10-11
