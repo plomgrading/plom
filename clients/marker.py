@@ -144,9 +144,17 @@ class BackgroundUploader(QThread):
             messenger.putFileDav(cname, cfile)
 
             print("Debug: upQ: sending marks for {} via mRMD cmd server...".format(code))
+            # ensure user is still authorised to upload this particular pageimage -
+            # this may have changed depending on what else is going on.
+            # TODO: remove, either rRMD will succeed or fail: don't precheck
+            msg = messenger.SRMsg_nopopup(["mUSO", self._userName, self._token, code])
+            if msg[0] != "ACK":
+                errmsg = msg[1]
+                print('Debug: upQ: emitting FAILED signal for {}'.format(code))
+                self.uploadFail.emit(code, errmsg)
             msg = messenger.SRMsg_nopopup(["mRMD", self._userName, self._token,
-                    code, int(gr) + 3, afile, pfile, cfile, mtime, pg, ver, tags])  # TODO: just "gr" here!
-            self.sleep(4)  # TODO: pretend actual upload took longer, remove!
+                    code, gr, afile, pfile, cfile, mtime, pg, ver, tags])
+            #self.sleep(4)  # pretend upload took longer
             if msg[0] == "ACK":
                 numdone = msg[1]
                 numtotal = msg[2]
@@ -164,9 +172,7 @@ class BackgroundUploader(QThread):
         # QThread (in the new thread's event loop) to call tryToUpload.
         timer = QTimer()
         timer.timeout.connect(tryToUpload)
-        #timer.start(500)
-        timer.start(10000)  # TODO: remove! use above 500
-        print(timer)
+        timer.start(250)
         self.exec_()
 
 
@@ -216,18 +222,6 @@ class ExamModel(QStandardItemModel):
                 "PaperDir",
             ]
         )
-
-    # TODO: old undead code?  mtime/pname swapped?!
-    def markPaper(self, index, mrk, aname, mtime, pname):
-        # When marked, set the annotated filename, the mark,
-        # and the total marking time (in case it was annotated earlier)
-        mt = self.itemData(index[3])
-        # total elapsed time.
-        self.setData(index[3], mtime + mt)
-        self.setData(index[1], "marked")
-        self.setData(index[2], mrk)
-        self.setData(index[6], aname)
-        self.setData(index[7], pname)
 
     def addPaper(self, paper):
         # Append new groupimage to list and append new row to table.
@@ -327,7 +321,7 @@ class ProxyModel(QSortFilterProxyModel):
         mt = int(self.data(index[3]))
         # total elapsed time.
         self.setData(index[3], mtime + mt)
-        self.setData(index[1], "uploading...")  # TODO: or "queued"?
+        self.setData(index[1], "uploading...")
         self.setData(index[2], mrk)
         self.setData(index[0].siblingAtColumn(6), aname)
         self.setData(index[0].siblingAtColumn(7), pname)
@@ -340,8 +334,7 @@ class ProxyModel(QSortFilterProxyModel):
         self.setData(index[1], "reverted")
         self.setData(index[2], -1)
         self.setData(index[3], 0)
-        # TODO: WTF, how to call clearPaperDir instead?
-        self.setData(index[0].siblingAtColumn(8), None)
+        self.clearPaperDir(index[0].row())
 
     def deferPaper(self, index):
         # When user defers paper, it must be unmarked or reverted already. Set status to "deferred"
@@ -475,7 +468,6 @@ class MarkerClient(QWidget):
         self.backgroundUploader = BackgroundUploader()
         self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
         self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
-        # TODO: temporary hacks of stuff into the uploader
         self.backgroundUploader._userName = self.userName
         self.backgroundUploader._token = self.token
         self.backgroundUploader.start()
@@ -693,6 +685,7 @@ class MarkerClient(QWidget):
         """Get rid of any annotations or marks and go back to unmarked original"""
         # TODO: shouldn't the server be informed?
         # https://gitlab.math.ubc.ca/andrewr/MLP/issues/406
+        # TODO: In particular, reverting the paper must not jump queue!
         prIndex = self.ui.tableView.selectedIndexes()
         # if no test then return
         if len(prIndex) == 0:
@@ -821,7 +814,8 @@ class MarkerClient(QWidget):
             oldaname = os.path.join(oldpaperdir, 'G' + tgv + ".png")
             oldpname = os.path.join(oldpaperdir, 'G' + tgv + ".plom")
             #oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
-            # TODO: json file not downloaded... double-check why
+            # TODO: json file not downloaded
+            # https://gitlab.math.ubc.ca/andrewr/MLP/issues/415
             shutil.copyfile(oldaname, aname)
             shutil.copyfile(oldpname, pname)
             #shutil.copyfile(oldcname, cname)
@@ -845,7 +839,7 @@ class MarkerClient(QWidget):
             [gr, mtime, launchAgain] = self.waitForAnnotator(aname, None)
         # Exited annotator with 'cancel', so don't save anything.
         if gr is None:
-            # TODO: could also erase the paperdir?
+            # TODO: could also erase the paperdir
             # reselect the row we were working on
             self.prxM.setData(index[1], prevState)
             self.ui.tableView.selectRow(index[1].row())
@@ -855,18 +849,8 @@ class MarkerClient(QWidget):
         # Update the currently displayed image by selecting that row
         self.ui.tableView.selectRow(index[1].row())
 
-        # these need to happen in another thread - but that requires
-        # us to check with server to make sure user is still authorised
-        # to upload this particular pageimage - this may have changed
-        # depending on what else is going on.
-
-        # TODO: should this check happen later?  we don't know for sure the upload will happen "NOW"
-        msg = messenger.SRMsg(
-            ["mUSO", self.userName, self.token, self.prxM.data(index[0])]
-        )
-        # On failure, SRMsg will have shown user "no longer authorised..."
-        if msg[0] == "ACK":
-            self.backgroundUploader.enqueueNewUpload(
+        # the actual upload will happen in another thread
+        self.backgroundUploader.enqueueNewUpload(
                 "t" + tgv, # current tgv
                 gr,  # grade
                 aname,  # annotated file
@@ -876,7 +860,7 @@ class MarkerClient(QWidget):
                 self.pageGroup,
                 self.version,
                 self.prxM.data(index[4]),  # tags
-            )
+        )
 
         # Check if no unmarked test, then request one.
         if launchAgain is False:
@@ -888,10 +872,11 @@ class MarkerClient(QWidget):
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
-        # TODO: prxM or exM?
         for r in range(self.prxM.rowCount()):
             if self.prxM.getPrefix(r) == code:
-                self.prxM.setStatus(r, "marked")
+                # maybe it changed while we waited for the upload
+                if self.prxM.getStatus(r) == "uploading...":
+                    self.prxM.setStatus(r, "marked")
         # TODO: negative used as invalid instead of None because the signal is typed
         if numdone > 0 and numtotal > 0:
             self.ui.mProgressBar.setValue(numdone)
@@ -900,7 +885,6 @@ class MarkerClient(QWidget):
 
     def backgroundUploadFailed(self, code, errmsg):
         """An upload has failed, not sure what to do but do to it LOADLY"""
-        # TODO: prxM or exM?
         for r in range(self.prxM.rowCount()):
             if self.prxM.getPrefix(r) == code:
                 self.prxM.setStatus(r, "???")
@@ -946,7 +930,6 @@ class MarkerClient(QWidget):
         # that is not marked.
         # Note - do this for everything, not just the proxy-model
         for r in range(self.exM.rowCount()):
-            # TODO: what to do for "uploading..."?
             if self.exM.data(self.exM.index(r, 1)) != "marked":
                 # Tell server the code fo any paper that is not marked.
                 # server will put that back on the todo-pile.
