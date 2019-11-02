@@ -112,10 +112,6 @@ class Chooser(QDialog):
         # Have Messenger login into to server
         messenger.setServerDetails(server, mport, wport)
         messenger.startMessenger()
-        # First ping to see if server is available
-        if not messenger.pingTest():
-            print("TODO: should pop up dialog here?")
-            return
         try:
             messenger.requestAndSaveToken(user, pwd)
         except ValueError as e:
