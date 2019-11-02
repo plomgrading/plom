@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * make 04 script less verbose.
+* Increase timeout on server ping test.
 
 ### Fixed
 * Fixed a race condition where regarding very quickly could result in incorrect uploads.

@@ -141,13 +141,12 @@ def putFileDav(lfn, dfn):
 
 async def handle_ping_test():
     """ A simple ping to test if the server is up and running.
-    If nothing back after 2 seconds then assume the server is
+    If nothing back after a few seconds then assume the server is
     down and tell the user, then exit.
     """
     ptest = asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
     try:
-        # Wait for 2 seconds, then raise TimeoutError
-        reader, writer = await asyncio.wait_for(ptest, timeout=2)
+        reader, writer = await asyncio.wait_for(ptest, timeout=6)
         jm = json.dumps(["PING"])
         writer.write(jm.encode())
         writer.write(b"\x00")
@@ -159,9 +158,19 @@ async def handle_ping_test():
         rmesg = json.loads(data.decode())  # message should be ['ACK']
         writer.close()
         return True
-    except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
+    except asyncio.TimeoutError as e:
+        # TODO: str(e) does nothing useful to keep separate from below
         msg = ErrorMessage(
-            "Server does not return ping." " Please double check details and try again."
+            "Server timed out.  " \
+            "Please double check details and try again."
+        )
+        msg.exec_()
+        return False
+    except (ConnectionRefusedError, OSError) as e:
+        msg = ErrorMessage(
+            "Server does not return ping.  " \
+            "Please double check details and try again.\n\n" \
+            "Details:\n" + str(e)
         )
         msg.exec_()
         return False
