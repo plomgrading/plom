@@ -206,7 +206,7 @@ class IDClient(QWidget):
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nameEdit.returnPressed.connect(self.enterName)
         self.ui.closeButton.clicked.connect(self.shutDown)
-        self.ui.nextButton.clicked.connect(self.requestNext)
+        self.ui.nextButton.clicked.connect(self.skipOnClick)
         # Make sure no button is clicked by a return-press
         self.ui.nextButton.setAutoDefault(False)
         self.ui.closeButton.setAutoDefault(False)
@@ -225,6 +225,17 @@ class IDClient(QWidget):
         # Create variable to store ID/Name conf window position
         # Initially set to top-left corner of window
         self.msgGeometry = None
+
+    def skipOnClick(self):
+        """Skip the current, moving to the next or loading a new one"""
+        index = self.ui.tableView.selectedIndexes()
+        if len(index) == 0:
+            return
+        r = index[0].row()  # which row is selected
+        if r == self.exM.rowCount() - 1:  # the last row is selected.
+            if self.requestNext():
+                return
+        self.moveToNextUnID()
 
     def getClassList(self):
         """Send request for classlist (iRCL) to server. The server then sends
@@ -453,13 +464,13 @@ class IDClient(QWidget):
         while True:
             attempts += 1
             # little sanity check - shouldn't be needed.
-            # TODO remove.
+            # TODO remove this sanity check - or replace with a pop-up warning thingy.
             if attempts > 5:
-                return
+                return False
             # ask server for ID of next task
             msg = messenger.SRMsg(["iANT", self.userName, self.token])
             if msg[0] == "ERR":
-                return
+                return False
             # grab returned test-code
             test = msg[1]
             # claim that test
@@ -486,6 +497,7 @@ class IDClient(QWidget):
         # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()
         self.ui.idEdit.setFocus()
+        return True
 
     def identifyStudent(self, index, alreadyIDd=False):
         """User ID's the student of the current paper. Some care around whether
@@ -608,13 +620,13 @@ class IDClient(QWidget):
                 self.ui.nameEdit.setText("Unknown")
         # Run identify student command (which talks to server)
         if self.identifyStudent(index, alreadyIDd):
-            # if successful, and everything local has been ID'd get next
-            if alreadyIDd is False and self.unidCount == 0:
-                self.requestNext()
-            else:
-                # otherwise move to the next unidentified paper.
+            if alreadyIDd:
                 self.moveToNextUnID()
-        return
+                return
+            if index[0].row() == self.exM.rowCount() - 1:  # last row is highlighted
+                if self.requestNext():
+                    return
+            self.moveToNextUnID()
 
     def enterName(self):
         """Triggered when user hits return in the name-lineedit.. that is
@@ -687,10 +699,10 @@ class IDClient(QWidget):
                 return
         # Run identify student command (which talks to server)
         if self.identifyStudent(index, alreadyIDd):
-            # if successful, and everything local has been ID'd get next
-            if alreadyIDd is False and self.unidCount == 0:
-                self.requestNext()
-            else:
-                # otherwise move to the next unidentified paper.
+            if alreadyIDd:
                 self.moveToNextUnID()
-        return
+                return
+            if index[0].row() == self.exM.rowCount() - 1:  # last row is highlighted
+                if self.requestNext():
+                    return
+            self.moveToNextUnID()

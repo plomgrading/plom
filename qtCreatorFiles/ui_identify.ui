@@ -180,7 +180,7 @@
       <item row="3" column="0">
        <widget class="QPushButton" name="nextButton">
         <property name="text">
-         <string>&amp;Get next</string>
+         <string>Skip (for now) and &amp;get next</string>
         </property>
        </widget>
       </item>
