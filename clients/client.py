@@ -15,6 +15,7 @@ from PyQt5.QtCore import pyqtSlot, QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
+from useful_classes import ErrorMessage, SimpleMessage
 
 import messenger
 sys.path.append("..")  # this allows us to import from ../resources
@@ -118,8 +119,8 @@ class Chooser(QDialog):
         try:
             messenger.requestAndSaveToken(user, pwd)
         except ValueError as e:
-            print("DEBUG: token fail: {}".format(e))
-            print("TODO: should pop up dialog here?")
+            ErrorMessage("Could not get authentication token.\n\n"
+                         "Error was: {}".format(e)).exec_()
             return
 
         # Now run the appropriate client sub-application

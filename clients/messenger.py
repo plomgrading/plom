@@ -86,7 +86,7 @@ def requestAndSaveToken(user, pw):
     TODO: what happens on timeout?
     """
     global _userName, _token
-    msg, token = SRMsg(["AUTH", user, pw, Plom_API_Version])
+    msg, token = SRMsg_nopopup(["AUTH", user, pw, Plom_API_Version])
     if not msg == "ACK":
         raise ValueError(token)
     _userName = user
