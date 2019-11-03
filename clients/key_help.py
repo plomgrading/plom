@@ -73,6 +73,11 @@ class KeyHelp(QDialog):
             ["Delta=3", ["3"], "See delta=1"],
             ["Delta=4", ["4"], "See delta=1"],
             ["Delta=5", ["5"], "See delta=1"],
+            ["Delta=5", ["5"], "See delta=1"],
+            ["Delta=6", ["6"], "See delta=1"],
+            ["Delta=7", ["7"], "See delta=1"],
+            ["Delta=8", ["8"], "See delta=1"],
+            ["Delta=9", ["9"], "See delta=1"],
         ],
         "Text": [
             [
