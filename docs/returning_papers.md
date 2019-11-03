@@ -47,12 +47,12 @@ We have a secret code for each student.  We want to upload these numbers to Canv
       1.  Create new assignment under Assignments.
       2.  Made it a new group.
       3.  Check "do not count towards the grade"
-      3.  Set the maximum points to `999999999999` (twelve nines).
+      4.  Set the maximum points to `999999999999` (twelve nines).
           This might look slightly different...
-      4.  Edit the assignment to say something non-scary so no one
+      5.  Edit the assignment to say something non-scary so no one
           thinks its part of their score.
-      4.  Publish and Immediately mute it.  Note: see below!
-      5.  The name *must* be `return code` (or you will need to make
+      6.  Publish and Immediately mute it.  Note: see below!
+      7.  The name *must* be `return code` (or you will need to make
           changes to `11_....py`).
 
   * The new autumn 2019 Canvas gradebook doesn't use "mute", instead
@@ -63,12 +63,12 @@ We have a secret code for each student.  We want to upload these numbers to Canv
       2. select “Grade Posting Policy”
       3  set to Manual
 
-   * Export the gradebook by clicking on "export".  Save the resulting
-     csv file as `canvas_from_export.csv` and move it `finishing/`.
-     Possibly need to select "All Sections".
+  * Export the gradebook by clicking on "export".  Save the resulting
+    csv file as `canvas_from_export.csv` and move it `finishing/`.
+    Possibly need to select "All Sections".
 
 
-## Generated the files
+## Generating the files
 
    * Run `11_write_to_canvas_spreadsheet.py` to create two csv files:
 
