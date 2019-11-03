@@ -1,5 +1,5 @@
 <!--
-__author__ = "Andrew Rechnitzer, Colin B Macdonald"
+__author__ = "Andrew Rechnitzer, Colin B Macdonald, Elyse Yeager"
 __copyright__ = "Copyright (C) 2018-9 Andrew Rechnitzer"
 __license__ = "GFDL"
  -->
@@ -51,15 +51,21 @@ We have a secret code for each student.  We want to upload these numbers to Canv
           This might look slightly different...
       4.  Edit the assignment to say something non-scary so no one
           thinks its part of their score.
-      4.  Publish and Immediately mute it.
+      4.  Publish and Immediately mute it.  Note: see below!
       5.  The name *must* be `return code` (or you will need to make
           changes to `11_....py`).
+
+  * The new autumn 2019 Canvas gradebook doesn't use "mute", instead
+    we want the "Grade Posting Policy" set to "Manual".  One way to do
+    this:
+
+      1. in Gradebook, click three dots in the relevant column header
+      2. select “Grade Posting Policy”
+      3  set to Manual
 
    * Export the gradebook by clicking on "export".  Save the resulting
      csv file as `canvas_from_export.csv` and move it `finishing/`.
      Possibly need to select "All Sections".
-
-  * TODO: new Canvas gradebook doesn't use "mute", update these...
 
 
 ## Generated the files
@@ -98,6 +104,6 @@ We have a secret code for each student.  We want to upload these numbers to Canv
     internet.  We want to minimize brute-force attempts to get
     other peoples' exams.
 
-  * Unmute the return code.
-
-  * Unmute the test.
+  * Make sure the "return code" and the test are visible to students.
+    In older Canvas you would "unmute" them.  Nowadays, see above
+    about "Grade Posting Policy".
