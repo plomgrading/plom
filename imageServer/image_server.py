@@ -299,7 +299,6 @@ class Server(object):
                 self.logger.info(
                     ">>> Unauthorised attempt by user {}".format(message[1])
                 )
-                print("Attempt by non-user to {}".format(message))
                 return ["ERR", "You are not an authorised user"]
 
     def authoriseUser(self, user, password, clientAPI):
