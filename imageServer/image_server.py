@@ -580,11 +580,17 @@ class Server(object):
         if int(mark) < 0 or int(mark) > self.testSpec.Marks[int(pg)]:
             # this should never happen.
             return ["ERR", "Assigned mark out of range. Contact administrator."]
-        if not (code.startswith("t") and
-                fname == "G{}.png".format(code[1:]) and
-                pname == "G{}.plom".format(code[1:]) and
-                cname == "G{}.json".format(code[1:])):
-            SLogger.info("Rejected mismatched files from buggy client (user {}) for {}".format(user, code))
+        if not (
+            code.startswith("t")
+            and fname == "G{}.png".format(code[1:])
+            and pname == "G{}.plom".format(code[1:])
+            and cname == "G{}.json".format(code[1:])
+        ):
+            SLogger.info(
+                "Rejected mismatched files from buggy client (user {}) for {}".format(
+                    user, code
+                )
+            )
             return ["ERR", "Buggy client gave me the wrong files!  File a bug."]
 
         # move annoted file to right place with new filename
@@ -844,10 +850,16 @@ davDirectory = tempDirectory.name
 os.system("chmod o-r {}".format(davDirectory))
 SLogger.info("Webdav directory = {}".format(davDirectory))
 # Fire up the webdav server.
+try:
+    webdavlog = open("webdav.log", "w+")
+except:
+    print("Cannot open webdav.log filehandle.")
+    exit()
+# note the -q reduces verbosity from default of 3 down to 2 - which outputs warnings+errors.
 cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.yaml".format(
     serverInfo["server"], serverInfo["wport"], davDirectory
 )
-davproc = subprocess.Popen(shlex.split(cmd))
+davproc = subprocess.Popen(shlex.split(cmd), stdout=webdavlog, stderr=webdavlog)
 
 # Read the test specification
 spec = TestSpecification()
@@ -911,6 +923,8 @@ loop.close()
 subprocess.Popen.kill(davproc)
 SLogger.info("Webdav server closed")
 print("Webdav server closed")
+webdavlog.close()
+# close the rest of the stuff
 SLogger.info("Closing databases")
 print("Closing databases")
 theIDDB.saveIdentified()
