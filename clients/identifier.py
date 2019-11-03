@@ -522,11 +522,9 @@ class IDClient(QWidget):
             # Update un-id'd count.
             self.unidCount -= 1
 
-        if self.unidCount == 0:
-            # if there are no unID'd papers
+        if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
             self.requestNext()
-        else:
-            # otherwise move to the next unidentified paper.
+        else:  # else move to the next unidentified paper.
             self.moveToNextUnID()
         return
 
