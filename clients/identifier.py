@@ -240,6 +240,7 @@ class IDClient(QWidget):
             if self.requestNext():
                 return
         self.moveToNextUnID()
+        self.ui.idEdit.setFocus()
 
     def getClassList(self):
         """Send request for classlist (iRCL) to server. The server then sends
