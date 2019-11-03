@@ -168,10 +168,7 @@ class IDClient(QWidget):
         # Init the messenger with server and port data.
         messenger.setServerDetails(server, message_port, web_port)
         messenger.startMessenger()
-        # Ping to see if server is up.
-        if not messenger.pingTest():
-            QTimer.singleShot(100, self.shutDownError)
-            return
+
         # Save username, password, and path the local temp directory for
         # image files and the class list.
         self.userName = userName
@@ -463,13 +460,29 @@ class IDClient(QWidget):
             self.ui.idProgressBar.setMaximum(msg[2])
             self.ui.idProgressBar.setValue(msg[1])
 
-        # ask server for next unid'd paper
-        msg = messenger.SRMsg(["iNID", self.userName, self.token])
-        if msg[0] == "ERR":
-            return False
-        # return message is [ACK, code, filename]
-        test = msg[1]
-        fname = msg[2]
+        attempts = 0
+        while True:
+            attempts += 1
+            # little sanity check - shouldn't be needed.
+            # TODO remove this sanity check - or replace with a pop-up warning thingy.
+            if attempts > 5:
+                return False
+            # ask server for ID of next task
+            msg = messenger.SRMsg(["iANT", self.userName, self.token])
+            if msg[0] == "ERR":
+                return False
+            # grab returned test-code
+            test = msg[1]
+            # claim that test
+            msg = messenger.SRMsg(["iCST", self.userName, self.token, test])
+            # return message is [ACK, True, code, filename] or [ACK, False]
+            if msg[0] == "ERR":
+                return
+            if msg[1] == True:
+                break
+
+        test = msg[2]
+        fname = msg[3]
         # Image name will be <code>.png
         iname = os.path.join(
             self.workingDirectory, test + ".png"
@@ -496,32 +509,17 @@ class IDClient(QWidget):
         # model to put data into the table.
         self.exM.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text())
         code = self.exM.data(index[0])
-        if alreadyIDd:
-            # If the paper was ID'd previously send return-already-ID'd (iRAD)
-            # with the code, ID, name.
-            msg = messenger.SRMsg(
-                [
-                    "iRAD",
-                    self.userName,
-                    self.token,
-                    code,
-                    self.ui.idEdit.text(),
-                    self.ui.nameEdit.text(),
-                ]
-            )
-        else:
-            # If the paper was not ID'd previously send return-ID'd (iRID)
-            # with the code, ID, name.
-            msg = messenger.SRMsg(
-                [
-                    "iRID",
-                    self.userName,
-                    self.token,
-                    code,
-                    self.ui.idEdit.text(),
-                    self.ui.nameEdit.text(),
-                ]
-            )
+        # Return paper to server with the code, ID, name.
+        msg = messenger.SRMsg(
+            [
+                "iRID",
+                self.userName,
+                self.token,
+                code,
+                self.ui.idEdit.text(),
+                self.ui.nameEdit.text(),
+            ]
+        )
         if msg[0] == "ERR":
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
