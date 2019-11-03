@@ -179,7 +179,6 @@ class IDClient(QWidget):
         self.workingDirectory = directoryPath
         # List of papers we have to ID.
         self.paperList = []
-        self.unidCount = 0
         # Fire up the interface.
         self.ui = Ui_IdentifyWindow()
         self.ui.setupUi(self)
@@ -456,15 +455,10 @@ class IDClient(QWidget):
         # select that row and display the image
         if update:
             # One more unid'd paper
-            self.unidCount += 1
             self.ui.tableView.selectRow(r)
             self.updateImage(r)
 
-    def requestNext(self):
-        """Ask the server for an unID'd paper (iNID). Server should return
-        message [ACK, testcode, filename]. Get file from webdav, add to the
-        list of papers and update the image.
-        """
+    def updateProgress(self):
         # ask server for id-count update
         msg = messenger.SRMsg(["iPRC", self.userName, self.token])
         # returns [ACK, #id'd, #total]
@@ -472,6 +466,11 @@ class IDClient(QWidget):
             self.ui.idProgressBar.setMaximum(msg[2])
             self.ui.idProgressBar.setValue(msg[1])
 
+    def requestNext(self):
+        """Ask the server for an unID'd paper (iNID). Server should return
+        message [ACK, testcode, filename]. Get file from webdav, add to the
+        list of papers and update the image.
+        """
         # ask server for next unid'd paper
         msg = messenger.SRMsg(["iNID", self.userName, self.token])
         if msg[0] == "ERR":
@@ -520,12 +519,13 @@ class IDClient(QWidget):
             QTimer.singleShot(0, self.ui.idEdit.clear)
             QTimer.singleShot(0, self.ui.nameEdit.clear)
             # Update un-id'd count.
-            self.unidCount -= 1
+
+        self.updateProgress()
 
         if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
-            self.requestNext()
+            self.requestNext()  # updates progressbars.
         else:  # else move to the next unidentified paper.
-            self.moveToNextUnID()
+            self.moveToNextUnID()  # doesn't
         return
 
     def identifyStudent(self, index, alreadyIDd=False):
@@ -577,9 +577,8 @@ class IDClient(QWidget):
             # clearing the line-edit. Very annoying but this fixes it.
             QTimer.singleShot(0, self.ui.idEdit.clear)
             QTimer.singleShot(0, self.ui.nameEdit.clear)
-            # Update un-id'd count.
-            if not alreadyIDd:
-                self.unidCount -= 1
+            # Update progressbars
+            self.updateProgress()
             return True
 
     def moveToNextUnID(self):
