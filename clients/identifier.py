@@ -240,7 +240,6 @@ class IDClient(QWidget):
             if self.requestNext():
                 return
         self.moveToNextUnID()
-        self.ui.idEdit.setFocus()
 
     def getClassList(self):
         """Send request for classlist (iRCL) to server. The server then sends
@@ -405,6 +404,7 @@ class IDClient(QWidget):
         self.ui.idEdit.setText(self.exM.data(selnew.indexes()[2]))
         self.ui.nameEdit.setText(self.exM.data(selnew.indexes()[3]))
         self.updateImage(selnew.indexes()[0].row())
+        self.ui.idEdit.setFocus()
 
     def checkFiles(self, r):
         tgv = self.exM.paperList[r].prefix
