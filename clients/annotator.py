@@ -258,7 +258,6 @@ class Annotator(QDialog):
             Qt.Key_Underscore: lambda: self.view.zoomOut(),
             # Only change-mark shortcuts 0-5.
             Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
-            Qt.Key_0: lambda: self.keyToChangeMark(0),
             Qt.Key_1: lambda: self.keyToChangeMark(1),
             Qt.Key_2: lambda: self.keyToChangeMark(2),
             Qt.Key_3: lambda: self.keyToChangeMark(3),
@@ -268,6 +267,7 @@ class Annotator(QDialog):
             Qt.Key_7: lambda: self.keyToChangeMark(7),
             Qt.Key_8: lambda: self.keyToChangeMark(8),
             Qt.Key_9: lambda: self.keyToChangeMark(9),
+            Qt.Key_0: lambda: self.keyToChangeMark(10),
             # ?-mark pop up a key-list
             Qt.Key_Question: lambda: self.keyPopUp(),
             # Toggle hide/unhide tools so as to maximise space for annotation
