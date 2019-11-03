@@ -483,7 +483,7 @@ class Annotator(QDialog):
         # Otherwise click the appropriate button.
         if self.markHandler.style == "Up":
             self.markHandler.markButtons["p{}".format(buttonNumber)].animateClick()
-        elif self.markHandler.style == "Down" and buttonNumber > 0:
+        elif self.markHandler.style == "Down" and buttonNumber >= 0:
             self.markHandler.markButtons["m{}".format(buttonNumber)].animateClick()
 
     def keyPressEvent(self, event):
