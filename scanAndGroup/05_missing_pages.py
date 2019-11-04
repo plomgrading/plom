@@ -64,10 +64,21 @@ print("Incomplete test papers are: ", incompleteTests)
 print("###################### ")
 print(">>> NOTE <<<")
 print('Any of the papers in the above list of "complete" papers may have extra pages.')
-print('If there are any pages in "pageimages/problemImages/" they may be extra-pages.')
-print(
-    "There are currently {} page(s) in that directory".format(
-        len(glob.glob("pageImages/problemImages/*.png"))
+
+n = len(glob.glob("pageImages/problemImages/*.png"))
+if n == 0:
+    print(
+        'There are currently no pages in "pageimages/problemImages/" - so no extra pages at present.'
     )
-)
-print("You can process those pages using the manual-page-identifier script.")
+elif n == 1:
+    print(
+        'There is currently 1 page in "pageimages/problemImages/". It might be an extra-page'
+    )
+    print("You can process that page using the manual-page-identifier script.")
+else:
+    print(
+        'There are currently {} pages in "pageimages/problemImages/". They might be extra-pages'.format(
+            n
+        )
+    )
+    print("You can process those pages using the manual-page-identifier script.")
