@@ -295,8 +295,10 @@ class Server(object):
                 # user is authorised, so run their requested function
                 return getattr(self, pcmd)(*message[1:])
             else:
-                self.logger.info(">>> Unauthorised attempt by user {}".format(user))
-                print("Attempt by non-user to {}".format(message))
+                # user should be message[1]
+                self.logger.info(
+                    ">>> Unauthorised attempt by user {}".format(message[1])
+                )
                 return ["ERR", "You are not an authorised user"]
 
     def authoriseUser(self, user, password, clientAPI):
