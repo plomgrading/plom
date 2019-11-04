@@ -857,8 +857,8 @@ try:
 except:
     print("Cannot open webdav.log filehandle.")
     exit()
-# note the -q reduces verbosity from default of 3 down to 2 - which outputs warnings+errors.
-cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.yaml".format(
+# consider using "-q" option since it reduces verbosity of log and only keeps warnings+errors.
+cmd = "wsgidav -H {} -p {} --server cheroot -r {} -c ../resources/davconf.yaml".format(
     serverInfo["server"], serverInfo["wport"], davDirectory
 )
 davproc = subprocess.Popen(shlex.split(cmd), stdout=webdavlog, stderr=webdavlog)
