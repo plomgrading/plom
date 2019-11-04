@@ -149,13 +149,19 @@ class BackgroundUploader(QThread):
             print("Debug: upQ (thread {}): popped code {} from queue, uploading "
                   "with webdav...".format(str(threading.get_ident()), code))
             afile = os.path.basename(aname)
-            messenger.putFileDav(aname, afile)
-            # copy plom file to webdav
             pfile = os.path.basename(pname)
-            messenger.putFileDav(pname, pfile)
-            # copy comment file to webdav
             cfile = os.path.basename(cname)
-            messenger.putFileDav(cname, cfile)
+            try:
+                messenger.putFileDav_woInsanity(aname, afile)
+                messenger.putFileDav_woInsanity(pname, pfile)
+                messenger.putFileDav_woInsanity(cname, cfile)
+            except Exception as ex:
+                # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
+                # TODO: its not really "Server Says" in the popup...
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                errmsg = template.format(type(ex).__name__, ex.args)
+                self.uploadFail.emit(code, errmsg)
+                return
 
             print("Debug: upQ: sending marks for {} via mRMD cmd server...".format(code))
             # ensure user is still authorised to upload this particular pageimage -

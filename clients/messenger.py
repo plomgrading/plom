@@ -150,6 +150,17 @@ def getFileDav_woInsanity(dfn, lfn):
     webdav.download(dfn, lfn)
 
 
+def putFileDav_woInsanity(lfn, dfn):
+    """Upload file lfn to the webdav as dfn.
+
+    Does not do any exception handling: that's the caller's problem.
+    """
+    webdav = easywebdav2.connect(
+        server, port=webdav_port, protocol="https", verify_ssl=False
+    )
+    webdav.upload(lfn, dfn)
+
+
 async def handle_ping_test():
     """ A simple ping to test if the server is up and running.
     If nothing back after a few seconds then assume the server is
