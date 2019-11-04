@@ -16,9 +16,9 @@ import os, sys, shutil
 from utils import myhash, SALTSTR as saltstr
 
 # check saltstr is set to something other than "salt"
-if saltstr == "salt":
+if saltstr == "default":
     print(
-        'You need to edit utils.py and change SALTSTR to something other than "salt".'
+        'You need to edit utils.py and change SALTSTR to something other than "default".'
     )
     print("Rerun this script after you have done that.")
     exit()
