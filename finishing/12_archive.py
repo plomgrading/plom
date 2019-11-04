@@ -23,10 +23,10 @@ __license__ = "AGPL-3.0-or-later"
 
 import os, sys, shutil
 
-archivename = '{COURSE}_{YEAR}{TERM}_{SHORTNAME}'
+archivename = "{COURSE}_{YEAR}{TERM}_{SHORTNAME}"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # this allows us to import from ../resources
     sys.path.append("..")
     from resources.testspecification import TestSpecification
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     spec = TestSpecification()
     spec.readSpec()
     basename = spec.Name
-    archivename = archivename.replace('{SHORTNAME}', basename)
+    archivename = archivename.replace("{SHORTNAME}", basename)
 
     # TODO: someday we can get this from spec file?
     # https://gitlab.math.ubc.ca/andrewr/MLP/issues/94
@@ -42,19 +42,23 @@ if __name__ == '__main__':
         print("ERROR: Incorrect command line...")
         print(__doc__)
         sys.exit(1)
-    archivename = archivename.replace('{COURSE}', sys.argv[1])
-    archivename = archivename.replace('{YEAR}', sys.argv[2])
-    archivename = archivename.replace('{TERM}', sys.argv[3])
+    archivename = archivename.replace("{COURSE}", sys.argv[1])
+    archivename = archivename.replace("{YEAR}", sys.argv[2])
+    archivename = archivename.replace("{TERM}", sys.argv[3])
 
-    print("""
+    print(
+        """
 This script tries to produce a minimal archive of your test:
     "{0}.zip"
 This is intended for archival purposes.  Note it would not be easy to
 regrade a question within Plom using this archive.  If you ever
 anticipate revisiting the grading of this test, you should backup the
 entire directory structure.
-    """.format(archivename))
-    #input('Press Enter to continue...')
+    """.format(
+            archivename
+        )
+    )
+    # input('Press Enter to continue...')
 
     all_ok = True
 
@@ -62,59 +66,80 @@ entire directory structure.
     try:
         os.mkdir(archivename)
     except FileExistsError:
-        print('Directory "{0}" already exists: if you want to re-run this script, try deleting it first.'.format(archivename))
+        print(
+            'Directory "{0}" already exists: if you want to re-run this script, try deleting it first.'.format(
+                archivename
+            )
+        )
         sys.exit(1)
 
-
-    print('Archiving source pdf files')
+    print("Archiving source pdf files")
     try:
-        shutil.copytree(os.path.join('..', 'build', 'sourceVersions'),
-                        os.path.join(archivename, 'sourceVersions'), symlinks=False)
+        shutil.copytree(
+            os.path.join("..", "build", "sourceVersions"),
+            os.path.join(archivename, "sourceVersions"),
+            symlinks=False,
+        )
     except:
         print('  WARNING: could not archive "build/sourceVersions" directory')
         all_ok = False
 
-
-    print('Archiving raw scans')
+    print("Archiving raw scans")
     try:
-        shutil.copytree(os.path.join('..', 'scanAndGroup', 'scannedExams'),
-                        os.path.join(archivename, 'scannedExams'), symlinks=False)
+        shutil.copytree(
+            os.path.join("..", "scanAndGroup", "scannedExams"),
+            os.path.join(archivename, "scannedExams"),
+            symlinks=False,
+        )
     except:
         print('  WARNING: could not archive "scanAndGroup/scannedExams" directory')
         all_ok = False
     try:
-        os.rmdir(os.path.join(archivename, 'scannedExams', 'png'))
+        os.rmdir(os.path.join(archivename, "scannedExams", "png"))
     except:
-        print('  WARNING: could not remove supposedly-empty "scanningExams/png" directory')
+        print(
+            '  WARNING: could not remove supposedly-empty "scanningExams/png" directory'
+        )
         all_ok = False
 
+    if os.path.isdir("reassembled"):
+        print('Archiving final graded pdf files ("reassembled")')
+        shutil.copytree(
+            "reassembled", os.path.join(archivename, "reassembled"), symlinks=False
+        )
+    elif os.path.isdir("reassembled_ID_but_not_marked"):
+        print('Archiving final identified pdf files ("reassembled_ID_but_not_marked")')
+        shutil.copytree(
+            "reassembled_ID_but_not_marked",
+            os.path.join(archivename, "reassembled_ID_but_not_marked"),
+            symlinks=False,
+        )
+    else:
+        print("  WARNING: cannot find any reassembled papers.")
 
-    print('Archiving final graded pdf files ("reassembled")')
-    shutil.copytree('reassembled', os.path.join(archivename, 'reassembled'), symlinks=False)
-
-
-    print('Archiving metadata and miscellanea')
-    shutil.copy2('testMarks.csv', archivename)
-    shutil.copy2(os.path.join('..', 'resources', 'testSpec.json'), archivename)
+    print("Archiving metadata and miscellanea")
+    shutil.copy2("testMarks.csv", archivename)
+    shutil.copy2(os.path.join("..", "resources", "testSpec.json"), archivename)
     # which version was used for each exam number
-    shutil.copy2(os.path.join('..', 'resources', 'examsProduced.json'), archivename)
+    shutil.copy2(os.path.join("..", "resources", "examsProduced.json"), archivename)
     # the mapping b/w scan file and paper number
-    shutil.copy2(os.path.join('..', 'resources', 'examsScanned.json'), archivename)
+    shutil.copy2(os.path.join("..", "resources", "examsScanned.json"), archivename)
     # the mapping b/w paper number and student
-    shutil.copy2(os.path.join('..', 'resources', 'examsIdentified.json'), archivename)
+    shutil.copy2(os.path.join("..", "resources", "examsIdentified.json"), archivename)
     # who did the marking
-    shutil.copy2(os.path.join('..', 'resources', 'groupImagesMarked.json'), archivename)
+    shutil.copy2(os.path.join("..", "resources", "groupImagesMarked.json"), archivename)
     # TODO: information about grading times?
 
-
-    with open(os.path.join(archivename, 'README.txt'), 'w') as file:
+    with open(os.path.join(archivename, "README.txt"), "w") as file:
         file.write(
-"""Plom Archive File
+            """Plom Archive File
 =================
 
 Explanations:
 
   * reassembled: these are the final graded pdf files, by student number.
+
+  * reassembled_ID_but_not_marked: these are the final identified (but not marked) pdf files, by student number.
 
   * sourceVersions: the original blank pdfs for the test/exam.  Each
     student's test is some combination of these.
@@ -123,17 +148,17 @@ Explanations:
 
   * The various .json files can be used to find students' papers in the raw
     scans.
-""")
+"""
+        )
 
-
-    print('Creating zip file')
-    fn = shutil.make_archive(archivename, 'zip', base_dir=archivename)
+    print("Creating zip file")
+    fn = shutil.make_archive(archivename, "zip", base_dir=archivename)
     print('  created "{0}"'.format(fn))
 
-    print('Removing temp directory')
+    print("Removing temp directory")
     shutil.rmtree(archivename)
 
-    print('\nFinished!  The zip file is:\n  {0}'.format(fn))
-    print('  (you may want to rename this)')
+    print("\nFinished!  The zip file is:\n  {0}".format(fn))
+    print("  (you may want to rename this)")
     if not all_ok:
-        print('... but there were some warnings, see above')
+        print("... but there were some warnings, see above")
