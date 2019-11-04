@@ -102,20 +102,28 @@ entire directory structure.
         )
         all_ok = False
 
-    if os.path.isdir("reassembled"):
+    t1 = os.path.isdir("reassembled")
+    t2 = os.path.isdir("reassembled_ID_but_not_marked")
+    if t1 and not t2:
         print('Archiving final graded pdf files ("reassembled")')
         shutil.copytree(
             "reassembled", os.path.join(archivename, "reassembled"), symlinks=False
         )
-    elif os.path.isdir("reassembled_ID_but_not_marked"):
+    elif t2 and not t1:
         print('Archiving final identified pdf files ("reassembled_ID_but_not_marked")')
         shutil.copytree(
             "reassembled_ID_but_not_marked",
             os.path.join(archivename, "reassembled_ID_but_not_marked"),
             symlinks=False,
         )
+    elif t1 and t2:
+        print(
+            "  WARNING: found both reassembled and reassembled_ID_but_not_marked directories. Which should be archived?"
+        )
+        all_ok = False
     else:
         print("  WARNING: cannot find any reassembled papers.")
+        all_ok = False
 
     print("Archiving metadata and miscellanea")
     shutil.copy2("testMarks.csv", archivename)
@@ -139,7 +147,7 @@ Explanations:
 
   * reassembled: these are the final graded pdf files, by student number.
 
-  * reassembled_ID_but_not_marked: these are the final identified (but not marked) pdf files, by student number.
+  * reassembled_ID_but_not_marked: these are the final identified (but not marked) pdf files, by student number. This probably means the marking was done on-paper before the papers were scanned. Note that only one of "reassembled" and "reassembled_ID_but_not_marked" should be present.
 
   * sourceVersions: the original blank pdfs for the test/exam.  Each
     student's test is some combination of these.
