@@ -3,6 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
+import glob
 import json
 import os
 import sys
@@ -61,3 +62,12 @@ print("Complete test papers are: ", completeTests)
 print("###################### ")
 print("Incomplete test papers are: ", incompleteTests)
 print("###################### ")
+print(">>> NOTE <<<")
+print('Any of the papers in the above list of "complete" papers may have extra pages.')
+print('If there are any pages in "pageimages/problemImages/" they may be extra-pages.')
+print(
+    "There are currently {} page(s) in that directory".format(
+        len(glob.glob("pageImages/problemImages/*.png"))
+    )
+)
+print("You can process those pages using the manual-page-identifier script.")
