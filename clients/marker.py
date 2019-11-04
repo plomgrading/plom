@@ -151,6 +151,10 @@ class BackgroundUploader(QThread):
             afile = os.path.basename(aname)
             pfile = os.path.basename(pname)
             cfile = os.path.basename(cname)
+            # TODO: DO NOT MERGE: this makes 40% of uploads fail FOR TESTING
+            import random
+            farkup = "" if random.random() > 0.4 else "youllneverfindme"
+            cname += farkup
             try:
                 messenger.putFileDav_woInsanity(aname, afile)
                 messenger.putFileDav_woInsanity(pname, pfile)
