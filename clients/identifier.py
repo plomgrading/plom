@@ -502,7 +502,7 @@ class IDClient(QWidget):
         code = self.exM.data(index[0])
         sname = self.ui.pNameLabel.text()
         sid = self.ui.pSIDLabel.text()
-        msg = messenger.SRMsg(["iRID", self.userName, self.token, code, sid, sname])
+        msg = messenger.msg("iRID", code, sid, sname)
         if msg[0] == "ERR":
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
