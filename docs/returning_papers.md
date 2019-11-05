@@ -1,5 +1,5 @@
 <!--
-__author__ = "Andrew Rechnitzer, Colin B Macdonald, Elyse Yeager"
+__author__ = "Andrew Rechnitzer, Colin B Macdonald, Elyse Yeager, Vinayak Vatsal"
 __copyright__ = "Copyright (C) 2018-9 Andrew Rechnitzer"
 __license__ = "GFDL"
  -->
@@ -29,6 +29,10 @@ can be returned with the same code.
 
 ## Uploading grades
 
+  * Before starting, make sure your grade posting policy in Canvas is set
+    to "manual".
+  * The relevant switch/tab is under the gear icon in the top-right corner
+    of the gradebook.
   * Go to Canvas, create a column with appropriate name for your test.
 
       1.  Suppose that name is "Test 2".
@@ -42,26 +46,23 @@ can be returned with the same code.
 
 We have a secret code for each student.  We want to upload these numbers to Canvas.
 
-  * Go to Canvas, add a new "return code" column
+  * Go to Canvas, add a new `return code` column.  Note the lack of
+    capitalization.  The column must be called `return code` exactly.
 
       1.  Create new assignment under Assignments.
-      2.  Made it a new group.
+      2.  Made it a new group.  The name doesn't matter.
       3.  Check "do not count towards the grade"
       4.  Set the maximum points to `999999999999` (twelve nines).
-          This might look slightly different...
+          This might look slightly different, canvas likes to use commas.
       5.  Edit the assignment to say something non-scary so no one
           thinks its part of their score.
-      6.  Publish and Immediately mute it.  Note: see below!
-      7.  The name *must* be `return code` (or you will need to make
+      6.  Publish, and check for the icon showing you that it's hidden.
+      7.  Again: the name *must* be `return code` (or you will need to make
           changes to `11_....py`).
 
-  * The new autumn 2019 Canvas gradebook doesn't use "mute", instead
-    we want the "Grade Posting Policy" set to "Manual".  One way to do
-    this:
-
-      1. in Gradebook, click three dots in the relevant column header
-      2. select “Grade Posting Policy”
-      3  set to Manual
+  * As of autumn 2019 Canvas gradebook doesn't use "mute"; instead we set
+    the "Grade Posting Policy" to "Manual", as noted above.  One can
+    doublecheck this under the "..." menu in the relevant column header.
 
   * Export the gradebook by clicking on "export".  Save the resulting
     csv file as `canvas_from_export.csv` and move it `finishing/`.
@@ -104,6 +105,8 @@ We have a secret code for each student.  We want to upload these numbers to Canv
     internet.  We want to minimize brute-force attempts to get
     other peoples' exams.
 
-  * Make sure the "return code" and the test are visible to students.
-    In older Canvas you would "unmute" them.  Nowadays, see above
-    about "Grade Posting Policy".
+  * Make sure the "return code" and the test are visible to students.  In
+    older Canvas you would "unmute" them.  Nowadays, something like:
+
+      1. Publish the return code.
+      2. Publish the test marks.
