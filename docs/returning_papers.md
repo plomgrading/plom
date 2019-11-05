@@ -38,8 +38,8 @@ can be returned with the same code.
       1.  Suppose that name is "Test 2".
       2.  See details below how to do this.
 
-  * Edit `11_write_to_canvas_spreadsheet` to specify "Test 2".
-    TODO: this is obviously not ideal!
+  * Edit `11_write_to_canvas_spreadsheet` to specify "Test 2 (".  Note the
+    open parenthesis.  TODO: this is obviously not ideal!
 
 
 ## Uploading the secret "return code" to Canvas
@@ -110,3 +110,5 @@ We have a secret code for each student.  We want to upload these numbers to Canv
 
       1. Publish the return code.
       2. Publish the test marks.
+
+    TODO: didn't we already "publish"?  How does this make them visible?
