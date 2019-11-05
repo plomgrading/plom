@@ -19,7 +19,9 @@ from PyQt5.QtCore import pyqtSlot, QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
+from useful_classes import ErrorMessage, SimpleMessage
 
+import messenger
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
 from resources.version import Plom_API_Version
@@ -110,6 +112,17 @@ class Chooser(QDialog):
         wport = self.ui.wportSB.value()
         # save those settings
         self.saveDetails()
+
+        # Have Messenger login into to server
+        messenger.setServerDetails(server, mport, wport)
+        messenger.startMessenger()
+        try:
+            messenger.requestAndSaveToken(user, pwd)
+        except ValueError as e:
+            ErrorMessage("Could not get authentication token.\n\n"
+                         "Error was: {}".format(e)).exec_()
+            return
+
         # Now run the appropriate client sub-application
         if self.runIt == "Marker":
             # Run the marker client.
@@ -125,9 +138,10 @@ class Chooser(QDialog):
             # Run the ID client.
             self.setEnabled(False)
             self.hide()
-            idwin = identifier.IDClient(user, pwd, server, mport, wport)
+            idwin = identifier.IDClient()
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
+            idwin.getToWork(messenger)
             self.parent.identifier = idwin
         else:
             # Run the Total client.

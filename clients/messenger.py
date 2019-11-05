@@ -10,6 +10,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import sys
 import asyncio
 import requests
 import easywebdav2
@@ -21,6 +22,9 @@ from useful_classes import ErrorMessage
 import time
 import threading
 
+sys.path.append("..")  # this allows us to import from ../resources
+from resources.version import Plom_API_Version
+
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -31,6 +35,8 @@ server = "127.0.0.1"
 message_port = 41984
 webdav_port = 41985
 SRmutex = threading.Lock()
+_userName = None
+_token = None
 
 
 def setServerDetails(s, mp, dp):
@@ -39,6 +45,11 @@ def setServerDetails(s, mp, dp):
     server = s
     message_port = mp
     webdav_port = dp
+
+
+def whoami():
+    global _userName
+    return _userName
 
 
 def http_messaging(msg):
@@ -54,6 +65,33 @@ def http_messaging(msg):
             "Something went seriously wrong. Check connection details and try again.",
         ]
     return response.json()["rmsg"]
+
+
+def requestAndSaveToken(user, pw):
+    """Get a authorisation token from the server
+
+    The request sends name and password (over ssl) to the server. If
+    hash of password matches the one on file, then the server sends
+    back an "ACK" and an authentication token. The token is then used
+    to authenticate future transactions with the server (since
+    password hashing is slow).
+
+    Raise a ValueError with message from the server.
+
+    TODO: what happens on timeout?
+    """
+    global _userName, _token
+    msg, token = SRMsg_nopopup(["AUTH", user, pw, Plom_API_Version])
+    if not msg == "ACK":
+        raise ValueError(token)
+    _userName = user
+    _token = token
+
+
+def msg(msgcode, *args):
+    """Send message to server and get back a reply"""
+    a = (msgcode, _userName, _token, *args)
+    return SRMsg(a)
 
 
 def SRMsg(msg):
