@@ -864,6 +864,9 @@ class MarkerClient(QWidget):
                         return
                     count = 0
 
+        # maybe the downloader failed for some (rare) reason
+        if not os.path.exists(fname):
+            return
         print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
         shutil.copyfile(fname, aname)
 
