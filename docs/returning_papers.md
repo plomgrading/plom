@@ -1,5 +1,5 @@
 <!--
-__author__ = "Andrew Rechnitzer, Colin B Macdonald"
+__author__ = "Andrew Rechnitzer, Colin B Macdonald, Elyse Yeager, Vinayak Vatsal"
 __copyright__ = "Copyright (C) 2018-9 Andrew Rechnitzer"
 __license__ = "GFDL"
  -->
@@ -29,40 +29,47 @@ can be returned with the same code.
 
 ## Uploading grades
 
+  * Before starting, make sure your grade posting policy in Canvas is set
+    to "manual".
+  * The relevant switch/tab is under the gear icon in the top-right corner
+    of the gradebook.
   * Go to Canvas, create a column with appropriate name for your test.
 
       1.  Suppose that name is "Test 2".
       2.  See details below how to do this.
 
-  * Edit `11_write_to_canvas_spreadsheet` to specify "Test 2".
-    TODO: this is obviously not ideal!
+  * Edit `11_write_to_canvas_spreadsheet` to specify "Test 2 (".  Note the
+    open parenthesis.  TODO: this is obviously not ideal!
 
 
 ## Uploading the secret "return code" to Canvas
 
 We have a secret code for each student.  We want to upload these numbers to Canvas.
 
-  * Go to Canvas, add a new "return code" column
+  * Go to Canvas, add a new `return code` column.  Note the lack of
+    capitalization.  The column must be called `return code` exactly.
 
       1.  Create new assignment under Assignments.
-      2.  Made it a new group.
+      2.  Made it a new group.  The name doesn't matter.
       3.  Check "do not count towards the grade"
-      3.  Set the maximum points to `999999999999` (twelve nines).
-          This might look slightly different...
-      4.  Edit the assignment to say something non-scary so no one
+      4.  Set the maximum points to `999999999999` (twelve nines).
+          This might look slightly different, canvas likes to use commas.
+      5.  Edit the assignment to say something non-scary so no one
           thinks its part of their score.
-      4.  Publish and Immediately mute it.
-      5.  The name *must* be `return code` (or you will need to make
+      6.  Publish, and check for the icon showing you that it's hidden.
+      7.  Again: the name *must* be `return code` (or you will need to make
           changes to `11_....py`).
 
-   * Export the gradebook by clicking on "export".  Save the resulting
-     csv file as `canvas_from_export.csv` and move it `finishing/`.
-     Possibly need to select "All Sections".
+  * As of autumn 2019 Canvas gradebook doesn't use "mute"; instead we set
+    the "Grade Posting Policy" to "Manual", as noted above.  One can
+    doublecheck this under the "..." menu in the relevant column header.
 
-  * TODO: new Canvas gradebook doesn't use "mute", update these...
+  * Export the gradebook by clicking on "export".  Save the resulting
+    csv file as `canvas_from_export.csv` and move it `finishing/`.
+    Possibly need to select "All Sections".
 
 
-## Generated the files
+## Generating the files
 
    * Run `11_write_to_canvas_spreadsheet.py` to create two csv files:
 
@@ -98,6 +105,29 @@ We have a secret code for each student.  We want to upload these numbers to Canv
     internet.  We want to minimize brute-force attempts to get
     other peoples' exams.
 
-  * Unmute the return code.
+  * Make sure the "return code" and the test are visible to students.  In
+    older Canvas you would "unmute" them.  Nowadays, something like:
 
-  * Unmute the test.
+      1. Publish the return code.
+      2. Publish the test marks.
+
+    TODO: didn't we already "publish"?  How does this make them visible?
+
+
+## FAQs
+
+"Canvas put commas in my return codes."
+: So it does, this is no problem.  Students do *not* need to remove them.
+
+"Microsoft Excel displays 12-digit return codes in scientific notation."
+: If you look at the raw .csv with a text editor, they are indeed integers.
+We don't recommend saving that file with Excel; if you want to spot-check
+before uploading to Canvas, use a text editor.  In theory, the values are
+less than `flintmax` so a round-trip through floating point should be
+harmless.
+
+"Where can I host the return files?"
+: UBC-specific answer: put stuff on `amcweb`.  TODO: Ask IT if you need
+help getting access to `amcweb`?  When logged into my VM, the path is
+`/zfs/users/cbm/www`.  This is different than when logged into pascal or
+hypatia.

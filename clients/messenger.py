@@ -12,6 +12,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import sys
 import asyncio
+import requests
 import easywebdav2
 import json
 import ssl
@@ -51,30 +52,19 @@ def whoami():
     return _userName
 
 
-async def handle_messaging(msg):
-    """Asyncio messager handler.
-    Sends message over the connection.
-    Message should be a list [cmd, user, password, arg1, arg2, etc]
-    Reads return message from the stream - usually ['ACK', arg1, arg2,...]
-    """
-    reader, writer = await asyncio.open_connection(
-        server, message_port, loop=loop, ssl=sslContext
-    )
-    # Message should be  [cmd, user, password, arg1, arg2, etc]
-    jm = json.dumps(msg)
-    writer.write(jm.encode())
-    # SSL does not support EOF, so send a null byte to indicate the end
-    # of the message.
-    writer.write(b"\x00")
-    await writer.drain()
-
-    # data = await reader.read(100)
-    data = await reader.readline()
-    terminate = data.endswith(b"\x00")
-    data = data.rstrip(b"\x00")
-    rmesg = json.loads(data.decode())  # message should be a list [ACK, arg1, arg2, etc]
-    writer.close()
-    return rmesg
+def http_messaging(msg):
+    try:
+        response = session.put(
+            "https://{}:{}/".format(server, message_port),
+            json={"msg": msg},
+            verify=False,
+        )
+    except:
+        return [
+            "ERR",
+            "Something went seriously wrong. Check connection details and try again.",
+        ]
+    return response.json()["rmsg"]
 
 
 def requestAndSaveToken(user, pw):
@@ -105,20 +95,19 @@ def msg(msgcode, *args):
 
 
 def SRMsg(msg):
-    """Send message using the asyncio message handler and get back
-    return message. If error then pop-up an error message.
+    """Send message using https and get back return message.
+    If error then pop-up an error message.
     """
-    #N = 0.5
-    #print("Messenger [{}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
+    # N = 0.5
+    # print("Messenger [{}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
     SRmutex.acquire()
     try:
-        #print("Messenger: got mutex, pretending to work for {}s, then talking to server".format(N))
-
-        #time.sleep(N)
-        rmsg = loop.run_until_complete(handle_messaging(msg))
+        # print("Messenger: got mutex, pretending to work for {}s, then talking to server".format(N))
+        # time.sleep(N)
+        rmsg = http_messaging(msg)
     finally:
         SRmutex.release()
-    #print("Messenger [{}]: got rmsg = {}".format(str(threading.get_ident()), str(rmsg)))
+
     if rmsg[0] == "ACK":
         return rmsg
     elif rmsg[0] == "ERR":
@@ -135,20 +124,23 @@ def SRMsg_nopopup(msg):
     """Send message using the asyncio message handler and get back
     return message.
     """
-    #N = 15
-    #print("Messenger [nopop, {}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
+    # N = 15
+    # print("Messenger [nopop, {}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
     SRmutex.acquire()
     try:
-        #print("Messenger [nopop]: got mutex, pretending to work for {}s, then talking to server".format(N))
-        #time.sleep(N)
-        rmsg = loop.run_until_complete(handle_messaging(msg))
+        # print("Messenger [nopop]: got mutex, pretending to work for {}s, then talking to server".format(N))
+        # time.sleep(N)
+        rmsg = http_messaging(msg)
     finally:
         SRmutex.release()
-    #print("Messenger [nopop, {}]: got rmsg = {}".format(str(threading.get_ident()), str(rmsg)))
+
     if rmsg[0] in ("ACK", "ERR"):
         return rmsg
     else:
-        raise RuntimeError("Unexpected response from server.  Consider filing a bug?  The return from the server was:\n\n" + str(rmsg))
+        raise RuntimeError(
+            "Unexpected response from server.  Consider filing a bug?  The return from the server was:\n\n"
+            + str(rmsg)
+        )
 
 
 def getFileDav(dfn, lfn):
@@ -177,6 +169,28 @@ def putFileDav(lfn, dfn):
         print(message)
 
 
+def getFileDav_woInsanity(dfn, lfn):
+    """Get file dfn from the webdav server and save as lfn.
+
+    Does not do anything for exceptions: that's the caller's problem.
+    """
+    webdav = easywebdav2.connect(
+        server, port=webdav_port, protocol="https", verify_ssl=False
+    )
+    webdav.download(dfn, lfn)
+
+
+def putFileDav_woInsanity(lfn, dfn):
+    """Upload file lfn to the webdav as dfn.
+
+    Does not do any exception handling: that's the caller's problem.
+    """
+    webdav = easywebdav2.connect(
+        server, port=webdav_port, protocol="https", verify_ssl=False
+    )
+    webdav.upload(lfn, dfn)
+
+
 async def handle_ping_test():
     """ A simple ping to test if the server is up and running.
     If nothing back after a few seconds then assume the server is
@@ -199,15 +213,14 @@ async def handle_ping_test():
     except asyncio.TimeoutError as e:
         # TODO: str(e) does nothing useful to keep separate from below
         msg = ErrorMessage(
-            "Server timed out.  " \
-            "Please double check details and try again."
+            "Server timed out.  " "Please double check details and try again."
         )
         msg.exec_()
         return False
     except (ConnectionRefusedError, OSError) as e:
         msg = ErrorMessage(
-            "Server does not return ping.  " \
-            "Please double check details and try again.\n\n" \
+            "Server does not return ping.  "
+            "Please double check details and try again.\n\n"
             "Details:\n" + str(e)
         )
         msg.exec_()
@@ -222,14 +235,22 @@ def pingTest():
     return rmsg
 
 
+session = None
+
+
 def startMessenger():
     """Start the asyncio event loop"""
-    global loop
-    print("Starting asyncio loop")
-    loop = asyncio.get_event_loop()
+    print("Starting a requests-session")
+    global session
+    session = requests.Session()
+    # set max_retries to large number because UBC-wifi is pretty crappy.
+    # TODO - set smaller number and have some sort of "hey you've retried
+    # nn times already, are you sure you want to keep retrying" message.
+    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
 
 
 def stopMessenger():
     """Stop the asyncio event loop"""
     loop.close()
     print("Stopped asyncio loop")
+    session.close()

@@ -10,15 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * preliminary support for a canned user list.
 * autogenerate password suggestions for new users.
+* 05 script now warns about potential extra pages
 
 ### Changed
 * make 04 script less verbose.
 * Increase timeout on server ping test.
+* Annotator has more keybindings for grades of 0-10 (see "key help")
 
 ### Fixed
-* Fixed a race condition where regarding very quickly could result in incorrect uploads.
+* fixed race conditions when/uploading and downloading.
+* certain file transfers are more robust at reporting errors.
 * userManager was failing to start.
 * return to greeter dialog on e.g., wrong server or pagegroup/version out of range.
+* `mark_reverter` less fragile if files DNE.
+* if you skip identifying a test, the client will defer it until the end.
+* identifying has various other UI fixes.
 
 
 ## [0.2.0] - 2019-10-11
