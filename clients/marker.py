@@ -19,6 +19,7 @@ import tempfile
 import time
 import threading
 import queue
+import math
 
 from PyQt5.QtCore import (
     Qt,
@@ -72,17 +73,49 @@ directoryPath = tempDirectory.name
 # and finally https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
 # I'll do it the simpler subclassing way
 class BackgroundDownloader(QThread):
-    downloaded = pyqtSignal(str)
+    downloadSuccess = pyqtSignal(str)
+    downloadFail = pyqtSignal(str, str)
+    # TODO: temporary stuff, eventually Messenger will know it
+    _userName = None
+    _token = None
 
-    def setFiles(self, tname, fname):
+    def __init__(self, tname, fname):
+        QThread.__init__(self)
         self.tname = tname
         self.fname = fname
 
     def run(self):
-        messenger.getFileDav(self.tname, self.fname)
-        # needed to send "please delete" back to server
-        self.downloaded.emit(self.tname)
-        # then exit
+        print(
+            "Debug: downloader thread {}: downloading {}, {}".format(
+                threading.get_ident(), self.tname, self.fname
+            )
+        )
+        try:
+            messenger.getFileDav_woInsanity(self.tname, self.fname)
+        except Exception as ex:
+            # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            errmsg = template.format(type(ex).__name__, ex.args)
+            self.downloadFail.emit(self.tname, errmsg)
+            self.quit()
+
+        # Ack that test received - server then deletes it from webdav
+        msg = messenger.SRMsg_nopopup(["mDWF", self._userName, self._token, self.tname])
+        if msg[0] == "ACK":
+            print(
+                "Debug: downloader thread {}: got tname, fname={},{}".format(
+                    threading.get_ident(), self.tname, self.fname
+                )
+            )
+            self.downloadSuccess.emit(self.tname)
+        else:
+            errmsg = msg[1]
+            print(
+                "Debug: downloader thread {}: FAILED to get tname, fname={},{}".format(
+                    threading.get_ident(), self.tname, self.fname
+                )
+            )
+            self.downloadFail.emit(self.tname, errmsg)
         self.quit()
 
 
@@ -112,46 +145,72 @@ class BackgroundUploader(QThread):
             # define this inside run so it will run in the new thread
             # https://stackoverflow.com/questions/52036021/qtimer-on-a-qthread
             from queue import Empty as EmptyQueueException
+
             try:
-                code, gr, aname, pname, cname, mtime, pg, ver, tags = self.q.get_nowait()
+                code, gr, aname, pname, cname, mtime, pg, ver, tags = (
+                    self.q.get_nowait()
+                )
             except EmptyQueueException:
                 return
-            print("Debug: upQ (thread {}): popped code {} from queue, uploading "
-                  "with webdav...".format(str(threading.get_ident()), code))
+            print(
+                "Debug: upQ (thread {}): popped code {} from queue, uploading "
+                "with webdav...".format(str(threading.get_ident()), code)
+            )
             afile = os.path.basename(aname)
-            messenger.putFileDav(aname, afile)
-            # copy plom file to webdav
             pfile = os.path.basename(pname)
-            messenger.putFileDav(pname, pfile)
-            # copy comment file to webdav
             cfile = os.path.basename(cname)
-            messenger.putFileDav(cname, cfile)
+            try:
+                messenger.putFileDav_woInsanity(aname, afile)
+                messenger.putFileDav_woInsanity(pname, pfile)
+                messenger.putFileDav_woInsanity(cname, cfile)
+            except Exception as ex:
+                # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                errmsg = template.format(type(ex).__name__, ex.args)
+                self.uploadFail.emit(code, errmsg)
+                return
 
-            print("Debug: upQ: sending marks for {} via mRMD cmd server...".format(code))
+            print(
+                "Debug: upQ: sending marks for {} via mRMD cmd server...".format(code)
+            )
             # ensure user is still authorised to upload this particular pageimage -
             # this may have changed depending on what else is going on.
             # TODO: remove, either rRMD will succeed or fail: don't precheck
             msg = messenger.SRMsg_nopopup(["mUSO", self._userName, self._token, code])
             if msg[0] != "ACK":
                 errmsg = msg[1]
-                print('Debug: upQ: emitting FAILED signal for {}'.format(code))
+                print("Debug: upQ: emitting FAILED signal for {}".format(code))
                 self.uploadFail.emit(code, errmsg)
-            msg = messenger.SRMsg_nopopup(["mRMD", self._userName, self._token,
-                    code, gr, afile, pfile, cfile, mtime, pg, ver, tags])
-            #self.sleep(4)  # pretend upload took longer
+            msg = messenger.SRMsg_nopopup(
+                [
+                    "mRMD",
+                    self._userName,
+                    self._token,
+                    code,
+                    gr,
+                    afile,
+                    pfile,
+                    cfile,
+                    mtime,
+                    pg,
+                    ver,
+                    tags,
+                ]
+            )
+            # self.sleep(4)  # pretend upload took longer
             if msg[0] == "ACK":
                 numdone = msg[1]
                 numtotal = msg[2]
-                print('Debug: upQ: emitting SUCCESS signal for {}'.format(code))
+                print("Debug: upQ: emitting SUCCESS signal for {}".format(code))
                 self.uploadSuccess.emit(code, numdone, numtotal)
             else:
                 errmsg = msg[1]
-                print('Debug: upQ: emitting FAILED signal for {}'.format(code))
+                print("Debug: upQ: emitting FAILED signal for {}".format(code))
                 self.uploadFail.emit(code, errmsg)
 
         print("upQ.run: thread " + str(threading.get_ident()))
         self.q = queue.Queue()
-        print('Debug: upQ: starting with new empty queue and starting timer')
+        print("Debug: upQ: starting with new empty queue and starting timer")
         # TODO: Probably don't need the timer: after each enqueue, signal the
         # QThread (in the new thread's event loop) to call tryToUpload.
         timer = QTimer()
@@ -437,19 +496,14 @@ class MarkerClient(QWidget):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         # A simple cache table for latex'd comments
         self.commentCache = {}
+        self.backgroundDownloader = None
         # Get a pagegroup to mark from the server
         self.requestNext()
         # reset the view so whole exam shown.
         self.testImg.resetB.animateClick()
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
-        # A thread for downloading in the background
-        # see https://stackoverflow.com/questions/6783194/background-thread-with-qthread-in-pyqt
-        # and https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
         print("Debug: Marker main thread: " + str(threading.get_ident()))
-        self.backgroundDownloader = BackgroundDownloader()
-        self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
-        # and another for uploading
         self.backgroundUploader = BackgroundUploader()
         self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
         self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
@@ -645,18 +699,38 @@ class MarkerClient(QWidget):
         # Get file from the tempfilename in the webdav
         tname = msg[3]
         # Do this `messenger.getFileDav(tname, fname)` in another thread
-        self.backgroundDownloader.setFiles(tname, fname)
+        if self.backgroundDownloader:
+            print("Previous Downloader: " + str(self.backgroundDownloader))
+            # if prev downloader still going than wait.  might block the gui
+            self.backgroundDownloader.wait()
+        self.backgroundDownloader = BackgroundDownloader(tname, fname)
+        self.backgroundDownloader._userName = self.userName
+        self.backgroundDownloader._token = self.token
+        self.backgroundDownloader.downloadSuccess.connect(
+            self.requestNextInBackgroundFinished
+        )
+        self.backgroundDownloader.downloadFail.connect(
+            self.requestNextInBackgroundFailed
+        )
         self.backgroundDownloader.start()
         # Add the page-group to the list of things to mark
         # do not update the displayed image with this new paper
         self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
 
-    def requestNextInBackgroundFinish(self, tname):
-        # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg(["mDWF", self.userName, self.token, tname])
+    def requestNextInBackgroundFinished(self, tname):
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
+
+    def requestNextInBackgroundFailed(self, code, errmsg):
+        # TODO what should we do?  Is there a realistic way forward
+        # or should we just die with an exception?
+        ErrorMessage(
+            "Unfortunately, there was an unexpected error downloading "
+            "paper {}.\n\n{}\n\n"
+            "Please consider filing an issue?  I don't know if its "
+            "safe to continue from here...".format(code, errmsg)
+        ).exec_()
 
     def moveToNextUnmarkedTest(self):
         # Move to the next unmarked test in the table.
@@ -811,18 +885,40 @@ class MarkerClient(QWidget):
             oldpaperdir = self.prxM.getPaperDir(index[0].row())
             print("Debug: oldpaperdir is " + oldpaperdir)
             assert oldpaperdir is not None
-            oldaname = os.path.join(oldpaperdir, 'G' + tgv + ".png")
-            oldpname = os.path.join(oldpaperdir, 'G' + tgv + ".plom")
-            #oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
+            oldaname = os.path.join(oldpaperdir, "G" + tgv + ".png")
+            oldpname = os.path.join(oldpaperdir, "G" + tgv + ".plom")
+            # oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
             # TODO: json file not downloaded
             # https://gitlab.math.ubc.ca/andrewr/MLP/issues/415
             shutil.copyfile(oldaname, aname)
             shutil.copyfile(oldpname, pname)
-            #shutil.copyfile(oldcname, cname)
+            # shutil.copyfile(oldcname, cname)
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
         fname = "{}".format(self.prxM.getOriginalFile(index[0].row()))
+        if self.backgroundDownloader:
+            count = 0
+            # Notes: we could check using `while not os.path.exists(fname):`
+            # Or we can wait on the downloader, which works when there is only
+            # one download thread.  Better yet might be a dict/database that
+            # we update on downloadFinished signal.
+            while self.backgroundDownloader.isRunning():
+                time.sleep(0.1)
+                count += 1
+                if math.remainder(count, 10) == 0:
+                    print("Debug: waiting for downloader: {}".format(fname))
+                if count >= 40:
+                    msg = SimpleMessage(
+                        "Still waiting for download.  Do you want to wait a bit longer?"
+                    )
+                    if msg.exec_() == QMessageBox.No:
+                        return
+                    count = 0
+
+        # maybe the downloader failed for some (rare) reason
+        if not os.path.exists(fname):
+            return
         print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
         shutil.copyfile(fname, aname)
 
@@ -847,15 +943,15 @@ class MarkerClient(QWidget):
 
         # the actual upload will happen in another thread
         self.backgroundUploader.enqueueNewUpload(
-                "t" + tgv, # current tgv
-                gr,  # grade
-                aname,  # annotated file
-                pname,  # plom file
-                cname,  # comment file
-                mtime,  # marking time
-                self.pageGroup,
-                self.version,
-                self.prxM.data(index[4]),  # tags
+            "t" + tgv,  # current tgv
+            gr,  # grade
+            aname,  # annotated file
+            pname,  # plom file
+            cname,  # comment file
+            mtime,  # marking time
+            self.pageGroup,
+            self.version,
+            self.prxM.data(index[4]),  # tags
         )
 
         # Check if no unmarked test, then request one.
@@ -864,7 +960,6 @@ class MarkerClient(QWidget):
         if self.moveToNextUnmarkedTest():
             # self.annotateTest()
             self.ui.annButton.animateClick()
-
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
@@ -878,18 +973,17 @@ class MarkerClient(QWidget):
             self.ui.mProgressBar.setValue(numdone)
             self.ui.mProgressBar.setMaximum(numtotal)
 
-
     def backgroundUploadFailed(self, code, errmsg):
         """An upload has failed, not sure what to do but do to it LOADLY"""
         for r in range(self.prxM.rowCount()):
             if self.prxM.getPrefix(r) == code:
                 self.prxM.setStatus(r, "???")
-        ErrorMessage("Unfortunately, there was an unexpected error; server did "
-                     "not accept our marked paper {}.\n\n"
-                     "Server said: \"{}\"\n\n"
-                     "Please consider filing an issue?  Perhaps you could try "
-                     "annotating that paper again?".format(code, errmsg)).exec_()
-
+        ErrorMessage(
+            "Unfortunately, there was an unexpected error; server did "
+            "not accept our marked paper {}.\n\n{}\n\n"
+            "Please consider filing an issue?  Perhaps you could try "
+            "annotating that paper again?".format(code, errmsg)
+        ).exec_()
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image

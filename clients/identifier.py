@@ -176,7 +176,6 @@ class IDClient(QWidget):
         self.workingDirectory = directoryPath
         # List of papers we have to ID.
         self.paperList = []
-        self.unidCount = 0
         # Fire up the interface.
         self.ui = Ui_IdentifyWindow()
         self.ui.setupUi(self)
@@ -207,6 +206,8 @@ class IDClient(QWidget):
         self.ui.nameEdit.returnPressed.connect(self.enterName)
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.nextButton.clicked.connect(self.skipOnClick)
+        self.ui.predButton.clicked.connect(self.acceptPrediction)
+
         # Make sure no button is clicked by a return-press
         self.ui.nextButton.setAutoDefault(False)
         self.ui.closeButton.setAutoDefault(False)
@@ -295,6 +296,9 @@ class IDClient(QWidget):
         fnt = self.font()
         fnt.setPointSize(fnt.pointSize() * 2)
         self.ui.pNameLabel.setFont(fnt)
+        # also tweak size of "accept prediction" button font
+        self.ui.predButton.setFont(fnt)
+        # make the SID larger still.
         fnt.setPointSize(fnt.pointSize() * 1.5)
         self.ui.pSIDLabel.setFont(fnt)
         # And if no predictions then hide that box
@@ -397,6 +401,7 @@ class IDClient(QWidget):
         self.ui.idEdit.setText(self.exM.data(selnew.indexes()[2]))
         self.ui.nameEdit.setText(self.exM.data(selnew.indexes()[3]))
         self.updateImage(selnew.indexes()[0].row())
+        self.ui.idEdit.setFocus()
 
     def checkFiles(self, r):
         tgv = self.exM.paperList[r].prefix
@@ -426,9 +431,13 @@ class IDClient(QWidget):
         elif tn in self.predictedTestToNumbers:
             psid = self.predictedTestToNumbers[tn]
             pname = self.studentNumbersToNames[psid]
-            self.ui.pSIDLabel.setText(psid)
-            self.ui.pNameLabel.setText(pname)
-            QTimer.singleShot(0, self.setuiedit)
+            if pname == "":
+                self.ui.predictionBox.hide()
+            else:
+                self.ui.predictionBox.show()
+                self.ui.pSIDLabel.setText(psid)
+                self.ui.pNameLabel.setText(pname)
+                QTimer.singleShot(0, self.setuiedit)
         else:
             self.ui.pSIDLabel.setText("")
             self.ui.pNameLabel.setText("")
@@ -444,15 +453,10 @@ class IDClient(QWidget):
         # select that row and display the image
         if update:
             # One more unid'd paper
-            self.unidCount += 1
             self.ui.tableView.selectRow(r)
             self.updateImage(r)
 
-    def requestNext(self):
-        """Ask the server for an unID'd paper (iNID). Server should return
-        message [ACK, testcode, filename]. Get file from webdav, add to the
-        list of papers and update the image.
-        """
+    def updateProgress(self):
         # ask server for id-count update
         msg = messenger.SRMsg(["iPRC", self.userName, self.token])
         # returns [ACK, #id'd, #total]
@@ -499,6 +503,40 @@ class IDClient(QWidget):
         self.ui.idEdit.setFocus()
         return True
 
+    def acceptPrediction(self):
+        # first check currently selected paper is unidentified - else do nothing
+        index = self.ui.tableView.selectedIndexes()
+        status = self.exM.data(index[1])
+        if status != "unidentified":
+            return
+        code = self.exM.data(index[0])
+        sname = self.ui.pNameLabel.text()
+        sid = self.ui.pSIDLabel.text()
+        msg = messenger.SRMsg(["iRID", self.userName, self.token, code, sid, sname])
+        if msg[0] == "ERR":
+            # If an error, revert the student and clear things.
+            self.exM.revertStudent(index)
+            # Use timer to avoid conflict between completer and
+            # clearing the line-edit. Very annoying but this fixes it.
+            QTimer.singleShot(0, self.ui.idEdit.clear)
+            QTimer.singleShot(0, self.ui.nameEdit.clear)
+            return
+        else:
+            self.exM.identifyStudent(index, sid, sname)
+            # Use timer to avoid conflict between completer and
+            # clearing the line-edit. Very annoying but this fixes it.
+            QTimer.singleShot(0, self.ui.idEdit.clear)
+            QTimer.singleShot(0, self.ui.nameEdit.clear)
+            # Update un-id'd count.
+
+        self.updateProgress()
+
+        if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
+            self.requestNext()  # updates progressbars.
+        else:  # else move to the next unidentified paper.
+            self.moveToNextUnID()  # doesn't
+        return
+
     def identifyStudent(self, index, alreadyIDd=False):
         """User ID's the student of the current paper. Some care around whether
         or not the paper was ID'd previously. Not called directly - instead
@@ -533,9 +571,8 @@ class IDClient(QWidget):
             # clearing the line-edit. Very annoying but this fixes it.
             QTimer.singleShot(0, self.ui.idEdit.clear)
             QTimer.singleShot(0, self.ui.nameEdit.clear)
-            # Update un-id'd count.
-            if not alreadyIDd:
-                self.unidCount -= 1
+            # Update progressbars
+            self.updateProgress()
             return True
 
     def moveToNextUnID(self):

@@ -12,7 +12,7 @@ import hashlib
 # If you know the salt string and you know someone's student
 # number, you can determine their code.  You should set this
 # per course (not per test).  TODO: move into the spec file?
-SALTSTR = "salt"
+SALTSTR = "default"
 
 
 def myhash(s, salt=None):
