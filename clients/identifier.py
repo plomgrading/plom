@@ -454,6 +454,11 @@ class IDClient(QWidget):
             self.ui.idProgressBar.setMaximum(msg[2])
             self.ui.idProgressBar.setValue(msg[1])
 
+    def requestNext(self):
+        """Ask the server for an unID'd paper (iNID). Server should return
+        message [ACK, testcode, filename]. Get file from webdav, add to the
+        list of papers and update the image.
+        """
         attempts = 0
         while True:
             attempts += 1
