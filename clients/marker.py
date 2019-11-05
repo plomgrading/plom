@@ -85,20 +85,36 @@ class BackgroundDownloader(QThread):
         self.fname = fname
 
     def run(self):
-        print("Debug: downloader thread {}: downloading {}, {}".format(threading.get_ident(), self.tname, self.fname))
-        #time.sleep(5)
-        # TODO: let this fail and feed to downloadFail below...
-        # https://gitlab.math.ubc.ca/andrewr/MLP/issues/417
-        messenger.getFileDav(self.tname, self.fname)
-        #time.sleep(5)
+        print(
+            "Debug: downloader thread {}: downloading {}, {}".format(
+                threading.get_ident(), self.tname, self.fname
+            )
+        )
+        try:
+            messenger.getFileDav_woInsanity(self.tname, self.fname)
+        except Exception as ex:
+            # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            errmsg = template.format(type(ex).__name__, ex.args)
+            self.downloadFail.emit(self.tname, errmsg)
+            self.quit()
+
         # Ack that test received - server then deletes it from webdav
         msg = messenger.SRMsg_nopopup(["mDWF", self._userName, self._token, self.tname])
         if msg[0] == "ACK":
-            print("Debug: downloader thread {}: got tname, fname={},{}".format(threading.get_ident(), self.tname, self.fname))
+            print(
+                "Debug: downloader thread {}: got tname, fname={},{}".format(
+                    threading.get_ident(), self.tname, self.fname
+                )
+            )
             self.downloadSuccess.emit(self.tname)
         else:
             errmsg = msg[1]
-            print("Debug: downloader thread {}: FAILED to get tname, fname={},{}".format(threading.get_ident(), self.tname, self.fname))
+            print(
+                "Debug: downloader thread {}: FAILED to get tname, fname={},{}".format(
+                    threading.get_ident(), self.tname, self.fname
+                )
+            )
             self.downloadFail.emit(self.tname, errmsg)
         self.quit()
 
@@ -136,13 +152,18 @@ class BackgroundUploader(QThread):
             print("Debug: upQ (thread {}): popped code {} from queue, uploading "
                   "with webdav...".format(str(threading.get_ident()), code))
             afile = os.path.basename(aname)
-            messenger.putFileDav(aname, afile)
-            # copy plom file to webdav
             pfile = os.path.basename(pname)
-            messenger.putFileDav(pname, pfile)
-            # copy comment file to webdav
             cfile = os.path.basename(cname)
-            messenger.putFileDav(cname, cfile)
+            try:
+                messenger.putFileDav_woInsanity(aname, afile)
+                messenger.putFileDav_woInsanity(pname, pfile)
+                messenger.putFileDav_woInsanity(cname, cfile)
+            except Exception as ex:
+                # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                errmsg = template.format(type(ex).__name__, ex.args)
+                self.uploadFail.emit(code, errmsg)
+                return
 
             print("Debug: upQ: sending marks for {} via mRMD cmd server...".format(code))
             # ensure user is still authorised to upload this particular pageimage -
@@ -653,11 +674,12 @@ class MarkerClient(QWidget):
     def requestNextInBackgroundFailed(self, code, errmsg):
         # TODO what should we do?  Is there a realistic way forward
         # or should we just die with an exception?
-        ErrorMessage("Unfortunately, there was an unexpected error download "
-                     "paper {}.\n\n"
-                     "Server said: \"{}\"\n\n"
-                     "Please consider filing an issue?  I don't know if its "
-                     "safe to continue from here...".format(code, errmsg)).exec_()
+        ErrorMessage(
+            "Unfortunately, there was an unexpected error downloading "
+            "paper {}.\n\n{}\n\n"
+            "Please consider filing an issue?  I don't know if its "
+            "safe to continue from here...".format(code, errmsg)
+        ).exec_()
 
     def moveToNextUnmarkedTest(self):
         # Move to the next unmarked test in the table.
@@ -841,6 +863,9 @@ class MarkerClient(QWidget):
                         return
                     count = 0
 
+        # maybe the downloader failed for some (rare) reason
+        if not os.path.exists(fname):
+            return
         print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
         shutil.copyfile(fname, aname)
 
@@ -896,18 +921,17 @@ class MarkerClient(QWidget):
             self.ui.mProgressBar.setValue(numdone)
             self.ui.mProgressBar.setMaximum(numtotal)
 
-
     def backgroundUploadFailed(self, code, errmsg):
         """An upload has failed, not sure what to do but do to it LOADLY"""
         for r in range(self.prxM.rowCount()):
             if self.prxM.getPrefix(r) == code:
                 self.prxM.setStatus(r, "???")
-        ErrorMessage("Unfortunately, there was an unexpected error; server did "
-                     "not accept our marked paper {}.\n\n"
-                     "Server said: \"{}\"\n\n"
-                     "Please consider filing an issue?  Perhaps you could try "
-                     "annotating that paper again?".format(code, errmsg)).exec_()
-
+        ErrorMessage(
+            "Unfortunately, there was an unexpected error; server did "
+            "not accept our marked paper {}.\n\n{}\n\n"
+            "Please consider filing an issue?  Perhaps you could try "
+            "annotating that paper again?".format(code, errmsg)
+        ).exec_()
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image

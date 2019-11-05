@@ -852,10 +852,16 @@ davDirectory = tempDirectory.name
 os.system("chmod o-r {}".format(davDirectory))
 SLogger.info("Webdav directory = {}".format(davDirectory))
 # Fire up the webdav server.
-cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.yaml".format(
+try:
+    webdavlog = open("webdav.log", "w+")
+except:
+    print("Cannot open webdav.log filehandle.")
+    exit()
+# consider using "-q" option since it reduces verbosity of log and only keeps warnings+errors.
+cmd = "wsgidav -H {} -p {} --server cheroot -r {} -c ../resources/davconf.yaml".format(
     serverInfo["server"], serverInfo["wport"], davDirectory
 )
-davproc = subprocess.Popen(shlex.split(cmd))
+davproc = subprocess.Popen(shlex.split(cmd), stdout=webdavlog, stderr=webdavlog)
 
 # Read the test specification
 spec = TestSpecification()
@@ -919,6 +925,8 @@ loop.close()
 subprocess.Popen.kill(davproc)
 SLogger.info("Webdav server closed")
 print("Webdav server closed")
+webdavlog.close()
+# close the rest of the stuff
 SLogger.info("Closing databases")
 print("Closing databases")
 theIDDB.saveIdentified()
