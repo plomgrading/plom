@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * fixed race conditions when/uploading and downloading.
+* certain file transfers are more robust at reporting errors.
 * userManager was failing to start.
 * return to greeter dialog on e.g., wrong server or pagegroup/version out of range.
 * `mark_reverter` less fragile if files DNE.
