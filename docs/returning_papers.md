@@ -112,3 +112,16 @@ We have a secret code for each student.  We want to upload these numbers to Canv
       2. Publish the test marks.
 
     TODO: didn't we already "publish"?  How does this make them visible?
+
+
+## FAQs
+
+"Canvas put commas in my return codes."
+: So it does, this is no problem.  Students do *not* need to remove them.
+
+"Microsoft Excel displays 12-digit return codes in scientific notation."
+: If you look at the raw .csv with a text editor, they are indeed integers.
+We don't recommend saving that file with Excel; if you want to spot-check
+before uploading to Canvas, use a text editor.  In theory, the values are
+less than `flintmax` so a round-trip through floating point should be
+harmless.
