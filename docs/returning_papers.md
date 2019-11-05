@@ -125,3 +125,9 @@ We don't recommend saving that file with Excel; if you want to spot-check
 before uploading to Canvas, use a text editor.  In theory, the values are
 less than `flintmax` so a round-trip through floating point should be
 harmless.
+
+"Where can I host the return files?"
+: UBC-specific answer: put stuff on `amcweb`.  TODO: Ask IT if you need
+help getting access to `amcweb`?  When logged into my VM, the path is
+`/zfs/users/cbm/www`.  This is different than when logged into pascal or
+hypatia.
