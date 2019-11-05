@@ -85,16 +85,13 @@ class BackgroundDownloader(QThread):
         self.fname = fname
 
     def run(self):
-        print("Debug: downloader thread {}: downloading {}, {}".format(threading.get_ident(), self.tname, self.fname))
-        #time.sleep(5)
-        # TODO: let this fail and feed to downloadFail below...
-        # https://gitlab.math.ubc.ca/andrewr/MLP/issues/417
-
-        # TODO: DO NOT MERGE: this makes 40% of downloads fail FOR TESTING
-        import random
-        farkup = "" if random.random() > 0.4 else "youllneverfindme"
+        print(
+            "Debug: downloader thread {}: downloading {}, {}".format(
+                threading.get_ident(), self.tname, self.fname
+            )
+        )
         try:
-            messenger.getFileDav_woInsanity(self.tname + farkup, self.fname)
+            messenger.getFileDav_woInsanity(self.tname, self.fname)
         except Exception as ex:
             # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -102,15 +99,22 @@ class BackgroundDownloader(QThread):
             self.downloadFail.emit(self.tname, errmsg)
             self.quit()
 
-        #time.sleep(5)
         # Ack that test received - server then deletes it from webdav
         msg = messenger.SRMsg_nopopup(["mDWF", self._userName, self._token, self.tname])
         if msg[0] == "ACK":
-            print("Debug: downloader thread {}: got tname, fname={},{}".format(threading.get_ident(), self.tname, self.fname))
+            print(
+                "Debug: downloader thread {}: got tname, fname={},{}".format(
+                    threading.get_ident(), self.tname, self.fname
+                )
+            )
             self.downloadSuccess.emit(self.tname)
         else:
             errmsg = msg[1]
-            print("Debug: downloader thread {}: FAILED to get tname, fname={},{}".format(threading.get_ident(), self.tname, self.fname))
+            print(
+                "Debug: downloader thread {}: FAILED to get tname, fname={},{}".format(
+                    threading.get_ident(), self.tname, self.fname
+                )
+            )
             self.downloadFail.emit(self.tname, errmsg)
         self.quit()
 
