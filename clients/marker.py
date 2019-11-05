@@ -97,7 +97,6 @@ class BackgroundDownloader(QThread):
             messenger.getFileDav_woInsanity(self.tname + farkup, self.fname)
         except Exception as ex:
             # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
-            # TODO: its not really "Server Says" in the popup...
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             errmsg = template.format(type(ex).__name__, ex.args)
             self.downloadFail.emit(self.tname, errmsg)
@@ -161,7 +160,6 @@ class BackgroundUploader(QThread):
                 messenger.putFileDav_woInsanity(cname, cfile)
             except Exception as ex:
                 # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
-                # TODO: its not really "Server Says" in the popup...
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                 errmsg = template.format(type(ex).__name__, ex.args)
                 self.uploadFail.emit(code, errmsg)
@@ -676,11 +674,12 @@ class MarkerClient(QWidget):
     def requestNextInBackgroundFailed(self, code, errmsg):
         # TODO what should we do?  Is there a realistic way forward
         # or should we just die with an exception?
-        ErrorMessage("Unfortunately, there was an unexpected error download "
-                     "paper {}.\n\n"
-                     "Server said: \"{}\"\n\n"
-                     "Please consider filing an issue?  I don't know if its "
-                     "safe to continue from here...".format(code, errmsg)).exec_()
+        ErrorMessage(
+            "Unfortunately, there was an unexpected error downloading "
+            "paper {}.\n\n{}\n\n"
+            "Please consider filing an issue?  I don't know if its "
+            "safe to continue from here...".format(code, errmsg)
+        ).exec_()
 
     def moveToNextUnmarkedTest(self):
         # Move to the next unmarked test in the table.
@@ -922,18 +921,17 @@ class MarkerClient(QWidget):
             self.ui.mProgressBar.setValue(numdone)
             self.ui.mProgressBar.setMaximum(numtotal)
 
-
     def backgroundUploadFailed(self, code, errmsg):
         """An upload has failed, not sure what to do but do to it LOADLY"""
         for r in range(self.prxM.rowCount()):
             if self.prxM.getPrefix(r) == code:
                 self.prxM.setStatus(r, "???")
-        ErrorMessage("Unfortunately, there was an unexpected error; server did "
-                     "not accept our marked paper {}.\n\n"
-                     "Server said: \"{}\"\n\n"
-                     "Please consider filing an issue?  Perhaps you could try "
-                     "annotating that paper again?".format(code, errmsg)).exec_()
-
+        ErrorMessage(
+            "Unfortunately, there was an unexpected error; server did "
+            "not accept our marked paper {}.\n\n{}\n\n"
+            "Please consider filing an issue?  Perhaps you could try "
+            "annotating that paper again?".format(code, errmsg)
+        ).exec_()
 
     def selChanged(self, selnew, selold):
         # When selection changed, update the displayed image
