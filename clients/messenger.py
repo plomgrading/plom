@@ -70,17 +70,17 @@ def SRMsg(msg):
     """Send message using the asyncio message handler and get back
     return message. If error then pop-up an error message.
     """
-    #N = 0.5
-    #print("Messenger [{}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
+    # N = 0.5
+    # print("Messenger [{}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
     SRmutex.acquire()
     try:
-        #print("Messenger: got mutex, pretending to work for {}s, then talking to server".format(N))
+        # print("Messenger: got mutex, pretending to work for {}s, then talking to server".format(N))
 
-        #time.sleep(N)
+        # time.sleep(N)
         rmsg = loop.run_until_complete(handle_messaging(msg))
     finally:
         SRmutex.release()
-    #print("Messenger [{}]: got rmsg = {}".format(str(threading.get_ident()), str(rmsg)))
+    # print("Messenger [{}]: got rmsg = {}".format(str(threading.get_ident()), str(rmsg)))
     if rmsg[0] == "ACK":
         return rmsg
     elif rmsg[0] == "ERR":
@@ -97,20 +97,23 @@ def SRMsg_nopopup(msg):
     """Send message using the asyncio message handler and get back
     return message.
     """
-    #N = 15
-    #print("Messenger [nopop, {}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
+    # N = 15
+    # print("Messenger [nopop, {}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
     SRmutex.acquire()
     try:
-        #print("Messenger [nopop]: got mutex, pretending to work for {}s, then talking to server".format(N))
-        #time.sleep(N)
+        # print("Messenger [nopop]: got mutex, pretending to work for {}s, then talking to server".format(N))
+        # time.sleep(N)
         rmsg = loop.run_until_complete(handle_messaging(msg))
     finally:
         SRmutex.release()
-    #print("Messenger [nopop, {}]: got rmsg = {}".format(str(threading.get_ident()), str(rmsg)))
+    # print("Messenger [nopop, {}]: got rmsg = {}".format(str(threading.get_ident()), str(rmsg)))
     if rmsg[0] in ("ACK", "ERR"):
         return rmsg
     else:
-        raise RuntimeError("Unexpected response from server.  Consider filing a bug?  The return from the server was:\n\n" + str(rmsg))
+        raise RuntimeError(
+            "Unexpected response from server.  Consider filing a bug?  The return from the server was:\n\n"
+            + str(rmsg)
+        )
 
 
 def getFileDav(dfn, lfn):
@@ -183,15 +186,14 @@ async def handle_ping_test():
     except asyncio.TimeoutError as e:
         # TODO: str(e) does nothing useful to keep separate from below
         msg = ErrorMessage(
-            "Server timed out.  " \
-            "Please double check details and try again."
+            "Server timed out.  " "Please double check details and try again."
         )
         msg.exec_()
         return False
     except (ConnectionRefusedError, OSError) as e:
         msg = ErrorMessage(
-            "Server does not return ping.  " \
-            "Please double check details and try again.\n\n" \
+            "Server does not return ping.  "
+            "Please double check details and try again.\n\n"
             "Details:\n" + str(e)
         )
         msg.exec_()

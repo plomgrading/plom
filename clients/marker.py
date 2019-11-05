@@ -65,7 +65,7 @@ sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
 
 # set up variables to store paths for marker and id clients
-tempDirectory = tempfile.TemporaryDirectory(prefix='plom_')
+tempDirectory = tempfile.TemporaryDirectory(prefix="plom_")
 directoryPath = tempDirectory.name
 
 # Read https://mayaposch.wordpress.com/2011/11/01/how-to-really-truly-use-qthreads-the-full-explanation/
@@ -145,12 +145,17 @@ class BackgroundUploader(QThread):
             # define this inside run so it will run in the new thread
             # https://stackoverflow.com/questions/52036021/qtimer-on-a-qthread
             from queue import Empty as EmptyQueueException
+
             try:
-                code, gr, aname, pname, cname, mtime, pg, ver, tags = self.q.get_nowait()
+                code, gr, aname, pname, cname, mtime, pg, ver, tags = (
+                    self.q.get_nowait()
+                )
             except EmptyQueueException:
                 return
-            print("Debug: upQ (thread {}): popped code {} from queue, uploading "
-                  "with webdav...".format(str(threading.get_ident()), code))
+            print(
+                "Debug: upQ (thread {}): popped code {} from queue, uploading "
+                "with webdav...".format(str(threading.get_ident()), code)
+            )
             afile = os.path.basename(aname)
             pfile = os.path.basename(pname)
             cfile = os.path.basename(cname)
@@ -165,31 +170,47 @@ class BackgroundUploader(QThread):
                 self.uploadFail.emit(code, errmsg)
                 return
 
-            print("Debug: upQ: sending marks for {} via mRMD cmd server...".format(code))
+            print(
+                "Debug: upQ: sending marks for {} via mRMD cmd server...".format(code)
+            )
             # ensure user is still authorised to upload this particular pageimage -
             # this may have changed depending on what else is going on.
             # TODO: remove, either rRMD will succeed or fail: don't precheck
             msg = messenger.SRMsg_nopopup(["mUSO", self._userName, self._token, code])
             if msg[0] != "ACK":
                 errmsg = msg[1]
-                print('Debug: upQ: emitting FAILED signal for {}'.format(code))
+                print("Debug: upQ: emitting FAILED signal for {}".format(code))
                 self.uploadFail.emit(code, errmsg)
-            msg = messenger.SRMsg_nopopup(["mRMD", self._userName, self._token,
-                    code, gr, afile, pfile, cfile, mtime, pg, ver, tags])
-            #self.sleep(4)  # pretend upload took longer
+            msg = messenger.SRMsg_nopopup(
+                [
+                    "mRMD",
+                    self._userName,
+                    self._token,
+                    code,
+                    gr,
+                    afile,
+                    pfile,
+                    cfile,
+                    mtime,
+                    pg,
+                    ver,
+                    tags,
+                ]
+            )
+            # self.sleep(4)  # pretend upload took longer
             if msg[0] == "ACK":
                 numdone = msg[1]
                 numtotal = msg[2]
-                print('Debug: upQ: emitting SUCCESS signal for {}'.format(code))
+                print("Debug: upQ: emitting SUCCESS signal for {}".format(code))
                 self.uploadSuccess.emit(code, numdone, numtotal)
             else:
                 errmsg = msg[1]
-                print('Debug: upQ: emitting FAILED signal for {}'.format(code))
+                print("Debug: upQ: emitting FAILED signal for {}".format(code))
                 self.uploadFail.emit(code, errmsg)
 
         print("upQ.run: thread " + str(threading.get_ident()))
         self.q = queue.Queue()
-        print('Debug: upQ: starting with new empty queue and starting timer')
+        print("Debug: upQ: starting with new empty queue and starting timer")
         # TODO: Probably don't need the timer: after each enqueue, signal the
         # QThread (in the new thread's event loop) to call tryToUpload.
         timer = QTimer()
@@ -506,7 +527,6 @@ class MarkerClient(QWidget):
         self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(e)
 
-
     def getMaxMark(self):
         """Return the max mark or raise ValueError."""
         # Send max-mark request (mGMX) to server
@@ -517,7 +537,6 @@ class MarkerClient(QWidget):
         if not msg[0] == "ACK":
             raise ValueError(msg[1])
         self.maxScore = msg[1]
-
 
     def getMarkedList(self):
         # Ask server for list of previously marked papers
@@ -659,8 +678,12 @@ class MarkerClient(QWidget):
         self.backgroundDownloader = BackgroundDownloader(tname, fname)
         self.backgroundDownloader._userName = self.userName
         self.backgroundDownloader._token = self.token
-        self.backgroundDownloader.downloadSuccess.connect(self.requestNextInBackgroundFinished)
-        self.backgroundDownloader.downloadFail.connect(self.requestNextInBackgroundFailed)
+        self.backgroundDownloader.downloadSuccess.connect(
+            self.requestNextInBackgroundFinished
+        )
+        self.backgroundDownloader.downloadFail.connect(
+            self.requestNextInBackgroundFailed
+        )
         self.backgroundDownloader.start()
         # Add the page-group to the list of things to mark
         # do not update the displayed image with this new paper
@@ -834,14 +857,14 @@ class MarkerClient(QWidget):
             oldpaperdir = self.prxM.getPaperDir(index[0].row())
             print("Debug: oldpaperdir is " + oldpaperdir)
             assert oldpaperdir is not None
-            oldaname = os.path.join(oldpaperdir, 'G' + tgv + ".png")
-            oldpname = os.path.join(oldpaperdir, 'G' + tgv + ".plom")
-            #oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
+            oldaname = os.path.join(oldpaperdir, "G" + tgv + ".png")
+            oldpname = os.path.join(oldpaperdir, "G" + tgv + ".plom")
+            # oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
             # TODO: json file not downloaded
             # https://gitlab.math.ubc.ca/andrewr/MLP/issues/415
             shutil.copyfile(oldaname, aname)
             shutil.copyfile(oldpname, pname)
-            #shutil.copyfile(oldcname, cname)
+            # shutil.copyfile(oldcname, cname)
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
@@ -858,7 +881,9 @@ class MarkerClient(QWidget):
                 if math.remainder(count, 10) == 0:
                     print("Debug: waiting for downloader: {}".format(fname))
                 if count >= 40:
-                    msg = SimpleMessage("Still waiting for download.  Do you want to wait a bit longer?")
+                    msg = SimpleMessage(
+                        "Still waiting for download.  Do you want to wait a bit longer?"
+                    )
                     if msg.exec_() == QMessageBox.No:
                         return
                     count = 0
@@ -890,15 +915,15 @@ class MarkerClient(QWidget):
 
         # the actual upload will happen in another thread
         self.backgroundUploader.enqueueNewUpload(
-                "t" + tgv, # current tgv
-                gr,  # grade
-                aname,  # annotated file
-                pname,  # plom file
-                cname,  # comment file
-                mtime,  # marking time
-                self.pageGroup,
-                self.version,
-                self.prxM.data(index[4]),  # tags
+            "t" + tgv,  # current tgv
+            gr,  # grade
+            aname,  # annotated file
+            pname,  # plom file
+            cname,  # comment file
+            mtime,  # marking time
+            self.pageGroup,
+            self.version,
+            self.prxM.data(index[4]),  # tags
         )
 
         # Check if no unmarked test, then request one.
@@ -907,7 +932,6 @@ class MarkerClient(QWidget):
         if self.moveToNextUnmarkedTest():
             # self.annotateTest()
             self.ui.annButton.animateClick()
-
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
