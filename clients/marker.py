@@ -446,7 +446,7 @@ class MarkerClient(QWidget):
         # create a settings variable for saving annotator window settings
         # initially all settings are "none"
         self.annotatorSettings = defaultdict(lambda: None)
-        self.loadAnnotatorSettings()
+        # self.loadAnnotatorSettings()
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -986,7 +986,7 @@ class MarkerClient(QWidget):
         msg, = messenger.SRMsg(["UCL", self.userName, self.token])
         assert msg == "ACK"
         # Now save annotatorSettings to file
-        self.saveAnnotatorSettings()
+        # self.saveAnnotatorSettings()
         # finally send shutdown signal to client window and close.
         self.my_shutdown_signal.emit(2)
         self.close()
