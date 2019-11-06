@@ -19,6 +19,7 @@ import tempfile
 import time
 import threading
 import queue
+import math
 
 from PyQt5.QtCore import (
     Qt,
@@ -72,17 +73,49 @@ directoryPath = tempDirectory.name
 # and finally https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
 # I'll do it the simpler subclassing way
 class BackgroundDownloader(QThread):
-    downloaded = pyqtSignal(str)
+    downloadSuccess = pyqtSignal(str)
+    downloadFail = pyqtSignal(str, str)
+    # TODO: temporary stuff, eventually Messenger will know it
+    _userName = None
+    _token = None
 
-    def setFiles(self, tname, fname):
+    def __init__(self, tname, fname):
+        QThread.__init__(self)
         self.tname = tname
         self.fname = fname
 
     def run(self):
-        messenger.getFileDav(self.tname, self.fname)
-        # needed to send "please delete" back to server
-        self.downloaded.emit(self.tname)
-        # then exit
+        print(
+            "Debug: downloader thread {}: downloading {}, {}".format(
+                threading.get_ident(), self.tname, self.fname
+            )
+        )
+        try:
+            messenger.getFileDav_woInsanity(self.tname, self.fname)
+        except Exception as ex:
+            # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            errmsg = template.format(type(ex).__name__, ex.args)
+            self.downloadFail.emit(self.tname, errmsg)
+            self.quit()
+
+        # Ack that test received - server then deletes it from webdav
+        msg = messenger.SRMsg_nopopup(["mDWF", self._userName, self._token, self.tname])
+        if msg[0] == "ACK":
+            print(
+                "Debug: downloader thread {}: got tname, fname={},{}".format(
+                    threading.get_ident(), self.tname, self.fname
+                )
+            )
+            self.downloadSuccess.emit(self.tname)
+        else:
+            errmsg = msg[1]
+            print(
+                "Debug: downloader thread {}: FAILED to get tname, fname={},{}".format(
+                    threading.get_ident(), self.tname, self.fname
+                )
+            )
+            self.downloadFail.emit(self.tname, errmsg)
         self.quit()
 
 
@@ -124,13 +157,18 @@ class BackgroundUploader(QThread):
                 "with webdav...".format(str(threading.get_ident()), code)
             )
             afile = os.path.basename(aname)
-            messenger.putFileDav(aname, afile)
-            # copy plom file to webdav
             pfile = os.path.basename(pname)
-            messenger.putFileDav(pname, pfile)
-            # copy comment file to webdav
             cfile = os.path.basename(cname)
-            messenger.putFileDav(cname, cfile)
+            try:
+                messenger.putFileDav_woInsanity(aname, afile)
+                messenger.putFileDav_woInsanity(pname, pfile)
+                messenger.putFileDav_woInsanity(cname, cfile)
+            except Exception as ex:
+                # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
+                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                errmsg = template.format(type(ex).__name__, ex.args)
+                self.uploadFail.emit(code, errmsg)
+                return
 
             print(
                 "Debug: upQ: sending marks for {} via mRMD cmd server...".format(code)
@@ -463,19 +501,14 @@ class MarkerClient(QWidget):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         # A simple cache table for latex'd comments
         self.commentCache = {}
+        self.backgroundDownloader = None
         # Get a pagegroup to mark from the server
         self.requestNext()
         # reset the view so whole exam shown.
         self.testImg.resetB.animateClick()
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
-        # A thread for downloading in the background
-        # see https://stackoverflow.com/questions/6783194/background-thread-with-qthread-in-pyqt
-        # and https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
         print("Debug: Marker main thread: " + str(threading.get_ident()))
-        self.backgroundDownloader = BackgroundDownloader()
-        self.backgroundDownloader.downloaded.connect(self.requestNextInBackgroundFinish)
-        # and another for uploading
         self.backgroundUploader = BackgroundUploader()
         self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
         self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
@@ -639,18 +672,38 @@ class MarkerClient(QWidget):
         # Get file from the tempfilename in the webdav
         tname = msg[2]
         # Do this `messenger.getFileDav(tname, fname)` in another thread
-        self.backgroundDownloader.setFiles(tname, fname)
+        if self.backgroundDownloader:
+            print("Previous Downloader: " + str(self.backgroundDownloader))
+            # if prev downloader still going than wait.  might block the gui
+            self.backgroundDownloader.wait()
+        self.backgroundDownloader = BackgroundDownloader(tname, fname)
+        self.backgroundDownloader._userName = self.userName
+        self.backgroundDownloader._token = self.token
+        self.backgroundDownloader.downloadSuccess.connect(
+            self.requestNextInBackgroundFinished
+        )
+        self.backgroundDownloader.downloadFail.connect(
+            self.requestNextInBackgroundFailed
+        )
         self.backgroundDownloader.start()
         # Add the page-group to the list of things to mark
         # do not update the displayed image with this new paper
         self.addTGVToList(TestPageGroup(msg[1], fname, tags=msg[3]), update=False)
 
-    def requestNextInBackgroundFinish(self, tname):
-        # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg(["mDWF", self.userName, self.token, tname])
+    def requestNextInBackgroundFinished(self, tname):
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
+
+    def requestNextInBackgroundFailed(self, code, errmsg):
+        # TODO what should we do?  Is there a realistic way forward
+        # or should we just die with an exception?
+        ErrorMessage(
+            "Unfortunately, there was an unexpected error downloading "
+            "paper {}.\n\n{}\n\n"
+            "Please consider filing an issue?  I don't know if its "
+            "safe to continue from here...".format(code, errmsg)
+        ).exec_()
 
     def moveToNextUnmarkedTest(self):
         # Move to the next unmarked test in the table.
@@ -817,6 +870,28 @@ class MarkerClient(QWidget):
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
         fname = "{}".format(self.prxM.getOriginalFile(index[0].row()))
+        if self.backgroundDownloader:
+            count = 0
+            # Notes: we could check using `while not os.path.exists(fname):`
+            # Or we can wait on the downloader, which works when there is only
+            # one download thread.  Better yet might be a dict/database that
+            # we update on downloadFinished signal.
+            while self.backgroundDownloader.isRunning():
+                time.sleep(0.1)
+                count += 1
+                if math.remainder(count, 10) == 0:
+                    print("Debug: waiting for downloader: {}".format(fname))
+                if count >= 40:
+                    msg = SimpleMessage(
+                        "Still waiting for download.  Do you want to wait a bit longer?"
+                    )
+                    if msg.exec_() == QMessageBox.No:
+                        return
+                    count = 0
+
+        # maybe the downloader failed for some (rare) reason
+        if not os.path.exists(fname):
+            return
         print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
         shutil.copyfile(fname, aname)
 
@@ -878,8 +953,7 @@ class MarkerClient(QWidget):
                 self.prxM.setStatus(r, "???")
         ErrorMessage(
             "Unfortunately, there was an unexpected error; server did "
-            "not accept our marked paper {}.\n\n"
-            'Server said: "{}"\n\n'
+            "not accept our marked paper {}.\n\n{}\n\n"
             "Please consider filing an issue?  Perhaps you could try "
             "annotating that paper again?".format(code, errmsg)
         ).exec_()

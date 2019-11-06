@@ -258,12 +258,16 @@ class Annotator(QDialog):
             Qt.Key_Underscore: lambda: self.view.zoomOut(),
             # Only change-mark shortcuts 0-5.
             Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
-            Qt.Key_0: lambda: self.keyToChangeMark(0),
             Qt.Key_1: lambda: self.keyToChangeMark(1),
             Qt.Key_2: lambda: self.keyToChangeMark(2),
             Qt.Key_3: lambda: self.keyToChangeMark(3),
             Qt.Key_4: lambda: self.keyToChangeMark(4),
             Qt.Key_5: lambda: self.keyToChangeMark(5),
+            Qt.Key_6: lambda: self.keyToChangeMark(6),
+            Qt.Key_7: lambda: self.keyToChangeMark(7),
+            Qt.Key_8: lambda: self.keyToChangeMark(8),
+            Qt.Key_9: lambda: self.keyToChangeMark(9),
+            Qt.Key_0: lambda: self.keyToChangeMark(10),
             # ?-mark pop up a key-list
             Qt.Key_Question: lambda: self.keyPopUp(),
             # Toggle hide/unhide tools so as to maximise space for annotation
@@ -467,15 +471,19 @@ class Annotator(QDialog):
             self.setWindowState(Qt.WindowNoState)
 
     def keyToChangeMark(self, buttonNumber):
-        """Translates a key-press (0,1,2,3,4,5) into a button-press
+        """Translates a key-press (0,1,2,..,9) into a button-press
         of the various delta-mark buttons in the mark-entry widget.
         If mark-up style then they trigger the positive mark buttons,
         hence p0,p1 etc... if mark down then triggers the negative mark
         buttons - n1,n2, etc.
         """
+        # if key is higher than maxMark then no such button.
+        if buttonNumber > self.maxMark:
+            return
+        # Otherwise click the appropriate button.
         if self.markHandler.style == "Up":
             self.markHandler.markButtons["p{}".format(buttonNumber)].animateClick()
-        elif self.markHandler.style == "Down" and buttonNumber > 0:
+        elif self.markHandler.style == "Down" and buttonNumber >= 0:
             self.markHandler.markButtons["m{}".format(buttonNumber)].animateClick()
 
     def keyPressEvent(self, event):
