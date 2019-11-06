@@ -838,6 +838,7 @@ class Annotator(QDialog):
             else:
                 self.loadModeFromBefore(self.parent.annotatorSettings["tool"])
 
+        print(">>>>>>>>> SETTING ZOOMS")
         # if zoom-state is none, set it to index 1 (fit page) - but delay.
         if self.parent.annotatorSettings["zoomState"] is None:
             QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))

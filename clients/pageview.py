@@ -118,10 +118,13 @@ class PageView(QGraphicsView):
 
     def initialZoom(self, initRect):
         if initRect is None:
+            print(">>>>>>>>> No initial zoom")
             self.fitInView(self.scene().imageItem, Qt.KeepAspectRatio)
         else:
+            print(">>>>>>>>> Trying to set initial zoom to {}".format(initRect))
             self.fitInView(initRect, Qt.KeepAspectRatio)
         self.zoomNull()
+        print(">>>>>>>>> Now set to {}".format(self.vrect))
 
     def getCurrentViewRect(self):
-        return self.viewport().contentsRect()
+        return self.mapToScene(self.viewport().contentsRect()).boundingRect()
