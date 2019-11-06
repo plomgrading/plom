@@ -845,7 +845,7 @@ class Annotator(QDialog):
         elif self.parent.annotatorSettings["zoomState"] == 0:
             # is set to "user", so set the view-rectangle
             if self.parent.annotatorSettings["viewRectangle"] is not None:
-                QTimer.singleShot(100, lambda: self.ui.zoomCB.setCurrentIndex(0))
+                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
                 QTimer.singleShot(
                     200,
                     lambda: self.view.initialZoom(
@@ -1050,6 +1050,7 @@ class Annotator(QDialog):
         self.ui.zoomCB.blockSignals(old)
 
     def zoomCBChanged(self):
+        print(">>>>>>>>>> {}".format(self.ui.zoomCB.currentText()))
         if self.ui.zoomCB.currentText() == "Fit Page":
             self.view.zoomAll()
         elif self.ui.zoomCB.currentText() == "Fit Width":
@@ -1066,6 +1067,8 @@ class Annotator(QDialog):
             self.view.zoomReset(0.5)
         elif self.ui.zoomCB.currentText() == "33%":
             self.view.zoomReset(0.33)
+        elif self.ui.zoomCB.currentText() == "User":
+            self.view.initialZoom(self.view.vrect)
         else:
             pass
         self.view.setFocus()

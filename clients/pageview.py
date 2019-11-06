@@ -40,6 +40,7 @@ class PageView(QGraphicsView):
 
     def resizeEvent(self, e):
         # re-zoom
+        print(">>>>>>>>> RESIZE EVENT! {}".format(self.vrect))
         self.parent.zoomCBChanged()
         # then any other stuff needed by parent class
         super(PageView, self).resizeEvent(e)
