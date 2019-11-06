@@ -158,8 +158,6 @@ class Annotator(QDialog):
         self.setWindowFlags(
             self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint
         )
-        # Make sure window is maximised.
-        self.showMaximized()
         # Grab window settings from parent
         self.loadWindowSettings()
 
@@ -809,6 +807,7 @@ class Annotator(QDialog):
         self.closeEvent(False)
 
     def loadWindowSettings(self):
+        # load the window geometry, else maximise.
         if self.parent.annotatorSettings["geometry"] is not None:
             # since we can't directly jsonify QByteArray:
             self.restoreGeometry(
@@ -816,10 +815,17 @@ class Annotator(QDialog):
                     self.parent.annotatorSettings["geometry"].encode()
                 )
             )
+        else:
+            # Make sure window is maximised.
+            self.showMaximized()
+
+        # remember the "do not show again" checks
         if self.parent.annotatorSettings["markWarnings"] is not None:
             self.markWarn = self.parent.annotatorSettings["markWarnings"]
         if self.parent.annotatorSettings["commentWarnings"] is not None:
             self.commentWarn = self.parent.annotatorSettings["commentWarnings"]
+
+        # remember the last tool used
         if self.parent.annotatorSettings["tool"] is not None:
             if self.parent.annotatorSettings["tool"] == "delta":
                 dlt = self.parent.annotatorSettings["delta"]
@@ -830,28 +836,29 @@ class Annotator(QDialog):
             else:
                 self.loadModeFromBefore(self.parent.annotatorSettings["tool"])
 
-        if self.parent.annotatorSettings["viewRectangle"] is not None:
-            # put in slight delay so that any resize events are done.
-            # since we can't directly jsonify QRectF:
-            QTimer.singleShot(
-                500,
-                lambda: self.view.initialZoom(
-                    QRectF(*self.parent.annotatorSettings["viewRectangle"])
-                ),
-            )
+        # if zoom-state is none, set it to index 1 (fit page) - but delay.
+        if self.parent.annotatorSettings["zoomState"] is None:
+            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+        elif self.parent.annotatorSettings["zoomState"] == 0:
+            # is set to "user", so set the view-rectangle
+            if self.parent.annotatorSettings["viewRectangle"] is not None:
+                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
+                QTimer.singleShot(
+                    250,
+                    lambda: self.view.initialZoom(
+                        QRectF(*self.parent.annotatorSettings["viewRectangle"])
+                    ),
+                )
+            else:
+                # no view-rectangle, so set to "fit-page"
+                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
         else:
-            QTimer.singleShot(150, lambda: self.view.initialZoom(None))
-        # there is some redundancy between the above and the below.
-        if self.parent.annotatorSettings["zoomState"] is not None:
-            # put in slight delay so that any resize events are done.
             QTimer.singleShot(
                 200,
                 lambda: self.ui.zoomCB.setCurrentIndex(
                     self.parent.annotatorSettings["zoomState"]
                 ),
             )
-        else:
-            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
 
     def saveWindowSettings(self):
         # since we can't directly jsonify QByteArray:
