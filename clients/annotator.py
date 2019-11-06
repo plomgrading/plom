@@ -834,7 +834,7 @@ class Annotator(QDialog):
             # put in slight delay so that any resize events are done.
             # since we can't directly jsonify QRectF:
             QTimer.singleShot(
-                150,
+                500,
                 lambda: self.view.initialZoom(
                     QRectF(*self.parent.annotatorSettings["viewRectangle"])
                 ),

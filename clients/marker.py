@@ -1155,6 +1155,11 @@ class MarkerClient(QWidget):
         msg = SimpleMessage('Save annotator settings to "annotatorSetting.json"?')
         if msg.exec_() == QMessageBox.No:
             return
+        # don't save some things
+        self.annotatorSettings["geometry"] = None
+        self.annotatorSettings["markWarnings"] = None
+        self.annotatorSettings["commentWarnings"] = None
+
         fh = open("annotatorSettings.json", "w")
         fh.write(json.dumps(self.annotatorSettings))
         fh.close()
