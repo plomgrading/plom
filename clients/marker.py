@@ -74,9 +74,6 @@ directoryPath = tempDirectory.name
 class BackgroundDownloader(QThread):
     downloadSuccess = pyqtSignal(str)
     downloadFail = pyqtSignal(str, str)
-    # TODO: temporary stuff, eventually Messenger will know it
-    _userName = None
-    _token = None
 
     def __init__(self, tname, fname):
         QThread.__init__(self)
@@ -99,7 +96,7 @@ class BackgroundDownloader(QThread):
             self.quit()
 
         # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg_nopopup(["mDWF", self._userName, self._token, self.tname])
+        msg = messenger.msg_nopopup("mDWF", self.tname)
         if msg[0] == "ACK":
             print(
                 "Debug: downloader thread {}: got tname, fname={},{}".format(
@@ -121,9 +118,6 @@ class BackgroundDownloader(QThread):
 class BackgroundUploader(QThread):
     uploadSuccess = pyqtSignal(str, int, int)
     uploadFail = pyqtSignal(str, str)
-    # TODO: temporary stuff, eventually Messenger will know it
-    _userName = None
-    _token = None
 
     def enqueueNewUpload(self, *args):
         """Place something in the upload queue
@@ -175,26 +169,22 @@ class BackgroundUploader(QThread):
             # ensure user is still authorised to upload this particular pageimage -
             # this may have changed depending on what else is going on.
             # TODO: remove, either rRMD will succeed or fail: don't precheck
-            msg = messenger.SRMsg_nopopup(["mUSO", self._userName, self._token, code])
+            msg = messenger.msg_nopopup("mUSO", code)
             if msg[0] != "ACK":
                 errmsg = msg[1]
                 print("Debug: upQ: emitting FAILED signal for {}".format(code))
                 self.uploadFail.emit(code, errmsg)
-            msg = messenger.SRMsg_nopopup(
-                [
-                    "mRMD",
-                    self._userName,
-                    self._token,
-                    code,
-                    gr,
-                    afile,
-                    pfile,
-                    cfile,
-                    mtime,
-                    pg,
-                    ver,
-                    tags,
-                ]
+            msg = messenger.msg_nopopup(
+                "mRMD",
+                code,
+                gr,
+                afile,
+                pfile,
+                cfile,
+                mtime,
+                pg,
+                ver,
+                tags,
             )
             # self.sleep(4)  # pretend upload took longer
             if msg[0] == "ACK":
@@ -492,8 +482,6 @@ class MarkerClient(QWidget):
         self.backgroundUploader = BackgroundUploader()
         self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
         self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
-        self.backgroundUploader._userName = self.userName
-        self.backgroundUploader._token = self.token
         self.backgroundUploader.start()
         # Now cache latex for comments:
         self.cacheLatexComments()
@@ -679,8 +667,6 @@ class MarkerClient(QWidget):
             # if prev downloader still going than wait.  might block the gui
             self.backgroundDownloader.wait()
         self.backgroundDownloader = BackgroundDownloader(tname, fname)
-        self.backgroundDownloader._userName = self.userName
-        self.backgroundDownloader._token = self.token
         self.backgroundDownloader.downloadSuccess.connect(
             self.requestNextInBackgroundFinished
         )
