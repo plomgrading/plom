@@ -175,16 +175,7 @@ class BackgroundUploader(QThread):
                 print("Debug: upQ: emitting FAILED signal for {}".format(code))
                 self.uploadFail.emit(code, errmsg)
             msg = messenger.msg_nopopup(
-                "mRMD",
-                code,
-                gr,
-                afile,
-                pfile,
-                cfile,
-                mtime,
-                pg,
-                ver,
-                tags,
+                "mRMD", code, gr, afile, pfile, cfile, mtime, pg, ver, tags
             )
             # self.sleep(4)  # pretend upload took longer
             if msg[0] == "ACK":
