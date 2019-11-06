@@ -56,6 +56,7 @@ class PageView(QGraphicsView):
     def zoomNull(self, update=False):
         # sets the current view rect
         self.vrect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
+        print(">>>>>>>>> Changing vrect {}".format(self.vrect))
         if update:
             self.parent.changeCBZoom(0)
 
@@ -123,7 +124,13 @@ class PageView(QGraphicsView):
             self.fitInView(self.scene().imageItem, Qt.KeepAspectRatio)
         else:
             print(">>>>>>>>> Trying to set initial zoom to {}".format(initRect))
+            print(">>>>>>>>> Window geom = {}".format(self.parent.geometry()))
             self.fitInView(initRect, Qt.KeepAspectRatio)
+            print(
+                ">>>>>>>>> Now set to {}".format(
+                    self.mapToScene(self.viewport().contentsRect()).boundingRect()
+                )
+            )
         self.zoomNull()
         print(">>>>>>>>> Now set to {}".format(self.vrect))
 

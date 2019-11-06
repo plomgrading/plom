@@ -792,6 +792,11 @@ class MarkerClient(QWidget):
         # Start a timer to record time spend annotating
         timer = QElapsedTimer()
         timer.start()
+        # while annotator is firing up request next paper in background
+        # after giving system a moment to do `annotator.exec_()`
+        # but check if unmarked papers already in list.
+        if self.countUnmarkedReverted() == 0:
+            self.requestNextInBackgroundStart()
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
@@ -802,11 +807,6 @@ class MarkerClient(QWidget):
             parent=self,
             plomDict=pdict,
         )
-        # while annotator is firing up request next paper in background
-        # after giving system a moment to do `annotator.exec_()`
-        # but check if unmarked papers already in list.
-        if self.countUnmarkedReverted() == 0:
-            self.requestNextInBackgroundStart()
         # run the annotator
         if annotator.exec_():
             # If annotator returns "accept"

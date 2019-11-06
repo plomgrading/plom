@@ -1067,8 +1067,8 @@ class Annotator(QDialog):
             self.view.zoomReset(0.5)
         elif self.ui.zoomCB.currentText() == "33%":
             self.view.zoomReset(0.33)
-        elif self.ui.zoomCB.currentText() == "User":
-            self.view.initialZoom(self.view.vrect)
+        # elif self.ui.zoomCB.currentText() == "User":
+        # self.view.initialZoom(self.view.vrect)
         else:
             pass
         self.view.setFocus()
