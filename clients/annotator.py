@@ -842,9 +842,9 @@ class Annotator(QDialog):
         elif self.parent.annotatorSettings["zoomState"] == 0:
             # is set to "user", so set the view-rectangle
             if self.parent.annotatorSettings["viewRectangle"] is not None:
-                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
+                QTimer.singleShot(100, lambda: self.ui.zoomCB.setCurrentIndex(0))
                 QTimer.singleShot(
-                    250,
+                    200,
                     lambda: self.view.initialZoom(
                         QRectF(*self.parent.annotatorSettings["viewRectangle"])
                     ),
@@ -868,7 +868,7 @@ class Annotator(QDialog):
         self.parent.annotatorSettings["markWarnings"] = self.markWarn
         self.parent.annotatorSettings["commentWarnings"] = self.commentWarn
         # since we can't directly jsonify qrectf:
-        jsrect = self.view.vrect
+        jsrect = self.view.getCurrentViewRect()
         self.parent.annotatorSettings["viewRectangle"] = [
             jsrect.x(),
             jsrect.y(),

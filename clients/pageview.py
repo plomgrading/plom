@@ -122,3 +122,6 @@ class PageView(QGraphicsView):
         else:
             self.fitInView(initRect, Qt.KeepAspectRatio)
         self.zoomNull()
+
+    def getCurrentViewRect(self):
+        return self.viewport().contentsRect()
