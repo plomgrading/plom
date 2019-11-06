@@ -809,12 +809,14 @@ class Annotator(QDialog):
     def loadWindowSettings(self):
         # load the window geometry, else maximise.
         if self.parent.annotatorSettings["geometry"] is not None:
+            self.restoreGeometry(self.parent.annotatorSettings["geometry"])
+            # TODO - delete the below
             # since we can't directly jsonify QByteArray:
-            self.restoreGeometry(
-                QByteArray.fromBase64(
-                    self.parent.annotatorSettings["geometry"].encode()
-                )
-            )
+            # self.restoreGeometry(
+            #     QByteArray.fromBase64(
+            #         self.parent.annotatorSettings["geometry"].encode()
+            #     )
+            # )
         else:
             # Make sure window is maximised.
             self.showMaximized()
@@ -846,9 +848,16 @@ class Annotator(QDialog):
                 QTimer.singleShot(
                     200,
                     lambda: self.view.initialZoom(
-                        QRectF(*self.parent.annotatorSettings["viewRectangle"])
+                        self.parent.annotatorSettings["viewRectangle"]
                     ),
                 )
+                # TODO - delete the below
+                # QTimer.singleShot(
+                #     200,
+                #     lambda: self.view.initialZoom(
+                #         QRectF(*self.parent.annotatorSettings["viewRectangle"])
+                #     ),
+                # )
             else:
                 # no view-rectangle, so set to "fit-page"
                 QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
@@ -861,20 +870,23 @@ class Annotator(QDialog):
             )
 
     def saveWindowSettings(self):
+        # TODO - delete below
         # since we can't directly jsonify QByteArray:
-        self.parent.annotatorSettings["geometry"] = (
-            self.saveGeometry().toBase64().data().decode()
-        )
+        # self.parent.annotatorSettings["geometry"] = (
+        #     self.saveGeometry().toBase64().data().decode()
+        # )
+        # since we can't directly jsonify qrectf:
+        # jsrect = self.view.getCurrentViewRect()
+        # self.parent.annotatorSettings["viewRectangle"] = [
+        #     jsrect.x(),
+        #     jsrect.y(),
+        #     jsrect.width(),
+        #     jsrect.height(),
+        # ]
+        self.parent.annotatorSettings["geometry"] = self.saveGeometry()
+        self.parent.annotatorSettings["viewRectangle"] = self.view.getCurrentViewRect()
         self.parent.annotatorSettings["markWarnings"] = self.markWarn
         self.parent.annotatorSettings["commentWarnings"] = self.commentWarn
-        # since we can't directly jsonify qrectf:
-        jsrect = self.view.getCurrentViewRect()
-        self.parent.annotatorSettings["viewRectangle"] = [
-            jsrect.x(),
-            jsrect.y(),
-            jsrect.width(),
-            jsrect.height(),
-        ]
         self.parent.annotatorSettings["zoomState"] = self.ui.zoomCB.currentIndex()
         self.parent.annotatorSettings["tool"] = self.scene.mode
         if self.scene.mode == "delta":

@@ -1135,31 +1135,33 @@ class MarkerClient(QWidget):
         self.prxM.setFilterString(self.ui.filterLE.text().strip())
         self.prxM.filterTags()
 
-    def loadAnnotatorSettings(self):
-        """load annotator settings from a json file"""
-        if os.path.isfile("annotatorSettings.json"):
-            # check if user wants to load them.
-            msg = SimpleMessage('Load annotator settings from "annotatorSetting.json"?')
-            if msg.exec_() == QMessageBox.No:
-                return
+    # TODO - delete the below
+    # def loadAnnotatorSettings(self):
+    #     """load annotator settings from a json file"""
+    #     if os.path.isfile("annotatorSettings.json"):
+    #         # check if user wants to load them.
+    #         msg = SimpleMessage('Load annotator settings from "annotatorSetting.json"?')
+    #         if msg.exec_() == QMessageBox.No:
+    #             return
+    #
+    #         with open("annotatorSettings.json") as data_file:
+    #             # update values from the json
+    #             try:
+    #                 self.annotatorSettings.update(json.load(data_file))
+    #             except:
+    #                 print("Couldn't load annotator settings from file.")
 
-            with open("annotatorSettings.json") as data_file:
-                # update values from the json
-                try:
-                    self.annotatorSettings.update(json.load(data_file))
-                except:
-                    print("Couldn't load annotator settings from file.")
-
-    def saveAnnotatorSettings(self):
-        """save annotator settings to a json file"""
-        msg = SimpleMessage('Save annotator settings to "annotatorSetting.json"?')
-        if msg.exec_() == QMessageBox.No:
-            return
-        # don't save some things
-        self.annotatorSettings["geometry"] = None
-        self.annotatorSettings["markWarnings"] = None
-        self.annotatorSettings["commentWarnings"] = None
-
-        fh = open("annotatorSettings.json", "w")
-        fh.write(json.dumps(self.annotatorSettings))
-        fh.close()
+    # TODO - delete the below
+    # def saveAnnotatorSettings(self):
+    #     """save annotator settings to a json file"""
+    #     msg = SimpleMessage('Save annotator settings to "annotatorSetting.json"?')
+    #     if msg.exec_() == QMessageBox.No:
+    #         return
+    #     # don't save some things
+    #     self.annotatorSettings["geometry"] = None
+    #     self.annotatorSettings["markWarnings"] = None
+    #     self.annotatorSettings["commentWarnings"] = None
+    #
+    #     fh = open("annotatorSettings.json", "w")
+    #     fh.write(json.dumps(self.annotatorSettings))
+    #     fh.close()
