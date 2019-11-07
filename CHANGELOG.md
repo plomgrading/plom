@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * make 04 script less verbose.
 * Increase timeout on server ping test.
 * Annotator has more keybindings for grades of 0-10 (see "key help")
+* resizing annotator persists between papers
+* zooming annotator persists between papers
+* docs: changes for uploading to the new Canvas gradebook
 
 ### Fixed
 * fixed race conditions when/uploading and downloading.
