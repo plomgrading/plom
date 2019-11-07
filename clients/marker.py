@@ -971,9 +971,11 @@ class MarkerClient(QWidget):
     def shutDown(self):
         print("Debug: Marker shutdown from thread " + str(threading.get_ident()))
         if self.backgroundUploader:
-            self.backgroundUploader.quit()
             count = 43
             while self.backgroundUploader.isRunning():
+                if self.backgroundUploader.empty():
+                    # don't try to quit until the queue is empty
+                    self.backgroundUploader.quit()
                 time.sleep(0.1)
                 count += 1
                 if count >= 50:
@@ -988,8 +990,8 @@ class MarkerClient(QWidget):
                         # then nuke it from orbit
                         if self.backgroundUploader.isRunning():
                             self.backgroundUploader.terminate()
-                        self.backgroundUploader.wait()
                         break
+            self.backgroundUploader.wait()
 
         # When shutting down, first alert server of any images that were
         # not marked - using 'DNF' (did not finish). Sever will put
