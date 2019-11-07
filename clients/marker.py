@@ -442,6 +442,7 @@ class MarkerClient(QWidget):
         # create a settings variable for saving annotator window settings
         # initially all settings are "none"
         self.annotatorSettings = defaultdict(lambda: None)
+        # self.loadAnnotatorSettings()
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -819,6 +820,11 @@ class MarkerClient(QWidget):
         # Start a timer to record time spend annotating
         timer = QElapsedTimer()
         timer.start()
+        # while annotator is firing up request next paper in background
+        # after giving system a moment to do `annotator.exec_()`
+        # but check if unmarked papers already in list.
+        if self.countUnmarkedReverted() == 0:
+            self.requestNextInBackgroundStart()
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
@@ -829,11 +835,6 @@ class MarkerClient(QWidget):
             parent=self,
             plomDict=pdict,
         )
-        # while annotator is firing up request next paper in background
-        # after giving system a moment to do `annotator.exec_()`
-        # but check if unmarked papers already in list.
-        if self.countUnmarkedReverted() == 0:
-            self.requestNextInBackgroundStart()
         # run the annotator
         if annotator.exec_():
             # If annotator returns "accept"
@@ -997,12 +998,28 @@ class MarkerClient(QWidget):
 
     def shutDown(self):
         print("Debug: Marker shutdown from thread " + str(threading.get_ident()))
-        while not self.backgroundUploader.empty():
-            print("Debug: upQ nonempty, waiting 0.5sec")
-            time.sleep(0.5)
-        # TODO: send some signal so it can take down the timer etc?
-        self.backgroundUploader.quit()  # quit once current event finished
-        self.backgroundUploader.wait()
+        if self.backgroundUploader:
+            count = 42
+            while self.backgroundUploader.isRunning():
+                if self.backgroundUploader.empty():
+                    # don't try to quit until the queue is empty
+                    self.backgroundUploader.quit()
+                time.sleep(0.1)
+                count += 1
+                if count >= 50:
+                    count = 0
+                    msg = SimpleMessage(
+                        "Still waiting for uploader to finish.  Do you want to wait a bit longer?"
+                    )
+                    if msg.exec_() == QMessageBox.No:
+                        # politely ask one more time
+                        self.backgroundUploader.quit()
+                        time.sleep(0.1)
+                        # then nuke it from orbit
+                        if self.backgroundUploader.isRunning():
+                            self.backgroundUploader.terminate()
+                        break
+            self.backgroundUploader.wait()
 
         # When shutting down, first alert server of any images that were
         # not marked - using 'DNF' (did not finish). Sever will put
@@ -1012,6 +1029,9 @@ class MarkerClient(QWidget):
         # authentication token.
         msg, = messenger.SRMsg(["UCL", self.userName, self.token])
         assert msg == "ACK"
+        # Now save annotatorSettings to file
+        # self.saveAnnotatorSettings()
+        # finally send shutdown signal to client window and close.
         self.my_shutdown_signal.emit(2)
         self.close()
 
