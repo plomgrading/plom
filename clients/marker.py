@@ -971,7 +971,7 @@ class MarkerClient(QWidget):
     def shutDown(self):
         print("Debug: Marker shutdown from thread " + str(threading.get_ident()))
         if self.backgroundUploader:
-            count = 43
+            count = 42
             while self.backgroundUploader.isRunning():
                 if self.backgroundUploader.empty():
                     # don't try to quit until the queue is empty
