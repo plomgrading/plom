@@ -7,7 +7,7 @@ import json
 import os
 import sys
 
-from PyQt5.QtCore import Qt, QByteArray, QRectF, QSettings, QSize, QTimer, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import Qt, QByteArray, QRectF, QSettings, QSize, QTimer, QElapsedTimer, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import (
     QCursor,
     QGuiApplication,
@@ -76,8 +76,7 @@ class Annotator(QWidget):
     and assigning marks.
     """
 
-    # TODO: double check that timer is int
-    ann_shutdown_signal = pyqtSignal(bool, int, bool)  # acc/rej, gr, again
+    ann_shutdown_signal = pyqtSignal(bool, int, bool, int)  # acc/rej, gr, again, mtime
 
     def __init__(
         self, fname, maxMark, markStyle, mouseHand, parent=None, plomDict=None
@@ -180,6 +179,8 @@ class Annotator(QWidget):
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
             self.unpickleIt(plomDict)
+        self.timer = QElapsedTimer()
+        self.timer.start()
 
     def setCurrentMarkMode(self):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
@@ -917,7 +918,7 @@ class Annotator(QWidget):
         # Close button/titlebar: reject (do not save) result, do not launch again
         if relaunch is None:
             print('ann emitted signal: REJECT')
-            self.ann_shutdown_signal.emit(False, -1, False)
+            self.ann_shutdown_signal.emit(False, -1, False, -1)
             print('ann closeEvent: closing window')
             # clean up after a testview
             self.doneViewingPaper()
@@ -983,7 +984,8 @@ class Annotator(QWidget):
         self.saveWindowSettings()
         # Close the annotator(QDialog) with an 'accept'.
         print('ann emitted signal: ACCEPT')
-        self.ann_shutdown_signal.emit(True, self.score, relaunch)
+        tim = self.timer.elapsed() // 1000
+        self.ann_shutdown_signal.emit(True, self.score, relaunch, tim)
         print('ann closeEvent: closing window')
         ce.accept()
 

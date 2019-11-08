@@ -751,10 +751,7 @@ class MarkerClient(QWidget):
         return count
 
     def startTheAnnotator(self, fname, pname=None):
-        """This fires up the annotation window for user annotation + maring.
-        Set a timer to record the time spend marking (for manager to see what
-        questions are taking a long time or are quick).
-        """
+        """This fires up the annotation window for user annotation + marking."""
         # Set marking style total/up/down - will pass to annotator
         self.markStyle = self.ui.markStyleGroup.checkedId()
         # Set mousehand left/right - will pass to annotator
@@ -769,10 +766,6 @@ class MarkerClient(QWidget):
             # TODO: there should be a filename sanity check here to
             # make sure plom file matches current image-file
 
-        # Start a timer to record time spend annotating
-        timer = QElapsedTimer()
-        timer.start()
-        self._wtfCantAnnotatorSaveItsOwnTimer = timer
         # while annotator is firing up request next paper in background
         # after giving system a moment to do `annotator.exec_()`
         if self.countUnmarkedReverted() == 0:
@@ -794,26 +787,23 @@ class MarkerClient(QWidget):
 
 
     # when the annotator is done, we end up here...
-    @pyqtSlot(bool, int, bool)
-    def callbackAnnIsDone(self, accept, grade, launchAgain):
+    @pyqtSlot(bool, int, bool, int)
+    def callbackAnnIsDone(self, accept, grade, launchAgain, tim):
         self.setEnabled(True)
         if accept:
             print("accepting callback")
             # If annotator returns "accept"
             # then pass back the mark, time spent marking
-            # (timer measures millisec, so divide by 1000)
             # and a flag as to whether or not we should relaunch the annotator
             # with the next page-image. In relaunch, then we will need to
             # ask server for next image.
-            timer = self._wtfCantAnnotatorSaveItsOwnTimer
-            tim = timer.elapsed() // 1000
         else:
             print("rejecting callback")
             # If annotator returns "reject", then pop up error
             msg = ErrorMessage("mark not recorded")
             msg.exec_()
-            tim = 0
             grade = None
+            tim = None
         self.afterAnnotator(grade, tim, launchAgain)
 
 
