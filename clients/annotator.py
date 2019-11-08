@@ -7,7 +7,17 @@ import json
 import os
 import sys
 
-from PyQt5.QtCore import Qt, QByteArray, QRectF, QSettings, QSize, QTimer, QElapsedTimer, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import (
+    Qt,
+    QByteArray,
+    QRectF,
+    QSettings,
+    QSize,
+    QTimer,
+    QElapsedTimer,
+    pyqtSlot,
+    pyqtSignal,
+)
 from PyQt5.QtGui import (
     QCursor,
     QGuiApplication,
@@ -80,7 +90,15 @@ class Annotator(QWidget):
     ann_finished_reject = pyqtSignal(str, list)
 
     def __init__(
-            self, tgv, fname, maxMark, markStyle, mouseHand, parent=None, plomDict=None, _xtracheese=None
+        self,
+        tgv,
+        fname,
+        maxMark,
+        markStyle,
+        mouseHand,
+        parent=None,
+        plomDict=None,
+        _xtracheese=None,
     ):
         super(Annotator, self).__init__()
         self._junkForMarker = _xtracheese
@@ -920,7 +938,7 @@ class Annotator(QWidget):
 
         # Close button/titlebar: reject (do not save) result, do not launch again
         if relaunch is None:
-            print('ann emitting signal: Reject/Cancel')
+            print("ann emitting signal: Reject/Cancel")
             self.ann_finished_reject.emit(self.tgv, self._junkForMarker)
             # clean up after a testview
             self.doneViewingPaper()
@@ -985,7 +1003,7 @@ class Annotator(QWidget):
         # Save the window settings
         self.saveWindowSettings()
         # Close the annotator(QDialog) with an 'accept'.
-        print('ann emitting signal: ACCEPT')
+        print("ann emitting signal: ACCEPT")
         tim = self.timer.elapsed() // 1000
         # some things here hardcoded elsewhere too, and up in marker
         plomFile = self.imageFile[:-3] + "plom"
@@ -993,7 +1011,6 @@ class Annotator(QWidget):
         stuff = [self.score, relaunch, tim, self.imageFile, plomFile, commentFile]
         self.ann_finished_accept.emit(self.tgv, stuff, self._junkForMarker)
         ce.accept()
-
 
     def checkAllObjectsInside(self):
         if self.scene.checkAllObjectsInside():

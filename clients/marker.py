@@ -360,7 +360,9 @@ class ProxyModel(QSortFilterProxyModel):
         if len(r0) == 0:
             raise ValueError("tgv {} not found!".format(tgv))
         elif not len(r0) == 1:
-            raise ValueError("Repeated tgv {} in rows {}  This should not happen!".format(tgv, r0))
+            raise ValueError(
+                "Repeated tgv {} in rows {}  This should not happen!".format(tgv, r0)
+            )
         return r0[0]
 
     def setDataByTGV(self, tgv, n, stuff):
@@ -382,11 +384,11 @@ class ProxyModel(QSortFilterProxyModel):
         r = self._findTGV(tgv)
         # When marked, set the annotated filename, the plomfile, the mark,
         # and the total marking time (in case it was annotated earlier)
-        mt = int(self.data(self.index(r,3)))
+        mt = int(self.data(self.index(r, 3)))
         # total elapsed time.
-        self.setData(self.index(r,3), mtime + mt)
+        self.setData(self.index(r, 3), mtime + mt)
         self.setStatus(r, "uploading...")
-        self.setData(self.index(r,2), mrk)
+        self.setData(self.index(r, 2), mrk)
         self.setAnnotatedFile(r, aname, pname)
         self.setPaperDir(r, tdir)
 
@@ -827,7 +829,6 @@ class MarkerClient(QWidget):
         self.setEnabled(False)
         annotator.show()
 
-
     def annotateTest(self):
         """Command grabs current test from table and (after checks) passes it
         to 'startTheAnnotator' which fires up the actual annotator.
@@ -900,7 +901,6 @@ class MarkerClient(QWidget):
         print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
         shutil.copyfile(fname, aname)
 
-
         prevState = self.prxM.data(index[1])
         self.prxM.setData(index[1], "annotating")
 
@@ -911,7 +911,6 @@ class MarkerClient(QWidget):
             self.startTheAnnotator(tgv, aname, None, _xtracheese=junkWeWantSendBackToUs)
         # we started the annotator, we'll get a signal back when its done
 
-
     # when the annotator is done, we end up here...
     @pyqtSlot(str, list)
     def callbackAnnIsDoneCancel(self, tgv, _xtracheese):
@@ -920,7 +919,7 @@ class MarkerClient(QWidget):
         # TODO: could also erase the paperdir
         self.prxM.setDataByTGV("t" + tgv, 1, prevState)
         # reselect the row we were working on
-        #self.ui.tableView.selectRow(index[1].row())
+        # self.ui.tableView.selectRow(index[1].row())
 
     # ... or here
     @pyqtSlot(str, list, list)
@@ -934,7 +933,7 @@ class MarkerClient(QWidget):
         # TODO: what if its filtered out of prxM?  Do this to exM?
         self.prxM.markPaperByTGV("t" + tgv, gr, aname, pname, mtime, paperdir)
         # Update the currently displayed image by selecting that row
-        #self.ui.tableView.selectRow(index[1].row())
+        # self.ui.tableView.selectRow(index[1].row())
         tags = self.prxM.getTagsByTGV("t" + tgv)
 
         # the actual upload will happen in another thread
@@ -947,7 +946,7 @@ class MarkerClient(QWidget):
             mtime,  # marking time
             self.pageGroup,
             self.version,
-            tags
+            tags,
         )
 
         # Check if no unmarked test, then request one.
