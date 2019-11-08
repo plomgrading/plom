@@ -507,24 +507,8 @@ class IDClient(QWidget):
         code = self.exM.data(index[0])
         sname = self.ui.pNameLabel.text()
         sid = self.ui.pSIDLabel.text()
-        msg = messenger.msg("iRID", code, sid, sname)
-        if msg[0] == "ERR":
-            # If an error, revert the student and clear things.
-            self.exM.revertStudent(index)
-            # Use timer to avoid conflict between completer and
-            # clearing the line-edit. Very annoying but this fixes it.
-            QTimer.singleShot(0, self.ui.idEdit.clear)
-            QTimer.singleShot(0, self.ui.nameEdit.clear)
-            return
-        else:
-            self.exM.identifyStudent(index, sid, sname)
-            # Use timer to avoid conflict between completer and
-            # clearing the line-edit. Very annoying but this fixes it.
-            QTimer.singleShot(0, self.ui.idEdit.clear)
-            QTimer.singleShot(0, self.ui.nameEdit.clear)
-            # Update un-id'd count.
 
-        self.updateProgress()
+        self.identifyStudent(index, sid, sname, alreadyIDd=False)
 
         if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
             self.requestNext()  # updates progressbars.
