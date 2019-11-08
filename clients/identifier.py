@@ -528,8 +528,10 @@ class IDClient(QWidget):
         # Return paper to server with the code, ID, name.
         msg = messenger.msg("iRID", code, sid, sname)
 
-        self.ui.idEdit.clear()
-        self.ui.nameEdit.clear()
+        # Issue #25: Use timer to avoid macOS conflict between completer and
+        # clearing the line-edit. Very annoying but this fixes it.
+        QTimer.singleShot(0, self.ui.idEdit.clear)
+        QTimer.singleShot(0, self.ui.nameEdit.clear)
         if msg[0] == "ERR":
             self.exM.revertStudent(index)
             return False
