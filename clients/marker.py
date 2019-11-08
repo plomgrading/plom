@@ -350,6 +350,46 @@ class ProxyModel(QSortFilterProxyModel):
         self.setData(index[0].siblingAtColumn(7), pname)
         self.setData(index[0].siblingAtColumn(8), tdir)
 
+    def _findTGV(self, tgv):
+        """Return the row index of for this tgv."""
+        r0 = []
+        for r in range(self.rowCount()):
+            if self.getPrefix(r) == tgv:
+                r0.append(r)
+
+        if len(r0) == 0:
+            raise ValueError("tgv {} not found!".format(tgv))
+        elif not len(r0) == 1:
+            raise ValueError("Repeated tgv {} in rows {}  This should not happen!".format(tgv, r0))
+        return r0[0]
+
+    def setDataByTGV(self, tgv, n, stuff):
+        """Find the row with `tgv` and put `stuff` into `n`th column."""
+        r = self._findTGV(tgv)
+        self.setData(self.index(r, n), stuff)
+
+    def getDataByTGV(self, tgv, n):
+        """Find the row with `tgv` and get the `n`th column."""
+        r = self._findTGV(tgv)
+        return self.data(self.index(r, n))
+
+    def getTagsByTGV(self, tgv):
+        """Return tags for tgv"""
+        return self.getDataByTGV(tgv, 4)
+
+    def markPaperByTGV(self, tgv, mrk, aname, pname, mtime, tdir):
+        # There should be exactly one row with this TGV
+        r = self._findTGV(tgv)
+        # When marked, set the annotated filename, the plomfile, the mark,
+        # and the total marking time (in case it was annotated earlier)
+        mt = int(self.data(self.index(r,3)))
+        # total elapsed time.
+        self.setData(self.index(r,3), mtime + mt)
+        self.setStatus(r, "uploading...")
+        self.setData(self.index(r,2), mrk)
+        self.setAnnotatedFile(r, aname, pname)
+        self.setPaperDir(r, tdir)
+
     def revertPaper(self, index):
         # When user reverts to original image, set status to "reverted"
         # mark back to -1, and marking time to zero.
@@ -899,13 +939,16 @@ class MarkerClient(QWidget):
         if gr is None:
             # TODO: could also erase the paperdir
             # reselect the row we were working on
-            self.prxM.setData(index[1], prevState)
-            self.ui.tableView.selectRow(index[1].row())
+            self.prxM.setDataByTGV("t" + tgv, 1, prevState)
+            #self.ui.tableView.selectRow(index[1].row())
             return
         # Copy the mark, annotated filename and the markingtime into the table
-        self.prxM.markPaper(index, gr, aname, pname, mtime, paperdir)
+        # TODO: sort this out whether tgv is "t00..." or "00..."?!
+        # TODO: what if its filtered out of prxM?  Do this to exM?
+        self.prxM.markPaperByTGV("t" + tgv, gr, aname, pname, mtime, paperdir)
         # Update the currently displayed image by selecting that row
-        self.ui.tableView.selectRow(index[1].row())
+        #self.ui.tableView.selectRow(index[1].row())
+        tags = self.prxM.getTagsByTGV("t" + tgv)
 
         # the actual upload will happen in another thread
         self.backgroundUploader.enqueueNewUpload(
@@ -917,7 +960,7 @@ class MarkerClient(QWidget):
             mtime,  # marking time
             self.pageGroup,
             self.version,
-            self.prxM.data(index[4]),  # tags
+            tags
         )
 
         # Check if no unmarked test, then request one.
