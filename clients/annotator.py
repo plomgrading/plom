@@ -76,7 +76,9 @@ class Annotator(QWidget):
     and assigning marks.
     """
 
-    ann_shutdown_signal = pyqtSignal(bool, int, bool, int, list)  # acc/rej, gr, again, mtime, stuff
+    # TODO: bool not needed?
+    ann_finished_accept = pyqtSignal(bool, list, list)
+    ann_finished_reject = pyqtSignal(bool, list)
 
     def __init__(
             self, fname, maxMark, markStyle, mouseHand, parent=None, plomDict=None, _xtracheese=None
@@ -919,8 +921,7 @@ class Annotator(QWidget):
         # Close button/titlebar: reject (do not save) result, do not launch again
         if relaunch is None:
             print('ann emitted signal: REJECT')
-            stuff = [*self._junkForMarker, None, None, None]
-            self.ann_shutdown_signal.emit(False, -1, False, -1, stuff)
+            self.ann_finished_reject.emit(False, self._junkForMarker)
             print('ann closeEvent: closing window')
             # clean up after a testview
             self.doneViewingPaper()
@@ -990,8 +991,8 @@ class Annotator(QWidget):
         # some things here hardcoded elsewhere too, and up in marker
         plomFile = self.imageFile[:-3] + "plom"
         commentFile = self.imageFile[:-3] + "json"
-        stuff = [*self._junkForMarker, self.imageFile, plomFile, commentFile]
-        self.ann_shutdown_signal.emit(True, self.score, relaunch, tim, stuff)
+        stuff = [self.score, relaunch, tim, self.imageFile, plomFile, commentFile]
+        self.ann_finished_accept.emit(True, stuff, self._junkForMarker)
         print('ann closeEvent: closing window')
         ce.accept()
 

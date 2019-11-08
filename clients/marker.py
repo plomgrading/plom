@@ -821,30 +821,10 @@ class MarkerClient(QWidget):
             _xtracheese=_xtracheese,
         )
         # run the annotator
-        annotator.ann_shutdown_signal.connect(self.callbackAnnIsDone)
+        annotator.ann_finished_accept.connect(self.callbackAnnIsDoneAccept)
+        annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
         self.setEnabled(False)
         annotator.show()
-
-
-    # when the annotator is done, we end up here...
-    @pyqtSlot(bool, int, bool, int, list)
-    def callbackAnnIsDone(self, accept, grade, launchAgain, tim, stuff):
-        self.setEnabled(True)
-        if accept:
-            print("accepting callback")
-            # If annotator returns "accept"
-            # then pass back the mark, time spent marking
-            # and a flag as to whether or not we should relaunch the annotator
-            # with the next page-image. In relaunch, then we will need to
-            # ask server for next image.
-        else:
-            print("rejecting callback")
-            # If annotator returns "reject", then pop up error
-            msg = ErrorMessage("mark not recorded")
-            msg.exec_()
-            grade = None
-            tim = None
-        self.afterAnnotator(grade, tim, launchAgain, stuff)
 
 
     def annotateTest(self):
@@ -928,20 +908,32 @@ class MarkerClient(QWidget):
             self.startTheAnnotator(aname, pname, _xtracheese=junkWeWantSendBackToUs)
         else:
             self.startTheAnnotator(aname, None, _xtracheese=junkWeWantSendBackToUs)
-        # we started the annotator...
+        # we started the annotator, we'll get a signal back when its done
 
 
-    # ... and eventually return here
-    def afterAnnotator(self, gr, mtime, launchAgain, stuff):
-        tgv, prevState, paperDir, aname, pname, cname = stuff
+    # when the annotator is done, we end up here...
+    @pyqtSlot(bool, list)
+    def callbackAnnIsDoneCancel(self, accept, _xtracheese):
+        self.setEnabled(True)
+        assert not accept
+        tgv = _xtracheese[0]
+        prevState = _xtracheese[1]
+        # TODO: remove
+        msg = ErrorMessage("mark not recorded")
+        msg.exec_()
+        # TODO: could also erase the paperdir
+        self.prxM.setDataByTGV("t" + tgv, 1, prevState)
+        # reselect the row we were working on
+        #self.ui.tableView.selectRow(index[1].row())
+
+    # ... or here
+    @pyqtSlot(bool, list, list)
+    def callbackAnnIsDoneAccept(self, accept, stuff, _xtracheese):
+        self.setEnabled(True)
+        assert accept
+        gr, launchAgain, mtime, aname, pname, cname = stuff
+        tgv, prevState, paperdir = _xtracheese
         print((tgv, gr, mtime, launchAgain))
-        # Exited annotator with 'cancel', so don't save anything.
-        if gr is None:
-            # TODO: could also erase the paperdir
-            # reselect the row we were working on
-            self.prxM.setDataByTGV("t" + tgv, 1, prevState)
-            #self.ui.tableView.selectRow(index[1].row())
-            return
         # Copy the mark, annotated filename and the markingtime into the table
         # TODO: sort this out whether tgv is "t00..." or "00..."?!
         # TODO: what if its filtered out of prxM?  Do this to exM?
