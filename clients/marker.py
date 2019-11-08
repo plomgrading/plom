@@ -377,6 +377,7 @@ class MarkerClient(QWidget):
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
+        self.testImg = None  # safer?
         # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # Save the group and version.
@@ -480,7 +481,6 @@ class MarkerClient(QWidget):
 
     def resizeEvent(self, e):
         if self.testImg is None:
-            # pingtest must have failed, so do nothing.
             return
         # On resize used to resize the image to keep it all in view
         self.testImg.resetB.animateClick()
