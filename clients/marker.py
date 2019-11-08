@@ -917,9 +917,6 @@ class MarkerClient(QWidget):
     def callbackAnnIsDoneCancel(self, tgv, _xtracheese):
         self.setEnabled(True)
         prevState = _xtracheese[0]
-        # TODO: remove
-        msg = ErrorMessage("mark not recorded")
-        msg.exec_()
         # TODO: could also erase the paperdir
         self.prxM.setDataByTGV("t" + tgv, 1, prevState)
         # reselect the row we were working on
