@@ -50,7 +50,6 @@ from annotator import Annotator
 from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
-from client_utils import requestToken
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -75,9 +74,6 @@ directoryPath = tempDirectory.name
 class BackgroundDownloader(QThread):
     downloadSuccess = pyqtSignal(str)
     downloadFail = pyqtSignal(str, str)
-    # TODO: temporary stuff, eventually Messenger will know it
-    _userName = None
-    _token = None
 
     def __init__(self, tname, fname):
         QThread.__init__(self)
@@ -100,7 +96,7 @@ class BackgroundDownloader(QThread):
             self.quit()
 
         # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg_nopopup(["mDWF", self._userName, self._token, self.tname])
+        msg = messenger.msg_nopopup("mDWF", self.tname)
         if msg[0] == "ACK":
             print(
                 "Debug: downloader thread {}: got tname, fname={},{}".format(
@@ -122,9 +118,6 @@ class BackgroundDownloader(QThread):
 class BackgroundUploader(QThread):
     uploadSuccess = pyqtSignal(str, int, int)
     uploadFail = pyqtSignal(str, str)
-    # TODO: temporary stuff, eventually Messenger will know it
-    _userName = None
-    _token = None
 
     def enqueueNewUpload(self, *args):
         """Place something in the upload queue
@@ -176,26 +169,13 @@ class BackgroundUploader(QThread):
             # ensure user is still authorised to upload this particular pageimage -
             # this may have changed depending on what else is going on.
             # TODO: remove, either rRMD will succeed or fail: don't precheck
-            msg = messenger.SRMsg_nopopup(["mUSO", self._userName, self._token, code])
+            msg = messenger.msg_nopopup("mUSO", code)
             if msg[0] != "ACK":
                 errmsg = msg[1]
                 print("Debug: upQ: emitting FAILED signal for {}".format(code))
                 self.uploadFail.emit(code, errmsg)
-            msg = messenger.SRMsg_nopopup(
-                [
-                    "mRMD",
-                    self._userName,
-                    self._token,
-                    code,
-                    gr,
-                    afile,
-                    pfile,
-                    cfile,
-                    mtime,
-                    pg,
-                    ver,
-                    tags,
-                ]
+            msg = messenger.msg_nopopup(
+                "mRMD", code, gr, afile, pfile, cfile, mtime, pg, ver, tags
             )
             # self.sleep(4)  # pretend upload took longer
             if msg[0] == "ACK":
@@ -392,20 +372,12 @@ class ProxyModel(QSortFilterProxyModel):
 class MarkerClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
-    def __init__(
-        self, userName, password, server, message_port, web_port, pageGroup, version
-    ):
-        # Init the client with username, password, server and port data,
-        # and which group/version is being marked.
+    def __init__(self, mess, pageGroup, version):
         super(MarkerClient, self).__init__()
-        # Fire up the messenger with server data.
-        messenger.setServerDetails(server, message_port, web_port)
-        messenger.startMessenger()
-
-        # Save username, password, and path the local temp directory for
-        # image files and the class list.
-        self.userName = userName
-        self.password = password
+        # TODO or `self.msgr = mess`?  trouble in threads?
+        global messenger
+        messenger = mess
+        # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # Save the group and version.
         self.pageGroup = pageGroup
@@ -419,7 +391,7 @@ class MarkerClient(QWidget):
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
         # Paste the username, pagegroup and version into GUI.
-        self.ui.userLabel.setText(self.userName)
+        self.ui.userLabel.setText(messenger.whoami())
         self.ui.pgLabel.setText(str(self.pageGroup).zfill(2))
         self.ui.vLabel.setText(str(self.version))
         # Exam model for the table of groupimages - connect to table
@@ -473,12 +445,6 @@ class MarkerClient(QWidget):
         self.ui.mouseHandGroup.setId(self.ui.rightMouseRB, 0)
         self.ui.mouseHandGroup.setId(self.ui.leftMouseRB, 1)
         # Start using connection to serverself.
-        try:
-            self.token = requestToken(self.userName, self.password)
-        except ValueError as e:
-            print("DEBUG: token fail: {}".format(e))
-            QTimer.singleShot(100, self.shutDownError)
-            return
         # Get the max-mark for the question from the server.
         try:
             self.getMaxMark()
@@ -508,8 +474,6 @@ class MarkerClient(QWidget):
         self.backgroundUploader = BackgroundUploader()
         self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
         self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
-        self.backgroundUploader._userName = self.userName
-        self.backgroundUploader._token = self.token
         self.backgroundUploader.start()
         # Now cache latex for comments:
         self.cacheLatexComments()
@@ -527,9 +491,7 @@ class MarkerClient(QWidget):
     def getMaxMark(self):
         """Return the max mark or raise ValueError."""
         # Send max-mark request (mGMX) to server
-        msg = messenger.SRMsg(
-            ["mGMX", self.userName, self.token, self.pageGroup, self.version]
-        )
+        msg = messenger.msg("mGMX", self.pageGroup, self.version)
         # Return should be [ACK, maxmark]
         if not msg[0] == "ACK":
             raise ValueError(msg[1])
@@ -537,15 +499,13 @@ class MarkerClient(QWidget):
 
     def getMarkedList(self):
         # Ask server for list of previously marked papers
-        msg = messenger.SRMsg(
-            ["mGML", self.userName, self.token, self.pageGroup, self.version]
-        )
+        msg = messenger.msg("mGML", self.pageGroup, self.version)
         if msg[0] == "ERR":
             return
         fname = os.path.join(self.workingDirectory, "markedList.txt")
         messenger.getFileDav(msg[1], fname)
         # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg(["mDWF", self.userName, self.token, msg[1]])
+        msg = messenger.msg("mDWF", msg[1])
         # Add those marked papers to our paper-list
         with open(fname) as json_file:
             markedList = json.load(json_file)
@@ -570,7 +530,7 @@ class MarkerClient(QWidget):
         tgv = self.prxM.getPrefix(pr)
         if self.prxM.getOriginalFile(pr) != "":
             return
-        msg = messenger.SRMsg(["mGGI", self.userName, self.token, tgv])
+        msg = messenger.msg("mGGI", tgv)
         if msg[0] == "ERR":
             return
         paperdir = tempfile.mkdtemp(prefix=tgv + "_", dir=self.workingDirectory)
@@ -585,7 +545,7 @@ class MarkerClient(QWidget):
         tpname = msg[4]  # the temp plom file on webdav
         messenger.getFileDav(tfname, fname)
         # got original file so ask server to remove it.
-        msg = messenger.SRMsg(["mDWF", self.userName, self.token, tfname])
+        msg = messenger.msg("mDWF", tfname)
         self.prxM.setOriginalFile(pr, fname)
         # If there is an annotated image then get it.
         if taname is None:
@@ -593,7 +553,7 @@ class MarkerClient(QWidget):
         messenger.getFileDav(taname, aname)
         messenger.getFileDav(tpname, pname)
         # got annotated image / plom file so ask server to remove it.
-        msg = messenger.SRMsg(["mDWF", self.userName, self.token, taname])
+        msg = messenger.msg("mDWF", taname)
         self.prxM.setAnnotatedFile(pr, aname, pname)
 
     def updateImage(self, pr=0):
@@ -614,9 +574,7 @@ class MarkerClient(QWidget):
 
     def updateCount(self):
         # ask server for marking-count update
-        progress_msg = messenger.SRMsg(
-            ["mPRC", self.userName, self.token, self.pageGroup, self.version]
-        )
+        progress_msg = messenger.msg("mPRC", self.pageGroup, self.version)
         # returns [ACK, #marked, #total]
         if progress_msg[0] == "ACK":
             self.ui.mProgressBar.setValue(progress_msg[1])
@@ -635,14 +593,12 @@ class MarkerClient(QWidget):
             if attempts > 5:
                 return
             # ask server for tgv of next task
-            msg = messenger.SRMsg(
-                ["mANT", self.userName, self.token, self.pageGroup, self.version]
-            )
+            msg = messenger.msg("mANT", self.pageGroup, self.version)
             if msg[0] == "ERR":
                 return
             # grab the test-code
             code = msg[1]
-            msg = messenger.SRMsg(["mCST", self.userName, self.token, code])
+            msg = messenger.msg("mCST", code)
             # return message is [ACK, True, code, filename] or [ACK, False] or [ERR, reason]
             if msg[0] == "ERR":
                 return
@@ -658,7 +614,7 @@ class MarkerClient(QWidget):
         # Add the page-group to the list of things to mark
         self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]))
         # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg(["mDWF", self.userName, self.token, tname])
+        msg = messenger.msg("mDWF", tname)
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
@@ -680,14 +636,12 @@ class MarkerClient(QWidget):
             if attempts > 5:
                 return
             # ask server for tgv of next task
-            msg = messenger.SRMsg(
-                ["mANT", self.userName, self.token, self.pageGroup, self.version]
-            )
+            msg = messenger.msg("mANT", self.pageGroup, self.version)
             if msg[0] == "ERR":
                 return
             # grab the test-code
             code = msg[1]
-            msg = messenger.SRMsg(["mCST", self.userName, self.token, code])
+            msg = messenger.msg("mCST", code)
             # return message is [ACK, True, code, filename] or [ACK, False] or [ERR, reason]
             if msg[0] == "ERR":
                 return
@@ -705,8 +659,6 @@ class MarkerClient(QWidget):
             # if prev downloader still going than wait.  might block the gui
             self.backgroundDownloader.wait()
         self.backgroundDownloader = BackgroundDownloader(tname, fname)
-        self.backgroundDownloader._userName = self.userName
-        self.backgroundDownloader._token = self.token
         self.backgroundDownloader.downloadSuccess.connect(
             self.requestNextInBackgroundFinished
         )
@@ -1027,7 +979,7 @@ class MarkerClient(QWidget):
         self.DNF()
         # Then send a 'user closing' message - server will revoke
         # authentication token.
-        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        msg, = messenger.msg("UCL")
         assert msg == "ACK"
         # Now save annotatorSettings to file
         # self.saveAnnotatorSettings()
@@ -1043,20 +995,13 @@ class MarkerClient(QWidget):
             if self.exM.data(self.exM.index(r, 1)) != "marked":
                 # Tell server the code fo any paper that is not marked.
                 # server will put that back on the todo-pile.
-                msg = messenger.SRMsg(
-                    [
-                        "mDNF",
-                        self.userName,
-                        self.token,
-                        self.exM.data(self.exM.index(r, 0)),
-                    ]
-                )
+                msg = messenger.msg("mDNF", self.exM.data(self.exM.index(r, 0)))
 
     def viewWholePaper(self):
         index = self.ui.tableView.selectedIndexes()
         tgv = self.prxM.getPrefix(index[0].row())
         testnumber = tgv[1:5]  # since tgv = tXXXXgYYvZ
-        msg = messenger.SRMsg(["mGWP", self.userName, self.token, testnumber])
+        msg = messenger.msg("mGWP", testnumber)
         if msg[0] == "ERR":
             return []
 
@@ -1071,7 +1016,7 @@ class MarkerClient(QWidget):
 
     def doneWithViewFiles(self):
         for f in self.viewFiles:
-            msg = messenger.SRMsg(["mDWF", self.userName, self.token, f])
+            msg = messenger.msg("mDWF", f)
         for f in self.localViewFiles:
             if os.path.isfile(f):
                 os.unlink(f)
@@ -1119,20 +1064,19 @@ class MarkerClient(QWidget):
         # not yet present, so have to build it
         # create a tempfile
         fname = os.path.join(self.workingDirectory, "fragment")
-        dname = (
-            self.userName
-        )  # call fragment file just the username to avoid collisions
+        # call fragment file just the username to avoid collisions
+        dname = messenger.whoami()
         # write the latex text to that file
         with open(fname, "w") as fh:
             fh.write(txt)
         messenger.putFileDav(fname, dname)
 
-        msg = messenger.SRMsg(["mLTT", self.userName, self.token, dname])
+        msg = messenger.msg("mLTT", dname)
         if msg[1] == False:
             return False
 
         messenger.getFileDav(msg[2], "frag.png")
-        messenger.SRMsg(["mDWF", self.userName, self.token, msg[2]])
+        messenger.msg("mDWF", msg[2])
         # now keep copy of frag.png for later use and update commentCache
         fragFile = tempfile.NamedTemporaryFile(
             delete=False, dir=self.workingDirectory
@@ -1163,16 +1107,11 @@ class MarkerClient(QWidget):
             self.ui.tableView.resizeRowsToContents()
 
             # send updated tag back to server.
-            msg = messenger.SRMsg(
-                [
-                    "mTAG",
-                    self.userName,
-                    self.token,
-                    self.prxM.data(index[0]),
-                    self.prxM.data(index[4]),  # send the tags back too
-                ]
+            msg = messenger.msg(
+                "mTAG",
+                self.prxM.data(index[0]),
+                self.prxM.data(index[4]),  # send the tags back too
             )
-
         return
 
     def setFilter(self):

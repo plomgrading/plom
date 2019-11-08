@@ -130,7 +130,7 @@ class Chooser(QDialog):
             v = str(self.ui.vSB.value())
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient(user, pwd, server, mport, wport, pg, v)
+            markerwin = marker.MarkerClient(messenger, pg, v)
             markerwin.my_shutdown_signal.connect(self.on_other_window_close)
             markerwin.show()
             self.parent.marker = markerwin
@@ -147,7 +147,7 @@ class Chooser(QDialog):
             # Run the Total client.
             self.setEnabled(False)
             self.hide()
-            totalerwin = totaler.TotalClient(user, pwd, server, mport, wport)
+            totalerwin = totaler.TotalClient(messenger)
             totalerwin.my_shutdown_signal.connect(self.on_other_window_close)
             totalerwin.show()
             self.parent.totaler = totalerwin

@@ -81,55 +81,55 @@ def requestAndSaveToken(user, pw):
     TODO: what happens on timeout?
     """
     global _userName, _token
-    msg, token = SRMsg_nopopup(["AUTH", user, pw, Plom_API_Version])
-    if not msg == "ACK":
-        raise ValueError(token)
-    _userName = user
-    _token = token
+
+    msg = ("AUTH", user, pw, Plom_API_Version)
+    SRmutex.acquire()
+    try:
+        rmsg = http_messaging(msg)
+    finally:
+        SRmutex.release()
+
+    if rmsg[0] == "ACK" and len(rsmg) == 2:
+        _userName = user
+        _token = rmsg[1]
+        return
+    elif rmsg[0] == "ERR" and len(rsmg) == 2:
+        raise ValueError(rmsg[1])
+    else:
+        raise RuntimeError(
+            "Unexpected response from server.  Consider filing a bug?  The return from the server was:\n\n"
+            + str(rmsg)
+        )
 
 
 def msg(msgcode, *args):
-    """Send message to server and get back a reply"""
-    a = (msgcode, _userName, _token, *args)
-    return SRMsg(a)
-
-
-def SRMsg(msg):
     """Send message using https and get back return message.
     If error then pop-up an error message.
     """
-    # N = 0.5
-    # print("Messenger [{}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
+    msg_ = (msgcode, _userName, _token, *args)
     SRmutex.acquire()
     try:
-        # print("Messenger: got mutex, pretending to work for {}s, then talking to server".format(N))
-        # time.sleep(N)
-        rmsg = http_messaging(msg)
+        rmsg = http_messaging(msg_)
     finally:
         SRmutex.release()
 
     if rmsg[0] == "ACK":
         return rmsg
     elif rmsg[0] == "ERR":
-        msg = ErrorMessage("Server says: " + rmsg[1])
-        msg.exec_()
+        ErrorMessage("Server says: " + rmsg[1]).exec_()
         return rmsg
     else:
         print(">>> Error I didn't expect. Return message was {}".format(rmsg))
-        msg = ErrorMessage("Something really wrong has happened.")
-        msg.exec_()
+        ErrorMessage("Something really wrong has happened.").exec_()
 
 
-def SRMsg_nopopup(msg):
+def msg_nopopup(msgcode, *args):
     """Send message using the asyncio message handler and get back
     return message.
     """
-    # N = 15
-    # print("Messenger [nopop, {}]: want to do '{}', acquiring mutex first...".format(str(threading.get_ident()), msg[0]))
+    msg = (msgcode, _userName, _token, *args)
     SRmutex.acquire()
     try:
-        # print("Messenger [nopop]: got mutex, pretending to work for {}s, then talking to server".format(N))
-        # time.sleep(N)
         rmsg = http_messaging(msg)
     finally:
         SRmutex.release()
