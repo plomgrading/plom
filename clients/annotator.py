@@ -7,7 +7,7 @@ import json
 import os
 import sys
 
-from PyQt5.QtCore import Qt, QSettings, QSize, QTimer, pyqtSlot
+from PyQt5.QtCore import Qt, QByteArray, QRectF, QSettings, QSize, QTimer, pyqtSlot
 from PyQt5.QtGui import (
     QCursor,
     QGuiApplication,
@@ -158,8 +158,6 @@ class Annotator(QDialog):
         self.setWindowFlags(
             self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint
         )
-        # Make sure window is maximised.
-        self.showMaximized()
         # Grab window settings from parent
         self.loadWindowSettings()
 
@@ -258,12 +256,16 @@ class Annotator(QDialog):
             Qt.Key_Underscore: lambda: self.view.zoomOut(),
             # Only change-mark shortcuts 0-5.
             Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
-            Qt.Key_0: lambda: self.keyToChangeMark(0),
             Qt.Key_1: lambda: self.keyToChangeMark(1),
             Qt.Key_2: lambda: self.keyToChangeMark(2),
             Qt.Key_3: lambda: self.keyToChangeMark(3),
             Qt.Key_4: lambda: self.keyToChangeMark(4),
             Qt.Key_5: lambda: self.keyToChangeMark(5),
+            Qt.Key_6: lambda: self.keyToChangeMark(6),
+            Qt.Key_7: lambda: self.keyToChangeMark(7),
+            Qt.Key_8: lambda: self.keyToChangeMark(8),
+            Qt.Key_9: lambda: self.keyToChangeMark(9),
+            Qt.Key_0: lambda: self.keyToChangeMark(10),
             # ?-mark pop up a key-list
             Qt.Key_Question: lambda: self.keyPopUp(),
             # Toggle hide/unhide tools so as to maximise space for annotation
@@ -467,15 +469,19 @@ class Annotator(QDialog):
             self.setWindowState(Qt.WindowNoState)
 
     def keyToChangeMark(self, buttonNumber):
-        """Translates a key-press (0,1,2,3,4,5) into a button-press
+        """Translates a key-press (0,1,2,..,9) into a button-press
         of the various delta-mark buttons in the mark-entry widget.
         If mark-up style then they trigger the positive mark buttons,
         hence p0,p1 etc... if mark down then triggers the negative mark
         buttons - n1,n2, etc.
         """
+        # if key is higher than maxMark then no such button.
+        if buttonNumber > self.maxMark:
+            return
+        # Otherwise click the appropriate button.
         if self.markHandler.style == "Up":
             self.markHandler.markButtons["p{}".format(buttonNumber)].animateClick()
-        elif self.markHandler.style == "Down" and buttonNumber > 0:
+        elif self.markHandler.style == "Down" and buttonNumber >= 0:
             self.markHandler.markButtons["m{}".format(buttonNumber)].animateClick()
 
     def keyPressEvent(self, event):
@@ -801,12 +807,27 @@ class Annotator(QDialog):
         self.closeEvent(False)
 
     def loadWindowSettings(self):
+        # load the window geometry, else maximise.
         if self.parent.annotatorSettings["geometry"] is not None:
             self.restoreGeometry(self.parent.annotatorSettings["geometry"])
+            # TODO - delete the below
+            # since we can't directly jsonify QByteArray:
+            # self.restoreGeometry(
+            #     QByteArray.fromBase64(
+            #         self.parent.annotatorSettings["geometry"].encode()
+            #     )
+            # )
+        else:
+            # Make sure window is maximised.
+            self.showMaximized()
+
+        # remember the "do not show again" checks
         if self.parent.annotatorSettings["markWarnings"] is not None:
             self.markWarn = self.parent.annotatorSettings["markWarnings"]
         if self.parent.annotatorSettings["commentWarnings"] is not None:
             self.commentWarn = self.parent.annotatorSettings["commentWarnings"]
+
+        # remember the last tool used
         if self.parent.annotatorSettings["tool"] is not None:
             if self.parent.annotatorSettings["tool"] == "delta":
                 dlt = self.parent.annotatorSettings["delta"]
@@ -817,33 +838,48 @@ class Annotator(QDialog):
             else:
                 self.loadModeFromBefore(self.parent.annotatorSettings["tool"])
 
-        if self.parent.annotatorSettings["viewRectangle"] is not None:
-            # put in slight delay so that any resize events are done.
-            QTimer.singleShot(
-                150,
-                lambda: self.view.initialZoom(
-                    self.parent.annotatorSettings["viewRectangle"]
-                ),
-            )
+        # if zoom-state is none, set it to index 1 (fit page) - but delay.
+        if self.parent.annotatorSettings["zoomState"] is None:
+            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+        elif self.parent.annotatorSettings["zoomState"] == 0:
+            # is set to "user", so set the view-rectangle
+            if self.parent.annotatorSettings["viewRectangle"] is not None:
+                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
+                QTimer.singleShot(
+                    200,
+                    lambda: self.view.initialZoom(
+                        self.parent.annotatorSettings["viewRectangle"]
+                    ),
+                )
+            else:
+                # no view-rectangle, so set to "fit-page"
+                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
         else:
-            QTimer.singleShot(150, lambda: self.view.initialZoom(None))
-        # there is some redundancy between the above and the below.
-        if self.parent.annotatorSettings["zoomState"] is not None:
-            # put in slight delay so that any resize events are done.
             QTimer.singleShot(
                 200,
                 lambda: self.ui.zoomCB.setCurrentIndex(
                     self.parent.annotatorSettings["zoomState"]
                 ),
             )
-        else:
-            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
 
     def saveWindowSettings(self):
+        # TODO - delete below
+        # since we can't directly jsonify QByteArray:
+        # self.parent.annotatorSettings["geometry"] = (
+        #     self.saveGeometry().toBase64().data().decode()
+        # )
+        # since we can't directly jsonify qrectf:
+        # jsrect = self.view.getCurrentViewRect()
+        # self.parent.annotatorSettings["viewRectangle"] = [
+        #     jsrect.x(),
+        #     jsrect.y(),
+        #     jsrect.width(),
+        #     jsrect.height(),
+        # ]
         self.parent.annotatorSettings["geometry"] = self.saveGeometry()
+        self.parent.annotatorSettings["viewRectangle"] = self.view.getCurrentViewRect()
         self.parent.annotatorSettings["markWarnings"] = self.markWarn
         self.parent.annotatorSettings["commentWarnings"] = self.commentWarn
-        self.parent.annotatorSettings["viewRectangle"] = self.view.vrect
         self.parent.annotatorSettings["zoomState"] = self.ui.zoomCB.currentIndex()
         self.parent.annotatorSettings["tool"] = self.scene.mode
         if self.scene.mode == "delta":

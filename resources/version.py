@@ -5,4 +5,4 @@ __license__ = "AGPLv3"
 
 
 __version__ = "0.2.0+"
-Plom_API_Version = "3"  # updated for background upload/download
+Plom_API_Version = "5"  # updated for restified API for get-next-task.

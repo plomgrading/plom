@@ -119,27 +119,45 @@ class IDDatabase:
         except IntegrityError:
             self.logging.info("IDImage {} {} already exists.".format(t, code))
 
-    def giveIDImageToClient(self, username):
-        """Find unid'd test and send to client"""
+    def askNextTask(self, username):
+        """Find unid'd test and send tgv to client"""
         try:
             with iddb.atomic():
                 # Grab image from todo pile
                 x = IDImage.get(status="ToDo")
                 # log it.
                 self.logging.info(
-                    "Passing IDImage {} {} to client {}".format(
+                    "Client asked for next task - passing number {} {} to client {}".format(
                         x.number, x.tgv, username
                     )
                 )
-                # Update status, user, time.
-                x.status = "OutForIDing"
-                x.user = username
-                x.time = datetime.now()
-                x.save()
                 # return tgv.
                 return x.tgv
         except IDImage.DoesNotExist:
             self.logging.info("Nothing left on To-Do pile")
+            return None
+
+    def giveSpecificTaskToClient(self, username, code):
+        try:
+            with iddb.atomic():
+                # get the record by code
+                x = IDImage.get(tgv=code)
+                # check either unclaimed or belongs to user.
+                # TODO check logic solid here - is this idempotent.
+                if x.user == "None" or x.user == username:
+                    # update status, Student-number, name, id-time.
+                    x.status = "OutForIDing"
+                    x.user = username
+                    x.time = datetime.now()
+                    x.save()
+                    return True
+                    # return tgv.
+                else:
+                    # has been claimed by someone else.
+                    return False
+        except IDImage.DoesNotExist:
+            self.logging.info("That IDImage number {} not known".format(code))
+            return False
 
     def takeIDImageFromClient(self, code, username, sid, sname):
         """Get ID'dimage back from client - update record in database."""

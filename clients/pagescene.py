@@ -637,6 +637,7 @@ class PageScene(QGraphicsScene):
             self.blurb.setPlainText(X[0])
             self.blurb.contents = X[0]
             self.blurb.setPos(QPointF(X[1], X[2]))
+            self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
             # knows to latex it if needed.
             self.undoStack.push(CommandText(self, self.blurb, self.ink))
 

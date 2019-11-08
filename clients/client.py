@@ -1,7 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import json
 import os
@@ -15,7 +19,9 @@ from PyQt5.QtCore import pyqtSlot, QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
+from useful_classes import ErrorMessage, SimpleMessage
 
+import messenger
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
 from resources.version import Plom_API_Version
@@ -106,6 +112,17 @@ class Chooser(QDialog):
         wport = self.ui.wportSB.value()
         # save those settings
         self.saveDetails()
+
+        # Have Messenger login into to server
+        messenger.setServerDetails(server, mport, wport)
+        messenger.startMessenger()
+        try:
+            messenger.requestAndSaveToken(user, pwd)
+        except ValueError as e:
+            ErrorMessage("Could not get authentication token.\n\n"
+                         "Error was: {}".format(e)).exec_()
+            return
+
         # Now run the appropriate client sub-application
         if self.runIt == "Marker":
             # Run the marker client.
@@ -113,7 +130,7 @@ class Chooser(QDialog):
             v = str(self.ui.vSB.value())
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient(user, pwd, server, mport, wport, pg, v)
+            markerwin = marker.MarkerClient(messenger, pg, v)
             markerwin.my_shutdown_signal.connect(self.on_other_window_close)
             markerwin.show()
             self.parent.marker = markerwin
@@ -121,15 +138,16 @@ class Chooser(QDialog):
             # Run the ID client.
             self.setEnabled(False)
             self.hide()
-            idwin = identifier.IDClient(user, pwd, server, mport, wport)
+            idwin = identifier.IDClient()
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
+            idwin.getToWork(messenger)
             self.parent.identifier = idwin
         else:
             # Run the Total client.
             self.setEnabled(False)
             self.hide()
-            totalerwin = totaler.TotalClient(user, pwd, server, mport, wport)
+            totalerwin = totaler.TotalClient(messenger)
             totalerwin.my_shutdown_signal.connect(self.on_other_window_close)
             totalerwin.show()
             self.parent.totaler = totalerwin

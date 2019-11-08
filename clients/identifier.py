@@ -1,7 +1,14 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+# -*- coding: utf-8 -*-
+
+"""
+Identifier Tool
+"""
+
+__author__ = "Andrew Rechnitzer, Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer, Colin B. Macdonald"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 from collections import defaultdict
 import csv
@@ -22,10 +29,8 @@ from PyQt5.QtCore import (
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QCompleter, QWidget, QMainWindow, QInputDialog, QMessageBox
 from examviewwindow import ExamViewWindow
-import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_identify import Ui_IdentifyWindow
-from client_utils import requestToken
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
@@ -162,29 +167,21 @@ class ExamModel(QAbstractTableModel):
 class IDClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
-    def __init__(self, userName, password, server, message_port, web_port):
-        # Init the client with username, password, server and port data.
+    def __init__(self):
         super(IDClient, self).__init__()
-        # Init the messenger with server and port data.
-        messenger.setServerDetails(server, message_port, web_port)
-        messenger.startMessenger()
-        # Ping to see if server is up.
-        if not messenger.pingTest():
-            QTimer.singleShot(100, self.shutDownError)
-            return
-        # Save username, password, and path the local temp directory for
-        # image files and the class list.
-        self.userName = userName
-        self.password = password
+
+    def getToWork(self, mess):
+        global messenger
+        messenger = mess
+        # Save the local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # List of papers we have to ID.
         self.paperList = []
-        self.unidCount = 0
         # Fire up the interface.
         self.ui = Ui_IdentifyWindow()
         self.ui.setupUi(self)
-        # Paste username into the GUI.
-        self.ui.userLabel.setText(self.userName)
+        # Paste username into the GUI (TODO: but why?)
+        self.ui.userLabel.setText(mess.whoami())
         # Exam model for the table of papers - associate to table in GUI.
         self.exM = ExamModel()
         self.ui.tableView.setModel(self.exM)
@@ -192,13 +189,7 @@ class IDClient(QWidget):
         # Paste into appropriate location in gui.
         self.testImg = ExamViewWindow()
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
-        # Start using connection to server.
-        try:
-            self.token = requestToken(self.userName, self.password)
-        except ValueError as e:
-            print("DEBUG: token fail: {}".format(e))
-            QTimer.singleShot(100, self.shutDownError)
-            return
+
         # Get the classlist from server for name/ID completion.
         self.getClassList()
         # Init the name/ID completers and a validator for ID
@@ -209,8 +200,9 @@ class IDClient(QWidget):
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nameEdit.returnPressed.connect(self.enterName)
         self.ui.closeButton.clicked.connect(self.shutDown)
-        self.ui.nextButton.setText("&Skip (for now)")  # TODO: Andrew do properly
         self.ui.nextButton.clicked.connect(self.skipOnClick)
+        self.ui.predButton.clicked.connect(self.acceptPrediction)
+
         # Make sure no button is clicked by a return-press
         self.ui.nextButton.setAutoDefault(False)
         self.ui.closeButton.setAutoDefault(False)
@@ -230,15 +222,16 @@ class IDClient(QWidget):
         # Initially set to top-left corner of window
         self.msgGeometry = None
 
-
     def skipOnClick(self):
         """Skip the current, moving to the next or loading a new one"""
-        last_row_is_highlighted = True  # TODO: how to check this?
-        if last_row_is_highlighted:
+        index = self.ui.tableView.selectedIndexes()
+        if len(index) == 0:
+            return
+        r = index[0].row()  # which row is selected
+        if r == self.exM.rowCount() - 1:  # the last row is selected.
             if self.requestNext():
                 return
         self.moveToNextUnID()
-
 
     def getClassList(self):
         """Send request for classlist (iRCL) to server. The server then sends
@@ -247,14 +240,14 @@ class IDClient(QWidget):
         of either two fields = FamilyName+GivenName or a single Name field.
         """
         # Send request for classlist (iRCL) to server
-        msg, remotefile = messenger.SRMsg(["iRCL", self.userName, self.token])
+        msg, remotefile = messenger.msg("iRCL")
         assert msg == "ACK", "Classlist problem"
         fileobj = BytesIO(b"")
         messenger.getFileDav(remotefile, fileobj)
         fileobj.seek(0)  # rewind
 
         # We have list, server can clean up (e.g., remove from webdav server)
-        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        msg, = messenger.msg("iDWF", remotefile)
         assert msg == "ACK"
 
         # csv reader needs file in text mode: this chokes on non-utf8?
@@ -276,14 +269,14 @@ class IDClient(QWidget):
         back the CSV of the predictions testnumber -> studentID.
         """
         # Send request for prediction list to server
-        msg, remotefile = messenger.SRMsg(["iRPL", self.userName, self.token])
+        msg, remotefile = messenger.msg("iRPL")
         assert msg == "ACK", "Prediction list problem"
         fileobj = BytesIO(b"")
         messenger.getFileDav(remotefile, fileobj)
         fileobj.seek(0)  # rewind
 
         # We have list, server can clean up (e.g., remove from webdav server)
-        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        msg, = messenger.msg("iDWF", remotefile)
         assert msg == "ACK"
 
         csvfile = TextIOWrapper(fileobj)
@@ -298,6 +291,9 @@ class IDClient(QWidget):
         fnt = self.font()
         fnt.setPointSize(fnt.pointSize() * 2)
         self.ui.pNameLabel.setFont(fnt)
+        # also tweak size of "accept prediction" button font
+        self.ui.predButton.setFont(fnt)
+        # make the SID larger still.
         fnt.setPointSize(fnt.pointSize() * 1.5)
         self.ui.pSIDLabel.setFont(fnt)
         # And if no predictions then hide that box
@@ -345,9 +341,10 @@ class IDClient(QWidget):
         take anything that this user has out-for-id-ing and return it to
         the todo pile. Then send a user-closing message so that the
         authorisation token is removed. Then finally close.
+        TODO: messenger needs to drop token here?
         """
         self.DNF()
-        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        msg, = messenger.msg("UCL")
         assert msg == "ACK"
         self.my_shutdown_signal.emit(1)
         self.close()
@@ -363,23 +360,17 @@ class IDClient(QWidget):
         for r in range(rc):
             if self.exM.data(self.exM.index(r, 1)) != "identified":
                 # Tell user DNF, user, auth-token, and paper's code.
-                msg = messenger.SRMsg(
-                    [
-                        "iDNF",
-                        self.userName,
-                        self.token,
-                        self.exM.data(self.exM.index(r, 0)),
-                    ]
-                )
+                msg = messenger.msg("iDNF", self.exM.data(self.exM.index(r, 0)))
+
 
     def getAlreadyIDList(self):
         # Ask server for list of previously ID'd papers
-        msg, remotefile = messenger.SRMsg(["iGAL", self.userName, self.token])
+        msg, remotefile = messenger.msg("iGAL")
         assert msg == "ACK", "problem getting previously IDed list from server"
         fileobj = BytesIO(b"")
         messenger.getFileDav(remotefile, fileobj)
         # Ack that test received - server then deletes it from webdav
-        msg, = messenger.SRMsg(["iDWF", self.userName, self.token, remotefile])
+        msg, = messenger.msg("iDWF", remotefile)
         assert msg == "ACK"
 
         # rewind the stream
@@ -400,19 +391,20 @@ class IDClient(QWidget):
         self.ui.idEdit.setText(self.exM.data(selnew.indexes()[2]))
         self.ui.nameEdit.setText(self.exM.data(selnew.indexes()[3]))
         self.updateImage(selnew.indexes()[0].row())
+        self.ui.idEdit.setFocus()
 
     def checkFiles(self, r):
         tgv = self.exM.paperList[r].prefix
         if self.exM.paperList[r].originalFile is not "":
             return
-        msg = messenger.SRMsg(["iGGI", self.userName, self.token, tgv])
+        msg = messenger.msg("iGGI", tgv)
         if msg[0] == "ERR":
             return
         fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
         tfname = msg[2]  # the temp original image file on webdav
         messenger.getFileDav(tfname, fname)
         # got original file so ask server to remove it.
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, tfname])
+        msg = messenger.msg("iDWF", tfname)
         self.exM.paperList[r].originalFile = fname
 
     def updateImage(self, r=0):
@@ -429,9 +421,13 @@ class IDClient(QWidget):
         elif tn in self.predictedTestToNumbers:
             psid = self.predictedTestToNumbers[tn]
             pname = self.studentNumbersToNames[psid]
-            self.ui.pSIDLabel.setText(psid)
-            self.ui.pNameLabel.setText(pname)
-            QTimer.singleShot(0, self.setuiedit)
+            if pname == "":
+                self.ui.predictionBox.hide()
+            else:
+                self.ui.predictionBox.show()
+                self.ui.pSIDLabel.setText(psid)
+                self.ui.pNameLabel.setText(pname)
+                QTimer.singleShot(0, self.setuiedit)
         else:
             self.ui.pSIDLabel.setText("")
             self.ui.pNameLabel.setText("")
@@ -447,29 +443,45 @@ class IDClient(QWidget):
         # select that row and display the image
         if update:
             # One more unid'd paper
-            self.unidCount += 1
             self.ui.tableView.selectRow(r)
             self.updateImage(r)
+
+    def updateProgress(self):
+        # ask server for id-count update
+        msg = messenger.msg("iPRC")
+        # returns [ACK, #id'd, #total]
+        if msg[0] == "ACK":
+            self.ui.idProgressBar.setMaximum(msg[2])
+            self.ui.idProgressBar.setValue(msg[1])
 
     def requestNext(self):
         """Ask the server for an unID'd paper (iNID). Server should return
         message [ACK, testcode, filename]. Get file from webdav, add to the
         list of papers and update the image.
         """
-        # ask server for id-count update
-        msg = messenger.SRMsg(["iPRC", self.userName, self.token])
-        # returns [ACK, #id'd, #total]
-        if msg[0] == "ACK":
-            self.ui.idProgressBar.setMaximum(msg[2])
-            self.ui.idProgressBar.setValue(msg[1])
+        attempts = 0
+        while True:
+            attempts += 1
+            # little sanity check - shouldn't be needed.
+            # TODO remove this sanity check - or replace with a pop-up warning thingy.
+            if attempts > 5:
+                return False
+            # ask server for ID of next task
+            msg = messenger.msg("iANT")
+            if msg[0] == "ERR":
+                return False
+            # grab returned test-code
+            test = msg[1]
+            # claim that test
+            msg = messenger.msg("iCST", test)
+            # return message is [ACK, True, code, filename] or [ACK, False]
+            if msg[0] == "ERR":
+                return
+            if msg[1] == True:
+                break
 
-        # ask server for next unid'd paper
-        msg = messenger.SRMsg(["iNID", self.userName, self.token])
-        if msg[0] == "ERR":
-            return False
-        # return message is [ACK, code, filename]
-        test = msg[1]
-        fname = msg[2]
+        test = msg[2]
+        fname = msg[3]
         # Image name will be <code>.png
         iname = os.path.join(
             self.workingDirectory, test + ".png"
@@ -479,12 +491,46 @@ class IDClient(QWidget):
         # Add the paper [code, filename, etc] to the list
         self.addPaperToList(Paper(test, iname))
         # Tell server we got the image (iGTP) - the server then deletes it.
-        msg = messenger.SRMsg(["iDWF", self.userName, self.token, fname])
+        msg = messenger.msg("iDWF", fname)
         # Clean up table - and set focus on the ID-lineedit so user can
         # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()
         self.ui.idEdit.setFocus()
         return True
+
+    def acceptPrediction(self):
+        # first check currently selected paper is unidentified - else do nothing
+        index = self.ui.tableView.selectedIndexes()
+        status = self.exM.data(index[1])
+        if status != "unidentified":
+            return
+        code = self.exM.data(index[0])
+        sname = self.ui.pNameLabel.text()
+        sid = self.ui.pSIDLabel.text()
+        msg = messenger.msg("iRID", code, sid, sname)
+        if msg[0] == "ERR":
+            # If an error, revert the student and clear things.
+            self.exM.revertStudent(index)
+            # Use timer to avoid conflict between completer and
+            # clearing the line-edit. Very annoying but this fixes it.
+            QTimer.singleShot(0, self.ui.idEdit.clear)
+            QTimer.singleShot(0, self.ui.nameEdit.clear)
+            return
+        else:
+            self.exM.identifyStudent(index, sid, sname)
+            # Use timer to avoid conflict between completer and
+            # clearing the line-edit. Very annoying but this fixes it.
+            QTimer.singleShot(0, self.ui.idEdit.clear)
+            QTimer.singleShot(0, self.ui.nameEdit.clear)
+            # Update un-id'd count.
+
+        self.updateProgress()
+
+        if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
+            self.requestNext()  # updates progressbars.
+        else:  # else move to the next unidentified paper.
+            self.moveToNextUnID()  # doesn't
+        return
 
     def identifyStudent(self, index, sid, sname, alreadyIDd=False):
         """User ID's the student of the current paper. Some care around whether
@@ -495,28 +541,18 @@ class IDClient(QWidget):
         # Pass the info to the exam model to put data into the table.
         self.exM.identifyStudent(index, sid, sname)
         code = self.exM.data(index[0])
-        # If the paper was ID'd previously send return-already-ID'd (iRAD)
-        # If the paper was not ID'd previously send return-ID'd (iRID)
-        # with the code, ID, name.
-        msg = messenger.SRMsg(
-            [
-                "iRAD" if alreadyIDd else "iRID",
-                self.userName,
-                self.token,
-                code,
-                sid,
-                sname,
-            ]
-        )
+        # Return paper to server with the code, ID, name.
+        msg = messenger.msg("iRID", code, sid, sname)
+
         self.ui.idEdit.clear()
         self.ui.nameEdit.clear()
         if msg[0] == "ERR":
             self.exM.revertStudent(index)
             return False
-        # Update un-id'd count.
-        if not alreadyIDd:
-            self.unidCount -= 1
-        return True
+        else:
+            # Update progressbars
+            self.updateProgress()
+            return True
 
     def moveToNextUnID(self):
         # Move to the next test in table which is not ID'd.
@@ -603,12 +639,10 @@ class IDClient(QWidget):
             if alreadyIDd:
                 self.moveToNextUnID()
                 return
-            last_row_highlighted = True  # TODO: how to check this?
-            if last_row_highlighted:
+            if index[0].row() == self.exM.rowCount() - 1:  # last row is highlighted
                 if self.requestNext():
                     return
             self.moveToNextUnID()
-
 
     def enterName(self):
         """Triggered when user hits return in the name-lineedit.. that is
@@ -684,8 +718,7 @@ class IDClient(QWidget):
             if alreadyIDd:
                 self.moveToNextUnID()
                 return
-            last_row_highlighted = True  # TODO: how to check this?
-            if last_row_highlighted:
+            if index[0].row() == self.exM.rowCount() - 1:  # last row is highlighted
                 if self.requestNext():
                     return
             self.moveToNextUnID()
