@@ -508,7 +508,7 @@ class IDClient(QWidget):
         sname = self.ui.pNameLabel.text()
         sid = self.ui.pSIDLabel.text()
 
-        self.identifyStudent(index, sid, sname, alreadyIDd=False)
+        self.identifyStudent(index, sid, sname)
 
         if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
             self.requestNext()  # updates progressbars.
@@ -516,7 +516,7 @@ class IDClient(QWidget):
             self.moveToNextUnID()  # doesn't
         return
 
-    def identifyStudent(self, index, sid, sname, alreadyIDd=False):
+    def identifyStudent(self, index, sid, sname):
         """User ID's the student of the current paper. Some care around whether
         or not the paper was ID'd previously. Not called directly - instead
         is called by "enterID" or "enterName" when user hits return on either
@@ -619,7 +619,7 @@ class IDClient(QWidget):
             else:
                 self.ui.nameEdit.setText("Unknown")
         # Run identify student command (which talks to server)
-        if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text(), alreadyIDd):
+        if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text()):
             if alreadyIDd:
                 self.moveToNextUnID()
                 return
@@ -698,7 +698,7 @@ class IDClient(QWidget):
                 msg.exec_()
                 return
         # Run identify student command (which talks to server)
-        if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text(), alreadyIDd):
+        if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text()):
             if alreadyIDd:
                 self.moveToNextUnID()
                 return
