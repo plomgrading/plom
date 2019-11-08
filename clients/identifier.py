@@ -507,24 +507,8 @@ class IDClient(QWidget):
         code = self.exM.data(index[0])
         sname = self.ui.pNameLabel.text()
         sid = self.ui.pSIDLabel.text()
-        msg = messenger.msg("iRID", code, sid, sname)
-        if msg[0] == "ERR":
-            # If an error, revert the student and clear things.
-            self.exM.revertStudent(index)
-            # Use timer to avoid conflict between completer and
-            # clearing the line-edit. Very annoying but this fixes it.
-            QTimer.singleShot(0, self.ui.idEdit.clear)
-            QTimer.singleShot(0, self.ui.nameEdit.clear)
-            return
-        else:
-            self.exM.identifyStudent(index, sid, sname)
-            # Use timer to avoid conflict between completer and
-            # clearing the line-edit. Very annoying but this fixes it.
-            QTimer.singleShot(0, self.ui.idEdit.clear)
-            QTimer.singleShot(0, self.ui.nameEdit.clear)
-            # Update un-id'd count.
 
-        self.updateProgress()
+        self.identifyStudent(index, sid, sname)
 
         if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
             self.requestNext()  # updates progressbars.
@@ -532,31 +516,26 @@ class IDClient(QWidget):
             self.moveToNextUnID()  # doesn't
         return
 
-    def identifyStudent(self, index, alreadyIDd=False):
+    def identifyStudent(self, index, sid, sname):
         """User ID's the student of the current paper. Some care around whether
         or not the paper was ID'd previously. Not called directly - instead
         is called by "enterID" or "enterName" when user hits return on either
         of those lineedits.
         """
-        # Pass the contents of the ID-lineedit and Name-lineedit to the exam
-        # model to put data into the table.
-        self.exM.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text())
+        # Pass the info to the exam model to put data into the table.
+        self.exM.identifyStudent(index, sid, sname)
         code = self.exM.data(index[0])
         # Return paper to server with the code, ID, name.
-        msg = messenger.msg("iRID", code, self.ui.idEdit.text(), self.ui.nameEdit.text())
+        msg = messenger.msg("iRID", code, sid, sname)
+
+        # Issue #25: Use timer to avoid macOS conflict between completer and
+        # clearing the line-edit. Very annoying but this fixes it.
+        QTimer.singleShot(0, self.ui.idEdit.clear)
+        QTimer.singleShot(0, self.ui.nameEdit.clear)
         if msg[0] == "ERR":
-            # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
-            # Use timer to avoid conflict between completer and
-            # clearing the line-edit. Very annoying but this fixes it.
-            QTimer.singleShot(0, self.ui.idEdit.clear)
-            QTimer.singleShot(0, self.ui.nameEdit.clear)
             return False
         else:
-            # Use timer to avoid conflict between completer and
-            # clearing the line-edit. Very annoying but this fixes it.
-            QTimer.singleShot(0, self.ui.idEdit.clear)
-            QTimer.singleShot(0, self.ui.nameEdit.clear)
             # Update progressbars
             self.updateProgress()
             return True
@@ -642,7 +621,7 @@ class IDClient(QWidget):
             else:
                 self.ui.nameEdit.setText("Unknown")
         # Run identify student command (which talks to server)
-        if self.identifyStudent(index, alreadyIDd):
+        if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text()):
             if alreadyIDd:
                 self.moveToNextUnID()
                 return
@@ -721,7 +700,7 @@ class IDClient(QWidget):
                 msg.exec_()
                 return
         # Run identify student command (which talks to server)
-        if self.identifyStudent(index, alreadyIDd):
+        if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text()):
             if alreadyIDd:
                 self.moveToNextUnID()
                 return
