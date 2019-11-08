@@ -920,9 +920,8 @@ class Annotator(QWidget):
 
         # Close button/titlebar: reject (do not save) result, do not launch again
         if relaunch is None:
-            print('ann emitted signal: REJECT')
+            print('ann emitting signal: Reject/Cancel')
             self.ann_finished_reject.emit(self.tgv, self._junkForMarker)
-            print('ann closeEvent: closing window')
             # clean up after a testview
             self.doneViewingPaper()
             ce.accept()
@@ -986,14 +985,13 @@ class Annotator(QWidget):
         # Save the window settings
         self.saveWindowSettings()
         # Close the annotator(QDialog) with an 'accept'.
-        print('ann emitted signal: ACCEPT')
+        print('ann emitting signal: ACCEPT')
         tim = self.timer.elapsed() // 1000
         # some things here hardcoded elsewhere too, and up in marker
         plomFile = self.imageFile[:-3] + "plom"
         commentFile = self.imageFile[:-3] + "json"
         stuff = [self.score, relaunch, tim, self.imageFile, plomFile, commentFile]
         self.ann_finished_accept.emit(self.tgv, stuff, self._junkForMarker)
-        print('ann closeEvent: closing window')
         ce.accept()
 
 
