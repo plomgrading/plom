@@ -480,12 +480,11 @@ class MarkerClient(QWidget):
         self.cacheLatexComments()
 
     def resizeEvent(self, e):
-        if self.testImg is None:
-            return
-        # On resize used to resize the image to keep it all in view
-        self.testImg.resetB.animateClick()
-        # resize the table too.
-        self.ui.tableView.resizeRowsToContents()
+        if self.testImg:
+            # On resize used to resize the image to keep it all in view
+            self.testImg.resetB.animateClick()
+            # resize the table too.
+            self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(e)
 
     def getMaxMark(self):
