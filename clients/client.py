@@ -133,8 +133,6 @@ class Chooser(QDialog):
             markerwin = marker.MarkerClient(messenger, pg, v)
             markerwin.my_shutdown_signal.connect(self.on_other_window_close)
             markerwin.show()
-            QTimer.singleShot(100, markerwin.go)   # why diff behaviour for 0?
-            #markerwin.go()
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
