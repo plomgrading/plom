@@ -83,11 +83,8 @@ def requestAndSaveToken(user, pw):
     global _userName, _token
 
     msg = ("AUTH", user, pw, Plom_API_Version)
-    SRmutex.acquire()
-    try:
+    with SRmutex:
         rmsg = http_messaging(msg)
-    finally:
-        SRmutex.release()
 
     if rmsg[0] == "ACK" and len(rmsg) == 2:
         _userName = user
