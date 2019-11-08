@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
@@ -9,18 +11,26 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 
 # this allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
+from resources.tpv_utils import (
+    parseTPV,
+    isValidTPV,
+    hasCurrentAPI,
+    getCode,
+    getPosition,
+)
 
 
 def decodeQRs():
     """Go into pageimage directory
     Look at all the png files
     If their QRcodes have not been successfully decoded previously
-    then decode them using extractQRAndOrient script.
+    then decode them using another script.
     The results are stored in blah.png.qr files.
     Commands piped through gnu-parallel.
     """
@@ -30,7 +40,7 @@ def decodeQRs():
         # If the .qr file does not exist, or if it has length 0
         # then run extract/orient script on that png.
         if (not os.path.exists(fname + ".qr")) or os.path.getsize(fname + ".qr") == 0:
-            fh.write("python3 ../extractQRAndOrient.py {}\n".format(fname))
+            fh.write("python3 ../extractQR.py {}\n".format(fname))
     fh.close()
     # run those commands through gnu-parallel then delete.
     os.system("parallel --bar < commandlist.txt")
@@ -60,53 +70,187 @@ def writeExamsScanned():
     es.close()
 
 
+def reOrientPage(fname, qrs):
+    """Re-orient this page if needed
+
+    If a page is upright, a subset of the QR codes 1 through 4 are on
+    the corners:
+
+        2---1   NW---NE
+        |   |    |   |
+        |   |    |   |
+        3---4   SW---SE
+
+    We use this known configuration to recognize rotations.  Either 1
+    or 2 is missing (because of the staple area) and we could be
+    missing others.
+
+    Assuming reflection combined with missing QR codes is an unlikely
+    scenario, we can orient even if we know only one corner.
+
+    Args:
+       fname (str): the png filename of this page.  Either its the FQN
+                    or we are currently in the right directory.
+       qrs (dict): the QR codes of the four corners.  Some or all may
+                   be missing.
+
+    Returns:
+       bool: True if the image was already upright or has now been
+             made upright.  False if the image is in unknown
+             orientation or we have contradictory information.
+
+    """
+    upright = [1, 2, 3, 4]  # [NE, NW, SW, SE]
+    flipped = [3, 4, 1, 2]
+    # fake a default_dict
+    g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else -1
+    current = [g("NE"), g("NW"), g("SW"), g("SE")]
+    # now compare as much as possible of current against upright/flipped ignoring -1s
+    upFlag = True
+    flipFlag = True
+    for k in range(4):
+        if current[k] == -1:
+            continue
+        if upright[k] == current[k]:
+            flipFlag = False
+        if flipped[k] == current[k]:
+            upFlag = False
+
+    if upFlag and not flipFlag:
+        # is upright, no rotation needed
+        return True
+    if flipFlag and not upFlag:
+        # is flipped, so rotate 180
+        #print(" .  {}: reorienting: 180 degree rotation".format(fname))
+        subprocess.run(
+            ["mogrify", "-quiet", "-rotate", "180", fname],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
+        return True
+    else:
+        # either not enough info or conflicting info
+        return False
+
+
 def checkQRsValid():
     """Check that the QRcodes in each pageimage are valid.
-    When each png is scanned a png.qr is produced.
-    Those should have 3 lines each - 2x tpv and 1x name.
-    Valid lines are either "QR-Code:tXpYvZ" or "QR-Code:N:X"
+
+    When each png is scanned a png.qr is produced.  Load the dict of
+    QR codes from that file and do some sanity checks.
+
+    Rotate any images that we can.
+
+    TODO: maybe we should split this function up a bit!
     """
-    # Build regular expressions for checking the QR codes.
-    patternCode = re.compile(r"QR-Code:(t\d+)(p\d+)(v\d+)")
-    patternName = re.compile(r"QR-Code:N.\w+")
     # go into page image directory and look at each .qr file.
     os.chdir("pageImages/")
     for fname in glob.glob("*.qr"):
-        fin = open(fname, "r")
-        lines = []
-        codeFlag = 0
-        nameFlag = 0
-        # check each line in the .qr file
-        for line in fin:
-            line = line.rstrip("\n")
-            lines.append(line)
-            # check if is test-name code N.blah and extract name
-            if patternName.match(line):
-                nameFlag += 1
-                testName = line[10:]
-            # check if is tpv code tXpYvZ
-            if patternCode.match(line):
-                # a valid line will be "QR-Code:tXpYvZ"
-                # store as code=[0,X,Y,Z]
-                code = re.split(r"\D", line[8:])
-                codeFlag += 1
-        # If we found a name and a tpv file, and the name matches the
-        # name in the test-specification then store the tpv in examsScannedNow
-        # later we check that list against those produced during build
-        if nameFlag == 1 and codeFlag == 1 and testName == spec.Name:
-            # Convert X,Y,Z to ints and make note it has been scanned.
-            # store as esn[testnumber][pagenumber] = [version, blah.png]
-            examsScannedNow[int(code[1])][int(code[2])] = (int(code[3]), fname[:-3])
-        else:
+        with open(fname, "r") as qrfile:
+            content = qrfile.read()
+        qrs = eval(content)  # unpickle
+
+        problemFlag = False
+        warnFlag = False
+
+        # Flag papers that have too many QR codes in some corner
+        # TODO: untested?
+        if any(len(x) > 1 for x in qrs.values()):
+            msg = "Too many QR codes in {} corner".format(d)
+            problemFlag = True
+
+        # Unpack the lists of QRs, building a new dict with only the
+        # the corners with exactly one QR code.
+        tmp = {}
+        for (d, qr) in qrs.items():
+            if len(qr) == 1:
+                tmp[d] = qr[0]
+        qrs = tmp
+        del tmp
+
+        if len(qrs) == 0:
+            msg = "No QR codes were decoded."
+            problemFlag = True
+
+        if not problemFlag:
+            for tpvc in qrs.values():
+                if not isValidTPV(tpvc):
+                    msg = "TPV '{}' is not a valid format".format(tpvc)
+                    problemFlag = True
+                elif not hasCurrentAPI(tpvc):
+                    msg = "TPV '{}' does not match API.  Legacy issue?".format(tpvc)
+                    problemFlag = True
+                elif str(getCode(tpvc)) != str(spec.MagicCode):
+                    msg = (
+                        "Magic code '{0}' did not match spec '{1}'.  "
+                        "Did you scan the wrong test?".format(
+                            getCode(tpvc), spec.MagicCode
+                        )
+                    )
+                    problemFlag = True
+
+        # Make sure all (t,p,v) on this page are the same
+        if not problemFlag:
+            tgvs = []
+            for tpvc in qrs.values():
+                tn, pn, vn, cn, o = parseTPV(tpvc)
+                tgvs.append((tn, pn, vn))
+
+            if not len(set(tgvs)) == 1:
+                # Decoder either gives the correct code or no code at all
+                # Perhaps if you see this, its a folded page
+                msg = "Multiple different QR codes! (rare in theory: folded page?)"
+                problemFlag = True
+
+        if not problemFlag:
+            orientationKnown = reOrientPage(fname[:-3], qrs)
+            # TODO: future improvement: could keep going, its possible
+            # we can go on to find the (t,p,v) in some cases.
+            if not orientationKnown:
+                msg = "Orientation not known"
+                problemFlag = True
+
+        # Decide in which cases we can be confident we know this papers (t,p,v)
+        if not problemFlag:
+            if len(tgvs) == 1:
+                msg = "Only one of three QR codes decoded."
+                # TODO: in principle could proceed, albeit dangerously
+                warnFlag = True
+                riskiness = 10
+                tgv = tgvs[0]
+            elif len(tgvs) == 2:
+                msg = "Only two of three QR codes decoded."
+                warnFlag = True
+                riskiness = 1
+                tgv = tgvs[0]
+            elif len(tgvs) == 3:
+                # full consensus
+                tgv = tgvs[0]
+            else:  # len > 3, shouldn't be possible now
+                msg = "Too many QR codes on the page!"
+                problemFlag = True
+
+        if not problemFlag:
+            # we have a valid TGVC and the code matches.
+            if warnFlag:
+                print("[W] {0}: {1}".format(fname, msg))
+                print(
+                    "   (high occurences of these warnings may mean printer/scanner problems)"
+                )
+            # store the tpv in examsScannedNow
+            examsScannedNow[tn][pn] = (vn, fname[:-3])
+            # later we check that list against those produced during build
+
+        if problemFlag:
             # Difficulty scanning this pageimage so move it
             # to problemimages
-            print(
-                "A problem with codes in {} and " "testname {}".format(fname, testName)
-            )
+            print("[F] {0}: {1}".format(fname, msg))
             # move blah.png.qr
             shutil.move(fname, "problemImages")
             # move blah.png
             shutil.move(fname[:-3], "problemImages")
+
     os.chdir("../")
 
 
@@ -129,16 +273,16 @@ def validateQRsAgainstProduction():
             ps = str(p)
             # the version of that test/page
             v = examsScannedNow[t][p][0]
-            # the corresponding page imge file name
+            # the corresponding page image file name
             fn = examsScannedNow[t][p][1]
             # if the tpv's match then all good.
             if examsProduced[ts][ps] == v:
-                # print success and thats all.
-                print(
-                    "Valid scan of t{:s} p{:s} v{:d} from file {:s}".format(
-                        ts, ps, v, fn
-                    )
-                )
+                pass
+                #print(
+                #    "Valid scan of t{:s} p{:s} v{:d} from file {:s}".format(
+                #        ts, ps, v, fn
+                #    )
+                #)
             else:
                 # print mismatch warning and move file to problem-images
                 print(">> Mismatch between exam scanned and exam produced")
@@ -210,15 +354,16 @@ def addCurrentScansToExamsScanned():
     os.chdir("../")
 
 
-examsProduced = {}
-examsScanned = defaultdict(dict)
-examsScannedNow = defaultdict(dict)
-spec = TestSpecification()
-spec.readSpec()
-readExamsProduced()
-readExamsScanned()
-decodeQRs()
-checkQRsValid()
-validateQRsAgainstProduction()
-addCurrentScansToExamsScanned()
-writeExamsScanned()
+if __name__ == "__main__":
+    examsProduced = {}
+    examsScanned = defaultdict(dict)
+    examsScannedNow = defaultdict(dict)
+    spec = TestSpecification()
+    spec.readSpec()
+    readExamsProduced()
+    readExamsScanned()
+    decodeQRs()
+    checkQRsValid()
+    validateQRsAgainstProduction()
+    addCurrentScansToExamsScanned()
+    writeExamsScanned()

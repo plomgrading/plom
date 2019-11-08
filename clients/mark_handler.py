@@ -11,16 +11,13 @@ from PyQt5.QtWidgets import (
     QLabel,
     QSizePolicy,
 )
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import Qt
 
 
 class MarkHandler(QWidget):
-    # When a mark or delta is set, these signals will be emitted.
-    markSetSignal = pyqtSignal(int)
-    deltaSetSignal = pyqtSignal(int)
-
-    def __init__(self, maxScore):
+    def __init__(self, parent, maxScore):
         super(MarkHandler, self).__init__()
+        self.parent = parent
         # Set max score/mark
         self.maxScore = maxScore
         # Set current score/mark.
@@ -41,15 +38,8 @@ class MarkHandler(QWidget):
         )
         # By default we set style to marking-UP.
         self.style = "Up"
-        # Set up a current-score/mark label at top of widget.
-        self.scoreL = QLabel("")
-        fnt = self.scoreL.font()
-        fnt.setPointSize(fnt.pointSize() * 2)
-        self.scoreL.setFont(fnt)
-        self.scoreL.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.scoreL.setSizePolicy(
-            QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
-        )
+        # Keep last delta used
+        self.lastDelta = 0
 
     def setStyle(self, markStyle):
         """Sets the mark entry style - either total, up or down
@@ -76,7 +66,6 @@ class MarkHandler(QWidget):
         else:
             ncolumn = 2
 
-        grid.addWidget(self.scoreL, 0, 0, 1, 2)
         for k in range(0, self.numButtons + 1):
             self.markButtons["p{}".format(k)] = QPushButton("+&{}".format(k))
             grid.addWidget(
@@ -100,8 +89,7 @@ class MarkHandler(QWidget):
         else:
             ncolumn = 2
 
-        grid.addWidget(self.scoreL, 0, 0, 1, 2)
-        for k in range(1, self.numButtons + 1):
+        for k in range(0, self.numButtons + 1):
             self.markButtons["m{}".format(k)] = QPushButton("-&{}".format(k))
             grid.addWidget(
                 self.markButtons["m{}".format(k)], k // ncolumn + 1, k % ncolumn, 1, 1
@@ -112,7 +100,7 @@ class MarkHandler(QWidget):
             )
 
         self.setLayout(grid)
-        self.markSetSignal.emit(self.currentScore)
+        self.parent.totalMarkSet(self.currentScore)
         self.style = "Down"
 
     def setMarkingTotal(self):
@@ -133,30 +121,79 @@ class MarkHandler(QWidget):
             )
 
         self.setLayout(grid)
-        self.markSetSignal.emit(self.currentScore)
+        self.parent.totalMarkSet(self.currentScore)
         self.style = "Total"
 
     def setDeltaMark(self):
         self.pdmb.setStyleSheet("")
         self.pdmb = self.sender()
         self.pdmb.setStyleSheet(self.greenStyle)
-        self.currentDelta = int(self.sender().text().replace("&", ""))
-        self.deltaSetSignal.emit(self.currentDelta)
+        self.currentDelta = self.sender().text().replace("&", "")
+        self.parent.deltaMarkSet(self.currentDelta)
 
     def setTotalMark(self):
         self.ptmb.setStyleSheet("")
         self.ptmb = self.sender()
         self.ptmb.setStyleSheet(self.redStyle)
         self.currentScore = int(self.sender().text().replace("&", ""))
-        self.markSetSignal.emit(self.currentScore)
+        self.parent.totalMarkSet(self.currentScore)
 
     def setMark(self, newScore):
         self.currentScore = newScore
-        self.scoreL.setText("{} / {}".format(self.currentScore, self.maxScore))
-        self.markSetSignal.emit(self.currentScore)
+        self.parent.totalMarkSet(self.currentScore)
 
     def clearButtonStyle(self):
         if self.style == "Total":
             pass  # don't clear the styling when marking total.
         else:
             self.pdmb.setStyleSheet("")
+
+    def loadDeltaValue(self, delta):
+        # delta is a string
+        idelta = int(delta)
+        if abs(idelta) > self.maxScore or self.style == "Total":
+            return
+        if idelta <= 0 and self.style == "Down":
+            self.markButtons["m{}".format(-idelta)].animateClick()
+        elif idelta >= 0 and self.style == "Up":
+            self.markButtons["p{}".format(idelta)].animateClick()
+
+    def unpickleTotal(self, score):
+        if (score <= self.maxScore) and (score >= 0) and (self.style == "Total"):
+            self.markButtons["{}".format(score)].animateClick()
+
+    def incrementDelta(self, dlt):
+        # dlt is a string, so make int(delta)
+        delta = int(dlt)
+        if self.style == "Up":
+            if delta < 0:
+                delta = 0
+            else:
+                delta += 1
+            if delta > self.maxScore:
+                delta = 0
+            self.markButtons["p{}".format(delta)].animateClick()
+        elif self.style == "Down":
+            if delta > 0:
+                delta = -1
+            else:
+                delta -= 1
+            if abs(delta) > self.maxScore:
+                delta = -1
+            self.markButtons["m{}".format(-delta)].animateClick()
+
+    def clickDelta(self, dlt):
+        # dlt is a string, so make int(delta)
+        # be careful if this has been set by a no-delta comment.
+        if dlt == ".":
+            delta = 0
+        else:
+            delta = int(dlt)
+        if self.style == "Up":
+            if delta < 0:
+                delta = 0
+            self.markButtons["p{}".format(delta)].animateClick()
+        elif self.style == "Down":
+            if delta > 0:
+                delta = 0
+            self.markButtons["m{}".format(-delta)].animateClick()

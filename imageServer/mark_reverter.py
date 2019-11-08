@@ -13,6 +13,7 @@ from collections import defaultdict
 from examviewwindow import ExamViewWindow
 import os
 import shutil
+import glob
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -162,23 +163,44 @@ class examTable(QWidget):
             os.makedirs("markedPapers/revertedPapers")
         # Move the png file
         fname = rec.value("annotatedFile")
-        shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/" + fname)
-        # And move the associated textfile.
-        fname += ".txt"
-        shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/" + fname)
+        if fname:
+            try:
+                shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/" + fname)
+            except FileNotFoundError:
+                print('failed to move png file')
+            # and any old .png.regraded files
+            for f in glob.glob("markedPapers/" + fname + '.regrade*'):
+                f2 = f.lstrip("markedPapers/")
+                try:
+                    shutil.move(f, "markedPapers/revertedPapers/" + f2)
+                except FileNotFoundError:
+                    print('failed to move .png.regrade file: ' + f)
+            # And move the associated textfile.
+            fname += ".txt"
+            try:
+                shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/" + fname)
+            except FileNotFoundError:
+                print('failed to move txt file')
         # now safe to set the annotatedFile value in the record
         rec.setValue("annotatedFile", "")
+
         # move the plomFile and commentFile too
         fname = rec.value("plomFile")
-        shutil.move(
-            "markedPapers/plomFiles/" + fname, "markedPapers/revertedPapers/" + fname
-        )
+        if fname:
+            try:
+                shutil.move("markedPapers/plomFiles/" + fname, "markedPapers/revertedPapers/" + fname)
+            except FileNotFoundError:
+                print('failed to move plom file')
         rec.setValue("plomFile", "")
+
         fname = rec.value("commentFile")
-        shutil.move(
-            "markedPapers/commentFiles/" + fname, "markedPapers/revertedPapers/" + fname
-        )
+        if fname:
+            try:
+                shutil.move("markedPapers/commentFiles/" + fname, "markedPapers/revertedPapers/" + fname)
+            except FileNotFoundError:
+                print('failed to move comment file')
         rec.setValue("commentFile", "")
+
         # clear the tags
         rec.setValue("tags", "")
         # update the row

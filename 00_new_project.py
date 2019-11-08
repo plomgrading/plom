@@ -40,18 +40,14 @@ directories += [
 
 directories += ["clients", "clients/uiFiles", "clients/icons"]
 
-directories += [
-    "finishing/frontPages",
-    "finishing/coverPages",
-    "finishing/reassembled/",
-    "finishing/reassembled_ID_but_not_marked",
-]
-
 files = [
     "resources/testspecification.py",
+    "resources/tpv_utils.py",
     "resources/davconf.conf",
     "resources/davconf.yaml",
     "resources/predictionlist.csv",
+    "resources/pageNotSubmitted.pdf",
+    "resources/version.py",
 ]
 
 files += [
@@ -69,7 +65,7 @@ files += [
     "scanAndGroup/03_scans_to_page_images.py",
     "scanAndGroup/cleanAll.py",
     "scanAndGroup/04_decode_images.py",
-    "scanAndGroup/extractQRAndOrient.py",
+    "scanAndGroup/extractQR.py",
     "scanAndGroup/05_missing_pages.py",
     "scanAndGroup/manualPageIdentifier.py",
     "scanAndGroup/06_group_pages.py",
@@ -78,6 +74,7 @@ files += [
 ]
 
 files += [
+    "imageServer/aliceBob.py",
     "imageServer/authenticate.py",
     "imageServer/examviewwindow.py",
     "imageServer/identify_manager.py",
@@ -102,6 +99,7 @@ files += [
     "clients/client.spec",
     "clients/examviewwindow.py",
     "clients/identifier.py",
+    "clients/key_help.py",
     "clients/marker.py",
     "clients/mark_handler.py",
     "clients/messenger.py",

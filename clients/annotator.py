@@ -7,7 +7,7 @@ import json
 import os
 import sys
 
-from PyQt5.QtCore import Qt, QSettings, QSize, QTimer, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import Qt, QByteArray, QRectF, QSettings, QSize, QTimer, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import (
     QCursor,
     QGuiApplication,
@@ -18,19 +18,28 @@ from PyQt5.QtGui import (
 )
 from PyQt5.QtWidgets import (
     QAbstractItemView,
+    QAction,
     QDialog,
     QWidget,
     QMainWindow,
+    QGridLayout,
+    QLabel,
+    QMenu,
     QMessageBox,
     QPushButton,
     QShortcut,
     QTableWidget,
     QTableWidgetItem,
-    QGridLayout,
+    QToolButton,
 )
 
 from mark_handler import MarkHandler
 from pageview import PageView
+from pagescene import PageScene
+
+# import the key-help popup window class
+from key_help import KeyHelp
+
 from useful_classes import (
     CommentWidget,
     ErrorMessage,
@@ -92,8 +101,10 @@ class Annotator(QWidget):
         self.markWarn = True
         self.commentWarn = True
 
-        # a test view window - initially set to None
+        # a test view pop-up window - initially set to None
+        # for viewing whole paper
         self.testView = None
+        self.testViewFiles = None
         # Set current mark to 0.
         self.score = 0
         # make styling of currently selected button/tool.
@@ -109,37 +120,43 @@ class Annotator(QWidget):
         self.currentButton = None
         # Window depends on mouse-hand - si
         # right-hand mouse = 0, left-hand mouse = 1
-        if mouseHand == 0:
+        self.mouseHand = mouseHand
+        if self.mouseHand == 0:
             self.ui = Ui_annotator_rhm()
         else:
             self.ui = Ui_annotator_lhm()
         # Set up the gui.
         self.ui.setupUi(self)
-        # Set up the view of the group-image - loads in the image etc
+        # hide the "revealbox" which is revealed when the hideBox is hidden.
+        self.ui.revealBox0.setHidden(True)
+        # Set up the graphicsview and graphicsscene of the group-image
+        # loads in the image etc
         self.view = None
-        self.setView()
+        self.scene = None
+        self.setViewAndScene()
+
         # Create the comment list widget and put into gui.
         self.commentW = CommentWidget(self, self.maxMark)
         self.ui.commentGrid.addWidget(self.commentW, 1, 1)
         # pass the marking style to the mark entry widget.
         # also when we set this up we have to connect various
-        # mark set, delta-set, mark change signals to functions
+        # mark set, delta-set, mark change functions
         self.setMarkHandler(self.markStyle)
+        self.setDeltaButtonMenu()
         # set alt-enter / alt-return as shortcut to finish annotating
         # also set ctrl-n and ctrl-b as same shortcut.
-        self.setEndShortCuts()
         # set ctrl-+ as zoom toggle shortcut
-        self.setZoomShortCuts()
+        # set ctrl-z / ctrl-y as undo/redo shortcuts
+        self.setMiscShortCuts()
         # set the zoom combobox
         self.setZoomComboBox()
         # Set the tool icons
         self.setIcons()
+        # Set up cursors
+        self.loadCursors()
+
         # Connect all the buttons to relevant functions
         self.setButtons()
-        # Set up the score-box that gets stamped in top-left of image.
-        # "k out of n" where k=current score, n = max score.
-        self.view.scene.scoreBox.changeMax(self.maxMark)
-        self.view.scene.scoreBox.changeScore(self.score)
         # pass this to the comment table too - it needs to know if we are
         # marking up/down/total to correctly shade deltas.
         self.commentW.setStyle(self.markStyle)
@@ -148,16 +165,47 @@ class Annotator(QWidget):
         self.setWindowFlags(
             self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint
         )
-        # Make sure window is maximised.
-        self.showMaximized()
         # Grab window settings from parent
         self.loadWindowSettings()
 
         # Keyboard shortcuts.
+        self.keycodes = self.getKeyCodes()
+
+        # set up current-mark / current-mode label
+        self.setCurrentMarkMode()
+
         # Connect various key-presses to associated tool-button clicks
         # Allows us to translate a key-press into a button-press.
         # Key layout (mostly) matches tool-button layout
-        self.keycodes = {
+        # Very last thing = unpickle scene from plomDict
+        if plomDict is not None:
+            self.unpickleIt(plomDict)
+
+    def setCurrentMarkMode(self):
+        self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
+        self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
+        self.ui.markLabel.setText(
+            "{} out of {}".format(self.scene.score, self.scene.maxMark)
+        )
+
+    def loadCursors(self):
+        # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
+        # pyinstaller creates a temp folder and stores path in _MEIPASS
+        try:
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = "./cursors"
+
+        # load pixmaps for cursors and set the hotspots
+        self.cursorBox = QCursor(QPixmap("{}/box.png".format(base_path)), 4, 4)
+        self.cursorCross = QCursor(QPixmap("{}/cross.png".format(base_path)), 4, 4)
+        self.cursorDelete = QCursor(QPixmap("{}/delete.png".format(base_path)), 4, 4)
+        self.cursorLine = QCursor(QPixmap("{}/line.png".format(base_path)), 4, 4)
+        self.cursorPen = QCursor(QPixmap("{}/pen.png".format(base_path)), 4, 4)
+        self.cursorTick = QCursor(QPixmap("{}/tick.png".format(base_path)), 4, 4)
+
+    def getKeyCodes(self):
+        return {
             # home-row
             Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
             Qt.Key_S: lambda: self.ui.undoButton.animateClick(),
@@ -215,12 +263,16 @@ class Annotator(QWidget):
             Qt.Key_Underscore: lambda: self.view.zoomOut(),
             # Only change-mark shortcuts 0-5.
             Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
-            Qt.Key_0: lambda: self.keyToChangeMark(0),
             Qt.Key_1: lambda: self.keyToChangeMark(1),
             Qt.Key_2: lambda: self.keyToChangeMark(2),
             Qt.Key_3: lambda: self.keyToChangeMark(3),
             Qt.Key_4: lambda: self.keyToChangeMark(4),
             Qt.Key_5: lambda: self.keyToChangeMark(5),
+            Qt.Key_6: lambda: self.keyToChangeMark(6),
+            Qt.Key_7: lambda: self.keyToChangeMark(7),
+            Qt.Key_8: lambda: self.keyToChangeMark(8),
+            Qt.Key_9: lambda: self.keyToChangeMark(9),
+            Qt.Key_0: lambda: self.keyToChangeMark(10),
             # ?-mark pop up a key-list
             Qt.Key_Question: lambda: self.keyPopUp(),
             # Toggle hide/unhide tools so as to maximise space for annotation
@@ -228,108 +280,167 @@ class Annotator(QWidget):
             # view whole paper
             Qt.Key_F1: lambda: self.viewWholePaper(),
         }
-        # Very last thing = unpickle scene from plomDict
-        if plomDict is not None:
-            self.unpickleIt(plomDict)
 
     def toggleTools(self):
         # Show / hide all the tools and so more space for the group-image
         # All tools in gui inside 'hideablebox' - so easily shown/hidden
         if self.ui.hideableBox.isHidden():
-            self.ui.hideableBox.show()
-            self.ui.hideButton.setText("Hide")
+            self.wideLayout()
         else:
-            self.ui.hideableBox.hide()
-            self.ui.hideButton.setText("Reveal")
+            self.narrowLayout()
+
+    def narrowLayout(self):
+        self.ui.revealBox0.show()
+        self.ui.hideableBox.hide()
+        self.ui.hideButton.setText("Wide")
+        self.ui.revealLayout.addWidget(
+            self.ui.hideButton, 1, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.markLabel, 2, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.modeLabel, 3, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+
+        self.ui.revealLayout.addWidget(
+            self.ui.penButton, 4, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.lineButton, 4, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+
+        self.ui.revealLayout.addWidget(
+            self.ui.tickButton, 5, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.crossButton, 5, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+
+        self.ui.revealLayout.addWidget(
+            self.ui.textButton, 6, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.commentButton, 6, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+
+        self.ui.revealLayout.addWidget(
+            self.ui.boxButton, 7, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.deltaButton, 7, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+
+        self.ui.revealLayout.addWidget(
+            self.ui.deleteButton, 8, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.panButton, 8, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+
+        self.ui.revealLayout.addWidget(
+            self.ui.undoButton, 8, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.redoButton, 8, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+
+        self.ui.revealLayout.addWidget(
+            self.ui.zoomButton, 9, 1, Qt.AlignHCenter | Qt.AlignTop
+        )
+        self.ui.revealLayout.addWidget(
+            self.ui.moveButton, 9, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+        # dropdown zoom menu thing
+        self.ui.revealLayout.addWidget(
+            self.ui.zoomCB, 10, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
+
+        # end buttons
+        self.ui.revealLayout2.addWidget(self.ui.finishedButton, Qt.AlignHCenter)
+        self.ui.revealLayout2.addWidget(self.ui.finishNoRelaunchButton, Qt.AlignHCenter)
+        self.ui.revealLayout2.addWidget(self.ui.cancelButton, Qt.AlignHCenter)
+
+    def wideLayout(self):
+        self.ui.hideableBox.show()
+        self.ui.revealBox0.hide()
+        self.ui.hideButton.setText("Compact")
+        # right-hand mouse = 0, left-hand mouse = 1
+        if self.mouseHand == 0:
+            self.ui.modeLayout.addWidget(self.ui.hideButton)
+            self.ui.modeLayout.addWidget(self.ui.modeLabel)
+            self.ui.modeLayout.addWidget(self.ui.markLabel)
+            # tools
+            self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 4, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 5, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.tickButton, 2, 4, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.commentButton, 2, 5, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.boxButton, 3, 4, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.commentDownButton, 3, 5, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.penButton, 0, 6, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.textButton, 2, 6, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.lineButton, 3, 6, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.deleteButton, 3, 3, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.undoButton, 2, 3, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 3, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.panButton, 0, 2, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 2, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 2, 1, 1)
+            # zoom QComboBox
+            self.ui.toolLayout.addWidget(self.ui.zoomCB, 4, 5, 1, 2)
+
+            # end buttons
+            self.ui.ebLayout.addWidget(self.ui.finishedButton)
+            self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
+            self.ui.ebLayout.addWidget(self.ui.cancelButton)
+        else:  # left-hand mouse
+            self.ui.modeLayout.addWidget(self.ui.markLabel)
+            self.ui.modeLayout.addWidget(self.ui.modeLabel)
+            self.ui.modeLayout.addWidget(self.ui.hideButton)
+
+            self.ui.toolLayout.addWidget(self.ui.commentButton, 2, 5, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.penButton, 0, 2, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.undoButton, 2, 7, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 8, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 8, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.panButton, 0, 8, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.lineButton, 3, 2, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.zoomCB, 4, 7, 1, 2)
+            self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 7, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.deleteButton, 3, 7, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.textButton, 2, 2, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 6, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.tickButton, 2, 6, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.boxButton, 3, 6, 1, 1)
+
+            # end buttons
+            self.ui.ebLayout.addWidget(self.ui.finishedButton)
+            self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
+            self.ui.ebLayout.addWidget(self.ui.cancelButton)
 
     def viewWholePaper(self):
-        files = self.parent.viewWholePaper()
+        # grab the files if needed.
+        if self.testViewFiles is None:
+            self.testViewFiles = self.parent.viewWholePaper()
+        # if we haven't built a testview, built it now
         if self.testView is None:
-            self.testView = TestView(self, files)
+            self.testView = TestView(self, self.testViewFiles)
+        else:
+            # must have closed it, so re-show it.
+            self.testView.show()
 
     def doneViewingPaper(self):
-        self.testView = None
         self.parent.doneWithViewFiles()
+        if self.testView is not None:
+            self.testView.close()
 
     def keyPopUp(self):
-        # Pops up a little window which containts table of
-        # keys and associated tools.
-        keylist = {
-            "a": "Zoom",
-            "s": "Undo",
-            "d": "Tick/QMark/Cross",
-            "f": "Current Comment",
-            "g": "Text",
-            "z": "Move",
-            "x": "Delete",
-            "c": "Box/Ellipse",
-            "v": "Next Comment",
-            "b": "Line/DoubleArrow/Arrow",
-            "q": "Pan",
-            "w": "Redo",
-            "e": "Cross/QMark/Tick",
-            "r": "Previous Comment",
-            "t": "Pen/DoubleArrow/Highlighter",
-            "\\": "Maximize Window",
-            "-": "Zoom Out",
-            "_": "Zoom Out",
-            "+": "Zoom In",
-            "=": "Zoom In",
-            "ctrl-=": "Toggle Zoom",
-            "`": "Set Mark 0",
-            "0": "Set Mark 0",
-            "1": "Set Mark 1",
-            "2": "Set Mark 2",
-            "3": "Set Mark 3",
-            "4": "Set Mark 4",
-            "5": "Set Mark 5",
-            ";": "Zoom",
-            "l": "Undo",
-            "k": "Tick/QMark/Cross",
-            "j": "Current Comment",
-            "h": "Text",
-            "/": "Move",
-            ".": "Delete",
-            ",": "Box/Ellipse",
-            "m": "Next Comment",
-            "n": "Line/DoubleArrow/Arrow",
-            "p": "Pan",
-            "o": "Redo",
-            "i": "Cross/QMark/Tick",
-            "u": "Previous Comment",
-            "y": "Pen/DoubleArrow/Highlighter",
-            "?": "Key Help",
-        }
         # build KeyPress shortcuts dialog
-        kp = QDialog()
-        grid = QGridLayout()
-        # Sortable table to display [key, description] pairs
-        kt = QTableWidget()
-        kt.setColumnCount(2)
-        # Set headers - not editable.
-        kt.setHorizontalHeaderLabels(["key", "function"])
-        kt.verticalHeader().hide()
-        kt.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        kt.setSortingEnabled(True)
-        # Read through the keys and put into table.
-        for a in keylist.keys():
-            r = kt.rowCount()
-            kt.setRowCount(r + 1)
-            kt.setItem(r, 0, QTableWidgetItem(a))
-            kt.setItem(r, 1, QTableWidgetItem("{}".format(keylist[a])))
-        # Give it a close-button.
-        cb = QPushButton("&close")
-        cb.clicked.connect(kp.accept)
-        grid.addWidget(kt, 1, 1, 3, 3)
-        grid.addWidget(cb, 4, 3)
-        kp.setLayout(grid)
-        # Resize items to fit
-        kt.resizeColumnsToContents()
-        kt.resizeRowsToContents()
+        kp = KeyHelp()
         # Pop it up.
         kp.exec_()
 
-    def setView(self):
+    def setViewAndScene(self):
         """Starts the pageview.
         The pageview (which is a qgraphicsview) which is (mostly) a layer
         between the annotation widget and the qgraphicsscene which
@@ -339,14 +450,23 @@ class Annotator(QWidget):
         """
         # Start the pageview - pass it this widget (so it can communicate
         # back to us) and the filename of the image.
-        self.view = PageView(self, self.imageFile)
+        self.view = PageView(self)
+        self.scene = PageScene(
+            self, self.imageFile, self.maxMark, self.score, self.markStyle
+        )
+        # connect view to scene
+        self.view.connectScene(self.scene)
+        # scene knows which views are connected via self.views()
+
         # put the view into the gui.
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
         # set the initial view to contain the entire scene which at
         # this stage is just the image.
-        self.view.fitInView(self.view.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
+        self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
         # Centre at top-left of image.
         self.view.centerOn(0, 0)
+        # click the move button
+        self.ui.moveButton.animateClick()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
@@ -356,15 +476,19 @@ class Annotator(QWidget):
             self.setWindowState(Qt.WindowNoState)
 
     def keyToChangeMark(self, buttonNumber):
-        """Translates a key-press (0,1,2,3,4,5) into a button-press
+        """Translates a key-press (0,1,2,..,9) into a button-press
         of the various delta-mark buttons in the mark-entry widget.
         If mark-up style then they trigger the positive mark buttons,
         hence p0,p1 etc... if mark down then triggers the negative mark
         buttons - n1,n2, etc.
         """
+        # if key is higher than maxMark then no such button.
+        if buttonNumber > self.maxMark:
+            return
+        # Otherwise click the appropriate button.
         if self.markHandler.style == "Up":
             self.markHandler.markButtons["p{}".format(buttonNumber)].animateClick()
-        elif self.markHandler.style == "Down" and buttonNumber > 0:
+        elif self.markHandler.style == "Down" and buttonNumber >= 0:
             self.markHandler.markButtons["m{}".format(buttonNumber)].animateClick()
 
     def keyPressEvent(self, event):
@@ -383,22 +507,31 @@ class Annotator(QWidget):
         Changes the styling of the corresponding button, and
         also the cursor.
         """
+        # TODO: clean up this function. Is a bit of a mess
+
         # Clear styling of the what was until now the current button
-        if self.currentButton is None:
-            pass
-        else:
+        if self.currentButton is not None:
             self.currentButton.setStyleSheet("")
+        # A bit of a hack to take care of comment-mode and delta-mode
+        if self.scene.mode == "comment" and newMode != "comment":
+            self.ui.commentButton.setStyleSheet("")
+        if self.scene.mode == "delta" and newMode != "delta":
+            self.ui.deltaButton.setStyleSheet("")
         # We change currentbutton to which ever widget sent us
         # to this function. We have to be a little careful since
         # not all widgets get the styling in the same way.
         # If the mark-handler widget sent us here, it takes care
         # of its own styling - so we update the little tool-tip
         # and set current button to none.
-        if self.sender() == self.markHandler:
+        if isinstance(self.sender(), QPushButton):
+            # has come from mark-change button in handler, so
             # set button=none, since markHandler does its own styling
             self.currentButton = None
         else:
-            # otherwise the button = whoever sent us here.
+            # Clear the style of the mark-handler (this will mostly not do
+            # anything, but saves us testing if we had styled it)
+            self.markHandler.clearButtonStyle()
+            # the current button = whoever sent us here.
             self.currentButton = self.sender()
             # Set the style of that button - be careful of the
             # comment list - since it needs different styling
@@ -409,13 +542,11 @@ class Annotator(QWidget):
                 self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
                 # make sure comment button style is cleared
                 self.ui.commentButton.setStyleSheet("")
-            # Clear the style of the mark-handler (this will mostly not do
-            # anything, but saves us testing if we had styled it)
-            self.markHandler.clearButtonStyle()
-        # pass the new mode to the graphicsview
-        self.view.setMode(newMode)
-        # set the mouse cursor
+        # pass the new mode to the graphicsview, and set the cursor in view
+        self.scene.setMode(newMode)
         self.view.setCursor(newCursor)
+        # set the modelabel
+        self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
         # refresh everything.
         self.repaint()
 
@@ -449,6 +580,7 @@ class Annotator(QWidget):
         )
         self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
         self.setIcon(self.ui.deleteButton, "delete", "{}/delete.svg".format(base_path))
+        self.setIcon(self.ui.deltaButton, "delta", "{}/delta.svg".format(base_path))
         self.setIcon(self.ui.lineButton, "line", "{}/line.svg".format(base_path))
         self.setIcon(self.ui.moveButton, "move", "{}/move.svg".format(base_path))
         self.setIcon(self.ui.panButton, "pan", "{}/pan.svg".format(base_path))
@@ -468,7 +600,7 @@ class Annotator(QWidget):
         self.commentW.saveComments()
         self.close()
 
-    def setEndShortCuts(self):
+    def setMiscShortCuts(self):
         # Set alt-enter or alt-return to end the annotator
         # The key-shortcuts fire a signal, which triggers the
         # endAndRelaunch slot.
@@ -481,15 +613,20 @@ class Annotator(QWidget):
         self.endShortCutc.activated.connect(self.endAndRelaunch)
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
         self.endShortCutd.activated.connect(self.endAndRelaunch)
-
-    def setZoomShortCuts(self):
+        self.cancelShortCut = QShortcut(QKeySequence("Ctrl+c"), self)
+        self.cancelShortCut.activated.connect(self.cleanUpCancel)
         # shortcuts for zoom-states
         self.zoomToggleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
         self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
+        # shortcuts for undo/redo
+        self.undoShortCut = QShortcut(QKeySequence("Ctrl+z"), self)
+        self.undoShortCut.activated.connect(self.scene.undo)
+        self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
+        self.redoShortCut.activated.connect(self.scene.redo)
 
     # Simple mode change functions
     def boxMode(self):
-        self.setMode("box", Qt.ArrowCursor)
+        self.setMode("box", self.cursorBox)
 
     def commentMode(self):
         if self.currentButton == self.commentW.CL:
@@ -499,13 +636,16 @@ class Annotator(QWidget):
         self.commentW.CL.handleClick()
 
     def crossMode(self):
-        self.setMode("cross", Qt.ArrowCursor)
+        self.setMode("cross", self.cursorCross)
 
     def deleteMode(self):
-        self.setMode("delete", Qt.ForbiddenCursor)
+        self.setMode("delete", self.cursorDelete)
+
+    def deltaButtonMode(self):
+        self.setMode("delta", Qt.IBeamCursor)
 
     def lineMode(self):
-        self.setMode("line", Qt.CrossCursor)
+        self.setMode("line", self.cursorLine)
 
     def moveMode(self):
         self.setMode("move", Qt.OpenHandCursor)
@@ -516,18 +656,18 @@ class Annotator(QWidget):
         self.view.setDragMode(1)
 
     def penMode(self):
-        self.setMode("pen", Qt.ArrowCursor)
+        self.setMode("pen", self.cursorPen)
 
     def textMode(self):
         self.setMode("text", Qt.IBeamCursor)
 
     def tickMode(self):
-        self.setMode("tick", Qt.ArrowCursor)
+        self.setMode("tick", self.cursorTick)
 
     def zoomMode(self):
         self.setMode("zoom", Qt.SizeFDiagCursor)
 
-    def loadModeFromBefore(self, mode):
+    def loadModeFromBefore(self, mode, aux=None):
         self.loadModes = {
             "box": lambda: self.ui.boxButton.animateClick(),
             "comment": lambda: self.commentMode(),
@@ -537,7 +677,13 @@ class Annotator(QWidget):
             "text": lambda: self.ui.textButton.animateClick(),
             "tick": lambda: self.ui.tickButton.animateClick(),
         }
-        self.loadModes.get(mode, lambda *args: None)()
+        if mode == "delta" and aux is not None:
+            self.markHandler.loadDeltaValue(aux)
+        elif mode == "comment" and aux is not None:
+            self.commentW.setCurrentItemRow(aux)
+            self.ui.commentButton.animateClick()
+        else:
+            self.loadModes.get(mode, lambda *args: None)()
 
     def setButtons(self):
         """Connect buttons to functions.
@@ -553,14 +699,17 @@ class Annotator(QWidget):
         self.ui.textButton.clicked.connect(self.textMode)
         self.ui.tickButton.clicked.connect(self.tickMode)
         self.ui.zoomButton.clicked.connect(self.zoomMode)
+        # Also the "hidden" delta-button
+        self.ui.deltaButton.clicked.connect(self.deltaButtonMode)
 
         # Pass the undo/redo button clicks on to the view
-        self.ui.undoButton.clicked.connect(self.view.undo)
-        self.ui.redoButton.clicked.connect(self.view.redo)
+        self.ui.undoButton.clicked.connect(self.scene.undo)
+        self.ui.redoButton.clicked.connect(self.scene.redo)
         # The key-help button connects to the keyPopUp command.
         self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
-        # Cancel button closes annotator with a reject/do not save
-        self.ui.cancelButton.clicked.connect(self.close)
+        # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
+        self.ui.cancelButton.clicked.connect(self.cleanUpCancel)
+        # TODO: or self.close above?
         # Hide button connects to the toggleTools command
         self.ui.hideButton.clicked.connect(self.toggleTools)
 
@@ -595,35 +744,10 @@ class Annotator(QWidget):
         then pasted into place.
         """
         # Set the model to text and change cursor.
-        self.setMode("text", QCursor(Qt.IBeamCursor))
+        # self.setMode("comment", self.cursorComment)
+        self.setMode("comment", QCursor(Qt.IBeamCursor))
         # Grab the delta from the arguments
-        delta = int(dlt_txt[0])
-        # We only paste the delta if it is appropriate - this depends on
-        # the marking style.
-        # If marking-up then keep delta if positive, and if applying it
-        # will not push mark past maximium possible
-        if self.markStyle == 2:  # mark up - disable negative
-            if delta <= 0 or delta + self.score > self.maxMark:
-                self.view.makeComment(0, dlt_txt[1])
-                return
-            else:
-                self.view.makeComment(dlt_txt[0], dlt_txt[1])
-                return
-        # If marking down, then keep delta if negative, and if applying it
-        # doesn't push mark down past zero.
-        elif self.markStyle == 3:
-            if delta >= 0 or delta + self.score < 0:
-                self.view.makeComment(0, dlt_txt[1])
-                return
-            else:
-                self.view.makeComment(dlt_txt[0], dlt_txt[1])
-                return
-        else:
-            # Remaining possibility = mark total - no restrictions
-            # since user has to set total mark manually - the deltas do not
-            # change the mark, so are not displayed or used.
-            self.view.makeComment(0, dlt_txt[1])
-            return
+        self.scene.changeTheComment(dlt_txt[0], dlt_txt[1], annotatorUpdate=True)
 
     def setMarkHandler(self, markStyle):
         """Set up the mark handling widget inside the annotator gui.
@@ -635,66 +759,51 @@ class Annotator(QWidget):
         image.
         """
         # Build the mark handler and put into the gui.
-        self.markHandler = MarkHandler(self.maxMark)
-        self.ui.markGrid.addWidget(self.markHandler, 1, 1)
-        # Connect the markHandler's mark-set and delta-set signals to
-        # the appropriate functions here.
-        self.markHandler.markSetSignal.connect(self.totalMarkSet)
-        self.markHandler.deltaSetSignal.connect(self.deltaMarkSet)
+        self.markHandler = MarkHandler(self, self.maxMark)
         self.markHandler.setStyle(markStyle)
-        if markStyle == 1:  # mark total style
-            # don't connect the delta-tool to the changeMark function
-            # this ensures that marked-comments do not change the total
-            pass
-        else:
-            # connect the delta tool to the changeMark function.
-            # delta and marked comments will change the total.
-            # The view makes this signal when a delta is pasted
-            self.view.scene.markChangedSignal.connect(self.changeMark)
+        self.ui.markGrid.addWidget(self.markHandler, 1, 1)
 
     def totalMarkSet(self, tm):
         # Set the total mark and pass that info to the comment list
         # so it can shade over deltas that are no longer applicable.
         self.score = tm
         self.commentW.changeMark(self.score)
-        # also tell the scorebox in the top-left of the image what the
-        # new total mark is.
-        self.view.scene.scoreBox.changeScore(self.score)
+        # also tell the scene what the new mark is
+        self.scene.setTheMark(self.score)
 
     def deltaMarkSet(self, dm):
         """When a delta-mark button is clicked, or a comment selected
         the view (and scene) need to know what the current delta is so
         that it can be pasted in correctly (when user clicks on image).
         """
-        # Compute mark if delta is applied = current mark + delta
-        lookingAhead = self.score + dm
-        # If it is out of range then change mode to "move" so that
-        # the user cannot paste in that delta.
-        if lookingAhead < 0 or lookingAhead > self.maxMark:
+        # Change the mode to delta
+        self.setMode("delta", QCursor(Qt.IBeamCursor))
+        # Try changing the delta in the scene
+        if not self.scene.changeTheDelta(dm, annotatorUpdate=True):
+            # If it is out of range then change mode to "move" so that
+            # the user cannot paste in that delta.
             self.ui.moveButton.animateClick()
             return
-        # Otherwise set the mode and tell the view the current delta value.
-        # which it, in turn, passes on to the pagescene.
-        self.setMode("delta", QCursor(Qt.ArrowCursor))
-        self.view.markDelta(dm)
+        # Else, the delta is now set, so now change the mode here.
+        self.setMode("delta", QCursor(Qt.IBeamCursor))
+        # and set style of the delta-button
+        self.ui.deltaButton.setStyleSheet(self.currentButtonStyleBackground)
 
-    def changeMark(self, dm):
-        """The mark has been changed by delta=dm. Update the mark-handler
-        and the scorebox and check if the user can use this delta again
-        while keeping the mark between 0 and the max possible.
+    def changeMark(self, score):
+        """The mark has been changed. Update the mark-handler.
         """
-        # Update the current mark
-        self.score += dm
         # Tell the mark-handler what the new mark is and force a repaint.
+        assert self.markStyle != 1, "Should not be called if mark-total"
+
+        self.score = score
+        # update the markline
+        self.ui.markLabel.setText(
+            "{} out of {}".format(self.scene.score, self.scene.maxMark)
+        )
         self.markHandler.setMark(self.score)
         self.markHandler.repaint()
-        # Tell the view (and scene) what the current mark is.
-        self.view.scene.scoreBox.changeScore(self.score)
-        # Look ahead to see if this delta can be used again while keeping
-        # the mark within range. If not, then set mode to 'move'.
-        lookingAhead = self.score + dm
-        if lookingAhead < 0 or lookingAhead > self.maxMark:
-            self.ui.moveButton.animateClick()
+        # update the delta-mark-menu
+        self.updateDeltaMarkMenu()
 
     def closeEventRelaunch(self):
         self._relaunch = True
@@ -705,45 +814,91 @@ class Annotator(QWidget):
         self.close()
 
     def loadWindowSettings(self):
-        if self.parent.annotatorSettings.value("geometry") is not None:
-            self.restoreGeometry(self.parent.annotatorSettings.value("geometry"))
-        if self.parent.annotatorSettings.value("markWarnings") is not None:
-            self.markWarn = self.parent.annotatorSettings.value("markWarnings")
-        if self.parent.annotatorSettings.value("commentWarnings") is not None:
-            self.commentWarn = self.parent.annotatorSettings.value("commentWarnings")
-        if self.parent.annotatorSettings.value("tool") is not None:
-            self.loadModeFromBefore(self.parent.annotatorSettings.value("tool"))
-        if self.parent.annotatorSettings.value("viewRectangle") is not None:
-            # put in slight delay so that any resize events are done.
-            QTimer.singleShot(
-                150,
-                lambda: self.view.initialZoom(
-                    self.parent.annotatorSettings.value("viewRectangle")
-                ),
-            )
+        # load the window geometry, else maximise.
+        if self.parent.annotatorSettings["geometry"] is not None:
+            self.restoreGeometry(self.parent.annotatorSettings["geometry"])
+            # TODO - delete the below
+            # since we can't directly jsonify QByteArray:
+            # self.restoreGeometry(
+            #     QByteArray.fromBase64(
+            #         self.parent.annotatorSettings["geometry"].encode()
+            #     )
+            # )
         else:
-            QTimer.singleShot(150, lambda: self.view.initialZoom(None))
-        # there is some redundancy between the above and the below.
-        if self.parent.annotatorSettings.value("zoomState") is not None:
-            # put in slight delay so that any resize events are done.
+            # Make sure window is maximised.
+            self.showMaximized()
+
+        # remember the "do not show again" checks
+        if self.parent.annotatorSettings["markWarnings"] is not None:
+            self.markWarn = self.parent.annotatorSettings["markWarnings"]
+        if self.parent.annotatorSettings["commentWarnings"] is not None:
+            self.commentWarn = self.parent.annotatorSettings["commentWarnings"]
+
+        # remember the last tool used
+        if self.parent.annotatorSettings["tool"] is not None:
+            if self.parent.annotatorSettings["tool"] == "delta":
+                dlt = self.parent.annotatorSettings["delta"]
+                self.loadModeFromBefore("delta", dlt)
+            elif self.parent.annotatorSettings["tool"] == "comment":
+                cmt = self.parent.annotatorSettings["comment"]
+                self.loadModeFromBefore("comment", cmt)
+            else:
+                self.loadModeFromBefore(self.parent.annotatorSettings["tool"])
+
+        # if zoom-state is none, set it to index 1 (fit page) - but delay.
+        if self.parent.annotatorSettings["zoomState"] is None:
+            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+        elif self.parent.annotatorSettings["zoomState"] == 0:
+            # is set to "user", so set the view-rectangle
+            if self.parent.annotatorSettings["viewRectangle"] is not None:
+                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
+                QTimer.singleShot(
+                    200,
+                    lambda: self.view.initialZoom(
+                        self.parent.annotatorSettings["viewRectangle"]
+                    ),
+                )
+            else:
+                # no view-rectangle, so set to "fit-page"
+                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+        else:
             QTimer.singleShot(
                 200,
                 lambda: self.ui.zoomCB.setCurrentIndex(
-                    self.parent.annotatorSettings.value("zoomState")
+                    self.parent.annotatorSettings["zoomState"]
                 ),
             )
-        else:
-            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
 
     def saveWindowSettings(self):
-        self.parent.annotatorSettings.setValue("geometry", self.saveGeometry())
-        self.parent.annotatorSettings.setValue("markWarnings", self.markWarn)
-        self.parent.annotatorSettings.setValue("commentWarnings", self.commentWarn)
-        self.parent.annotatorSettings.setValue("tool", self.view.scene.mode)
-        self.parent.annotatorSettings.setValue("viewRectangle", self.view.vrect)
-        self.parent.annotatorSettings.setValue(
-            "zoomState", self.ui.zoomCB.currentIndex()
-        )
+        # TODO - delete below
+        # since we can't directly jsonify QByteArray:
+        # self.parent.annotatorSettings["geometry"] = (
+        #     self.saveGeometry().toBase64().data().decode()
+        # )
+        # since we can't directly jsonify qrectf:
+        # jsrect = self.view.getCurrentViewRect()
+        # self.parent.annotatorSettings["viewRectangle"] = [
+        #     jsrect.x(),
+        #     jsrect.y(),
+        #     jsrect.width(),
+        #     jsrect.height(),
+        # ]
+        self.parent.annotatorSettings["geometry"] = self.saveGeometry()
+        self.parent.annotatorSettings["viewRectangle"] = self.view.getCurrentViewRect()
+        self.parent.annotatorSettings["markWarnings"] = self.markWarn
+        self.parent.annotatorSettings["commentWarnings"] = self.commentWarn
+        self.parent.annotatorSettings["zoomState"] = self.ui.zoomCB.currentIndex()
+        self.parent.annotatorSettings["tool"] = self.scene.mode
+        if self.scene.mode == "delta":
+            self.parent.annotatorSettings["delta"] = self.scene.markDelta
+        if self.scene.mode == "comment":
+            self.parent.annotatorSettings["comment"] = self.commentW.getCurrentItemRow()
+
+    def cleanUpCancel(self):
+        # clean up after a testview
+        self.doneViewingPaper()
+        self.reject()
+        return
 
     def closeEvent(self, ce):
         """When the user closes the window - either by clicking on the
@@ -766,17 +921,19 @@ class Annotator(QWidget):
             print('ann emitted signal: REJECT')
             self.ann_shutdown_signal.emit(False, -1, False)
             print('ann closeEvent: closing window')
+            # clean up after a testview
+            self.doneViewingPaper()
             ce.accept()
             return
         # do some checks before accepting things
-        if not self.view.areThereAnnotations():
-            msg = ErrorMessage("Please annotate even if blank.")
+        if not self.scene.areThereAnnotations():
+            msg = ErrorMessage("Please make an annotation, even if the page is blank.")
             msg.exec_()
             ce.ignore()
             return
 
         # check if comments have been left.
-        if self.view.countComments() == 0:
+        if self.scene.countComments() == 0:
             # error message if total is not 0 or full
             if self.score > 0 and self.score < self.maxMark and self.commentWarn:
                 msg = SimpleMessageCheckBox(
@@ -815,11 +972,14 @@ class Annotator(QWidget):
             ce.ignore()
             return
 
-        # Save the view/scene to file.
-        self.view.save()
+        # clean up after a testview
+        self.doneViewingPaper()
+
+        # Save the scene to file.
+        self.scene.save()
         # Save the marker's comments
         self.saveMarkerComments()
-        # Pickle the scene as a PLOM-file
+        # Pickle the scene as a plom-file
         self.pickleIt()
         # Save the window settings
         self.saveWindowSettings()
@@ -831,7 +991,7 @@ class Annotator(QWidget):
 
 
     def checkAllObjectsInside(self):
-        if self.view.checkAllObjectsInside():
+        if self.scene.checkAllObjectsInside():
             return True
         else:
             # some objects outside the image, check if user really wants to finish
@@ -844,7 +1004,7 @@ class Annotator(QWidget):
                 return True
 
     def getComments(self):
-        return self.view.getComments()
+        return self.scene.getComments()
 
     def saveMarkerComments(self):
         commentList = self.getComments()
@@ -856,7 +1016,7 @@ class Annotator(QWidget):
         return self.parent.latexAFragment(txt)
 
     def pickleIt(self):
-        lst = self.view.scene.pickleSceneItems()  # newest items first
+        lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
         plomDict = {
             "fileName": os.path.basename(self.imageFile),
@@ -871,8 +1031,12 @@ class Annotator(QWidget):
             json.dump(plomDict, fh)
 
     def unpickleIt(self, plomDict):
-        self.view.scene.unpickleSceneItems(plomDict["sceneItems"])
-        # do some sanity checks here?
+        self.view.setHidden(True)
+        self.scene.unpickleSceneItems(plomDict["sceneItems"])
+        # if markstyle is "Total", then click appropriate button
+        if self.markStyle == 1:
+            self.markHandler.unpickleTotal(plomDict["currentMark"])
+        self.view.setHidden(False)
 
     def setZoomComboBox(self):
         self.ui.zoomCB.addItem("User")
@@ -911,3 +1075,42 @@ class Annotator(QWidget):
         else:
             pass
         self.view.setFocus()
+
+    def setDeltaButtonMenu(self):
+        if self.markStyle == 1:
+            # mark total - don't set anything
+            return
+        self.ui.deltaMenu = QMenu("Set Delta")
+        self.deltaActions = {}
+        if self.markStyle == 2:
+            # set to mark up
+            for k in range(0, self.maxMark + 1):
+                self.deltaActions[k] = self.ui.deltaMenu.addAction("+{}".format(k))
+                self.deltaActions[k].triggered.connect(
+                    self.markHandler.markButtons["p{}".format(k)].animateClick
+                )
+        elif self.markStyle == 3:
+            # set to mark down
+            for k in range(0, self.maxMark + 1):
+                self.deltaActions[k] = self.ui.deltaMenu.addAction("-{}".format(k))
+                self.deltaActions[k].triggered.connect(
+                    self.markHandler.markButtons["m{}".format(k)].animateClick
+                )
+        self.ui.deltaButton.setMenu(self.ui.deltaMenu)
+        self.updateDeltaMarkMenu()
+
+    def updateDeltaMarkMenu(self):
+        if self.markStyle == 1:
+            return
+        elif self.markStyle == 2:
+            for k in range(0, self.maxMark + 1):
+                if self.score + k <= self.maxMark:
+                    self.deltaActions[k].setEnabled(True)
+                else:
+                    self.deltaActions[k].setEnabled(False)
+        elif self.markStyle == 3:
+            for k in range(0, self.maxMark + 1):
+                if self.score >= k:
+                    self.deltaActions[k].setEnabled(True)
+                else:
+                    self.deltaActions[k].setEnabled(False)

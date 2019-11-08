@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8; -*-
-#
-# Copyright (C) 2018-2019 Colin B. Macdonald <cbm@m.fsf.org>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+
+"""Read in a Canvas-exported spreadsheet and prepare data for upload.
+
+This will create two csv files:
+
+  1. `canvas_return_codes_to_import.csv`.
+  2. `canvas_grades_to_import.csv`.
+
+You can upload/import one or both of these files back to Canvas.  If
+you kept the same salt, you may be able to upload just the grades.
+
+TODO: testname etc not ideal
+"""
+
+__author__ = "Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2019 Colin B. Macdonald"
+__credits__ = ["Matt Coles"]
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 from return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
 from return_tools import make_canvas_gradefile
@@ -24,7 +28,7 @@ canvas_return_tofile = 'canvas_return_codes_for_import.csv'
 canvas_grades_tofile = 'canvas_grades_for_import.csv'
 
 # TODO: should get this from project?!
-canvas_test_name = 'Test2'  # almost certainly wrong
+canvas_test_name = 'Midterm ('  # almost certainly wrong
 
 # TODO: check if former exists and latter does not, and give some
 # basic instructions

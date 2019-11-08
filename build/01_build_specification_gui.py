@@ -20,7 +20,7 @@ from ui_builder import Ui_SpecBuilder
 # the following allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
-
+from resources.tpv_utils import newMagicCode
 
 global spec
 spec = TestSpecification()
@@ -40,6 +40,12 @@ class SpecBuilder(QWidget):
         self.ui = Ui_SpecBuilder()
         self.ui.setupUi(self)
         self.setupTable()
+
+        self.magicCode = newMagicCode()
+        # this length chosen to ensure resulting qr-code is as small as possible
+        # given the info we need to store. Any more digits and the code goes up
+        # to the next size.
+        self.ui.codeLabel.setText("Magic code: {}".format(self.magicCode))
 
         self.ui.confirmButton.clicked.connect(self.basicSetup)
         self.ui.addRowButton.clicked.connect(self.addRow)
@@ -67,6 +73,7 @@ class SpecBuilder(QWidget):
         elif nameTest.isalnum() is False:
             self.errorManager(11)
         else:
+            spec.setCode(self.magicCode)
             spec.setNumberOfPages(numPages)
             spec.setNumberOfVersions(numVersions)
             spec.Name = nameTest

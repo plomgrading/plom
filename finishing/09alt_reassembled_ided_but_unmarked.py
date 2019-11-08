@@ -1,7 +1,15 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Reassemble tests from identified-only papers.
+"""
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
-__license__ = "AGPLv3"
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 from collections import defaultdict
 import json
@@ -39,9 +47,8 @@ def imageList(n):
     and identified (but not marked) paper.
     This will be passed to the reassembly script.
     """
-    # list of image files for the reassembly
     imgl = []
-    # zeroth is the ID-group
+    # the ID-group pages
     imgl.append(
         "../scanAndGroup/readyForMarking/idgroup/{}.png".format(examsGrouped[n][0])
     )
@@ -59,22 +66,24 @@ def imageList(n):
     return imgl
 
 
-# read the test spec
-spec = TestSpecification()
-spec.readSpec()
-# read the ID'd and grouped exams.
-readExamsIDed()
-readExamsGrouped()
-# Open a file for the list of commands to process to reassemble papers
-fh = open("./commandlist.txt", "w")
-for n in sorted(examsIDed.keys()):
-    fh.write(
-        'python3 testReassembler_only_ided.py {} "{}"\n'.format(
-            examsIDed[n][1], imageList(n)
+if __name__ == '__main__':
+    spec = TestSpecification()
+    spec.readSpec()
+    # read the ID'd and grouped exams.
+    readExamsIDed()
+    readExamsGrouped()
+    outdir = "reassembled_ID_but_not_marked"
+    os.makedirs(outdir, exist_ok=True)
+    # Open a file for the list of commands to process to reassemble papers
+    fh = open("./commandlist.txt", "w")
+    for n in sorted(examsIDed.keys()):
+        fh.write(
+            'python3 testReassembler.py {} {} {} "" "{}"\n'.format(
+                spec.Name, examsIDed[n][1], outdir, imageList(n)
+            )
         )
-    )
-fh.close()
-# pipe the commandlist into gnu-parallel
-os.system("parallel --bar <commandlist.txt")
-# delete the commandlist file.
-os.unlink("commandlist.txt")
+    fh.close()
+    # pipe the commandlist into gnu-parallel
+    os.system("parallel --bar <commandlist.txt")
+    # delete the commandlist file.
+    os.unlink("commandlist.txt")

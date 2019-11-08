@@ -160,6 +160,50 @@ class MarkDatabase:
         except IntegrityError:
             self.logging.info("GroupImage {} {} already exists.".format(t, code))
 
+    def askNextTask(self, username, pg, v):
+        """Find unmarked test and send tgv to client"""
+        try:
+            with markdb.atomic():
+                # grab image from ToDo pile with required group,version
+                x = GroupImage.get(status="ToDo", pageGroup=pg, version=v)
+                # log it
+                self.logging.info(
+                    "Client asked for next task - passing {} to user {}".format(
+                        x.tgv, username
+                    )
+                )
+                # return the tgv
+                return x.tgv
+        except GroupImage.DoesNotExist:
+            self.logging.info("Nothing left on To-Do pile")
+            return None
+
+    def giveSpecificTaskToClient(self, username, code):
+        try:
+            with markdb.atomic():
+                # get the record by code
+                x = GroupImage.get(tgv=code)
+                # check either unclaimed or belongs to user.
+                # TODO check logic solid here - is this idempotent.
+                if x.user == "None" or x.user == username:
+                    # update status, Student-number, name, id-time.
+                    self.logging.info(
+                        "User {} claiming GroupImage {}".format(username, x.tgv)
+                    )
+                    # update status, user, time
+                    x.status = "OutForMarking"
+                    x.user = username
+                    x.time = datetime.now()
+                    x.save()
+                    # return the tgv and filename
+                    return [True, x.tgv, x.originalFile, x.tags]
+                else:
+                    # has been claimed by someone else.
+                    return [False]
+        except GroupImage.DoesNotExist:
+            self.logging.info("That GroupImage number {} not known".format(code))
+            return [False]
+
     def giveGroupImageToClient(self, username, pg, v):
         """Find unmarked image with (group,version) and give to client"""
         try:
@@ -180,6 +224,15 @@ class MarkDatabase:
         except GroupImage.DoesNotExist:
             self.logging.info("Nothing left on To-Do pile")
             return (None, None, None)
+
+    def userStillOwnsTGV(self, code, username):
+        try:
+            with markdb.atomic():
+                # get the record by code and username
+                x = GroupImage.get(tgv=code, user=username)
+            return True
+        except GroupImage.DoesNotExist:
+            return False
 
     def takeGroupImageFromClient(
         self, code, username, mark, fname, pname, cname, mt, tag

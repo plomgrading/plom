@@ -1,0 +1,106 @@
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2019 John Hsu
+# Copyright (C) 2019 Colin B. Macdonald
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+#
+# This the CI configuration for Plom
+
+# TODO list
+# ---------
+#   * use our Dockerfile instead of apt-get
+#       - I think this is "dind"
+#   * prepare an sql dump and some pngs so
+#     we can fake the grading.
+#   * test scripts 08 through 12
+
+image: ubuntu:18.04
+
+variables:
+  KUBERNETES_VERSION: 1.11.7
+  HELM_VERSION: 2.12.3
+
+  DOCKER_DRIVER: overlay2
+
+  ROLLOUT_RESOURCE_TYPE: deployment
+
+before_script:
+  - apt-get update
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
+  - apt-get --no-install-recommends --yes install
+    parallel zbar-tools cmake
+    python3-passlib python3-seaborn python3-pandas python3-pyqt5
+    python3-pyqt5.qtsql python3-pyqrcode python3-png
+    python3-pip python3-setuptools python3-wheel imagemagick
+    texlive-latex-extra dvipng g++ make python3-dev
+    netcat-openbsd iproute2 psmisc
+  - pip3 install wsgidav easywebdav2 pymupdf weasyprint imutils
+    lapsolver peewee cheroot
+
+stages:
+  - build
+  - test
+
+job imageServerStarts:
+  stage: test
+  script:
+    - mkdir scanAndGroup/scannedExams/
+    # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
+    - curl https://www.math.ubc.ca/~cbm/tmp/namesAdded.pdf > scanAndGroup/scannedExams/foo.pdf
+    - curl https://www.math.ubc.ca/~cbm/tmp/resources.tar.gz | tar -zx
+    - ls resources
+    - ls scanAndGroup/scannedExams
+    - pushd scanAndGroup
+    - python3 03_scans_to_page_images.py
+    - python3 04_decode_images.py
+    - python3 05_missing_pages.py
+    - python3 06_group_pages.py
+    - popd
+    - pushd imageServer
+    - ip addr
+    - python3 image_server.py &
+    - sleep 4
+    - echo "Image_server should be in background"
+    - jobs -l
+    - echo "We should be able to connect to it"
+    - nc -zv localhost 41984-41985
+    - echo "Now take down the server"
+    # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
+    - jobs -l
+    - killall -9 wsgidav
+    - sleep 1
+    - kill -9 %1
+    - sleep 1
+    - echo "Should be no jobs and this should succeed"
+    - jobs -l
+    - popd
+    - pushd finishing
+    - echo "The 07 script should fail as we did not grade and ID"
+    - if (python3 07_check_completed.py); then false; else true; fi
+    - popd
+
+job backgroundTest:
+  before_script:
+    - echo "Overriding before_script"
+  stage: test
+  script:
+    - sleep 60 &
+    - jobs -l
+    - jobs -p
+    - echo "Sleep job has started"
+    - sleep 2
+    - jobs -l
+    - jobs -p
+    - echo "We will kill it"
+    - kill -9 %1
+    - echo "Should be no jobs and this should succeed"
+    - jobs -p
+
+job someUnitTests:
+  stage: test
+  script:
+    - cd finishing
+    - ./run_unit_tests.sh

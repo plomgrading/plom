@@ -3,10 +3,12 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
+from aiohttp import web
 import asyncio
 import datetime
 import errno
 import glob
+import imghdr
 import json
 import logging
 import os
@@ -25,8 +27,8 @@ from authenticate import Authority
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
-
-__version__ = "0.1.0+"
+from resources.version import __version__
+from resources.version import Plom_API_Version as serverAPI
 
 # default server values and location of grouped-scans.
 serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
@@ -37,6 +39,34 @@ sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.key")
 
+# aiohttp-ificiation of things
+routes = web.RouteTableDef()
+
+
+@routes.put("/")
+async def hello(request):
+    data = await request.json()
+    message = data["msg"]
+    print("Got message {}".format(message))
+
+    # message should be a list [cmd, user, password, arg1, arg2, etc]
+    if not isinstance(message, list):
+        SLogger.info(">>> Got strange message - not a list. {}".format(message))
+    else:
+        if message[0] == "AUTH":
+            # do not log the password - just auth and username
+            SLogger.info("Got auth request: {}".format(message[:2]))
+        else:
+            SLogger.info("Got message: {}".format(message))
+        # Run the command on the server and get the return message.
+        # peon will be the instance of the server when it runs.
+        rmesg = peon.proc_cmd(message)
+        print("Returning message {}".format(rmesg))
+        SLogger.info("Returning message {}".format(rmesg))
+        return web.json_response({"rmsg": rmesg}, status=200)
+
+
+# ----------------------
 
 # Set up loggers for server, marking and ID-ing
 def setupLogger(name, log_file, level=logging.INFO):
@@ -101,21 +131,23 @@ def getServerInfo():
 servCmd = {
     "AUTH": "authoriseUser",
     "UCL": "userClosing",
+    "iANT": "IDaskNextTask",
+    "iCST": "IDclaimSpecificTask",
     "iDNF": "IDdidntFinish",
-    "iNID": "IDnextUnIDd",
     "iPRC": "IDprogressCount",
     "iRID": "IDreturnIDd",
-    "iRAD": "IDreturnAlreadyIDd",
     "iRCL": "IDrequestClassList",
     "iRPL": "IDrequestPredictionList",
     "iGAL": "IDgetAlreadyIDList",
     "iGGI": "IDgetGroupImage",
     "iDWF": "IDdoneWithFile",
+    #####
+    "mANT": "MaskNextTask",
+    "mCST": "MclaimSpecificTask",
     "mDNF": "MdidntFinish",
-    "mNUM": "MnextUnmarked",
     "mPRC": "MprogressCount",
+    "mUSO": "MuserStillOwns",
     "mRMD": "MreturnMarked",
-    "mRAM": "MreturnAlreadyMarked",
     "mGMX": "MgetPageGroupMax",
     "mGML": "MgetMarkedPaperList",
     "mGGI": "MgetGroupImages",
@@ -125,6 +157,7 @@ servCmd = {
     "mRCF": "MreturnCommentFile",
     "mRPF": "MreturnPlomFile",
     "mTAG": "MsetTag",
+    #####
     "tGMM": "TgetMaxMark",
     "tGTP": "TgotTest",
     "tPRC": "TprogressCount",
@@ -136,45 +169,6 @@ servCmd = {
     "tDWF": "TdoneWithFile",
     "tGGI": "TgetGroupImage",
 }
-
-
-async def handle_messaging(reader, writer):
-    """Asyncio messager handler.
-    Reads message from the stream.
-    Message should be a list [cmd, user, password, arg1, arg2, etc]
-    Converts message[0] to the server command using the servCmd dictionary
-    Server, peon, then runs command and we send back the return message.
-    """
-    data = await reader.read(1024)
-    terminate = data.endswith(b"\x00")
-    data = data.rstrip(b"\x00")
-    message = json.loads(data.decode())
-    # print("Got message {}".format(message))
-
-    # message should be a list [cmd, user, password, arg1, arg2, etc]
-    if not isinstance(message, list):
-        SLogger.info(">>> Got strange message - not a list. {}".format(message))
-    else:
-        if message[0] == "AUTH":
-            # do not log the password - just auth and username
-            SLogger.info("Got auth request: {}".format(message[:2]))
-        else:
-            SLogger.info("Got message: {}".format(message))
-        # Run the command on the server and get the return message.
-        # peon will be the instance of the server when it runs.
-        rmesg = peon.proc_cmd(message)
-        SLogger.info("Returning message {}".format(rmesg))
-
-    addr = writer.get_extra_info("peername")
-    # convert message to json
-    jdm = json.dumps(rmesg)
-    # send encoded-json'd message back over connection.
-    writer.write(jdm.encode())
-    # SSL does not support EOF, so send a null byte
-    # to indicate the end of the message.
-    writer.write(b"\x00")
-    await writer.drain()
-    writer.close()
 
 
 # # # # # # # # # # # #
@@ -294,11 +288,22 @@ class Server(object):
                 # user is authorised, so run their requested function
                 return getattr(self, pcmd)(*message[1:])
             else:
+                user = message[1]
+                # only exception here is if user is closing.
+                # if unauth'd user tries this, just ignore.
+                if message[0] == "UCL":
+                    self.logger.info(
+                        ">>> User {} appears to be closing out more than once.".format(
+                            user
+                        )
+                    )
+                    return ["ACK"]
+                # otherwise throw an "Unauth error" to client.
                 self.logger.info(">>> Unauthorised attempt by user {}".format(user))
                 print("Attempt by non-user to {}".format(message))
                 return ["ERR", "You are not an authorised user"]
 
-    def authoriseUser(self, user, password):
+    def authoriseUser(self, user, password, clientAPI):
         """When a user requests authorisation
         They have sent their name and password
         first check if they are a valid user
@@ -307,6 +312,14 @@ class Server(object):
         Then pass them back the authorisation token
         (the password is only checked on first authorisation - since slow)
         """
+        if clientAPI != serverAPI:
+            return [
+                "ERR",
+                'Plom API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
+                    clientAPI, serverAPI, __version__
+                ),
+            ]
+
         if self.authority.authoriseUser(user, password):
             # On token request also make sure anything "out" with that user is reset as todo.
             self.IDDB.resetUsersToDo(user)
@@ -364,13 +377,16 @@ class Server(object):
                 dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
             )
         # This should really use path-join.
-        shutil.move(srcfile, dstfile)
+        shutil.copy(srcfile, dstfile)
         # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
 
     def removeFile(self, davfn):
         """Once a file has been grabbed by the client, delete it from the webdav.
         """
-        os.unlink(davDirectory + "/" + davfn)
+        # delete file if present.
+        fname = davDirectory + "/" + davfn
+        if os.path.isfile(davDirectory + "/" + davfn):
+            os.unlink(fname)
 
     def printToDo(self):
         """Ask each database to print the images that are still on
@@ -467,23 +483,31 @@ class Server(object):
         self.authority.detoken(user)
         return ["ACK"]
 
-    def IDnextUnIDd(self, user, token):
+    def IDaskNextTask(self, user, token):
         """The client has asked for the next unidentified paper, so
-        ask the database for its code and then copy the appropriate file
-        into the webdav and send code and the temp-webdav path back to the
+        ask the database for its code and send back to the
         client.
         """
         # Get code of next unidentified image from the database
-        give = self.IDDB.giveIDImageToClient(user)
+        give = self.IDDB.askNextTask(user)
         if give is None:
             return ["ERR", "No more papers"]
         else:
-            # copy the file into the webdav and tell client the code and path
+            # Send to the client
+            return ["ACK", give]
+
+    def IDclaimSpecificTask(self, user, token, code):
+        if self.IDDB.giveSpecificTaskToClient(user, code):
+            # return a successful claim
             return [
                 "ACK",
-                give,
-                self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give)),
+                True,
+                code,
+                self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, code)),
             ]
+        else:
+            # return a fail claim - client will try again.
+            return ["ACK", False]
 
     def IDprogressCount(self, user, token):
         """Send back current ID progress counts to the client"""
@@ -499,15 +523,6 @@ class Server(object):
             return ["ACK"]
         else:
             return ["ERR", "That student number already used."]
-
-    def IDreturnAlreadyIDd(self, user, token, ret, sid, sname):
-        """Client has re-ID'd the pageimage with code=ret, student-number=sid,
-        and student-name=sname. Send the information to the database (which
-        checks if that number has been used previously). If okay then send
-        and ACK, else send an error that the number has been used.
-        """
-        self.IDDB.takeIDImageFromClient(ret, user, sid, sname)
-        return ["ACK"]
 
     def IDgetAlreadyIDList(self, user, token):
         """When a id-client logs on they request a list of papers they have already IDd.
@@ -529,18 +544,28 @@ class Server(object):
         else:
             return ["ERR", "User {} is not authorised for tgv={}".format(user, tgv)]
 
-    def MnextUnmarked(self, user, token, pg, v):
-        """The client has asked for the next unmarked image (with
-        group pg, and version v), so ask the database for its code and
-        then copy the appropriate file into the webdav and send code
-        and the temp-webdav path back to the client.
+    def MaskNextTask(self, user, token, pg, v):
+        """The client has asked for the next unmarked paper, so
+        ask the database for its code and send back to the
+        client.
         """
-        give, fname, tag = self.MDB.giveGroupImageToClient(user, pg, v)
+        # Get code of next unidentified image from the database
+        give = self.MDB.askNextTask(user, pg, v)
         if give is None:
-            return ["ERR", "Nothing left on todo pile"]
+            return ["ERR", "No more papers"]
         else:
+            # Send to the client
+            return ["ACK", give]
+
+    def MclaimSpecificTask(self, user, token, code):
+        retval = self.MDB.giveSpecificTaskToClient(user, code)
+        # retval is either [False] or [True, give, fname, tag]
+        if retval[0] is True:
             # copy the file into the webdav and tell client code / path.
-            return ["ACK", give, self.provideFile(fname), tag]
+            return ["ACK", True, retval[1], self.provideFile(retval[2]), retval[3]]
+        else:
+            # return a fail claim - client will try again.
+            return ["ACK", False]
 
     def MprogressCount(self, user, token, pg, v):
         """Send back current marking progress counts to the client"""
@@ -553,6 +578,13 @@ class Server(object):
         self.removeFile(filename)
         return ["ACK"]
 
+    def MuserStillOwns(self, user, token, code):
+        """Check that user still 'owns' the tgv = code"""
+        if self.MDB.userStillOwnsTGV(code, user):
+            return ["ACK"]
+        else:
+            return ["ERR", "You are no longer authorised to upload that tgv"]
+
     def MreturnMarked(
         self, user, token, code, mark, fname, pname, cname, mtime, pg, v, tags
     ):
@@ -560,14 +592,35 @@ class Server(object):
         (which the client has uploaded to webdav), and spent mtime marking it.
         Send the information to the database and send an ack.
         """
+        # sanity check that mark lies in [0,..,max]
+        if int(mark) < 0 or int(mark) > self.testSpec.Marks[int(pg)]:
+            # this should never happen.
+            return ["ERR", "Assigned mark out of range. Contact administrator."]
+        if not (
+            code.startswith("t")
+            and fname == "G{}.png".format(code[1:])
+            and pname == "G{}.plom".format(code[1:])
+            and cname == "G{}.json".format(code[1:])
+        ):
+            SLogger.info(
+                "Rejected mismatched files from buggy client (user {}) for {}".format(
+                    user, code
+                )
+            )
+            return ["ERR", "Buggy client gave me the wrong files!  File a bug."]
+
         # move annoted file to right place with new filename
+        self.claimFile(fname, "")
+        self.claimFile(pname, "plomFiles")
+        self.claimFile(cname, "commentFiles")
+        # Should check the fname is valid png - just check header presently
+        if imghdr.what(os.path.join("markedPapers", fname)) != "png":
+            return ["ERR", "Misformed image file. Try again."]
+        # now update the database
         self.MDB.takeGroupImageFromClient(
             code, user, mark, fname, pname, cname, mtime, tags
         )
         self.recordMark(user, mark, fname, mtime, tags)
-        self.claimFile(fname, "")
-        self.claimFile(pname, "plomFiles")
-        self.claimFile(cname, "commentFiles")
         # return ack with current counts.
         return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
@@ -768,7 +821,7 @@ def checkPorts():
                 serverInfo["mport"], serverInfo["server"]
             )
         )
-        exit()
+        exit(1)
 
     if checkPortFree(serverInfo["server"], serverInfo["wport"]):
         SLogger.info("Webdav port is free and working.")
@@ -786,7 +839,7 @@ def checkPorts():
                 serverInfo["wport"], serverInfo["server"]
             )
         )
-        exit()
+        exit(1)
 
 
 def checkDirectories():
@@ -798,7 +851,7 @@ def checkDirectories():
         os.mkdir("markedPapers/commentFiles")
 
 
-print("PLOM v{0}: image server starting...".format(__version__))
+print("Plom Server v{}: this is free software without warranty".format(__version__))
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
@@ -813,10 +866,16 @@ davDirectory = tempDirectory.name
 os.system("chmod o-r {}".format(davDirectory))
 SLogger.info("Webdav directory = {}".format(davDirectory))
 # Fire up the webdav server.
-cmd = "wsgidav -q -H {} -p {} --server cheroot -r {} -c ../resources/davconf.yaml".format(
+try:
+    webdavlog = open("webdav.log", "w+")
+except:
+    print("Cannot open webdav.log filehandle.")
+    exit()
+# consider using "-q" option since it reduces verbosity of log and only keeps warnings+errors.
+cmd = "wsgidav -H {} -p {} --server cheroot -r {} -c ../resources/davconf.yaml".format(
     serverInfo["server"], serverInfo["wport"], davDirectory
 )
-davproc = subprocess.Popen(shlex.split(cmd))
+davproc = subprocess.Popen(shlex.split(cmd), stdout=webdavlog, stderr=webdavlog)
 
 # Read the test specification
 spec = TestSpecification()
@@ -837,49 +896,21 @@ theTotalDB = TotalDatabase(TotalLogger)
 # Fire up the server with both database client classes and the test-spec.
 peon = Server(theIDDB, theMarkDB, theTotalDB, spec, SLogger)
 
-# # # # # # # # # # # #
-# Fire up the asyncio event loop.
-loop = asyncio.get_event_loop()
-coro = asyncio.start_server(
-    handle_messaging,
-    serverInfo["server"],
-    serverInfo["mport"],
-    loop=loop,
-    ssl=sslContext,
-)
 try:
-    server = loop.run_until_complete(coro)
-except OSError:
-    SLogger.info(
-        "There is a problem running the socket-listening loop. "
-        "Check if port {} is free and try again.".format(serverInfo["mport"])
-    )
-    print(
-        "There is a problem running the socket-listening loop. "
-        "Check if port {} is free and try again.".format(serverInfo["mport"])
-    )
-    subprocess.Popen.kill(davproc)
-    loop.close()
-    exit()
-
-SLogger.info("Serving messages on {}".format(server.sockets[0].getsockname()))
-print("Serving messages on {}".format(server.sockets[0].getsockname()))
-try:
-    # Run the event loop until it is killed off.
-    loop.run_forever()
+    # Run the server
+    app = web.Application()
+    app.add_routes(routes)
+    web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
 except KeyboardInterrupt:
     pass
-
-# Close down the event loop.
-server.close()
-loop.run_until_complete(server.wait_closed())
-loop.close()
 
 # # # # # # # # # # # #
 # Close the webdav server
 subprocess.Popen.kill(davproc)
 SLogger.info("Webdav server closed")
 print("Webdav server closed")
+webdavlog.close()
+# close the rest of the stuff
 SLogger.info("Closing databases")
 print("Closing databases")
 theIDDB.saveIdentified()

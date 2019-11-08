@@ -1,20 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8; -*-
-#
-# Copyright (C) 2018-2019 Colin B. Macdonald <cbm@m.fsf.org>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+
+"""Misc tools related to digital return"""
+
+__author__ = "Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2019 Colin B. Macdonald"
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import os, sys
 import csv
@@ -36,7 +27,7 @@ def import_canvas_csv(canvas_fromfile):
     print('Carefully filtering rows w/o "Student Number" including:\n'
           '  almost blank rows, "Points Possible" and "Test Student"s')
     isbad = df.apply(
-        lambda x: (pandas.isnull(x['Student Number']) and
+        lambda x: (pandas.isnull(x['SIS User ID']) and
                    (pandas.isnull(x['Student'])
                     or x['Student'].strip().lower().startswith('points possible')
                     or x['Student'].strip().lower().startswith('test student'))),
@@ -94,7 +85,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     # TODO: could 'left' lose someone who is in Plom, but missing in Canvas?
     # https://gitlab.math.ubc.ca/andrewr/MLP/issues/159
     df = pandas.merge(df, marks, how='left',
-                      left_on='Student Number', right_on='StudentID')
+                      left_on='SIS User ID', right_on='StudentID')
     df[testheader] = df['Total']
     df = df[cols]  # discard again (e.g., PG specific stuff)
 
@@ -119,10 +110,15 @@ def canvas_csv_add_return_codes(csvin, csvout):
     sns = {}
     for i, row in df.iterrows():
         name = row['Student']
-        sn = str(row['Student Number'])
+        sn = str(row['SIS User ID'])
+        sn_ = str(row['Student Number'])
+        # as of 2019-10 we don't really dare use Student Number but let's ensure its not insane if it is there...
+        if not sn_ == 'nan':
+            assert sn == sn_, "Canvas has misleading student numbers: " + str((sn,sn_)) + ", for row = " + str(row)
+
 
         assert len(name) > 0, "Student name is empty"
-        assert len(sn) == 8, "Student number is not 8 characters"
+        assert len(sn) == 8, "Student number is not 8 characters: row = " + str(row)
 
         code = myhash(sn)
 
@@ -202,7 +198,7 @@ def test_csv():
     *** Running tests ***
 
     Its normal for some verbose output to appear below.  But there should be
-    no Exceptions and it should ens with "All tests passed".
+    no Exceptions and it should end with "All tests passed".
     """)
 
     # general test
@@ -214,8 +210,8 @@ Jane Smith,43,12345679,ABCDEFGHIJ02,12345679,Math 123 S102v,36,,42
 Test Student,99,,bbbc6740f0b946af,,,,0
 """
     s2 = """Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code (241017)
-John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,351525727036
-Jane Smith,43,12345679,ABCDEFGHIJ02,Math 123 S102v,12345679,909470548567
+John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,349284813368
+Jane Smith,43,12345679,ABCDEFGHIJ02,Math 123 S102v,12345679,919005618467
 """
     infile = StringIO(s1)
     outfile = StringIO('')
@@ -234,16 +230,16 @@ Jane Smith,43,12345679,ABCDEFGHIJ02,Math 123 S102v,12345679,909470548567
     s1 = """Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code ()
 ,,,,,,Muted
   Points Possible,,,,,,999999999999
-A Smith,42,12345678,ABCDEFGHIJ01,101,12345678,"351,525,727,036.0"
-B Smith,43,12348888,ABCDEFGHIJ02,102,12348888,"480,698,598,264.00"
-C Smith,44,12347777,ABCDEFGHIJ03,103,12347777,525156685030.0
-D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,347453551559.00
+A Smith,42,12345678,ABCDEFGHIJ01,101,12345678,"349,284,813,368.0"
+B Smith,43,12348888,ABCDEFGHIJ02,102,12348888,"789,059,192,218.00"
+C Smith,44,12347777,ABCDEFGHIJ03,103,12347777,894464449308.0
+D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,149766785804.00
 """
     s2 = """Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code ()
-A Smith,42,12345678,ABCDEFGHIJ01,101,12345678,351525727036
-B Smith,43,12348888,ABCDEFGHIJ02,102,12348888,480698598264
-C Smith,44,12347777,ABCDEFGHIJ03,103,12347777,525156685030
-D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,347453551559
+A Smith,42,12345678,ABCDEFGHIJ01,101,12345678,349284813368
+B Smith,43,12348888,ABCDEFGHIJ02,102,12348888,789059192218
+C Smith,44,12347777,ABCDEFGHIJ03,103,12347777,894464449308
+D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,149766785804
 """
     infile = StringIO(s1)
     outfile = StringIO('')

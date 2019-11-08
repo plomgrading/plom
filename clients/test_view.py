@@ -52,6 +52,8 @@ class TestView(QWidget):
         else:
             self.setWindowState(Qt.WindowNoState)
 
+    def closeEvent(self, event):
+        self.closeWindow()
+
     def closeWindow(self):
-        self.parent.doneViewingPaper()
         self.close()
