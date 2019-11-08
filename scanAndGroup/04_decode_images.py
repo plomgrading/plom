@@ -326,23 +326,22 @@ def addCurrentScansToExamsScanned():
             if ps in examsScanned[ts]:
                 # Eventually we should output this sort of thing to
                 # a log file in case of user-errors.
-                print(
-                    ">> Have already scanned t{:s}p{:s}v{:d} in file {:s}".format(
-                        ts, ps, v, fn
-                    )
-                )
-                print(">> Will move old scan out of the way and copy in new version")
-                # This should really use path-join.
-                oldfile = "../decodedPages/page_{}/version_{}/t{}p{}v{}.png".format(
-                    str(p).zfill(2), str(v), str(t).zfill(4), str(p).zfill(2), str(v)
-                )
-                os.rename(
-                    oldfile,
-                    oldfile + ".rescanned_at_" + datetime.now().strftime("%d_%H-%M-%S"),
-                )
-                shutil.copy(fn, oldfile)
-
-                examsScanned[ts][ps] = examsScannedNow[t][p]
+                print("WARNING: you have already scanned t{}p{}v{}".format(ts, ps, v))
+                overwriteAttempt["t{}p{}v{}".format(ts, ps, v)] = fn
+                # TODO handle rescans with code like that below
+                # TODO this also needs to update examsGrouped
+                # print(">> Will move old scan out of the way and copy in new version")
+                # # This should really use path-join.
+                # oldfile = "../decodedPages/page_{}/version_{}/t{}p{}v{}.png".format(
+                #     str(p).zfill(2), str(v), str(t).zfill(4), str(p).zfill(2), str(v)
+                # )
+                # os.rename(
+                #     oldfile,
+                #     oldfile + ".rescanned_at_" + datetime.now().strftime("%d_%H-%M-%S"),
+                # )
+                # shutil.copy(fn, oldfile)
+                #
+                # examsScanned[ts][ps] = examsScannedNow[t][p]
             else:
                 # This is a new test/page so add it to the scan-list
                 examsScanned[ts][ps] = examsScannedNow[t][p]
@@ -365,10 +364,20 @@ def addCurrentScansToExamsScanned():
     os.chdir("../")
 
 
+def overwriteWarnings():
+    print(
+        "Warning - you attempted to overwrite the following TPVs with the files indicated:"
+    )
+    for X in sorted(overwriteAttempt.keys()):
+        print("{} => {}".format(X, overwriteAttempt[X]))
+    print("We do not yet support overwriting old scans with new scans.")
+
+
 if __name__ == "__main__":
     examsProduced = {}
     examsScanned = defaultdict(dict)
     examsScannedNow = defaultdict(dict)
+    overwriteAttempt = defaultdict(str)
     spec = TestSpecification()
     spec.readSpec()
     readExamsProduced()
@@ -378,3 +387,4 @@ if __name__ == "__main__":
     validateQRsAgainstProduction()
     addCurrentScansToExamsScanned()
     writeExamsScanned()
+    overwriteWarnings()
