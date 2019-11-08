@@ -789,7 +789,7 @@ class MarkerClient(QWidget):
                 count += 1
         return count
 
-    def startTheAnnotator(self, fname, pname=None):
+    def startTheAnnotator(self, fname, pname=None, _xtracheese=None):
         """This fires up the annotation window for user annotation + marking."""
         # Set marking style total/up/down - will pass to annotator
         self.markStyle = self.ui.markStyleGroup.checkedId()
@@ -818,6 +818,7 @@ class MarkerClient(QWidget):
             self.mouseHand,
             parent=self,
             plomDict=pdict,
+            _xtracheese=_xtracheese,
         )
         # run the annotator
         annotator.ann_shutdown_signal.connect(self.callbackAnnIsDone)
@@ -826,8 +827,8 @@ class MarkerClient(QWidget):
 
 
     # when the annotator is done, we end up here...
-    @pyqtSlot(bool, int, bool, int)
-    def callbackAnnIsDone(self, accept, grade, launchAgain, tim):
+    @pyqtSlot(bool, int, bool, int, list)
+    def callbackAnnIsDone(self, accept, grade, launchAgain, tim, stuff):
         self.setEnabled(True)
         if accept:
             print("accepting callback")
@@ -843,7 +844,7 @@ class MarkerClient(QWidget):
             msg.exec_()
             grade = None
             tim = None
-        self.afterAnnotator(grade, tim, launchAgain)
+        self.afterAnnotator(grade, tim, launchAgain, stuff)
 
 
     def annotateTest(self):
@@ -922,19 +923,18 @@ class MarkerClient(QWidget):
         prevState = self.prxM.data(index[1])
         self.prxM.setData(index[1], "annotating")
 
-        self._holyhack = [tgv, aname, pname, cname, remarkFlag, index, prevState, paperdir]
-
+        junkWeWantSendBackToUs = [tgv, prevState, paperdir]
         if remarkFlag:
-            self.startTheAnnotator(aname, pname)
+            self.startTheAnnotator(aname, pname, _xtracheese=junkWeWantSendBackToUs)
         else:
-            self.startTheAnnotator(aname, None)
+            self.startTheAnnotator(aname, None, _xtracheese=junkWeWantSendBackToUs)
         # we started the annotator...
 
 
     # ... and eventually return here
-    def afterAnnotator(self, gr, mtime, launchAgain):
-        tgv, aname, pname, cname, remarkFlag, index, prevState, paperdir = self._holyhack
-        print((gr, mtime, launchAgain))
+    def afterAnnotator(self, gr, mtime, launchAgain, stuff):
+        tgv, prevState, paperDir, aname, pname, cname = stuff
+        print((tgv, gr, mtime, launchAgain))
         # Exited annotator with 'cancel', so don't save anything.
         if gr is None:
             # TODO: could also erase the paperdir
