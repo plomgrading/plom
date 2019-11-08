@@ -445,13 +445,16 @@ class MarkerClient(QWidget):
         # 1 = Left-handed user - reverse layout
         self.ui.mouseHandGroup.setId(self.ui.rightMouseRB, 0)
         self.ui.mouseHandGroup.setId(self.ui.leftMouseRB, 1)
-        # Start using connection to serverself.
+        self.backgroundUploader = None
+        self.backgroundDownloader = None
+
+    def go(self):
         # Get the max-mark for the question from the server.
         try:
             self.getMaxMark()
         except ValueError as e:
             print("DEBUG: max-mark fail: {}".format(e))
-            QTimer.singleShot(100, self.shutDownError)
+            self.shutDownError()
             return
         # Paste the max-mark into the gui.
         self.ui.scoreLabel.setText(str(self.maxScore))
@@ -464,13 +467,12 @@ class MarkerClient(QWidget):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         # A simple cache table for latex'd comments
         self.commentCache = {}
-        self.backgroundDownloader = None
         # Get a pagegroup to mark from the server
         self.requestNext()
         # reset the view so whole exam shown.
         self.testImg.resetB.animateClick()
         # resize the table too.
-        QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
+        self.ui.tableView.resizeRowsToContents()
         print("Debug: Marker main thread: " + str(threading.get_ident()))
         self.backgroundUploader = BackgroundUploader()
         self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
