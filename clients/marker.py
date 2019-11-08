@@ -789,7 +789,7 @@ class MarkerClient(QWidget):
                 count += 1
         return count
 
-    def startTheAnnotator(self, fname, pname=None, _xtracheese=None):
+    def startTheAnnotator(self, tgv, fname, pname=None, _xtracheese=None):
         """This fires up the annotation window for user annotation + marking."""
         # Set marking style total/up/down - will pass to annotator
         self.markStyle = self.ui.markStyleGroup.checkedId()
@@ -812,6 +812,7 @@ class MarkerClient(QWidget):
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
+            tgv,
             fname,
             self.maxScore,
             self.markStyle,
@@ -903,21 +904,19 @@ class MarkerClient(QWidget):
         prevState = self.prxM.data(index[1])
         self.prxM.setData(index[1], "annotating")
 
-        junkWeWantSendBackToUs = [tgv, prevState, paperdir]
+        junkWeWantSendBackToUs = [prevState, paperdir]
         if remarkFlag:
-            self.startTheAnnotator(aname, pname, _xtracheese=junkWeWantSendBackToUs)
+            self.startTheAnnotator(tgv, aname, pname, _xtracheese=junkWeWantSendBackToUs)
         else:
-            self.startTheAnnotator(aname, None, _xtracheese=junkWeWantSendBackToUs)
+            self.startTheAnnotator(tgv, aname, None, _xtracheese=junkWeWantSendBackToUs)
         # we started the annotator, we'll get a signal back when its done
 
 
     # when the annotator is done, we end up here...
-    @pyqtSlot(bool, list)
-    def callbackAnnIsDoneCancel(self, accept, _xtracheese):
+    @pyqtSlot(str, list)
+    def callbackAnnIsDoneCancel(self, tgv, _xtracheese):
         self.setEnabled(True)
-        assert not accept
-        tgv = _xtracheese[0]
-        prevState = _xtracheese[1]
+        prevState = _xtracheese[0]
         # TODO: remove
         msg = ErrorMessage("mark not recorded")
         msg.exec_()
@@ -927,12 +926,11 @@ class MarkerClient(QWidget):
         #self.ui.tableView.selectRow(index[1].row())
 
     # ... or here
-    @pyqtSlot(bool, list, list)
-    def callbackAnnIsDoneAccept(self, accept, stuff, _xtracheese):
+    @pyqtSlot(str, list, list)
+    def callbackAnnIsDoneAccept(self, tgv, stuff, _xtracheese):
         self.setEnabled(True)
-        assert accept
         gr, launchAgain, mtime, aname, pname, cname = stuff
-        tgv, prevState, paperdir = _xtracheese
+        prevState, paperdir = _xtracheese
         print((tgv, gr, mtime, launchAgain))
         # Copy the mark, annotated filename and the markingtime into the table
         # TODO: sort this out whether tgv is "t00..." or "00..."?!
