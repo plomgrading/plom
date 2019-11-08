@@ -305,8 +305,7 @@ class ProxyModel(QSortFilterProxyModel):
         return self.data(self.index(r, 1))
 
     def setStatus(self, r, stat):
-        # Return the status of the image
-        return self.setData(self.index(r, 1), stat)
+        self.setData(self.index(r, 1), stat)
 
     def getOriginalFile(self, r):
         # Return the filename of the original un-annotated image
