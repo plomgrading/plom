@@ -709,7 +709,6 @@ class Annotator(QWidget):
         self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
         self.ui.cancelButton.clicked.connect(self.cleanUpCancel)
-        # TODO: or self.close above?
         # Hide button connects to the toggleTools command
         self.ui.hideButton.clicked.connect(self.toggleTools)
 
@@ -897,8 +896,7 @@ class Annotator(QWidget):
     def cleanUpCancel(self):
         # clean up after a testview
         self.doneViewingPaper()
-        self.reject()
-        return
+        self.close()
 
     def closeEvent(self, ce):
         """When the user closes the window - either by clicking on the

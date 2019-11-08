@@ -895,7 +895,7 @@ class MarkerClient(QWidget):
         prevState = self.prxM.data(index[1])
         self.prxM.setData(index[1], "annotating")
 
-        self._holyhack = [aname, pname, cname, remarkFlag, index, prevState]
+        self._holyhack = [tgv, aname, pname, cname, remarkFlag, index, prevState, paperdir]
 
         if remarkFlag:
             self.startTheAnnotator(aname, pname)
@@ -906,7 +906,7 @@ class MarkerClient(QWidget):
 
     # ... and eventually return here
     def afterAnnotator(self, gr, mtime, launchAgain):
-        aname, pname, cname, remarkFlag, index, prevState = self._holyhack
+        tgv, aname, pname, cname, remarkFlag, index, prevState, paperdir = self._holyhack
         print((gr, mtime, launchAgain))
         # Exited annotator with 'cancel', so don't save anything.
         if gr is None:
