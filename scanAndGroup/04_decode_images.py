@@ -6,6 +6,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
 from collections import defaultdict
+from datetime import datetime
 import glob
 import json
 import os
@@ -121,7 +122,7 @@ def reOrientPage(fname, qrs):
         return True
     if flipFlag and not upFlag:
         # is flipped, so rotate 180
-        #print(" .  {}: reorienting: 180 degree rotation".format(fname))
+        # print(" .  {}: reorienting: 180 degree rotation".format(fname))
         subprocess.run(
             ["mogrify", "-quiet", "-rotate", "180", fname],
             stderr=subprocess.STDOUT,
@@ -278,11 +279,11 @@ def validateQRsAgainstProduction():
             # if the tpv's match then all good.
             if examsProduced[ts][ps] == v:
                 pass
-                #print(
+                # print(
                 #    "Valid scan of t{:s} p{:s} v{:d} from file {:s}".format(
                 #        ts, ps, v, fn
                 #    )
-                #)
+                # )
             else:
                 # print mismatch warning and move file to problem-images
                 print(">> Mismatch between exam scanned and exam produced")
@@ -330,7 +331,17 @@ def addCurrentScansToExamsScanned():
                         ts, ps, v, fn
                     )
                 )
-                print(">> Will overwrite with new version")
+                print(">> Will move old scan out of the way and copy in new version")
+                # This should really use path-join.
+                oldfile = "../decodedPages/page_{}/version_{}/t{}p{}v{}.png".format(
+                    str(p).zfill(2), str(v), str(t).zfill(4), str(p).zfill(2), str(v)
+                )
+                os.rename(
+                    oldfile,
+                    oldfile + ".rescanned_at_" + datetime.now().strftime("%d_%H-%M-%S"),
+                )
+                shutil.copy(fn, oldfile)
+
                 examsScanned[ts][ps] = examsScannedNow[t][p]
             else:
                 # This is a new test/page so add it to the scan-list
