@@ -119,9 +119,17 @@ class Chooser(QDialog):
         messenger.startMessenger()
         try:
             messenger.requestAndSaveToken(user, pwd)
+        except plom_exceptions.PlomAPIException as e:
+            ErrorMessage("Could not authenticate due to API mismatch."
+                         "Your client version is {}.\n\n"
+                         "Error was: {}".format(__version__, e)).exec_()
+            return
         except plom_exceptions.BenignException as e:
+            ErrorMessage("Could not authenticate: {}".format(e)).exec_()
+            return
+        except plom_exceptions.SeriousError as e:
             ErrorMessage("Could not get authentication token.\n\n"
-                         "Error was: {}".format(e)).exec_()
+                         "Unexpected error: {}".format(e)).exec_()
             return
 
         # Now run the appropriate client sub-application

@@ -94,7 +94,7 @@ def requestAndSaveToken(user, pw):
         if response.status_code == 401:  # authentication error
             raise plom_exceptions.BenignException("You are not authenticated.")
         elif response.status_code == 400:  # API error
-            raise plom_exceptions.BenignException(response.json())
+            raise plom_exceptions.PlomAPIException(response.json())
         else:
             raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
     finally:
