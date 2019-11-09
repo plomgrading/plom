@@ -304,8 +304,7 @@ class ProxyModel(QSortFilterProxyModel):
         return self.data(self.index(r, 1))
 
     def setStatus(self, r, stat):
-        # Return the status of the image
-        return self.setData(self.index(r, 1), stat)
+        self.setData(self.index(r, 1), stat)
 
     def getOriginalFile(self, r):
         # Return the filename of the original un-annotated image
@@ -377,6 +376,7 @@ class MarkerClient(QWidget):
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
+        self.testImg = None  # safer?
         # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # Save the group and version.
@@ -479,13 +479,11 @@ class MarkerClient(QWidget):
         self.cacheLatexComments()
 
     def resizeEvent(self, e):
-        if self.testImg is None:
-            # pingtest must have failed, so do nothing.
-            return
-        # On resize used to resize the image to keep it all in view
-        self.testImg.resetB.animateClick()
-        # resize the table too.
-        self.ui.tableView.resizeRowsToContents()
+        if self.testImg:
+            # On resize used to resize the image to keep it all in view
+            self.testImg.resetB.animateClick()
+            # resize the table too.
+            self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(e)
 
     def getMaxMark(self):
