@@ -411,6 +411,49 @@ def IDreturnIDdTask(code, studentID, studentName):
 
 
 # ------------------------
+
+
+def IDdidNotFinishTask(code):
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/ID/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return True
+
+
+def IDcloseUser():
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/ID/users/{}".format(server, message_port, _userName),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return True
+
+
+# ------------------------
 # ------------------------
 
 session = None

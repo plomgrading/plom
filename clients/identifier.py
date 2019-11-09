@@ -350,8 +350,11 @@ class IDClient(QWidget):
         TODO: messenger needs to drop token here?
         """
         self.DNF()
-        msg, = messenger.msg("UCL")
-        assert msg == "ACK"
+        try:
+            messenger.IDcloseUser()
+        except plom_exceptions.SeriousError as err:
+            self.throwSeriousError(err)
+
         self.my_shutdown_signal.emit(1)
         self.close()
 
@@ -366,7 +369,10 @@ class IDClient(QWidget):
         for r in range(rc):
             if self.exM.data(self.exM.index(r, 1)) != "identified":
                 # Tell user DNF, user, auth-token, and paper's code.
-                msg = messenger.msg("iDNF", self.exM.data(self.exM.index(r, 0)))
+                try:
+                    messenger.IDdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
+                except plom_exceptions.SeriousError as err:
+                    self.throwSeriousError(err)
 
     def getAlreadyIDList(self):
         # Ask server for list of previously ID'd papers

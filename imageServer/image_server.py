@@ -179,6 +179,33 @@ async def IDreturnIDd(request):
 
 
 # ----------------------
+
+
+@routes.delete("/ID/tasks/{task}")
+async def IDdidNotFinishTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        peon.IDdidntFinish(data["user"], code)
+        return web.json_response(status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.delete("/ID/users/{user}")
+async def IDnextTask(request):
+    data = await request.json()
+    user = request.match_info["user"]
+    if data["user"] != request.match_info["user"]:
+        return web.Response(status=400)  # malformed request.
+    elif peon.validate(data["user"], data["token"]):
+        peon.userClosing(data["user"])
+        return web.Response(status=200)
+    else:
+        return web.Response(status=401)
+
+
+# ----------------------
 # ----------------------
 
 # Set up loggers for server, marking and ID-ing
@@ -243,10 +270,6 @@ def getServerInfo():
 # A dict of messages from client and corresponding server commands.
 servCmd = {
     "AUTH": "authoriseUser",
-    "UCL": "userClosing",
-    "iDNF": "IDdidntFinish",
-    "iRID": "IDreturnIDd",
-    "iDWF": "IDdoneWithFile",
     #####
     "mANT": "MaskNextTask",
     "mCST": "MclaimSpecificTask",
@@ -559,13 +582,12 @@ class Server(object):
         # Send an ack with the max-mark for the pagegroup.
         return ["ACK", self.testSpec.Marks[ipg]]
 
-    def IDdidntFinish(self, user, token, code):
+    def IDdidntFinish(self, user, code):
         """User didn't finish IDing the image with given code. Tell the
         database to put this back on the todo-pile.
         """
         self.IDDB.didntFinish(user, code)
-        # send back an ACK.
-        return ["ACK"]
+        return
 
     def MdidntFinish(self, user, token, tgv):
         """User didn't finish marking the image with given code. Tell the
@@ -583,11 +605,10 @@ class Server(object):
         # send back an ACK.
         return ["ACK"]
 
-    def userClosing(self, user, token):
+    def userClosing(self, user):
         """Client is closing down their app, so remove the authorisation token
         """
         self.authority.detoken(user)
-        return ["ACK"]
 
     def IDaskNextTask(self, user):
         """The client has asked for the next unidentified paper, so
