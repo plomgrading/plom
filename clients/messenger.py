@@ -22,6 +22,9 @@ from useful_classes import ErrorMessage
 import time
 import threading
 
+from io import StringIO, BytesIO, TextIOWrapper
+import plom_exceptions
+
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
 
@@ -188,55 +191,233 @@ def putFileDav_woInsanity(lfn, dfn):
     webdav.upload(lfn, dfn)
 
 
-async def handle_ping_test():
-    """ A simple ping to test if the server is up and running.
-    If nothing back after a few seconds then assume the server is
-    down and tell the user, then exit.
-    """
-    ptest = asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
+# ------------------------
+# ------------------------
+
+
+def IDGetProgressCount():
+    global _userName, _token
+
+    SRmutex.acquire()
     try:
-        reader, writer = await asyncio.wait_for(ptest, timeout=6)
-        jm = json.dumps(["PING"])
-        writer.write(jm.encode())
-        writer.write(b"\x00")
-        await writer.drain()
-
-        data = await reader.read(100)
-        terminate = data.endswith(b"\x00")
-        data = data.rstrip(b"\x00")
-        rmesg = json.loads(data.decode())  # message should be ['ACK']
-        writer.close()
-        return True
-    except asyncio.TimeoutError as e:
-        # TODO: str(e) does nothing useful to keep separate from below
-        msg = ErrorMessage(
-            "Server timed out.  " "Please double check details and try again."
+        response = session.get(
+            "https://{}:{}/ID/progress".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
         )
-        msg.exec_()
-        return False
-    except (ConnectionRefusedError, OSError) as e:
-        msg = ErrorMessage(
-            "Server does not return ping.  "
-            "Please double check details and try again.\n\n"
-            "Details:\n" + str(e)
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
+
+
+def IDGetAvailable():
+    global _userName, _token
+
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/tasks/available".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
         )
-        msg.exec_()
-        return False
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 204:
+            raise plom_exceptions.BenignException("No tasks left.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
 
 
-def pingTest():
-    """Use the asyncio handler to send a ping to the server
-    to check it is up and running
-    """
-    rmsg = loop.run_until_complete(handle_ping_test())
-    return rmsg
+def IDGetClasslist():
+    global _userName, _token
 
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/classlist".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        classlist = TextIOWrapper(BytesIO(response.content))
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 404:
+            raise plom_exceptions.SeriousError("Server cannot find the class list")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return classlist
+
+
+def IDGetPredictions():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/predictions".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        predictions = TextIOWrapper(BytesIO(response.content))
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 404:
+            raise plom_exceptions.SeriousError(
+                "Server cannot find the prediction list."
+            )
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return predictions
+
+
+def IDgetAlreadyComplete():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/tasks/complete".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        idList = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return idList
+
+
+def IDgetGroupImage(code):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/images/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 404:
+            raise plom_exceptions.SeriousError(
+                "Cannot find image file for {}.".format(code)
+            )
+        elif response.status_code == 409:
+            raise plom_exceptions.SeriousError(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image
+
+
+# ------------------------
+
+# TODO - API needs improve. Both of these throw a put/patch to same url = /ID/tasks/{tgv}
+# One only updates the user claim, while the other actually ID's it.
+# Think of better url structure for this?
+def IDclaimThisTask(code):
+    SRmutex.acquire()
+    try:
+        response = session.patch(
+            "https://{}:{}/ID/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()  # pass back image as bytes
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 204:
+            raise plom_exceptions.BenignException("Task taken by another user.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image
+
+
+def IDreturnIDdTask(code, studentID, studentName):
+    SRmutex.acquire()
+    try:
+        response = session.put(
+            "https://{}:{}/ID/tasks/{}".format(server, message_port, code),
+            json={
+                "user": _userName,
+                "token": _token,
+                "sid": studentID,
+                "sname": studentName,
+            },
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if resposne.status_code == 409:
+            raise plom_exceptions.BenignException(
+                "Student number {} already in use".format(e)
+            )
+        elif response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 404:
+            raise plom_exceptions.SeriousError(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return True
+
+
+# ------------------------
+# ------------------------
 
 session = None
 
 
 def startMessenger():
-    """Start the asyncio event loop"""
+    """Start the messenger session"""
     print("Starting a requests-session")
     global session
     session = requests.Session()
@@ -247,7 +428,6 @@ def startMessenger():
 
 
 def stopMessenger():
-    """Stop the asyncio event loop"""
-    loop.close()
-    print("Stopped asyncio loop")
+    """Stop the messenger"""
+    print("Stopped messenger session")
     session.close()

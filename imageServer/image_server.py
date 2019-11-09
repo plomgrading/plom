@@ -39,6 +39,9 @@ sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.key")
 
+# ----------------------
+# ----------------------
+
 # aiohttp-ificiation of things
 routes = web.RouteTableDef()
 
@@ -66,6 +69,116 @@ async def hello(request):
         return web.json_response({"rmsg": rmesg}, status=200)
 
 
+@routes.get("/ID/progress")
+async def IDprogressCount(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        return web.json_response(peon.IDprogressCount(), status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/ID/tasks/available")
+async def IDnextTask(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.IDaskNextTask(data["user"])  # returns [True, code] or [False]
+        if rmsg[0]:
+            return web.json_response(rmsg[1], status=200)
+        else:
+            return web.Response(status=204)  # no papers left
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/ID/classlist")
+async def IDgimmetheclasslist(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        if os.path.isfile("../resources/classlist.csv"):
+            return web.FileResponse("../resources/classlist.csv", status=200)
+        else:
+            return web.Response(status=404)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/ID/predictions")
+async def IDgimmethepredictions(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        if os.path.isfile("../resources/predictionlist.csv"):
+            return web.FileResponse("../resources/predictionlist.csv", status=200)
+        else:
+            return web.Response(status=404)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/ID/tasks/complete")
+async def IDgimmewhatsdone(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        # return the completed list
+        return web.json_response(peon.IDgetAlreadyIDList(data["user"]), status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/ID/images/{tgv}")
+async def IDgetImage(request):
+    data = await request.json()
+    code = request.match_info["tgv"]
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.IDgetGroupImage(data["user"], code)
+        if rmsg[0]:  # user allowed access - returns [true, fname]
+            if os.path.isfile(rmsg[1] + "q"):
+                return web.FileResponse(rmsg[1], status=200)
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=409)  # someone else has that image
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
+# ----------------------
+
+## ID put - do change server status.
+@routes.patch("/ID/tasks/{task}")
+async def IDclaimThisTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        rmesg = peon.IDclaimSpecificTask(data["user"], code)
+        if rmesg[0]:  # return [True, filename]
+            return web.FileResponse(rmesg[1], status=200)
+        else:
+            return web.Response(status=204)  # that task already taken.
+    else:
+        return web.Response(status=401)
+
+
+@routes.put("/ID/tasks/{task}")
+async def IDreturnIDd(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.IDreturnIDd(data["user"], code, data["sid"], data["sname"])
+        # returns [True] if all good
+        # [False, True] - if student number already in use
+        # [False, False] - if bigger error
+        if rmsg[0]:  # all good
+            return web.Response(status=200)
+        elif rmsg[1]:  # student number already in use
+            return web.Response(status=409)
+        else:  # a more serious error - can't find this in database
+            return web.Response(status=404)
+    else:
+        return web.Response(status=401)
+
+
+# ----------------------
 # ----------------------
 
 # Set up loggers for server, marking and ID-ing
@@ -131,15 +244,8 @@ def getServerInfo():
 servCmd = {
     "AUTH": "authoriseUser",
     "UCL": "userClosing",
-    "iANT": "IDaskNextTask",
-    "iCST": "IDclaimSpecificTask",
     "iDNF": "IDdidntFinish",
-    "iPRC": "IDprogressCount",
     "iRID": "IDreturnIDd",
-    "iRCL": "IDrequestClassList",
-    "iRPL": "IDrequestPredictionList",
-    "iGAL": "IDgetAlreadyIDList",
-    "iGGI": "IDgetGroupImage",
     "iDWF": "IDdoneWithFile",
     #####
     "mANT": "MaskNextTask",
@@ -483,7 +589,7 @@ class Server(object):
         self.authority.detoken(user)
         return ["ACK"]
 
-    def IDaskNextTask(self, user, token):
+    def IDaskNextTask(self, user):
         """The client has asked for the next unidentified paper, so
         ask the database for its code and send back to the
         client.
@@ -491,58 +597,47 @@ class Server(object):
         # Get code of next unidentified image from the database
         give = self.IDDB.askNextTask(user)
         if give is None:
-            return ["ERR", "No more papers"]
+            return [False]
         else:
             # Send to the client
-            return ["ACK", give]
+            return [True, give]
 
-    def IDclaimSpecificTask(self, user, token, code):
+    def IDclaimSpecificTask(self, user, code):
         if self.IDDB.giveSpecificTaskToClient(user, code):
-            # return a successful claim
-            return [
-                "ACK",
-                True,
-                code,
-                self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, code)),
-            ]
+            # return true, image-filename
+            return [True, "{}/idgroup/{}.png".format(pathScanDirectory, code)]
         else:
             # return a fail claim - client will try again.
-            return ["ACK", False]
+            return [False]
 
-    def IDprogressCount(self, user, token):
+    def IDprogressCount(self):
         """Send back current ID progress counts to the client"""
-        return ["ACK", self.IDDB.countIdentified(), self.IDDB.countAll()]
+        return [self.IDDB.countIdentified(), self.IDDB.countAll()]
 
-    def IDreturnIDd(self, user, token, ret, sid, sname):
+    def IDreturnIDd(self, user, ret, sid, sname):
         """Client has ID'd the pageimage with code=ret, student-number=sid,
         and student-name=sname. Send the information to the database (which
         checks if that number has been used previously). If okay then send
         and ACK, else send an error that the number has been used.
         """
-        if self.IDDB.takeIDImageFromClient(ret, user, sid, sname):
-            return ["ACK"]
-        else:
-            return ["ERR", "That student number already used."]
+        # TODO - improve this
+        # returns [True] if all good
+        # [False, True] - if student number already in use
+        # [False, False] - if bigger error
+        return self.IDDB.takeIDImageFromClient(ret, user, sid, sname)
 
-    def IDgetAlreadyIDList(self, user, token):
+    def IDgetAlreadyIDList(self, user):
         """When a id-client logs on they request a list of papers they have already IDd.
-        Send back a textfile with list of TGVs.
+        Send back the list.
         """
-        idList = self.IDDB.buildIDList(user)
-        # dump the list to file as json and then give file to client
-        tfn = tempfile.NamedTemporaryFile()
-        with open(tfn.name, "w") as outfile:
-            json.dump(idList, outfile)
-        # Send an ack with the file
-        return ["ACK", self.provideFile(tfn.name)]
+        return self.IDDB.buildIDList(user)
 
-    def IDgetGroupImage(self, user, token, tgv):
-        give = self.IDDB.getGroupImage(user, tgv)
-        fname = "{}/idgroup/{}.png".format(pathScanDirectory, give)
-        if fname is not None:
-            return ["ACK", give, self.provideFile(fname), None]
+    def IDgetGroupImage(self, user, tgv):
+        if self.IDDB.getGroupImage(user, tgv):
+            fname = "{}/idgroup/{}.png".format(pathScanDirectory, tgv)
+            return [True, fname]
         else:
-            return ["ERR", "User {} is not authorised for tgv={}".format(user, tgv)]
+            return [False]
 
     def MaskNextTask(self, user, token, pg, v):
         """The client has asked for the next unmarked paper, so

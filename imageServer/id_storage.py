@@ -177,17 +177,17 @@ class IDDatabase:
                         x.number, code, sid, sname, username
                     )
                 )
-                return True
+                return [True]
         except IntegrityError:
             self.logging.info("Student number {} already entered".format(sid))
-            return False
+            return [False, True]
         except IDImage.DoesNotExist:
             self.logging.info(
                 "That IDImage number {} / username {} pair not known".format(
                     code, username
                 )
             )
-            return False
+            return [False, False]
 
     def didntFinish(self, username, code):
         """When user logs off, any images they have still out should be put
@@ -259,10 +259,11 @@ class IDDatabase:
         return idList
 
     def getGroupImage(self, username, code):
+        # if user has image then return True else false.
         try:
             with iddb.atomic():
                 x = IDImage.get(tgv=code, user=username)
-                return x.tgv
+                return True
         except IDImage.DoesNotExist:
             print("Request for non-existant tgv = {}".format(code))
-            return None
+            return False
