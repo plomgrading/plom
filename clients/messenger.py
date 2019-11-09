@@ -70,36 +70,35 @@ def http_messaging(msg):
     return response.json()["rmsg"]
 
 
-# def requestAndSaveToken(user, pw):
-#     """Get a authorisation token from the server
-#
-#     The request sends name and password (over ssl) to the server. If
-#     hash of password matches the one on file, then the server sends
-#     back an "ACK" and an authentication token. The token is then used
-#     to authenticate future transactions with the server (since
-#     password hashing is slow).
-#
-#     Raise a ValueError with message from the server.
-#
-#     TODO: what happens on timeout?
-#     """
-#     global _userName, _token
-#
-#     msg = ("AUTH", user, pw, Plom_API_Version)
-#     with SRmutex:
-#         rmsg = http_messaging(msg)
-#
-#     if rmsg[0] == "ACK" and len(rmsg) == 2:
-#         _userName = user
-#         _token = rmsg[1]
-#         return
-#     elif rmsg[0] == "ERR" and len(rmsg) == 2:
-#         raise ValueError(rmsg[1])
-#     else:
-#         raise RuntimeError(
-#             "Unexpected response from server.  Consider filing a bug?  The return from the server was:\n\n"
-#             + str(rmsg)
-#         )
+def requestAndSaveToken(user, pw):
+    """Get a authorisation token from the server.
+
+    The token is then used to authenticate future transactions with the server.
+
+    """
+    global _userName, _token
+
+    SRmutex.acquire()
+    try:
+        response = session.put(
+            "https://{}:{}/ID/users/{}".format(server, message_port, user),
+            json={"user": user, "pw": pw, "api": Plom_API_Version},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        _token = response.json()
+        _userName = user
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise plom_exceptions.BenignException("You are not authenticated.")
+        elif response.status_code == 400:  # API error
+            raise plom_exceptions.BenignException(response.json())
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
 
 
 def msg(msgcode, *args):
@@ -451,32 +450,6 @@ def IDcloseUser():
         SRmutex.release()
 
     return True
-
-
-def requestAndSaveToken(user, pw):
-    global _userName, _token
-
-    SRmutex.acquire()
-    try:
-        response = session.put(
-            "https://{}:{}/ID/users/{}".format(server, message_port, user),
-            json={"user": user, "pw": pw, "api": Plom_API_Version},
-            verify=False,
-        )
-        # throw errors when response code != 200.
-        response.raise_for_status()
-        # convert the content of the response to a textfile for identifier
-        _token = response.json()
-        _userName = user
-    except requests.HTTPError as e:
-        if response.status_code == 401:  # authentication error
-            raise plom_exceptions.SeriousError("You are not authenticated.")
-        elif response.status_code == 400:  # API error
-            raise plom_exceptions.SeriousError(response.json())
-        else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
 
 
 # ------------------------

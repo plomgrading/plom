@@ -20,6 +20,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
 from useful_classes import ErrorMessage, SimpleMessage
+import plom_exceptions
 
 import messenger
 sys.path.append("..")  # this allows us to import from ../resources
@@ -118,7 +119,7 @@ class Chooser(QDialog):
         messenger.startMessenger()
         try:
             messenger.requestAndSaveToken(user, pwd)
-        except ValueError as e:
+        except plom_exceptions.BenignException as e:
             ErrorMessage("Could not get authentication token.\n\n"
                          "Error was: {}".format(e)).exec_()
             return
