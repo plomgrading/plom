@@ -206,7 +206,7 @@ async def CloseUser(request):
 
 
 @routes.put("/ID/users/{user}")
-async def IDnextTask(request):
+async def LoginUserGiveToken(request):
     data = await request.json()
     user = request.match_info["user"]
 
