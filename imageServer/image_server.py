@@ -213,9 +213,9 @@ async def LoginUserGiveToken(request):
     rmsg = peon.authoriseUser(data["user"], data["pw"], data["api"])
     if rmsg[0]:
         return web.json_response(rmsg[1], status=200)  # all good, return the token
-    elif rmsg[1] == "API":
+    elif rmsg[1].startswith("API"):
         return web.json_response(
-            rmsg[2], status=400
+            rmsg[1], status=400
         )  # api error - return the error message
     else:
         return web.Response(status=401)  # you are not authorised
