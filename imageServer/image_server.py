@@ -205,6 +205,22 @@ async def IDnextTask(request):
         return web.Response(status=401)
 
 
+@routes.put("/ID/users/{user}")
+async def IDnextTask(request):
+    data = await request.json()
+    user = request.match_info["user"]
+
+    rmsg = peon.authoriseUser(data["user"], data["pw"], data["api"])
+    if rmsg[0]:
+        return web.json_response(rmsg[1], status=200)  # all good, return the token
+    elif rmsg[1] == "API":
+        return web.json_response(
+            rmsg[2], status=400
+        )  # api error - return the error message
+    else:
+        return web.Response(status=401)  # you are not authorised
+
+
 # ----------------------
 # ----------------------
 
@@ -443,7 +459,8 @@ class Server(object):
         """
         if clientAPI != serverAPI:
             return [
-                "ERR",
+                False,
+                "API"
                 'Plom API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
                     clientAPI, serverAPI, __version__
                 ),
@@ -455,9 +472,9 @@ class Server(object):
             self.MDB.resetUsersToDo(user)
             self.TDB.resetUsersToDo(user)
             self.logger.info("Authorising user {}".format(user))
-            return ["ACK", self.authority.getToken(user)]
+            return [True, self.authority.getToken(user)]
         else:
-            return ["ERR", "You are not an authorised user"]
+            return [False, "NAU"]
 
     def validate(self, user, token):
         """Check the user's token is valid"""
