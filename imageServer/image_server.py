@@ -193,7 +193,7 @@ async def IDdidNotFinishTask(request):
 
 
 @routes.delete("/ID/users/{user}")
-async def IDnextTask(request):
+async def CloseUser(request):
     data = await request.json()
     user = request.match_info["user"]
     if data["user"] != request.match_info["user"]:
