@@ -199,6 +199,8 @@ class PageScene(QGraphicsScene):
         self.scoreBox = ScoreBox(self.fontSize, self.maxMark, self.score)
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
+        # make a box around the scorebox where mouse-press-event won't work.
+        self.avoidBox = self.scoreBox.boundingRect().adjusted(0, 0, 24, 24)
 
     def setMode(self, mode):
         self.mode = mode
@@ -266,6 +268,10 @@ class PageScene(QGraphicsScene):
     # These events use the dictionaries defined above to
     # translate the current tool-mode into function calls
     def mousePressEvent(self, event):
+        # check if mouseclick inside the avoidBox
+        if self.avoidBox.contains(event.scenePos()):
+            return
+
         # Get the function name from the dictionary based on current mode.
         functionName = mousePress.get(self.mode, None)
         if functionName:
@@ -315,9 +321,9 @@ class PageScene(QGraphicsScene):
             or isinstance(under, GroupDTItem)
         ):
             return
-
         # grab the location of the mouse-click
         pt = event.scenePos()
+
         # build the textitem
         self.blurb = TextItem(self, self.fontSize)
         self.blurb.setPlainText(self.commentText)
