@@ -272,6 +272,8 @@ class Annotator(QDialog):
             Qt.Key_Home: lambda: self.toggleTools(),
             # view whole paper
             Qt.Key_F1: lambda: self.viewWholePaper(),
+            # pan through paper
+            Qt.Key_Space: lambda: self.panThrough(),
         }
 
     def toggleTools(self):
@@ -1100,3 +1102,6 @@ class Annotator(QDialog):
                     self.deltaActions[k].setEnabled(True)
                 else:
                     self.deltaActions[k].setEnabled(False)
+
+    def panThrough(self):
+        self.view.panThrough()
