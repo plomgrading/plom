@@ -326,7 +326,11 @@ def addCurrentScansToExamsScanned():
             if ps in examsScanned[ts]:
                 # Eventually we should output this sort of thing to
                 # a log file in case of user-errors.
-                print("WARNING: you have already scanned t{}p{}v{}".format(ts, ps, v))
+                print(
+                    "WARNING: you have already scanned t{}p{}v{}. Will not process image-file {}.".format(
+                        ts, ps, v, fn
+                    )
+                )
                 overwriteAttempt["t{}p{}v{}".format(ts, ps, v)] = fn
                 # TODO handle rescans with code like that below
                 # TODO this also needs to update examsGrouped
@@ -358,9 +362,9 @@ def addCurrentScansToExamsScanned():
                         str(v),
                     ),
                 )
-            # move the filename into alreadyProcessed
-            shutil.move(fn, "alreadyProcessed")
-            shutil.move(fn + ".qr", "alreadyProcessed")
+                # move this new scan file into alreadyProcessed
+                shutil.move(fn, "alreadyProcessed")
+                shutil.move(fn + ".qr", "alreadyProcessed")
     os.chdir("../")
 
 
