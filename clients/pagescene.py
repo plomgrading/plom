@@ -119,6 +119,7 @@ mouseMove = {
     "pen": "mouseMovePen",
     "comment": "mouseMoveComment",
     "delta": "mouseMoveDelta",
+    "zoom": "mouseMoveZoom",
 }
 mouseRelease = {
     "box": "mouseReleaseBox",
@@ -127,6 +128,7 @@ mouseRelease = {
     "move": "mouseReleaseMove",
     "pen": "mouseReleasePen",
     "pan": "mouseReleasePan",
+    "zoom": "mouseReleaseZoom",
 }
 
 
@@ -164,6 +166,7 @@ class PageScene(QGraphicsScene):
         self.brush = QBrush(self.ink.color())
         self.lightBrush = QBrush(QColor(255, 255, 0, 16))
         self.deleteBrush = QBrush(QColor(255, 0, 0, 16))
+        self.zoomBrush = QBrush(QColor(0, 0, 255, 16))
         # Flags to indicate if drawing an arrow (vs line),
         # highlight (vs regular pen),
         # box (vs ellipse), area-delete vs point.
@@ -171,6 +174,7 @@ class PageScene(QGraphicsScene):
         self.penFlag = 0
         self.boxFlag = 0
         self.deleteFlag = 0
+        self.zoomFlag = 0
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
         self.currentPos = QPointF(0, 0)
@@ -180,6 +184,7 @@ class PageScene(QGraphicsScene):
         self.pathItem = QGraphicsPathItem()
         self.boxItem = QGraphicsRectItem()
         self.delBoxItem = QGraphicsRectItem()
+        self.zoomBoxItem = QGraphicsRectItem()
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
         self.blurb = TextItem(self, self.fontSize)
@@ -452,20 +457,6 @@ class PageScene(QGraphicsScene):
         else:
             command = CommandTick(self, pt)
         self.undoStack.push(command)
-
-    def mousePressZoom(self, event):
-        """Mouse-click changes the view-scale on the parent
-        qgraphicsview. left zooms in, right zooms out.
-        """
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-        ):
-            self.views()[0].scale(0.8, 0.8)
-        else:
-            self.views()[0].scale(1.25, 1.25)
-        self.views()[0].centerOn(event.scenePos())
-        # sets the view rectangle and updates zoom-dropdown.
-        self.views()[0].zoomNull(True)
 
     # Mouse release tool functions.
     # Most of these delete the temp-object (eg box / line)
@@ -922,6 +913,75 @@ class PageScene(QGraphicsScene):
         #     > 8
         # ):
         #     self.undoStack.push(command)
+
+    def mousePressZoom(self, event):
+        """Start drawing a zoom-box. Nothing happens until button is released.
+        """
+        if self.zoomFlag is not 0:
+            return
+
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
+            # sets the view rectangle and updates zoom-dropdown.
+            self.views()[0].scale(0.8, 0.8)
+            self.views()[0].centerOn(event.scenePos())
+            self.views()[0].zoomNull(True)
+            self.zoomFlag = 0
+            return
+        else:
+            self.zoomFlag = 1
+
+        self.originPos = event.scenePos()
+        self.currentPos = self.originPos
+        self.zoomBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.zoomBoxItem.setPen(Qt.blue)
+        self.zoomBoxItem.setBrush(self.zoomBrush)
+        self.addItem(self.zoomBoxItem)
+
+    def mouseMoveZoom(self, event):
+        """Update the box as the mouse is moved. This
+        animates the drawing of the box for the user.
+        """
+        if self.zoomFlag is not 0:
+            self.zoomFlag = 2  # drag started.
+            self.currentPos = event.scenePos()
+            if self.zoomBoxItem is None:
+                print("EEK - should not be here")
+                # somehow missed the mouse-press
+                self.zoomBoxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+                self.zoomBoxItem.setPen(self.ink)
+                self.zoomBoxItem.setBrush(self.zoomBrush)
+                self.addItem(self.zoomBoxItem)
+            else:
+                self.zoomBoxItem.setRect(QRectF(self.originPos, self.currentPos))
+
+    def mouseReleaseZoom(self, event):
+        """Either zoom-in a little (if zoombox small), else fit the zoombox in view.
+        Delete the zoombox afterwards and set the zoomflag back to 0.
+        """
+        if self.zoomFlag == 0:
+            return
+        # check to see if box is quite small (since very hard
+        # to click button without moving a little)
+        # if small then set flag to 1 and treat like a click
+        if self.zoomBoxItem.rect().height() < 8 and self.zoomBoxItem.rect().width() < 8:
+            self.zoomFlag = 1
+
+        if self.zoomFlag == 1:
+            self.views()[0].scale(1.25, 1.25)
+            self.views()[0].centerOn(event.scenePos())
+
+        elif self.zoomFlag == 2:
+            self.views()[0].fitInView(self.zoomBoxItem, Qt.KeepAspectRatio)
+
+        # sets the view rectangle and updates zoom-dropdown.
+        self.views()[0].zoomNull(True)
+        # remove the box and put flag back.
+        self.removeItem(self.zoomBoxItem)
+        self.zoomFlag = 0
 
     def mousePressDelete(self, event):
         """Start drawing a delete-box. Nothing happens until button is released.
