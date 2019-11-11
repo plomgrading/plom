@@ -365,6 +365,8 @@ def addCurrentScansToExamsScanned():
 
 
 def overwriteWarnings():
+    if not overwriteAttempt.keys():
+        return
     print(
         "Warning - you attempted to overwrite the following TPVs with the files indicated:"
     )
