@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * autogenerate password suggestions for new users.
 * 05 script now warns about potential extra pages
 * Annotator - spacebar pans through paper (down and right), shift-space pans back (up and left).
+* Annotator - zoom-mode click-drag creates a (temp) rectangle to zoom into.
 
 ### Changed
 * make 04 script less verbose.
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * resizing annotator persists between papers
 * zooming annotator persists between papers
 * docs: changes for uploading to the new Canvas gradebook
+* Annotator - can no longer click in region around score-box. This prevents accidentally pasting objects behind the scorebox.
 
 ### Fixed
 * fixed race conditions when/uploading and downloading.
