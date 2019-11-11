@@ -120,9 +120,19 @@ class KeyHelp(QDialog):
                 "Moves through the current view, down and then right.",
             ],
             [
+                "Pan-through (slowly)",
+                ["ctrl-space"],
+                "Moves slowly through the current view, down and then right.",
+            ],
+            [
                 "Pan-back",
                 ["shift-space"],
                 "Moves back through the current view, up and then left.",
+            ],
+            [
+                "Pan-back (slowly)",
+                ["ctrl-shift-space"],
+                "Moves slowly back through the current view, up and then left.",
             ],
             [
                 "Show whole paper",

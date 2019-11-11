@@ -624,6 +624,10 @@ class Annotator(QDialog):
         self.panShortCut.activated.connect(self.view.panThrough)
         self.depanShortCut = QShortcut(QKeySequence("Shift+space"), self)
         self.depanShortCut.activated.connect(self.view.depanThrough)
+        self.slowPanShortCut = QShortcut(QKeySequence("Ctrl+space"), self)
+        self.slowPanShortCut.activated.connect(lambda: self.view.panThrough(0.02))
+        self.slowDepanShortCut = QShortcut(QKeySequence("Ctrl+Shift+space"), self)
+        self.slowDepanShortCut.activated.connect(lambda: self.view.depanThrough(0.02))
 
     # Simple mode change functions
     def boxMode(self):
