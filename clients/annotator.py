@@ -272,8 +272,6 @@ class Annotator(QDialog):
             Qt.Key_Home: lambda: self.toggleTools(),
             # view whole paper
             Qt.Key_F1: lambda: self.viewWholePaper(),
-            # pan through paper
-            Qt.Key_Space: lambda: self.panThrough(),
         }
 
     def toggleTools(self):
@@ -621,6 +619,11 @@ class Annotator(QDialog):
         self.undoShortCut.activated.connect(self.scene.undo)
         self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
         self.redoShortCut.activated.connect(self.scene.redo)
+        # pan shortcuts
+        self.panShortCut = QShortcut(QKeySequence("space"), self)
+        self.panShortCut.activated.connect(self.view.panThrough)
+        self.depanShortCut = QShortcut(QKeySequence("Shift+space"), self)
+        self.depanShortCut.activated.connect(self.view.depanThrough)
 
     # Simple mode change functions
     def boxMode(self):
@@ -1102,6 +1105,3 @@ class Annotator(QDialog):
                     self.deltaActions[k].setEnabled(True)
                 else:
                     self.deltaActions[k].setEnabled(False)
-
-    def panThrough(self):
-        self.view.panThrough()

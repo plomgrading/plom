@@ -115,6 +115,16 @@ class KeyHelp(QDialog):
         "View": [
             ["Pan", ["q", "p"], "Click and drag moves the current view."],
             [
+                "Pan-through",
+                ["space"],
+                "Moves through the current view, down and then right.",
+            ],
+            [
+                "Pan-back",
+                ["shift-space"],
+                "Moves back through the current view, up and then left.",
+            ],
+            [
                 "Show whole paper",
                 ["f1", "fn-f1"],
                 "Opens a window to display all the pages of the current test being annotated (except the ID-page).",

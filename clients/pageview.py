@@ -147,3 +147,27 @@ class PageView(QGraphicsView):
                 self.horizontalScrollBar().setValue(0)
 
         self.zoomNull()
+
+    def depanThrough(self):
+        hv = self.horizontalScrollBar().value()
+        vv = self.verticalScrollBar().value()
+        # if not at bottom of view, step down via scrollbar
+        if vv > 0:
+            self.verticalScrollBar().setValue(
+                vv - self.verticalScrollBar().pageStep() * 0.8
+            )
+        else:
+            # else move up to top of view
+            self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
+            # if not at right of view, step right via scrollbar
+            if hv > 0:
+                self.horizontalScrollBar().setValue(
+                    hv - self.horizontalScrollBar().pageStep()
+                )
+            else:
+                # else move back to origin.
+                self.horizontalScrollBar().setValue(
+                    self.horizontalScrollBar().maximum()
+                )
+
+        self.zoomNull()
