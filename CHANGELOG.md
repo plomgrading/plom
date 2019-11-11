@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * resizing annotator persists between papers
 * zooming annotator persists between papers
 * docs: changes for uploading to the new Canvas gradebook
+* Annotator - can no longer click in region around score-box. This prevents accidentally pasting objects behind the scorebox.
 
 ### Fixed
 * fixed race conditions when/uploading and downloading.
