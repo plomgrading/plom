@@ -69,6 +69,16 @@ async def hello(request):
         return web.json_response({"rmsg": rmesg}, status=200)
 
 
+@routes.get("/Version")
+async def IDprogressCount(request):
+    return web.Response(
+        text="Running Plom server version {} with API {}".format(
+            __version__, serverAPI
+        ),
+        status=200,
+    )
+
+
 @routes.get("/ID/progress")
 async def IDprogressCount(request):
     data = await request.json()
@@ -988,7 +998,7 @@ print("Plom Server v{}: this is free software without warranty".format(__version
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
-checkPorts()
+# checkPorts()
 # check that markedPapers and subdirectories exist
 checkDirectories()
 
