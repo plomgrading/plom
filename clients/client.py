@@ -237,10 +237,16 @@ if __name__ == "__main__":
 
     window = Chooser(app)
     window.show()
-    # undocumented feature: `./client.py user:pass@url:port`
+
+    # Command line arguments (currently undocumented/unsupported)
+    #    `./client.py user:pass@url:port`
+    # Other options:
+    #   `-i` starts Identifier.
+    #   `-m1:2` starts Marker for PG 1 version 2.
+    #   `-m` starts Marker with whatever PG/ver was in json
     if len(sys.argv) >= 2:
-        stuff = sys.argv[1]
-        user, server = stuff.split('@')
+        arg = sys.argv[1]
+        user, server = arg.split('@')
         user, pwd = user.split(':')
         server, port = server.split(':')
         print("got from cli: {}".format((user, pwd, server, port)))
@@ -249,4 +255,19 @@ if __name__ == "__main__":
         window.ui.serverLE.setText(server)
         window.ui.mportSB.setValue(int(port))
         window.ui.wportSB.setValue(int(port)+1)
+    if len(sys.argv) >= 3:
+        arg = sys.argv[2]
+        if arg == '-i':
+            window.ui.identifyButton.animateClick()
+        if arg.startswith('-m'):
+            if len(arg) >= 2:
+                pg, v = arg.lstrip('-m').split(":")
+                window.ui.pgSB.setValue(int(pg))
+                window.ui.vSB.setValue(int(v))
+            window.ui.markButton.animateClick()
+        else:
+            raise ValueError("Should I sing until I can't sing any more\n"
+                             "Play these strings until my fingers are raw\n"
+                             "You're so hard to please\n"
+                             "What do you want from me?")
     sys.exit(app.exec_())
