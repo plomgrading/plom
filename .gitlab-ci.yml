@@ -27,6 +27,8 @@ variables:
 
   ROLLOUT_RESOURCE_TYPE: deployment
 
+# Need pip >= 19, which turns out to be nontrivial: cannot just call
+# pip/pip3 after upgrading, hence `python3 -m pip` stuff below
 before_script:
   - apt-get update
   - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
@@ -37,8 +39,11 @@ before_script:
     python3-pip python3-setuptools python3-wheel imagemagick
     texlive-latex-extra dvipng g++ make python3-dev
     iproute2 psmisc
-  - pip3 install wsgidav easywebdav2 pymupdf weasyprint imutils
-    lapsolver peewee cheroot
+  - pip3 install --upgrade pip
+  - which pip3
+  - python3 -m pip -V
+  - python3 -m pip install wsgidav easywebdav2 pymupdf weasyprint
+    imutils lapsolver peewee cheroot
 
 stages:
   - build
