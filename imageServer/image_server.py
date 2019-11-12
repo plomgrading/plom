@@ -998,7 +998,7 @@ print("Plom Server v{}: this is free software without warranty".format(__version
 # Get the server information from file
 getServerInfo()
 # Check the server ports are free
-# checkPorts()
+checkPorts()
 # check that markedPapers and subdirectories exist
 checkDirectories()
 
