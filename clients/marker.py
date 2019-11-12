@@ -901,10 +901,11 @@ class MarkerClient(QWidget):
         print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
         shutil.copyfile(fname, aname)
 
+        # stash the previous state, not ideal because makes column wider
         prevState = self.prxM.data(index[1])
-        self.prxM.setData(index[1], "annotating")
+        self.prxM.setData(index[1], "annotating:" + prevState)
 
-        junkWeWantSendBackToUs = [prevState, paperdir]
+        junkWeWantSendBackToUs = [paperdir]
         if remarkFlag:
             self.startTheAnnotator(tgv, aname, pname, _xtracheese=junkWeWantSendBackToUs)
         else:
@@ -915,7 +916,7 @@ class MarkerClient(QWidget):
     @pyqtSlot(str, list)
     def callbackAnnIsDoneCancel(self, tgv, _xtracheese):
         self.setEnabled(True)
-        prevState = _xtracheese[0]
+        prevState = self.prxM.getDataByTGV("t" + tgv, 1).split(':')[-1]
         # TODO: could also erase the paperdir
         self.prxM.setDataByTGV("t" + tgv, 1, prevState)
         # reselect the row we were working on
@@ -926,7 +927,7 @@ class MarkerClient(QWidget):
     def callbackAnnIsDoneAccept(self, tgv, stuff, _xtracheese):
         self.setEnabled(True)
         gr, launchAgain, mtime, aname, pname, cname = stuff
-        prevState, paperdir = _xtracheese
+        paperdir = _xtracheese
         print((tgv, gr, mtime, launchAgain))
         # Copy the mark, annotated filename and the markingtime into the table
         # TODO: sort this out whether tgv is "t00..." or "00..."?!
