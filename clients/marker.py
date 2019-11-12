@@ -903,7 +903,7 @@ class MarkerClient(QWidget):
 
         # stash the previous state, not ideal because makes column wider
         prevState = self.prxM.data(index[1])
-        self.prxM.setData(index[1], "annotating:" + prevState)
+        self.prxM.setData(index[1], "ann:" + prevState)
 
         if remarkFlag:
             self.startTheAnnotator(tgv, paperdir, aname, pname)
