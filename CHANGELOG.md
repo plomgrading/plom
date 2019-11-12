@@ -8,9 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+
+## [0.2.1] - 2019-11-11
+
+### Added
 * preliminary support for a canned user list.
 * autogenerate password suggestions for new users.
 * 05 script now warns about potential extra pages
+* Annotator - spacebar pans through paper (down and right), shift-space pans back (up and left). Ctrl+space, Ctrl-shift-space does similarly but more slowly.
+* Annotator - zoom-mode click-drag creates a (temp) rectangle to zoom into.
 
 ### Changed
 * make 04 script less verbose.
@@ -19,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * resizing annotator persists between papers
 * zooming annotator persists between papers
 * docs: changes for uploading to the new Canvas gradebook
+* Annotator - can no longer click in region around score-box. This prevents accidentally pasting objects behind the scorebox.
 
 ### Fixed
 * fixed race conditions when/uploading and downloading.
@@ -73,6 +85,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is the first release of Plom, PaperLessOpenMarking.
 
-
-[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.0...master
+[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...master
+[0.2.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.0...v0.2.1
 [0.2.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.1.0...v0.2.0
