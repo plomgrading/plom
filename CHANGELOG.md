@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * preliminary support for a canned user list.
 * autogenerate password suggestions for new users.
 * 05 script now warns about potential extra pages
+* Annotator - spacebar pans through paper (down and right), shift-space pans back (up and left). Ctrl+space, Ctrl-shift-space does similarly but more slowly.
 * Annotator - zoom-mode click-drag creates a (temp) rectangle to zoom into.
 
 ### Changed
