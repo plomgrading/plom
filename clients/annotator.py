@@ -86,22 +86,21 @@ class Annotator(QWidget):
     and assigning marks.
     """
 
-    ann_finished_accept = pyqtSignal(str, list, list)
+    ann_finished_accept = pyqtSignal(str, list)
     ann_finished_reject = pyqtSignal(str, list)
 
     def __init__(
         self,
         tgv,
+        paperdir,
         fname,
         maxMark,
         markStyle,
         mouseHand,
         parent=None,
         plomDict=None,
-        _xtracheese=None,
     ):
         super(Annotator, self).__init__()
-        self._junkForMarker = _xtracheese
         # Temporary hack: None means "just close", can be True/False
         self._relaunch = None
         # remember parent
@@ -109,6 +108,7 @@ class Annotator(QWidget):
         # Grab filename of image, max mark, mark style (total/up/down)
         # and mouse-hand (left/right)
         self.tgv = tgv
+        self.paperdir = paperdir
         self.imageFile = fname
         self.maxMark = maxMark
         # get markstyle from plomDict
@@ -939,7 +939,7 @@ class Annotator(QWidget):
         # Close button/titlebar: reject (do not save) result, do not launch again
         if relaunch is None:
             print("ann emitting signal: Reject/Cancel")
-            self.ann_finished_reject.emit(self.tgv, self._junkForMarker)
+            self.ann_finished_reject.emit(self.tgv, [])
             # clean up after a testview
             self.doneViewingPaper()
             ce.accept()
@@ -1008,8 +1008,16 @@ class Annotator(QWidget):
         # some things here hardcoded elsewhere too, and up in marker
         plomFile = self.imageFile[:-3] + "plom"
         commentFile = self.imageFile[:-3] + "json"
-        stuff = [self.score, relaunch, tim, self.imageFile, plomFile, commentFile]
-        self.ann_finished_accept.emit(self.tgv, stuff, self._junkForMarker)
+        stuff = [
+            self.score,
+            relaunch,
+            tim,
+            self.paperdir,
+            self.imageFile,
+            plomFile,
+            commentFile,
+        ]
+        self.ann_finished_accept.emit(self.tgv, stuff)
         ce.accept()
 
     def checkAllObjectsInside(self):

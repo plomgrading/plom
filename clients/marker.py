@@ -791,7 +791,7 @@ class MarkerClient(QWidget):
                 count += 1
         return count
 
-    def startTheAnnotator(self, tgv, fname, pname=None, _xtracheese=None):
+    def startTheAnnotator(self, tgv, paperdir, fname, pname=None):
         """This fires up the annotation window for user annotation + marking."""
         # Set marking style total/up/down - will pass to annotator
         self.markStyle = self.ui.markStyleGroup.checkedId()
@@ -815,13 +815,13 @@ class MarkerClient(QWidget):
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
             tgv,
+            paperdir,
             fname,
             self.maxScore,
             self.markStyle,
             self.mouseHand,
             parent=self,
             plomDict=pdict,
-            _xtracheese=_xtracheese,
         )
         # run the annotator
         annotator.ann_finished_accept.connect(self.callbackAnnIsDoneAccept)
@@ -905,17 +905,17 @@ class MarkerClient(QWidget):
         prevState = self.prxM.data(index[1])
         self.prxM.setData(index[1], "annotating:" + prevState)
 
-        junkWeWantSendBackToUs = [paperdir]
         if remarkFlag:
-            self.startTheAnnotator(tgv, aname, pname, _xtracheese=junkWeWantSendBackToUs)
+            self.startTheAnnotator(tgv, paperdir, aname, pname)
         else:
-            self.startTheAnnotator(tgv, aname, None, _xtracheese=junkWeWantSendBackToUs)
+            self.startTheAnnotator(tgv, paperdir, aname, None)
         # we started the annotator, we'll get a signal back when its done
 
     # when the annotator is done, we end up here...
     @pyqtSlot(str, list)
-    def callbackAnnIsDoneCancel(self, tgv, _xtracheese):
+    def callbackAnnIsDoneCancel(self, tgv, stuff):
         self.setEnabled(True)
+        assert not stuff  # currently nothing given back on cancel
         prevState = self.prxM.getDataByTGV("t" + tgv, 1).split(':')[-1]
         # TODO: could also erase the paperdir
         self.prxM.setDataByTGV("t" + tgv, 1, prevState)
@@ -923,12 +923,10 @@ class MarkerClient(QWidget):
         # self.ui.tableView.selectRow(index[1].row())
 
     # ... or here
-    @pyqtSlot(str, list, list)
-    def callbackAnnIsDoneAccept(self, tgv, stuff, _xtracheese):
+    @pyqtSlot(str, list)
+    def callbackAnnIsDoneAccept(self, tgv, stuff):
         self.setEnabled(True)
-        gr, launchAgain, mtime, aname, pname, cname = stuff
-        paperdir = _xtracheese
-        print((tgv, gr, mtime, launchAgain))
+        gr, launchAgain, mtime, paperdir, aname, pname, cname = stuff
         # Copy the mark, annotated filename and the markingtime into the table
         # TODO: sort this out whether tgv is "t00..." or "00..."?!
         # TODO: what if its filtered out of prxM?  Do this to exM?
