@@ -269,7 +269,7 @@ async def Tgimmewhatsdone(request):
 async def TprogressCount(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
-        return web.json_response(peon.IDprogressCount(), status=200)
+        return web.json_response(peon.TprogressCount(), status=200)
     else:
         return web.Response(status=401)
 
@@ -308,6 +308,38 @@ async def TdidNotFinishTask(request):
     if peon.validate(data["user"], data["token"]):
         peon.TdidntFinish(data["user"], code)
         return web.json_response(status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/TOT/images/{tgv}")
+async def TgetImage(request):
+    data = await request.json()
+    code = request.match_info["tgv"]
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.TgetGroupImage(data["user"], code)
+        if rmsg[0]:  # user allowed access - returns [true, fname]
+            if os.path.isfile(rmsg[1] + "q"):
+                return web.FileResponse(rmsg[1], status=200)
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=409)  # someone else has that image
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
+@routes.put("/TOT/tasks/{task}")
+async def TreturnTotaled(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.TreturnTotaled(data["user"], code, data["mark"])
+        # returns True if all good, False if error
+        if rmsg:  # all good
+            return web.Response(status=200)
+        else:  # a more serious error - can't find this in database
+            return web.Response(status=404)
     else:
         return web.Response(status=401)
 
@@ -394,10 +426,6 @@ servCmd = {
     "mRPF": "MreturnPlomFile",
     "mTAG": "MsetTag",
     #####
-    "tRAT": "TreturnAlreadyTotaled",
-    "tRUT": "TreturnTotaled",
-    "tDWF": "TdoneWithFile",
-    "tGGI": "TgetGroupImage",
 }
 
 
@@ -952,7 +980,7 @@ class Server(object):
         self.removeFile(tfn)
         return ["ACK"]
 
-    def TprogressCount(self, user, token):
+    def TprogressCount(self):
         """Send back current total progress counts to the client"""
         return [self.TDB.countTotaled(), self.TDB.countAll()]
 
@@ -974,17 +1002,11 @@ class Server(object):
                 self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give)),
             ]
 
-    def TreturnTotaled(self, user, token, ret, value):
+    def TreturnTotaled(self, user, ret, value):
         """Client has totaled the pageimage with code=ret, total=value.
         Send the information to the database and return an ACK
         """
-        self.TDB.takeTotalImageFromClient(ret, user, value)
-        return ["ACK"]
-
-    def TreturnAlreadyTotaled(self, user, token, ret, value):
-        """ As per TReturnTotaled"""
-        self.TDB.takeTotalImageFromClient(ret, user, value)
-        return ["ACK"]
+        return self.TDB.takeTotalImageFromClient(ret, user, value)
 
     def TgetAlreadyTotaledList(self, user):
         """When a total-client logs on they request a list of papers they have already totaled.
@@ -999,13 +1021,12 @@ class Server(object):
         self.removeFile(tfn)
         return ["ACK"]
 
-    def TgetGroupImage(self, user, token, tgv):
-        give = self.TDB.getGroupImage(user, tgv)
-        fname = "{}/idgroup/{}.png".format(pathScanDirectory, give)
-        if fname is not None:
-            return ["ACK", give, self.provideFile(fname), None]
+    def TgetGroupImage(self, user, tgv):
+        if self.TDB.getGroupImage(user, tgv):
+            fname = "{}/idgroup/{}.png".format(pathScanDirectory, tgv)
+            return [True, fname]
         else:
-            return ["ERR", "User {} is not authorised for tgv={}".format(user, tgv)]
+            return [False]
 
 
 # # # # # # # # # # # #

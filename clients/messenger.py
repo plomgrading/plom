@@ -435,6 +435,7 @@ def IDreturnIDdTask(code, studentID, studentName):
     finally:
         SRmutex.release()
 
+    # TODO - do we need this return value?
     return True
 
 
@@ -601,6 +602,60 @@ def TdidNotFinishTask(code):
     finally:
         SRmutex.release()
 
+    return True
+
+
+def TgetGroupImage(code):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/TOT/images/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 404:
+            raise plom_exceptions.SeriousError(
+                "Cannot find image file for {}.".format(code)
+            )
+        elif response.status_code == 409:
+            raise plom_exceptions.SeriousError(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image
+
+
+def TreturnTotaledTask(code, mark):
+    SRmutex.acquire()
+    try:
+        response = session.put(
+            "https://{}:{}/TOT/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token, "mark": mark},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 404:
+            raise plom_exceptions.SeriousError(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    # TODO - do we need this return value?
     return True
 
 

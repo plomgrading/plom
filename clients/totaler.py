@@ -281,16 +281,20 @@ class TotalClient(QWidget):
 
     def checkFiles(self, r):
         tgv = self.exM.paperList[r].prefix
+        # check if we have the image file
         if self.exM.paperList[r].originalFile is not "":
             return
-        msg = self.msgr.msg("tGGI", tgv)
-        if msg[0] == "ERR":
+        # else try to grab it from server
+        try:
+            image = messenger.TgetGroupImage(tgv)
+        except plom_exceptions.SeriousError as e:
+            self.throwSeriousError(e)
             return
-        fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
-        tfname = msg[2]  # the temp original image file on webdav
-        self.msgr.getFileDav(tfname, fname)
-        # got original file so ask server to remove it.
-        msg = self.msgr.msg("tDWF", tfname)
+        # save the image to appropriate filename
+        fname = os.path.join(self.workingDirectory, "{}.png".format(tgv))
+        with open(fname, "wb+") as fh:
+            fh.write(image)
+
         self.exM.paperList[r].originalFile = fname
 
     def updateImage(self, r=0):
@@ -306,8 +310,6 @@ class TotalClient(QWidget):
         if update:
             self.ui.tableView.selectRow(r)
             self.updateImage(r)
-            # One more untotaledpaper
-            self.noTotalCount += 1
 
     def updateProgress(self):
         # update progressbars
@@ -370,29 +372,19 @@ class TotalClient(QWidget):
         # model to put data into the table.
         self.exM.totalPaper(index, self.ui.totalEdit.text())
         code = self.exM.data(index[0])
-        if alreadyTotaled:
-            # If the paper was totaled previously send return-already-totaled (tRAT)
-            # with the code, ID, name.
-            msg = self.msgr.msg("tRAT", code, self.ui.totalEdit.text())
-        else:
-            # If the paper was not totaled previously send return-previously untotaled (iRUT)
-            # with the code, ID, name.
-            msg = self.msgr.msg("tRUT", code, self.ui.totalEdit.text())
-        if msg[0] == "ERR":
-            # If an error, revert the student and clear things.
-            self.exM.revertStudent(index)
-            # Use timer to avoid conflict between completer and
-            # clearing the line-edit. Very annoying but this fixes it.
-            QTimer.singleShot(0, self.ui.totalEdit.clear)
+
+        try:
+            messenger.TreturnTotaledTask(code, self.ui.totalEdit.text())
+        except plom_exceptions.SeriousError as err:
+            self.throwSeriousError(err)
             return False
-        else:
-            # Use timer to avoid conflict between completer and
-            # clearing the line-edit. Very annoying but this fixes it.
-            QTimer.singleShot(0, self.ui.totalEdit.clear)
-            # Update untotaled count.
-            if not alreadyTotaled:
-                self.noTotalCount -= 1
-            return True
+
+        # Use timer to avoid conflict between completer and
+        # clearing the line-edit. Very annoying but this fixes it.
+        QTimer.singleShot(0, self.ui.totalEdit.clear)
+        # Update progressbars
+        self.updateProgress()
+        return True
 
     def moveToNextUntotaled(self):
         # Move to the next test in table which is not totaled.
@@ -443,7 +435,7 @@ class TotalClient(QWidget):
 
         if self.totalPaper(index, alreadyTotaled):
             # if successful, and everything local has been ID'd get next
-            if alreadyTotaled is False and self.noTotalCount == 0:
+            if alreadyTotaled is False:
                 self.requestNext()
             else:
                 # otherwise move to the next unidentified paper.

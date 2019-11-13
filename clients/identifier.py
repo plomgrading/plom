@@ -531,6 +531,7 @@ class IDClient(QWidget):
         code = self.exM.data(index[0])
         # Return paper to server with the code, ID, name.
         try:
+            # TODO - do we need this return value
             msg = messenger.IDreturnIDdTask(
                 code, self.ui.idEdit.text(), self.ui.nameEdit.text()
             )
