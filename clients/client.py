@@ -23,6 +23,7 @@ from useful_classes import ErrorMessage, SimpleMessage
 import plom_exceptions
 
 import messenger
+
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
 from resources.version import Plom_API_Version
@@ -120,16 +121,20 @@ class Chooser(QDialog):
         try:
             messenger.requestAndSaveToken(user, pwd)
         except plom_exceptions.PlomAPIException as e:
-            ErrorMessage("Could not authenticate due to API mismatch."
-                         "Your client version is {}.\n\n"
-                         "Error was: {}".format(__version__, e)).exec_()
+            ErrorMessage(
+                "Could not authenticate due to API mismatch."
+                "Your client version is {}.\n\n"
+                "Error was: {}".format(__version__, e)
+            ).exec_()
             return
         except plom_exceptions.BenignException as e:
             ErrorMessage("Could not authenticate: {}".format(e)).exec_()
             return
         except plom_exceptions.SeriousError as e:
-            ErrorMessage("Could not get authentication token.\n\n"
-                         "Unexpected error: {}".format(e)).exec_()
+            ErrorMessage(
+                "Could not get authentication token.\n\n"
+                "Unexpected error: {}".format(e)
+            ).exec_()
             return
 
         # Now run the appropriate client sub-application
@@ -156,9 +161,10 @@ class Chooser(QDialog):
             # Run the Total client.
             self.setEnabled(False)
             self.hide()
-            totalerwin = totaler.TotalClient(messenger)
+            totalerwin = totaler.TotalClient()
             totalerwin.my_shutdown_signal.connect(self.on_other_window_close)
             totalerwin.show()
+            totalerwin.getToWork(messenger)
             self.parent.totaler = totalerwin
 
     def runMarker(self):

@@ -25,6 +25,8 @@ import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_totaler import Ui_TotalWindow
 
+import plom_exceptions
+
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
 
@@ -149,9 +151,12 @@ class ExamModel(QAbstractTableModel):
 class TotalClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
-    def __init__(self, mess):
+    def __init__(self):
         super(TotalClient, self).__init__()
-        self.msgr = mess
+
+    def getToWork(self, mess):
+        global messenger
+        messenger = mess
         # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # List of papers we have to ID.
@@ -162,7 +167,7 @@ class TotalClient(QWidget):
         self.ui = Ui_TotalWindow()
         self.ui.setupUi(self)
         # Paste username into the GUI.
-        self.ui.userLabel.setText(self.msgr.whoami())
+        self.ui.userLabel.setText(messenger.whoami())
         # Exam model for the table of papers - associate to table in GUI.
         self.exM = ExamModel()
         self.ui.tableView.setModel(self.exM)
@@ -172,10 +177,6 @@ class TotalClient(QWidget):
         # make sure the resetview is not auto-defaulted to be triggered by return
         self.testImg.resetB.setAutoDefault(False)
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
-        # Get the max mark from server
-        self.getMaxMark()
-        self.markValidator = QIntValidator(0, self.maxMark)
-        self.ui.totalEdit.setValidator(self.markValidator)
         # Connect buttons and key-presses to functions.
         self.ui.totalEdit.returnPressed.connect(self.enterTotal)
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -184,8 +185,24 @@ class TotalClient(QWidget):
         self.ui.nextButton.setAutoDefault(False)
         # Make sure window is maximised and request a paper from server.
         self.showMaximized()
+
+        # Get the max mark from server
+        try:
+            self.getMaxMark()
+        except plom_exceptions.SeriousError as err:
+            self.throwSeriousError(err)
+            return
+
+        self.markValidator = QIntValidator(0, self.maxMark)
+        self.ui.totalEdit.setValidator(self.markValidator)
         # Get list of papers already ID'd and add to table.
-        self.getAlreadyTotaledList()
+        # Get list of papers already ID'd and add to table.
+        try:
+            self.getAlreadyTotaledList()
+        except plom_exceptions.SeriousError as err:
+            self.throwSeriousError(err)
+            return
+
         # Connect the view **after** list updated.
         # Connect the table's model sel-changed to appropriate function.
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
@@ -194,18 +211,20 @@ class TotalClient(QWidget):
         # very slight delay to ensure things loaded first
         QTimer.singleShot(100, self.testImg.view.resetView)
 
+    def throwSeriousError(self, err):
+        ErrorMessage(
+            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down totaller.'.format(
+                err
+            )
+        ).exec_()
+        self.shutDownError()
+
     def getMaxMark(self):
         """Send request for maximum mark (tGMM) to server. The server then sends
         back the value.
         """
-        # Send request for classlist (iRCL) to server
-        msg = self.msgr.msg("tGMM")
-        # Return should be [ACK, value]
-        if msg[0] == "ERR":
-            ErrorMessage("Cannot get maximum mark")
-            quit()
-        # Get the filename from the message.
-        self.maxMark = int(msg[1])
+        # Get the classlist from server for name/ID completion.
+        self.maxMark = messenger.TgetMaxMark()
         # Update the groupbox label
         self.ui.totalBox.setTitle("Enter total out of {}".format(self.maxMark))
 
@@ -221,8 +240,11 @@ class TotalClient(QWidget):
         TODO: messenger needs to drop token here?
         """
         self.DNF()
-        msg, = self.msgr.msg("UCL")
-        assert msg == "ACK"
+        try:
+            messenger.closeUser()
+        except plom_exceptions.SeriousError as err:
+            self.throwSeriousError(err)
+
         self.my_shutdown_signal.emit(2)
         self.close()
 
@@ -236,24 +258,19 @@ class TotalClient(QWidget):
         rc = self.exM.rowCount()
         for r in range(rc):
             if self.exM.data(self.exM.index(r, 1)) != "totaled":
-                msg = self.msgr.msg("tDNF", self.exM.data(self.exM.index(r, 0)))
+                try:
+                    messenger.TdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
+                except plom_exceptions.SeriousError as err:
+                    self.throwSeriousError(err)
 
     def getAlreadyTotaledList(self):
         # Ask server for list of previously marked papers
-        msg = self.msgr.msg("tGAT")
-        if msg[0] == "ERR":
-            return
-        fname = os.path.join(self.workingDirectory, "tList.txt")
-        self.msgr.getFileDav(msg[1], fname)
-        # Ack that test received - server then deletes it from webdav
-        msg = self.msgr.msg("tDWF", msg[1])
+        tList = messenger.TgetAlreadyComplete()
         # Add those marked papers to our paper-list
-        with open(fname) as json_file:
-            tList = json.load(json_file)
-            for x in tList:
-                self.addPaperToList(
-                    Paper(x[0], fname="", stat="totaled", mark=x[2]), update=False
-                )
+        for x in tList:
+            self.addPaperToList(
+                Paper(x[0], fname="", stat="totaled", mark=x[2]), update=False
+            )
 
     def selChanged(self, selnew, selold):
         # When the selection changes, update the ID and name line-edit boxes
@@ -292,35 +309,53 @@ class TotalClient(QWidget):
             # One more untotaledpaper
             self.noTotalCount += 1
 
+    def updateProgress(self):
+        # update progressbars
+        try:
+            v, m = messenger.TGetProgressCount()
+            self.ui.idProgressBar.setMaximum(m)
+            self.ui.idProgressBar.setValue(v)
+        except plom_exceptions.SeriousError as err:
+            self.throwSeriousError(err)
+
     def requestNext(self):
         """Ask the server for an untotaled paper (tNUT). Server should return
         message [ACK, testcode, filename]. Get file from webdav, add to the
         list of papers and update the image.
         """
-        # ask server for id-count update
-        msg = self.msgr.msg("tPRC")
-        # returns [ACK, #id'd, #total]
-        if msg[0] == "ACK":
-            self.ui.idProgressBar.setValue(msg[1])
-            self.ui.idProgressBar.setMaximum(msg[2])
+        # update progress bars
+        self.updateProgress()
 
-        # ask server for next unmarked paper
-        msg = self.msgr.msg("tNUT")
-        if msg[0] == "ERR":
-            return
-        # return message is [ACK, code, filename]
-        test = msg[1]
-        fname = msg[2]
+        # ask server for next untotaled paper
+        attempts = 0
+        while True:
+            # TODO - remove this little sanity check else replace with a pop-up warning thingy.
+            if attempts >= 5:
+                return False
+            else:
+                attempts += 1
+            # ask server for ID of next task
+            try:
+                test = messenger.TGetAvailable()
+            except plom_exceptions.BenignException as err:
+                self.throwBenign(err)  # no tasks left
+                return False
+
+            try:
+                image = messenger.TclaimThisTask(test)
+                break
+            except plom_exceptions.BenignException as err:
+                # task already taken.
+                continue
+
         # Image name will be <code>.png
-        iname = os.path.join(
-            self.workingDirectory, test + ".png"
-        )  # windows/linux compatibility
-        # Grab image from webdav and copy to <code.png>
-        self.msgr.getFileDav(fname, iname)
+        iname = os.path.join(self.workingDirectory, test + ".png")
+        # save it
+        with open(iname, "wb+") as fh:
+            fh.write(image)
+
         # Add the paper [code, filename, etc] to the list
         self.addPaperToList(Paper(test, iname))
-        # Tell server we got the image (iGTP) - the server then deletes it.
-        msg = self.msgr.msg("tGTP", test, fname)
         # Clean up table - and set focus on the ID-lineedit so user can
         # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()

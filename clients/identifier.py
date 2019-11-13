@@ -351,7 +351,7 @@ class IDClient(QWidget):
         """
         self.DNF()
         try:
-            messenger.IDcloseUser()
+            messenger.closeUser()
         except plom_exceptions.SeriousError as err:
             self.throwSeriousError(err)
 

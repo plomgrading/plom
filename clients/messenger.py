@@ -70,6 +70,11 @@ def http_messaging(msg):
     return response.json()["rmsg"]
 
 
+# ------------------------
+# ------------------------
+# Authentication stuff
+
+
 def requestAndSaveToken(user, pw):
     """Get a authorisation token from the server.
 
@@ -81,7 +86,7 @@ def requestAndSaveToken(user, pw):
     SRmutex.acquire()
     try:
         response = session.put(
-            "https://{}:{}/ID/users/{}".format(server, message_port, user),
+            "https://{}:{}/users/{}".format(server, message_port, user),
             json={"user": user, "pw": pw, "api": Plom_API_Version},
             verify=False,
         )
@@ -99,6 +104,29 @@ def requestAndSaveToken(user, pw):
             raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
+
+
+def closeUser():
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/users/{}".format(server, message_port, _userName),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return True
+
+
+# ----------------
 
 
 def msg(msgcode, *args):
@@ -192,6 +220,7 @@ def putFileDav_woInsanity(lfn, dfn):
 
 # ------------------------
 # ------------------------
+# ID client API stuff
 
 
 def IDGetProgressCount():
@@ -409,9 +438,6 @@ def IDreturnIDdTask(code, studentID, studentName):
     return True
 
 
-# ------------------------
-
-
 def IDdidNotFinishTask(code):
     SRmutex.acquire()
     try:
@@ -432,11 +458,137 @@ def IDdidNotFinishTask(code):
     return True
 
 
-def IDcloseUser():
+# ------------------------
+# ------------------------
+# Totaller client API stuff
+
+
+def TgetMaxMark():
+    global _userName, _token
+
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/TOT/maxMark".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        maxMark = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return maxMark
+
+
+def TgetAlreadyComplete():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/TOT/tasks/complete".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        idList = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return idList
+
+
+def TGetProgressCount():
+    global _userName, _token
+
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/TOT/progress".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
+
+
+def TGetAvailable():
+    global _userName, _token
+
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/TOT/tasks/available".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 204:
+            raise plom_exceptions.BenignException("No tasks left.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
+
+
+def TclaimThisTask(code):
+    SRmutex.acquire()
+    try:
+        response = session.patch(
+            "https://{}:{}/TOT/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()  # pass back image as bytes
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 204:
+            raise plom_exceptions.BenignException("Task taken by another user.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image
+
+
+def TdidNotFinishTask(code):
     SRmutex.acquire()
     try:
         response = session.delete(
-            "https://{}:{}/ID/users/{}".format(server, message_port, _userName),
+            "https://{}:{}/TOT/tasks/{}".format(server, message_port, code),
             json={"user": _userName, "token": _token},
             verify=False,
         )

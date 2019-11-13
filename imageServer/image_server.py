@@ -69,14 +69,53 @@ async def hello(request):
         return web.json_response({"rmsg": rmesg}, status=200)
 
 
+# ----------------------
+# ----------------------
+# Authentication / closing stuff
+
+
 @routes.get("/Version")
-async def IDprogressCount(request):
+async def Version(request):
     return web.Response(
         text="Running Plom server version {} with API {}".format(
             __version__, serverAPI
         ),
         status=200,
     )
+
+
+@routes.delete("/users/{user}")
+async def CloseUser(request):
+    data = await request.json()
+    user = request.match_info["user"]
+    if data["user"] != request.match_info["user"]:
+        return web.Response(status=400)  # malformed request.
+    elif peon.validate(data["user"], data["token"]):
+        peon.userClosing(data["user"])
+        return web.Response(status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.put("/users/{user}")
+async def LoginUserGiveToken(request):
+    data = await request.json()
+    user = request.match_info["user"]
+
+    rmsg = peon.authoriseUser(data["user"], data["pw"], data["api"])
+    if rmsg[0]:
+        return web.json_response(rmsg[1], status=200)  # all good, return the token
+    elif rmsg[1].startswith("API"):
+        return web.json_response(
+            rmsg[1], status=400
+        )  # api error - return the error message
+    else:
+        return web.Response(status=401)  # you are not authorised
+
+
+# ----------------------
+# ----------------------
+# Identifier stuff
 
 
 @routes.get("/ID/progress")
@@ -202,33 +241,75 @@ async def IDdidNotFinishTask(request):
         return web.Response(status=401)
 
 
-@routes.delete("/ID/users/{user}")
-async def CloseUser(request):
+# ----------------------
+# ----------------------
+# Totaller stuff
+
+
+@routes.get("/TOT/maxMark")
+async def TmarkMark(request):
     data = await request.json()
-    user = request.match_info["user"]
-    if data["user"] != request.match_info["user"]:
-        return web.Response(status=400)  # malformed request.
-    elif peon.validate(data["user"], data["token"]):
-        peon.userClosing(data["user"])
-        return web.Response(status=200)
+    if peon.validate(data["user"], data["token"]):
+        return web.json_response(peon.TgetMaxMark(), status=200)
     else:
         return web.Response(status=401)
 
 
-@routes.put("/ID/users/{user}")
-async def LoginUserGiveToken(request):
+@routes.get("/TOT/tasks/complete")
+async def Tgimmewhatsdone(request):
     data = await request.json()
-    user = request.match_info["user"]
-
-    rmsg = peon.authoriseUser(data["user"], data["pw"], data["api"])
-    if rmsg[0]:
-        return web.json_response(rmsg[1], status=200)  # all good, return the token
-    elif rmsg[1].startswith("API"):
-        return web.json_response(
-            rmsg[1], status=400
-        )  # api error - return the error message
+    if peon.validate(data["user"], data["token"]):
+        # return the completed list
+        return web.json_response(peon.TgetAlreadyTotaledList(data["user"]), status=200)
     else:
-        return web.Response(status=401)  # you are not authorised
+        return web.Response(status=401)
+
+
+@routes.get("/TOT/progress")
+async def TprogressCount(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        return web.json_response(peon.IDprogressCount(), status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/TOT/tasks/available")
+async def TnextTask(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.TaskNextTask(data["user"])  # returns [True, code] or [False]
+        if rmsg[0]:
+            return web.json_response(rmsg[1], status=200)
+        else:
+            return web.Response(status=204)  # no papers left
+    else:
+        return web.Response(status=401)
+
+
+@routes.patch("/TOT/tasks/{task}")
+async def TclaimThisTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        rmesg = peon.TclaimSpecificTask(data["user"], code)
+        if rmesg[0]:  # return [True, filename]
+            return web.FileResponse(rmesg[1], status=200)
+        else:
+            return web.Response(status=204)  # that task already taken.
+    else:
+        return web.Response(status=401)
+
+
+@routes.delete("/TOT/tasks/{task}")
+async def TdidNotFinishTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        peon.TdidntFinish(data["user"], code)
+        return web.json_response(status=200)
+    else:
+        return web.Response(status=401)
 
 
 # ----------------------
@@ -313,14 +394,8 @@ servCmd = {
     "mRPF": "MreturnPlomFile",
     "mTAG": "MsetTag",
     #####
-    "tGMM": "TgetMaxMark",
-    "tGTP": "TgotTest",
-    "tPRC": "TprogressCount",
-    "tNUT": "TnextUntotaled",
-    "tDNF": "TdidntFinish",
     "tRAT": "TreturnAlreadyTotaled",
     "tRUT": "TreturnTotaled",
-    "tGAT": "TgetAlreadyTotaledList",
     "tDWF": "TdoneWithFile",
     "tGGI": "TgetGroupImage",
 }
@@ -624,13 +699,12 @@ class Server(object):
         # send back an ACK.
         return ["ACK"]
 
-    def TdidntFinish(self, user, token, code):
+    def TdidntFinish(self, user, code):
         """User didn't finish totaling the image with given code. Tell the
         database to put this back on the todo-pile.
         """
         self.TDB.didntFinish(user, code)
-        # send back an ACK.
-        return ["ACK"]
+        return
 
     def userClosing(self, user):
         """Client is closing down their app, so remove the authorisation token
@@ -847,8 +921,29 @@ class Server(object):
             msg = ["ACK", False]
         return msg
 
-    def TgetMaxMark(self, user, token):
-        return ["ACK", sum(spec.Marks)]
+    def TgetMaxMark(self):
+        return sum(spec.Marks)
+
+    def TaskNextTask(self, user):
+        """The client has asked for the next unidentified paper, so
+        ask the database for its code and send back to the
+        client.
+        """
+        # Get code of next unidentified image from the database
+        give = self.TDB.askNextTask(user)
+        if give is None:
+            return [False]
+        else:
+            # Send to the client
+            return [True, give]
+
+    def TclaimSpecificTask(self, user, code):
+        if self.TDB.giveSpecificTaskToClient(user, code):
+            # return true, image-filename
+            return [True, "{}/idgroup/{}.png".format(pathScanDirectory, code)]
+        else:
+            # return a fail claim - client will try again.
+            return [False]
 
     def TgotTest(self, user, token, test, tfn):
         """Client acknowledges they got the test pageimage, so server
@@ -859,7 +954,7 @@ class Server(object):
 
     def TprogressCount(self, user, token):
         """Send back current total progress counts to the client"""
-        return ["ACK", self.TDB.countTotaled(), self.TDB.countAll()]
+        return [self.TDB.countTotaled(), self.TDB.countAll()]
 
     def TnextUntotaled(self, user, token):
         """The client has asked for the next untotaled paper, so
@@ -891,17 +986,11 @@ class Server(object):
         self.TDB.takeTotalImageFromClient(ret, user, value)
         return ["ACK"]
 
-    def TgetAlreadyTotaledList(self, user, token):
+    def TgetAlreadyTotaledList(self, user):
         """When a total-client logs on they request a list of papers they have already totaled.
-        Send back a textfile with list of TGVs.
+        Send back a list of TGVs.
         """
-        tList = self.TDB.buildTotalList(user)
-        # dump the list to file as json and then give file to client
-        tfn = tempfile.NamedTemporaryFile()
-        with open(tfn.name, "w") as outfile:
-            json.dump(tList, outfile)
-        # Send an ack with the file
-        return ["ACK", self.provideFile(tfn.name)]
+        return self.TDB.buildTotalList(user)
 
     def TdoneWithFile(self, user, token, tfn):
         """The client acknowledges they got the file,
