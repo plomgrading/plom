@@ -73,46 +73,43 @@ directoryPath = tempDirectory.name
 # and finally https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
 # I'll do it the simpler subclassing way
 class BackgroundDownloader(QThread):
-    downloadSuccess = pyqtSignal(str)
-    downloadFail = pyqtSignal(str, str)
+    downloadSuccess = pyqtSignal(str, str, str)  # [tgv, file, tags]
+    downloadFail = pyqtSignal(str)
 
-    def __init__(self, tname, fname):
+    def __init__(self, pg, v):
         QThread.__init__(self)
-        self.tname = tname
-        self.fname = fname
+        self.pageGroup = pg
+        self.version = v
+        self.workingDirectory = directoryPath
 
     def run(self):
-        print(
-            "Debug: downloader thread {}: downloading {}, {}".format(
-                threading.get_ident(), self.tname, self.fname
-            )
-        )
-        try:
-            messenger.getFileDav_woInsanity(self.tname, self.fname)
-        except Exception as ex:
-            # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-            errmsg = template.format(type(ex).__name__, ex.args)
-            self.downloadFail.emit(self.tname, errmsg)
-            self.quit()
+        attempts = 0
+        while True:
+            print("B")
+            attempts += 1
+            # little sanity check - shouldn't be needed.
+            # TODO remove.
+            if attempts > 5:
+                return
+            # ask server for tgv of next task
+            try:
+                test = messenger.MgetAvailable(self.pageGroup, self.version)
+            except plom_exceptions.BenignException as err:
+                self.downloadFail.emit(errmsg)
 
-        # Ack that test received - server then deletes it from webdav
-        msg = messenger.msg_nopopup("mDWF", self.tname)
-        if msg[0] == "ACK":
-            print(
-                "Debug: downloader thread {}: got tname, fname={},{}".format(
-                    threading.get_ident(), self.tname, self.fname
-                )
-            )
-            self.downloadSuccess.emit(self.tname)
-        else:
-            errmsg = msg[1]
-            print(
-                "Debug: downloader thread {}: FAILED to get tname, fname={},{}".format(
-                    threading.get_ident(), self.tname, self.fname
-                )
-            )
-            self.downloadFail.emit(self.tname, errmsg)
+            try:
+                [image, tags] = messenger.MclaimThisTask(test)
+                break
+            except plom_exceptions.BenignException as err:
+                # task already taken.
+                continue
+        # Return message should be [ACK, True, code, temp-filename, tags]
+        # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
+        fname = os.path.join(self.workingDirectory, test + ".png")
+        # save it
+        with open(fname, "wb+") as fh:
+            fh.write(image)
+        self.downloadSuccess.emit(test, fname, tags)
         self.quit()
 
 
@@ -631,37 +628,12 @@ class MarkerClient(QWidget):
             self.ui.annButton.animateClick()
 
     def requestNextInBackgroundStart(self):
-        attempts = 0
-        while True:
-            attempts += 1
-            # little sanity check - shouldn't be needed.
-            # TODO remove.
-            if attempts > 5:
-                return
-            # ask server for tgv of next task
-            msg = messenger.msg("mANT", self.pageGroup, self.version)
-            if msg[0] == "ERR":
-                return
-            # grab the test-code
-            code = msg[1]
-            msg = messenger.msg("mCST", code)
-            # return message is [ACK, True, code, filename] or [ACK, False] or [ERR, reason]
-            if msg[0] == "ERR":
-                return
-            if msg[1] == True:
-                break
-
-        # Return message should be [ACK, True, code, temp-filename, tags]
-        # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
-        fname = os.path.join(self.workingDirectory, msg[2] + ".png")
-        # Get file from the tempfilename in the webdav
-        tname = msg[3]
         # Do this `messenger.getFileDav(tname, fname)` in another thread
         if self.backgroundDownloader:
             print("Previous Downloader: " + str(self.backgroundDownloader))
             # if prev downloader still going than wait.  might block the gui
             self.backgroundDownloader.wait()
-        self.backgroundDownloader = BackgroundDownloader(tname, fname)
+        self.backgroundDownloader = BackgroundDownloader(self.pageGroup, self.version)
         self.backgroundDownloader.downloadSuccess.connect(
             self.requestNextInBackgroundFinished
         )
@@ -669,16 +641,19 @@ class MarkerClient(QWidget):
             self.requestNextInBackgroundFailed
         )
         self.backgroundDownloader.start()
-        # Add the page-group to the list of things to mark
-        # do not update the displayed image with this new paper
-        self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
+        # # Add the page-group to the list of things to mark
+        # # do not update the displayed image with this new paper
+        # self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
 
-    def requestNextInBackgroundFinished(self, tname):
+    def requestNextInBackgroundFinished(self, test, fname, tags):
+        print("HERE ", test, fname, tags)
+        self.addTGVToList(TestPageGroup(test, fname, tags=tags))
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
 
-    def requestNextInBackgroundFailed(self, code, errmsg):
+    def requestNextInBackgroundFailed(self, errmsg):
+        print("THERE ", errmsg)
         # TODO what should we do?  Is there a realistic way forward
         # or should we just die with an exception?
         ErrorMessage(
