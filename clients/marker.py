@@ -1067,27 +1067,21 @@ class MarkerClient(QWidget):
             shutil.copyfile(self.commentCache[txt], "frag.png")
             return True
 
-        # not yet present, so have to build it
-        # create a tempfile
-        fname = os.path.join(self.workingDirectory, "fragment")
-        # call fragment file just the username to avoid collisions
-        dname = messenger.whoami()
-        # write the latex text to that file
-        with open(fname, "w") as fh:
-            fh.write(txt)
-        messenger.putFileDav(fname, dname)
-
-        msg = messenger.msg("mLTT", dname)
-        if msg[1] == False:
+        try:
+            fragment = messenger.MlatexFragment(txt)
+        except plom_exceptions.BenignException as err:
+            # a latex error
             return False
-
-        messenger.getFileDav(msg[2], "frag.png")
-        messenger.msg("mDWF", msg[2])
-        # now keep copy of frag.png for later use and update commentCache
+        # a name for the fragment file
         fragFile = tempfile.NamedTemporaryFile(
             delete=False, dir=self.workingDirectory
         ).name
-        shutil.copyfile("frag.png", fragFile)
+        # save it
+        with open(fragFile, "wb+") as fh:
+            fh.write(fragment)
+        # and put a copy to frag.png
+        shutil.copyfile(fragFile, "frag.png")
+        # add it to the cache
         self.commentCache[txt] = fragFile
         return True
 

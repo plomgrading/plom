@@ -810,6 +810,31 @@ def MclaimThisTask(code):
     return [image, tags]
 
 
+def MlatexFragment(latex):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/latex".format(server, message_port),
+            json={"user": _userName, "token": _token, "fragment": latex},
+            verify=False,
+        )
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 406:
+            raise plom_exceptions.BenignException(
+                "There is an error in your latex fragment"
+            )
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image
+
+
 # ------------------------
 # ------------------------
 

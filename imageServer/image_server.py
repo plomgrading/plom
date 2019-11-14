@@ -181,7 +181,7 @@ async def IDgetImage(request):
     if peon.validate(data["user"], data["token"]):
         rmsg = peon.IDgetGroupImage(data["user"], code)
         if rmsg[0]:  # user allowed access - returns [true, fname]
-            if os.path.isfile(rmsg[1] + "q"):
+            if os.path.isfile(rmsg[1]):
                 return web.FileResponse(rmsg[1], status=200)
             else:
                 return web.Response(status=404)
@@ -319,7 +319,7 @@ async def TgetImage(request):
     if peon.validate(data["user"], data["token"]):
         rmsg = peon.TgetGroupImage(data["user"], code)
         if rmsg[0]:  # user allowed access - returns [true, fname]
-            if os.path.isfile(rmsg[1] + "q"):
+            if os.path.isfile(rmsg[1]):
                 return web.FileResponse(rmsg[1], status=200)
             else:
                 return web.Response(status=404)
@@ -436,6 +436,22 @@ async def MclaimThisTask(request):
         return web.Response(status=401)
 
 
+@routes.get("/MK/latex")
+async def MlatexFragment(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.MlatexThisText(data["user"], data["fragment"])
+        if rmsg[0]:  # user allowed access - returns [true, fname]
+            if os.path.isfile(rmsg[1]):
+                return web.FileResponse(rmsg[1], status=200)
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=406)  # a latex error
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
 # ----------------------
 # ----------------------
 
@@ -507,7 +523,6 @@ servCmd = {
     "mGGI": "MgetGroupImages",
     "mDWF": "MdoneWithFile",
     "mGWP": "MgetWholePaper",
-    "mLTT": "MlatexThisText",
     "mRCF": "MreturnCommentFile",
     "mRPF": "MreturnPlomFile",
     "mTAG": "MsetTag",
@@ -1007,17 +1022,20 @@ class Server(object):
             msg.append(self.provideFile(f))
         return msg
 
-    def MlatexThisText(self, user, token, fragmentFile):
-        fragment = os.path.join(davDirectory, fragmentFile)
-        tfn = tempfile.NamedTemporaryFile()
+    def MlatexThisText(self, user, fragment):
+        # TODO - only one frag file per user - is this okay?
+        tfrag = tempfile.NamedTemporaryFile()
+        with open(tfrag.name, "w+") as fh:
+            fh.write(fragment)
+
+        fname = os.path.join(tempDirectory.name, "{}_frag.png".format(user))
         if (
-            subprocess.run(["python3", "latex2png.py", fragment, tfn.name]).returncode
+            subprocess.run(["python3", "latex2png.py", tfrag.name, fname]).returncode
             == 0
         ):
-            msg = ["ACK", True, self.provideFile(tfn.name)]
+            return [True, fname]
         else:
-            msg = ["ACK", False]
-        return msg
+            return [False]
 
     def TgetMaxMark(self):
         return sum(spec.Marks)
