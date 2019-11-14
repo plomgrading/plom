@@ -85,7 +85,6 @@ class BackgroundDownloader(QThread):
     def run(self):
         attempts = 0
         while True:
-            print("B")
             attempts += 1
             # little sanity check - shouldn't be needed.
             # TODO remove.
@@ -530,30 +529,32 @@ class MarkerClient(QWidget):
         tgv = self.prxM.getPrefix(pr)
         if self.prxM.getOriginalFile(pr) != "":
             return
-        msg = messenger.msg("mGGI", tgv)
-        if msg[0] == "ERR":
+
+        print("HERE")
+        try:
+            [image, anImage, plImage] = messenger.MgetGroupImage(tgv)
+        except plom_exceptions.SeriousError as e:
+            self.throwSeriousError(e)
             return
+
+        print("THERE")
         paperdir = tempfile.mkdtemp(prefix=tgv + "_", dir=self.workingDirectory)
         print("Debug: create paperdir {} for already-graded download".format(paperdir))
-        fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
-        aname = os.path.join(paperdir, "G{}.png".format(msg[1][1:]))
-        pname = os.path.join(paperdir, "G{}.plom".format(msg[1][1:]))
-        self.prxM.setPaperDir(pr, paperdir)
-
-        tfname = msg[2]  # the temp original image file on webdav
-        taname = msg[3]  # the temp annotated image file on webdav
-        tpname = msg[4]  # the temp plom file on webdav
-        messenger.getFileDav(tfname, fname)
-        # got original file so ask server to remove it.
-        msg = messenger.msg("mDWF", tfname)
+        fname = os.path.join(self.workingDirectory, "{}.png".format(tgv))
+        with open(fname, "wb+") as fh:
+            fh.write(image)
         self.prxM.setOriginalFile(pr, fname)
-        # If there is an annotated image then get it.
-        if taname is None:
+
+        if anImage is None:
             return
-        messenger.getFileDav(taname, aname)
-        messenger.getFileDav(tpname, pname)
-        # got annotated image / plom file so ask server to remove it.
-        msg = messenger.msg("mDWF", taname)
+
+        self.prxM.setPaperDir(pr, paperdir)
+        aname = os.path.join(paperdir, "G{}.png".format(tgv[1:]))
+        pname = os.path.join(paperdir, "G{}.plom".format(tgv[1:]))
+        with open(aname, "wb+") as fh:
+            fh.write(anImage)
+        with open(pname, "wb+") as fh:
+            fh.write(plImage)
         self.prxM.setAnnotatedFile(pr, aname, pname)
 
     def updateImage(self, pr=0):
@@ -646,14 +647,12 @@ class MarkerClient(QWidget):
         # self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
 
     def requestNextInBackgroundFinished(self, test, fname, tags):
-        print("HERE ", test, fname, tags)
         self.addTGVToList(TestPageGroup(test, fname, tags=tags))
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
 
     def requestNextInBackgroundFailed(self, errmsg):
-        print("THERE ", errmsg)
         # TODO what should we do?  Is there a realistic way forward
         # or should we just die with an exception?
         ErrorMessage(

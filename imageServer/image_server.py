@@ -442,12 +442,29 @@ async def MlatexFragment(request):
     if peon.validate(data["user"], data["token"]):
         rmsg = peon.MlatexThisText(data["user"], data["fragment"])
         if rmsg[0]:  # user allowed access - returns [true, fname]
-            if os.path.isfile(rmsg[1]):
-                return web.FileResponse(rmsg[1], status=200)
-            else:
-                return web.Response(status=404)
+            return web.FileResponse(rmsg[1], status=200)
         else:
             return web.Response(status=406)  # a latex error
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
+@routes.get("/MK/images/{tgv}")
+async def MgetImage(request):
+    data = await request.json()
+    code = request.match_info["tgv"]
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.MgetGroupImage(data["user"], code)
+        # returns either [True, fname] or [True, fname, aname, plomdat] or [False, error]
+        if rmsg[0]:  # user allowed access - returns [true, fname]
+            with MultipartWriter("imageAnImageAndPlom") as mpwriter:
+                mpwriter.append(open(rmsg[1], "rb"))
+                if len(rmsg) == 4:
+                    mpwriter.append(open(rmsg[2], "rb"))
+                    mpwriter.append(open(rmsg[3], "rb"))
+            return web.Response(body=mpwriter, status=200)
+        else:
+            return web.Response(status=409)  # someone else has that image
     else:
         return web.Response(status=401)  # not authorised at all
 
@@ -520,7 +537,6 @@ servCmd = {
     #####
     "mUSO": "MuserStillOwns",
     "mRMD": "MreturnMarked",
-    "mGGI": "MgetGroupImages",
     "mDWF": "MdoneWithFile",
     "mGWP": "MgetWholePaper",
     "mRCF": "MreturnCommentFile",
@@ -990,22 +1006,21 @@ class Server(object):
         # TODO - verify that since this happens after "get max mark" we don't need to check ranges - they should be fine unless real idiocy has happened?
         return self.MDB.buildMarkedList(user, pg, v)
 
-    def MgetGroupImages(self, user, token, tgv):
+    def MgetGroupImage(self, user, tgv):
         give, fname, aname = self.MDB.getGroupImage(user, tgv)
         if fname is not None:
             if aname is not None:
                 # plom file is same as annotated file just with suffix plom
                 return [
-                    "ACK",
-                    give,
-                    self.provideFile(fname),
-                    self.provideFile("markedPapers/" + aname),
-                    self.provideFile("markedPapers/plomFiles/" + aname[:-3] + "plom"),
+                    True,
+                    fname,
+                    "markedPapers/" + aname,
+                    "markedPapers/plomFiles/" + aname[:-3] + "plom",
                 ]
             else:
-                return ["ACK", give, self.provideFile(fname), None]
+                return [True, fname]
         else:
-            return ["ERR", "Non-existant tgv={}".format(tgv)]
+            return [False]
 
     def MsetTag(self, user, token, tgv, tag):
         if self.MDB.setTag(user, tgv, tag):

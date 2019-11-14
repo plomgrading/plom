@@ -835,6 +835,52 @@ def MlatexFragment(latex):
     return image
 
 
+def MgetGroupImage(code):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/images/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+
+        # response is either [image] or [image, annotatedImage, plom-data]
+        imageAnImageAndPlom = decoder.MultipartDecoder.from_response(response).parts
+        image = BytesIO(
+            imageAnImageAndPlom[0].content
+        ).getvalue()  # pass back image as bytes
+        if len(imageAnImageAndPlom) == 3:
+            anImage = BytesIO(
+                imageAnImageAndPlom[1].content
+            ).getvalue()  # pass back annotated-image as bytes
+            plDat = BytesIO(
+                imageAnImageAndPlom[2].content
+            ).getvalue()  # pass back plomData as bytes
+
+        else:
+            anImage = None
+            plDat = None
+
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 404:
+            raise plom_exceptions.SeriousError(
+                "Cannot find image file for {}.".format(code)
+            )
+        elif response.status_code == 409:
+            raise plom_exceptions.SeriousError(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return [image, anImage, plDat]
+
+
 # ------------------------
 # ------------------------
 
