@@ -13,6 +13,7 @@ __license__ = "AGPL-3.0-or-later"
 import sys
 import asyncio
 import requests
+from requests_toolbelt.multipart import decoder
 import easywebdav2
 import json
 import ssl
@@ -657,6 +658,156 @@ def TreturnTotaledTask(code, mark):
 
     # TODO - do we need this return value?
     return True
+
+
+# ------------------------
+# ------------------------
+# Marker stuff
+def MgetMaxMark(pageGroup, version):
+    global _userName, _token
+
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/maxMark".format(server, message_port),
+            json={"user": _userName, "token": _token, "pg": pageGroup, "v": version},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        maxMark = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 416:
+            raise plom_exceptions.SeriousError(response.text)
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return maxMark
+
+
+def MdidNotFinishTask(code):
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/MK/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return True
+
+
+def MgetMarkedList(pg, v):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/tasks/complete".format(server, message_port),
+            json={"user": _userName, "token": _token, "pg": pg, "v": v},
+            verify=False,
+        )
+        response.raise_for_status()
+        idList = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return idList
+
+
+def MGetProgressCount(pg, v):
+    global _userName, _token
+
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/progress".format(server, message_port),
+            json={"user": _userName, "token": _token, "pg": pg, "v": v},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
+
+
+def MgetAvailable(pg, v):
+    global _userName, _token
+
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/tasks/available".format(server, message_port),
+            json={"user": _userName, "token": _token, "pg": pg, "v": v},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 204:
+            raise plom_exceptions.BenignException("No tasks left.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
+
+
+def MclaimThisTask(code):
+    SRmutex.acquire()
+    try:
+        response = session.patch(
+            "https://{}:{}/MK/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+
+        # response should be multipart = [image, tags]
+        imageAndTags = decoder.MultipartDecoder.from_response(response).parts
+        image = BytesIO(imageAndTags[0].content).getvalue()  # pass back image as bytes
+        tags = imageAndTags[1].text
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 204:
+            raise plom_exceptions.BenignException("Task taken by another user.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return [image, tags]
 
 
 # ------------------------

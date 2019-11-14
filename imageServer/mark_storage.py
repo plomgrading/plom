@@ -196,7 +196,7 @@ class MarkDatabase:
                     x.time = datetime.now()
                     x.save()
                     # return the tgv and filename
-                    return [True, x.tgv, x.originalFile, x.tags]
+                    return [True, x.originalFile, x.tags]
                 else:
                     # has been claimed by someone else.
                     return [False]

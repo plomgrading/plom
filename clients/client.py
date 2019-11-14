@@ -144,9 +144,10 @@ class Chooser(QDialog):
             v = str(self.ui.vSB.value())
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient(messenger, pg, v)
+            markerwin = marker.MarkerClient()
             markerwin.my_shutdown_signal.connect(self.on_other_window_close)
             markerwin.show()
+            markerwin.getToWork(messenger, pg, v)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.

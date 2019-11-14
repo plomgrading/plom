@@ -47,6 +47,7 @@ from PyQt5.QtWidgets import (
 from examviewwindow import ExamViewWindow
 import messenger
 from annotator import Annotator
+import plom_exceptions
 from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
@@ -372,8 +373,10 @@ class ProxyModel(QSortFilterProxyModel):
 class MarkerClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
-    def __init__(self, mess, pageGroup, version):
+    def __init__(self):
         super(MarkerClient, self).__init__()
+
+    def getToWork(self, mess, pageGroup, version):
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
@@ -448,16 +451,21 @@ class MarkerClient(QWidget):
         # Get the max-mark for the question from the server.
         try:
             self.getMaxMark()
-        except ValueError as e:
-            print("DEBUG: max-mark fail: {}".format(e))
-            QTimer.singleShot(100, self.shutDownError)
+        except plom_exceptions.SeriousError as err:
+            self.throwSeriousError(err)
             return
         # Paste the max-mark into the gui.
         self.ui.scoreLabel.setText(str(self.maxScore))
+
         # Get list of papers already marked and add to table.
-        self.getMarkedList()
+        try:
+            self.getMarkedList()
+        except plom_exceptions.SeriousError as err:
+            self.throwSeriousError(err)
+            return
+
         # Update counts
-        self.updateCount()
+        self.updateProgress()
         # Connect the view **after** list updated.
         # Connect the table-model's selection change to appropriate function
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
@@ -479,43 +487,38 @@ class MarkerClient(QWidget):
         self.cacheLatexComments()
 
     def resizeEvent(self, e):
-        if self.testImg is None:
-            # pingtest must have failed, so do nothing.
-            return
-        # On resize used to resize the image to keep it all in view
-        self.testImg.resetB.animateClick()
+        # a resize can be triggered before we "getToWork" is called.
+        if hasattr(self, "testImg"):
+            # On resize used to resize the image to keep it all in view
+            self.testImg.resetB.animateClick()
         # resize the table too.
-        self.ui.tableView.resizeRowsToContents()
+        if hasattr(self, "ui.tableView"):
+            self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(e)
 
+    def throwSeriousError(self, err):
+        ErrorMessage(
+            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down totaller.'.format(
+                err
+            )
+        ).exec_()
+        self.shutDownError()
+
     def getMaxMark(self):
-        """Return the max mark or raise ValueError."""
+        """Get max mark from server and set."""
         # Send max-mark request (mGMX) to server
-        msg = messenger.msg("mGMX", self.pageGroup, self.version)
-        # Return should be [ACK, maxmark]
-        if not msg[0] == "ACK":
-            raise ValueError(msg[1])
-        self.maxScore = msg[1]
+        self.maxScore = messenger.MgetMaxMark(self.pageGroup, self.version)
 
     def getMarkedList(self):
         # Ask server for list of previously marked papers
-        msg = messenger.msg("mGML", self.pageGroup, self.version)
-        if msg[0] == "ERR":
-            return
-        fname = os.path.join(self.workingDirectory, "markedList.txt")
-        messenger.getFileDav(msg[1], fname)
-        # Ack that test received - server then deletes it from webdav
-        msg = messenger.msg("mDWF", msg[1])
-        # Add those marked papers to our paper-list
-        with open(fname) as json_file:
-            markedList = json.load(json_file)
-            for x in markedList:
-                self.addTGVToList(
-                    TestPageGroup(
-                        x[0], fname="", stat="marked", mrk=x[2], mtime=x[3], tags=x[4]
-                    ),
-                    update=False,
-                )
+        markedList = messenger.MgetMarkedList(self.pageGroup, self.version)
+        for x in markedList:
+            self.addTGVToList(
+                TestPageGroup(
+                    x[0], fname="", stat="marked", mrk=x[2], mtime=x[3], tags=x[4]
+                ),
+                update=False,
+            )
 
     def addTGVToList(self, paper, update=True):
         # Add a new entry (given inside paper) to the table and
@@ -572,13 +575,14 @@ class MarkerClient(QWidget):
         # Give focus to the table (so enter-key fires up annotator)
         self.ui.tableView.setFocus()
 
-    def updateCount(self):
-        # ask server for marking-count update
-        progress_msg = messenger.msg("mPRC", self.pageGroup, self.version)
-        # returns [ACK, #marked, #total]
-        if progress_msg[0] == "ACK":
-            self.ui.mProgressBar.setValue(progress_msg[1])
-            self.ui.mProgressBar.setMaximum(progress_msg[2])
+    def updateProgress(self):
+        # ask server for progress update
+        try:
+            v, m = messenger.MGetProgressCount(self.pageGroup, self.version)
+            self.ui.mProgressBar.setMaximum(m)
+            self.ui.mProgressBar.setValue(v)
+        except plom_exceptions.SeriousError as err:
+            self.throwSeriousError(err)
 
     def requestNext(self, launchAgain=False):
         """Ask the server for an unmarked paper (mNUM). Server should return
@@ -593,28 +597,27 @@ class MarkerClient(QWidget):
             if attempts > 5:
                 return
             # ask server for tgv of next task
-            msg = messenger.msg("mANT", self.pageGroup, self.version)
-            if msg[0] == "ERR":
-                return
-            # grab the test-code
-            code = msg[1]
-            msg = messenger.msg("mCST", code)
-            # return message is [ACK, True, code, filename] or [ACK, False] or [ERR, reason]
-            if msg[0] == "ERR":
-                return
-            if msg[1] == True:
+            try:
+                test = messenger.MgetAvailable(self.pageGroup, self.version)
+            except plom_exceptions.BenignException as err:
+                self.throwBenign(err)  # no tasks left
+                return False
+
+            try:
+                [image, tags] = messenger.MclaimThisTask(test)
                 break
+            except plom_exceptions.BenignException as err:
+                # task already taken.
+                continue
 
         # Return message should be [ACK, True, code, temp-filename, tags]
         # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
-        fname = os.path.join(self.workingDirectory, msg[2] + ".png")
-        # Get file from the tempfilename in the webdav
-        tname = msg[3]
-        messenger.getFileDav(tname, fname)
-        # Add the page-group to the list of things to mark
-        self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]))
-        # Ack that test received - server then deletes it from webdav
-        msg = messenger.msg("mDWF", tname)
+        fname = os.path.join(self.workingDirectory, test + ".png")
+        # save it
+        with open(fname, "wb+") as fh:
+            fh.write(image)
+        self.addTGVToList(TestPageGroup(test, fname, tags=tags))
+
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
@@ -622,7 +625,7 @@ class MarkerClient(QWidget):
         # Note-launch-again is set to true when user just wants to get
         # the next test and get annotating directly.
         # When false the user stays at the marker window
-        if msg[0] != "ERR" and launchAgain:
+        if launchAgain:
             # do not recurse, instead animate click
             # self.annotateTest()
             self.ui.annButton.animateClick()
@@ -979,11 +982,11 @@ class MarkerClient(QWidget):
         self.DNF()
         # Then send a 'user closing' message - server will revoke
         # authentication token.
-        msg, = messenger.msg("UCL")
-        assert msg == "ACK"
-        # Now save annotatorSettings to file
-        # self.saveAnnotatorSettings()
-        # finally send shutdown signal to client window and close.
+        try:
+            messenger.closeUser()
+        except plom_exceptions.SeriousError as err:
+            self.throwSeriousError(err)
+
         self.my_shutdown_signal.emit(2)
         self.close()
 
@@ -995,7 +998,10 @@ class MarkerClient(QWidget):
             if self.exM.data(self.exM.index(r, 1)) != "marked":
                 # Tell server the code fo any paper that is not marked.
                 # server will put that back on the todo-pile.
-                msg = messenger.msg("mDNF", self.exM.data(self.exM.index(r, 0)))
+                try:
+                    messenger.MdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
+                except plom_exceptions.SeriousError as err:
+                    self.throwSeriousError(err)
 
     def viewWholePaper(self):
         index = self.ui.tableView.selectedIndexes()

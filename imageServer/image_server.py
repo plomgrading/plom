@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
-from aiohttp import web
+from aiohttp import web, MultipartWriter
 import asyncio
 import datetime
 import errno
@@ -346,6 +346,98 @@ async def TreturnTotaled(request):
 
 # ----------------------
 # ----------------------
+# Marker stuff
+
+
+@routes.get("/MK/maxMark")
+async def TmarkMark(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.MgetPageGroupMax(data["pg"], data["v"])
+        if rmsg[0]:
+            return web.json_response(rmsg[1], status=200)
+        elif rmsg[1] == "PGE":
+            # pg out of range
+            return web.Response(
+                text="Page-group out of range - please check before trying again.",
+                status=416,
+            )
+        elif rmsg[1] == "VE":
+            # version our of range
+            return web.Response(
+                text="Version out of range - please check before trying again.",
+                status=416,
+            )
+    else:
+        return web.Response(status=401)
+
+
+@routes.delete("/MK/tasks/{task}")
+async def MdidNotFinishTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        peon.MdidntFinish(data["user"], code)
+        return web.json_response(status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/MK/tasks/complete")
+async def Mgimmewhatsdone(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        # return the completed list
+        return web.json_response(
+            peon.MgetMarkedList(data["user"], data["pg"], data["v"]), status=200
+        )
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/MK/progress")
+async def MprogressCount(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        return web.json_response(peon.MprogressCount(data["pg"], data["v"]), status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/MK/tasks/available")
+async def MnextTask(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.MaskNextTask(
+            data["user"], data["pg"], data["v"]
+        )  # returns [True, code] or [False]
+        if rmsg[0]:
+            return web.json_response(rmsg[1], status=200)
+        else:
+            return web.Response(status=204)  # no papers left
+    else:
+        return web.Response(status=401)
+
+
+@routes.patch("/MK/tasks/{task}")
+async def MclaimThisTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        rmesg = peon.MclaimSpecificTask(data["user"], code)
+        if rmesg[0]:  # return [True, filename, tags]
+            with MultipartWriter("imageAndTags") as mpwriter:
+                mpwriter.append(open(rmesg[1], "rb"))
+                mpwriter.append_json(rmesg[2])
+            return web.Response(body=mpwriter, status=200)
+        else:
+            return web.Response(status=204)  # that task already taken.
+    else:
+        return web.Response(status=401)
+
+
+# ----------------------
+# ----------------------
 
 # Set up loggers for server, marking and ID-ing
 def setupLogger(name, log_file, level=logging.INFO):
@@ -410,14 +502,8 @@ def getServerInfo():
 servCmd = {
     "AUTH": "authoriseUser",
     #####
-    "mANT": "MaskNextTask",
-    "mCST": "MclaimSpecificTask",
-    "mDNF": "MdidntFinish",
-    "mPRC": "MprogressCount",
     "mUSO": "MuserStillOwns",
     "mRMD": "MreturnMarked",
-    "mGMX": "MgetPageGroupMax",
-    "mGML": "MgetMarkedPaperList",
     "mGGI": "MgetGroupImages",
     "mDWF": "MdoneWithFile",
     "mGWP": "MgetWholePaper",
@@ -698,7 +784,7 @@ class Server(object):
         self.removeFile(tfn)
         return ["ACK"]
 
-    def MgetPageGroupMax(self, user, token, pg, v):
+    def MgetPageGroupMax(self, pg, v):
         """When a marked-client logs on they need the max mark for the group
         they are marking. Check the (group/version) is valid and then send back
         the corresponding mark from the test spec.
@@ -706,11 +792,11 @@ class Server(object):
         iv = int(v)
         ipg = int(pg)
         if ipg < 1 or ipg > self.testSpec.getNumberOfGroups():
-            return ["ERR", "Pagegroup out of range"]
+            return [False, "PGE"]
         if iv < 1 or iv > self.testSpec.Versions:
-            return ["ERR", "Version out of range"]
+            return [False, "VE"]
         # Send an ack with the max-mark for the pagegroup.
-        return ["ACK", self.testSpec.Marks[ipg]]
+        return [True, self.testSpec.Marks[ipg]]
 
     def IDdidntFinish(self, user, code):
         """User didn't finish IDing the image with given code. Tell the
@@ -719,13 +805,12 @@ class Server(object):
         self.IDDB.didntFinish(user, code)
         return
 
-    def MdidntFinish(self, user, token, tgv):
+    def MdidntFinish(self, user, tgv):
         """User didn't finish marking the image with given code. Tell the
         database to put this back on the todo-pile.
         """
         self.MDB.didntFinish(user, tgv)
-        # send back an ACK.
-        return ["ACK"]
+        return
 
     def TdidntFinish(self, user, code):
         """User didn't finish totaling the image with given code. Tell the
@@ -789,7 +874,7 @@ class Server(object):
         else:
             return [False]
 
-    def MaskNextTask(self, user, token, pg, v):
+    def MaskNextTask(self, user, pg, v):
         """The client has asked for the next unmarked paper, so
         ask the database for its code and send back to the
         client.
@@ -797,24 +882,18 @@ class Server(object):
         # Get code of next unidentified image from the database
         give = self.MDB.askNextTask(user, pg, v)
         if give is None:
-            return ["ERR", "No more papers"]
+            return [False]
         else:
             # Send to the client
-            return ["ACK", give]
+            return [True, give]
 
-    def MclaimSpecificTask(self, user, token, code):
-        retval = self.MDB.giveSpecificTaskToClient(user, code)
-        # retval is either [False] or [True, give, fname, tag]
-        if retval[0] is True:
-            # copy the file into the webdav and tell client code / path.
-            return ["ACK", True, retval[1], self.provideFile(retval[2]), retval[3]]
-        else:
-            # return a fail claim - client will try again.
-            return ["ACK", False]
+    def MclaimSpecificTask(self, user, code):
+        return self.MDB.giveSpecificTaskToClient(user, code)
+        # retval is either [False] or [True, fname, tags]
 
-    def MprogressCount(self, user, token, pg, v):
+    def MprogressCount(self, pg, v):
         """Send back current marking progress counts to the client"""
-        return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
+        return [self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
     def MdoneWithFile(self, user, token, filename):
         """Client acknowledges they got the file, so
@@ -887,23 +966,14 @@ class Server(object):
         )
         fh.close()
 
-    def MgetMarkedPaperList(self, user, token, pg, v):
+    def MgetMarkedList(self, user, pg, v):
         """When a marked-client logs on they request a list of papers they have already marked.
         Check the (group/version) is valid and then send back a textfile with list of TGVs.
         """
         iv = int(v)
         ipg = int(pg)
-        if ipg < 1 or ipg > self.testSpec.getNumberOfGroups():
-            return ["ERR", "Pagegroup out of range"]
-        if iv < 1 or iv > self.testSpec.Versions:
-            return ["ERR", "Version out of range"]
-        markedList = self.MDB.buildMarkedList(user, pg, v)
-        # dump the list to file as json and then give file to client
-        tfn = tempfile.NamedTemporaryFile()
-        with open(tfn.name, "w") as outfile:
-            json.dump(markedList, outfile)
-        # Send an ack with the file
-        return ["ACK", self.provideFile(tfn.name)]
+        # TODO - verify that since this happens after "get max mark" we don't need to check ranges - they should be fine unless real idiocy has happened?
+        return self.MDB.buildMarkedList(user, pg, v)
 
     def MgetGroupImages(self, user, token, tgv):
         give, fname, aname = self.MDB.getGroupImage(user, tgv)
