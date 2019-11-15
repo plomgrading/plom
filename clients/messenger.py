@@ -13,7 +13,7 @@ __license__ = "AGPL-3.0-or-later"
 import sys
 import asyncio
 import requests
-from requests_toolbelt.multipart import decoder
+from requests_toolbelt import MultipartEncoder, MultipartDecoder
 import easywebdav2
 import json
 import ssl
@@ -213,6 +213,7 @@ def putFileDav_woInsanity(lfn, dfn):
 
     Does not do any exception handling: that's the caller's problem.
     """
+
     webdav = easywebdav2.connect(
         server, port=webdav_port, protocol="https", verify_ssl=False
     )
@@ -768,13 +769,13 @@ def MgetAvailable(pg, v):
         )
         # throw errors when response code != 200.
         response.raise_for_status()
+        if response.status_code == 204:
+            raise plom_exceptions.BenignException("No tasks left.")
         # convert the content of the response to a textfile for identifier
         progress = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise plom_exceptions.SeriousError("You are not authenticated.")
-        elif response.status_code == 204:
-            raise plom_exceptions.BenignException("No tasks left.")
         else:
             raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
     finally:
@@ -794,7 +795,7 @@ def MclaimThisTask(code):
         response.raise_for_status()
 
         # response should be multipart = [image, tags]
-        imageAndTags = decoder.MultipartDecoder.from_response(response).parts
+        imageAndTags = MultipartDecoder.from_response(response).parts
         image = BytesIO(imageAndTags[0].content).getvalue()  # pass back image as bytes
         tags = imageAndTags[1].text
     except requests.HTTPError as e:
@@ -879,6 +880,44 @@ def MgetGroupImage(code):
         SRmutex.release()
 
     return [image, anImage, plDat]
+
+
+def MreturnMarkedTask(code, score, mtime, tags, aname, pname, cname):
+    SRmutex.acquire()
+    try:
+        dat = MultipartEncoder(
+            fields={
+                "annotated": (aname, open(aname, "rb"), "image/png"),  # image
+                "plom": (pname, open(pname, "rb"), "text/plain"),  # plom-file
+                "comments": (cname, open(cname, "rb"), "text/plain"),  # comments
+                "user": _userName,
+                "token": _token,
+                "score": str(score),  # have to convert to string
+                "mtime": str(mtime),  # have to convert to string
+                "tags": tags,
+            }
+        )
+        response = session.put(
+            "https://{}:{}/MK/tasks/{}".format(server, message_port, code),
+            data=dat,
+            headers={"Content-Type": dat.content_type},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 404:
+            raise plom_exceptions.SeriousError(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    # TODO - do we need this return value?
+    return True
 
 
 # ------------------------

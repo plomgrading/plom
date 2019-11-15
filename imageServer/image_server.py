@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
-from aiohttp import web, MultipartWriter
+from aiohttp import web, MultipartWriter, MultipartReader
 import asyncio
 import datetime
 import errno
@@ -409,7 +409,7 @@ async def MnextTask(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
         rmsg = peon.MaskNextTask(
-            data["user"], data["pg"], data["v"]
+            data["pg"], data["v"]
         )  # returns [True, code] or [False]
         if rmsg[0]:
             return web.json_response(rmsg[1], status=200)
@@ -467,6 +467,34 @@ async def MgetImage(request):
             return web.Response(status=409)  # someone else has that image
     else:
         return web.Response(status=401)  # not authorised at all
+
+
+@routes.put("/MK/tasks/{tgv}")
+async def MreturnMarked(request):
+    reader = MultipartReader.from_response(request)
+
+    while True:
+        part = await reader.next()
+        if part is None:
+            break
+        print(part.headers)
+    data = await request.json()
+    print(data)
+    # code = request.match_info["tgv"]
+    # if peon.validate(data["user"], data["token"]):
+    #     rmsg = peon.MgetGroupImage(data["user"], code)
+    #     # returns either [True, fname] or [True, fname, aname, plomdat] or [False, error]
+    #     if rmsg[0]:  # user allowed access - returns [true, fname]
+    #         with MultipartWriter("imageAnImageAndPlom") as mpwriter:
+    #             mpwriter.append(open(rmsg[1], "rb"))
+    #             if len(rmsg) == 4:
+    #                 mpwriter.append(open(rmsg[2], "rb"))
+    #                 mpwriter.append(open(rmsg[3], "rb"))
+    #         return web.Response(body=mpwriter, status=200)
+    #     else:
+    #         return web.Response(status=409)  # someone else has that image
+    # else:
+    return web.Response(status=401)  # not authorised at all
 
 
 # ----------------------
@@ -905,13 +933,13 @@ class Server(object):
         else:
             return [False]
 
-    def MaskNextTask(self, user, pg, v):
+    def MaskNextTask(self, pg, v):
         """The client has asked for the next unmarked paper, so
         ask the database for its code and send back to the
         client.
         """
         # Get code of next unidentified image from the database
-        give = self.MDB.askNextTask(user, pg, v)
+        give = self.MDB.askNextTask(pg, v)
         if give is None:
             return [False]
         else:

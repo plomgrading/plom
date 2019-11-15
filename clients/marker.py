@@ -150,9 +150,12 @@ class BackgroundUploader(QThread):
             pfile = os.path.basename(pname)
             cfile = os.path.basename(cname)
             try:
-                messenger.putFileDav_woInsanity(aname, afile)
-                messenger.putFileDav_woInsanity(pname, pfile)
-                messenger.putFileDav_woInsanity(cname, cfile)
+                messenger.MreturnMarkedTask(code, gr, mtime, tags, aname, pname, cname)
+            #
+            # try:
+            #     messenger.putFileDav_woInsanity(aname, afile)
+            #     messenger.putFileDav_woInsanity(pname, pfile)
+            #     messenger.putFileDav_woInsanity(cname, cfile)
             except Exception as ex:
                 # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -160,30 +163,26 @@ class BackgroundUploader(QThread):
                 self.uploadFail.emit(code, errmsg)
                 return
 
-            print(
-                "Debug: upQ: sending marks for {} via mRMD cmd server...".format(code)
-            )
-            # ensure user is still authorised to upload this particular pageimage -
-            # this may have changed depending on what else is going on.
-            # TODO: remove, either rRMD will succeed or fail: don't precheck
-            msg = messenger.msg_nopopup("mUSO", code)
-            if msg[0] != "ACK":
-                errmsg = msg[1]
-                print("Debug: upQ: emitting FAILED signal for {}".format(code))
-                self.uploadFail.emit(code, errmsg)
-            msg = messenger.msg_nopopup(
-                "mRMD", code, gr, afile, pfile, cfile, mtime, pg, ver, tags
-            )
+            # print(
+            #     "Debug: upQ: sending marks for {} via mRMD cmd server...".format(code)
+            # )
+            # # ensure user is still authorised to upload this particular pageimage -
+            # # this may have changed depending on what else is going on.
+            # # TODO: remove, either rRMD will succeed or fail: don't precheck
+            # msg = messenger.msg_nopopup("mUSO", code)
+            # if msg[0] != "ACK":
+            #     errmsg = msg[1]
+            #     print("Debug: upQ: emitting FAILED signal for {}".format(code))
+            #     self.uploadFail.emit(code, errmsg)
+            # msg = messenger.msg_nopopup(
+            #     "mRMD", code, gr, afile, pfile, cfile, mtime, pg, ver, tags
+            # )
             # self.sleep(4)  # pretend upload took longer
             if msg[0] == "ACK":
                 numdone = msg[1]
                 numtotal = msg[2]
                 print("Debug: upQ: emitting SUCCESS signal for {}".format(code))
                 self.uploadSuccess.emit(code, numdone, numtotal)
-            else:
-                errmsg = msg[1]
-                print("Debug: upQ: emitting FAILED signal for {}".format(code))
-                self.uploadFail.emit(code, errmsg)
 
         print("upQ.run: thread " + str(threading.get_ident()))
         self.q = queue.Queue()
@@ -499,6 +498,9 @@ class MarkerClient(QWidget):
             )
         ).exec_()
         self.shutDownError()
+
+    def throwBenign(self, err):
+        ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
 
     def getMaxMark(self):
         """Get max mark from server and set."""
