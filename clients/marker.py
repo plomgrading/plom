@@ -94,14 +94,17 @@ class BackgroundDownloader(QThread):
             try:
                 test = messenger.MgetAvailable(self.pageGroup, self.version)
             except plom_exceptions.BenignException as err:
-                self.downloadFail.emit(errmsg)
-
-            try:
-                [image, tags] = messenger.MclaimThisTask(test)
-                break
-            except plom_exceptions.BenignException as err:
                 # task already taken.
                 continue
+
+            try:
+                image, tags = messenger.MclaimThisTask(test)
+                break
+            except plom_exceptions.BenignException as err:
+                # cast the error message as a string before emitting.
+                self.downloadFail.emit(str(err))
+                self.quit()
+
         # Return message should be [ACK, True, code, temp-filename, tags]
         # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
         fname = os.path.join(self.workingDirectory, test + ".png")
@@ -643,13 +646,14 @@ class MarkerClient(QWidget):
         self.ui.tableView.resizeRowsToContents()
 
     def requestNextInBackgroundFailed(self, errmsg):
+        print("HELLO {}".format(errmsg))
         # TODO what should we do?  Is there a realistic way forward
         # or should we just die with an exception?
         ErrorMessage(
             "Unfortunately, there was an unexpected error downloading "
-            "paper {}.\n\n{}\n\n"
+            "next paper.\n\n{}\n\n"
             "Please consider filing an issue?  I don't know if its "
-            "safe to continue from here...".format(code, errmsg)
+            "safe to continue from here...".format(errmsg)
         ).exec_()
 
     def moveToNextUnmarkedTest(self):

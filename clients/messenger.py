@@ -168,13 +168,13 @@ def IDGetAvailable():
         )
         # throw errors when response code != 200.
         response.raise_for_status()
+        if response.status_code == 204:
+            raise plom_exceptions.BenignException("No tasks left.")
         # convert the content of the response to a textfile for identifier
         progress = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise plom_exceptions.SeriousError("You are not authenticated.")
-        elif response.status_code == 204:
-            raise plom_exceptions.BenignException("No tasks left.")
         else:
             raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
     finally:
@@ -298,13 +298,13 @@ def IDclaimThisTask(code):
             json={"user": _userName, "token": _token},
             verify=False,
         )
+        if response.status_code == 204:
+            raise plom_exceptions.BenignException("Task taken by another user.")
         response.raise_for_status()
         image = BytesIO(response.content).getvalue()  # pass back image as bytes
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise plom_exceptions.SeriousError("You are not authenticated.")
-        elif response.status_code == 204:
-            raise plom_exceptions.BenignException("Task taken by another user.")
         else:
             raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
     finally:
@@ -454,14 +454,14 @@ def TGetAvailable():
             verify=False,
         )
         # throw errors when response code != 200.
+        if response.status_code == 204:
+            raise plom_exceptions.BenignException("No tasks left.")
         response.raise_for_status()
         # convert the content of the response to a textfile for identifier
         progress = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise plom_exceptions.SeriousError("You are not authenticated.")
-        elif response.status_code == 204:
-            raise plom_exceptions.BenignException("No tasks left.")
         else:
             raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
     finally:
@@ -478,13 +478,13 @@ def TclaimThisTask(code):
             json={"user": _userName, "token": _token},
             verify=False,
         )
+        if response.status_code == 204:
+            raise plom_exceptions.BenignException("Task taken by another user.")
         response.raise_for_status()
         image = BytesIO(response.content).getvalue()  # pass back image as bytes
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise plom_exceptions.SeriousError("You are not authenticated.")
-        elif response.status_code == 204:
-            raise plom_exceptions.BenignException("Task taken by another user.")
         else:
             raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
     finally:
@@ -674,9 +674,9 @@ def MgetAvailable(pg, v):
             verify=False,
         )
         # throw errors when response code != 200.
-        response.raise_for_status()
         if response.status_code == 204:
             raise plom_exceptions.BenignException("No tasks left.")
+        response.raise_for_status()
         # convert the content of the response to a textfile for identifier
         progress = response.json()
     except requests.HTTPError as e:
@@ -699,6 +699,8 @@ def MclaimThisTask(code):
             verify=False,
         )
         response.raise_for_status()
+        if response.status_code == 204:
+            raise plom_exceptions.BenignException("Task taken by another user.")
 
         # response should be multipart = [image, tags]
         imageAndTags = MultipartDecoder.from_response(response).parts
@@ -707,14 +709,12 @@ def MclaimThisTask(code):
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise plom_exceptions.SeriousError("You are not authenticated.")
-        elif response.status_code == 204:
-            raise plom_exceptions.BenignException("Task taken by another user.")
         else:
             raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
-    return [image, tags]
+    return image, tags
 
 
 def MlatexFragment(latex):
