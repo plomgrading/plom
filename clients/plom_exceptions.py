@@ -9,3 +9,7 @@ class BenignException(Exception):
 class PlomAPIException(BenignException):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
+
+class PlomNoMoreException(BenignException):
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
