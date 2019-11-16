@@ -592,7 +592,7 @@ class MarkerClient(QWidget):
                 test = messenger.MgetAvailable(self.pageGroup, self.version)
             except PlomNoMoreException as e:
                 # TODO: (a) to we need a dialog?  (b) how to get text from e?
-                #ErrorMessage("No more tasks").exec_()
+                # ErrorMessage("No more tasks").exec_()
                 return False
 
             try:
@@ -868,6 +868,7 @@ class MarkerClient(QWidget):
             [gr, mtime, launchAgain] = self.waitForAnnotator(aname, pname)
         else:
             [gr, mtime, launchAgain] = self.waitForAnnotator(aname, None)
+
         # Exited annotator with 'cancel', so don't save anything.
         if gr is None:
             # TODO: could also erase the paperdir
@@ -876,7 +877,11 @@ class MarkerClient(QWidget):
             self.ui.tableView.selectRow(index[1].row())
             return
         # Copy the mark, annotated filename and the markingtime into the table
+        # note that this increments the marktime by mtime.
         self.prxM.markPaper(index, gr, aname, pname, mtime, paperdir)
+        # update the mtime to be the total marking time
+        totmtime = int(self.prxM.data(index[3]))
+
         # Update the currently displayed image by selecting that row
         self.ui.tableView.selectRow(index[1].row())
 
@@ -887,7 +892,7 @@ class MarkerClient(QWidget):
             aname,  # annotated file
             pname,  # plom file
             cname,  # comment file
-            mtime,  # marking time
+            totmtime,  # total marking time
             self.pageGroup,
             self.version,
             self.prxM.data(index[4]),  # tags
