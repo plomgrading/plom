@@ -100,6 +100,12 @@ def requestAndSaveToken(user, pw):
             raise plom_exceptions.PlomAPIException(response.json())
         else:
             raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    except requests.ConnectionError as err:
+        raise plom_exceptions.SeriousError(
+            "Cannot connect to\n server:port = {}:{}\n Please check details before trying again.".format(
+                server, message_port
+            )
+        )
     finally:
         SRmutex.release()
 
