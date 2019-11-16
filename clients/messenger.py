@@ -24,6 +24,7 @@ import threading
 
 from io import StringIO, BytesIO, TextIOWrapper
 import plom_exceptions
+from plom_exceptions import *
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
@@ -162,7 +163,7 @@ def IDGetAvailable():
         # throw errors when response code != 200.
         response.raise_for_status()
         if response.status_code == 204:
-            raise plom_exceptions.BenignException("No tasks left.")
+            raise PlomNoMoreException("No tasks left.")
         # convert the content of the response to a textfile for identifier
         progress = response.json()
     except requests.HTTPError as e:
@@ -440,7 +441,7 @@ def TGetAvailable():
         )
         # throw errors when response code != 200.
         if response.status_code == 204:
-            raise plom_exceptions.BenignException("No tasks left.")
+            raise PlomNoMoreException("No tasks left.")
         response.raise_for_status()
         # convert the content of the response to a textfile for identifier
         progress = response.json()
@@ -654,7 +655,7 @@ def MgetAvailable(pg, v):
         )
         # throw errors when response code != 200.
         if response.status_code == 204:
-            raise plom_exceptions.BenignException("No tasks left.")
+            raise PlomNoMoreException("No tasks left.")
         response.raise_for_status()
         # convert the content of the response to a textfile for identifier
         progress = response.json()

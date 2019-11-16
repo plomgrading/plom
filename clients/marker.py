@@ -48,6 +48,7 @@ from examviewwindow import ExamViewWindow
 import messenger
 from annotator import Annotator
 import plom_exceptions
+from plom_exceptions import *
 from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
@@ -589,8 +590,9 @@ class MarkerClient(QWidget):
             # ask server for tgv of next task
             try:
                 test = messenger.MgetAvailable(self.pageGroup, self.version)
-            except plom_exceptions.BenignException as err:
-                self.throwBenign(err)  # no tasks left
+            except PlomNoMoreException as e:
+                # TODO: (a) to we need a dialog?  (b) how to get text from e?
+                #ErrorMessage("No more tasks").exec_()
                 return False
 
             try:
