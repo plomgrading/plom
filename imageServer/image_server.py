@@ -471,30 +471,48 @@ async def MgetImage(request):
 
 @routes.put("/MK/tasks/{tgv}")
 async def MreturnMarked(request):
+    code = request.match_info["tgv"]
+    # the put will be in 3 parts - use multipart reader
+    # in order we expect those 3 parts - [parameters (inc comments), image, plom-file]
     reader = MultipartReader.from_response(request)
+    part0 = await reader.next()
+    if part0 is None:  # weird error
+        return web.Response(status=406)  # should have sent 3 parts
+    param = await part0.json()
+    comments = param["comments"]
 
-    while True:
-        part = await reader.next()
-        if part is None:
-            break
-        print(part.headers)
-    data = await request.json()
-    print(data)
-    # code = request.match_info["tgv"]
-    # if peon.validate(data["user"], data["token"]):
-    #     rmsg = peon.MgetGroupImage(data["user"], code)
-    #     # returns either [True, fname] or [True, fname, aname, plomdat] or [False, error]
-    #     if rmsg[0]:  # user allowed access - returns [true, fname]
-    #         with MultipartWriter("imageAnImageAndPlom") as mpwriter:
-    #             mpwriter.append(open(rmsg[1], "rb"))
-    #             if len(rmsg) == 4:
-    #                 mpwriter.append(open(rmsg[2], "rb"))
-    #                 mpwriter.append(open(rmsg[3], "rb"))
-    #         return web.Response(body=mpwriter, status=200)
-    #     else:
-    #         return web.Response(status=409)  # someone else has that image
-    # else:
-    return web.Response(status=401)  # not authorised at all
+    # image file
+    part1 = await reader.next()
+    if part1 is None:  # weird error
+        return web.Response(status=406)  # should have sent 3 parts
+    image = await part1.read()
+
+    # plom file
+    part2 = await reader.next()
+    if part2 is None:  # weird error
+        return web.Response(status=406)  # should have sent 3 parts
+    plomdat = await part2.read()
+
+    if peon.validate(param["user"], param["token"]):
+        rmsg = peon.MreturnMarked(
+            param["user"],
+            code,
+            int(param["pg"]),
+            int(param["ver"]),
+            int(param["score"]),
+            image,
+            plomdat,
+            comments,
+            int(param["mtime"]),
+            param["tags"],
+        )
+        # rmsg = either [True, numDone, numTotal] or [False] if error.
+        if rmsg[0]:
+            return web.json_response([rmsg[1], rmsg[2]], status=200)
+        else:
+            return web.Response(status=400)  # some sort of error with image file
+    else:
+        return web.Response(status=401)  # not authorised at all
 
 
 # ----------------------
@@ -564,7 +582,6 @@ servCmd = {
     "AUTH": "authoriseUser",
     #####
     "mUSO": "MuserStillOwns",
-    "mRMD": "MreturnMarked",
     "mDWF": "MdoneWithFile",
     "mGWP": "MgetWholePaper",
     "mRCF": "MreturnCommentFile",
@@ -969,43 +986,34 @@ class Server(object):
             return ["ERR", "You are no longer authorised to upload that tgv"]
 
     def MreturnMarked(
-        self, user, token, code, mark, fname, pname, cname, mtime, pg, v, tags
+        self, user, code, pg, v, mark, image, plomdat, comments, mtime, tags
     ):
         """Client has marked the pageimage with code, mark, annotated-file-name
         (which the client has uploaded to webdav), and spent mtime marking it.
         Send the information to the database and send an ack.
         """
-        # sanity check that mark lies in [0,..,max]
-        if int(mark) < 0 or int(mark) > self.testSpec.Marks[int(pg)]:
-            # this should never happen.
-            return ["ERR", "Assigned mark out of range. Contact administrator."]
-        if not (
-            code.startswith("t")
-            and fname == "G{}.png".format(code[1:])
-            and pname == "G{}.plom".format(code[1:])
-            and cname == "G{}.json".format(code[1:])
-        ):
-            SLogger.info(
-                "Rejected mismatched files from buggy client (user {}) for {}".format(
-                    user, code
-                )
-            )
-            return ["ERR", "Buggy client gave me the wrong files!  File a bug."]
+        # score + file sanity checks were done at client. Do we need to redo here?
+        # image, plomdat are bytearrays, comments = list
+        aname = "G{}.png".format(code[1:])
+        pname = "G{}.plom".format(code[1:])
+        cname = "G{}.json".format(code[1:])
+        with open("markedPapers/" + aname, "wb") as fh:
+            fh.write(image)
+        with open("markedPapers/plomFiles/" + pname, "wb") as fh:
+            fh.write(plomdat)
+        with open("markedPapers/commentFiles/" + cname, "w") as fh:
+            json.dump(comments, fh)
 
-        # move annoted file to right place with new filename
-        self.claimFile(fname, "")
-        self.claimFile(pname, "plomFiles")
-        self.claimFile(cname, "commentFiles")
         # Should check the fname is valid png - just check header presently
-        if imghdr.what(os.path.join("markedPapers", fname)) != "png":
-            return ["ERR", "Misformed image file. Try again."]
+        if imghdr.what("markedPapers/" + aname) != "png":
+            return [False, "Misformed image file. Try again."]
         # now update the database
         self.MDB.takeGroupImageFromClient(
-            code, user, mark, fname, pname, cname, mtime, tags
+            code, user, mark, aname, pname, cname, mtime, tags
         )
-        self.recordMark(user, mark, fname, mtime, tags)
+        self.recordMark(user, mark, aname, mtime, tags)
         # return ack with current counts.
-        return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
+        return [True, self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
     def recordMark(self, user, mark, fname, mtime, tags):
         """For test blah.png, we record, in blah.png.txt, as a backup

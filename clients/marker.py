@@ -143,19 +143,26 @@ class BackgroundUploader(QThread):
             except EmptyQueueException:
                 return
             print(
-                "Debug: upQ (thread {}): popped code {} from queue, uploading "
-                "with webdav...".format(str(threading.get_ident()), code)
+                "Debug: upQ (thread {}): popped code {} from queue, uploading".format(
+                    str(threading.get_ident()), code
+                )
             )
-            afile = os.path.basename(aname)
-            pfile = os.path.basename(pname)
-            cfile = os.path.basename(cname)
+            # do name sanity check here
+            if not (
+                code.startswith("t")
+                and os.path.basename(aname) == "G{}.png".format(code[1:])
+                and os.path.basename(pname) == "G{}.plom".format(code[1:])
+                and os.path.basename(cname) == "G{}.json".format(code[1:])
+            ):
+                raise plom_exceptions.SeriousError(
+                    "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
+                        fname, pname, cname
+                    )
+                )
             try:
-                messenger.MreturnMarkedTask(code, gr, mtime, tags, aname, pname, cname)
-            #
-            # try:
-            #     messenger.putFileDav_woInsanity(aname, afile)
-            #     messenger.putFileDav_woInsanity(pname, pfile)
-            #     messenger.putFileDav_woInsanity(cname, cfile)
+                msg = messenger.MreturnMarkedTask(
+                    code, pg, ver, gr, mtime, tags, aname, pname, cname
+                )
             except Exception as ex:
                 # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -163,26 +170,10 @@ class BackgroundUploader(QThread):
                 self.uploadFail.emit(code, errmsg)
                 return
 
-            # print(
-            #     "Debug: upQ: sending marks for {} via mRMD cmd server...".format(code)
-            # )
-            # # ensure user is still authorised to upload this particular pageimage -
-            # # this may have changed depending on what else is going on.
-            # # TODO: remove, either rRMD will succeed or fail: don't precheck
-            # msg = messenger.msg_nopopup("mUSO", code)
-            # if msg[0] != "ACK":
-            #     errmsg = msg[1]
-            #     print("Debug: upQ: emitting FAILED signal for {}".format(code))
-            #     self.uploadFail.emit(code, errmsg)
-            # msg = messenger.msg_nopopup(
-            #     "mRMD", code, gr, afile, pfile, cfile, mtime, pg, ver, tags
-            # )
-            # self.sleep(4)  # pretend upload took longer
-            if msg[0] == "ACK":
-                numdone = msg[1]
-                numtotal = msg[2]
-                print("Debug: upQ: emitting SUCCESS signal for {}".format(code))
-                self.uploadSuccess.emit(code, numdone, numtotal)
+            numdone = msg[0]
+            numtotal = msg[1]
+            print("Debug: upQ: emitting SUCCESS signal for {}".format(code))
+            self.uploadSuccess.emit(code, numdone, numtotal)
 
         print("upQ.run: thread " + str(threading.get_ident()))
         self.q = queue.Queue()
@@ -532,14 +523,12 @@ class MarkerClient(QWidget):
         if self.prxM.getOriginalFile(pr) != "":
             return
 
-        print("HERE")
         try:
             [image, anImage, plImage] = messenger.MgetGroupImage(tgv)
         except plom_exceptions.SeriousError as e:
             self.throwSeriousError(e)
             return
 
-        print("THERE")
         paperdir = tempfile.mkdtemp(prefix=tgv + "_", dir=self.workingDirectory)
         print("Debug: create paperdir {} for already-graded download".format(paperdir))
         fname = os.path.join(self.workingDirectory, "{}.png".format(tgv))
@@ -774,7 +763,22 @@ class MarkerClient(QWidget):
             # and a flag as to whether or not we should relaunch the annotator
             # with the next page-image. In relaunch, then we will need to
             # ask server for next image.
-            ret = [str(annotator.score), timer.elapsed() // 1000, annotator.launchAgain]
+
+            # do score sanity check
+            if 0 <= annotator.score <= self.maxScore:
+                ret = [
+                    str(annotator.score),
+                    timer.elapsed() // 1000,
+                    annotator.launchAgain,
+                ]
+            else:
+                msg = ErrorMessage(
+                    "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(
+                        self.annotator.score
+                    )
+                )
+                msg.exec_()
+                ret = [None, timer.elapsed(), False]
         else:
             # If annotator returns "reject", then pop up error
             msg = ErrorMessage("mark not recorded")

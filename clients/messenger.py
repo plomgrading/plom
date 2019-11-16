@@ -847,7 +847,7 @@ def MgetGroupImage(code):
         response.raise_for_status()
 
         # response is either [image] or [image, annotatedImage, plom-data]
-        imageAnImageAndPlom = decoder.MultipartDecoder.from_response(response).parts
+        imageAnImageAndPlom = MultipartDecoder.from_response(response).parts
         image = BytesIO(
             imageAnImageAndPlom[0].content
         ).getvalue()  # pass back image as bytes
@@ -882,19 +882,26 @@ def MgetGroupImage(code):
     return [image, anImage, plDat]
 
 
-def MreturnMarkedTask(code, score, mtime, tags, aname, pname, cname):
+def MreturnMarkedTask(code, pg, ver, score, mtime, tags, aname, pname, cname):
     SRmutex.acquire()
     try:
+        # doesn't like ints, so covert ints to strings
+        param = {
+            "user": _userName,
+            "token": _token,
+            "pg": str(pg),
+            "ver": str(ver),
+            "score": str(score),
+            "mtime": str(mtime),
+            "tags": tags,
+            "comments": open(cname, "r").read(),
+        }
+
         dat = MultipartEncoder(
             fields={
+                "param": json.dumps(param),
                 "annotated": (aname, open(aname, "rb"), "image/png"),  # image
                 "plom": (pname, open(pname, "rb"), "text/plain"),  # plom-file
-                "comments": (cname, open(cname, "rb"), "text/plain"),  # comments
-                "user": _userName,
-                "token": _token,
-                "score": str(score),  # have to convert to string
-                "mtime": str(mtime),  # have to convert to string
-                "tags": tags,
             }
         )
         response = session.put(
@@ -904,20 +911,19 @@ def MreturnMarkedTask(code, score, mtime, tags, aname, pname, cname):
             verify=False,
         )
         response.raise_for_status()
+        ret = response.json()  # this is [#done, #total]
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise plom_exceptions.SeriousError("You are not authenticated.")
-        elif response.status_code == 404:
+        elif response.status_code == 400:
             raise plom_exceptions.SeriousError(
-                "Another user has the image for {}. This should not happen".format(code)
+                "Image file is corrupted. This should not happen".format(code)
             )
         else:
             raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
-
-    # TODO - do we need this return value?
-    return True
+    return ret
 
 
 # ------------------------
