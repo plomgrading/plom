@@ -375,7 +375,6 @@ class MarkerClient(QWidget):
         self.maxScore = -1
         # For viewing the whole paper we'll need these two lists.
         self.viewFiles = []
-        self.localViewFiles = []
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
@@ -987,26 +986,24 @@ class MarkerClient(QWidget):
         index = self.ui.tableView.selectedIndexes()
         tgv = self.prxM.getPrefix(index[0].row())
         testnumber = tgv[1:5]  # since tgv = tXXXXgYYvZ
-        msg = messenger.msg("mGWP", testnumber)
-        if msg[0] == "ERR":
-            return []
+        try:
+            imagesAsBytes = messenger.MgetWholePaper(testnumber)
+        except plom_exceptions.BenignException as err:
+            self.throwBenign(err)
 
-        self.viewFiles = msg[1:]
-        self.localViewFiles = []
-        ## GIVE FILES NAMES
-        for f in self.viewFiles:
+        self.viewFiles = []
+        for iab in imagesAsBytes:
             tfn = tempfile.NamedTemporaryFile(delete=False).name
-            self.localViewFiles.append(tfn)
-            messenger.getFileDav(f, tfn)
-        return self.localViewFiles
+            self.viewFiles.append(tfn)
+            with open(tfn, "wb") as fh:
+                fh.write(iab)
+
+        return self.viewFiles
 
     def doneWithViewFiles(self):
         for f in self.viewFiles:
-            msg = messenger.msg("mDWF", f)
-        for f in self.localViewFiles:
             if os.path.isfile(f):
                 os.unlink(f)
-        self.localViewFiles = []
         self.viewFiles = []
 
     def cacheLatexComments(self):

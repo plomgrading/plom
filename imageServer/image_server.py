@@ -529,6 +529,23 @@ async def MreturnMarked(request):
         return web.Response(status=401)  # not authorised at all
 
 
+@routes.get("/MK/whole/{number}")
+async def MclaimThisTask(request):
+    data = await request.json()
+    number = request.match_info["number"]
+    if peon.validate(data["user"], data["token"]):
+        rmesg = peon.MgetWholePaper(data["user"], number)
+        if rmesg[0]:  # return [True, [filenames]] or [False]
+            with MultipartWriter("imageAndTags") as mpwriter:
+                for fn in rmesg[1]:
+                    mpwriter.append(open(fn, "rb"))
+            return web.Response(body=mpwriter, status=200)
+        else:
+            return web.Response(status=409)  # not yours
+    else:
+        return web.Response(status=401)
+
+
 # ----------------------
 # ----------------------
 
@@ -588,18 +605,6 @@ def getServerInfo():
             print("Server details loaded: ", serverInfo)
     else:
         print("Cannot find server details.")
-
-
-# # # # # # # # # # # #
-# A dict of messages from client and corresponding server commands.
-servCmd = {
-    "AUTH": "authoriseUser",
-    #####
-    "mUSO": "MuserStillOwns",
-    "mDWF": "MdoneWithFile",
-    "mGWP": "MgetWholePaper",
-    #####
-}
 
 
 # # # # # # # # # # # #
@@ -786,40 +791,6 @@ class Server(object):
             t, pg, v = int(tgv[1:5]), int(tgv[6:8]), int(tgv[9])
             self.MDB.addUnmarkedGroupImage(t, pg, v, tgv, pageGroupsForGrading[tgv])
 
-    def provideFile(self, fname):
-        """Copy a file (temporarily) into the webdav for a client,
-        and return the temp-filename to the client.
-        """
-        tfn = tempfile.NamedTemporaryFile(delete=False, dir=davDirectory)
-        shutil.copy(fname, tfn.name)
-        return os.path.basename(tfn.name)
-
-    def claimFile(self, fname, subdir):
-        """Once an image has been marked, the server copies the image
-        back from the webdav and into markedPapers or appropriate
-        subdirectory.
-        """
-        srcfile = os.path.join(davDirectory, fname)
-        dstfile = os.path.join("markedPapers", subdir, fname)
-        # Check if file already exists
-        if os.path.isfile(dstfile):
-            # backup the older file with a timestamp
-            os.rename(
-                dstfile,
-                dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
-            )
-        # This should really use path-join.
-        shutil.copy(srcfile, dstfile)
-        # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
-
-    def removeFile(self, davfn):
-        """Once a file has been grabbed by the client, delete it from the webdav.
-        """
-        # delete file if present.
-        fname = davDirectory + "/" + davfn
-        if os.path.isfile(davDirectory + "/" + davfn):
-            os.unlink(fname)
-
     def printToDo(self):
         """Ask each database to print the images that are still on
         the todo pile
@@ -853,23 +824,6 @@ class Server(object):
         """The client sent a strange message, so send back an error message.
         """
         return ["ERR", "Some sort of command error - what did you send?"]
-
-    def IDrequestClassList(self, user, token):
-        """The client requests the classlist, so the server copies
-        the class list to the webdav and returns the temp webdav path
-        to that file to the client.
-        """
-        return ["ACK", self.provideFile("../resources/classlist.csv")]
-
-    def IDrequestPredictionList(self, user, token):
-        return ["ACK", self.provideFile("../resources/predictionlist.csv")]
-
-    def IDdoneWithFile(self, user, token, tfn):
-        """The client acknowledges they got the file,
-        so the server deletes it and sends back an ACK.
-        """
-        self.removeFile(tfn)
-        return ["ACK"]
 
     def MgetPageGroupMax(self, pg, v):
         """When a marked-client logs on they need the max mark for the group
@@ -982,20 +936,6 @@ class Server(object):
         """Send back current marking progress counts to the client"""
         return [self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
-    def MdoneWithFile(self, user, token, filename):
-        """Client acknowledges they got the file, so
-        server deletes it from the webdav and sends an ack.
-        """
-        self.removeFile(filename)
-        return ["ACK"]
-
-    def MuserStillOwns(self, user, token, code):
-        """Check that user still 'owns' the tgv = code"""
-        if self.MDB.userStillOwnsTGV(code, user):
-            return ["ACK"]
-        else:
-            return ["ERR", "You are no longer authorised to upload that tgv"]
-
     def MreturnMarked(
         self, user, code, pg, v, mark, image, plomdat, comments, mtime, tags
     ):
@@ -1075,14 +1015,14 @@ class Server(object):
         else:
             return False
 
-    def MgetWholePaper(self, user, token, testNumber):
+    def MgetWholePaper(self, user, testNumber):
         # client passes the tgv code of their current group image.
         # from this we infer the test number.
         files = self.MDB.getTestAll(testNumber)
-        msg = ["ACK"]
-        for f in files:
-            msg.append(self.provideFile(f))
-        return msg
+        if len(files) > 0:
+            return [True, files]
+        else:
+            return [False]
 
     def MlatexThisText(self, user, fragment):
         # TODO - only one frag file per user - is this okay?
@@ -1123,34 +1063,9 @@ class Server(object):
             # return a fail claim - client will try again.
             return [False]
 
-    def TgotTest(self, user, token, test, tfn):
-        """Client acknowledges they got the test pageimage, so server
-        deletes it from the webdav and sends an ack.
-        """
-        self.removeFile(tfn)
-        return ["ACK"]
-
     def TprogressCount(self):
         """Send back current total progress counts to the client"""
         return [self.TDB.countTotaled(), self.TDB.countAll()]
-
-    def TnextUntotaled(self, user, token):
-        """The client has asked for the next untotaled paper, so
-        ask the database for its code and then copy the appropriate file
-        into the webdav and send code and the temp-webdav path back to the
-        client.
-        """
-        # Get code of next unidentified image from the database
-        give = self.TDB.giveTotalImageToClient(user)
-        if give is None:
-            return ["ERR", "No more papers"]
-        else:
-            # copy the file into the webdav and tell client the code and path
-            return [
-                "ACK",
-                give,
-                self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give)),
-            ]
 
     def TreturnTotaled(self, user, ret, value):
         """Client has totaled the pageimage with code=ret, total=value.
@@ -1278,7 +1193,7 @@ except:
 cmd = "wsgidav -H {} -p {} --server cheroot -r {} -c ../resources/davconf.yaml".format(
     serverInfo["server"], serverInfo["wport"], davDirectory
 )
-davproc = subprocess.Popen(shlex.split(cmd), stdout=webdavlog, stderr=webdavlog)
+# davproc = subprocess.Popen(shlex.split(cmd), stdout=webdavlog, stderr=webdavlog)
 
 # Read the test specification
 spec = TestSpecification()

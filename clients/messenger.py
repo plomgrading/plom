@@ -14,7 +14,6 @@ import sys
 import asyncio
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartDecoder
-import easywebdav2
 import json
 import ssl
 from PyQt5.QtWidgets import QMessageBox
@@ -125,99 +124,6 @@ def closeUser():
         SRmutex.release()
 
     return True
-
-
-# ----------------
-
-
-def msg(msgcode, *args):
-    """Send message using https and get back return message.
-    If error then pop-up an error message.
-    """
-    msg_ = (msgcode, _userName, _token, *args)
-    SRmutex.acquire()
-    try:
-        rmsg = http_messaging(msg_)
-    finally:
-        SRmutex.release()
-
-    if rmsg[0] == "ACK":
-        return rmsg
-    elif rmsg[0] == "ERR":
-        ErrorMessage("Server says: " + rmsg[1]).exec_()
-        return rmsg
-    else:
-        print(">>> Error I didn't expect. Return message was {}".format(rmsg))
-        ErrorMessage("Something really wrong has happened.").exec_()
-
-
-def msg_nopopup(msgcode, *args):
-    """Send message using the asyncio message handler and get back
-    return message.
-    """
-    msg = (msgcode, _userName, _token, *args)
-    SRmutex.acquire()
-    try:
-        rmsg = http_messaging(msg)
-    finally:
-        SRmutex.release()
-
-    if rmsg[0] in ("ACK", "ERR"):
-        return rmsg
-    else:
-        raise RuntimeError(
-            "Unexpected response from server.  Consider filing a bug?  The return from the server was:\n\n"
-            + str(rmsg)
-        )
-
-
-def getFileDav(dfn, lfn):
-    """Get file dfn from the webdav server and save as lfn."""
-    webdav = easywebdav2.connect(
-        server, port=webdav_port, protocol="https", verify_ssl=False
-    )
-    try:
-        webdav.download(dfn, lfn)
-    except Exception as ex:
-        template = ">>> An exception of type {0} occurred. Arguments:\n{1!r}"
-        message = template.format(type(ex).__name__, ex.args)
-        print(message)
-
-
-def putFileDav(lfn, dfn):
-    """Upload file lfn to the webdav as dfn."""
-    webdav = easywebdav2.connect(
-        server, port=webdav_port, protocol="https", verify_ssl=False
-    )
-    try:
-        webdav.upload(lfn, dfn)
-    except Exception as ex:
-        template = ">>> An exception of type {0} occurred. Arguments:\n{1!r}"
-        message = template.format(type(ex).__name__, ex.args)
-        print(message)
-
-
-def getFileDav_woInsanity(dfn, lfn):
-    """Get file dfn from the webdav server and save as lfn.
-
-    Does not do anything for exceptions: that's the caller's problem.
-    """
-    webdav = easywebdav2.connect(
-        server, port=webdav_port, protocol="https", verify_ssl=False
-    )
-    webdav.download(dfn, lfn)
-
-
-def putFileDav_woInsanity(lfn, dfn):
-    """Upload file lfn to the webdav as dfn.
-
-    Does not do any exception handling: that's the caller's problem.
-    """
-
-    webdav = easywebdav2.connect(
-        server, port=webdav_port, protocol="https", verify_ssl=False
-    )
-    webdav.upload(lfn, dfn)
 
 
 # ------------------------
@@ -946,6 +852,34 @@ def MsetTag(code, tags):
             raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
+
+
+def MgetWholePaper(code):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/whole/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+
+        # response should be multipart = [image, tags]
+        imagesAsBytes = MultipartDecoder.from_response(response).parts
+        images = []
+        for iab in imagesAsBytes:
+            images.append(BytesIO(iab.content).getvalue())  # pass back image as bytes
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 409:
+            raise plom_exceptions.BenignException("Task taken by another user.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return images
 
 
 # ------------------------
