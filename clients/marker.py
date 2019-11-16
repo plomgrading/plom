@@ -1087,11 +1087,13 @@ class MarkerClient(QWidget):
             self.ui.tableView.resizeRowsToContents()
 
             # send updated tag back to server.
-            msg = messenger.msg(
-                "mTAG",
-                self.prxM.data(index[0]),
-                self.prxM.data(index[4]),  # send the tags back too
-            )
+            try:
+                msg = messenger.MsetTag(
+                    self.prxM.data(index[0]),
+                    self.prxM.data(index[4]),  # send the tags back too
+                )
+            except plom_exceptions.SeriousError as err:
+                self.throwSeriousError(err)
         return
 
     def setFilter(self):

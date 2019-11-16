@@ -515,6 +515,20 @@ async def MreturnMarked(request):
         return web.Response(status=401)  # not authorised at all
 
 
+@routes.patch("/MK/tags/{tgv}")
+async def MreturnMarked(request):
+    code = request.match_info["tgv"]
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.MsetTag(data["user"], code, data["tags"])
+        if rmsg:
+            return web.Response(status=200)
+        else:
+            return web.Response(status=409)  # this is not your tgv
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
 # ----------------------
 # ----------------------
 
@@ -584,9 +598,6 @@ servCmd = {
     "mUSO": "MuserStillOwns",
     "mDWF": "MdoneWithFile",
     "mGWP": "MgetWholePaper",
-    "mRCF": "MreturnCommentFile",
-    "mRPF": "MreturnPlomFile",
-    "mTAG": "MsetTag",
     #####
 }
 
@@ -1058,11 +1069,11 @@ class Server(object):
         else:
             return [False]
 
-    def MsetTag(self, user, token, tgv, tag):
+    def MsetTag(self, user, tgv, tag):
         if self.MDB.setTag(user, tgv, tag):
-            return ["ACK"]
+            return True
         else:
-            return ["ERR", "Non-existant tgv={}".format(tgv)]
+            return False
 
     def MgetWholePaper(self, user, token, testNumber):
         # client passes the tgv code of their current group image.

@@ -926,6 +926,28 @@ def MreturnMarkedTask(code, pg, ver, score, mtime, tags, aname, pname, cname):
     return ret
 
 
+# todo - work out URLs for the various operations a little more nicely.
+def MsetTag(code, tags):
+    SRmutex.acquire()
+    try:
+        response = session.patch(
+            "https://{}:{}/MK/tags/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token, "tags": tags},
+            verify=False,
+        )
+        response.raise_for_status()
+
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 409:
+            raise plom_exceptions.BenignException("Task taken by another user.")
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+
 # ------------------------
 # ------------------------
 
