@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '../qtCreatorFiles/ui_chooser.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.0
+# Created by: PyQt5 UI code generator 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Chooser(object):
     def setupUi(self, Chooser):
         Chooser.setObjectName("Chooser")
-        Chooser.resize(486, 572)
+        Chooser.resize(540, 572)
         self.verticalLayout = QtWidgets.QVBoxLayout(Chooser)
         self.verticalLayout.setObjectName("verticalLayout")
         self.userGBox = QtWidgets.QGroupBox(Chooser)
@@ -43,30 +43,21 @@ class Ui_Chooser(object):
         self.gridLayout = QtWidgets.QGridLayout(self.serverGBox)
         self.gridLayout.setObjectName("gridLayout")
         self.serverLabel = QtWidgets.QLabel(self.serverGBox)
-        self.serverLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.serverLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.serverLabel.setObjectName("serverLabel")
         self.gridLayout.addWidget(self.serverLabel, 0, 0, 1, 1)
         self.serverLE = QtWidgets.QLineEdit(self.serverGBox)
         self.serverLE.setObjectName("serverLE")
-        self.gridLayout.addWidget(self.serverLE, 0, 1, 1, 3)
-        self.mportLabel = QtWidgets.QLabel(self.serverGBox)
-        self.mportLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.mportLabel.setObjectName("mportLabel")
-        self.gridLayout.addWidget(self.mportLabel, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.serverLE, 0, 1, 1, 2)
         self.mportSB = QtWidgets.QSpinBox(self.serverGBox)
         self.mportSB.setMaximum(65535)
         self.mportSB.setProperty("value", 41984)
         self.mportSB.setObjectName("mportSB")
         self.gridLayout.addWidget(self.mportSB, 1, 1, 1, 1)
-        self.wportLabel = QtWidgets.QLabel(self.serverGBox)
-        self.wportLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.wportLabel.setObjectName("wportLabel")
-        self.gridLayout.addWidget(self.wportLabel, 1, 2, 1, 1)
-        self.wportSB = QtWidgets.QSpinBox(self.serverGBox)
-        self.wportSB.setMaximum(65535)
-        self.wportSB.setProperty("value", 41985)
-        self.wportSB.setObjectName("wportSB")
-        self.gridLayout.addWidget(self.wportSB, 1, 3, 1, 1)
+        self.mportLabel = QtWidgets.QLabel(self.serverGBox)
+        self.mportLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.mportLabel.setObjectName("mportLabel")
+        self.gridLayout.addWidget(self.mportLabel, 1, 0, 1, 1)
         self.verticalLayout.addWidget(self.serverGBox)
         self.markGBox = QtWidgets.QGroupBox(Chooser)
         self.markGBox.setEnabled(True)
@@ -149,8 +140,7 @@ class Ui_Chooser(object):
         Chooser.setTabOrder(self.userLE, self.passwordLE)
         Chooser.setTabOrder(self.passwordLE, self.serverLE)
         Chooser.setTabOrder(self.serverLE, self.mportSB)
-        Chooser.setTabOrder(self.mportSB, self.wportSB)
-        Chooser.setTabOrder(self.wportSB, self.pgSB)
+        Chooser.setTabOrder(self.mportSB, self.pgSB)
         Chooser.setTabOrder(self.pgSB, self.vSB)
         Chooser.setTabOrder(self.vSB, self.markButton)
         Chooser.setTabOrder(self.markButton, self.identifyButton)
@@ -164,10 +154,9 @@ class Ui_Chooser(object):
         self.label.setText(_translate("Chooser", "Username"))
         self.label_2.setText(_translate("Chooser", "Password"))
         self.serverGBox.setTitle(_translate("Chooser", "Server Information"))
-        self.serverLabel.setText(_translate("Chooser", "Server name"))
+        self.serverLabel.setText(_translate("Chooser", "Server name:"))
         self.serverLE.setText(_translate("Chooser", "127.0.0.1"))
-        self.mportLabel.setText(_translate("Chooser", "Message port"))
-        self.wportLabel.setText(_translate("Chooser", "Webdav port"))
+        self.mportLabel.setText(_translate("Chooser", "Port:"))
         self.markGBox.setTitle(_translate("Chooser", "Marking information"))
         self.pgLabel.setText(_translate("Chooser", "Page group"))
         self.vlabel.setText(_translate("Chooser", "Version"))
