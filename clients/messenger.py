@@ -51,7 +51,6 @@ def setServerDetails(s, mp, dp):
 
 
 def whoami():
-    global _userName
     return _userName
 
 
@@ -132,8 +131,6 @@ def closeUser():
 
 
 def IDGetProgressCount():
-    global _userName, _token
-
     SRmutex.acquire()
     try:
         response = session.get(
@@ -157,8 +154,6 @@ def IDGetProgressCount():
 
 
 def IDGetAvailable():
-    global _userName, _token
-
     SRmutex.acquire()
     try:
         response = session.get(
@@ -184,8 +179,6 @@ def IDGetAvailable():
 
 
 def IDGetClasslist():
-    global _userName, _token
-
     SRmutex.acquire()
     try:
         response = session.get(
@@ -373,8 +366,6 @@ def IDdidNotFinishTask(code):
 
 
 def TgetMaxMark():
-    global _userName, _token
-
     SRmutex.acquire()
     try:
         response = session.get(
@@ -419,8 +410,6 @@ def TgetAlreadyComplete():
 
 
 def TGetProgressCount():
-    global _userName, _token
-
     SRmutex.acquire()
     try:
         response = session.get(
@@ -444,8 +433,6 @@ def TGetProgressCount():
 
 
 def TGetAvailable():
-    global _userName, _token
-
     SRmutex.acquire()
     try:
         response = session.get(
@@ -571,8 +558,6 @@ def TreturnTotaledTask(code, mark):
 # ------------------------
 # Marker stuff
 def MgetMaxMark(pageGroup, version):
-    global _userName, _token
-
     SRmutex.acquire()
     try:
         response = session.get(
@@ -639,8 +624,6 @@ def MgetMarkedList(pg, v):
 
 
 def MGetProgressCount(pg, v):
-    global _userName, _token
-
     SRmutex.acquire()
     try:
         response = session.get(
@@ -664,8 +647,6 @@ def MGetProgressCount(pg, v):
 
 
 def MgetAvailable(pg, v):
-    global _userName, _token
-
     SRmutex.acquire()
     try:
         response = session.get(
