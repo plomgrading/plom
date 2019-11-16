@@ -460,8 +460,7 @@ class IDClient(QWidget):
             self.throwSeriousError(err)
 
     def requestNext(self):
-        """Ask the server for an unID'd paper (iNID). Server should return
-        message [ACK, testcode, filename]. Get file from webdav, add to the
+        """Ask the server for an unID'd paper.   Get file, add to the
         list of papers and update the image.
         """
         self.updateProgress()

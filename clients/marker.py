@@ -576,8 +576,7 @@ class MarkerClient(QWidget):
             self.throwSeriousError(err)
 
     def requestNext(self, launchAgain=False):
-        """Ask the server for an unmarked paper (mNUM). Server should return
-        message [ACK, test-code, temp-filename]. Get file from webdav, add to
+        """Ask the server for an unmarked paper.  Get file, add to
         the list of papers and update the image.
         """
         attempts = 0
@@ -601,7 +600,6 @@ class MarkerClient(QWidget):
                 # task already taken.
                 continue
 
-        # Return message should be [ACK, True, code, temp-filename, tags]
         # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
         fname = os.path.join(self.workingDirectory, test + ".png")
         # save it

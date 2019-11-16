@@ -321,8 +321,7 @@ class TotalClient(QWidget):
             self.throwSeriousError(err)
 
     def requestNext(self):
-        """Ask the server for an untotaled paper (tNUT). Server should return
-        message [ACK, testcode, filename]. Get file from webdav, add to the
+        """Ask the server for an untotaled paper.  Get file, add to the
         list of papers and update the image.
         """
         # update progress bars
