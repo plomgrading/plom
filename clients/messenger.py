@@ -36,18 +36,16 @@ sslContext.check_hostname = False
 # Server defaults
 server = "127.0.0.1"
 message_port = 41984
-webdav_port = 41985
 SRmutex = threading.Lock()
 _userName = None
 _token = None
 
 
-def setServerDetails(s, mp, dp):
-    """Set the server IP, message port and webdav port"""
-    global server, message_port, webdav_port
+def setServerDetails(s, mp):
+    """Set the server IP and port"""
+    global server, message_port
     server = s
     message_port = mp
-    webdav_port = dp
 
 
 def whoami():

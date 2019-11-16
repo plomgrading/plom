@@ -43,7 +43,6 @@ def readLastTime():
     lastTime["user"] = ""
     lastTime["server"] = "localhost"
     lastTime["mport"] = "41984"
-    lastTime["wport"] = "41985"
     lastTime["pg"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
@@ -93,7 +92,6 @@ class Chooser(QDialog):
         self.ui.userLE.setText(lastTime["user"])
         self.ui.serverLE.setText(lastTime["server"])
         self.ui.mportSB.setValue(int(lastTime["mport"]))
-        self.ui.wportSB.setValue(int(lastTime["wport"]))
         self.ui.pgSB.setValue(int(lastTime["pg"]))
         self.ui.vSB.setValue(int(lastTime["v"]))
         self.ui.fontSB.setValue(int(lastTime["fontSize"]))
@@ -108,15 +106,13 @@ class Chooser(QDialog):
         pwd = self.ui.passwordLE.text()
         if len(pwd) < 4:
             return
-        # set server, message port, webdave port.
         server = self.ui.serverLE.text()
         mport = self.ui.mportSB.value()
-        wport = self.ui.wportSB.value()
         # save those settings
         self.saveDetails()
 
         # Have Messenger login into to server
-        messenger.setServerDetails(server, mport, wport)
+        messenger.setServerDetails(server, mport)
         messenger.startMessenger()
         try:
             messenger.requestAndSaveToken(user, pwd)
@@ -184,7 +180,6 @@ class Chooser(QDialog):
         lastTime["user"] = self.ui.userLE.text()
         lastTime["server"] = self.ui.serverLE.text()
         lastTime["mport"] = self.ui.mportSB.value()
-        lastTime["wport"] = self.ui.wportSB.value()
         lastTime["pg"] = self.ui.pgSB.value()
         lastTime["v"] = self.ui.vSB.value()
         lastTime["fontSize"] = self.ui.fontSB.value()
