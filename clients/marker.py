@@ -369,7 +369,6 @@ class MarkerClient(QWidget):
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
-        self.testImg = None  # safer?
         # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # Save the group and version.
@@ -383,7 +382,7 @@ class MarkerClient(QWidget):
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
         # Paste the username, pagegroup and version into GUI.
-        self.ui.userLabel.setText(messenger.whoami())
+        self.ui.userBox.setTitle("User: {}".format(messenger.whoami()))
         self.ui.pgLabel.setText(str(self.pageGroup).zfill(2))
         self.ui.vLabel.setText(str(self.version))
         # Exam model for the table of groupimages - connect to table
@@ -417,6 +416,7 @@ class MarkerClient(QWidget):
         self.ui.tagButton.clicked.connect(self.tagTest)
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
+        self.ui.viewButton.clicked.connect(self.viewSpecificImage)
         # self.ui.filterLE.focusInEvent.connect(lambda: self.ui.filterButton.setFocus())
         # Give IDs to the radio-buttons which select the marking style
         # 1 = mark total = user clicks the total-mark
@@ -1105,3 +1105,6 @@ class MarkerClient(QWidget):
     def setFilter(self):
         self.prxM.setFilterString(self.ui.filterLE.text().strip())
         self.prxM.filterTags()
+
+    def viewSpecificImage(self):
+        print("Do something")
