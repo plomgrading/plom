@@ -295,8 +295,7 @@ class ProxyModel(QSortFilterProxyModel):
         return self.data(self.index(r, 1))
 
     def setStatus(self, r, stat):
-        # Return the status of the image
-        return self.setData(self.index(r, 1), stat)
+        self.setData(self.index(r, 1), stat)
 
     def getOriginalFile(self, r):
         # Return the filename of the original un-annotated image
@@ -370,6 +369,7 @@ class MarkerClient(QWidget):
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
+        self.testImg = None  # safer?
         # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # Save the group and version.
