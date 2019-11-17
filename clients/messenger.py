@@ -83,10 +83,11 @@ def requestAndSaveToken(user, pw):
 
     SRmutex.acquire()
     try:
-        response = session.put(
+        response = authSession.put(
             "https://{}:{}/users/{}".format(server, message_port, user),
             json={"user": user, "pw": pw, "api": Plom_API_Version},
             verify=False,
+            timeout=5,
         )
         # throw errors when response code != 200.
         response.raise_for_status()
@@ -877,11 +878,14 @@ session = None
 def startMessenger():
     """Start the messenger session"""
     print("Starting a requests-session")
+    global authSession
     global session
+    authSession = requests.Session()
     session = requests.Session()
     # set max_retries to large number because UBC-wifi is pretty crappy.
     # TODO - set smaller number and have some sort of "hey you've retried
     # nn times already, are you sure you want to keep retrying" message.
+    authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
 
 
@@ -889,3 +893,4 @@ def stopMessenger():
     """Stop the messenger"""
     print("Stopped messenger session")
     session.close()
+    authSession.close()
