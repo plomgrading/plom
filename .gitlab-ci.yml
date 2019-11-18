@@ -43,7 +43,7 @@ before_script:
   - which pip3
   - python3 -m pip -V
   - python3 -m pip install easywebdav2 pymupdf weasyprint
-    imutils lapsolver peewee cheroot
+    imutils lapsolver peewee cheroot aiohttp
 
 stages:
   - build

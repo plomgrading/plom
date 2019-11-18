@@ -55,7 +55,7 @@ in anyway, not sure why.
 Other stuff we get from pip:
 ```
   # sudo apt-get install python3-pip
-  # pip3 install --upgrade --user pymupdf weasyprint imutils lapsolver
+  # pip3 install --upgrade --user pymupdf weasyprint imutils lapsolver aiohttp
 ```
 Ubuntu 16.04 also needs:
 ```
