@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 # Usual server defaults.
-serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
+serverInfo = {"server": "127.0.0.1", "mport": 41984}
 
 
 def getServerInfo():

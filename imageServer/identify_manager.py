@@ -29,7 +29,6 @@ import ssl
 import asyncio
 
 server = "localhost"
-webdav_port = 41985
 message_port = 41984
 
 # # # # # # # # # # # #

@@ -50,8 +50,7 @@ sudo docker exec $PD adduser -u $UID --no-create-home --disabled-password --geco
 #     texlive-latex-extra dvipng g++ make python3-dev
 #
 # docker exec $PD pip3 install --upgrade \
-#        wsgidav easywebdav2 pymupdf weasyprint imutils \
-#        lapsolver peewee cheroot
+#     pymupdf weasyprint imutils lapsolver peewee cheroot
 
 #script:
 mkdir plom/scanAndGroup/scannedExams/
