@@ -5,8 +5,6 @@
 
 * cleanAll = utility script to delete user generated content
 
-* davconf.conf = configuration file for webdav server used by mark_server. Need a better way to configure this.
-
 * examviewwindow.py = defines a widget for exam viewing window used by the mark_manager. Displays the pagegroup image in the mark-manager and allows the manager to zoom in on parts of it.
 
 * identify_manager = this is a relatively simple(?) gui that reads in the identity.db file and displays it using the Qt library's stuff. The manager can then filter by the marker (ie the TA) and also by the status of the paper. It also displays the 'user progress' - ie how many of the currently displayed papers has each user ID'd.
@@ -47,7 +45,6 @@
   * and the mark - set to -1 initially.
 
   * image_server - this is where all the fun happens. This script needs to understand how to communicate with the two databases (which it does through the objects in id_storage and mark_storage) as well as communicate with the clients.
-   * on start-up the server opens the databases and also fires up a webdav server - the configuration is given by davconf.conf.
    * the configuration of the various ports, hostname, webdav username + password needs improving. There is a single username/password set for the webdav (I think this is fine) - but webdav needs ssl encryption.
    * The database interactions are relatively straightforward (probably needs someone to look at it carefully for exceptions and errors)
    * image files are served to clients using a webdav server which runs in a temp directory. When files are requested, the server copies a file into the temp directory with a temp name and sends a message to the client telling it where to find it. After it has been retrieved by the client the file is deleted.
