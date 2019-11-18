@@ -36,6 +36,7 @@ from PyQt5.QtCore import (
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QDialog,
+    QInputDialog,
     QMainWindow,
     QMessageBox,
     QProgressDialog,
@@ -1107,4 +1108,16 @@ class MarkerClient(QWidget):
         self.prxM.filterTags()
 
     def viewSpecificImage(self):
-        print("Do something")
+        testNumber, ok = QInputDialog.getInt(
+            self,
+            "View another test",
+            "From which test do you want to view (pageGroup, version)=({}, {})?".format(
+                int(self.pageGroup), int(self.version)
+            ),
+            1,
+            1,
+            9999,
+            1,
+        )
+        if ok:
+            print(i)
