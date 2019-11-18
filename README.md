@@ -74,7 +74,6 @@ System to generate tests from a small number of similar source versions
   * some database handling code (which should be moved from python's [peewee](http://docs.peewee-orm.com/en/latest/) library to use (perhaps?) Qt's [database library](http://doc.qt.io/qt-5/sql-connecting.html). One for associating student numbers and names with papers, and then another to record marks + annotated pagegroup images.
   * a simple 'authority' which verifies passwords and hands out authorisation tokens to the server (which can then be passed on to clients). The tokens are produced using [uuid4](https://docs.python.org/3.6/library/uuid.html).
   * the main server which keeps track of who has which file and what information is coming back from the clients.
-  * files are served and retrieved from clients using a [webdav server](https://wsgidav.readthedocs.io/en/latest/).
   * messages between clients and the server are handled using the standard python [asyncio](https://docs.python.org/3/library/asyncio.html) library.
   * These messages are encrypted using SSL. The 00 script will build a new certificate for the project (providing relevant libraries are installed).
 

@@ -42,7 +42,7 @@ before_script:
   - pip3 install --upgrade pip
   - which pip3
   - python3 -m pip -V
-  - python3 -m pip install wsgidav easywebdav2 pymupdf weasyprint
+  - python3 -m pip install easywebdav2 pymupdf weasyprint
     imutils lapsolver peewee cheroot
 
 stages:

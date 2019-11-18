@@ -23,8 +23,7 @@ Fedora's [python3-weasyprint is too old](https://bugzilla.redhat.com/show_bug.cg
 
 Other stuff we install locally with `pip`:
 ```
-  # pip3 install --upgrade --user pyqrcode easywebdav2 wsgidav \
-                                  cheroot Weasyprint
+  # pip3 install --upgrade --user pyqrcode easywebdav2 cheroot Weasyprint
 ```
 
 More dependencies for the tensorflow-based ID reader:
@@ -56,7 +55,7 @@ in anyway, not sure why.
 Other stuff we get from pip:
 ```
   # sudo apt-get install python3-pip
-  # pip3 install --upgrade --user wsgidav easywebdav2 pymupdf \
+  # pip3 install --upgrade --user easywebdav2 pymupdf \
                                   weasyprint imutils lapsolver
 ```
 Ubuntu 16.04 also needs:
