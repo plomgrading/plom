@@ -35,7 +35,8 @@
 * get "/MK/tasks/complete" - return list of tasks completed by that user
 * get "/MK/tasks/available" - return next available task
 * get "/MK/latex" - take latex-fragment, process and return png
-* get "/MK/images/{tgv}" - return imagefile of that tgv
+* get "/MK/images/{tgv}" - return original imagefile of that tgv plus the annotated version plus the plom-file
+* get "/MK/originalImage/{tgv}" - return (original, unannotated) imagefile of that tgv
 * get "/MK/whole/{number}" - return group-images of entire paper (except id-page)
 * patch "/MK/tags/{tgv}" - save user-tags of that tgv
 * put "/MK/tasks/{tgv}" - send back marked-image, plom-file, comments, mark etc.

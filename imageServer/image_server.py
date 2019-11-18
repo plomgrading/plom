@@ -468,6 +468,21 @@ async def MgetImage(request):
         return web.Response(status=401)  # not authorised at all
 
 
+@routes.get("/MK/originalImage/{tgv}")
+async def MgetOriginalImage(request):
+    data = await request.json()
+    code = request.match_info["tgv"]
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.MgetOriginalGroupImage(code)
+        # returns either [True, fname] or [False]
+        if rmsg[0]:  # user allowed access - returns [true, fname]
+            return web.FileResponse(rmsg[1], status=200)
+        else:
+            return web.Response(status=204)  # no content there
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
 @routes.put("/MK/tasks/{tgv}")
 async def MreturnMarked(request):
     code = request.match_info["tgv"]
@@ -1008,6 +1023,13 @@ class Server(object):
         else:
             return [False]
 
+    def MgetOriginalGroupImage(self, tgv):
+        fname = self.MDB.getOriginalGroupImage(tgv)
+        if fname is not None:
+            return [True, fname]
+        else:
+            return [False]
+
     def MsetTag(self, user, tgv, tag):
         if self.MDB.setTag(user, tgv, tag):
             return True
@@ -1154,11 +1176,9 @@ checkPorts()
 # check that markedPapers and subdirectories exist
 checkDirectories()
 
-# Create a temp directory for the webdav
 tempDirectory = tempfile.TemporaryDirectory()
-davDirectory = tempDirectory.name
 # Give directory correct permissions.
-os.system("chmod o-r {}".format(davDirectory))
+os.system("chmod o-r {}".format(tempDirectory.name))
 
 # Read the test specification
 spec = TestSpecification()

@@ -53,6 +53,7 @@ from plom_exceptions import *
 from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
+from test_view import GroupView
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -1120,4 +1121,17 @@ class MarkerClient(QWidget):
             1,
         )
         if ok:
-            print(i)
+            tgv = "t{}g{}v{}".format(
+                str(testNumber).zfill(4), self.pageGroup, self.version
+            )
+            try:
+                image = messenger.MgetOriginalGroupImage(tgv)
+            except PlomNoMoreException as err:
+                msg = ErrorMessage("No image corresponding to code {}".format(tgv))
+                msg.exec_()
+                return
+            ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory)
+            with open(ifile.name, "wb") as fh:
+                fh.write(image)
+            tvw = GroupView(ifile.name)
+            tvw.exec_()
