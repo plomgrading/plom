@@ -49,51 +49,65 @@
    * The database interactions are relatively straightforward (probably needs someone to look at it carefully for exceptions and errors)
    * image files are served to clients.  The files come from the '../scanAndGroup/readyForGrading' directory, so it must be run in place. Annotated image files are placed in the 'markedPapers' directory.
    * the messages between server and client (and server and manager) are handled using some simple(ish) asyncio stuff with ssl encryption.
-   * when the client logs in initially the send a message ['AUTH', user, password] - the server then checks the password against the hashed password list stored in '../resources/userList'. If the password is fine then the server returns an authorisation token. This token is used to check (subsequently) that the user is authorised to make requests of the server.
+   * when the client logs in, it sends a put/request to "{server}:{port}/users/{user}" with the username, password and API-version. The server then checks the API and the password against the hashed password list stored in '../resources/userList'. If the password is fine then the server returns an authorisation token. This token is used to check (subsequently) that the user is authorised to make requests of the server.
+   * Similarly, when a client logs out, it sends a delete request to the same "{server}:{port}/users/{user}" - which causes the server to delete the authorisation token.
+
    * **NOTE** when a client logs in again we should make sure anything in the database listed as 'OutForIDing' or 'OutForMarking' gets put back on the todo list. Similarly when they close. Not sure if we can also put in some time-out thingy in case a client crashes out of the system?
 
-   * a message is of the form of a list ['CMD', user, token, 'ARG1', 'ARG2',...].
-     * Where 'CMD' is some 3-letter command (such as 'ACK' - for acknowledge or  'ERR' for error or 'RCL' = requestClassList)
-     * user = the name of the user
-     * token = authentication token.
-     * The later ARGs depend on the command. eg to request the classlist, the identifier-client sends ['iRCL', user] to the server. The server then copies the classlist into the webdav directory and sends back ['ACK', filename]. Once the identifier-client has the classlist it sends back ['iGCL',filename] which the server acknowledges with ['ACK'] and deletes the file from the webdav.
-     * When an id-client identifies a paper it sends ['iRID', user, code, sid, sname] - the username, the test's code, the student ID number and the student's name.
-     * If the id-client wants another paper to identify, it sends ['iNID',user] and the server responds with ['ACK', code, fname] being the code of the test and the temp filename of the page image in the webdav.
-     * list of commands sent from id-client or manager:
-       * AUTH = request for authorisation - if the user/password pair are validated then a token is returned (a uuid4 random thingy)
-       * UCL = user is closing their client. the server removes the authorisation token from their list.
-       * iDNF = didntFinish = the client sends this for each unid'd paper they have. tells the server to put these papers back in the ToDo list.
-       * iNID = nextUnIDd = asking for the next unid'd paper in the database.
-       * iGTP = gotTest = sent to acknowledge that the client got the test image and that the server can delete it.
-       * iRID = returnIDd = sent with code, student id number and student name. Server can then update the database with this information.
-       * iRAD = returnAlreadyIDd = as previous excepting that the client had previously ID'd the paper and went back and ID'd it again (ie they made a mistake the first time).
-       * iRCL = requestClassList = client requesting the classlist for the course (which is stored in ../resources/classlist.csv)
-       * iGCL = gotClassList = tells the server that the client got the classlist and the server is free to delete the copy from the webdav.
+   * messages from the client to the server are HTTP requests to various URLS. These (mostly) start with either "/ID/", "/TOT/" or "/MK/" - for identifier, totaler, or marker, the exceptions being the login/logout and API-check urls.
 
-     * Messages sent by the marker-client
-       * AUTH and UCL = as abobve
-       * mDNF = didntFinish - on closing the marker-client sends one for each pageimage it has but has not marked. These pageimages need to go back on the ToDo list.
-       * mNUM = nextUnmarked - used by the client to ask for the next ToDo paper in the assigned pagegroup and version. The server copies the pageimage into the webdav and sends an ACK.
-       * mGTP = gotTest - an acknowledgement sent by the client that it has copied the pageimage from the webdav and it is safe to remove it.
-       * mRMD = returnMarked - the client sends this along with the mark, and the location (in the webdav) of the annotated pageimage.
-       * mRAM = returnAlreadyMarked - as above, but the client has remarked this pageimage.
-       * mGMX = getPageGroupMax - on starting the client sends this to ask the server what is the maximum mark that can be assigned to the pagegroup.
+   * The messages sent by the identifier, totaler and marker are HTTP requests sent to the server. We give the list of the URLS here. All of these pass the username and authorisation-token for verification.
 
-     * Responses from server
-       * ACK = acknowledgement, followed by relevant data
-       * ERR = error, followed by error message
+** TODO ** add some blurb about aiohttp at server and requests at client.
 
-   * The message list is JSON'd and then sent over the ssl'd socket. The code for doing this is pretty standard stuff (I hope I've used reasonable code here)
-   * We use a simple (once you've seen it) python trick to translate the 3 letter messages sent over the socket into actual python commands. First a dictionary translates the 3letter command into the string of the function that should actually be called. Then call getattr(Object, String) which is equivalent to Object.String. Very handy.
-   * the message passing (from the server end, and the client end is similar) is split into 3 parts.
-     * proc_cmd() actually parses the message into a command call (using the getattr trick). This is relatively straightforward.
-     * handle_messaging() is more involved. I have tried to code this using standard bits of asyncio code. See [this page](https://pymotw.com/3/asyncio/ssl.html) and also [here](https://docs.python.org/3/library/asyncio-protocol.html#protocol-examples) and many other googled pages. This waits (more on that in a moment) for a connection, reads the data from it, decodes the JSON into a list. The message is passed through proc_cmd, which processes the actual command and returns what ever acknowledgement or error is required. The ack/err is then sent back.
-     * the asyncio stuff - pretty much taken directly from [here](https://docs.python.org/3/library/asyncio-protocol.html#protocol-examples)
-       * loop = an asyncio event loop - read some of the asyncio python pages - they'll do a better job than me. Roughly speaking, this handles the asynchronous nature of the incoming connections so that whole system doesn't hang waiting for things to happen.
-       * server = the event loop uses this to invoke the coro server thingy when needed (I think **more thinking about this needed** but it works fine).
-       * coro = an asyncio coroutine that listens for incoming connections and passes them to handle_messaging. See [here](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.AbstractEventLoop.create_server)
-    * The eventloop runs forever until there is a user-interrupt and then things are closed down.
-   * On closing the image_server also re-saves the databases as JSON files '../resources/examsIdentified.json' and '../resources/groupImagesMarked.json'
+## Messenger messages
+When the client is started the user is prompted for various details: username, password, port, server etc. The user the selects a task and the client fires up the messenger which acts as the message-passing intermediary between the client and the server. The messenger then
+* put "/users/{user}" - (with username, password, API included as data). The server verifies the user/password/API and then returns the auth-token
+* delete "/users/{user}" (with username, token included as data). The server verifies the token and then deletes the authorisation token - logging out the user.
+
+
+## Identifier messages
+I have tried to list these in the order in which they are called by the identifier-client (after the initial authorisation message). All of these include the username + token in order to authenticate the user before any actions performed.
+
+   * get "/ID/classlist" - server returns classlist file (used for auto-completion of names and IDs`)
+   * get "/ID/predictions" - server return prediction-list file (generated by machine-learning student-number reader)
+   * get "/ID/tasks/complete" - server return list of tasks completed (ie papers-identified) by that user
+   * get "/ID/progress" - server returns [#papers identified by all users, #total papers to be identified]
+   * get "/ID/tasks/available" - server returns [code for next available task] or 204-code (if no tasks left). Note that this task is not automatically assigned to the user. The user has to send a separate "claim task" request.
+   * patch "/ID/tasks/{task}" - user asks to claim task (if still available) and the server returns either an error-code (if task taken by another user) or the corresponding image of the id-page.
+   * put "/ID/tasks/{task}" - when user IDs a paper, the client sends this message to the server (with the ID/Name). The server either reports a success or an error-code if that ID-number has been used already.
+   * delete "/ID/tasks/{task}" - when a user closes the identifier, any un-finished tasks have to be reported to the server. This message unclaims a given task, the server will then put the task back on the todo-list.
+   * get "/ID/images/{tgv}" - when the user clicks on a previous completed task the client will look to see if it has the corresponding image already and display it. If the file is not present, then it sends this message to the server and it returns the image-file.
+
+## Totaler Messages
+These are very similar to those for the identifier - indeed the only differences are that it doesn't require a classlist or prediction-list, it needs the max-possible mark for the paper. And instead of passing back student-ID/Names, it returns the (user-inputted) mark.
+
+* get "/TOT/maxMark" - return max-total-mark for test
+* get "/TOT/tasks/complete" - return list of tasks completed by that user
+* get "/TOT/tasks/available" - return the next available task or an error code if none left
+* get "/TOT/progress" - return [#done, #total]
+* patch "/TOT/tasks/{task}" - claim task (if still available) - return imagefile
+* put "/TOT/tasks/{task}" - update the mark of the task (ie test)
+* delete "/TOT/tasks/{task}" - unclaim task
+* get "/TOT/images/{tgv}" - return imagefile of that tgv
+
+## Marker Messages
+Some of these are similar to those of the identifier and totaler, but there are necesarily more complications. TODO - finish embellishing this list.
+
+* get "/MK/maxMark" - return max-mark for the page-group
+* get "/MK/progress" - return [#done, #total]
+* get "/MK/tasks/complete" - return list of tasks completed by that user
+* get "/MK/tasks/available" - return next available task
+* get "/MK/latex" - take latex-fragment, process and return png
+* get "/MK/images/{tgv}" - return original imagefile of that tgv plus the annotated version plus the plom-file
+* get "/MK/originalImage/{tgv}" - return (original, unannotated) imagefile of that tgv
+* get "/MK/whole/{number}" - return group-images of entire paper (except id-page)
+* patch "/MK/tags/{tgv}" - save user-tags of that tgv
+* put "/MK/tasks/{tgv}" - send back marked-image, plom-file, comments, mark etc.
+* patch "/MK/tasks/{task}" - claim the task (if still available) - return imagefile
+* delete "/MK/tasks/{task}" - unclaim the task.
+
+
 
 
 * userManager = a very simple user-management script / gui. The manager can add or remove users.
