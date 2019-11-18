@@ -4,7 +4,6 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
 from aiohttp import web, MultipartWriter, MultipartReader
-import asyncio
 import datetime
 import errno
 import glob
