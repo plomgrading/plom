@@ -8,4 +8,4 @@ RUN apt-get --no-install-recommends --yes install  \
     python3-setuptools python3-wheel imagemagick python3-requests-toolbelt \
     texlive-latex-extra dvipng g++ make python3-dev
 RUN pip3 install --upgrade \
-    easywebdav2 pymupdf weasyprint imutils lapsolver peewee cheroot
+    pymupdf weasyprint imutils lapsolver peewee cheroot
