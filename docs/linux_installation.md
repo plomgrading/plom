@@ -10,13 +10,13 @@ Installing on Popular GNU/Linux Distros
 Fedora
 ------
 
-Tested on Fedora 30.  Some stuff from the package manager:
+Tested on Fedora 31.  Some stuff from the package manager:
 ```
   # sudo dnf install parallel ImageMagick zbar \
                      python3-PyMuPDF python3-passlib python3-pypng \
                      python3-jsmin python3-defusedxml python3-yaml \
                      python3-urllib3 python3-more-itertools \
-                     python3-seaborn python3-matplotlib-qt5 \
+                     python3-seaborn python3-matplotlib-qt5 python3-aiohttp \
                      python3-peewee python3-pandas python3-requests-toolbelt
 ```
 Fedora's [python3-weasyprint is too old](https://bugzilla.redhat.com/show_bug.cgi?id=1475749).
@@ -55,7 +55,7 @@ in anyway, not sure why.
 Other stuff we get from pip:
 ```
   # sudo apt-get install python3-pip
-  # pip3 install --upgrade --user pymupdf weasyprint imutils lapsolver
+  # pip3 install --upgrade --user pymupdf weasyprint imutils lapsolver aiohttp
 ```
 Ubuntu 16.04 also needs:
 ```

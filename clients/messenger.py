@@ -11,7 +11,6 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import sys
-import asyncio
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartDecoder
 import json
