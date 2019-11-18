@@ -18,8 +18,6 @@ __license__ = "GFDL"
   * 04_finishing
   * resources = dont rename since it contains files used by scripts in each of the directories. (eg some json files, some .tex files and some images)
 
-* Have put ssl wrapper around the communication between servers and clients. Need to also put ssl around the webdav communication.
-
 * Have implemented basic password check + authorisation tokens. Need to get this looked at by someone who actually knows this stuff.
 
 * move from peewee sql wrapper to the qt-sql wrappers? (since the manager scripts use them anyway). they are likely more robust if the system is being pushed hard (though I can't imagine that more than about 30 TAs using this thing at any given time). Might actually be better to move to sqlalchemy rather that qt-sql.... it is a bit more widely supported and perhaps easier to code in? Mind you, we already require the Qt libraries for this project so perhaps choosing qt would mean one fewer packages to install?
