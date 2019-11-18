@@ -1155,11 +1155,9 @@ checkPorts()
 # check that markedPapers and subdirectories exist
 checkDirectories()
 
-# Create a temp directory for the webdav
 tempDirectory = tempfile.TemporaryDirectory()
-davDirectory = tempDirectory.name
 # Give directory correct permissions.
-os.system("chmod o-r {}".format(davDirectory))
+os.system("chmod o-r {}".format(tempDirectory.name))
 
 # Read the test specification
 spec = TestSpecification()
