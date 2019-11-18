@@ -473,10 +473,9 @@ class IDClient(QWidget):
             else:
                 attempts += 1
             # ask server for ID of next task
-            try:
-                test = messenger.IDGetAvailable()
-            except plom_exceptions.BenignException as err:
-                self.throwBenign(err)  # no tasks left
+            test = messenger.IDGetAvailable()
+            if not test:
+                #ErrorMessage("No more tasks").exec_()
                 return False
 
             try:

@@ -160,6 +160,14 @@ def IDGetProgressCount():
 
 
 def IDGetAvailable():
+    """Return the TGV of a paper that needs IDing.
+
+    Return:
+        string or None if no papers need IDing.
+
+    Raises:
+        SeriousError: if something has unexpectedly gone wrong.
+    """
     SRmutex.acquire()
     try:
         response = session.get(
@@ -170,9 +178,8 @@ def IDGetAvailable():
         # throw errors when response code != 200.
         response.raise_for_status()
         if response.status_code == 204:
-            raise PlomNoMoreException("No tasks left.")
-        # convert the content of the response to a textfile for identifier
-        progress = response.json()
+            return None
+        tgv = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise plom_exceptions.SeriousError("You are not authenticated.")
@@ -181,7 +188,7 @@ def IDGetAvailable():
     finally:
         SRmutex.release()
 
-    return progress
+    return tgv
 
 
 def IDGetClasslist():
