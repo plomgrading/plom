@@ -307,7 +307,6 @@ def IDclaimThisTask(code):
         if response.status_code == 204:
             raise plom_exceptions.BenignException("Task taken by another user.")
         response.raise_for_status()
-        image = BytesIO(response.content).getvalue()  # pass back image as bytes
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise plom_exceptions.SeriousError("You are not authenticated.")
@@ -316,6 +315,7 @@ def IDclaimThisTask(code):
     finally:
         SRmutex.release()
 
+    image = BytesIO(response.content).getvalue()  # pass back image as bytes
     return image
 
 
