@@ -17,7 +17,7 @@ Tested on Fedora 30.  Some stuff from the package manager:
                      python3-jsmin python3-defusedxml python3-yaml \
                      python3-urllib3 python3-more-itertools \
                      python3-seaborn python3-matplotlib-qt5 \
-                     python3-peewee python3-pandas \
+                     python3-peewee python3-pandas python3-requests-toolbelt
 ```
 Fedora's [python3-weasyprint is too old](https://bugzilla.redhat.com/show_bug.cgi?id=1475749).
 
@@ -42,8 +42,8 @@ Some stuff from the package manager:
 ```
   # sudo apt-get install parallel zbar-tools cmake \
                          python3-passlib python3-seaborn python3-pandas \
-                         python3-pyqt5 python3-pyqt5.qtsql \
-                         python3-peewee python3-pyqrcode python3-png
+                         python3-pyqt5 python3-pyqt5.qtsql python3-peewee \
+                         python3-pyqrcode python3-png python3-requests-toolbelt
 ```
 (Ubuntu 18.04 has python3-opencv: older systems may need `pip3`)
 
