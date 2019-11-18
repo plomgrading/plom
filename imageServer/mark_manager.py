@@ -39,7 +39,6 @@ sns.set()  # Sets up seaborn defaults for plots.
 
 
 server = "localhost"
-webdav_port = 41985
 message_port = 41984
 
 # # # # # # # # # # # #

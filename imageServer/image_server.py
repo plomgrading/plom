@@ -940,7 +940,7 @@ class Server(object):
         self, user, code, pg, v, mark, image, plomdat, comments, mtime, tags
     ):
         """Client has marked the pageimage with code, mark, annotated-file-name
-        (which the client has uploaded to webdav), and spent mtime marking it.
+        and spent mtime marking it.
         Send the information to the database and send an ack.
         """
         # score + file sanity checks were done at client. Do we need to redo here?
@@ -1099,9 +1099,7 @@ class Server(object):
 
 
 def checkPortFree(ip, port):
-    """Test if the given port is free so server can use it
-    for messaging and/or webdav.
-    """
+    """Test if the given port is free so server can use it."""
     # Create a socket.
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # try to bind it to the IP and port.
@@ -1120,9 +1118,7 @@ def checkPortFree(ip, port):
 
 
 def checkPorts():
-    """Check that the messaging and webdav ports are free
-    on the server.
-    """
+    """Check that the messaging port is free on the server."""
     if checkPortFree(serverInfo["server"], serverInfo["mport"]):
         SLogger.info("Messaging port is free and working.")
         print("Messaging port is free and working.")
@@ -1137,24 +1133,6 @@ def checkPorts():
             "Problem with messaging port {} on server {}. "
             "Please check and try again.".format(
                 serverInfo["mport"], serverInfo["server"]
-            )
-        )
-        exit(1)
-
-    if checkPortFree(serverInfo["server"], serverInfo["wport"]):
-        SLogger.info("Webdav port is free and working.")
-        print("Webdav port is free and working.")
-    else:
-        SLogger.info(
-            "Problem with webdav port {} on server {}. "
-            "Please check and try again.".format(
-                serverInfo["wport"], serverInfo["server"]
-            )
-        )
-        print(
-            "Problem with webdav port {} on server {}. "
-            "Please check and try again.".format(
-                serverInfo["wport"], serverInfo["server"]
             )
         )
         exit(1)

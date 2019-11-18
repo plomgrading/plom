@@ -147,8 +147,8 @@ class SetUp(QWidget):
             with open("../resources/serverDetails.json") as data_file:
                 self.info = json.load(data_file)
         else:
-            # set server address, message port and webdav port.
-            self.info = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
+            # set server address, message port
+            self.info = {"server": "127.0.0.1", "mport": 41984}
 
     def putInfoIntoUi(self):
         """Grab the values from the info dict and put into the UI fields
