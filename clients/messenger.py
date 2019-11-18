@@ -775,6 +775,35 @@ def MgetGroupImage(code):
     return [image, anImage, plDat]
 
 
+def MgetOriginalGroupImage(code):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/originalImage/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        if response.status_code == 204:
+            raise PlomNoMoreException("No paper with code {}.".format(code))
+        response.raise_for_status()
+        # response is either [image] or [image, annotatedImage, plom-data]
+        image = BytesIO(response.content).getvalue()  # pass back image as bytes
+
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise plom_exceptions.SeriousError("You are not authenticated.")
+        elif response.status_code == 404:
+            raise plom_exceptions.SeriousError(
+                "Cannot find image file for {}.".format(code)
+            )
+        else:
+            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image
+
+
 def MreturnMarkedTask(code, pg, ver, score, mtime, tags, aname, pname, cname):
     SRmutex.acquire()
     try:

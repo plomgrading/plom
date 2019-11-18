@@ -4,7 +4,7 @@ __credits__ = ["Andrew Rechnitzer"]
 __license__ = "AGPLv3"
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication, QDialog, QGridLayout, QPushButton, QWidget
 from uiFiles.ui_test_view import Ui_TestView
 from examviewwindow import ExamViewWindow
 
@@ -44,6 +44,36 @@ class TestView(QWidget):
         if t < 0:
             t = self.ui.groupViewTabWidget.count() - 1
         self.ui.groupViewTabWidget.setCurrentIndex(t)
+
+    def swapMaxNorm(self):
+        """Toggles the window size between max and normal"""
+        if self.windowState() != Qt.WindowMaximized:
+            self.setWindowState(Qt.WindowMaximized)
+        else:
+            self.setWindowState(Qt.WindowNoState)
+
+    def closeEvent(self, event):
+        self.closeWindow()
+
+    def closeWindow(self):
+        self.close()
+
+
+class GroupView(QDialog):
+    def __init__(self, fname):
+        super(GroupView, self).__init__()
+        grid = QGridLayout()
+        self.testImg = ExamViewWindow(fname)
+        self.closeButton = QPushButton("Close")
+        self.maxNormButton = QPushButton("Max/Norm")
+        grid.addWidget(self.testImg, 1, 1, 6, 6)
+        grid.addWidget(self.closeButton, 7, 7)
+        grid.addWidget(self.maxNormButton, 1, 7)
+        self.setLayout(grid)
+        self.closeButton.clicked.connect(self.closeWindow)
+        self.maxNormButton.clicked.connect(self.swapMaxNorm)
+
+        self.show()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
