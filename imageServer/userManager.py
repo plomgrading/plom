@@ -40,7 +40,7 @@ mlpctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 # Server info defaults
-serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
+serverInfo = {"server": "127.0.0.1", "mport": 41984}
 
 from aliceBob import simplePassword, makeRandomUserList, makeNumberedUserList
 

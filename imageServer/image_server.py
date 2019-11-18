@@ -31,7 +31,7 @@ from resources.version import __version__
 from resources.version import Plom_API_Version as serverAPI
 
 # default server values and location of grouped-scans.
-serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
+serverInfo = {"server": "127.0.0.1", "mport": 41984}
 pathScanDirectory = "../scanAndGroup/readyForMarking/"
 # # # # # # # # # # # #
 # Fire up ssl for network communications
