@@ -542,7 +542,7 @@ class IDClient(QWidget):
             self.throwSeriousError(err)
             return
         # successful ID
-        # Use timer to avoid conflict between completer and
+        # Issue #25: Use timer to avoid macOS conflict between completer and
         # clearing the line-edit. Very annoying but this fixes it.
         QTimer.singleShot(0, self.ui.idEdit.clear)
         QTimer.singleShot(0, self.ui.nameEdit.clear)
