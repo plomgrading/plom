@@ -48,7 +48,9 @@
    * the configuration of the various ports, hostname, username + password needs improving.
    * The database interactions are relatively straightforward (probably needs someone to look at it carefully for exceptions and errors)
    * image files are served to clients.  The files come from the '../scanAndGroup/readyForGrading' directory, so it must be run in place. Annotated image files are placed in the 'markedPapers' directory.
-   * the messages between server and client (and server and manager) are handled using some simple(ish) asyncio stuff with ssl encryption.
+
+   * the messages between server and client (and server and manager) are handled using aiohttp at the server-side and requests at the client side. The client sends https-messages to the server (we've tried to make them REST-API style), and the server runs async-aiohttp to respond to those requests.
+
    * when the client logs in, it sends a put/request to "{server}:{port}/users/{user}" with the username, password and API-version. The server then checks the API and the password against the hashed password list stored in '../resources/userList'. If the password is fine then the server returns an authorisation token. This token is used to check (subsequently) that the user is authorised to make requests of the server.
    * Similarly, when a client logs out, it sends a delete request to the same "{server}:{port}/users/{user}" - which causes the server to delete the authorisation token.
 
@@ -58,7 +60,7 @@
 
    * The messages sent by the identifier, totaler and marker are HTTP requests sent to the server. We give the list of the URLS here. All of these pass the username and authorisation-token for verification.
 
-** TODO ** add some blurb about aiohttp at server and requests at client.
+
 
 ## Messenger messages
 When the client is started the user is prompted for various details: username, password, port, server etc. The user the selects a task and the client fires up the messenger which acts as the message-passing intermediary between the client and the server. The messenger then
@@ -92,22 +94,31 @@ These are very similar to those for the identifier - indeed the only differences
 * get "/TOT/images/{tgv}" - return imagefile of that tgv
 
 ## Marker Messages
-Some of these are similar to those of the identifier and totaler, but there are necesarily more complications. TODO - finish embellishing this list.
+Most of these are similar to those of the identifier and totaler, but there are necesarily more complications since the marker's task is more involved. Again, we've tried to list these in the approximate order they are called.
 
-* get "/MK/maxMark" - return max-mark for the page-group
-* get "/MK/progress" - return [#done, #total]
-* get "/MK/tasks/complete" - return list of tasks completed by that user
-* get "/MK/tasks/available" - return next available task
-* get "/MK/latex" - take latex-fragment, process and return png
-* get "/MK/images/{tgv}" - return original imagefile of that tgv plus the annotated version plus the plom-file
-* get "/MK/originalImage/{tgv}" - return (original, unannotated) imagefile of that tgv
-* get "/MK/whole/{number}" - return group-images of entire paper (except id-page)
-* patch "/MK/tags/{tgv}" - save user-tags of that tgv
-* put "/MK/tasks/{tgv}" - send back marked-image, plom-file, comments, mark etc.
-* patch "/MK/tasks/{task}" - claim the task (if still available) - return imagefile
+* get "/MK/maxMark" - server returns max-mark for the page-group (ie question)
+* get "/MK/tasks/complete" - server returns list of tasks (within that page-group/version) completed by that user
+* get "/MK/progress" - server returns [#done, #total] for tasks within that pagegroup/version
+* get "/MK/tasks/available" - server returns next available task within that pagegroup/version
+
+* get "/MK/latex" - user sends a latex-fragment which the server then processes into a png and returns. Note this runs at the start of the marker to cache user-defined latex-comments. It is then run each time the user makes a new latex comment.
+
+* patch "/MK/tasks/{task}" - marker claims the task (if still available) - server returns imagefile or an error code if task already taken by another user.
+
+* put "/MK/tasks/{tgv}" - client sends back annotated-image, plom-file, comments, mark etc to server. Server responds with error if any problems, or with a progress update [#done, #total] if all good.
+
 * delete "/MK/tasks/{task}" - unclaim the task.
 
+* patch "/MK/tags/{tgv}" - client sends user-tags of that tgv to the server.
 
+* get "/MK/images/{tgv}" - when the user clicks on a previous completed task the client will look to see if it has the corresponding image (original/annotated) already and display it. If the file is not present, then it sends this message to the server and it returns the original image, the annotated image, and the plom-file (ie the svg-like file which allows system to continue editing an already annotated image).
+
+* get "/MK/whole/{number}" - during annotation user can press F1 and system displays whole of the paper. Client sends this request to server and server returns group-images of entire paper (except id-page)
+
+* get "/MK/originalImage/{tgv}" - in marker window if user pressed "view" and enters a test-number then sends tgv (with the current page-group+version) to server. server returns (original, unannotated) imagefile of that tgv.
+
+
+## Other stuff
 
 
 * userManager = a very simple user-management script / gui. The manager can add or remove users.
