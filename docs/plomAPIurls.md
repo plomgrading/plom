@@ -42,3 +42,20 @@
 * put "/MK/tasks/{tgv}" - send back marked-image, plom-file, comments, mark etc.
 * patch "/MK/tasks/{task}" - claim the task (if still available) - return imagefile
 * delete "/MK/tasks/{task}" - unclaim the task.
+
+
+# Table of functions etc - shows need for harmonisation
+|method|url|messenger|server|DB|
+|------|----|----|----|----|
+| get | "/Version" |.|.|.|
+| put | "/users/{user}"| requestAndSaveToken | LoginUserGiveToken | authoriseUser |
+| delete | "/users/{user}" | closeUser | CloseUser | userClosing |
+| get |"/ID/progress" | IDGetProgressCount | IDprogressCount | IDprogressCount|
+| get |"/ID/tasks/available"| IDGetAvailable | IDnextTask | IDaskNextTask |
+| get |"/ID/classlist"| IDGetClasslist | IDgimmetheclasslist | . |
+| get |"/ID/predictions" | IDGetPredictions | IDgimmethepredictions | . |
+| get |"/ID/tasks/complete" | IDgetAlreadyComplete | IDgimmewhatsdone | IDgetAlreadyIDList |
+| get |"/ID/images/{tgv}" | IDgetGroupImage | IDgetImage | IDgetGroupImage |
+| patch |"/ID/tasks/{task}"| IDclaimThisTask | IDclaimThisTask | IDclaimSpecificTask |
+| put |"/ID/tasks/{task}" | IDreturnIDdTask | IDreturnIDd | IDreturnIDd |
+| delete |"/ID/tasks/{task}" | IDdidNotFinishTask | IDdidNotFinishTask | IDdidntFinish |
