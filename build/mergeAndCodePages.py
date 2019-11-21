@@ -3,6 +3,8 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __license__ = "AGPLv3"
 
 import sys
+import shlex
+import subprocess
 import os
 import fitz
 import pyqrcode
@@ -68,19 +70,20 @@ with tempfile.TemporaryDirectory() as tmpDir:
     dnw1File = os.path.join(tmpDir, "dnw1.png")
     # make a little grey triangle with the test name
     # put this in corner where staple is
-    cmd = (
+    cmd = shlex.split(
         'convert -pointsize 18 -antialias -size 232x116 xc:white -draw "stroke black fill grey '
         "path 'M 114,0  L 0,114  L 228,114 L 114,0 Z'\"  -gravity south "
         "-annotate +0+8 '{}' -rotate -45 -trim {}".format(name, dnw0File)
     )
-    os.system(cmd)
+    subprocess.call(cmd)
+
     # and one for the other corner (back of page) in other orientation
-    cmd = (
+    cmd = shlex.split(
         'convert -pointsize 18 -size 232x116 xc:white -draw "stroke black fill grey '
         "path 'M 114,0  L 0,114  L 228,114 L 114,0 Z'\"  -gravity south "
         "-annotate +0+8 '{}' -rotate +45 -trim {}".format(name, dnw1File)
     )
-    os.system(cmd)
+    subprocess.call(cmd)
 
     # create QR codes and other stamps for each test/page/version
     qrFile = {}
@@ -95,18 +98,20 @@ with tempfile.TemporaryDirectory() as tmpDir:
             qrFile[p][i] = os.path.join(tmpDir, "page{}_{}.png".format(p, i))
             qr.png(qrFile[p][i], scale=4)
             # put a border around it
-            os.system("mogrify {} {}".format(mogParams, qrFile[p][i]))
+            cmd = shlex.split("mogrify {} {}".format(mogParams, qrFile[p][i]))
+            subprocess.call(cmd)
 
         # a file for the test/page stamp in top-centre of page
         tpFile[p] = os.path.join(
             tmpDir, "t{}p{}.png".format(str(test).zfill(4), str(p).zfill(2))
         )
         # create the test/page stamp using imagemagick
-        os.system(
+        cmd = shlex.split(
             "convert -pointsize 36 -size 200x42 caption:'{}.{}' -trim "
             "-gravity Center -extent 200x42 -bordercolor black "
             "-border 1 {}".format(str(test).zfill(4), str(p).zfill(2), tpFile[p])
         )
+        subprocess.call(cmd)
     # After creating all of the QRcodes etc we can put them onto
     # the actual pdf pages as pixmaps using pymupdf
     # read the DNW triangles in to pymupdf
@@ -137,10 +142,12 @@ with tempfile.TemporaryDirectory() as tmpDir:
         # a file for the student-details
         sidFile = os.path.join(tmpDir, "sid.png")
         # make a studentID label thingy
-        cmd = "convert -pointsize 48 -antialias -background white -fill black -gravity center label:'{}\n{}' -bordercolor white -border 12 -bordercolor black -border 1 {}".format(
-            pageVersions["id"], pageVersions["name"], sidFile
+        cmd = shlex.split(
+            "convert -pointsize 48 -antialias -background white -fill black -gravity center label:'{}\n{}' -bordercolor white -border 12 -bordercolor black -border 1 {}".format(
+                pageVersions["id"], pageVersions["name"], sidFile
+            )
         )
-        os.system(cmd)
+        subprocess.call(cmd)
         # now stamp the ID-image into the middle of page0
         sidImage = fitz.Pixmap(sidFile)
         sidW = sidImage.width
