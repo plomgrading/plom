@@ -6,8 +6,7 @@ __license__ = "AGPLv3"
 import sys
 import tempfile
 import json
-import asyncio
-import ssl
+
 from collections import defaultdict
 from examviewwindow import ExamViewWindow
 from PyQt5.QtCore import Qt, QSortFilterProxyModel
@@ -36,50 +35,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 sns.set()  # Sets up seaborn defaults for plots.
-
-
-server = "localhost"
-message_port = 41984
-
-# # # # # # # # # # # #
-sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-sslContext.check_hostname = False
-# # # # # # # # # # # #
-
-
-async def handle_messaging(msg):
-    reader, writer = await asyncio.open_connection(
-        server, message_port, loop=loop, ssl=sslContext
-    )
-    jm = json.dumps(msg)
-    writer.write(jm.encode())
-    # SSL does not support EOF, so send a null byte to indicate the end of the message.
-    writer.write(b"\x00")
-    await writer.drain()
-
-    data = await reader.read(100)
-    terminate = data.endswith(b"\x00")
-    data = data.rstrip(b"\x00")
-    rmesg = json.loads(
-        data.decode()
-    )  # message should be a list [cmd, user, arg1, arg2, etc]
-    writer.close()
-    return rmesg
-
-
-def SRMsg(msg):
-    # print("Sending message {}",format(msg))
-    rmsg = loop.run_until_complete(handle_messaging(msg))
-    if rmsg[0] == "ACK":
-        return rmsg
-    elif rmsg[0] == "ERR":
-        # print("Some sort of error occurred - didnt get an ACK, instead got ", rmsg)
-        msg = errorMessage(rmsg[1])
-        msg.exec_()
-        return rmsg
-    else:
-        msg = errorMessage("Something really wrong has happened.")
-        self.Close()
 
 
 class errorMessage(QMessageBox):
@@ -516,7 +471,6 @@ class manager(QWidget):
         self.show()
 
 
-loop = asyncio.get_event_loop()
 tempDirectory = tempfile.TemporaryDirectory()
 directoryPath = tempDirectory.name
 
