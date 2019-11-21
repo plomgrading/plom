@@ -349,5 +349,5 @@ class MarkDatabase:
             with markdb.atomic():
                 x = GroupImage.get(tgv=code)
                 return True
-        except IDImage.DoesNotExist:
+        except GroupImage.DoesNotExist:
             return False

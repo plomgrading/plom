@@ -29,6 +29,8 @@ from resources.testspecification import TestSpecification
 from resources.version import __version__
 from resources.version import Plom_API_Version as serverAPI
 
+pathScanDirectory = "../scanAndGroup/readyForMarking/"
+
 # Set up loggers for server, marking and ID-ing
 def setupLogger(name, log_file, level=logging.INFO):
     # For setting up separate logging for IDing and Marking

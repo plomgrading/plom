@@ -243,7 +243,7 @@ class TotalDatabase:
             with tdb.atomic():
                 x = TotalImage.get(tgv=code, user=username)
                 return x.tgv
-        except IDImage.DoesNotExist:
+        except TotalImage.DoesNotExist:
             print("Request for non-existant tgv = {}".format(code))
             return None
 
@@ -252,5 +252,5 @@ class TotalDatabase:
             with tdb.atomic():
                 x = TotalImage.get(tgv=code)
                 return True
-        except IDImage.DoesNotExist:
+        except TotalImage.DoesNotExist:
             return False

@@ -89,7 +89,6 @@ def findPageGroups():
         for fname in glob.glob(
             "{}/group_{}/*/*.png".format(pathScanDirectory, str(pg).zfill(2))
         ):
-            print("Adding pageimage from {}".format(fname))
             # Since file is tXXXXgYYvZ.png - get the tgv by deleting 4 char.
             pageGroupsForGrading[os.path.basename(fname)[:-4]] = fname
 
@@ -387,18 +386,31 @@ class Server(object):
     def checkDatabases(self):
         """Check that each TGV is in the database"""
         flag = True
+        idMiss = []
+        tMiss = []
+        mMiss = []
         for t in sorted(examsGrouped.keys()):
             code = "t{:s}idg".format(t.zfill(4))
             if not self.IDDB.checkExists(code):
-                print("ID database missing {}".format(code))
+                # print("ID database missing {}".format(code))
+                idMiss.append(code)
                 flag = False
             if not self.TDB.checkExists(code):
-                print("Total database missing {}".format(code))
+                # print("Total database missing {}".format(code))
+                tMiss.append(code)
                 flag = False
         for tgv in sorted(pageGroupsForGrading.keys()):
             if not self.MDB.checkExists(tgv):
-                print("Mark database missing {}".format(code))
+                # print("Mark database missing {}".format(code))
+                mMiss.append(tgv)
                 flag = False
+        if not flag:
+            if len(idMiss) > 0:
+                print("ID-database missing {}".format(idMiss))
+            if len(tMiss) > 0:
+                print("Total-database missing {}".format(tMiss))
+            if len(mMiss) > 0:
+                print("Mark-database missing {}".format(mMiss))
         return flag
 
     def provideFile(self, fname):
