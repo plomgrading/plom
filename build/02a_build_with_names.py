@@ -10,6 +10,8 @@ import csv
 import json
 import os
 import sys
+import shlex
+import subprocess
 from random import randint
 
 sys.path.append("..")  # this allows us to import from ../resources
@@ -72,7 +74,8 @@ def buildExamPages(spec):
 def buildDirectories():
     lst = ["examsToPrint"]
     for x in lst:
-        os.system("mkdir -p " + x)
+        cmd = shlex.split("mkdir -p {}".format(x))
+        subprocess.call(cmd)
 
 
 def writeExamLog():
@@ -89,4 +92,5 @@ if __name__ == "__main__":
     buildDirectories()
     buildExamPages(spec)
     writeExamLog()
-    os.system("python3 buildTestPDFs.py")
+    cmd = shlex.split("python3 buildTestPDFs.py")
+    subprocess.call(cmd)

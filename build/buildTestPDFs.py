@@ -5,6 +5,8 @@ __license__ = "AGPLv3"
 import json
 import os
 import sys
+import shlex
+import subprocess
 
 # the following allows us to import from ../resources
 sys.path.append("..")
@@ -31,7 +33,8 @@ def scriptBuild():
             )
         )
     fh.close()
-    os.system("parallel --bar <commandlist.txt")
+    cmd = shlex.split("parallel --bar -a commandlist.txt")
+    subprocess.call(cmd)
 
 
 spec = TestSpecification()
