@@ -27,7 +27,7 @@ def scriptBuild():
     for x in exams:
         fh.write(
             'python3 mergeAndCodePages_named.py {} {} {} {} {} "{}"\n'.format(
-                spec.Name, spec.Code, spec.Length, spec.Versions, x, exams[x]
+                spec.Name, spec.MagicCode, spec.Length, spec.Versions, x, exams[x]
             )
         )
     fh.close()
