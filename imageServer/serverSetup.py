@@ -155,7 +155,6 @@ class SetUp(QWidget):
         """
         self.ui.serverLE.setText(self.info["server"])
         self.ui.mportSB.setValue(self.info["mport"])
-        self.ui.wportSB.setValue("unused")
 
     def saveAndClose(self):
         """Grab values from the UI, put into dictionary and save as json.

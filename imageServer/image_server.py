@@ -112,6 +112,18 @@ async def LoginUserGiveToken(request):
         return web.Response(status=401)  # you are not authorised
 
 
+@routes.put("/admin/reloadUsers")
+async def LoginUserGiveToken(request):
+    data = await request.json()
+
+    rmsg = peon.reloadUsers(data["pw"])
+    # returns either True (success) or False (auth-error)
+    if rmsg:
+        return web.json_response(status=200)  # all good
+    else:
+        return web.Response(status=401)  # you are not authorised
+
+
 # ----------------------
 # ----------------------
 # Identifier stuff
@@ -675,7 +687,7 @@ class Server(object):
         """Reload the user list."""
         # Check user is manager.
         if not self.authority.authoriseUser("Manager", password):
-            return ["ERR", "You are not authorised to reload users"]
+            return False
         self.logger.info("Reloading the user list")
         # Load in the user list and check against existing user list for differences
         if os.path.exists("../resources/userList.json"):
@@ -699,8 +711,9 @@ class Server(object):
                         # remove user's authorisation token.
                         self.authority.detoken(u)
         self.logger.info("Current user list = {}".format(list(self.userList.keys())))
-        # return acknowledgement to manager.
-        return ["ACK"]
+        # return acknowledgement
+        print(">> User list reloaded")
+        return True
 
     def proc_cmd(self, message):
         """Process the server command in the message
@@ -720,11 +733,6 @@ class Server(object):
             # message should be ['AUTH', user, password]
             # So we return their authentication token (if they are legit)
             return self.authoriseUser(*message[1:])
-        elif message[0] == "RUSR":
-            # Manager is requesting server reload users.
-            # message should be ['RUSR', managerpwd]
-            rv = self.reloadUsers(*message[1:])
-            return rv
         elif message[0] == "RIMR":
             # Manager is requesting server reload images
             # message should be ['RIMR', managerpwd]
