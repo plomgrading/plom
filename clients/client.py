@@ -43,6 +43,8 @@ def readLastTime():
     lastTime["pg"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
+    lastTime["upDown"] = "up"
+    lastTime["mouse"] = "right"
     # If exists, read from json file.
     if os.path.isfile("lastTime.json"):
         with open("lastTime.json") as data_file:
@@ -117,7 +119,9 @@ class Chooser(QDialog):
             v = str(self.ui.vSB.value())
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient(user, pwd, server, mport, wport, pg, v)
+            markerwin = marker.MarkerClient(
+                user, pwd, server, mport, wport, pg, v, lastTime
+            )
             markerwin.my_shutdown_signal.connect(self.on_other_window_close)
             markerwin.show()
             self.parent.marker = markerwin
@@ -172,7 +176,23 @@ class Chooser(QDialog):
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):
+        global lastTime
         assert isinstance(value, int)
+        # update mouse-hand and up/down style for lasttime file
+        if self.runIt == "Marker":
+            # TODO - make this less of a hack.
+            if self.parent.marker.markStyle == 2:
+                lastTime["upDown"] = "up"
+                print("Set up")
+            elif self.parent.marker.markStyle == 3:
+                lastTime["upDown"] = "down"
+                print("Set down")
+            if self.parent.marker.mouseHand == 0:
+                lastTime["mouse"] = "right"
+                print("Set right")
+            elif self.parent.marker.mouseHand == 1:
+                lastTime["mouse"] = "left"
+                print("Set left")
         self.show()
         self.setEnabled(True)
 

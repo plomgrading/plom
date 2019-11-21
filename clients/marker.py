@@ -393,7 +393,15 @@ class MarkerClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
     def __init__(
-        self, userName, password, server, message_port, web_port, pageGroup, version
+        self,
+        userName,
+        password,
+        server,
+        message_port,
+        web_port,
+        pageGroup,
+        version,
+        lastTime,
     ):
         # Init the client with username, password, server and port data,
         # and which group/version is being marked.
@@ -446,7 +454,10 @@ class MarkerClient(QWidget):
         # create a settings variable for saving annotator window settings
         # initially all settings are "none"
         self.annotatorSettings = defaultdict(lambda: None)
-        # self.loadAnnotatorSettings()
+        # if lasttime["POWERUSER"] is true, the disable warnings in annotator
+        if lastTime["POWERUSER"]:
+            self.annotatorSettings["markWarnings"] = False
+            self.annotatorSettings["commentWarnings"] = False
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -470,12 +481,22 @@ class MarkerClient(QWidget):
         # continue with the other buttons
         self.ui.markStyleGroup.setId(self.ui.markUpRB, 2)
         self.ui.markStyleGroup.setId(self.ui.markDownRB, 3)
+        if lastTime["upDown"] == "up":
+            self.ui.markUpRB.animateClick()
+        elif lastTime["upDown"] == "down":
+            self.ui.markDownRB.animateClick()
+
         # Give IDs to the radio buttons which select which mouse-hand is used
         # 0 = Right-handed user will typically have right-hand on mouse and
         # left hand on the keyboard. The annotator layout will follow this.
         # 1 = Left-handed user - reverse layout
         self.ui.mouseHandGroup.setId(self.ui.rightMouseRB, 0)
         self.ui.mouseHandGroup.setId(self.ui.leftMouseRB, 1)
+        if lastTime["mouse"] == "right":
+            self.ui.rightMouseRB.animateClick()
+        elif lastTime["mouse"] == "left":
+            self.ui.leftMouseRB.animateClick()
+
         # Start using connection to serverself.
         try:
             self.token = requestToken(self.userName, self.password)
@@ -1001,8 +1022,10 @@ class MarkerClient(QWidget):
         # authentication token.
         msg, = messenger.SRMsg(["UCL", self.userName, self.token])
         assert msg == "ACK"
-        # Now save annotatorSettings to file
-        # self.saveAnnotatorSettings()
+        # set marking style, mousehand for return to client/parent
+        self.markStyle = self.ui.markStyleGroup.checkedId()
+        self.mouseHand = self.ui.mouseHandGroup.checkedId()
+
         # finally send shutdown signal to client window and close.
         self.my_shutdown_signal.emit(2)
         self.close()
