@@ -26,19 +26,19 @@ def readClassList():
         next(red, None)
         k = 0
         for row in red:
-            students[k] = [row[0], row[1]]
             k += 1
+            students[k] = [row[0], row[1]]
 
 
 def nameExam(t):
     if t in students:
-        exams[t][-1] = students[t][0]
-        exams[t][-2] = students[t][1]
+        exams[t]["id"] = students[t][0]
+        exams[t]["name"] = students[t][1]
 
 
 def buildIDPages(t, idpages):
     for p in idpages:
-        exams[t][p] = 1  # ID pages are always version1
+        exams[t][str(p)] = 1  # ID pages are always version1
 
 
 def buildGroup(t, pageTuple, fcr, V, v):
@@ -51,7 +51,7 @@ def buildGroup(t, pageTuple, fcr, V, v):
         if v > V:
             v = 1
     for p in pageTuple:
-        exams[t][p] = v
+        exams[t][str(p)] = v
 
     return v
 

@@ -68,8 +68,6 @@ def readExamsGrouped():
     if os.path.exists("../resources/examsGrouped.json"):
         with open("../resources/examsGrouped.json") as data_file:
             examsGrouped = json.load(data_file)
-            for n in examsGrouped.keys():
-                print("Adding id group {}".format(examsGrouped[n][0]))
 
 
 def readExamsProduced():
@@ -354,16 +352,24 @@ class Server(object):
         for t in sorted(examsGrouped.keys()):
             if (
                 t in examsProduced
-                and "-1" in examsProduced[t]
-                and "-2" in examsProduced[t]
+                and "id" in examsProduced[t]
+                and "name" in examsProduced[t]
             ):
+                print(
+                    "Adding id group {} with ID {} and name {}".format(
+                        examsGrouped[t][0],
+                        examsProduced[t]["id"],
+                        examsProduced[t]["name"],
+                    )
+                )
                 self.IDDB.addPreIDdExam(
                     int(t),
                     "t{:s}idg".format(t.zfill(4)),
-                    examsProduced[t]["-1"],
-                    examsProduced[t]["-2"],
+                    examsProduced[t]["id"],
+                    examsProduced[t]["name"],
                 )
             else:
+                print("Adding id group {}".format(examsGrouped[t][0]))
                 self.IDDB.addUnIDdExam(int(t), "t{:s}idg".format(t.zfill(4)))
 
         self.logger.info("Adding Total-images {}".format(sorted(examsGrouped.keys())))

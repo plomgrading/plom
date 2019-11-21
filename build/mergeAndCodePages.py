@@ -133,12 +133,12 @@ with tempfile.TemporaryDirectory() as tmpDir:
             exam[p].insertImage(rNW, pixmap=qr[2], overlay=True)
             exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
             exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
-    if "-1" in pageVersions and "-2" in pageVersions:
+    if "id" in pageVersions and "name" in pageVersions:
         # a file for the student-details
         sidFile = os.path.join(tmpDir, "sid.png")
         # make a studentID label thingy
         cmd = "convert -pointsize 48 -antialias -background white -fill black -gravity center label:'{}\n{}' -bordercolor white -border 12 -bordercolor black -border 1 {}".format(
-            pageVersions["-1"], pageVersions["-2"], sidFile
+            pageVersions["id"], pageVersions["name"], sidFile
         )
         os.system(cmd)
         # now stamp the ID-image into the middle of page0
