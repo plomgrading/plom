@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
-import asyncio
+import requests
 import json
 import os
 import ssl
@@ -26,6 +26,33 @@ sslContext.check_hostname = False
 # Usual server defaults.
 serverInfo = {"server": "127.0.0.1", "mport": 41984}
 
+authSession = requests.Session()
+authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
+
+
+def requestScansReload(server, port, password):
+    """Get message handler to send user reload request."""
+    try:
+        response = authSession.put(
+            "https://{}:{}/admin/reloadScans".format(server, port),
+            json={"pw": password},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            return False
+        else:
+            raise Exception(
+                "Something nasty has happened. Got return code = {}".format(
+                    response.status_code
+                )
+            )
+    except Exception as err:
+        print(err)
+        return False
+    return True
+
 
 def getServerInfo():
     """Get server info from file or leave the defaults"""
@@ -33,38 +60,6 @@ def getServerInfo():
     if os.path.isfile("../resources/serverDetails.json"):
         with open("../resources/serverDetails.json") as data_file:
             serverInfo = json.load(data_file)
-
-
-# Fire up the asyncio event loop.
-loop = asyncio.get_event_loop()
-
-
-# The async message handler.
-async def handle_image_reload(server, message_port, password):
-    # Usual asyncio read/write connection.
-    reader, writer = await asyncio.open_connection(
-        server, message_port, loop=loop, ssl=sslContext
-    )
-    # Send the message as json over the connection
-    jm = json.dumps(["RIMR", password])
-    writer.write(jm.encode())
-    writer.write(b"\x00")
-    await writer.drain()
-    # Wait for the return message.
-    data = await reader.read(100)
-    terminate = data.endswith(b"\x00")
-    data = data.rstrip(b"\x00")
-    # message should be a list [cmd, user, arg1, arg2, etc] - decode it.
-    rmesg = json.loads(data.decode())
-    # close the connection and return the message.
-    writer.close()
-    return rmesg
-
-
-def requestImageReload(server, message_port, password):
-    """Send reload groupimages request to server over asyncio connection."""
-    rmsg = loop.run_until_complete(handle_image_reload(server, message_port, password))
-    return rmsg
 
 
 class SimpleMessage(QMessageBox):
@@ -112,7 +107,10 @@ class AddScans(QWidget):
             )
             # If user clicks okay then send message.
             if ok:
-                requestImageReload(serverInfo["server"], serverInfo["mport"], pwd)
+                ret = requestImageReload(serverInfo["server"], serverInfo["mport"], pwd)
+                if not ret:
+                    msg = ErrorMessage("Something went wrong when contacting server.")
+                    msg.exec_()
 
 
 def main():

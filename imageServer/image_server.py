@@ -113,10 +113,22 @@ async def LoginUserGiveToken(request):
 
 
 @routes.put("/admin/reloadUsers")
-async def LoginUserGiveToken(request):
+async def adminReloadUsers(request):
     data = await request.json()
 
     rmsg = peon.reloadUsers(data["pw"])
+    # returns either True (success) or False (auth-error)
+    if rmsg:
+        return web.json_response(status=200)  # all good
+    else:
+        return web.Response(status=401)  # you are not authorised
+
+
+@routes.put("/admin/reloadScans")
+async def adminReloadScans(request):
+    data = await request.json()
+
+    rmsg = peon.reloadImages(data["pw"])
     # returns either True (success) or False (auth-error)
     if rmsg:
         return web.json_response(status=200)  # all good
@@ -674,14 +686,14 @@ class Server(object):
         """
         # Check user is manager.
         if not self.authority.authoriseUser("Manager", password):
-            return ["ERR", "You are not authorised to reload images"]
+            return False
         self.logger.info("Reloading group images")
         # Read in the groups and images again.
         readExamsGrouped()
         findPageGroups()
         self.loadPapers()
         # Send acknowledgement back to manager.
-        return ["ACK"]
+        return True
 
     def reloadUsers(self, password):
         """Reload the user list."""
