@@ -49,7 +49,7 @@
    * The database interactions are relatively straightforward (probably needs someone to look at it carefully for exceptions and errors)
    * image files are served to clients.  The files come from the '../scanAndGroup/readyForGrading' directory, so it must be run in place. Annotated image files are placed in the 'markedPapers' directory.
 
-   * the messages between server and client (and server and manager) are handled using aiohttp at the server-side and requests at the client side. The client sends https-messages to the server (we've tried to make them REST-API style), and the server runs async-aiohttp to respond to those requests.
+   * the messages between server and client (and server and manager) are handled using aiohttp at the server-side and requests at the client side. The client sends https-messages to the server (we've tried to make them REST-API style), and the server runs aiohttp to respond to those requests.
 
    * when the client logs in, it sends a put/request to "{server}:{port}/users/{user}" with the username, password and API-version. The server then checks the API and the password against the hashed password list stored in '../resources/userList'. If the password is fine then the server returns an authorisation token. This token is used to check (subsequently) that the user is authorised to make requests of the server.
    * Similarly, when a client logs out, it sends a delete request to the same "{server}:{port}/users/{user}" - which causes the server to delete the authorisation token.
