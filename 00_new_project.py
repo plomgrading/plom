@@ -59,6 +59,7 @@ files += [
     "build/mergeAndCodePages.py",
     "build/mergeAndCodePages_named.py",
     "build/buildTestPDFs.py",
+    "build/buildTestPDFs_named.py",
     "build/ui_builder.py",
     "build/version_selector_qlist.py",
 ]
