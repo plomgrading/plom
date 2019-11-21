@@ -57,9 +57,7 @@ files += [
     "build/02_build_tests_from_spec.py",
     "build/02a_build_with_names.py",
     "build/mergeAndCodePages.py",
-    "build/mergeAndCodePages_named.py",
     "build/buildTestPDFs.py",
-    "build/buildTestPDFs_named.py",
     "build/ui_builder.py",
     "build/version_selector_qlist.py",
 ]

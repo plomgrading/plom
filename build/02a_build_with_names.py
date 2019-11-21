@@ -89,4 +89,4 @@ if __name__ == "__main__":
     buildDirectories()
     buildExamPages(spec)
     writeExamLog()
-    os.system("python3 buildTestPDFs_named.py")
+    os.system("python3 buildTestPDFs.py")
