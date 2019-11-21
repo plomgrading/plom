@@ -343,3 +343,11 @@ class MarkDatabase:
         for x in query:
             lst.append(x.originalFile)
         return lst
+
+    def checkExists(self, code):
+        try:
+            with markdb.atomic():
+                x = GroupImage.get(tgv=code)
+                return True
+        except IDImage.DoesNotExist:
+            return False

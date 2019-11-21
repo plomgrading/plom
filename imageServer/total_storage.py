@@ -246,3 +246,11 @@ class TotalDatabase:
         except IDImage.DoesNotExist:
             print("Request for non-existant tgv = {}".format(code))
             return None
+
+    def checkExists(self, code):
+        try:
+            with tdb.atomic():
+                x = TotalImage.get(tgv=code)
+                return True
+        except IDImage.DoesNotExist:
+            return False

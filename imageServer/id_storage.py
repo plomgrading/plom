@@ -265,3 +265,11 @@ class IDDatabase:
         except IDImage.DoesNotExist:
             print("Request for non-existant tgv = {}".format(code))
             return None
+
+    def checkExists(self, code):
+        try:
+            with iddb.atomic():
+                x = IDImage.get(tgv=code)
+                return True
+        except IDImage.DoesNotExist:
+            return False

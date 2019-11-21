@@ -199,10 +199,12 @@ class Server(object):
         self.testSpec = tspec
         self.logger = logger
         self.logger.info("Loading images and users.")
-        # Load in the idgroup images and the pagegroup images
-        self.loadPapers()
         # Load in the list of users who will run the client app.
         self.loadUsers()
+        # check databases are set up
+        if not self.checkDatabases():
+            print("Problem with databases. Have you run pre-server scripts?")
+            quit()
 
     def loadUsers(self):
         """Load the users from json file, add them to the authority which
@@ -234,7 +236,7 @@ class Server(object):
         findPageGroups()
         # read exams-produced for case that papers already have SID/SNames stamped
 
-        self.loadPapers()
+        self.repopulateDatabases()
         # Send acknowledgement back to manager.
         return ["ACK"]
 
@@ -342,7 +344,7 @@ class Server(object):
         """Check the user's token is valid"""
         return self.authority.validateToken(user, token)
 
-    def loadPapers(self):
+    def repopulateDatabases(self):
         """Load the IDgroup page images for identifying
         and the group-images for marking.
         The ID-images are stored in the IDDB, and the
@@ -355,7 +357,7 @@ class Server(object):
                 and "id" in examsProduced[t]
                 and "name" in examsProduced[t]
             ):
-                print(
+                self.logger.info(
                     "Adding id group {} with ID {} and name {}".format(
                         examsGrouped[t][0],
                         examsProduced[t]["id"],
@@ -369,7 +371,7 @@ class Server(object):
                     examsProduced[t]["name"],
                 )
             else:
-                print("Adding id group {}".format(examsGrouped[t][0]))
+                self.logger.info("Adding id group {}".format(examsGrouped[t][0]))
                 self.IDDB.addUnIDdExam(int(t), "t{:s}idg".format(t.zfill(4)))
 
         self.logger.info("Adding Total-images {}".format(sorted(examsGrouped.keys())))
@@ -381,6 +383,23 @@ class Server(object):
             # tgv is t1234g67v9
             t, pg, v = int(tgv[1:5]), int(tgv[6:8]), int(tgv[9])
             self.MDB.addUnmarkedGroupImage(t, pg, v, tgv, pageGroupsForGrading[tgv])
+
+    def checkDatabases(self):
+        """Check that each TGV is in the database"""
+        flag = True
+        for t in sorted(examsGrouped.keys()):
+            code = "t{:s}idg".format(t.zfill(4))
+            if not self.IDDB.checkExists(code):
+                print("ID database missing {}".format(code))
+                flag = False
+            if not self.TDB.checkExists(code):
+                print("Total database missing {}".format(code))
+                flag = False
+        for tgv in sorted(pageGroupsForGrading.keys()):
+            if not self.MDB.checkExists(tgv):
+                print("Mark database missing {}".format(code))
+                flag = False
+        return flag
 
     def provideFile(self, fname):
         """Copy a file (temporarily) into the webdav for a client,
