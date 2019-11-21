@@ -72,6 +72,16 @@ def readExamsGrouped():
                 print("Adding id group {}".format(examsGrouped[n][0]))
 
 
+def readExamsProduced():
+    """Read the list of exams that were grouped after scanning.
+    Store in examsGrouped.
+    """
+    global examsProduced
+    if os.path.exists("../resources/examsProduced.json"):
+        with open("../resources/examsProduced.json") as data_file:
+            examsProduced = json.load(data_file)
+
+
 def findPageGroups():
     """Read the filenames of all the groups produced after scanning.
     Store in pageGroupsForGrading by tgv code.
@@ -224,6 +234,8 @@ class Server(object):
         # Read in the groups and images again.
         readExamsGrouped()
         findPageGroups()
+        # read exams-produced for case that papers already have SID/SNames stamped
+
         self.loadPapers()
         # Send acknowledgement back to manager.
         return ["ACK"]
@@ -340,7 +352,19 @@ class Server(object):
         """
         self.logger.info("Adding IDgroups {}".format(sorted(examsGrouped.keys())))
         for t in sorted(examsGrouped.keys()):
-            self.IDDB.addUnIDdExam(int(t), "t{:s}idg".format(t.zfill(4)))
+            if (
+                t in examsProduced
+                and "-1" in examsProduced[t]
+                and "-2" in examsProduced[t]
+            ):
+                self.IDDB.addPreIDdExam(
+                    int(t),
+                    "t{:s}idg".format(t.zfill(4)),
+                    examsProduced[t]["-1"],
+                    examsProduced[t]["-2"],
+                )
+            else:
+                self.IDDB.addUnIDdExam(int(t), "t{:s}idg".format(t.zfill(4)))
 
         self.logger.info("Adding Total-images {}".format(sorted(examsGrouped.keys())))
         for t in sorted(examsGrouped.keys()):
@@ -870,8 +894,10 @@ spec.readSpec()
 # scanning and the filenames of the group-images
 # that need marking.
 examsGrouped = {}
+examsProduced = {}
 pageGroupsForGrading = {}
 readExamsGrouped()
+readExamsProduced()
 findPageGroups()
 
 # Set up the classes for handling transactions with databases

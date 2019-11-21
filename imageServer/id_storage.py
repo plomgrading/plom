@@ -119,6 +119,23 @@ class IDDatabase:
         except IntegrityError:
             self.logging.info("IDImage {} {} already exists.".format(t, code))
 
+    def addPreIDdExam(self, t, code, sid, sname):
+        """Add exam number t with given code to the database"""
+        self.logging.info("Adding unid'd IDImage {} to database".format(t))
+        try:
+            with iddb.atomic():
+                IDImage.create(
+                    number=t,
+                    tgv=code,
+                    status="Identified",
+                    user="manager",
+                    time=datetime.now(),
+                    sid=sid,
+                    sname=sname,
+                )
+        except IntegrityError:
+            self.logging.info("IDImage {} {} already exists.".format(t, code))
+
     def giveIDImageToClient(self, username):
         """Find unid'd test and send to client"""
         try:
