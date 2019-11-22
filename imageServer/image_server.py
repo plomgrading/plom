@@ -200,10 +200,12 @@ class Server(object):
         self.logger.info("Loading images and users.")
         # Load in the list of users who will run the client app.
         self.loadUsers()
-        # check databases are set up
-        if not self.checkDatabases():
-            print("Problem with databases. Have you run pre-server scripts?")
-            quit()
+        # check databases are set up and complete.
+        if self.checkDatabases():
+            print("Databases checked - complete.")
+        else:
+            print("Databases incomplete - repopulating.")
+            self.repopulateDatabases()
 
     def loadUsers(self):
         """Load the users from json file, add them to the authority which
@@ -222,22 +224,6 @@ class Server(object):
             self.logger.info(">>> Cannot find user/password file.")
             print("Where is user/password file?")
             quit()
-
-    def reloadImages(self, password):
-        """Reload all the grouped exams and all the page images.
-        """
-        # Check user is manager.
-        if not self.authority.authoriseUser("Manager", password):
-            return ["ERR", "You are not authorised to reload images"]
-        self.logger.info("Reloading group images")
-        # Read in the groups and images again.
-        readExamsGrouped()
-        findPageGroups()
-        # read exams-produced for case that papers already have SID/SNames stamped
-
-        self.repopulateDatabases()
-        # Send acknowledgement back to manager.
-        return ["ACK"]
 
     def reloadUsers(self, password):
         """Reload the user list."""
@@ -343,45 +329,63 @@ class Server(object):
         """Check the user's token is valid"""
         return self.authority.validateToken(user, token)
 
+    def reloadImages(self, password):
+        """Reload all the grouped exams and all the page images.
+        """
+        # Check user is manager.
+        if not self.authority.authoriseUser("Manager", password):
+            return ["ERR", "You are not authorised to reload images"]
+        self.logger.info("Reloading group images")
+        # Read in the groups and images again.
+        readExamsGrouped()
+        findPageGroups()
+        # read exams-produced for case that papers already have SID/SNames stamped
+
+        self.repopulateDatabases()
+        # Send acknowledgement back to manager.
+        return ["ACK"]
+
     def repopulateDatabases(self):
         """Load the IDgroup page images for identifying
         and the group-images for marking.
         The ID-images are stored in the IDDB, and the
         image for marking in the MDB.
         """
-        self.logger.info("Adding IDgroups {}".format(sorted(examsGrouped.keys())))
+        self.logger.info("Repopulating databases with missing entries.")
         for t in sorted(examsGrouped.keys()):
-            if (
-                t in examsProduced
-                and "id" in examsProduced[t]
-                and "name" in examsProduced[t]
-            ):
-                self.logger.info(
-                    "Adding id group {} with ID {} and name {}".format(
-                        examsGrouped[t][0],
-                        examsProduced[t]["id"],
-                        examsProduced[t]["name"],
+            # the corresponding code:
+            code = "t{:s}idg".format(t.zfill(4))
+            # check the ID-database
+            if not self.IDDB.checkExists(code):
+                if (
+                    t in examsProduced
+                    and "id" in examsProduced[t]
+                    and "name" in examsProduced[t]
+                ):
+                    self.logger.info(
+                        "Adding id group {} with ID {} and name {}".format(
+                            examsGrouped[t][0],
+                            examsProduced[t]["id"],
+                            examsProduced[t]["name"],
+                        )
                     )
-                )
-                self.IDDB.addPreIDdExam(
-                    int(t),
-                    "t{:s}idg".format(t.zfill(4)),
-                    examsProduced[t]["id"],
-                    examsProduced[t]["name"],
-                )
-            else:
-                self.logger.info("Adding id group {}".format(examsGrouped[t][0]))
-                self.IDDB.addUnIDdExam(int(t), "t{:s}idg".format(t.zfill(4)))
+                    self.IDDB.addPreIDdExam(
+                        int(t), code, examsProduced[t]["id"], examsProduced[t]["name"]
+                    )
+                else:
+                    self.logger.info("Adding id group {}".format(code))
+                    self.IDDB.addUnIDdExam(int(t), code)
+            # check the total-database
+            if not self.TDB.checkExists(code):
+                self.TDB.addUntotaledExam(int(t), code)
+                self.logger.info("Adding Total-image {}".format(code))
 
-        self.logger.info("Adding Total-images {}".format(sorted(examsGrouped.keys())))
-        for t in sorted(examsGrouped.keys()):
-            self.TDB.addUntotaledExam(int(t), "t{:s}idg".format(t.zfill(4)))
-
-        self.logger.info("Adding TGVs {}".format(sorted(pageGroupsForGrading.keys())))
         for tgv in sorted(pageGroupsForGrading.keys()):
-            # tgv is t1234g67v9
-            t, pg, v = int(tgv[1:5]), int(tgv[6:8]), int(tgv[9])
-            self.MDB.addUnmarkedGroupImage(t, pg, v, tgv, pageGroupsForGrading[tgv])
+            if not self.MDB.checkExists(tgv):
+                # tgv is t1234g67v9
+                t, pg, v = int(tgv[1:5]), int(tgv[6:8]), int(tgv[9])
+                self.MDB.addUnmarkedGroupImage(t, pg, v, tgv, pageGroupsForGrading[tgv])
+                self.logger.info("Adding groupImage {}".format(tgv))
 
     def checkDatabases(self):
         """Check that each TGV is in the database"""
