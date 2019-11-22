@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Utilities for generating metadata for a series of tests."""
+"""Utilities for generating metadata and a series of tests."""
 
 __author__ = "Andrew Rechnitzer, Colin Macdonald"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
@@ -12,6 +12,8 @@ from collections import defaultdict
 import json
 import sys
 import os
+import shlex
+import subprocess
 from random import randint
 
 sys.path.append("..")  # this allows us to import from ../resources
@@ -67,3 +69,20 @@ def writeExamLog(exams):
     # TODO: use of sort_keys precludes mixing int/str keys
     elFH.write(json.dumps(exams, indent=2, sort_keys=True))
     elFH.close()
+
+
+def buildTestPDFs(spec, exams):
+    """Rerun mergeandcode script to rebuild all the exams
+    Build a list of commands and pipe through gnu-parallel
+    to take advantage of multiple processors
+    """
+    fh = open("./commandlist.txt", "w")
+    for x in exams:
+        fh.write(
+            'python3 mergeAndCodePages.py {} {} {} {} {} "{}"\n'.format(
+                spec.Name, spec.MagicCode, spec.Length, spec.Versions, x, exams[x]
+            )
+        )
+    fh.close()
+    cmd = shlex.split("parallel --bar -a commandlist.txt")
+    subprocess.call(cmd)

@@ -58,7 +58,6 @@ files += [
     "build/02a_build_with_names.py",
     "build/build_utils.py",
     "build/mergeAndCodePages.py",
-    "build/buildTestPDFs.py",
     "build/ui_builder.py",
     "build/version_selector_qlist.py",
 ]
