@@ -96,27 +96,21 @@ with tempfile.TemporaryDirectory() as tmpDir:
             qr.png(qrFile[p][i], scale=4)
             # put a border around it
             os.system("mogrify {} {}".format(mogParams, qrFile[p][i]))
-
-        # a file for the test/page stamp in top-centre of page
-        tpFile[p] = os.path.join(
-            tmpDir, "t{}p{}.png".format(str(test).zfill(4), str(p).zfill(2))
-        )
-        # create the test/page stamp using imagemagick
-        os.system(
-            "convert -pointsize 36 -size 200x42 caption:'{}.{}' -trim "
-            "-gravity Center -extent 200x42 -bordercolor black "
-            "-border 1 {}".format(str(test).zfill(4), str(p).zfill(2), tpFile[p])
-        )
     # After creating all of the QRcodes etc we can put them onto
     # the actual pdf pages as pixmaps using pymupdf
     # read the DNW triangles in to pymupdf
     dnw0 = fitz.Pixmap(dnw0File)
     dnw1 = fitz.Pixmap(dnw1File)
     for p in range(length):
-        # read in the test/page stamp
-        testnumber = fitz.Pixmap(tpFile[p + 1])
-        # put it at centre top each page
-        exam[p].insertImage(rTC, pixmap=testnumber, overlay=True, keep_proportion=False)
+        # test/page stamp in top-centre of page
+        #   TODO: use insertText?
+        #   TODO: how to draw box around it?
+        #   TODO: 20/80 units?
+        rect = fitz.Rect(0, 20, pW, 80)
+        text = "{}.{}".format(str(test).zfill(4), str(p+1).zfill(2))
+        rc = exam[p].insertTextbox(rect, text, fontsize=16, color=[0, 0, 0], fontname="Helvetica", fontfile=None, align=1)
+        assert(rc > 0)
+
         # grab the tpv QRcodes for current page
         qr = {}
         for i in range(1, 5):
