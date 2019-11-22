@@ -61,21 +61,6 @@ def whoami():
     return _userName
 
 
-def http_messaging(msg):
-    try:
-        response = session.put(
-            "https://{}:{}/".format(server, message_port),
-            json={"msg": msg},
-            verify=False,
-        )
-    except:
-        return [
-            "ERR",
-            "Something went seriously wrong. Check connection details and try again.",
-        ]
-    return response.json()["rmsg"]
-
-
 # ------------------------
 # ------------------------
 # Authentication stuff

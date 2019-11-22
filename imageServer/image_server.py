@@ -45,29 +45,6 @@ sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.
 routes = web.RouteTableDef()
 
 
-@routes.put("/")
-async def hello(request):
-    data = await request.json()
-    message = data["msg"]
-    print("Got message {}".format(message))
-
-    # message should be a list [cmd, user, password, arg1, arg2, etc]
-    if not isinstance(message, list):
-        SLogger.info(">>> Got strange message - not a list. {}".format(message))
-    else:
-        if message[0] == "AUTH":
-            # do not log the password - just auth and username
-            SLogger.info("Got auth request: {}".format(message[:2]))
-        else:
-            SLogger.info("Got message: {}".format(message))
-        # Run the command on the server and get the return message.
-        # peon will be the instance of the server when it runs.
-        rmesg = peon.proc_cmd(message)
-        print("Returning message {}".format(rmesg))
-        SLogger.info("Returning message {}".format(rmesg))
-        return web.json_response({"rmsg": rmesg}, status=200)
-
-
 # ----------------------
 # ----------------------
 # Authentication / closing stuff
