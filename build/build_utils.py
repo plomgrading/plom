@@ -11,8 +11,7 @@ __license__ = "AGPL-3.0-or-later"
 from collections import defaultdict
 import json
 import sys
-import shlex
-import subprocess
+import os
 from random import randint
 
 sys.path.append("..")  # this allows us to import from ../resources
@@ -41,10 +40,7 @@ def buildGroup(exams, t, pageTuple, fcr, V, v):
 
 
 def buildDirectories():
-    lst = ["examsToPrint"]
-    for x in lst:
-        cmd = shlex.split("mkdir -p {}".format(x))
-        subprocess.call(cmd)
+    os.makedirs("examsToPrint", exist_ok=True)
 
 
 def buildExamPages(spec):
