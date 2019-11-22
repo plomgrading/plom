@@ -120,8 +120,10 @@ class IDDatabase:
             self.logging.info("IDImage {} {} already exists.".format(t, code))
 
     def addPreIDdExam(self, t, code, sid, sname):
-        """Add exam number t with given code to the database"""
-        self.logging.info("Adding unid'd IDImage {} to database".format(t))
+        """Add exam number t with given code, student-ID/Name to the database"""
+        self.logging.info(
+            "Adding preID'd IDImage {} ({}, {}) to database".format(t, sid, sname)
+        )
         try:
             with iddb.atomic():
                 IDImage.create(
