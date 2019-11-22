@@ -120,7 +120,6 @@ with tempfile.TemporaryDirectory() as tmpDir:
             fontfile=None,
             align=1,
         )
-
         exam[p].drawRect(rect, color=[0, 0, 0])
         assert rc > 0
 
@@ -142,24 +141,38 @@ with tempfile.TemporaryDirectory() as tmpDir:
             exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
     if "id" in pageVersions and "name" in pageVersions:
         # a file for the student-details
-        sidFile = os.path.join(tmpDir, "sid.png")
-        # make a studentID label thingy
-        cmd = shlex.split(
-            "convert -pointsize 48 -antialias -background white -fill black -gravity center label:'{}\n{}' -bordercolor white -border 12 -bordercolor black -border 1 {}".format(
-                pageVersions["id"], pageVersions["name"], sidFile
+        txt = "{}\n{}".format(pageVersions["id"], pageVersions["name"])
+        sidW = (
+            max(
+                fitz.getTextlength(
+                    pageVersions["id"], fontsize=36, fontname="Helvetica"
+                ),
+                fitz.getTextlength(
+                    pageVersions["name"], fontsize=36, fontname="Helvetica"
+                ),
             )
+            * 1.3
+            * 0.5
         )
-        subprocess.call(cmd)
-        # now stamp the ID-image into the middle of page0
-        sidImage = fitz.Pixmap(sidFile)
-        sidW = sidImage.width
-        sidH = sidImage.height
+        sidH = 36 * 1.5
         sidRect = fitz.Rect(
-            (pW - sidW) // 2, (pH - sidH) // 2, (pW + sidW) // 2, (pH + sidH) // 2
+            pW // 2 - sidW, pH // 2 - sidH, pW // 2 + sidW, pH // 2 + sidH
         )
-        exam[0].insertImage(
-            sidRect, pixmap=sidImage, overlay=True, keep_proportion=False
+        sidRect2 = fitz.Rect(
+            sidRect.x0 - 8, sidRect.y0 - 8, sidRect.x1 + 8, sidRect.y1 + 8
         )
+        exam[0].drawRect(sidRect2, color=[0, 0, 0], fill=[1, 1, 1], width=4)
+        exam[0].drawRect(sidRect, color=[0, 0, 0], fill=[1, 1, 1], width=4)
+        rc = exam[0].insertTextbox(
+            sidRect,
+            txt,
+            fontsize=42,
+            color=[0, 0, 0],
+            fontname="Helvetica",
+            fontfile=None,
+            align=1,
+        )
+        print("RC = {}".format(rc))
 
 # Finally save the resulting pdf.
 # Add the deflate option to compress the embedded pngs
