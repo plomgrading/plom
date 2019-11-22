@@ -103,13 +103,21 @@ with tempfile.TemporaryDirectory() as tmpDir:
     dnw1 = fitz.Pixmap(dnw1File)
     for p in range(length):
         # test/page stamp in top-centre of page
-        #   TODO: use insertText?
-        #   TODO: how to draw box around it?
-        #   TODO: 20/80 units?
-        rect = fitz.Rect(0, 20, pW, 80)
-        text = "{}.{}".format(str(test).zfill(4), str(p+1).zfill(2))
-        rc = exam[p].insertTextbox(rect, text, fontsize=16, color=[0, 0, 0], fontname="Helvetica", fontfile=None, align=1)
-        assert(rc > 0)
+        # Rectangle size hacked by hand. TODO = do this more algorithmically
+        rect = fitz.Rect(pW // 2 - 40, 20, pW // 2 + 40, 44)
+        text = "{}.{}".format(str(test).zfill(4), str(p + 1).zfill(2))
+        rc = exam[p].insertTextbox(
+            rect,
+            text,
+            fontsize=18,
+            color=[0, 0, 0],
+            fontname="Helvetica",
+            fontfile=None,
+            align=1,
+        )
+        print("Rect return = ", rc)
+        exam[p].drawRect(rect, color=[0, 0, 0])
+        assert rc > 0
 
         # grab the tpv QRcodes for current page
         qr = {}
