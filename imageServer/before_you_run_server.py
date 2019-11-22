@@ -63,9 +63,7 @@ def readExamsGrouped():
 
 
 def readExamsProduced():
-    """Read the list of exams that were grouped after scanning.
-    Store in examsGrouped.
-    """
+    """Read the list of exams that were produced for printing."""
     global examsProduced
     if os.path.exists("../resources/examsProduced.json"):
         with open("../resources/examsProduced.json") as data_file:
