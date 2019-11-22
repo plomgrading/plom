@@ -53,9 +53,12 @@ class MarkDatabase:
 
     def createTable(self):
         """Create the required table in the database"""
-        self.logging.info("Creating database tables")
         with markdb:
-            markdb.create_tables([GroupImage])
+            if markdb.table_exists("groupimage"):
+                self.logging.info("Database table already exists")
+            else:
+                self.logging.info("Creating database table")
+                markdb.create_tables([GroupImage])
 
     def shutdown(self):
         """Shut connection to the database"""

@@ -44,9 +44,12 @@ class TotalDatabase:
 
     def createTable(self):
         """Create the required table in the database"""
-        self.logging.info("Creating database tables")
         with tdb:
-            tdb.create_tables([TotalImage])
+            if tdb.table_exists("totalimage"):
+                self.logging.info("Database table exists")
+            else:
+                tdb.create_tables([TotalImage])
+                self.logging.info("Creating database table")
 
     def shutdown(self):
         """Shut connection to the database"""

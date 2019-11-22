@@ -45,9 +45,12 @@ class IDDatabase:
 
     def createTable(self):
         """Create the required table in the database"""
-        self.logging.info("Creating database tables")
         with iddb:
-            iddb.create_tables([IDImage])
+            if iddb.table_exists("idimage"):
+                self.logging.info("Database table already exists.")
+            else:
+                self.logging.info("Creating database table")
+                iddb.create_tables([IDImage])
 
     def shutdown(self):
         """Shut connection to the database"""
