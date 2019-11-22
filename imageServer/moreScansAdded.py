@@ -107,7 +107,7 @@ class AddScans(QWidget):
             )
             # If user clicks okay then send message.
             if ok:
-                ret = requestImageReload(serverInfo["server"], serverInfo["mport"], pwd)
+                ret = requestScansReload(serverInfo["server"], serverInfo["mport"], pwd)
                 if not ret:
                     msg = ErrorMessage("Something went wrong when contacting server.")
                     msg.exec_()
