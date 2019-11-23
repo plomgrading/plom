@@ -704,52 +704,6 @@ class Server(object):
         print(">> User list reloaded")
         return True
 
-    def proc_cmd(self, message):
-        """Process the server command in the message
-        Message should be a list [cmd, user, password, arg1, arg2, etc]
-        Basic comands are handled in this function.
-        More complicated ones are run as separate functions.
-        """
-        # convert the command in message[0] to a function-call
-        # if cannot convert then exec msgError()
-        pcmd = servCmd.get(message[0], "msgError")
-        if message[0] == "PING":
-            # Client has sent a ping to test if server is up
-            # so we return an ACK
-            return ["ACK"]
-        elif message[0] == "AUTH":
-            # Client is requesting authentication
-            # message should be ['AUTH', user, password]
-            # So we return their authentication token (if they are legit)
-            return self.authoriseUser(*message[1:])
-        elif message[0] == "RIMR":
-            # Manager is requesting server reload images
-            # message should be ['RIMR', managerpwd]
-            rv = self.reloadImages(*message[1:])
-            return rv
-        else:
-            # Otherwise client is making a normal request
-            # should be ['CMD', user, token, arg1, arg2,...]
-            # first check if user is authorised - check their authorisation token.
-            if self.validate(message[1], message[2]):
-                # user is authorised, so run their requested function
-                return getattr(self, pcmd)(*message[1:])
-            else:
-                user = message[1]
-                # only exception here is if user is closing.
-                # if unauth'd user tries this, just ignore.
-                if message[0] == "UCL":
-                    self.logger.info(
-                        ">>> User {} appears to be closing out more than once.".format(
-                            user
-                        )
-                    )
-                    return ["ACK"]
-                # otherwise throw an "Unauth error" to client.
-                self.logger.info(">>> Unauthorised attempt by user {}".format(user))
-                print("Attempt by non-user to {}".format(message))
-                return ["ERR", "You are not an authorised user"]
-
     def giveUserToken(self, user, password, clientAPI):
         """When a user requests authorisation
         They have sent their name and password
@@ -830,11 +784,6 @@ class Server(object):
         """Ask the database to print the images that have been identified.
         """
         self.IDDB.printIdentified()
-
-    def msgError(self, *args):
-        """The client sent a strange message, so send back an error message.
-        """
-        return ["ERR", "Some sort of command error - what did you send?"]
 
     def MgetPageGroupMax(self, pg, v):
         """When a marked-client logs on they need the max mark for the group
