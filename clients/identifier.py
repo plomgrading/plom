@@ -32,7 +32,7 @@ from examviewwindow import ExamViewWindow
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_identify import Ui_IdentifyWindow
 
-import plom_exceptions
+from plom_exceptions import *
 
 
 sys.path.append("..")  # this allows us to import from ../resources
@@ -196,7 +196,7 @@ class IDClient(QWidget):
         # Get the classlist from server for name/ID completion.
         try:
             self.getClassList()
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
             return
 
@@ -205,7 +205,7 @@ class IDClient(QWidget):
         # Get the predicted list from server for ID guesses.
         try:
             self.getPredictions()
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
             return
 
@@ -225,7 +225,7 @@ class IDClient(QWidget):
         # Get list of papers already ID'd and add to table.
         try:
             self.getAlreadyIDList()
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
             return
 
@@ -352,7 +352,7 @@ class IDClient(QWidget):
         self.DNF()
         try:
             messenger.closeUser()
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
 
         self.my_shutdown_signal.emit(1)
@@ -371,7 +371,7 @@ class IDClient(QWidget):
                 # Tell user DNF, user, auth-token, and paper's code.
                 try:
                     messenger.IDdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
-                except plom_exceptions.SeriousError as err:
+                except PlomSeriousException as err:
                     self.throwSeriousError(err)
 
     def getAlreadyIDList(self):
@@ -401,7 +401,7 @@ class IDClient(QWidget):
         # else try to grab it from server
         try:
             image = messenger.IDrequestImage(tgv)
-        except plom_exceptions.SeriousError as e:
+        except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
         # save the image to appropriate filename
@@ -456,7 +456,7 @@ class IDClient(QWidget):
             v, m = messenger.IDprogressCount()
             self.ui.idProgressBar.setMaximum(m)
             self.ui.idProgressBar.setValue(v)
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
 
     def requestNext(self):
@@ -481,7 +481,7 @@ class IDClient(QWidget):
             try:
                 image = messenger.IDclaimThisTask(test)
                 break
-            except plom_exceptions.BenignException as err:
+            except PlomBenignException as err:
                 # task already taken.
                 continue
         # Image name will be <code>.png
@@ -533,12 +533,12 @@ class IDClient(QWidget):
             msg = messenger.IDreturnIDdTask(
                 code, self.ui.idEdit.text(), self.ui.nameEdit.text()
             )
-        except plom_exceptions.BenignException as err:
+        except PlomBenignException as err:
             self.throwBenign(err)
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
             return False
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
             return
         # successful ID

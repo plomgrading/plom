@@ -31,7 +31,6 @@ requests_log.setLevel(logging.DEBUG)
 requests_log.propagate = True
 
 from io import StringIO, BytesIO, TextIOWrapper
-import plom_exceptions
 from plom_exceptions import *
 
 sys.path.append("..")  # this allows us to import from ../resources
@@ -89,13 +88,13 @@ def requestAndSaveToken(user, pw):
         _userName = user
     except requests.HTTPError as e:
         if response.status_code == 401:  # authentication error
-            raise plom_exceptions.BenignException("You are not authenticated.")
+            raise PlomAuthenticationException("You are not authenticated.")
         elif response.status_code == 400:  # API error
-            raise plom_exceptions.PlomAPIException(response.json())
+            raise PlomAPIException(response.json())
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     except requests.ConnectionError as err:
-        raise plom_exceptions.SeriousError(
+        raise PlomSeriousException(
             "Cannot connect to\n server:port = {}:{}\n Please check details before trying again.".format(
                 server, message_port
             )
@@ -115,9 +114,9 @@ def closeUser():
         response.raise_for_status()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -143,9 +142,9 @@ def IDprogressCount():
         progress = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -175,9 +174,9 @@ def IDaskNextTask():
         tgv = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -198,11 +197,11 @@ def IDrequestClasslist():
         classlist = TextIOWrapper(BytesIO(response.content))
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 404:
-            raise plom_exceptions.SeriousError("Server cannot find the class list")
+            raise PlomSeriousException("Server cannot find the class list")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -221,13 +220,11 @@ def IDrequestPredictions():
         predictions = TextIOWrapper(BytesIO(response.content))
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 404:
-            raise plom_exceptions.SeriousError(
-                "Server cannot find the prediction list."
-            )
+            raise PlomSeriousException("Server cannot find the prediction list.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -246,9 +243,9 @@ def IDrequestDoneTasks():
         idList = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -267,17 +264,15 @@ def IDrequestImage(code):
         image = BytesIO(response.content).getvalue()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 404:
-            raise plom_exceptions.SeriousError(
-                "Cannot find image file for {}.".format(code)
-            )
+            raise PlomSeriousException("Cannot find image file for {}.".format(code))
         elif response.status_code == 409:
-            raise plom_exceptions.SeriousError(
+            raise PlomSeriousException(
                 "Another user has the image for {}. This should not happen".format(code)
             )
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -298,13 +293,13 @@ def IDclaimThisTask(code):
             verify=False,
         )
         if response.status_code == 204:
-            raise plom_exceptions.BenignException("Task taken by another user.")
+            raise PlomBenignException("Task taken by another user.")
         response.raise_for_status()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -328,17 +323,15 @@ def IDreturnIDdTask(code, studentID, studentName):
         response.raise_for_status()
     except requests.HTTPError as e:
         if resposne.status_code == 409:
-            raise plom_exceptions.BenignException(
-                "Student number {} already in use".format(e)
-            )
+            raise PlomBenignException("Student number {} already in use".format(e))
         elif response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 404:
-            raise plom_exceptions.SeriousError(
+            raise PlomSeriousException(
                 "Another user has the image for {}. This should not happen".format(code)
             )
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -357,9 +350,9 @@ def IDdidNotFinishTask(code):
         response.raise_for_status()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
