@@ -189,7 +189,7 @@ class TotalClient(QWidget):
         # Get the max mark from server
         try:
             self.getMaxMark()
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
             return
 
@@ -199,7 +199,7 @@ class TotalClient(QWidget):
         # Get list of papers already ID'd and add to table.
         try:
             self.getAlreadyTotaledList()
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
             return
 
@@ -242,7 +242,7 @@ class TotalClient(QWidget):
         self.DNF()
         try:
             messenger.closeUser()
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
 
         self.my_shutdown_signal.emit(2)
@@ -260,7 +260,7 @@ class TotalClient(QWidget):
             if self.exM.data(self.exM.index(r, 1)) != "totaled":
                 try:
                     messenger.TdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
-                except plom_exceptions.SeriousError as err:
+                except PlomSeriousException as err:
                     self.throwSeriousError(err)
 
     def getAlreadyTotaledList(self):
@@ -287,7 +287,7 @@ class TotalClient(QWidget):
         # else try to grab it from server
         try:
             image = messenger.TrequestImage(tgv)
-        except plom_exceptions.SeriousError as e:
+        except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
         # save the image to appropriate filename
@@ -317,7 +317,7 @@ class TotalClient(QWidget):
             v, m = messenger.TprogressCount()
             self.ui.idProgressBar.setMaximum(m)
             self.ui.idProgressBar.setValue(v)
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
 
     def requestNext(self):
@@ -338,14 +338,14 @@ class TotalClient(QWidget):
             # ask server for ID of next task
             try:
                 test = messenger.TaskNextTask()
-            except plom_exceptions.BenignException as err:
+            except PlomBenignException as err:
                 self.throwBenign(err)  # no tasks left
                 return False
 
             try:
                 image = messenger.TclaimThisTask(test)
                 break
-            except plom_exceptions.BenignException as err:
+            except PlomBenignException as err:
                 # task already taken.
                 continue
 
@@ -374,7 +374,7 @@ class TotalClient(QWidget):
 
         try:
             messenger.TreturnTotaledTask(code, self.ui.totalEdit.text())
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
             return False
 

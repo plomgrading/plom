@@ -48,7 +48,6 @@ from PyQt5.QtWidgets import (
 from examviewwindow import ExamViewWindow
 import messenger
 from annotator import Annotator
-import plom_exceptions
 from plom_exceptions import *
 from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
@@ -96,14 +95,14 @@ class BackgroundDownloader(QThread):
             # ask server for tgv of next task
             try:
                 test = messenger.MaskNextTask(self.pageGroup, self.version)
-            except plom_exceptions.BenignException as err:
+            except PlomBenignException as err:
                 # task already taken.
                 continue
 
             try:
                 image, tags = messenger.MclaimThisTask(test)
                 break
-            except plom_exceptions.BenignException as err:
+            except PlomBenignException as err:
                 # cast the error message as a string before emitting.
                 self.downloadFail.emit(str(err))
                 self.quit()
@@ -160,7 +159,7 @@ class BackgroundUploader(QThread):
                 and os.path.basename(pname) == "G{}.plom".format(code[1:])
                 and os.path.basename(cname) == "G{}.json".format(code[1:])
             ):
-                raise plom_exceptions.SeriousError(
+                raise PlomSeriousException(
                     "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
                         fname, pname, cname
                     )
@@ -442,7 +441,7 @@ class MarkerClient(QWidget):
         # Get the max-mark for the question from the server.
         try:
             self.getMaxMark()
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
             return
         # Paste the max-mark into the gui.
@@ -451,7 +450,7 @@ class MarkerClient(QWidget):
         # Get list of papers already marked and add to table.
         try:
             self.getMarkedList()
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
             return
 
@@ -530,7 +529,7 @@ class MarkerClient(QWidget):
 
         try:
             [image, anImage, plImage] = messenger.MrequestImages(tgv)
-        except plom_exceptions.SeriousError as e:
+        except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
 
@@ -575,7 +574,7 @@ class MarkerClient(QWidget):
             v, m = messenger.MprogressCount(self.pageGroup, self.version)
             self.ui.mProgressBar.setMaximum(m)
             self.ui.mProgressBar.setValue(v)
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
 
     def requestNext(self, launchAgain=False):
@@ -600,7 +599,7 @@ class MarkerClient(QWidget):
             try:
                 [image, tags] = messenger.MclaimThisTask(test)
                 break
-            except plom_exceptions.BenignException as err:
+            except PlomBenignException as err:
                 # task already taken.
                 continue
 
@@ -974,7 +973,7 @@ class MarkerClient(QWidget):
         # authentication token.
         try:
             messenger.closeUser()
-        except plom_exceptions.SeriousError as err:
+        except PlomSeriousException as err:
             self.throwSeriousError(err)
 
         self.my_shutdown_signal.emit(2)
@@ -990,7 +989,7 @@ class MarkerClient(QWidget):
                 # server will put that back on the todo-pile.
                 try:
                     messenger.MdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
-                except plom_exceptions.SeriousError as err:
+                except PlomSeriousException as err:
                     self.throwSeriousError(err)
 
     def viewWholePaper(self):
@@ -999,7 +998,7 @@ class MarkerClient(QWidget):
         testnumber = tgv[1:5]  # since tgv = tXXXXgYYvZ
         try:
             imagesAsBytes = messenger.MrequestWholePaper(testnumber)
-        except plom_exceptions.BenignException as err:
+        except PlomBenignException as err:
             self.throwBenign(err)
 
         self.viewFiles = []
@@ -1057,7 +1056,7 @@ class MarkerClient(QWidget):
 
         try:
             fragment = messenger.MlatexFragment(txt)
-        except plom_exceptions.BenignException as err:
+        except PlomLatexException as err:
             # a latex error
             return False
         # a name for the fragment file
@@ -1100,7 +1099,7 @@ class MarkerClient(QWidget):
                     self.prxM.data(index[0]),
                     self.prxM.data(index[4]),  # send the tags back too
                 )
-            except plom_exceptions.SeriousError as err:
+            except PlomSeriousException as err:
                 self.throwSeriousError(err)
         return
 

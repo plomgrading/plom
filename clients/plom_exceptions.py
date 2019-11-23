@@ -26,3 +26,8 @@ class PlomNoMoreException(BenignException):
 class PlomAuthenticationException(BenignException):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
+
+
+class PlomLatexException(BenignException):
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)

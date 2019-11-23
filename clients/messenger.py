@@ -378,9 +378,9 @@ def TgetMaxMark():
         maxMark = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -399,9 +399,9 @@ def TrequestDoneTasks():
         idList = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -422,9 +422,9 @@ def TprogressCount():
         progress = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -447,9 +447,9 @@ def TaskNextTask():
         progress = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -465,14 +465,14 @@ def TclaimThisTask(code):
             verify=False,
         )
         if response.status_code == 204:
-            raise plom_exceptions.BenignException("Task taken by another user.")
+            raise PlomBenignException("Task taken by another user.")
         response.raise_for_status()
         image = BytesIO(response.content).getvalue()  # pass back image as bytes
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -490,9 +490,9 @@ def TdidNotFinishTask(code):
         response.raise_for_status()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -511,17 +511,15 @@ def TrequestImage(code):
         image = BytesIO(response.content).getvalue()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 404:
-            raise plom_exceptions.SeriousError(
-                "Cannot find image file for {}.".format(code)
-            )
+            raise PlomSeriousException("Cannot find image file for {}.".format(code))
         elif response.status_code == 409:
-            raise plom_exceptions.SeriousError(
+            raise PlomSeriousException(
                 "Another user has the image for {}. This should not happen".format(code)
             )
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -539,13 +537,13 @@ def TreturnTotaledTask(code, mark):
         response.raise_for_status()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 404:
-            raise plom_exceptions.SeriousError(
+            raise PlomSeriousException(
                 "Another user has the image for {}. This should not happen".format(code)
             )
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -570,11 +568,11 @@ def MgetMaxMark(pageGroup, version):
         maxMark = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 416:
-            raise plom_exceptions.SeriousError(response.text)
+            raise PlomSeriousException(response.text)
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -592,9 +590,9 @@ def MdidNotFinishTask(code):
         response.raise_for_status()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -613,9 +611,9 @@ def MrequestDoneTasks(pg, v):
         idList = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -636,9 +634,9 @@ def MprogressCount(pg, v):
         progress = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -661,9 +659,9 @@ def MaskNextTask(pg, v):
         progress = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -680,7 +678,7 @@ def MclaimThisTask(code):
         )
         response.raise_for_status()
         if response.status_code == 204:
-            raise plom_exceptions.BenignException("Task taken by another user.")
+            raise PlomBenignException("Task taken by another user.")
 
         # response should be multipart = [image, tags]
         imageAndTags = MultipartDecoder.from_response(response).parts
@@ -688,9 +686,9 @@ def MclaimThisTask(code):
         tags = imageAndTags[1].text
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -709,13 +707,11 @@ def MlatexFragment(latex):
         image = BytesIO(response.content).getvalue()
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 406:
-            raise plom_exceptions.BenignException(
-                "There is an error in your latex fragment"
-            )
+            raise PlomLatexException("There is an error in your latex fragment")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -751,17 +747,15 @@ def MrequestImages(code):
 
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 404:
-            raise plom_exceptions.SeriousError(
-                "Cannot find image file for {}.".format(code)
-            )
+            raise PlomSeriousException("Cannot find image file for {}.".format(code))
         elif response.status_code == 409:
-            raise plom_exceptions.SeriousError(
+            raise PlomSeriousException(
                 "Another user has the image for {}. This should not happen".format(code)
             )
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -784,13 +778,11 @@ def MrequestOriginalImage(code):
 
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 404:
-            raise plom_exceptions.SeriousError(
-                "Cannot find image file for {}.".format(code)
-            )
+            raise PlomSeriousException("Cannot find image file for {}.".format(code))
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -829,13 +821,13 @@ def MreturnMarkedTask(code, pg, ver, score, mtime, tags, aname, pname, cname):
         ret = response.json()  # this is [#done, #total]
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 400:
-            raise plom_exceptions.SeriousError(
+            raise PlomSeriousException(
                 "Image file is corrupted. This should not happen".format(code)
             )
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
     return ret
@@ -854,11 +846,11 @@ def MsetTag(code, tags):
 
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 409:
-            raise plom_exceptions.BenignException("Task taken by another user.")
+            raise PlomBenignException("Task taken by another user.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
@@ -880,11 +872,11 @@ def MrequestWholePaper(code):
             images.append(BytesIO(iab.content).getvalue())  # pass back image as bytes
     except requests.HTTPError as e:
         if response.status_code == 401:
-            raise plom_exceptions.SeriousError("You are not authenticated.")
+            raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 409:
-            raise plom_exceptions.BenignException("Task taken by another user.")
+            raise PlomBenignException("Task taken by another user.")
         else:
-            raise plom_exceptions.SeriousError("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 

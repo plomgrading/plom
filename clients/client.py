@@ -20,7 +20,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
 from useful_classes import ErrorMessage, SimpleMessage
-import plom_exceptions
+from plom_exceptions import *
 
 import messenger
 
@@ -116,17 +116,17 @@ class Chooser(QDialog):
         messenger.startMessenger()
         try:
             messenger.requestAndSaveToken(user, pwd)
-        except plom_exceptions.PlomAPIException as e:
+        except PlomAPIException as e:
             ErrorMessage(
                 "Could not authenticate due to API mismatch."
                 "Your client version is {}.\n\n"
                 "Error was: {}".format(__version__, e)
             ).exec_()
             return
-        except plom_exceptions.BenignException as e:
+        except PlomAuthenticationException as e:
             ErrorMessage("Could not authenticate: {}".format(e)).exec_()
             return
-        except plom_exceptions.SeriousError as e:
+        except PlomSeriousException as e:
             ErrorMessage(
                 "Could not get authentication token.\n\n"
                 "Unexpected error: {}".format(e)
