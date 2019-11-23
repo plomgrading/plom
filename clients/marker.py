@@ -95,7 +95,7 @@ class BackgroundDownloader(QThread):
                 return
             # ask server for tgv of next task
             try:
-                test = messenger.MgetAvailable(self.pageGroup, self.version)
+                test = messenger.MaskNextTask(self.pageGroup, self.version)
             except plom_exceptions.BenignException as err:
                 # task already taken.
                 continue
@@ -505,7 +505,7 @@ class MarkerClient(QWidget):
 
     def getMarkedList(self):
         # Ask server for list of previously marked papers
-        markedList = messenger.MgetMarkedList(self.pageGroup, self.version)
+        markedList = messenger.MrequestDoneTasks(self.pageGroup, self.version)
         for x in markedList:
             self.addTGVToList(
                 TestPageGroup(
@@ -529,7 +529,7 @@ class MarkerClient(QWidget):
             return
 
         try:
-            [image, anImage, plImage] = messenger.MgetGroupImage(tgv)
+            [image, anImage, plImage] = messenger.MrequestImages(tgv)
         except plom_exceptions.SeriousError as e:
             self.throwSeriousError(e)
             return
@@ -572,7 +572,7 @@ class MarkerClient(QWidget):
     def updateProgress(self):
         # ask server for progress update
         try:
-            v, m = messenger.MGetProgressCount(self.pageGroup, self.version)
+            v, m = messenger.MprogressCount(self.pageGroup, self.version)
             self.ui.mProgressBar.setMaximum(m)
             self.ui.mProgressBar.setValue(v)
         except plom_exceptions.SeriousError as err:
@@ -591,7 +591,7 @@ class MarkerClient(QWidget):
                 return
             # ask server for tgv of next task
             try:
-                test = messenger.MgetAvailable(self.pageGroup, self.version)
+                test = messenger.MaskNextTask(self.pageGroup, self.version)
             except PlomNoMoreException as e:
                 # TODO: (a) to we need a dialog?  (b) how to get text from e?
                 # ErrorMessage("No more tasks").exec_()
@@ -998,7 +998,7 @@ class MarkerClient(QWidget):
         tgv = self.prxM.getPrefix(index[0].row())
         testnumber = tgv[1:5]  # since tgv = tXXXXgYYvZ
         try:
-            imagesAsBytes = messenger.MgetWholePaper(testnumber)
+            imagesAsBytes = messenger.MrequestWholePaper(testnumber)
         except plom_exceptions.BenignException as err:
             self.throwBenign(err)
 
@@ -1125,7 +1125,7 @@ class MarkerClient(QWidget):
                 str(testNumber).zfill(4), self.pageGroup, self.version
             )
             try:
-                image = messenger.MgetOriginalGroupImage(tgv)
+                image = messenger.MrequestOriginalImage(tgv)
             except PlomNoMoreException as err:
                 msg = ErrorMessage("No image corresponding to code {}".format(tgv))
                 msg.exec_()

@@ -269,7 +269,7 @@ class IDClient(QWidget):
         of either two fields = FamilyName+GivenName or a single Name field.
         """
         # Send request for classlist (iRCL) to server
-        csvfile = messenger.IDGetClasslist()
+        csvfile = messenger.IDrequestClasslist()
         # create dictionaries from the classlist
         self.studentNamesToNumbers = defaultdict(int)
         self.studentNumbersToNames = defaultdict(str)
@@ -285,7 +285,7 @@ class IDClient(QWidget):
         back the CSV of the predictions testnumber -> studentID.
         """
         # Send request for prediction list to server
-        csvfile = messenger.IDGetPredictions()
+        csvfile = messenger.IDrequestPredictions()
 
         # create dictionary from the prediction list
         self.predictedTestToNumbers = defaultdict(int)
@@ -376,7 +376,7 @@ class IDClient(QWidget):
 
     def getAlreadyIDList(self):
         # Ask server for list of previously ID'd papers
-        idList = messenger.IDgetAlreadyComplete()
+        idList = messenger.IDrequestDoneTasks()
         for x in idList:
             self.addPaperToList(
                 Paper(x[0], fname="", stat="identified", id=x[2], name=x[3]),
@@ -400,7 +400,7 @@ class IDClient(QWidget):
             return
         # else try to grab it from server
         try:
-            image = messenger.IDgetGroupImage(tgv)
+            image = messenger.IDrequestImage(tgv)
         except plom_exceptions.SeriousError as e:
             self.throwSeriousError(e)
             return
@@ -453,7 +453,7 @@ class IDClient(QWidget):
     def updateProgress(self):
         # update progressbars
         try:
-            v, m = messenger.IDGetProgressCount()
+            v, m = messenger.IDprogressCount()
             self.ui.idProgressBar.setMaximum(m)
             self.ui.idProgressBar.setValue(v)
         except plom_exceptions.SeriousError as err:
@@ -473,9 +473,9 @@ class IDClient(QWidget):
             else:
                 attempts += 1
             # ask server for ID of next task
-            test = messenger.IDGetAvailable()
+            test = messenger.IDaskNextTask()
             if not test:
-                #ErrorMessage("No more tasks").exec_()
+                # ErrorMessage("No more tasks").exec_()
                 return False
 
             try:

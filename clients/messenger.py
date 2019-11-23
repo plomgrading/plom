@@ -129,7 +129,7 @@ def closeUser():
 # ID client API stuff
 
 
-def IDGetProgressCount():
+def IDprogressCount():
     SRmutex.acquire()
     try:
         response = session.get(
@@ -152,7 +152,7 @@ def IDGetProgressCount():
     return progress
 
 
-def IDGetAvailable():
+def IDaskNextTask():
     """Return the TGV of a paper that needs IDing.
 
     Return:
@@ -184,7 +184,7 @@ def IDGetAvailable():
     return tgv
 
 
-def IDGetClasslist():
+def IDrequestClasslist():
     SRmutex.acquire()
     try:
         response = session.get(
@@ -209,7 +209,7 @@ def IDGetClasslist():
     return classlist
 
 
-def IDGetPredictions():
+def IDrequestPredictions():
     SRmutex.acquire()
     try:
         response = session.get(
@@ -234,7 +234,7 @@ def IDGetPredictions():
     return predictions
 
 
-def IDgetAlreadyComplete():
+def IDrequestDoneTasks():
     SRmutex.acquire()
     try:
         response = session.get(
@@ -255,7 +255,7 @@ def IDgetAlreadyComplete():
     return idList
 
 
-def IDgetGroupImage(code):
+def IDrequestImage(code):
     SRmutex.acquire()
     try:
         response = session.get(
@@ -394,7 +394,7 @@ def TgetMaxMark():
     return maxMark
 
 
-def TgetAlreadyComplete():
+def TrequestDoneTasks():
     SRmutex.acquire()
     try:
         response = session.get(
@@ -415,7 +415,7 @@ def TgetAlreadyComplete():
     return idList
 
 
-def TGetProgressCount():
+def TprogressCount():
     SRmutex.acquire()
     try:
         response = session.get(
@@ -438,7 +438,7 @@ def TGetProgressCount():
     return progress
 
 
-def TGetAvailable():
+def TaskNextTask():
     SRmutex.acquire()
     try:
         response = session.get(
@@ -506,7 +506,7 @@ def TdidNotFinishTask(code):
     return True
 
 
-def TgetGroupImage(code):
+def TrequestImage(code):
     SRmutex.acquire()
     try:
         response = session.get(
@@ -608,7 +608,7 @@ def MdidNotFinishTask(code):
     return True
 
 
-def MgetMarkedList(pg, v):
+def MrequestDoneTasks(pg, v):
     SRmutex.acquire()
     try:
         response = session.get(
@@ -629,7 +629,7 @@ def MgetMarkedList(pg, v):
     return idList
 
 
-def MGetProgressCount(pg, v):
+def MprogressCount(pg, v):
     SRmutex.acquire()
     try:
         response = session.get(
@@ -652,7 +652,7 @@ def MGetProgressCount(pg, v):
     return progress
 
 
-def MgetAvailable(pg, v):
+def MaskNextTask(pg, v):
     SRmutex.acquire()
     try:
         response = session.get(
@@ -729,7 +729,7 @@ def MlatexFragment(latex):
     return image
 
 
-def MgetGroupImage(code):
+def MrequestImages(code):
     SRmutex.acquire()
     try:
         response = session.get(
@@ -775,7 +775,7 @@ def MgetGroupImage(code):
     return [image, anImage, plDat]
 
 
-def MgetOriginalGroupImage(code):
+def MrequestOriginalImage(code):
     SRmutex.acquire()
     try:
         response = session.get(

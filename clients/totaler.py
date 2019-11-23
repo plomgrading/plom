@@ -265,7 +265,7 @@ class TotalClient(QWidget):
 
     def getAlreadyTotaledList(self):
         # Ask server for list of previously marked papers
-        tList = messenger.TgetAlreadyComplete()
+        tList = messenger.TrequestDoneTasks()
         # Add those marked papers to our paper-list
         for x in tList:
             self.addPaperToList(
@@ -286,7 +286,7 @@ class TotalClient(QWidget):
             return
         # else try to grab it from server
         try:
-            image = messenger.TgetGroupImage(tgv)
+            image = messenger.TrequestImage(tgv)
         except plom_exceptions.SeriousError as e:
             self.throwSeriousError(e)
             return
@@ -314,7 +314,7 @@ class TotalClient(QWidget):
     def updateProgress(self):
         # update progressbars
         try:
-            v, m = messenger.TGetProgressCount()
+            v, m = messenger.TprogressCount()
             self.ui.idProgressBar.setMaximum(m)
             self.ui.idProgressBar.setValue(v)
         except plom_exceptions.SeriousError as err:
@@ -337,7 +337,7 @@ class TotalClient(QWidget):
                 attempts += 1
             # ask server for ID of next task
             try:
-                test = messenger.TGetAvailable()
+                test = messenger.TaskNextTask()
             except plom_exceptions.BenignException as err:
                 self.throwBenign(err)  # no tasks left
                 return False

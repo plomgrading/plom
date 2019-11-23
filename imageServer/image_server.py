@@ -51,7 +51,7 @@ routes = web.RouteTableDef()
 
 
 @routes.get("/Version")
-async def Version(request):
+async def version(request):
     return web.Response(
         text="Running Plom server version {} with API {}".format(
             __version__, serverAPI
@@ -61,24 +61,24 @@ async def Version(request):
 
 
 @routes.delete("/users/{user}")
-async def CloseUser(request):
+async def closeUser(request):
     data = await request.json()
     user = request.match_info["user"]
     if data["user"] != request.match_info["user"]:
         return web.Response(status=400)  # malformed request.
     elif peon.validate(data["user"], data["token"]):
-        peon.userClosing(data["user"])
+        peon.closeUser(data["user"])
         return web.Response(status=200)
     else:
         return web.Response(status=401)
 
 
 @routes.put("/users/{user}")
-async def LoginUserGiveToken(request):
+async def giveUserToken(request):
     data = await request.json()
     user = request.match_info["user"]
 
-    rmsg = peon.authoriseUser(data["user"], data["pw"], data["api"])
+    rmsg = peon.giveUserToken(data["user"], data["pw"], data["api"])
     if rmsg[0]:
         return web.json_response(rmsg[1], status=200)  # all good, return the token
     elif rmsg[1].startswith("API"):
@@ -128,7 +128,7 @@ async def IDprogressCount(request):
 
 
 @routes.get("/ID/tasks/available")
-async def IDnextTask(request):
+async def IDaskNextTask(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
         rmsg = peon.IDaskNextTask(data["user"])  # returns [True, code] or [False]
@@ -141,7 +141,7 @@ async def IDnextTask(request):
 
 
 @routes.get("/ID/classlist")
-async def IDgimmetheclasslist(request):
+async def IDrequestClasslist(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
         if os.path.isfile("../resources/classlist.csv"):
@@ -153,7 +153,7 @@ async def IDgimmetheclasslist(request):
 
 
 @routes.get("/ID/predictions")
-async def IDgimmethepredictions(request):
+async def IDrequestPredictions(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
         if os.path.isfile("../resources/predictionlist.csv"):
@@ -165,21 +165,21 @@ async def IDgimmethepredictions(request):
 
 
 @routes.get("/ID/tasks/complete")
-async def IDgimmewhatsdone(request):
+async def IDrequestDoneTasks(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
         # return the completed list
-        return web.json_response(peon.IDgetAlreadyIDList(data["user"]), status=200)
+        return web.json_response(peon.IDrequestDoneTasks(data["user"]), status=200)
     else:
         return web.Response(status=401)
 
 
 @routes.get("/ID/images/{tgv}")
-async def IDgetImage(request):
+async def IDrequestImage(request):
     data = await request.json()
     code = request.match_info["tgv"]
     if peon.validate(data["user"], data["token"]):
-        rmsg = peon.IDgetGroupImage(data["user"], code)
+        rmsg = peon.IDrequestImage(data["user"], code)
         if rmsg[0]:  # user allowed access - returns [true, fname]
             if os.path.isfile(rmsg[1]):
                 return web.FileResponse(rmsg[1], status=200)
@@ -199,7 +199,7 @@ async def IDclaimThisTask(request):
     data = await request.json()
     code = request.match_info["task"]
     if peon.validate(data["user"], data["token"]):
-        rmesg = peon.IDclaimSpecificTask(data["user"], code)
+        rmesg = peon.IDclaimThisTask(data["user"], code)
         if rmesg[0]:  # return [True, filename]
             return web.FileResponse(rmesg[1], status=200)
         else:
@@ -209,11 +209,11 @@ async def IDclaimThisTask(request):
 
 
 @routes.put("/ID/tasks/{task}")
-async def IDreturnIDd(request):
+async def IDreturnIDdTask(request):
     data = await request.json()
     code = request.match_info["task"]
     if peon.validate(data["user"], data["token"]):
-        rmsg = peon.IDreturnIDd(data["user"], code, data["sid"], data["sname"])
+        rmsg = peon.IDreturnIDdTask(data["user"], code, data["sid"], data["sname"])
         # returns [True] if all good
         # [False, True] - if student number already in use
         # [False, False] - if bigger error
@@ -235,7 +235,7 @@ async def IDdidNotFinishTask(request):
     data = await request.json()
     code = request.match_info["task"]
     if peon.validate(data["user"], data["token"]):
-        peon.IDdidntFinish(data["user"], code)
+        peon.IDdidNotFinish(data["user"], code)
         return web.json_response(status=200)
     else:
         return web.Response(status=401)
@@ -247,7 +247,7 @@ async def IDdidNotFinishTask(request):
 
 
 @routes.get("/TOT/maxMark")
-async def TmarkMark(request):
+async def TgetMarkMark(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
         return web.json_response(peon.TgetMaxMark(), status=200)
@@ -256,11 +256,11 @@ async def TmarkMark(request):
 
 
 @routes.get("/TOT/tasks/complete")
-async def Tgimmewhatsdone(request):
+async def TrequestDoneTasks(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
         # return the completed list
-        return web.json_response(peon.TgetAlreadyTotaledList(data["user"]), status=200)
+        return web.json_response(peon.TrequestDoneTasks(data["user"]), status=200)
     else:
         return web.Response(status=401)
 
@@ -275,7 +275,7 @@ async def TprogressCount(request):
 
 
 @routes.get("/TOT/tasks/available")
-async def TnextTask(request):
+async def TaskNextTask(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
         rmsg = peon.TaskNextTask(data["user"])  # returns [True, code] or [False]
@@ -292,7 +292,7 @@ async def TclaimThisTask(request):
     data = await request.json()
     code = request.match_info["task"]
     if peon.validate(data["user"], data["token"]):
-        rmesg = peon.TclaimSpecificTask(data["user"], code)
+        rmesg = peon.TclaimThisTask(data["user"], code)
         if rmesg[0]:  # return [True, filename]
             return web.FileResponse(rmesg[1], status=200)
         else:
@@ -306,18 +306,18 @@ async def TdidNotFinishTask(request):
     data = await request.json()
     code = request.match_info["task"]
     if peon.validate(data["user"], data["token"]):
-        peon.TdidntFinish(data["user"], code)
+        peon.TdidNotFinish(data["user"], code)
         return web.json_response(status=200)
     else:
         return web.Response(status=401)
 
 
 @routes.get("/TOT/images/{tgv}")
-async def TgetImage(request):
+async def TrequestImage(request):
     data = await request.json()
     code = request.match_info["tgv"]
     if peon.validate(data["user"], data["token"]):
-        rmsg = peon.TgetGroupImage(data["user"], code)
+        rmsg = peon.TrequestImage(data["user"], code)
         if rmsg[0]:  # user allowed access - returns [true, fname]
             if os.path.isfile(rmsg[1]):
                 return web.FileResponse(rmsg[1], status=200)
@@ -330,11 +330,11 @@ async def TgetImage(request):
 
 
 @routes.put("/TOT/tasks/{task}")
-async def TreturnTotaled(request):
+async def TreturnTotaledTask(request):
     data = await request.json()
     code = request.match_info["task"]
     if peon.validate(data["user"], data["token"]):
-        rmsg = peon.TreturnTotaled(data["user"], code, data["mark"])
+        rmsg = peon.TreturnTotaledTask(data["user"], code, data["mark"])
         # returns True if all good, False if error
         if rmsg:  # all good
             return web.Response(status=200)
@@ -350,7 +350,7 @@ async def TreturnTotaled(request):
 
 
 @routes.get("/MK/maxMark")
-async def TmarkMark(request):
+async def TgetMarkMark(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
         rmsg = peon.MgetPageGroupMax(data["pg"], data["v"])
@@ -377,19 +377,19 @@ async def MdidNotFinishTask(request):
     data = await request.json()
     code = request.match_info["task"]
     if peon.validate(data["user"], data["token"]):
-        peon.MdidntFinish(data["user"], code)
+        peon.MdidNotFinish(data["user"], code)
         return web.json_response(status=200)
     else:
         return web.Response(status=401)
 
 
 @routes.get("/MK/tasks/complete")
-async def Mgimmewhatsdone(request):
+async def MrequestDoneTasks(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
         # return the completed list
         return web.json_response(
-            peon.MgetMarkedList(data["user"], data["pg"], data["v"]), status=200
+            peon.MrequestDoneTasks(data["user"], data["pg"], data["v"]), status=200
         )
     else:
         return web.Response(status=401)
@@ -405,7 +405,7 @@ async def MprogressCount(request):
 
 
 @routes.get("/MK/tasks/available")
-async def MnextTask(request):
+async def MaskNextTask(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
         rmsg = peon.MaskNextTask(
@@ -424,7 +424,7 @@ async def MclaimThisTask(request):
     data = await request.json()
     code = request.match_info["task"]
     if peon.validate(data["user"], data["token"]):
-        rmesg = peon.MclaimSpecificTask(data["user"], code)
+        rmesg = peon.MclaimThisTask(data["user"], code)
         if rmesg[0]:  # return [True, filename, tags]
             with MultipartWriter("imageAndTags") as mpwriter:
                 mpwriter.append(open(rmesg[1], "rb"))
@@ -440,7 +440,7 @@ async def MclaimThisTask(request):
 async def MlatexFragment(request):
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
-        rmsg = peon.MlatexThisText(data["user"], data["fragment"])
+        rmsg = peon.MlatexFragment(data["user"], data["fragment"])
         if rmsg[0]:  # user allowed access - returns [true, fname]
             return web.FileResponse(rmsg[1], status=200)
         else:
@@ -450,11 +450,11 @@ async def MlatexFragment(request):
 
 
 @routes.get("/MK/images/{tgv}")
-async def MgetImage(request):
+async def MrequestImages(request):
     data = await request.json()
     code = request.match_info["tgv"]
     if peon.validate(data["user"], data["token"]):
-        rmsg = peon.MgetGroupImage(data["user"], code)
+        rmsg = peon.MrequestImages(data["user"], code)
         # returns either [True, fname] or [True, fname, aname, plomdat] or [False, error]
         if rmsg[0]:  # user allowed access - returns [true, fname]
             with MultipartWriter("imageAnImageAndPlom") as mpwriter:
@@ -470,11 +470,11 @@ async def MgetImage(request):
 
 
 @routes.get("/MK/originalImage/{tgv}")
-async def MgetOriginalImage(request):
+async def MrequestOriginalImage(request):
     data = await request.json()
     code = request.match_info["tgv"]
     if peon.validate(data["user"], data["token"]):
-        rmsg = peon.MgetOriginalGroupImage(code)
+        rmsg = peon.MrequestOriginalImage(code)
         # returns either [True, fname] or [False]
         if rmsg[0]:  # user allowed access - returns [true, fname]
             return web.FileResponse(rmsg[1], status=200)
@@ -485,7 +485,7 @@ async def MgetOriginalImage(request):
 
 
 @routes.put("/MK/tasks/{tgv}")
-async def MreturnMarked(request):
+async def MreturnMarkedTask(request):
     code = request.match_info["tgv"]
     # the put will be in 3 parts - use multipart reader
     # in order we expect those 3 parts - [parameters (inc comments), image, plom-file]
@@ -509,7 +509,7 @@ async def MreturnMarked(request):
     plomdat = await part2.read()
 
     if peon.validate(param["user"], param["token"]):
-        rmsg = peon.MreturnMarked(
+        rmsg = peon.MreturnMarkedTask(
             param["user"],
             code,
             int(param["pg"]),
@@ -531,7 +531,7 @@ async def MreturnMarked(request):
 
 
 @routes.patch("/MK/tags/{tgv}")
-async def MreturnMarked(request):
+async def MsetTag(request):
     code = request.match_info["tgv"]
     data = await request.json()
     if peon.validate(data["user"], data["token"]):
@@ -545,11 +545,11 @@ async def MreturnMarked(request):
 
 
 @routes.get("/MK/whole/{number}")
-async def MclaimThisTask(request):
+async def MrequestWholePaper(request):
     data = await request.json()
     number = request.match_info["number"]
     if peon.validate(data["user"], data["token"]):
-        rmesg = peon.MgetWholePaper(data["user"], number)
+        rmesg = peon.MrequestWholePaper(data["user"], number)
         if rmesg[0]:  # return [True, [filenames]] or [False]
             with MultipartWriter("imageAndTags") as mpwriter:
                 for fn in rmesg[1]:
@@ -750,7 +750,7 @@ class Server(object):
                 print("Attempt by non-user to {}".format(message))
                 return ["ERR", "You are not an authorised user"]
 
-    def authoriseUser(self, user, password, clientAPI):
+    def giveUserToken(self, user, password, clientAPI):
         """When a user requests authorisation
         They have sent their name and password
         first check if they are a valid user
@@ -850,28 +850,28 @@ class Server(object):
         # Send an ack with the max-mark for the pagegroup.
         return [True, self.testSpec.Marks[ipg]]
 
-    def IDdidntFinish(self, user, code):
+    def IDdidNotFinish(self, user, code):
         """User didn't finish IDing the image with given code. Tell the
         database to put this back on the todo-pile.
         """
         self.IDDB.didntFinish(user, code)
         return
 
-    def MdidntFinish(self, user, tgv):
+    def MdidNotFinish(self, user, tgv):
         """User didn't finish marking the image with given code. Tell the
         database to put this back on the todo-pile.
         """
         self.MDB.didntFinish(user, tgv)
         return
 
-    def TdidntFinish(self, user, code):
+    def TdidNotFinish(self, user, code):
         """User didn't finish totaling the image with given code. Tell the
         database to put this back on the todo-pile.
         """
         self.TDB.didntFinish(user, code)
         return
 
-    def userClosing(self, user):
+    def closeUser(self, user):
         """Client is closing down their app, so remove the authorisation token
         """
         self.authority.detoken(user)
@@ -889,7 +889,7 @@ class Server(object):
             # Send to the client
             return [True, give]
 
-    def IDclaimSpecificTask(self, user, code):
+    def IDclaimThisTask(self, user, code):
         if self.IDDB.giveSpecificTaskToClient(user, code):
             # return true, image-filename
             return [True, "{}/idgroup/{}.png".format(pathScanDirectory, code)]
@@ -901,7 +901,7 @@ class Server(object):
         """Send back current ID progress counts to the client"""
         return [self.IDDB.countIdentified(), self.IDDB.countAll()]
 
-    def IDreturnIDd(self, user, ret, sid, sname):
+    def IDreturnIDdTask(self, user, ret, sid, sname):
         """Client has ID'd the pageimage with code=ret, student-number=sid,
         and student-name=sname. Send the information to the database (which
         checks if that number has been used previously). If okay then send
@@ -913,13 +913,13 @@ class Server(object):
         # [False, False] - if bigger error
         return self.IDDB.takeIDImageFromClient(ret, user, sid, sname)
 
-    def IDgetAlreadyIDList(self, user):
+    def IDrequestDoneTasks(self, user):
         """When a id-client logs on they request a list of papers they have already IDd.
         Send back the list.
         """
         return self.IDDB.buildIDList(user)
 
-    def IDgetGroupImage(self, user, tgv):
+    def IDrequestImage(self, user, tgv):
         if self.IDDB.getGroupImage(user, tgv):
             fname = "{}/idgroup/{}.png".format(pathScanDirectory, tgv)
             return [True, fname]
@@ -939,7 +939,7 @@ class Server(object):
             # Send to the client
             return [True, give]
 
-    def MclaimSpecificTask(self, user, code):
+    def MclaimThisTask(self, user, code):
         return self.MDB.giveSpecificTaskToClient(user, code)
         # retval is either [False] or [True, fname, tags]
 
@@ -947,7 +947,7 @@ class Server(object):
         """Send back current marking progress counts to the client"""
         return [self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
-    def MreturnMarked(
+    def MreturnMarkedTask(
         self, user, code, pg, v, mark, image, plomdat, comments, mtime, tags
     ):
         """Client has marked the pageimage with code, mark, annotated-file-name
@@ -995,7 +995,7 @@ class Server(object):
         )
         fh.close()
 
-    def MgetMarkedList(self, user, pg, v):
+    def MrequestDoneTasks(self, user, pg, v):
         """When a marked-client logs on they request a list of papers they have already marked.
         Check the (group/version) is valid and then send back a textfile with list of TGVs.
         """
@@ -1004,7 +1004,7 @@ class Server(object):
         # TODO - verify that since this happens after "get max mark" we don't need to check ranges - they should be fine unless real idiocy has happened?
         return self.MDB.buildMarkedList(user, pg, v)
 
-    def MgetGroupImage(self, user, tgv):
+    def MrequestImages(self, user, tgv):
         give, fname, aname = self.MDB.getGroupImage(user, tgv)
         if fname is not None:
             if aname is not None:
@@ -1020,7 +1020,7 @@ class Server(object):
         else:
             return [False]
 
-    def MgetOriginalGroupImage(self, tgv):
+    def MrequestOriginalImage(self, tgv):
         fname = self.MDB.getOriginalGroupImage(tgv)
         if fname is not None:
             return [True, fname]
@@ -1033,7 +1033,7 @@ class Server(object):
         else:
             return False
 
-    def MgetWholePaper(self, user, testNumber):
+    def MrequestWholePaper(self, user, testNumber):
         # client passes the tgv code of their current group image.
         # from this we infer the test number.
         files = self.MDB.getTestAll(testNumber)
@@ -1042,7 +1042,7 @@ class Server(object):
         else:
             return [False]
 
-    def MlatexThisText(self, user, fragment):
+    def MlatexFragment(self, user, fragment):
         # TODO - only one frag file per user - is this okay?
         tfrag = tempfile.NamedTemporaryFile()
         with open(tfrag.name, "w+") as fh:
@@ -1073,7 +1073,7 @@ class Server(object):
             # Send to the client
             return [True, give]
 
-    def TclaimSpecificTask(self, user, code):
+    def TclaimThisTask(self, user, code):
         if self.TDB.giveSpecificTaskToClient(user, code):
             # return true, image-filename
             return [True, "{}/idgroup/{}.png".format(pathScanDirectory, code)]
@@ -1085,26 +1085,19 @@ class Server(object):
         """Send back current total progress counts to the client"""
         return [self.TDB.countTotaled(), self.TDB.countAll()]
 
-    def TreturnTotaled(self, user, ret, value):
+    def TreturnTotaledTask(self, user, ret, value):
         """Client has totaled the pageimage with code=ret, total=value.
         Send the information to the database and return an ACK
         """
         return self.TDB.takeTotalImageFromClient(ret, user, value)
 
-    def TgetAlreadyTotaledList(self, user):
+    def TrequestDoneTasks(self, user):
         """When a total-client logs on they request a list of papers they have already totaled.
         Send back a list of TGVs.
         """
         return self.TDB.buildTotalList(user)
 
-    def TdoneWithFile(self, user, token, tfn):
-        """The client acknowledges they got the file,
-        so the server deletes it and sends back an ACK.
-        """
-        self.removeFile(tfn)
-        return ["ACK"]
-
-    def TgetGroupImage(self, user, tgv):
+    def TrequestImage(self, user, tgv):
         if self.TDB.getGroupImage(user, tgv):
             fname = "{}/idgroup/{}.png".format(pathScanDirectory, tgv)
             return [True, fname]

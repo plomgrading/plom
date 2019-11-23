@@ -48,14 +48,14 @@
 |method|url|messenger|server|DB|
 |------|----|----|----|----|
 | get | "/Version" |.|.|.|
-| put | "/users/{user}"| requestAndSaveToken | LoginUserGiveToken | authoriseUser |
-| delete | "/users/{user}" | closeUser | CloseUser | userClosing |
-| get |"/ID/progress" | IDGetProgressCount | IDprogressCount | IDprogressCount|
-| get |"/ID/tasks/available"| IDGetAvailable | IDnextTask | IDaskNextTask |
-| get |"/ID/classlist"| IDGetClasslist | IDgimmetheclasslist | . |
-| get |"/ID/predictions" | IDGetPredictions | IDgimmethepredictions | . |
-| get |"/ID/tasks/complete" | IDgetAlreadyComplete | IDgimmewhatsdone | IDgetAlreadyIDList |
-| get |"/ID/images/{tgv}" | IDgetGroupImage | IDgetImage | IDgetGroupImage |
-| patch |"/ID/tasks/{task}"| IDclaimThisTask | IDclaimThisTask | IDclaimSpecificTask |
-| put |"/ID/tasks/{task}" | IDreturnIDdTask | IDreturnIDd | IDreturnIDd |
+| put | "/users/{user}"| requestAndSaveToken | giveUserToken | giveUserToken |
+| delete | "/users/{user}" | closeUser | closeUser | closeUser |
+| get |"/ID/progress" | IDprogressCount | IDprogressCount | IDprogressCount|
+| get |"/ID/tasks/available"| IDaskNextTask | IDaskNextTask | IDaskNextTask |
+| get |"/ID/classlist"| IDrequestClasslist | IDrequestClasslist | . |
+| get |"/ID/predictions" | IDrequestPredictions | IDrequestPredictions | . |
+| get |"/ID/tasks/complete" | IDrequestDoneTasks | IDrequestDoneTasks | IDrequestDoneTasks |
+| get |"/ID/images/{tgv}" | IDrequestImage | IDrequestImage | IDrequestImage |
+| patch |"/ID/tasks/{task}"| IDclaimThisTask | IDclaimThisTask | IDclaimThisTask |
+| put |"/ID/tasks/{task}" | IDreturnIDdTask | IDreturnIDdTask | IDreturnIDdTask |
 | delete |"/ID/tasks/{task}" | IDdidNotFinishTask | IDdidNotFinishTask | IDdidntFinish |
