@@ -870,7 +870,7 @@ def MsetTag(code, tags):
         SRmutex.release()
 
 
-def MgetWholePaper(code):
+def MrequestWholePaper(code):
     SRmutex.acquire()
     try:
         response = session.get(
