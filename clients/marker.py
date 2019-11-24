@@ -76,6 +76,7 @@ directoryPath = tempDirectory.name
 # I'll do it the simpler subclassing way
 class BackgroundDownloader(QThread):
     downloadSuccess = pyqtSignal(str, str, str)  # [tgv, file, tags]
+    downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
     def __init__(self, pg, v):
@@ -96,7 +97,7 @@ class BackgroundDownloader(QThread):
             try:
                 test = messenger.MaskNextTask(self.pageGroup, self.version)
                 if not test:  # no more tests left
-                    self.downloadSuccess.emit("", "", "")
+                    self.downloadNoneAvailable.emit()
                     self.quit()
                     return
             except PlomSeriousException as err:
@@ -647,9 +648,6 @@ class MarkerClient(QWidget):
         # self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
 
     def requestNextInBackgroundFinished(self, test, fname, tags):
-        # check to see if we got a task
-        if not test:
-            return
         self.addTGVToList(TestPageGroup(test, fname, tags=tags))
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
