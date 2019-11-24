@@ -97,7 +97,9 @@ class BackgroundDownloader(QThread):
                 test = messenger.MaskNextTask(self.pageGroup, self.version)
                 if not test:  # no more tests left
                     # TODO - ask CBM to hack this.
+                    self.downloadSuccess.emit("NoMoreTasks", "", "")
                     self.quit()
+                    return
             except PlomSeriousException as err:
                 self.downloadFail.emit(str(err))
                 self.quit()
@@ -646,13 +648,15 @@ class MarkerClient(QWidget):
         # self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
 
     def requestNextInBackgroundFinished(self, test, fname, tags):
+        # check to see if we got a task
+        if test == "NoMoreTasks":
+            return
         self.addTGVToList(TestPageGroup(test, fname, tags=tags))
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
 
     def requestNextInBackgroundFailed(self, errmsg):
-        print("HELLO {}".format(errmsg))
         # TODO what should we do?  Is there a realistic way forward
         # or should we just die with an exception?
         ErrorMessage(
