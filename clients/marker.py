@@ -639,6 +639,9 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.downloadSuccess.connect(
             self.requestNextInBackgroundFinished
         )
+        self.backgroundDownloader.downloadNoneAvailable.connect(
+            self.requestNextInBackgroundNoneAvailable
+        )
         self.backgroundDownloader.downloadFail.connect(
             self.requestNextInBackgroundFailed
         )
@@ -652,6 +655,10 @@ class MarkerClient(QWidget):
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
+
+    def requestNextInBackgroundNoneAvailable(self):
+        # Keep this function here just in case we want to do something in the future.
+        pass
 
     def requestNextInBackgroundFailed(self, errmsg):
         # TODO what should we do?  Is there a realistic way forward
