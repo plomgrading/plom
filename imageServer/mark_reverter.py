@@ -6,7 +6,7 @@ __license__ = "AGPLv3"
 import sys
 import tempfile
 import json
-import asyncio
+
 from datetime import datetime
 import ssl
 from collections import defaultdict
@@ -165,22 +165,26 @@ class examTable(QWidget):
         fname = rec.value("annotatedFile")
         if fname:
             try:
-                shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/" + fname)
+                shutil.move(
+                    "markedPapers/" + fname, "markedPapers/revertedPapers/" + fname
+                )
             except FileNotFoundError:
-                print('failed to move png file')
+                print("failed to move png file")
             # and any old .png.regraded files
-            for f in glob.glob("markedPapers/" + fname + '.regrade*'):
+            for f in glob.glob("markedPapers/" + fname + ".regrade*"):
                 f2 = f.lstrip("markedPapers/")
                 try:
                     shutil.move(f, "markedPapers/revertedPapers/" + f2)
                 except FileNotFoundError:
-                    print('failed to move .png.regrade file: ' + f)
+                    print("failed to move .png.regrade file: " + f)
             # And move the associated textfile.
             fname += ".txt"
             try:
-                shutil.move("markedPapers/" + fname, "markedPapers/revertedPapers/" + fname)
+                shutil.move(
+                    "markedPapers/" + fname, "markedPapers/revertedPapers/" + fname
+                )
             except FileNotFoundError:
-                print('failed to move txt file')
+                print("failed to move txt file")
         # now safe to set the annotatedFile value in the record
         rec.setValue("annotatedFile", "")
 
@@ -188,17 +192,23 @@ class examTable(QWidget):
         fname = rec.value("plomFile")
         if fname:
             try:
-                shutil.move("markedPapers/plomFiles/" + fname, "markedPapers/revertedPapers/" + fname)
+                shutil.move(
+                    "markedPapers/plomFiles/" + fname,
+                    "markedPapers/revertedPapers/" + fname,
+                )
             except FileNotFoundError:
-                print('failed to move plom file')
+                print("failed to move plom file")
         rec.setValue("plomFile", "")
 
         fname = rec.value("commentFile")
         if fname:
             try:
-                shutil.move("markedPapers/commentFiles/" + fname, "markedPapers/revertedPapers/" + fname)
+                shutil.move(
+                    "markedPapers/commentFiles/" + fname,
+                    "markedPapers/revertedPapers/" + fname,
+                )
             except FileNotFoundError:
-                print('failed to move comment file')
+                print("failed to move comment file")
         rec.setValue("commentFile", "")
 
         # clear the tags

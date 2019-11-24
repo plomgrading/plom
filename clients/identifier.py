@@ -32,6 +32,9 @@ from examviewwindow import ExamViewWindow
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_identify import Ui_IdentifyWindow
 
+from plom_exceptions import *
+
+
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
 
@@ -191,11 +194,21 @@ class IDClient(QWidget):
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
 
         # Get the classlist from server for name/ID completion.
-        self.getClassList()
+        try:
+            self.getClassList()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+            return
+
         # Init the name/ID completers and a validator for ID
         self.setCompleters()
         # Get the predicted list from server for ID guesses.
-        self.getPredictions()
+        try:
+            self.getPredictions()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+            return
+
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
         self.ui.nameEdit.returnPressed.connect(self.enterName)
@@ -210,7 +223,12 @@ class IDClient(QWidget):
         # Make sure window is maximised and request a paper from server.
         self.showMaximized()
         # Get list of papers already ID'd and add to table.
-        self.getAlreadyIDList()
+        try:
+            self.getAlreadyIDList()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+            return
+
         # Connect the view **after** list updated.
         # Connect the table's model sel-changed to appropriate function.
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
@@ -221,6 +239,17 @@ class IDClient(QWidget):
         # Create variable to store ID/Name conf window position
         # Initially set to top-left corner of window
         self.msgGeometry = None
+
+    def throwSeriousError(self, err):
+        ErrorMessage(
+            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down identifier.'.format(
+                err
+            )
+        ).exec_()
+        self.shutDownError()
+
+    def throwBenign(self, err):
+        ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
 
     def skipOnClick(self):
         """Skip the current, moving to the next or loading a new one"""
@@ -240,20 +269,7 @@ class IDClient(QWidget):
         of either two fields = FamilyName+GivenName or a single Name field.
         """
         # Send request for classlist (iRCL) to server
-        msg, remotefile = messenger.msg("iRCL")
-        assert msg == "ACK", "Classlist problem"
-        fileobj = BytesIO(b"")
-        messenger.getFileDav(remotefile, fileobj)
-        fileobj.seek(0)  # rewind
-
-        # We have list, server can clean up (e.g., remove from webdav server)
-        msg, = messenger.msg("iDWF", remotefile)
-        assert msg == "ACK"
-
-        # csv reader needs file in text mode: this chokes on non-utf8?
-        csvfile = TextIOWrapper(fileobj)
-        # csvfile = TextIOWrapper(fileobj, errors='backslashreplace')
-
+        csvfile = messenger.IDrequestClasslist()
         # create dictionaries from the classlist
         self.studentNamesToNumbers = defaultdict(int)
         self.studentNumbersToNames = defaultdict(str)
@@ -269,17 +285,7 @@ class IDClient(QWidget):
         back the CSV of the predictions testnumber -> studentID.
         """
         # Send request for prediction list to server
-        msg, remotefile = messenger.msg("iRPL")
-        assert msg == "ACK", "Prediction list problem"
-        fileobj = BytesIO(b"")
-        messenger.getFileDav(remotefile, fileobj)
-        fileobj.seek(0)  # rewind
-
-        # We have list, server can clean up (e.g., remove from webdav server)
-        msg, = messenger.msg("iDWF", remotefile)
-        assert msg == "ACK"
-
-        csvfile = TextIOWrapper(fileobj)
+        csvfile = messenger.IDrequestPredictions()
 
         # create dictionary from the prediction list
         self.predictedTestToNumbers = defaultdict(int)
@@ -344,8 +350,11 @@ class IDClient(QWidget):
         TODO: messenger needs to drop token here?
         """
         self.DNF()
-        msg, = messenger.msg("UCL")
-        assert msg == "ACK"
+        try:
+            messenger.closeUser()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+
         self.my_shutdown_signal.emit(1)
         self.close()
 
@@ -360,24 +369,14 @@ class IDClient(QWidget):
         for r in range(rc):
             if self.exM.data(self.exM.index(r, 1)) != "identified":
                 # Tell user DNF, user, auth-token, and paper's code.
-                msg = messenger.msg("iDNF", self.exM.data(self.exM.index(r, 0)))
-
+                try:
+                    messenger.IDdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
+                except PlomSeriousException as err:
+                    self.throwSeriousError(err)
 
     def getAlreadyIDList(self):
         # Ask server for list of previously ID'd papers
-        msg, remotefile = messenger.msg("iGAL")
-        assert msg == "ACK", "problem getting previously IDed list from server"
-        fileobj = BytesIO(b"")
-        messenger.getFileDav(remotefile, fileobj)
-        # Ack that test received - server then deletes it from webdav
-        msg, = messenger.msg("iDWF", remotefile)
-        assert msg == "ACK"
-
-        # rewind the stream
-        fileobj.seek(0)
-        json_file = TextIOWrapper(fileobj)
-        # Add those marked papers to our paper-list
-        idList = json.load(json_file)
+        idList = messenger.IDrequestDoneTasks()
         for x in idList:
             self.addPaperToList(
                 Paper(x[0], fname="", stat="identified", id=x[2], name=x[3]),
@@ -394,17 +393,22 @@ class IDClient(QWidget):
         self.ui.idEdit.setFocus()
 
     def checkFiles(self, r):
+        # grab the selected tgv
         tgv = self.exM.paperList[r].prefix
+        # check if we have a copy
         if self.exM.paperList[r].originalFile is not "":
             return
-        msg = messenger.msg("iGGI", tgv)
-        if msg[0] == "ERR":
+        # else try to grab it from server
+        try:
+            image = messenger.IDrequestImage(tgv)
+        except PlomSeriousException as e:
+            self.throwSeriousError(e)
             return
-        fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
-        tfname = msg[2]  # the temp original image file on webdav
-        messenger.getFileDav(tfname, fname)
-        # got original file so ask server to remove it.
-        msg = messenger.msg("iDWF", tfname)
+        # save the image to appropriate filename
+        fname = os.path.join(self.workingDirectory, "{}.png".format(tgv))
+        with open(fname, "wb+") as fh:
+            fh.write(image)
+
         self.exM.paperList[r].originalFile = fname
 
     def updateImage(self, r=0):
@@ -447,51 +451,51 @@ class IDClient(QWidget):
             self.updateImage(r)
 
     def updateProgress(self):
-        # ask server for id-count update
-        msg = messenger.msg("iPRC")
-        # returns [ACK, #id'd, #total]
-        if msg[0] == "ACK":
-            self.ui.idProgressBar.setMaximum(msg[2])
-            self.ui.idProgressBar.setValue(msg[1])
+        # update progressbars
+        try:
+            v, m = messenger.IDprogressCount()
+            self.ui.idProgressBar.setMaximum(m)
+            self.ui.idProgressBar.setValue(v)
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
 
     def requestNext(self):
-        """Ask the server for an unID'd paper (iNID). Server should return
-        message [ACK, testcode, filename]. Get file from webdav, add to the
+        """Ask the server for an unID'd paper.   Get file, add to the
         list of papers and update the image.
         """
+        self.updateProgress()
+
         attempts = 0
         while True:
-            attempts += 1
-            # little sanity check - shouldn't be needed.
-            # TODO remove this sanity check - or replace with a pop-up warning thingy.
-            if attempts > 5:
+            # TODO - remove this little sanity check else replace with a pop-up warning thingy.
+            if attempts >= 5:
                 return False
+            else:
+                attempts += 1
             # ask server for ID of next task
-            msg = messenger.msg("iANT")
-            if msg[0] == "ERR":
+            try:
+                test = messenger.IDaskNextTask()
+                if not test:  # no tasks left
+                    return False
+            except PlomSeriousException as err:
+                self.throwSeriousError(err)
                 return False
-            # grab returned test-code
-            test = msg[1]
-            # claim that test
-            msg = messenger.msg("iCST", test)
-            # return message is [ACK, True, code, filename] or [ACK, False]
-            if msg[0] == "ERR":
-                return
-            if msg[1] == True:
-                break
 
-        test = msg[2]
-        fname = msg[3]
+            try:
+                image = messenger.IDclaimThisTask(test)
+                break
+            except PlomBenignException as err:
+                # task already taken.
+                continue
         # Image name will be <code>.png
-        iname = os.path.join(
-            self.workingDirectory, test + ".png"
-        )  # windows/linux compatibility
-        # Grab image from webdav and copy to <code.png>
-        messenger.getFileDav(fname, iname)
+        iname = os.path.join(self.workingDirectory, test + ".png")
+        # save it
+        with open(iname, "wb+") as fh:
+            fh.write(image)
+
         # Add the paper [code, filename, etc] to the list
         self.addPaperToList(Paper(test, iname))
-        # Tell server we got the image (iGTP) - the server then deletes it.
-        msg = messenger.msg("iDWF", fname)
+
         # Clean up table - and set focus on the ID-lineedit so user can
         # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()
@@ -514,6 +518,7 @@ class IDClient(QWidget):
             self.requestNext()  # updates progressbars.
         else:  # else move to the next unidentified paper.
             self.moveToNextUnID()  # doesn't
+            self.updateProgress()
         return
 
     def identifyStudent(self, index, sid, sname):
@@ -526,19 +531,25 @@ class IDClient(QWidget):
         self.exM.identifyStudent(index, sid, sname)
         code = self.exM.data(index[0])
         # Return paper to server with the code, ID, name.
-        msg = messenger.msg("iRID", code, sid, sname)
-
+        try:
+            # TODO - do we need this return value
+            msg = messenger.IDreturnIDdTask(code, sid, sname)
+        except PlomBenignException as err:
+            self.throwBenign(err)
+            # If an error, revert the student and clear things.
+            self.exM.revertStudent(index)
+            return False
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+            return
+        # successful ID
         # Issue #25: Use timer to avoid macOS conflict between completer and
         # clearing the line-edit. Very annoying but this fixes it.
         QTimer.singleShot(0, self.ui.idEdit.clear)
         QTimer.singleShot(0, self.ui.nameEdit.clear)
-        if msg[0] == "ERR":
-            self.exM.revertStudent(index)
-            return False
-        else:
-            # Update progressbars
-            self.updateProgress()
-            return True
+        # Update progressbars
+        self.updateProgress()
+        return True
 
     def moveToNextUnID(self):
         # Move to the next test in table which is not ID'd.
