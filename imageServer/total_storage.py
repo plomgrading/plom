@@ -46,7 +46,7 @@ class TotalDatabase:
         """Create the required table in the database"""
         with tdb:
             if tdb.table_exists("totalimage"):
-                self.logging.info("Database table exists")
+                self.logging.info("Reusing existing 'totalimage' database table")
             else:
                 tdb.create_tables([TotalImage])
                 self.logging.info("Creating database table")

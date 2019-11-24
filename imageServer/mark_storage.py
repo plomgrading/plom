@@ -55,7 +55,7 @@ class MarkDatabase:
         """Create the required table in the database"""
         with markdb:
             if markdb.table_exists("groupimage"):
-                self.logging.info("Database table already exists")
+                self.logging.info("Reusing existing 'groupimage' database table")
             else:
                 self.logging.info("Creating database table")
                 markdb.create_tables([GroupImage])

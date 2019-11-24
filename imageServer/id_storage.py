@@ -47,7 +47,7 @@ class IDDatabase:
         """Create the required table in the database"""
         with iddb:
             if iddb.table_exists("idimage"):
-                self.logging.info("Database table already exists.")
+                self.logging.info("Using existing 'idimage' database table.")
             else:
                 self.logging.info("Creating database table")
                 iddb.create_tables([IDImage])
