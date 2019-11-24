@@ -473,9 +473,12 @@ class IDClient(QWidget):
             else:
                 attempts += 1
             # ask server for ID of next task
-            test = messenger.IDaskNextTask()
-            if not test:
-                # ErrorMessage("No more tasks").exec_()
+            try:
+                test = messenger.IDaskNextTask()
+                if not test:  # no tasks left
+                    return False
+            except PlomSeriousException as err:
+                self.throwSeriousError(err)
                 return False
 
             try:

@@ -441,7 +441,7 @@ def TaskNextTask():
         )
         # throw errors when response code != 200.
         if response.status_code == 204:
-            raise PlomNoMoreException("No tasks left.")
+            return None
         response.raise_for_status()
         # convert the content of the response to a textfile for identifier
         progress = response.json()
@@ -653,7 +653,7 @@ def MaskNextTask(pg, v):
         )
         # throw errors when response code != 200.
         if response.status_code == 204:
-            raise PlomNoMoreException("No tasks left.")
+            return None
         response.raise_for_status()
         # convert the content of the response to a textfile for identifier
         progress = response.json()

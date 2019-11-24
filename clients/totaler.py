@@ -341,8 +341,10 @@ class TotalClient(QWidget):
             # ask server for ID of next task
             try:
                 test = messenger.TaskNextTask()
-            except PlomNoMoreException as err:
-                self.throwBenign(err)  # no tasks left
+                if not test:  # no tasks left
+                    return False
+            except PlomSeriousException as err:
+                self.throwSerious(err)
                 return False
 
             try:

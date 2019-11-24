@@ -95,15 +95,20 @@ class BackgroundDownloader(QThread):
             # ask server for tgv of next task
             try:
                 test = messenger.MaskNextTask(self.pageGroup, self.version)
-            except PlomNoMoreException as err:
-                # task already taken.
-                continue
+                if not test:  # no more tests left
+                    # TODO - ask CBM to hack this.
+                    self.quit()
+            except PlomSeriousException as err:
+                self.downloadFail.emit(str(err))
+                self.quit()
 
             try:
                 image, tags = messenger.MclaimThisTask(test)
                 break
             except PlomBenignException as err:
-                # cast the error message as a string before emitting.
+                # task taken by another user, so continue
+                continue
+            except PlomSeriousException as err:
                 self.downloadFail.emit(str(err))
                 self.quit()
 
@@ -591,10 +596,10 @@ class MarkerClient(QWidget):
             # ask server for tgv of next task
             try:
                 test = messenger.MaskNextTask(self.pageGroup, self.version)
-            except PlomNoMoreException as e:
-                # TODO: (a) to we need a dialog?  (b) how to get text from e?
-                # ErrorMessage("No more tasks").exec_()
-                return False
+                if not test:
+                    return False
+            except PlomSeriousException as err:
+                self.throwSeriousError(err)
 
             try:
                 [image, tags] = messenger.MclaimThisTask(test)
