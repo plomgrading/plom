@@ -150,24 +150,38 @@ with tempfile.TemporaryDirectory() as tmpDir:
                 fitz.getTextlength(
                     pageVersions["name"], fontsize=36, fontname="Helvetica"
                 ),
+                fitz.getTextlength(
+                    "Please sign here", fontsize=36, fontname="Helvetica"
+                ),
             )
             * 1.3
             * 0.5
         )
-        sidH = 36 * 1.5
+        sidH = 36 * 1.3
         sidRect = fitz.Rect(
             pW // 2 - sidW, pH // 2 - sidH, pW // 2 + sidW, pH // 2 + sidH
         )
-        sidRect2 = fitz.Rect(
-            sidRect.x0 - 8, sidRect.y0 - 8, sidRect.x1 + 8, sidRect.y1 + 8
+        sidRect2 = fitz.Rect(sidRect.x0, sidRect.y1, sidRect.x1, sidRect.y1 + sidH)
+        sidRect3 = fitz.Rect(
+            sidRect.x0 - 8, sidRect.y0 - 8, sidRect.x1 + 8, sidRect2.y1 + 8
         )
-        exam[0].drawRect(sidRect2, color=[0, 0, 0], fill=[1, 1, 1], width=4)
-        exam[0].drawRect(sidRect, color=[0, 0, 0], fill=[1, 1, 1], width=4)
+        exam[0].drawRect(sidRect3, color=[0, 0, 0], fill=[1, 1, 1], width=4)
+        exam[0].drawRect(sidRect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+        exam[0].drawRect(sidRect2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
         rc = exam[0].insertTextbox(
             sidRect,
             txt,
-            fontsize=42,
+            fontsize=36,
             color=[0, 0, 0],
+            fontname="Helvetica",
+            fontfile=None,
+            align=1,
+        )
+        rc = exam[0].insertTextbox(
+            sidRect2,
+            "Please sign here",
+            fontsize=36,
+            color=[0.9, 0.9, 0.9],
             fontname="Helvetica",
             fontfile=None,
             align=1,
