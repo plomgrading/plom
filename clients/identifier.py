@@ -533,9 +533,7 @@ class IDClient(QWidget):
         # Return paper to server with the code, ID, name.
         try:
             # TODO - do we need this return value
-            msg = messenger.IDreturnIDdTask(
-                code, self.ui.idEdit.text(), self.ui.nameEdit.text()
-            )
+            msg = messenger.IDreturnIDdTask(code, sid, sname)
         except PlomBenignException as err:
             self.throwBenign(err)
             # If an error, revert the student and clear things.
