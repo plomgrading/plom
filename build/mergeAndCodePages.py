@@ -172,7 +172,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
             fontfile=None,
             align=1,
         )
-        print("RC = {}".format(rc))
+
 
 # Finally save the resulting pdf.
 # Add the deflate option to compress the embedded pngs
