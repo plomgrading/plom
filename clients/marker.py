@@ -95,7 +95,7 @@ class BackgroundDownloader(QThread):
             # ask server for tgv of next task
             try:
                 test = messenger.MaskNextTask(self.pageGroup, self.version)
-            except PlomBenignException as err:
+            except PlomNoMoreException as err:
                 # task already taken.
                 continue
 

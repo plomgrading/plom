@@ -25,7 +25,7 @@ import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_totaler import Ui_TotalWindow
 
-import plom_exceptions
+from plom_exceptions import *
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
@@ -219,6 +219,9 @@ class TotalClient(QWidget):
         ).exec_()
         self.shutDownError()
 
+    def throwBenign(self, err):
+        ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
+
     def getMaxMark(self):
         """Send request for maximum mark (tGMM) to server. The server then sends
         back the value.
@@ -338,7 +341,7 @@ class TotalClient(QWidget):
             # ask server for ID of next task
             try:
                 test = messenger.TaskNextTask()
-            except PlomBenignException as err:
+            except PlomNoMoreException as err:
                 self.throwBenign(err)  # no tasks left
                 return False
 
