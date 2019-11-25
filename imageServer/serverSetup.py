@@ -236,18 +236,6 @@ class SetUp(QWidget):
                 print("Extracting columns from Canvas data and renaming")
                 df = df[["Student Number", "Student"]]
                 df.columns = ["id", "studentName"]
-                # check characters in names are latin-1 compatible
-                if not checkLatinNames(df):
-                    QMessageBox.question(
-                        self,
-                        "Classlist problems",
-                        "The classlist you supplied contains non-Latin characters - see console output. You can proceed, but it may cause problems. We recommend you Latinise them and reload the classlist.",
-                        buttons=QMessageBox.Ok,
-                    )
-
-                print("Saving to classlist.csv")
-                df.to_csv("../resources/classlist.csv", index=False)
-                return
             else:  # Is not canvas so check we have required headers
                 df = checkNonCanvasCSV(fname)
                 if df is None:
@@ -260,18 +248,18 @@ class SetUp(QWidget):
                     return
                 df = df[["id", "studentName"]]
 
-                # check characters in names are latin-1 compatible
-                if not checkLatinNames(df):
-                    QMessageBox.question(
-                        self,
-                        "Classlist problems",
-                        "The classlist you supplied contains non-Latin characters - see console output. You can proceed, but it may cause problems. We recommend you Latinise them and reload the classlist.",
-                        buttons=QMessageBox.Ok,
-                    )
+            # check characters in names are latin-1 compatible
+            if not checkLatinNames(df):
+                QMessageBox.question(
+                    self,
+                    "Classlist problems",
+                    "The classlist you supplied contains non-Latin characters - see console output. You can proceed, but it may cause problems. We recommend you Latinise them and reload the classlist. Sorry for the eurocentricity - fixing this is on the TODO list.",
+                    buttons=QMessageBox.Ok,
+                )
 
-                print("Saving to classlist.csv")
-                df.to_csv("../resources/classlist.csv", index=False)
-                return
+            print("Saving to classlist.csv")
+            df.to_csv("../resources/classlist.csv", index=False)
+            return
 
 
 if __name__ == "__main__":
