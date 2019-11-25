@@ -11,9 +11,8 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import sys
-import asyncio
 import requests
-import easywebdav2
+from requests_toolbelt import MultipartEncoder, MultipartDecoder
 import json
 import ssl
 from PyQt5.QtWidgets import QMessageBox
@@ -21,6 +20,18 @@ import urllib3
 from useful_classes import ErrorMessage
 import time
 import threading
+
+from http.client import HTTPConnection
+import logging
+
+logging.basicConfig()  # you need to initialize logging, otherwise you will not see anything from requests
+logging.getLogger().setLevel(logging.DEBUG)
+requests_log = logging.getLogger("urllib3")
+requests_log.setLevel(logging.DEBUG)
+requests_log.propagate = True
+
+from io import StringIO, BytesIO, TextIOWrapper
+from plom_exceptions import *
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
@@ -33,221 +44,867 @@ sslContext.check_hostname = False
 # Server defaults
 server = "127.0.0.1"
 message_port = 41984
-webdav_port = 41985
 SRmutex = threading.Lock()
 _userName = None
 _token = None
 
 
-def setServerDetails(s, mp, dp):
-    """Set the server IP, message port and webdav port"""
-    global server, message_port, webdav_port
+def setServerDetails(s, mp):
+    """Set the server IP and port"""
+    global server, message_port
     server = s
     message_port = mp
-    webdav_port = dp
 
 
 def whoami():
-    global _userName
     return _userName
 
 
-def http_messaging(msg):
-    try:
-        response = session.put(
-            "https://{}:{}/".format(server, message_port),
-            json={"msg": msg},
-            verify=False,
-        )
-    except:
-        return [
-            "ERR",
-            "Something went seriously wrong. Check connection details and try again.",
-        ]
-    return response.json()["rmsg"]
+# ------------------------
+# ------------------------
+# Authentication stuff
 
 
 def requestAndSaveToken(user, pw):
-    """Get a authorisation token from the server
+    """Get a authorisation token from the server.
 
-    The request sends name and password (over ssl) to the server. If
-    hash of password matches the one on file, then the server sends
-    back an "ACK" and an authentication token. The token is then used
-    to authenticate future transactions with the server (since
-    password hashing is slow).
+    The token is then used to authenticate future transactions with the server.
 
-    Raise a ValueError with message from the server.
-
-    TODO: what happens on timeout?
     """
     global _userName, _token
 
-    msg = ("AUTH", user, pw, Plom_API_Version)
-    with SRmutex:
-        rmsg = http_messaging(msg)
-
-    if rmsg[0] == "ACK" and len(rmsg) == 2:
+    SRmutex.acquire()
+    try:
+        response = authSession.put(
+            "https://{}:{}/users/{}".format(server, message_port, user),
+            json={"user": user, "pw": pw, "api": Plom_API_Version},
+            verify=False,
+            timeout=5,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        _token = response.json()
         _userName = user
-        _token = rmsg[1]
-        return
-    elif rmsg[0] == "ERR" and len(rmsg) == 2:
-        raise ValueError(rmsg[1])
-    else:
-        raise RuntimeError(
-            "Unexpected response from server.  Consider filing a bug?  The return from the server was:\n\n"
-            + str(rmsg)
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        elif response.status_code == 400:  # API error
+            raise PlomAPIException(response.json())
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    except requests.ConnectionError as err:
+        raise PlomSeriousException(
+            "Cannot connect to\n server:port = {}:{}\n Please check details before trying again.".format(
+                server, message_port
+            )
         )
-
-
-def msg(msgcode, *args):
-    """Send message using https and get back return message.
-    If error then pop-up an error message.
-    """
-    msg_ = (msgcode, _userName, _token, *args)
-    SRmutex.acquire()
-    try:
-        rmsg = http_messaging(msg_)
     finally:
         SRmutex.release()
 
-    if rmsg[0] == "ACK":
-        return rmsg
-    elif rmsg[0] == "ERR":
-        ErrorMessage("Server says: " + rmsg[1]).exec_()
-        return rmsg
-    else:
-        print(">>> Error I didn't expect. Return message was {}".format(rmsg))
-        ErrorMessage("Something really wrong has happened.").exec_()
 
-
-def msg_nopopup(msgcode, *args):
-    """Send message using the asyncio message handler and get back
-    return message.
-    """
-    msg = (msgcode, _userName, _token, *args)
+def closeUser():
     SRmutex.acquire()
     try:
-        rmsg = http_messaging(msg)
+        response = session.delete(
+            "https://{}:{}/users/{}".format(server, message_port, _userName),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
 
-    if rmsg[0] in ("ACK", "ERR"):
-        return rmsg
-    else:
-        raise RuntimeError(
-            "Unexpected response from server.  Consider filing a bug?  The return from the server was:\n\n"
-            + str(rmsg)
-        )
+    return True
 
 
-def getFileDav(dfn, lfn):
-    """Get file dfn from the webdav server and save as lfn."""
-    webdav = easywebdav2.connect(
-        server, port=webdav_port, protocol="https", verify_ssl=False
-    )
+# ------------------------
+# ------------------------
+# ID client API stuff
+
+
+def IDprogressCount():
+    SRmutex.acquire()
     try:
-        webdav.download(dfn, lfn)
-    except Exception as ex:
-        template = ">>> An exception of type {0} occurred. Arguments:\n{1!r}"
-        message = template.format(type(ex).__name__, ex.args)
-        print(message)
-
-
-def putFileDav(lfn, dfn):
-    """Upload file lfn to the webdav as dfn."""
-    webdav = easywebdav2.connect(
-        server, port=webdav_port, protocol="https", verify_ssl=False
-    )
-    try:
-        webdav.upload(lfn, dfn)
-    except Exception as ex:
-        template = ">>> An exception of type {0} occurred. Arguments:\n{1!r}"
-        message = template.format(type(ex).__name__, ex.args)
-        print(message)
-
-
-def getFileDav_woInsanity(dfn, lfn):
-    """Get file dfn from the webdav server and save as lfn.
-
-    Does not do anything for exceptions: that's the caller's problem.
-    """
-    webdav = easywebdav2.connect(
-        server, port=webdav_port, protocol="https", verify_ssl=False
-    )
-    webdav.download(dfn, lfn)
-
-
-def putFileDav_woInsanity(lfn, dfn):
-    """Upload file lfn to the webdav as dfn.
-
-    Does not do any exception handling: that's the caller's problem.
-    """
-    webdav = easywebdav2.connect(
-        server, port=webdav_port, protocol="https", verify_ssl=False
-    )
-    webdav.upload(lfn, dfn)
-
-
-async def handle_ping_test():
-    """ A simple ping to test if the server is up and running.
-    If nothing back after a few seconds then assume the server is
-    down and tell the user, then exit.
-    """
-    ptest = asyncio.open_connection(server, message_port, loop=loop, ssl=sslContext)
-    try:
-        reader, writer = await asyncio.wait_for(ptest, timeout=6)
-        jm = json.dumps(["PING"])
-        writer.write(jm.encode())
-        writer.write(b"\x00")
-        await writer.drain()
-
-        data = await reader.read(100)
-        terminate = data.endswith(b"\x00")
-        data = data.rstrip(b"\x00")
-        rmesg = json.loads(data.decode())  # message should be ['ACK']
-        writer.close()
-        return True
-    except asyncio.TimeoutError as e:
-        # TODO: str(e) does nothing useful to keep separate from below
-        msg = ErrorMessage(
-            "Server timed out.  " "Please double check details and try again."
+        response = session.get(
+            "https://{}:{}/ID/progress".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
         )
-        msg.exec_()
-        return False
-    except (ConnectionRefusedError, OSError) as e:
-        msg = ErrorMessage(
-            "Server does not return ping.  "
-            "Please double check details and try again.\n\n"
-            "Details:\n" + str(e)
-        )
-        msg.exec_()
-        return False
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
 
 
-def pingTest():
-    """Use the asyncio handler to send a ping to the server
-    to check it is up and running
+def IDaskNextTask():
+    """Return the TGV of a paper that needs IDing.
+
+    Return:
+        string or None if no papers need IDing.
+
+    Raises:
+        SeriousError: if something has unexpectedly gone wrong.
     """
-    rmsg = loop.run_until_complete(handle_ping_test())
-    return rmsg
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/tasks/available".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        if response.status_code == 204:
+            return None
+        tgv = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
 
+    return tgv
+
+
+def IDrequestClasslist():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/classlist".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        classlist = TextIOWrapper(BytesIO(response.content))
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException("Server cannot find the class list")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return classlist
+
+
+def IDrequestPredictions():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/predictions".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        predictions = TextIOWrapper(BytesIO(response.content))
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException("Server cannot find the prediction list.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return predictions
+
+
+def IDrequestDoneTasks():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/tasks/complete".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        idList = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return idList
+
+
+def IDrequestImage(code):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/images/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException("Cannot find image file for {}.".format(code))
+        elif response.status_code == 409:
+            raise PlomSeriousException(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image
+
+
+# ------------------------
+
+# TODO - API needs improve. Both of these throw a put/patch to same url = /ID/tasks/{tgv}
+# One only updates the user claim, while the other actually ID's it.
+# Think of better url structure for this?
+def IDclaimThisTask(code):
+    SRmutex.acquire()
+    try:
+        response = session.patch(
+            "https://{}:{}/ID/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        if response.status_code == 204:
+            raise PlomBenignException("Task taken by another user.")
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    image = BytesIO(response.content).getvalue()  # pass back image as bytes
+    return image
+
+
+def IDreturnIDdTask(code, studentID, studentName):
+    SRmutex.acquire()
+    try:
+        response = session.put(
+            "https://{}:{}/ID/tasks/{}".format(server, message_port, code),
+            json={
+                "user": _userName,
+                "token": _token,
+                "sid": studentID,
+                "sname": studentName,
+            },
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if resposne.status_code == 409:
+            raise PlomBenignException("Student number {} already in use".format(e))
+        elif response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    # TODO - do we need this return value?
+    return True
+
+
+def IDdidNotFinishTask(code):
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/ID/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return True
+
+
+# ------------------------
+# ------------------------
+# Totaller client API stuff
+
+
+def TgetMaxMark():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/TOT/maxMark".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        maxMark = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return maxMark
+
+
+def TrequestDoneTasks():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/TOT/tasks/complete".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        idList = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return idList
+
+
+def TprogressCount():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/TOT/progress".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
+
+
+def TaskNextTask():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/TOT/tasks/available".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        if response.status_code == 204:
+            return None
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
+
+
+def TclaimThisTask(code):
+    SRmutex.acquire()
+    try:
+        response = session.patch(
+            "https://{}:{}/TOT/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        if response.status_code == 204:
+            raise PlomBenignException("Task taken by another user.")
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()  # pass back image as bytes
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image
+
+
+def TdidNotFinishTask(code):
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/TOT/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return True
+
+
+def TrequestImage(code):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/TOT/images/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException("Cannot find image file for {}.".format(code))
+        elif response.status_code == 409:
+            raise PlomSeriousException(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image
+
+
+def TreturnTotaledTask(code, mark):
+    SRmutex.acquire()
+    try:
+        response = session.put(
+            "https://{}:{}/TOT/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token, "mark": mark},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    # TODO - do we need this return value?
+    return True
+
+
+# ------------------------
+# ------------------------
+# Marker stuff
+def MgetMaxMark(pageGroup, version):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/maxMark".format(server, message_port),
+            json={"user": _userName, "token": _token, "pg": pageGroup, "v": version},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        maxMark = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 416:
+            raise PlomSeriousException(response.text)
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return maxMark
+
+
+def MdidNotFinishTask(code):
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/MK/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return True
+
+
+def MrequestDoneTasks(pg, v):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/tasks/complete".format(server, message_port),
+            json={"user": _userName, "token": _token, "pg": pg, "v": v},
+            verify=False,
+        )
+        response.raise_for_status()
+        idList = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return idList
+
+
+def MprogressCount(pg, v):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/progress".format(server, message_port),
+            json={"user": _userName, "token": _token, "pg": pg, "v": v},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
+
+
+def MaskNextTask(pg, v):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/tasks/available".format(server, message_port),
+            json={"user": _userName, "token": _token, "pg": pg, "v": v},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        if response.status_code == 204:
+            return None
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
+
+
+def MclaimThisTask(code):
+    SRmutex.acquire()
+    try:
+        response = session.patch(
+            "https://{}:{}/MK/tasks/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        if response.status_code == 204:
+            raise PlomBenignException("Task taken by another user.")
+
+        # response should be multipart = [image, tags]
+        imageAndTags = MultipartDecoder.from_response(response).parts
+        image = BytesIO(imageAndTags[0].content).getvalue()  # pass back image as bytes
+        tags = imageAndTags[1].text
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image, tags
+
+
+def MlatexFragment(latex):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/latex".format(server, message_port),
+            json={"user": _userName, "token": _token, "fragment": latex},
+            verify=False,
+        )
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 406:
+            raise PlomLatexException("There is an error in your latex fragment")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image
+
+
+def MrequestImages(code):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/images/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+
+        # response is either [image] or [image, annotatedImage, plom-data]
+        imageAnImageAndPlom = MultipartDecoder.from_response(response).parts
+        image = BytesIO(
+            imageAnImageAndPlom[0].content
+        ).getvalue()  # pass back image as bytes
+        if len(imageAnImageAndPlom) == 3:
+            anImage = BytesIO(
+                imageAnImageAndPlom[1].content
+            ).getvalue()  # pass back annotated-image as bytes
+            plDat = BytesIO(
+                imageAnImageAndPlom[2].content
+            ).getvalue()  # pass back plomData as bytes
+
+        else:
+            anImage = None
+            plDat = None
+
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException("Cannot find image file for {}.".format(code))
+        elif response.status_code == 409:
+            raise PlomSeriousException(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return [image, anImage, plDat]
+
+
+def MrequestOriginalImage(code):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/originalImage/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        if response.status_code == 204:
+            raise PlomNoMoreException("No paper with code {}.".format(code))
+        response.raise_for_status()
+        # response is either [image] or [image, annotatedImage, plom-data]
+        image = BytesIO(response.content).getvalue()  # pass back image as bytes
+
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException("Cannot find image file for {}.".format(code))
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image
+
+
+def MreturnMarkedTask(code, pg, ver, score, mtime, tags, aname, pname, cname):
+    SRmutex.acquire()
+    try:
+        # doesn't like ints, so covert ints to strings
+        param = {
+            "user": _userName,
+            "token": _token,
+            "pg": str(pg),
+            "ver": str(ver),
+            "score": str(score),
+            "mtime": str(mtime),
+            "tags": tags,
+            "comments": open(cname, "r").read(),
+        }
+
+        dat = MultipartEncoder(
+            fields={
+                "param": json.dumps(param),
+                "annotated": (aname, open(aname, "rb"), "image/png"),  # image
+                "plom": (pname, open(pname, "rb"), "text/plain"),  # plom-file
+            }
+        )
+        response = session.put(
+            "https://{}:{}/MK/tasks/{}".format(server, message_port, code),
+            data=dat,
+            headers={"Content-Type": dat.content_type},
+            verify=False,
+        )
+        response.raise_for_status()
+        ret = response.json()  # this is [#done, #total]
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 400:
+            raise PlomSeriousException(
+                "Image file is corrupted. This should not happen".format(code)
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+    return ret
+
+
+# todo - work out URLs for the various operations a little more nicely.
+def MsetTag(code, tags):
+    SRmutex.acquire()
+    try:
+        response = session.patch(
+            "https://{}:{}/MK/tags/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token, "tags": tags},
+            verify=False,
+        )
+        response.raise_for_status()
+
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 409:
+            raise PlomBenignException("Task taken by another user.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+
+def MrequestWholePaper(code):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/whole/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+
+        # response should be multipart = [image, tags]
+        imagesAsBytes = MultipartDecoder.from_response(response).parts
+        images = []
+        for iab in imagesAsBytes:
+            images.append(BytesIO(iab.content).getvalue())  # pass back image as bytes
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 409:
+            raise PlomBenignException("Task taken by another user.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return images
+
+
+# ------------------------
+# ------------------------
 
 session = None
 
 
 def startMessenger():
-    """Start the asyncio event loop"""
+    """Start the messenger session"""
     print("Starting a requests-session")
+    global authSession
     global session
+    authSession = requests.Session()
     session = requests.Session()
     # set max_retries to large number because UBC-wifi is pretty crappy.
     # TODO - set smaller number and have some sort of "hey you've retried
     # nn times already, are you sure you want to keep retrying" message.
+    authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
 
 
 def stopMessenger():
-    """Stop the asyncio event loop"""
-    loop.close()
-    print("Stopped asyncio loop")
+    """Stop the messenger"""
+    print("Stopped messenger session")
     session.close()
+    authSession.close()

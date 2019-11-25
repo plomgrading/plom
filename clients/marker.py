@@ -37,6 +37,7 @@ from PyQt5.QtCore import (
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QDialog,
+    QInputDialog,
     QMainWindow,
     QMessageBox,
     QProgressDialog,
@@ -48,9 +49,11 @@ from PyQt5.QtWidgets import (
 from examviewwindow import ExamViewWindow
 import messenger
 from annotator import Annotator
+from plom_exceptions import *
 from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
+from test_view import GroupView
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -73,46 +76,52 @@ directoryPath = tempDirectory.name
 # and finally https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
 # I'll do it the simpler subclassing way
 class BackgroundDownloader(QThread):
-    downloadSuccess = pyqtSignal(str)
-    downloadFail = pyqtSignal(str, str)
+    downloadSuccess = pyqtSignal(str, str, str)  # [tgv, file, tags]
+    downloadNoneAvailable = pyqtSignal()
+    downloadFail = pyqtSignal(str)
 
-    def __init__(self, tname, fname):
+    def __init__(self, pg, v):
         QThread.__init__(self)
-        self.tname = tname
-        self.fname = fname
+        self.pageGroup = pg
+        self.version = v
+        self.workingDirectory = directoryPath
 
     def run(self):
-        print(
-            "Debug: downloader thread {}: downloading {}, {}".format(
-                threading.get_ident(), self.tname, self.fname
-            )
-        )
-        try:
-            messenger.getFileDav_woInsanity(self.tname, self.fname)
-        except Exception as ex:
-            # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-            errmsg = template.format(type(ex).__name__, ex.args)
-            self.downloadFail.emit(self.tname, errmsg)
-            self.quit()
+        attempts = 0
+        while True:
+            attempts += 1
+            # little sanity check - shouldn't be needed.
+            # TODO remove.
+            if attempts > 5:
+                return
+            # ask server for tgv of next task
+            try:
+                test = messenger.MaskNextTask(self.pageGroup, self.version)
+                if not test:  # no more tests left
+                    self.downloadNoneAvailable.emit()
+                    self.quit()
+                    return
+            except PlomSeriousException as err:
+                self.downloadFail.emit(str(err))
+                self.quit()
 
-        # Ack that test received - server then deletes it from webdav
-        msg = messenger.msg_nopopup("mDWF", self.tname)
-        if msg[0] == "ACK":
-            print(
-                "Debug: downloader thread {}: got tname, fname={},{}".format(
-                    threading.get_ident(), self.tname, self.fname
-                )
-            )
-            self.downloadSuccess.emit(self.tname)
-        else:
-            errmsg = msg[1]
-            print(
-                "Debug: downloader thread {}: FAILED to get tname, fname={},{}".format(
-                    threading.get_ident(), self.tname, self.fname
-                )
-            )
-            self.downloadFail.emit(self.tname, errmsg)
+            try:
+                image, tags = messenger.MclaimThisTask(test)
+                break
+            except PlomBenignException as err:
+                # task taken by another user, so continue
+                continue
+            except PlomSeriousException as err:
+                self.downloadFail.emit(str(err))
+                self.quit()
+
+        # Return message should be [ACK, True, code, temp-filename, tags]
+        # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
+        fname = os.path.join(self.workingDirectory, test + ".png")
+        # save it
+        with open(fname, "wb+") as fh:
+            fh.write(image)
+        self.downloadSuccess.emit(test, fname, tags)
         self.quit()
 
 
@@ -147,16 +156,26 @@ class BackgroundUploader(QThread):
             except EmptyQueueException:
                 return
             print(
-                "Debug: upQ (thread {}): popped code {} from queue, uploading "
-                "with webdav...".format(str(threading.get_ident()), code)
+                "Debug: upQ (thread {}): popped code {} from queue, uploading".format(
+                    str(threading.get_ident()), code
+                )
             )
-            afile = os.path.basename(aname)
-            pfile = os.path.basename(pname)
-            cfile = os.path.basename(cname)
+            # do name sanity check here
+            if not (
+                code.startswith("t")
+                and os.path.basename(aname) == "G{}.png".format(code[1:])
+                and os.path.basename(pname) == "G{}.plom".format(code[1:])
+                and os.path.basename(cname) == "G{}.json".format(code[1:])
+            ):
+                raise PlomSeriousException(
+                    "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
+                        fname, pname, cname
+                    )
+                )
             try:
-                messenger.putFileDav_woInsanity(aname, afile)
-                messenger.putFileDav_woInsanity(pname, pfile)
-                messenger.putFileDav_woInsanity(cname, cfile)
+                msg = messenger.MreturnMarkedTask(
+                    code, pg, ver, gr, mtime, tags, aname, pname, cname
+                )
             except Exception as ex:
                 # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -164,30 +183,10 @@ class BackgroundUploader(QThread):
                 self.uploadFail.emit(code, errmsg)
                 return
 
-            print(
-                "Debug: upQ: sending marks for {} via mRMD cmd server...".format(code)
-            )
-            # ensure user is still authorised to upload this particular pageimage -
-            # this may have changed depending on what else is going on.
-            # TODO: remove, either rRMD will succeed or fail: don't precheck
-            msg = messenger.msg_nopopup("mUSO", code)
-            if msg[0] != "ACK":
-                errmsg = msg[1]
-                print("Debug: upQ: emitting FAILED signal for {}".format(code))
-                self.uploadFail.emit(code, errmsg)
-            msg = messenger.msg_nopopup(
-                "mRMD", code, gr, afile, pfile, cfile, mtime, pg, ver, tags
-            )
-            # self.sleep(4)  # pretend upload took longer
-            if msg[0] == "ACK":
-                numdone = msg[1]
-                numtotal = msg[2]
-                print("Debug: upQ: emitting SUCCESS signal for {}".format(code))
-                self.uploadSuccess.emit(code, numdone, numtotal)
-            else:
-                errmsg = msg[1]
-                print("Debug: upQ: emitting FAILED signal for {}".format(code))
-                self.uploadFail.emit(code, errmsg)
+            numdone = msg[0]
+            numtotal = msg[1]
+            print("Debug: upQ: emitting SUCCESS signal for {}".format(code))
+            self.uploadSuccess.emit(code, numdone, numtotal)
 
         print("upQ.run: thread " + str(threading.get_ident()))
         self.q = queue.Queue()
@@ -379,6 +378,10 @@ class ProxyModel(QSortFilterProxyModel):
         """Return tags for tgv"""
         return self.getDataByTGV(tgv, 4)
 
+    def getMTimeByTGV(self, tgv):
+        """Return total marking time for tgv"""
+        return int(self.getDataByTGV(tgv, 3))
+
     def markPaperByTGV(self, tgv, mrk, aname, pname, mtime, tdir):
         # There should be exactly one row with this TGV
         r = self._findTGV(tgv)
@@ -414,12 +417,13 @@ class ProxyModel(QSortFilterProxyModel):
 class MarkerClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
-    def __init__(self, mess, pageGroup, version):
+    def __init__(self):
         super(MarkerClient, self).__init__()
+
+    def getToWork(self, mess, pageGroup, version):
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
-        self.testImg = None  # safer?
         # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # Save the group and version.
@@ -429,12 +433,11 @@ class MarkerClient(QWidget):
         self.maxScore = -1
         # For viewing the whole paper we'll need these two lists.
         self.viewFiles = []
-        self.localViewFiles = []
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
         # Paste the username, pagegroup and version into GUI.
-        self.ui.userLabel.setText(messenger.whoami())
+        self.ui.userBox.setTitle("User: {}".format(messenger.whoami()))
         self.ui.pgLabel.setText(str(self.pageGroup).zfill(2))
         self.ui.vLabel.setText(str(self.version))
         # Exam model for the table of groupimages - connect to table
@@ -468,6 +471,7 @@ class MarkerClient(QWidget):
         self.ui.tagButton.clicked.connect(self.tagTest)
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
+        self.ui.viewButton.clicked.connect(self.viewSpecificImage)
         # self.ui.filterLE.focusInEvent.connect(lambda: self.ui.filterButton.setFocus())
         # Give IDs to the radio-buttons which select the marking style
         # 1 = mark total = user clicks the total-mark
@@ -491,16 +495,21 @@ class MarkerClient(QWidget):
         # Get the max-mark for the question from the server.
         try:
             self.getMaxMark()
-        except ValueError as e:
-            print("DEBUG: max-mark fail: {}".format(e))
-            QTimer.singleShot(100, self.shutDownError)
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
             return
         # Paste the max-mark into the gui.
         self.ui.scoreLabel.setText(str(self.maxScore))
+
         # Get list of papers already marked and add to table.
-        self.getMarkedList()
+        try:
+            self.getMarkedList()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+            return
+
         # Update counts
-        self.updateCount()
+        self.updateProgress()
         # Connect the view **after** list updated.
         # Connect the table-model's selection change to appropriate function
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
@@ -522,41 +531,41 @@ class MarkerClient(QWidget):
         self.cacheLatexComments()
 
     def resizeEvent(self, e):
-        if self.testImg:
+        # a resize can be triggered before we "getToWork" is called.
+        if hasattr(self, "testImg"):
             # On resize used to resize the image to keep it all in view
             self.testImg.resetB.animateClick()
-            # resize the table too.
+        # resize the table too.
+        if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(e)
 
+    def throwSeriousError(self, err):
+        ErrorMessage(
+            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down totaller.'.format(
+                err
+            )
+        ).exec_()
+        self.shutDownError()
+
+    def throwBenign(self, err):
+        ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
+
     def getMaxMark(self):
-        """Return the max mark or raise ValueError."""
+        """Get max mark from server and set."""
         # Send max-mark request (mGMX) to server
-        msg = messenger.msg("mGMX", self.pageGroup, self.version)
-        # Return should be [ACK, maxmark]
-        if not msg[0] == "ACK":
-            raise ValueError(msg[1])
-        self.maxScore = msg[1]
+        self.maxScore = messenger.MgetMaxMark(self.pageGroup, self.version)
 
     def getMarkedList(self):
         # Ask server for list of previously marked papers
-        msg = messenger.msg("mGML", self.pageGroup, self.version)
-        if msg[0] == "ERR":
-            return
-        fname = os.path.join(self.workingDirectory, "markedList.txt")
-        messenger.getFileDav(msg[1], fname)
-        # Ack that test received - server then deletes it from webdav
-        msg = messenger.msg("mDWF", msg[1])
-        # Add those marked papers to our paper-list
-        with open(fname) as json_file:
-            markedList = json.load(json_file)
-            for x in markedList:
-                self.addTGVToList(
-                    TestPageGroup(
-                        x[0], fname="", stat="marked", mrk=x[2], mtime=x[3], tags=x[4]
-                    ),
-                    update=False,
-                )
+        markedList = messenger.MrequestDoneTasks(self.pageGroup, self.version)
+        for x in markedList:
+            self.addTGVToList(
+                TestPageGroup(
+                    x[0], fname="", stat="marked", mrk=x[2], mtime=x[3], tags=x[4]
+                ),
+                update=False,
+            )
 
     def addTGVToList(self, paper, update=True):
         # Add a new entry (given inside paper) to the table and
@@ -571,30 +580,30 @@ class MarkerClient(QWidget):
         tgv = self.prxM.getPrefix(pr)
         if self.prxM.getOriginalFile(pr) != "":
             return
-        msg = messenger.msg("mGGI", tgv)
-        if msg[0] == "ERR":
+
+        try:
+            [image, anImage, plImage] = messenger.MrequestImages(tgv)
+        except PlomSeriousException as e:
+            self.throwSeriousError(e)
             return
+
         paperdir = tempfile.mkdtemp(prefix=tgv + "_", dir=self.workingDirectory)
         print("Debug: create paperdir {} for already-graded download".format(paperdir))
-        fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
-        aname = os.path.join(paperdir, "G{}.png".format(msg[1][1:]))
-        pname = os.path.join(paperdir, "G{}.plom".format(msg[1][1:]))
-        self.prxM.setPaperDir(pr, paperdir)
-
-        tfname = msg[2]  # the temp original image file on webdav
-        taname = msg[3]  # the temp annotated image file on webdav
-        tpname = msg[4]  # the temp plom file on webdav
-        messenger.getFileDav(tfname, fname)
-        # got original file so ask server to remove it.
-        msg = messenger.msg("mDWF", tfname)
+        fname = os.path.join(self.workingDirectory, "{}.png".format(tgv))
+        with open(fname, "wb+") as fh:
+            fh.write(image)
         self.prxM.setOriginalFile(pr, fname)
-        # If there is an annotated image then get it.
-        if taname is None:
+
+        if anImage is None:
             return
-        messenger.getFileDav(taname, aname)
-        messenger.getFileDav(tpname, pname)
-        # got annotated image / plom file so ask server to remove it.
-        msg = messenger.msg("mDWF", taname)
+
+        self.prxM.setPaperDir(pr, paperdir)
+        aname = os.path.join(paperdir, "G{}.png".format(tgv[1:]))
+        pname = os.path.join(paperdir, "G{}.plom".format(tgv[1:]))
+        with open(aname, "wb+") as fh:
+            fh.write(anImage)
+        with open(pname, "wb+") as fh:
+            fh.write(plImage)
         self.prxM.setAnnotatedFile(pr, aname, pname)
 
     def updateImage(self, pr=0):
@@ -613,17 +622,17 @@ class MarkerClient(QWidget):
         # Give focus to the table (so enter-key fires up annotator)
         self.ui.tableView.setFocus()
 
-    def updateCount(self):
-        # ask server for marking-count update
-        progress_msg = messenger.msg("mPRC", self.pageGroup, self.version)
-        # returns [ACK, #marked, #total]
-        if progress_msg[0] == "ACK":
-            self.ui.mProgressBar.setValue(progress_msg[1])
-            self.ui.mProgressBar.setMaximum(progress_msg[2])
+    def updateProgress(self):
+        # ask server for progress update
+        try:
+            v, m = messenger.MprogressCount(self.pageGroup, self.version)
+            self.ui.mProgressBar.setMaximum(m)
+            self.ui.mProgressBar.setValue(v)
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
 
     def requestNext(self, launchAgain=False):
-        """Ask the server for an unmarked paper (mNUM). Server should return
-        message [ACK, test-code, temp-filename]. Get file from webdav, add to
+        """Ask the server for an unmarked paper.  Get file, add to
         the list of papers and update the image.
         """
         attempts = 0
@@ -634,28 +643,27 @@ class MarkerClient(QWidget):
             if attempts > 5:
                 return
             # ask server for tgv of next task
-            msg = messenger.msg("mANT", self.pageGroup, self.version)
-            if msg[0] == "ERR":
-                return
-            # grab the test-code
-            code = msg[1]
-            msg = messenger.msg("mCST", code)
-            # return message is [ACK, True, code, filename] or [ACK, False] or [ERR, reason]
-            if msg[0] == "ERR":
-                return
-            if msg[1] == True:
-                break
+            try:
+                test = messenger.MaskNextTask(self.pageGroup, self.version)
+                if not test:
+                    return False
+            except PlomSeriousException as err:
+                self.throwSeriousError(err)
 
-        # Return message should be [ACK, True, code, temp-filename, tags]
+            try:
+                [image, tags] = messenger.MclaimThisTask(test)
+                break
+            except PlomBenignException as err:
+                # task already taken.
+                continue
+
         # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
-        fname = os.path.join(self.workingDirectory, msg[2] + ".png")
-        # Get file from the tempfilename in the webdav
-        tname = msg[3]
-        messenger.getFileDav(tname, fname)
-        # Add the page-group to the list of things to mark
-        self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]))
-        # Ack that test received - server then deletes it from webdav
-        msg = messenger.msg("mDWF", tname)
+        fname = os.path.join(self.workingDirectory, test + ".png")
+        # save it
+        with open(fname, "wb+") as fh:
+            fh.write(image)
+        self.addTGVToList(TestPageGroup(test, fname, tags=tags))
+
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
@@ -663,67 +671,50 @@ class MarkerClient(QWidget):
         # Note-launch-again is set to true when user just wants to get
         # the next test and get annotating directly.
         # When false the user stays at the marker window
-        if msg[0] != "ERR" and launchAgain:
+        if launchAgain:
             # do not recurse, instead animate click
             # self.annotateTest()
             self.ui.annButton.animateClick()
 
     def requestNextInBackgroundStart(self):
-        attempts = 0
-        while True:
-            attempts += 1
-            # little sanity check - shouldn't be needed.
-            # TODO remove.
-            if attempts > 5:
-                return
-            # ask server for tgv of next task
-            msg = messenger.msg("mANT", self.pageGroup, self.version)
-            if msg[0] == "ERR":
-                return
-            # grab the test-code
-            code = msg[1]
-            msg = messenger.msg("mCST", code)
-            # return message is [ACK, True, code, filename] or [ACK, False] or [ERR, reason]
-            if msg[0] == "ERR":
-                return
-            if msg[1] == True:
-                break
-
-        # Return message should be [ACK, True, code, temp-filename, tags]
-        # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
-        fname = os.path.join(self.workingDirectory, msg[2] + ".png")
-        # Get file from the tempfilename in the webdav
-        tname = msg[3]
         # Do this `messenger.getFileDav(tname, fname)` in another thread
         if self.backgroundDownloader:
             print("Previous Downloader: " + str(self.backgroundDownloader))
             # if prev downloader still going than wait.  might block the gui
             self.backgroundDownloader.wait()
-        self.backgroundDownloader = BackgroundDownloader(tname, fname)
+        self.backgroundDownloader = BackgroundDownloader(self.pageGroup, self.version)
         self.backgroundDownloader.downloadSuccess.connect(
             self.requestNextInBackgroundFinished
+        )
+        self.backgroundDownloader.downloadNoneAvailable.connect(
+            self.requestNextInBackgroundNoneAvailable
         )
         self.backgroundDownloader.downloadFail.connect(
             self.requestNextInBackgroundFailed
         )
         self.backgroundDownloader.start()
-        # Add the page-group to the list of things to mark
-        # do not update the displayed image with this new paper
-        self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
+        # # Add the page-group to the list of things to mark
+        # # do not update the displayed image with this new paper
+        # self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
 
-    def requestNextInBackgroundFinished(self, tname):
+    def requestNextInBackgroundFinished(self, test, fname, tags):
+        self.addTGVToList(TestPageGroup(test, fname, tags=tags))
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
 
-    def requestNextInBackgroundFailed(self, code, errmsg):
+    def requestNextInBackgroundNoneAvailable(self):
+        # Keep this function here just in case we want to do something in the future.
+        pass
+
+    def requestNextInBackgroundFailed(self, errmsg):
         # TODO what should we do?  Is there a realistic way forward
         # or should we just die with an exception?
         ErrorMessage(
             "Unfortunately, there was an unexpected error downloading "
-            "paper {}.\n\n{}\n\n"
+            "next paper.\n\n{}\n\n"
             "Please consider filing an issue?  I don't know if its "
-            "safe to continue from here...".format(code, errmsg)
+            "safe to continue from here...".format(errmsg)
         ).exec_()
 
     def moveToNextUnmarkedTest(self):
@@ -927,10 +918,24 @@ class MarkerClient(QWidget):
     def callbackAnnIsDoneAccept(self, tgv, stuff):
         self.setEnabled(True)
         gr, launchAgain, mtime, paperdir, aname, pname, cname = stuff
+
+        if not (0 <= gr and gr <= self.maxScore):
+            msg = ErrorMessage(
+                "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(
+                    self.annotator.score
+                )
+            )
+            msg.exec_()
+            # TODO: what do do here?  revert?
+            return
+
         # Copy the mark, annotated filename and the markingtime into the table
         # TODO: sort this out whether tgv is "t00..." or "00..."?!
         # TODO: what if its filtered out of prxM?  Do this to exM?
         self.prxM.markPaperByTGV("t" + tgv, gr, aname, pname, mtime, paperdir)
+        # update the mtime to be the total marking time
+        totmtime = self.prxM.getMTimeByTGV("t" + tgv)
+
         # Update the currently displayed image by selecting that row
         # self.ui.tableView.selectRow(index[1].row())
         tags = self.prxM.getTagsByTGV("t" + tgv)
@@ -942,7 +947,7 @@ class MarkerClient(QWidget):
             aname,  # annotated file
             pname,  # plom file
             cname,  # comment file
-            mtime,  # marking time
+            totmtime,  # total marking time
             self.pageGroup,
             self.version,
             tags,
@@ -1020,11 +1025,11 @@ class MarkerClient(QWidget):
         self.DNF()
         # Then send a 'user closing' message - server will revoke
         # authentication token.
-        msg, = messenger.msg("UCL")
-        assert msg == "ACK"
-        # Now save annotatorSettings to file
-        # self.saveAnnotatorSettings()
-        # finally send shutdown signal to client window and close.
+        try:
+            messenger.closeUser()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+
         self.my_shutdown_signal.emit(2)
         self.close()
 
@@ -1036,32 +1041,33 @@ class MarkerClient(QWidget):
             if self.exM.data(self.exM.index(r, 1)) != "marked":
                 # Tell server the code fo any paper that is not marked.
                 # server will put that back on the todo-pile.
-                msg = messenger.msg("mDNF", self.exM.data(self.exM.index(r, 0)))
+                try:
+                    messenger.MdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
+                except PlomSeriousException as err:
+                    self.throwSeriousError(err)
 
     def viewWholePaper(self):
         index = self.ui.tableView.selectedIndexes()
         tgv = self.prxM.getPrefix(index[0].row())
         testnumber = tgv[1:5]  # since tgv = tXXXXgYYvZ
-        msg = messenger.msg("mGWP", testnumber)
-        if msg[0] == "ERR":
-            return []
+        try:
+            imagesAsBytes = messenger.MrequestWholePaper(testnumber)
+        except PlomBenignException as err:
+            self.throwBenign(err)
 
-        self.viewFiles = msg[1:]
-        self.localViewFiles = []
-        ## GIVE FILES NAMES
-        for f in self.viewFiles:
+        self.viewFiles = []
+        for iab in imagesAsBytes:
             tfn = tempfile.NamedTemporaryFile(delete=False).name
-            self.localViewFiles.append(tfn)
-            messenger.getFileDav(f, tfn)
-        return self.localViewFiles
+            self.viewFiles.append(tfn)
+            with open(tfn, "wb") as fh:
+                fh.write(iab)
+
+        return self.viewFiles
 
     def doneWithViewFiles(self):
         for f in self.viewFiles:
-            msg = messenger.msg("mDWF", f)
-        for f in self.localViewFiles:
             if os.path.isfile(f):
                 os.unlink(f)
-        self.localViewFiles = []
         self.viewFiles = []
 
     def cacheLatexComments(self):
@@ -1102,27 +1108,21 @@ class MarkerClient(QWidget):
             shutil.copyfile(self.commentCache[txt], "frag.png")
             return True
 
-        # not yet present, so have to build it
-        # create a tempfile
-        fname = os.path.join(self.workingDirectory, "fragment")
-        # call fragment file just the username to avoid collisions
-        dname = messenger.whoami()
-        # write the latex text to that file
-        with open(fname, "w") as fh:
-            fh.write(txt)
-        messenger.putFileDav(fname, dname)
-
-        msg = messenger.msg("mLTT", dname)
-        if msg[1] == False:
+        try:
+            fragment = messenger.MlatexFragment(txt)
+        except PlomLatexException as err:
+            # a latex error
             return False
-
-        messenger.getFileDav(msg[2], "frag.png")
-        messenger.msg("mDWF", msg[2])
-        # now keep copy of frag.png for later use and update commentCache
+        # a name for the fragment file
         fragFile = tempfile.NamedTemporaryFile(
             delete=False, dir=self.workingDirectory
         ).name
-        shutil.copyfile("frag.png", fragFile)
+        # save it
+        with open(fragFile, "wb+") as fh:
+            fh.write(fragment)
+        # and put a copy to frag.png
+        shutil.copyfile(fragFile, "frag.png")
+        # add it to the cache
         self.commentCache[txt] = fragFile
         return True
 
@@ -1148,13 +1148,43 @@ class MarkerClient(QWidget):
             self.ui.tableView.resizeRowsToContents()
 
             # send updated tag back to server.
-            msg = messenger.msg(
-                "mTAG",
-                self.prxM.data(index[0]),
-                self.prxM.data(index[4]),  # send the tags back too
-            )
+            try:
+                msg = messenger.MsetTag(
+                    self.prxM.data(index[0]),
+                    self.prxM.data(index[4]),  # send the tags back too
+                )
+            except PlomSeriousException as err:
+                self.throwSeriousError(err)
         return
 
     def setFilter(self):
         self.prxM.setFilterString(self.ui.filterLE.text().strip())
         self.prxM.filterTags()
+
+    def viewSpecificImage(self):
+        testNumber, ok = QInputDialog.getInt(
+            self,
+            "View another test",
+            "From which test do you want to view (pageGroup, version)=({}, {})?".format(
+                int(self.pageGroup), int(self.version)
+            ),
+            1,
+            1,
+            9999,
+            1,
+        )
+        if ok:
+            tgv = "t{}g{}v{}".format(
+                str(testNumber).zfill(4), self.pageGroup, self.version
+            )
+            try:
+                image = messenger.MrequestOriginalImage(tgv)
+            except PlomNoMoreException as err:
+                msg = ErrorMessage("No image corresponding to code {}".format(tgv))
+                msg.exec_()
+                return
+            ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory)
+            with open(ifile.name, "wb") as fh:
+                fh.write(image)
+            tvw = GroupView(ifile.name)
+            tvw.exec_()

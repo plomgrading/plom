@@ -20,8 +20,10 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
 from useful_classes import ErrorMessage, SimpleMessage
+from plom_exceptions import *
 
 import messenger
+
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
 from resources.version import Plom_API_Version
@@ -41,7 +43,6 @@ def readLastTime():
     lastTime["user"] = ""
     lastTime["server"] = "localhost"
     lastTime["mport"] = "41984"
-    lastTime["wport"] = "41985"
     lastTime["pg"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
@@ -91,7 +92,6 @@ class Chooser(QDialog):
         self.ui.userLE.setText(lastTime["user"])
         self.ui.serverLE.setText(lastTime["server"])
         self.ui.mportSB.setValue(int(lastTime["mport"]))
-        self.ui.wportSB.setValue(int(lastTime["wport"]))
         self.ui.pgSB.setValue(int(lastTime["pg"]))
         self.ui.vSB.setValue(int(lastTime["v"]))
         self.ui.fontSB.setValue(int(lastTime["fontSize"]))
@@ -106,21 +106,31 @@ class Chooser(QDialog):
         pwd = self.ui.passwordLE.text()
         if len(pwd) < 4:
             return
-        # set server, message port, webdave port.
         server = self.ui.serverLE.text()
         mport = self.ui.mportSB.value()
-        wport = self.ui.wportSB.value()
         # save those settings
         self.saveDetails()
 
         # Have Messenger login into to server
-        messenger.setServerDetails(server, mport, wport)
+        messenger.setServerDetails(server, mport)
         messenger.startMessenger()
         try:
             messenger.requestAndSaveToken(user, pwd)
-        except ValueError as e:
-            ErrorMessage("Could not get authentication token.\n\n"
-                         "Error was: {}".format(e)).exec_()
+        except PlomAPIException as e:
+            ErrorMessage(
+                "Could not authenticate due to API mismatch."
+                "Your client version is {}.\n\n"
+                "Error was: {}".format(__version__, e)
+            ).exec_()
+            return
+        except PlomAuthenticationException as e:
+            ErrorMessage("Could not authenticate: {}".format(e)).exec_()
+            return
+        except PlomSeriousException as e:
+            ErrorMessage(
+                "Could not get authentication token.\n\n"
+                "Unexpected error: {}".format(e)
+            ).exec_()
             return
 
         # Now run the appropriate client sub-application
@@ -130,9 +140,10 @@ class Chooser(QDialog):
             v = str(self.ui.vSB.value())
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient(messenger, pg, v)
+            markerwin = marker.MarkerClient()
             markerwin.my_shutdown_signal.connect(self.on_other_window_close)
             markerwin.show()
+            markerwin.getToWork(messenger, pg, v)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
@@ -147,9 +158,10 @@ class Chooser(QDialog):
             # Run the Total client.
             self.setEnabled(False)
             self.hide()
-            totalerwin = totaler.TotalClient(messenger)
+            totalerwin = totaler.TotalClient()
             totalerwin.my_shutdown_signal.connect(self.on_other_window_close)
             totalerwin.show()
+            totalerwin.getToWork(messenger)
             self.parent.totaler = totalerwin
 
     def runMarker(self):
@@ -168,7 +180,6 @@ class Chooser(QDialog):
         lastTime["user"] = self.ui.userLE.text()
         lastTime["server"] = self.ui.serverLE.text()
         lastTime["mport"] = self.ui.mportSB.value()
-        lastTime["wport"] = self.ui.wportSB.value()
         lastTime["pg"] = self.ui.pgSB.value()
         lastTime["v"] = self.ui.vSB.value()
         lastTime["fontSize"] = self.ui.fontSB.value()

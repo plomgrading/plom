@@ -3,8 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
-from aiohttp import web
-import asyncio
+from aiohttp import web, MultipartWriter, MultipartReader
 import datetime
 import errno
 import glob
@@ -31,7 +30,7 @@ from resources.version import __version__
 from resources.version import Plom_API_Version as serverAPI
 
 # default server values and location of grouped-scans.
-serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
+serverInfo = {"server": "127.0.0.1", "mport": 41984}
 pathScanDirectory = "../scanAndGroup/readyForMarking/"
 # # # # # # # # # # # #
 # Fire up ssl for network communications
@@ -39,33 +38,530 @@ sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.key")
 
+# ----------------------
+# ----------------------
+
 # aiohttp-ificiation of things
 routes = web.RouteTableDef()
 
 
-@routes.put("/")
-async def hello(request):
+# ----------------------
+# ----------------------
+# Authentication / closing stuff
+
+
+@routes.get("/Version")
+async def version(request):
+    return web.Response(
+        text="Running Plom server version {} with API {}".format(
+            __version__, serverAPI
+        ),
+        status=200,
+    )
+
+
+@routes.delete("/users/{user}")
+async def closeUser(request):
     data = await request.json()
-    message = data["msg"]
-    print("Got message {}".format(message))
-
-    # message should be a list [cmd, user, password, arg1, arg2, etc]
-    if not isinstance(message, list):
-        SLogger.info(">>> Got strange message - not a list. {}".format(message))
+    user = request.match_info["user"]
+    if data["user"] != request.match_info["user"]:
+        return web.Response(status=400)  # malformed request.
+    elif peon.validate(data["user"], data["token"]):
+        peon.closeUser(data["user"])
+        return web.Response(status=200)
     else:
-        if message[0] == "AUTH":
-            # do not log the password - just auth and username
-            SLogger.info("Got auth request: {}".format(message[:2]))
+        return web.Response(status=401)
+
+
+@routes.put("/users/{user}")
+async def giveUserToken(request):
+    data = await request.json()
+    user = request.match_info["user"]
+
+    rmsg = peon.giveUserToken(data["user"], data["pw"], data["api"])
+    if rmsg[0]:
+        return web.json_response(rmsg[1], status=200)  # all good, return the token
+    elif rmsg[1].startswith("API"):
+        return web.json_response(
+            rmsg[1], status=400
+        )  # api error - return the error message
+    else:
+        return web.Response(status=401)  # you are not authorised
+
+
+@routes.put("/admin/reloadUsers")
+async def adminReloadUsers(request):
+    data = await request.json()
+
+    rmsg = peon.reloadUsers(data["pw"])
+    # returns either True (success) or False (auth-error)
+    if rmsg:
+        return web.json_response(status=200)  # all good
+    else:
+        return web.Response(status=401)  # you are not authorised
+
+
+@routes.put("/admin/reloadScans")
+async def adminReloadScans(request):
+    data = await request.json()
+
+    rmsg = peon.reloadImages(data["pw"])
+    # returns either True (success) or False (auth-error)
+    if rmsg:
+        return web.json_response(status=200)  # all good
+    else:
+        return web.Response(status=401)  # you are not authorised
+
+
+# ----------------------
+# ----------------------
+# Identifier stuff
+
+
+@routes.get("/ID/progress")
+async def IDprogressCount(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        return web.json_response(peon.IDprogressCount(), status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/ID/tasks/available")
+async def IDaskNextTask(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.IDaskNextTask(data["user"])  # returns [True, code] or [False]
+        if rmsg[0]:
+            return web.json_response(rmsg[1], status=200)
         else:
-            SLogger.info("Got message: {}".format(message))
-        # Run the command on the server and get the return message.
-        # peon will be the instance of the server when it runs.
-        rmesg = peon.proc_cmd(message)
-        print("Returning message {}".format(rmesg))
-        SLogger.info("Returning message {}".format(rmesg))
-        return web.json_response({"rmsg": rmesg}, status=200)
+            return web.Response(status=204)  # no papers left
+    else:
+        return web.Response(status=401)
 
 
+@routes.get("/ID/classlist")
+async def IDrequestClasslist(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        if os.path.isfile("../resources/classlist.csv"):
+            return web.FileResponse("../resources/classlist.csv", status=200)
+        else:
+            return web.Response(status=404)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/ID/predictions")
+async def IDrequestPredictions(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        if os.path.isfile("../resources/predictionlist.csv"):
+            return web.FileResponse("../resources/predictionlist.csv", status=200)
+        else:
+            return web.Response(status=404)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/ID/tasks/complete")
+async def IDrequestDoneTasks(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        # return the completed list
+        return web.json_response(peon.IDrequestDoneTasks(data["user"]), status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/ID/images/{tgv}")
+async def IDrequestImage(request):
+    data = await request.json()
+    code = request.match_info["tgv"]
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.IDrequestImage(data["user"], code)
+        if rmsg[0]:  # user allowed access - returns [true, fname]
+            if os.path.isfile(rmsg[1]):
+                return web.FileResponse(rmsg[1], status=200)
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=409)  # someone else has that image
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
+# ----------------------
+
+## ID put - do change server status.
+@routes.patch("/ID/tasks/{task}")
+async def IDclaimThisTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        rmesg = peon.IDclaimThisTask(data["user"], code)
+        if rmesg[0]:  # return [True, filename]
+            return web.FileResponse(rmesg[1], status=200)
+        else:
+            return web.Response(status=204)  # that task already taken.
+    else:
+        return web.Response(status=401)
+
+
+@routes.put("/ID/tasks/{task}")
+async def IDreturnIDdTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.IDreturnIDdTask(data["user"], code, data["sid"], data["sname"])
+        # returns [True] if all good
+        # [False, True] - if student number already in use
+        # [False, False] - if bigger error
+        if rmsg[0]:  # all good
+            return web.Response(status=200)
+        elif rmsg[1]:  # student number already in use
+            return web.Response(status=409)
+        else:  # a more serious error - can't find this in database
+            return web.Response(status=404)
+    else:
+        return web.Response(status=401)
+
+
+# ----------------------
+
+
+@routes.delete("/ID/tasks/{task}")
+async def IDdidNotFinishTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        peon.IDdidNotFinish(data["user"], code)
+        return web.json_response(status=200)
+    else:
+        return web.Response(status=401)
+
+
+# ----------------------
+# ----------------------
+# Totaller stuff
+
+
+@routes.get("/TOT/maxMark")
+async def TgetMarkMark(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        return web.json_response(peon.TgetMaxMark(), status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/TOT/tasks/complete")
+async def TrequestDoneTasks(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        # return the completed list
+        return web.json_response(peon.TrequestDoneTasks(data["user"]), status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/TOT/progress")
+async def TprogressCount(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        return web.json_response(peon.TprogressCount(), status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/TOT/tasks/available")
+async def TaskNextTask(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.TaskNextTask(data["user"])  # returns [True, code] or [False]
+        if rmsg[0]:
+            return web.json_response(rmsg[1], status=200)
+        else:
+            return web.Response(status=204)  # no papers left
+    else:
+        return web.Response(status=401)
+
+
+@routes.patch("/TOT/tasks/{task}")
+async def TclaimThisTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        rmesg = peon.TclaimThisTask(data["user"], code)
+        if rmesg[0]:  # return [True, filename]
+            return web.FileResponse(rmesg[1], status=200)
+        else:
+            return web.Response(status=204)  # that task already taken.
+    else:
+        return web.Response(status=401)
+
+
+@routes.delete("/TOT/tasks/{task}")
+async def TdidNotFinishTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        peon.TdidNotFinish(data["user"], code)
+        return web.json_response(status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/TOT/images/{tgv}")
+async def TrequestImage(request):
+    data = await request.json()
+    code = request.match_info["tgv"]
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.TrequestImage(data["user"], code)
+        if rmsg[0]:  # user allowed access - returns [true, fname]
+            if os.path.isfile(rmsg[1]):
+                return web.FileResponse(rmsg[1], status=200)
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=409)  # someone else has that image
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
+@routes.put("/TOT/tasks/{task}")
+async def TreturnTotaledTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.TreturnTotaledTask(data["user"], code, data["mark"])
+        # returns True if all good, False if error
+        if rmsg:  # all good
+            return web.Response(status=200)
+        else:  # a more serious error - can't find this in database
+            return web.Response(status=404)
+    else:
+        return web.Response(status=401)
+
+
+# ----------------------
+# ----------------------
+# Marker stuff
+
+
+@routes.get("/MK/maxMark")
+async def TgetMarkMark(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.MgetPageGroupMax(data["pg"], data["v"])
+        if rmsg[0]:
+            return web.json_response(rmsg[1], status=200)
+        elif rmsg[1] == "PGE":
+            # pg out of range
+            return web.Response(
+                text="Page-group out of range - please check before trying again.",
+                status=416,
+            )
+        elif rmsg[1] == "VE":
+            # version our of range
+            return web.Response(
+                text="Version out of range - please check before trying again.",
+                status=416,
+            )
+    else:
+        return web.Response(status=401)
+
+
+@routes.delete("/MK/tasks/{task}")
+async def MdidNotFinishTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        peon.MdidNotFinish(data["user"], code)
+        return web.json_response(status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/MK/tasks/complete")
+async def MrequestDoneTasks(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        # return the completed list
+        return web.json_response(
+            peon.MrequestDoneTasks(data["user"], data["pg"], data["v"]), status=200
+        )
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/MK/progress")
+async def MprogressCount(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        return web.json_response(peon.MprogressCount(data["pg"], data["v"]), status=200)
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/MK/tasks/available")
+async def MaskNextTask(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.MaskNextTask(
+            data["pg"], data["v"]
+        )  # returns [True, code] or [False]
+        if rmsg[0]:
+            return web.json_response(rmsg[1], status=200)
+        else:
+            return web.Response(status=204)  # no papers left
+    else:
+        return web.Response(status=401)
+
+
+@routes.patch("/MK/tasks/{task}")
+async def MclaimThisTask(request):
+    data = await request.json()
+    code = request.match_info["task"]
+    if peon.validate(data["user"], data["token"]):
+        rmesg = peon.MclaimThisTask(data["user"], code)
+        if rmesg[0]:  # return [True, filename, tags]
+            with MultipartWriter("imageAndTags") as mpwriter:
+                mpwriter.append(open(rmesg[1], "rb"))
+                mpwriter.append_json(rmesg[2])
+            return web.Response(body=mpwriter, status=200)
+        else:
+            return web.Response(status=204)  # that task already taken.
+    else:
+        return web.Response(status=401)
+
+
+@routes.get("/MK/latex")
+async def MlatexFragment(request):
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.MlatexFragment(data["user"], data["fragment"])
+        if rmsg[0]:  # user allowed access - returns [true, fname]
+            return web.FileResponse(rmsg[1], status=200)
+        else:
+            return web.Response(status=406)  # a latex error
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
+@routes.get("/MK/images/{tgv}")
+async def MrequestImages(request):
+    data = await request.json()
+    code = request.match_info["tgv"]
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.MrequestImages(data["user"], code)
+        # returns either [True, fname] or [True, fname, aname, plomdat] or [False, error]
+        if rmsg[0]:  # user allowed access - returns [true, fname]
+            with MultipartWriter("imageAnImageAndPlom") as mpwriter:
+                mpwriter.append(open(rmsg[1], "rb"))
+                if len(rmsg) == 4:
+                    mpwriter.append(open(rmsg[2], "rb"))
+                    mpwriter.append(open(rmsg[3], "rb"))
+            return web.Response(body=mpwriter, status=200)
+        else:
+            return web.Response(status=409)  # someone else has that image
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
+@routes.get("/MK/originalImage/{tgv}")
+async def MrequestOriginalImage(request):
+    data = await request.json()
+    code = request.match_info["tgv"]
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.MrequestOriginalImage(code)
+        # returns either [True, fname] or [False]
+        if rmsg[0]:  # user allowed access - returns [true, fname]
+            return web.FileResponse(rmsg[1], status=200)
+        else:
+            return web.Response(status=204)  # no content there
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
+@routes.put("/MK/tasks/{tgv}")
+async def MreturnMarkedTask(request):
+    code = request.match_info["tgv"]
+    # the put will be in 3 parts - use multipart reader
+    # in order we expect those 3 parts - [parameters (inc comments), image, plom-file]
+    reader = MultipartReader.from_response(request)
+    part0 = await reader.next()
+    if part0 is None:  # weird error
+        return web.Response(status=406)  # should have sent 3 parts
+    param = await part0.json()
+    comments = param["comments"]
+
+    # image file
+    part1 = await reader.next()
+    if part1 is None:  # weird error
+        return web.Response(status=406)  # should have sent 3 parts
+    image = await part1.read()
+
+    # plom file
+    part2 = await reader.next()
+    if part2 is None:  # weird error
+        return web.Response(status=406)  # should have sent 3 parts
+    plomdat = await part2.read()
+
+    if peon.validate(param["user"], param["token"]):
+        rmsg = peon.MreturnMarkedTask(
+            param["user"],
+            code,
+            int(param["pg"]),
+            int(param["ver"]),
+            int(param["score"]),
+            image,
+            plomdat,
+            comments,
+            int(param["mtime"]),
+            param["tags"],
+        )
+        # rmsg = either [True, numDone, numTotal] or [False] if error.
+        if rmsg[0]:
+            return web.json_response([rmsg[1], rmsg[2]], status=200)
+        else:
+            return web.Response(status=400)  # some sort of error with image file
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
+@routes.patch("/MK/tags/{tgv}")
+async def MsetTag(request):
+    code = request.match_info["tgv"]
+    data = await request.json()
+    if peon.validate(data["user"], data["token"]):
+        rmsg = peon.MsetTag(data["user"], code, data["tags"])
+        if rmsg:
+            return web.Response(status=200)
+        else:
+            return web.Response(status=409)  # this is not your tgv
+    else:
+        return web.Response(status=401)  # not authorised at all
+
+
+@routes.get("/MK/whole/{number}")
+async def MrequestWholePaper(request):
+    data = await request.json()
+    number = request.match_info["number"]
+    if peon.validate(data["user"], data["token"]):
+        rmesg = peon.MrequestWholePaper(data["user"], number)
+        if rmesg[0]:  # return [True, [filenames]] or [False]
+            with MultipartWriter("imageAndTags") as mpwriter:
+                for fn in rmesg[1]:
+                    mpwriter.append(open(fn, "rb"))
+            return web.Response(body=mpwriter, status=200)
+        else:
+            return web.Response(status=409)  # not yours
+    else:
+        return web.Response(status=401)
+
+
+# ----------------------
 # ----------------------
 
 # Set up loggers for server, marking and ID-ing
@@ -127,51 +623,6 @@ def getServerInfo():
 
 
 # # # # # # # # # # # #
-# A dict of messages from client and corresponding server commands.
-servCmd = {
-    "AUTH": "authoriseUser",
-    "UCL": "userClosing",
-    "iANT": "IDaskNextTask",
-    "iCST": "IDclaimSpecificTask",
-    "iDNF": "IDdidntFinish",
-    "iPRC": "IDprogressCount",
-    "iRID": "IDreturnIDd",
-    "iRCL": "IDrequestClassList",
-    "iRPL": "IDrequestPredictionList",
-    "iGAL": "IDgetAlreadyIDList",
-    "iGGI": "IDgetGroupImage",
-    "iDWF": "IDdoneWithFile",
-    #####
-    "mANT": "MaskNextTask",
-    "mCST": "MclaimSpecificTask",
-    "mDNF": "MdidntFinish",
-    "mPRC": "MprogressCount",
-    "mUSO": "MuserStillOwns",
-    "mRMD": "MreturnMarked",
-    "mGMX": "MgetPageGroupMax",
-    "mGML": "MgetMarkedPaperList",
-    "mGGI": "MgetGroupImages",
-    "mDWF": "MdoneWithFile",
-    "mGWP": "MgetWholePaper",
-    "mLTT": "MlatexThisText",
-    "mRCF": "MreturnCommentFile",
-    "mRPF": "MreturnPlomFile",
-    "mTAG": "MsetTag",
-    #####
-    "tGMM": "TgetMaxMark",
-    "tGTP": "TgotTest",
-    "tPRC": "TprogressCount",
-    "tNUT": "TnextUntotaled",
-    "tDNF": "TdidntFinish",
-    "tRAT": "TreturnAlreadyTotaled",
-    "tRUT": "TreturnTotaled",
-    "tGAT": "TgetAlreadyTotaledList",
-    "tDWF": "TdoneWithFile",
-    "tGGI": "TgetGroupImage",
-}
-
-
-# # # # # # # # # # # #
 
 
 class Server(object):
@@ -212,20 +663,20 @@ class Server(object):
         """
         # Check user is manager.
         if not self.authority.authoriseUser("Manager", password):
-            return ["ERR", "You are not authorised to reload images"]
+            return False
         self.logger.info("Reloading group images")
         # Read in the groups and images again.
         readExamsGrouped()
         findPageGroups()
         self.loadPapers()
         # Send acknowledgement back to manager.
-        return ["ACK"]
+        return True
 
     def reloadUsers(self, password):
         """Reload the user list."""
         # Check user is manager.
         if not self.authority.authoriseUser("Manager", password):
-            return ["ERR", "You are not authorised to reload users"]
+            return False
         self.logger.info("Reloading the user list")
         # Load in the user list and check against existing user list for differences
         if os.path.exists("../resources/userList.json"):
@@ -249,61 +700,11 @@ class Server(object):
                         # remove user's authorisation token.
                         self.authority.detoken(u)
         self.logger.info("Current user list = {}".format(list(self.userList.keys())))
-        # return acknowledgement to manager.
-        return ["ACK"]
+        # return acknowledgement
+        print(">> User list reloaded")
+        return True
 
-    def proc_cmd(self, message):
-        """Process the server command in the message
-        Message should be a list [cmd, user, password, arg1, arg2, etc]
-        Basic comands are handled in this function.
-        More complicated ones are run as separate functions.
-        """
-        # convert the command in message[0] to a function-call
-        # if cannot convert then exec msgError()
-        pcmd = servCmd.get(message[0], "msgError")
-        if message[0] == "PING":
-            # Client has sent a ping to test if server is up
-            # so we return an ACK
-            return ["ACK"]
-        elif message[0] == "AUTH":
-            # Client is requesting authentication
-            # message should be ['AUTH', user, password]
-            # So we return their authentication token (if they are legit)
-            return self.authoriseUser(*message[1:])
-        elif message[0] == "RUSR":
-            # Manager is requesting server reload users.
-            # message should be ['RUSR', managerpwd]
-            rv = self.reloadUsers(*message[1:])
-            return rv
-        elif message[0] == "RIMR":
-            # Manager is requesting server reload images
-            # message should be ['RIMR', managerpwd]
-            rv = self.reloadImages(*message[1:])
-            return rv
-        else:
-            # Otherwise client is making a normal request
-            # should be ['CMD', user, token, arg1, arg2,...]
-            # first check if user is authorised - check their authorisation token.
-            if self.validate(message[1], message[2]):
-                # user is authorised, so run their requested function
-                return getattr(self, pcmd)(*message[1:])
-            else:
-                user = message[1]
-                # only exception here is if user is closing.
-                # if unauth'd user tries this, just ignore.
-                if message[0] == "UCL":
-                    self.logger.info(
-                        ">>> User {} appears to be closing out more than once.".format(
-                            user
-                        )
-                    )
-                    return ["ACK"]
-                # otherwise throw an "Unauth error" to client.
-                self.logger.info(">>> Unauthorised attempt by user {}".format(user))
-                print("Attempt by non-user to {}".format(message))
-                return ["ERR", "You are not an authorised user"]
-
-    def authoriseUser(self, user, password, clientAPI):
+    def giveUserToken(self, user, password, clientAPI):
         """When a user requests authorisation
         They have sent their name and password
         first check if they are a valid user
@@ -314,7 +715,8 @@ class Server(object):
         """
         if clientAPI != serverAPI:
             return [
-                "ERR",
+                False,
+                "API"
                 'Plom API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
                     clientAPI, serverAPI, __version__
                 ),
@@ -326,9 +728,9 @@ class Server(object):
             self.MDB.resetUsersToDo(user)
             self.TDB.resetUsersToDo(user)
             self.logger.info("Authorising user {}".format(user))
-            return ["ACK", self.authority.getToken(user)]
+            return [True, self.authority.getToken(user)]
         else:
-            return ["ERR", "You are not an authorised user"]
+            return [False, "NAU"]
 
     def validate(self, user, token):
         """Check the user's token is valid"""
@@ -353,40 +755,6 @@ class Server(object):
             # tgv is t1234g67v9
             t, pg, v = int(tgv[1:5]), int(tgv[6:8]), int(tgv[9])
             self.MDB.addUnmarkedGroupImage(t, pg, v, tgv, pageGroupsForGrading[tgv])
-
-    def provideFile(self, fname):
-        """Copy a file (temporarily) into the webdav for a client,
-        and return the temp-filename to the client.
-        """
-        tfn = tempfile.NamedTemporaryFile(delete=False, dir=davDirectory)
-        shutil.copy(fname, tfn.name)
-        return os.path.basename(tfn.name)
-
-    def claimFile(self, fname, subdir):
-        """Once an image has been marked, the server copies the image
-        back from the webdav and into markedPapers or appropriate
-        subdirectory.
-        """
-        srcfile = os.path.join(davDirectory, fname)
-        dstfile = os.path.join("markedPapers", subdir, fname)
-        # Check if file already exists
-        if os.path.isfile(dstfile):
-            # backup the older file with a timestamp
-            os.rename(
-                dstfile,
-                dstfile + ".regraded_at_" + datetime.now().strftime("%d_%H-%M-%S"),
-            )
-        # This should really use path-join.
-        shutil.copy(srcfile, dstfile)
-        # Copy with full name (not just directory) so can overwrite properly - else error on overwrite.
-
-    def removeFile(self, davfn):
-        """Once a file has been grabbed by the client, delete it from the webdav.
-        """
-        # delete file if present.
-        fname = davDirectory + "/" + davfn
-        if os.path.isfile(davDirectory + "/" + davfn):
-            os.unlink(fname)
 
     def printToDo(self):
         """Ask each database to print the images that are still on
@@ -417,29 +785,7 @@ class Server(object):
         """
         self.IDDB.printIdentified()
 
-    def msgError(self, *args):
-        """The client sent a strange message, so send back an error message.
-        """
-        return ["ERR", "Some sort of command error - what did you send?"]
-
-    def IDrequestClassList(self, user, token):
-        """The client requests the classlist, so the server copies
-        the class list to the webdav and returns the temp webdav path
-        to that file to the client.
-        """
-        return ["ACK", self.provideFile("../resources/classlist.csv")]
-
-    def IDrequestPredictionList(self, user, token):
-        return ["ACK", self.provideFile("../resources/predictionlist.csv")]
-
-    def IDdoneWithFile(self, user, token, tfn):
-        """The client acknowledges they got the file,
-        so the server deletes it and sends back an ACK.
-        """
-        self.removeFile(tfn)
-        return ["ACK"]
-
-    def MgetPageGroupMax(self, user, token, pg, v):
+    def MgetPageGroupMax(self, pg, v):
         """When a marked-client logs on they need the max mark for the group
         they are marking. Check the (group/version) is valid and then send back
         the corresponding mark from the test spec.
@@ -447,43 +793,39 @@ class Server(object):
         iv = int(v)
         ipg = int(pg)
         if ipg < 1 or ipg > self.testSpec.getNumberOfGroups():
-            return ["ERR", "Pagegroup out of range"]
+            return [False, "PGE"]
         if iv < 1 or iv > self.testSpec.Versions:
-            return ["ERR", "Version out of range"]
+            return [False, "VE"]
         # Send an ack with the max-mark for the pagegroup.
-        return ["ACK", self.testSpec.Marks[ipg]]
+        return [True, self.testSpec.Marks[ipg]]
 
-    def IDdidntFinish(self, user, token, code):
+    def IDdidNotFinish(self, user, code):
         """User didn't finish IDing the image with given code. Tell the
         database to put this back on the todo-pile.
         """
         self.IDDB.didntFinish(user, code)
-        # send back an ACK.
-        return ["ACK"]
+        return
 
-    def MdidntFinish(self, user, token, tgv):
+    def MdidNotFinish(self, user, tgv):
         """User didn't finish marking the image with given code. Tell the
         database to put this back on the todo-pile.
         """
         self.MDB.didntFinish(user, tgv)
-        # send back an ACK.
-        return ["ACK"]
+        return
 
-    def TdidntFinish(self, user, token, code):
+    def TdidNotFinish(self, user, code):
         """User didn't finish totaling the image with given code. Tell the
         database to put this back on the todo-pile.
         """
         self.TDB.didntFinish(user, code)
-        # send back an ACK.
-        return ["ACK"]
+        return
 
-    def userClosing(self, user, token):
+    def closeUser(self, user):
         """Client is closing down their app, so remove the authorisation token
         """
         self.authority.detoken(user)
-        return ["ACK"]
 
-    def IDaskNextTask(self, user, token):
+    def IDaskNextTask(self, user):
         """The client has asked for the next unidentified paper, so
         ask the database for its code and send back to the
         client.
@@ -491,138 +833,98 @@ class Server(object):
         # Get code of next unidentified image from the database
         give = self.IDDB.askNextTask(user)
         if give is None:
-            return ["ERR", "No more papers"]
+            return [False]
         else:
             # Send to the client
-            return ["ACK", give]
+            return [True, give]
 
-    def IDclaimSpecificTask(self, user, token, code):
+    def IDclaimThisTask(self, user, code):
         if self.IDDB.giveSpecificTaskToClient(user, code):
-            # return a successful claim
-            return [
-                "ACK",
-                True,
-                code,
-                self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, code)),
-            ]
+            # return true, image-filename
+            return [True, "{}/idgroup/{}.png".format(pathScanDirectory, code)]
         else:
             # return a fail claim - client will try again.
-            return ["ACK", False]
+            return [False]
 
-    def IDprogressCount(self, user, token):
+    def IDprogressCount(self):
         """Send back current ID progress counts to the client"""
-        return ["ACK", self.IDDB.countIdentified(), self.IDDB.countAll()]
+        return [self.IDDB.countIdentified(), self.IDDB.countAll()]
 
-    def IDreturnIDd(self, user, token, ret, sid, sname):
+    def IDreturnIDdTask(self, user, ret, sid, sname):
         """Client has ID'd the pageimage with code=ret, student-number=sid,
         and student-name=sname. Send the information to the database (which
         checks if that number has been used previously). If okay then send
         and ACK, else send an error that the number has been used.
         """
-        if self.IDDB.takeIDImageFromClient(ret, user, sid, sname):
-            return ["ACK"]
-        else:
-            return ["ERR", "That student number already used."]
+        # TODO - improve this
+        # returns [True] if all good
+        # [False, True] - if student number already in use
+        # [False, False] - if bigger error
+        return self.IDDB.takeIDImageFromClient(ret, user, sid, sname)
 
-    def IDgetAlreadyIDList(self, user, token):
+    def IDrequestDoneTasks(self, user):
         """When a id-client logs on they request a list of papers they have already IDd.
-        Send back a textfile with list of TGVs.
+        Send back the list.
         """
-        idList = self.IDDB.buildIDList(user)
-        # dump the list to file as json and then give file to client
-        tfn = tempfile.NamedTemporaryFile()
-        with open(tfn.name, "w") as outfile:
-            json.dump(idList, outfile)
-        # Send an ack with the file
-        return ["ACK", self.provideFile(tfn.name)]
+        return self.IDDB.buildIDList(user)
 
-    def IDgetGroupImage(self, user, token, tgv):
-        give = self.IDDB.getGroupImage(user, tgv)
-        fname = "{}/idgroup/{}.png".format(pathScanDirectory, give)
-        if fname is not None:
-            return ["ACK", give, self.provideFile(fname), None]
+    def IDrequestImage(self, user, tgv):
+        if self.IDDB.getGroupImage(user, tgv):
+            fname = "{}/idgroup/{}.png".format(pathScanDirectory, tgv)
+            return [True, fname]
         else:
-            return ["ERR", "User {} is not authorised for tgv={}".format(user, tgv)]
+            return [False]
 
-    def MaskNextTask(self, user, token, pg, v):
+    def MaskNextTask(self, pg, v):
         """The client has asked for the next unmarked paper, so
         ask the database for its code and send back to the
         client.
         """
         # Get code of next unidentified image from the database
-        give = self.MDB.askNextTask(user, pg, v)
+        give = self.MDB.askNextTask(pg, v)
         if give is None:
-            return ["ERR", "No more papers"]
+            return [False]
         else:
             # Send to the client
-            return ["ACK", give]
+            return [True, give]
 
-    def MclaimSpecificTask(self, user, token, code):
-        retval = self.MDB.giveSpecificTaskToClient(user, code)
-        # retval is either [False] or [True, give, fname, tag]
-        if retval[0] is True:
-            # copy the file into the webdav and tell client code / path.
-            return ["ACK", True, retval[1], self.provideFile(retval[2]), retval[3]]
-        else:
-            # return a fail claim - client will try again.
-            return ["ACK", False]
+    def MclaimThisTask(self, user, code):
+        return self.MDB.giveSpecificTaskToClient(user, code)
+        # retval is either [False] or [True, fname, tags]
 
-    def MprogressCount(self, user, token, pg, v):
+    def MprogressCount(self, pg, v):
         """Send back current marking progress counts to the client"""
-        return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
+        return [self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
-    def MdoneWithFile(self, user, token, filename):
-        """Client acknowledges they got the file, so
-        server deletes it from the webdav and sends an ack.
-        """
-        self.removeFile(filename)
-        return ["ACK"]
-
-    def MuserStillOwns(self, user, token, code):
-        """Check that user still 'owns' the tgv = code"""
-        if self.MDB.userStillOwnsTGV(code, user):
-            return ["ACK"]
-        else:
-            return ["ERR", "You are no longer authorised to upload that tgv"]
-
-    def MreturnMarked(
-        self, user, token, code, mark, fname, pname, cname, mtime, pg, v, tags
+    def MreturnMarkedTask(
+        self, user, code, pg, v, mark, image, plomdat, comments, mtime, tags
     ):
         """Client has marked the pageimage with code, mark, annotated-file-name
-        (which the client has uploaded to webdav), and spent mtime marking it.
+        and spent mtime marking it.
         Send the information to the database and send an ack.
         """
-        # sanity check that mark lies in [0,..,max]
-        if int(mark) < 0 or int(mark) > self.testSpec.Marks[int(pg)]:
-            # this should never happen.
-            return ["ERR", "Assigned mark out of range. Contact administrator."]
-        if not (
-            code.startswith("t")
-            and fname == "G{}.png".format(code[1:])
-            and pname == "G{}.plom".format(code[1:])
-            and cname == "G{}.json".format(code[1:])
-        ):
-            SLogger.info(
-                "Rejected mismatched files from buggy client (user {}) for {}".format(
-                    user, code
-                )
-            )
-            return ["ERR", "Buggy client gave me the wrong files!  File a bug."]
+        # score + file sanity checks were done at client. Do we need to redo here?
+        # image, plomdat are bytearrays, comments = list
+        aname = "G{}.png".format(code[1:])
+        pname = "G{}.plom".format(code[1:])
+        cname = "G{}.json".format(code[1:])
+        with open("markedPapers/" + aname, "wb") as fh:
+            fh.write(image)
+        with open("markedPapers/plomFiles/" + pname, "wb") as fh:
+            fh.write(plomdat)
+        with open("markedPapers/commentFiles/" + cname, "w") as fh:
+            json.dump(comments, fh)
 
-        # move annoted file to right place with new filename
-        self.claimFile(fname, "")
-        self.claimFile(pname, "plomFiles")
-        self.claimFile(cname, "commentFiles")
         # Should check the fname is valid png - just check header presently
-        if imghdr.what(os.path.join("markedPapers", fname)) != "png":
-            return ["ERR", "Misformed image file. Try again."]
+        if imghdr.what("markedPapers/" + aname) != "png":
+            return [False, "Misformed image file. Try again."]
         # now update the database
         self.MDB.takeGroupImageFromClient(
-            code, user, mark, fname, pname, cname, mtime, tags
+            code, user, mark, aname, pname, cname, mtime, tags
         )
-        self.recordMark(user, mark, fname, mtime, tags)
+        self.recordMark(user, mark, aname, mtime, tags)
         # return ack with current counts.
-        return ["ACK", self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
+        return [True, self.MDB.countMarked(pg, v), self.MDB.countAll(pg, v)]
 
     def recordMark(self, user, mark, fname, mtime, tags):
         """For test blah.png, we record, in blah.png.txt, as a backup
@@ -642,138 +944,114 @@ class Server(object):
         )
         fh.close()
 
-    def MgetMarkedPaperList(self, user, token, pg, v):
+    def MrequestDoneTasks(self, user, pg, v):
         """When a marked-client logs on they request a list of papers they have already marked.
         Check the (group/version) is valid and then send back a textfile with list of TGVs.
         """
         iv = int(v)
         ipg = int(pg)
-        if ipg < 1 or ipg > self.testSpec.getNumberOfGroups():
-            return ["ERR", "Pagegroup out of range"]
-        if iv < 1 or iv > self.testSpec.Versions:
-            return ["ERR", "Version out of range"]
-        markedList = self.MDB.buildMarkedList(user, pg, v)
-        # dump the list to file as json and then give file to client
-        tfn = tempfile.NamedTemporaryFile()
-        with open(tfn.name, "w") as outfile:
-            json.dump(markedList, outfile)
-        # Send an ack with the file
-        return ["ACK", self.provideFile(tfn.name)]
+        # TODO - verify that since this happens after "get max mark" we don't need to check ranges - they should be fine unless real idiocy has happened?
+        return self.MDB.buildMarkedList(user, pg, v)
 
-    def MgetGroupImages(self, user, token, tgv):
+    def MrequestImages(self, user, tgv):
         give, fname, aname = self.MDB.getGroupImage(user, tgv)
         if fname is not None:
             if aname is not None:
                 # plom file is same as annotated file just with suffix plom
                 return [
-                    "ACK",
-                    give,
-                    self.provideFile(fname),
-                    self.provideFile("markedPapers/" + aname),
-                    self.provideFile("markedPapers/plomFiles/" + aname[:-3] + "plom"),
+                    True,
+                    fname,
+                    "markedPapers/" + aname,
+                    "markedPapers/plomFiles/" + aname[:-3] + "plom",
                 ]
             else:
-                return ["ACK", give, self.provideFile(fname), None]
+                return [True, fname]
         else:
-            return ["ERR", "Non-existant tgv={}".format(tgv)]
+            return [False]
 
-    def MsetTag(self, user, token, tgv, tag):
+    def MrequestOriginalImage(self, tgv):
+        fname = self.MDB.getOriginalGroupImage(tgv)
+        if fname is not None:
+            return [True, fname]
+        else:
+            return [False]
+
+    def MsetTag(self, user, tgv, tag):
         if self.MDB.setTag(user, tgv, tag):
-            return ["ACK"]
+            return True
         else:
-            return ["ERR", "Non-existant tgv={}".format(tgv)]
+            return False
 
-    def MgetWholePaper(self, user, token, testNumber):
+    def MrequestWholePaper(self, user, testNumber):
         # client passes the tgv code of their current group image.
         # from this we infer the test number.
         files = self.MDB.getTestAll(testNumber)
-        msg = ["ACK"]
-        for f in files:
-            msg.append(self.provideFile(f))
-        return msg
+        if len(files) > 0:
+            return [True, files]
+        else:
+            return [False]
 
-    def MlatexThisText(self, user, token, fragmentFile):
-        fragment = os.path.join(davDirectory, fragmentFile)
-        tfn = tempfile.NamedTemporaryFile()
+    def MlatexFragment(self, user, fragment):
+        # TODO - only one frag file per user - is this okay?
+        tfrag = tempfile.NamedTemporaryFile()
+        with open(tfrag.name, "w+") as fh:
+            fh.write(fragment)
+
+        fname = os.path.join(tempDirectory.name, "{}_frag.png".format(user))
         if (
-            subprocess.run(["python3", "latex2png.py", fragment, tfn.name]).returncode
+            subprocess.run(["python3", "latex2png.py", tfrag.name, fname]).returncode
             == 0
         ):
-            msg = ["ACK", True, self.provideFile(tfn.name)]
+            return [True, fname]
         else:
-            msg = ["ACK", False]
-        return msg
+            return [False]
 
-    def TgetMaxMark(self, user, token):
-        return ["ACK", sum(spec.Marks)]
+    def TgetMaxMark(self):
+        return sum(spec.Marks)
 
-    def TgotTest(self, user, token, test, tfn):
-        """Client acknowledges they got the test pageimage, so server
-        deletes it from the webdav and sends an ack.
-        """
-        self.removeFile(tfn)
-        return ["ACK"]
-
-    def TprogressCount(self, user, token):
-        """Send back current total progress counts to the client"""
-        return ["ACK", self.TDB.countTotaled(), self.TDB.countAll()]
-
-    def TnextUntotaled(self, user, token):
-        """The client has asked for the next untotaled paper, so
-        ask the database for its code and then copy the appropriate file
-        into the webdav and send code and the temp-webdav path back to the
+    def TaskNextTask(self, user):
+        """The client has asked for the next unidentified paper, so
+        ask the database for its code and send back to the
         client.
         """
         # Get code of next unidentified image from the database
-        give = self.TDB.giveTotalImageToClient(user)
+        give = self.TDB.askNextTask(user)
         if give is None:
-            return ["ERR", "No more papers"]
+            return [False]
         else:
-            # copy the file into the webdav and tell client the code and path
-            return [
-                "ACK",
-                give,
-                self.provideFile("{}/idgroup/{}.png".format(pathScanDirectory, give)),
-            ]
+            # Send to the client
+            return [True, give]
 
-    def TreturnTotaled(self, user, token, ret, value):
+    def TclaimThisTask(self, user, code):
+        if self.TDB.giveSpecificTaskToClient(user, code):
+            # return true, image-filename
+            return [True, "{}/idgroup/{}.png".format(pathScanDirectory, code)]
+        else:
+            # return a fail claim - client will try again.
+            return [False]
+
+    def TprogressCount(self):
+        """Send back current total progress counts to the client"""
+        return [self.TDB.countTotaled(), self.TDB.countAll()]
+
+    def TreturnTotaledTask(self, user, ret, value):
         """Client has totaled the pageimage with code=ret, total=value.
         Send the information to the database and return an ACK
         """
-        self.TDB.takeTotalImageFromClient(ret, user, value)
-        return ["ACK"]
+        return self.TDB.takeTotalImageFromClient(ret, user, value)
 
-    def TreturnAlreadyTotaled(self, user, token, ret, value):
-        """ As per TReturnTotaled"""
-        self.TDB.takeTotalImageFromClient(ret, user, value)
-        return ["ACK"]
-
-    def TgetAlreadyTotaledList(self, user, token):
+    def TrequestDoneTasks(self, user):
         """When a total-client logs on they request a list of papers they have already totaled.
-        Send back a textfile with list of TGVs.
+        Send back a list of TGVs.
         """
-        tList = self.TDB.buildTotalList(user)
-        # dump the list to file as json and then give file to client
-        tfn = tempfile.NamedTemporaryFile()
-        with open(tfn.name, "w") as outfile:
-            json.dump(tList, outfile)
-        # Send an ack with the file
-        return ["ACK", self.provideFile(tfn.name)]
+        return self.TDB.buildTotalList(user)
 
-    def TdoneWithFile(self, user, token, tfn):
-        """The client acknowledges they got the file,
-        so the server deletes it and sends back an ACK.
-        """
-        self.removeFile(tfn)
-        return ["ACK"]
-
-    def TgetGroupImage(self, user, token, tgv):
-        give = self.TDB.getGroupImage(user, tgv)
-        fname = "{}/idgroup/{}.png".format(pathScanDirectory, give)
-        if fname is not None:
-            return ["ACK", give, self.provideFile(fname), None]
+    def TrequestImage(self, user, tgv):
+        if self.TDB.getGroupImage(user, tgv):
+            fname = "{}/idgroup/{}.png".format(pathScanDirectory, tgv)
+            return [True, fname]
         else:
-            return ["ERR", "User {} is not authorised for tgv={}".format(user, tgv)]
+            return [False]
 
 
 # # # # # # # # # # # #
@@ -781,9 +1059,7 @@ class Server(object):
 
 
 def checkPortFree(ip, port):
-    """Test if the given port is free so server can use it
-    for messaging and/or webdav.
-    """
+    """Test if the given port is free so server can use it."""
     # Create a socket.
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # try to bind it to the IP and port.
@@ -802,9 +1078,7 @@ def checkPortFree(ip, port):
 
 
 def checkPorts():
-    """Check that the messaging and webdav ports are free
-    on the server.
-    """
+    """Check that the messaging port is free on the server."""
     if checkPortFree(serverInfo["server"], serverInfo["mport"]):
         SLogger.info("Messaging port is free and working.")
         print("Messaging port is free and working.")
@@ -819,24 +1093,6 @@ def checkPorts():
             "Problem with messaging port {} on server {}. "
             "Please check and try again.".format(
                 serverInfo["mport"], serverInfo["server"]
-            )
-        )
-        exit(1)
-
-    if checkPortFree(serverInfo["server"], serverInfo["wport"]):
-        SLogger.info("Webdav port is free and working.")
-        print("Webdav port is free and working.")
-    else:
-        SLogger.info(
-            "Problem with webdav port {} on server {}. "
-            "Please check and try again.".format(
-                serverInfo["wport"], serverInfo["server"]
-            )
-        )
-        print(
-            "Problem with webdav port {} on server {}. "
-            "Please check and try again.".format(
-                serverInfo["wport"], serverInfo["server"]
             )
         )
         exit(1)
@@ -859,23 +1115,9 @@ checkPorts()
 # check that markedPapers and subdirectories exist
 checkDirectories()
 
-# Create a temp directory for the webdav
 tempDirectory = tempfile.TemporaryDirectory()
-davDirectory = tempDirectory.name
 # Give directory correct permissions.
-os.system("chmod o-r {}".format(davDirectory))
-SLogger.info("Webdav directory = {}".format(davDirectory))
-# Fire up the webdav server.
-try:
-    webdavlog = open("webdav.log", "w+")
-except:
-    print("Cannot open webdav.log filehandle.")
-    exit()
-# consider using "-q" option since it reduces verbosity of log and only keeps warnings+errors.
-cmd = "wsgidav -H {} -p {} --server cheroot -r {} -c ../resources/davconf.yaml".format(
-    serverInfo["server"], serverInfo["wport"], davDirectory
-)
-davproc = subprocess.Popen(shlex.split(cmd), stdout=webdavlog, stderr=webdavlog)
+os.system("chmod o-r {}".format(tempDirectory.name))
 
 # Read the test specification
 spec = TestSpecification()
@@ -904,12 +1146,6 @@ try:
 except KeyboardInterrupt:
     pass
 
-# # # # # # # # # # # #
-# Close the webdav server
-subprocess.Popen.kill(davproc)
-SLogger.info("Webdav server closed")
-print("Webdav server closed")
-webdavlog.close()
 # close the rest of the stuff
 SLogger.info("Closing databases")
 print("Closing databases")

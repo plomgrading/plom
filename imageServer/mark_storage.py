@@ -160,7 +160,7 @@ class MarkDatabase:
         except IntegrityError:
             self.logging.info("GroupImage {} {} already exists.".format(t, code))
 
-    def askNextTask(self, username, pg, v):
+    def askNextTask(self, pg, v):
         """Find unmarked test and send tgv to client"""
         try:
             with markdb.atomic():
@@ -168,9 +168,7 @@ class MarkDatabase:
                 x = GroupImage.get(status="ToDo", pageGroup=pg, version=v)
                 # log it
                 self.logging.info(
-                    "Client asked for next task - passing {} to user {}".format(
-                        x.tgv, username
-                    )
+                    "Client asked for next task - passing {}".format(x.tgv)
                 )
                 # return the tgv
                 return x.tgv
@@ -196,7 +194,7 @@ class MarkDatabase:
                     x.time = datetime.now()
                     x.save()
                     # return the tgv and filename
-                    return [True, x.tgv, x.originalFile, x.tags]
+                    return [True, x.originalFile, x.tags]
                 else:
                     # has been claimed by someone else.
                     return [False]
@@ -224,15 +222,6 @@ class MarkDatabase:
         except GroupImage.DoesNotExist:
             self.logging.info("Nothing left on To-Do pile")
             return (None, None, None)
-
-    def userStillOwnsTGV(self, code, username):
-        try:
-            with markdb.atomic():
-                # get the record by code and username
-                x = GroupImage.get(tgv=code, user=username)
-            return True
-        except GroupImage.DoesNotExist:
-            return False
 
     def takeGroupImageFromClient(
         self, code, username, mark, fname, pname, cname, mt, tag
@@ -376,6 +365,15 @@ class MarkDatabase:
         except GroupImage.DoesNotExist:
             print("Request for non-existant tgv={}".format(code))
             return (None, None)
+
+    def getOriginalGroupImage(self, code):
+        try:
+            with markdb.atomic():
+                x = GroupImage.get(tgv=code)
+                return x.originalFile
+        except GroupImage.DoesNotExist:
+            print("Request for non-existant tgv={}".format(code))
+            return None
 
     def getTestAll(self, number):
         lst = []
