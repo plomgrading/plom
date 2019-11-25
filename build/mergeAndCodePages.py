@@ -65,7 +65,6 @@ rSE = fitz.Rect(pW - 85, pH - 90, pW - 15, pH - 20)
 # Build all relevant pngs in a temp directory
 with tempfile.TemporaryDirectory() as tmpDir:
     # filenames for testname QR and dnw rectangles
-    nameFile = os.path.join(tmpDir, "name.png")
     dnw0File = os.path.join(tmpDir, "dnw0.png")
     dnw1File = os.path.join(tmpDir, "dnw1.png")
     # make a little grey triangle with the test name
