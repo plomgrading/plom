@@ -44,9 +44,12 @@ class TotalDatabase:
 
     def createTable(self):
         """Create the required table in the database"""
-        self.logging.info("Creating database tables")
         with tdb:
-            tdb.create_tables([TotalImage])
+            if tdb.table_exists("totalimage"):
+                self.logging.info("Reusing existing 'totalimage' database table")
+            else:
+                tdb.create_tables([TotalImage])
+                self.logging.info("Creating database table")
 
     def shutdown(self):
         """Shut connection to the database"""
@@ -243,6 +246,14 @@ class TotalDatabase:
             with tdb.atomic():
                 x = TotalImage.get(tgv=code, user=username)
                 return x.tgv
-        except IDImage.DoesNotExist:
+        except TotalImage.DoesNotExist:
             print("Request for non-existant tgv = {}".format(code))
             return None
+
+    def checkExists(self, code):
+        try:
+            with tdb.atomic():
+                x = TotalImage.get(tgv=code)
+                return True
+        except TotalImage.DoesNotExist:
+            return False

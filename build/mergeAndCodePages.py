@@ -3,6 +3,8 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __license__ = "AGPLv3"
 
 import sys
+import shlex
+import subprocess
 import os
 import fitz
 import pyqrcode
@@ -63,24 +65,24 @@ rSE = fitz.Rect(pW - 85, pH - 90, pW - 15, pH - 20)
 # Build all relevant pngs in a temp directory
 with tempfile.TemporaryDirectory() as tmpDir:
     # filenames for testname QR and dnw rectangles
-    nameFile = os.path.join(tmpDir, "name.png")
     dnw0File = os.path.join(tmpDir, "dnw0.png")
     dnw1File = os.path.join(tmpDir, "dnw1.png")
     # make a little grey triangle with the test name
     # put this in corner where staple is
-    cmd = (
+    cmd = shlex.split(
         'convert -pointsize 18 -antialias -size 232x116 xc:white -draw "stroke black fill grey '
         "path 'M 114,0  L 0,114  L 228,114 L 114,0 Z'\"  -gravity south "
         "-annotate +0+8 '{}' -rotate -45 -trim {}".format(name, dnw0File)
     )
-    os.system(cmd)
+    subprocess.call(cmd)
+
     # and one for the other corner (back of page) in other orientation
-    cmd = (
+    cmd = shlex.split(
         'convert -pointsize 18 -size 232x116 xc:white -draw "stroke black fill grey '
         "path 'M 114,0  L 0,114  L 228,114 L 114,0 Z'\"  -gravity south "
         "-annotate +0+8 '{}' -rotate +45 -trim {}".format(name, dnw1File)
     )
-    os.system(cmd)
+    subprocess.call(cmd)
 
     # create QR codes and other stamps for each test/page/version
     qrFile = {}
@@ -95,28 +97,31 @@ with tempfile.TemporaryDirectory() as tmpDir:
             qrFile[p][i] = os.path.join(tmpDir, "page{}_{}.png".format(p, i))
             qr.png(qrFile[p][i], scale=4)
             # put a border around it
-            os.system("mogrify {} {}".format(mogParams, qrFile[p][i]))
+            cmd = shlex.split("mogrify {} {}".format(mogParams, qrFile[p][i]))
+            subprocess.call(cmd)
 
-        # a file for the test/page stamp in top-centre of page
-        tpFile[p] = os.path.join(
-            tmpDir, "t{}p{}.png".format(str(test).zfill(4), str(p).zfill(2))
-        )
-        # create the test/page stamp using imagemagick
-        os.system(
-            "convert -pointsize 36 -size 200x42 caption:'{}.{}' -trim "
-            "-gravity Center -extent 200x42 -bordercolor black "
-            "-border 1 {}".format(str(test).zfill(4), str(p).zfill(2), tpFile[p])
-        )
     # After creating all of the QRcodes etc we can put them onto
     # the actual pdf pages as pixmaps using pymupdf
     # read the DNW triangles in to pymupdf
     dnw0 = fitz.Pixmap(dnw0File)
     dnw1 = fitz.Pixmap(dnw1File)
     for p in range(length):
-        # read in the test/page stamp
-        testnumber = fitz.Pixmap(tpFile[p + 1])
-        # put it at centre top each page
-        exam[p].insertImage(rTC, pixmap=testnumber, overlay=True, keep_proportion=False)
+        # test/page stamp in top-centre of page
+        # Rectangle size hacked by hand. TODO = do this more algorithmically
+        rect = fitz.Rect(pW // 2 - 40, 20, pW // 2 + 40, 44)
+        text = "{}.{}".format(str(test).zfill(4), str(p + 1).zfill(2))
+        rc = exam[p].insertTextbox(
+            rect,
+            text,
+            fontsize=18,
+            color=[0, 0, 0],
+            fontname="Helvetica",
+            fontfile=None,
+            align=1,
+        )
+        exam[p].drawRect(rect, color=[0, 0, 0])
+        assert rc > 0
+
         # grab the tpv QRcodes for current page
         qr = {}
         for i in range(1, 5):
@@ -133,6 +138,70 @@ with tempfile.TemporaryDirectory() as tmpDir:
             exam[p].insertImage(rNW, pixmap=qr[2], overlay=True)
             exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
             exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
+    if "id" in pageVersions and "name" in pageVersions:
+        # a file for the student-details
+        YSHIFT = 0.4  # where on page is centre of box 0=top, 1=bottom
+        txt = "{}\n{}".format(pageVersions["id"], pageVersions["name"])
+        sidW = (
+            max(
+                fitz.getTextlength(
+                    pageVersions["id"], fontsize=36, fontname="Helvetica"
+                ),
+                fitz.getTextlength(
+                    pageVersions["name"], fontsize=36, fontname="Helvetica"
+                ),
+                fitz.getTextlength(
+                    "Please sign here", fontsize=48, fontname="Helvetica"
+                ),
+            )
+            * 1.1
+            * 0.5
+        )
+        sidH = 36 * 1.3
+        sidRect = fitz.Rect(
+            pW // 2 - sidW, pH * YSHIFT - sidH, pW // 2 + sidW, pH * YSHIFT + sidH
+        )
+        sidRect2 = fitz.Rect(sidRect.x0, sidRect.y1, sidRect.x1, sidRect.y1 + 48 * 1.3)
+        sidRect3 = fitz.Rect(
+            sidRect.x0 - 8, sidRect.y0 - 8, sidRect.x1 + 8, sidRect2.y1 + 8
+        )
+        exam[0].drawRect(sidRect3, color=[0, 0, 0], fill=[1, 1, 1], width=4)
+        exam[0].drawRect(sidRect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+        exam[0].drawRect(sidRect2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+        fontname = None
+        try:
+            tmp = txt.encode("Latin-1")
+            fontname = "Helvetica"
+        except UnicodeEncodeError:
+            pass
+        if not fontname:
+            try:
+                # TODO: double-check what encoding is right for PDF 1.7
+                tmp = txt.encode("gb2312")
+                fontname = "china-ss"
+            except UnicodeEncodeError:
+                pass
+        if not fontname:
+            raise ValueError("Don't know how to write name {} into PDF".format(txt))
+        rc = exam[0].insertTextbox(
+            sidRect,
+            txt,
+            fontsize=36,
+            color=[0, 0, 0],
+            fontname=fontname,
+            fontfile=None,
+            align=1,
+        )
+        rc = exam[0].insertTextbox(
+            sidRect2,
+            "Please sign here",
+            fontsize=48,
+            color=[0.9, 0.9, 0.9],
+            fontname="Helvetica",
+            fontfile=None,
+            align=1,
+        )
+
 
 # Finally save the resulting pdf.
 # Add the deflate option to compress the embedded pngs
