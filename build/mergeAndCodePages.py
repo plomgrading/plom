@@ -141,6 +141,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
             exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
     if "id" in pageVersions and "name" in pageVersions:
         # a file for the student-details
+        YSHIFT = 0.4  # where on page is centre of box 0=top, 1=bottom
         txt = "{}\n{}".format(pageVersions["id"], pageVersions["name"])
         sidW = (
             max(
@@ -151,17 +152,17 @@ with tempfile.TemporaryDirectory() as tmpDir:
                     pageVersions["name"], fontsize=36, fontname="Helvetica"
                 ),
                 fitz.getTextlength(
-                    "Please sign here", fontsize=36, fontname="Helvetica"
+                    "Please sign here", fontsize=48, fontname="Helvetica"
                 ),
             )
-            * 1.3
+            * 1.1
             * 0.5
         )
         sidH = 36 * 1.3
         sidRect = fitz.Rect(
-            pW // 2 - sidW, pH // 2 - sidH, pW // 2 + sidW, pH // 2 + sidH
+            pW // 2 - sidW, pH * YSHIFT - sidH, pW // 2 + sidW, pH * YSHIFT + sidH
         )
-        sidRect2 = fitz.Rect(sidRect.x0, sidRect.y1, sidRect.x1, sidRect.y1 + sidH)
+        sidRect2 = fitz.Rect(sidRect.x0, sidRect.y1, sidRect.x1, sidRect.y1 + 48 * 1.3)
         sidRect3 = fitz.Rect(
             sidRect.x0 - 8, sidRect.y0 - 8, sidRect.x1 + 8, sidRect2.y1 + 8
         )
@@ -180,7 +181,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
         rc = exam[0].insertTextbox(
             sidRect2,
             "Please sign here",
-            fontsize=36,
+            fontsize=48,
             color=[0.9, 0.9, 0.9],
             fontname="Helvetica",
             fontfile=None,
