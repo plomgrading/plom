@@ -8,6 +8,7 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import csv
+from warnings import warn
 
 from build_utils import (
     buildDirectories,
@@ -45,6 +46,19 @@ if __name__ == "__main__":
     buildDirectories()
     exams = buildExamPages(spec)
     students = readClassList()
+    print(
+        "Creating {} exams: {} will have student name/number pre-written, "
+        "{} will be spare blanks.".format(
+            spec.Tests, len(students), spec.Tests - len(students)
+        )
+    )
+    if len(students) > spec.Tests:
+        warn("too many students for number of tests")
+    if (
+        spec.Tests - len(students) < 0.05 * len(students)
+        or spec.Tests - len(students) < 3
+    ):
+        warn("not enough spare blanks (?)")
     exams = prefillNamesOnExams(spec, exams, students)
     writeExamLog(exams)
     buildTestPDFs(spec, exams)
