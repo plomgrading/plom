@@ -120,7 +120,26 @@ def checkNonCanvasCSV(fname):
     # concat name0 and name1 fields into fullName field
     # strip excess whitespace from those fields
     df["studentName"] = df[name0] + ", " + df[name1]
+
     return df
+
+
+def checkLatinNames(df):
+    """Pass the pandas object and check that the entries in the studentName column are all latin."""
+    # TODO - make this less eurocentric in the future.
+    problems = []
+    for index, row in df.iterrows():
+        try:
+            tmp = row["studentName"].encode("Latin-1")
+        except UnicodeEncodeError:
+            problems.append([row["id"], row["studentName"]])
+    if len(problems) > 0:
+        print("WARNING: The following ID/name pairs contain non-Latin characters:")
+        for X in problems:
+            print(X)
+        return False
+    else:
+        return True
 
 
 class SetUp(QWidget):
@@ -217,6 +236,15 @@ class SetUp(QWidget):
                 print("Extracting columns from Canvas data and renaming")
                 df = df[["Student Number", "Student"]]
                 df.columns = ["id", "studentName"]
+                # check characters in names are latin-1 compatible
+                if not checkLatinNames(df):
+                    QMessageBox.question(
+                        self,
+                        "Classlist problems",
+                        "The classlist you supplied contains non-Latin characters - see console output. You can proceed, but it may cause problems. We recommend you Latinise them and reload the classlist.",
+                        buttons=QMessageBox.Ok,
+                    )
+
                 print("Saving to classlist.csv")
                 df.to_csv("../resources/classlist.csv", index=False)
                 return
@@ -231,6 +259,16 @@ class SetUp(QWidget):
                     )
                     return
                 df = df[["id", "studentName"]]
+
+                # check characters in names are latin-1 compatible
+                if not checkLatinNames(df):
+                    QMessageBox.question(
+                        self,
+                        "Classlist problems",
+                        "The classlist you supplied contains non-Latin characters - see console output. You can proceed, but it may cause problems. We recommend you Latinise them and reload the classlist.",
+                        buttons=QMessageBox.Ok,
+                    )
+
                 print("Saving to classlist.csv")
                 df.to_csv("../resources/classlist.csv", index=False)
                 return
