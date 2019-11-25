@@ -169,12 +169,26 @@ with tempfile.TemporaryDirectory() as tmpDir:
         exam[0].drawRect(sidRect3, color=[0, 0, 0], fill=[1, 1, 1], width=4)
         exam[0].drawRect(sidRect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
         exam[0].drawRect(sidRect2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+        fontname = None
+        try:
+            tmp = txt.encode("Latin-1")
+            fontname = "Helvetica"
+        except UnicodeEncodeError:
+            pass
+        try:
+            # TODO: double-check what encoding is right for PDF 1.7
+            tmp = txt.encode("gb2312")
+            fontname = "china-ss"
+        except UnicodeEncodeError:
+            pass
+        if not fontname:
+            raise ValueError("Don't know how to write name {} into PDF".format(txt))
         rc = exam[0].insertTextbox(
             sidRect,
             txt,
             fontsize=36,
             color=[0, 0, 0],
-            fontname="Helvetica",
+            fontname=fontname,
             fontfile=None,
             align=1,
         )
