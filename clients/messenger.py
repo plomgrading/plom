@@ -21,14 +21,14 @@ from useful_classes import ErrorMessage
 import time
 import threading
 
-from http.client import HTTPConnection
-import logging
-
-logging.basicConfig()  # you need to initialize logging, otherwise you will not see anything from requests
-logging.getLogger().setLevel(logging.DEBUG)
-requests_log = logging.getLogger("urllib3")
-requests_log.setLevel(logging.DEBUG)
-requests_log.propagate = True
+# from http.client import HTTPConnection
+# import logging
+#
+# logging.basicConfig()  # you need to initialize logging, otherwise you will not see anything from requests
+# logging.getLogger().setLevel(logging.DEBUG)
+# requests_log = logging.getLogger("urllib3")
+# requests_log.setLevel(logging.DEBUG)
+# requests_log.propagate = True
 
 from io import StringIO, BytesIO, TextIOWrapper
 from plom_exceptions import *
