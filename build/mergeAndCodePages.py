@@ -174,12 +174,13 @@ with tempfile.TemporaryDirectory() as tmpDir:
             fontname = "Helvetica"
         except UnicodeEncodeError:
             pass
-        try:
-            # TODO: double-check what encoding is right for PDF 1.7
-            tmp = txt.encode("gb2312")
-            fontname = "china-ss"
-        except UnicodeEncodeError:
-            pass
+        if not fontname:
+            try:
+                # TODO: double-check what encoding is right for PDF 1.7
+                tmp = txt.encode("gb2312")
+                fontname = "china-ss"
+            except UnicodeEncodeError:
+                pass
         if not fontname:
             raise ValueError("Don't know how to write name {} into PDF".format(txt))
         rc = exam[0].insertTextbox(
