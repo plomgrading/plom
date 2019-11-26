@@ -5,6 +5,7 @@ __license__ = "AGPLv3"
 
 import os
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -37,7 +38,9 @@ with tempfile.TemporaryDirectory() as tmpDir:
     # split image into pieces, then extract qr codes from corners
     # this helps to determine the orientation
     # TODO: can tell diff b/w odd/even: doc somewhere?
-    os.system("convert -quiet {} -crop 4x5@ tile_%d.png".format(imgName))
+    cmd = "convert -quiet {} -crop 4x5@ tile_%d.png".format(imgName)
+    cmd = shlex.split(cmd)
+    subprocess.run(cmd, check=True)
 
     # Use zbarimg to extract QR codes from some tiles
     # There may not be any (e.g., DNW area, folded corner, poor quality)

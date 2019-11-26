@@ -8,6 +8,7 @@ __license__ = "AGPLv3"
 import glob
 import os
 import shutil
+import shlex
 import subprocess
 import sys
 
@@ -94,27 +95,13 @@ def processScans():
         shutil.move(fname, "alreadyProcessed")
         # go into png directory
         os.chdir("./png/")
-        fh = open("./commandlist.txt", "w")
-        # build list of mogrify commands to do
-        # each does simple gamma shift to image
-        for fn in glob.glob("*.png"):
-            fh.write("mogrify -quiet -gamma 0.5 -quality 100 " + fn + "\n")
-        fh.close()
+        with open("./commandlist.txt", "w") as fh:
+            # build list of mogrify commands to simple gamma shift
+            for fn in glob.glob("*.png"):
+                fh.write("mogrify -quiet -gamma 0.5 -quality 100 " + fn + "\n")
         # run the command list through parallel then delete
-        try:
-            subprocess.run(
-                ["parallel", "--bar", "-a", "commandlist.txt"],
-                stderr=subprocess.STDOUT,
-                shell=False,
-                check=True,
-            )
-        except subprocess.CalledProcessError as suberror:
-            print(
-                "Error running post-processing mogrify: {}".format(
-                    suberror.stdout.decode("utf-8")
-                )
-            )
-
+        cmd = shlex.split("parallel --bar -a commandlist.txt")
+        subprocess.run(cmd, check=True)
         os.unlink("commandlist.txt")
 
         # move all the pngs into pageimages directory
@@ -123,7 +110,7 @@ def processScans():
         os.chdir("../")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Look for pdfs in scanned exams.
     counter = 0
     for fname in os.listdir("./scannedExams"):

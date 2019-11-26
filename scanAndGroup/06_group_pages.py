@@ -7,6 +7,8 @@ from collections import defaultdict
 import json
 import os
 import sys
+import shlex
+import subprocess
 
 # this allows us to import from ../resources
 sys.path.append("..")
@@ -130,11 +132,11 @@ def checkTests():
     # Go into the relevant directory
     os.chdir("decodedPages")
     # Write the grouping command to file
-    fh = open("commandlist.txt", "w")
-    fh.write(commandList)
-    fh.close()
+    with open("commandlist.txt", "w") as fh:
+        fh.write(commandList)
     # Run it through gnu-parallel and then delete.
-    os.system("parallel --bar < commandlist.txt")
+    cmd = shlex.split("parallel --bar -a commandlist.txt")
+    subprocess.run(cmd, check=True)
     os.unlink("commandlist.txt")
     os.chdir("../")
 

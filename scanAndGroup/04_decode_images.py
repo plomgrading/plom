@@ -125,8 +125,6 @@ def reOrientPage(fname, qrs):
         # print(" .  {}: reorienting: 180 degree rotation".format(fname))
         subprocess.run(
             ["mogrify", "-quiet", "-rotate", "180", fname],
-            stderr=subprocess.STDOUT,
-            shell=False,
             check=True,
         )
         return True
