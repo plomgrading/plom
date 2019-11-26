@@ -7,6 +7,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import argparse
 import json
 import os
 import marker
@@ -239,35 +240,58 @@ if __name__ == "__main__":
     window.show()
 
     # Command line arguments (currently undocumented/unsupported)
-    #    `./client.py user:pass@url:port`
-    # Other options:
-    #   `-i` starts Identifier.
-    #   `-m1:2` starts Marker for PG 1 version 2.
-    #   `-m` starts Marker with whatever PG/ver was in json
-    if len(sys.argv) >= 2:
-        arg = sys.argv[1]
-        user, server = arg.split('@')
-        user, pwd = user.split(':')
-        server, port = server.split(':')
-        print("got from cli: {}".format((user, pwd, server, port)))
-        window.ui.userLE.setText(user)
-        window.ui.passwordLE.setText(pwd)
-        window.ui.serverLE.setText(server)
-        window.ui.mportSB.setValue(int(port))
-        window.ui.wportSB.setValue(int(port)+1)
-    if len(sys.argv) >= 3:
-        arg = sys.argv[2]
-        if arg == '-i':
+    # either nothing, or the following
+    if len(sys.argv) > 1:
+        parser = argparse.ArgumentParser(
+            description="Run the Plom client. No arguments = run as normal."
+        )
+        parser.add_argument("user", type=str)
+        parser.add_argument("password", type=str)
+        parser.add_argument(
+            "-s", "--server", action="store", help="Which server to contact."
+        )
+        parser.add_argument("-p", "--port", action="store", help="Which port to use.")
+
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
+            "-i", "--identifier", action="store_true", help="Run the identifier"
+        )
+        group.add_argument(
+            "-t", "--totaler", action="store_true", help="Run the totaler"
+        )
+        group.add_argument(
+            "-m",
+            "--marker",
+            const="json",
+            nargs="?",
+            type=str,
+            help="Run the marker. Pass either -m n:k (to run on pagegroup n, version k) or -m (to run on whatever was used last time).",
+        )
+        args = parser.parse_args()
+
+        window.ui.userLE.setText(args.user)
+        window.ui.passwordLE.setText(args.password)
+        if args.server:
+            window.ui.serverLE.setText(args.server)
+        if args.port:
+            window.ui.mportSB.setValue(int(args.port))
+            window.ui.wportSB.setValue(int(args.port) + 1)
+
+        if args.identifier:
             window.ui.identifyButton.animateClick()
-        if arg.startswith('-m'):
-            if len(arg) >= 2:
-                pg, v = arg.lstrip('-m').split(":")
-                window.ui.pgSB.setValue(int(pg))
-                window.ui.vSB.setValue(int(v))
+        if args.totaler:
+            window.ui.totalButton.animateClick()
+        if args.marker:
+            if args.marker != "json":
+                pg, v = args.marker.split(":")
+                try:
+                    window.ui.pgSB.setValue(int(pg))
+                    window.ui.vSB.setValue(int(v))
+                except ValueError:
+                    print(
+                        "When you use -m, there should either be no argument, or an argument of the form n:k where n,k are integers."
+                    )
+                    quit()
+
             window.ui.markButton.animateClick()
-        else:
-            raise ValueError("Should I sing until I can't sing any more\n"
-                             "Play these strings until my fingers are raw\n"
-                             "You're so hard to please\n"
-                             "What do you want from me?")
     sys.exit(app.exec_())
