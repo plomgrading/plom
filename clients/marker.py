@@ -631,7 +631,7 @@ class MarkerClient(QWidget):
         except PlomSeriousException as err:
             self.throwSeriousError(err)
 
-    def requestNext(self, launchAgain=False):
+    def requestNext(self):
         """Ask the server for an unmarked paper.  Get file, add to
         the list of papers and update the image.
         """
@@ -667,14 +667,6 @@ class MarkerClient(QWidget):
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
-        # launch annotator on the new test
-        # Note-launch-again is set to true when user just wants to get
-        # the next test and get annotating directly.
-        # When false the user stays at the marker window
-        if launchAgain:
-            # do not recurse, instead animate click
-            # self.annotateTest()
-            self.ui.annButton.animateClick()
 
     def requestNextInBackgroundStart(self):
         # Do this `messenger.getFileDav(tname, fname)` in another thread
@@ -818,15 +810,12 @@ class MarkerClient(QWidget):
         # run the annotator
         annotator.ann_finished_accept.connect(self.callbackAnnIsDoneAccept)
         annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
-        self.setEnabled(False)
+        #self.setEnabled(False)
         annotator.show()
 
     def annotateTest(self):
         """Command grabs current test from table and (after checks) passes it
         to 'startTheAnnotator' which fires up the actual annotator.
-        Checks if current test has been marked already
-        Saves the annotated file, mark, marking time etc in the table.
-        Sends file and data back to server.
         """
         # If nothing in the table, return.
         if self.prxM.rowCount() == 0:
