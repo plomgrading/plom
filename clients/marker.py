@@ -716,21 +716,15 @@ class MarkerClient(QWidget):
         if prt == 0:
             return
         # get current position from the tgv
-
-        # back up one row because before this is called we have
-        # added a row in the background, so the current row is actually
-        # one too far forward.
         prstart = self.prxM._findTGV(tgv)
         pr = prstart
         while self.prxM.getStatus(pr) in ["marked", "uploading...", "deferred", "???"]:
             pr = (pr + 1) % prt
             if pr == prstart:
                 break
-        self.ui.tableView.selectRow(pr)
         if pr == prstart:
-            # gone right round, so select prstart+1
-            self.ui.tableView.selectRow((pr + 1) % prt)
             return False
+        self.ui.tableView.selectRow(pr)
         return True
 
     def revertTest(self):
@@ -900,8 +894,6 @@ class MarkerClient(QWidget):
         prevState = self.prxM.getDataByTGV("t" + tgv, 1).split(":")[-1]
         # TODO: could also erase the paperdir
         self.prxM.setDataByTGV("t" + tgv, 1, prevState)
-        # reselect the row we were working on
-        # self.ui.tableView.selectRow(index[1].row())
 
     # ... or here
     @pyqtSlot(str, list)
@@ -926,8 +918,6 @@ class MarkerClient(QWidget):
         # update the mtime to be the total marking time
         totmtime = self.prxM.getMTimeByTGV("t" + tgv)
 
-        # Update the currently displayed image by selecting that row
-        # self.ui.tableView.selectRow(index[1].row())
         tags = self.prxM.getTagsByTGV("t" + tgv)
 
         # the actual upload will happen in another thread
@@ -943,8 +933,14 @@ class MarkerClient(QWidget):
             tags,
         )
 
-        # Check if no unmarked test, then request one.
         if launchAgain is False:
+            # update image view, if the row we just finished is selected
+            r = self.prxM._findTGV("t" + tgv)
+            prIndex = self.ui.tableView.selectedIndexes()
+            if len(prIndex) == 0:
+                return
+            if r == prIndex[0].row():
+                self.updateImage(r)
             return
         if self.moveToNextUnmarkedTest("t" + tgv):
             # self.annotateTest()
