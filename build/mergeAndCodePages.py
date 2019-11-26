@@ -127,7 +127,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
             morph=morph,
         )
         # exam[p].drawRect(r, morph=morph)
-        assert rc < 0, "Text didn't fit: shortname too long?  or font issue/bug?"
+        assert rc > 0, "Text didn't fit: shortname too long?  or font issue/bug?"
         # grab the tpv QRcodes for current page
         qr = {}
         for i in range(1, 5):
