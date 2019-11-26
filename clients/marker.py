@@ -717,17 +717,18 @@ class MarkerClient(QWidget):
             "safe to continue from here...".format(errmsg)
         ).exec_()
 
-    def moveToNextUnmarkedTest(self):
+    def moveToNextUnmarkedTest(self, tgv):
         # Move to the next unmarked test in the table.
         # Be careful not to get stuck in a loop if all marked
         prt = self.prxM.rowCount()
         if prt == 0:
             return
+        # get current position from the tgv
 
         # back up one row because before this is called we have
         # added a row in the background, so the current row is actually
         # one too far forward.
-        prstart = self.ui.tableView.selectedIndexes()[0].row()
+        prstart = self.prxM._findTGV(tgv)
         pr = prstart
         while self.prxM.getStatus(pr) in ["marked", "uploading...", "deferred", "???"]:
             pr = (pr + 1) % prt
@@ -907,7 +908,7 @@ class MarkerClient(QWidget):
     def callbackAnnIsDoneCancel(self, tgv, stuff):
         self.setEnabled(True)
         assert not stuff  # currently nothing given back on cancel
-        prevState = self.prxM.getDataByTGV("t" + tgv, 1).split(':')[-1]
+        prevState = self.prxM.getDataByTGV("t" + tgv, 1).split(":")[-1]
         # TODO: could also erase the paperdir
         self.prxM.setDataByTGV("t" + tgv, 1, prevState)
         # reselect the row we were working on
@@ -956,7 +957,7 @@ class MarkerClient(QWidget):
         # Check if no unmarked test, then request one.
         if launchAgain is False:
             return
-        if self.moveToNextUnmarkedTest():
+        if self.moveToNextUnmarkedTest("t" + tgv):
             # self.annotateTest()
             self.ui.annButton.animateClick()
 
