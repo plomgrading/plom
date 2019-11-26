@@ -698,7 +698,7 @@ class MarkerClient(QWidget):
         # self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
 
     def requestNextInBackgroundFinished(self, test, fname, tags):
-        self.addTGVToList(TestPageGroup(test, fname, tags=tags))
+        self.addTGVToList(TestPageGroup(test, fname, tags=tags), update=False)
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
