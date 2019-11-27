@@ -605,11 +605,11 @@ class MarkerClient(QWidget):
         # Ask server for list of previously marked papers
         markedList = messenger.MrequestDoneTasks(self.pageGroup, self.version)
         for x in markedList:
-            self.addTGVToList(
+            # TODO: might not the "markedList" have some other statuses?
+            self.exM.addPaper(
                 TestPageGroup(
                     x[0], fname="", stat="marked", mrk=x[2], mtime=x[3], tags=x[4]
-                ),
-                update=False,
+                )
             )
 
     def addTGVToList(self, paper, update=True):
@@ -735,7 +735,7 @@ class MarkerClient(QWidget):
         # self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
 
     def requestNextInBackgroundFinished(self, test, fname, tags):
-        self.addTGVToList(TestPageGroup(test, fname, tags=tags), update=False)
+        self.exM.addPaper(TestPageGroup(test, fname, tags=tags))
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
