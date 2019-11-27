@@ -866,9 +866,11 @@ class MarkerClient(QWidget):
         # mark sure something is selected
         if len(index) == 0:
             return
+        row = index[0].row()
+        del index
         # Create annotated filename. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
-        tgv = self.prxM.data(index[0])[1:]
+        tgv = self.prxM.getPrefix(row)[1:]
         paperdir = tempfile.mkdtemp(prefix=tgv + "_", dir=self.workingDirectory)
         print("Debug: create paperdir {} for annotating".format(paperdir))
         aname = os.path.join(paperdir, "G" + tgv + ".png")
@@ -878,12 +880,13 @@ class MarkerClient(QWidget):
         # If image has been marked confirm with user if they want
         # to annotate further.
         remarkFlag = False
-        if self.prxM.data(index[1]) in ("marked", "uploading...", "???"):
+
+        if self.prxM.getStatus(row) in ("marked", "uploading...", "???"):
             msg = SimpleMessage("Continue marking paper?")
             if not msg.exec_() == QMessageBox.Yes:
                 return
             remarkFlag = True
-            oldpaperdir = self.prxM.getPaperDir(index[0].row())
+            oldpaperdir = self.prxM.getPaperDir(row)
             print("Debug: oldpaperdir is " + oldpaperdir)
             assert oldpaperdir is not None
             oldaname = os.path.join(oldpaperdir, "G" + tgv + ".png")
@@ -897,7 +900,7 @@ class MarkerClient(QWidget):
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
-        fname = "{}".format(self.prxM.getOriginalFile(index[0].row()))
+        fname = "{}".format(self.prxM.getOriginalFile(row))
         if self.backgroundDownloader:
             count = 0
             # Notes: we could check using `while not os.path.exists(fname):`
@@ -924,8 +927,8 @@ class MarkerClient(QWidget):
         shutil.copyfile(fname, aname)
 
         # stash the previous state, not ideal because makes column wider
-        prevState = self.prxM.data(index[1])
-        self.prxM.setData(index[1], "ann:" + prevState)
+        prevState = self.prxM.getStatus(row)
+        self.prxM.setStatus(row, "ann:" + prevState)
 
         if remarkFlag:
             self.startTheAnnotator(tgv, paperdir, aname, pname)
