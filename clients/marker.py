@@ -263,6 +263,94 @@ class ExamModel(QStandardItemModel):
         )
         return r
 
+    def _getPrefix(self, r):
+        # Return the prefix of the image
+        return self.data(self.index(r, 0))
+
+    def _getStatus(self, r):
+        # Return the status of the image
+        return self.data(self.index(r, 1))
+
+    def _setStatus(self, r, stat):
+        self.setData(self.index(r, 1), stat)
+
+    def _getAnnotatedFile(self, r):
+        # Return the filename of the annotated image
+        return self.data(self.index(r, 6))
+
+    def _setAnnotatedFile(self, r, aname, pname):
+        # Set the annotated image filename
+        self.setData(self.index(r, 6), aname)
+        self.setData(self.index(r, 7), pname)
+
+    def _setPaperDir(self, r, tdir):
+        # Set the temporary directory for this grading
+        self.setData(self.index(r, 8), tdir)
+
+    def _clearPaperDir(self, r):
+        self.setPaperDir(r, None)
+
+    def _getPaperDir(self, r):
+        return self.data(self.index(r, 8))
+
+    def _findTGV(self, tgv):
+        """Return the row index of for this tgv.
+
+        Raises ValueError if not found.
+        """
+        r0 = []
+        for r in range(self.rowCount()):
+            if self._getPrefix(r) == tgv:
+                r0.append(r)
+
+        if len(r0) == 0:
+            raise ValueError("tgv {} not found!".format(tgv))
+        elif not len(r0) == 1:
+            raise ValueError(
+                "Repeated tgv {} in rows {}  This should not happen!".format(tgv, r0)
+            )
+        return r0[0]
+
+    def setDataByTGV(self, tgv, n, stuff):
+        """Find the row with `tgv` and put `stuff` into `n`th column."""
+        r = self._findTGV(tgv)
+        self.setData(self.index(r, n), stuff)
+
+    def getDataByTGV(self, tgv, n):
+        """Find the row with `tgv` and get the `n`th column."""
+        r = self._findTGV(tgv)
+        return self.data(self.index(r, n))
+
+    def getStatusByTGV(self, tgv):
+        """Return status for tgv"""
+        return self.getDataByTGV(tgv, 1)
+
+    def setStatusByTGV(self, tgv, st):
+        """Set status for tgv"""
+        return self.setDataByTGV(tgv, 1, st)
+
+    def getTagsByTGV(self, tgv):
+        """Return tags for tgv"""
+        return self.getDataByTGV(tgv, 4)
+
+    def getMTimeByTGV(self, tgv):
+        """Return total marking time for tgv"""
+        return int(self.getDataByTGV(tgv, 3))
+
+    def markPaperByTGV(self, tgv, mrk, aname, pname, mtime, tdir):
+        # There should be exactly one row with this TGV
+        r = self._findTGV(tgv)
+        # When marked, set the annotated filename, the plomfile, the mark,
+        # and the total marking time (in case it was annotated earlier)
+        mt = int(self.data(self.index(r, 3)))
+        # total elapsed time.
+        self.setData(self.index(r, 3), mtime + mt)
+        self._setStatus(r, "uploading...")
+        self.setData(self.index(r, 2), mrk)
+        self._setAnnotatedFile(r, aname, pname)
+        self._setPaperDir(r, tdir)
+
+
 
 ##########################
 class ProxyModel(QSortFilterProxyModel):
@@ -350,50 +438,19 @@ class ProxyModel(QSortFilterProxyModel):
         self.setData(index[0].siblingAtColumn(8), tdir)
 
     def _findTGV(self, tgv):
-        """Return the row index of for this tgv."""
+        """Return the row index of for this tgv or None if absent."""
         r0 = []
         for r in range(self.rowCount()):
             if self.getPrefix(r) == tgv:
                 r0.append(r)
 
         if len(r0) == 0:
-            raise ValueError("tgv {} not found!".format(tgv))
+            return None
         elif not len(r0) == 1:
             raise ValueError(
                 "Repeated tgv {} in rows {}  This should not happen!".format(tgv, r0)
             )
         return r0[0]
-
-    def setDataByTGV(self, tgv, n, stuff):
-        """Find the row with `tgv` and put `stuff` into `n`th column."""
-        r = self._findTGV(tgv)
-        self.setData(self.index(r, n), stuff)
-
-    def getDataByTGV(self, tgv, n):
-        """Find the row with `tgv` and get the `n`th column."""
-        r = self._findTGV(tgv)
-        return self.data(self.index(r, n))
-
-    def getTagsByTGV(self, tgv):
-        """Return tags for tgv"""
-        return self.getDataByTGV(tgv, 4)
-
-    def getMTimeByTGV(self, tgv):
-        """Return total marking time for tgv"""
-        return int(self.getDataByTGV(tgv, 3))
-
-    def markPaperByTGV(self, tgv, mrk, aname, pname, mtime, tdir):
-        # There should be exactly one row with this TGV
-        r = self._findTGV(tgv)
-        # When marked, set the annotated filename, the plomfile, the mark,
-        # and the total marking time (in case it was annotated earlier)
-        mt = int(self.data(self.index(r, 3)))
-        # total elapsed time.
-        self.setData(self.index(r, 3), mtime + mt)
-        self.setStatus(r, "uploading...")
-        self.setData(self.index(r, 2), mrk)
-        self.setAnnotatedFile(r, aname, pname)
-        self.setPaperDir(r, tdir)
 
     def revertPaper(self, index):
         # When user reverts to original image, set status to "reverted"
@@ -717,6 +774,9 @@ class MarkerClient(QWidget):
             return
         # get current position from the tgv
         prstart = self.prxM._findTGV(tgv)
+        if not prstart:
+            # it might be hidden by filters
+            prstart = 0
         pr = prstart
         while self.prxM.getStatus(pr) in ["marked", "uploading...", "deferred", "???"]:
             pr = (pr + 1) % prt
@@ -891,9 +951,9 @@ class MarkerClient(QWidget):
     def callbackAnnIsDoneCancel(self, tgv, stuff):
         self.setEnabled(True)
         assert not stuff  # currently nothing given back on cancel
-        prevState = self.prxM.getDataByTGV("t" + tgv, 1).split(":")[-1]
+        prevState = self.exM.getDataByTGV("t" + tgv, 1).split(":")[-1]
         # TODO: could also erase the paperdir
-        self.prxM.setDataByTGV("t" + tgv, 1, prevState)
+        self.exM.setDataByTGV("t" + tgv, 1, prevState)
 
     # ... or here
     @pyqtSlot(str, list)
@@ -913,12 +973,10 @@ class MarkerClient(QWidget):
 
         # Copy the mark, annotated filename and the markingtime into the table
         # TODO: sort this out whether tgv is "t00..." or "00..."?!
-        # TODO: what if its filtered out of prxM?  Do this to exM?
-        self.prxM.markPaperByTGV("t" + tgv, gr, aname, pname, mtime, paperdir)
+        self.exM.markPaperByTGV("t" + tgv, gr, aname, pname, mtime, paperdir)
         # update the mtime to be the total marking time
-        totmtime = self.prxM.getMTimeByTGV("t" + tgv)
-
-        tags = self.prxM.getTagsByTGV("t" + tgv)
+        totmtime = self.exM.getMTimeByTGV("t" + tgv)
+        tags = self.exM.getTagsByTGV("t" + tgv)
 
         # the actual upload will happen in another thread
         self.backgroundUploader.enqueueNewUpload(
@@ -948,21 +1006,20 @@ class MarkerClient(QWidget):
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
-        for r in range(self.prxM.rowCount()):
-            if self.prxM.getPrefix(r) == code:
-                # maybe it changed while we waited for the upload
-                if self.prxM.getStatus(r) == "uploading...":
-                    self.prxM.setStatus(r, "marked")
-        # TODO: negative used as invalid instead of None because the signal is typed
+        print("GOING TO SET MARKED: {}, first getting status...".format(code))
+        st = self.exM.getStatusByTGV(code)
+        # maybe it changed while we waited for the upload
+        print("GOING TO SET MARKED: {}".format(st))
+        if st == "uploading...":
+            print("SETTING MARKED")
+            self.exM.setStatusByTGV(code, "marked")
         if numdone > 0 and numtotal > 0:
             self.ui.mProgressBar.setValue(numdone)
             self.ui.mProgressBar.setMaximum(numtotal)
 
     def backgroundUploadFailed(self, code, errmsg):
         """An upload has failed, not sure what to do but do to it LOADLY"""
-        for r in range(self.prxM.rowCount()):
-            if self.prxM.getPrefix(r) == code:
-                self.prxM.setStatus(r, "???")
+        self.exM.setStatusByTGV(code, "???")
         ErrorMessage(
             "Unfortunately, there was an unexpected error; server did "
             "not accept our marked paper {}.\n\n{}\n\n"
