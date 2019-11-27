@@ -358,6 +358,11 @@ class ExamModel(QStandardItemModel):
         self._setAnnotatedFile(r, aname, pname)
         self._setPaperDir(r, tdir)
 
+    def deferPaper(self, tgv):
+        # When user defers paper, it must be unmarked or reverted already.
+        # TODO: what is point of this comment?
+        self.setStatusByTGV(tgv, "deferred")
+
 
 ##########################
 class ProxyModel(QSortFilterProxyModel):
@@ -455,11 +460,6 @@ class ProxyModel(QSortFilterProxyModel):
         self.setData(self.index(r, 2), -1)
         self.setData(self.index(r, 3), 0)
         self.clearPaperDir(r)
-
-    def deferPaper(self, r):
-        # When user defers paper, it must be unmarked or reverted already.
-        # TODO: what is point of this comment?
-        self.setStatus(r, "deferred")
 
 
 ##########################
@@ -796,19 +796,19 @@ class MarkerClient(QWidget):
         self.updateImage(r)
 
     def deferTest(self):
-        # Mark test as "defer" - to be skipped until later.
-        index = self.ui.tableView.selectedIndexes()
-        # if no test then return
-        if len(index) == 0:
+        """Mark test as "defer" - to be skipped until later."""
+        if len(self.ui.tableView.selectedIndexes()):
+            pr = self.ui.tableView.selectedIndexes()[0].row()
+        else:
             return
-        r = index[0].row()
-        if self.prxM.getStatus(r) == "deferred":
+        tgv = self.prxM.getPrefix(pr)
+        if self.exM.getStatusByTGV(tgv) == "deferred":
             return
-        if self.prxM.getStatus(r) in ("marked", "uploading...", "???"):
+        if self.exM.getStatusByTGV(tgv) in ("marked", "uploading...", "???"):
             msg = ErrorMessage("Paper is already marked - revert it before deferring.")
             msg.exec_()
             return
-        self.prxM.deferPaper(r)
+        self.exM.deferPaper(tgv)
 
     def countUnmarkedReverted(self):
         count = 0
