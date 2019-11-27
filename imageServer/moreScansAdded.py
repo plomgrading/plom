@@ -62,9 +62,9 @@ def getServerInfo():
             serverInfo = json.load(data_file)
 
 
-class errorMessage(QMessageBox):
+class ErrorMessage(QMessageBox):
     def __init__(self, txt):
-        super(errorMessage, self).__init__()
+        super(ErrorMessage, self).__init__()
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Ok)
 
