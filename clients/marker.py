@@ -861,9 +861,6 @@ class MarkerClient(QWidget):
         """Command grabs current test from table and (after checks) passes it
         to 'startTheAnnotator' which fires up the actual annotator.
         """
-        # If nothing in the table, return.
-        if self.prxM.rowCount() == 0:
-            return
         # Grab the currently selected row.
         index = self.ui.tableView.selectedIndexes()
         # mark sure something is selected
