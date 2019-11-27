@@ -997,12 +997,9 @@ class MarkerClient(QWidget):
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
-        print("GOING TO SET MARKED: {}, first getting status...".format(code))
-        st = self.exM.getStatusByTGV(code)
+        stat = self.exM.getStatusByTGV(code)
         # maybe it changed while we waited for the upload
-        print("GOING TO SET MARKED: {}".format(st))
-        if st == "uploading...":
-            print("SETTING MARKED")
+        if stat == "uploading...":
             self.exM.setStatusByTGV(code, "marked")
         if numdone > 0 and numtotal > 0:
             self.ui.mProgressBar.setValue(numdone)
