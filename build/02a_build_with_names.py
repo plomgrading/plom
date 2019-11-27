@@ -46,19 +46,34 @@ if __name__ == "__main__":
     buildDirectories()
     exams = buildExamPages(spec)
     students = readClassList()
+
     print(
         "Creating {} exams: {} will have student name/number pre-written, "
         "{} will be spare blanks.".format(
             spec.Tests, len(students), spec.Tests - len(students)
         )
     )
+    warnFlag = False
+    # check number of tests and issue warnings
     if len(students) > spec.Tests:
-        warn("too many students for number of tests")
+        warn(
+            "Too few tests for the length of your class-list. Consider making more tests."
+        )
+        warnFlag = True
     if (
         spec.Tests - len(students) < 0.05 * len(students)
         or spec.Tests - len(students) < 3
     ):
-        warn("not enough spare blanks (?)")
+        warn(
+            "We think you might not have produced enough spare blanks tests. Please double-check."
+        )
+        warnFlag = True
+    # now do the actual build
     exams = prefillNamesOnExams(spec, exams, students)
     writeExamLog(exams)
     buildTestPDFs(spec, exams)
+    # if a warning was issued - remind the user to check the output
+    if warnFlag:
+        warn(
+            "A warning was issued above, please double-check the number of tests and length of classlist."
+        )
