@@ -612,15 +612,6 @@ class MarkerClient(QWidget):
                 )
             )
 
-    def addTGVToList(self, paper, update=True):
-        # Add a new entry (given inside paper) to the table and
-        # select it and update the displayed page-group image
-        # convert new row to proxyRow
-        pr = self.prxM.addPaper(paper)
-        if update is True:
-            self.ui.tableView.selectRow(pr)
-            self.updateImage(pr)
-
     def checkFiles(self, pr):
         tgv = self.prxM.getPrefix(pr)
         if self.prxM.getOriginalFile(pr) != "":
@@ -707,11 +698,14 @@ class MarkerClient(QWidget):
         # save it
         with open(fname, "wb+") as fh:
             fh.write(image)
-        self.addTGVToList(TestPageGroup(test, fname, tags=tags))
-
-        # Clean up the table
-        self.ui.tableView.resizeColumnsToContents()
-        self.ui.tableView.resizeRowsToContents()
+        pr = self.prxM.addPaper(TestPageGroup(test, fname, tags=tags))
+        if pr >= 0:
+            # if the newly-added row is visible, then do some redrawing
+            self.ui.tableView.selectRow(pr)
+            self.updateImage(pr)
+            # Clean up the table
+            self.ui.tableView.resizeColumnsToContents()
+            self.ui.tableView.resizeRowsToContents()
 
     def requestNextInBackgroundStart(self):
         if self.backgroundDownloader:
