@@ -351,7 +351,6 @@ class ExamModel(QStandardItemModel):
         self._setPaperDir(r, tdir)
 
 
-
 ##########################
 class ProxyModel(QSortFilterProxyModel):
     """A proxymodel wrapper to put around the table model to handle filtering and sorting."""
@@ -425,18 +424,6 @@ class ProxyModel(QSortFilterProxyModel):
         # Return the filename of the plom file
         return self.data(self.index(r, 7))
 
-    def markPaper(self, index, mrk, aname, pname, mtime, tdir):
-        # When marked, set the annotated filename, the plomfile, the mark,
-        # and the total marking time (in case it was annotated earlier)
-        mt = int(self.data(index[3]))
-        # total elapsed time.
-        self.setData(index[3], mtime + mt)
-        self.setData(index[1], "uploading...")
-        self.setData(index[2], mrk)
-        self.setData(index[0].siblingAtColumn(6), aname)
-        self.setData(index[0].siblingAtColumn(7), pname)
-        self.setData(index[0].siblingAtColumn(8), tdir)
-
     def _findTGV(self, tgv):
         """Return the row index of for this tgv or None if absent."""
         r0 = []
@@ -452,18 +439,19 @@ class ProxyModel(QSortFilterProxyModel):
             )
         return r0[0]
 
-    def revertPaper(self, index):
+    def revertPaper(self, r):
         # When user reverts to original image, set status to "reverted"
         # mark back to -1, and marking time to zero.
         # Do not erase any files: could still be uploading
-        self.setData(index[1], "reverted")
-        self.setData(index[2], -1)
-        self.setData(index[3], 0)
-        self.clearPaperDir(index[0].row())
+        self.setStatus(r, "reverted")
+        self.setData(self.index(r, 2), -1)
+        self.setData(self.index(r, 3), 0)
+        self.clearPaperDir(r)
 
-    def deferPaper(self, index):
-        # When user defers paper, it must be unmarked or reverted already. Set status to "deferred"
-        self.setData(index[1], "deferred")
+    def deferPaper(self, r):
+        # When user defers paper, it must be unmarked or reverted already.
+        # TODO: what is point of this comment?
+        self.setStatus(r, "deferred")
 
 
 ##########################
@@ -796,17 +784,18 @@ class MarkerClient(QWidget):
         # if no test then return
         if len(prIndex) == 0:
             return
+        r = prIndex[0].row()
         # If test is untouched or already reverted, nothing to do
-        if self.prxM.data(prIndex[1]) in ["untouched", "reverted"]:
+        if self.prxM.getStatus(r) in ["untouched", "reverted"]:
             return
         # Check user really wants to revert
         msg = SimpleMessage("Do you want to revert to original scan?")
         if msg.exec_() == QMessageBox.No:
             return
         # Revert the test in the table (set status, mark etc)
-        self.prxM.revertPaper(prIndex)
+        self.prxM.revertPaper(r)
         # Update the image (is now back to original untouched image)
-        self.updateImage(prIndex[0].row())
+        self.updateImage(r)
 
     def deferTest(self):
         # Mark test as "defer" - to be skipped until later.
@@ -814,13 +803,14 @@ class MarkerClient(QWidget):
         # if no test then return
         if len(index) == 0:
             return
-        if self.prxM.data(index[1]) == "deferred":
+        r = index[0].row()
+        if self.prxM.getStatus(r) == "deferred":
             return
-        if self.prxM.data(index[1]) in ("marked", "uploading...", "???"):
+        if self.prxM.getStatus(r) in ("marked", "uploading...", "???"):
             msg = ErrorMessage("Paper is already marked - revert it before deferring.")
             msg.exec_()
             return
-        self.prxM.deferPaper(index)
+        self.prxM.deferPaper(r)
 
     def countUnmarkedReverted(self):
         count = 0
