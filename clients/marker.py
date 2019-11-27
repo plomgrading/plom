@@ -337,6 +337,14 @@ class ExamModel(QStandardItemModel):
         """Return total marking time for tgv"""
         return int(self.getDataByTGV(tgv, 3))
 
+    def getPaperDirByTGV(self, tgv):
+        """Return tags for tgv"""
+        return self.getDataByTGV(tgv, 8)
+
+    def getOriginalFileByTGV(self, tgv):
+        """Return tags for tgv"""
+        return self.getDataByTGV(tgv, 5)
+
     def markPaperByTGV(self, tgv, mrk, aname, pname, mtime, tdir):
         # There should be exactly one row with this TGV
         r = self._findTGV(tgv)
@@ -848,18 +856,20 @@ class MarkerClient(QWidget):
         annotator.show()
 
     def annotateTest(self):
-        """Command grabs current test from table and (after checks) passes it
-        to 'startTheAnnotator' which fires up the actual annotator.
-        """
-        # Grab the currently selected row. Return if nothing selected.
+        """Grab current test from table, do checks, start annotator."""
         if len(self.ui.tableView.selectedIndexes()):
             row = self.ui.tableView.selectedIndexes()[0].row()
         else:
             return
+        tgv = self.prxM.getPrefix(row)
+        # split fcn: maybe we want to start the annotator not based on current selection
+        self.annotateTest_doit(tgv)
 
+    def annotateTest_doit(self, tgv):
+        """Start annotator on a particular tgv."""
         # Create annotated filename. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
-        tgv = self.prxM.getPrefix(row)
+        assert tgv[1] == "t"
         Gtgv = "G" + tgv[1:]
         paperdir = tempfile.mkdtemp(prefix=tgv[1:] + "_", dir=self.workingDirectory)
         print("Debug: create paperdir {} for annotating".format(paperdir))
@@ -871,12 +881,12 @@ class MarkerClient(QWidget):
         # to annotate further.
         remarkFlag = False
 
-        if self.prxM.getStatus(row) in ("marked", "uploading...", "???"):
+        if self.exM.getStatusByTGV(tgv) in ("marked", "uploading...", "???"):
             msg = SimpleMessage("Continue marking paper?")
             if not msg.exec_() == QMessageBox.Yes:
                 return
             remarkFlag = True
-            oldpaperdir = self.prxM.getPaperDir(row)
+            oldpaperdir = self.exM.getPaperDirByTGV(tgv)
             print("Debug: oldpaperdir is " + oldpaperdir)
             assert oldpaperdir is not None
             oldaname = os.path.join(oldpaperdir, Gtgv + ".png")
@@ -890,7 +900,7 @@ class MarkerClient(QWidget):
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
-        fname = "{}".format(self.prxM.getOriginalFile(row))
+        fname = "{}".format(self.exM.getOriginalFileByTGV(tgv))
         if self.backgroundDownloader:
             count = 0
             # Notes: we could check using `while not os.path.exists(fname):`
@@ -917,8 +927,8 @@ class MarkerClient(QWidget):
         shutil.copyfile(fname, aname)
 
         # stash the previous state, not ideal because makes column wider
-        prevState = self.prxM.getStatus(row)
-        self.prxM.setStatus(row, "ann:" + prevState)
+        prevState = self.exM.getStatusByTGV(tgv)
+        self.exM.setStatusByTGV(tgv, "ann:" + prevState)
 
         if remarkFlag:
             self.startTheAnnotator(tgv[1:], paperdir, aname, pname)
