@@ -854,7 +854,7 @@ class MarkerClient(QWidget):
         # run the annotator
         annotator.ann_finished_accept.connect(self.callbackAnnIsDoneAccept)
         annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
-        #self.setEnabled(False)
+        # self.setEnabled(False)
         annotator.show()
 
     def annotateTest(self):
@@ -870,12 +870,13 @@ class MarkerClient(QWidget):
         del index
         # Create annotated filename. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
-        tgv = self.prxM.getPrefix(row)[1:]
-        paperdir = tempfile.mkdtemp(prefix=tgv + "_", dir=self.workingDirectory)
+        tgv = self.prxM.getPrefix(row)
+        Gtgv = "G" + tgv[1:]
+        paperdir = tempfile.mkdtemp(prefix=tgv[1:] + "_", dir=self.workingDirectory)
         print("Debug: create paperdir {} for annotating".format(paperdir))
-        aname = os.path.join(paperdir, "G" + tgv + ".png")
-        cname = os.path.join(paperdir, "G" + tgv + ".json")
-        pname = os.path.join(paperdir, "G" + tgv + ".plom")
+        aname = os.path.join(paperdir, Gtgv + ".png")
+        cname = os.path.join(paperdir, Gtgv + ".json")
+        pname = os.path.join(paperdir, Gtgv + ".plom")
 
         # If image has been marked confirm with user if they want
         # to annotate further.
@@ -889,9 +890,9 @@ class MarkerClient(QWidget):
             oldpaperdir = self.prxM.getPaperDir(row)
             print("Debug: oldpaperdir is " + oldpaperdir)
             assert oldpaperdir is not None
-            oldaname = os.path.join(oldpaperdir, "G" + tgv + ".png")
-            oldpname = os.path.join(oldpaperdir, "G" + tgv + ".plom")
-            # oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
+            oldaname = os.path.join(oldpaperdir, Gtgv + ".png")
+            oldpname = os.path.join(oldpaperdir, Gtgv + ".plom")
+            # oldcname = os.path.join(oldpaperdir, Gtgv + ".json")
             # TODO: json file not downloaded
             # https://gitlab.math.ubc.ca/andrewr/MLP/issues/415
             shutil.copyfile(oldaname, aname)
@@ -931,9 +932,9 @@ class MarkerClient(QWidget):
         self.prxM.setStatus(row, "ann:" + prevState)
 
         if remarkFlag:
-            self.startTheAnnotator(tgv, paperdir, aname, pname)
+            self.startTheAnnotator(tgv[1:], paperdir, aname, pname)
         else:
-            self.startTheAnnotator(tgv, paperdir, aname, None)
+            self.startTheAnnotator(tgv[1:], paperdir, aname, None)
         # we started the annotator, we'll get a signal back when its done
 
     # when the annotator is done, we end up here...
