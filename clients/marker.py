@@ -861,13 +861,12 @@ class MarkerClient(QWidget):
         """Command grabs current test from table and (after checks) passes it
         to 'startTheAnnotator' which fires up the actual annotator.
         """
-        # Grab the currently selected row.
-        index = self.ui.tableView.selectedIndexes()
-        # mark sure something is selected
-        if len(index) == 0:
+        # Grab the currently selected row. Return if nothing selected.
+        if len(self.ui.tableView.selectedIndexes()):
+            row = self.ui.tableView.selectedIndexes()[0].row()
+        else:
             return
-        row = index[0].row()
-        del index
+
         # Create annotated filename. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
         tgv = self.prxM.getPrefix(row)
