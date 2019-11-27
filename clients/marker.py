@@ -714,7 +714,6 @@ class MarkerClient(QWidget):
         self.ui.tableView.resizeRowsToContents()
 
     def requestNextInBackgroundStart(self):
-        # Do this `messenger.getFileDav(tname, fname)` in another thread
         if self.backgroundDownloader:
             print("Previous Downloader: " + str(self.backgroundDownloader))
             # if prev downloader still going than wait.  might block the gui
@@ -730,9 +729,6 @@ class MarkerClient(QWidget):
             self.requestNextInBackgroundFailed
         )
         self.backgroundDownloader.start()
-        # # Add the page-group to the list of things to mark
-        # # do not update the displayed image with this new paper
-        # self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
 
     def requestNextInBackgroundFinished(self, test, fname, tags):
         self.exM.addPaper(TestPageGroup(test, fname, tags=tags))
