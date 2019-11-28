@@ -30,6 +30,7 @@ from PyQt5.QtCore import (
     QSortFilterProxyModel,
     QTimer,
     QThread,
+    pyqtSlot,
     QVariant,
     pyqtSignal,
 )
@@ -262,6 +263,149 @@ class ExamModel(QStandardItemModel):
         )
         return r
 
+    def _getPrefix(self, r):
+        # Return the prefix of the image
+        return self.data(self.index(r, 0))
+
+    def _getStatus(self, r):
+        # Return the status of the image
+        return self.data(self.index(r, 1))
+
+    def _setStatus(self, r, stat):
+        self.setData(self.index(r, 1), stat)
+
+    def _getAnnotatedFile(self, r):
+        # Return the filename of the annotated image
+        return self.data(self.index(r, 6))
+
+    def _setAnnotatedFile(self, r, aname, pname):
+        # Set the annotated image filename
+        self.setData(self.index(r, 6), aname)
+        self.setData(self.index(r, 7), pname)
+
+    def _setPaperDir(self, r, tdir):
+        self.setData(self.index(r, 8), tdir)
+
+    def _clearPaperDir(self, r):
+        self._setPaperDir(r, None)
+
+    def _getPaperDir(self, r):
+        return self.data(self.index(r, 8))
+
+    def _findTGV(self, tgv):
+        """Return the row index of this tgv.
+
+        Raises ValueError if not found.
+        """
+        r0 = []
+        for r in range(self.rowCount()):
+            if self._getPrefix(r) == tgv:
+                r0.append(r)
+
+        if len(r0) == 0:
+            raise ValueError("tgv {} not found!".format(tgv))
+        elif not len(r0) == 1:
+            raise ValueError(
+                "Repeated tgv {} in rows {}  This should not happen!".format(tgv, r0)
+            )
+        return r0[0]
+
+    def _setDataByTGV(self, tgv, n, stuff):
+        """Find the row with `tgv` and put `stuff` into `n`th column."""
+        r = self._findTGV(tgv)
+        self.setData(self.index(r, n), stuff)
+
+    def _getDataByTGV(self, tgv, n):
+        """Find the row with `tgv` and get the `n`th column."""
+        r = self._findTGV(tgv)
+        return self.data(self.index(r, n))
+
+    def getStatusByTGV(self, tgv):
+        """Return status for tgv"""
+        return self._getDataByTGV(tgv, 1)
+
+    def setStatusByTGV(self, tgv, st):
+        """Set status for tgv"""
+        self._setDataByTGV(tgv, 1, st)
+
+    def getTagsByTGV(self, tgv):
+        """Return tags for tgv"""
+        return self._getDataByTGV(tgv, 4)
+
+    def setTagsByTGV(self, tgv, tags):
+        """Set tags for tgv"""
+        return self._setDataByTGV(tgv, 4, tags)
+
+    def getAllTags(self):
+        """Return all tags as a set."""
+        tags = set()
+        for r in range(self.rowCount()):
+            v = self.data(self.index(r, 4))
+            if len(v) > 0:
+                tags.add(v)
+        return tags
+
+    def getMTimeByTGV(self, tgv):
+        """Return total marking time for tgv"""
+        return int(self._getDataByTGV(tgv, 3))
+
+    def getPaperDirByTGV(self, tgv):
+        """Return temporary directory for this grading."""
+        return self._getDataByTGV(tgv, 8)
+
+    def setPaperDirByTGV(self, tgv, tdir):
+        """Set temporary directory for this grading."""
+        self._setDataByTGV(tgv, 8, tdir)
+
+    def getOriginalFile(self, tgv):
+        """Return filename for original un-annotated image."""
+        return self._getDataByTGV(tgv, 5)
+
+    def setOriginalFile(self, tgv, fname):
+        """Set the original un-annotated image filename."""
+        self._setDataByTGV(tgv, 5, fname)
+
+    def setAnnotatedFile(self, tgv, aname, pname):
+        """Set the annotated image and data filenames."""
+        self._setDataByTGV(tgv, 6, aname)
+        self._setDataByTGV(tgv, 7, pname)
+
+    def markPaperByTGV(self, tgv, mrk, aname, pname, mtime, tdir):
+        # There should be exactly one row with this TGV
+        r = self._findTGV(tgv)
+        # When marked, set the annotated filename, the plomfile, the mark,
+        # and the total marking time (in case it was annotated earlier)
+        mt = int(self.data(self.index(r, 3)))
+        # total elapsed time.
+        self.setData(self.index(r, 3), mtime + mt)
+        self._setStatus(r, "uploading...")
+        self.setData(self.index(r, 2), mrk)
+        self._setAnnotatedFile(r, aname, pname)
+        self._setPaperDir(r, tdir)
+
+    def deferPaper(self, tgv):
+        # When user defers paper, it must be unmarked or reverted already.
+        # TODO: what is point of this comment?
+        self.setStatusByTGV(tgv, "deferred")
+
+    def revertPaper(self, tgv):
+        # When user reverts to original image, set status to "reverted"
+        # mark back to -1, and marking time to zero.
+        r = self._findTGV(tgv)
+        self._setStatus(r, "reverted")
+        self.setData(self.index(r, 2), -1)
+        self.setData(self.index(r, 3), 0)
+        # Do not erase any files: could still be uploading
+        self._clearPaperDir(r)
+
+    def countReadyToMark(self):
+        """Count how many are untouched or reverted."""
+        count = 0
+        for r in range(self.rowCount()):
+            if self._getStatus(r) in ("untouched", "reverted"):
+                count += 1
+        return count
+
 
 ##########################
 class ProxyModel(QSortFilterProxyModel):
@@ -288,12 +432,6 @@ class ProxyModel(QSortFilterProxyModel):
             return True
         return False
 
-    def addPaper(self, rho):
-        # Append new groupimage to list and append new row to table.
-        r = self.sourceModel().addPaper(rho)
-        pr = self.mapFromSource(self.sourceModel().index(r, 0)).row()
-        return pr
-
     def getPrefix(self, r):
         # Return the prefix of the image
         return self.data(self.index(r, 0))
@@ -302,64 +440,28 @@ class ProxyModel(QSortFilterProxyModel):
         # Return the status of the image
         return self.data(self.index(r, 1))
 
-    def setStatus(self, r, stat):
-        self.setData(self.index(r, 1), stat)
-
     def getOriginalFile(self, r):
         # Return the filename of the original un-annotated image
         return self.data(self.index(r, 5))
-
-    def setOriginalFile(self, r, fname):
-        # Set the original image filename
-        self.setData(self.index(r, 5), fname)
-
-    def setPaperDir(self, r, tdir):
-        # Set the temporary directory for this grading
-        self.setData(self.index(r, 8), tdir)
-
-    def clearPaperDir(self, r):
-        self.setPaperDir(r, None)
-
-    def getPaperDir(self, r):
-        return self.data(self.index(r, 8))
 
     def getAnnotatedFile(self, r):
         # Return the filename of the annotated image
         return self.data(self.index(r, 6))
 
-    def setAnnotatedFile(self, r, aname, pname):
-        # Set the annotated image filename
-        self.setData(self.index(r, 6), aname)
-        self.setData(self.index(r, 7), pname)
+    def rowFromTGV(self, tgv):
+        """Return the row index of this tgv or None if absent."""
+        r0 = []
+        for r in range(self.rowCount()):
+            if self.getPrefix(r) == tgv:
+                r0.append(r)
 
-    def getPlomFile(self, r):
-        # Return the filename of the plom file
-        return self.data(self.index(r, 7))
-
-    def markPaper(self, index, mrk, aname, pname, mtime, tdir):
-        # When marked, set the annotated filename, the plomfile, the mark,
-        # and the total marking time (in case it was annotated earlier)
-        mt = int(self.data(index[3]))
-        # total elapsed time.
-        self.setData(index[3], mtime + mt)
-        self.setData(index[1], "uploading...")
-        self.setData(index[2], mrk)
-        self.setData(index[0].siblingAtColumn(6), aname)
-        self.setData(index[0].siblingAtColumn(7), pname)
-        self.setData(index[0].siblingAtColumn(8), tdir)
-
-    def revertPaper(self, index):
-        # When user reverts to original image, set status to "reverted"
-        # mark back to -1, and marking time to zero.
-        # Do not erase any files: could still be uploading
-        self.setData(index[1], "reverted")
-        self.setData(index[2], -1)
-        self.setData(index[3], 0)
-        self.clearPaperDir(index[0].row())
-
-    def deferPaper(self, index):
-        # When user defers paper, it must be unmarked or reverted already. Set status to "deferred"
-        self.setData(index[1], "deferred")
+        if len(r0) == 0:
+            return None
+        elif not len(r0) == 1:
+            raise ValueError(
+                "Repeated tgv {} in rows {}  This should not happen!".format(tgv, r0)
+            )
+        return r0[0]
 
 
 ##########################
@@ -513,25 +615,16 @@ class MarkerClient(QWidget):
         # Ask server for list of previously marked papers
         markedList = messenger.MrequestDoneTasks(self.pageGroup, self.version)
         for x in markedList:
-            self.addTGVToList(
+            # TODO: might not the "markedList" have some other statuses?
+            self.exM.addPaper(
                 TestPageGroup(
                     x[0], fname="", stat="marked", mrk=x[2], mtime=x[3], tags=x[4]
-                ),
-                update=False,
+                )
             )
 
-    def addTGVToList(self, paper, update=True):
-        # Add a new entry (given inside paper) to the table and
-        # select it and update the displayed page-group image
-        # convert new row to proxyRow
-        pr = self.prxM.addPaper(paper)
-        if update is True:
-            self.ui.tableView.selectRow(pr)
-            self.updateImage(pr)
-
-    def checkFiles(self, pr):
-        tgv = self.prxM.getPrefix(pr)
-        if self.prxM.getOriginalFile(pr) != "":
+    def checkAndGrabFiles(self, tgv):
+        # TODO: doesn't seem to do a lot of checking, despite name
+        if self.exM.getOriginalFile(tgv) != "":
             return
 
         try:
@@ -545,23 +638,23 @@ class MarkerClient(QWidget):
         fname = os.path.join(self.workingDirectory, "{}.png".format(tgv))
         with open(fname, "wb+") as fh:
             fh.write(image)
-        self.prxM.setOriginalFile(pr, fname)
+        self.exM.setOriginalFile(tgv, fname)
 
         if anImage is None:
             return
 
-        self.prxM.setPaperDir(pr, paperdir)
+        self.exM.setPaperDirByTGV(tgv, paperdir)
         aname = os.path.join(paperdir, "G{}.png".format(tgv[1:]))
         pname = os.path.join(paperdir, "G{}.plom".format(tgv[1:]))
         with open(aname, "wb+") as fh:
             fh.write(anImage)
         with open(pname, "wb+") as fh:
             fh.write(plImage)
-        self.prxM.setAnnotatedFile(pr, aname, pname)
+        self.exM.setAnnotatedFile(tgv, aname, pname)
 
     def updateImage(self, pr=0):
         # Here the system should check if imagefiles exist and grab if needed.
-        self.checkFiles(pr)
+        self.checkAndGrabFiles(self.prxM.getPrefix(pr))
 
         # Grab the group-image from file and display in the examviewwindow
         # If group has been marked then display the annotated file
@@ -584,7 +677,7 @@ class MarkerClient(QWidget):
         except PlomSeriousException as err:
             self.throwSeriousError(err)
 
-    def requestNext(self, launchAgain=False):
+    def requestNext(self):
         """Ask the server for an unmarked paper.  Get file, add to
         the list of papers and update the image.
         """
@@ -615,22 +708,17 @@ class MarkerClient(QWidget):
         # save it
         with open(fname, "wb+") as fh:
             fh.write(image)
-        self.addTGVToList(TestPageGroup(test, fname, tags=tags))
-
-        # Clean up the table
-        self.ui.tableView.resizeColumnsToContents()
-        self.ui.tableView.resizeRowsToContents()
-        # launch annotator on the new test
-        # Note-launch-again is set to true when user just wants to get
-        # the next test and get annotating directly.
-        # When false the user stays at the marker window
-        if launchAgain:
-            # do not recurse, instead animate click
-            # self.annotateTest()
-            self.ui.annButton.animateClick()
+        self.exM.addPaper(TestPageGroup(test, fname, tags=tags))
+        pr = self.prxM.rowFromTGV(test)
+        if pr:
+            # if newly-added row is visible, select it and redraw
+            self.ui.tableView.selectRow(pr)
+            self.updateImage(pr)
+            # Clean up the table
+            self.ui.tableView.resizeColumnsToContents()
+            self.ui.tableView.resizeRowsToContents()
 
     def requestNextInBackgroundStart(self):
-        # Do this `messenger.getFileDav(tname, fname)` in another thread
         if self.backgroundDownloader:
             print("Previous Downloader: " + str(self.backgroundDownloader))
             # if prev downloader still going than wait.  might block the gui
@@ -646,12 +734,9 @@ class MarkerClient(QWidget):
             self.requestNextInBackgroundFailed
         )
         self.backgroundDownloader.start()
-        # # Add the page-group to the list of things to mark
-        # # do not update the displayed image with this new paper
-        # self.addTGVToList(TestPageGroup(msg[2], fname, tags=msg[4]), update=False)
 
     def requestNextInBackgroundFinished(self, test, fname, tags):
-        self.addTGVToList(TestPageGroup(test, fname, tags=tags))
+        self.exM.addPaper(TestPageGroup(test, fname, tags=tags))
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
@@ -670,27 +755,25 @@ class MarkerClient(QWidget):
             "safe to continue from here...".format(errmsg)
         ).exec_()
 
-    def moveToNextUnmarkedTest(self):
+    def moveToNextUnmarkedTest(self, tgv):
         # Move to the next unmarked test in the table.
         # Be careful not to get stuck in a loop if all marked
         prt = self.prxM.rowCount()
         if prt == 0:
-            return
-
-        # back up one row because before this is called we have
-        # added a row in the background, so the current row is actually
-        # one too far forward.
-        prstart = self.ui.tableView.selectedIndexes()[0].row()
+            return  # TODO True or False?
+        # get current position from the tgv
+        prstart = self.prxM.rowFromTGV(tgv)
+        if not prstart:
+            # it might be hidden by filters
+            prstart = 0
         pr = prstart
         while self.prxM.getStatus(pr) in ["marked", "uploading...", "deferred", "???"]:
             pr = (pr + 1) % prt
             if pr == prstart:
                 break
-        self.ui.tableView.selectRow(pr)
         if pr == prstart:
-            # gone right round, so select prstart+1
-            self.ui.tableView.selectRow((pr + 1) % prt)
             return False
+        self.ui.tableView.selectRow(pr)
         return True
 
     def revertTest(self):
@@ -698,48 +781,40 @@ class MarkerClient(QWidget):
         # TODO: shouldn't the server be informed?
         # https://gitlab.math.ubc.ca/andrewr/MLP/issues/406
         # TODO: In particular, reverting the paper must not jump queue!
-        prIndex = self.ui.tableView.selectedIndexes()
-        # if no test then return
-        if len(prIndex) == 0:
+        if len(self.ui.tableView.selectedIndexes()):
+            pr = self.ui.tableView.selectedIndexes()[0].row()
+        else:
             return
+        tgv = self.prxM.getPrefix(pr)
         # If test is untouched or already reverted, nothing to do
-        if self.prxM.data(prIndex[1]) in ["untouched", "reverted"]:
+        if self.exM.getStatusByTGV(tgv) in ("untouched", "reverted"):
             return
         # Check user really wants to revert
         msg = SimpleMessage("Do you want to revert to original scan?")
         if msg.exec_() == QMessageBox.No:
             return
         # Revert the test in the table (set status, mark etc)
-        self.prxM.revertPaper(prIndex)
+        self.exM.revertPaper(tgv)
         # Update the image (is now back to original untouched image)
-        self.updateImage(prIndex[0].row())
+        self.updateImage(pr)
 
     def deferTest(self):
-        # Mark test as "defer" - to be skipped until later.
-        index = self.ui.tableView.selectedIndexes()
-        # if no test then return
-        if len(index) == 0:
+        """Mark test as "defer" - to be skipped until later."""
+        if len(self.ui.tableView.selectedIndexes()):
+            pr = self.ui.tableView.selectedIndexes()[0].row()
+        else:
             return
-        if self.prxM.data(index[1]) == "deferred":
+        tgv = self.prxM.getPrefix(pr)
+        if self.exM.getStatusByTGV(tgv) == "deferred":
             return
-        if self.prxM.data(index[1]) in ("marked", "uploading...", "???"):
+        if self.exM.getStatusByTGV(tgv) in ("marked", "uploading...", "???"):
             msg = ErrorMessage("Paper is already marked - revert it before deferring.")
             msg.exec_()
             return
-        self.prxM.deferPaper(index)
+        self.exM.deferPaper(tgv)
 
-    def countUnmarkedReverted(self):
-        count = 0
-        for pr in range(self.prxM.rowCount()):
-            if self.prxM.getStatus(pr) in ["untouched", "reverted"]:
-                count += 1
-        return count
-
-    def waitForAnnotator(self, fname, pname=None):
-        """This fires up the annotation window for user annotation + maring.
-        Set a timer to record the time spend marking (for manager to see what
-        questions are taking a long time or are quick).
-        """
+    def startTheAnnotator(self, tgv, paperdir, fname, pname=None):
+        """This fires up the annotation window for user annotation + marking."""
         # Set marking style total/up/down - will pass to annotator
         self.markStyle = self.ui.markStyleGroup.checkedId()
         # Set mousehand left/right - will pass to annotator
@@ -754,17 +829,15 @@ class MarkerClient(QWidget):
             # TODO: there should be a filename sanity check here to
             # make sure plom file matches current image-file
 
-        # Start a timer to record time spend annotating
-        timer = QElapsedTimer()
-        timer.start()
         # while annotator is firing up request next paper in background
         # after giving system a moment to do `annotator.exec_()`
-        # but check if unmarked papers already in list.
-        if self.countUnmarkedReverted() == 0:
+        if self.exM.countReadyToMark() == 0:
             self.requestNextInBackgroundStart()
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
+            tgv,
+            paperdir,
             fname,
             self.maxScore,
             self.markStyle,
@@ -773,74 +846,48 @@ class MarkerClient(QWidget):
             plomDict=pdict,
         )
         # run the annotator
-        if annotator.exec_():
-            # If annotator returns "accept"
-            # then pass back the mark, time spent marking
-            # (timer measures millisec, so divide by 1000)
-            # and a flag as to whether or not we should relaunch the annotator
-            # with the next page-image. In relaunch, then we will need to
-            # ask server for next image.
-
-            # do score sanity check
-            if (0 <= annotator.score) and (annotator.score <= self.maxScore):
-                ret = [
-                    str(annotator.score),
-                    timer.elapsed() // 1000,
-                    annotator.launchAgain,
-                ]
-            else:
-                msg = ErrorMessage(
-                    "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(
-                        self.annotator.score
-                    )
-                )
-                msg.exec_()
-                ret = [None, timer.elapsed(), False]
-        else:
-            # If annotator returns "reject", then pop up error
-            msg = ErrorMessage("mark not recorded")
-            msg.exec_()
-            ret = [None, timer.elapsed(), False]
-        return ret
+        annotator.ann_finished_accept.connect(self.callbackAnnIsDoneAccept)
+        annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
+        self.setEnabled(False)
+        annotator.show()
 
     def annotateTest(self):
-        """Command grabs current test from table and (after checks) passes it
-        to 'waitForAnnotator' which fires up the actual annotator.
-        Checks if current test has been marked already
-        Saves the annotated file, mark, marking time etc in the table.
-        Sends file and data back to server.
-        """
-        # If nothing in the table, return.
-        if self.prxM.rowCount() == 0:
+        """Grab current test from table, do checks, start annotator."""
+        if len(self.ui.tableView.selectedIndexes()):
+            row = self.ui.tableView.selectedIndexes()[0].row()
+        else:
             return
-        # Grab the currently selected row.
-        index = self.ui.tableView.selectedIndexes()
-        # mark sure something is selected
-        if len(index) == 0:
-            return
+        tgv = self.prxM.getPrefix(row)
+        # split fcn: maybe we want to start the annotator not based on current selection
+        self.annotateTest_doit(tgv)
+
+    def annotateTest_doit(self, tgv):
+        """Start annotator on a particular tgv."""
         # Create annotated filename. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
-        tgv = self.prxM.data(index[0])[1:]
-        paperdir = tempfile.mkdtemp(prefix=tgv + "_", dir=self.workingDirectory)
+        assert tgv.startswith("t")
+        Gtgv = "G" + tgv[1:]
+        paperdir = tempfile.mkdtemp(prefix=tgv[1:] + "_", dir=self.workingDirectory)
         print("Debug: create paperdir {} for annotating".format(paperdir))
-        aname = os.path.join(paperdir, "G" + tgv + ".png")
-        cname = os.path.join(paperdir, "G" + tgv + ".json")
-        pname = os.path.join(paperdir, "G" + tgv + ".plom")
+        aname = os.path.join(paperdir, Gtgv + ".png")
+        cname = os.path.join(paperdir, Gtgv + ".json")
+        pname = os.path.join(paperdir, Gtgv + ".plom")
 
         # If image has been marked confirm with user if they want
         # to annotate further.
         remarkFlag = False
-        if self.prxM.data(index[1]) in ("marked", "uploading...", "???"):
+
+        if self.exM.getStatusByTGV(tgv) in ("marked", "uploading...", "???"):
             msg = SimpleMessage("Continue marking paper?")
             if not msg.exec_() == QMessageBox.Yes:
                 return
             remarkFlag = True
-            oldpaperdir = self.prxM.getPaperDir(index[0].row())
+            oldpaperdir = self.exM.getPaperDirByTGV(tgv)
             print("Debug: oldpaperdir is " + oldpaperdir)
             assert oldpaperdir is not None
-            oldaname = os.path.join(oldpaperdir, "G" + tgv + ".png")
-            oldpname = os.path.join(oldpaperdir, "G" + tgv + ".plom")
-            # oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
+            oldaname = os.path.join(oldpaperdir, Gtgv + ".png")
+            oldpname = os.path.join(oldpaperdir, Gtgv + ".plom")
+            # oldcname = os.path.join(oldpaperdir, Gtgv + ".json")
             # TODO: json file not downloaded
             # https://gitlab.math.ubc.ca/andrewr/MLP/issues/415
             shutil.copyfile(oldaname, aname)
@@ -849,7 +896,7 @@ class MarkerClient(QWidget):
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
-        fname = "{}".format(self.prxM.getOriginalFile(index[0].row()))
+        fname = "{}".format(self.exM.getOriginalFile(tgv))
         if self.backgroundDownloader:
             count = 0
             # Notes: we could check using `while not os.path.exists(fname):`
@@ -875,29 +922,47 @@ class MarkerClient(QWidget):
         print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
         shutil.copyfile(fname, aname)
 
-        # Get mark, markingtime, and launch-again flag from 'waitForAnnotator'
-        prevState = self.prxM.data(index[1])
-        self.prxM.setData(index[1], "annotating")
+        # stash the previous state, not ideal because makes column wider
+        prevState = self.exM.getStatusByTGV(tgv)
+        self.exM.setStatusByTGV(tgv, "ann:" + prevState)
+
         if remarkFlag:
-            [gr, mtime, launchAgain] = self.waitForAnnotator(aname, pname)
+            self.startTheAnnotator(tgv[1:], paperdir, aname, pname)
         else:
-            [gr, mtime, launchAgain] = self.waitForAnnotator(aname, None)
+            self.startTheAnnotator(tgv[1:], paperdir, aname, None)
+        # we started the annotator, we'll get a signal back when its done
 
-        # Exited annotator with 'cancel', so don't save anything.
-        if gr is None:
-            # TODO: could also erase the paperdir
-            # reselect the row we were working on
-            self.prxM.setData(index[1], prevState)
-            self.ui.tableView.selectRow(index[1].row())
+    # when the annotator is done, we end up here...
+    @pyqtSlot(str, list)
+    def callbackAnnIsDoneCancel(self, tgv, stuff):
+        self.setEnabled(True)
+        assert not stuff  # currently nothing given back on cancel
+        prevState = self.exM.getStatusByTGV("t" + tgv).split(":")[-1]
+        # TODO: could also erase the paperdir
+        self.exM.setStatusByTGV("t" + tgv, prevState)
+
+    # ... or here
+    @pyqtSlot(str, list)
+    def callbackAnnIsDoneAccept(self, tgv, stuff):
+        self.setEnabled(True)
+        gr, launchAgain, mtime, paperdir, aname, pname, cname = stuff
+
+        if not (0 <= gr and gr <= self.maxScore):
+            msg = ErrorMessage(
+                "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(
+                    self.annotator.score
+                )
+            )
+            msg.exec_()
+            # TODO: what do do here?  revert?
             return
-        # Copy the mark, annotated filename and the markingtime into the table
-        # note that this increments the marktime by mtime.
-        self.prxM.markPaper(index, gr, aname, pname, mtime, paperdir)
-        # update the mtime to be the total marking time
-        totmtime = int(self.prxM.data(index[3]))
 
-        # Update the currently displayed image by selecting that row
-        self.ui.tableView.selectRow(index[1].row())
+        # Copy the mark, annotated filename and the markingtime into the table
+        # TODO: sort this out whether tgv is "t00..." or "00..."?!
+        self.exM.markPaperByTGV("t" + tgv, gr, aname, pname, mtime, paperdir)
+        # update the mtime to be the total marking time
+        totmtime = self.exM.getMTimeByTGV("t" + tgv)
+        tags = self.exM.getTagsByTGV("t" + tgv)
 
         # the actual upload will happen in another thread
         self.backgroundUploader.enqueueNewUpload(
@@ -909,33 +974,35 @@ class MarkerClient(QWidget):
             totmtime,  # total marking time
             self.pageGroup,
             self.version,
-            self.prxM.data(index[4]),  # tags
+            tags,
         )
 
-        # Check if no unmarked test, then request one.
         if launchAgain is False:
+            # update image view, if the row we just finished is selected
+            prIndex = self.ui.tableView.selectedIndexes()
+            if len(prIndex) == 0:
+                return
+            pr = prIndex[0].row()
+            if self.prxM.getPrefix(pr) == "t" + tgv:
+                self.updateImage(pr)
             return
-        if self.moveToNextUnmarkedTest():
+        if self.moveToNextUnmarkedTest("t" + tgv):
             # self.annotateTest()
             self.ui.annButton.animateClick()
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
-        for r in range(self.prxM.rowCount()):
-            if self.prxM.getPrefix(r) == code:
-                # maybe it changed while we waited for the upload
-                if self.prxM.getStatus(r) == "uploading...":
-                    self.prxM.setStatus(r, "marked")
-        # TODO: negative used as invalid instead of None because the signal is typed
+        stat = self.exM.getStatusByTGV(code)
+        # maybe it changed while we waited for the upload
+        if stat == "uploading...":
+            self.exM.setStatusByTGV(code, "marked")
         if numdone > 0 and numtotal > 0:
             self.ui.mProgressBar.setValue(numdone)
             self.ui.mProgressBar.setMaximum(numtotal)
 
     def backgroundUploadFailed(self, code, errmsg):
         """An upload has failed, not sure what to do but do to it LOADLY"""
-        for r in range(self.prxM.rowCount()):
-            if self.prxM.getPrefix(r) == code:
-                self.prxM.setStatus(r, "???")
+        self.exM.setStatusByTGV(code, "???")
         ErrorMessage(
             "Unfortunately, there was an unexpected error; server did "
             "not accept our marked paper {}.\n\n{}\n\n"
@@ -1086,32 +1153,28 @@ class MarkerClient(QWidget):
         return True
 
     def tagTest(self):
-        index = self.ui.tableView.selectedIndexes()
-        tagSet = set()
-        currentTag = self.prxM.data(index[4])
-
-        for r in range(self.exM.rowCount()):
-            v = self.exM.data(self.exM.index(r, 4))
-            if len(v) > 0:
-                tagSet.add(v)
+        if len(self.ui.tableView.selectedIndexes()):
+            pr = self.ui.tableView.selectedIndexes()[0].row()
+        else:
+            return
+        tgv = self.prxM.getPrefix(pr)
+        tagSet = self.exM.getAllTags()
+        currentTag = self.exM.getTagsByTGV(tgv)
 
         atb = AddTagBox(self, currentTag, list(tagSet))
         if atb.exec_() == QDialog.Accepted:
             txt = atb.TE.toPlainText().strip()
-            # truncate at 256 characters.
+            # truncate at 256 characters.  TODO: without warning?
             if len(txt) > 256:
                 txt = txt[:256]
 
-            self.prxM.setData(index[4], txt)
+            self.exM.setTagsByTGV(tgv, txt)
             # resize view too
             self.ui.tableView.resizeRowsToContents()
 
             # send updated tag back to server.
             try:
-                msg = messenger.MsetTag(
-                    self.prxM.data(index[0]),
-                    self.prxM.data(index[4]),  # send the tags back too
-                )
+                msg = messenger.MsetTag(tgv, txt)
             except PlomSeriousException as err:
                 self.throwSeriousError(err)
         return
