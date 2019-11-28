@@ -712,6 +712,9 @@ class Annotator(QDialog):
         self.ui.redoButton.clicked.connect(self.scene.redo)
         # The key-help button connects to the keyPopUp command.
         self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
+        # The view button connects to the viewWholePaper
+        self.ui.viewButton.clicked.connect(self.viewWholePaper)
+
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
         self.ui.cancelButton.clicked.connect(self.cleanUpCancel)
         # Hide button connects to the toggleTools command
