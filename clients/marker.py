@@ -332,6 +332,19 @@ class ExamModel(QStandardItemModel):
         """Return tags for tgv"""
         return self._getDataByTGV(tgv, 4)
 
+    def setTagsByTGV(self, tgv, tags):
+        """Set tags for tgv"""
+        return self._setDataByTGV(tgv, 4, tags)
+
+    def getAllTags(self):
+        """Return all tags as a set."""
+        tags = set()
+        for r in range(self.rowCount()):
+            v = self.data(self.index(r, 4))
+            if len(v) > 0:
+                tags.add(v)
+        return tags
+
     def getMTimeByTGV(self, tgv):
         """Return total marking time for tgv"""
         return int(self._getDataByTGV(tgv, 3))
@@ -1144,32 +1157,28 @@ class MarkerClient(QWidget):
         return True
 
     def tagTest(self):
-        index = self.ui.tableView.selectedIndexes()
-        tagSet = set()
-        currentTag = self.prxM.data(index[4])
-
-        for r in range(self.exM.rowCount()):
-            v = self.exM.data(self.exM.index(r, 4))
-            if len(v) > 0:
-                tagSet.add(v)
+        if len(self.ui.tableView.selectedIndexes()):
+            pr = self.ui.tableView.selectedIndexes()[0].row()
+        else:
+            return
+        tgv = self.prxM.getPrefix(pr)
+        tagSet = self.exM.getAllTags()
+        currentTag = self.exM.getTagsByTGV(tgv)
 
         atb = AddTagBox(self, currentTag, list(tagSet))
         if atb.exec_() == QDialog.Accepted:
             txt = atb.TE.toPlainText().strip()
-            # truncate at 256 characters.
+            # truncate at 256 characters.  TODO: without warning?
             if len(txt) > 256:
                 txt = txt[:256]
 
-            self.prxM.setData(index[4], txt)
+            self.exM.setTagsByTGV(tgv, txt)
             # resize view too
             self.ui.tableView.resizeRowsToContents()
 
             # send updated tag back to server.
             try:
-                msg = messenger.MsetTag(
-                    self.prxM.data(index[0]),
-                    self.prxM.data(index[4]),  # send the tags back too
-                )
+                msg = messenger.MsetTag(tgv, txt)
             except PlomSeriousException as err:
                 self.throwSeriousError(err)
         return
