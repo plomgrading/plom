@@ -928,9 +928,9 @@ class MarkerClient(QWidget):
     def callbackAnnIsDoneCancel(self, tgv, stuff):
         self.setEnabled(True)
         assert not stuff  # currently nothing given back on cancel
-        prevState = self.exM._getDataByTGV("t" + tgv, 1).split(":")[-1]  # TODO rem priv
+        prevState = self.exM.getStatusByTGV("t" + tgv).split(":")[-1]
         # TODO: could also erase the paperdir
-        self.exM._setDataByTGV("t" + tgv, 1, prevState)  # TODO remove private
+        self.exM.setStatusByTGV("t" + tgv, prevState)
 
     # ... or here
     @pyqtSlot(str, list)
