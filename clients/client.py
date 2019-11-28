@@ -122,7 +122,7 @@ class Chooser(QDialog):
             markerwin = marker.MarkerClient(
                 user, pwd, server, mport, wport, pg, v, lastTime
             )
-            markerwin.my_shutdown_signal.connect(self.on_other_window_close)
+            markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
@@ -174,25 +174,35 @@ class Chooser(QDialog):
         fnt.setPointSize(v)
         self.parent.setFont(fnt)
 
-    def getMarkerOptions(self):
-        global lastTime
-        if self.parent.marker.markStyle == 2:
-            lastTime["upDown"] = "up"
-        elif self.parent.marker.markStyle == 3:
-            lastTime["upDown"] = "down"
-        if self.parent.marker.mouseHand == 0:
-            lastTime["mouse"] = "right"
-        elif self.parent.marker.mouseHand == 1:
-            lastTime["mouse"] = "left"
-
     @pyqtSlot(int)
     def on_other_window_close(self, value):
         assert isinstance(value, int)
-        if self.runIt == "Marker":
-            # update mouse-hand and up/down style for lasttime file
-            self.getMarkerOptions()
         self.show()
         self.setEnabled(True)
+
+    @pyqtSlot(int, list)
+    def on_marker_window_close(self, value, stuff):
+        assert isinstance(value, int)
+        self.show()
+        self.setEnabled(True)
+        if not stuff:
+            return
+        # update mouse-hand and up/down style for lasttime file
+        markStyle, mouseHand = stuff
+        global lastTime
+        if markStyle == 2:
+            lastTime["upDown"] = "up"
+        elif markStyle == 3:
+            lastTime["upDown"] = "down"
+        else:
+            raise RuntimeError("tertium non datur")
+        if mouseHand == 0:
+            lastTime["mouse"] = "right"
+        elif mouseHand == 1:
+            lastTime["mouse"] = "left"
+        else:
+            raise RuntimeError("tertium non datur")
+
 
 
 # Pop up a dialog for unhandled exceptions and then exit

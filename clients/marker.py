@@ -390,7 +390,7 @@ class ProxyModel(QSortFilterProxyModel):
 # TODO: should be a QMainWindow but at any rate not a Dialog
 # TODO: should this be parented by the QApplication?
 class MarkerClient(QWidget):
-    my_shutdown_signal = pyqtSignal(int)
+    my_shutdown_signal = pyqtSignal(int, list)
 
     def __init__(
         self,
@@ -987,7 +987,7 @@ class MarkerClient(QWidget):
             self.updateImage(idx[0].row())
 
     def shutDownError(self):
-        self.my_shutdown_signal.emit(2)
+        self.my_shutdown_signal.emit(2, [])
         self.close()
 
     def shutDown(self):
@@ -1024,11 +1024,11 @@ class MarkerClient(QWidget):
         msg, = messenger.SRMsg(["UCL", self.userName, self.token])
         assert msg == "ACK"
         # set marking style, mousehand for return to client/parent
-        self.markStyle = self.ui.markStyleGroup.checkedId()
+        self.markStyle = self.ui.markStyleGroup.checkedId()  # TODO
         self.mouseHand = self.ui.mouseHandGroup.checkedId()
 
         # finally send shutdown signal to client window and close.
-        self.my_shutdown_signal.emit(2)
+        self.my_shutdown_signal.emit(2, [self.markStyle, self.mouseHand])
         self.close()
 
     def DNF(self):
