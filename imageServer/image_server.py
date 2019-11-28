@@ -428,7 +428,7 @@ async def MclaimThisTask(request):
         if rmesg[0]:  # return [True, filename, tags]
             with MultipartWriter("imageAndTags") as mpwriter:
                 mpwriter.append(open(rmesg[1], "rb"))
-                mpwriter.append_json(rmesg[2])
+                mpwriter.append(rmesg[2])  # append tags as raw text.
             return web.Response(body=mpwriter, status=200)
         else:
             return web.Response(status=204)  # that task already taken.
