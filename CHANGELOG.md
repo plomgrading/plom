@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Annotator mark up/down and handedness preferences are saved between sessions.
 
 
 ## [0.2.1] - 2019-11-11
