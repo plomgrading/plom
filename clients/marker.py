@@ -293,7 +293,7 @@ class ExamModel(QStandardItemModel):
         return self.data(self.index(r, 8))
 
     def _findTGV(self, tgv):
-        """Return the row index of for this tgv.
+        """Return the row index of this tgv.
 
         Raises ValueError if not found.
         """
@@ -446,8 +446,8 @@ class ProxyModel(QSortFilterProxyModel):
         # Return the filename of the annotated image
         return self.data(self.index(r, 6))
 
-    def _findTGV(self, tgv):
-        """Return the row index of for this tgv or None if absent."""
+    def rowFromTGV(self, tgv):
+        """Return the row index of this tgv or None if absent."""
         r0 = []
         for r in range(self.rowCount()):
             if self.getPrefix(r) == tgv:
@@ -759,7 +759,7 @@ class MarkerClient(QWidget):
         if prt == 0:
             return  # TODO True or False?
         # get current position from the tgv
-        prstart = self.prxM._findTGV(tgv)
+        prstart = self.prxM.rowFromTGV(tgv)
         if not prstart:
             # it might be hidden by filters
             prstart = 0
