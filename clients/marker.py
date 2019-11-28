@@ -848,7 +848,7 @@ class MarkerClient(QWidget):
         # run the annotator
         annotator.ann_finished_accept.connect(self.callbackAnnIsDoneAccept)
         annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
-        # self.setEnabled(False)
+        self.setEnabled(False)
         annotator.show()
 
     def annotateTest(self):
