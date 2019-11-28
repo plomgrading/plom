@@ -310,52 +310,52 @@ class ExamModel(QStandardItemModel):
             )
         return r0[0]
 
-    def setDataByTGV(self, tgv, n, stuff):
+    def _setDataByTGV(self, tgv, n, stuff):
         """Find the row with `tgv` and put `stuff` into `n`th column."""
         r = self._findTGV(tgv)
         self.setData(self.index(r, n), stuff)
 
-    def getDataByTGV(self, tgv, n):
+    def _getDataByTGV(self, tgv, n):
         """Find the row with `tgv` and get the `n`th column."""
         r = self._findTGV(tgv)
         return self.data(self.index(r, n))
 
     def getStatusByTGV(self, tgv):
         """Return status for tgv"""
-        return self.getDataByTGV(tgv, 1)
+        return self._getDataByTGV(tgv, 1)
 
     def setStatusByTGV(self, tgv, st):
         """Set status for tgv"""
-        self.setDataByTGV(tgv, 1, st)
+        self._setDataByTGV(tgv, 1, st)
 
     def getTagsByTGV(self, tgv):
         """Return tags for tgv"""
-        return self.getDataByTGV(tgv, 4)
+        return self._getDataByTGV(tgv, 4)
 
     def getMTimeByTGV(self, tgv):
         """Return total marking time for tgv"""
-        return int(self.getDataByTGV(tgv, 3))
+        return int(self._getDataByTGV(tgv, 3))
 
     def getPaperDirByTGV(self, tgv):
         """Return temporary directory for this grading."""
-        return self.getDataByTGV(tgv, 8)
+        return self._getDataByTGV(tgv, 8)
 
     def setPaperDirByTGV(self, tgv, tdir):
         """Set temporary directory for this grading."""
-        self.setDataByTGV(tgv, 8, tdir)
+        self._setDataByTGV(tgv, 8, tdir)
 
     def getOriginalFile(self, tgv):
         """Return filename for original un-annotated image."""
-        return self.getDataByTGV(tgv, 5)
+        return self._getDataByTGV(tgv, 5)
 
     def setOriginalFile(self, tgv, fname):
         """Set the original un-annotated image filename."""
-        self.setDataByTGV(tgv, 5, fname)
+        self._setDataByTGV(tgv, 5, fname)
 
     def setAnnotatedFile(self, tgv, aname, pname):
         """Set the annotated image and data filenames."""
-        self.setDataByTGV(tgv, 6, aname)
-        self.setDataByTGV(tgv, 7, pname)
+        self._setDataByTGV(tgv, 6, aname)
+        self._setDataByTGV(tgv, 7, pname)
 
     def markPaperByTGV(self, tgv, mrk, aname, pname, mtime, tdir):
         # There should be exactly one row with this TGV
@@ -425,30 +425,13 @@ class ProxyModel(QSortFilterProxyModel):
         # Return the status of the image
         return self.data(self.index(r, 1))
 
-    def setStatus(self, r, stat):
-        self.setData(self.index(r, 1), stat)
-
     def getOriginalFile(self, r):
         # Return the filename of the original un-annotated image
         return self.data(self.index(r, 5))
 
-    def setPaperDir(self, r, tdir):
-        # Set the temporary directory for this grading
-        self.setData(self.index(r, 8), tdir)
-
-    def clearPaperDir(self, r):
-        self.setPaperDir(r, None)
-
-    def getPaperDir(self, r):
-        return self.data(self.index(r, 8))
-
     def getAnnotatedFile(self, r):
         # Return the filename of the annotated image
         return self.data(self.index(r, 6))
-
-    def getPlomFile(self, r):
-        # Return the filename of the plom file
-        return self.data(self.index(r, 7))
 
     def _findTGV(self, tgv):
         """Return the row index of for this tgv or None if absent."""
@@ -945,9 +928,9 @@ class MarkerClient(QWidget):
     def callbackAnnIsDoneCancel(self, tgv, stuff):
         self.setEnabled(True)
         assert not stuff  # currently nothing given back on cancel
-        prevState = self.exM.getDataByTGV("t" + tgv, 1).split(":")[-1]
+        prevState = self.exM._getDataByTGV("t" + tgv, 1).split(":")[-1]  # TODO rem priv
         # TODO: could also erase the paperdir
-        self.exM.setDataByTGV("t" + tgv, 1, prevState)
+        self.exM._setDataByTGV("t" + tgv, 1, prevState)  # TODO remove private
 
     # ... or here
     @pyqtSlot(str, list)
