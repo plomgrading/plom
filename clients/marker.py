@@ -363,6 +363,16 @@ class ExamModel(QStandardItemModel):
         # TODO: what is point of this comment?
         self.setStatusByTGV(tgv, "deferred")
 
+    def revertPaper(self, tgv):
+        # When user reverts to original image, set status to "reverted"
+        # mark back to -1, and marking time to zero.
+        r = self._findTGV(tgv)
+        self._setStatus(t, "reverted")
+        self.setData(self.index(r, 2), -1)
+        self.setData(self.index(r, 3), 0)
+        # Do not erase any files: could still be uploading
+        self._clearPaperDir(r)
+
 
 ##########################
 class ProxyModel(QSortFilterProxyModel):
@@ -451,15 +461,6 @@ class ProxyModel(QSortFilterProxyModel):
                 "Repeated tgv {} in rows {}  This should not happen!".format(tgv, r0)
             )
         return r0[0]
-
-    def revertPaper(self, r):
-        # When user reverts to original image, set status to "reverted"
-        # mark back to -1, and marking time to zero.
-        # Do not erase any files: could still be uploading
-        self.setStatus(r, "reverted")
-        self.setData(self.index(r, 2), -1)
-        self.setData(self.index(r, 3), 0)
-        self.clearPaperDir(r)
 
 
 ##########################
@@ -778,22 +779,22 @@ class MarkerClient(QWidget):
         # TODO: shouldn't the server be informed?
         # https://gitlab.math.ubc.ca/andrewr/MLP/issues/406
         # TODO: In particular, reverting the paper must not jump queue!
-        prIndex = self.ui.tableView.selectedIndexes()
-        # if no test then return
-        if len(prIndex) == 0:
+        if len(self.ui.tableView.selectedIndexes()):
+            pr = self.ui.tableView.selectedIndexes()[0].row()
+        else:
             return
-        r = prIndex[0].row()
+        tgv = self.prxM.getPrefix(pr)
         # If test is untouched or already reverted, nothing to do
-        if self.prxM.getStatus(r) in ["untouched", "reverted"]:
+        if self.exM.getStatusByTGV(tgv) in ("untouched", "reverted"):
             return
         # Check user really wants to revert
         msg = SimpleMessage("Do you want to revert to original scan?")
         if msg.exec_() == QMessageBox.No:
             return
         # Revert the test in the table (set status, mark etc)
-        self.prxM.revertPaper(r)
+        self.exM.revertPaper(tgv)
         # Update the image (is now back to original untouched image)
-        self.updateImage(r)
+        self.updateImage(pr)
 
     def deferTest(self):
         """Mark test as "defer" - to be skipped until later."""
