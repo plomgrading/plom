@@ -870,7 +870,7 @@ class MarkerClient(QWidget):
         """Start annotator on a particular tgv."""
         # Create annotated filename. If original tXXXXgYYvZ.png, then
         # annotated version is GXXXXgYYvZ (G=graded).
-        assert tgv[1] == "t"
+        assert tgv.startswith("t")
         Gtgv = "G" + tgv[1:]
         paperdir = tempfile.mkdtemp(prefix=tgv[1:] + "_", dir=self.workingDirectory)
         print("Debug: create paperdir {} for annotating".format(paperdir))
