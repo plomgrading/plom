@@ -90,4 +90,4 @@ def buildTestPDFs(spec, exams):
         )
     fh.close()
     cmd = shlex.split("parallel --bar -a commandlist.txt")
-    subprocess.call(cmd)
+    subprocess.run(cmd, check=True)

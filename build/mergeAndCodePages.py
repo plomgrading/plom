@@ -170,20 +170,21 @@ with tempfile.TemporaryDirectory() as tmpDir:
         exam[0].drawRect(sidRect3, color=[0, 0, 0], fill=[1, 1, 1], width=4)
         exam[0].drawRect(sidRect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
         exam[0].drawRect(sidRect2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
-        fontname = None
-        try:
-            tmp = txt.encode("Latin-1")
-            fontname = "Helvetica"
-        except UnicodeEncodeError:
-            pass
-        if not fontname:
+        def isPossibleToEncodeAs(s, x):
             try:
-                # TODO: double-check what encoding is right for PDF 1.7
-                tmp = txt.encode("gb2312")
-                fontname = "china-ss"
+                _tmp = s.encode(x)
+                return True
             except UnicodeEncodeError:
-                pass
-        if not fontname:
+                return False
+        if isPossibleToEncodeAs(txt, "Latin-1"):
+            fontname = "Helvetica"
+        elif isPossibleToEncodeAs(txt, "gb2312"):
+            # TODO: Double-check encoding name.  Add other CJK (how does Big5
+            # vs GB work?).  Check printers can handle these or do we need to
+            # embed a font?  (Adobe Acrobat users need to download something)
+            fontname = "china-ss"
+        else:
+            # TODO: or warn use Helvetica, get "?" chars
             raise ValueError("Don't know how to write name {} into PDF".format(txt))
         rc = exam[0].insertTextbox(
             sidRect,

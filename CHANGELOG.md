@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Pseudorandom question versions are now more reproducible (based on MagicCode).
+* Warnings are given if some non-Latin-1 names are in the classlist (as those may cause problems in generated PDFs).
 
 ### Fixed
 
