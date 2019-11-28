@@ -987,12 +987,12 @@ class MarkerClient(QWidget):
 
         if launchAgain is False:
             # update image view, if the row we just finished is selected
-            r = self.prxM._findTGV("t" + tgv)
             prIndex = self.ui.tableView.selectedIndexes()
             if len(prIndex) == 0:
                 return
-            if r == prIndex[0].row():
-                self.updateImage(r)
+            pr = prIndex[0].row()
+            if self.prxM.getPrefix(pr) == "t" + tgv:
+                self.updateImage(pr)
             return
         if self.moveToNextUnmarkedTest("t" + tgv):
             # self.annotateTest()
