@@ -761,7 +761,7 @@ class MarkerClient(QWidget):
         # Be careful not to get stuck in a loop if all marked
         prt = self.prxM.rowCount()
         if prt == 0:
-            return
+            return  # TODO True or False?
         # get current position from the tgv
         prstart = self.prxM._findTGV(tgv)
         if not prstart:
