@@ -398,6 +398,14 @@ class ExamModel(QStandardItemModel):
         # Do not erase any files: could still be uploading
         self._clearPaperDir(r)
 
+    def countReadyToMark(self):
+        """Count how many are untouched or reverted."""
+        count = 0
+        for r in range(self.rowCount()):
+            if self._getStatus(r) in ("untouched", "reverted"):
+                count += 1
+        return count
+
 
 ##########################
 class ProxyModel(QSortFilterProxyModel):
@@ -805,13 +813,6 @@ class MarkerClient(QWidget):
             return
         self.exM.deferPaper(tgv)
 
-    def countUnmarkedReverted(self):
-        count = 0
-        for pr in range(self.prxM.rowCount()):
-            if self.prxM.getStatus(pr) in ["untouched", "reverted"]:
-                count += 1
-        return count
-
     def startTheAnnotator(self, tgv, paperdir, fname, pname=None):
         """This fires up the annotation window for user annotation + marking."""
         # Set marking style total/up/down - will pass to annotator
@@ -830,7 +831,7 @@ class MarkerClient(QWidget):
 
         # while annotator is firing up request next paper in background
         # after giving system a moment to do `annotator.exec_()`
-        if self.countUnmarkedReverted() == 0:
+        if self.exM.countReadyToMark() == 0:
             self.requestNextInBackgroundStart()
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
