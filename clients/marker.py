@@ -798,16 +798,16 @@ class MarkerClient(QWidget):
         questions are taking a long time or are quick).
         """
         # Set marking style total/up/down - will pass to annotator
-        self.markStyle = self.ui.markStyleGroup.checkedId()
+        markStyle = self.ui.markStyleGroup.checkedId()
         # Set mousehand left/right - will pass to annotator
-        self.mouseHand = self.ui.mouseHandGroup.checkedId()
+        mouseHand = self.ui.mouseHandGroup.checkedId()
         # Set plom-dictionary to none
         pdict = None
-        # check if given a plom-file and set markstyle + pdict accordingly
+        # check if given a plom-file and override markstyle + pdict accordingly
         if pname is not None:
             with open(pname, "r") as fh:
                 pdict = json.load(fh)
-            self.markStyle = pdict["markStyle"]
+            markStyle = pdict["markStyle"]
             # TODO: there should be a filename sanity check here to
             # make sure plom file matches current image-file
 
@@ -824,8 +824,8 @@ class MarkerClient(QWidget):
         annotator = Annotator(
             fname,
             self.maxScore,
-            self.markStyle,
-            self.mouseHand,
+            markStyle,
+            mouseHand,
             parent=self,
             plomDict=pdict,
         )
@@ -1024,11 +1024,11 @@ class MarkerClient(QWidget):
         msg, = messenger.SRMsg(["UCL", self.userName, self.token])
         assert msg == "ACK"
         # set marking style, mousehand for return to client/parent
-        self.markStyle = self.ui.markStyleGroup.checkedId()  # TODO
-        self.mouseHand = self.ui.mouseHandGroup.checkedId()
+        markStyle = self.ui.markStyleGroup.checkedId()  # TODO
+        mouseHand = self.ui.mouseHandGroup.checkedId()
 
         # finally send shutdown signal to client window and close.
-        self.my_shutdown_signal.emit(2, [self.markStyle, self.mouseHand])
+        self.my_shutdown_signal.emit(2, [markStyle, mouseHand])
         self.close()
 
     def DNF(self):
