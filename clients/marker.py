@@ -284,7 +284,6 @@ class ExamModel(QStandardItemModel):
         self.setData(self.index(r, 7), pname)
 
     def _setPaperDir(self, r, tdir):
-        # Set the temporary directory for this grading
         self.setData(self.index(r, 8), tdir)
 
     def _clearPaperDir(self, r):
@@ -338,12 +337,25 @@ class ExamModel(QStandardItemModel):
         return int(self.getDataByTGV(tgv, 3))
 
     def getPaperDirByTGV(self, tgv):
-        """Return tags for tgv"""
+        """Return temporary directory for this grading."""
         return self.getDataByTGV(tgv, 8)
 
-    def getOriginalFileByTGV(self, tgv):
-        """Return tags for tgv"""
+    def setPaperDirByTGV(self, tgv, tdir):
+        """Set temporary directory for this grading."""
+        self.setDataByTGV(tgv, 8, tdir)
+
+    def getOriginalFile(self, tgv):
+        """Return filename for original un-annotated image."""
         return self.getDataByTGV(tgv, 5)
+
+    def setOriginalFile(self, tgv, fname):
+        """Set the original un-annotated image filename."""
+        self.setDataByTGV(tgv, 5, fname)
+
+    def setAnnotatedFile(self, tgv, aname, pname):
+        """Set the annotated image and data filenames."""
+        self.setDataByTGV(tgv, 6, aname)
+        self.setDataByTGV(tgv, 7, pname)
 
     def markPaperByTGV(self, tgv, mrk, aname, pname, mtime, tdir):
         # There should be exactly one row with this TGV
@@ -420,10 +432,6 @@ class ProxyModel(QSortFilterProxyModel):
         # Return the filename of the original un-annotated image
         return self.data(self.index(r, 5))
 
-    def setOriginalFile(self, r, fname):
-        # Set the original image filename
-        self.setData(self.index(r, 5), fname)
-
     def setPaperDir(self, r, tdir):
         # Set the temporary directory for this grading
         self.setData(self.index(r, 8), tdir)
@@ -437,11 +445,6 @@ class ProxyModel(QSortFilterProxyModel):
     def getAnnotatedFile(self, r):
         # Return the filename of the annotated image
         return self.data(self.index(r, 6))
-
-    def setAnnotatedFile(self, r, aname, pname):
-        # Set the annotated image filename
-        self.setData(self.index(r, 6), aname)
-        self.setData(self.index(r, 7), pname)
 
     def getPlomFile(self, r):
         # Return the filename of the plom file
@@ -621,9 +624,9 @@ class MarkerClient(QWidget):
                 )
             )
 
-    def checkFiles(self, pr):
-        tgv = self.prxM.getPrefix(pr)
-        if self.prxM.getOriginalFile(pr) != "":
+    def checkAndGrabFiles(self, tgv):
+        # TODO: doesn't seem to do a lot of checking, despite name
+        if self.exM.getOriginalFile(tgv) != "":
             return
 
         try:
@@ -637,23 +640,23 @@ class MarkerClient(QWidget):
         fname = os.path.join(self.workingDirectory, "{}.png".format(tgv))
         with open(fname, "wb+") as fh:
             fh.write(image)
-        self.prxM.setOriginalFile(pr, fname)
+        self.exM.setOriginalFile(tgv, fname)
 
         if anImage is None:
             return
 
-        self.prxM.setPaperDir(pr, paperdir)
+        self.exM.setPaperDirByTGV(tgv, paperdir)
         aname = os.path.join(paperdir, "G{}.png".format(tgv[1:]))
         pname = os.path.join(paperdir, "G{}.plom".format(tgv[1:]))
         with open(aname, "wb+") as fh:
             fh.write(anImage)
         with open(pname, "wb+") as fh:
             fh.write(plImage)
-        self.prxM.setAnnotatedFile(pr, aname, pname)
+        self.exM.setAnnotatedFile(tgv, aname, pname)
 
     def updateImage(self, pr=0):
         # Here the system should check if imagefiles exist and grab if needed.
-        self.checkFiles(pr)
+        self.checkAndGrabFiles(self.prxM.getPrefix(pr))
 
         # Grab the group-image from file and display in the examviewwindow
         # If group has been marked then display the annotated file
@@ -901,7 +904,7 @@ class MarkerClient(QWidget):
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
-        fname = "{}".format(self.exM.getOriginalFileByTGV(tgv))
+        fname = "{}".format(self.exM.getOriginalFile(tgv))
         if self.backgroundDownloader:
             count = 0
             # Notes: we could check using `while not os.path.exists(fname):`
