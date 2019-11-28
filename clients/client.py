@@ -44,6 +44,8 @@ def readLastTime():
     lastTime["pg"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
+    lastTime["upDown"] = "up"
+    lastTime["mouse"] = "right"
     # If exists, read from json file.
     if os.path.isfile("lastTime.json"):
         with open("lastTime.json") as data_file:
@@ -118,8 +120,10 @@ class Chooser(QDialog):
             v = str(self.ui.vSB.value())
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient(user, pwd, server, mport, wport, pg, v)
-            markerwin.my_shutdown_signal.connect(self.on_other_window_close)
+            markerwin = marker.MarkerClient(
+                user, pwd, server, mport, wport, pg, v, lastTime
+            )
+            markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
@@ -176,6 +180,30 @@ class Chooser(QDialog):
         assert isinstance(value, int)
         self.show()
         self.setEnabled(True)
+
+    @pyqtSlot(int, list)
+    def on_marker_window_close(self, value, stuff):
+        assert isinstance(value, int)
+        self.show()
+        self.setEnabled(True)
+        if not stuff:
+            return
+        # update mouse-hand and up/down style for lasttime file
+        markStyle, mouseHand = stuff
+        global lastTime
+        if markStyle == 2:
+            lastTime["upDown"] = "up"
+        elif markStyle == 3:
+            lastTime["upDown"] = "down"
+        else:
+            raise RuntimeError("tertium non datur")
+        if mouseHand == 0:
+            lastTime["mouse"] = "right"
+        elif mouseHand == 1:
+            lastTime["mouse"] = "left"
+        else:
+            raise RuntimeError("tertium non datur")
+
 
 
 # Pop up a dialog for unhandled exceptions and then exit
