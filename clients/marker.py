@@ -424,12 +424,6 @@ class ProxyModel(QSortFilterProxyModel):
             return True
         return False
 
-    def addPaper(self, rho):
-        # Append new groupimage to list and append new row to table.
-        r = self.sourceModel().addPaper(rho)
-        pr = self.mapFromSource(self.sourceModel().index(r, 0)).row()
-        return pr
-
     def getPrefix(self, r):
         # Return the prefix of the image
         return self.data(self.index(r, 0))
@@ -706,9 +700,10 @@ class MarkerClient(QWidget):
         # save it
         with open(fname, "wb+") as fh:
             fh.write(image)
-        pr = self.prxM.addPaper(TestPageGroup(test, fname, tags=tags))
-        if pr >= 0:
-            # if the newly-added row is visible, then do some redrawing
+        self.exM.addPaper(TestPageGroup(test, fname, tags=tags))
+        pr = self.prxM.rowFromTGV(test)
+        if pr:
+            # if newly-added row is visible, select it and redraw
             self.ui.tableView.selectRow(pr)
             self.updateImage(pr)
             # Clean up the table
