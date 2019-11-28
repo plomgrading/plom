@@ -1124,8 +1124,8 @@ class MarkerClient(QWidget):
         testNumber, ok = QInputDialog.getInt(
             self,
             "View another test",
-            "From which test do you want to view (pageGroup, version)=({}, {})?".format(
-                int(self.pageGroup), int(self.version)
+            "From which test do you want to view pageGroup {}?".format(
+                int(self.pageGroup)
             ),
             1,
             1,
@@ -1133,13 +1133,14 @@ class MarkerClient(QWidget):
             1,
         )
         if ok:
-            tgv = "t{}g{}v{}".format(
-                str(testNumber).zfill(4), self.pageGroup, self.version
-            )
             try:
-                image = messenger.MrequestOriginalImage(tgv)
+                image = messenger.MrequestOriginalImage(testNumber, self.pageGroup)
             except PlomNoMoreException as err:
-                msg = ErrorMessage("No image corresponding to code {}".format(tgv))
+                msg = ErrorMessage(
+                    "No image corresponding to test {} pageGroup".format(
+                        testNumber, self.pageGroup
+                    )
+                )
                 msg.exec_()
                 return
             ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory)
