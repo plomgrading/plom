@@ -125,14 +125,21 @@ def checkNonCanvasCSV(fname):
 
 
 def checkLatinNames(df):
-    """Pass the pandas object and check that the entries in the studentName column are all latin."""
+    """Pass the pandas object and check studentNames encode to Latin-1.
+
+    Print out a warning message for any that are not.
+    """
     # TODO - make this less eurocentric in the future.
     problems = []
     for index, row in df.iterrows():
         try:
             tmp = row["studentName"].encode("Latin-1")
         except UnicodeEncodeError:
-            problems.append([row["id"], row["studentName"]])
+            problems.append(
+                'row {}, number {}, name: "{}"'.format(
+                    index, row["id"], row["studentName"]
+                )
+            )
     if len(problems) > 0:
         print("WARNING: The following ID/name pairs contain non-Latin characters:")
         for X in problems:
@@ -252,8 +259,10 @@ class SetUp(QWidget):
             if not checkLatinNames(df):
                 QMessageBox.question(
                     self,
-                    "Classlist problems",
-                    "The classlist you supplied contains non-Latin characters - see console output. You can proceed, but it may cause problems. We recommend you Latinise them and reload the classlist. Sorry for the eurocentricity - fixing this is on the TODO list.",
+                    "Potential classlist problems",
+                    "The classlist you supplied contains non-Latin characters - see console output. "
+                    "You can proceed, but it might cause problems later. "
+                    "Apologies for the eurocentricity.",
                     buttons=QMessageBox.Ok,
                 )
 
