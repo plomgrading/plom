@@ -663,6 +663,7 @@ class Server(object):
         """
         # Check user is manager.
         if not self.authority.authoriseUser("Manager", password):
+            self.logger.info("Unauthorised attempt to reload images")
             return False
         self.logger.info("Reloading group images")
         # Read in the groups and images again.
@@ -676,6 +677,7 @@ class Server(object):
         """Reload the user list."""
         # Check user is manager.
         if not self.authority.authoriseUser("Manager", password):
+            self.logger.info("Unauthorised attempt to reload users")
             return False
         self.logger.info("Reloading the user list")
         # Load in the user list and check against existing user list for differences

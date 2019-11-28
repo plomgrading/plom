@@ -62,6 +62,13 @@ def getServerInfo():
             serverInfo = json.load(data_file)
 
 
+class ErrorMessage(QMessageBox):
+    def __init__(self, txt):
+        super(ErrorMessage, self).__init__()
+        self.setText(txt)
+        self.setStandardButtons(QMessageBox.Ok)
+
+
 class SimpleMessage(QMessageBox):
     """Simple messagebox derivative with message and yes/no buttons."""
 
