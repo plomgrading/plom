@@ -16,8 +16,9 @@ import json
 import shutil
 import sys
 import tempfile
-import time
 import threading
+import time
+import toml
 import queue
 import math
 
@@ -1098,9 +1099,14 @@ class MarkerClient(QWidget):
 
     def cacheLatexComments(self):
         # grab the list of comments from disk
-        if not os.path.exists("signedCommentList.json"):
+        if not os.path.exists("plomComments.toml"):
             return
-        clist = json.load(open("signedCommentList.json"))
+        # note by default toml creates dictionaries
+        cdict = toml.load(open("plomComments.toml"))
+        if "comments" in cdict:
+            clist = cdict["comments"]
+        else:
+            clist = []
         # sort list in order of longest comment to shortest comment
         clist.sort(key=lambda C: -len(C[1]))
 
