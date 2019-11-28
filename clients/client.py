@@ -7,6 +7,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import argparse
 import json
 import os
 import marker
@@ -237,4 +238,60 @@ if __name__ == "__main__":
 
     window = Chooser(app)
     window.show()
+
+    # Command line arguments (currently undocumented/unsupported)
+    # either nothing, or the following
+    if len(sys.argv) > 1:
+        parser = argparse.ArgumentParser(
+            description="Run the Plom client. No arguments = run as normal."
+        )
+        parser.add_argument("user", type=str)
+        parser.add_argument("password", type=str)
+        parser.add_argument(
+            "-s", "--server", action="store", help="Which server to contact."
+        )
+        parser.add_argument("-p", "--port", action="store", help="Which port to use.")
+
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
+            "-i", "--identifier", action="store_true", help="Run the identifier"
+        )
+        group.add_argument(
+            "-t", "--totaler", action="store_true", help="Run the totaler"
+        )
+        group.add_argument(
+            "-m",
+            "--marker",
+            const="json",
+            nargs="?",
+            type=str,
+            help="Run the marker. Pass either -m n:k (to run on pagegroup n, version k) or -m (to run on whatever was used last time).",
+        )
+        args = parser.parse_args()
+
+        window.ui.userLE.setText(args.user)
+        window.ui.passwordLE.setText(args.password)
+        if args.server:
+            window.ui.serverLE.setText(args.server)
+        if args.port:
+            window.ui.mportSB.setValue(int(args.port))
+            window.ui.wportSB.setValue(int(args.port) + 1)
+
+        if args.identifier:
+            window.ui.identifyButton.animateClick()
+        if args.totaler:
+            window.ui.totalButton.animateClick()
+        if args.marker:
+            if args.marker != "json":
+                pg, v = args.marker.split(":")
+                try:
+                    window.ui.pgSB.setValue(int(pg))
+                    window.ui.vSB.setValue(int(v))
+                except ValueError:
+                    print(
+                        "When you use -m, there should either be no argument, or an argument of the form n:k where n,k are integers."
+                    )
+                    quit()
+
+            window.ui.markButton.animateClick()
     sys.exit(app.exec_())

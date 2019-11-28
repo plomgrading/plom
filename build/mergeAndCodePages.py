@@ -64,26 +64,6 @@ rSE = fitz.Rect(pW - 85, pH - 90, pW - 15, pH - 20)
 
 # Build all relevant pngs in a temp directory
 with tempfile.TemporaryDirectory() as tmpDir:
-    # filenames for testname QR and dnw rectangles
-    dnw0File = os.path.join(tmpDir, "dnw0.png")
-    dnw1File = os.path.join(tmpDir, "dnw1.png")
-    # make a little grey triangle with the test name
-    # put this in corner where staple is
-    cmd = shlex.split(
-        'convert -pointsize 18 -antialias -size 232x116 xc:white -draw "stroke black fill grey '
-        "path 'M 114,0  L 0,114  L 228,114 L 114,0 Z'\"  -gravity south "
-        "-annotate +0+8 '{}' -rotate -45 -trim {}".format(name, dnw0File)
-    )
-    subprocess.call(cmd)
-
-    # and one for the other corner (back of page) in other orientation
-    cmd = shlex.split(
-        'convert -pointsize 18 -size 232x116 xc:white -draw "stroke black fill grey '
-        "path 'M 114,0  L 0,114  L 228,114 L 114,0 Z'\"  -gravity south "
-        "-annotate +0+8 '{}' -rotate +45 -trim {}".format(name, dnw1File)
-    )
-    subprocess.call(cmd)
-
     # create QR codes and other stamps for each test/page/version
     qrFile = {}
     tpFile = {}
@@ -102,9 +82,6 @@ with tempfile.TemporaryDirectory() as tmpDir:
 
     # After creating all of the QRcodes etc we can put them onto
     # the actual pdf pages as pixmaps using pymupdf
-    # read the DNW triangles in to pymupdf
-    dnw0 = fitz.Pixmap(dnw0File)
-    dnw1 = fitz.Pixmap(dnw1File)
     for p in range(length):
         # test/page stamp in top-centre of page
         # Rectangle size hacked by hand. TODO = do this more algorithmically
@@ -122,19 +99,44 @@ with tempfile.TemporaryDirectory() as tmpDir:
         exam[p].drawRect(rect, color=[0, 0, 0])
         assert rc > 0
 
+        # stamp DNW near staple: even/odd pages different
+        r = rDNW0 if p % 2 == 0 else rDNW1
+        shape = exam[p].newShape()
+        shape.drawLine(r.top_left, r.top_right)
+        if p % 2 == 0:
+            shape.drawLine(r.top_right, r.bottom_left)
+        else:
+            shape.drawLine(r.top_right, r.bottom_right)
+        shape.finish(width=0.5, color=[0, 0, 0], fill=[0.75, 0.75, 0.75])
+        shape.commit()
+        if p % 2 == 0:
+            # offset by trial-and-error, could be improved
+            r = r + (19, 19, 19, 19)
+        else:
+            r = r + (-19, 19, -19, 19)
+        mat = fitz.Matrix(45 if p % 2 == 0 else -45)
+        pivot = r.tr / 2 + r.bl / 2
+        morph = (pivot, mat)
+        rc = exam[p].insertTextbox(
+            r,
+            name,
+            fontsize=8,
+            fontname="Helvetica",
+            fontfile=None,
+            align=1,
+            morph=morph,
+        )
+        # exam[p].drawRect(r, morph=morph)
+        assert rc > 0, "Text didn't fit: shortname too long?  or font issue/bug?"
         # grab the tpv QRcodes for current page
         qr = {}
         for i in range(1, 5):
             qr[i] = fitz.Pixmap(qrFile[p + 1][i])
         if p % 2 == 0:
-            # if even page then stamp DNW near staple
-            exam[p].insertImage(rDNW0, pixmap=dnw0, overlay=True)
             exam[p].insertImage(rNE, pixmap=qr[1], overlay=True)
             exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
             exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
         else:
-            # odd page - put DNW stamp near staple
-            exam[p].insertImage(rDNW1, pixmap=dnw1, overlay=True)
             exam[p].insertImage(rNW, pixmap=qr[2], overlay=True)
             exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
             exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)

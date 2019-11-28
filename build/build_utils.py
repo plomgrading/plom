@@ -14,7 +14,7 @@ import sys
 import os
 import shlex
 import subprocess
-from random import randint
+import random
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.testspecification import TestSpecification
@@ -30,7 +30,7 @@ def buildGroup(exams, t, pageTuple, fcr, V, v):
     if fcr == "f" or fcr == "i":  # fixed and id pages always version 1
         v = 1
     elif fcr == "r":  # pick one at random
-        v = randint(1, V)
+        v = random.randint(1, V)
     else:  # cycle
         v += 1
         if v > V:
@@ -48,9 +48,14 @@ def buildDirectories():
 def buildExamPages(spec):
     """Build the metadata for a bunch of exams from a spec file
 
+    Versions are chosen randomly, but the choices are reproducible
+    by seeding the RNG based on "MagicCode" from the spec.
+
     Returns:
        exams: a dict keyed by [testnum][page]
+
     """
+    random.seed(spec.MagicCode)
     exams = defaultdict(dict)
     npg = spec.getNumberOfGroups()
     # keep track of version of given page group in given exam so can compute cycling versions.
