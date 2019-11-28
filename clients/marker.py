@@ -288,7 +288,7 @@ class ExamModel(QStandardItemModel):
         self.setData(self.index(r, 8), tdir)
 
     def _clearPaperDir(self, r):
-        self.setPaperDir(r, None)
+        self._setPaperDir(r, None)
 
     def _getPaperDir(self, r):
         return self.data(self.index(r, 8))
@@ -327,7 +327,7 @@ class ExamModel(QStandardItemModel):
 
     def setStatusByTGV(self, tgv, st):
         """Set status for tgv"""
-        return self.setDataByTGV(tgv, 1, st)
+        self.setDataByTGV(tgv, 1, st)
 
     def getTagsByTGV(self, tgv):
         """Return tags for tgv"""
@@ -367,7 +367,7 @@ class ExamModel(QStandardItemModel):
         # When user reverts to original image, set status to "reverted"
         # mark back to -1, and marking time to zero.
         r = self._findTGV(tgv)
-        self._setStatus(t, "reverted")
+        self._setStatus(r, "reverted")
         self.setData(self.index(r, 2), -1)
         self.setData(self.index(r, 3), 0)
         # Do not erase any files: could still be uploading
