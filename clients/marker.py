@@ -782,7 +782,7 @@ class MarkerClient(QWidget):
             # ask server for next image.
 
             # do score sanity check
-            if 0 <= annotator.score <= self.maxScore:
+            if (0 <= annotator.score) and (annotator.score <= self.maxScore):
                 ret = [
                     str(annotator.score),
                     timer.elapsed() // 1000,
