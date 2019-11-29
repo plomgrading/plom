@@ -51,7 +51,11 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QSpinBox" name="versionSB"/>
+       <widget class="QSpinBox" name="versionSB">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+       </widget>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="pagesLabel">
@@ -61,7 +65,11 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QSpinBox" name="pageSB"/>
+       <widget class="QSpinBox" name="pageSB">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+       </widget>
       </item>
       <item row="2" column="2">
        <spacer name="horizontalSpacer">

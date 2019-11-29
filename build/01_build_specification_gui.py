@@ -207,9 +207,9 @@ class SpecBuilder(QWidget):
         )
         self.rotation = QComboBox()
         self.rotation.setObjectName("rotation")
+        self.rotation.addItem("random")
         self.rotation.addItem("fixed")
         self.rotation.addItem("cycled")
-        self.rotation.addItem("random")
         self.ui.pgTable.setCellWidget(rows, 2, self.rotation)
         return rows
 
@@ -268,7 +268,7 @@ class SpecBuilder(QWidget):
         switcher = {
             1: "Please fill up the number of pages and the number of versions and click confirm before continue",
             2: "Please fill up the current row before continue",
-            3: "Marks have to be positive integers",
+            3: "Marks have to be non-negative integers",
             4: "'page to' must be greater or equal to 'page from'",
             5: "you have exceeded the maximum number of pages you set",
             6: "Number of versions and number of pages cannot be zero",
