@@ -4,5 +4,5 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
 
-__version__ = "0.2.1+"
+__version__ = "0.2.2+"
 Plom_API_Version = "5"  # updated for restified API for get-next-task.

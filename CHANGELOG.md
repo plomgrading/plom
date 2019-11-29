@@ -5,17 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.2] - 2019-11-29
 
 ### Added
-* Can now build papers with student Names/IDs stamped on page 1. The 02a script reads the classlist (in order) to do this. If more papers than students, then those papers produced without such a name/id stamp. The server knows when this is done and the associated database is populated accordingly.
+* Can now build papers with student Names/IDs pre-written on page 1.
+* Client now has a "view" button to quickly view other questions.
 
 ### Changed
-* Pseudorandom question versions are now more reproducible (based on MagicCode).
-* Warnings are given if some non-Latin-1 names are in the classlist (as those may cause problems in generated PDFs).
+* Warning given for non-Latin names classlist (may cause problems in PDFs).
 
 ### Fixed
-* Annotator mark up/down and handedness preferences are saved between sessions.
+* Annotator mark up/down and handedness preferences now saved between sessions.
 
 
 ## [0.2.1] - 2019-11-11
@@ -89,6 +89,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is the first release of Plom, PaperLessOpenMarking.
 
-[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...master
+[0.2.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...v0.2.2
 [0.2.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.0...v0.2.1
 [0.2.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.1.0...v0.2.0
