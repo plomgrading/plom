@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Can now build papers with student Names/IDs pre-written on page 1.
 
 ### Changed
-* Pseudorandom question versions are now more reproducible.
 * Warning given for non-Latin names classlist (may cause problems in PDFs).
 
 ### Fixed
