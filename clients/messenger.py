@@ -683,7 +683,7 @@ def MclaimThisTask(code):
         # response should be multipart = [image, tags]
         imageAndTags = MultipartDecoder.from_response(response).parts
         image = BytesIO(imageAndTags[0].content).getvalue()  # pass back image as bytes
-        tags = imageAndTags[1].text
+        tags = imageAndTags[1].text  # this is raw text.
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")
