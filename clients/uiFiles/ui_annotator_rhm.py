@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator_righthandmouse.ui'
+# Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator_rhm.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.0
+# Created by: PyQt5 UI code generator 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -204,6 +204,16 @@ class Ui_annotator_rhm(object):
         self.zoomCB = QtWidgets.QComboBox(self.frame)
         self.zoomCB.setObjectName("zoomCB")
         self.toolLayout.addWidget(self.zoomCB, 4, 5, 1, 2)
+        self.viewButton = QtWidgets.QPushButton(self.frame)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.viewButton.sizePolicy().hasHeightForWidth())
+        self.viewButton.setSizePolicy(sizePolicy)
+        self.viewButton.setMinimumSize(QtCore.QSize(45, 0))
+        self.viewButton.setMaximumSize(QtCore.QSize(45, 16777215))
+        self.viewButton.setObjectName("viewButton")
+        self.toolLayout.addWidget(self.viewButton, 4, 4, 1, 1)
         self.verticalLayout.addWidget(self.frame, 0, QtCore.Qt.AlignHCenter)
         self.markBox = QtWidgets.QFrame(self.hideableBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
@@ -307,6 +317,7 @@ class Ui_annotator_rhm(object):
         self.moveButton.setToolTip(_translate("annotator_rhm", "press z"))
         self.moveButton.setText(_translate("annotator_rhm", "..."))
         self.keyHelpButton.setText(_translate("annotator_rhm", "Key Help"))
+        self.viewButton.setText(_translate("annotator_rhm", "View"))
         self.finishedButton.setToolTip(_translate("annotator_rhm", "Save and move to the next paper"))
         self.finishedButton.setText(_translate("annotator_rhm", "Next"))
         self.finishNoRelaunchButton.setToolTip(_translate("annotator_rhm", "Save and return to marker window"))
