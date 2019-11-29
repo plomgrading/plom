@@ -7,8 +7,8 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import toml
 import argparse
-import json
 import os
 import marker
 import identifier
@@ -49,17 +49,16 @@ def readLastTime():
     lastTime["fontSize"] = 10
     lastTime["upDown"] = "up"
     lastTime["mouse"] = "right"
-    # If exists, read from json file.
-    if os.path.isfile("lastTime.json"):
-        with open("lastTime.json") as data_file:
-            # update values from the json
-            lastTime.update(json.load(data_file))
+    # If config file exists, use it to update the defaults
+    if os.path.isfile("plomConfig.toml"):
+        with open("plomConfig.toml") as data_file:
+            lastTime.update(toml.load(data_file))
 
 
 def writeLastTime():
-    # Write the options to json file.
-    fh = open("lastTime.json", "w")
-    fh.write(json.dumps(lastTime, indent=4, sort_keys=True))
+    """Write the options to the config file."""
+    fh = open("plomConfig.toml", "w")
+    fh.write(toml.dumps(lastTime))
     fh.close()
 
 
