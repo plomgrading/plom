@@ -49,15 +49,14 @@ def readLastTime():
     lastTime["fontSize"] = 10
     lastTime["upDown"] = "up"
     lastTime["mouse"] = "right"
-    # If exists, read from toml file.
+    # If config file exists, use it to update the defaults
     if os.path.isfile("plomConfig.toml"):
         with open("plomConfig.toml") as data_file:
-            # update values from the json
             lastTime.update(toml.load(data_file))
 
 
 def writeLastTime():
-    # Write the options to json file.
+    """Write the options to the config file."""
     fh = open("plomConfig.toml", "w")
     fh.write(toml.dumps(lastTime))
     fh.close()
