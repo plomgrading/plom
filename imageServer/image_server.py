@@ -428,7 +428,7 @@ async def MclaimThisTask(request):
         if rmesg[0]:  # return [True, filename, tags]
             with MultipartWriter("imageAndTags") as mpwriter:
                 mpwriter.append(open(rmesg[1], "rb"))
-                mpwriter.append_json(rmesg[2])
+                mpwriter.append(rmesg[2])  # append tags as raw text.
             return web.Response(body=mpwriter, status=200)
         else:
             return web.Response(status=204)  # that task already taken.
@@ -593,8 +593,16 @@ def readExamsGrouped():
     if os.path.exists("../resources/examsGrouped.json"):
         with open("../resources/examsGrouped.json") as data_file:
             examsGrouped = json.load(data_file)
-            for n in examsGrouped.keys():
-                print("Adding id group {}".format(examsGrouped[n][0]))
+
+
+def readExamsProduced():
+    """Read the list of exams that were grouped after scanning.
+    Store in examsGrouped.
+    """
+    global examsProduced
+    if os.path.exists("../resources/examsProduced.json"):
+        with open("../resources/examsProduced.json") as data_file:
+            examsProduced = json.load(data_file)
 
 
 def findPageGroups():
@@ -606,7 +614,6 @@ def findPageGroups():
         for fname in glob.glob(
             "{}/group_{}/*/*.png".format(pathScanDirectory, str(pg).zfill(2))
         ):
-            print("Adding pageimage from {}".format(fname))
             # Since file is tXXXXgYYvZ.png - get the tgv by deleting 4 char.
             pageGroupsForGrading[os.path.basename(fname)[:-4]] = fname
 
@@ -635,10 +642,14 @@ class Server(object):
         self.testSpec = tspec
         self.logger = logger
         self.logger.info("Loading images and users.")
-        # Load in the idgroup images and the pagegroup images
-        self.loadPapers()
         # Load in the list of users who will run the client app.
         self.loadUsers()
+        # check databases are set up and complete.
+        if self.checkDatabases():
+            print("Databases checked - complete.")
+        else:
+            print("Databases incomplete - repopulating.")
+            self.repopulateDatabases()
 
     def loadUsers(self):
         """Load the users from json file, add them to the authority which
@@ -738,25 +749,93 @@ class Server(object):
         """Check the user's token is valid"""
         return self.authority.validateToken(user, token)
 
-    def loadPapers(self):
+    def reloadImages(self, password):
+        """Reload all the grouped exams and all the page images.
+        """
+        # Check user is manager.
+        if not self.authority.authoriseUser("Manager", password):
+            return ["ERR", "You are not authorised to reload images"]
+        self.logger.info("Reloading group images")
+        # Read in the groups and images again.
+        readExamsGrouped()
+        findPageGroups()
+        # read exams-produced for case that papers already have SID/SNames stamped
+
+        self.repopulateDatabases()
+        # Send acknowledgement back to manager.
+        return ["ACK"]
+
+    def repopulateDatabases(self):
         """Load the IDgroup page images for identifying
         and the group-images for marking.
         The ID-images are stored in the IDDB, and the
         image for marking in the MDB.
         """
-        self.logger.info("Adding IDgroups {}".format(sorted(examsGrouped.keys())))
+        self.logger.info("Repopulating databases with missing entries.")
         for t in sorted(examsGrouped.keys()):
-            self.IDDB.addUnIDdExam(int(t), "t{:s}idg".format(t.zfill(4)))
+            # the corresponding code:
+            code = "t{:s}idg".format(t.zfill(4))
+            # check the ID-database
+            if not self.IDDB.checkExists(code):
+                if (
+                    t in examsProduced
+                    and "id" in examsProduced[t]
+                    and "name" in examsProduced[t]
+                ):
+                    self.logger.info(
+                        "Adding id group {} with ID {} and name {}".format(
+                            examsGrouped[t][0],
+                            examsProduced[t]["id"],
+                            examsProduced[t]["name"],
+                        )
+                    )
+                    self.IDDB.addPreIDdExam(
+                        int(t), code, examsProduced[t]["id"], examsProduced[t]["name"]
+                    )
+                else:
+                    self.logger.info("Adding id group {}".format(code))
+                    self.IDDB.addUnIDdExam(int(t), code)
+            # check the total-database
+            if not self.TDB.checkExists(code):
+                self.TDB.addUntotaledExam(int(t), code)
+                self.logger.info("Adding Total-image {}".format(code))
 
-        self.logger.info("Adding Total-images {}".format(sorted(examsGrouped.keys())))
-        for t in sorted(examsGrouped.keys()):
-            self.TDB.addUntotaledExam(int(t), "t{:s}idg".format(t.zfill(4)))
-
-        self.logger.info("Adding TGVs {}".format(sorted(pageGroupsForGrading.keys())))
         for tgv in sorted(pageGroupsForGrading.keys()):
-            # tgv is t1234g67v9
-            t, pg, v = int(tgv[1:5]), int(tgv[6:8]), int(tgv[9])
-            self.MDB.addUnmarkedGroupImage(t, pg, v, tgv, pageGroupsForGrading[tgv])
+            if not self.MDB.checkExists(tgv):
+                # tgv is t1234g67v9
+                t, pg, v = int(tgv[1:5]), int(tgv[6:8]), int(tgv[9])
+                self.MDB.addUnmarkedGroupImage(t, pg, v, tgv, pageGroupsForGrading[tgv])
+                self.logger.info("Adding groupImage {}".format(tgv))
+
+    def checkDatabases(self):
+        """Check that each TGV is in the database"""
+        flag = True
+        idMiss = []
+        tMiss = []
+        mMiss = []
+        for t in sorted(examsGrouped.keys()):
+            code = "t{:s}idg".format(t.zfill(4))
+            if not self.IDDB.checkExists(code):
+                # print("ID database missing {}".format(code))
+                idMiss.append(code)
+                flag = False
+            if not self.TDB.checkExists(code):
+                # print("Total database missing {}".format(code))
+                tMiss.append(code)
+                flag = False
+        for tgv in sorted(pageGroupsForGrading.keys()):
+            if not self.MDB.checkExists(tgv):
+                # print("Mark database missing {}".format(code))
+                mMiss.append(tgv)
+                flag = False
+        if not flag:
+            if len(idMiss) > 0:
+                print("ID-database missing {}".format(idMiss))
+            if len(tMiss) > 0:
+                print("Total-database missing {}".format(tMiss))
+            if len(mMiss) > 0:
+                print("Mark-database missing {}".format(mMiss))
+        return flag
 
     def printToDo(self):
         """Ask each database to print the images that are still on
@@ -1128,8 +1207,10 @@ spec.readSpec()
 # scanning and the filenames of the group-images
 # that need marking.
 examsGrouped = {}
+examsProduced = {}
 pageGroupsForGrading = {}
 readExamsGrouped()
+readExamsProduced()
 findPageGroups()
 
 # Set up the classes for handling transactions with databases

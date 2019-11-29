@@ -45,9 +45,12 @@ class IDDatabase:
 
     def createTable(self):
         """Create the required table in the database"""
-        self.logging.info("Creating database tables")
         with iddb:
-            iddb.create_tables([IDImage])
+            if iddb.table_exists("idimage"):
+                self.logging.info("Using existing 'idimage' database table.")
+            else:
+                self.logging.info("Creating database table")
+                iddb.create_tables([IDImage])
 
     def shutdown(self):
         """Shut connection to the database"""
@@ -115,6 +118,25 @@ class IDDatabase:
                     time=datetime.now(),
                     sid=-t,
                     sname="",
+                )
+        except IntegrityError:
+            self.logging.info("IDImage {} {} already exists.".format(t, code))
+
+    def addPreIDdExam(self, t, code, sid, sname):
+        """Add exam number t with given code, student-ID/Name to the database"""
+        self.logging.info(
+            "Adding preID'd IDImage {} ({}, {}) to database".format(t, sid, sname)
+        )
+        try:
+            with iddb.atomic():
+                IDImage.create(
+                    number=t,
+                    tgv=code,
+                    status="Identified",
+                    user="manager",
+                    time=datetime.now(),
+                    sid=sid,
+                    sname=sname,
                 )
         except IntegrityError:
             self.logging.info("IDImage {} {} already exists.".format(t, code))
@@ -266,4 +288,12 @@ class IDDatabase:
                 return True
         except IDImage.DoesNotExist:
             print("Request for non-existant tgv = {}".format(code))
+            return False
+
+    def checkExists(self, code):
+        try:
+            with iddb.atomic():
+                x = IDImage.get(tgv=code)
+                return True
+        except IDImage.DoesNotExist:
             return False

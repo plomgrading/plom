@@ -3,6 +3,8 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __license__ = "AGPLv3"
 
 import sys
+import shlex
+import subprocess
 import os
 import fitz
 import pyqrcode
@@ -62,26 +64,6 @@ rSE = fitz.Rect(pW - 85, pH - 90, pW - 15, pH - 20)
 
 # Build all relevant pngs in a temp directory
 with tempfile.TemporaryDirectory() as tmpDir:
-    # filenames for testname QR and dnw rectangles
-    nameFile = os.path.join(tmpDir, "name.png")
-    dnw0File = os.path.join(tmpDir, "dnw0.png")
-    dnw1File = os.path.join(tmpDir, "dnw1.png")
-    # make a little grey triangle with the test name
-    # put this in corner where staple is
-    cmd = (
-        'convert -pointsize 18 -antialias -size 232x116 xc:white -draw "stroke black fill grey '
-        "path 'M 114,0  L 0,114  L 228,114 L 114,0 Z'\"  -gravity south "
-        "-annotate +0+8 '{}' -rotate -45 -trim {}".format(name, dnw0File)
-    )
-    os.system(cmd)
-    # and one for the other corner (back of page) in other orientation
-    cmd = (
-        'convert -pointsize 18 -size 232x116 xc:white -draw "stroke black fill grey '
-        "path 'M 114,0  L 0,114  L 228,114 L 114,0 Z'\"  -gravity south "
-        "-annotate +0+8 '{}' -rotate +45 -trim {}".format(name, dnw1File)
-    )
-    os.system(cmd)
-
     # create QR codes and other stamps for each test/page/version
     qrFile = {}
     tpFile = {}
@@ -95,44 +77,134 @@ with tempfile.TemporaryDirectory() as tmpDir:
             qrFile[p][i] = os.path.join(tmpDir, "page{}_{}.png".format(p, i))
             qr.png(qrFile[p][i], scale=4)
             # put a border around it
-            os.system("mogrify {} {}".format(mogParams, qrFile[p][i]))
+            cmd = shlex.split("mogrify {} {}".format(mogParams, qrFile[p][i]))
+            subprocess.call(cmd)
 
-        # a file for the test/page stamp in top-centre of page
-        tpFile[p] = os.path.join(
-            tmpDir, "t{}p{}.png".format(str(test).zfill(4), str(p).zfill(2))
-        )
-        # create the test/page stamp using imagemagick
-        os.system(
-            "convert -pointsize 36 -size 200x42 caption:'{}.{}' -trim "
-            "-gravity Center -extent 200x42 -bordercolor black "
-            "-border 1 {}".format(str(test).zfill(4), str(p).zfill(2), tpFile[p])
-        )
     # After creating all of the QRcodes etc we can put them onto
     # the actual pdf pages as pixmaps using pymupdf
-    # read the DNW triangles in to pymupdf
-    dnw0 = fitz.Pixmap(dnw0File)
-    dnw1 = fitz.Pixmap(dnw1File)
     for p in range(length):
-        # read in the test/page stamp
-        testnumber = fitz.Pixmap(tpFile[p + 1])
-        # put it at centre top each page
-        exam[p].insertImage(rTC, pixmap=testnumber, overlay=True, keep_proportion=False)
+        # test/page stamp in top-centre of page
+        # Rectangle size hacked by hand. TODO = do this more algorithmically
+        rect = fitz.Rect(pW // 2 - 40, 20, pW // 2 + 40, 44)
+        text = "{}.{}".format(str(test).zfill(4), str(p + 1).zfill(2))
+        rc = exam[p].insertTextbox(
+            rect,
+            text,
+            fontsize=18,
+            color=[0, 0, 0],
+            fontname="Helvetica",
+            fontfile=None,
+            align=1,
+        )
+        exam[p].drawRect(rect, color=[0, 0, 0])
+        assert rc > 0
+
+        # stamp DNW near staple: even/odd pages different
+        r = rDNW0 if p % 2 == 0 else rDNW1
+        shape = exam[p].newShape()
+        shape.drawLine(r.top_left, r.top_right)
+        if p % 2 == 0:
+            shape.drawLine(r.top_right, r.bottom_left)
+        else:
+            shape.drawLine(r.top_right, r.bottom_right)
+        shape.finish(width=0.5, color=[0, 0, 0], fill=[0.75, 0.75, 0.75])
+        shape.commit()
+        if p % 2 == 0:
+            # offset by trial-and-error, could be improved
+            r = r + (19, 19, 19, 19)
+        else:
+            r = r + (-19, 19, -19, 19)
+        mat = fitz.Matrix(45 if p % 2 == 0 else -45)
+        pivot = r.tr / 2 + r.bl / 2
+        morph = (pivot, mat)
+        rc = exam[p].insertTextbox(
+            r,
+            name,
+            fontsize=8,
+            fontname="Helvetica",
+            fontfile=None,
+            align=1,
+            morph=morph,
+        )
+        # exam[p].drawRect(r, morph=morph)
+        assert rc > 0, "Text didn't fit: shortname too long?  or font issue/bug?"
         # grab the tpv QRcodes for current page
         qr = {}
         for i in range(1, 5):
             qr[i] = fitz.Pixmap(qrFile[p + 1][i])
         if p % 2 == 0:
-            # if even page then stamp DNW near staple
-            exam[p].insertImage(rDNW0, pixmap=dnw0, overlay=True)
             exam[p].insertImage(rNE, pixmap=qr[1], overlay=True)
             exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
             exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
         else:
-            # odd page - put DNW stamp near staple
-            exam[p].insertImage(rDNW1, pixmap=dnw1, overlay=True)
             exam[p].insertImage(rNW, pixmap=qr[2], overlay=True)
             exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
             exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
+    if "id" in pageVersions and "name" in pageVersions:
+        # a file for the student-details
+        YSHIFT = 0.4  # where on page is centre of box 0=top, 1=bottom
+        txt = "{}\n{}".format(pageVersions["id"], pageVersions["name"])
+        sidW = (
+            max(
+                fitz.getTextlength(
+                    pageVersions["id"], fontsize=36, fontname="Helvetica"
+                ),
+                fitz.getTextlength(
+                    pageVersions["name"], fontsize=36, fontname="Helvetica"
+                ),
+                fitz.getTextlength(
+                    "Please sign here", fontsize=48, fontname="Helvetica"
+                ),
+            )
+            * 1.1
+            * 0.5
+        )
+        sidH = 36 * 1.3
+        sidRect = fitz.Rect(
+            pW // 2 - sidW, pH * YSHIFT - sidH, pW // 2 + sidW, pH * YSHIFT + sidH
+        )
+        sidRect2 = fitz.Rect(sidRect.x0, sidRect.y1, sidRect.x1, sidRect.y1 + 48 * 1.3)
+        sidRect3 = fitz.Rect(
+            sidRect.x0 - 8, sidRect.y0 - 8, sidRect.x1 + 8, sidRect2.y1 + 8
+        )
+        exam[0].drawRect(sidRect3, color=[0, 0, 0], fill=[1, 1, 1], width=4)
+        exam[0].drawRect(sidRect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+        exam[0].drawRect(sidRect2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+        def isPossibleToEncodeAs(s, x):
+            try:
+                _tmp = s.encode(x)
+                return True
+            except UnicodeEncodeError:
+                return False
+        if isPossibleToEncodeAs(txt, "Latin-1"):
+            fontname = "Helvetica"
+        elif isPossibleToEncodeAs(txt, "gb2312"):
+            # TODO: Double-check encoding name.  Add other CJK (how does Big5
+            # vs GB work?).  Check printers can handle these or do we need to
+            # embed a font?  (Adobe Acrobat users need to download something)
+            fontname = "china-ss"
+        else:
+            # TODO: or warn use Helvetica, get "?" chars
+            raise ValueError("Don't know how to write name {} into PDF".format(txt))
+        rc = exam[0].insertTextbox(
+            sidRect,
+            txt,
+            fontsize=36,
+            color=[0, 0, 0],
+            fontname=fontname,
+            fontfile=None,
+            align=1,
+        )
+        rc = exam[0].insertTextbox(
+            sidRect2,
+            "Please sign here",
+            fontsize=48,
+            color=[0.9, 0.9, 0.9],
+            fontname="Helvetica",
+            fontfile=None,
+            align=1,
+        )
+
 
 # Finally save the resulting pdf.
 # Add the deflate option to compress the embedded pngs

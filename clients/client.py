@@ -8,6 +8,7 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import toml
+import argparse
 import os
 import marker
 import identifier
@@ -46,6 +47,8 @@ def readLastTime():
     lastTime["pg"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
+    lastTime["upDown"] = "up"
+    lastTime["mouse"] = "right"
     # If exists, read from toml file.
     if os.path.isfile("plomConfig.toml"):
         with open("plomConfig.toml") as data_file:
@@ -141,9 +144,9 @@ class Chooser(QDialog):
             self.setEnabled(False)
             self.hide()
             markerwin = marker.MarkerClient()
-            markerwin.my_shutdown_signal.connect(self.on_other_window_close)
+            markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
-            markerwin.getToWork(messenger, pg, v)
+            markerwin.getToWork(messenger, pg, v, lastTime)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
@@ -200,6 +203,30 @@ class Chooser(QDialog):
         assert isinstance(value, int)
         self.show()
         self.setEnabled(True)
+
+    @pyqtSlot(int, list)
+    def on_marker_window_close(self, value, stuff):
+        assert isinstance(value, int)
+        self.show()
+        self.setEnabled(True)
+        if not stuff:
+            return
+        # update mouse-hand and up/down style for lasttime file
+        markStyle, mouseHand = stuff
+        global lastTime
+        if markStyle == 2:
+            lastTime["upDown"] = "up"
+        elif markStyle == 3:
+            lastTime["upDown"] = "down"
+        else:
+            raise RuntimeError("tertium non datur")
+        if mouseHand == 0:
+            lastTime["mouse"] = "right"
+        elif mouseHand == 1:
+            lastTime["mouse"] = "left"
+        else:
+            raise RuntimeError("tertium non datur")
+
 
 
 # Pop up a dialog for unhandled exceptions and then exit
@@ -262,4 +289,60 @@ if __name__ == "__main__":
 
     window = Chooser(app)
     window.show()
+
+    # Command line arguments (currently undocumented/unsupported)
+    # either nothing, or the following
+    if len(sys.argv) > 1:
+        parser = argparse.ArgumentParser(
+            description="Run the Plom client. No arguments = run as normal."
+        )
+        parser.add_argument("user", type=str)
+        parser.add_argument("password", type=str)
+        parser.add_argument(
+            "-s", "--server", action="store", help="Which server to contact."
+        )
+        parser.add_argument("-p", "--port", action="store", help="Which port to use.")
+
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
+            "-i", "--identifier", action="store_true", help="Run the identifier"
+        )
+        group.add_argument(
+            "-t", "--totaler", action="store_true", help="Run the totaler"
+        )
+        group.add_argument(
+            "-m",
+            "--marker",
+            const="json",
+            nargs="?",
+            type=str,
+            help="Run the marker. Pass either -m n:k (to run on pagegroup n, version k) or -m (to run on whatever was used last time).",
+        )
+        args = parser.parse_args()
+
+        window.ui.userLE.setText(args.user)
+        window.ui.passwordLE.setText(args.password)
+        if args.server:
+            window.ui.serverLE.setText(args.server)
+        if args.port:
+            window.ui.mportSB.setValue(int(args.port))
+            window.ui.wportSB.setValue(int(args.port) + 1)
+
+        if args.identifier:
+            window.ui.identifyButton.animateClick()
+        if args.totaler:
+            window.ui.totalButton.animateClick()
+        if args.marker:
+            if args.marker != "json":
+                pg, v = args.marker.split(":")
+                try:
+                    window.ui.pgSB.setValue(int(pg))
+                    window.ui.vSB.setValue(int(v))
+                except ValueError:
+                    print(
+                        "When you use -m, there should either be no argument, or an argument of the form n:k where n,k are integers."
+                    )
+                    quit()
+
+            window.ui.markButton.animateClick()
     sys.exit(app.exec_())
