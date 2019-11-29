@@ -1,7 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 __author__ = "Andrew Rechnitzer and Elvis Cai"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer and Elvis Cai"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
-__license__ = "AGPLv3"
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import sys
 from PyQt5.QtCore import Qt

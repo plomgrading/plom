@@ -470,12 +470,12 @@ class ProxyModel(QSortFilterProxyModel):
 # TODO: should be a QMainWindow but at any rate not a Dialog
 # TODO: should this be parented by the QApplication?
 class MarkerClient(QWidget):
-    my_shutdown_signal = pyqtSignal(int)
+    my_shutdown_signal = pyqtSignal(int, list)
 
     def __init__(self):
         super(MarkerClient, self).__init__()
 
-    def getToWork(self, mess, pageGroup, version):
+    def getToWork(self, mess, pageGroup, version, lastTime):
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
@@ -515,7 +515,11 @@ class MarkerClient(QWidget):
         # create a settings variable for saving annotator window settings
         # initially all settings are "none"
         self.annotatorSettings = defaultdict(lambda: None)
-        # self.loadAnnotatorSettings()
+        # if lasttime["POWERUSER"] is true, the disable warnings in annotator
+        if "POWERUSER" in lastTime:
+            if lastTime["POWERUSER"]:
+                self.annotatorSettings["markWarnings"] = False
+                self.annotatorSettings["commentWarnings"] = False
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -540,12 +544,22 @@ class MarkerClient(QWidget):
         # continue with the other buttons
         self.ui.markStyleGroup.setId(self.ui.markUpRB, 2)
         self.ui.markStyleGroup.setId(self.ui.markDownRB, 3)
+        if lastTime["upDown"] == "up":
+            self.ui.markUpRB.animateClick()
+        elif lastTime["upDown"] == "down":
+            self.ui.markDownRB.animateClick()
+
         # Give IDs to the radio buttons which select which mouse-hand is used
         # 0 = Right-handed user will typically have right-hand on mouse and
         # left hand on the keyboard. The annotator layout will follow this.
         # 1 = Left-handed user - reverse layout
         self.ui.mouseHandGroup.setId(self.ui.rightMouseRB, 0)
         self.ui.mouseHandGroup.setId(self.ui.leftMouseRB, 1)
+        if lastTime["mouse"] == "right":
+            self.ui.rightMouseRB.animateClick()
+        elif lastTime["mouse"] == "left":
+            self.ui.leftMouseRB.animateClick()
+
         # Start using connection to serverself.
         # Get the max-mark for the question from the server.
         try:
@@ -816,16 +830,16 @@ class MarkerClient(QWidget):
     def startTheAnnotator(self, tgv, paperdir, fname, pname=None):
         """This fires up the annotation window for user annotation + marking."""
         # Set marking style total/up/down - will pass to annotator
-        self.markStyle = self.ui.markStyleGroup.checkedId()
+        markStyle = self.ui.markStyleGroup.checkedId()
         # Set mousehand left/right - will pass to annotator
-        self.mouseHand = self.ui.mouseHandGroup.checkedId()
+        mouseHand = self.ui.mouseHandGroup.checkedId()
         # Set plom-dictionary to none
         pdict = None
-        # check if given a plom-file and set markstyle + pdict accordingly
+        # check if given a plom-file and override markstyle + pdict accordingly
         if pname is not None:
             with open(pname, "r") as fh:
                 pdict = json.load(fh)
-            self.markStyle = pdict["markStyle"]
+            markStyle = pdict["markStyle"]
             # TODO: there should be a filename sanity check here to
             # make sure plom file matches current image-file
 
@@ -840,8 +854,8 @@ class MarkerClient(QWidget):
             paperdir,
             fname,
             self.maxScore,
-            self.markStyle,
-            self.mouseHand,
+            markStyle,
+            mouseHand,
             parent=self,
             plomDict=pdict,
         )
@@ -1017,7 +1031,7 @@ class MarkerClient(QWidget):
             self.updateImage(idx[0].row())
 
     def shutDownError(self):
-        self.my_shutdown_signal.emit(2)
+        self.my_shutdown_signal.emit(2, [])
         self.close()
 
     def shutDown(self):
@@ -1056,7 +1070,9 @@ class MarkerClient(QWidget):
         except PlomSeriousException as err:
             self.throwSeriousError(err)
 
-        self.my_shutdown_signal.emit(2)
+        markStyle = self.ui.markStyleGroup.checkedId()
+        mouseHand = self.ui.mouseHandGroup.checkedId()
+        self.my_shutdown_signal.emit(2, [markStyle, mouseHand])
         self.close()
 
     def DNF(self):

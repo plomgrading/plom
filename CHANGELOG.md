@@ -8,10 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Can now build papers with student Names/IDs stamped on page 1. The 02a script reads the classlist (in order) to do this. If more papers than students, then those papers produced without such a name/id stamp. The server knows when this is done and the associated database is populated accordingly.
 
 ### Changed
+* Pseudorandom question versions are now more reproducible (based on MagicCode).
+* Warnings are given if some non-Latin-1 names are in the classlist (as those may cause problems in generated PDFs).
 
 ### Fixed
+* Annotator mark up/down and handedness preferences are saved between sessions.
 
 
 ## [0.2.1] - 2019-11-11
