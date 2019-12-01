@@ -1,6 +1,11 @@
-# Copy this to "testSpec.toml" and edit.
-[plom]
+#  Copyright (C) 2019 Andrew Rechnitzer and "Colin Macdonald"
+# License "AGPL-3.0-or-later"
 
+# >>> To Use <<
+# Copy this to "testSpec.toml" and edit the entries below.
+
+# The configuration file starts here...
+[plom]
 # the human-readible names of the test - one long, one short.
 name = "m101mt1"
 longName = "Midterm for Mathematics 101"

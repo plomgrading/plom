@@ -1,4 +1,6 @@
 import toml
+import random
+
 
 # a couple of useful functions
 def isPositiveInt(s):
@@ -37,6 +39,7 @@ def check_keys(spec):
     # check it contains required keys
     for x in [
         "name",
+        "longName",
         "sourceVersions",
         "totalPages",
         "numberToProduce",
@@ -63,13 +66,25 @@ def check_keys(spec):
 def check_name_and_production_numbers(spec):
     print("Check specification name and numbers")
     # check name is alphanumeric and non-zero length
-    print("\tChecking name")
+    print("\tChecking names")
     if spec["name"].isalnum() and len(spec["name"]) > 0:
-        print('\t\tName "{}" has non-zero length - check'.format(spec["name"]))
-        print('\t\tName "{}" is alphanumeric string - check'.format(spec["name"]))
+        print('\t\tname "{}" has non-zero length - check'.format(spec["name"]))
+        print('\t\tname "{}" is alphanumeric string - check'.format(spec["name"]))
     else:
         print(
             "Specification error - Test name must be an alphanumeric string of non-zero length."
+        )
+        exit(1)
+
+    if (
+        all(x.isalnum() or x.isspace() for x in spec["longName"])
+        and len(spec["longName"]) > 0
+    ):
+        print('\t\tName "{}" has non-zero length - check'.format(spec["longName"]))
+        print('\t\tName "{}" is alphanumeric string - check'.format(spec["longName"]))
+    else:
+        print(
+            "Specification error - Test longName must be an alphanumeric string of non-zero length."
         )
         exit(1)
 
@@ -249,6 +264,19 @@ for g in range(spec["numberOfGroups"]):
 
 check_pages(spec)
 
-print(
-    "CBM = If all tests passed then this should append both a public code and a private code for subsequent scripts"
-)
+# now check and set public and private codes
+
+if "privateCode" in spec:
+    print("WARNING - privateSeed is already set. Not replacing this.")
+else:
+    print("Assigning a privateSeed to the spec - check")
+    wholeSpec["plom"]["privateSeed"] = str(random.randrange(0, 10 ** 16)).zfill(16)
+
+if "publicCode" in spec:
+    print("WARNING - publicCode is already set. Not replacing this.")
+else:
+    print("Assigning a publicCode to the spec - check")
+    wholeSpec["plom"]["publicCode"] = str(random.randrange(0, 10 ** 6)).zfill(6)
+
+with open("verifiedSpec.toml", "w+") as fh:
+    toml.dump(wholeSpec, fh)
