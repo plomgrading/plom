@@ -53,24 +53,17 @@ def processFileToPng(fname):
     scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
     safeScan = scan.replace(" ", "_")
-    try:
-        subprocess.run(
-            [
-                "gs",
-                "-dNumRenderingThreads=4",
-                "-dNOPAUSE",
-                "-sDEVICE=png256",
-                "-o",
-                "./png/" + safeScan + "-%d.png",
-                "-r200",
-                fname,
-            ],
-            stderr=subprocess.STDOUT,
-            shell=False,
-            check=True,
-        )
-    except subprocess.CalledProcessError as suberror:
-        print("Error running gs: {}".format(suberror.stdout.decode("utf-8")))
+    cmd = [
+        "gs",
+        "-dNumRenderingThreads=4",
+        "-dNOPAUSE",
+        "-sDEVICE=png256",
+        "-o",
+        "./png/" + safeScan + "-%d.png",
+        "-r200",
+        fname,
+    ]
+    subprocess.run(cmd, check=True)
 
 
 def processScans():
