@@ -17,11 +17,8 @@ curDir = os.getcwd()
 
 # First check if the image is in portrait or landscape by aspect ratio
 # Should be in portrait.
-ratio = (
-    subprocess.check_output(["identify", "-format", "%[fx:w/h]", imgName])
-    .decode()
-    .rstrip()
-)
+cmd = ["identify", "-format", "%[fx:w/h]", imgName]
+ratio = subprocess.check_output(cmd).decode().rstrip()
 if float(ratio) > 1:  # landscape
     subprocess.check_call(["mogrify", "-quiet", "-rotate", "90", imgName])
 
@@ -41,21 +38,16 @@ with tempfile.TemporaryDirectory() as tmpDir:
     # Use zbarimg to extract QR codes from some tiles
     # There may not be any (e.g., DNW area, folded corner, poor quality)
     cornerQR = {}
-    cornerKeys = ['NE', 'NW', 'SW', 'SE']
-    cornerTiles = ['tile_3.png', 'tile_0.png', 'tile_16.png', 'tile_19.png']
+    cornerKeys = ["NE", "NW", "SW", "SE"]
+    cornerTiles = ["tile_3.png", "tile_0.png", "tile_16.png", "tile_19.png"]
     for i in range(0, 4):
         # Apply a slight blur filter to make reading codes easier (typically)
         subprocess.check_call(
             ["mogrify", "-quiet", cornerTiles[i], "-blur", "0", "-quality", "100"],
         )
         try:
-            this = (subprocess.check_output(
-                    ["zbarimg", "-q", "-Sdisable", "-Sqr.enable", cornerTiles[i]]
-                )
-                .decode()
-                .rstrip()
-                .split("\n")
-            )
+            cmd = ["zbarimg", "-q", "-Sdisable", "-Sqr.enable", cornerTiles[i]]
+            this = subprocess.check_output(cmd).decode().rstrip().split("\n")
         except subprocess.CalledProcessError as zberr:
             if zberr.returncode == 4:  # means no codes found
                 this = []
