@@ -120,7 +120,33 @@ def checkNonCanvasCSV(fname):
     # concat name0 and name1 fields into fullName field
     # strip excess whitespace from those fields
     df["studentName"] = df[name0] + ", " + df[name1]
+
     return df
+
+
+def checkLatinNames(df):
+    """Pass the pandas object and check studentNames encode to Latin-1.
+
+    Print out a warning message for any that are not.
+    """
+    # TODO - make this less eurocentric in the future.
+    problems = []
+    for index, row in df.iterrows():
+        try:
+            tmp = row["studentName"].encode("Latin-1")
+        except UnicodeEncodeError:
+            problems.append(
+                'row {}, number {}, name: "{}"'.format(
+                    index, row["id"], row["studentName"]
+                )
+            )
+    if len(problems) > 0:
+        print("WARNING: The following ID/name pairs contain non-Latin characters:")
+        for X in problems:
+            print(X)
+        return False
+    else:
+        return True
 
 
 class SetUp(QWidget):
@@ -147,15 +173,14 @@ class SetUp(QWidget):
             with open("../resources/serverDetails.json") as data_file:
                 self.info = json.load(data_file)
         else:
-            # set server address, message port and webdav port.
-            self.info = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
+            # set server address, message port
+            self.info = {"server": "127.0.0.1", "mport": 41984}
 
     def putInfoIntoUi(self):
         """Grab the values from the info dict and put into the UI fields
         """
         self.ui.serverLE.setText(self.info["server"])
         self.ui.mportSB.setValue(self.info["mport"])
-        self.ui.wportSB.setValue(self.info["wport"])
 
     def saveAndClose(self):
         """Grab values from the UI, put into dictionary and save as json.
@@ -163,7 +188,6 @@ class SetUp(QWidget):
         """
         self.info["server"] = self.ui.serverLE.text()
         self.info["mport"] = self.ui.mportSB.value()
-        self.info["wport"] = self.ui.wportSB.value()
 
         fh = open("../resources/serverDetails.json", "w")
         fh.write(json.dumps(self.info, indent=4, sort_keys=True))
@@ -217,9 +241,6 @@ class SetUp(QWidget):
                 print("Extracting columns from Canvas data and renaming")
                 df = df[["Student Number", "Student"]]
                 df.columns = ["id", "studentName"]
-                print("Saving to classlist.csv")
-                df.to_csv("../resources/classlist.csv", index=False)
-                return
             else:  # Is not canvas so check we have required headers
                 df = checkNonCanvasCSV(fname)
                 if df is None:
@@ -231,9 +252,21 @@ class SetUp(QWidget):
                     )
                     return
                 df = df[["id", "studentName"]]
-                print("Saving to classlist.csv")
-                df.to_csv("../resources/classlist.csv", index=False)
-                return
+
+            # check characters in names are latin-1 compatible
+            if not checkLatinNames(df):
+                QMessageBox.question(
+                    self,
+                    "Potential classlist problems",
+                    "The classlist you supplied contains non-Latin characters - see console output. "
+                    "You can proceed, but it might cause problems later. "
+                    "Apologies for the eurocentricity.",
+                    buttons=QMessageBox.Ok,
+                )
+
+            print("Saving to classlist.csv")
+            df.to_csv("../resources/classlist.csv", index=False)
+            return
 
 
 if __name__ == "__main__":

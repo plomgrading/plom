@@ -44,9 +44,12 @@ class TotalDatabase:
 
     def createTable(self):
         """Create the required table in the database"""
-        self.logging.info("Creating database tables")
         with tdb:
-            tdb.create_tables([TotalImage])
+            if tdb.table_exists("totalimage"):
+                self.logging.info("Reusing existing 'totalimage' database table")
+            else:
+                tdb.create_tables([TotalImage])
+                self.logging.info("Creating database table")
 
     def shutdown(self):
         """Shut connection to the database"""
@@ -243,6 +246,54 @@ class TotalDatabase:
             with tdb.atomic():
                 x = TotalImage.get(tgv=code, user=username)
                 return x.tgv
-        except IDImage.DoesNotExist:
+        except TotalImage.DoesNotExist:
             print("Request for non-existant tgv = {}".format(code))
             return None
+
+    def askNextTask(self, username):
+        """Find unid'd test and send tgv to client"""
+        try:
+            with tdb.atomic():
+                # Grab image from todo pile
+                x = TotalImage.get(status="ToDo")
+                # log it.
+                self.logging.info(
+                    "Client asked for next task - passing number {} {} to client {}".format(
+                        x.number, x.tgv, username
+                    )
+                )
+                # return tgv.
+                return x.tgv
+        except TotalImage.DoesNotExist:
+            self.logging.info("Nothing left on To-Do pile")
+            return None
+
+    def giveSpecificTaskToClient(self, username, code):
+        try:
+            with tdb.atomic():
+                # get the record by code
+                x = TotalImage.get(tgv=code)
+                # check either unclaimed or belongs to user.
+                # TODO check logic solid here - is this idempotent.
+                if x.user == "None" or x.user == username:
+                    # update status, Student-number, name, id-time.
+                    x.status = "OutForTotaling"
+                    x.user = username
+                    x.time = datetime.now()
+                    x.save()
+                    return True
+                    # return tgv.
+                else:
+                    # has been claimed by someone else.
+                    return False
+        except IDImage.DoesNotExist:
+            self.logging.info("That IDImage number {} not known".format(code))
+            return False
+
+    def checkExists(self, code):
+        try:
+            with tdb.atomic():
+                x = TotalImage.get(tgv=code)
+                return True
+        except TotalImage.DoesNotExist:
+            return False

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>486</width>
+    <width>540</width>
     <height>572</height>
    </rect>
   </property>
@@ -68,27 +68,17 @@
       <item row="0" column="0">
        <widget class="QLabel" name="serverLabel">
         <property name="text">
-         <string>Server name</string>
+         <string>Server name:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
-      <item row="0" column="1" colspan="3">
+      <item row="0" column="1" colspan="2">
        <widget class="QLineEdit" name="serverLE">
         <property name="text">
          <string>127.0.0.1</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="mportLabel">
-        <property name="text">
-         <string>Message port</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </item>
@@ -102,23 +92,13 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
-       <widget class="QLabel" name="wportLabel">
+      <item row="1" column="0">
+       <widget class="QLabel" name="mportLabel">
         <property name="text">
-         <string>Webdav port</string>
+         <string>Port:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3">
-       <widget class="QSpinBox" name="wportSB">
-        <property name="maximum">
-         <number>65535</number>
-        </property>
-        <property name="value">
-         <number>41985</number>
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
@@ -276,7 +256,6 @@
   <tabstop>passwordLE</tabstop>
   <tabstop>serverLE</tabstop>
   <tabstop>mportSB</tabstop>
-  <tabstop>wportSB</tabstop>
   <tabstop>pgSB</tabstop>
   <tabstop>vSB</tabstop>
   <tabstop>markButton</tabstop>

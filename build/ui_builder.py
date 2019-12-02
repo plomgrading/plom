@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './ui_builder.ui'
+# Form implementation generated from reading ui file '../qtCreatorFiles/ui_builder.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.0
+# Created by: PyQt5 UI code generator 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -40,12 +40,14 @@ class Ui_SpecBuilder(object):
         self.versionLabel.setObjectName("versionLabel")
         self.gridLayout_2.addWidget(self.versionLabel, 1, 0, 1, 1)
         self.versionSB = QtWidgets.QSpinBox(self.nameVersionGB)
+        self.versionSB.setMinimum(1)
         self.versionSB.setObjectName("versionSB")
         self.gridLayout_2.addWidget(self.versionSB, 1, 1, 1, 1)
         self.pagesLabel = QtWidgets.QLabel(self.nameVersionGB)
         self.pagesLabel.setObjectName("pagesLabel")
         self.gridLayout_2.addWidget(self.pagesLabel, 2, 0, 1, 1)
         self.pageSB = QtWidgets.QSpinBox(self.nameVersionGB)
+        self.pageSB.setMinimum(1)
         self.pageSB.setObjectName("pageSB")
         self.gridLayout_2.addWidget(self.pageSB, 2, 1, 1, 1)
         spacerItem = QtWidgets.QSpacerItem(189, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)

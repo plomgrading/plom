@@ -27,7 +27,7 @@ def import_canvas_csv(canvas_fromfile):
     print('Carefully filtering rows w/o "Student Number" including:\n'
           '  almost blank rows, "Points Possible" and "Test Student"s')
     isbad = df.apply(
-        lambda x: (pandas.isnull(x['Student Number']) and
+        lambda x: (pandas.isnull(x['SIS User ID']) and
                    (pandas.isnull(x['Student'])
                     or x['Student'].strip().lower().startswith('points possible')
                     or x['Student'].strip().lower().startswith('test student'))),
@@ -85,7 +85,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     # TODO: could 'left' lose someone who is in Plom, but missing in Canvas?
     # https://gitlab.math.ubc.ca/andrewr/MLP/issues/159
     df = pandas.merge(df, marks, how='left',
-                      left_on='Student Number', right_on='StudentID')
+                      left_on='SIS User ID', right_on='StudentID')
     df[testheader] = df['Total']
     df = df[cols]  # discard again (e.g., PG specific stuff)
 
@@ -110,10 +110,15 @@ def canvas_csv_add_return_codes(csvin, csvout):
     sns = {}
     for i, row in df.iterrows():
         name = row['Student']
-        sn = str(row['Student Number'])
+        sn = str(row['SIS User ID'])
+        sn_ = str(row['Student Number'])
+        # as of 2019-10 we don't really dare use Student Number but let's ensure its not insane if it is there...
+        if not sn_ == 'nan':
+            assert sn == sn_, "Canvas has misleading student numbers: " + str((sn,sn_)) + ", for row = " + str(row)
+
 
         assert len(name) > 0, "Student name is empty"
-        assert len(sn) == 8, "Student number is not 8 characters"
+        assert len(sn) == 8, "Student number is not 8 characters: row = " + str(row)
 
         code = myhash(sn)
 
@@ -205,8 +210,8 @@ Jane Smith,43,12345679,ABCDEFGHIJ02,12345679,Math 123 S102v,36,,42
 Test Student,99,,bbbc6740f0b946af,,,,0
 """
     s2 = """Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code (241017)
-John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,351525727036
-Jane Smith,43,12345679,ABCDEFGHIJ02,Math 123 S102v,12345679,909470548567
+John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,349284813368
+Jane Smith,43,12345679,ABCDEFGHIJ02,Math 123 S102v,12345679,919005618467
 """
     infile = StringIO(s1)
     outfile = StringIO('')
@@ -225,16 +230,16 @@ Jane Smith,43,12345679,ABCDEFGHIJ02,Math 123 S102v,12345679,909470548567
     s1 = """Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code ()
 ,,,,,,Muted
   Points Possible,,,,,,999999999999
-A Smith,42,12345678,ABCDEFGHIJ01,101,12345678,"351,525,727,036.0"
-B Smith,43,12348888,ABCDEFGHIJ02,102,12348888,"480,698,598,264.00"
-C Smith,44,12347777,ABCDEFGHIJ03,103,12347777,525156685030.0
-D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,347453551559.00
+A Smith,42,12345678,ABCDEFGHIJ01,101,12345678,"349,284,813,368.0"
+B Smith,43,12348888,ABCDEFGHIJ02,102,12348888,"789,059,192,218.00"
+C Smith,44,12347777,ABCDEFGHIJ03,103,12347777,894464449308.0
+D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,149766785804.00
 """
     s2 = """Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code ()
-A Smith,42,12345678,ABCDEFGHIJ01,101,12345678,351525727036
-B Smith,43,12348888,ABCDEFGHIJ02,102,12348888,480698598264
-C Smith,44,12347777,ABCDEFGHIJ03,103,12347777,525156685030
-D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,347453551559
+A Smith,42,12345678,ABCDEFGHIJ01,101,12345678,349284813368
+B Smith,43,12348888,ABCDEFGHIJ02,102,12348888,789059192218
+C Smith,44,12347777,ABCDEFGHIJ03,103,12347777,894464449308
+D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,149766785804
 """
     infile = StringIO(s1)
     outfile = StringIO('')

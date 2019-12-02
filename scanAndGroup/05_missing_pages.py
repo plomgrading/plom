@@ -7,6 +7,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import glob
 import json
 import os
 import sys
@@ -69,3 +70,23 @@ if __name__ == '__main__':
     s = format_int_list_with_runs(incompleteTests) if incompleteTests else u"None 😀"
     print("Incomplete test papers are: " + s)
     print("###################### ")
+    print(">>> NOTE <<<")
+    print('Any of the papers in the above list of "complete" papers may have extra pages.')
+
+    n = len(glob.glob("pageImages/problemImages/*.png"))
+    if n == 0:
+        print(
+            'There are currently no pages in "pageimages/problemImages/" - so no extra pages at present.'
+        )
+    elif n == 1:
+        print(
+            'There is currently 1 page in "pageimages/problemImages/". It might be an extra-page'
+        )
+        print("You can process that page using the manual-page-identifier script.")
+    else:
+        print(
+            'There are currently {} pages in "pageimages/problemImages/". They might be extra-pages'.format(
+                n
+            )
+        )
+        print("You can process those pages using the manual-page-identifier script.")

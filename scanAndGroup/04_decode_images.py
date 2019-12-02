@@ -6,6 +6,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
 from collections import defaultdict
+from datetime import datetime
 import glob
 import json
 import os
@@ -121,7 +122,7 @@ def reOrientPage(fname, qrs):
         return True
     if flipFlag and not upFlag:
         # is flipped, so rotate 180
-        print(" .  {}: reorienting: 180 degree rotation".format(fname))
+        # print(" .  {}: reorienting: 180 degree rotation".format(fname))
         subprocess.run(
             ["mogrify", "-quiet", "-rotate", "180", fname],
             stderr=subprocess.STDOUT,
@@ -277,12 +278,12 @@ def validateQRsAgainstProduction():
             fn = examsScannedNow[t][p][1]
             # if the tpv's match then all good.
             if examsProduced[ts][ps] == v:
-                # print success and thats all.
-                print(
-                    "Valid scan of t{:s} p{:s} v{:d} from file {:s}".format(
-                        ts, ps, v, fn
-                    )
-                )
+                pass
+                # print(
+                #    "Valid scan of t{:s} p{:s} v{:d} from file {:s}".format(
+                #        ts, ps, v, fn
+                #    )
+                # )
             else:
                 # print mismatch warning and move file to problem-images
                 print(">> Mismatch between exam scanned and exam produced")
@@ -326,12 +327,25 @@ def addCurrentScansToExamsScanned():
                 # Eventually we should output this sort of thing to
                 # a log file in case of user-errors.
                 print(
-                    ">> Have already scanned t{:s}p{:s}v{:d} in file {:s}".format(
+                    "WARNING: you have already scanned t{}p{}v{}. Will not process image-file {}.".format(
                         ts, ps, v, fn
                     )
                 )
-                print(">> Will overwrite with new version")
-                examsScanned[ts][ps] = examsScannedNow[t][p]
+                overwriteAttempt["t{}p{}v{}".format(ts, ps, v)] = fn
+                # TODO handle rescans with code like that below
+                # TODO this also needs to update examsGrouped
+                # print(">> Will move old scan out of the way and copy in new version")
+                # # This should really use path-join.
+                # oldfile = "../decodedPages/page_{}/version_{}/t{}p{}v{}.png".format(
+                #     str(p).zfill(2), str(v), str(t).zfill(4), str(p).zfill(2), str(v)
+                # )
+                # os.rename(
+                #     oldfile,
+                #     oldfile + ".rescanned_at_" + datetime.now().strftime("%d_%H-%M-%S"),
+                # )
+                # shutil.copy(fn, oldfile)
+                #
+                # examsScanned[ts][ps] = examsScannedNow[t][p]
             else:
                 # This is a new test/page so add it to the scan-list
                 examsScanned[ts][ps] = examsScannedNow[t][p]
@@ -348,16 +362,28 @@ def addCurrentScansToExamsScanned():
                         str(v),
                     ),
                 )
-            # move the filename into alreadyProcessed
-            shutil.move(fn, "alreadyProcessed")
-            shutil.move(fn + ".qr", "alreadyProcessed")
+                # move this new scan file into alreadyProcessed
+                shutil.move(fn, "alreadyProcessed")
+                shutil.move(fn + ".qr", "alreadyProcessed")
     os.chdir("../")
+
+
+def overwriteWarnings():
+    if not overwriteAttempt.keys():
+        return
+    print(
+        "Warning - you attempted to overwrite the following TPVs with the files indicated:"
+    )
+    for X in sorted(overwriteAttempt.keys()):
+        print("{} => {}".format(X, overwriteAttempt[X]))
+    print("We do not yet support overwriting old scans with new scans.")
 
 
 if __name__ == "__main__":
     examsProduced = {}
     examsScanned = defaultdict(dict)
     examsScannedNow = defaultdict(dict)
+    overwriteAttempt = defaultdict(str)
     spec = TestSpecification()
     spec.readSpec()
     readExamsProduced()
@@ -367,3 +393,4 @@ if __name__ == "__main__":
     validateQRsAgainstProduction()
     addCurrentScansToExamsScanned()
     writeExamsScanned()
+    overwriteWarnings()

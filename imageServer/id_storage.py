@@ -45,9 +45,12 @@ class IDDatabase:
 
     def createTable(self):
         """Create the required table in the database"""
-        self.logging.info("Creating database tables")
         with iddb:
-            iddb.create_tables([IDImage])
+            if iddb.table_exists("idimage"):
+                self.logging.info("Using existing 'idimage' database table.")
+            else:
+                self.logging.info("Creating database table")
+                iddb.create_tables([IDImage])
 
     def shutdown(self):
         """Shut connection to the database"""
@@ -119,27 +122,64 @@ class IDDatabase:
         except IntegrityError:
             self.logging.info("IDImage {} {} already exists.".format(t, code))
 
-    def giveIDImageToClient(self, username):
-        """Find unid'd test and send to client"""
+    def addPreIDdExam(self, t, code, sid, sname):
+        """Add exam number t with given code, student-ID/Name to the database"""
+        self.logging.info(
+            "Adding preID'd IDImage {} ({}, {}) to database".format(t, sid, sname)
+        )
+        try:
+            with iddb.atomic():
+                IDImage.create(
+                    number=t,
+                    tgv=code,
+                    status="Identified",
+                    user="manager",
+                    time=datetime.now(),
+                    sid=sid,
+                    sname=sname,
+                )
+        except IntegrityError:
+            self.logging.info("IDImage {} {} already exists.".format(t, code))
+
+    def askNextTask(self, username):
+        """Find unid'd test and send tgv to client"""
         try:
             with iddb.atomic():
                 # Grab image from todo pile
                 x = IDImage.get(status="ToDo")
                 # log it.
                 self.logging.info(
-                    "Passing IDImage {} {} to client {}".format(
+                    "Client asked for next task - passing number {} {} to client {}".format(
                         x.number, x.tgv, username
                     )
                 )
-                # Update status, user, time.
-                x.status = "OutForIDing"
-                x.user = username
-                x.time = datetime.now()
-                x.save()
                 # return tgv.
                 return x.tgv
         except IDImage.DoesNotExist:
             self.logging.info("Nothing left on To-Do pile")
+            return None
+
+    def giveSpecificTaskToClient(self, username, code):
+        try:
+            with iddb.atomic():
+                # get the record by code
+                x = IDImage.get(tgv=code)
+                # check either unclaimed or belongs to user.
+                # TODO check logic solid here - is this idempotent.
+                if x.user == "None" or x.user == username:
+                    # update status, Student-number, name, id-time.
+                    x.status = "OutForIDing"
+                    x.user = username
+                    x.time = datetime.now()
+                    x.save()
+                    return True
+                    # return tgv.
+                else:
+                    # has been claimed by someone else.
+                    return False
+        except IDImage.DoesNotExist:
+            self.logging.info("That IDImage number {} not known".format(code))
+            return False
 
     def takeIDImageFromClient(self, code, username, sid, sname):
         """Get ID'dimage back from client - update record in database."""
@@ -159,17 +199,17 @@ class IDDatabase:
                         x.number, code, sid, sname, username
                     )
                 )
-                return True
+                return [True]
         except IntegrityError:
             self.logging.info("Student number {} already entered".format(sid))
-            return False
+            return [False, True]
         except IDImage.DoesNotExist:
             self.logging.info(
                 "That IDImage number {} / username {} pair not known".format(
                     code, username
                 )
             )
-            return False
+            return [False, False]
 
     def didntFinish(self, username, code):
         """When user logs off, any images they have still out should be put
@@ -241,10 +281,19 @@ class IDDatabase:
         return idList
 
     def getGroupImage(self, username, code):
+        # if user has image then return True else false.
         try:
             with iddb.atomic():
                 x = IDImage.get(tgv=code, user=username)
-                return x.tgv
+                return True
         except IDImage.DoesNotExist:
             print("Request for non-existant tgv = {}".format(code))
-            return None
+            return False
+
+    def checkExists(self, code):
+        try:
+            with iddb.atomic():
+                x = IDImage.get(tgv=code)
+                return True
+        except IDImage.DoesNotExist:
+            return False

@@ -5,13 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.2] - 2019-11-29
 
 ### Added
+* Can now build papers with student Names/IDs pre-written on page 1.
+* Client now has a "view" button to quickly view other questions.
 
 ### Changed
+* Warning given for non-Latin names classlist (may cause problems in PDFs).
 
 ### Fixed
+* Annotator mark up/down and handedness preferences now saved between sessions.
+
+
+## [0.2.1] - 2019-11-11
+
+### Added
+* preliminary support for a canned user list.
+* autogenerate password suggestions for new users.
+* 05 script now warns about potential extra pages
+* Annotator - spacebar pans through paper (down and right), shift-space pans back (up and left). Ctrl+space, Ctrl-shift-space does similarly but more slowly.
+* Annotator - zoom-mode click-drag creates a (temp) rectangle to zoom into.
+
+### Changed
+* make 04 script less verbose.
+* Increase timeout on server ping test.
+* Annotator has more keybindings for grades of 0-10 (see "key help")
+* resizing annotator persists between papers
+* zooming annotator persists between papers
+* docs: changes for uploading to the new Canvas gradebook
+* Annotator - can no longer click in region around score-box. This prevents accidentally pasting objects behind the scorebox.
+
+### Fixed
+* fixed race conditions when/uploading and downloading.
+* certain file transfers are more robust at reporting errors.
+* userManager was failing to start.
+* return to greeter dialog on e.g., wrong server or pagegroup/version out of range.
+* `mark_reverter` less fragile if files DNE.
+* if you skip identifying a test, the client will defer it until the end.
+* identifying has various other UI fixes.
 
 
 ## [0.2.0] - 2019-10-11
@@ -57,6 +89,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is the first release of Plom, PaperLessOpenMarking.
 
-
-[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.0...master
+[0.2.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...v0.2.2
+[0.2.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.0...v0.2.1
 [0.2.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.1.0...v0.2.0

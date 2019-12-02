@@ -53,9 +53,12 @@ class MarkDatabase:
 
     def createTable(self):
         """Create the required table in the database"""
-        self.logging.info("Creating database tables")
         with markdb:
-            markdb.create_tables([GroupImage])
+            if markdb.table_exists("groupimage"):
+                self.logging.info("Reusing existing 'groupimage' database table")
+            else:
+                self.logging.info("Creating database table")
+                markdb.create_tables([GroupImage])
 
     def shutdown(self):
         """Shut connection to the database"""
@@ -160,6 +163,48 @@ class MarkDatabase:
         except IntegrityError:
             self.logging.info("GroupImage {} {} already exists.".format(t, code))
 
+    def askNextTask(self, pg, v):
+        """Find unmarked test and send tgv to client"""
+        try:
+            with markdb.atomic():
+                # grab image from ToDo pile with required group,version
+                x = GroupImage.get(status="ToDo", pageGroup=pg, version=v)
+                # log it
+                self.logging.info(
+                    "Client asked for next task - passing {}".format(x.tgv)
+                )
+                # return the tgv
+                return x.tgv
+        except GroupImage.DoesNotExist:
+            self.logging.info("Nothing left on To-Do pile")
+            return None
+
+    def giveSpecificTaskToClient(self, username, code):
+        try:
+            with markdb.atomic():
+                # get the record by code
+                x = GroupImage.get(tgv=code)
+                # check either unclaimed or belongs to user.
+                # TODO check logic solid here - is this idempotent.
+                if x.user == "None" or x.user == username:
+                    # update status, Student-number, name, id-time.
+                    self.logging.info(
+                        "User {} claiming GroupImage {}".format(username, x.tgv)
+                    )
+                    # update status, user, time
+                    x.status = "OutForMarking"
+                    x.user = username
+                    x.time = datetime.now()
+                    x.save()
+                    # return the tgv and filename
+                    return [True, x.originalFile, x.tags]
+                else:
+                    # has been claimed by someone else.
+                    return [False]
+        except GroupImage.DoesNotExist:
+            self.logging.info("That GroupImage number {} not known".format(code))
+            return [False]
+
     def giveGroupImageToClient(self, username, pg, v):
         """Find unmarked image with (group,version) and give to client"""
         try:
@@ -180,15 +225,6 @@ class MarkDatabase:
         except GroupImage.DoesNotExist:
             self.logging.info("Nothing left on To-Do pile")
             return (None, None, None)
-
-    def userStillOwnsTGV(self, code, username):
-        try:
-            with markdb.atomic():
-                # get the record by code and username
-                x = GroupImage.get(tgv=code, user=username)
-            return True
-        except GroupImage.DoesNotExist:
-            return False
 
     def takeGroupImageFromClient(
         self, code, username, mark, fname, pname, cname, mt, tag
@@ -333,6 +369,15 @@ class MarkDatabase:
             print("Request for non-existant tgv={}".format(code))
             return (None, None)
 
+    def getOriginalGroupImage(self, code):
+        try:
+            with markdb.atomic():
+                x = GroupImage.get(tgv=code)
+                return x.originalFile
+        except GroupImage.DoesNotExist:
+            print("Request for non-existant tgv={}".format(code))
+            return None
+
     def getTestAll(self, number):
         lst = []
         query = (
@@ -343,3 +388,11 @@ class MarkDatabase:
         for x in query:
             lst.append(x.originalFile)
         return lst
+
+    def checkExists(self, code):
+        try:
+            with markdb.atomic():
+                x = GroupImage.get(tgv=code)
+                return True
+        except GroupImage.DoesNotExist:
+            return False

@@ -122,3 +122,52 @@ class PageView(QGraphicsView):
         else:
             self.fitInView(initRect, Qt.KeepAspectRatio)
         self.zoomNull()
+
+    def getCurrentViewRect(self):
+        return self.mapToScene(self.viewport().contentsRect()).boundingRect()
+
+    def panThrough(self, dy=0.8):
+        hv = self.horizontalScrollBar().value()
+        vv = self.verticalScrollBar().value()
+        # if not at bottom of view, step down via scrollbar
+        if vv < self.verticalScrollBar().maximum():
+            self.verticalScrollBar().setValue(
+                vv + self.verticalScrollBar().pageStep() * dy
+            )
+        else:
+            # else move up to top of view
+            self.verticalScrollBar().setValue(0)
+            # if not at right of view, step right via scrollbar
+            if hv < self.horizontalScrollBar().maximum():
+                self.horizontalScrollBar().setValue(
+                    hv + self.horizontalScrollBar().pageStep()
+                )
+            else:
+                # else move back to origin.
+                self.horizontalScrollBar().setValue(0)
+
+        self.zoomNull()
+
+    def depanThrough(self, dy=0.8):
+        hv = self.horizontalScrollBar().value()
+        vv = self.verticalScrollBar().value()
+        # if not at bottom of view, step down via scrollbar
+        if vv > 0:
+            self.verticalScrollBar().setValue(
+                vv - self.verticalScrollBar().pageStep() * dy
+            )
+        else:
+            # else move up to top of view
+            self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
+            # if not at right of view, step right via scrollbar
+            if hv > 0:
+                self.horizontalScrollBar().setValue(
+                    hv - self.horizontalScrollBar().pageStep()
+                )
+            else:
+                # else move back to origin.
+                self.horizontalScrollBar().setValue(
+                    self.horizontalScrollBar().maximum()
+                )
+
+        self.zoomNull()

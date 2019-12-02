@@ -7,7 +7,17 @@ import json
 import os
 import sys
 
-from PyQt5.QtCore import Qt, QSettings, QSize, QTimer, pyqtSlot
+from PyQt5.QtCore import (
+    Qt,
+    QByteArray,
+    QRectF,
+    QSettings,
+    QSize,
+    QTimer,
+    QElapsedTimer,
+    pyqtSlot,
+    pyqtSignal,
+)
 from PyQt5.QtGui import (
     QCursor,
     QGuiApplication,
@@ -20,6 +30,8 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QAction,
     QDialog,
+    QWidget,
+    QMainWindow,
     QGridLayout,
     QLabel,
     QMenu,
@@ -69,19 +81,34 @@ tipText = {
 }
 
 
-class Annotator(QDialog):
+class Annotator(QWidget):
     """The main annotation window for annotating group-images
     and assigning marks.
     """
 
+    ann_finished_accept = pyqtSignal(str, list)
+    ann_finished_reject = pyqtSignal(str, list)
+
     def __init__(
-        self, fname, maxMark, markStyle, mouseHand, parent=None, plomDict=None
+        self,
+        tgv,
+        paperdir,
+        fname,
+        maxMark,
+        markStyle,
+        mouseHand,
+        parent=None,
+        plomDict=None,
     ):
-        super(Annotator, self).__init__(parent)
+        super(Annotator, self).__init__()
+        # Temporary hack: None means "just close", can be True/False
+        self._relaunch = None
         # remember parent
         self.parent = parent
         # Grab filename of image, max mark, mark style (total/up/down)
         # and mouse-hand (left/right)
+        self.tgv = tgv
+        self.paperdir = paperdir
         self.imageFile = fname
         self.maxMark = maxMark
         # get markstyle from plomDict
@@ -158,8 +185,6 @@ class Annotator(QDialog):
         self.setWindowFlags(
             self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint
         )
-        # Make sure window is maximised.
-        self.showMaximized()
         # Grab window settings from parent
         self.loadWindowSettings()
 
@@ -175,6 +200,8 @@ class Annotator(QDialog):
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
             self.unpickleIt(plomDict)
+        self.timer = QElapsedTimer()
+        self.timer.start()
 
     def setCurrentMarkMode(self):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
@@ -258,12 +285,16 @@ class Annotator(QDialog):
             Qt.Key_Underscore: lambda: self.view.zoomOut(),
             # Only change-mark shortcuts 0-5.
             Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
-            Qt.Key_0: lambda: self.keyToChangeMark(0),
             Qt.Key_1: lambda: self.keyToChangeMark(1),
             Qt.Key_2: lambda: self.keyToChangeMark(2),
             Qt.Key_3: lambda: self.keyToChangeMark(3),
             Qt.Key_4: lambda: self.keyToChangeMark(4),
             Qt.Key_5: lambda: self.keyToChangeMark(5),
+            Qt.Key_6: lambda: self.keyToChangeMark(6),
+            Qt.Key_7: lambda: self.keyToChangeMark(7),
+            Qt.Key_8: lambda: self.keyToChangeMark(8),
+            Qt.Key_9: lambda: self.keyToChangeMark(9),
+            Qt.Key_0: lambda: self.keyToChangeMark(10),
             # ?-mark pop up a key-list
             Qt.Key_Question: lambda: self.keyPopUp(),
             # Toggle hide/unhide tools so as to maximise space for annotation
@@ -467,31 +498,31 @@ class Annotator(QDialog):
             self.setWindowState(Qt.WindowNoState)
 
     def keyToChangeMark(self, buttonNumber):
-        """Translates a key-press (0,1,2,3,4,5) into a button-press
+        """Translates a key-press (0,1,2,..,9) into a button-press
         of the various delta-mark buttons in the mark-entry widget.
         If mark-up style then they trigger the positive mark buttons,
         hence p0,p1 etc... if mark down then triggers the negative mark
         buttons - n1,n2, etc.
         """
+        # if key is higher than maxMark then no such button.
+        if buttonNumber > self.maxMark:
+            return
+        # Otherwise click the appropriate button.
         if self.markHandler.style == "Up":
             self.markHandler.markButtons["p{}".format(buttonNumber)].animateClick()
-        elif self.markHandler.style == "Down" and buttonNumber > 0:
+        elif self.markHandler.style == "Down" and buttonNumber >= 0:
             self.markHandler.markButtons["m{}".format(buttonNumber)].animateClick()
 
     def keyPressEvent(self, event):
         """Translates key-presses into tool-button presses if
-        appropriate. Also captures the escape-key since this would
-        normally close a qdialog.
+        appropriate.
         """
         # Check to see if no mousebutton pressed
         # If a key-press detected use the keycodes dict to translate
         # the press into a function call (if exists)
         if QGuiApplication.mouseButtons() == Qt.NoButton:
             self.keycodes.get(event.key(), lambda *args: None)()
-        # If escape key pressed then do not process it because
-        # esc in a qdialog closes the window as a "reject".
-        if event.key() != Qt.Key_Escape:
-            super(Annotator, self).keyPressEvent(event)
+        super(Annotator, self).keyPressEvent(event)
 
     def setMode(self, newMode, newCursor):
         """Change the current tool mode.
@@ -587,8 +618,9 @@ class Annotator(QDialog):
     # unmarked image and fires up the annotator on that.
     @pyqtSlot()
     def endAndRelaunch(self):
+        self._relaunch = True
         self.commentW.saveComments()
-        self.closeEvent(True)
+        self.close()
 
     def setMiscShortCuts(self):
         # Set alt-enter or alt-return to end the annotator
@@ -613,6 +645,15 @@ class Annotator(QDialog):
         self.undoShortCut.activated.connect(self.scene.undo)
         self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
         self.redoShortCut.activated.connect(self.scene.redo)
+        # pan shortcuts
+        self.panShortCut = QShortcut(QKeySequence("space"), self)
+        self.panShortCut.activated.connect(self.view.panThrough)
+        self.depanShortCut = QShortcut(QKeySequence("Shift+space"), self)
+        self.depanShortCut.activated.connect(self.view.depanThrough)
+        self.slowPanShortCut = QShortcut(QKeySequence("Ctrl+space"), self)
+        self.slowPanShortCut.activated.connect(lambda: self.view.panThrough(0.02))
+        self.slowDepanShortCut = QShortcut(QKeySequence("Ctrl+Shift+space"), self)
+        self.slowDepanShortCut.activated.connect(lambda: self.view.depanThrough(0.02))
 
     # Simple mode change functions
     def boxMode(self):
@@ -697,6 +738,9 @@ class Annotator(QDialog):
         self.ui.redoButton.clicked.connect(self.scene.redo)
         # The key-help button connects to the keyPopUp command.
         self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
+        # The view button connects to the viewWholePaper
+        self.ui.viewButton.clicked.connect(self.viewWholePaper)
+
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
         self.ui.cancelButton.clicked.connect(self.cleanUpCancel)
         # Hide button connects to the toggleTools command
@@ -795,18 +839,35 @@ class Annotator(QDialog):
         self.updateDeltaMarkMenu()
 
     def closeEventRelaunch(self):
-        self.closeEvent(True)
+        self._relaunch = True
+        self.close()
 
     def closeEventNoRelaunch(self):
-        self.closeEvent(False)
+        self._relaunch = False
+        self.close()
 
     def loadWindowSettings(self):
+        # load the window geometry, else maximise.
         if self.parent.annotatorSettings["geometry"] is not None:
             self.restoreGeometry(self.parent.annotatorSettings["geometry"])
+            # TODO - delete the below
+            # since we can't directly jsonify QByteArray:
+            # self.restoreGeometry(
+            #     QByteArray.fromBase64(
+            #         self.parent.annotatorSettings["geometry"].encode()
+            #     )
+            # )
+        else:
+            # Make sure window is maximised.
+            self.showMaximized()
+
+        # remember the "do not show again" checks
         if self.parent.annotatorSettings["markWarnings"] is not None:
             self.markWarn = self.parent.annotatorSettings["markWarnings"]
         if self.parent.annotatorSettings["commentWarnings"] is not None:
             self.commentWarn = self.parent.annotatorSettings["commentWarnings"]
+
+        # remember the last tool used
         if self.parent.annotatorSettings["tool"] is not None:
             if self.parent.annotatorSettings["tool"] == "delta":
                 dlt = self.parent.annotatorSettings["delta"]
@@ -817,33 +878,48 @@ class Annotator(QDialog):
             else:
                 self.loadModeFromBefore(self.parent.annotatorSettings["tool"])
 
-        if self.parent.annotatorSettings["viewRectangle"] is not None:
-            # put in slight delay so that any resize events are done.
-            QTimer.singleShot(
-                150,
-                lambda: self.view.initialZoom(
-                    self.parent.annotatorSettings["viewRectangle"]
-                ),
-            )
+        # if zoom-state is none, set it to index 1 (fit page) - but delay.
+        if self.parent.annotatorSettings["zoomState"] is None:
+            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+        elif self.parent.annotatorSettings["zoomState"] == 0:
+            # is set to "user", so set the view-rectangle
+            if self.parent.annotatorSettings["viewRectangle"] is not None:
+                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
+                QTimer.singleShot(
+                    200,
+                    lambda: self.view.initialZoom(
+                        self.parent.annotatorSettings["viewRectangle"]
+                    ),
+                )
+            else:
+                # no view-rectangle, so set to "fit-page"
+                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
         else:
-            QTimer.singleShot(150, lambda: self.view.initialZoom(None))
-        # there is some redundancy between the above and the below.
-        if self.parent.annotatorSettings["zoomState"] is not None:
-            # put in slight delay so that any resize events are done.
             QTimer.singleShot(
                 200,
                 lambda: self.ui.zoomCB.setCurrentIndex(
                     self.parent.annotatorSettings["zoomState"]
                 ),
             )
-        else:
-            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
 
     def saveWindowSettings(self):
+        # TODO - delete below
+        # since we can't directly jsonify QByteArray:
+        # self.parent.annotatorSettings["geometry"] = (
+        #     self.saveGeometry().toBase64().data().decode()
+        # )
+        # since we can't directly jsonify qrectf:
+        # jsrect = self.view.getCurrentViewRect()
+        # self.parent.annotatorSettings["viewRectangle"] = [
+        #     jsrect.x(),
+        #     jsrect.y(),
+        #     jsrect.width(),
+        #     jsrect.height(),
+        # ]
         self.parent.annotatorSettings["geometry"] = self.saveGeometry()
+        self.parent.annotatorSettings["viewRectangle"] = self.view.getCurrentViewRect()
         self.parent.annotatorSettings["markWarnings"] = self.markWarn
         self.parent.annotatorSettings["commentWarnings"] = self.commentWarn
-        self.parent.annotatorSettings["viewRectangle"] = self.view.vrect
         self.parent.annotatorSettings["zoomState"] = self.ui.zoomCB.currentIndex()
         self.parent.annotatorSettings["tool"] = self.scene.mode
         if self.scene.mode == "delta":
@@ -854,10 +930,9 @@ class Annotator(QDialog):
     def cleanUpCancel(self):
         # clean up after a testview
         self.doneViewingPaper()
-        self.reject()
-        return
+        self.close()
 
-    def closeEvent(self, relaunch):
+    def closeEvent(self, ce):
         """When the user closes the window - either by clicking on the
         little standard all windows have them close icon in the titlebar
         or by clicking on 'finished' - do some basic checks.
@@ -869,21 +944,23 @@ class Annotator(QDialog):
         Be careful of max-score when marking down.
         In either case - get user to confirm the score before closing.
         """
+        relaunch = self._relaunch
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
 
-        # If the titlebar close clicked then don't relauch and close the
-        # annotator (QDialog) with a 'reject'
-        if type(relaunch) == QCloseEvent:
-            self.launchAgain = False
+        # Close button/titlebar: reject (do not save) result, do not launch again
+        if relaunch is None:
+            print("ann emitting signal: Reject/Cancel")
+            self.ann_finished_reject.emit(self.tgv, [])
             # clean up after a testview
             self.doneViewingPaper()
-            self.reject()
+            ce.accept()
             return
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
             msg = ErrorMessage("Please make an annotation, even if the page is blank.")
             msg.exec_()
+            ce.ignore()
             return
 
         # check if comments have been left.
@@ -894,6 +971,7 @@ class Annotator(QDialog):
                     "You have given no comments.\n Please confirm."
                 )
                 if msg.exec_() == QMessageBox.No:
+                    ce.ignore()
                     return
                 if msg.cb.checkState() == Qt.Checked:
                     self.commentWarn = False
@@ -902,6 +980,7 @@ class Annotator(QDialog):
         if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
             msg = SimpleMessageCheckBox("You have given 0 - please confirm")
             if msg.exec_() == QMessageBox.No:
+                ce.ignore()
                 return
             if msg.cb.checkState() == Qt.Checked:
                 self.markWarn = False
@@ -915,15 +994,13 @@ class Annotator(QDialog):
                 "You have given {} - please confirm".format(self.maxMark)
             )
             if msg.exec_() == QMessageBox.No:
+                ce.ignore()
                 return
             if msg.cb.checkState() == Qt.Checked:
                 self.markWarn = False
-        if relaunch:
-            self.launchAgain = True
-        else:
-            self.launchAgain = False
 
         if not self.checkAllObjectsInside():
+            ce.ignore()
             return
 
         # clean up after a testview
@@ -938,7 +1015,22 @@ class Annotator(QDialog):
         # Save the window settings
         self.saveWindowSettings()
         # Close the annotator(QDialog) with an 'accept'.
-        self.accept()
+        print("ann emitting signal: ACCEPT")
+        tim = self.timer.elapsed() // 1000
+        # some things here hardcoded elsewhere too, and up in marker
+        plomFile = self.imageFile[:-3] + "plom"
+        commentFile = self.imageFile[:-3] + "json"
+        stuff = [
+            self.score,
+            relaunch,
+            tim,
+            self.paperdir,
+            self.imageFile,
+            plomFile,
+            commentFile,
+        ]
+        self.ann_finished_accept.emit(self.tgv, stuff)
+        ce.accept()
 
     def checkAllObjectsInside(self):
         if self.scene.checkAllObjectsInside():

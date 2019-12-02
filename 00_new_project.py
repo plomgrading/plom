@@ -44,8 +44,6 @@ files = [
     "resources/testspecification.py",
     "resources/tpv_utils.py",
     "resources/misc_utils.py",
-    "resources/davconf.conf",
-    "resources/davconf.yaml",
     "resources/predictionlist.csv",
     "resources/pageNotSubmitted.pdf",
     "resources/version.py",
@@ -56,8 +54,9 @@ files += [
     "build/cleanAll.py",
     "build/editMeToBuildASpec.py",
     "build/02_build_tests_from_spec.py",
+    "build/02a_build_with_names.py",
+    "build/build_utils.py",
     "build/mergeAndCodePages.py",
-    "build/buildTestPDFs.py",
     "build/ui_builder.py",
     "build/version_selector_qlist.py",
 ]
@@ -75,6 +74,7 @@ files += [
 ]
 
 files += [
+    "imageServer/aliceBob.py",
     "imageServer/authenticate.py",
     "imageServer/examviewwindow.py",
     "imageServer/identify_manager.py",
