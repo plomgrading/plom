@@ -36,7 +36,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
     # TODO: can tell diff b/w odd/even: doc somewhere?
     cmd = "convert -quiet {} -crop 4x5@ tile_%d.png".format(imgName)
     cmd = shlex.split(cmd)
-    subprocess.run(cmd, check=True)
+    subprocess.check_call(cmd)
 
     # Use zbarimg to extract QR codes from some tiles
     # There may not be any (e.g., DNW area, folded corner, poor quality)
@@ -45,9 +45,9 @@ with tempfile.TemporaryDirectory() as tmpDir:
     cornerTiles = ['tile_3.png', 'tile_0.png', 'tile_16.png', 'tile_19.png']
     for i in range(0, 4):
         # Apply a slight blur filter to make reading codes easier (typically)
-        subprocess.run(
+        subprocess.check_call(
             ["mogrify", "-quiet", cornerTiles[i], "-blur", "0", "-quality", "100"],
-            check=True)
+        )
         try:
             this = (subprocess.check_output(
                     ["zbarimg", "-q", "-Sdisable", "-Sqr.enable", cornerTiles[i]]
