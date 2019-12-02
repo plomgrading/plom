@@ -9,24 +9,14 @@ __license__ = "AGPL-3.0-or-later"
 
 from collections import defaultdict
 import random
+import toml
+import json
 
 from specParser import SpecParser
 
 
 def buildDirectories():
     os.makedirs("examsToPrint", exist_ok=True)
-
-
-def buildIDPages(exams, t, idpages):
-    for p in idpages["pages"]:
-        exams[t][str(p)] = 1  # ID pages are always version1
-    return exams
-
-
-def buildDoNotMark(exams, t, dnm):
-    for p in dnm["pages"]:
-        exams[t][str(p)] = 1  # Donotmark pages are always version1
-    return exams
 
 
 def buildExamPages(spec):
@@ -45,11 +35,13 @@ def buildExamPages(spec):
         for p in spec["doNotMark"]["pages"]:
             pv[str(p)] = 1
         # now build the groups
-        for g in range(spec["numberOfGroups"]):  # runs from 1,2,...
-            gs = str(g + 1)
-            if spec[gs]["select"] == "fixed":  # all pages are version 1
+        for g in range(spec["numberOfGroups"]):  # runs from 0,1,2,...
+            gs = str(g + 1)  # now 1,2,3,...
+            # if selection = fixed, then all are version 1
+            if spec[gs]["select"] == "fixed":
                 for p in spec[gs]["pages"]:
                     pv[str(p)] = 1
+            # if selection = shuffle, then the group is selected randomly
             elif spec[gs]["select"] == "shuffle":
                 v = random.randint(
                     1, spec["sourceVersions"]
@@ -66,10 +58,7 @@ def buildExamPages(spec):
 if __name__ == "__main__":
     # buildDirectories()
     spec = SpecParser().spec
+    # set the random number seed from the spec.
     random.seed(spec["privateSeed"])
-
-    exams = buildExamPages(spec)
-    print(exams)
-
-    # writeExamLog(exams)
-    # buildTestPDFs(spec, exams)
+    # build the exam pages (ie - select which pages from which version)
+    buildExamDatabase(spec)
