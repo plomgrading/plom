@@ -44,7 +44,8 @@ def decodeQRs():
             fh.write("python3 ../extractQR.py {}\n".format(fname))
     fh.close()
     # run those commands through gnu-parallel then delete.
-    os.system("parallel --bar < commandlist.txt")
+    cmd = shlex.split("parallel --bar -a commandlist.txt")
+    subprocess.check_call(cmd)
     os.unlink("commandlist.txt")
     os.chdir("../")
 
