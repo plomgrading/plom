@@ -33,33 +33,19 @@ def buildExamDatabase(spec):
         examDB.addTest(t)
         examDB.addIDGroup(t, spec["idPages"]["pages"])
         examDB.addDNMGroup(t, spec["doNotMark"]["pages"])
-
-    #     pv = dict()
-    #     # build the ID-pages - always version 1
-    #     for p in spec["idPages"]["pages"]:
-    #         pv[str(p)] = 1
-    #     # build the DoNotMark-pages - always version 1
-    #     for p in spec["doNotMark"]["pages"]:
-    #         pv[str(p)] = 1
-    #     # now build the groups
-    #     for g in range(spec["numberOfGroups"]):  # runs from 0,1,2,...
-    #         gs = str(g + 1)  # now 1,2,3,...
-    #         # if selection = fixed, then all are version 1
-    #         if spec[gs]["select"] == "fixed":
-    #             for p in spec[gs]["pages"]:
-    #                 pv[str(p)] = 1
-    #         # if selection = shuffle, then the group is selected randomly
-    #         elif spec[gs]["select"] == "shuffle":
-    #             v = random.randint(
-    #                 1, spec["sourceVersions"]
-    #             )  # version selected randomly [1,2,..#versions]
-    #             for p in spec[gs]["pages"]:
-    #                 pv[str(p)] = v
-    #         else:
-    #             print("ERROR - problem with specification. Please check it carefully.")
-    #             exit(1)
-    #     exams[t] = pv
-    # return exams
+        # now build the groups
+        for g in range(spec["numberOfGroups"]):  # runs from 0,1,2,...
+            gs = str(g + 1)  # now 1,2,3,...
+            if spec[gs]["select"] == "fixed":  # all are version 1
+                v = 1
+            elif spec[gs]["select"] == "shuffle":  # version selected randomly
+                v = random.randint(
+                    1, spec["sourceVersions"]
+                )  # version selected randomly [1,2,..#versions]
+            else:
+                print("ERROR - problem with specification. Please check it carefully.")
+                exit(1)
+            examDB.addMGroup(t, int(gs), v, spec[gs]["pages"])
 
 
 if __name__ == "__main__":
@@ -67,7 +53,9 @@ if __name__ == "__main__":
     spec = SpecParser().spec
     # set the random number seed from the spec.
     random.seed(spec["privateSeed"])
-    buildExamDatabase(spec)
+    # buildExamDatabase(spec)
+    examDB.printGroups(3)
+    examDB.printPages(3)
 
     # build the exam pages (ie - select which pages from which version)
     # buildExamDatabase(spec)
