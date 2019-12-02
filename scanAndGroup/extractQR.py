@@ -17,17 +17,13 @@ curDir = os.getcwd()
 
 # First check if the image is in portrait or landscape by aspect ratio
 # Should be in portrait.
-try:
-    ratio = (
-        subprocess.check_output(["identify", "-format", "%[fx:w/h]", imgName])
-        .decode()
-        .rstrip()
-    )
-    # if ratio>1 then in landscape so rotate.
-    if float(ratio) > 1:
-        os.system("mogrify -quiet -rotate 90 {}".format(imgName))
-except subprocess.CalledProcessError:
-    print("Imagemagick error getting aspect ratio")
+ratio = (
+    subprocess.check_output(["identify", "-format", "%[fx:w/h]", imgName])
+    .decode()
+    .rstrip()
+)
+if float(ratio) > 1:  # landscape
+    subprocess.check_call(["mogrify", "-quiet", "-rotate", "90", imgName])
 
 # Operate in a temp directory
 with tempfile.TemporaryDirectory() as tmpDir:
