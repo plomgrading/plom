@@ -51,7 +51,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
         # Apply a slight blur filter to make reading codes easier (typically)
         subprocess.run(
             ["mogrify", "-quiet", cornerTiles[i], "-blur", "0", "-quality", "100"],
-            stderr=subprocess.STDOUT, shell=False, check=True)
+            check=True)
         try:
             this = (subprocess.check_output(
                     ["zbarimg", "-q", "-Sdisable", "-Sqr.enable", cornerTiles[i]]
