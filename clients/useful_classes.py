@@ -460,16 +460,17 @@ class SimpleCommentTable(QTableView):
         # grab comments from the toml file,
         # if no file, then populate with some simple ones
         self.clist = [
-            (-1, "algebra", ""),
-            (-1, "arithmetic", ""),
-            (-1, "huh?", ""),
+            ("-1", "algebra", ""),
+            ("-1", "arithmetic", ""),
+            ("-1", "huh?", ""),
             (".", "meh", ""),
-            (0, "tex: you can write latex $e^{i\pi}+1=0$", ""),
-            (0, "be careful", ""),
-            (1, "good", ""),
-            (1, "very nice", ""),
-            (1, "Quest. 1 specific...", "Q1"),
-            (2, "Quest. 2 specific...", "Q2"),
+            ("0", "tex: you can write latex $e^{i\pi}+1=0$", ""),
+            ("0", "be careful", ""),
+            ("1", "good", ""),
+            ("1", "very nice", ""),
+            ("1", "Quest. 1 specific...", "Q1"),
+            ("2", "Quest. 2 specific...", "Q2"),
+            ("1", "Another Q1 spec", "Q1"),
         ]
         if os.path.exists("plomComments.toml"):
             # toml is a dict by default.
@@ -564,7 +565,7 @@ class SimpleCommentTable(QTableView):
         #self.selectRow(self.cmodel.rowCount() - 1)
         #self.resizeRowToContents(self.cmodel.rowCount() - 1)
         # TODO: just insert to clist and rebuild
-        self.clist.append([dlt, txt, tag])
+        self.clist.append([str(dlt), txt, tag])
         self.cmodel.clear()
         self.populateTable()
 
@@ -579,9 +580,10 @@ class SimpleCommentTable(QTableView):
             #self.cmodel.setData(tableIndex.siblingAtColumn(2), dt[2])
             # TODO: for now, just insert into clist and rebuild
             key = int(self.cmodel.index(r, 3).data())
-            self.clist[key] = dt
+            self.clist[key] = [str(dt[0]), dt[1], dt[2]]
             self.cmodel.clear()
             self.populateTable()
+
 
     def focusInEvent(self, event):
         super(SimpleCommentTable, self).focusInEvent(event)
