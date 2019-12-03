@@ -30,10 +30,9 @@ def buildExamDatabase(spec):
     """
     exams = defaultdict(dict)
     for t in range(1, spec["numberToProduce"] + 1):
-        examDB.addTest(t)
-        examDB.addIDGroup(t, spec["idPages"]["pages"])
-        examDB.addDNMGroup(t, spec["doNotMark"]["pages"])
-        # now build the groups
+        examDB.createTest(t)
+        examDB.createIDGroup(t, spec["idPages"]["pages"])
+        examDB.createDNMGroup(t, spec["doNotMark"]["pages"])
         for g in range(spec["numberOfGroups"]):  # runs from 0,1,2,...
             gs = str(g + 1)  # now 1,2,3,...
             if spec[gs]["select"] == "fixed":  # all are version 1
@@ -45,7 +44,7 @@ def buildExamDatabase(spec):
             else:
                 print("ERROR - problem with specification. Please check it carefully.")
                 exit(1)
-            examDB.addMGroup(t, int(gs), v, spec[gs]["pages"])
+            examDB.createMGroup(t, int(gs), v, spec[gs]["pages"])
 
 
 if __name__ == "__main__":
@@ -53,9 +52,7 @@ if __name__ == "__main__":
     spec = SpecParser().spec
     # set the random number seed from the spec.
     random.seed(spec["privateSeed"])
-    # buildExamDatabase(spec)
-    examDB.printGroups(3)
-    examDB.printPages(3)
+    buildExamDatabase(spec)
 
     # build the exam pages (ie - select which pages from which version)
     # buildExamDatabase(spec)
