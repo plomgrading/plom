@@ -417,6 +417,10 @@ class SimpleCommentTable(QTableView):
         # Grab [delta, comment] from the list and put into table.
         for (dlt, txt, tag) in self.clist:
             # User can edit the text, but doesn't handle drops.
+            # TODO: need regex for QNN, not just contains Q
+            # TODO: how do I get the pagegroup?
+            if tag.count("Q") > 0 and tag.count("Q{}".format(1)) == 0:
+                continue
             txti = QStandardItem(txt)
             txti.setEditable(True)
             txti.setDropEnabled(False)
@@ -460,8 +464,8 @@ class SimpleCommentTable(QTableView):
             (0, "be careful", ""),
             (1, "good", ""),
             (1, "very nice", ""),
-            (1, "Quest. 1 specific...", "q1"),
-            (2, "Quest. 2 specific...", "q2"),
+            (1, "Quest. 1 specific...", "Q1"),
+            (2, "Quest. 2 specific...", "Q2"),
         ]
         if os.path.exists("plomComments.toml"):
             # toml is a dict by default.
@@ -473,6 +477,7 @@ class SimpleCommentTable(QTableView):
     def saveCommentList(self):
         # grab comments from the table, populate a list
         # export to toml file.
+        # TODO: maybe try to keep "clist" the authoratitive one?
         self.clist = []
         for r in range(self.cmodel.rowCount()):
             self.clist.append(
