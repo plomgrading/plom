@@ -419,8 +419,9 @@ class SimpleCommentTable(QTableView):
         for i, (dlt, txt, tag) in enumerate(self.clist):
             # User can edit the text, but doesn't handle drops.
             # TODO: need regex for QNN, not just contains Q
-            # TODO: how do I get the pagegroup?
-            if tag.count("Q") > 0 and tag.count("Q{}".format(1)) == 0:
+            # TODO: YUCK! (how do I get the pagegroup)
+            pg = int(self.parent.parent.parent.pageGroup)
+            if tag.count("Q") > 0 and tag.count("Q{}".format(pg)) == 0:
                 continue
             txti = QStandardItem(txt)
             txti.setEditable(True)
