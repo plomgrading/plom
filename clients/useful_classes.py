@@ -4,6 +4,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPLv3"
 import os
 import toml
+import re
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QTimer
 from PyQt5.QtGui import QDropEvent, QIcon, QPixmap, QStandardItem, QStandardItemModel
@@ -418,10 +419,13 @@ class SimpleCommentTable(QTableView):
         # Grab [delta, comment] from the list and put into table.
         for i, (dlt, txt, tag) in enumerate(self.clist):
             # User can edit the text, but doesn't handle drops.
-            # TODO: need regex for QNN, not just contains Q
             # TODO: YUCK! (how do I get the pagegroup)
             pg = int(self.parent.parent.parent.pageGroup)
-            if tag.count("Q") > 0 and tag.count("Q{}".format(pg)) == 0:
+            Qn = "Q{}".format(pg)
+            tags = tag.split()
+            # If there is at least one Q tag then there must be a Qn tag
+            if (any([re.match("^Q\d+$", t) for t in tags]) and
+                not any([t == Qn for t in tags])):
                 continue
             txti = QStandardItem(txt)
             txti.setEditable(True)
