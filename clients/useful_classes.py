@@ -201,9 +201,10 @@ class CommentWidget(QWidget):
             else:
                 dlt = "."
             txt = acb.TE.toPlainText().strip()
+            tag = acb.TEtag.toPlainText().strip()
             # check if txt has any content
             if len(txt) > 0:
-                self.CL.insertItem(dlt, txt)
+                self.CL.insertItem(dlt, txt, tag)
                 self.currentItem()
                 # send a click to the comment button to force updates
                 self.parent.ui.commentButton.animateClick()
