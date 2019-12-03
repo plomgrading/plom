@@ -416,7 +416,7 @@ class SimpleCommentTable(QTableView):
 
     def populateTable(self):
         # Grab [delta, comment] from the list and put into table.
-        for (dlt, txt, tag) in self.clist:
+        for i, (dlt, txt, tag) in enumerate(self.clist):
             # User can edit the text, but doesn't handle drops.
             # TODO: need regex for QNN, not just contains Q
             # TODO: how do I get the pagegroup?
@@ -440,8 +440,11 @@ class SimpleCommentTable(QTableView):
             tagi = QStandardItem(tag)
             tagi.setEditable(True)
             tagi.setDropEnabled(False)
+            idxi = QStandardItem(str(i))
+            idxi.setEditable(False)
+            idxi.setDropEnabled(False)
             # Append it to the table.
-            self.cmodel.appendRow([delti, txti, tagi])
+            self.cmodel.appendRow([delti, txti, tagi, idxi])
 
     def handleClick(self, index=0):
         # When an item is clicked, grab the details and emit
@@ -476,14 +479,7 @@ class SimpleCommentTable(QTableView):
                 self.clist = cdict["comments"]
 
     def saveCommentList(self):
-        # grab comments from the table, populate a list
         # export to toml file.
-        # TODO: maybe try to keep "clist" the authoratitive one?
-        self.clist = []
-        for r in range(self.cmodel.rowCount()):
-            self.clist.append(
-                (self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data(), self.cmodel.index(r, 2).data())
-            )
         # toml wants a dictionary
         with open("plomComments.toml", "w") as fname:
             toml.dump({"comments": self.clist}, fname)
@@ -512,7 +508,12 @@ class SimpleCommentTable(QTableView):
         sel = self.selectedIndexes()
         if len(sel) == 0:
             return
-        self.cmodel.removeRow(sel[0].row())
+        key = int(self.cmodel.index(sel[0].row(), 3).data())
+        self.clist.pop(key)
+        #self.cmodel.removeRow(sel[0].row())
+        # TODO: maybe sloppy to rebuild, need automatic cmodel ontop of clist
+        self.cmodel.clear()
+        self.populateTable()
 
     def currentItem(self):
         # If no selected row, then select row 0.
@@ -548,20 +549,24 @@ class SimpleCommentTable(QTableView):
     def insertItem(self, dlt, txt, tag):
         # Create a [delta, comment] pair for user to edit
         # and append to end of table.
-        txti = QStandardItem(txt)
-        txti.setEditable(True)
-        txti.setDropEnabled(False)
-        delti = QStandardItem("{}".format(dlt))
-        delti.setEditable(True)
-        delti.setDropEnabled(False)
-        delti.setTextAlignment(Qt.AlignCenter)
-        tagi = QStandardItem(tag)
-        tagi.setEditable(True)
-        tagi.setDropEnabled(False)
-        self.cmodel.appendRow([delti, txti, tagi])
+        #txti = QStandardItem(txt)
+        #txti.setEditable(True)
+        #txti.setDropEnabled(False)
+        #delti = QStandardItem("{}".format(dlt))
+        #delti.setEditable(True)
+        #delti.setDropEnabled(False)
+        #delti.setTextAlignment(Qt.AlignCenter)
+        #tagi = QStandardItem(tag)
+        #tagi.setEditable(True)
+        #tagi.setDropEnabled(False)
+        #self.cmodel.appendRow([delti, txti, tagi, idxi])
         # select the new row and resize
-        self.selectRow(self.cmodel.rowCount() - 1)
-        self.resizeRowToContents(self.cmodel.rowCount() - 1)
+        #self.selectRow(self.cmodel.rowCount() - 1)
+        #self.resizeRowToContents(self.cmodel.rowCount() - 1)
+        # TODO: just insert to clist and rebuild
+        self.clist.append([dlt, txt, tag])
+        self.cmodel.clear()
+        self.populateTable()
 
     def editRow(self, tableIndex):
         r = tableIndex.row()
@@ -569,9 +574,14 @@ class SimpleCommentTable(QTableView):
             self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data(), self.cmodel.index(r, 2).data()
         )
         if dt is not None:
-            self.cmodel.setData(tableIndex.siblingAtColumn(0), dt[0])
-            self.cmodel.setData(tableIndex.siblingAtColumn(1), dt[1])
-            self.cmodel.setData(tableIndex.siblingAtColumn(2), dt[2])
+            #self.cmodel.setData(tableIndex.siblingAtColumn(0), dt[0])
+            #self.cmodel.setData(tableIndex.siblingAtColumn(1), dt[1])
+            #self.cmodel.setData(tableIndex.siblingAtColumn(2), dt[2])
+            # TODO: for now, just insert into clist and rebuild
+            key = int(self.cmodel.index(r, 3).data())
+            self.clist[key] = dt
+            self.cmodel.clear()
+            self.populateTable()
 
     def focusInEvent(self, event):
         super(SimpleCommentTable, self).focusInEvent(event)
