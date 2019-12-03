@@ -16,3 +16,6 @@ print(
 )
 print('2. Run the "002_verifySpec.py" script')
 print('3. Run the "003_buildPlomDB.py" script')
+print(
+    '4. If you are producing exams with names and IDs prefilled then run "005_buildPDFs_with_names.py" script.\n \tOtherwise run the "004_buildPDFs_no_names.py" script.'
+)

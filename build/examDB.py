@@ -208,3 +208,17 @@ class PlomDB:
                 for g in tref.groups:
                     g.status = "produced"
                     g.save()
+
+    def identifyTest(self, t, sid, sname):
+        tref = Test.get_or_none(testNumber=t)
+        if tref is None:
+            return
+        with plomdb.atomic():
+            for g in tref.groups:
+                if g.groupType == "i":
+                    g.status = "identified"
+                    g.save()
+                    break
+            tref.studentID = sid
+            tref.studentName = sname
+            tref.save()
