@@ -461,7 +461,7 @@ class SimpleCommentTable(QTableView):
             (1, "good", ""),
             (1, "very nice", ""),
             (1, "Quest. 1 specific...", "q1"),
-            (2, "Quest. 2 specific...", "q1"),
+            (2, "Quest. 2 specific...", "q2"),
         ]
         if os.path.exists("plomComments.toml"):
             # toml is a dict by default.
