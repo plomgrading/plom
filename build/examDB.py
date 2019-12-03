@@ -43,8 +43,8 @@ class Page(Model):
 
 
 # Data for mark-groups
-class MData(Model):
-    gid = ForeignKeyField(Group, backref="mdata")
+class MarkData(Model):
+    gid = ForeignKeyField(Group, backref="markdata")
     groupNumber = IntegerField(null=False)
     version = IntegerField(null=False)
     annotatedFile = CharField(null=True)
@@ -57,36 +57,40 @@ class MData(Model):
 class PlomDB:
     def __init__(self):
         with plomdb:
-            plomdb.create_tables([Test, Group, MData, Page])
+            plomdb.create_tables([Test, Group, MarkData, Page])
 
     def createTest(self, t):
         try:
             Test.create(testNumber=t, status="produced")  # must be unique
         except IntegrityError as e:
             print("Test {} already exists.".format(t))
+            return False
+        return True
 
     def addPages(self, tref, gref, t, pages, v):
+        flag = True
         for p in pages:
             try:
-                with plomdb.atomic():
-                    Page.create(
-                        test=tref,
-                        group=gref,
-                        gid=gref.gid,
-                        status="produced",
-                        pageNumber=p,
-                        version=v,
-                        pid="t{}p{}".format(t, p),
-                        originalFile="",
-                    )
+                Page.create(
+                    test=tref,
+                    group=gref,
+                    gid=gref.gid,
+                    status="produced",
+                    pageNumber=p,
+                    version=v,
+                    pid="t{}p{}".format(t, p),
+                    originalFile="",
+                )
             except IntegrityError as e:
                 print("Page {} for test {} already exists.".format(p, t))
+                flag = False
+        return flag
 
     def createIDGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             print("No test with number {}".format(t))
-            return
+            return False
 
         gid = "i{}".format(str(t).zfill(4))
         try:
@@ -95,14 +99,14 @@ class PlomDB:
             )  # must be unique
         except IntegrityError as e:
             print("Group {} of Test {} already exists.".format(gid, t))
-            print(e)
-        self.addPages(tref, gref, t, pages, 1)
+            return False
+        return self.addPages(tref, gref, t, pages, 1)
 
     def createDNMGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             print("No test with number {}".format(t))
-            return
+            return False
 
         gid = "d{}".format(str(t).zfill(4))
         # make the dnmgroup
@@ -112,14 +116,14 @@ class PlomDB:
             )  # must be unique
         except IntegrityError as e:
             print("Group {} of Test {} already exists.".format(gid, t))
-            return
-        self.addPages(tref, gref, t, pages, 1)
+            return False
+        return self.addPages(tref, gref, t, pages, 1)
 
     def createMGroup(self, t, g, v, pages):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             print("No test with number {}".format(t))
-            return
+            return False
 
         gid = "m{}g{}".format(str(t).zfill(4), g)
         # make the dnmgroup
@@ -129,13 +133,13 @@ class PlomDB:
             )  # must be unique
         except IntegrityError as e:
             print("Group {} of Test {} already exists.".format(gid, t))
-            return
+            return False
         try:
-            mref = MData.create(gid=gref, groupNumber=g, version=v)
+            mref = MarkData.create(gid=gref, groupNumber=g, version=v)
         except IntegrityError as e:
             print("MGroup {} of Group {} already exists.".format(mref, gid))
-            return
-        self.addPages(tref, gref, t, pages, v)
+            return False
+        return self.addPages(tref, gref, t, pages, v)
 
     def printGroups(self, t):
         tref = Test.get_or_none(testNumber=t)
@@ -143,7 +147,7 @@ class PlomDB:
             return
         for x in tref.groups:
             if x.groupType == "m":
-                mdata = x.mdata[0]
+                mdata = x.markdata[0]
                 print(
                     x.gid,
                     x.groupType,

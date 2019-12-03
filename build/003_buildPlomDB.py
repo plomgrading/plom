@@ -8,9 +8,8 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 from collections import defaultdict
+import os
 import random
-import toml
-import json
 
 from specParser import SpecParser
 from examDB import *
@@ -29,10 +28,26 @@ def buildExamDatabase(spec):
        exams: a dict keyed by [testnum][page]
     """
     exams = defaultdict(dict)
+    errFlag = False
     for t in range(1, spec["numberToProduce"] + 1):
-        examDB.createTest(t)
-        examDB.createIDGroup(t, spec["idPages"]["pages"])
-        examDB.createDNMGroup(t, spec["doNotMark"]["pages"])
+        if examDB.createTest(t):
+            print("Test {} created".format(t))
+        else:
+            print("Error - problem creating test {}".format(t))
+            errFlag = True
+
+        if examDB.createIDGroup(t, spec["idPages"]["pages"]):
+            print("\tID-group created")
+        else:
+            print("Error - problem creating ipdbgroup for test {}".format(t))
+            errFlag = True
+
+        if examDB.createDNMGroup(t, spec["doNotMark"]["pages"]):
+            print("\tDoNotMark-group created")
+        else:
+            print("Error - problem creating DoNotMark-group for test {}".format(t))
+            errFlag = True
+
         for g in range(spec["numberOfGroups"]):  # runs from 0,1,2,...
             gs = str(g + 1)  # now 1,2,3,...
             if spec[gs]["select"] == "fixed":  # all are version 1
@@ -42,9 +57,25 @@ def buildExamDatabase(spec):
                     1, spec["sourceVersions"]
                 )  # version selected randomly [1,2,..#versions]
             else:
-                print("ERROR - problem with specification. Please check it carefully.")
+                print(
+                    "ERROR - problem with specification - this should not happen!! Please check it carefully."
+                )
                 exit(1)
-            examDB.createMGroup(t, int(gs), v, spec[gs]["pages"])
+            if examDB.createMGroup(t, int(gs), v, spec[gs]["pages"]):
+                print("\tMark-group {} created".format(gs))
+            else:
+                print(
+                    "Error - problem creating Mark-group {} for test {}".format(gs, t)
+                )
+                errFlag = True
+    if errFlag:
+        print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
+        print(
+            "There were errors during database creation. Remove the database and try again."
+        )
+        print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
+    else:
+        print("Database created successfully")
 
 
 if __name__ == "__main__":
