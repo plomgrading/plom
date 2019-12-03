@@ -485,25 +485,6 @@ class SimpleCommentTable(QTableView):
         with open("plomComments.toml", "w") as fname:
             toml.dump({"comments": self.clist}, fname)
 
-    def addItem(self):
-        # Create a [delta, comment, tags] pair for user to edit
-        # and append to end of table.
-        txti = QStandardItem("EDIT ME")
-        txti.setEditable(True)
-        txti.setDropEnabled(False)
-        delti = QStandardItem("0")
-        delti.setEditable(True)
-        delti.setDropEnabled(False)
-        delti.setTextAlignment(Qt.AlignCenter)
-        tagi = QStandardItem("")
-        tagi.setEditable(True)
-        tagi.setDropEnabled(False)
-        self.cmodel.appendRow([delti, txti, tagi])
-        # select the new row
-        self.selectRow(self.cmodel.rowCount() - 1)
-        # fire up editor on the comment which is second selected index
-        self.edit(self.selectedIndexes()[1])
-
     def deleteItem(self):
         # Remove the selected row (or do nothing if no selection)
         sel = self.selectedIndexes()
