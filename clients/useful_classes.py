@@ -558,7 +558,9 @@ class SimpleCommentTable(QTableView):
     def editRow(self, tableIndex):
         r = tableIndex.row()
         dt = self.parent.editCurrent(
-            self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data(), self.cmodel.index(r, 2).data()
+            self.cmodel.index(r, 0).data(),
+            self.cmodel.index(r, 1).data(),
+            self.cmodel.index(r, 2).data(),
         )
         if dt is not None:
             #self.cmodel.setData(tableIndex.siblingAtColumn(0), dt[0])
@@ -569,7 +571,6 @@ class SimpleCommentTable(QTableView):
             self.clist[key] = [str(dt[0]), dt[1], dt[2]]
             self.cmodel.clear()
             self.populateTable()
-
 
     def focusInEvent(self, event):
         super(SimpleCommentTable, self).focusInEvent(event)
