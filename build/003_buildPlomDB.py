@@ -48,11 +48,8 @@ def buildExamDatabase(spec):
 
 
 if __name__ == "__main__":
-    # buildDirectories()
+    buildDirectories()
     spec = SpecParser().spec
     # set the random number seed from the spec.
     random.seed(spec["privateSeed"])
     buildExamDatabase(spec)
-
-    # build the exam pages (ie - select which pages from which version)
-    # buildExamDatabase(spec)

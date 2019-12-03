@@ -64,7 +64,6 @@ class PlomDB:
             Test.create(testNumber=t, status="produced")  # must be unique
         except IntegrityError as e:
             print("Test {} already exists.".format(t))
-            print(e)
 
     def addPages(self, tref, gref, t, pages, v):
         for p in pages:
@@ -82,10 +81,13 @@ class PlomDB:
                     )
             except IntegrityError as e:
                 print("Page {} for test {} already exists.".format(p, t))
-                print(e)
 
     def createIDGroup(self, t, pages):
-        tref = Test.get(testNumber=t)
+        tref = Test.get_or_none(testNumber=t)
+        if tref is None:
+            print("No test with number {}".format(t))
+            return
+
         gid = "i{}".format(str(t).zfill(4))
         try:
             gref = Group.create(
@@ -97,7 +99,11 @@ class PlomDB:
         self.addPages(tref, gref, t, pages, 1)
 
     def createDNMGroup(self, t, pages):
-        tref = Test.get(testNumber=t)
+        tref = Test.get_or_none(testNumber=t)
+        if tref is None:
+            print("No test with number {}".format(t))
+            return
+
         gid = "d{}".format(str(t).zfill(4))
         # make the dnmgroup
         try:
@@ -106,11 +112,15 @@ class PlomDB:
             )  # must be unique
         except IntegrityError as e:
             print("Group {} of Test {} already exists.".format(gid, t))
-            print(e)
+            return
         self.addPages(tref, gref, t, pages, 1)
 
     def createMGroup(self, t, g, v, pages):
-        tref = Test.get(testNumber=t)
+        tref = Test.get_or_none(testNumber=t)
+        if tref is None:
+            print("No test with number {}".format(t))
+            return
+
         gid = "m{}g{}".format(str(t).zfill(4), g)
         # make the dnmgroup
         try:
@@ -119,12 +129,12 @@ class PlomDB:
             )  # must be unique
         except IntegrityError as e:
             print("Group {} of Test {} already exists.".format(gid, t))
-            print(e)
+            return
         try:
             mref = MData.create(gid=gref, groupNumber=g, version=v)
         except IntegrityError as e:
             print("MGroup {} of Group {} already exists.".format(mref, gid))
-            print(e)
+            return
         self.addPages(tref, gref, t, pages, v)
 
     def printGroups(self, t):
