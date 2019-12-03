@@ -43,7 +43,7 @@ exam = fitz.open()
 # Insert the relevant page-versions into this pdf.
 for p in range(1, length + 1):
     # Pymupdf starts pagecounts from 0 rather than 1. So offset things.
-    exam.insertPDF(V[pageVersions[str(p)]], from_page=p - 1, to_page=p - 1, start_at=-1)
+    exam.insertPDF(V[pageVersions[p]], from_page=p - 1, to_page=p - 1, start_at=-1)
 
 # Start to decorate the pages with qr-codes etc
 # Get page width and height
@@ -71,7 +71,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
         # 4 qr codes for the corners (one will be omitted for the staple)
         qrFile[p] = {}
         for i in range(1, 5):
-            tpv = encodeTPV(test, p, pageVersions[str(p)], i, code)
+            tpv = encodeTPV(test, p, pageVersions[p], i, code)
             qr = pyqrcode.create(tpv, error="H")
             # save it in the associated file
             qrFile[p][i] = os.path.join(tmpDir, "page{}_{}.png".format(p, i))
@@ -170,12 +170,14 @@ with tempfile.TemporaryDirectory() as tmpDir:
         exam[0].drawRect(sidRect3, color=[0, 0, 0], fill=[1, 1, 1], width=4)
         exam[0].drawRect(sidRect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
         exam[0].drawRect(sidRect2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+
         def isPossibleToEncodeAs(s, x):
             try:
                 _tmp = s.encode(x)
                 return True
             except UnicodeEncodeError:
                 return False
+
         if isPossibleToEncodeAs(txt, "Latin-1"):
             fontname = "Helvetica"
         elif isPossibleToEncodeAs(txt, "gb2312"):

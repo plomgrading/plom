@@ -7,7 +7,6 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from collections import defaultdict
 import os
 import random
 
@@ -26,7 +25,7 @@ def buildExamDatabase(spec):
     and inserts all into the database.
 
     """
-    exams = defaultdict(dict)
+
     errFlag = False
     for t in range(1, spec["numberToProduce"] + 1):
         if examDB.createTest(t):
