@@ -128,7 +128,9 @@ class PlomDB:
         self.addPages(tref, gref, t, pages, v)
 
     def printGroups(self, t):
-        tref = Test.get(testNumber=t)
+        tref = Test.get_or_none(testNumber=t)
+        if tref is None:
+            return
         for x in tref.groups:
             if x.groupType == "m":
                 mdata = x.mdata[0]
@@ -146,6 +148,16 @@ class PlomDB:
                 print("\t", p.pageNumber, p.version)
 
     def printPagesByTest(self, t):
-        tref = Test.get(testNumber=t)
+        tref = Test.get_or_none(testNumber=t)
+        if tref is None:
+            return
         for p in tref.pages:
             print(p.pageNumber, p.version, p.gid)
+
+    def getPageVersions(self, t):
+        tref = Test.get_or_none(testNumber=t)
+        if tref is None:
+            return {}
+        else:
+            pvDict = {p.pageNumber: p.version for p in tref.pages}
+            return pvDict
