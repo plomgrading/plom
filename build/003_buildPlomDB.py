@@ -23,9 +23,8 @@ def buildDirectories():
 
 def buildExamDatabase(spec):
     """Build the metadata for a bunch of exams from a spec file
+    and inserts all into the database.
 
-    Returns:
-       exams: a dict keyed by [testnum][page]
     """
     exams = defaultdict(dict)
     errFlag = False
