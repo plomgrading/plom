@@ -3,6 +3,15 @@ from peewee import *
 plomdb = SqliteDatabase("plom.db")
 
 # the test contains groups
+# test status will evolve something like...
+# [specified, produced, incomplete, scanned, done, finished]
+# specified = we've run the spec and got a bunch of page/versions to turn into a pdf
+# produced = we've built the PDF
+# scanned = we've fed it to students, scanned it into system.
+# done = client-facing processes are complete
+# finished = we've rebuilt the PDF at the end with coverpages etc etc
+
+
 class Test(Model):
     testNumber = IntegerField(primary_key=True, unique=True)
     status = CharField()
@@ -17,6 +26,8 @@ class Test(Model):
 
 
 # group knows its test
+# group status will evolve something like...
+# [specified, produced, scanned, todo, outwithclient, identified or marked]
 class Group(Model):
     test = ForeignKeyField(Test, backref="groups")
     gid = CharField(primary_key=True, unique=True)  # must be unique
@@ -29,6 +40,8 @@ class Group(Model):
 
 
 # Page knows its group and its test
+# Page status will evolve
+# [specified, produced, scanned]
 class Page(Model):
     test = ForeignKeyField(Test, backref="pages")
     gid = ForeignKeyField(Group, backref="pages")
@@ -61,7 +74,7 @@ class PlomDB:
 
     def createTest(self, t):
         try:
-            Test.create(testNumber=t, status="produced")  # must be unique
+            Test.create(testNumber=t, status="specified")  # must be unique
         except IntegrityError as e:
             print("Test {} already exists.".format(t))
             return False
@@ -69,21 +82,22 @@ class PlomDB:
 
     def addPages(self, tref, gref, t, pages, v):
         flag = True
-        for p in pages:
-            try:
-                Page.create(
-                    test=tref,
-                    group=gref,
-                    gid=gref.gid,
-                    status="produced",
-                    pageNumber=p,
-                    version=v,
-                    pid="t{}p{}".format(t, p),
-                    originalFile="",
-                )
-            except IntegrityError as e:
-                print("Page {} for test {} already exists.".format(p, t))
-                flag = False
+        with plomdb.atomic():
+            for p in pages:
+                try:
+                    Page.create(
+                        test=tref,
+                        group=gref,
+                        gid=gref.gid,
+                        status="specified",
+                        pageNumber=p,
+                        version=v,
+                        pid="t{}p{}".format(t, p),
+                        originalFile="",
+                    )
+                except IntegrityError as e:
+                    print("Page {} for test {} already exists.".format(p, t))
+                    flag = False
         return flag
 
     def createIDGroup(self, t, pages):
@@ -95,7 +109,7 @@ class PlomDB:
         gid = "i{}".format(str(t).zfill(4))
         try:
             gref = Group.create(
-                test=tref, gid=gid, groupType="i", status="produced", version=1
+                test=tref, gid=gid, groupType="i", status="specified", version=1
             )  # must be unique
         except IntegrityError as e:
             print("Group {} of Test {} already exists.".format(gid, t))
@@ -112,7 +126,7 @@ class PlomDB:
         # make the dnmgroup
         try:
             gref = Group.create(
-                test=tref, gid=gid, groupType="d", status="produced", version=1
+                test=tref, gid=gid, groupType="d", status="specified", version=1
             )  # must be unique
         except IntegrityError as e:
             print("Group {} of Test {} already exists.".format(gid, t))
@@ -129,7 +143,7 @@ class PlomDB:
         # make the dnmgroup
         try:
             gref = Group.create(
-                test=tref, gid=gid, groupType="m", status="produced", version=v
+                test=tref, gid=gid, groupType="m", status="specified", version=v
             )  # must be unique
         except IntegrityError as e:
             print("Group {} of Test {} already exists.".format(gid, t))
@@ -151,22 +165,23 @@ class PlomDB:
                 print(
                     x.gid,
                     x.groupType,
+                    x.status,
                     mdata.groupNumber,
                     mdata.version,
                     mdata.mark,
                     mdata.annotatedFile,
                 )
             else:
-                print(x.gid, x.groupType)
+                print(x.gid, x.groupType, x.status)
             for p in x.pages:
-                print("\t", p.pageNumber, p.version)
+                print("\t", p.pageNumber, p.version, p.status)
 
     def printPagesByTest(self, t):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return
         for p in tref.pages:
-            print(p.pageNumber, p.version, p.gid)
+            print(p.pageNumber, p.version, p.gid, p.status)
 
     def getPageVersions(self, t):
         tref = Test.get_or_none(testNumber=t)
@@ -175,3 +190,21 @@ class PlomDB:
         else:
             pvDict = {p.pageNumber: p.version for p in tref.pages}
             return pvDict
+
+    def produceTest(self, t):
+        # After creating the test (003 script) we'll turn the spec'd papers into PDFs
+        # we'll refer to those as "produced"
+        tref = Test.get_or_none(testNumber=t)
+        if tref is None:
+            return
+        else:
+            # TODO - work out how to make this more efficient? Multiple updates in one op?
+            with plomdb.atomic():
+                tref.status = "produced"
+                tref.save()
+                for p in tref.pages:
+                    p.status = "produced"
+                    p.save()
+                for g in tref.groups:
+                    g.status = "produced"
+                    g.save()
