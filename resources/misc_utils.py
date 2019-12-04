@@ -24,3 +24,9 @@ def format_int_list_with_runs(L):
                 r = r + ", "
             start = None
     return r
+
+
+def test1():
+    L = ['1', '2', '3', '4', '7', '10', '11', '12', '13', '14', '64']
+    out = "1–4, 7, 10–14, 64"
+    assert format_int_list_with_runs(L) == out
