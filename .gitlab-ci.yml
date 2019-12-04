@@ -76,8 +76,6 @@ job imageServerStarts:
     - jobs -l
     - kill %1
     - sleep 2
-    - kill -9 %1
-    - sleep 2
     - echo "Should be no jobs and this should succeed"
     - jobs -l
     - popd
