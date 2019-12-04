@@ -3,53 +3,55 @@ from peewee import *
 plomdb = SqliteDatabase("plom.db")
 
 # the test contains groups
-# test status will evolve something like...
-# [specified, produced, incomplete, scanned, done, finished]
-# specified = we've run the spec and got a bunch of page/versions to turn into a pdf
+# test bools something like
 # produced = we've built the PDF
 # scanned = we've fed it to students, scanned it into system.
-# done = client-facing processes are complete
+# identified = ID-ing is done
+# marked = marking is done
 # finished = we've rebuilt the PDF at the end with coverpages etc etc
 
 
 class Test(Model):
     testNumber = IntegerField(primary_key=True, unique=True)
-    status = CharField()
-    studentID = CharField(
-        unique=True, null=True
-    )  # could potentially move into an "IDData"
-    studentName = CharField(null=True)  # could potentially move into an "IDData"
+    studentID = CharField(unique=True, null=True)
+    studentName = CharField(null=True)
     totalMark = IntegerField(null=True)
+    # some state bools
+    produced = BooleanField(default=False)
+    scanned = BooleanField(default=False)
+    identified = BooleanField(default=False)
+    marked = BooleanField(default=False)
+    finished = BooleanField(default=False)
 
     class Meta:
         database = plomdb
 
 
 # group knows its test
-# group status will evolve something like...
-# [specified, produced, scanned, todo, outwithclient, identified or marked]
+# group status will evolve something like... [todo, outwithclient, done]
 class Group(Model):
     test = ForeignKeyField(Test, backref="groups")
     gid = CharField(primary_key=True, unique=True)  # must be unique
     groupType = CharField()  # to distinguish between ID, DNM, and Mark groups
     status = CharField()
     version = IntegerField(default=1)
+    # flags
+    scanned = BooleanField(default=False)
 
     class Meta:
         database = plomdb
 
 
 # Page knows its group and its test
-# Page status will evolve
-# [specified, produced, scanned]
 class Page(Model):
     test = ForeignKeyField(Test, backref="pages")
     gid = ForeignKeyField(Group, backref="pages")
     pageNumber = IntegerField(null=False)
     pid = CharField(unique=True)  # to ensure uniqueness
     version = IntegerField(default=1)
-    status = CharField()
     originalFile = CharField(null=True)
+    # flags
+    scanned = BooleanField(default=False)
 
     class Meta:
         database = plomdb
@@ -62,6 +64,8 @@ class MarkData(Model):
     version = IntegerField(null=False)
     annotatedFile = CharField(null=True)
     mark = IntegerField(null=True)
+    # flags
+    marked = BooleanField(default=False)
 
     class Meta:
         database = plomdb
