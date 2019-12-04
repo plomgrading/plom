@@ -49,15 +49,16 @@ files = [
 ]
 
 files += [
-    "build/01_build_specification_gui.py",
+    "build/001_startHere.py",
+    "build/002_verifySpec.py",
+    "build/003_buildPlomDB.py",
+    "build/004_buildPDFs_no_names.py",
+    "build/005_buildPDF_with_names.py",
     "build/cleanAll.py",
-    "build/editMeToBuildASpec.py",
-    "build/02_build_tests_from_spec.py",
-    "build/02a_build_with_names.py",
-    "build/build_utils.py",
+    "build/examDB.py",
     "build/mergeAndCodePages.py",
-    "build/ui_builder.py",
-    "build/version_selector_qlist.py",
+    "build/specParser.py",
+    "build/template_testSpec.toml",
 ]
 
 files += [
