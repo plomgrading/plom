@@ -5,7 +5,7 @@
 # Copy this to "testSpec.toml" and edit the entries below.
 
 # The configuration file starts here...
-[plom]
+
 # the human-readible names of the test - one long, one short.
 name = "m101mt1"
 longName = "Midterm for Mathematics 101"
@@ -21,30 +21,30 @@ numberToName=10
 numberOfGroups=3
 
 # the id-pages - always taken from Version1
-[plom.idPages]
+[idPages]
 pages=[1] # must contain at least 1 page and be contiguous
 
 # pages that are not marked (like instructions, formula sheets, examination rules etc) - always taken from Version1
-[plom.doNotMark]
+[doNotMark]
 pages=[2,7] # must exist, but can be an empty list.
 
 # now the actual groups of pages to be marked
-# [plom.0] - name as [plom.n]
+# [mark.n] with n a positive integer [1,2,3... etc] - contiguous please.
 # pages = [1,2,3] - contiguous ordered list of positive integers
 # mark = positive integer
 # select = "fixed" or "shuffle"
 
-[plom.1]
+[mark.1]
 pages=[3,4]
 mark=10
 select="shuffle"
 
-[plom.2]
+[mark.2]
 pages=[5,6]
 mark=10
 select="fixed"
 
-[plom.3]
+[mark.3]
 pages=[8]
 mark=10
 select="shuffle"
