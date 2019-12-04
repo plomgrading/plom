@@ -235,10 +235,10 @@ if __name__ == '__main__':
         examsCompleted[int(n)] = checkExam(n)
     # print summary
     print("###################### ")
-    s = format_int_list_with_runs(completeTests) if completeTests else u"None 🙁"
+    s = format_int_list_with_runs(completeTests) if completeTests else u"None"
     print("Complete papers are: " + s)
     print("###################### ")
-    s = format_int_list_with_runs(unmarkedTests) if unmarkedTests else u"None 😀"
+    s = format_int_list_with_runs(unmarkedTests) if unmarkedTests else u"None"
     print("Not completely marked papers are: " + s)
     print("###################### ")
     print("Pagegroup status: ")
