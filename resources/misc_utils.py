@@ -7,14 +7,24 @@ __copyright__ = "Copyright (C) 2019 Colin B. Macdonald, Omer Angel"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import sys
 import math
 
 
-def format_int_list_with_runs(L):
+def format_int_list_with_runs(L, use_unicode=None):
     """Replace runs in a list with a range notation"""
+    if use_unicode is None:
+        if "UTF-8" in sys.stdout.encoding:
+            use_unicode = True
+        else:
+            use_unicode = False
+    if use_unicode:
+        rangy = "{}–{}"
+    else:
+        rangy = "{}-{}"
     L = _find_runs(L)
     L = _flatten_2len_runs(L)
-    L = ["{}–{}".format(l[0], l[-1]) if isinstance(l, list) else str(l) for l in L]
+    L = [rangy.format(l[0], l[-1]) if isinstance(l, list) else str(l) for l in L]
     return ", ".join(L)
 
 
@@ -46,11 +56,14 @@ def _flatten_2len_runs(L):
 # TODO: unit tests
 def test1():
     L = ['1', '2', '3', '4', '7', '10', '11', '12', '13', '14', '64']
-    out = "1–4, 7, 10–14, 64"
-    assert format_int_list_with_runs(L) == out
+    uout = "1–4, 7, 10–14, 64"
+    aout = "1-4, 7, 10-14, 64"
+    assert format_int_list_with_runs(L, use_unicode=True) == uout
+    assert format_int_list_with_runs(L, use_unicode=False) == aout
+    assert format_int_list_with_runs(L) in (aout, uout)
 
 
 def test_shortruns():
     L = ['1', '2', '4', '5', '6', '7', '9', '10', '12', '78', '79', '80']
-    out = "1, 2, 4–7, 9, 10, 12, 78–80"
-    assert format_int_list_with_runs(L) == out
+    out = "1, 2, 4-7, 9, 10, 12, 78-80"
+    assert format_int_list_with_runs(L, use_unicode=False) == out
