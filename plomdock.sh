@@ -48,7 +48,8 @@ sudo docker exec $PD adduser -u $UID --no-create-home --disabled-password --geco
 #     python3-pyqt5.qtsql python3-pyqrcode python3-png python3-pip \
 #     python3-setuptools python3-wheel python3-requests-toolbelt \
 #     imagemagick texlive-latex-extra dvipng g++ make python3-dev
-# docker exec $PD pip3 install --upgrade \
+# docker exec $PD pip3 install --upgrade pip \
+# docker exec $PD python3 -m pip install --upgrade \
 #     pymupdf weasyprint imutils lapsolver peewee cheroot aiohttp
 
 #script:

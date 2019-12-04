@@ -55,11 +55,14 @@ in anyway, not sure why.
 Other stuff we get from pip:
 ```
   # sudo apt-get install python3-pip
-  # pip3 install --upgrade --user pymupdf weasyprint imutils lapsolver aiohttp
+  # pip3 install --upgrade pip
+  # python3 -m pip install --upgrade --user pymupdf weasyprint imutils lapsolver aiohttp
 ```
+(Note `python3 -m pip` to use the newly upgraded pip).
+
 Ubuntu 16.04 also needs:
 ```
-  # pip3 install --user opencv-python peewee pyqrcode pypng
+  # python3 -m pip install --user opencv-python peewee pyqrcode pypng
 
 ```
 
