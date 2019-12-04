@@ -55,9 +55,9 @@ class Page(Model):
         database = plomdb
 
 
-# Data for mark-groups
+# Data for question-groups
 class MarkData(Model):
-    gid = ForeignKeyField(Group, backref="markdata")
+    gid = ForeignKeyField(Group, backref="mdata")
     groupNumber = IntegerField(null=False)
     version = IntegerField(null=False)
     annotatedFile = CharField(null=True)
@@ -140,18 +140,18 @@ class PlomDB:
             return False
 
         gid = "m{}g{}".format(str(t).zfill(4), g)
-        # make the dnmgroup
+        # make the mgroup
         try:
             gref = Group.create(
                 test=tref, gid=gid, groupType="m", status="specified", version=v
             )  # must be unique
         except IntegrityError as e:
-            print("Group {} of Test {} already exists.".format(gid, t))
+            print("Question {} of Test {} already exists.".format(gid, t))
             return False
         try:
             mref = MarkData.create(gid=gref, groupNumber=g, version=v)
         except IntegrityError as e:
-            print("MGroup {} of Group {} already exists.".format(mref, gid))
+            print("Markdata {} of question {} already exists.".format(mref, gid))
             return False
         return self.addPages(tref, gref, t, pages, v)
 

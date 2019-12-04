@@ -46,11 +46,13 @@ def buildExamDatabase(spec):
             print("Error - problem creating DoNotMark-group for test {}".format(t))
             errFlag = True
 
-        for g in range(spec["numberOfGroups"]):  # runs from 0,1,2,...
+        for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
             gs = str(g + 1)  # now 1,2,3,...
-            if spec["group"][gs]["select"] == "fixed":  # all are version 1
+            if spec["question"][gs]["select"] == "fixed":  # all are version 1
                 v = 1
-            elif spec["group"][gs]["select"] == "shuffle":  # version selected randomly
+            elif (
+                spec["question"][gs]["select"] == "shuffle"
+            ):  # version selected randomly
                 v = random.randint(
                     1, spec["sourceVersions"]
                 )  # version selected randomly [1,2,..#versions]
@@ -59,12 +61,10 @@ def buildExamDatabase(spec):
                     "ERROR - problem with specification - this should not happen!! Please check it carefully."
                 )
                 exit(1)
-            if examDB.createMGroup(t, int(gs), v, spec["group"][gs]["pages"]):
-                print("\tMark-group {} created".format(gs))
+            if examDB.createMGroup(t, int(gs), v, spec["question"][gs]["pages"]):
+                print("\tQuestion {} created".format(gs))
             else:
-                print(
-                    "Error - problem creating Mark-group {} for test {}".format(gs, t)
-                )
+                print("Error - problem creating Question {} for test {}".format(gs, t))
                 errFlag = True
     if errFlag:
         print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
