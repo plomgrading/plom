@@ -45,6 +45,7 @@ directories += ["clients", "clients/uiFiles", "clients/icons"]
 files = [
     "resources/testspecification.py",
     "resources/tpv_utils.py",
+    "resources/misc_utils.py",
     "resources/predictionlist.csv",
     "resources/pageNotSubmitted.pdf",
     "resources/version.py",

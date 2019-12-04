@@ -104,5 +104,9 @@ job backgroundTest:
 job someUnitTests:
   stage: test
   script:
-    - cd finishing
+    - pushd finishing
     - ./run_unit_tests.sh
+    - popd
+    - pushd resources
+    - ./run_unit_tests.sh
+    - popd
