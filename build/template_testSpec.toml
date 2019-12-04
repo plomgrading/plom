@@ -17,8 +17,8 @@ totalPages = 8
 numberToProduce=20
 # how many of those papers should be named - ie from classlist - always <= numberToProduce
 numberToName=10
-# How many groups to mark - these will be named [plom.1], [plom.2], ... [plom.n]
-numberOfGroups=3
+# How many questions to mark - these will be named [question.1], [question.2], ... [question.n]
+numberOfQuestions=3
 
 # the id-pages - always taken from Version1
 [idPages]
@@ -28,23 +28,23 @@ pages=[1] # must contain at least 1 page and be contiguous
 [doNotMark]
 pages=[2,7] # must exist, but can be an empty list.
 
-# now the actual groups of pages to be marked
-# [mark.n] with n a positive integer [1,2,3... etc] - contiguous please.
+# now the actual questions (groups of pages) to be marked
+# [question.n] with n a positive integer [1,2,3... etc] - contiguous please.
 # pages = [1,2,3] - contiguous ordered list of positive integers
 # mark = positive integer
 # select = "fixed" or "shuffle"
 
-[mark.1]
+[question.1]
 pages=[3,4]
 mark=10
 select="shuffle"
 
-[mark.2]
+[question.2]
 pages=[5,6]
 mark=10
 select="fixed"
 
-[mark.3]
+[question.3]
 pages=[8]
 mark=10
 select="shuffle"
