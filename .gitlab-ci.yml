@@ -74,10 +74,10 @@ job imageServerStarts:
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
-    - killall -9 wsgidav
-    - sleep 1
+    - kill %1
+    - sleep 2
     - kill -9 %1
-    - sleep 1
+    - sleep 2
     - echo "Should be no jobs and this should succeed"
     - jobs -l
     - popd
