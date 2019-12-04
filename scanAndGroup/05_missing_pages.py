@@ -64,10 +64,10 @@ if __name__ == '__main__':
             incompleteTests.append(t)
 
     print("###################### ")
-    s = format_int_list_with_runs(completeTests) if completeTests else u"None 🙁"
+    s = format_int_list_with_runs(completeTests) if completeTests else u"None"
     print("Complete test papers are: " + s)
     print("###################### ")
-    s = format_int_list_with_runs(incompleteTests) if incompleteTests else u"None 😀"
+    s = format_int_list_with_runs(incompleteTests) if incompleteTests else u"None"
     print("Incomplete test papers are: " + s)
     print("###################### ")
     print(">>> NOTE <<<")
