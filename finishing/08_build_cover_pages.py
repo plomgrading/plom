@@ -7,6 +7,8 @@ from collections import defaultdict
 import json
 import os
 import sys
+import shlex
+import subprocess
 
 # this allows us to import from ../resources
 sys.path.append("..")
@@ -97,6 +99,6 @@ for n in sorted(examsCompleted.keys()):
             fh.write(buildCoverPage(n))
 fh.close()
 # Run all the commands through gnu-parallel
-os.system("parallel --bar <commandlist.txt")
-# Delete the command file.
+cmd = shlex.split("parallel --bar -a commandlist.txt")
+subprocess.run(cmd, check=True)
 os.unlink("commandlist.txt")

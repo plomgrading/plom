@@ -76,13 +76,12 @@ def buildTestPDFs(spec, exams):
     Build a list of commands and pipe through gnu-parallel
     to take advantage of multiple processors
     """
-    fh = open("./commandlist.txt", "w")
-    for x in exams:
-        fh.write(
-            'python3 mergeAndCodePages.py {} {} {} {} {} "{}"\n'.format(
-                spec.Name, spec.MagicCode, spec.Length, spec.Versions, x, exams[x]
+    with open("./commandlist.txt", "w") as fh:
+        for x in exams:
+            fh.write(
+                'python3 mergeAndCodePages.py {} {} {} {} {} "{}"\n'.format(
+                    spec.Name, spec.MagicCode, spec.Length, spec.Versions, x, exams[x]
+                )
             )
-        )
-    fh.close()
     cmd = shlex.split("parallel --bar -a commandlist.txt")
     subprocess.run(cmd, check=True)

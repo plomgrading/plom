@@ -7,6 +7,7 @@ import os
 import sys
 import subprocess
 import tempfile
+import shutil
 
 head = """
 \\documentclass[12pt]{article}
@@ -51,5 +52,5 @@ convertIt = subprocess.run(
 if convertIt.returncode != 0:
     sys.exit(convertIt.returncode)
 
-os.system("cp frag.png {}".format(sys.argv[2]))
+shutil.copyfile("frag.png", sys.argv[2])
 os.chdir(cdir)
