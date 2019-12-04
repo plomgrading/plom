@@ -24,17 +24,17 @@ class SpecParser:
         print("\tNumber of pages = ", self.spec["totalPages"])
         print("\tIDpages = ", self.spec["idPages"]["pages"])
         print("\tDo not mark pages = ", self.spec["doNotMark"]["pages"])
-        print("\tNumber of groups to mark = ", self.spec["numberOfGroups"])
+        print("\tNumber of groups to mark = ", self.spec["numberOfQuestions"])
         tot = 0
-        for g in range(self.spec["numberOfGroups"]):
+        for g in range(self.spec["numberOfQuestions"]):
             gs = str(g + 1)
-            tot += self.spec["group"][gs]["mark"]
+            tot += self.spec["question"][gs]["mark"]
             print(
                 "\tGroup.{} = pages {} = selected as {} = worth {} marks".format(
                     gs,
-                    self.spec["group"][gs]["pages"],
-                    self.spec["group"][gs]["select"],
-                    self.spec["group"][gs]["mark"],
+                    self.spec["question"][gs]["pages"],
+                    self.spec["question"][gs]["select"],
+                    self.spec["question"][gs]["mark"],
                 )
             )
         print("\tTest total = {} marks".format(tot))
@@ -54,7 +54,7 @@ class SpecVerifier:
         self.check_doNotMark(lastPage)
 
         print("Checking groups")
-        for g in range(self.spec["numberOfGroups"]):
+        for g in range(self.spec["numberOfQuestions"]):
             self.check_group(str(g + 1), lastPage)
 
         self.check_pages()
@@ -123,7 +123,7 @@ class SpecVerifier:
             "totalPages",
             "numberToProduce",
             "numberToName",
-            "numberOfGroups",
+            "numberOfQuestions",
             "idPages",
             "doNotMark",
         ]:
@@ -133,7 +133,7 @@ class SpecVerifier:
             else:
                 print('\tcontains "{}" - check'.format(x))
         # check it contains at least 1 group to mark
-        if "1" in self.spec["group"]:
+        if "1" in self.spec["question"]:
             print('\tcontains at least 1 group (ie "plom.1") - check')
         else:
             print(
@@ -183,7 +183,7 @@ class SpecVerifier:
             "totalPages",
             "numberToProduce",
             "numberToName",
-            "numberOfGroups",
+            "numberOfQuestions",
         ]:
             if self.isPositiveInt(self.spec[x]):
                 print(
@@ -211,11 +211,11 @@ class SpecVerifier:
             else:
                 print("\t\tProducing sufficient spare papers - check")
 
-        for k in range(self.spec["numberOfGroups"]):
-            if str(k + 1) in self.spec["group"]:
+        for k in range(self.spec["numberOfQuestions"]):
+            if str(k + 1) in self.spec["question"]:
                 print(
                     "\t\tFound group {} of {} - check".format(
-                        k + 1, self.spec["numberOfGroups"]
+                        k + 1, self.spec["numberOfQuestions"]
                     )
                 )
             else:
@@ -271,44 +271,44 @@ class SpecVerifier:
         print("\tChecking group.{}".format(g))
         # each group has keys
         for x in ["pages", "select", "mark"]:
-            if x not in self.spec["group"][g]:
+            if x not in self.spec["question"][g]:
                 print("Group error - could not find {} key".format(x))
                 exit(1)
         # check pages is contiguous list of positive integers
-        if self.isContiguousListPosInt(self.spec["group"][g]["pages"], lastPage):
+        if self.isContiguousListPosInt(self.spec["question"][g]["pages"], lastPage):
             print(
                 "\t\tpages {} is list of contiguous positive integers - check".format(
-                    self.spec["group"][g]["pages"]
+                    self.spec["question"][g]["pages"]
                 )
             )
         else:
             print(
                 "Group error - pages {} is not list of contiguous positive integers".format(
-                    self.spec["group"][g]["pages"]
+                    self.spec["question"][g]["pages"]
                 )
             )
             exit(1)
         # check mark is positive integer
-        if self.isPositiveInt(self.spec["group"][g]["mark"]):
+        if self.isPositiveInt(self.spec["question"][g]["mark"]):
             print(
                 "\t\tmark {} is positive integer - check".format(
-                    self.spec["group"][g]["mark"]
+                    self.spec["question"][g]["mark"]
                 )
             )
         else:
             print(
                 "Group error - mark {} is not a positive integer".format(
-                    self.spec["group"][g]["mark"]
+                    self.spec["question"][g]["mark"]
                 )
             )
             exit(1)
         # check select is "fixed" or "shuffle"
-        if self.spec["group"][g]["select"] in ["fixed", "shuffle"]:
+        if self.spec["question"][g]["select"] in ["fixed", "shuffle"]:
             print('\t\tselect is "fixed" or "shuffle" - check')
         else:
             print(
                 'Group error - select {} is not "fixed" or "shuffle"'.format(
-                    self.spec["group"][g]["select"]
+                    self.spec["question"][g]["select"]
                 )
             )
             exit(1)
@@ -320,8 +320,8 @@ class SpecVerifier:
             pageUse[p] += 1
         for p in self.spec["doNotMark"]["pages"]:
             pageUse[p] += 1
-        for g in range(self.spec["numberOfGroups"]):
-            for p in self.spec["group"][str(g + 1)]["pages"]:
+        for g in range(self.spec["numberOfQuestions"]):
+            for p in self.spec["question"][str(g + 1)]["pages"]:
                 pageUse[p] += 1
         for p in range(1, self.spec["totalPages"] + 1):
             if pageUse[p] != 1:
