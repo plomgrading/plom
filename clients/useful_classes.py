@@ -205,7 +205,8 @@ class CommentWidget(QWidget):
             tag = acb.TEtag.toPlainText().strip()
             # check if txt has any content
             if len(txt) > 0:
-                self.CL.insertItem(dlt, txt, tag)
+                com = {"delta": dlt, "text":txt, "tags":tag}
+                self.CL.insertItem(com)
                 self.currentItem()
                 # send a click to the comment button to force updates
                 self.parent.ui.commentButton.animateClick()
@@ -560,8 +561,8 @@ tags = "Q2 foo bar"
         else:
             self.selectRow((sel[0].row() - 1) % self.cmodel.rowCount())
 
-    def insertItem(self, dlt, txt, tag):
-        self.clist.append({"delta": dlt, "text":txt, "tags":tag})
+    def insertItem(self, com):
+        self.clist.append(com)
         self.populateTable()
 
     def editRow(self, tableIndex):
