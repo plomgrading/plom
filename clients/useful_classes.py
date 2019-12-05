@@ -522,7 +522,7 @@ tags = "Q2 foo bar"
         sel = self.selectedIndexes()
         if len(sel) == 0:
             return
-        idx = int(self.cmodel.index(sel[0].row(), 3).data())
+        idx = int(self.cmodel.index(sel[0].row(), 2).data())
         self.clist.pop(idx)
         #self.cmodel.removeRow(sel[0].row())
         # TODO: maybe sloppy to rebuild, need automatic cmodel ontop of clist
