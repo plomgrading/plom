@@ -5,6 +5,7 @@ __license__ = "AGPLv3"
 import os
 import toml
 import re
+import time
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QTimer
 from PyQt5.QtGui import QDropEvent, QIcon, QPixmap, QStandardItem, QStandardItemModel
@@ -205,7 +206,7 @@ class CommentWidget(QWidget):
             tag = acb.TEtag.toPlainText().strip()
             # check if txt has any content
             if len(txt) > 0:
-                com = {"delta": dlt, "text":txt, "tags":tag}
+                com = {"delta": dlt, "text":txt, "tags":tag, "created":time.gmtime(), "modified":time.gmtime()}
                 self.CL.insertItem(com)
                 self.currentItem()
                 # send a click to the comment button to force updates
@@ -228,7 +229,12 @@ class CommentWidget(QWidget):
                 dlt = "."
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
-            return {"delta":dlt, "text":txt, "tags":tag}
+            # update the comment with new values
+            com["delta"] = dlt
+            com["text"] = txt
+            com["tags"] = tag
+            com["modified"] = time.gmtime()
+            return com
         else:
             return None
 
@@ -500,6 +506,7 @@ delta = -1
 text = "Quest. 2 specific comment"
 tags = "Q2 foo bar"
 """
+        other_comment_defaults = {"tags":"", "created":time.gmtime(0), "modified":time.gmtime(0)}
         if os.path.exists("plomComments.toml"):
             # toml is a dict by defacat ult.
             cdict = toml.load("plomComments.toml")
@@ -510,7 +517,7 @@ tags = "Q2 foo bar"
         assert "comment" in cdict
         self.clist = cdict["comment"]
         for d in self.clist:
-            d["tags"] = d.get("tags", "")
+            d.update(other_comment_defaults)
 
     def saveCommentList(self):
         # export to toml file.
