@@ -196,7 +196,8 @@ class CommentWidget(QWidget):
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
 
-        acb = AddCommentBox(self, self.maxMark, alist)
+        questnum = int(self.parent.parent.pageGroup)  # YUCK!
+        acb = AddCommentBox(self, self.maxMark, alist, questnum)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = acb.SB.value()
@@ -227,8 +228,9 @@ class CommentWidget(QWidget):
             clist.append(self.CL.cmodel.index(r, 1).data())
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
+        questnum = int(self.parent.parent.pageGroup)  # YUCK!
         acb = AddCommentBox(
-            self, self.maxMark, alist, com["delta"], com["text"], com["tags"]
+            self, self.maxMark, alist, questnum, com["delta"], com["text"], com["tags"]
         )
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
@@ -600,9 +602,10 @@ tags = "Q2 foo bar"
 
 
 class AddCommentBox(QDialog):
-    def __init__(self, parent, maxMark, lst, curDelta=None, curText=None, curTag=None):
+    def __init__(self, parent, maxMark, lst, questnum, curDelta=None, curText=None, curTag=None):
         super(QDialog, self).__init__()
         self.parent = parent
+        self.questnum = questnum
         self.CB = QComboBox()
         self.TE = QTextEdit()
         self.SB = QSpinBox()
@@ -610,13 +613,19 @@ class AddCommentBox(QDialog):
         self.DE.setCheckState(Qt.Checked)
         self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QTextEdit()
+        # TODO: how to make it smaller vertically than the TE?
+        #self.TEtag.setMinimumHeight(self.TE.minimumHeight() // 2)
+        #self.TEtag.setMaximumHeight(self.TE.maximumHeight() // 2)
+        self.QSpecific = QCheckBox("Specific to question {}".format(questnum))
+        self.QSpecific.stateChanged.connect(self.toggleQSpecific)
 
         flay = QFormLayout()
         flay.addRow("Enter text", self.TE)
         flay.addRow("Choose text", self.CB)
         flay.addRow("Set delta", self.SB)
-        flay.addRow("Tags", self.TEtag)
         flay.addRow("", self.DE)
+        flay.addRow("", self.QSpecific)
+        flay.addRow("Tags", self.TEtag)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -656,6 +665,20 @@ class AddCommentBox(QDialog):
             self.SB.setEnabled(True)
         else:
             self.SB.setEnabled(False)
+
+    def toggleQSpecific(self):
+        tags = self.TEtag.toPlainText().split()
+        Qn = "Q{}".format(self.questnum)
+        if self.QSpecific.checkState() == Qt.Checked:
+            if not Qn in tags:
+                tags.insert(0, Qn)
+                self.TEtag.clear()
+                self.TEtag.insertPlainText(" ".join(tags))
+        else:
+            if Qn in tags:
+                tags.remove(Qn)
+                self.TEtag.clear()
+                self.TEtag.insertPlainText(" ".join(tags))
 
 
 class AddTagBox(QDialog):
