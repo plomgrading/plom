@@ -24,13 +24,13 @@ class SpecParser:
         print("\tNumber of pages = ", self.spec["totalPages"])
         print("\tIDpages = ", self.spec["idPages"]["pages"])
         print("\tDo not mark pages = ", self.spec["doNotMark"]["pages"])
-        print("\tNumber of groups to mark = ", self.spec["numberOfQuestions"])
+        print("\tNumber of questions to mark = ", self.spec["numberOfQuestions"])
         tot = 0
         for g in range(self.spec["numberOfQuestions"]):
             gs = str(g + 1)
             tot += self.spec["question"][gs]["mark"]
             print(
-                "\tGroup.{} = pages {} = selected as {} = worth {} marks".format(
+                "\tQuestion.{} = pages {} = selected as {} = worth {} marks".format(
                     gs,
                     self.spec["question"][gs]["pages"],
                     self.spec["question"][gs]["select"],
@@ -53,7 +53,7 @@ class SpecVerifier:
         self.check_IDPages(lastPage)
         self.check_doNotMark(lastPage)
 
-        print("Checking groups")
+        print("Checking question group")
         for g in range(self.spec["numberOfQuestions"]):
             self.check_group(str(g + 1), lastPage)
 
@@ -132,12 +132,12 @@ class SpecVerifier:
                 exit(1)
             else:
                 print('\tcontains "{}" - check'.format(x))
-        # check it contains at least 1 group to mark
+        # check it contains at least one question to mark
         if "1" in self.spec["question"]:
-            print('\tcontains at least 1 group (ie "plom.1") - check')
+            print('\tcontains at least one question (ie "question.1") - check')
         else:
             print(
-                "Specification error - must contain at least 1 group to mark but does not."
+                "Specification error - must contain at least one question to mark but does not."
             )
             exit(1)
 
@@ -214,12 +214,12 @@ class SpecVerifier:
         for k in range(self.spec["numberOfQuestions"]):
             if str(k + 1) in self.spec["question"]:
                 print(
-                    "\t\tFound group {} of {} - check".format(
+                    "\t\tFound question {} of {} - check".format(
                         k + 1, self.spec["numberOfQuestions"]
                     )
                 )
             else:
-                print("Specification error - could not find group {} ".format(k + 1))
+                print("Specification error - could not find question {} ".format(k + 1))
                 exit(1)
 
     def check_IDPages(self, lastPage):
@@ -268,11 +268,11 @@ class SpecVerifier:
         print("\t\tDoNotMark pages is list of positive integers - check")
 
     def check_group(self, g, lastPage):
-        print("\tChecking group.{}".format(g))
+        print("\tChecking question group #{}".format(g))
         # each group has keys
         for x in ["pages", "select", "mark"]:
             if x not in self.spec["question"][g]:
-                print("Group error - could not find {} key".format(x))
+                print("Question error - could not find {} key".format(x))
                 exit(1)
         # check pages is contiguous list of positive integers
         if self.isContiguousListPosInt(self.spec["question"][g]["pages"], lastPage):
@@ -283,7 +283,7 @@ class SpecVerifier:
             )
         else:
             print(
-                "Group error - pages {} is not list of contiguous positive integers".format(
+                "Question error - pages {} is not list of contiguous positive integers".format(
                     self.spec["question"][g]["pages"]
                 )
             )
@@ -297,7 +297,7 @@ class SpecVerifier:
             )
         else:
             print(
-                "Group error - mark {} is not a positive integer".format(
+                "Question error - mark {} is not a positive integer".format(
                     self.spec["question"][g]["mark"]
                 )
             )
@@ -307,7 +307,7 @@ class SpecVerifier:
             print('\t\tselect is "fixed" or "shuffle" - check')
         else:
             print(
-                'Group error - select {} is not "fixed" or "shuffle"'.format(
+                'Question error - select {} is not "fixed" or "shuffle"'.format(
                     self.spec["question"][g]["select"]
                 )
             )
