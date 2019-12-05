@@ -1198,7 +1198,7 @@ checkDirectories()
 
 tempDirectory = tempfile.TemporaryDirectory()
 # Give directory correct permissions.
-os.system("chmod o-r {}".format(tempDirectory.name))
+subprocess.check_call(["chmod", "o-r", tempDirectory.name])
 
 # Read the test specification
 spec = TestSpecification()

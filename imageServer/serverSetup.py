@@ -9,6 +9,7 @@ import csv
 import json
 import os
 import sys
+import subprocess
 import pandas
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
 from ui_server_setup import Ui_ServerInfo
@@ -196,7 +197,7 @@ class SetUp(QWidget):
 
     def manageUsers(self):
         """Fire up the user manager app."""
-        os.system("python3 ./userManager.py")
+        subprocess.run(["python3", "./userManager.py"], check=True)
 
     def getClassList(self):
         """Grab list of student numbers and names from a csv file.

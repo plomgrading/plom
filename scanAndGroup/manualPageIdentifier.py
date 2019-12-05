@@ -9,6 +9,7 @@ import glob
 import json
 import os
 import shutil
+import subprocess
 import sys
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QBrush, QColor, QGuiApplication, QPainter, QPen, QPixmap
@@ -308,10 +309,9 @@ class ImageTable(QTableWidget):
         r = self.currentRow()
         if r is not None:
             # turn 90 in case in landscape.
-            os.system(
-                "mogrify -rotate 90 -compress lossless "
-                "pageImages/problemImages/{}".format(self.item(r, 0).text())
-            )
+            cmd = ["mogrify", "-rotate", "90", "-compress", "lossless",
+                   "pageImages/problemImages/{}".format(self.item(r, 0).text())]
+            subprocess.check_call(cmd)
         return r
 
     def saveValid(self):

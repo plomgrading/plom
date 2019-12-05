@@ -15,6 +15,8 @@ from collections import defaultdict
 import json
 import os
 import sys
+import shlex
+import subprocess
 
 # this allows us to import from ../resources
 sys.path.append("..")
@@ -84,6 +86,6 @@ if __name__ == '__main__':
         )
     fh.close()
     # pipe the commandlist into gnu-parallel
-    os.system("parallel --bar <commandlist.txt")
-    # delete the commandlist file.
+    cmd = shlex.split("parallel --bar -a commandlist.txt")
+    subprocess.run(cmd, check=True)
     os.unlink("commandlist.txt")

@@ -78,7 +78,7 @@ with tempfile.TemporaryDirectory() as tmpDir:
             qr.png(qrFile[p][i], scale=4)
             # put a border around it
             cmd = shlex.split("mogrify {} {}".format(mogParams, qrFile[p][i]))
-            subprocess.call(cmd)
+            subprocess.run(cmd, check=True)
 
     # After creating all of the QRcodes etc we can put them onto
     # the actual pdf pages as pixmaps using pymupdf

@@ -17,6 +17,7 @@ import sys
 # this allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
+from resources.misc_utils import format_int_list_with_runs
 
 # Do we need this?
 # sys.path.append("../imageServer")
@@ -234,9 +235,11 @@ if __name__ == '__main__':
         examsCompleted[int(n)] = checkExam(n)
     # print summary
     print("###################### ")
-    print("Complete papers are: " + ", ".join(completeTests))
+    s = format_int_list_with_runs(completeTests) if completeTests else u"None"
+    print("Complete papers are: " + s)
     print("###################### ")
-    print("Not completely marked papers are: " + ", ".join(unmarkedTests))
+    s = format_int_list_with_runs(unmarkedTests) if unmarkedTests else u"None"
+    print("Not completely marked papers are: " + s)
     print("###################### ")
     print("Pagegroup status: ")
     printPGStatus(len(examsGrouped))
