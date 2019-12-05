@@ -16,7 +16,7 @@ from specParser import SpecParser
 
 
 def buildDirectories(spec):
-    """Build the directories that the scan scripts need"""
+    """Build the directories that this scripts needs"""
     # the list of directories. Might need updating.
     lst = [
         "scannedExams/alreadyProcessed",
@@ -24,18 +24,12 @@ def buildDirectories(spec):
         "pageImages",
         "pageImages/alreadyProcessed",
         "pageImages/problemImages",
-        "decodedPages",
     ]
     for dir in lst:
         try:
             os.mkdir(dir)
         except FileExistsError:
             pass
-    # For each page we need a directory
-    # in decoded pages
-    for p in range(1, spec["totalPages"] + 1):
-        dir = "decodedPages/page_{:s}".format(str(p).zfill(2))
-        os.makedirs(dir, exist_ok=True)
 
 
 def processFileToPng(fname):

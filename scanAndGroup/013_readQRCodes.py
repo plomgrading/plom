@@ -28,6 +28,23 @@ sys.path.append("..")
 from tpv_utils import parseTPV, isValidTPV, hasCurrentAPI, getCode, getPosition
 
 
+def buildDirectories(spec):
+    """Build the directories that this script needs"""
+    # the list of directories. Might need updating.
+    lst = ["decodedPages"]
+    for dir in lst:
+        try:
+            os.mkdir(dir)
+        except FileExistsError:
+            pass
+    # For each page we need a directory
+    # in decoded pages
+    for p in range(1, spec["totalPages"] + 1):
+        for v in range(1, spec["sourceVersions"] + 1):
+            dir = "decodedPages/page_{}/version_{}".format(str(p).zfill(2), v)
+            os.makedirs(dir, exist_ok=True)
+
+
 def decodeQRs():
     """Go into pageimage directory
     Look at all the png files
@@ -302,8 +319,8 @@ def moveScansIntoPlace():
             # grab the version and filename
             v = examsScannedNow[t][p][0]
             fn = examsScannedNow[t][p][1]
-            destName = "../decodedPages/page_{}/t{}p{}v{}.png".format(
-                str(p).zfill(2), str(t).zfill(4), str(p).zfill(2), str(v)
+            destName = "../decodedPages/page_{}/version_{}/t{}p{}v{}.png".format(
+                str(p).zfill(2), v, str(t).zfill(4), str(p).zfill(2), str(v)
             )
             if os.path.isfile(destName):
                 print(
@@ -337,7 +354,8 @@ if __name__ == "__main__":
     overwriteAttempt = defaultdict(str)
 
     spec = SpecParser().spec
-    # decodeQRs()
+    buildDirectories(spec)
+    decodeQRs()
     checkQRsValid()
     validateQRsAgainstProduction()
     moveScansIntoPlace()

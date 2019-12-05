@@ -12,5 +12,10 @@ print("0. Copy your PDF scans of the tests into the directory scannedExams")
 print(
     '1. Copy the file "template_testSpec.toml" to "testSpec.toml" and edit using your favourite text editor.'
 )
-print('2. Run the "012_scansToImages.py" script')
-print("3. Profit")
+print(
+    '2. Run the "012_scansToImages.py" script - this processes your PDFs into individual pages'
+)
+print(
+    '3. Run the "013_readQRCodes.py" script - this reads barcodes from the pages and files them away accordingly'
+)
+print("4. Profit")
