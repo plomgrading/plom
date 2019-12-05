@@ -206,7 +206,13 @@ class CommentWidget(QWidget):
             tag = acb.TEtag.toPlainText().strip()
             # check if txt has any content
             if len(txt) > 0:
-                com = {"delta": dlt, "text":txt, "tags":tag, "created":time.gmtime(), "modified":time.gmtime()}
+                com = {
+                    "delta": dlt,
+                    "text": txt,
+                    "tags": tag,
+                    "created": time.gmtime(),
+                    "modified": time.gmtime(),
+                }
                 self.CL.insertItem(com)
                 self.currentItem()
                 # send a click to the comment button to force updates
@@ -221,7 +227,9 @@ class CommentWidget(QWidget):
             clist.append(self.CL.cmodel.index(r, 1).data())
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
-        acb = AddCommentBox(self, self.maxMark, alist, com["delta"], com["text"], com["tags"])
+        acb = AddCommentBox(
+            self, self.maxMark, alist, com["delta"], com["text"], com["tags"]
+        )
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = str(acb.SB.value())
@@ -506,7 +514,11 @@ delta = -1
 text = "Quest. 2 specific comment"
 tags = "Q2 foo bar"
 """
-        other_comment_defaults = {"tags":"", "created":time.gmtime(0), "modified":time.gmtime(0)}
+        other_comment_defaults = {
+            "tags": "",
+            "created": time.gmtime(0),
+            "modified": time.gmtime(0),
+        }
         if os.path.exists("plomComments.toml"):
             # toml is a dict by defacat ult.
             cdict = toml.load("plomComments.toml")
