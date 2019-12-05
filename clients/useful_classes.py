@@ -503,7 +503,7 @@ tags = "Q2 foo bar"
         else:
             print(clist_defaults)
             cdict = toml.loads(clist_defaults)
-        # should be a dict = {"comments": [list of stuff]}
+        # should be a dict = {"comment": [list of stuff]}
         assert "comment" in cdict
         self.clist = cdict["comment"]
         for d in self.clist:
@@ -560,23 +560,6 @@ tags = "Q2 foo bar"
             self.selectRow((sel[0].row() - 1) % self.cmodel.rowCount())
 
     def insertItem(self, dlt, txt, tag):
-        # Create a [delta, comment] pair for user to edit
-        # and append to end of table.
-        #txti = QStandardItem(txt)
-        #txti.setEditable(True)
-        #txti.setDropEnabled(False)
-        #delti = QStandardItem("{}".format(dlt))
-        #delti.setEditable(True)
-        #delti.setDropEnabled(False)
-        #delti.setTextAlignment(Qt.AlignCenter)
-        #tagi = QStandardItem(tag)
-        #tagi.setEditable(True)
-        #tagi.setDropEnabled(False)
-        #self.cmodel.appendRow([delti, txti, tagi, idxi])
-        # select the new row and resize
-        #self.selectRow(self.cmodel.rowCount() - 1)
-        #self.resizeRowToContents(self.cmodel.rowCount() - 1)
-        # TODO: just insert to clist and rebuild
         self.clist.append({"delta": dlt, "text":txt, "tags":tag})
         self.cmodel.clear()
         self.populateTable()
