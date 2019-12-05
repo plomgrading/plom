@@ -540,7 +540,8 @@ tags = "Q2 foo bar"
             self.selectRow(sel[0].row())
 
     def getCurrentItemRow(self):
-        return self.selectedIndexes()[0].row()
+        if self.selectedIndexes():
+            return self.selectedIndexes()[0].row()
 
     def setCurrentItemRow(self, r):
         self.selectRow(r)
