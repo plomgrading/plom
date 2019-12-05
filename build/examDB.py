@@ -207,7 +207,7 @@ class PlomDB:
                     p.save()
                 for g in tref.groups:
                     g.save()
-                tref.status = "produced"
+                tref.produced = True
                 tref.save()
 
     def identifyTest(self, t, sid, sname):
@@ -222,4 +222,5 @@ class PlomDB:
                     break
             tref.studentID = sid
             tref.studentName = sname
+            tref.identified = True
             tref.save()
