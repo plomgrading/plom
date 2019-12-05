@@ -33,7 +33,7 @@ class Group(Model):
     test = ForeignKeyField(Test, backref="groups")
     gid = CharField(primary_key=True, unique=True)  # must be unique
     groupType = CharField()  # to distinguish between ID, DNM, and Mark groups
-    status = CharField()
+    status = CharField(default="")
     version = IntegerField(default=1)
     # flags
     scanned = BooleanField(default=False)
@@ -78,7 +78,7 @@ class PlomDB:
 
     def createTest(self, t):
         try:
-            Test.create(testNumber=t, status="specified")  # must be unique
+            Test.create(testNumber=t)  # must be unique
         except IntegrityError as e:
             print("Test {} already exists.".format(t))
             return False
@@ -93,7 +93,6 @@ class PlomDB:
                         test=tref,
                         group=gref,
                         gid=gref.gid,
-                        status="specified",
                         pageNumber=p,
                         version=v,
                         pid="t{}p{}".format(t, p),
@@ -113,7 +112,7 @@ class PlomDB:
         gid = "i{}".format(str(t).zfill(4))
         try:
             gref = Group.create(
-                test=tref, gid=gid, groupType="i", status="specified", version=1
+                test=tref, gid=gid, groupType="i", version=1
             )  # must be unique
         except IntegrityError as e:
             print("Group {} of Test {} already exists.".format(gid, t))
@@ -130,7 +129,7 @@ class PlomDB:
         # make the dnmgroup
         try:
             gref = Group.create(
-                test=tref, gid=gid, groupType="d", status="specified", version=1
+                test=tref, gid=gid, groupType="d", version=1
             )  # must be unique
         except IntegrityError as e:
             print("Group {} of Test {} already exists.".format(gid, t))
@@ -147,7 +146,7 @@ class PlomDB:
         # make the mgroup
         try:
             gref = Group.create(
-                test=tref, gid=gid, groupType="m", status="specified", version=v
+                test=tref, gid=gid, groupType="m", version=v
             )  # must be unique
         except IntegrityError as e:
             print("Question {} of Test {} already exists.".format(gid, t))
@@ -176,16 +175,16 @@ class PlomDB:
                     mdata.annotatedFile,
                 )
             else:
-                print(x.gid, x.groupType, x.status)
+                print(x.gid, x.groupType)
             for p in x.pages:
-                print("\t", p.pageNumber, p.version, p.status)
+                print("\t", p.pageNumber, p.version)
 
     def printPagesByTest(self, t):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return
         for p in tref.pages:
-            print(p.pageNumber, p.version, p.gid, p.status)
+            print(p.pageNumber, p.version, p.gid)
 
     def getPageVersions(self, t):
         tref = Test.get_or_none(testNumber=t)
@@ -204,14 +203,12 @@ class PlomDB:
         else:
             # TODO - work out how to make this more efficient? Multiple updates in one op?
             with plomdb.atomic():
-                tref.status = "produced"
-                tref.save()
                 for p in tref.pages:
-                    p.status = "produced"
                     p.save()
                 for g in tref.groups:
-                    g.status = "produced"
                     g.save()
+                tref.status = "produced"
+                tref.save()
 
     def identifyTest(self, t, sid, sname):
         tref = Test.get_or_none(testNumber=t)

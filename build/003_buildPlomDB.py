@@ -37,7 +37,7 @@ def buildExamDatabase(spec):
         if examDB.createIDGroup(t, spec["idPages"]["pages"]):
             print("\tID-group created")
         else:
-            print("Error - problem creating ipdbgroup for test {}".format(t))
+            print("Error - problem creating idgroup for test {}".format(t))
             errFlag = True
 
         if examDB.createDNMGroup(t, spec["doNotMark"]["pages"]):
