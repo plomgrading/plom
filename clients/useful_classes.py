@@ -417,19 +417,20 @@ class SimpleCommentTable(QTableView):
 
     def populateTable(self):
         # Grab [delta, comment] from the list and put into table.
-        for i, (dlt, txt, tag) in enumerate(self.clist):
+        for i, com in enumerate(self.clist):
             # User can edit the text, but doesn't handle drops.
             # TODO: YUCK! (how do I get the pagegroup)
             pg = int(self.parent.parent.parent.pageGroup)
             Qn = "Q{}".format(pg)
-            tags = tag.split()
+            tags = com["tags"].split()
             # If there is at least one Q tag then there must be a Qn tag
             if (any([re.match("^Q\d+$", t) for t in tags]) and
                 not any([t == Qn for t in tags])):
                 continue
-            txti = QStandardItem(txt)
+            txti = QStandardItem(com["text"])
             txti.setEditable(True)
             txti.setDropEnabled(False)
+            dlt = com["delta"]
             # If delta>0 then should be "+n"
             if dlt == ".":
                 delti = QStandardItem(".")
@@ -442,7 +443,7 @@ class SimpleCommentTable(QTableView):
             delti.setEditable(True)
             delti.setDropEnabled(False)
             delti.setTextAlignment(Qt.AlignCenter)
-            tagi = QStandardItem(tag)
+            tagi = QStandardItem(com["tags"])
             tagi.setEditable(True)
             tagi.setDropEnabled(False)
             idxi = QStandardItem(str(i))
@@ -464,39 +465,66 @@ class SimpleCommentTable(QTableView):
     def loadCommentList(self):
         # grab comments from the toml file,
         # if no file, then populate with some simple ones
-        self.clist = [
-            ("-1", "algebra", ""),
-            ("-1", "arithmetic", ""),
-            ("-1", "huh?", ""),
-            (".", "meh", ""),
-            ("0", "tex: you can write latex $e^{i\pi}+1=0$", ""),
-            ("0", "be careful", ""),
-            ("1", "good", ""),
-            ("1", "very nice", ""),
-            ("1", "Quest. 1 specific...", "Q1"),
-            ("2", "Quest. 2 specific...", "Q2"),
-            ("1", "Another Q1 spec", "Q1"),
-        ]
+        clist_defaults = """
+[[comment]]
+delta = -1
+text = "algebra"
+
+[[comment]]
+delta = -1
+text = "arithmetic"
+
+[[comment]]
+delta = "."
+text = "meh"
+
+[[comment]]
+delta = 0
+text = 'tex: you can write latex $e^{i\pi}+1=0$'
+
+[[comment]]
+delta = 0
+text = "be careful"
+
+[[comment]]
+delta = 1
+text = "good"
+
+[[comment]]
+delta = 1
+text = "Quest. 1 specific comment"
+tags = "Q1"
+
+[[comment]]
+delta = -1
+text = "Quest. 2 specific comment"
+tags = "Q2 foo bar"
+"""
         if os.path.exists("plomComments.toml"):
-            # toml is a dict by default.
-            cdict = toml.load(open("plomComments.toml"))
-            # should be a dict = {"comments": [list of stuff]}
-            if "comments" in cdict:
-                self.clist = cdict["comments"]
+            # toml is a dict by defacat ult.
+            cdict = toml.load("plomComments.toml")
+        else:
+            print(clist_defaults)
+            cdict = toml.loads(clist_defaults)
+        # should be a dict = {"comments": [list of stuff]}
+        assert "comment" in cdict
+        self.clist = cdict["comment"]
+        for d in self.clist:
+            d["tags"] = d.get("tags", "")
 
     def saveCommentList(self):
         # export to toml file.
         # toml wants a dictionary
         with open("plomComments.toml", "w") as fname:
-            toml.dump({"comments": self.clist}, fname)
+            toml.dump({"comment": self.clist}, fname)
 
     def deleteItem(self):
         # Remove the selected row (or do nothing if no selection)
         sel = self.selectedIndexes()
         if len(sel) == 0:
             return
-        key = int(self.cmodel.index(sel[0].row(), 3).data())
-        self.clist.pop(key)
+        idx = int(self.cmodel.index(sel[0].row(), 3).data())
+        self.clist.pop(idx)
         #self.cmodel.removeRow(sel[0].row())
         # TODO: maybe sloppy to rebuild, need automatic cmodel ontop of clist
         self.cmodel.clear()
@@ -551,7 +579,7 @@ class SimpleCommentTable(QTableView):
         #self.selectRow(self.cmodel.rowCount() - 1)
         #self.resizeRowToContents(self.cmodel.rowCount() - 1)
         # TODO: just insert to clist and rebuild
-        self.clist.append([str(dlt), txt, tag])
+        self.clist.append({"delta": dlt, "text":txt, "tags":tag})
         self.cmodel.clear()
         self.populateTable()
 
@@ -567,8 +595,8 @@ class SimpleCommentTable(QTableView):
             #self.cmodel.setData(tableIndex.siblingAtColumn(1), dt[1])
             #self.cmodel.setData(tableIndex.siblingAtColumn(2), dt[2])
             # TODO: for now, just insert into clist and rebuild
-            key = int(self.cmodel.index(r, 3).data())
-            self.clist[key] = [str(dt[0]), dt[1], dt[2]]
+            idx = int(self.cmodel.index(r, 3).data())
+            self.clist[idx] = {'delta':dt[0], 'text':dt[1], 'tags':dt[2]}
             self.cmodel.clear()
             self.populateTable()
 
