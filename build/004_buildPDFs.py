@@ -19,17 +19,21 @@ else:
     exit(1)
 
 
-print("There are two options for building PDFs - with or without names pre-filled.")
-print("\t- the 004a script builds PDFs **without** names.")
 print(
-    "\t - the 004b script builds PDFs **with** names. The names are read from the classlist in order."
+    """
+There are two options for building PDFs - with or without names pre-filled.
+  - the 004a script builds PDFs **without** names.
+  - the 004b script builds PDFs **with** names.  The names are read from the
+    classlist in order.
+"""
 )
+
 print(
     "Your test specification says you want to build {} papers of which {} should be named.".format(
         spec["numberToProduce"], spec["numberToName"]
     )
 )
 if spec["numberToName"] > 0:
-    print("Based on your spec it looks like you should run 004b")
+    print('Based on your spec it looks like you should run "004b".')
 else:
-    print("Based on your spec it looks like you should run 004a")
+    print('Based on your spec it looks like you should run "004a".')
