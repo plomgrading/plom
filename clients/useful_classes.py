@@ -417,7 +417,8 @@ class SimpleCommentTable(QTableView):
         )
 
     def populateTable(self):
-        # Grab [delta, comment] from the list and put into table.
+        # first erase rows but don't use .clear()
+        self.cmodel.setRowCount(0)
         for i, com in enumerate(self.clist):
             # User can edit the text, but doesn't handle drops.
             # TODO: YUCK! (how do I get the pagegroup)
@@ -525,7 +526,6 @@ tags = "Q2 foo bar"
         self.clist.pop(idx)
         #self.cmodel.removeRow(sel[0].row())
         # TODO: maybe sloppy to rebuild, need automatic cmodel ontop of clist
-        self.cmodel.clear()
         self.populateTable()
 
     def currentItem(self):
@@ -562,7 +562,6 @@ tags = "Q2 foo bar"
 
     def insertItem(self, dlt, txt, tag):
         self.clist.append({"delta": dlt, "text":txt, "tags":tag})
-        self.cmodel.clear()
         self.populateTable()
 
     def editRow(self, tableIndex):
@@ -572,7 +571,6 @@ tags = "Q2 foo bar"
         newcom = self.parent.editCurrent(com)
         if newcom is not None:
             self.clist[idx] = newcom
-            self.cmodel.clear()
             self.populateTable()
 
     def focusInEvent(self, event):
