@@ -7,7 +7,8 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-print("""
+print(
+    """
 To start the build process
 
   0. Find your source PDFs and copy them to the "sourceVersions" directory
@@ -19,4 +20,5 @@ To start the build process
   2. Run the "002_verifySpec.py" script
   3. Run the "003_buildPlomDB.py" script
   4. Run the "004_buildPDFs.py" script
-""")
+"""
+)
