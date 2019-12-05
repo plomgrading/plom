@@ -210,7 +210,7 @@ class CommentWidget(QWidget):
                 # send a click to the comment button to force updates
                 self.parent.ui.commentButton.animateClick()
 
-    def editCurrent(self, curDelta, curText, curTag):
+    def editCurrent(self, com):
         # text items in scene.
         lst = self.parent.getComments()
         # text items already in comment list
@@ -219,7 +219,7 @@ class CommentWidget(QWidget):
             clist.append(self.CL.cmodel.index(r, 1).data())
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
-        acb = AddCommentBox(self, self.maxMark, alist, curDelta, curText, curTag)
+        acb = AddCommentBox(self, self.maxMark, alist, com["delta"], com["text"], com["tags"])
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = str(acb.SB.value())
@@ -227,7 +227,7 @@ class CommentWidget(QWidget):
                 dlt = "."
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
-            return [dlt, txt, tag]
+            return {"delta":dlt, "text":txt, "tags":tag}
         else:
             return None
 
@@ -342,7 +342,7 @@ class SimpleCommentTable(QTableView):
         # Use the row model defined above, to allow newlines inside comments
         self.cmodel = commentRowModel()
         # self.cmodel = QStandardItemModel()
-        self.cmodel.setHorizontalHeaderLabels(["delta", "comment"])
+        self.cmodel.setHorizontalHeaderLabels(["delta", "comment", "idx"])
         self.setModel(self.cmodel)
         # When editor finishes make sure current row re-selected.
         self.cmodel.itemChanged.connect(self.handleClick)
@@ -443,14 +443,11 @@ class SimpleCommentTable(QTableView):
             delti.setEditable(True)
             delti.setDropEnabled(False)
             delti.setTextAlignment(Qt.AlignCenter)
-            tagi = QStandardItem(com["tags"])
-            tagi.setEditable(True)
-            tagi.setDropEnabled(False)
             idxi = QStandardItem(str(i))
             idxi.setEditable(False)
             idxi.setDropEnabled(False)
             # Append it to the table.
-            self.cmodel.appendRow([delti, txti, tagi, idxi])
+            self.cmodel.appendRow([delti, txti, idxi])
 
     def handleClick(self, index=0):
         # When an item is clicked, grab the details and emit
@@ -586,18 +583,11 @@ tags = "Q2 foo bar"
 
     def editRow(self, tableIndex):
         r = tableIndex.row()
-        dt = self.parent.editCurrent(
-            self.cmodel.index(r, 0).data(),
-            self.cmodel.index(r, 1).data(),
-            self.cmodel.index(r, 2).data(),
-        )
-        if dt is not None:
-            #self.cmodel.setData(tableIndex.siblingAtColumn(0), dt[0])
-            #self.cmodel.setData(tableIndex.siblingAtColumn(1), dt[1])
-            #self.cmodel.setData(tableIndex.siblingAtColumn(2), dt[2])
-            # TODO: for now, just insert into clist and rebuild
-            idx = int(self.cmodel.index(r, 3).data())
-            self.clist[idx] = {'delta':dt[0], 'text':dt[1], 'tags':dt[2]}
+        idx = int(self.cmodel.index(r, 2).data())
+        com = self.clist[idx]
+        newcom = self.parent.editCurrent(com)
+        if newcom is not None:
+            self.clist[idx] = newcom
             self.cmodel.clear()
             self.populateTable()
 
