@@ -363,6 +363,7 @@ class SimpleCommentTable(QTableView):
         # set this so no (native) edit. Instead we'll hijack double-click
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.doubleClicked.connect(self.editRow)
+        self.hideColumn(2)
 
     def dropEvent(self, event: QDropEvent):
         # If drag and drop from self to self.
