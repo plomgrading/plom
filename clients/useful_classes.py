@@ -607,6 +607,7 @@ class AddCommentBox(QDialog):
         super(QDialog, self).__init__()
         self.parent = parent
         self.questnum = questnum
+        self.setWindowTitle("Edit comment")
         self.CB = QComboBox()
         self.TE = QTextEdit()
         self.SB = QSpinBox()
