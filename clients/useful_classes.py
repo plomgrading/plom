@@ -12,6 +12,7 @@ from PyQt5.QtGui import QDropEvent, QIcon, QPixmap, QStandardItem, QStandardItem
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
+    QLabel,
     QComboBox,
     QDialog,
     QDialogButtonBox,
@@ -616,11 +617,14 @@ class AddCommentBox(QDialog):
         # TODO: how to make it smaller vertically than the TE?
         #self.TEtag.setMinimumHeight(self.TE.minimumHeight() // 2)
         #self.TEtag.setMaximumHeight(self.TE.maximumHeight() // 2)
-        self.QSpecific = QCheckBox("Specific to question {}".format(questnum))
+        self.QSpecific = QCheckBox("Available only in question {}".format(questnum))
         self.QSpecific.stateChanged.connect(self.toggleQSpecific)
+        self.quickHelp = QLabel('Prepend with "tex:" to use math.  You can "Choose text" from an existing annotation.')
+        self.quickHelp.setWordWrap(True)
 
         flay = QFormLayout()
         flay.addRow("Enter text", self.TE)
+        flay.addRow("", self.quickHelp)
         flay.addRow("Choose text", self.CB)
         flay.addRow("Set delta", self.SB)
         flay.addRow("", self.DE)
