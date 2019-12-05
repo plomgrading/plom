@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+
+__author__ = "Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
+__license__ = "AGPLv3"
+
+import glob
+import os
+import shutil
+import subprocess
+import sys
+
+
+from specParser import SpecParser
+
+
+def buildDirectories(spec):
+    """Build the directories that the scan scripts need"""
+    # the list of directories. Might need updating.
+    lst = [
+        "scannedExams/alreadyProcessed",
+        "scannedExams/png",
+        "pageImages",
+        "pageImages/alreadyProcessed",
+        "pageImages/problemImages",
+        "decodedPages",
+    ]
+    for dir in lst:
+        try:
+            os.mkdir(dir)
+        except FileExistsError:
+            pass
+    # For each page we need a directory
+    # in decoded pages
+    for p in range(1, spec["totalPages"] + 1):
+        dir = "decodedPages/page_{:s}".format(str(p).zfill(2))
+        os.makedirs(dir, exist_ok=True)
+
+
+def processFileToPng(fname):
+    """Convert each page of pdf into png using ghostscript"""
+    scan, fext = os.path.splitext(fname)
+    # issue #126 - replace spaces in names with underscores for output names.
+    safeScan = scan.replace(" ", "_")
+    try:
+        subprocess.run(
+            [
+                "gs",
+                "-dNumRenderingThreads=4",
+                "-dNOPAUSE",
+                "-sDEVICE=png256",
+                "-o",
+                "./png/" + safeScan + "-%d.png",
+                "-r200",
+                fname,
+            ],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
+    except subprocess.CalledProcessError as suberror:
+        print("Error running gs: {}".format(suberror.stdout.decode("utf-8")))
+
+
+def processScans():
+    """Look in the scanned exams directory
+    Process each pdf into png pageimages in the png subdir
+    Then move the processed pdf into alreadyProcessed
+    so as to avoid duplications.
+    Do a small amount of post-processing of the pngs
+    A simple gamma shift to leave white-white but make everything
+    else darker. Improves images when students write in
+    very light pencil.
+    """
+    # go into scanned exams and create png subdir if needed.
+    os.chdir("./scannedExams/")
+    if not os.path.exists("png"):
+        os.makedirs("png")
+    # look at every pdf file
+    for fname in glob.glob("*.pdf"):
+        # process the file into png page images
+        processFileToPng(fname)
+        # move file into alreadyProcessed
+        shutil.move(fname, "alreadyProcessed")
+        # go into png directory
+        os.chdir("./png/")
+        fh = open("./commandlist.txt", "w")
+        # build list of mogrify commands to do
+        # each does simple gamma shift to image
+        for fn in glob.glob("*.png"):
+            fh.write("mogrify -quiet -gamma 0.5 -quality 100 " + fn + "\n")
+        fh.close()
+        # run the command list through parallel then delete
+        try:
+            subprocess.run(
+                ["parallel", "--bar", "-a", "commandlist.txt"],
+                stderr=subprocess.STDOUT,
+                shell=False,
+                check=True,
+            )
+        except subprocess.CalledProcessError as suberror:
+            print(
+                "Error running post-processing mogrify: {}".format(
+                    suberror.stdout.decode("utf-8")
+                )
+            )
+
+        os.unlink("commandlist.txt")
+
+        # move all the pngs into pageimages directory
+        for pngfile in glob.glob("*.png"):
+            shutil.move(pngfile, "../../pageImages")
+        os.chdir("../")
+
+
+if __name__ == "__main__":
+    # Look for pdfs in scanned exams.
+    counter = 0
+    for fname in os.listdir("./scannedExams"):
+        if fname.endswith(".pdf"):
+            counter = counter + 1
+    # If there are some then process them else return a warning.
+    if not counter == 0:
+        spec = SpecParser().spec
+        buildDirectories(spec)
+        processScans()
+        print("Successfully converted scans to page images")
+    else:
+        print("Warning: please put scanned exams in scannedExams directory")
