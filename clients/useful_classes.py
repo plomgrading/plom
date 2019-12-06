@@ -116,6 +116,20 @@ class SimpleToolButton(QToolButton):
         self.setMinimumWidth(100)
 
 
+def commentVisibleInQuestion(com, n):
+    """Return True if comment would be visible in Question n.
+
+    Either there are no Q# tags or there is a Qn tag.
+
+    TODO: eventually should have a comment class: `com.isVisibileInQ(n)`
+    """
+    Qn = "Q{}".format(n)
+    tags = com["tags"].split()
+    return any([t == Qn for t in tags]) or not any(
+        [re.match("^Q\d+$", t) for t in tags]
+    )
+
+
 class CommentWidget(QWidget):
     """A widget wrapper around the marked-comment table."""
 
@@ -439,11 +453,7 @@ class SimpleCommentTable(QTableView):
             # User can edit the text, but doesn't handle drops.
             # TODO: YUCK! (how do I get the pagegroup)
             pg = int(self.parent.parent.parent.pageGroup)
-            Qn = "Q{}".format(pg)
-            tags = com["tags"].split()
-            # If there is at least one Q tag then there must be a Qn tag
-            if (any([re.match("^Q\d+$", t) for t in tags]) and
-                not any([t == Qn for t in tags])):
+            if not commentVisibleInQuestion(com, pg):
                 continue
             txti = QStandardItem(com["text"])
             txti.setEditable(True)
