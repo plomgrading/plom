@@ -39,8 +39,8 @@ def buildDirectories(spec):
             pass
     # For each page we need a directory
     # in decoded pages
-    for p in range(1, spec["totalPages"] + 1):
-        for v in range(1, spec["sourceVersions"] + 1):
+    for p in range(1, spec["numberOfPages"] + 1):
+        for v in range(1, spec["numberOfVersions"] + 1):
             dir = "decodedPages/page_{}/version_{}".format(str(p).zfill(2), v)
             os.makedirs(dir, exist_ok=True)
 

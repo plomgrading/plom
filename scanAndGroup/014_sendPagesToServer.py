@@ -22,8 +22,8 @@ def buildDirectories(spec):
             os.mkdir(dir)
         except FileExistsError:
             pass
-    for p in range(1, spec["totalPages"] + 1):
-        for v in range(1, spec["sourceVersions"] + 1):
+    for p in range(1, spec["numberOfPages"] + 1):
+        for v in range(1, spec["numberOfVersions"] + 1):
             dir = "sentPages/page_{}/version_{}".format(str(p).zfill(2), v)
             os.makedirs(dir, exist_ok=True)
 
@@ -73,11 +73,11 @@ if __name__ == "__main__":
     spec = SpecParser().spec
     buildDirectories(spec)
 
-    for p in range(1, spec["totalPages"] + 1):
+    for p in range(1, spec["numberOfPages"] + 1):
         sp = str(p).zfill(2)
         if not os.path.isdir("decodedPages/page_{}".format(sp)):
             continue
-        for v in range(1, spec["sourceVersions"] + 1):
+        for v in range(1, spec["numberOfVersions"] + 1):
             print("Looking for page {} version {}".format(sp, v))
             if not os.path.isdir("decodedPages/page_{}/version_{}".format(sp, v)):
                 continue
