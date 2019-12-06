@@ -9,9 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 
 print("To start the scan process")
 print("0. Copy your PDF scans of the tests into the directory scannedExams")
-print(
-    '1. Copy the file "template_testSpec.toml" to "testSpec.toml" and edit using your favourite text editor.'
-)
+print("1. Copy verifiedSpec.toml and plom.db from the build directory to here.")
 print(
     '2. Run the "012_scansToImages.py" script - this processes your PDFs into individual pages'
 )
