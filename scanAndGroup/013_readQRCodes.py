@@ -67,28 +67,6 @@ def decodeQRs():
     os.chdir("../")
 
 
-def readExamsProduced():
-    """Read the exams that were produced during build"""
-    global examsProduced
-    with open("../resources/examsProduced.json") as data_file:
-        examsProduced = json.load(data_file)
-
-
-def readExamsScanned():
-    """Read the list of test/page/versions that have been scanned"""
-    global examsScanned
-    if os.path.exists("../resources/examsScanned.json"):
-        with open("../resources/examsScanned.json") as data_file:
-            examsScanned = json.load(data_file)
-
-
-def writeExamsScanned():
-    """Update the list of test/page/versions that have been scanned"""
-    es = open("../resources/examsScanned.json", "w")
-    es.write(json.dumps(examsScanned, indent=2, sort_keys=True))
-    es.close()
-
-
 def reOrientPage(fname, qrs):
     """Re-orient this page if needed
 
@@ -319,39 +297,17 @@ def moveScansIntoPlace():
             # grab the version and filename
             v = examsScannedNow[t][p][0]
             fn = examsScannedNow[t][p][1]
-            destName = "../decodedPages/page_{}/version_{}/t{}p{}v{}.png".format(
-                str(p).zfill(2), v, str(t).zfill(4), str(p).zfill(2), str(v)
+            destName = "../decodedPages/page_{}/version_{}/t{}p{}v{}.{}.png".format(
+                str(p).zfill(2), v, str(t).zfill(4), str(p).zfill(2), str(v), fn
             )
-            if os.path.isfile(destName):
-                print(
-                    "WARNING: you have already scanned t{}p{}v{}. Will not process image-file {}.".format(
-                        ts, ps, v, fn
-                    )
-                )
-                overwriteAttempt["t{}p{}v{}".format(ts, ps, v)] = fn
-            else:
-                shutil.copy(fn, destName)
-            # move this new scan file into alreadyProcessed
-            shutil.move(fn, "alreadyProcessed")
-            shutil.move(fn + ".qr", "alreadyProcessed")
+            shutil.move(fn, destName)
+            shutil.move(fn + ".qr", destName + ".qr")
 
     os.chdir("../")
 
 
-def overwriteWarnings():
-    if not overwriteAttempt.keys():
-        return
-    print(
-        "Warning - you attempted to overwrite the following TPVs with the files indicated:"
-    )
-    for X in sorted(overwriteAttempt.keys()):
-        print("{} => {}".format(X, overwriteAttempt[X]))
-    print("We do not yet support overwriting old scans with new scans.")
-
-
 if __name__ == "__main__":
     examsScannedNow = defaultdict(dict)
-    overwriteAttempt = defaultdict(str)
 
     spec = SpecParser().spec
     buildDirectories(spec)
@@ -359,4 +315,3 @@ if __name__ == "__main__":
     checkQRsValid()
     validateQRsAgainstProduction()
     moveScansIntoPlace()
-    overwriteWarnings()

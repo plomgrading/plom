@@ -28,13 +28,43 @@ def buildDirectories(spec):
             os.makedirs(dir, exist_ok=True)
 
 
+def extractTPV(name):
+    # TODO - replace this with something less cludgy.
+    # should be tXXXXpYYvZ.blah
+    assert name[0] == "t"
+    k = 1
+    ts = ""
+    while name[k].isnumeric():
+        ts += name[k]
+        k += 1
+
+    assert name[k] == "p"
+    k += 1
+    ps = ""
+    while name[k].isnumeric():
+        ps += name[k]
+        k += 1
+
+    assert name[k] == "v"
+    k += 1
+    vs = ""
+    while name[k].isnumeric():
+        vs += name[k]
+        k += 1
+    return (ts, ps, vs)
+
+
 def sendFiles(fileList):
     for fname in fileList:
         sname = os.path.split(fname)[1]
-        print("**********************")
-        print("Upload {} to server".format(sname))
-        print("If successful then move {} to sentPages subdirectory".format(sname))
-        print("Otherwise move {} to sentPages/problemImages subdirectory".format(sname))
+        ts, ps, vs = extractTPV(sname)
+        # print("**********************")
+        print("Upload {},{},{} = {} to server".format(ts, ps, vs, sname))
+        print(
+            "If successful then move {} to sentPages subdirectory else move to problemImages".format(
+                sname
+            )
+        )
 
 
 if __name__ == "__main__":
