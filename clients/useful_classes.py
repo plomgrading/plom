@@ -523,7 +523,7 @@ delta = -1
 text = "Quest. 2 specific comment"
 tags = "Q2 foo bar"
 """
-        other_comment_defaults = {
+        comment_defaults = {
             "tags": "",
             "created": time.gmtime(0),
             "modified": time.gmtime(0),
@@ -538,7 +538,8 @@ tags = "Q2 foo bar"
         assert "comment" in cdict
         self.clist = cdict["comment"]
         for d in self.clist:
-            d.update(other_comment_defaults)
+            for k, v in comment_defaults.items():
+                d.setdefault(k, comment_defaults[k])
 
     def saveCommentList(self):
         # export to toml file.
