@@ -130,6 +130,16 @@ def commentVisibleInQuestion(com, n):
     )
 
 
+def commentTaggedQn(com, n):
+    """Return True if comment tagged for Question n.
+
+    There is a Qn tag.
+    """
+    Qn = "Q{}".format(n)
+    tags = com["tags"].split()
+    return any([t == Qn for t in tags])
+
+
 class CommentWidget(QWidget):
     """A widget wrapper around the marked-comment table."""
 
@@ -668,7 +678,7 @@ class AddCommentBox(QDialog):
                     self.DE.setCheckState(Qt.Unchecked)
                 else:
                     self.SB.setValue(int(com["delta"]))
-        if commentVisibleInQuestion(com, self.questnum):
+        if commentTaggedQn(com, self.questnum):
             self.QSpecific.setCheckState(Qt.Checked)
 
     def changedCB(self):
