@@ -140,6 +140,12 @@ def commentTaggedQn(com, n):
     return any([t == Qn for t in tags])
 
 
+def commentHasMultipleQTags(com):
+    tags = com["tags"].split()
+    x = [1 if re.match("^Q\d+$", t) else 0 for t in tags]
+    return sum(x) >= 2
+
+
 class CommentWidget(QWidget):
     """A widget wrapper around the marked-comment table."""
 
@@ -678,8 +684,13 @@ class AddCommentBox(QDialog):
                     self.DE.setCheckState(Qt.Unchecked)
                 else:
                     self.SB.setValue(int(com["delta"]))
-        if commentTaggedQn(com, self.questnum):
+        # TODO: ideally we would do this on TE change signal
+        if commentHasMultipleQTags(com):
+            self.QSpecific.setEnabled(False)
+        elif commentTaggedQn(com, self.questnum):
             self.QSpecific.setCheckState(Qt.Checked)
+        else:
+            self.QSpecific.setCheckState(Qt.Unchecked)
 
     def changedCB(self):
         self.TE.clear()
