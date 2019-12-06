@@ -14,6 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 
+## [0.2.2] - 2019-11-29
+
+### Added
+* Can now build papers with student Names/IDs pre-written on page 1.
+* Client now has a "view" button to quickly view other questions.
+
+### Changed
+* Warning given for non-Latin names in classlist (may cause problems in PDFs).
+
+### Fixed
+* Annotator mark up/down and handedness preferences now saved between sessions.
+
+
 ## [0.2.1] - 2019-11-11
 
 ### Added
@@ -85,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is the first release of Plom, PaperLessOpenMarking.
 
-[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...master
+[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.2...master
+[0.2.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...v0.2.2
 [0.2.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.0...v0.2.1
 [0.2.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.1.0...v0.2.0

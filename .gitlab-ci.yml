@@ -42,7 +42,7 @@ before_script:
   - pip3 install --upgrade pip
   - which pip3
   - python3 -m pip -V
-  - python3 -m pip install pymupdf weasyprint imutils lapsolver peewee cheroot
+  - python3 -m pip install pymupdf weasyprint imutils lapsolver peewee cheroot aiohttp
 
 stages:
   - build
@@ -74,10 +74,8 @@ job imageServerStarts:
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
-    - killall -9 wsgidav
-    - sleep 1
-    - kill -9 %1
-    - sleep 1
+    - kill %1
+    - sleep 2
     - echo "Should be no jobs and this should succeed"
     - jobs -l
     - popd
@@ -106,5 +104,9 @@ job backgroundTest:
 job someUnitTests:
   stage: test
   script:
-    - cd finishing
+    - pushd finishing
     - ./run_unit_tests.sh
+    - popd
+    - pushd resources
+    - ./run_unit_tests.sh
+    - popd

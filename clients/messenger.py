@@ -21,14 +21,14 @@ from useful_classes import ErrorMessage
 import time
 import threading
 
-from http.client import HTTPConnection
-import logging
-
-logging.basicConfig()  # you need to initialize logging, otherwise you will not see anything from requests
-logging.getLogger().setLevel(logging.DEBUG)
-requests_log = logging.getLogger("urllib3")
-requests_log.setLevel(logging.DEBUG)
-requests_log.propagate = True
+# from http.client import HTTPConnection
+# import logging
+#
+# logging.basicConfig()  # you need to initialize logging, otherwise you will not see anything from requests
+# logging.getLogger().setLevel(logging.DEBUG)
+# requests_log = logging.getLogger("urllib3")
+# requests_log.setLevel(logging.DEBUG)
+# requests_log.propagate = True
 
 from io import StringIO, BytesIO, TextIOWrapper
 from plom_exceptions import *
@@ -683,7 +683,7 @@ def MclaimThisTask(code):
         # response should be multipart = [image, tags]
         imageAndTags = MultipartDecoder.from_response(response).parts
         image = BytesIO(imageAndTags[0].content).getvalue()  # pass back image as bytes
-        tags = imageAndTags[1].text
+        tags = imageAndTags[1].text  # this is raw text.
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")

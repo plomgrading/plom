@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator_lhm.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.0
+# Created by: PyQt5 UI code generator 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -147,6 +147,16 @@ class Ui_annotator_lhm(object):
         self.keyHelpButton = QtWidgets.QPushButton(self.frame)
         self.keyHelpButton.setObjectName("keyHelpButton")
         self.toolLayout.addWidget(self.keyHelpButton, 4, 2, 1, 4)
+        self.viewButton = QtWidgets.QPushButton(self.frame)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.viewButton.sizePolicy().hasHeightForWidth())
+        self.viewButton.setSizePolicy(sizePolicy)
+        self.viewButton.setMinimumSize(QtCore.QSize(45, 0))
+        self.viewButton.setMaximumSize(QtCore.QSize(45, 16777215))
+        self.viewButton.setObjectName("viewButton")
+        self.toolLayout.addWidget(self.viewButton, 4, 6, 1, 1)
         self.verticalLayout.addWidget(self.frame, 0, QtCore.Qt.AlignHCenter)
         self.markBox = QtWidgets.QFrame(self.hideableBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
@@ -308,6 +318,7 @@ class Ui_annotator_lhm(object):
         self.boxButton.setToolTip(_translate("annotator_lhm", "press c"))
         self.boxButton.setText(_translate("annotator_lhm", "..."))
         self.keyHelpButton.setText(_translate("annotator_lhm", "Key Help"))
+        self.viewButton.setText(_translate("annotator_lhm", "View"))
         self.finishedButton.setToolTip(_translate("annotator_lhm", "Save and move to the next paper"))
         self.finishedButton.setText(_translate("annotator_lhm", "Next"))
         self.finishNoRelaunchButton.setToolTip(_translate("annotator_lhm", "Save and return to marker window"))

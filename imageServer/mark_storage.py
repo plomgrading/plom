@@ -53,9 +53,12 @@ class MarkDatabase:
 
     def createTable(self):
         """Create the required table in the database"""
-        self.logging.info("Creating database tables")
         with markdb:
-            markdb.create_tables([GroupImage])
+            if markdb.table_exists("groupimage"):
+                self.logging.info("Reusing existing 'groupimage' database table")
+            else:
+                self.logging.info("Creating database table")
+                markdb.create_tables([GroupImage])
 
     def shutdown(self):
         """Shut connection to the database"""
@@ -385,3 +388,11 @@ class MarkDatabase:
         for x in query:
             lst.append(x.originalFile)
         return lst
+
+    def checkExists(self, code):
+        try:
+            with markdb.atomic():
+                x = GroupImage.get(tgv=code)
+                return True
+        except GroupImage.DoesNotExist:
+            return False

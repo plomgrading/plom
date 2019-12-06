@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 import os
-import json
+import toml
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QTimer
 from PyQt5.QtGui import QDropEvent, QIcon, QPixmap, QStandardItem, QStandardItemModel
@@ -445,33 +445,37 @@ class SimpleCommentTable(QTableView):
         )
 
     def loadCommentList(self):
-        # grab comments from the json file,
+        # grab comments from the toml file,
         # if no file, then populate with some simple ones
-        if os.path.exists("signedCommentList.json"):
-            self.clist = json.load(open("signedCommentList.json"))
-        else:
-            self.clist = [
-                (-1, "algebra"),
-                (-1, "arithmetic"),
-                (-1, "huh?"),
-                (".", "meh"),
-                (0, "tex: you can write latex $e^{i\pi}+1=0$"),
-                (0, "be careful"),
-                (1, "good"),
-                (1, "very nice"),
-                (1, "yes"),
-            ]
+        self.clist = [
+            (-1, "algebra"),
+            (-1, "arithmetic"),
+            (-1, "huh?"),
+            (".", "meh"),
+            (0, "tex: you can write latex $e^{i\pi}+1=0$"),
+            (0, "be careful"),
+            (1, "good"),
+            (1, "very nice"),
+            (1, "yes"),
+        ]
+        if os.path.exists("plomComments.toml"):
+            # toml is a dict by default.
+            cdict = toml.load(open("plomComments.toml"))
+            # should be a dict = {"comments": [list of stuff]}
+            if "comments" in cdict:
+                self.clist = cdict["comments"]
 
     def saveCommentList(self):
         # grab comments from the table, populate a list
-        # export to json file.
+        # export to toml file.
         self.clist = []
         for r in range(self.cmodel.rowCount()):
             self.clist.append(
                 (self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data())
             )
-        with open("signedCommentList.json", "w") as fname:
-            json.dump(self.clist, fname)
+        # toml wants a dictionary
+        with open("plomComments.toml", "w") as fname:
+            toml.dump({"comments": self.clist}, fname)
 
     def addItem(self):
         # Create a [delta, comment] pair for user to edit
