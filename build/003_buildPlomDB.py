@@ -54,7 +54,7 @@ def buildExamDatabase(spec):
                 spec["question"][gs]["select"] == "shuffle"
             ):  # version selected randomly
                 v = random.randint(
-                    1, spec["sourceVersions"]
+                    1, spec["numberOfVersions"]
                 )  # version selected randomly [1,2,..#versions]
             else:
                 print(

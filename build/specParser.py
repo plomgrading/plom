@@ -12,7 +12,7 @@ class SpecParser:
         print("Verified test specification:")
         print("\tName of test = ", self.spec["name"])
         print("\tLong name of test = ", self.spec["longName"])
-        print("\tNumber of source versions = ", self.spec["sourceVersions"])
+        print("\tNumber of source versions = ", self.spec["numberOfVersions"])
         print(
             "\tPublic code (to prevent project collisions) = ", self.spec["publicCode"]
         )
@@ -21,7 +21,7 @@ class SpecParser:
         print(
             "\tNumber of those to be printed with names = ", self.spec["numberToName"]
         )
-        print("\tNumber of pages = ", self.spec["totalPages"])
+        print("\tNumber of pages = ", self.spec["numberOfPages"])
         print("\tIDpages = ", self.spec["idPages"]["pages"])
         print("\tDo not mark pages = ", self.spec["doNotMark"]["pages"])
         print("\tNumber of questions to mark = ", self.spec["numberOfQuestions"])
@@ -49,7 +49,7 @@ class SpecVerifier:
         # check that spec contains required attributes
         self.check_keys()
         self.check_name_and_production_numbers()
-        lastPage = self.spec["totalPages"]
+        lastPage = self.spec["numberOfPages"]
         self.check_IDPages(lastPage)
         self.check_doNotMark(lastPage)
 
@@ -119,8 +119,8 @@ class SpecVerifier:
         for x in [
             "name",
             "longName",
-            "sourceVersions",
-            "totalPages",
+            "numberOfVersions",
+            "numberOfPages",
             "numberToProduce",
             "numberToName",
             "numberOfQuestions",
@@ -179,8 +179,8 @@ class SpecVerifier:
         print("\tChecking production numbers")
         # all should be positive integers
         for x in [
-            "sourceVersions",
-            "totalPages",
+            "numberOfVersions",
+            "numberOfPages",
             "numberToProduce",
             "numberToName",
             "numberOfQuestions",
@@ -315,7 +315,7 @@ class SpecVerifier:
 
     def check_pages(self):
         print("Checking all pages used exactly once:")
-        pageUse = {k + 1: 0 for k in range(self.spec["totalPages"])}
+        pageUse = {k + 1: 0 for k in range(self.spec["numberOfPages"])}
         for p in self.spec["idPages"]["pages"]:
             pageUse[p] += 1
         for p in self.spec["doNotMark"]["pages"]:
@@ -323,7 +323,7 @@ class SpecVerifier:
         for g in range(self.spec["numberOfQuestions"]):
             for p in self.spec["question"][str(g + 1)]["pages"]:
                 pageUse[p] += 1
-        for p in range(1, self.spec["totalPages"] + 1):
+        for p in range(1, self.spec["numberOfPages"] + 1):
             if pageUse[p] != 1:
                 print("Page Use error - page {} used {} times".format(p, pageUse[p]))
                 exit(1)

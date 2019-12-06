@@ -10,9 +10,9 @@
 name = "m101mt1"
 longName = "Midterm for Mathematics 101"
 # how many source versions
-sourceVersions = 3
+numberOfVersions = 3
 # how many pages
-totalPages = 8
+numberOfPages = 8
 # total number of papers to produce
 numberToProduce=20
 # how many of those papers should be named - ie from classlist - always <= numberToProduce

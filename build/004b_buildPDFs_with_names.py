@@ -44,8 +44,8 @@ def buildCommandList(spec, students):
             'python3 mergeAndCodePages.py {} {} {} {} {} "{}"\n'.format(
                 spec["name"],
                 spec["publicCode"],
-                spec["totalPages"],
-                spec["sourceVersions"],
+                spec["numberOfPages"],
+                spec["numberOfVersions"],
                 t,
                 pv,
             )
