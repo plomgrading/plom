@@ -244,9 +244,7 @@ class CommentWidget(QWidget):
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
         questnum = int(self.parent.parent.pageGroup)  # YUCK!
-        acb = AddCommentBox(
-            self, self.maxMark, alist, questnum, com["delta"], com["text"], com["tags"]
-        )
+        acb = AddCommentBox(self, self.maxMark, alist, questnum, com)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = str(acb.SB.value())
@@ -611,7 +609,7 @@ tags = "Q2 foo bar"
 
 
 class AddCommentBox(QDialog):
-    def __init__(self, parent, maxMark, lst, questnum, curDelta=None, curText=None, curTag=None):
+    def __init__(self, parent, maxMark, lst, questnum, com=None):
         super(QDialog, self).__init__()
         self.parent = parent
         self.questnum = questnum
@@ -656,18 +654,21 @@ class AddCommentBox(QDialog):
         # Set up TE and CB so that when CB changed, text is updated
         self.CB.currentTextChanged.connect(self.changedCB)
         # If supplied with current text/delta then set them
-        if curText is not None:
-            self.TE.clear()
-            self.TE.insertPlainText(curText)
-        if curTag is not None:
-            self.TEtag.clear()
-            self.TEtag.insertPlainText(curTag)
-        if curDelta is not None:
-            if curDelta == ".":
-                self.SB.setValue(0)
-                self.DE.setCheckState(Qt.Unchecked)
-            else:
-                self.SB.setValue(int(curDelta))
+        if com:
+            if com["text"]:
+                self.TE.clear()
+                self.TE.insertPlainText(com["text"])
+            if com["tags"]:
+                self.TEtag.clear()
+                self.TEtag.insertPlainText(com["tags"])
+            if com["delta"]:
+                if com["delta"] == ".":
+                    self.SB.setValue(0)
+                    self.DE.setCheckState(Qt.Unchecked)
+                else:
+                    self.SB.setValue(int(com["delta"]))
+        if commentVisibleInQuestion(com, self.questnum):
+            self.QSpecific.setCheckState(Qt.Checked)
 
     def changedCB(self):
         self.TE.clear()
