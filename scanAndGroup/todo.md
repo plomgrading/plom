@@ -38,4 +38,7 @@
 7. Note that this means we keep the PDF-bundles, but no pageimages once uploaded to server.
 
 ## Database hackery
-Coming soon.
+0. Each object set needs a unique integer identifier (as well as what ever else we make up)
+1. Markdata - needs to support regrades. ie - each regrade of a paper should be a separate Markdata instance.
+2. UnknownPages - pageImages that are yet to be identified as either extras or TPVs
+3. Duplicates - pages that are duplicates of TPVs already uploaded. 
