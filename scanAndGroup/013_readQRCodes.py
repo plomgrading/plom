@@ -17,11 +17,6 @@ import sys
 
 from specParser import SpecParser
 
-from examDB import *
-
-examDB = PlomDB()
-
-
 # this allows us to import from ../resources
 sys.path.append("..")
 
@@ -251,35 +246,34 @@ def checkQRsValid():
     os.chdir("../")
 
 
-def validateQRsAgainstProduction():
-    """After pageimages have been decoded we need to check the
-    results against the TPVs that constructed during build.
-    A simple check of test-name was done already, but now
-    the test-page-version triples are checked.
+def validateQRsAgainstSpec(spec):
+    """After pageimages have been decoded we need to check the results
+    against the spec. A simple check of test-name and magic-code were
+    done already, but now the test-page-version triples are checked.
     """
-    # go into page images directory
-    os.chdir("./pageImages")
-    # for each test-number that was scanned on this run of this script
-    # check that the tpv matches the one recorded during build.
     for t in examsScannedNow.keys():
-        # for each page of that test-number
         for p in examsScannedNow[t].keys():
-
-            # the version of that test/page
             v = examsScannedNow[t][p][0]
-            # the corresponding page image file name
-            fn = examsScannedNow[t][p][1]
-            # if the tpv's match then all good.
-            tfv = examDB.getVersionFromTP(t, p)
-            # returns [False] or [True, produced-version]
-            if tfv[0] and tfv[1] == v:
-                # pass
-                print("Valid scan of t{} p{} v{} from file {}".format(t, p, v, fn))
-            else:
-                # print mismatch warning and move file to problem-images
-                print(">> Mismatch between exam scanned and exam produced")
+            # make a valid flag
+            flag = True
+            if t < 0 or t > spec["numberToProduce"]:
+                flag = False
+            if p < 0 or p > spec["numberOfPages"]:
+                flag = False
+            if v < 0 or v > spec["numberOfVersions"]:
+                flag = False
+            if not flag:
+                print(
+                    ">> Mismatch between page scanned and spec - this should NOT happen"
+                )
                 print(">> Produced t{} p{} v{}".format(t, p, tfv[1]))
-                print(">> Scanned t{} p{} v{} from file {}".format(t, p, v, fn))
+                print(
+                    ">> Must have t-code in [1,{}], p-code in [1,{}], v-code in [1,{}]".format(
+                        spec["numberToProduce"],
+                        spec["numberOfPages"],
+                        spec["numberOfVersions"],
+                    )
+                )
                 print(">> Moving problem files to problemImages")
                 # move the blah.png and blah.png.qr
                 # this means that they won't be added to the
@@ -297,7 +291,7 @@ def moveScansIntoPlace():
             # grab the version and filename
             v = examsScannedNow[t][p][0]
             fn = examsScannedNow[t][p][1]
-            destName = "../decodedPages/page_{}/version_{}/t{}p{}v{}.{}.png".format(
+            destName = "../decodedPages/page_{}/version_{}/t{}p{}v{}.{}".format(
                 str(p).zfill(2), v, str(t).zfill(4), str(p).zfill(2), str(v), fn
             )
             shutil.move(fn, destName)
@@ -313,5 +307,5 @@ if __name__ == "__main__":
     buildDirectories(spec)
     decodeQRs()
     checkQRsValid()
-    validateQRsAgainstProduction()
+    validateQRsAgainstSpec()
     moveScansIntoPlace()
