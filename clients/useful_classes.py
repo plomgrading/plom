@@ -416,15 +416,15 @@ class SimpleCommentTable(QTableView):
         if not event.isAccepted() and event.source() == self:
             # grab the row number of dragged row and its data
             row = self.selectedIndexes()[0].row()
-            idx = self.cmode.index(row, 2).data()
+            idx = self.cmodel.index(row, 2).data()
             # Get the row on which to drop
             dropRow = self.drop_on(event)
-            dropIdx = self.cmode.index(Droprow, 2).data()
+            dropIdx = self.cmodel.index(dropRow, 2).data()
             # If we drag from earlier row, handle index after deletion
             if row < dropRow:
                 dropRow -= 1
-            com = self.clist.pop[row]
-            self.clist.insert(drowRow, com)
+            com = self.clist.pop(row)
+            self.clist.insert(dropRow, com)
             self.populateTable()
 
             # Reselect the dropped row (TODO: does this work?)
