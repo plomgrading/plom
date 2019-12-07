@@ -6,11 +6,12 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
 import glob
+import hashlib
 import os
 import shutil
 import subprocess
 import sys
-
+import toml
 
 from specParser import SpecParser
 
@@ -19,10 +20,10 @@ def buildDirectories(spec):
     """Build the directories that this scripts needs"""
     # the list of directories. Might need updating.
     lst = [
-        "scannedExams/alreadyProcessed",
-        "scannedExams/png",
+        "archivedPDFs",
+        "scannedExams",
+        "scannedExams/png/",
         "pageImages",
-        "pageImages/alreadyProcessed",
         "pageImages/problemImages",
     ]
     for dir in lst:
@@ -30,6 +31,32 @@ def buildDirectories(spec):
             os.mkdir(dir)
         except FileExistsError:
             pass
+
+
+def archivePDF(fname):
+    md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+    shutil.move(fname, "../archivedPDFs/")
+    # open the existing archive if it is there
+    arcName = "../archivedPDFs/archive.toml"
+    if os.path.isfile(arcName):
+        arch = toml.load(arcName)
+    else:
+        arch = {}
+    arch[md5] = fname
+    # now save it
+    with open(arcName, "w+") as fh:
+        toml.dump(arch, fh)
+
+
+def isInArchive(fname):
+    arcName = "../archivedPDFs/archive.toml"
+    if not os.path.isfile(arcName):
+        return [False]
+    arch = toml.load(arcName)
+    md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+    if md5 in arch:
+        return [True, arch[md5]]
+    return [False]
 
 
 def processFileToPng(fname):
@@ -73,10 +100,20 @@ def processScans():
         os.makedirs("png")
     # look at every pdf file
     for fname in glob.glob("*.pdf"):
+        # check if fname is in archive (by checking md5sum)
+        tf = isInArchive(fname)
+        if tf[0]:
+            print(
+                "WARNING - {} is in the PDF archive - we checked md5sum - it the same as file {}. It will not be processed.".format(
+                    fname, tf[1]
+                )
+            )
+            continue
+
         # process the file into png page images
         processFileToPng(fname)
-        # move file into alreadyProcessed
-        shutil.move(fname, "alreadyProcessed")
+        # archive the scan PDF
+        archivePDF(fname)
         # go into png directory
         os.chdir("./png/")
         fh = open("./commandlist.txt", "w")
