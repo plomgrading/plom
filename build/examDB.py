@@ -31,7 +31,7 @@ class Test(Model):
 # group status will evolve something like... [todo, outwithclient, done]
 class Group(Model):
     test = ForeignKeyField(Test, backref="groups")
-    gid = CharField(primary_key=True, unique=True)  # must be unique
+    gid = CharField(unique=True)  # must be unique
     groupType = CharField()  # to distinguish between ID, DNM, and Mark groups
     status = CharField(default="")
     version = IntegerField(default=1)
@@ -45,11 +45,12 @@ class Group(Model):
 # Page knows its group and its test
 class Page(Model):
     test = ForeignKeyField(Test, backref="pages")
-    gid = ForeignKeyField(Group, backref="pages")
+    group = ForeignKeyField(Group, backref="pages")  # note - not the GID
     pageNumber = IntegerField(null=False)
     pid = CharField(unique=True)  # to ensure uniqueness
     version = IntegerField(default=1)
     originalFile = CharField(null=True)
+    md5sum = CharField(null=True)  # to check for duplications
     # flags
     scanned = BooleanField(default=False)
 
@@ -71,10 +72,32 @@ class MarkData(Model):
         database = plomdb
 
 
+class UnknownPages(Model):
+    annotatedFile = CharField(null=True)
+    md5sum = CharField()
+    test = ForeignKeyField(Test, backref="pages")
+
+    class Meta:
+        database = plomdb
+
+
+class DuplicatePages(Model):
+    test = ForeignKeyField(Test, backref="pages")
+    pageNumber = IntegerField(null=False)
+    version = IntegerField(default=1)
+    originalFile = CharField(null=True)
+    md5sum = CharField()
+
+    class Meta:
+        database = plomdb
+
+
 class PlomDB:
     def __init__(self):
         with plomdb:
-            plomdb.create_tables([Test, Group, MarkData, Page])
+            plomdb.create_tables(
+                [Test, Group, MarkData, Page, UnknownPages, DuplicatePages]
+            )
 
     def createTest(self, t):
         try:
@@ -100,6 +123,7 @@ class PlomDB:
                     )
                 except IntegrityError as e:
                     print("Page {} for test {} already exists.".format(p, t))
+                    print(e)
                     flag = False
         return flag
 
