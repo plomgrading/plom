@@ -280,7 +280,6 @@ def validateQRsAgainstSpec(spec):
                 # list of correctly scanned page images
                 shutil.move(fn, "problemImages")
                 shutil.move(fn + ".qr", "problemImages")
-    os.chdir("../")
 
 
 def moveScansIntoPlace():
@@ -307,5 +306,5 @@ if __name__ == "__main__":
     buildDirectories(spec)
     decodeQRs()
     checkQRsValid()
-    validateQRsAgainstSpec()
+    validateQRsAgainstSpec(spec)
     moveScansIntoPlace()

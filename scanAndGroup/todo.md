@@ -3,11 +3,11 @@
 ## Workflow.
 
 * User produces a bundle scan `blah.pdf`.
-* After (successful) processing the bundle is moved to an `archivePDFs` directory.
-* Before processing the scan - check old bundles in archive - by both filename and md5sum.
-  * if md5sum same then tell user and do not process.
-  * if filename same then tell user to rename before processing.
-* store md5sum of bundle as well as m5sum of pageimage. Name as `blah-n.png`.
+* After (successful) processing the bundle is moved to an `archivePDFs` directory. DONE.
+* Before processing the scan - check old bundles in archive - by both filename and md5sum. DONE.
+  * if md5sum same then tell user and do not process. DONE.
+  * if filename same then tell user to rename before processing. DONE.
+* store md5sum of bundle as well as m5sum of pageimage. Name as `blah-n.png`. DONE
 
 * Initial QR code read of each pageimage
   * If no QR code - then file (somehow) as `unknown`
@@ -41,4 +41,4 @@
 0. Each object set needs a unique integer identifier (as well as what ever else we make up)
 1. Markdata - needs to support regrades. ie - each regrade of a paper should be a separate Markdata instance.
 2. UnknownPages - pageImages that are yet to be identified as either extras or TPVs
-3. Duplicates - pages that are duplicates of TPVs already uploaded. 
+3. Duplicates - pages that are duplicates of TPVs already uploaded.
