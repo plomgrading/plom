@@ -123,6 +123,52 @@ def closeUser():
     return True
 
 
+# ----------------------
+# ----------------------
+# Test information
+def getInfoShortName():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/info/shortName".format(server, message_port), verify=False
+        )
+        response.raise_for_status()
+        shortName = response.text
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return shortName
+
+
+def getInfoPagesVersions():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/info/numberOfGroupsAndVersions".format(server, message_port),
+            verify=False,
+        )
+        response.raise_for_status()
+        pv = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return pv
+
+
 # ------------------------
 # ------------------------
 # ID client API stuff

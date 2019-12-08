@@ -116,6 +116,11 @@ class Chooser(QDialog):
         # Have Messenger login into to server
         messenger.setServerDetails(server, mport)
         messenger.startMessenger()
+        print(">>>> CBM - I'm trying stuff out <<<<")
+        print("Name = ", messenger.getInfoShortName())
+        print("[P,V] = ", messenger.getInfoPagesVersions())
+        print(">>>> Did it work? <<<<")
+
         try:
             messenger.requestAndSaveToken(user, pwd)
         except PlomAPIException as e:
@@ -225,7 +230,6 @@ class Chooser(QDialog):
             lastTime["mouse"] = "left"
         else:
             raise RuntimeError("tertium non datur")
-
 
 
 # Pop up a dialog for unhandled exceptions and then exit
