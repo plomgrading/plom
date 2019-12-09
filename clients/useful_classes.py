@@ -550,10 +550,11 @@ tags = "Q2 foo bar"
             cdict = toml.loads(clist_defaults)
         # should be a dict = {"comment": [list of stuff]}
         assert "comment" in cdict
-        self.clist = cdict["comment"]
-        for d in self.clist:
+        clist = cdict["comment"]
+        for d in clist:
             for k, v in comment_defaults.items():
                 d.setdefault(k, comment_defaults[k])
+        self.clist = clist
 
     def saveCommentList(self):
         # export to toml file.
