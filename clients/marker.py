@@ -51,7 +51,7 @@ from examviewwindow import ExamViewWindow
 import messenger
 from annotator import Annotator
 from plom_exceptions import *
-from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
+from useful_classes import AddTagBox, ErrorMessage, SimpleMessage, commentLoadAll
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
 from test_view import GroupView
@@ -1114,17 +1114,9 @@ class MarkerClient(QWidget):
         self.viewFiles = []
 
     def cacheLatexComments(self):
-        # grab the list of comments from disk
-        if not os.path.exists("plomComments.toml"):
-            return
-        # note by default toml creates dictionaries
-        cdict = toml.load(open("plomComments.toml"))
-        if "comments" in cdict:
-            clist = cdict["comments"]
-        else:
-            clist = []
+        clist = commentLoadAll()
         # sort list in order of longest comment to shortest comment
-        clist.sort(key=lambda C: -len(C[1]))
+        clist.sort(key=lambda C: -len(C["text"]))
 
         # Build a progress dialog to warn user
         pd = QProgressDialog("Caching latex comments", None, 0, 2 * len(clist), self)
@@ -1134,8 +1126,8 @@ class MarkerClient(QWidget):
         # Start caching.
         c = 0
         for X in clist:
-            if X[1][:4].upper() == "TEX:":
-                txt = X[1][4:].strip()
+            if X["text"][:4].upper() == "TEX:":
+                txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version
                 self.latexAFragment(txt)
