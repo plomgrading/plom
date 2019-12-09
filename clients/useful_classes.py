@@ -173,6 +173,13 @@ tags = "Q2 foo bar"
     return clist
 
 
+def commentSaveList(clist):
+    """Export comment list to toml file."""
+    # toml wants a dictionary
+    with open("plomComments.toml", "w") as fname:
+        toml.dump({"comment": clist}, fname)
+
+
 def commentVisibleInQuestion(com, n):
     """Return True if comment would be visible in Question n.
 
@@ -557,10 +564,7 @@ class SimpleCommentTable(QTableView):
         )
 
     def saveCommentList(self):
-        # export to toml file.
-        # toml wants a dictionary
-        with open("plomComments.toml", "w") as fname:
-            toml.dump({"comment": self.clist}, fname)
+        commentSaveList(self.clist)
 
     def deleteItem(self):
         # Remove the selected row (or do nothing if no selection)
