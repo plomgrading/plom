@@ -545,10 +545,8 @@ tags = "Q2 foo bar"
             "modified": time.gmtime(0),
         }
         if os.path.exists("plomComments.toml"):
-            # toml is a dict by defacat ult.
             cdict = toml.load("plomComments.toml")
         else:
-            print(clist_defaults)
             cdict = toml.loads(clist_defaults)
         # should be a dict = {"comment": [list of stuff]}
         assert "comment" in cdict
