@@ -116,6 +116,63 @@ class SimpleToolButton(QToolButton):
         self.setMinimumWidth(100)
 
 
+# Comment helper functions: TODO may split out to new .py file
+def commentLoadAll():
+    """Grab comments from the toml file or return defaults."""
+
+    clist_defaults = """
+[[comment]]
+delta = -1
+text = "algebra"
+
+[[comment]]
+delta = -1
+text = "arithmetic"
+
+[[comment]]
+delta = "."
+text = "meh"
+
+[[comment]]
+delta = 0
+text = 'tex: you can write latex $e^{i\pi}+1=0$'
+
+[[comment]]
+delta = 0
+text = "be careful"
+
+[[comment]]
+delta = 1
+text = "good"
+
+[[comment]]
+delta = 1
+text = "Quest. 1 specific comment"
+tags = "Q1"
+
+[[comment]]
+delta = -1
+text = "Quest. 2 specific comment"
+tags = "Q2 foo bar"
+"""
+    comment_defaults = {
+        "tags": "",
+        "created": time.gmtime(0),
+        "modified": time.gmtime(0),
+    }
+    if os.path.exists("plomComments.toml"):
+        cdict = toml.load("plomComments.toml")
+    else:
+        cdict = toml.loads(clist_defaults)
+    # should be a dict = {"comment": [list of stuff]}
+    assert "comment" in cdict
+    clist = cdict["comment"]
+    for d in clist:
+        for k, v in comment_defaults.items():
+            d.setdefault(k, comment_defaults[k])
+    return clist
+
+
 def commentVisibleInQuestion(com, n):
     """Return True if comment would be visible in Question n.
 
@@ -395,10 +452,8 @@ class SimpleCommentTable(QTableView):
         # Use the delegate defined above to shade deltas when needed
         self.delegate = commentDelegate()
         self.setItemDelegate(self.delegate)
-        # A list of [delta, comment] pairs
-        self.clist = []
-        # Load in from file (if it exists) and populate table.
-        self.loadCommentList()
+        # A list of comments
+        self.clist = commentLoadAll()
         self.populateTable()
         # put these in a timer(0) so they exec when other stuff done
         QTimer.singleShot(0, self.resizeRowsToContents)
@@ -500,61 +555,6 @@ class SimpleCommentTable(QTableView):
         self.commentSignal.emit(
             [self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()]
         )
-
-    def loadCommentList(self):
-        # grab comments from the toml file,
-        # if no file, then populate with some simple ones
-        clist_defaults = """
-[[comment]]
-delta = -1
-text = "algebra"
-
-[[comment]]
-delta = -1
-text = "arithmetic"
-
-[[comment]]
-delta = "."
-text = "meh"
-
-[[comment]]
-delta = 0
-text = 'tex: you can write latex $e^{i\pi}+1=0$'
-
-[[comment]]
-delta = 0
-text = "be careful"
-
-[[comment]]
-delta = 1
-text = "good"
-
-[[comment]]
-delta = 1
-text = "Quest. 1 specific comment"
-tags = "Q1"
-
-[[comment]]
-delta = -1
-text = "Quest. 2 specific comment"
-tags = "Q2 foo bar"
-"""
-        comment_defaults = {
-            "tags": "",
-            "created": time.gmtime(0),
-            "modified": time.gmtime(0),
-        }
-        if os.path.exists("plomComments.toml"):
-            cdict = toml.load("plomComments.toml")
-        else:
-            cdict = toml.loads(clist_defaults)
-        # should be a dict = {"comment": [list of stuff]}
-        assert "comment" in cdict
-        clist = cdict["comment"]
-        for d in clist:
-            for k, v in comment_defaults.items():
-                d.setdefault(k, comment_defaults[k])
-        self.clist = clist
 
     def saveCommentList(self):
         # export to toml file.
