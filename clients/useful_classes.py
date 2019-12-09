@@ -25,6 +25,7 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QTableView,
     QTextEdit,
+    QLineEdit,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -157,6 +158,7 @@ tags = "Q2 foo bar"
 """
     comment_defaults = {
         "tags": "",
+        "testname": "",
         "created": time.gmtime(0),
         "modified": time.gmtime(0),
     }
@@ -292,7 +294,8 @@ class CommentWidget(QWidget):
         alist = [X for X in lst if X not in clist]
 
         questnum = int(self.parent.parent.pageGroup)  # YUCK!
-        acb = AddCommentBox(self, self.maxMark, alist, questnum)
+        testname = self.parent.testname
+        acb = AddCommentBox(self, self.maxMark, alist, questnum, testname)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = acb.SB.value()
@@ -300,12 +303,14 @@ class CommentWidget(QWidget):
                 dlt = "."
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
+            testnames = acb.TEtestname.text().strip()
             # check if txt has any content
             if len(txt) > 0:
                 com = {
                     "delta": dlt,
                     "text": txt,
                     "tags": tag,
+                    "testname": testnames,
                     "created": time.gmtime(),
                     "modified": time.gmtime(),
                 }
@@ -324,7 +329,8 @@ class CommentWidget(QWidget):
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
         questnum = int(self.parent.parent.pageGroup)  # YUCK!
-        acb = AddCommentBox(self, self.maxMark, alist, questnum, com)
+        testname = self.parent.testname
+        acb = AddCommentBox(self, self.maxMark, alist, questnum, testname, com)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = str(acb.SB.value())
@@ -332,10 +338,12 @@ class CommentWidget(QWidget):
                 dlt = "."
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
+            testnames = acb.TEtestname.text().strip()
             # update the comment with new values
             com["delta"] = dlt
             com["text"] = txt
             com["tags"] = tag
+            com["testname"] = testnames
             com["modified"] = time.gmtime()
             return com
         else:
@@ -531,6 +539,9 @@ class SimpleCommentTable(QTableView):
             pg = int(self.parent.parent.parent.pageGroup)
             if not commentVisibleInQuestion(com, pg):
                 continue
+            testname = self.parent.parent.testname
+            if com["testname"] and not com["testname"] == testname:
+                continue
             txti = QStandardItem(com["text"])
             txti.setEditable(True)
             txti.setDropEnabled(False)
@@ -629,7 +640,7 @@ class SimpleCommentTable(QTableView):
 
 
 class AddCommentBox(QDialog):
-    def __init__(self, parent, maxMark, lst, questnum, com=None):
+    def __init__(self, parent, maxMark, lst, questnum, curtestname, com=None):
         super(QDialog, self).__init__()
         self.parent = parent
         self.questnum = questnum
@@ -641,6 +652,8 @@ class AddCommentBox(QDialog):
         self.DE.setCheckState(Qt.Checked)
         self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QTextEdit()
+        self.TEmeta = QTextEdit()
+        self.TEtestname = QLineEdit()
         # TODO: how to make it smaller vertically than the TE?
         #self.TEtag.setMinimumHeight(self.TE.minimumHeight() // 2)
         #self.TEtag.setMaximumHeight(self.TE.maximumHeight() // 2)
@@ -657,6 +670,8 @@ class AddCommentBox(QDialog):
         flay.addRow("", self.DE)
         flay.addRow("", self.QSpecific)
         flay.addRow("Tags", self.TEtag)
+        flay.addRow("Specific to test", self.TEtestname)
+        flay.addRow("", QLabel("(leave blank to share between tests)"))
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -687,6 +702,8 @@ class AddCommentBox(QDialog):
                     self.DE.setCheckState(Qt.Unchecked)
                 else:
                     self.SB.setValue(int(com["delta"]))
+            if com["testname"]:
+                self.TEtestname.setText(com["testname"])
         # TODO: ideally we would do this on TE change signal
         if commentHasMultipleQTags(com):
             self.QSpecific.setEnabled(False)
