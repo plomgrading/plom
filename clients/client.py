@@ -116,10 +116,6 @@ class Chooser(QDialog):
         # Have Messenger login into to server
         messenger.setServerDetails(server, mport)
         messenger.startMessenger()
-        print(">>>> CBM - I'm trying stuff out <<<<")
-        print("Name = ", messenger.getInfoShortName())
-        print("[P,V] = ", messenger.getInfoPagesVersions())
-        print(">>>> Did it work? <<<<")
 
         try:
             messenger.requestAndSaveToken(user, pwd)
