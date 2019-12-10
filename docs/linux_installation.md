@@ -40,7 +40,7 @@ Ubuntu
 
 Some stuff from the package manager:
 ```
-  # sudo apt-get install parallel zbar-tools cmake \
+  # sudo apt-get install parallel zbar-tools cmake imagemagick \
                          python3-passlib python3-seaborn python3-pandas \
                          python3-pyqt5 python3-pyqt5.qtsql \
                          python3-peewee python3-pyqrcode python3-png
