@@ -39,10 +39,12 @@ Ubuntu
 
 Some stuff from the package manager:
 ```
-  # sudo apt-get install parallel zbar-tools cmake imagemagick \
-                         python3-passlib python3-seaborn python3-pandas \
-                         python3-pyqt5 python3-pyqt5.qtsql python3-peewee \
-                         python3-pyqrcode python3-png python3-requests-toolbelt
+  # sudo apt-get install \
+        parallel zbar-tools cmake make imagemagick dvipng g++ \
+        python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
+        python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
+        python3-pip python3-setuptools python3-wheel python3-requests-toolbelt \
+        texlive-latex-extra python3-peewee
 ```
 (Ubuntu 18.04 has python3-opencv: older systems may need `pip3`)
 
