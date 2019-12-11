@@ -44,10 +44,9 @@ Some stuff from the package manager:
         parallel zbar-tools cmake make imagemagick dvipng g++ \
         python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
         python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
-        python3-pip python3-setuptools python3-wheel texlive-latex-extra
+        python3-pip python3-setuptools python3-wheel texlive-latex-extra \
+        python3-opencv
 ```
-(Ubuntu 18.04 has python3-opencv: older systems may need `pip3`)
-
 These (and others) should work from the package manager but pip pulls them
 in anyway, not sure why.
 ```
@@ -57,8 +56,8 @@ in anyway, not sure why.
 Other stuff we get from pip:
 ```
   # sudo apt-get install python3-pip
-  # pip3 install --upgrade --user wsgidav easywebdav2 pymupdf \
-                                  weasyprint imutils lapsolver
+  # pip3 install --upgrade --user wsgidav easywebdav2 pymupdf weasyprint \
+                                  imutils lapsolver tensorflow
 ```
 Ubuntu 16.04 also needs:
 ```
