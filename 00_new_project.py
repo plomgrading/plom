@@ -55,7 +55,7 @@ files += [
     "build/001_startHere.py",
     "build/002_verifySpec.py",
     "build/003_buildPlomDB.py",
-    "build/004a_buildPDFs.py",
+    "build/004_buildPDFs.py",
     "build/004a_buildPDFs_no_names.py",
     "build/004b_buildPDF_with_names.py",
     "build/cleanAll.py",

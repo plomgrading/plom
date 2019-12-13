@@ -60,7 +60,7 @@ class Page(Model):
 
 # Data for question-groups
 class MarkData(Model):
-    gid = ForeignKeyField(Group, backref="mdata")
+    gid = ForeignKeyField(Group, backref="markdata")
     groupNumber = IntegerField(null=False)
     version = IntegerField(null=False)
     annotatedFile = CharField(null=True)
@@ -75,14 +75,14 @@ class MarkData(Model):
 class UnknownPages(Model):
     annotatedFile = CharField(null=True)
     md5sum = CharField()
-    test = ForeignKeyField(Test, backref="pages")
+    test = ForeignKeyField(Test, backref="unknownPages")
 
     class Meta:
         database = plomdb
 
 
 class DuplicatePages(Model):
-    test = ForeignKeyField(Test, backref="pages")
+    test = ForeignKeyField(Test, backref="duplicatePages")
     pageNumber = IntegerField(null=False)
     version = IntegerField(default=1)
     originalFile = CharField(null=True)
@@ -208,7 +208,7 @@ class PlomDB:
         if tref is None:
             return
         for p in tref.pages:
-            print(p.pageNumber, p.version, p.gid)
+            print(p.pageNumber, p.version, p.group.gid)
 
     def getPageVersions(self, t):
         tref = Test.get_or_none(testNumber=t)
