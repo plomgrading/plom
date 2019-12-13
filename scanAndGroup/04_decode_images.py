@@ -352,7 +352,7 @@ def addCurrentScansToExamsScanned():
                 # copy the file into place
                 # eventually we should move it instead of copying it.
                 # save on disc space?
-                shutil.copy(
+                shutil.copyfile(
                     fn,
                     "../decodedPages/page_{}/version_{}/t{}p{}v{}.png".format(
                         str(p).zfill(2),
