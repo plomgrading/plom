@@ -41,6 +41,7 @@ class Group(Model):
     class Meta:
         database = plomdb
 
+
 # Data for question-groups
 class MarkData(Model):
     gid = ForeignKeyField(Group, backref="markdata")
@@ -62,7 +63,8 @@ class Page(Model):
     pageNumber = IntegerField(null=False)
     pid = CharField(unique=True)  # to ensure uniqueness
     version = IntegerField(default=1)
-    originalFile = CharField(null=True)
+    originalName = CharField(null=True)
+    fileName = CharField(null=True)
     md5sum = CharField(null=True)  # to check for duplications
     # flags
     scanned = BooleanField(default=False)
@@ -70,27 +72,29 @@ class Page(Model):
     class Meta:
         database = plomdb
 
+
 # Duplicate pages know where they should be... but not assigned to a group
 # until we resolve their duplicatedness.
 class DuplicatePages(Model):
     test = ForeignKeyField(Test, backref="duplicatePages")
     pageNumber = IntegerField(null=False)
     version = IntegerField(default=1)
-    originalFile = CharField(null=True)
+    originalName = CharField(null=True)
+    fileName = CharField(null=True)
     md5sum = CharField()
 
     class Meta:
         database = plomdb
 
-# Unknown pages are basically just the file.
+
+# Unknown pages are basically just the file        tref = Test.get_or_none(testNumber=t)
 class UnknownPages(Model):
-    originalFile = CharField(null=True)
+    originalName = CharField(null=True)
+    fileName = CharField(null=True)
     md5sum = CharField()
 
     class Meta:
         database = plomdb
-
-
 
 
 class PlomDB:
@@ -120,7 +124,8 @@ class PlomDB:
                         pageNumber=p,
                         version=v,
                         pid="t{}p{}".format(t, p),
-                        originalFile="",
+                        originalName="",
+                        fileName="",
                     )
                 except IntegrityError as e:
                     print("Page {} for test {} already exists.".format(p, t))
@@ -249,3 +254,19 @@ class PlomDB:
             tref.studentName = sname
             tref.identified = True
             tref.save()
+
+    def uploadKnownPage(self, t, p, v, oname, nname, md5):
+        tref = Test.get_or_none(testNumber=t)
+        if tref is None:
+            return [False, "Cannot find test"]
+        pref = Page.get_or_none(test=tref, pageNumber=p, version=v)
+        if pref is None:
+            return [False, "Cannot find page,version"]
+        with plomdb.atomic():
+            pref.originalName = oname
+            pref.fileName = nname
+            pref.md5sum = md5
+            pref.scanned = True
+            pref.save()
+
+        return [True, pref]

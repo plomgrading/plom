@@ -7,10 +7,75 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import os
 from glob import glob
+import hashlib
+import json
+import os
+import requests
+from requests_toolbelt import MultipartEncoder
+import ssl
+import urllib3
+import threading
 
+# ----------------------
+from plom_exceptions import *
 from specParser import SpecParser
+
+_userName = "kenneth"
+
+# ----------------------
+
+
+# If we use unverified ssl certificates we get lots of warnings,
+# so put in this to hide them.
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+sslContext.check_hostname = False
+# Server defaults
+server = "0.0.0.0"
+message_port = 41984
+SRmutex = threading.Lock()
+
+
+# ----------------------
+
+
+def uploadKnownPage(code, test, page, version, sname, fname, md5sum):
+    SRmutex.acquire()
+    try:
+        param = {
+            "user": _userName,
+            "fileName": sname,
+            "test": test,
+            "page": page,
+            "version": version,
+            "md5sum": md5sum,
+        }
+        dat = MultipartEncoder(
+            fields={
+                "param": json.dumps(param),
+                "originalImage": (sname, open(fname, "rb"), "image/png"),  # image
+            }
+        )
+        response = session.put(
+            "https://{}:{}/admin/knownPages/{}".format(server, message_port, code),
+            data=dat,
+            headers={"Content-Type": dat.content_type},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return True
+
+
+# ----------------------
 
 
 def buildDirectories(spec):
@@ -56,15 +121,18 @@ def extractTPV(name):
 
 def sendFiles(fileList):
     for fname in fileList:
-        sname = os.path.split(fname)[1]
-        ts, ps, vs = extractTPV(sname)
+        shortName = os.path.split(fname)[1]
+        ts, ps, vs = extractTPV(shortName)
         # print("**********************")
-        print("Upload {},{},{} = {} to server".format(ts, ps, vs, sname))
+        print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
         print(
             "If successful then move {} to sentPages subdirectory else move to problemImages".format(
-                sname
+                shortName
             )
         )
+        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+        code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
+        uploadKnownPage(code, int(ts), int(ps), int(vs), shortName, fname, md5)
 
 
 if __name__ == "__main__":
@@ -72,6 +140,8 @@ if __name__ == "__main__":
     # Look for pages in decodedPages
     spec = SpecParser().spec
     buildDirectories(spec)
+    session = requests.Session()
+    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
 
     for p in range(1, spec["numberOfPages"] + 1):
         sp = str(p).zfill(2)
