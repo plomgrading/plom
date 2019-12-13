@@ -17,13 +17,13 @@ Tested on Fedora 31.  Some stuff from the package manager:
                      python3-jsmin python3-defusedxml python3-yaml \
                      python3-urllib3 python3-more-itertools \
                      python3-seaborn python3-matplotlib-qt5 python3-aiohttp \
-                     python3-peewee python3-pandas python3-requests-toolbelt
+                     python3-peewee python3-pandas python3-requests-toolbelt \
+                     python3-pip python3-toml python3-weasyprint
 ```
-Fedora's [python3-weasyprint is too old](https://bugzilla.redhat.com/show_bug.cgi?id=1475749).
 
 Other stuff we install locally with `pip`:
 ```
-  # pip3 install --upgrade --user pyqrcode cheroot Weasyprint
+  # pip3 install --upgrade --user pyqrcode cheroot
 ```
 
 More dependencies for the tensorflow-based ID reader:
@@ -39,24 +39,25 @@ Ubuntu
 
 Some stuff from the package manager:
 ```
-  # sudo apt-get install parallel zbar-tools cmake imagemagick \
-                         python3-passlib python3-seaborn python3-pandas \
-                         python3-pyqt5 python3-pyqt5.qtsql python3-peewee \
-                         python3-pyqrcode python3-png python3-requests-toolbelt
+  # sudo apt install \
+        parallel zbar-tools cmake make imagemagick dvipng g++ \
+        python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
+        python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
+        python3-pip python3-setuptools python3-wheel python3-toml \
+        python3-requests-toolbelt python3-opencv texlive-latex-extra \
+        python3-peewee
 ```
-(Ubuntu 18.04 has python3-opencv: older systems may need `pip3`)
-
 These (and others) should work from the package manager but pip pulls them
 in anyway, not sure why.
 ```
-  # sudo apt-get install python3-defusedxml python3-jsmin python3-cairosvg
+  # sudo apt install python3-defusedxml python3-jsmin python3-cairosvg
 ```
 
 Other stuff we get from pip:
 ```
-  # sudo apt-get install python3-pip
   # pip3 install --upgrade pip
-  # python3 -m pip install --upgrade --user pymupdf weasyprint imutils lapsolver aiohttp
+  # python3 -m pip install --upgrade --user \
+        pymupdf weasyprint imutils aiohttp lapsolver tensorflow
 ```
 (Note `python3 -m pip` to use the newly upgraded pip).
 
