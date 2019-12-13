@@ -520,25 +520,30 @@ class Annotator(QDialog):
         # If the mark-handler widget sent us here, it takes care
         # of its own styling - so we update the little tool-tip
         # and set current button to none.
+        print("SENDER: {}, type={}".format(str(self.sender()), type(self.sender())))
         if isinstance(self.sender(), QPushButton):
             # has come from mark-change button in handler, so
             # set button=none, since markHandler does its own styling
             self.currentButton = None
-        else:
+        elif isinstance(self.sender(), QToolButton):
+            self.currentButton = self.sender()
+            self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
+            # make sure comment button style is cleared
+            self.ui.commentButton.setStyleSheet("")
+        elif self.sender() is self.commentW.CL:
+            self.markHandler.clearButtonStyle()
+            self.commentW.CL.setStyleSheet(self.currentButtonStyleOutline)
+            self.ui.commentButton.setStyleSheet(self.currentButtonStyleBackground)
+        elif self.sender() is self.markHandler:
             # Clear the style of the mark-handler (this will mostly not do
             # anything, but saves us testing if we had styled it)
             self.markHandler.clearButtonStyle()
-            # the current button = whoever sent us here.
-            self.currentButton = self.sender()
-            # Set the style of that button - be careful of the
-            # comment list - since it needs different styling
-            if self.currentButton == self.commentW.CL:
-                self.currentButton.setStyleSheet(self.currentButtonStyleOutline)
-                self.ui.commentButton.setStyleSheet(self.currentButtonStyleBackground)
-            else:
-                self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
-                # make sure comment button style is cleared
-                self.ui.commentButton.setStyleSheet("")
+            print("DO WE EVERY GET HERE?")
+            # TODO: should we go that markHandler.clear stuff in other cases too?
+        else:
+            # Now Whut?
+            print("THE SCARY PLACE!!!")
+            pass
         # pass the new mode to the graphicsview, and set the cursor in view
         self.scene.setMode(newMode)
         self.view.setCursor(newCursor)
