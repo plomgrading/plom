@@ -17,7 +17,8 @@ Tested on Fedora 31.  Some stuff from the package manager:
                      python3-jsmin python3-defusedxml python3-yaml \
                      python3-urllib3 python3-more-itertools \
                      python3-seaborn python3-matplotlib-qt5 python3-aiohttp \
-                     python3-peewee python3-pandas python3-requests-toolbelt
+                     python3-peewee python3-pandas python3-requests-toolbelt \
+                     python3-toml
 ```
 Fedora's [python3-weasyprint is too old](https://bugzilla.redhat.com/show_bug.cgi?id=1475749).
 
@@ -43,8 +44,9 @@ Some stuff from the package manager:
         parallel zbar-tools cmake make imagemagick dvipng g++ \
         python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
         python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
-        python3-pip python3-setuptools python3-wheel python3-requests-toolbelt \
-        python3-opencv texlive-latex-extra python3-peewee
+        python3-pip python3-setuptools python3-wheel python3-toml \
+        python3-requests-toolbelt python3-opencv texlive-latex-extra \
+        python3-peewee
 ```
 These (and others) should work from the package manager but pip pulls them
 in anyway, not sure why.
