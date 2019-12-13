@@ -41,6 +41,19 @@ class Group(Model):
     class Meta:
         database = plomdb
 
+# Data for question-groups
+class MarkData(Model):
+    gid = ForeignKeyField(Group, backref="markdata")
+    groupNumber = IntegerField(null=False)
+    version = IntegerField(null=False)
+    annotatedFile = CharField(null=True)
+    mark = IntegerField(null=True)
+    # flags
+    marked = BooleanField(default=False)
+
+    class Meta:
+        database = plomdb
+
 
 # Page knows its group and its test
 class Page(Model):
@@ -57,30 +70,8 @@ class Page(Model):
     class Meta:
         database = plomdb
 
-
-# Data for question-groups
-class MarkData(Model):
-    gid = ForeignKeyField(Group, backref="markdata")
-    groupNumber = IntegerField(null=False)
-    version = IntegerField(null=False)
-    annotatedFile = CharField(null=True)
-    mark = IntegerField(null=True)
-    # flags
-    marked = BooleanField(default=False)
-
-    class Meta:
-        database = plomdb
-
-
-class UnknownPages(Model):
-    annotatedFile = CharField(null=True)
-    md5sum = CharField()
-    test = ForeignKeyField(Test, backref="unknownPages")
-
-    class Meta:
-        database = plomdb
-
-
+# Duplicate pages know where they should be... but not assigned to a group
+# until we resolve their duplicatedness.
 class DuplicatePages(Model):
     test = ForeignKeyField(Test, backref="duplicatePages")
     pageNumber = IntegerField(null=False)
@@ -90,6 +81,16 @@ class DuplicatePages(Model):
 
     class Meta:
         database = plomdb
+
+# Unknown pages are basically just the file.
+class UnknownPages(Model):
+    originalFile = CharField(null=True)
+    md5sum = CharField()
+
+    class Meta:
+        database = plomdb
+
+
 
 
 class PlomDB:
