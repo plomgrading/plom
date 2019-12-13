@@ -39,7 +39,7 @@ Ubuntu
 
 Some stuff from the package manager:
 ```
-  # sudo apt-get install \
+  # sudo apt install \
         parallel zbar-tools cmake make imagemagick dvipng g++ \
         python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
         python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
@@ -50,7 +50,7 @@ Some stuff from the package manager:
 These (and others) should work from the package manager but pip pulls them
 in anyway, not sure why.
 ```
-  # sudo apt-get install python3-defusedxml python3-jsmin python3-cairosvg
+  # sudo apt install python3-defusedxml python3-jsmin python3-cairosvg
 ```
 
 Other stuff we get from pip:
