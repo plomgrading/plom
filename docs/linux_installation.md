@@ -55,7 +55,6 @@ in anyway, not sure why.
 
 Other stuff we get from pip:
 ```
-  # sudo apt-get install python3-pip
   # pip3 install --upgrade pip
   # python3 -m pip install --upgrade --user \
         pymupdf weasyprint imutils aiohttp lapsolver tensorflow
