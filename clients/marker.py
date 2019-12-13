@@ -147,9 +147,17 @@ class BackgroundUploader(QThread):
             from queue import Empty as EmptyQueueException
 
             try:
-                code, gr, aname, pname, cname, mtime, pg, ver, tags = (
-                    self.q.get_nowait()
-                )
+                (
+                    code,
+                    gr,
+                    aname,
+                    pname,
+                    cname,
+                    mtime,
+                    pg,
+                    ver,
+                    tags,
+                ) = self.q.get_nowait()
             except EmptyQueueException:
                 return
             print(
@@ -292,6 +300,16 @@ class ProxyModel(QSortFilterProxyModel):
         QSortFilterProxyModel.__init__(self, parent)
         self.setFilterKeyColumn(4)
         self.filterString = ""
+
+    def lessThan(self, left, right):
+        # Check to see if data is integer, and compare that
+        try:
+            lv = int(left.data())
+            rv = int(right.data())
+            return lv < rv
+        except ValueError:
+            # else let qt handle it.
+            return left.data() < right.data()
 
     def setFilterString(self, flt):
         self.filterString = flt
@@ -822,12 +840,7 @@ class MarkerClient(QWidget):
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
-            fname,
-            self.maxScore,
-            markStyle,
-            mouseHand,
-            parent=self,
-            plomDict=pdict,
+            fname, self.maxScore, markStyle, mouseHand, parent=self, plomDict=pdict,
         )
         # run the annotator
         if annotator.exec_():
@@ -1021,7 +1034,7 @@ class MarkerClient(QWidget):
         self.DNF()
         # Then send a 'user closing' message - server will revoke
         # authentication token.
-        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        (msg,) = messenger.SRMsg(["UCL", self.userName, self.token])
         assert msg == "ACK"
         # set marking style, mousehand for return to client/parent
         markStyle = self.ui.markStyleGroup.checkedId()  # TODO
