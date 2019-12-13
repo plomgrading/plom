@@ -18,13 +18,12 @@ Tested on Fedora 31.  Some stuff from the package manager:
                      python3-urllib3 python3-more-itertools \
                      python3-seaborn python3-matplotlib-qt5 python3-aiohttp \
                      python3-peewee python3-pandas python3-requests-toolbelt \
-                     python3-toml
+                     python3-toml python3-weasyprint
 ```
-Fedora's [python3-weasyprint is too old](https://bugzilla.redhat.com/show_bug.cgi?id=1475749).
 
 Other stuff we install locally with `pip`:
 ```
-  # pip3 install --upgrade --user pyqrcode cheroot Weasyprint
+  # pip3 install --upgrade --user pyqrcode cheroot
 ```
 
 More dependencies for the tensorflow-based ID reader:
