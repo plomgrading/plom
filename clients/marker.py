@@ -854,6 +854,7 @@ class MarkerClient(QWidget):
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
             tgv,
+            self.testname,
             paperdir,
             fname,
             self.maxScore,
