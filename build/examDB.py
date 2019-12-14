@@ -42,7 +42,7 @@ class Group(Model):
         database = plomdb
 
 
-# Data for question-groups
+# Data for question-groupsWe have the CPU time.We have the CPU time.
 class MarkData(Model):
     gid = ForeignKeyField(Group, backref="markdata")
     groupNumber = IntegerField(null=False)
@@ -73,12 +73,10 @@ class Page(Model):
         database = plomdb
 
 
-# Duplicate pages know where they should be... but not assigned to a group
-# until we resolve their duplicatedness.
+# Duplicate pages should be attached to the page their are duplicating
+# When duplication status resolved we can move them about.
 class DuplicatePages(Model):
-    test = ForeignKeyField(Test, backref="duplicatePages")
-    pageNumber = IntegerField(null=False)
-    version = IntegerField(default=1)
+    page = ForeignKeyField(Page, backref="duplicates")
     originalName = CharField(null=True)
     fileName = CharField(null=True)
     md5sum = CharField()
@@ -87,7 +85,7 @@ class DuplicatePages(Model):
         database = plomdb
 
 
-# Unknown pages are basically just the file        tref = Test.get_or_none(testNumber=t)
+# Unknown pages are basically just the file
 class UnknownPages(Model):
     originalName = CharField(null=True)
     fileName = CharField(null=True)
