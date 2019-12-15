@@ -40,7 +40,6 @@ async def uploadKnownPage(request):
     if part0 is None:  # weird error
         return web.Response(status=406)  # should have sent 3 parts
     param = await part0.json()
-    print(param)
 
     part1 = await reader.next()  # should be the image file
     if part1 is None:  # weird error
@@ -96,7 +95,6 @@ class Server(object):
             md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
             assert md5n == md5o
             print("Storing {} as {} = {}".format(pref, newName, val))
-            print("From database = {}".format(val[1]))
         else:
             print("Did not store page")
             print("From database = {}".format(val[1]))

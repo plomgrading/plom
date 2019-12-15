@@ -177,9 +177,16 @@ class PlomDB:
         gid = "d{}".format(str(t).zfill(4))
         # make the dnmgroup
         try:
-            gref = Group.create(
-                test=tref, gid=gid, groupType="d", version=1
-            )  # must be unique
+            # A DNM group may have 0 pages, in that case mark it as scanned
+            if len(pages) == 0:
+                gref = Group.create(
+                    test=tref, gid=gid, groupType="d", version=1, scanned=True
+                )
+            else:
+                gref = Group.create(
+                    test=tref, gid=gid, groupType="d", version=1
+                )  # must be unique
+
         except IntegrityError as e:
             print("Group {} of Test {} already exists.".format(gid, t))
             return False
@@ -274,6 +281,40 @@ class PlomDB:
             tref.identified = True
             tref.save()
 
+    def checkTestAllUploaded(self, gref):
+        tref = gref.test
+        sflag = True
+        for g in tref.groups:
+            if g.scanned == False:
+                # TODO - deal with empty DO NOT MARK groups correctly
+                sflag = False
+                print("\t Group {} not scanned".format(g.gid))
+                break
+        with plomdb.atomic():
+            if sflag:
+                tref.scanned = True
+                print("Test {} is all scanned".format(tref.testNumber))
+            else:
+                tref.scanned = False
+            tref.save()
+
+    def checkGroupAllUploaded(self, pref):
+        gref = pref.group
+        sflag = True
+        for p in gref.pages:
+            if p.scanned == False:
+                sflag = False
+                break
+        with plomdb.atomic():
+            if sflag:
+                gref.scanned = True
+                print("Group {} is all scanned".format(gref.gid))
+            else:
+                gref.scanned = False
+            gref.save()
+        if sflag:
+            self.checkTestAllUploaded(gref)
+
     def uploadKnownPage(self, t, p, v, oname, nname, md5):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
@@ -287,7 +328,7 @@ class PlomDB:
             if md5 == pref.md5sum:
                 # Exact duplicate - md5sum of this image is sames as the one already in database
                 return [False, "Exact duplicate of page already in database"]
-            # deal with duplicate page
+            # TODO - deal with duplicate page
             return [True, "Is duplicate of {} {} {}".format(t, p, v)]
         else:
             with plomdb.atomic():
@@ -296,4 +337,5 @@ class PlomDB:
                 pref.md5sum = md5
                 pref.scanned = True
                 pref.save()
-                return [True, pref.pid]
+            self.checkGroupAllUploaded(pref)
+            return [True, pref.pid]
