@@ -68,6 +68,7 @@ class Page(Model):
     md5sum = CharField(null=True)  # to check for duplications
     # flags
     scanned = BooleanField(default=False)
+    hasDuplicates = BooleanField(default=False)
 
     class Meta:
         database = plomdb
@@ -315,6 +316,17 @@ class PlomDB:
         if sflag:
             self.checkTestAllUploaded(gref)
 
+    def uploadDuplicatePage(self, pref, oname, nname, md5):
+        for dp in pref.duplicates:
+            if dp.md5sum == md5:
+                return [False, "Exact duplicate of duplicate-page already in database"]
+        with plomdb.atomic():
+            dpref = DuplicatePages.create(
+                page=pref, originalName=oname, fileName=nname, md5sum=md5
+            )
+            pref.hasDuplicates = True
+        return [True, "Is duplicate of page {}".format(pref.pid)]
+
     def uploadKnownPage(self, t, p, v, oname, nname, md5):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
@@ -329,7 +341,7 @@ class PlomDB:
                 # Exact duplicate - md5sum of this image is sames as the one already in database
                 return [False, "Exact duplicate of page already in database"]
             # TODO - deal with duplicate page
-            return [True, "Is duplicate of {} {} {}".format(t, p, v)]
+            return self.uploadDuplicatePage(pref, oname, nname, md5)
         else:
             with plomdb.atomic():
                 pref.originalName = oname
@@ -338,4 +350,4 @@ class PlomDB:
                 pref.scanned = True
                 pref.save()
             self.checkGroupAllUploaded(pref)
-            return [True, pref.pid]
+            return [True, "Page saved as {}".format(pref.pid)]

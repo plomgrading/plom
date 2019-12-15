@@ -3,6 +3,8 @@ __copyright__ = "Copyright (C) 2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
+# TODO - directory structure!
+
 # ----------------------
 
 from aiohttp import web, MultipartWriter, MultipartReader
@@ -85,7 +87,7 @@ class Server(object):
         pref = "t{}p{}v{}".format(str(t).zfill(4), str(p).zfill(2), v)
         while True:
             collide = "." + str(uuid.uuid4())[:8]
-            newName = "originalPages/" + pref + collide + ".png"
+            newName = "pages/originalPages/" + pref + collide + ".png"
             if not os.path.isfile(newName):
                 break
         val = self.DB.uploadKnownPage(t, p, v, fname, newName, md5o)
