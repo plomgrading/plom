@@ -281,11 +281,19 @@ class PlomDB:
         pref = Page.get_or_none(test=tref, pageNumber=p, version=v)
         if pref is None:
             return [False, "Cannot find page,version"]
-        with plomdb.atomic():
-            pref.originalName = oname
-            pref.fileName = nname
-            pref.md5sum = md5
-            pref.scanned = True
-            pref.save()
-
-        return [True, pref]
+        if pref.scanned:
+            # have already loaded an image for this page - so this is actually a duplicate
+            print("This appears to be a duplicate. Checking md5sums")
+            if md5 == pref.md5sum:
+                # Exact duplicate - md5sum of this image is sames as the one already in database
+                return [False, "Exact duplicate of page already in database"]
+            # deal with duplicate page
+            return [True, "Is duplicate of {} {} {}".format(t, p, v)]
+        else:
+            with plomdb.atomic():
+                pref.originalName = oname
+                pref.fileName = nname
+                pref.md5sum = md5
+                pref.scanned = True
+                pref.save()
+                return [True, pref.pid]

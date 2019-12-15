@@ -89,14 +89,18 @@ class Server(object):
             newName = "originalPages/" + pref + collide + ".png"
             if not os.path.isfile(newName):
                 break
-
-        with open(newName, "wb") as fh:
-            fh.write(image)
-        md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
-        assert md5n == md5o
-
-        val = self.DB.uploadKnownPage(t, p, v, fname, newName, md5n)
-        print("Storing {} as {} = {}".format(pref, newName, val))
+        val = self.DB.uploadKnownPage(t, p, v, fname, newName, md5o)
+        if val[0]:
+            with open(newName, "wb") as fh:
+                fh.write(image)
+            md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
+            assert md5n == md5o
+            print("Storing {} as {} = {}".format(pref, newName, val))
+            print("From database = {}".format(val[1]))
+        else:
+            print("Did not store page")
+            print("From database = {}".format(val[1]))
+        return val
 
 
 examDB = PlomDB()
