@@ -95,11 +95,32 @@ class UnknownPages(Model):
         database = plomdb
 
 
+# Discarded pages are basically just the file and a reason
+# reason could be "garbage", "duplicate of tpv-code", ...?
+class DiscardedPages(Model):
+    originalName = CharField(null=True)
+    fileName = CharField(null=True)
+    md5sum = CharField()
+    reason = CharField()
+    tpv = CharField(null=True)  # if the discard is a duplicate of a given tpv
+
+    class Meta:
+        database = plomdb
+
+
 class PlomDB:
     def __init__(self):
         with plomdb:
             plomdb.create_tables(
-                [Test, Group, MarkData, Page, UnknownPages, DuplicatePages]
+                [
+                    Test,
+                    Group,
+                    MarkData,
+                    Page,
+                    UnknownPages,
+                    DuplicatePages,
+                    DiscardedPages,
+                ]
             )
 
     def createTest(self, t):
