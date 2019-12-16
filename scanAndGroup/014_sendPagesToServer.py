@@ -13,6 +13,7 @@ import json
 import os
 import requests
 from requests_toolbelt import MultipartEncoder
+import shutil
 import ssl
 import urllib3
 import threading
@@ -81,7 +82,7 @@ def uploadKnownPage(code, test, page, version, sname, fname, md5sum):
 def buildDirectories(spec):
     """Build the directories that this script needs"""
     # the list of directories. Might need updating.
-    lst = ["sentPages", "sentPages/problemImages"]
+    lst = ["sentPages", "discardedPages", "collidingPages"]
     for dir in lst:
         try:
             os.mkdir(dir)
@@ -121,20 +122,24 @@ def extractTPV(name):
 
 def doFiling(rmsg, ts, ps, vs, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
-        print(rmsg[2])
-        print("Todo - mv {} to pages/originalPages/".format(shortName))
+        # print(rmsg[2])
+        shutil.move(
+            fname, "sentPages/page_{}/version_{}/{}".format(ps.zfill(2), vs, shortName)
+        )
+        shutil.move(
+            fname + ".qr",
+            "sentPages/page_{}/version_{}/{}.qr".format(ps.zfill(2), vs, shortName),
+        )
     else:  # msg = [False, reason, message]
         if rmsg[1] == "duplicate":
             print(rmsg[2])
-            print("Todo - mv {} to pages/discardedPages/".format(shortName))
-            pass
+            shutil.move(fname, "discardedPages/{}".format(shortName))
+            shutil.move(fname + ".qr", "discardedPages/{}.qr".format(shortName))
+
         elif rmsg[1] == "collision":
             print(rmsg[2])
-            print(
-                "Todo - mv {} to pages/duplicatePages and tell user to review before running 015 = uploadDuplicatePages script (not yet coded)".format(
-                    shortName
-                )
-            )
+            shutil.move(fname, "collidingPages/{}".format(shortName))
+            shutil.move(fname + ".qr", "collidingPages/{}.qr".format(shortName))
         # now bad errors
         elif rmsg[1] == "testError":
             print(rmsg[2])
@@ -148,13 +153,7 @@ def sendFiles(fileList):
     for fname in fileList:
         shortName = os.path.split(fname)[1]
         ts, ps, vs = extractTPV(shortName)
-        # print("**********************")
         print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
-        print(
-            "If successful then move {} to sentPages subdirectory else move to problemImages".format(
-                shortName
-            )
-        )
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
         rmsg = uploadKnownPage(code, int(ts), int(ps), int(vs), shortName, fname, md5)
