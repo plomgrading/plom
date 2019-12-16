@@ -142,7 +142,7 @@ def doFiling(rmsg, ts, ps, vs, shortName, fname):
             shutil.move(fname, nname)
             shutil.move(fname + ".qr", nname + ".qr".format(shortName))
             # and write the name of the colliding file
-            with open("nname" + ".collide", "w+") as fh:
+            with open(nname + ".collide", "w+") as fh:
                 fh.write(rmsg[2])
         # now bad errors
         elif rmsg[1] == "testError":
