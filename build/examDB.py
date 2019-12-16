@@ -324,7 +324,9 @@ class PlomDB:
             dpref = DuplicatePages.create(
                 page=pref, originalName=oname, fileName=nname, md5sum=md5
             )
+            dpref.save()
             pref.hasDuplicates = True
+            pref.save()
         return [True, "Is duplicate of page {}".format(pref.pid)]
 
     def uploadKnownPage(self, t, p, v, oname, nname, md5):
