@@ -72,7 +72,7 @@ def uploadKnownPage(code, test, page, version, sname, fname, md5sum):
     finally:
         SRmutex.release()
 
-    return True
+    return response.json()
 
 
 # ----------------------
@@ -119,6 +119,29 @@ def extractTPV(name):
     return (ts, ps, vs)
 
 
+def doFiling(rmsg, ts, ps, vs, shortName, fname):
+    if rmsg[0]:  # msg should be [True, "success", success message]
+        print(rms[2])
+        print("Todo - mv {} to pages/originalPages/")
+    else:  # msg = [False, reason, message]
+        if rmsg[1] == "duplicate":
+            print(rmsg[2])
+            print("Todo - mv {} to pages/discardedPages/")
+            pass
+        elif rmsg[1] == "collision":
+            print(rmsg[2])
+            print(
+                "Todo - mv {} to pages/duplicatePages and tell user to review before running 015 = uploadDuplicatePages script (not yet coded)"
+            )
+        # now bad errors
+        elif rmsg[1] == "testError":
+            print(rmsg[2])
+            print("This should not happen - todo = log error in sensible way")
+        elif rmsg[1] == "pageError":
+            print(rmsg[2])
+            print("This should not happen - todo = log error in sensible way")
+
+
 def sendFiles(fileList):
     for fname in fileList:
         shortName = os.path.split(fname)[1]
@@ -132,7 +155,8 @@ def sendFiles(fileList):
         )
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
-        uploadKnownPage(code, int(ts), int(ps), int(vs), shortName, fname, md5)
+        rmsg = uploadKnownPage(code, int(ts), int(ps), int(vs), shortName, fname, md5)
+        doFiling(rmsg, ts, ps, vs, shortName, fname)
 
 
 if __name__ == "__main__":
@@ -152,4 +176,4 @@ if __name__ == "__main__":
             if not os.path.isdir("decodedPages/page_{}/version_{}".format(sp, v)):
                 continue
             fileList = glob("decodedPages/page_{}/version_{}/t*.png".format(sp, v))
-            sendFiles(fileList)
+            rmsg = sendFiles(fileList)

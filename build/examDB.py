@@ -178,10 +178,15 @@ class PlomDB:
         gid = "d{}".format(str(t).zfill(4))
         # make the dnmgroup
         try:
-            # A DNM group may have 0 pages, in that case mark it as scanned
+            # A DNM group may have 0 pages, in that case mark it as scanned and set status = "complete"
             if len(pages) == 0:
                 gref = Group.create(
-                    test=tref, gid=gid, groupType="d", version=1, scanned=True
+                    test=tref,
+                    gid=gid,
+                    groupType="d",
+                    version=1,
+                    scanned=True,
+                    status="complete",
                 )
             else:
                 gref = Group.create(
@@ -282,6 +287,42 @@ class PlomDB:
             tref.identified = True
             tref.save()
 
+    # ---------------
+    # Functions to handle explicit uploading of duplicate pages
+    # TODO
+    # def checkGroupDuplicateUploaded(self, gref):
+    #
+    #     print(
+    #         "We need to work out how to handle the case where a duplicate page is uploaded to a group that is being processed or already processed."
+    #     )
+    #     # for the moment, I will set the status to
+    #     with plomdb.atomic():
+    #         if gref.groupType=="d":
+    #             # nothing to be done for DNM groups - we don't care about duplicates
+    #             pass
+    #         elif gref.groupType=="i":
+    #             gref.status = None
+    #             gref.
+    #
+    #     pass
+    #
+    # def uploadDuplicatePage(self, pref, oname, nname, md5):
+    #     for dp in pref.duplicates:
+    #         if dp.md5sum == md5:
+    #             return [False, "Exact duplicate of duplicate-page already in database"]
+    #     with plomdb.atomic():
+    #         dpref = DuplicatePages.create(
+    #             page=pref, originalName=oname, fileName=nname, md5sum=md5
+    #         )
+    #         dpref.save()
+    #         pref.hasDuplicates = True
+    #         pref.save()
+    #     self.checkGroupDuplicateUploaded(gref)
+    #     return [True, "Is duplicate of page {}".format(pref.pid)]
+
+    # ---------------
+    # Functions to handle uploading of new pages
+
     def checkTestAllUploaded(self, gref):
         tref = gref.test
         sflag = True
@@ -299,6 +340,29 @@ class PlomDB:
                 tref.scanned = False
             tref.save()
 
+    def setGroupReady(self, gref):
+        if gref.groupType == "i":
+            # check if group already identified - can happen if printed tests with names
+            if gref.status == "identified":
+                print("Group {} is already identified.".format(gref.gid))
+            else:
+                gref.status = "todo"
+                print("Group {} is ready to be identified.".format(gref.gid))
+        elif gref.groupType == "d":
+            # we don't do anything with these groups
+            gref.status = "complete"
+            print(
+                "Group {} is DoNotMark - all scanned, nothing to be done.".format(
+                    gref.gid
+                )
+            )
+        elif gref.groupType == "m":
+            # ToDo - work out logic cleanly here.
+            if gref.status is not None:
+                print("We should never reach here")
+            gref.status = "todo"
+        return gref
+
     def checkGroupAllUploaded(self, pref):
         gref = pref.group
         sflag = True
@@ -309,42 +373,41 @@ class PlomDB:
         with plomdb.atomic():
             if sflag:
                 gref.scanned = True
-                print("Group {} is all scanned".format(gref.gid))
+                gref = self.setGroupReady(gref)
             else:
                 gref.scanned = False
             gref.save()
         if sflag:
             self.checkTestAllUploaded(gref)
 
-    def uploadDuplicatePage(self, pref, oname, nname, md5):
-        for dp in pref.duplicates:
-            if dp.md5sum == md5:
-                return [False, "Exact duplicate of duplicate-page already in database"]
-        with plomdb.atomic():
-            dpref = DuplicatePages.create(
-                page=pref, originalName=oname, fileName=nname, md5sum=md5
-            )
-            dpref.save()
-            pref.hasDuplicates = True
-            pref.save()
-        return [True, "Is duplicate of page {}".format(pref.pid)]
-
     def uploadKnownPage(self, t, p, v, oname, nname, md5):
+        # return value is either [True, <success message>] or
+        # [False, stuff] - but need to distinguish between "discard this image" and "you should perhaps keep this image"
+        # So return either [False, "discard", discard message]
+        # or [False, "keep", keep this image message]
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
-            return [False, "Cannot find test"]
+            return [False, "testError", "Cannot find test {}".format(t)]
         pref = Page.get_or_none(test=tref, pageNumber=p, version=v)
         if pref is None:
-            return [False, "Cannot find page,version"]
+            return [
+                False,
+                "pageError",
+                "Cannot find page,version {} for test {}".format([p, v], t),
+            ]
         if pref.scanned:
             # have already loaded an image for this page - so this is actually a duplicate
             print("This appears to be a duplicate. Checking md5sums")
             if md5 == pref.md5sum:
                 # Exact duplicate - md5sum of this image is sames as the one already in database
-                return [False, "Exact duplicate of page already in database"]
-            # TODO - deal with duplicate page
-            return self.uploadDuplicatePage(pref, oname, nname, md5)
-        else:
+                return [
+                    False,
+                    "duplicate",
+                    "Exact duplicate of page already in database",
+                ]
+            # Deal with duplicate pages separately. return to sender (as it were)
+            return [False, "collision", "{}".format(pref.originalName)]
+        else:  # this is a new page.
             with plomdb.atomic():
                 pref.originalName = oname
                 pref.fileName = nname
@@ -352,4 +415,4 @@ class PlomDB:
                 pref.scanned = True
                 pref.save()
             self.checkGroupAllUploaded(pref)
-            return [True, "Page saved as {}".format(pref.pid)]
+            return [True, "success", "Page saved as {}".format(pref.pid)]
