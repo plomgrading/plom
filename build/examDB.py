@@ -406,6 +406,8 @@ class PlomDB:
                     "Exact duplicate of page already in database",
                 ]
             # Deal with duplicate pages separately. return to sender (as it were)
+            # At present just return "collision" - in future we need to check if this is a new collision
+            # or if it is the duplicate of an existing collision.
             return [False, "collision", "{}".format(pref.originalName)]
         else:  # this is a new page.
             with plomdb.atomic():

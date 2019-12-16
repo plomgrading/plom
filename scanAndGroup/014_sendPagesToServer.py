@@ -121,17 +121,19 @@ def extractTPV(name):
 
 def doFiling(rmsg, ts, ps, vs, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
-        print(rms[2])
-        print("Todo - mv {} to pages/originalPages/")
+        print(rmsg[2])
+        print("Todo - mv {} to pages/originalPages/".format(shortName))
     else:  # msg = [False, reason, message]
         if rmsg[1] == "duplicate":
             print(rmsg[2])
-            print("Todo - mv {} to pages/discardedPages/")
+            print("Todo - mv {} to pages/discardedPages/".format(shortName))
             pass
         elif rmsg[1] == "collision":
             print(rmsg[2])
             print(
-                "Todo - mv {} to pages/duplicatePages and tell user to review before running 015 = uploadDuplicatePages script (not yet coded)"
+                "Todo - mv {} to pages/duplicatePages and tell user to review before running 015 = uploadDuplicatePages script (not yet coded)".format(
+                    shortName
+                )
             )
         # now bad errors
         elif rmsg[1] == "testError":
