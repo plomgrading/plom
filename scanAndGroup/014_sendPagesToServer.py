@@ -138,8 +138,12 @@ def doFiling(rmsg, ts, ps, vs, shortName, fname):
 
         elif rmsg[1] == "collision":
             print(rmsg[2])
-            shutil.move(fname, "collidingPages/{}".format(shortName))
-            shutil.move(fname + ".qr", "collidingPages/{}.qr".format(shortName))
+            nname = "collidingPages/{}".format(shortName)
+            shutil.move(fname, nname)
+            shutil.move(fname + ".qr", nname + ".qr".format(shortName))
+            # and write the name of the colliding file
+            with open("nname" + ".collide", "w+") as fh:
+                fh.write(rmsg[2])
         # now bad errors
         elif rmsg[1] == "testError":
             print(rmsg[2])
@@ -177,4 +181,4 @@ if __name__ == "__main__":
             if not os.path.isdir("decodedPages/page_{}/version_{}".format(sp, v)):
                 continue
             fileList = glob("decodedPages/page_{}/version_{}/t*.png".format(sp, v))
-            rmsg = sendFiles(fileList)
+            sendFiles(fileList)
