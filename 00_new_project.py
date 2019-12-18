@@ -46,7 +46,8 @@ directories += [
 directories += ["clients", "clients/uiFiles", "clients/icons"]
 
 files = [
-    "resources/testspecification.py",
+    "resources/examDB.py",
+    "resources/specParser.py",
     "resources/tpv_utils.py",
     "resources/misc_utils.py",
     "resources/predictionlist.csv",
@@ -62,9 +63,7 @@ files += [
     "build/004a_buildPDFs_no_names.py",
     "build/004b_buildPDF_with_names.py",
     "build/cleanAll.py",
-    "build/examDB.py",
     "build/mergeAndCodePages.py",
-    "build/specParser.py",
     "build/template_testSpec.toml",
 ]
 
