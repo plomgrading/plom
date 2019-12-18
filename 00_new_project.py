@@ -31,10 +31,9 @@ directories += [
     "scanAndGroup/collidingPages",
     "scanAndGroup/decodedPages",
     "scanAndGroup/discardedPages",
-    "scanAndGroup/extraPages/",
-    "scanAndGroup/pageImages/",
+    "scanAndGroup/pageImages",
     "scanAndGroup/scannedExams",
-    "scanAndGroup/sentPages/",
+    "scanAndGroup/sentPages",
 ]
 
 directories += [
@@ -75,7 +74,7 @@ files += [
     "scanAndGroup/012_scansToImages.py",
     "scanAndGroup/013_readQRCodes.py",
     "scanAndGroup/014_sendPagesToServer.py",
-    "scanAndGroup/015_sendDuplicatesToServer.py",
+    "scanAndGroup/015_sendUnknownsToServer.py",
 ]
 
 files += [

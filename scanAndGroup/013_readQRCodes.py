@@ -242,11 +242,11 @@ def checkQRsValid():
         if problemFlag:
             # Difficulty scanning this pageimage so move it
             # to unknownPages
-            print("[F] {0}: {1}".format(fname, msg))
+            print("[F] {0}: {1} - moving to unknownPages".format(fname, msg))
             # move blah.png.qr
             shutil.move(fname, "../unknownPages")
             # move blah.png
-            shutil.move(fname[:-3], "unknownPages")
+            shutil.move(fname[:-3], "../unknownPages")
 
     os.chdir("../")
 
