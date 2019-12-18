@@ -15,6 +15,7 @@ import requests
 from requests_toolbelt import MultipartEncoder
 import shutil
 import ssl
+import sys
 import urllib3
 import threading
 
