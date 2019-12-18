@@ -13,7 +13,8 @@ import subprocess
 import sys
 import toml
 
-from specParser import SpecParser
+sys.path.append("..")
+from resources.specParser import SpecParser
 
 
 def buildDirectories(spec):

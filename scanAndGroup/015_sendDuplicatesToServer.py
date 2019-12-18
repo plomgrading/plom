@@ -25,6 +25,8 @@ _userName = "kenneth"
 
 # ----------------------
 
+print(">> This is still a place-holder script - it currently does nothing. <<")
+
 
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.

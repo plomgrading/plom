@@ -15,11 +15,10 @@ import shutil
 import subprocess
 import sys
 
-from specParser import SpecParser
 
 # this allows us to import from ../resources
 sys.path.append("..")
-
+from resources.specParser import SpecParser
 from tpv_utils import parseTPV, isValidTPV, hasCurrentAPI, getCode, getPosition
 
 

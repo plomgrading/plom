@@ -20,7 +20,9 @@ import threading
 
 # ----------------------
 from plom_exceptions import *
-from specParser import SpecParser
+
+sys.path.append("..")
+from resources.specParser import SpecParser
 
 _userName = "kenneth"
 
