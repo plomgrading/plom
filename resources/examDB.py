@@ -418,3 +418,19 @@ class PlomDB:
                 pref.save()
             self.checkGroupAllUploaded(pref)
             return [True, "success", "Page saved as {}".format(pref.pid)]
+
+    def uploadUnknownPage(self, oname, nname, md5):
+        # return value is either [True, <success message>] or
+        # [False, <duplicate message>]
+        # check if md5 is already in Unknown pages
+        uref = UnknownPages.get_or_none(md5sum=md5)
+        if uref is not None:
+            return [
+                False,
+                "duplicate",
+                "Exact duplicate of page already in database",
+            ]
+        with plomdb.atomic():
+            uref = UnknownPages.create(originalName=oname, fileName=nname, md5sum=md5)
+            uref.save()
+        return [True, "success", "Page saved in unknownPages list"]

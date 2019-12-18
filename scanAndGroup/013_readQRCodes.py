@@ -31,7 +31,7 @@ from resources.tpv_utils import (
 def buildDirectories(spec):
     """Build the directories that this script needs"""
     # the list of directories. Might need updating.
-    lst = ["decodedPages"]
+    lst = ["decodedPages", "unknownPages"]
     for dir in lst:
         try:
             os.mkdir(dir)
@@ -241,12 +241,12 @@ def checkQRsValid():
 
         if problemFlag:
             # Difficulty scanning this pageimage so move it
-            # to problemimages
+            # to unknownPages
             print("[F] {0}: {1}".format(fname, msg))
             # move blah.png.qr
-            shutil.move(fname, "problemImages")
+            shutil.move(fname, "../unknownPages")
             # move blah.png
-            shutil.move(fname[:-3], "problemImages")
+            shutil.move(fname[:-3], "unknownPages")
 
     os.chdir("../")
 
@@ -279,12 +279,12 @@ def validateQRsAgainstSpec(spec):
                         spec["numberOfVersions"],
                     )
                 )
-                print(">> Moving problem files to problemImages")
+                print(">> Moving problem files to unknownPages")
                 # move the blah.png and blah.png.qr
                 # this means that they won't be added to the
                 # list of correctly scanned page images
-                shutil.move(fn, "problemImages")
-                shutil.move(fn + ".qr", "problemImages")
+                shutil.move(fn, "../unknownPages")
+                shutil.move(fn + ".qr", "../unknownPages")
 
 
 def moveScansIntoPlace():

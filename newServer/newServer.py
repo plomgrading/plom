@@ -80,6 +80,24 @@ async def uploadKnownPage(request):
     return web.json_response(rmsg, status=200)  # all good
 
 
+@routes.put("/admin/unknownPages")
+async def uploadKnownPage(request):
+    reader = MultipartReader.from_response(request)
+
+    part0 = await reader.next()  # should be parameters
+    if part0 is None:  # weird error
+        return web.Response(status=406)  # should have sent 3 parts
+    param = await part0.json()
+
+    part1 = await reader.next()  # should be the image file
+    if part1 is None:  # weird error
+        return web.Response(status=406)  # should have sent 3 parts
+    image = await part1.read()
+    # file it away.
+    rmsg = peon.addUnknownPage(param["fileName"], image, param["md5sum"],)
+    return web.json_response(rmsg, status=200)  # all good
+
+
 # ----------------------
 
 
@@ -118,6 +136,26 @@ class Server(object):
             md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
             assert md5n == md5o
             print("Storing {} as {} = {}".format(pref, newName, val))
+        else:
+            print("Did not store page")
+            print("From database = {}".format(val[1]))
+        return val
+
+    def addUnknownPage(self, fname, image, md5o):
+        # create a filename for the image
+        pref = "unk."
+        while True:
+            collide = str(uuid.uuid4())[:8]
+            newName = "pages/originalPages/" + pref + collide + ".png"
+            if not os.path.isfile(newName):
+                break
+        val = self.DB.uploadUnknownPage(fname, newName, md5o)
+        if val[0]:
+            with open(newName, "wb") as fh:
+                fh.write(image)
+            md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
+            assert md5n == md5o
+            print("Storing {} = {}".format(newName, val))
         else:
             print("Did not store page")
             print("From database = {}".format(val[1]))

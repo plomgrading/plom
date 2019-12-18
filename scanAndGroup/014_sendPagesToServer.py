@@ -155,7 +155,7 @@ def doFiling(rmsg, ts, ps, vs, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendFiles(fileList):
+def sendKnownFiles(fileList):
     for fname in fileList:
         shortName = os.path.split(fname)[1]
         ts, ps, vs = extractTPV(shortName)
@@ -183,4 +183,4 @@ if __name__ == "__main__":
             if not os.path.isdir("decodedPages/page_{}/version_{}".format(sp, v)):
                 continue
             fileList = glob("decodedPages/page_{}/version_{}/t*.png".format(sp, v))
-            sendFiles(fileList)
+            sendKnownFiles(fileList)
