@@ -27,11 +27,14 @@ directories = ["build", "finishing", "imageServer", "resources", "scanAndGroup"]
 directories += ["build/examsToPrint", "build/sourceVersions"]
 
 directories += [
+    "scanAndGroup/archivedPDFs",
+    "scanAndGroup/collidingPages",
     "scanAndGroup/decodedPages",
-    "scanAndGroup/pageImages/",
-    "scanAndGroup/readyForMarking",
-    "scanAndGroup/scannedExams",
+    "scanAndGroup/discardedPages",
     "scanAndGroup/extraPages/",
+    "scanAndGroup/pageImages/",
+    "scanAndGroup/scannedExams",
+    "scanAndGroup/sentPages/",
 ]
 
 directories += [
@@ -66,15 +69,13 @@ files += [
 ]
 
 files += [
-    "scanAndGroup/03_scans_to_page_images.py",
     "scanAndGroup/cleanAll.py",
-    "scanAndGroup/04_decode_images.py",
     "scanAndGroup/extractQR.py",
-    "scanAndGroup/05_missing_pages.py",
-    "scanAndGroup/manualPageIdentifier.py",
-    "scanAndGroup/06_group_pages.py",
-    "scanAndGroup/06a_group_extra_pages.py",
-    "scanAndGroup/testspecification.py",
+    "scanAndGroup/011_startHere.py",
+    "scanAndGroup/012_scansToImages.py",
+    "scanAndGroup/013_readQRCodes.py",
+    "scanAndGroup/014_sendPagesToServer.py",
+    "scanAndGroup/015_sendDuplicatesToServer.py",
 ]
 
 files += [
