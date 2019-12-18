@@ -46,6 +46,7 @@ directories += [
 directories += ["clients", "clients/uiFiles", "clients/icons"]
 
 files = [
+    "resources/plom_exceptions.py",
     "resources/examDB.py",
     "resources/specParser.py",
     "resources/tpv_utils.py",
