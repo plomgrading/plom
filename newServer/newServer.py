@@ -16,9 +16,12 @@ import uuid
 
 # ----------------------
 
-from examDB import *
-from specParser import SpecParser
 from authenticate import Authority
+
+# this allows us to import from ../resources
+sys.path.append("..")
+from resources.specParser import SpecParser
+from resources.examDB import *
 
 # ----------------------
 
