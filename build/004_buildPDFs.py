@@ -8,6 +8,7 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import os
+import sys
 
 # this allows us to import from ../resources
 sys.path.append("..")

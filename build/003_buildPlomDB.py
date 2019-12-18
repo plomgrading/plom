@@ -9,6 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import os
 import random
+import sys
 
 # this allows us to import from ../resources
 sys.path.append("..")

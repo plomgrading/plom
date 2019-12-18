@@ -12,6 +12,7 @@ import os
 import random
 import shlex
 import subprocess
+import sys
 
 # this allows us to import from ../resources
 sys.path.append("..")
