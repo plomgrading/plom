@@ -35,6 +35,23 @@ sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.
 # aiohttp-ificiation of things
 routes = web.RouteTableDef()
 
+# ----------------------
+def buildDirectories(spec):
+    """Build the directories that this script needs"""
+    # the list of directories. Might need updating.
+    lst = [
+        "pages",
+        "pages/discardedPages",
+        "pages/duplicatePages",
+        "pages/collidingPages",
+        "pages/originalPages",
+    ]
+    for dir in lst:
+        try:
+            os.mkdir(dir)
+        except FileExistsError:
+            pass
+
 
 # ----------------------
 @routes.put("/admin/knownPages/{tpv}")
@@ -109,6 +126,7 @@ class Server(object):
 
 examDB = PlomDB()
 spec = SpecParser().spec
+buildDirectories(spec)
 peon = Server(spec, examDB)
 
 try:
