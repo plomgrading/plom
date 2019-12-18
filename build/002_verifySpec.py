@@ -7,7 +7,11 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from specParser import SpecVerifier, SpecParser
+import sys
+
+# this allows us to import from ../resources
+sys.path.append("..")
+from resources.specParser import SpecVerifier, SpecParser
 
 sv = SpecVerifier()
 sv.verifySpec()

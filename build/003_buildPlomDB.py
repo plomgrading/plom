@@ -10,8 +10,10 @@ __license__ = "AGPL-3.0-or-later"
 import os
 import random
 
-from specParser import SpecParser
-from examDB import *
+# this allows us to import from ../resources
+sys.path.append("..")
+from resources.specParser import SpecParser
+from resources.examDB import *
 
 examDB = PlomDB()
 

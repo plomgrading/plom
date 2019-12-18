@@ -1,6 +1,6 @@
 from peewee import *
 
-plomdb = SqliteDatabase("plom.db")
+plomdb = SqliteDatabase("../resources/plom.db")
 
 # the test contains groups
 # test bools something like

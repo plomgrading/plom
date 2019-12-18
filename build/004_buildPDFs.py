@@ -8,11 +8,14 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import os
-from specParser import SpecParser
+
+# this allows us to import from ../resources
+sys.path.append("..")
+from resources.specParser import SpecParser
 
 spec = SpecParser().spec
 
-if os.path.isfile("plom.db"):
+if os.path.isfile("../resources/plom.db"):
     print("A database file is present - good - you are ready to continue.")
 else:
     print('There is no database file "plom.db" -  did you run 003?')

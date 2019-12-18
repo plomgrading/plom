@@ -12,8 +12,10 @@ import random
 import shlex
 import subprocess
 
-from examDB import *
-from specParser import SpecParser
+# this allows us to import from ../resources
+sys.path.append("..")
+from resources.specParser import SpecParser
+from resources.examDB import *
 
 examDB = PlomDB()
 
