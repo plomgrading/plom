@@ -256,7 +256,7 @@ class SpecVerifier:
             exit(1)
         # should be a list of positive integers
         for n in self.spec["doNotMark"]["pages"]:
-            if self.isPositiveInt(n) and n < lastPage:
+            if self.isPositiveInt(n) and n <= lastPage:
                 pass
             else:
                 print(
