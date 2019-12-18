@@ -68,16 +68,16 @@ class Page(Model):
     md5sum = CharField(null=True)  # to check for duplications
     # flags
     scanned = BooleanField(default=False)
-    hasDuplicates = BooleanField(default=False)
+    hasCollisions = BooleanField(default=False)
 
     class Meta:
         database = plomdb
 
 
-# Duplicate pages should be attached to the page their are duplicating
-# When duplication status resolved we can move them about.
-class DuplicatePages(Model):
-    page = ForeignKeyField(Page, backref="duplicates")
+# Colliding pages should be attached to the page their are duplicating
+# When collision status resolved we can move them about.
+class CollidingPages(Model):
+    page = ForeignKeyField(Page, backref="collisions")
     originalName = CharField(null=True)
     fileName = CharField(null=True)
     md5sum = CharField()
@@ -119,7 +119,7 @@ class PlomDB:
                     MarkData,
                     Page,
                     UnknownPages,
-                    DuplicatePages,
+                    CollidingPages,
                     DiscardedPages,
                 ]
             )
