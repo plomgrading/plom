@@ -19,7 +19,13 @@ import sys
 # this allows us to import from ../resources
 sys.path.append("..")
 from resources.specParser import SpecParser
-from tpv_utils import parseTPV, isValidTPV, hasCurrentAPI, getCode, getPosition
+from resources.tpv_utils import (
+    parseTPV,
+    isValidTPV,
+    hasCurrentAPI,
+    getCode,
+    getPosition,
+)
 
 
 def buildDirectories(spec):

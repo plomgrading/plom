@@ -19,10 +19,9 @@ import urllib3
 import threading
 
 # ----------------------
-from plom_exceptions import *
-
 sys.path.append("..")
 from resources.specParser import SpecParser
+from resources.plom_exceptions import *
 
 _userName = "kenneth"
 
