@@ -7,7 +7,7 @@ __license__ = "AGPLv3"
 
 # ----------------------
 
-from aiohttp import web, MultipartWriter, MultipartReader
+from aiohttp import web
 import hashlib
 import json
 import os
@@ -32,8 +32,8 @@ sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.key")
 
-# aiohttp-ificiation of things
-routes = web.RouteTableDef()
+
+from plomServer.routesUpload import UploadHandler
 
 # ----------------------
 def buildDirectories(spec):
@@ -51,51 +51,6 @@ def buildDirectories(spec):
             os.mkdir(dir)
         except FileExistsError:
             pass
-
-
-# ----------------------
-@routes.put("/admin/knownPages/{tpv}")
-async def uploadKnownPage(request):
-    reader = MultipartReader.from_response(request)
-    code = request.match_info["tpv"]
-
-    part0 = await reader.next()  # should be parameters
-    if part0 is None:  # weird error
-        return web.Response(status=406)  # should have sent 3 parts
-    param = await part0.json()
-
-    part1 = await reader.next()  # should be the image file
-    if part1 is None:  # weird error
-        return web.Response(status=406)  # should have sent 3 parts
-    image = await part1.read()
-    # file it away.
-    rmsg = peon.addKnownPage(
-        param["test"],
-        param["page"],
-        param["version"],
-        param["fileName"],
-        image,
-        param["md5sum"],
-    )
-    return web.json_response(rmsg, status=200)  # all good
-
-
-@routes.put("/admin/unknownPages")
-async def uploadKnownPage(request):
-    reader = MultipartReader.from_response(request)
-
-    part0 = await reader.next()  # should be parameters
-    if part0 is None:  # weird error
-        return web.Response(status=406)  # should have sent 3 parts
-    param = await part0.json()
-
-    part1 = await reader.next()  # should be the image file
-    if part1 is None:  # weird error
-        return web.Response(status=406)  # should have sent 3 parts
-    image = await part1.read()
-    # file it away.
-    rmsg = peon.addUnknownPage(param["fileName"], image, param["md5sum"],)
-    return web.json_response(rmsg, status=200)  # all good
 
 
 # ----------------------
@@ -121,56 +76,19 @@ class Server(object):
             print("Where is user/password file?")
             quit()
 
-    def addKnownPage(self, t, p, v, fname, image, md5o):
-        # create a filename for the image
-        pref = "t{}p{}v{}".format(str(t).zfill(4), str(p).zfill(2), v)
-        while True:
-            collide = "." + str(uuid.uuid4())[:8]
-            newName = "pages/originalPages/" + pref + collide + ".png"
-            if not os.path.isfile(newName):
-                break
-        val = self.DB.uploadKnownPage(t, p, v, fname, newName, md5o)
-        if val[0]:
-            with open(newName, "wb") as fh:
-                fh.write(image)
-            md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
-            assert md5n == md5o
-            print("Storing {} as {} = {}".format(pref, newName, val))
-        else:
-            print("Did not store page")
-            print("From database = {}".format(val[1]))
-        return val
-
-    def addUnknownPage(self, fname, image, md5o):
-        # create a filename for the image
-        pref = "unk."
-        while True:
-            collide = str(uuid.uuid4())[:8]
-            newName = "pages/originalPages/" + pref + collide + ".png"
-            if not os.path.isfile(newName):
-                break
-        val = self.DB.uploadUnknownPage(fname, newName, md5o)
-        if val[0]:
-            with open(newName, "wb") as fh:
-                fh.write(image)
-            md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
-            assert md5n == md5o
-            print("Storing {} = {}".format(newName, val))
-        else:
-            print("Did not store page")
-            print("From database = {}".format(val[1]))
-        return val
+    from plomServer.serverUpload import addKnownPage, addUnknownPage, addCollidingPage
 
 
 examDB = PlomDB()
 spec = SpecParser().spec
 buildDirectories(spec)
 peon = Server(spec, examDB)
+uploader = UploadHandler(peon)
 
 try:
     # Run the server
     app = web.Application()
-    app.add_routes(routes)
+    uploader.setUpRoutes(app.router)
     web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
 except KeyboardInterrupt:
     pass
