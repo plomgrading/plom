@@ -22,6 +22,7 @@ class Test(Model):
     identified = BooleanField(default=False)
     marked = BooleanField(default=False)
     finished = BooleanField(default=False)
+    hasCollisions = BooleanField(default=False)
 
     class Meta:
         database = plomdb
@@ -37,6 +38,7 @@ class Group(Model):
     version = IntegerField(default=1)
     # flags
     scanned = BooleanField(default=False)
+    hasCollisions = BooleanField(default=False)
 
     class Meta:
         database = plomdb
@@ -287,42 +289,6 @@ class PlomDB:
             tref.identified = True
             tref.save()
 
-    # ---------------
-    # Functions to handle explicit uploading of duplicate pages
-    # TODO
-    # def checkGroupDuplicateUploaded(self, gref):
-    #
-    #     print(
-    #         "We need to work out how to handle the case where a duplicate page is uploaded to a group that is being processed or already processed."
-    #     )
-    #     # for the moment, I will set the status to
-    #     with plomdb.atomic():
-    #         if gref.groupType=="d":
-    #             # nothing to be done for DNM groups - we don't care about duplicates
-    #             pass
-    #         elif gref.groupType=="i":
-    #             gref.status = None
-    #             gref.
-    #
-    #     pass
-    #
-    # def uploadDuplicatePage(self, pref, oname, nname, md5):
-    #     for dp in pref.duplicates:
-    #         if dp.md5sum == md5:
-    #             return [False, "Exact duplicate of duplicate-page already in database"]
-    #     with plomdb.atomic():
-    #         dpref = DuplicatePages.create(
-    #             page=pref, originalName=oname, fileName=nname, md5sum=md5
-    #         )
-    #         dpref.save()
-    #         pref.hasDuplicates = True
-    #         pref.save()
-    #     self.checkGroupDuplicateUploaded(gref)
-    #     return [True, "Is duplicate of page {}".format(pref.pid)]
-
-    # ---------------
-    # Functions to handle uploading of new pages
-
     def checkTestAllUploaded(self, gref):
         tref = gref.test
         sflag = True
@@ -408,7 +374,7 @@ class PlomDB:
             # Deal with duplicate pages separately. return to sender (as it were)
             # At present just return "collision" - in future we need to check if this is a new collision
             # or if it is the duplicate of an existing collision.
-            return [False, "collision", "{}".format(pref.originalName)]
+            return [False, "collision", ["{}".format(pref.originalName), t, p, v]]
         else:  # this is a new page.
             with plomdb.atomic():
                 pref.originalName = oname
@@ -434,3 +400,73 @@ class PlomDB:
             uref = UnknownPages.create(originalName=oname, fileName=nname, md5sum=md5)
             uref.save()
         return [True, "success", "Page saved in unknownPages list"]
+
+    def uploadCollidingPage(self, t, p, v, oname, nname, md5):
+        tref = Test.get_or_none(testNumber=t)
+        if tref is None:
+            return [False, "testError", "Cannot find test {}".format(t)]
+        pref = Page.get_or_none(test=tref, pageNumber=p, version=v)
+        if pref is None:
+            return [
+                False,
+                "pageError",
+                "Cannot find page,version {} for test {}".format([p, v], t),
+            ]
+        if not pref.scanned:
+            return [
+                False,
+                "original",
+                "This is not a collision - this page was not scanned previously",
+            ]
+        # check this against other collisions
+        for cp in pref.collisions:
+            if md5 == cp.md5sum:
+                # Exact duplicate - md5sum of this image is sames as the one already in database
+                return [
+                    False,
+                    "duplicate",
+                    "Exact duplicate of page already in database",
+                ]
+        with plomdb.atomic():
+            cref = CollidingPages.create(
+                originalName=oname, fileName=nname, md5sum=md5, page=pref
+            )
+            cref.save()
+        self.flagCollisions(pref)
+        return [
+            True,
+            "success",
+            "Colliding page saved, attached to {}".format(pref.pid),
+        ]
+
+    def flagCollisions(self, pref):
+        # TODO - Colin we need to think about this very carefully.
+        with plomdb.atomic():
+            pref.hasCollisions = True
+            pref.save()
+
+            gref = pref.group
+            tref = gref.test
+            if gref.groupType == "d":  # we don't care
+                pass
+            else:  # for either i or m groups the test is not finished.
+                gref.hasCollisions = True
+                gref.status = (
+                    ""  # TODO - will this mess up any papers that are out with clients?
+                )
+                tref.hasCollisions = True
+                tref.finished = False
+                if gref.groupType == "i":  # if ID-group then invalidate any IDs
+                    tref.identified = False
+                    tref.studentName = None
+                    tref.studentID = None
+                elif gref.groupType == "m":
+                    # invalidate the marking
+                    tref.marked = False
+                    mref = gref.markdata[0]
+                    mref.marked = False
+                    mref.mark = None
+                    mref.annotatedFile = None  # should we delete that?
+                    mref.save()
+                gref.save()
+                tref.save()

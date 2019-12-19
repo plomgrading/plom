@@ -28,7 +28,6 @@ _userName = "kenneth"
 
 # ----------------------
 
-
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -43,7 +42,7 @@ SRmutex = threading.Lock()
 # ----------------------
 
 
-def uploadKnownPage(code, test, page, version, sname, fname, md5sum):
+def uploadCollidingPage(code, test, page, version, sname, fname, md5sum):
     SRmutex.acquire()
     try:
         param = {
@@ -61,7 +60,7 @@ def uploadKnownPage(code, test, page, version, sname, fname, md5sum):
             }
         )
         response = session.put(
-            "https://{}:{}/admin/knownPages/{}".format(server, message_port, code),
+            "https://{}:{}/admin/collidingPages/{}".format(server, message_port, code),
             data=dat,
             headers={"Content-Type": dat.content_type},
             verify=False,
@@ -84,99 +83,69 @@ def uploadKnownPage(code, test, page, version, sname, fname, md5sum):
 def buildDirectories(spec):
     """Build the directories that this script needs"""
     # the list of directories. Might need updating.
-    lst = ["sentPages", "discardedPages", "collidingPages"]
+    lst = ["sentPages", "sentPages/collisions"]
     for dir in lst:
         try:
             os.mkdir(dir)
         except FileExistsError:
             pass
-    for p in range(1, spec["numberOfPages"] + 1):
-        for v in range(1, spec["numberOfVersions"] + 1):
-            dir = "sentPages/page_{}/version_{}".format(str(p).zfill(2), v)
-            os.makedirs(dir, exist_ok=True)
 
 
-def extractTPV(name):
-    # TODO - replace this with something less cludgy.
-    # should be tXXXXpYYvZ.blah
-    assert name[0] == "t"
-    k = 1
-    ts = ""
-    while name[k].isnumeric():
-        ts += name[k]
-        k += 1
-
-    assert name[k] == "p"
-    k += 1
-    ps = ""
-    while name[k].isnumeric():
-        ps += name[k]
-        k += 1
-
-    assert name[k] == "v"
-    k += 1
-    vs = ""
-    while name[k].isnumeric():
-        vs += name[k]
-        k += 1
-    return (ts, ps, vs)
-
-
-def doFiling(rmsg, ts, ps, vs, shortName, fname):
+def doFiling(rmsg, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
+        # print(rmsg[2])
+        shutil.move(fname, "sentPages/collisions/{}".format(shortName))
         shutil.move(
-            fname, "sentPages/page_{}/version_{}/{}".format(ps.zfill(2), vs, shortName)
+            fname + ".qr", "sentPages/collisions/{}.qr".format(shortName),
         )
         shutil.move(
-            fname + ".qr",
-            "sentPages/page_{}/version_{}/{}.qr".format(ps.zfill(2), vs, shortName),
+            fname + ".collide", "sentPages/collisions/{}.collide".format(shortName),
         )
     else:  # msg = [False, reason, message]
-        print(rmsg[1], rmsg[2])
         if rmsg[1] == "duplicate":
+            print(rmsg[2])
             shutil.move(fname, "discardedPages/{}".format(shortName))
             shutil.move(fname + ".qr", "discardedPages/{}.qr".format(shortName))
-
-        elif rmsg[1] == "collision":
-            nname = "collidingPages/{}".format(shortName)
-            shutil.move(fname, nname)
-            shutil.move(fname + ".qr", nname + ".qr".format(shortName))
-            # and write the name of the colliding file
-            with open(nname + ".collide", "w+") as fh:
-                json.dump(rmsg[2], fh)  # this is [collidingFile, test, page, version]
-        # now bad errors
-        elif rmsg[1] == "testError":
-            print("This should not happen - todo = log error in sensible way")
-        elif rmsg[1] == "pageError":
+            shutil.move(
+                fname + ".collide", "discardedPages/{}.collide".format(shortName)
+            )
+        elif rmsg[1] == "original":
+            print(rmsg[2])
+            print("This should not happen - todo = log error in a sensible way")
+        else:
+            print(rmsg[2])
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendKnownFiles(fileList):
+def sendCollidingFiles(fileList):
     for fname in fileList:
-        shortName = os.path.split(fname)[1]
-        ts, ps, vs = extractTPV(shortName)
-        print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
+        cname = fname + ".collide"
+        with open(cname, "r") as fh:
+            cdat = json.load(fh)
+        print(
+            "File {} collides with {} - has tpv = {} {} {}".format(
+                fname, cdat[0], cdat[1], cdat[2], cdat[3]
+            )
+        )
+        ts = str(cdat[1]).zfill(4)
+        ps = str(cdat[2]).zfill(2)
+        vs = str(cdat[3])
+        code = "t{}p{}v{}".format(ts, ps, vs)
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
-        rmsg = uploadKnownPage(code, int(ts), int(ps), int(vs), shortName, fname, md5)
-        doFiling(rmsg, ts, ps, vs, shortName, fname)
+        shortName = os.path.split(fname)[1]
+        rmsg = uploadCollidingPage(
+            code, int(ts), int(ps), int(vs), shortName, fname, md5
+        )
+        doFiling(rmsg, shortName, fname)
 
 
 if __name__ == "__main__":
-    print(">> This is still a dummy script, but gives you the idea? <<")
-    # Look for pages in decodedPages
+    # Look for pages in unknowns
     spec = SpecParser().spec
     buildDirectories(spec)
     session = requests.Session()
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
 
-    for p in range(1, spec["numberOfPages"] + 1):
-        sp = str(p).zfill(2)
-        if not os.path.isdir("decodedPages/page_{}".format(sp)):
-            continue
-        for v in range(1, spec["numberOfVersions"] + 1):
-            print("Looking for page {} version {}".format(sp, v))
-            if not os.path.isdir("decodedPages/page_{}/version_{}".format(sp, v)):
-                continue
-            fileList = glob("decodedPages/page_{}/version_{}/t*.png".format(sp, v))
-            sendKnownFiles(fileList)
+    fileList = glob("collidingPages/*.png")
+    print(fileList)
+    sendCollidingFiles(fileList)
