@@ -1,5 +1,7 @@
 from peewee import *
 
+# a simple comment added.
+
 plomdb = SqliteDatabase("../resources/plom.db")
 
 # the test contains groups
