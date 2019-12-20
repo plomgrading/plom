@@ -8,10 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* saved delta-comments can be filtered per question.
 
 ### Changed
+* New more robust networking using "requests" library.
+* Improved printing of various scripts
+* Client: config and saved comments now more human-readble in toml files.
 
 ### Fixed
+* many fixes, especially related to client crashes due to networking.
 
 
 ## [0.2.2] - 2019-11-29
