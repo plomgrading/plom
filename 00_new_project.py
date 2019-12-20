@@ -151,6 +151,7 @@ files += [
     "finishing/09alt_reassembled_ided_but_unmarked.py",
     "finishing/10_prepare_coded_return.py",
     "finishing/11_write_to_canvas_spreadsheet.py",
+    "finishing/12_archive.py",
     "finishing/coverPageBuilder.py",
     "finishing/return_tools.py",
     "finishing/testReassembler.py",
