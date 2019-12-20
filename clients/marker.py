@@ -19,7 +19,6 @@ import tempfile
 import time
 import threading
 import queue
-import math
 
 from PyQt5.QtCore import (
     Qt,
@@ -887,7 +886,7 @@ class MarkerClient(QWidget):
             oldpname = os.path.join(oldpaperdir, "G" + tgv + ".plom")
             # oldcname = os.path.join(oldpaperdir, 'G' + tgv + ".json")
             # TODO: json file not downloaded
-            # https://gitlab.math.ubc.ca/andrewr/MLP/issues/415
+            # https://gitlab..ubc.ca/andrewr/MLP/issues/415
             shutil.copyfile(oldaname, aname)
             shutil.copyfile(oldpname, pname)
             # shutil.copyfile(oldcname, cname)
@@ -904,7 +903,7 @@ class MarkerClient(QWidget):
             while self.backgroundDownloader.isRunning():
                 time.sleep(0.1)
                 count += 1
-                # if math.remainder(count, 10) == 0: # this is only python3.7 and later.
+                # if .remainder(count, 10) == 0: # this is only python3.7 and later. - see #509
                 if (count % 10) == 0:
                     print("Debug: waiting for downloader: {}".format(fname))
                 if count >= 40:
