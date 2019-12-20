@@ -20,7 +20,6 @@ import threading
 import time
 import toml
 import queue
-import math
 
 from PyQt5.QtCore import (
     Qt,
@@ -151,9 +150,17 @@ class BackgroundUploader(QThread):
             from queue import Empty as EmptyQueueException
 
             try:
-                code, gr, aname, pname, cname, mtime, pg, ver, tags = (
-                    self.q.get_nowait()
-                )
+                (
+                    code,
+                    gr,
+                    aname,
+                    pname,
+                    cname,
+                    mtime,
+                    pg,
+                    ver,
+                    tags,
+                ) = self.q.get_nowait()
             except EmptyQueueException:
                 return
             print(
@@ -921,7 +928,8 @@ class MarkerClient(QWidget):
             while self.backgroundDownloader.isRunning():
                 time.sleep(0.1)
                 count += 1
-                if math.remainder(count, 10) == 0:
+                # if .remainder(count, 10) == 0: # this is only python3.7 and later. - see #509
+                if (count % 10) == 0:
                     print("Debug: waiting for downloader: {}".format(fname))
                 if count >= 40:
                     msg = SimpleMessage(
