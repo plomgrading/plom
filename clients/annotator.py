@@ -504,14 +504,15 @@ class Annotator(QDialog):
         Changes the styling of the corresponding button, and
         also the cursor.
         """
-        # TODO: clean up this function. Is a bit of a mess
-
+        # self.currentButton should only ever be set to a button - nothing else.
         # Clear styling of the what was until now the current button
         if self.currentButton is not None:
             self.currentButton.setStyleSheet("")
         # A bit of a hack to take care of comment-mode and delta-mode
         if self.scene.mode == "comment" and newMode != "comment":
+            # clear the comment button styling
             self.ui.commentButton.setStyleSheet("")
+            self.commentW.CL.setStyleSheet("")
         if self.scene.mode == "delta" and newMode != "delta":
             self.ui.deltaButton.setStyleSheet("")
         # We change currentbutton to which ever widget sent us
@@ -520,16 +521,15 @@ class Annotator(QDialog):
         # If the mark-handler widget sent us here, it takes care
         # of its own styling - so we update the little tool-tip
         # and set current button to none.
-        print("SENDER: {}, type={}".format(str(self.sender()), type(self.sender())))
         if isinstance(self.sender(), QPushButton):
             # has come from mark-change button in handler, so
             # set button=none, since markHandler does its own styling
             self.currentButton = None
-        elif isinstance(self.sender(), QToolButton):
+        elif isinstance(
+            self.sender(), QToolButton
+        ):  # only toolbuttons are the mode-changing ones.
             self.currentButton = self.sender()
             self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
-            # make sure comment button style is cleared
-            self.ui.commentButton.setStyleSheet("")
         elif self.sender() is self.commentW.CL:
             self.markHandler.clearButtonStyle()
             self.commentW.CL.setStyleSheet(self.currentButtonStyleOutline)
@@ -538,11 +538,9 @@ class Annotator(QDialog):
             # Clear the style of the mark-handler (this will mostly not do
             # anything, but saves us testing if we had styled it)
             self.markHandler.clearButtonStyle()
-            print("DO WE EVERY GET HERE?")
-            # TODO: should we go that markHandler.clear stuff in other cases too?
+            # this should not happen
         else:
-            # Now Whut?
-            print("THE SCARY PLACE!!!")
+            # this should also not happen - except by strange async race issues. So we don't change anything.
             pass
         # pass the new mode to the graphicsview, and set the cursor in view
         self.scene.setMode(newMode)
@@ -639,7 +637,7 @@ class Annotator(QDialog):
         self.setMode("box", self.cursorBox)
 
     def commentMode(self):
-        if self.currentButton == self.commentW.CL:
+        if self.scene.mode == "comment":
             self.commentW.nextItem()
         else:
             self.commentW.currentItem()
