@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * saved delta-comments can be filtered per question.
 
 ### Changed
+* The manual-identifier now has a "discard" option - to junk pageimages that are not needed (eg - blank extra pages)
 * New more robust networking by moving to https (rather than raw sockets). This is handled by the "requests" library on the client side and the "aiohttp" library on the server side.
 * Client: config and saved comments now more human-readble in toml files.
 

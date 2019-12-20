@@ -32,6 +32,7 @@ directories += [
     "scanAndGroup/readyForMarking",
     "scanAndGroup/scannedExams",
     "scanAndGroup/extraPages/",
+    "scanAndGroup/discardedPages/",
 ]
 
 directories += [
