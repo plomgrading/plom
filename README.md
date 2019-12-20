@@ -74,8 +74,7 @@ System to generate tests from a small number of similar source versions
   * some database handling code (which should be moved from python's [peewee](http://docs.peewee-orm.com/en/latest/) library to use (perhaps?) Qt's [database library](http://doc.qt.io/qt-5/sql-connecting.html). One for associating student numbers and names with papers, and then another to record marks + annotated pagegroup images.
   * a simple 'authority' which verifies passwords and hands out authorisation tokens to the server (which can then be passed on to clients). The tokens are produced using [uuid4](https://docs.python.org/3.6/library/uuid.html).
   * the main server which keeps track of who has which file and what information is coming back from the clients.
-  * files are served and retrieved from clients using a [webdav server](https://wsgidav.readthedocs.io/en/latest/).
-  * messages between clients and the server are handled using the standard python [asyncio](https://docs.python.org/3/library/asyncio.html) library.
+  * messages between clients and the server are handled using the [aiohttp](https://aiohttp.readthedocs.io/en/stable/) library.
   * These messages are encrypted using SSL. The 00 script will build a new certificate for the project (providing relevant libraries are installed).
 
 * Once the users are set up and the server ports etc are set, just run the image_server script and its time to fire up the clients.
@@ -101,7 +100,7 @@ System to generate tests from a small number of similar source versions
 * The marker client is much more involved - not least because page images must be downloaded from the client and then annotated, marked and uploaded again.
  * on start up the marker client asks the server the total marks for the pagegroup/version that the TA has been assigned.
  * then the main window opens up - this shows the current test as well as options for annotation, reversion (ie going back to the original pageimage) etc. Initially no pageimages are present and the TA has to click "get next test".
- * on clicking this the client requests a groupimage (ie matching the pagegroup + version the TA is marking) from the server. The server copies the a relevant groupimage into the webdav and tells the client what the filename is. The client then downloads the image and returns a 'I got it' message to the server, which can then delete the file from the webdav.
+ * on clicking this the client requests a groupimage (ie matching the pagegroup + version the TA is marking) from the server.
  * now the TA can annotate the paper (by pressing the 'annotate' button or hitting enter). This fires up a separate window with a little annotation application in it.
  * The annotation window has several simple paint tools (like pen, line, box, tick, cross). Using left-click with line draws a line, while right-click draws a line with an arrow-head. Left-click with tick/cross produces a tick/cross, while right-click gives a cross/tick. Right-click on pen gives a yellow highlighter.
  * There is a simple text tool (which one leaves using the escape key). Additionally the TA can click on a 'standard comment' and then click in the window to paste that comment. Comments in the comment list can be edited, added, deleted etc. They are stored in the 'commentList.json' file.

@@ -24,7 +24,8 @@ from examviewwindow import ExamViewWindow
 import messenger
 from useful_classes import ErrorMessage, SimpleMessage
 from uiFiles.ui_totaler import Ui_TotalWindow
-from client_utils import requestToken
+
+from plom_exceptions import *
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import Plom_API_Version
@@ -150,20 +151,13 @@ class ExamModel(QAbstractTableModel):
 class TotalClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
-    def __init__(self, userName, password, server, message_port, web_port):
-        # Init the client with username, password, server and port data.
+    def __init__(self):
         super(TotalClient, self).__init__()
-        # Init the messenger with server and port data.
-        messenger.setServerDetails(server, message_port, web_port)
-        messenger.startMessenger()
-        # Ping to see if server is up.
-        if not messenger.pingTest():
-            QTimer.singleShot(100, self.shutDownError)
-            return
-        # Save username, password, and path the local temp directory for
-        # image files and the class list.
-        self.userName = userName
-        self.password = password
+
+    def getToWork(self, mess):
+        global messenger
+        messenger = mess
+        # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # List of papers we have to ID.
         self.paperList = []
@@ -173,7 +167,7 @@ class TotalClient(QWidget):
         self.ui = Ui_TotalWindow()
         self.ui.setupUi(self)
         # Paste username into the GUI.
-        self.ui.userLabel.setText(self.userName)
+        self.ui.userLabel.setText(messenger.whoami())
         # Exam model for the table of papers - associate to table in GUI.
         self.exM = ExamModel()
         self.ui.tableView.setModel(self.exM)
@@ -183,17 +177,6 @@ class TotalClient(QWidget):
         # make sure the resetview is not auto-defaulted to be triggered by return
         self.testImg.resetB.setAutoDefault(False)
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
-        # Start using connection to server.
-        try:
-            self.token = requestToken(self.userName, self.password)
-        except ValueError as e:
-            print("DEBUG: token fail: {}".format(e))
-            QTimer.singleShot(100, self.shutDownError)
-            return
-        # Get the max mark from server
-        self.getMaxMark()
-        self.markValidator = QIntValidator(0, self.maxMark)
-        self.ui.totalEdit.setValidator(self.markValidator)
         # Connect buttons and key-presses to functions.
         self.ui.totalEdit.returnPressed.connect(self.enterTotal)
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -202,8 +185,24 @@ class TotalClient(QWidget):
         self.ui.nextButton.setAutoDefault(False)
         # Make sure window is maximised and request a paper from server.
         self.showMaximized()
+
+        # Get the max mark from server
+        try:
+            self.getMaxMark()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+            return
+
+        self.markValidator = QIntValidator(0, self.maxMark)
+        self.ui.totalEdit.setValidator(self.markValidator)
         # Get list of papers already ID'd and add to table.
-        self.getAlreadyTotaledList()
+        # Get list of papers already ID'd and add to table.
+        try:
+            self.getAlreadyTotaledList()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+            return
+
         # Connect the view **after** list updated.
         # Connect the table's model sel-changed to appropriate function.
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
@@ -212,18 +211,23 @@ class TotalClient(QWidget):
         # very slight delay to ensure things loaded first
         QTimer.singleShot(100, self.testImg.view.resetView)
 
+    def throwSeriousError(self, err):
+        ErrorMessage(
+            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down totaller.'.format(
+                err
+            )
+        ).exec_()
+        self.shutDownError()
+
+    def throwBenign(self, err):
+        ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
+
     def getMaxMark(self):
         """Send request for maximum mark (tGMM) to server. The server then sends
         back the value.
         """
-        # Send request for classlist (iRCL) to server
-        msg = messenger.SRMsg(["tGMM", self.userName, self.token])
-        # Return should be [ACK, value]
-        if msg[0] == "ERR":
-            ErrorMessage("Cannot get maximum mark")
-            quit()
-        # Get the filename from the message.
-        self.maxMark = int(msg[1])
+        # Get the classlist from server for name/ID completion.
+        self.maxMark = messenger.TgetMaxMark()
         # Update the groupbox label
         self.ui.totalBox.setTitle("Enter total out of {}".format(self.maxMark))
 
@@ -234,12 +238,16 @@ class TotalClient(QWidget):
     def shutDown(self):
         """Send the server a DNF (did not finish) message so it knows to
         take anything that this user has out-for-id-ing and return it to
-        the todo pile. Then send a user-closing message so that the
-        authorisation token is removed. Then finally close.
+        the todo pile.
+
+        TODO: messenger needs to drop token here?
         """
         self.DNF()
-        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
-        assert msg == "ACK"
+        try:
+            messenger.closeUser()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+
         self.my_shutdown_signal.emit(2)
         self.close()
 
@@ -249,36 +257,23 @@ class TotalClient(QWidget):
         onto the todo-pile.
         """
         # Go through each entry in the table - it not ID'd then send a DNF
-        # to the server.
+        # to the server with that paper code.
         rc = self.exM.rowCount()
         for r in range(rc):
             if self.exM.data(self.exM.index(r, 1)) != "totaled":
-                # Tell user DNF, user, auth-token, and paper's code.
-                msg = messenger.SRMsg(
-                    [
-                        "tDNF",
-                        self.userName,
-                        self.token,
-                        self.exM.data(self.exM.index(r, 0)),
-                    ]
-                )
+                try:
+                    messenger.TdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
+                except PlomSeriousException as err:
+                    self.throwSeriousError(err)
 
     def getAlreadyTotaledList(self):
         # Ask server for list of previously marked papers
-        msg = messenger.SRMsg(["tGAT", self.userName, self.token])
-        if msg[0] == "ERR":
-            return
-        fname = os.path.join(self.workingDirectory, "tList.txt")
-        messenger.getFileDav(msg[1], fname)
-        # Ack that test received - server then deletes it from webdav
-        msg = messenger.SRMsg(["tDWF", self.userName, self.token, msg[1]])
+        tList = messenger.TrequestDoneTasks()
         # Add those marked papers to our paper-list
-        with open(fname) as json_file:
-            tList = json.load(json_file)
-            for x in tList:
-                self.addPaperToList(
-                    Paper(x[0], fname="", stat="totaled", mark=x[2]), update=False
-                )
+        for x in tList:
+            self.addPaperToList(
+                Paper(x[0], fname="", stat="totaled", mark=x[2]), update=False
+            )
 
     def selChanged(self, selnew, selold):
         # When the selection changes, update the ID and name line-edit boxes
@@ -289,16 +284,20 @@ class TotalClient(QWidget):
 
     def checkFiles(self, r):
         tgv = self.exM.paperList[r].prefix
+        # check if we have the image file
         if self.exM.paperList[r].originalFile is not "":
             return
-        msg = messenger.SRMsg(["tGGI", self.userName, self.token, tgv])
-        if msg[0] == "ERR":
+        # else try to grab it from server
+        try:
+            image = messenger.TrequestImage(tgv)
+        except PlomSeriousException as e:
+            self.throwSeriousError(e)
             return
-        fname = os.path.join(self.workingDirectory, "{}.png".format(msg[1]))
-        tfname = msg[2]  # the temp original image file on webdav
-        messenger.getFileDav(tfname, fname)
-        # got original file so ask server to remove it.
-        msg = messenger.SRMsg(["tDWF", self.userName, self.token, tfname])
+        # save the image to appropriate filename
+        fname = os.path.join(self.workingDirectory, "{}.png".format(tgv))
+        with open(fname, "wb+") as fh:
+            fh.write(image)
+
         self.exM.paperList[r].originalFile = fname
 
     def updateImage(self, r=0):
@@ -314,38 +313,55 @@ class TotalClient(QWidget):
         if update:
             self.ui.tableView.selectRow(r)
             self.updateImage(r)
-            # One more untotaledpaper
-            self.noTotalCount += 1
+
+    def updateProgress(self):
+        # update progressbars
+        try:
+            v, m = messenger.TprogressCount()
+            self.ui.idProgressBar.setMaximum(m)
+            self.ui.idProgressBar.setValue(v)
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
 
     def requestNext(self):
-        """Ask the server for an untotaled paper (tNUT). Server should return
-        message [ACK, testcode, filename]. Get file from webdav, add to the
+        """Ask the server for an untotaled paper.  Get file, add to the
         list of papers and update the image.
         """
-        # ask server for id-count update
-        msg = messenger.SRMsg(["tPRC", self.userName, self.token])
-        # returns [ACK, #id'd, #total]
-        if msg[0] == "ACK":
-            self.ui.idProgressBar.setValue(msg[1])
-            self.ui.idProgressBar.setMaximum(msg[2])
+        # update progress bars
+        self.updateProgress()
 
-        # ask server for next unmarked paper
-        msg = messenger.SRMsg(["tNUT", self.userName, self.token])
-        if msg[0] == "ERR":
-            return
-        # return message is [ACK, code, filename]
-        test = msg[1]
-        fname = msg[2]
+        # ask server for next untotaled paper
+        attempts = 0
+        while True:
+            # TODO - remove this little sanity check else replace with a pop-up warning thingy.
+            if attempts >= 5:
+                return False
+            else:
+                attempts += 1
+            # ask server for ID of next task
+            try:
+                test = messenger.TaskNextTask()
+                if not test:  # no tasks left
+                    return False
+            except PlomSeriousException as err:
+                self.throwSerious(err)
+                return False
+
+            try:
+                image = messenger.TclaimThisTask(test)
+                break
+            except PlomBenignException as err:
+                # task already taken.
+                continue
+
         # Image name will be <code>.png
-        iname = os.path.join(
-            self.workingDirectory, test + ".png"
-        )  # windows/linux compatibility
-        # Grab image from webdav and copy to <code.png>
-        messenger.getFileDav(fname, iname)
+        iname = os.path.join(self.workingDirectory, test + ".png")
+        # save it
+        with open(iname, "wb+") as fh:
+            fh.write(image)
+
         # Add the paper [code, filename, etc] to the list
         self.addPaperToList(Paper(test, iname))
-        # Tell server we got the image (iGTP) - the server then deletes it.
-        msg = messenger.SRMsg(["tGTP", self.userName, self.token, test, fname])
         # Clean up table - and set focus on the ID-lineedit so user can
         # just start typing in the next ID-number.
         self.ui.tableView.resizeColumnsToContents()
@@ -360,33 +376,19 @@ class TotalClient(QWidget):
         # model to put data into the table.
         self.exM.totalPaper(index, self.ui.totalEdit.text())
         code = self.exM.data(index[0])
-        if alreadyTotaled:
-            # If the paper was totaled previously send return-already-totaled (tRAT)
-            # with the code, ID, name.
-            msg = messenger.SRMsg(
-                ["tRAT", self.userName, self.token, code, self.ui.totalEdit.text()]
-            )
-        else:
-            # If the paper was not totaled previously send return-previously untotaled (iRUT)
-            # with the code, ID, name.
-            msg = messenger.SRMsg(
-                ["tRUT", self.userName, self.token, code, self.ui.totalEdit.text()]
-            )
-        if msg[0] == "ERR":
-            # If an error, revert the student and clear things.
-            self.exM.revertStudent(index)
-            # Use timer to avoid conflict between completer and
-            # clearing the line-edit. Very annoying but this fixes it.
-            QTimer.singleShot(0, self.ui.totalEdit.clear)
+
+        try:
+            messenger.TreturnTotaledTask(code, self.ui.totalEdit.text())
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
             return False
-        else:
-            # Use timer to avoid conflict between completer and
-            # clearing the line-edit. Very annoying but this fixes it.
-            QTimer.singleShot(0, self.ui.totalEdit.clear)
-            # Update untotaled count.
-            if not alreadyTotaled:
-                self.noTotalCount -= 1
-            return True
+
+        # Use timer to avoid conflict between completer and
+        # clearing the line-edit. Very annoying but this fixes it.
+        QTimer.singleShot(0, self.ui.totalEdit.clear)
+        # Update progressbars
+        self.updateProgress()
+        return True
 
     def moveToNextUntotaled(self):
         # Move to the next test in table which is not totaled.
@@ -437,7 +439,7 @@ class TotalClient(QWidget):
 
         if self.totalPaper(index, alreadyTotaled):
             # if successful, and everything local has been ID'd get next
-            if alreadyTotaled is False and self.noTotalCount == 0:
+            if alreadyTotaled is False:
                 self.requestNext()
             else:
                 # otherwise move to the next unidentified paper.

@@ -6,6 +6,8 @@ __license__ = "AGPLv3"
 import sys
 import os
 import shutil
+import shlex
+import subprocess
 import locale
 from PyQt5.QtWidgets import (
     QApplication,
@@ -43,8 +45,7 @@ directories += ["clients", "clients/uiFiles", "clients/icons"]
 files = [
     "resources/testspecification.py",
     "resources/tpv_utils.py",
-    "resources/davconf.conf",
-    "resources/davconf.yaml",
+    "resources/misc_utils.py",
     "resources/predictionlist.csv",
     "resources/pageNotSubmitted.pdf",
     "resources/version.py",
@@ -270,7 +271,7 @@ def buildKey(projPath):
     )
     sslcmd += " '/C={}/ST=./L=./CN=localhost'".format(locale.getdefaultlocale()[0][-2:])
     print(sslcmd)
-    os.system(sslcmd)
+    subprocess.check_call(shlex.split(sslcmd))
 
 
 def doThings(projPath):
@@ -307,7 +308,7 @@ def doThings(projPath):
     msg.exec_()
     cpwd = os.getcwd()
     os.chdir(projPath + "/imageServer")
-    os.system("python3 serverSetup.py")
+    subprocess.check_call(["python3", "serverSetup.py"])
     os.chdir(cpwd)
 
     msg = LeftToDo()

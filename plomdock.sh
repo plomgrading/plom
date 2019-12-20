@@ -45,13 +45,12 @@ sudo docker exec $PD adduser -u $UID --no-create-home --disabled-password --geco
 # docker exec $PD apt-get --no-install-recommends --yes install  \
 #     parallel zbar-tools cmake \
 #     python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
-#     python3-pyqt5.qtsql python3-pyqrcode python3-png \
-#     python3-pip python3-setuptools python3-wheel imagemagick \
-#     texlive-latex-extra dvipng g++ make python3-dev
-#
-# docker exec $PD pip3 install --upgrade \
-#        wsgidav easywebdav2 pymupdf weasyprint imutils \
-#        lapsolver peewee cheroot
+#     python3-pyqt5.qtsql python3-pyqrcode python3-png python3-pip \
+#     python3-setuptools python3-wheel python3-requests-toolbelt \
+#     imagemagick texlive-latex-extra dvipng g++ make python3-dev
+# docker exec $PD pip3 install --upgrade pip \
+# docker exec $PD python3 -m pip install --upgrade \
+#     pymupdf weasyprint imutils lapsolver peewee cheroot aiohttp
 
 #script:
 mkdir plom/scanAndGroup/scannedExams/

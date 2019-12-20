@@ -8,6 +8,8 @@ import fitz
 import json
 import os
 import shutil
+import shlex
+import subprocess
 import sys
 import tempfile
 
@@ -45,11 +47,12 @@ def writeExamsScanned():
 def buildSubstitute(test, page):
     tpImage = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
     # create the test/page stamp using imagemagick
-    os.system(
+    cmd = shlex.split(
         "convert -pointsize 36 -size 200x42 caption:'{}.{}' -trim "
         "-gravity Center -extent 200x42 -bordercolor black "
         "-border 1 {}".format(str(test).zfill(4), str(page).zfill(2), tpImage.name)
     )
+    subprocess.check_call(cmd)
 
     DNS = fitz.open(
         "../resources/pageNotSubmitted.pdf"
@@ -62,7 +65,8 @@ def buildSubstitute(test, page):
     DNS[0].insertImage(rTC, pixmap=testnumber, overlay=True, keep_proportion=False)
 
     DNS.save("pns.pdf", garbage=4, deflate=True, clean=True)
-    os.system("convert -density 200 pns.pdf pns.png")
+    cmd = shlex.split("convert -density 200 pns.pdf pns.png")
+    subprocess.check_call(cmd)
     os.unlink("pns.pdf")
 
 

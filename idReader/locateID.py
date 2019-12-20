@@ -6,6 +6,7 @@ __license__ = "AGPLv3"
 import glob
 import sys
 import os
+import subprocess
 
 from PyQt5.QtCore import Qt, QRectF
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPixmap
@@ -98,7 +99,8 @@ class IDLocator(QWidget):
         t = int(max(0, self.ui.topSlider.value() - 5) / 100 * h)
         b = int(min(100, 105 - self.ui.bottomSlider.value()) / 100 * h)
         print("Run ID-code on image height range {} to {}".format(t, b))
-        os.system("python3 ./readStudentID.py {} {}".format(t, b))
+        cmd = ["python3" "./readStudentID.py" str(t) str(b)]
+        subprocess.check_call(cmd)
         self.close()
 
 

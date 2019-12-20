@@ -25,52 +25,6 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from examviewwindow import ExamViewWindow
-import ssl
-import asyncio
-
-server = "localhost"
-webdav_port = 41985
-message_port = 41984
-
-# # # # # # # # # # # #
-sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-sslContext.check_hostname = False
-# # # # # # # # # # # #
-
-
-async def handle_messaging(msg):
-    reader, writer = await asyncio.open_connection(
-        server, message_port, loop=loop, ssl=sslContext
-    )
-    jm = json.dumps(msg)
-    writer.write(jm.encode())
-    # SSL does not support EOF, so send a null byte to indicate the end of the message.
-    writer.write(b"\x00")
-    await writer.drain()
-
-    data = await reader.read(100)
-    terminate = data.endswith(b"\x00")
-    data = data.rstrip(b"\x00")
-    rmesg = json.loads(data.decode())
-    # message should be a list [cmd, user, arg1, arg2, etc]
-    writer.close()
-    return rmesg
-
-
-def SRMsg(msg):
-    # print("Sending message {}",format(msg))
-    rmsg = loop.run_until_complete(handle_messaging(msg))
-    if rmsg[0] == "ACK":
-        return rmsg
-    elif rmsg[0] == "ERR":
-        # print("Some sort of error occurred - didnt get an ACK, instead got ", rmsg)
-        msg = ErrorMessage(rmsg[1])
-        msg.exec_()
-        return rmsg
-    else:
-        msg = ErrorMessage("Something really wrong has happened.")
-        self.Close()
-        return rmsg
 
 
 class ErrorMessage(QMessageBox):
@@ -254,11 +208,9 @@ class Manager(QWidget):
         self.show()
 
 
-loop = asyncio.get_event_loop()
 tempDirectory = tempfile.TemporaryDirectory()
 directoryPath = tempDirectory.name
 
 app = QApplication(sys.argv)
 iic = Manager()
 app.exec_()
-loop.close()

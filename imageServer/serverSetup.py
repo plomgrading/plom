@@ -9,6 +9,7 @@ import csv
 import json
 import os
 import sys
+import subprocess
 import pandas
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
 from ui_server_setup import Ui_ServerInfo
@@ -173,15 +174,14 @@ class SetUp(QWidget):
             with open("../resources/serverDetails.json") as data_file:
                 self.info = json.load(data_file)
         else:
-            # set server address, message port and webdav port.
-            self.info = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
+            # set server address, message port
+            self.info = {"server": "127.0.0.1", "mport": 41984}
 
     def putInfoIntoUi(self):
         """Grab the values from the info dict and put into the UI fields
         """
         self.ui.serverLE.setText(self.info["server"])
         self.ui.mportSB.setValue(self.info["mport"])
-        self.ui.wportSB.setValue(self.info["wport"])
 
     def saveAndClose(self):
         """Grab values from the UI, put into dictionary and save as json.
@@ -189,7 +189,6 @@ class SetUp(QWidget):
         """
         self.info["server"] = self.ui.serverLE.text()
         self.info["mport"] = self.ui.mportSB.value()
-        self.info["wport"] = self.ui.wportSB.value()
 
         fh = open("../resources/serverDetails.json", "w")
         fh.write(json.dumps(self.info, indent=4, sort_keys=True))
@@ -198,7 +197,7 @@ class SetUp(QWidget):
 
     def manageUsers(self):
         """Fire up the user manager app."""
-        os.system("python3 ./userManager.py")
+        subprocess.run(["python3", "./userManager.py"], check=True)
 
     def getClassList(self):
         """Grab list of student numbers and names from a csv file.

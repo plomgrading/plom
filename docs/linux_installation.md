@@ -10,28 +10,27 @@ Installing on Popular GNU/Linux Distros
 Fedora
 ------
 
-Tested on Fedora 30.  Some stuff from the package manager:
+Tested on Fedora 31.  Some stuff from the package manager:
 ```
   # sudo dnf install parallel ImageMagick zbar \
                      python3-PyMuPDF python3-passlib python3-pypng \
                      python3-jsmin python3-defusedxml python3-yaml \
                      python3-urllib3 python3-more-itertools \
-                     python3-seaborn python3-matplotlib-qt5 \
-                     python3-peewee python3-pandas \
+                     python3-seaborn python3-matplotlib-qt5 python3-aiohttp \
+                     python3-peewee python3-pandas python3-requests-toolbelt \
+                     python3-pip python3-toml python3-weasyprint
 ```
-Fedora's [python3-weasyprint is too old](https://bugzilla.redhat.com/show_bug.cgi?id=1475749).
 
 Other stuff we install locally with `pip`:
 ```
-  # pip3 install --upgrade --user pyqrcode easywebdav2 wsgidav \
-                                  cheroot Weasyprint
+  # pip3 install --upgrade --user pyqrcode cheroot
 ```
 
 More dependencies for the tensorflow-based ID reader:
 ```
   # sudo dnf install python3-termcolor python3-wheel python3-grpcio \
                      python3-markdown python3-h5py
-  # pip3 install --user tensorflow
+  # pip3 install --user lapsolver "tensorflow<2"
 ```
 
 
@@ -40,28 +39,31 @@ Ubuntu
 
 Some stuff from the package manager:
 ```
-  # sudo apt-get install \
+  # sudo apt install \
         parallel zbar-tools cmake make imagemagick dvipng g++ \
         python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
         python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
-        python3-pip python3-setuptools python3-wheel texlive-latex-extra \
-        python3-opencv
+        python3-pip python3-setuptools python3-wheel python3-toml \
+        python3-requests-toolbelt python3-opencv texlive-latex-extra \
+        python3-peewee
 ```
 These (and others) should work from the package manager but pip pulls them
 in anyway, not sure why.
 ```
-  # sudo apt-get install python3-defusedxml python3-jsmin python3-cairosvg
+  # sudo apt install python3-defusedxml python3-jsmin python3-cairosvg
 ```
 
 Other stuff we get from pip:
 ```
-  # sudo apt-get install python3-pip
-  # pip3 install --upgrade --user wsgidav easywebdav2 pymupdf weasyprint \
-                                  imutils lapsolver tensorflow
+  # pip3 install --upgrade pip
+  # python3 -m pip install --upgrade --user pymupdf weasyprint imutils aiohttp
+  # python3 -m pip install --upgrade --user lapsolver "tensorflow<2"
 ```
+(Note `python3 -m pip` to use the newly upgraded pip).
+
 Ubuntu 16.04 also needs:
 ```
-  # pip3 install --user opencv-python peewee pyqrcode pypng
+  # python3 -m pip install --user opencv-python peewee pyqrcode pypng
 
 ```
 

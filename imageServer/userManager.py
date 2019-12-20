@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
-import asyncio
+import requests
 import json
 import os
 import random
@@ -40,9 +40,37 @@ mlpctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 # Server info defaults
-serverInfo = {"server": "127.0.0.1", "mport": 41984, "wport": 41985}
+serverInfo = {"server": "127.0.0.1", "mport": 41984}
 
 from aliceBob import simplePassword, makeRandomUserList, makeNumberedUserList
+
+authSession = requests.Session()
+authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
+
+
+def requestUserReload(server, port, password):
+    """Get message handler to send user reload request."""
+    try:
+        response = authSession.put(
+            "https://{}:{}/admin/reloadUsers".format(server, port),
+            json={"pw": password},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            return False
+        else:
+            raise Exception(
+                "Something nasty has happened. Got return code = {}".format(
+                    response.status_code
+                )
+            )
+    except Exception as err:
+        print(err)
+        return False
+
+    return True
 
 
 class CannedUserList(QDialog):
@@ -94,35 +122,16 @@ def getServerInfo():
             serverInfo = json.load(data_file)
 
 
-async def handle_user_reload(server, message_port, password):
-    """Asyncio messager handler.
-    Sends server a "reload users" command
-    waits for response.
-    """
-    # open async connection
-    reader, writer = await asyncio.open_connection(
-        server, message_port, loop=loop, ssl=sslContext
-    )
-    # convert message to json and then send is encoded.
-    jm = json.dumps(["RUSR", password])
-    writer.write(jm.encode())
-    # SSL does not support EOF, so send a null byte
-    # to indicate the end of the message.
-    writer.write(b"\x00")
-    await writer.drain()
+class ErrorMessage(QMessageBox):
+    """A simple error message pop-up"""
 
-    data = await reader.read(100)
-    terminate = data.endswith(b"\x00")
-    data = data.rstrip(b"\x00")
-    rmesg = json.loads(data.decode())  # message should be an ['ACK']
-    writer.close()
-    return rmesg
-
-
-def requestUserReload(server, message_port, password):
-    """Get message handler to send user reload request."""
-    rmsg = loop.run_until_complete(handle_user_reload(server, message_port, password))
-    return rmsg
+    def __init__(self, txt):
+        super(ErrorMessage, self).__init__()
+        fnt = self.font()
+        fnt.setPointSize((fnt.pointSize() * 3) // 2)
+        self.setFont(fnt)
+        self.setText(txt)
+        self.setStandardButtons(QMessageBox.Ok)
 
 
 class SimpleMessage(QMessageBox):
@@ -394,7 +403,10 @@ class userManager(QWidget):
             )
             if ok:
                 # Fire off reload request
-                requestUserReload(serverInfo["server"], serverInfo["mport"], pwd)
+                ret = requestUserReload(serverInfo["server"], serverInfo["mport"], pwd)
+                if not ret:
+                    msg = ErrorMessage("Something went wrong when contacting server.")
+                    msg.exec_()
 
     def buildCannedUsers(self):
         # get canned user list
@@ -417,10 +429,6 @@ class userManager(QWidget):
                     print("User {} already present".format(n))
         self.saveUsers()
         self.refreshUserList()
-
-
-# Set asycio event loop running for communication with server.
-loop = asyncio.get_event_loop()
 
 
 def main():

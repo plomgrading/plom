@@ -12,6 +12,7 @@ import json
 import os
 import re
 import shutil
+import shlex
 import subprocess
 import sys
 
@@ -44,7 +45,8 @@ def decodeQRs():
             fh.write("python3 ../extractQR.py {}\n".format(fname))
     fh.close()
     # run those commands through gnu-parallel then delete.
-    os.system("parallel --bar < commandlist.txt")
+    cmd = shlex.split("parallel --bar -a commandlist.txt")
+    subprocess.check_call(cmd)
     os.unlink("commandlist.txt")
     os.chdir("../")
 
@@ -125,8 +127,6 @@ def reOrientPage(fname, qrs):
         # print(" .  {}: reorienting: 180 degree rotation".format(fname))
         subprocess.run(
             ["mogrify", "-quiet", "-rotate", "180", fname],
-            stderr=subprocess.STDOUT,
-            shell=False,
             check=True,
         )
         return True
