@@ -147,9 +147,17 @@ class BackgroundUploader(QThread):
             from queue import Empty as EmptyQueueException
 
             try:
-                code, gr, aname, pname, cname, mtime, pg, ver, tags = (
-                    self.q.get_nowait()
-                )
+                (
+                    code,
+                    gr,
+                    aname,
+                    pname,
+                    cname,
+                    mtime,
+                    pg,
+                    ver,
+                    tags,
+                ) = self.q.get_nowait()
             except EmptyQueueException:
                 return
             print(
@@ -822,12 +830,7 @@ class MarkerClient(QWidget):
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
-            fname,
-            self.maxScore,
-            markStyle,
-            mouseHand,
-            parent=self,
-            plomDict=pdict,
+            fname, self.maxScore, markStyle, mouseHand, parent=self, plomDict=pdict,
         )
         # run the annotator
         if annotator.exec_():
@@ -901,7 +904,8 @@ class MarkerClient(QWidget):
             while self.backgroundDownloader.isRunning():
                 time.sleep(0.1)
                 count += 1
-                if math.remainder(count, 10) == 0:
+                # if math.remainder(count, 10) == 0: # this is only python3.7 and later.
+                if (count % 10) == 0:
                     print("Debug: waiting for downloader: {}".format(fname))
                 if count >= 40:
                     msg = SimpleMessage(
@@ -1021,7 +1025,7 @@ class MarkerClient(QWidget):
         self.DNF()
         # Then send a 'user closing' message - server will revoke
         # authentication token.
-        msg, = messenger.SRMsg(["UCL", self.userName, self.token])
+        (msg,) = messenger.SRMsg(["UCL", self.userName, self.token])
         assert msg == "ACK"
         # set marking style, mousehand for return to client/parent
         markStyle = self.ui.markStyleGroup.checkedId()  # TODO
