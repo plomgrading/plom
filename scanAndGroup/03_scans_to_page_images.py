@@ -26,6 +26,8 @@ def buildDirectories():
         "pageImages/alreadyProcessed",
         "pageImages/problemImages",
         "decodedPages",
+        "discardedPages",
+        "extraPages",
         "readyForMarking",
         "readyForMarking/idgroup/",
     ]
