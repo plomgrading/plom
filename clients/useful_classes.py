@@ -337,7 +337,7 @@ class CommentWidget(QWidget):
         acb = AddCommentBox(self, self.maxMark, alist, questnum, testname, com)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
-                dlt = str(acb.SB.value())
+                dlt = acb.SB.value()
             else:
                 dlt = "."
             txt = acb.TE.toPlainText().strip()
