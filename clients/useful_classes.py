@@ -714,6 +714,7 @@ class AddCommentBox(QDialog):
                 self.QSpecific.setCheckState(Qt.Unchecked)
         else:
             self.TEtestname.setText(curtestname)
+            self.QSpecific.setCheckState(Qt.Checked)
 
     def changedCB(self):
         self.TE.clear()
