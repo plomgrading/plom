@@ -659,12 +659,9 @@ class AddCommentBox(QDialog):
         #self.TEtag.setMaximumHeight(self.TE.maximumHeight() // 2)
         self.QSpecific = QCheckBox("Available only in question {}".format(questnum))
         self.QSpecific.stateChanged.connect(self.toggleQSpecific)
-        self.quickHelp = QLabel('Prepend with "tex:" to use math.  You can "Choose text" from an existing annotation.')
-        self.quickHelp.setWordWrap(True)
 
         flay = QFormLayout()
         flay.addRow("Enter text", self.TE)
-        flay.addRow("", self.quickHelp)
         flay.addRow("Choose text", self.CB)
         flay.addRow("Set delta", self.SB)
         flay.addRow("", self.DE)
@@ -715,6 +712,9 @@ class AddCommentBox(QDialog):
         else:
             self.TEtestname.setText(curtestname)
             self.QSpecific.setCheckState(Qt.Checked)
+            self.TE.setPlaceholderText('Prepend with "tex:" to use math.\n\n'
+                                       'You can "Choose text" to harvest comments from an existing annotation.\n\n'
+                                       'Change "delta" below to set a point-change associated with this comment.')
 
     def changedCB(self):
         self.TE.clear()
