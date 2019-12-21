@@ -164,6 +164,7 @@ tags = "Q2 foo bar"
         "created": time.gmtime(0),
         "modified": time.gmtime(0),
     }
+    # TODO: don't save empty tags/testnames/etc to file
     if os.path.exists("plomComments.toml"):
         cdict = toml.load("plomComments.toml")
     else:
@@ -673,6 +674,7 @@ class AddCommentBox(QDialog):
         flay.addRow("", self.DE)
         flay.addRow("", self.QSpecific)
         flay.addRow("Tags", self.TEtag)
+        # TODO: support multiple tests, change label to "test(s)" here
         flay.addRow("Specific to test", self.TEtestname)
         flay.addRow("", QLabel("(leave blank to share between tests)"))
         flay.addRow("Meta", self.TEmeta)
