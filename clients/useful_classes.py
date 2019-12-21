@@ -145,6 +145,7 @@ text = "be careful"
 [[comment]]
 delta = 1
 text = "good"
+meta = "give constructive feedback"
 
 [[comment]]
 delta = 1
@@ -159,6 +160,7 @@ tags = "Q2 foo bar"
     comment_defaults = {
         "tags": "",
         "testname": "",
+        "meta": "",
         "created": time.gmtime(0),
         "modified": time.gmtime(0),
     }
@@ -303,6 +305,7 @@ class CommentWidget(QWidget):
                 dlt = "."
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
+            meta = acb.TEmeta.toPlainText().strip()
             testnames = acb.TEtestname.text().strip()
             # check if txt has any content
             if len(txt) > 0:
@@ -311,6 +314,7 @@ class CommentWidget(QWidget):
                     "text": txt,
                     "tags": tag,
                     "testname": testnames,
+                    "meta": meta,
                     "created": time.gmtime(),
                     "modified": time.gmtime(),
                 }
@@ -338,12 +342,14 @@ class CommentWidget(QWidget):
                 dlt = "."
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
+            meta = acb.TEmeta.toPlainText().strip()
             testnames = acb.TEtestname.text().strip()
             # update the comment with new values
             com["delta"] = dlt
             com["text"] = txt
             com["tags"] = tag
             com["testname"] = testnames
+            com["meta"] = meta
             com["modified"] = time.gmtime()
             return com
         else:
@@ -669,6 +675,7 @@ class AddCommentBox(QDialog):
         flay.addRow("Tags", self.TEtag)
         flay.addRow("Specific to test", self.TEtestname)
         flay.addRow("", QLabel("(leave blank to share between tests)"))
+        flay.addRow("Meta", self.TEmeta)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -693,6 +700,9 @@ class AddCommentBox(QDialog):
             if com["tags"]:
                 self.TEtag.clear()
                 self.TEtag.insertPlainText(com["tags"])
+            if com["meta"]:
+                self.TEmeta.clear()
+                self.TEmeta.insertPlainText(com["meta"])
             if com["delta"]:
                 if com["delta"] == ".":
                     self.SB.setValue(0)
@@ -715,6 +725,8 @@ class AddCommentBox(QDialog):
             self.TE.setPlaceholderText('Prepend with "tex:" to use math.\n\n'
                                        'You can "Choose text" to harvest comments from an existing annotation.\n\n'
                                        'Change "delta" below to set a point-change associated with this comment.')
+            self.TEmeta.setPlaceholderText("notes to self, hints on when to use this comment, etc.\n\n"
+                                           "Not shown to student!")
 
     def changedCB(self):
         self.TE.clear()
