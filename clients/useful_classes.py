@@ -704,13 +704,14 @@ class AddCommentBox(QDialog):
                     self.SB.setValue(int(com["delta"]))
             if com["testname"]:
                 self.TEtestname.setText(com["testname"])
-        # TODO: ideally we would do this on TE change signal
-        if commentHasMultipleQTags(com):
-            self.QSpecific.setEnabled(False)
-        elif commentTaggedQn(com, self.questnum):
-            self.QSpecific.setCheckState(Qt.Checked)
-        else:
-            self.QSpecific.setCheckState(Qt.Unchecked)
+            # TODO: ideally we would do this on TE change signal
+            # TODO: textEdited() signal (not textChanged())
+            if commentHasMultipleQTags(com):
+                self.QSpecific.setEnabled(False)
+            elif commentTaggedQn(com, self.questnum):
+                self.QSpecific.setCheckState(Qt.Checked)
+            else:
+                self.QSpecific.setCheckState(Qt.Unchecked)
 
     def changedCB(self):
         self.TE.clear()
