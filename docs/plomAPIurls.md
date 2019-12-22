@@ -3,10 +3,16 @@
 ## TODOs
 * build a proper API document which shows inputs and return values etc.
 
-## Authentication + Version
+## Misc information
 * get "/Version" - return server+API versions as test string
+* get "/info/shortName" - return the shortname of the test (from spec)
+* get "/info/numberOfGroupsAndVersions" - return a pair (#pages, #versions)
+
+## Authentication + misc Admin tasks
 * put "/users/{user}" - verify user/password + return auth-token
 * delete "/users/{user}" - close user-session + revoke auth-token
+* put "/admin/reloadUsers" - force server to reload user list
+* put "/admin/reloadScans" - force server to reload scans
 
 ## Identifier
 * get "/ID/progress" - return [#done, #total]
@@ -44,7 +50,47 @@
 * delete "/MK/tasks/{task}" - unclaim the task.
 
 
-# Table of functions etc - shows need for harmonisation
+## List of routes from grep of image_server.py
+Placed a checkmark next to each if appears in lists above.
+
+* get("/Version") ✓
+* delete("/users/{user}") ✓
+* put("/users/{user}") ✓
+* put("/admin/reloadUsers") ✓
+* put("/admin/reloadScans") ✓
+* get("/info/shortName") ✓
+* get("/info/numberOfGroupsAndVersions") ✓
+* get("/ID/progress") ✓
+* get("/ID/tasks/available") ✓
+* get("/ID/classlist") ✓
+* get("/ID/predictions") ✓
+* get("/ID/tasks/complete") ✓
+* get("/ID/images/{tgv}") ✓
+* patch("/ID/tasks/{task}") ✓
+* put("/ID/tasks/{task}") ✓
+* delete("/ID/tasks/{task}") ✓
+* get("/TOT/maxMark") ✓
+* get("/TOT/tasks/complete") ✓
+* get("/TOT/progress") ✓
+* get("/TOT/tasks/available") ✓
+* patch("/TOT/tasks/{task}") ✓
+* delete("/TOT/tasks/{task}") ✓
+* get("/TOT/images/{tgv}") ✓
+* put("/TOT/tasks/{task}") ✓
+* get("/MK/maxMark") ✓
+* delete("/MK/tasks/{task}") ✓
+* get("/MK/tasks/complete") ✓
+* get("/MK/progress") ✓
+* get("/MK/tasks/available") ✓
+* patch("/MK/tasks/{task}") ✓
+* get("/MK/latex") ✓
+* get("/MK/images/{tgv}") ✓
+* get("/MK/originalImage/{tgv}") ✓
+* put("/MK/tasks/{tgv}") ✓
+* patch("/MK/tags/{tgv}") ✓
+* get("/MK/whole/{number}") ✓
+
+<!-- # Table of functions etc - shows need for harmonisation
 |method|url|messenger|server|DB|
 |------|----|----|----|----|
 | get | "/Version" |.|.|.|
@@ -58,4 +104,4 @@
 | get |"/ID/images/{tgv}" | IDrequestImage | IDrequestImage | IDrequestImage |
 | patch |"/ID/tasks/{task}"| IDclaimThisTask | IDclaimThisTask | IDclaimThisTask |
 | put |"/ID/tasks/{task}" | IDreturnIDdTask | IDreturnIDdTask | IDreturnIDdTask |
-| delete |"/ID/tasks/{task}" | IDdidNotFinishTask | IDdidNotFinishTask | IDdidntFinish |
+| delete |"/ID/tasks/{task}" | IDdidNotFinishTask | IDdidNotFinishTask | IDdidntFinish | -->
