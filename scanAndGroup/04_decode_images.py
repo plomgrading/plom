@@ -269,7 +269,7 @@ def validateQRsAgainstProduction():
         # create string of t for json matching.
         ts = str(t)
         # for each page of that test-number
-        for p in examsScannedNow[t].keys():
+        for p in list(examsScannedNow[t].keys()):
             # again create string of p for json matching.
             ps = str(p)
             # the version of that test/page
@@ -302,7 +302,7 @@ def validateQRsAgainstProduction():
                 shutil.move(fn, "problemImages")
                 shutil.move(fn + ".qr", "problemImages")
                 # Remove page from the exams-scanned-now list.
-                examsScannedNow[ts].pop(ps)
+                examsScannedNow[t].pop(p)
     os.chdir("../")
 
 
