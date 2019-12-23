@@ -296,7 +296,7 @@ class CommentWidget(QWidget):
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
 
-        questnum = int(self.parent.parent.pageGroup)  # YUCK!
+        questnum = int(self.parent.tgv[5:7])
         testname = self.parent.testname
         acb = AddCommentBox(self, self.maxMark, alist, questnum, testname)
         if acb.exec_() == QDialog.Accepted:
@@ -543,10 +543,10 @@ class SimpleCommentTable(QTableView):
         for i, com in enumerate(self.clist):
             # User can edit the text, but doesn't handle drops.
             # TODO: YUCK! (how do I get the pagegroup)
-            pg = int(self.parent.parent.parent.pageGroup)
-            if not commentVisibleInQuestion(com, pg):
-                continue
+            questnum = int(self.parent.parent.tgv[5:7])
             testname = self.parent.parent.testname
+            if not commentVisibleInQuestion(com, questnum):
+                continue
             if com["testname"] and not com["testname"] == testname:
                 continue
             txti = QStandardItem(com["text"])
