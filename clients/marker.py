@@ -732,7 +732,7 @@ class MarkerClient(QWidget):
             fh.write(image)
         self.exM.addPaper(TestPageGroup(test, fname, tags=tags))
         pr = self.prxM.rowFromTGV(test)
-        if pr:
+        if pr is not None:
             # if newly-added row is visible, select it and redraw
             self.ui.tableView.selectRow(pr)
             self.updateImage(pr)
