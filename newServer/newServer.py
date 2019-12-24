@@ -77,6 +77,11 @@ class Server(object):
             quit()
 
     from plomServer.serverUpload import addKnownPage, addUnknownPage, addCollidingPage
+    from plomServer.serverID import IDprogressCount
+
+    def validate(self, user, token):
+        """Check the user's token is valid"""
+        return self.authority.validateToken(user, token)
 
 
 examDB = PlomDB()
@@ -84,11 +89,13 @@ spec = SpecParser().spec
 buildDirectories(spec)
 peon = Server(spec, examDB)
 uploader = UploadHandler(peon)
+ider = IDHandler(peon)
 
 try:
     # Run the server
     app = web.Application()
     uploader.setUpRoutes(app.router)
+    ider.setUpRoutes(app.router)
     web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
 except KeyboardInterrupt:
     pass

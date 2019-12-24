@@ -472,3 +472,61 @@ class PlomDB:
                     mref.save()
                 gref.save()
                 tref.save()
+
+
+# ------------------
+# Identifier stuff
+
+
+def IDcountAll(self):
+    """Count all the records"""
+    try:
+        return Test.select().where(Test.scanned == True).count()
+    except Test.DoesNotExist:
+        return 0
+
+
+def IDcountIdentified(self):
+    """Count all the ID'd records"""
+    """Count all the records"""
+    try:
+        return (
+            Test.select().where(Test.scanned == True, Test.identified == True).count()
+        )
+    except Test.DoesNotExist:
+        return 0
+
+
+def IDaskNextTask(self, username):
+    """Find unid'd test and send testNumber to client"""
+    try:
+        with plomdb.atomic():
+            # Grab image from todo pile
+            x = Test.get_or_none(status == scanned, identified == False)
+            if x is None:
+                self.logging.info("Nothing left on To-Do pile")
+                return None
+            # log it.
+            self.logging.info(
+                "Client asked for next task - passing number {} to client {}".format(
+                    x.number, username
+                )
+            )
+            return x.number
+    except IDImage.DoesNotExist:
+        self.logging.info("Nothing left on To-Do pile")
+        return None
+
+
+def IDrequestDoneTasks(self, username):
+    """When a id-client logs on they request a list of papers they have already IDd.
+        Send back the list.
+        """
+    try:
+        with plomdb.atomic():
+    query = IDImage.select().where(IDImage.user == username)
+    idList = []
+    for x in query:
+        if x.status == "Identified":
+            idList.append([x.tgv, x.status, x.sid, x.sname])
+            return idList
