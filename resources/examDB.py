@@ -1,4 +1,5 @@
 from peewee import *
+from datetime import datetime
 
 # a simple comment added.
 
@@ -15,9 +16,6 @@ plomdb = SqliteDatabase("../resources/plom.db")
 
 class Test(Model):
     testNumber = IntegerField(primary_key=True, unique=True)
-    studentID = CharField(unique=True, null=True)
-    studentName = CharField(null=True)
-    totalMark = IntegerField(null=True)
     # some state bools
     produced = BooleanField(default=False)
     scanned = BooleanField(default=False)
@@ -36,8 +34,6 @@ class Group(Model):
     test = ForeignKeyField(Test, backref="groups")
     gid = CharField(unique=True)  # must be unique
     groupType = CharField()  # to distinguish between ID, DNM, and Mark groups
-    status = CharField(default="")
-    version = IntegerField(default=1)
     # flags
     scanned = BooleanField(default=False)
     hasCollisions = BooleanField(default=False)
@@ -46,13 +42,33 @@ class Group(Model):
         database = plomdb
 
 
-# Data for question-groupsWe have the CPU time.We have the CPU time.
-class MarkData(Model):
-    gid = ForeignKeyField(Group, backref="markdata")
-    groupNumber = IntegerField(null=False)
+# Data for id-group
+class IDData(Model):
+    test = ForeignKeyField(Test, backref="iddata")
+    group = ForeignKeyField(Group, backref="iddata")
+    status = CharField(default="")
+    studentID = CharField(unique=True, null=True)
+    studentName = CharField(null=True)
+    username = CharField(default="")
+    time = DateTimeField(null=True)
+    # flags
+    identified = BooleanField(default=False)
+
+    class Meta:
+        database = plomdb
+
+
+# Data for question-groups
+class QuestionData(Model):
+    test = ForeignKeyField(Test, backref="iddata")
+    group = ForeignKeyField(Group, backref="questiondata")
+    status = CharField(default="")
+    questionNumber = IntegerField(null=False)
     version = IntegerField(null=False)
     annotatedFile = CharField(null=True)
     mark = IntegerField(null=True)
+    username = CharField(default="")
+    time = DateTimeField(null=True)
     # flags
     marked = BooleanField(default=False)
 
@@ -120,7 +136,8 @@ class PlomDB:
                 [
                     Test,
                     Group,
-                    MarkData,
+                    IDData,
+                    QuestionData,
                     Page,
                     UnknownPages,
                     CollidingPages,
@@ -132,7 +149,7 @@ class PlomDB:
         try:
             Test.create(testNumber=t)  # must be unique
         except IntegrityError as e:
-            print("Test {} already exists.".format(t))
+            print("Test {} error - {}".format(t, e))
             return False
         return True
 
@@ -152,7 +169,7 @@ class PlomDB:
                         fileName="",
                     )
                 except IntegrityError as e:
-                    print("Page {} for test {} already exists.".format(p, t))
+                    print("Page {} for test {} error - {}".format(p, t, e))
                     print(e)
                     flag = False
         return flag
@@ -165,11 +182,15 @@ class PlomDB:
 
         gid = "i{}".format(str(t).zfill(4))
         try:
-            gref = Group.create(
-                test=tref, gid=gid, groupType="i", version=1
-            )  # must be unique
+            gref = Group.create(test=tref, gid=gid, groupType="i")  # must be unique
         except IntegrityError as e:
-            print("Group {} of Test {} already exists.".format(gid, t))
+            print("Group {} of Test {} error - {}".format(gid, t, e))
+            return False
+        try:
+            iref = IDData.create(test=tref, group=gref)
+        except IntegrityError as e:
+            print(e)
+            print("IDdata {} of group {} error - {}.".format(qref, gref, e))
             return False
         return self.addPages(tref, gref, t, pages, 1)
 
@@ -183,26 +204,15 @@ class PlomDB:
         # make the dnmgroup
         try:
             # A DNM group may have 0 pages, in that case mark it as scanned and set status = "complete"
-            if len(pages) == 0:
-                gref = Group.create(
-                    test=tref,
-                    gid=gid,
-                    groupType="d",
-                    version=1,
-                    scanned=True,
-                    status="complete",
-                )
-            else:
-                gref = Group.create(
-                    test=tref, gid=gid, groupType="d", version=1
-                )  # must be unique
+            sc = True if len(pages) == 0 else False
+            gref = Group.create(test=tref, gid=gid, groupType="d", scanned=sc)
 
         except IntegrityError as e:
-            print("Group {} of Test {} already exists.".format(gid, t))
+            print("Group {} of Test {} error - {}".format(gid, t, e))
             return False
         return self.addPages(tref, gref, t, pages, 1)
 
-    def createMGroup(self, t, g, v, pages):
+    def createQGroup(self, t, g, v, pages):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             print("No test with number {}".format(t))
@@ -211,16 +221,17 @@ class PlomDB:
         gid = "m{}g{}".format(str(t).zfill(4), g)
         # make the mgroup
         try:
-            gref = Group.create(
-                test=tref, gid=gid, groupType="m", version=v
-            )  # must be unique
+            gref = Group.create(test=tref, gid=gid, groupType="m", version=v)
         except IntegrityError as e:
-            print("Question {} of Test {} already exists.".format(gid, t))
+            print("Question {} of Test {} error - {}".format(gid, t, e))
             return False
         try:
-            mref = MarkData.create(gid=gref, groupNumber=g, version=v)
+            qref = QuestionData.create(
+                test=tref, group=gref, questionNumber=g, version=v
+            )
         except IntegrityError as e:
-            print("Markdata {} of question {} already exists.".format(mref, gid))
+            print(e)
+            print("Questiondata {} of question {} error - {}.".format(qref, gid, e))
             return False
         return self.addPages(tref, gref, t, pages, v)
 
@@ -229,27 +240,28 @@ class PlomDB:
         if tref is None:
             return
         for x in tref.groups:
-            if x.groupType == "m":
-                mdata = x.markdata[0]
+            print(x.gid, x.groupType)
+            if x.groupType == "i":
+                idata = x.iddata[0]
+                print("\t", idata.studentID, idata.studentName)
+            elif x.groupType == "m":
+                qdata = x.questiondata[0]
                 print(
-                    x.gid,
-                    x.groupType,
-                    x.status,
-                    mdata.groupNumber,
-                    mdata.version,
-                    mdata.mark,
-                    mdata.annotatedFile,
+                    "\t",
+                    qdata.questionNumber,
+                    qdata.version,
+                    qdata.status,
+                    qdata.mark,
+                    qdata.annotatedFile,
                 )
-            else:
-                print(x.gid, x.groupType)
-            for p in x.pages:
-                print("\t", p.pageNumber, p.version)
+            for p in x.pages.order_by(Page.pageNumber):
+                print("\t", [p.pageNumber, p.version])
 
     def printPagesByTest(self, t):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return
-        for p in tref.pages:
+        for p in tref.pages.order_by(Page.pageNumber):
             print(p.pageNumber, p.version, p.group.gid)
 
     def getPageVersions(self, t):
@@ -280,14 +292,17 @@ class PlomDB:
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return
+        iref = IDData.get_or_none(test=tref)
+        if iref is None:
+            return
         with plomdb.atomic():
-            for g in tref.groups:
-                if g.groupType == "i":
-                    g.status = "identified"
-                    g.save()
-                    break
-            tref.studentID = sid
-            tref.studentName = sname
+            iref.status = "identified"
+            iref.studentID = sid
+            iref.studentName = sname
+            iref.identified = True
+            iref.username = "automatic"
+            iref.time = datetime.now()
+            iref.save()
             tref.identified = True
             tref.save()
 
@@ -518,15 +533,15 @@ def IDaskNextTask(self, username):
         return None
 
 
-def IDrequestDoneTasks(self, username):
-    """When a id-client logs on they request a list of papers they have already IDd.
-        Send back the list.
-        """
-    try:
-        with plomdb.atomic():
-    query = IDImage.select().where(IDImage.user == username)
-    idList = []
-    for x in query:
-        if x.status == "Identified":
-            idList.append([x.tgv, x.status, x.sid, x.sname])
-            return idList
+# def IDrequestDoneTasks(self, username):
+#     """When a id-client logs on they request a list of papers they have already IDd.
+#         Send back the list.
+#         """
+#     try:
+#         with plomdb.atomic():
+#     query = IDImage.select().where(IDImage.user == username)
+#     idList = []
+#     for x in query:
+#         if x.status == "Identified":
+#             idList.append([x.tgv, x.status, x.sid, x.sname])
+#             return idList

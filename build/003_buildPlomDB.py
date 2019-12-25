@@ -64,7 +64,7 @@ def buildExamDatabase(spec):
                     "ERROR - problem with specification - this should not happen!! Please check it carefully."
                 )
                 exit(1)
-            if examDB.createMGroup(t, int(gs), v, spec["question"][gs]["pages"]):
+            if examDB.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
                 print("\tQuestion {} created".format(gs))
             else:
                 print("Error - problem creating Question {} for test {}".format(gs, t))
