@@ -325,26 +325,27 @@ class PlomDB:
 
     def setGroupReady(self, gref):
         if gref.groupType == "i":
+            iref = gref.iddata[0]
             # check if group already identified - can happen if printed tests with names
-            if gref.status == "identified":
+            if iref.status == "identified":
                 print("Group {} is already identified.".format(gref.gid))
             else:
-                gref.status = "todo"
+                iref.status = "todo"
                 print("Group {} is ready to be identified.".format(gref.gid))
+            iref.save()
         elif gref.groupType == "d":
             # we don't do anything with these groups
-            gref.status = "complete"
             print(
                 "Group {} is DoNotMark - all scanned, nothing to be done.".format(
                     gref.gid
                 )
             )
         elif gref.groupType == "m":
-            # ToDo - work out logic cleanly here.
-            if gref.status is not None:
-                print("We should never reach here")
+            qref = gref.questiondata[0]
+            if qref.status is not "":
+                print("We should never reach here - status = {}".format(qref.status))
             gref.status = "todo"
-        return gref
+            qref.save()
 
     def checkGroupAllUploaded(self, pref):
         gref = pref.group
@@ -356,7 +357,7 @@ class PlomDB:
         with plomdb.atomic():
             if sflag:
                 gref.scanned = True
-                gref = self.setGroupReady(gref)
+                self.setGroupReady(gref)
             else:
                 gref.scanned = False
             gref.save()
@@ -475,16 +476,20 @@ class PlomDB:
                 tref.finished = False
                 if gref.groupType == "i":  # if ID-group then invalidate any IDs
                     tref.identified = False
-                    tref.studentName = None
-                    tref.studentID = None
+                    iref = gref.iddata[0]
+                    iref.studentName = None
+                    iref.studentID = None
+                    iref.identified = False
+                    iref.save()
                 elif gref.groupType == "m":
                     # invalidate the marking
                     tref.marked = False
-                    mref = gref.markdata[0]
-                    mref.marked = False
-                    mref.mark = None
-                    mref.annotatedFile = None  # should we delete that?
-                    mref.save()
+                    qref = gref.questiondata[0]
+                    qref.marked = False
+                    qref.mark = None
+                    qref.annotatedFile = None
+                    # should we delete that? - else move to DiscardedPages
+                    qref.save()
                 gref.save()
                 tref.save()
 
