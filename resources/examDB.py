@@ -556,9 +556,7 @@ class PlomDB:
         tref = Test.get_or_none(Test.testNumber == t)
         if tref.scanned == False:
             return [False]
-        iref = tref.iddata
-        for p in iref:
-            print(p)
+        iref = tref.iddata[0]
         # check if task given to user
         if iref.username != username:
             return [False]
