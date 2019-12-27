@@ -34,6 +34,7 @@ sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.
 
 
 from plomServer.routesUpload import UploadHandler
+from plomServer.routesID import IDHandler
 
 # ----------------------
 def buildDirectories(spec):
@@ -77,7 +78,12 @@ class Server(object):
             quit()
 
     from plomServer.serverUpload import addKnownPage, addUnknownPage, addCollidingPage
-    from plomServer.serverID import IDprogressCount
+    from plomServer.serverID import (
+        IDprogressCount,
+        IDgetNextTask,
+        IDgetDoneTasks,
+        IDgetImage,
+    )
 
     def validate(self, user, token):
         """Check the user's token is valid"""

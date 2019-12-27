@@ -60,7 +60,7 @@ class IDData(Model):
 
 # Data for question-groups
 class QuestionData(Model):
-    test = ForeignKeyField(Test, backref="iddata")
+    test = ForeignKeyField(Test, backref="questiondata")
     group = ForeignKeyField(Group, backref="questiondata")
     status = CharField(default="")
     questionNumber = IntegerField(null=False)
@@ -499,7 +499,11 @@ class PlomDB:
     def IDcountAll(self):
         """Count all the records"""
         try:
-            return Test.select().where(Test.scanned == True).count()
+            return (
+                Test.select()
+                .where(Test.scanned == True, Test.hasCollisions == False)
+                .count()
+            )
         except Test.DoesNotExist:
             return 0
 
@@ -509,28 +513,36 @@ class PlomDB:
         try:
             return (
                 Test.select()
-                .where(Test.scanned == True, Test.identified == True)
+                .where(
+                    Test.scanned == True,
+                    Test.identified == True,
+                    Test.hasCollisions == False,
+                )
                 .count()
             )
         except Test.DoesNotExist:
             return 0
 
-    def IDaskNextTask(self):
+    def IDgetNextTask(self):
         """Find unid'd test and send testNumber to client"""
         try:
             with plomdb.atomic():
                 # Grab image from todo pile
-                x = Test.get_or_none(Test.scanned == True, Test.identified == False)
+                x = Test.get_or_none(
+                    Test.scanned == True,
+                    Test.identified == False,
+                    Test.hasCollisions == False,
+                )
                 if x is None:
                     print("Nothing left on to-do pile")
                     return None
-                print("Next ID task = ".format(x.number))
-                return x.number
+                print("Next ID task = ".format(x.testNumber))
+                return x.testNumber
         except Test.DoesNotExist:
             self.logging.info("Nothing left on To-Do pile")
             return None
 
-    def IDaskDoneTasks(self, username):
+    def IDgetDoneTasks(self, username):
         """When a id-client logs on they request a list of papers they have already IDd.
         Send back the list."""
         query = IDData.select().where(IDData.username == username)
@@ -540,11 +552,13 @@ class PlomDB:
                 idList.append([x.test.testNumber, x.status, x.studentID, x.studentName])
         return idList
 
-    def IDrequestImage(self, username, t):
+    def IDgetImage(self, username, t):
         tref = Test.get_or_none(Test.testNumber == t)
         if tref.scanned == False:
             return [False]
         iref = tref.iddata
+        for p in iref:
+            print(p)
         # check if task given to user
         if iref.username != username:
             return [False]
