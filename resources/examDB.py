@@ -539,3 +539,17 @@ class PlomDB:
             if x.status == "identified":
                 idList.append([x.test.testNumber, x.status, x.studentID, x.studentName])
         return idList
+
+    def IDrequestImage(self, username, t):
+        tref = Test.get_or_none(Test.testNumber == t)
+        if tref.scanned == False:
+            return [False]
+        iref = tref.iddata
+        # check if task given to user
+        if iref.username != username:
+            return [False]
+        gref = iref.group
+        rval = [True]
+        for p in gref.pages.order_by(Page.pageNumber):
+            rval.append(p.fileName)
+        return rval
