@@ -78,6 +78,55 @@ class IDHandler:
         else:
             return web.Response(status=401)
 
+    # @routes.patch("/ID/tasks/{task}")
+    async def IDclaimThisTask(self, request):
+        data = await request.json()
+        testNumber = request.match_info["task"]
+        if self.server.validate(data["user"], data["token"]):
+            rmsg = self.server.IDclaimThisTask(data["user"], testNumber)
+            if rmsg[0]:  # user allowed access - returns [true, fname0, fname1,...]
+                with MultipartWriter("images") as mpwriter:
+                    for fn in rmsg[1:]:
+                        if os.path.isfile(fn):
+                            mpwriter.append(open(fn, "rb"))
+                        else:
+                            return web.Response(status=404)
+                    return web.Response(body=mpwriter, status=200)
+            else:
+                return web.Response(status=204)  # that task already taken.
+        else:
+            return web.Response(status=401)
+
+    # @routes.put("/ID/tasks/{task}")
+    async def IDreturnIDdTask(self, request):
+        data = await request.json()
+        testNumber = request.match_info["task"]
+        if self.server.validate(data["user"], data["token"]):
+            rmsg = self.server.IDreturnIDdTask(
+                data["user"], testNumber, data["sid"], data["sname"]
+            )
+            # returns [True] if all good
+            # [False, True] - if student number already in use
+            # [False, False] - if bigger error
+            if rmsg[0]:  # all good
+                return web.Response(status=200)
+            elif rmsg[1]:  # student number already in use
+                return web.Response(status=409)
+            else:  # a more serious error - can't find this in database
+                return web.Response(status=404)
+        else:
+            return web.Response(status=401)
+
+    # @routes.delete("/ID/tasks/{task}")
+    async def IDdidNotFinishTask(self, request):
+        data = await request.json()
+        testNumber = request.match_info["task"]
+        if self.server.validate(data["user"], data["token"]):
+            self.server.IDdidNotFinish(data["user"], testNumber)
+            return web.json_response(status=200)
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_get("/ID/progress", self.IDprogressCount)
         router.add_get("/ID/classlist", self.IDgetClasslist)
@@ -85,3 +134,6 @@ class IDHandler:
         router.add_get("/ID/tasks/complete", self.IDgetDoneTasks)
         router.add_get("/ID/images/{test}", self.IDgetImage)
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
+        router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
+        router.add_put("/ID/tasks/{task}", self.IDreturnIDdTask)
+        router.add_delete("/ID/tasks/{task}", self.IDdidNotFinishTask)

@@ -536,11 +536,38 @@ class PlomDB:
                 if x is None:
                     print("Nothing left on to-do pile")
                     return None
-                print("Next ID task = ".format(x.testNumber))
+                print("Next ID task = {}".format(x.testNumber))
                 return x.testNumber
         except Test.DoesNotExist:
-            self.logging.info("Nothing left on To-Do pile")
+            print("Nothing left on To-Do pile")
             return None
+
+    def IDgiveTaskToClient(self, username, testNumber):
+        try:
+            with plomdb.atomic():
+                tref = Test.get_or_none(Test.testNumber == testNumber)
+                if tref.scanned == False:
+                    return [False]
+                iref = tref.iddata[0]
+                if iref.username != "" and iref.username != username:
+                    # has been claimed by someone else.
+                    return [False]
+                # update status, Student-number, name, id-time.
+                iref.status = "outforiding"
+                iref.username = username
+                iref.time = datetime.now()
+                iref.save()
+                # return [true, page1, page2, etc]
+                gref = iref.group
+                rval = [True]
+                for p in gref.pages.order_by(Page.pageNumber):
+                    rval.append(p.fileName)
+                print("Giving ID task {} to user {}".format(testNumber, username))
+                return rval
+
+        except Test.DoesNotExist:
+            print("That test number {} not known".format(testNumber))
+            return False
 
     def IDgetDoneTasks(self, username):
         """When a id-client logs on they request a list of papers they have already IDd.

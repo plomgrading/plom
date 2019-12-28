@@ -99,6 +99,9 @@ class Server(object):
         IDgetNextTask,
         IDgetDoneTasks,
         IDgetImage,
+        IDclaimThisTask,
+        IDdidNotFinish,
+        IDreturnIDdTask,
     )
 
 

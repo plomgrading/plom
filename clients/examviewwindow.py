@@ -42,14 +42,14 @@ class ExamViewWindow(QWidget):
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
 
-    def updateImage(self, fname):
+    def updateImage(self, fnames):
         """Pass file to the view to update the image"""
         # first store the current view transform and scroll values
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
         # update the image
-        self.view.updateImage(fname)
+        self.view.updateImage(fnames)
         # re-set the view transform and scroll values
         self.view.setTransform(self.viewTrans)
         self.view.horizontalScrollBar().setValue(self.dx)
@@ -61,11 +61,13 @@ class ExamView(QGraphicsView):
     - containing an image and click-to-zoom/unzoom
     """
 
-    def __init__(self, fname):
+    def __init__(self, fnames):
         QGraphicsView.__init__(self)
-        self.initUI(fname)
+        self.initUI(fnames)
 
-    def initUI(self, fname):
+    def initUI(self, fnames):
+        TODO - FINISH THIS
+
         # Make QGraphicsScene
         self.scene = QGraphicsScene()
         # Pixmap, pixmapitem from the filename, render nicely.
@@ -80,7 +82,9 @@ class ExamView(QGraphicsView):
         self.setScene(self.scene)
         self.fitInView(self.imageItem, Qt.KeepAspectRatio)
 
-    def updateImage(self, fname):
+    def updateImage(self, fnames):
+        TODO - FINISH THIS
+
         """Update the image with that from filename"""
         self.image = QPixmap(fname)
         self.imageItem.setPixmap(self.image)

@@ -29,3 +29,30 @@ def IDgetImage(self, username, testNumber):
     Send back the list.
     """
     return self.DB.IDgetImage(username, testNumber)
+
+
+def IDclaimThisTask(self, user, testNumber):
+    return self.DB.IDgiveTaskToClient(user, testNumber)
+    # return [true, image-filename1, name2,...]
+    # or return [false]
+
+
+def IDreturnIDdTask(self, user, ret, sid, sname):
+    """Client has ID'd the pageimage with code=ret, student-number=sid,
+    and student-name=sname. Send the information to the database (which
+    checks if that number has been used previously). If okay then send
+    and ACK, else send an error that the number has been used.
+    """
+    # TODO - improve this
+    # returns [True] if all good
+    # [False, True] - if student number already in use
+    # [False, False] - if bigger error
+    return self.DB.IDgetTaskFromClient(ret, user, sid, sname)
+
+
+def IDdidNotFinish(self, user, testNumber):
+    """User didn't finish IDing the image with given code. Tell the
+    database to put this back on the todo-pile.
+    """
+    self.DB.IDdidNotFinish(user, testNumber)
+    return

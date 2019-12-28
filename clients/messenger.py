@@ -307,7 +307,11 @@ def IDrequestImage(code):
             verify=False,
         )
         response.raise_for_status()
-        image = BytesIO(response.content).getvalue()
+        imageList = []
+        for img in MultipartDecoder.from_response(response).parts:
+            imageList.append(
+                BytesIO(img.content).getvalue()
+            )  # pass back image as bytes
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")
@@ -322,7 +326,7 @@ def IDrequestImage(code):
     finally:
         SRmutex.release()
 
-    return image
+    return imageList
 
 
 # ------------------------
@@ -349,8 +353,10 @@ def IDclaimThisTask(code):
     finally:
         SRmutex.release()
 
-    image = BytesIO(response.content).getvalue()  # pass back image as bytes
-    return image
+    imageList = []
+    for img in MultipartDecoder.from_response(response).parts:
+        imageList.append(BytesIO(img.content).getvalue())  # pass back image as bytes
+    return imageList
 
 
 def IDreturnIDdTask(code, studentID, studentName):
