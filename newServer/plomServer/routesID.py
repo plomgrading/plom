@@ -9,7 +9,7 @@ class IDHandler:
     # @routes.get("/ID/progress")
     async def IDprogressCount(self, request):
         data = await request.json()
-        if True or self.server.validate(data["user"], data["token"]):
+        if self.server.validate(data["user"], data["token"]):
             return web.json_response(self.server.IDprogressCount(), status=200)
         else:
             return web.Response(status=401)
@@ -17,7 +17,7 @@ class IDHandler:
     # @routes.get("/ID/classlist")
     async def IDgetClasslist(self, request):
         data = await request.json()
-        if True or self.server.validate(data["user"], data["token"]):
+        if self.server.validate(data["user"], data["token"]):
             if os.path.isfile("../resources/classlist.csv"):
                 return web.FileResponse("../resources/classlist.csv", status=200)
             else:
@@ -28,7 +28,7 @@ class IDHandler:
     # @routes.get("/ID/predictions")
     async def IDgetPredictions(self, request):
         data = await request.json()
-        if True or self.server.validate(data["user"], data["token"]):
+        if self.server.validate(data["user"], data["token"]):
             if os.path.isfile("../resources/predictionlist.csv"):
                 return web.FileResponse("../resources/predictionlist.csv", status=200)
             else:
@@ -39,7 +39,7 @@ class IDHandler:
     # @routes.get("/ID/tasks/complete")
     async def IDgetDoneTasks(self, request):
         data = await request.json()
-        if True or self.server.validate(data["user"], data["token"]):
+        if self.server.validate(data["user"], data["token"]):
             # return the completed list
             return web.json_response(
                 self.server.IDgetDoneTasks(data["user"]), status=200
@@ -51,7 +51,7 @@ class IDHandler:
     async def IDgetImage(self, request):
         data = await request.json()
         test = request.match_info["test"]
-        if True or self.server.validate(data["user"], data["token"]):
+        if self.server.validate(data["user"], data["token"]):
             rmsg = self.server.IDgetImage(data["user"], test)
             if rmsg[0]:  # user allowed access - returns [true, fname0, fname1,...]
                 with MultipartWriter("images") as mpwriter:
@@ -69,10 +69,8 @@ class IDHandler:
     # @routes.get("/ID/tasks/available")
     async def IDgetNextTask(self, request):
         data = await request.json()
-        if True or self.server.validate(data["user"], data["token"]):
-            rmsg = self.server.IDgetNextTask(
-                data["user"]
-            )  # returns [True, code] or [False]
+        if self.server.validate(data["user"], data["token"]):
+            rmsg = self.server.IDgetNextTask()  # returns [True, code] or [False]
             if rmsg[0]:
                 return web.json_response(rmsg[1], status=200)
             else:

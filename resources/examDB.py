@@ -190,7 +190,7 @@ class PlomDB:
             iref = IDData.create(test=tref, group=gref)
         except IntegrityError as e:
             print(e)
-            print("IDdata {} of group {} error - {}.".format(qref, gref, e))
+            print("IDData {} of group {} error - {}.".format(qref, gref, e))
             return False
         return self.addPages(tref, gref, t, pages, 1)
 
@@ -231,7 +231,7 @@ class PlomDB:
             )
         except IntegrityError as e:
             print(e)
-            print("Questiondata {} of question {} error - {}.".format(qref, gid, e))
+            print("QuestionData {} of question {} error - {}.".format(qref, gid, e))
             return False
         return self.addPages(tref, gref, t, pages, v)
 
@@ -565,3 +565,25 @@ class PlomDB:
         for p in gref.pages.order_by(Page.pageNumber):
             rval.append(p.fileName)
         return rval
+
+    def resetUsersToDo(self, username):
+        with plomdb.atomic():
+            query = IDData.select().where(
+                IDData.username == username, IDData.status == "outforiding"
+            )
+            for x in query:
+                x.status = "todo"
+                x.username = ""
+                x.time = datetime.now()
+                x.save()
+        with plomdb.atomic():
+            query = QuestionData.select().where(
+                QuestionData.username == username,
+                QuestionData.status == "outformarking",
+            )
+            for x in query:
+                x.status = "todo"
+                x.username = ""
+                x.markingTime = 0
+                x.time = datetime.now()
+                x.save()

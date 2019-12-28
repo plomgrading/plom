@@ -3,6 +3,24 @@ import os
 import uuid
 
 
+def InfoShortName(self):
+    if self.testSpec is None:
+        return [False]
+    else:
+        return [True, self.testSpec["name"]]
+
+
+def InfoQuestionsVersions(self):
+    if self.testSpec is None:
+        return [False]
+    else:
+        return [
+            True,
+            self.testSpec["numberOfQuestions"],
+            self.testSpec["numberOfVersions"],
+        ]
+
+
 def reloadUsers(self, password):
     """Reload the user list."""
     # Check user is manager.
@@ -20,15 +38,14 @@ def reloadUsers(self, password):
                     # This is a new user - add them in.
                     self.userList[u] = newUserList[u]
                     self.authority.addUser(u, newUserList[u])
-                    self.logger.info("New user = {}".format(u))
+                    print("New user = {}".format(u))
             # for each user in the old list..
             for u in self.userList:
                 if u not in newUserList:
                     # this user has been removed
-                    self.logger.info("Removing user = {}".format(u))
+                    print("Removing user = {}".format(u))
                     # Anything out at user should go back on todo pile.
-                    self.IDDB.resetUsersToDo(u)
-                    self.MDB.resetUsersToDo(u)
+                    self.DB.resetUsersToDo(u)
                     # remove user's authorisation token.
                     self.authority.detoken(u)
     self.logger.info("Current user list = {}".format(list(self.userList.keys())))
@@ -46,24 +63,22 @@ def giveUserToken(self, user, password, clientAPI):
     Then pass them back the authorisation token
     (the password is only checked on first authorisation - since slow)
     """
-    if clientAPI != serverAPI:
+    if clientAPI != self.API:
         return [
             False,
             "API"
             'Plom API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
-                clientAPI, serverAPI, __version__
+                clientAPI, self.API, self.Version
             ),
         ]
 
     if self.authority.authoriseUser(user, password):
         # On token request also make sure anything "out" with that user is reset as todo.
-        self.IDDB.resetUsersToDo(user)
-        self.MDB.resetUsersToDo(user)
-        self.TDB.resetUsersToDo(user)
-        self.logger.info("Authorising user {}".format(user))
+        self.DB.resetUsersToDo(user)
+        print("Authorising user {}".format(user))
         return [True, self.authority.getToken(user)]
     else:
-        return [False, "NAU"]
+        return [False, "The name / password pair is not authorised".format(user)]
 
 
 def closeUser(self, user):

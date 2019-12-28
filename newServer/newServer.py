@@ -21,6 +21,8 @@ from authenticate import Authority
 
 # this allows us to import from ../resources
 sys.path.append("..")
+from resources.version import __version__
+from resources.version import Plom_API_Version as serverAPI
 from resources.specParser import SpecParser
 from resources.examDB import *
 
@@ -33,6 +35,7 @@ sslContext.check_hostname = False
 sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.key")
 
 
+from plomServer.routesUserInit import UserInitHandler
 from plomServer.routesUpload import UploadHandler
 from plomServer.routesID import IDHandler
 
@@ -61,6 +64,8 @@ class Server(object):
     def __init__(self, spec, db):
         self.testSpec = spec
         self.DB = db
+        self.API = serverAPI
+        self.Version = __version__
         self.loadUsers()
 
     def loadUsers(self):
@@ -81,7 +86,13 @@ class Server(object):
         """Check the user's token is valid"""
         return self.authority.validateToken(user, token)
 
-    from plomServer.serverUserInit import reloadUsers, giveUserToken
+    from plomServer.serverUserInit import (
+        InfoShortName,
+        InfoQuestionsVersions,
+        reloadUsers,
+        giveUserToken,
+        closeUser,
+    )
     from plomServer.serverUpload import addKnownPage, addUnknownPage, addCollidingPage
     from plomServer.serverID import (
         IDprogressCount,
@@ -95,14 +106,19 @@ examDB = PlomDB()
 spec = SpecParser().spec
 buildDirectories(spec)
 peon = Server(spec, examDB)
+userIniter = UserInitHandler(peon)
 uploader = UploadHandler(peon)
 ider = IDHandler(peon)
 
 try:
-    # Run the server
+    # construct the web server
     app = web.Application()
+    # add the routes
+    userIniter.setUpRoutes(app.router)
     uploader.setUpRoutes(app.router)
     ider.setUpRoutes(app.router)
+    # run the web server
     web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
 except KeyboardInterrupt:
+    print("Closing down")
     pass

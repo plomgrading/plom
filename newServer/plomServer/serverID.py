@@ -10,7 +10,7 @@ def IDprogressCount(self):
 
 def IDgetNextTask(self):
     # Get number of next unidentified test from the database
-    give = self.DB.IDgetNextTask(user)
+    give = self.DB.IDgetNextTask()
     if give is None:
         return [False]
     else:
