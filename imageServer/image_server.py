@@ -115,6 +115,25 @@ async def adminReloadScans(request):
 
 # ----------------------
 # ----------------------
+# Test information
+@routes.get("/info/shortName")
+async def InfoShortName(request):
+    if spec is not None:
+        return web.Response(text=spec.Name, status=200)
+    else:  # this should not happen
+        return web.Response(status=404)
+
+
+@routes.get("/info/numberOfGroupsAndVersions")
+async def InfoPagesVersions(request):
+    if spec is not None:
+        return web.json_response([spec.Length, spec.Versions], status=200)
+    else:  # this should not happen
+        return web.Response(status=404)
+
+
+# ----------------------
+# ----------------------
 # Identifier stuff
 
 
