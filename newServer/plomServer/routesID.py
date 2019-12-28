@@ -1,4 +1,5 @@
 from aiohttp import web, MultipartWriter, MultipartReader
+import os
 
 
 class IDHandler:
@@ -65,9 +66,24 @@ class IDHandler:
         else:
             return web.Response(status=401)  # not authorised at all
 
+    # @routes.get("/ID/tasks/available")
+    async def IDgetNextTask(self, request):
+        data = await request.json()
+        if True or self.server.validate(data["user"], data["token"]):
+            rmsg = self.server.IDgetNextTask(
+                data["user"]
+            )  # returns [True, code] or [False]
+            if rmsg[0]:
+                return web.json_response(rmsg[1], status=200)
+            else:
+                return web.Response(status=204)  # no papers left
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_get("/ID/progress", self.IDprogressCount)
         router.add_get("/ID/classlist", self.IDgetClasslist)
         router.add_get("/ID/predictions", self.IDgetPredictions)
         router.add_get("/ID/tasks/complete", self.IDgetDoneTasks)
         router.add_get("/ID/images/{test}", self.IDgetImage)
+        router.add_get("/ID/tasks/available", self.IDgetNextTask)

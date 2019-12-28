@@ -77,6 +77,11 @@ class Server(object):
             print("Where is user/password file?")
             quit()
 
+    def validate(self, user, token):
+        """Check the user's token is valid"""
+        return self.authority.validateToken(user, token)
+
+    from plomServer.serverUserInit import reloadUsers, giveUserToken
     from plomServer.serverUpload import addKnownPage, addUnknownPage, addCollidingPage
     from plomServer.serverID import (
         IDprogressCount,
@@ -84,10 +89,6 @@ class Server(object):
         IDgetDoneTasks,
         IDgetImage,
     )
-
-    def validate(self, user, token):
-        """Check the user's token is valid"""
-        return self.authority.validateToken(user, token)
 
 
 examDB = PlomDB()
