@@ -70,46 +70,34 @@ class ExamView(QGraphicsView):
         # Make QGraphicsScene
         self.scene = QGraphicsScene()
         # TODO = handle different image sizes.
+        self.images = {}
         self.imageGItem = QGraphicsItemGroup()
-        if fnames is not None:
-            x = 0
-            for fn in fnames:
-                img = QGraphicsPixmapItem(QPixmap(fn))
-                img.setTransformationMode(Qt.SmoothTransformation)
-                img.setPos(x, 0)
-                x += img.width()
-                self.imageGItem.addToGroup(img)
-
-        # Set sensible sizes and put into the view, and fit view to the image.
-        br = self.imageGItem.boundingRect()
-        self.scene.setSceneRect(
-            0, 0, max(1000, br.width()), max(1000, br.height()),
-        )
         self.scene.addItem(self.imageGItem)
-        self.setScene(self.scene)
-        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
+        self.updateImage(fnames)
 
     def updateImage(self, fnames):
         # TODO - FINISH THIS
-
         """Update the image with that from filename"""
-        self.imageGItem = QGraphicsItemGroup()
+        for n in self.images:
+            self.imageGItem.removeFromGroup(self.images[n])
+            self.scene.removeItem(self.images[n])
         if fnames is not None:
             x = 0
+            n = 0
             for fn in fnames:
-                img = QPixmap(fn)
-                imgI = QGraphicsPixmapItem(img)
-                imgI.setTransformationMode(Qt.SmoothTransformation)
-                imgI.setPos(x, 0)
-                x += img.width() + 10
-                self.imageGItem.addToGroup(imgI)
+                self.images[n] = QGraphicsPixmapItem(QPixmap(fn))
+                self.images[n].setTransformationMode(Qt.SmoothTransformation)
+                self.images[n].setPos(x, 0)
+                self.scene.addItem(self.images[n])
+                x += self.images[n].boundingRect().width() + 10
+                self.imageGItem.addToGroup(self.images[n])
+                n += 1
 
         # Set sensible sizes and put into the view, and fit view to the image.
         br = self.imageGItem.boundingRect()
         self.scene.setSceneRect(
             0, 0, max(1000, br.width()), max(1000, br.height()),
         )
-        self.scene.addItem(self.imageGItem)
         self.setScene(self.scene)
         self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
 

@@ -49,7 +49,7 @@ class Paper:
     store the studentName and ID-numer.
     """
 
-    def __init__(self, test, fnames, stat="unidentified", id="", name=""):
+    def __init__(self, test, fnames=[], stat="unidentified", id="", name=""):
         # tgv = t0000p00v0
         # ... = 0123456789
         # The test number
@@ -377,7 +377,7 @@ class IDClient(QWidget):
         idList = messenger.IDrequestDoneTasks()
         for x in idList:
             self.addPaperToList(
-                Paper(x[0], fnames="", stat="identified", id=x[2], name=x[3]),
+                Paper(x[0], fnames=[], stat="identified", id=x[2], name=x[3]),
                 update=False,
             )
 
@@ -394,7 +394,7 @@ class IDClient(QWidget):
         # grab the selected tgv
         test = self.exM.paperList[r].test
         # check if we have a copy
-        if self.exM.paperList[r].originalFiles is not "":
+        if len(self.exM.paperList[r].originalFiles) > 0:
             return
         # else try to grab it from server
         try:
@@ -411,7 +411,7 @@ class IDClient(QWidget):
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
 
-        self.exM.paperList[r].originalFile = inames
+        self.exM.paperList[r].originalFiles = inames
 
     def updateImage(self, r=0):
         # Here the system should check if imagefile exist and grab if needed.
