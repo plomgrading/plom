@@ -494,6 +494,31 @@ class PlomDB:
                 tref.save()
 
     # ------------------
+    # For user login - we reset all their stuff that is out
+
+    def resetUsersToDo(self, username):
+        with plomdb.atomic():
+            query = IDData.select().where(
+                IDData.username == username, IDData.status == "outforiding"
+            )
+            for x in query:
+                x.status = "todo"
+                x.username = ""
+                x.time = datetime.now()
+                x.save()
+        with plomdb.atomic():
+            query = QuestionData.select().where(
+                QuestionData.username == username,
+                QuestionData.status == "outformarking",
+            )
+            for x in query:
+                x.status = "todo"
+                x.username = ""
+                x.markingTime = 0
+                x.time = datetime.now()
+                x.save()
+
+    # ------------------
     # Identifier stuff
 
     def IDcountAll(self):
@@ -593,24 +618,60 @@ class PlomDB:
             rval.append(p.fileName)
         return rval
 
-    def resetUsersToDo(self, username):
-        with plomdb.atomic():
-            query = IDData.select().where(
-                IDData.username == username, IDData.status == "outforiding"
+    def IDdidNotFinish(self, username, testNumber):
+        """When user logs off, any images they have still out should be put
+        back on todo pile
+        """
+        # Log user returning given tgv.
+        print("User {} did not ID-task {}".format(username, testNumber))
+        try:
+            with plomdb.atomic():
+                tref = Test.get_or_none(Test.testNumber == testNumber)
+                if tref.scanned == False:
+                    return
+                iref = tref.iddata[0]
+                if iref.username != username or iref.status != "outforiding":
+                    # has been claimed by someone else.
+                    return
+                # update status, Student-number, name, id-time.
+                iref.status = "todo"
+                iref.username = ""
+                iref.time = datetime.now()
+                iref.save()
+
+        except Test.DoesNotExist:
+            print("That test number {} not known".format(testNumber))
+            return False
+
+    def IDtakeTaskFromClient(self, testNumber, username, sid, sname):
+        """Get ID'dimage back from client - update record in database."""
+        print(
+            "User {} returning ID-task {} with {} {}".format(
+                username, testNumber, sid, sname
             )
-            for x in query:
-                x.status = "todo"
-                x.username = ""
-                x.time = datetime.now()
-                x.save()
-        with plomdb.atomic():
-            query = QuestionData.select().where(
-                QuestionData.username == username,
-                QuestionData.status == "outformarking",
-            )
-            for x in query:
-                x.status = "todo"
-                x.username = ""
-                x.markingTime = 0
-                x.time = datetime.now()
-                x.save()
+        )
+        try:
+            with plomdb.atomic():
+                tref = Test.get_or_none(Test.testNumber == testNumber)
+                if tref.scanned == False:
+                    return [False, False]
+                iref = tref.iddata[0]
+                if iref.username != username:
+                    # that belongs to someone else - this is a serious error
+                    return [False, False]
+                # update status, Student-number, name, id-time.
+                iref.status = "identified"
+                iref.studentID = sid
+                iref.studentName = sname
+                iref.identified = True
+                iref.time = datetime.now()
+                iref.save()
+                tref.identified = True
+                tref.save()
+                return [True]
+        except IDData.DoesNotExist:
+            print("That test number {} not known".format(testNumber))
+            return [False, False]
+        except IntegrityError:
+            print("Student number {} already entered".format(sid))
+            return [False, True]

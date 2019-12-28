@@ -47,7 +47,7 @@ def IDreturnIDdTask(self, user, ret, sid, sname):
     # returns [True] if all good
     # [False, True] - if student number already in use
     # [False, False] - if bigger error
-    return self.DB.IDgetTaskFromClient(ret, user, sid, sname)
+    return self.DB.IDtakeTaskFromClient(ret, user, sid, sname)
 
 
 def IDdidNotFinish(self, user, testNumber):

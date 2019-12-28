@@ -374,7 +374,7 @@ def IDreturnIDdTask(code, studentID, studentName):
         )
         response.raise_for_status()
     except requests.HTTPError as e:
-        if resposne.status_code == 409:
+        if response.status_code == 409:
             raise PlomBenignException("Student number {} already in use".format(e))
         elif response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")

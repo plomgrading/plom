@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QGuiApplication, QPainter, QPixmap
 from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
+    QGraphicsItemGroup,
     QGraphicsScene,
     QGraphicsView,
     QGridLayout,
@@ -66,30 +67,51 @@ class ExamView(QGraphicsView):
         self.initUI(fnames)
 
     def initUI(self, fnames):
-        TODO - FINISH THIS
-
         # Make QGraphicsScene
         self.scene = QGraphicsScene()
-        # Pixmap, pixmapitem from the filename, render nicely.
-        self.image = QPixmap(fname)
-        self.imageItem = QGraphicsPixmapItem(self.image)
-        self.imageItem.setTransformationMode(Qt.SmoothTransformation)
+        # TODO = handle different image sizes.
+        self.imageGItem = QGraphicsItemGroup()
+        if fnames is not None:
+            x = 0
+            for fn in fnames:
+                img = QGraphicsPixmapItem(QPixmap(fn))
+                img.setTransformationMode(Qt.SmoothTransformation)
+                img.setPos(x, 0)
+                x += img.width()
+                self.imageGItem.addToGroup(img)
+
         # Set sensible sizes and put into the view, and fit view to the image.
+        br = self.imageGItem.boundingRect()
         self.scene.setSceneRect(
-            0, 0, max(1000, self.image.width()), max(1000, self.image.height())
+            0, 0, max(1000, br.width()), max(1000, br.height()),
         )
-        self.scene.addItem(self.imageItem)
+        self.scene.addItem(self.imageGItem)
         self.setScene(self.scene)
-        self.fitInView(self.imageItem, Qt.KeepAspectRatio)
+        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
 
     def updateImage(self, fnames):
-        TODO - FINISH THIS
+        # TODO - FINISH THIS
 
         """Update the image with that from filename"""
-        self.image = QPixmap(fname)
-        self.imageItem.setPixmap(self.image)
-        self.scene.setSceneRect(0, 0, self.image.width(), self.image.height())
-        self.fitInView(self.imageItem, Qt.KeepAspectRatio)
+        self.imageGItem = QGraphicsItemGroup()
+        if fnames is not None:
+            x = 0
+            for fn in fnames:
+                img = QPixmap(fn)
+                imgI = QGraphicsPixmapItem(img)
+                imgI.setTransformationMode(Qt.SmoothTransformation)
+                imgI.setPos(x, 0)
+                x += img.width() + 10
+                self.imageGItem.addToGroup(imgI)
+
+        # Set sensible sizes and put into the view, and fit view to the image.
+        br = self.imageGItem.boundingRect()
+        self.scene.setSceneRect(
+            0, 0, max(1000, br.width()), max(1000, br.height()),
+        )
+        self.scene.addItem(self.imageGItem)
+        self.setScene(self.scene)
+        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
 
     def mouseReleaseEvent(self, event):
         """Left/right click to zoom in and out"""
@@ -103,4 +125,4 @@ class ExamView(QGraphicsView):
 
     def resetView(self):
         """Reset the view to its reasonable initial state."""
-        self.fitInView(self.imageItem, Qt.KeepAspectRatio)
+        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)

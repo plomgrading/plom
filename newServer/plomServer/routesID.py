@@ -105,6 +105,7 @@ class IDHandler:
             rmsg = self.server.IDreturnIDdTask(
                 data["user"], testNumber, data["sid"], data["sname"]
             )
+            print("RMSG = {}".format(rmsg))
             # returns [True] if all good
             # [False, True] - if student number already in use
             # [False, False] - if bigger error
