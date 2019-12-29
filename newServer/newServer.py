@@ -38,6 +38,7 @@ sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.
 from plomServer.routesUserInit import UserInitHandler
 from plomServer.routesUpload import UploadHandler
 from plomServer.routesID import IDHandler
+from plomServer.routesMark import MarkHandler
 
 # ----------------------
 def buildDirectories(spec):
@@ -103,6 +104,7 @@ class Server(object):
         IDdidNotFinish,
         IDreturnIDdTask,
     )
+    from plomServer.serverMark import MprogressCount, MgetQuestionMax, MgetDoneTasks
 
 
 examDB = PlomDB()
@@ -112,6 +114,7 @@ peon = Server(spec, examDB)
 userIniter = UserInitHandler(peon)
 uploader = UploadHandler(peon)
 ider = IDHandler(peon)
+marker = MarkHandler(peon)
 
 try:
     # construct the web server
@@ -120,6 +123,7 @@ try:
     userIniter.setUpRoutes(app.router)
     uploader.setUpRoutes(app.router)
     ider.setUpRoutes(app.router)
+    marker.setUpRoutes(app.router)
     # run the web server
     web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
 except KeyboardInterrupt:

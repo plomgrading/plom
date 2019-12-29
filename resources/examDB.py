@@ -71,6 +71,7 @@ class QuestionData(Model):
     version = IntegerField(null=False)
     annotatedFile = CharField(null=True)
     mark = IntegerField(null=True)
+    tags = CharField(default="")
     username = CharField(default="")
     time = DateTimeField(null=True)
     # flags
@@ -545,13 +546,11 @@ class PlomDB:
 
     def IDcountIdentified(self):
         """Count all the ID'd records"""
-        """Count all the records"""
         try:
             return (
-                Group.select()
-                .join(IDData)
+                IDData.select()
+                .join(Group)
                 .where(
-                    Group.groupType == "i",
                     Group.scanned == True,
                     Group.hasCollisions == False,
                     IDData.identified == True,
@@ -616,11 +615,12 @@ class PlomDB:
     def IDgetDoneTasks(self, username):
         """When a id-client logs on they request a list of papers they have already IDd.
         Send back the list."""
-        query = IDData.select().where(IDData.username == username)
+        query = IDData.select().where(
+            IDData.username == username, IDData.status == "identified"
+        )
         idList = []
         for x in query:
-            if x.status == "identified":
-                idList.append([x.test.testNumber, x.status, x.studentID, x.studentName])
+            idList.append([x.test.testNumber, x.status, x.studentID, x.studentName])
         return idList
 
     def IDgetImage(self, username, t):
@@ -695,3 +695,57 @@ class PlomDB:
         except IntegrityError:
             print("Student number {} already entered".format(sid))
             return [False, True]
+
+    # ------------------
+    # Marker stuff
+
+    def McountAll(self, q, v):
+        """Count all the records"""
+        try:
+            return (
+                QuestionData.select()
+                .join(Group)
+                .where(
+                    QuestionData.questionNumber == q,
+                    QuestionData.version == v,
+                    Group.scanned == True,
+                    Group.hasCollisions == False,
+                )
+                .count()
+            )
+        except QuestionData.DoesNotExist:
+            return 0
+
+    def McountMarked(self, q, v):
+        """Count all the Marked records"""
+        try:
+            return (
+                Group.select()
+                .join(IDData)
+                .where(
+                    QuestionData.questionNumber == q,
+                    QuestionData.version == v,
+                    QuestionData.status == "marked",
+                    Group.scanned == True,
+                    Group.hasCollisions == False,
+                )
+                .count()
+            )
+        except Group.DoesNotExist:
+            return 0
+
+    def MgetDoneTasks(self, username, q, v):
+        """When a id-client logs on they request a list of papers they have already Marked.
+        Send back the list."""
+        query = QuestionData.select().where(
+            Question.username == username,
+            Question.questionNumber == q,
+            Question.version == v,
+            Question.statys == "marked",
+        )
+        markList = []
+        for x in query:
+            markList.append(
+                [x.test.testNumber, x.status, x.mark, x.markingTime, x.tags]
+            )
+        return markList

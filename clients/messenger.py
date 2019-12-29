@@ -606,12 +606,12 @@ def TreturnTotaledTask(code, mark):
 # ------------------------
 # ------------------------
 # Marker stuff
-def MgetMaxMark(pageGroup, version):
+def MgetMaxMark(question, version):
     SRmutex.acquire()
     try:
         response = session.get(
             "https://{}:{}/MK/maxMark".format(server, message_port),
-            json={"user": _userName, "token": _token, "pg": pageGroup, "v": version},
+            json={"user": _userName, "token": _token, "q": question, "v": version},
             verify=False,
         )
         # throw errors when response code != 200.
@@ -651,16 +651,16 @@ def MdidNotFinishTask(code):
     return True
 
 
-def MrequestDoneTasks(pg, v):
+def MrequestDoneTasks(q, v):
     SRmutex.acquire()
     try:
         response = session.get(
             "https://{}:{}/MK/tasks/complete".format(server, message_port),
-            json={"user": _userName, "token": _token, "pg": pg, "v": v},
+            json={"user": _userName, "token": _token, "q": q, "v": v},
             verify=False,
         )
         response.raise_for_status()
-        idList = response.json()
+        mList = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")
@@ -669,7 +669,7 @@ def MrequestDoneTasks(pg, v):
     finally:
         SRmutex.release()
 
-    return idList
+    return mList
 
 
 def MprogressCount(pg, v):
