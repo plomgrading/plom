@@ -1,7 +1,11 @@
 from peewee import *
 from datetime import datetime
 
-# a simple comment added.
+# import logging
+# logger = logging.getLogger("peewee")
+# logger.addHandler(logging.StreamHandler())
+# logger.setLevel(logging.DEBUG)
+
 
 plomdb = SqliteDatabase("../resources/plom.db")
 
@@ -520,13 +524,20 @@ class PlomDB:
 
     # ------------------
     # Identifier stuff
+    # The ID-able tasks have grouptype ="i", group.scanned=True, group.collisions=false
+    # The todo id-tasks are iddata.status="todo"
+    # the done id-tasks have iddata.status="identified"
 
     def IDcountAll(self):
         """Count all the records"""
         try:
             return (
-                Test.select()
-                .where(Test.scanned == True, Test.hasCollisions == False)
+                Group.select()
+                .where(
+                    Group.groupType == "i",
+                    Group.scanned == True,
+                    Group.hasCollisions == False,
+                )
                 .count()
             )
         except Test.DoesNotExist:
@@ -537,11 +548,13 @@ class PlomDB:
         """Count all the records"""
         try:
             return (
-                Test.select()
+                Group.select()
+                .join(IDData)
                 .where(
-                    Test.scanned == True,
-                    Test.identified == True,
-                    Test.hasCollisions == False,
+                    Group.groupType == "i",
+                    Group.scanned == True,
+                    Group.hasCollisions == False,
+                    IDData.identified == True,
                 )
                 .count()
             )
@@ -552,17 +565,23 @@ class PlomDB:
         """Find unid'd test and send testNumber to client"""
         try:
             with plomdb.atomic():
-                # Grab image from todo pile
-                x = Test.get_or_none(
-                    Test.scanned == True,
-                    Test.identified == False,
-                    Test.hasCollisions == False,
-                )
-                if x is None:
+                try:
+                    x = (
+                        IDData.select()
+                        .join(Group)
+                        .where(
+                            IDData.status == "todo",
+                            Group.scanned == True,
+                            Group.hasCollisions == False,
+                        )
+                        .get()
+                    )
+                except IDData.DoesNotExist:
                     print("Nothing left on to-do pile")
                     return None
-                print("Next ID task = {}".format(x.testNumber))
-                return x.testNumber
+
+                print("Next ID task = {}".format(x.test.testNumber))
+                return x.test.testNumber
         except Test.DoesNotExist:
             print("Nothing left on To-Do pile")
             return None
@@ -616,6 +635,7 @@ class PlomDB:
         rval = [True]
         for p in gref.pages.order_by(Page.pageNumber):
             rval.append(p.fileName)
+        print("Sending IDpages of test {} to user {}".format(t, username))
         return rval
 
     def IDdidNotFinish(self, username, testNumber):
