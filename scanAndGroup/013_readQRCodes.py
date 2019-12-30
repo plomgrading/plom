@@ -59,7 +59,7 @@ def decodeQRs():
         # If the .qr file does not exist, or if it has length 0
         # then run extract/orient script on that png.
         if (not os.path.exists(fname + ".qr")) or os.path.getsize(fname + ".qr") == 0:
-            fh.write("python3 ../extractQR.py {}\n".format(fname))
+            fh.write("python3 ../fasterQRExtract.py {}\n".format(fname))
     fh.close()
     # run those commands through gnu-parallel then delete.
     os.system("parallel --bar < commandlist.txt")
@@ -145,8 +145,7 @@ def checkQRsValid():
     os.chdir("pageImages/")
     for fname in glob.glob("*.qr"):
         with open(fname, "r") as qrfile:
-            content = qrfile.read()
-        qrs = eval(content)  # unpickle
+            qrs = json.load(qrfile)
 
         problemFlag = False
         warnFlag = False
@@ -154,7 +153,7 @@ def checkQRsValid():
         # Flag papers that have too many QR codes in some corner
         # TODO: untested?
         if any(len(x) > 1 for x in qrs.values()):
-            msg = "Too many QR codes in {} corner".format(d)
+            msg = "Too many QR codes in {} corner".format(x)
             problemFlag = True
 
         # Unpack the lists of QRs, building a new dict with only the
