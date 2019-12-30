@@ -29,7 +29,7 @@ class MarkHandler:
             return web.Response(status=401)
 
     # @routes.get("/MK/progress")
-    async def MprogressCount(request):
+    async def MprogressCount(self, request):
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             return web.json_response(
@@ -39,7 +39,7 @@ class MarkHandler:
             return web.Response(status=401)
 
     # @routes.get("/MK/tasks/complete")
-    async def MgetDoneTasks(request):
+    async def MgetDoneTasks(self, request):
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             # return the completed list
@@ -49,6 +49,31 @@ class MarkHandler:
             )
         else:
             return web.Response(status=401)
+
+    # @routes.get("/MK/tasks/available")
+    async def MgetNextTask(self, request):
+        data = await request.json()
+        if self.server.validate(data["user"], data["token"]):
+            rmsg = self.server.MgetNextTask(data["q"], data["v"])
+            # returns [True, code] or [False]
+            if rmsg[0]:
+                return web.json_response(rmsg[1], status=200)
+            else:
+                return web.Response(status=204)  # no papers left
+        else:
+            return web.Response(status=401)
+
+    # @routes.get("/MK/latex")
+    async def MlatexFragment(self, request):
+        data = await request.json()
+        if self.server.validate(data["user"], data["token"]):
+            rmsg = self.server.MlatexFragment(data["user"], data["fragment"])
+            if rmsg[0]:  # user allowed access - returns [true, fname]
+                return web.FileResponse(rmsg[1], status=200)
+            else:
+                return web.Response(status=406)  # a latex error
+        else:
+            return web.Response(status=401)  # not authorised at all
 
     # @routes.delete("/MK/tasks/{task}")
     # async def MdidNotFinishTask(request):
@@ -65,19 +90,6 @@ class MarkHandler:
     #
     #
     #
-    # @routes.get("/MK/tasks/available")
-    # async def MaskNextTask(request):
-    #     data = await request.json()
-    #     if self.server.validate(data["user"], data["token"]):
-    #         rmsg = self.server.MaskNextTask(
-    #             data["pg"], data["v"]
-    #         )  # returns [True, code] or [False]
-    #         if rmsg[0]:
-    #             return web.json_response(rmsg[1], status=200)
-    #         else:
-    #             return web.Response(status=204)  # no papers left
-    #     else:
-    #         return web.Response(status=401)
     #
     #
     # @routes.patch("/MK/tasks/{task}")
@@ -97,17 +109,6 @@ class MarkHandler:
     #         return web.Response(status=401)
     #
     #
-    # @routes.get("/MK/latex")
-    # async def MlatexFragment(request):
-    #     data = await request.json()
-    #     if self.server.validate(data["user"], data["token"]):
-    #         rmsg = self.server.MlatexFragment(data["user"], data["fragment"])
-    #         if rmsg[0]:  # user allowed access - returns [true, fname]
-    #             return web.FileResponse(rmsg[1], status=200)
-    #         else:
-    #             return web.Response(status=406)  # a latex error
-    #     else:
-    #         return web.Response(status=401)  # not authorised at all
     #
     #
     # @routes.get("/MK/images/{tgv}")
@@ -225,3 +226,5 @@ class MarkHandler:
         router.add_get("/MK/maxMark", self.MgetQuestionMark)
         router.add_get("/MK/progress", self.MprogressCount)
         router.add_get("/MK/tasks/complete", self.MgetDoneTasks)
+        router.add_get("/MK/tasks/available", self.MgetNextTask)
+        router.add_get("/MK/latex", self.MlatexFragment)

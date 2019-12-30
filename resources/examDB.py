@@ -346,10 +346,10 @@ class PlomDB:
                 )
             )
         elif gref.groupType == "m":
+            # todo - sanity check here?
+            print("Group {} is ready to be marked.".format(gref.gid))
             qref = gref.questiondata[0]
-            if qref.status is not "":
-                print("We should never reach here - status = {}".format(qref.status))
-            gref.status = "todo"
+            qref.status = "todo"
             qref.save()
 
     def checkGroupAllUploaded(self, pref):
@@ -541,7 +541,7 @@ class PlomDB:
                 )
                 .count()
             )
-        except Test.DoesNotExist:
+        except Group.DoesNotExist:
             return 0
 
     def IDcountIdentified(self):
@@ -557,33 +557,29 @@ class PlomDB:
                 )
                 .count()
             )
-        except Test.DoesNotExist:
+        except IDData.DoesNotExist:
             return 0
 
     def IDgetNextTask(self):
         """Find unid'd test and send testNumber to client"""
-        try:
-            with plomdb.atomic():
-                try:
-                    x = (
-                        IDData.select()
-                        .join(Group)
-                        .where(
-                            IDData.status == "todo",
-                            Group.scanned == True,
-                            Group.hasCollisions == False,
-                        )
-                        .get()
+        with plomdb.atomic():
+            try:
+                x = (
+                    IDData.select()
+                    .join(Group)
+                    .where(
+                        IDData.status == "todo",
+                        Group.scanned == True,
+                        Group.hasCollisions == False,
                     )
-                except IDData.DoesNotExist:
-                    print("Nothing left on to-do pile")
-                    return None
+                    .get()
+                )
+            except IDData.DoesNotExist:
+                print("Nothing left on to-do pile")
+                return None
 
-                print("Next ID task = {}".format(x.test.testNumber))
-                return x.test.testNumber
-        except Test.DoesNotExist:
-            print("Nothing left on To-Do pile")
-            return None
+            print("Next ID task = {}".format(x.test.testNumber))
+            return x.test.testNumber
 
     def IDgiveTaskToClient(self, username, testNumber):
         try:
@@ -720,8 +716,8 @@ class PlomDB:
         """Count all the Marked records"""
         try:
             return (
-                Group.select()
-                .join(IDData)
+                QuestionData.select()
+                .join(Group)
                 .where(
                     QuestionData.questionNumber == q,
                     QuestionData.version == v,
@@ -731,17 +727,17 @@ class PlomDB:
                 )
                 .count()
             )
-        except Group.DoesNotExist:
+        except QuestionData.DoesNotExist:
             return 0
 
     def MgetDoneTasks(self, username, q, v):
         """When a id-client logs on they request a list of papers they have already Marked.
         Send back the list."""
         query = QuestionData.select().where(
-            Question.username == username,
-            Question.questionNumber == q,
-            Question.version == v,
-            Question.statys == "marked",
+            QuestionData.username == username,
+            QuestionData.questionNumber == q,
+            QuestionData.version == v,
+            QuestionData.status == "marked",
         )
         markList = []
         for x in query:
@@ -749,3 +745,26 @@ class PlomDB:
                 [x.test.testNumber, x.status, x.mark, x.markingTime, x.tags]
             )
         return markList
+
+    def MgetNextTask(self, q, v):
+        """Find unid'd test and send testNumber to client"""
+        with plomdb.atomic():
+            try:
+                x = (
+                    QuestionData.select()
+                    .join(Group)
+                    .where(
+                        QuestionData.status == "todo",
+                        QuestionData.questionNumber == q,
+                        QuestionData.version == v,
+                        Group.scanned == True,
+                        Group.hasCollisions == False,
+                    )
+                    .get()
+                )
+            except QuestionData.DoesNotExist as e:
+                print("Nothing left on to-do pile - {}".format(e))
+                return None
+
+            print("Next marking task = {}".format(x.group.gid))
+            return x.group.gid

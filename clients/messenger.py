@@ -607,6 +607,7 @@ def TreturnTotaledTask(code, mark):
 # ------------------------
 # Marker stuff
 def MgetMaxMark(question, version):
+    print("Asking for max-mark")
     SRmutex.acquire()
     try:
         response = session.get(
@@ -632,6 +633,7 @@ def MgetMaxMark(question, version):
 
 
 def MdidNotFinishTask(code):
+    print("Didn't finish task {}".format(code))
     SRmutex.acquire()
     try:
         response = session.delete(
@@ -652,6 +654,7 @@ def MdidNotFinishTask(code):
 
 
 def MrequestDoneTasks(q, v):
+    print("Asking for done tasks")
     SRmutex.acquire()
     try:
         response = session.get(
@@ -672,12 +675,13 @@ def MrequestDoneTasks(q, v):
     return mList
 
 
-def MprogressCount(pg, v):
+def MprogressCount(q, v):
+    print("Asking for progress count")
     SRmutex.acquire()
     try:
         response = session.get(
             "https://{}:{}/MK/progress".format(server, message_port),
-            json={"user": _userName, "token": _token, "pg": pg, "v": v},
+            json={"user": _userName, "token": _token, "q": q, "v": v},
             verify=False,
         )
         # throw errors when response code != 200.
@@ -695,12 +699,13 @@ def MprogressCount(pg, v):
     return progress
 
 
-def MaskNextTask(pg, v):
+def MaskNextTask(q, v):
+    print("Asking for next task")
     SRmutex.acquire()
     try:
         response = session.get(
             "https://{}:{}/MK/tasks/available".format(server, message_port),
-            json={"user": _userName, "token": _token, "pg": pg, "v": v},
+            json={"user": _userName, "token": _token, "q": q, "v": v},
             verify=False,
         )
         # throw errors when response code != 200.
@@ -721,6 +726,7 @@ def MaskNextTask(pg, v):
 
 
 def MclaimThisTask(code):
+    print("Claiming task {}".format(code))
     SRmutex.acquire()
     try:
         response = session.patch(

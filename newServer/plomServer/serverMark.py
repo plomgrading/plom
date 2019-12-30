@@ -1,5 +1,7 @@
 import hashlib
 import os
+import subprocess
+import tempfile
 import uuid
 
 
@@ -29,3 +31,28 @@ def MgetDoneTasks(self, user, q, v):
     iv = int(v)
     iq = int(q)
     return self.DB.MgetDoneTasks(user, iq, iv)
+
+
+def MgetNextTask(self, q, v):
+    """The client has asked for the next unmarked paper, so
+    ask the database for its code and send back to the
+    client.
+    """
+    give = self.DB.MgetNextTask(q, v)
+    if give is None:
+        return [False]
+    else:
+        return [True, give]
+
+
+def MlatexFragment(self, user, fragment):
+    # TODO - only one frag file per user - is this okay?
+    tfrag = tempfile.NamedTemporaryFile()
+    with open(tfrag.name, "w+") as fh:
+        fh.write(fragment)
+
+    fname = os.path.join(self.tempDirectory.name, "{}_frag.png".format(user))
+    if subprocess.run(["python3", "latex2png.py", tfrag.name, fname]).returncode == 0:
+        return [True, fname]
+    else:
+        return [False]

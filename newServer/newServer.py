@@ -12,7 +12,9 @@ import hashlib
 import json
 import os
 import ssl
+import subprocess
 import sys
+import tempfile
 import uuid
 
 # ----------------------
@@ -67,6 +69,9 @@ class Server(object):
         self.DB = db
         self.API = serverAPI
         self.Version = __version__
+        self.tempDirectory = tempfile.TemporaryDirectory()
+        # Give directory correct permissions.
+        subprocess.check_call(["chmod", "o-r", self.tempDirectory.name])
         self.loadUsers()
 
     def loadUsers(self):
@@ -104,7 +109,13 @@ class Server(object):
         IDdidNotFinish,
         IDreturnIDdTask,
     )
-    from plomServer.serverMark import MprogressCount, MgetQuestionMax, MgetDoneTasks
+    from plomServer.serverMark import (
+        MprogressCount,
+        MgetQuestionMax,
+        MgetDoneTasks,
+        MgetNextTask,
+        MlatexFragment,
+    )
 
 
 examDB = PlomDB()
