@@ -76,7 +76,7 @@ directoryPath = tempDirectory.name
 # and finally https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
 # I'll do it the simpler subclassing way
 class BackgroundDownloader(QThread):
-    downloadSuccess = pyqtSignal(str, str, str)  # [tgv, file, tags]
+    downloadSuccess = pyqtSignal(str, str, str)  # [task, file, tags]
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
@@ -87,6 +87,8 @@ class BackgroundDownloader(QThread):
         self.workingDirectory = directoryPath
 
     def run(self):
+        print("THIS CAUSES CRASHES - FIX ME!!")
+        return
         attempts = 0
         while True:
             attempts += 1
@@ -94,10 +96,10 @@ class BackgroundDownloader(QThread):
             # TODO remove.
             if attempts > 5:
                 return
-            # ask server for tgv of next task
+            # ask server for task-code of next task
             try:
-                test = messenger.MaskNextTask(self.pageGroup, self.version)
-                if not test:  # no more tests left
+                task = messenger.MaskNextTask(self.pageGroup, self.version)
+                if not task:  # no more tests left
                     self.downloadNoneAvailable.emit()
                     self.quit()
                     return
@@ -106,7 +108,7 @@ class BackgroundDownloader(QThread):
                 self.quit()
 
             try:
-                image, tags = messenger.MclaimThisTask(test)
+                imageList, tags = messenger.MclaimThisTask(task)
                 break
             except PlomBenignException as err:
                 # task taken by another user, so continue
@@ -115,13 +117,15 @@ class BackgroundDownloader(QThread):
                 self.downloadFail.emit(str(err))
                 self.quit()
 
-        # Return message should be [ACK, True, code, temp-filename, tags]
-        # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
-        fname = os.path.join(self.workingDirectory, test + ".png")
-        # save it
-        with open(fname, "wb+") as fh:
-            fh.write(image)
-        self.downloadSuccess.emit(test, fname, tags)
+        # Image names = "<task>.<imagenumber>.png"
+        inames = []
+        for i in range(len(imageList)):
+            tmp = os.path.join(self.workingDirectory, "{}.{}.png".format(task, i))
+            inames.append(tmp)
+            with open(tmp, "wb+") as fh:
+                fh.write(imageList[i])
+
+        self.downloadSuccess.emit(task, inames, tags)
         self.quit()
 
 
@@ -214,17 +218,17 @@ class TestPageGroup:
     time spent marking the groupimage.
     """
 
-    def __init__(self, tgv, fname="", stat="untouched", mrk="-1", mtime="0", tags=""):
-        # tgv = t0000p00v0
+    def __init__(self, task, fnames=[], stat="untouched", mrk="-1", mtime="0", tags=""):
+        # task will be of the form m1234g9 = test 1234 question 9
         # ... = 0123456789
         # the test code
-        self.prefix = tgv
+        self.prefix = task
         # the test number
         self.status = stat
         # By default set mark to be negative (since 0 is a possible mark)
         self.mark = mrk
         # The filename of the untouched image
-        self.originalFile = fname
+        self.originalFiles = fnames
         # The filename for the (future) annotated image
         self.annotatedFile = ""
         # The filename for the (future) plom file
@@ -242,12 +246,12 @@ class ExamModel(QStandardItemModel):
         QStandardItemModel.__init__(self, parent)
         self.setHorizontalHeaderLabels(
             [
-                "TGV",
+                "Task",
                 "Status",
                 "Mark",
                 "Time",
                 "Tag",
-                "OriginalFile",
+                "OriginalFiles",
                 "AnnotatedFile",
                 "PlomFile",
                 "PaperDir",
@@ -264,7 +268,8 @@ class ExamModel(QStandardItemModel):
                 QStandardItem(str(paper.mark)),
                 QStandardItem(str(paper.markingTime)),
                 QStandardItem(paper.tags),
-                QStandardItem(paper.originalFile),
+                # TODO - work out how to store list more directly rather than as a string-rep of the list of file names.
+                QStandardItem(repr(paper.originalFiles)),
                 QStandardItem(paper.annotatedFile),
                 QStandardItem(paper.plomFile),
             ]
@@ -365,13 +370,13 @@ class ExamModel(QStandardItemModel):
         """Set temporary directory for this grading."""
         self._setDataByTGV(tgv, 8, tdir)
 
-    def getOriginalFile(self, tgv):
+    def getOriginalFiles(self, tgv):
         """Return filename for original un-annotated image."""
-        return self._getDataByTGV(tgv, 5)
+        return eval(self._getDataByTGV(tgv, 5))
 
-    def setOriginalFile(self, tgv, fname):
-        """Set the original un-annotated image filename."""
-        self._setDataByTGV(tgv, 5, fname)
+    def setOriginalFiles(self, tgv, fnames):
+        """Set the original un-annotated image filenames."""
+        self._setDataByTGV(tgv, 5, repr(fnames))
 
     def setAnnotatedFile(self, tgv, aname, pname):
         """Set the annotated image and data filenames."""
@@ -448,9 +453,9 @@ class ProxyModel(QSortFilterProxyModel):
         # Return the status of the image
         return self.data(self.index(r, 1))
 
-    def getOriginalFile(self, r):
+    def getOriginalFiles(self, r):
         # Return the filename of the original un-annotated image
-        return self.data(self.index(r, 5))
+        return eval(self.data(self.index(r, 5)))
 
     def getAnnotatedFile(self, r):
         # Return the filename of the annotated image
@@ -640,27 +645,33 @@ class MarkerClient(QWidget):
             # TODO: might not the "markedList" have some other statuses?
             self.exM.addPaper(
                 TestPageGroup(
-                    x[0], fname="", stat="marked", mrk=x[2], mtime=x[3], tags=x[4]
+                    x[0], fnames=[], stat="marked", mrk=x[2], mtime=x[3], tags=x[4]
                 )
             )
 
-    def checkAndGrabFiles(self, tgv):
+    def checkAndGrabFiles(self, task):
         # TODO: doesn't seem to do a lot of checking, despite name
-        if self.exM.getOriginalFile(tgv) != "":
+        if len(self.exM.getOriginalFiles(task)) > 0:
             return
 
         try:
-            [image, anImage, plImage] = messenger.MrequestImages(tgv)
+            [imageList, anImage, plImage] = messenger.MrequestImages(tgv)
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
 
         paperdir = tempfile.mkdtemp(prefix=tgv + "_", dir=self.workingDirectory)
         print("Debug: create paperdir {} for already-graded download".format(paperdir))
-        fname = os.path.join(self.workingDirectory, "{}.png".format(tgv))
-        with open(fname, "wb+") as fh:
-            fh.write(image)
-        self.exM.setOriginalFile(tgv, fname)
+
+        # Image names = "<task>.<imagenumber>.png"
+        inames = []
+        for i in range(len(imageList)):
+            tmp = os.path.join(self.workingDirectory, "{}.{}.png".format(task, i))
+            inames.append(tmp)
+            with open(tmp, "wb+") as fh:
+                fh.write(imageList[i])
+
+        self.exM.setOriginalFiles(tgv, inames)
 
         if anImage is None:
             return
@@ -684,7 +695,7 @@ class MarkerClient(QWidget):
         if self.prxM.getStatus(pr) in ("marked", "uploading...", "???"):
             self.testImg.updateImage(self.prxM.getAnnotatedFile(pr))
         else:
-            self.testImg.updateImage(self.prxM.getOriginalFile(pr))
+            self.testImg.updateImage(self.prxM.getOriginalFiles(pr))
         # wait a moment and click the reset-view button
         QTimer.singleShot(100, self.testImg.view.resetView)
         # Give focus to the table (so enter-key fires up annotator)
@@ -712,26 +723,29 @@ class MarkerClient(QWidget):
                 return
             # ask server for tgv of next task
             try:
-                test = messenger.MaskNextTask(self.pageGroup, self.version)
-                if not test:
+                task = messenger.MaskNextTask(self.pageGroup, self.version)
+                if not task:
                     return False
             except PlomSeriousException as err:
                 self.throwSeriousError(err)
 
             try:
-                [image, tags] = messenger.MclaimThisTask(test)
+                imageList, tags = messenger.MclaimThisTask(task)
                 break
             except PlomBenignException as err:
                 # task already taken.
                 continue
 
-        # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
-        fname = os.path.join(self.workingDirectory, test + ".png")
-        # save it
-        with open(fname, "wb+") as fh:
-            fh.write(image)
-        self.exM.addPaper(TestPageGroup(test, fname, tags=tags))
-        pr = self.prxM.rowFromTGV(test)
+        # Image names = "<task>.<imagenumber>.png"
+        inames = []
+        for i in range(len(imageList)):
+            tmp = os.path.join(self.workingDirectory, "{}.{}.png".format(task, i))
+            inames.append(tmp)
+            with open(tmp, "wb+") as fh:
+                fh.write(imageList[i])
+
+        self.exM.addPaper(TestPageGroup(task, inames, tags=tags))
+        pr = self.prxM.rowFromTGV(task)
         if pr is not None:
             # if newly-added row is visible, select it and redraw
             self.ui.tableView.selectRow(pr)
@@ -757,8 +771,8 @@ class MarkerClient(QWidget):
         )
         self.backgroundDownloader.start()
 
-    def requestNextInBackgroundFinished(self, test, fname, tags):
-        self.exM.addPaper(TestPageGroup(test, fname, tags=tags))
+    def requestNextInBackgroundFinished(self, test, fnames, tags):
+        self.exM.addPaper(TestPageGroup(test, fnames, tags=tags))
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
@@ -883,13 +897,13 @@ class MarkerClient(QWidget):
         # split fcn: maybe we want to start the annotator not based on current selection
         self.annotateTest_doit(tgv)
 
-    def annotateTest_doit(self, tgv):
-        """Start annotator on a particular tgv."""
-        # Create annotated filename. If original tXXXXgYYvZ.png, then
-        # annotated version is GXXXXgYYvZ (G=graded).
-        assert tgv.startswith("t")
-        Gtgv = "G" + tgv[1:]
-        paperdir = tempfile.mkdtemp(prefix=tgv[1:] + "_", dir=self.workingDirectory)
+    def annotateTest_doit(self, task):
+        """Start annotator on a particular task."""
+        # Create annotated filename. If original mXXXXgYY, then
+        # annotated version is GXXXXgYY (G=graded).
+        assert task.startswith("m")
+        Gtgv = "G" + task[1:]
+        paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
         print("Debug: create paperdir {} for annotating".format(paperdir))
         aname = os.path.join(paperdir, Gtgv + ".png")
         cname = os.path.join(paperdir, Gtgv + ".json")
@@ -899,12 +913,12 @@ class MarkerClient(QWidget):
         # to annotate further.
         remarkFlag = False
 
-        if self.exM.getStatusByTGV(tgv) in ("marked", "uploading...", "???"):
+        if self.exM.getStatusByTGV(task) in ("marked", "uploading...", "???"):
             msg = SimpleMessage("Continue marking paper?")
             if not msg.exec_() == QMessageBox.Yes:
                 return
             remarkFlag = True
-            oldpaperdir = self.exM.getPaperDirByTGV(tgv)
+            oldpaperdir = self.exM.getPaperDirByTGV(task)
             print("Debug: oldpaperdir is " + oldpaperdir)
             assert oldpaperdir is not None
             oldaname = os.path.join(oldpaperdir, Gtgv + ".png")
@@ -918,7 +932,7 @@ class MarkerClient(QWidget):
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
-        fname = "{}".format(self.exM.getOriginalFile(tgv))
+        fnames = self.exM.getOriginalFiles(task)
         if self.backgroundDownloader:
             count = 0
             # Notes: we could check using `while not os.path.exists(fname):`
@@ -930,7 +944,7 @@ class MarkerClient(QWidget):
                 count += 1
                 # if .remainder(count, 10) == 0: # this is only python3.7 and later. - see #509
                 if (count % 10) == 0:
-                    print("Debug: waiting for downloader: {}".format(fname))
+                    print("Debug: waiting for downloader: {}".format(fnames))
                 if count >= 40:
                     msg = SimpleMessage(
                         "Still waiting for download.  Do you want to wait a bit longer?"
@@ -940,19 +954,21 @@ class MarkerClient(QWidget):
                     count = 0
 
         # maybe the downloader failed for some (rare) reason
-        if not os.path.exists(fname):
-            return
-        print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
-        shutil.copyfile(fname, aname)
+        for fn in fnames:
+            if not os.path.exists(fn):
+                return
+        # print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
+        # TODO - fix this!!!!
+        # shutil.copyfile(fname, aname)
 
         # stash the previous state, not ideal because makes column wider
-        prevState = self.exM.getStatusByTGV(tgv)
-        self.exM.setStatusByTGV(tgv, "ann:" + prevState)
+        prevState = self.exM.getStatusByTGV(task)
+        self.exM.setStatusByTGV(task, "ann:" + prevState)
 
         if remarkFlag:
-            self.startTheAnnotator(tgv[1:], paperdir, aname, pname)
+            self.startTheAnnotator(task[1:], paperdir, fnames, pname)
         else:
-            self.startTheAnnotator(tgv[1:], paperdir, aname, None)
+            self.startTheAnnotator(task[1:], paperdir, fnames, None)
         # we started the annotator, we'll get a signal back when its done
 
     # when the annotator is done, we end up here...

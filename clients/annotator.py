@@ -93,7 +93,7 @@ class Annotator(QWidget):
         self,
         tgv,
         paperdir,
-        fname,
+        fnames,
         maxMark,
         markStyle,
         mouseHand,
@@ -109,7 +109,7 @@ class Annotator(QWidget):
         # and mouse-hand (left/right)
         self.tgv = tgv
         self.paperdir = paperdir
-        self.imageFile = fname
+        self.imageFiles = fnames
         self.maxMark = maxMark
         # get markstyle from plomDict
         if plomDict is None:
@@ -474,7 +474,7 @@ class Annotator(QWidget):
         # back to us) and the filename of the image.
         self.view = PageView(self)
         self.scene = PageScene(
-            self, self.imageFile, self.maxMark, self.score, self.markStyle
+            self, self.imageFiles, self.maxMark, self.score, self.markStyle
         )
         # connect view to scene
         self.view.connectScene(self.scene)

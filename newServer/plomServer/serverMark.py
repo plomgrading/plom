@@ -56,3 +56,7 @@ def MlatexFragment(self, user, fragment):
         return [True, fname]
     else:
         return [False]
+
+
+def MclaimThisTask(self, user, code):
+    return self.DB.MgiveTaskToClient(user, code)

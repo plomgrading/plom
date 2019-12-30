@@ -738,10 +738,6 @@ def MclaimThisTask(code):
         if response.status_code == 204:
             raise PlomBenignException("Task taken by another user.")
 
-        # response should be multipart = [image, tags]
-        imageAndTags = MultipartDecoder.from_response(response).parts
-        image = BytesIO(imageAndTags[0].content).getvalue()  # pass back image as bytes
-        tags = imageAndTags[1].text  # this is raw text.
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")
@@ -750,7 +746,19 @@ def MclaimThisTask(code):
     finally:
         SRmutex.release()
 
-    return image, tags
+    # should be multipart = [tags, image1, image2, ....]
+    tags = "tagsAndImages[0].text  # this is raw text"
+    imageList = []
+    i = 0
+    for img in MultipartDecoder.from_response(response).parts:
+        if i == 0:
+            tags = img.text
+        else:
+            imageList.append(
+                BytesIO(img.content).getvalue()
+            )  # pass back image as bytes
+        i += 1
+    return imageList, tags
 
 
 def MlatexFragment(latex):

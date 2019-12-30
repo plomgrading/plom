@@ -75,6 +75,23 @@ class MarkHandler:
         else:
             return web.Response(status=401)  # not authorised at all
 
+    # @routes.patch("/MK/tasks/{task}")
+    async def MclaimThisTask(self, request):
+        data = await request.json()
+        code = request.match_info["task"]
+        if self.server.validate(data["user"], data["token"]):
+            rmesg = self.server.MclaimThisTask(data["user"], code)
+            if rmesg[0]:  # return [True, tag, filename1, filename2,...]
+                with MultipartWriter("imageAndTags") as mpwriter:
+                    mpwriter.append(rmesg[1])  # append tags as raw text.
+                    for fn in rmesg[2:]:
+                        mpwriter.append(open(fn, "rb"))
+                return web.Response(body=mpwriter, status=200)
+            else:
+                return web.Response(status=204)  # that task already taken.
+        else:
+            return web.Response(status=401)
+
     # @routes.delete("/MK/tasks/{task}")
     # async def MdidNotFinishTask(request):
     #     data = await request.json()
@@ -92,21 +109,6 @@ class MarkHandler:
     #
     #
     #
-    # @routes.patch("/MK/tasks/{task}")
-    # async def MclaimThisTask(request):
-    #     data = await request.json()
-    #     code = request.match_info["task"]
-    #     if self.server.validate(data["user"], data["token"]):
-    #         rmesg = self.server.MclaimThisTask(data["user"], code)
-    #         if rmesg[0]:  # return [True, filename, tags]
-    #             with MultipartWriter("imageAndTags") as mpwriter:
-    #                 mpwriter.append(open(rmesg[1], "rb"))
-    #                 mpwriter.append(rmesg[2])  # append tags as raw text.
-    #             return web.Response(body=mpwriter, status=200)
-    #         else:
-    #             return web.Response(status=204)  # that task already taken.
-    #     else:
-    #         return web.Response(status=401)
     #
     #
     #
@@ -228,3 +230,4 @@ class MarkHandler:
         router.add_get("/MK/tasks/complete", self.MgetDoneTasks)
         router.add_get("/MK/tasks/available", self.MgetNextTask)
         router.add_get("/MK/latex", self.MlatexFragment)
+        router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)

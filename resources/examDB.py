@@ -768,3 +768,31 @@ class PlomDB:
 
             print("Next marking task = {}".format(x.group.gid))
             return x.group.gid
+
+    def MgiveTaskToClient(self, username, groupID):
+        try:
+            with plomdb.atomic():
+                gref = Group.get_or_none(Group.gid == groupID)
+                if gref.scanned == False:
+                    return [False]
+                qref = gref.questiondata[0]
+                if qref.username != "" and qref.username != username:
+                    # has been claimed by someone else.
+                    return [False]
+                # update status, Student-number, name, id-time.
+                qref.status = "outformarking"
+                qref.username = username
+                qref.time = datetime.now()
+                qref.save()
+                # return [true, tags, page1, page2, etc]
+                rval = [
+                    True,
+                    qref.tags,
+                ]
+                for p in gref.pages.order_by(Page.pageNumber):
+                    rval.append(p.fileName)
+                print("Giving marking task {} to user {}".format(groupID, username))
+                return rval
+        except Group.DoesNotExist:
+            print("That question {} not known".format(groupID))
+            return False
