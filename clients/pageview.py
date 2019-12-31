@@ -34,7 +34,7 @@ class PageView(QGraphicsView):
 
     def connectScene(self, scene):
         self.setScene(scene)
-        self.fitInView(self.scene().imageGItem, Qt.KeepAspectRatio)
+        self.fitInView(self.scene().underImage, Qt.KeepAspectRatio)
         # the current view
         self.vrect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
 
@@ -118,7 +118,7 @@ class PageView(QGraphicsView):
 
     def initialZoom(self, initRect):
         if initRect is None:
-            self.fitInView(self.scene().imageGItem, Qt.KeepAspectRatio)
+            self.fitInView(self.scene().underImage, Qt.KeepAspectRatio)
         else:
             self.fitInView(initRect, Qt.KeepAspectRatio)
         self.zoomNull()

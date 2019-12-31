@@ -98,6 +98,22 @@ class ScoreBox(QGraphicsTextItem):
         super(ScoreBox, self).paint(painter, option, widget)
 
 
+class UnderlyingImage(QGraphicsItemGroup):
+    def __init__(self, imageNames):
+        super(QGraphicsItemGroup, self).__init__()
+        self.imageNames = imageNames
+        self.images = {}
+        x = 0
+        n = 0
+        for img in self.imageNames:
+            self.images[n] = QGraphicsPixmapItem(QPixmap(img))
+            self.images[n].setTransformationMode(Qt.SmoothTransformation)
+            self.images[n].setPos(x, 0)
+            x += self.images[n].boundingRect().width()
+            self.addToGroup(self.images[n])
+            n += 1
+
+
 # Dictionaries to translate tool-modes into functions
 # for mouse press, move and release
 mousePress = {
@@ -144,7 +160,6 @@ class PageScene(QGraphicsScene):
         self.parent = parent
         # Grab filename of groupimage
         self.imageNames = imgNames
-        self.images = {}
         self.saveName = saveName
         self.maxMark = maxMark
         self.score = score
@@ -152,13 +167,12 @@ class PageScene(QGraphicsScene):
         # Tool mode - initially set it to "move"
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
-        self.imageGItem = QGraphicsItemGroup()
-        self.patchImagesTogether(imgNames)
-        # self.imageItem = QGraphicsPixmapItem(self.image)
-        # self.imageItem.setTransformationMode(Qt.SmoothTransformation)
+        self.underImage = UnderlyingImage(self.imageNames)
+        self.addItem(self.underImage)
+
         # Build scene rectangle to fit the image, and place image into it.
-        self.setSceneRect(self.imageGItem.boundingRect())
-        # self.addItem(self.imageGItem)
+        self.setSceneRect(self.underImage.boundingRect())
+        # self.addItem(self.underImage)
         # initialise the undo-stack
         self.undoStack = QUndoStack()
 
@@ -211,19 +225,19 @@ class PageScene(QGraphicsScene):
         # make a box around the scorebox where mouse-press-event won't work.
         self.avoidBox = self.scoreBox.boundingRect().adjusted(0, 0, 24, 24)
 
-    def patchImagesTogether(self, imageList):
-        x = 0
-        n = 0
-        for img in imageList:
-            self.images[n] = QGraphicsPixmapItem(QPixmap(img))
-            self.images[n].setTransformationMode(Qt.SmoothTransformation)
-            self.images[n].setPos(x, 0)
-            self.addItem(self.images[n])
-            x += self.images[n].boundingRect().width()
-            self.imageGItem.addToGroup(self.images[n])
-            n += 1
-
-        self.addItem(self.imageGItem)
+    # def patchImagesTogether(self, imageList):
+    #     x = 0
+    #     n = 0
+    #     for img in imageList:
+    #         self.images[n] = QGraphicsPixmapItem(QPixmap(img))
+    #         self.images[n].setTransformationMode(Qt.SmoothTransformation)
+    #         self.images[n].setPos(x, 0)
+    #         self.addItem(self.images[n])
+    #         x += self.images[n].boundingRect().width()
+    #         self.underImage.addToGroup(self.images[n])
+    #         n += 1
+    #
+    #     self.addItem(self.underImage)
 
     def setMode(self, mode):
         self.mode = mode
@@ -268,7 +282,7 @@ class PageScene(QGraphicsScene):
         # Make sure the ghostComment is hidden
         self.ghostItem.hide()
         # Get the width and height of the image
-        br = self.imageGItem.boundingRect()
+        br = self.underImage.boundingRect()
         w = br.width()
         h = br.height()
         # Create an output pixmap and painter (to export it)
@@ -1045,7 +1059,7 @@ class PageScene(QGraphicsScene):
     def deleteIfLegal(self, item):
         # can't delete the pageimage, scorebox, delete-box, ghostitem and its constituents
         if item in [
-            self.imageGItem,
+            self.underImage,
             self.scoreBox,
             self.delBoxItem,
             self.ghostItem,
@@ -1102,7 +1116,10 @@ class PageScene(QGraphicsScene):
     def checkAllObjectsInside(self):
         for X in self.items():
             # check all items that are not the image or scorebox
-            if (X is self.imageGItem) or (X is self.scoreBox):
+            if (X is self.underImage) or (X is self.scoreBox):
+                continue
+            # make sure that it is not one of the images inside the underlying image.
+            if X.parentItem() is self.underImage:
                 continue
             # And be careful - there might be a GhostComment floating about
             if (
@@ -1112,8 +1129,7 @@ class PageScene(QGraphicsScene):
             ):
                 continue
             # make sure is inside image
-            if not X.collidesWithItem(self.imageGItem, mode=Qt.ContainsItemShape):
-                print("Object {} is outside?".format(X))
+            if not X.collidesWithItem(self.underImage, mode=Qt.ContainsItemShape):
                 return False
         return True
 
