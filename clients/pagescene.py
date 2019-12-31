@@ -139,12 +139,13 @@ class PageScene(QGraphicsScene):
     textitems.
     """
 
-    def __init__(self, parent, imgNames, maxMark, score, markStyle):
+    def __init__(self, parent, imgNames, saveName, maxMark, score, markStyle):
         super(PageScene, self).__init__(parent)
         self.parent = parent
         # Grab filename of groupimage
         self.imageNames = imgNames
         self.images = {}
+        self.saveName = saveName
         self.maxMark = maxMark
         self.score = score
         self.markStyle = markStyle
@@ -267,8 +268,9 @@ class PageScene(QGraphicsScene):
         # Make sure the ghostComment is hidden
         self.ghostItem.hide()
         # Get the width and height of the image
-        w = self.image.width()
-        h = self.image.height()
+        br = self.imageGItem.boundingRect()
+        w = br.width()
+        h = br.height()
         # Create an output pixmap and painter (to export it)
         oimg = QPixmap(w, h)
         exporter = QPainter(oimg)
@@ -276,7 +278,7 @@ class PageScene(QGraphicsScene):
         self.render(exporter)
         exporter.end()
         # Save the result to file.
-        oimg.save(self.imageName)
+        oimg.save(self.saveName)
 
     def keyPressEvent(self, event):
         # The escape key removes focus from the graphicsscene.
@@ -563,6 +565,7 @@ class PageScene(QGraphicsScene):
                 for Y in [
                     ScoreBox,
                     QGraphicsPixmapItem,
+                    QGraphicsItemGroup,
                     GhostComment,
                     GhostDelta,
                     GhostText,
@@ -1110,6 +1113,7 @@ class PageScene(QGraphicsScene):
                 continue
             # make sure is inside image
             if not X.collidesWithItem(self.imageGItem, mode=Qt.ContainsItemShape):
+                print("Object {} is outside?".format(X))
                 return False
         return True
 

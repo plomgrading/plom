@@ -171,7 +171,7 @@ class BackgroundUploader(QThread):
             )
             # do name sanity check here
             if not (
-                code.startswith("t")
+                code.startswith("m")
                 and os.path.basename(aname) == "G{}.png".format(code[1:])
                 and os.path.basename(pname) == "G{}.plom".format(code[1:])
                 and os.path.basename(cname) == "G{}.json".format(code[1:])
@@ -846,7 +846,7 @@ class MarkerClient(QWidget):
             return
         self.exM.deferPaper(task)
 
-    def startTheAnnotator(self, task, paperdir, fname, pname=None):
+    def startTheAnnotator(self, task, paperdir, fnames, saveName, pname=None):
         """This fires up the annotation window for user annotation + marking."""
         # Set marking style total/up/down - will pass to annotator
         markStyle = self.ui.markStyleGroup.checkedId()
@@ -871,7 +871,8 @@ class MarkerClient(QWidget):
         annotator = Annotator(
             task,
             paperdir,
-            fname,
+            fnames,
+            saveName,
             self.maxScore,
             markStyle,
             mouseHand,
@@ -963,9 +964,9 @@ class MarkerClient(QWidget):
         self.exM.setStatusByTask(task, "ann:" + prevState)
 
         if remarkFlag:
-            self.startTheAnnotator(task[1:], paperdir, fnames, pname)
+            self.startTheAnnotator(task[1:], paperdir, fnames, aname, pname)
         else:
-            self.startTheAnnotator(task[1:], paperdir, fnames, None)
+            self.startTheAnnotator(task[1:], paperdir, fnames, aname, None)
         # we started the annotator, we'll get a signal back when its done
 
     # when the annotator is done, we end up here...
@@ -981,7 +982,7 @@ class MarkerClient(QWidget):
     @pyqtSlot(str, list)
     def callbackAnnIsDoneAccept(self, task, stuff):
         self.setEnabled(True)
-        gr, launchAgain, mtime, paperdir, aname, pname, cname = stuff
+        gr, launchAgain, mtime, paperdir, fnames, aname, pname, cname = stuff
 
         if not (0 <= gr and gr <= self.maxScore):
             msg = ErrorMessage(
@@ -994,15 +995,15 @@ class MarkerClient(QWidget):
             return
 
         # Copy the mark, annotated filename and the markingtime into the table
-        # TODO: sort this out whether task is "t00..." or "00..."?!
-        self.exM.markPaperByTask("t" + task, gr, aname, pname, mtime, paperdir)
+        # TODO: sort this out whether task is "m00..." or "00..."?!
+        self.exM.markPaperByTask("m" + task, gr, aname, pname, mtime, paperdir)
         # update the mtime to be the total marking time
-        totmtime = self.exM.getMTimeByTask("t" + task)
-        tags = self.exM.getTagsByTask("t" + task)
+        totmtime = self.exM.getMTimeByTask("m" + task)
+        tags = self.exM.getTagsByTask("m" + task)
 
         # the actual upload will happen in another thread
         self.backgroundUploader.enqueueNewUpload(
-            "t" + task,  # current task
+            "m" + task,  # current task
             gr,  # grade
             aname,  # annotated file
             pname,  # plom file
@@ -1019,10 +1020,10 @@ class MarkerClient(QWidget):
             if len(prIndex) == 0:
                 return
             pr = prIndex[0].row()
-            if self.prxM.getPrefix(pr) == "t" + task:
+            if self.prxM.getPrefix(pr) == "m" + task:
                 self.updateImage(pr)
             return
-        if self.moveToNextUnmarkedTest("t" + task):
+        if self.moveToNextUnmarkedTest("m" + task):
             # self.annotateTest()
             self.ui.annButton.animateClick()
 
