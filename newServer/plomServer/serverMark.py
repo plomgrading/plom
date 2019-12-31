@@ -1,4 +1,7 @@
+from datetime import datetime
 import hashlib
+import imghdr
+import json
 import os
 import subprocess
 import tempfile
@@ -35,7 +38,7 @@ def MgetDoneTasks(self, user, q, v):
 
 def MgetNextTask(self, q, v):
     """The client has asked for the next unmarked paper, so
-    ask the database for its code and send back to the
+    ask the database for its task and send back to the
     client.
     """
     give = self.DB.MgetNextTask(q, v)
@@ -58,8 +61,8 @@ def MlatexFragment(self, user, fragment):
         return [False]
 
 
-def MclaimThisTask(self, user, code):
-    return self.DB.MgiveTaskToClient(user, code)
+def MclaimThisTask(self, user, task):
+    return self.DB.MgiveTaskToClient(user, task)
 
 
 def MdidNotFinish(self, user, task):
@@ -68,3 +71,61 @@ def MdidNotFinish(self, user, task):
     """
     self.DB.MdidNotFinish(user, task)
     return
+
+
+def MreturnMarkedTask(
+    self, user, task, qu, v, mark, image, plomdat, comments, mtime, tags, md5
+):
+    """Client has marked the pageimage with task, mark, annotated-file-name
+    and spent mtime marking it.
+    Send the information to the database and send an ack.
+    """
+    # score + file sanity checks were done at client. Do we need to redo here?
+    # image, plomdat are bytearrays, comments = list
+    aname = "G{}.png".format(task[1:])
+    pname = "G{}.plom".format(task[1:])
+    cname = "G{}.json".format(task[1:])
+    with open("markedQuestions/" + aname, "wb") as fh:
+        fh.write(image)
+    with open("markedQuestions/plomFiles/" + pname, "wb") as fh:
+        fh.write(plomdat)
+    with open("markedQuestions/commentFiles/" + cname, "w") as fh:
+        json.dump(comments, fh)
+
+    # Should check the aname is valid png - just check header presently
+    if imghdr.what("markedQuestions/" + aname) != "png":
+        return [False, "Misformed image file. Try again."]
+    # Also check the md5sum matches
+    md5n = hashlib.md5(open("markedQuestions/" + aname, "rb").read()).hexdigest()
+    if md5 != md5n:
+        return [
+            False,
+            "Misformed image file - md5sum doesn't match serverside={} vs clientside={}. Try again.".format(
+                md5n, md5
+            ),
+        ]
+
+    # now update the database
+    rval = self.DB.MtakeTaskFromClient(
+        task, user, mark, aname, pname, cname, mtime, tags, md5n
+    )
+    if rval:
+        self.MrecordMark(user, mark, aname, mtime, tags)
+        # return ack with current counts.
+        return [True, self.DB.McountMarked(qu, v), self.DB.McountAll(qu, v)]
+    else:
+        return [False, "Database problem - does {} own task {}?".format(user, task)]
+
+
+def MrecordMark(self, user, mark, aname, mtime, tags):
+    """For test blah.png, we record, in blah.png.txt, as a backup
+    the filename, mark, user, time, marking time and any tags.
+    This is not used.
+    """
+    fh = open("./markedQuestions/{}.txt".format(aname), "w")
+    fh.write(
+        "{}\t{}\t{}\t{}\t{}\t{}".format(
+            aname, mark, user, datetime.now().strftime("%Y-%m-%d,%H:%M"), mtime, tags,
+        )
+    )
+    fh.close()

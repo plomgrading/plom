@@ -20,6 +20,7 @@ import urllib3
 from useful_classes import ErrorMessage
 import time
 import threading
+import hashlib
 
 # from http.client import HTTPConnection
 # import logging
@@ -868,6 +869,7 @@ def MreturnMarkedTask(code, pg, ver, score, mtime, tags, aname, pname, cname):
             "mtime": str(mtime),
             "tags": tags,
             "comments": open(cname, "r").read(),
+            "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
         }
 
         dat = MultipartEncoder(

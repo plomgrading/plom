@@ -117,6 +117,8 @@ class Server(object):
         MlatexFragment,
         MclaimThisTask,
         MdidNotFinish,
+        MrecordMark,
+        MreturnMarkedTask,
     )
 
 

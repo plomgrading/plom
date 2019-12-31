@@ -102,17 +102,52 @@ class MarkHandler:
         else:
             return web.Response(status=401)
 
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
+    # @routes.put("/MK/tasks/{task}")
+    async def MreturnMarkedTask(self, request):
+        task = request.match_info["task"]
+        # the put will be in 3 parts - use multipart reader
+        # in order we expect those 3 parts - [parameters (inc comments), image, plom-file]
+        reader = MultipartReader.from_response(request)
+        part0 = await reader.next()
+        if part0 is None:  # weird error
+            return web.Response(status=406)  # should have sent 3 parts
+        param = await part0.json()
+        comments = param["comments"]
+
+        # image file
+        part1 = await reader.next()
+        if part1 is None:  # weird error
+            return web.Response(status=406)  # should have sent 3 parts
+        image = await part1.read()
+
+        # plom file
+        part2 = await reader.next()
+        if part2 is None:  # weird error
+            return web.Response(status=406)  # should have sent 3 parts
+        plomdat = await part2.read()
+
+        if self.server.validate(param["user"], param["token"]):
+            rmsg = self.server.MreturnMarkedTask(
+                param["user"],
+                task,
+                int(param["pg"]),
+                int(param["ver"]),
+                int(param["score"]),
+                image,
+                plomdat,
+                comments,
+                int(param["mtime"]),
+                param["tags"],
+                param["md5sum"],
+            )
+            # rmsg = either [True, numDone, numTotal] or [False] if error.
+            if rmsg[0]:
+                return web.json_response([rmsg[1], rmsg[2]], status=200)
+            else:
+                return web.Response(status=400)  # some sort of error with image file
+        else:
+            return web.Response(status=401)  # not authorised at all
+
     #
     # @routes.get("/MK/images/{task}")
     # async def MrequestImages(request):
@@ -149,50 +184,6 @@ class MarkHandler:
     #         return web.Response(status=401)  # not authorised at all
     #
     #
-    # @routes.put("/MK/tasks/{task}")
-    # async def MreturnMarkedTask(request):
-    #     task = request.match_info["task"]
-    #     # the put will be in 3 parts - use multipart reader
-    #     # in order we expect those 3 parts - [parameters (inc comments), image, plom-file]
-    #     reader = MultipartReader.from_response(request)
-    #     part0 = await reader.next()
-    #     if part0 is None:  # weird error
-    #         return web.Response(status=406)  # should have sent 3 parts
-    #     param = await part0.json()
-    #     comments = param["comments"]
-    #
-    #     # image file
-    #     part1 = await reader.next()
-    #     if part1 is None:  # weird error
-    #         return web.Response(status=406)  # should have sent 3 parts
-    #     image = await part1.read()
-    #
-    #     # plom file
-    #     part2 = await reader.next()
-    #     if part2 is None:  # weird error
-    #         return web.Response(status=406)  # should have sent 3 parts
-    #     plomdat = await part2.read()
-    #
-    #     if self.server.validate(param["user"], param["token"]):
-    #         rmsg = self.server.MreturnMarkedTask(
-    #             param["user"],
-    #             task,
-    #             int(param["pg"]),
-    #             int(param["ver"]),
-    #             int(param["score"]),
-    #             image,
-    #             plomdat,
-    #             comments,
-    #             int(param["mtime"]),
-    #             param["tags"],
-    #         )
-    #         # rmsg = either [True, numDone, numTotal] or [False] if error.
-    #         if rmsg[0]:
-    #             return web.json_response([rmsg[1], rmsg[2]], status=200)
-    #         else:
-    #             return web.Response(status=400)  # some sort of error with image file
-    #     else:
-    #         return web.Response(status=401)  # not authorised at all
     #
     #
     # @routes.patch("/MK/tags/{task}")
@@ -233,3 +224,4 @@ class MarkHandler:
         router.add_get("/MK/latex", self.MlatexFragment)
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
         router.add_delete("/MK/tasks/{task}", self.MdidNotFinishTask)
+        router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)

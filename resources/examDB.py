@@ -70,7 +70,11 @@ class QuestionData(Model):
     questionNumber = IntegerField(null=False)
     version = IntegerField(null=False)
     annotatedFile = CharField(null=True)
+    m5dsum = CharField(null=True)
+    plomFile = CharField(null=True)
+    commentFile = CharField(null=True)
     mark = IntegerField(null=True)
+    markingTime = IntegerField(null=True)
     tags = CharField(default="")
     username = CharField(default="")
     time = DateTimeField(null=True)
@@ -823,4 +827,46 @@ class PlomDB:
 
         except Group.DoesNotExist:
             print("That task {} not known".format(groupID))
+            return False
+
+    def MtakeTaskFromClient(
+        self, task, username, mark, aname, pname, cname, mtime, tags, md5
+    ):
+        """Get marked image back from client and update the record
+        in the database.
+        """
+        try:
+            with plomdb.atomic():
+                gref = Group.get_or_none(Group.gid == task)
+                qref = gref.questiondata[0]
+                if qref.username != username or qref.status != "outformarking":
+                    # has been claimed by someone else.
+                    return False
+
+                # update status, mark, annotate-file-name, time, and
+                # time spent marking the image
+                qref.status = "marked"
+                qref.mark = mark
+                qref.annotatedFile = aname
+                qref.md5sum = md5
+                qref.plomFile = pname
+                qref.commentFile = cname
+                qref.time = datetime.now()
+                qref.markingTime = mtime
+                qref.tags = tags
+                qref.marked = True
+                qref.save()
+
+                print(
+                    "Task {} marked {} by user {} and placed at {}".format(
+                        task, mark, username, aname
+                    )
+                )
+                return True
+        except Group.DoesNotExist:
+            print(
+                "That task number {} / username {} pair not known".format(
+                    task, username
+                )
+            )
             return False
