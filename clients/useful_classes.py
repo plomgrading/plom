@@ -291,7 +291,7 @@ class CommentWidget(QWidget):
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
 
-        questnum = int(self.parent.parent.pageGroup)  # YUCK!
+        questnum = int(self.parent.parent.question)  # YUCK!
         acb = AddCommentBox(self, self.maxMark, alist, questnum)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
@@ -323,7 +323,7 @@ class CommentWidget(QWidget):
             clist.append(self.CL.cmodel.index(r, 1).data())
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
-        questnum = int(self.parent.parent.pageGroup)  # YUCK!
+        questnum = int(self.parent.parent.question)  # YUCK!
         acb = AddCommentBox(self, self.maxMark, alist, questnum, com)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
@@ -527,9 +527,9 @@ class SimpleCommentTable(QTableView):
         self.cmodel.setRowCount(0)
         for i, com in enumerate(self.clist):
             # User can edit the text, but doesn't handle drops.
-            # TODO: YUCK! (how do I get the pagegroup)
-            pg = int(self.parent.parent.parent.pageGroup)
-            if not commentVisibleInQuestion(com, pg):
+            # TODO: YUCK! (how do I get the question)
+            qu = int(self.parent.parent.parent.question)
+            if not commentVisibleInQuestion(com, qu):
                 continue
             txti = QStandardItem(com["text"])
             txti.setEditable(True)
@@ -573,7 +573,7 @@ class SimpleCommentTable(QTableView):
             return
         idx = int(self.cmodel.index(sel[0].row(), 2).data())
         self.clist.pop(idx)
-        #self.cmodel.removeRow(sel[0].row())
+        # self.cmodel.removeRow(sel[0].row())
         # TODO: maybe sloppy to rebuild, need automatic cmodel ontop of clist
         self.populateTable()
 
@@ -642,11 +642,13 @@ class AddCommentBox(QDialog):
         self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QTextEdit()
         # TODO: how to make it smaller vertically than the TE?
-        #self.TEtag.setMinimumHeight(self.TE.minimumHeight() // 2)
-        #self.TEtag.setMaximumHeight(self.TE.maximumHeight() // 2)
+        # self.TEtag.setMinimumHeight(self.TE.minimumHeight() // 2)
+        # self.TEtag.setMaximumHeight(self.TE.maximumHeight() // 2)
         self.QSpecific = QCheckBox("Available only in question {}".format(questnum))
         self.QSpecific.stateChanged.connect(self.toggleQSpecific)
-        self.quickHelp = QLabel('Prepend with "tex:" to use math.  You can "Choose text" from an existing annotation.')
+        self.quickHelp = QLabel(
+            'Prepend with "tex:" to use math.  You can "Choose text" from an existing annotation.'
+        )
         self.quickHelp.setWordWrap(True)
 
         flay = QFormLayout()

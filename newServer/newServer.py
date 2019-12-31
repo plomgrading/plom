@@ -116,6 +116,7 @@ class Server(object):
         MgetNextTask,
         MlatexFragment,
         MclaimThisTask,
+        MdidNotFinish,
     )
 
 

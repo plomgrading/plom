@@ -60,3 +60,11 @@ def MlatexFragment(self, user, fragment):
 
 def MclaimThisTask(self, user, code):
     return self.DB.MgiveTaskToClient(user, code)
+
+
+def MdidNotFinish(self, user, task):
+    """User didn't finish marking the given task. Tell the
+    database to put this back on the todo-pile.
+    """
+    self.DB.MdidNotFinish(user, task)
+    return

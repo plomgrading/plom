@@ -55,7 +55,7 @@ class MarkHandler:
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             rmsg = self.server.MgetNextTask(data["q"], data["v"])
-            # returns [True, code] or [False]
+            # returns [True, task] or [False]
             if rmsg[0]:
                 return web.json_response(rmsg[1], status=200)
             else:
@@ -78,9 +78,9 @@ class MarkHandler:
     # @routes.patch("/MK/tasks/{task}")
     async def MclaimThisTask(self, request):
         data = await request.json()
-        code = request.match_info["task"]
+        task = request.match_info["task"]
         if self.server.validate(data["user"], data["token"]):
-            rmesg = self.server.MclaimThisTask(data["user"], code)
+            rmesg = self.server.MclaimThisTask(data["user"], task)
             if rmesg[0]:  # return [True, tag, filename1, filename2,...]
                 with MultipartWriter("imageAndTags") as mpwriter:
                     mpwriter.append(rmesg[1])  # append tags as raw text.
@@ -93,14 +93,15 @@ class MarkHandler:
             return web.Response(status=401)
 
     # @routes.delete("/MK/tasks/{task}")
-    # async def MdidNotFinishTask(request):
-    #     data = await request.json()
-    #     code = request.match_info["task"]
-    #     if self.server.validate(data["user"], data["token"]):
-    #         self.server.MdidNotFinish(data["user"], code)
-    #         return web.json_response(status=200)
-    #     else:
-    #         return web.Response(status=401)
+    async def MdidNotFinishTask(self, request):
+        data = await request.json()
+        task = request.match_info["task"]
+        if self.server.validate(data["user"], data["token"]):
+            self.server.MdidNotFinish(data["user"], task)
+            return web.json_response(status=200)
+        else:
+            return web.Response(status=401)
+
     #
     #
     #
@@ -113,12 +114,12 @@ class MarkHandler:
     #
     #
     #
-    # @routes.get("/MK/images/{tgv}")
+    # @routes.get("/MK/images/{task}")
     # async def MrequestImages(request):
     #     data = await request.json()
-    #     code = request.match_info["tgv"]
+    #     task = request.match_info["task"]
     #     if self.server.validate(data["user"], data["token"]):
-    #         rmsg = self.server.MrequestImages(data["user"], code)
+    #         rmsg = self.server.MrequestImages(data["user"], task)
     #         # returns either [True, fname] or [True, fname, aname, plomdat] or [False, error]
     #         if rmsg[0]:  # user allowed access - returns [true, fname]
     #             with MultipartWriter("imageAnImageAndPlom") as mpwriter:
@@ -133,12 +134,12 @@ class MarkHandler:
     #         return web.Response(status=401)  # not authorised at all
     #
     #
-    # @routes.get("/MK/originalImage/{tgv}")
+    # @routes.get("/MK/originalImage/{task}")
     # async def MrequestOriginalImage(request):
     #     data = await request.json()
-    #     code = request.match_info["tgv"]
+    #     task = request.match_info["task"]
     #     if self.server.validate(data["user"], data["token"]):
-    #         rmsg = self.server.MrequestOriginalImage(code)
+    #         rmsg = self.server.MrequestOriginalImage(task)
     #         # returns either [True, fname] or [False]
     #         if rmsg[0]:  # user allowed access - returns [true, fname]
     #             return web.FileResponse(rmsg[1], status=200)
@@ -148,9 +149,9 @@ class MarkHandler:
     #         return web.Response(status=401)  # not authorised at all
     #
     #
-    # @routes.put("/MK/tasks/{tgv}")
+    # @routes.put("/MK/tasks/{task}")
     # async def MreturnMarkedTask(request):
-    #     code = request.match_info["tgv"]
+    #     task = request.match_info["task"]
     #     # the put will be in 3 parts - use multipart reader
     #     # in order we expect those 3 parts - [parameters (inc comments), image, plom-file]
     #     reader = MultipartReader.from_response(request)
@@ -175,7 +176,7 @@ class MarkHandler:
     #     if self.server.validate(param["user"], param["token"]):
     #         rmsg = self.server.MreturnMarkedTask(
     #             param["user"],
-    #             code,
+    #             task,
     #             int(param["pg"]),
     #             int(param["ver"]),
     #             int(param["score"]),
@@ -194,16 +195,16 @@ class MarkHandler:
     #         return web.Response(status=401)  # not authorised at all
     #
     #
-    # @routes.patch("/MK/tags/{tgv}")
+    # @routes.patch("/MK/tags/{task}")
     # async def MsetTag(request):
-    #     code = request.match_info["tgv"]
+    #     task = request.match_info["task"]
     #     data = await request.json()
     #     if self.server.validate(data["user"], data["token"]):
-    #         rmsg = self.server.MsetTag(data["user"], code, data["tags"])
+    #         rmsg = self.server.MsetTag(data["user"], task, data["tags"])
     #         if rmsg:
     #             return web.Response(status=200)
     #         else:
-    #             return web.Response(status=409)  # this is not your tgv
+    #             return web.Response(status=409)  # this is not your task
     #     else:
     #         return web.Response(status=401)  # not authorised at all
     #
@@ -231,3 +232,4 @@ class MarkHandler:
         router.add_get("/MK/tasks/available", self.MgetNextTask)
         router.add_get("/MK/latex", self.MlatexFragment)
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
+        router.add_delete("/MK/tasks/{task}", self.MdidNotFinishTask)

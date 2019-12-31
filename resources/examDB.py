@@ -639,7 +639,7 @@ class PlomDB:
         back on todo pile
         """
         # Log user returning given tgv.
-        print("User {} did not ID-task {}".format(username, testNumber))
+        print("User {} did not ID task {}".format(username, testNumber))
         try:
             with plomdb.atomic():
                 tref = Test.get_or_none(Test.testNumber == testNumber)
@@ -653,6 +653,7 @@ class PlomDB:
                 iref.status = "todo"
                 iref.username = ""
                 iref.time = datetime.now()
+                iref.identified = False
                 iref.save()
 
         except Test.DoesNotExist:
@@ -795,4 +796,31 @@ class PlomDB:
                 return rval
         except Group.DoesNotExist:
             print("That question {} not known".format(groupID))
+            return False
+
+    def MdidNotFinish(self, username, groupID):
+        """When user logs off, any images they have still out should be put
+        back on todo pile
+        """
+        # Log user returning given tgv.
+        print("User {} did not mark task {}".format(username, groupID))
+        try:
+            with plomdb.atomic():
+                gref = Group.get_or_none(Group.gid == groupID)
+                if gref.scanned == False:
+                    return
+                qref = gref.questiondata[0]
+                if qref.username != username or qref.status != "outformarking":
+                    # has been claimed by someone else.
+                    return
+                # update status, Student-number, name, id-time.
+                qref.status = "todo"
+                qref.username = ""
+                qref.time = datetime.now()
+                qref.markingTime = 0
+                qref.marked = False
+                qref.save()
+
+        except Group.DoesNotExist:
+            print("That task {} not known".format(groupID))
             return False
