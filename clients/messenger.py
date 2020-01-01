@@ -836,11 +836,11 @@ def MrequestImages(code):
     return [imageList, anImage, plDat]
 
 
-def MrequestOriginalImage(code):
+def MrequestOriginalImages(code):
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/MK/originalImage/{}".format(server, message_port, code),
+            "https://{}:{}/MK/originalImages/{}".format(server, message_port, code),
             json={"user": _userName, "token": _token},
             verify=False,
         )

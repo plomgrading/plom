@@ -132,5 +132,9 @@ def MrecordMark(self, user, mark, aname, mtime, tags):
     fh.close()
 
 
-def MrequestImages(self, user, task):
+def MgetImages(self, user, task):
     return self.DB.MgetImages(user, task)
+
+
+def MgetOriginalImages(self, task):
+    return self.DB.MgetOriginalImages(task)

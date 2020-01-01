@@ -1235,7 +1235,7 @@ class MarkerClient(QWidget):
                 str(testNumber).zfill(4), self.question, self.version
             )
             try:
-                image = messenger.MrequestOriginalImage(task)
+                image = messenger.MrequestOriginalImages(task)
             except PlomNoMoreException as err:
                 msg = ErrorMessage("No image corresponding to code {}".format(task))
                 msg.exec_()

@@ -119,7 +119,8 @@ class Server(object):
         MdidNotFinish,
         MrecordMark,
         MreturnMarkedTask,
-        MrequestImages,
+        MgetImages,
+        MgetOriginalImages,
     )
 
 

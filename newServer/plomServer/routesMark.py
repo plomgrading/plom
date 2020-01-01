@@ -150,11 +150,11 @@ class MarkHandler:
             return web.Response(status=401)  # not authorised at all
 
     # @routes.get("/MK/images/{task}")
-    async def MrequestImages(self, request):
+    async def MgetImages(self, request):
         data = await request.json()
         task = request.match_info["task"]
         if self.server.validate(data["user"], data["token"]):
-            rmsg = self.server.MrequestImages(data["user"], task)
+            rmsg = self.server.MgetImages(data["user"], task)
             # returns either [True,n, fname1,fname2,..,fname.n] or [True, n, fname1,..,fname.n, aname, plomdat] or [False, error]
             if rmsg[0]:
                 with MultipartWriter("imageAnImageAndPlom") as mpwriter:
@@ -167,21 +167,20 @@ class MarkHandler:
         else:
             return web.Response(status=401)  # not authorised at all
 
-    #
-    #
     # @routes.get("/MK/originalImage/{task}")
-    # async def MrequestOriginalImage(request):
-    #     data = await request.json()
-    #     task = request.match_info["task"]
-    #     if self.server.validate(data["user"], data["token"]):
-    #         rmsg = self.server.MrequestOriginalImage(task)
-    #         # returns either [True, fname] or [False]
-    #         if rmsg[0]:  # user allowed access - returns [true, fname]
-    #             return web.FileResponse(rmsg[1], status=200)
-    #         else:
-    #             return web.Response(status=204)  # no content there
-    #     else:
-    #         return web.Response(status=401)  # not authorised at all
+    async def MgetOriginalImages(self, request):
+        data = await request.json()
+        task = request.match_info["task"]
+        if self.server.validate(data["user"], data["token"]):
+            rmsg = self.server.MgetOriginalImages(task)
+            # returns either [True, fname1, fname2,... ] or [False]
+            if rmsg[0]:  # user allowed access - returns [true, fname1, fname2,...]
+                return web.FileResponse(rmsg[1], status=200)
+            else:
+                return web.Response(status=204)  # no content there
+        else:
+            return web.Response(status=401)  # not authorised at all
+
     #
     #
     #
@@ -225,4 +224,5 @@ class MarkHandler:
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
         router.add_delete("/MK/tasks/{task}", self.MdidNotFinishTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
-        router.add_get("/MK/images/{task}", self.MrequestImages)
+        router.add_get("/MK/images/{task}", self.MgetImages)
+        router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)

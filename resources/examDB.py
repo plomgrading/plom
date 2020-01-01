@@ -895,3 +895,18 @@ class PlomDB:
         except Group.DoesNotExist:
             print("That task {} not known".format(task))
             return False
+
+    def MgetOriginalImages(self, task):
+        try:
+            with plomdb.atomic():
+                gref = Group.get(Group.gid == task)
+                if gref.scanned == False:
+                    return [False, "Task {} is not completely scanned".format(task)]
+                qref = gref.questiondata[0]
+                # return [true, page1,..,page.n]
+                rval = [True]
+                for p in gref.pages.order_by(Page.pageNumber):
+                    rval.append(p.fileName)
+                return rval
+        except Group.DoesNotExist:
+            return [False, "Task {} not known".format(task)]
