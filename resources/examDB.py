@@ -659,6 +659,8 @@ class PlomDB:
                 iref.time = datetime.now()
                 iref.identified = False
                 iref.save()
+                iref.test.identified = False
+                tref.save()
 
         except Test.DoesNotExist:
             print("That test number {} not known".format(testNumber))
@@ -822,6 +824,8 @@ class PlomDB:
                 qref.markingTime = 0
                 qref.marked = False
                 qref.save()
+                qref.test.marked = False
+                tref.save()
 
         except Group.DoesNotExist:
             print("That task {} not known".format(groupID))
