@@ -667,7 +667,6 @@ class MarkerClient(QWidget):
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
-
         self.exM.setOriginalFiles(task, inames)
 
         if anImage is None:

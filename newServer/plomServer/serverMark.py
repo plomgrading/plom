@@ -82,21 +82,22 @@ def MreturnMarkedTask(
     """
     # score + file sanity checks were done at client. Do we need to redo here?
     # image, plomdat are bytearrays, comments = list
-    aname = "G{}.png".format(task[1:])
-    pname = "G{}.plom".format(task[1:])
-    cname = "G{}.json".format(task[1:])
-    with open("markedQuestions/" + aname, "wb") as fh:
+    aname = "markedQuestions/G{}.png".format(task[1:])
+    pname = "markedQuestions/plomFiles/G{}.plom".format(task[1:])
+    cname = "markedQuestions/commentFiles/G{}.json".format(task[1:])
+    with open(aname, "wb") as fh:
         fh.write(image)
-    with open("markedQuestions/plomFiles/" + pname, "wb") as fh:
+    with open(pname, "wb") as fh:
         fh.write(plomdat)
-    with open("markedQuestions/commentFiles/" + cname, "w") as fh:
+    with open(cname, "w") as fh:
         json.dump(comments, fh)
 
     # Should check the aname is valid png - just check header presently
-    if imghdr.what("markedQuestions/" + aname) != "png":
+    if imghdr.what(aname) != "png":
+        print("EEK = {}".format(imghdr.what(aname)))
         return [False, "Misformed image file. Try again."]
     # Also check the md5sum matches
-    md5n = hashlib.md5(open("markedQuestions/" + aname, "rb").read()).hexdigest()
+    md5n = hashlib.md5(open(aname, "rb").read()).hexdigest()
     if md5 != md5n:
         return [
             False,
@@ -122,10 +123,14 @@ def MrecordMark(self, user, mark, aname, mtime, tags):
     the filename, mark, user, time, marking time and any tags.
     This is not used.
     """
-    fh = open("./markedQuestions/{}.txt".format(aname), "w")
+    fh = open("{}.txt".format(aname), "w")
     fh.write(
         "{}\t{}\t{}\t{}\t{}\t{}".format(
             aname, mark, user, datetime.now().strftime("%Y-%m-%d,%H:%M"), mtime, tags,
         )
     )
     fh.close()
+
+
+def MrequestImages(self, user, task):
+    return self.DB.MgetImages(user, task)

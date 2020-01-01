@@ -604,6 +604,7 @@ class PageScene(QGraphicsScene):
                 for Y in [
                     ScoreBox,
                     QGraphicsPixmapItem,
+                    UnderlyingImage,
                     GhostComment,
                     GhostDelta,
                     GhostText,

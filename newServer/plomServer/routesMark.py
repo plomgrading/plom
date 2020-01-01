@@ -144,29 +144,29 @@ class MarkHandler:
             if rmsg[0]:
                 return web.json_response([rmsg[1], rmsg[2]], status=200)
             else:
+                print("Returning with error 400 = {}".format(rmsg))
                 return web.Response(status=400)  # some sort of error with image file
         else:
             return web.Response(status=401)  # not authorised at all
 
-    #
     # @routes.get("/MK/images/{task}")
-    # async def MrequestImages(request):
-    #     data = await request.json()
-    #     task = request.match_info["task"]
-    #     if self.server.validate(data["user"], data["token"]):
-    #         rmsg = self.server.MrequestImages(data["user"], task)
-    #         # returns either [True, fname] or [True, fname, aname, plomdat] or [False, error]
-    #         if rmsg[0]:  # user allowed access - returns [true, fname]
-    #             with MultipartWriter("imageAnImageAndPlom") as mpwriter:
-    #                 mpwriter.append(open(rmsg[1], "rb"))
-    #                 if len(rmsg) == 4:
-    #                     mpwriter.append(open(rmsg[2], "rb"))
-    #                     mpwriter.append(open(rmsg[3], "rb"))
-    #             return web.Response(body=mpwriter, status=200)
-    #         else:
-    #             return web.Response(status=409)  # someone else has that image
-    #     else:
-    #         return web.Response(status=401)  # not authorised at all
+    async def MrequestImages(self, request):
+        data = await request.json()
+        task = request.match_info["task"]
+        if self.server.validate(data["user"], data["token"]):
+            rmsg = self.server.MrequestImages(data["user"], task)
+            # returns either [True,n, fname1,fname2,..,fname.n] or [True, n, fname1,..,fname.n, aname, plomdat] or [False, error]
+            if rmsg[0]:
+                with MultipartWriter("imageAnImageAndPlom") as mpwriter:
+                    mpwriter.append("{}".format(rmsg[1]))  # send 'n' as string
+                    for fn in rmsg[2:]:
+                        mpwriter.append(open(fn, "rb"))
+                return web.Response(body=mpwriter, status=200)
+            else:
+                return web.Response(status=409)  # someone else has that image
+        else:
+            return web.Response(status=401)  # not authorised at all
+
     #
     #
     # @routes.get("/MK/originalImage/{task}")
@@ -225,3 +225,4 @@ class MarkHandler:
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
         router.add_delete("/MK/tasks/{task}", self.MdidNotFinishTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
+        router.add_get("/MK/images/{task}", self.MrequestImages)

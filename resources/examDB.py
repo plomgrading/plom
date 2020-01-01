@@ -746,9 +746,7 @@ class PlomDB:
         )
         markList = []
         for x in query:
-            markList.append(
-                [x.test.testNumber, x.status, x.mark, x.markingTime, x.tags]
-            )
+            markList.append([x.group.gid, x.status, x.mark, x.markingTime, x.tags])
         return markList
 
     def MgetNextTask(self, q, v):
@@ -839,7 +837,7 @@ class PlomDB:
             with plomdb.atomic():
                 gref = Group.get_or_none(Group.gid == task)
                 qref = gref.questiondata[0]
-                if qref.username != username or qref.status != "outformarking":
+                if qref.username != username:
                     # has been claimed by someone else.
                     return False
 
@@ -869,4 +867,31 @@ class PlomDB:
                     task, username
                 )
             )
+            return False
+
+    def MgetImages(self, username, task):
+        try:
+            with plomdb.atomic():
+                gref = Group.get_or_none(Group.gid == task)
+                if gref.scanned == False:
+                    return [False, "Task {} is not completely scanned".format(task)]
+                qref = gref.questiondata[0]
+                if qref.username != username:
+                    # belongs to another user
+                    return [
+                        False,
+                        "Task {} does not belong to user {}".format(task, username),
+                    ]
+                # return [true, n, page1,..,page.n]
+                # or
+                # return [true, n, page1,..,page.n, annotatedFile, plomFile]
+                pp = []
+                for p in gref.pages.order_by(Page.pageNumber):
+                    pp.append(p.fileName)
+                if qref.annotatedFile is not None:
+                    return [True, len(pp)] + pp + [qref.annotatedFile, qref.plomFile]
+                else:
+                    return [True, len(pp)] + pp
+        except Group.DoesNotExist:
+            print("That task {} not known".format(task))
             return False

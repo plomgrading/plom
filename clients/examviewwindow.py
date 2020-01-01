@@ -19,13 +19,16 @@ from PyQt5.QtWidgets import (
 class ExamViewWindow(QWidget):
     """Simple view window for pageimages"""
 
-    def __init__(self, fname=None):
+    def __init__(self, fnames=None):
         QWidget.__init__(self)
-        self.initUI(fname)
+        if type(fnames) == list:
+            self.initUI(fnames)
+        else:
+            self.initUI([fnames])
 
-    def initUI(self, fname):
+    def initUI(self, fnames):
         # Grab an examview widget (QGraphicsView)
-        self.view = ExamView(fname)
+        self.view = ExamView(fnames)
         # Render nicely
         self.view.setRenderHint(QPainter.HighQualityAntialiasing)
         # reset view button passes to the examview.
@@ -50,7 +53,11 @@ class ExamViewWindow(QWidget):
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
         # update the image
-        self.view.updateImage(fnames)
+        if type(fnames) == list:
+            self.view.updateImage(fnames)
+        else:
+            self.view.updateImage([fnames])
+
         # re-set the view transform and scroll values
         self.view.setTransform(self.viewTrans)
         self.view.horizontalScrollBar().setValue(self.dx)
@@ -76,11 +83,10 @@ class ExamView(QGraphicsView):
         self.updateImage(fnames)
 
     def updateImage(self, fnames):
-        # TODO - FINISH THIS
         """Update the image with that from filename"""
         for n in self.images:
             self.imageGItem.removeFromGroup(self.images[n])
-            self.scene.removeItem(self.images[n])
+            self.images[n].setVisible(False)
         if fnames is not None:
             x = 0
             n = 0
@@ -88,6 +94,7 @@ class ExamView(QGraphicsView):
                 self.images[n] = QGraphicsPixmapItem(QPixmap(fn))
                 self.images[n].setTransformationMode(Qt.SmoothTransformation)
                 self.images[n].setPos(x, 0)
+                self.images[n].setVisible(True)
                 self.scene.addItem(self.images[n])
                 x += self.images[n].boundingRect().width() + 10
                 self.imageGItem.addToGroup(self.images[n])

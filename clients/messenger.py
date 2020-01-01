@@ -795,23 +795,30 @@ def MrequestImages(code):
         )
         response.raise_for_status()
 
-        # response is either [image] or [image, annotatedImage, plom-data]
-        imageAnImageAndPlom = MultipartDecoder.from_response(response).parts
-        image = BytesIO(
-            imageAnImageAndPlom[0].content
-        ).getvalue()  # pass back image as bytes
-        if len(imageAnImageAndPlom) == 3:
-            anImage = BytesIO(
-                imageAnImageAndPlom[1].content
-            ).getvalue()  # pass back annotated-image as bytes
-            plDat = BytesIO(
-                imageAnImageAndPlom[2].content
-            ).getvalue()  # pass back plomData as bytes
-
-        else:
+        # response is either [n, image1,..,image.n] or [n, image1,...,image.n, annotatedImage, plom-data]
+        imagesAnnotAndPlom = MultipartDecoder.from_response(response).parts
+        n = int(imagesAnnotAndPlom[0].content)  # 'n' sent as string
+        imageList = [
+            BytesIO(imagesAnnotAndPlom[i].content).getvalue() for i in range(1, n + 1)
+        ]
+        if len(imagesAnnotAndPlom) == n + 1:
+            # all is fine - no annotated image or plom data
             anImage = None
             plDat = None
-
+        elif len(imagesAnnotAndPlom) == n + 3:
+            # all fine - last two parts are annotated image + plom-data
+            anImage = BytesIO(
+                imagesAnnotAndPlom[n + 1].content
+            ).getvalue()  # pass back annotated-image as bytes
+            plDat = BytesIO(
+                imagesAnnotAndPlom[n + 2].content
+            ).getvalue()  # pass back plomData as bytes
+        else:
+            raise PlomSeriousException(
+                "Number of images passed doesn't make sense {} vs {}".format(
+                    n, len(imagesAnnotAndPlom)
+                )
+            )
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")
@@ -826,7 +833,7 @@ def MrequestImages(code):
     finally:
         SRmutex.release()
 
-    return [image, anImage, plDat]
+    return [imageList, anImage, plDat]
 
 
 def MrequestOriginalImage(code):
