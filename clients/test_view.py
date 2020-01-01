@@ -10,11 +10,12 @@ from examviewwindow import ExamViewWindow
 
 
 class TestView(QWidget):
-    def __init__(self, parent, groups):
+    def __init__(self, parent, pageNames, pages):
         super(TestView, self).__init__()
         self.parent = parent
-        self.numberGroups = len(groups)
-        self.groupList = groups
+        self.numberOfPages = len(pages)
+        self.pageList = pages
+        self.pageNames = pageNames
         self.ui = Ui_TestView()
         self.ui.setupUi(self)
         self.connectButtons()
@@ -29,9 +30,11 @@ class TestView(QWidget):
         self.ui.maxNormButton.clicked.connect(self.swapMaxNorm)
 
     def buildTabs(self):
-        for k in range(0, self.numberGroups):
-            self.tabs[k] = ExamViewWindow(self.groupList[k])
-            self.ui.groupViewTabWidget.addTab(self.tabs[k], "Group {}".format(k + 1))
+        for k in range(0, self.numberOfPages):
+            self.tabs[k] = ExamViewWindow(self.pageList[k])
+            self.ui.groupViewTabWidget.addTab(
+                self.tabs[k], "Page {}".format(self.pageNames[k])
+            )
 
     def nextTab(self):
         t = self.ui.groupViewTabWidget.currentIndex() + 1
@@ -60,10 +63,10 @@ class TestView(QWidget):
 
 
 class GroupView(QDialog):
-    def __init__(self, fname):
+    def __init__(self, fnames):
         super(GroupView, self).__init__()
         grid = QGridLayout()
-        self.testImg = ExamViewWindow(fname)
+        self.testImg = ExamViewWindow(fnames)
         self.closeButton = QPushButton("Close")
         self.maxNormButton = QPushButton("Max/Norm")
         grid.addWidget(self.testImg, 1, 1, 6, 6)

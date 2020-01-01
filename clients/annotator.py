@@ -446,10 +446,11 @@ class Annotator(QWidget):
     def viewWholePaper(self):
         # grab the files if needed.
         if self.testViewFiles is None:
-            self.testViewFiles = self.parent.viewWholePaper()
+            pageNames, self.testViewFiles = self.parent.viewWholePaper()
+            print("Pagenames = {}".format(pageNames))
         # if we haven't built a testview, built it now
         if self.testView is None:
-            self.testView = TestView(self, self.testViewFiles)
+            self.testView = TestView(self, pageNames, self.testViewFiles)
         else:
             # must have closed it, so re-show it.
             self.testView.show()

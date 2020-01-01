@@ -1115,7 +1115,7 @@ class MarkerClient(QWidget):
         task = self.prxM.getPrefix(index[0].row())
         testnumber = task[1:5]  # since task = mXXXXgYY
         try:
-            imagesAsBytes = messenger.MrequestWholePaper(testnumber)
+            pageNames, imagesAsBytes = messenger.MrequestWholePaper(testnumber)
         except PlomBenignException as err:
             self.throwBenign(err)
 
@@ -1126,7 +1126,7 @@ class MarkerClient(QWidget):
             with open(tfn, "wb") as fh:
                 fh.write(iab)
 
-        return self.viewFiles
+        return [pageNames, self.viewFiles]
 
     def doneWithViewFiles(self):
         for f in self.viewFiles:
@@ -1222,8 +1222,8 @@ class MarkerClient(QWidget):
         testNumber, ok = QInputDialog.getInt(
             self,
             "View another test",
-            "From which test do you want to view (question, version)=({}, {})?".format(
-                int(self.question), int(self.version)
+            "From which test do you want to view question {}?".format(
+                int(self.question)
             ),
             1,
             1,
@@ -1231,17 +1231,21 @@ class MarkerClient(QWidget):
             1,
         )
         if ok:
-            task = "t{}g{}v{}".format(
-                str(testNumber).zfill(4), self.question, self.version
-            )
+            task = "m{}g{}".format(str(testNumber).zfill(4), int(self.question))
             try:
-                image = messenger.MrequestOriginalImages(task)
+                imageList = messenger.MrequestOriginalImages(task)
             except PlomNoMoreException as err:
                 msg = ErrorMessage("No image corresponding to code {}".format(task))
                 msg.exec_()
                 return
-            ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory)
-            with open(ifile.name, "wb") as fh:
-                fh.write(image)
-            tvw = GroupView(ifile.name)
-            tvw.exec_()
+            # put imagefiles into a temp-dir so they are removed afterwards
+            with tempfile.TemporaryDirectory() as tdir:
+                inames = []
+                i = 0
+                for img in imageList:
+                    inames.append("{}/{}.{}".format(tdir, task, i))
+                    with open(inames[-1], "wb") as fh:
+                        fh.write(img)
+                    i += 1
+                tvw = GroupView(inames)
+                tvw.exec_()

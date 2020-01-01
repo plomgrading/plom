@@ -138,3 +138,11 @@ def MgetImages(self, user, task):
 
 def MgetOriginalImages(self, task):
     return self.DB.MgetOriginalImages(task)
+
+
+def MsetTag(self, user, task, tag):
+    return self.DB.MsetTag(user, task, tag)
+
+
+def MgetWholePaper(self, testNumber):
+    return self.DB.MgetWholePaper(testNumber)

@@ -121,6 +121,8 @@ class Server(object):
         MreturnMarkedTask,
         MgetImages,
         MgetOriginalImages,
+        MsetTag,
+        MgetWholePaper,
     )
 
 

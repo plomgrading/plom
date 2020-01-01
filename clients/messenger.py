@@ -836,19 +836,21 @@ def MrequestImages(code):
     return [imageList, anImage, plDat]
 
 
-def MrequestOriginalImages(code):
+def MrequestOriginalImages(task):
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/MK/originalImages/{}".format(server, message_port, code),
+            "https://{}:{}/MK/originalImages/{}".format(server, message_port, task),
             json={"user": _userName, "token": _token},
             verify=False,
         )
         if response.status_code == 204:
-            raise PlomNoMoreException("No paper with code {}.".format(code))
+            raise PlomNoMoreException("No task = {}.".format(task))
         response.raise_for_status()
-        # response is either [image] or [image, annotatedImage, plom-data]
-        image = BytesIO(response.content).getvalue()  # pass back image as bytes
+        # response is [image1, image2,... image.n]
+        imageList = []
+        for img in MultipartDecoder.from_response(response).parts:
+            imageList.append(BytesIO(img.content).getvalue())
 
     except requests.HTTPError as e:
         if response.status_code == 401:
@@ -860,7 +862,7 @@ def MrequestOriginalImages(code):
     finally:
         SRmutex.release()
 
-    return image
+    return imageList
 
 
 def MreturnMarkedTask(code, pg, ver, score, mtime, tags, aname, pname, cname):
@@ -940,11 +942,19 @@ def MrequestWholePaper(code):
         )
         response.raise_for_status()
 
-        # response should be multipart = [image, tags]
+        # response should be multipart = [[pageNames], f1,f2,f3..]
         imagesAsBytes = MultipartDecoder.from_response(response).parts
         images = []
+        i = 0
         for iab in imagesAsBytes:
-            images.append(BytesIO(iab.content).getvalue())  # pass back image as bytes
+            if i == 0:
+                pageNames = json.loads(iab.content)
+            else:
+                images.append(
+                    BytesIO(iab.content).getvalue()
+                )  # pass back image as bytes
+            i += 1
+
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")
@@ -955,7 +965,7 @@ def MrequestWholePaper(code):
     finally:
         SRmutex.release()
 
-    return images
+    return [pageNames, images]
 
 
 # ------------------------

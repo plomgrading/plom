@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>View test pages</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
@@ -45,14 +45,14 @@
       <item row="0" column="0">
        <widget class="QPushButton" name="prevGroupButton">
         <property name="text">
-         <string>Previous Group</string>
+         <string>Previous Page</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
        <widget class="QPushButton" name="nextGroupButton">
         <property name="text">
-         <string>Next Group</string>
+         <string>Next Page</string>
         </property>
        </widget>
       </item>

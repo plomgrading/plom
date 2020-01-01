@@ -174,46 +174,45 @@ class MarkHandler:
         if self.server.validate(data["user"], data["token"]):
             rmsg = self.server.MgetOriginalImages(task)
             # returns either [True, fname1, fname2,... ] or [False]
-            if rmsg[0]:  # user allowed access - returns [true, fname1, fname2,...]
-                return web.FileResponse(rmsg[1], status=200)
+            if rmsg[0]:
+                with MultipartWriter("images") as mpwriter:
+                    for fn in rmsg[1:]:
+                        mpwriter.append(open(fn, "rb"))
+                return web.Response(body=mpwriter, status=200)
             else:
                 return web.Response(status=204)  # no content there
         else:
             return web.Response(status=401)  # not authorised at all
 
-    #
-    #
-    #
-    #
     # @routes.patch("/MK/tags/{task}")
-    # async def MsetTag(request):
-    #     task = request.match_info["task"]
-    #     data = await request.json()
-    #     if self.server.validate(data["user"], data["token"]):
-    #         rmsg = self.server.MsetTag(data["user"], task, data["tags"])
-    #         if rmsg:
-    #             return web.Response(status=200)
-    #         else:
-    #             return web.Response(status=409)  # this is not your task
-    #     else:
-    #         return web.Response(status=401)  # not authorised at all
-    #
-    #
+    async def MsetTag(self, request):
+        task = request.match_info["task"]
+        data = await request.json()
+        if self.server.validate(data["user"], data["token"]):
+            rmsg = self.server.MsetTag(data["user"], task, data["tags"])
+            if rmsg:
+                return web.Response(status=200)
+            else:
+                return web.Response(status=409)  # this is not your task
+        else:
+            return web.Response(status=401)  # not authorised at all
+
     # @routes.get("/MK/whole/{number}")
-    # async def MrequestWholePaper(request):
-    #     data = await request.json()
-    #     number = request.match_info["number"]
-    #     if self.server.validate(data["user"], data["token"]):
-    #         rmesg = self.server.MrequestWholePaper(data["user"], number)
-    #         if rmesg[0]:  # return [True, [filenames]] or [False]
-    #             with MultipartWriter("imageAndTags") as mpwriter:
-    #                 for fn in rmesg[1]:
-    #                     mpwriter.append(open(fn, "rb"))
-    #             return web.Response(body=mpwriter, status=200)
-    #         else:
-    #             return web.Response(status=409)  # not yours
-    #     else:
-    #         return web.Response(status=401)
+    async def MgetWholePaper(self, request):
+        data = await request.json()
+        number = request.match_info["number"]
+        if self.server.validate(data["user"], data["token"]):
+            rmesg = self.server.MgetWholePaper(number)
+            if rmesg[0]:  # return [True,[pn1,pn2,.],f1,f2,f3,...] or [False]
+                with MultipartWriter("images") as mpwriter:
+                    mpwriter.append_json(rmesg[1])  # append the pageNames
+                    for fn in rmesg[2:]:
+                        mpwriter.append(open(fn, "rb"))
+                return web.Response(body=mpwriter, status=200)
+            else:
+                return web.Response(status=404)  # not found
+        else:
+            return web.Response(status=401)
 
     def setUpRoutes(self, router):
         router.add_get("/MK/maxMark", self.MgetQuestionMark)
@@ -226,3 +225,5 @@ class MarkHandler:
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
         router.add_get("/MK/images/{task}", self.MgetImages)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
+        router.add_patch("/MK/tags/{task}", self.MsetTag)
+        router.add_get("/MK/whole/{number}", self.MgetWholePaper)

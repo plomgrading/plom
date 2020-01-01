@@ -854,13 +854,25 @@ class PlomDB:
                 qref.tags = tags
                 qref.marked = True
                 qref.save()
+                # since this has been marked - check if all questions for test have been marked
+                tref = qref.test
+                if (
+                    QuestionData.get_or_none(
+                        QuestionData.test == tref, QuestionData.marked == False
+                    )
+                    is None
+                ):
+                    print("All of test {} is marked".format(tref.testNumber))
+                    tref.marked = True
+                    tref.save()
+
+                return True
 
                 print(
                     "Task {} marked {} by user {} and placed at {}".format(
                         task, mark, username, aname
                     )
                 )
-                return True
         except Group.DoesNotExist:
             print(
                 "That task number {} / username {} pair not known".format(
@@ -910,3 +922,32 @@ class PlomDB:
                 return rval
         except Group.DoesNotExist:
             return [False, "Task {} not known".format(task)]
+
+    def MsetTag(self, username, task, tag):
+        try:
+            with plomdb.atomic():
+                gref = Group.get(Group.gid == task)
+                qref = gref.questiondata[0]
+                if qref.username != username:
+                    return False  # not your task
+                # update tag
+                qref.tags = tag
+                qref.save()
+                print("Task {} tagged {} by user {}".format(task, tag, username))
+                return True
+        except Group.DoesNotExist:
+            print("That task {} / username {} pair not known".format(task, username))
+            return False
+
+    def MgetWholePaper(self, testNumber):
+        tref = Test.get_or_none(Test.testNumber == testNumber, Test.scanned == True)
+        if tref is None:  # don't know that test - this shouldn't happen
+            return [False]
+        pageFiles = []
+        pageNames = []
+        for pref in tref.pages:
+            # Don't include ID-group pages
+            if pref.group.groupType != "i":
+                pageNames.append(pref.pageNumber)
+                pageFiles.append(pref.fileName)
+        return [True, pageNames] + pageFiles
