@@ -18,7 +18,7 @@ class ReportHandler:
         return web.json_response(self.server.RgetUnusedTests(), status=200)
 
     # @routes.get("/REP/progress")
-    async def RgetUnusedTests(self, request):
+    async def RgetProgress(self, request):
         data = await request.json()
         return web.json_response(
             self.server.RgetUnusedTests(data["q"], data["v"]), status=200

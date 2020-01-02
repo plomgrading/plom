@@ -96,6 +96,7 @@ class Server(object):
     from plomServer.serverUserInit import (
         InfoShortName,
         InfoQuestionsVersions,
+        InfoPQV,
         reloadUsers,
         giveUserToken,
         closeUser,

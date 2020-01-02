@@ -70,6 +70,14 @@ class UserInitHandler:
         else:  # this should not happen
             return web.Response(status=404)
 
+    # @routes.get("/info/numberOfPQV")
+    async def InfoPQV(self, request):
+        rmsg = self.server.InfoPQV()
+        if rmsg[0]:
+            return web.json_response(rmsg[1:], status=200)
+        else:  # this should not happen
+            return web.Response(status=404)
+
     def setUpRoutes(self, router):
         router.add_get("/Version", self.version)
         router.add_delete("/users/{user}", self.closeUser)
@@ -77,3 +85,4 @@ class UserInitHandler:
         router.add_put("/admin/reloadUsers", self.adminReloadUsers)
         router.add_get("/info/shortname", self.InfoShortName)
         router.add_get("/info/numberOfQuestionsAndVersions", self.InfoQuestionsVersions)
+        router.add_get("/info/numberOfPQV", self.InfoPQV)

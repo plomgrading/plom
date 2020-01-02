@@ -18,7 +18,14 @@ import sys
 import traceback as tblib
 from PyQt5.QtCore import pyqtSlot, QTimer
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox, QWidget
+from PyQt5.QtWidgets import (
+    QApplication,
+    QDialog,
+    QStyleFactory,
+    QMessageBox,
+    QTreeWidgetItem,
+    QWidget,
+)
 from uiFiles.ui_iic import Ui_IIC
 from useful_classes import ErrorMessage, SimpleMessage
 from plom_exceptions import *
@@ -98,6 +105,34 @@ class Manager(QWidget):
         self.ui.userGBox.setEnabled(False)
         self.ui.serverGBox.setEnabled(False)
         self.ui.loginButton.setEnabled(False)
+
+        self.getPQV()
+        self.initScanTab()
+
+    # -------------------
+    def getPQV(self):
+        pqv = managerMessenger.getInfoPQV()
+        self.numberOfPages = pqv[0]
+        self.numberOfQuestions = pqv[1]
+        self.numberOfVersions = pqv[2]
+
+    def initScanTab(self):
+        scanned = managerMessenger.getScannedTests()
+        incomplete = managerMessenger.getIncompleteTests()
+        self.ui.scanTW.setHeaderLabels(["Test number", "Page number"])
+        self.ui.incompTW.setHeaderLabels(["Test number", "Missing page"])
+
+        for t in incomplete:
+            l0 = QTreeWidgetItem(["{}".format(t), ""])
+            for p in incomplete[t]:
+                l0.addChild(QTreeWidgetItem(["", "{}".format(p)]))
+            self.ui.incompTW.addTopLevelItem(l0)
+
+        for t in scanned:
+            l0 = QTreeWidgetItem(["{}".format(t), ""])
+            for p in range(self.numberOfPages):
+                l0.addChild(QTreeWidgetItem(["", "{}".format(p + 1)]))
+            self.ui.scanTW.addTopLevelItem(l0)
 
 
 # Pop up a dialog for unhandled exceptions and then exit

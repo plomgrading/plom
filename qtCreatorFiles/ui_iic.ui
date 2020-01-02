@@ -249,10 +249,18 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <widget class="QTreeWidget" name="treeWidget">
+           <widget class="QTreeWidget" name="scanTW">
+            <property name="columnCount">
+             <number>2</number>
+            </property>
             <column>
              <property name="text">
               <string notr="true">1</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string notr="true">2</string>
              </property>
             </column>
            </widget>
@@ -298,10 +306,18 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
-           <widget class="QTreeWidget" name="treeWidget">
+           <widget class="QTreeWidget" name="incompTW">
+            <property name="columnCount">
+             <number>2</number>
+            </property>
             <column>
              <property name="text">
               <string notr="true">1</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string notr="true">2</string>
              </property>
             </column>
            </widget>

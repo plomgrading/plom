@@ -48,6 +48,7 @@ message_port = 41984
 SRmutex = threading.Lock()
 _userName = None
 _token = None
+session = None
 
 
 def setServerDetails(s, mp):
@@ -124,7 +125,67 @@ def closeUser():
     return True
 
 
-session = None
+def getInfoPQV():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/info/numberOfPQV".format(server, message_port), verify=False,
+        )
+        response.raise_for_status()
+        pqv = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return pqv
+
+
+def getScannedTests():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/scanned".format(server, message_port), verify=False,
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
+def getIncompleteTests():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/incomplete".format(server, message_port), verify=False,
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
 
 
 def startMessenger():

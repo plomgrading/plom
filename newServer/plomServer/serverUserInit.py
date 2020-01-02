@@ -21,6 +21,18 @@ def InfoQuestionsVersions(self):
         ]
 
 
+def InfoPQV(self):
+    if self.testSpec is None:
+        return [False]
+    else:
+        return [
+            True,
+            self.testSpec["numberOfPages"],
+            self.testSpec["numberOfQuestions"],
+            self.testSpec["numberOfVersions"],
+        ]
+
+
 def reloadUsers(self, password):
     """Reload the user list."""
     # Check user is manager.
