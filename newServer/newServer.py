@@ -41,6 +41,7 @@ from plomServer.routesUserInit import UserInitHandler
 from plomServer.routesUpload import UploadHandler
 from plomServer.routesID import IDHandler
 from plomServer.routesMark import MarkHandler
+from plomServer.routesReport import ReportHandler
 
 # ----------------------
 def buildDirectories(spec):
@@ -124,6 +125,11 @@ class Server(object):
         MsetTag,
         MgetWholePaper,
     )
+    from plomServer.serverReport import (
+        RgetUnusedTests,
+        RgetScannedTests,
+        RgetIncompleteTests,
+    )
 
 
 examDB = PlomDB()
@@ -134,6 +140,7 @@ userIniter = UserInitHandler(peon)
 uploader = UploadHandler(peon)
 ider = IDHandler(peon)
 marker = MarkHandler(peon)
+reporter = ReportHandler(peon)
 
 try:
     # construct the web server
@@ -143,6 +150,7 @@ try:
     uploader.setUpRoutes(app.router)
     ider.setUpRoutes(app.router)
     marker.setUpRoutes(app.router)
+    reporter.setUpRoutes(app.router)
     # run the web server
     web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
 except KeyboardInterrupt:

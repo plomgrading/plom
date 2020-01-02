@@ -12,6 +12,7 @@ plomdb = SqliteDatabase("../resources/plom.db")
 # the test contains groups
 # test bools something like
 # produced = we've built the PDF
+# used = we've scanned at least one page
 # scanned = we've fed it to students, scanned it into system.
 # identified = ID-ing is done
 # marked = marking is done
@@ -22,6 +23,7 @@ class Test(Model):
     testNumber = IntegerField(primary_key=True, unique=True)
     # some state bools
     produced = BooleanField(default=False)
+    used = BooleanField(default=False)
     scanned = BooleanField(default=False)
     identified = BooleanField(default=False)
     marked = BooleanField(default=False)
@@ -426,6 +428,8 @@ class PlomDB:
                 pref.md5sum = md5
                 pref.scanned = True
                 pref.save()
+                tref.used = True
+                tref.save()
             self.checkGroupAllUploaded(pref)
             return [True, "success", "Page saved as {}".format(pref.pid)]
 
@@ -518,6 +522,31 @@ class PlomDB:
                     qref.save()
                 gref.save()
                 tref.save()
+
+    # ------------------
+    # Reporting functions
+
+    def RgetScannedTests(self):
+        rval = []
+        for t in Test.select().where(Test.scanned == True):
+            rval.append(t.testNumber)
+        return rval
+
+    def RgetIncompleteTests(self):
+        rval = {}
+        for tref in Test.select().where(Test.scanned == False, Test.used == True):
+            pMissing = []
+            for p in tref.pages:
+                if p.scanned == False:
+                    pMissing.append(p.pageNumber)
+            rval[tref.testNumber] = pMissing
+        return rval
+
+    def RgetUnusedTests(self):
+        rval = []
+        for tref in Test.select().where(Test.used == False):
+            rval.append(tref.testNumber)
+        return rval
 
     # ------------------
     # For user login - we reset all their stuff that is out
