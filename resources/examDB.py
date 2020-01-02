@@ -26,6 +26,7 @@ class Test(Model):
     identified = BooleanField(default=False)
     marked = BooleanField(default=False)
     finished = BooleanField(default=False)
+    totalled = BooleanField(default=False)
     hasCollisions = BooleanField(default=False)
 
     class Meta:
@@ -80,6 +81,19 @@ class QuestionData(Model):
     time = DateTimeField(null=True)
     # flags
     marked = BooleanField(default=False)
+
+    class Meta:
+        database = plomdb
+
+
+# Data for totalling the marks
+class SumData(Model):
+    test = ForeignKeyField(Test, backref="sumdata")
+    sumMark = IntegerField(null=True)
+    username = CharField(default="")
+    time = DateTimeField(null=True)
+    # flags
+    summed = BooleanField(default=False)
 
     class Meta:
         database = plomdb
@@ -147,6 +161,7 @@ class PlomDB:
                     Group,
                     IDData,
                     QuestionData,
+                    SumData,
                     Page,
                     UnknownPages,
                     CollidingPages,
@@ -156,7 +171,9 @@ class PlomDB:
 
     def createTest(self, t):
         try:
-            Test.create(testNumber=t)  # must be unique
+            tref = Test.create(testNumber=t)  # must be unique
+            # also create the sum-mark objects
+            sref = SumData.create(test=tref)
         except IntegrityError as e:
             print("Test {} error - {}".format(t, e))
             return False
@@ -860,23 +877,37 @@ class PlomDB:
                 qref.save()
                 # since this has been marked - check if all questions for test have been marked
                 tref = qref.test
+                # check if there are any unmarked questions
                 if (
-                    QuestionData.get_or_none(
-                        QuestionData.test == tref, QuestionData.marked == False
-                    )
-                    is None
+                    QuestionData.get_or_none(QuestionData.test == tref, marked == False)
+                    is not None
                 ):
-                    print("All of test {} is marked".format(tref.testNumber))
-                    tref.marked = True
-                    tref.save()
-
-                return True
-
+                    print(
+                        "Task {} marked {} by user {} and placed at {}".format(
+                            task, mark, username, aname
+                        )
+                    )
+                    return True
+                # update the sum-mark
+                tot = 0
+                for qd in QuestionData.select().where(test == tref):
+                    tot += qd.mark
+                sref = SumData.get_or_none(test == tref)
+                if sref is not None:
+                    sref.username = "automatic"
+                    sref.time = datetime.now()
+                    sref.sumMark = tot
+                    sref.summed = True
+                    sref.save()
                 print(
-                    "Task {} marked {} by user {} and placed at {}".format(
-                        task, mark, username, aname
+                    "All of test {} is marked - total updated = {}".format(
+                        tref.testNumber, tot
                     )
                 )
+                tref.marked = True
+                tref.save()
+                return True
+
         except Group.DoesNotExist:
             print(
                 "That task number {} / username {} pair not known".format(
