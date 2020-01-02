@@ -347,7 +347,7 @@
        <bool>false</bool>
       </property>
       <attribute name="title">
-       <string>Progress</string>
+       <string>Marking</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>

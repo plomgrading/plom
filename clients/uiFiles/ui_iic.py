@@ -239,4 +239,4 @@ class Ui_IIC(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.scanTab), _translate("IIC", "Scans"))
         self.groupBox_2.setTitle(_translate("IIC", "Marking progress"))
         self.refreshPButton.setText(_translate("IIC", "Refresh"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.progressTab), _translate("IIC", "Progress"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.progressTab), _translate("IIC", "Marking"))

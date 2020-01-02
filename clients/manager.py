@@ -23,42 +23,11 @@ from uiFiles.ui_iic import Ui_IIC
 from useful_classes import ErrorMessage, SimpleMessage
 from plom_exceptions import *
 
+import managerMessenger
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
 from resources.version import Plom_API_Version
-
-# set up variables to store paths for marker and id clients
-global tempDirectory, directoryPath
-# to store login + options for next run of client.
-lastTime = {}
-
-
-def readLastTime():
-    """Read the login + server options that were used on
-    the last run of the client.
-    """
-    global lastTime
-    # set some reasonable defaults.
-    lastTime["user"] = ""
-    lastTime["server"] = "localhost"
-    lastTime["mport"] = "41984"
-    lastTime["pg"] = 1
-    lastTime["v"] = 1
-    lastTime["fontSize"] = 10
-    lastTime["upDown"] = "up"
-    lastTime["mouse"] = "right"
-    # If config file exists, use it to update the defaults
-    if os.path.isfile("plomConfig.toml"):
-        with open("plomConfig.toml") as data_file:
-            lastTime.update(toml.load(data_file))
-
-
-def writeLastTime():
-    """Write the options to the config file."""
-    fh = open("plomConfig.toml", "w")
-    fh.write(toml.dumps(lastTime))
-    fh.close()
 
 
 class Manager(QWidget):
@@ -73,6 +42,62 @@ class Manager(QWidget):
         )
         self.ui = Ui_IIC()
         self.ui.setupUi(self)
+        self.connectButtons()
+
+    def connectButtons(self):
+        self.ui.loginButton.clicked.connect(self.login)
+        self.ui.closeButton.clicked.connect(self.closeWindow)
+        self.ui.fontButton.clicked.connect(self.setFont)
+
+    def closeWindow(self):
+        self.close()
+
+    def setFont(self):
+        v = self.ui.fontSB.value()
+        fnt = self.parent.font()
+        fnt.setPointSize(v)
+        self.parent.setFont(fnt)
+
+    def login(self):
+        # Check username is a reasonable string
+        user = self.ui.userLE.text()
+        if (not user.isalnum()) or (not user):
+            return
+        # check password at least 4 char long
+        pwd = self.ui.passwordLE.text()
+        if len(pwd) < 4:
+            return
+        server = self.ui.serverLE.text()
+        mport = self.ui.mportSB.value()
+
+        # Have Messenger login into to server
+        managerMessenger.setServerDetails(server, mport)
+        managerMessenger.startMessenger()
+
+        try:
+            managerMessenger.requestAndSaveToken(user, pwd)
+        except PlomAPIException as e:
+            ErrorMessage(
+                "Could not authenticate due to API mismatch."
+                "Your client version is {}.\n\n"
+                "Error was: {}".format(__version__, e)
+            ).exec_()
+            return
+        except PlomAuthenticationException as e:
+            ErrorMessage("Could not authenticate: {}".format(e)).exec_()
+            return
+        except PlomSeriousException as e:
+            ErrorMessage(
+                "Could not get authentication token.\n\n"
+                "Unexpected error: {}".format(e)
+            ).exec_()
+            return
+
+        self.ui.scanTab.setEnabled(True)
+        self.ui.progressTab.setEnabled(True)
+        self.ui.userGBox.setEnabled(False)
+        self.ui.serverGBox.setEnabled(False)
+        self.ui.loginButton.setEnabled(False)
 
 
 # Pop up a dialog for unhandled exceptions and then exit
