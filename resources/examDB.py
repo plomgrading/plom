@@ -1,5 +1,5 @@
 from peewee import *
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # import logging
 # logger = logging.getLogger("peewee")
@@ -547,6 +547,49 @@ class PlomDB:
         for tref in Test.select().where(Test.used == False):
             rval.append(tref.testNumber)
         return rval
+
+    def RgetProgress(self, qu, v):
+        # return [numberScanned, numberMarked, numberRecent, avgMark, avgTimetaken]
+        oneHour = timedelta(hours=1)
+        NScanned = 0
+        NMarked = 0
+        NRecent = 0
+        SMark = 0
+        SMTime = 0
+        for x in (
+            QuestionData.select()
+            .join(Group)
+            .where(
+                QuestionData.questionNumber == q,
+                QuestionData.version == v,
+                Group.scanned == True,
+                Group.hasCollisions == False,
+            )
+        ):
+            NScanned += 1
+            if x.marked == True:
+                NMarked += 1
+                SMark += x.mark
+                SMTime += x.markingTime
+                if datetime.now() - x.time < oneHour:
+                    NRecent += 1
+
+        if NMarked == 0:
+            return {
+                "NScanned": NScanned,
+                "NMarked": NMarked,
+                "NRecent": NRecent,
+                "avgMark": None,
+                "avgTimeTaken": None,
+            }
+        else:
+            return {
+                "NScanned": NScanned,
+                "NMarked": NMarked,
+                "NRecent": NRecent,
+                "avgMark": SMark / NMarked,
+                "avgMTime": SMTime / NMarked,
+            }
 
     # ------------------
     # For user login - we reset all their stuff that is out

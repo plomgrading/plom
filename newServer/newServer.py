@@ -129,6 +129,7 @@ class Server(object):
         RgetUnusedTests,
         RgetScannedTests,
         RgetIncompleteTests,
+        RgetProgress,
     )
 
 
