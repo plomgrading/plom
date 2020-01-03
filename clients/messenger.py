@@ -509,11 +509,11 @@ def TaskNextTask():
     return progress
 
 
-def TclaimThisTask(code):
+def TclaimThisTask(task):
     SRmutex.acquire()
     try:
         response = session.patch(
-            "https://{}:{}/TOT/tasks/{}".format(server, message_port, code),
+            "https://{}:{}/TOT/tasks/{}".format(server, message_port, task),
             json={"user": _userName, "token": _token},
             verify=False,
         )
@@ -552,11 +552,11 @@ def TdidNotFinishTask(code):
     return True
 
 
-def TrequestImage(code):
+def TrequestImage(testNumber):
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/TOT/images/{}".format(server, message_port, code),
+            "https://{}:{}/TOT/image/{}".format(server, message_port, testNumber),
             json={"user": _userName, "token": _token},
             verify=False,
         )
@@ -566,10 +566,14 @@ def TrequestImage(code):
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 404:
-            raise PlomSeriousException("Cannot find image file for {}.".format(code))
+            raise PlomSeriousException(
+                "Cannot find image file for {}.".format(testNumber)
+            )
         elif response.status_code == 409:
             raise PlomSeriousException(
-                "Another user has the image for {}. This should not happen".format(code)
+                "Another user has the image for {}. This should not happen".format(
+                    testNumber
+                )
             )
         else:
             raise PlomSeriousException("Some other sort of error {}".format(e))
@@ -608,7 +612,6 @@ def TreturnTotaledTask(code, mark):
 # ------------------------
 # Marker stuff
 def MgetMaxMark(question, version):
-    print("Asking for max-mark")
     SRmutex.acquire()
     try:
         response = session.get(
@@ -634,7 +637,6 @@ def MgetMaxMark(question, version):
 
 
 def MdidNotFinishTask(code):
-    print("Didn't finish task {}".format(code))
     SRmutex.acquire()
     try:
         response = session.delete(
@@ -655,7 +657,6 @@ def MdidNotFinishTask(code):
 
 
 def MrequestDoneTasks(q, v):
-    print("Asking for done tasks")
     SRmutex.acquire()
     try:
         response = session.get(
@@ -677,7 +678,6 @@ def MrequestDoneTasks(q, v):
 
 
 def MprogressCount(q, v):
-    print("Asking for progress count")
     SRmutex.acquire()
     try:
         response = session.get(
@@ -701,7 +701,6 @@ def MprogressCount(q, v):
 
 
 def MaskNextTask(q, v):
-    print("Asking for next task")
     SRmutex.acquire()
     try:
         response = session.get(
@@ -727,7 +726,6 @@ def MaskNextTask(q, v):
 
 
 def MclaimThisTask(code):
-    print("Claiming task {}".format(code))
     SRmutex.acquire()
     try:
         response = session.patch(

@@ -41,6 +41,7 @@ from plomServer.routesUserInit import UserInitHandler
 from plomServer.routesUpload import UploadHandler
 from plomServer.routesID import IDHandler
 from plomServer.routesMark import MarkHandler
+from plomServer.routesTotal import TotalHandler
 from plomServer.routesReport import ReportHandler
 
 # ----------------------
@@ -126,6 +127,17 @@ class Server(object):
         MsetTag,
         MgetWholePaper,
     )
+    from plomServer.serverTotal import (
+        TgetMaxMark,
+        TprogressCount,
+        TgetDoneTasks,
+        TgetNextTask,
+        TclaimThisTask,
+        TgetImage,
+        TreturnTotalledTask,
+        TdidNotFinish,
+    )
+
     from plomServer.serverReport import (
         RgetUnusedTests,
         RgetScannedTests,
@@ -142,6 +154,7 @@ userIniter = UserInitHandler(peon)
 uploader = UploadHandler(peon)
 ider = IDHandler(peon)
 marker = MarkHandler(peon)
+totaller = TotalHandler(peon)
 reporter = ReportHandler(peon)
 
 try:
@@ -152,6 +165,7 @@ try:
     uploader.setUpRoutes(app.router)
     ider.setUpRoutes(app.router)
     marker.setUpRoutes(app.router)
+    totaller.setUpRoutes(app.router)
     reporter.setUpRoutes(app.router)
     # run the web server
     web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])

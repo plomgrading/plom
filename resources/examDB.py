@@ -91,6 +91,7 @@ class QuestionData(Model):
 # Data for totalling the marks
 class SumData(Model):
     test = ForeignKeyField(Test, backref="sumdata")
+    status = CharField(default="")
     sumMark = IntegerField(null=True)
     username = CharField(default="")
     time = DateTimeField(null=True)
@@ -324,7 +325,7 @@ class PlomDB:
         if iref is None:
             return
         with plomdb.atomic():
-            iref.status = "identified"
+            iref.status = "done"
             iref.studentID = sid
             iref.studentName = sname
             iref.identified = True
@@ -347,6 +348,10 @@ class PlomDB:
             if sflag:
                 tref.scanned = True
                 print("Test {} is all scanned".format(tref.testNumber))
+                # set the status of the sumdata
+                sdref = tref.sumdata[0]
+                sdref.status = "todo"
+                sdref.save()
             else:
                 tref.scanned = False
             tref.save()
@@ -355,7 +360,7 @@ class PlomDB:
         if gref.groupType == "i":
             iref = gref.iddata[0]
             # check if group already identified - can happen if printed tests with names
-            if iref.status == "identified":
+            if iref.status == "done":
                 print("Group {} is already identified.".format(gref.gid))
             else:
                 iref.status = "todo"
@@ -597,7 +602,7 @@ class PlomDB:
     def resetUsersToDo(self, username):
         with plomdb.atomic():
             query = IDData.select().where(
-                IDData.username == username, IDData.status == "outforiding"
+                IDData.username == username, IDData.status == "out"
             )
             for x in query:
                 x.status = "todo"
@@ -606,8 +611,7 @@ class PlomDB:
                 x.save()
         with plomdb.atomic():
             query = QuestionData.select().where(
-                QuestionData.username == username,
-                QuestionData.status == "outformarking",
+                QuestionData.username == username, QuestionData.status == "out",
             )
             for x in query:
                 x.status = "todo"
@@ -615,12 +619,21 @@ class PlomDB:
                 x.markingTime = 0
                 x.time = datetime.now()
                 x.save()
+        with plomdb.atomic():
+            query = SumData.select().where(
+                SumData.username == username, SumData.status == "out"
+            )
+            for x in query:
+                x.status = "todo"
+                x.username = ""
+                x.time = datetime.now()
+                x.save()
 
     # ------------------
     # Identifier stuff
     # The ID-able tasks have grouptype ="i", group.scanned=True, group.collisions=false
     # The todo id-tasks are iddata.status="todo"
-    # the done id-tasks have iddata.status="identified"
+    # the done id-tasks have iddata.status="done"
 
     def IDcountAll(self):
         """Count all the records"""
@@ -685,7 +698,7 @@ class PlomDB:
                     # has been claimed by someone else.
                     return [False]
                 # update status, Student-number, name, id-time.
-                iref.status = "outforiding"
+                iref.status = "out"
                 iref.username = username
                 iref.time = datetime.now()
                 iref.save()
@@ -705,7 +718,7 @@ class PlomDB:
         """When a id-client logs on they request a list of papers they have already IDd.
         Send back the list."""
         query = IDData.select().where(
-            IDData.username == username, IDData.status == "identified"
+            IDData.username == username, IDData.status == "done"
         )
         idList = []
         for x in query:
@@ -739,7 +752,7 @@ class PlomDB:
                 if tref.scanned == False:
                     return
                 iref = tref.iddata[0]
-                if iref.username != username or iref.status != "outforiding":
+                if iref.username != username or iref.status != "out":
                     # has been claimed by someone else.
                     return
                 # update status, Student-number, name, id-time.
@@ -748,7 +761,7 @@ class PlomDB:
                 iref.time = datetime.now()
                 iref.identified = False
                 iref.save()
-                iref.test.identified = False
+                tref.identified = False
                 tref.save()
 
         except Test.DoesNotExist:
@@ -772,7 +785,7 @@ class PlomDB:
                     # that belongs to someone else - this is a serious error
                     return [False, False]
                 # update status, Student-number, name, id-time.
-                iref.status = "identified"
+                iref.status = "done"
                 iref.studentID = sid
                 iref.studentName = sname
                 iref.identified = True
@@ -817,7 +830,7 @@ class PlomDB:
                 .where(
                     QuestionData.questionNumber == q,
                     QuestionData.version == v,
-                    QuestionData.status == "marked",
+                    QuestionData.status == "done",
                     Group.scanned == True,
                     Group.hasCollisions == False,
                 )
@@ -833,7 +846,7 @@ class PlomDB:
             QuestionData.username == username,
             QuestionData.questionNumber == q,
             QuestionData.version == v,
-            QuestionData.status == "marked",
+            QuestionData.status == "done",
         )
         markList = []
         for x in query:
@@ -874,7 +887,7 @@ class PlomDB:
                     # has been claimed by someone else.
                     return [False]
                 # update status, Student-number, name, id-time.
-                qref.status = "outformarking"
+                qref.status = "out"
                 qref.username = username
                 qref.time = datetime.now()
                 qref.save()
@@ -903,7 +916,7 @@ class PlomDB:
                 if gref.scanned == False:
                     return
                 qref = gref.questiondata[0]
-                if qref.username != username or qref.status != "outformarking":
+                if qref.username != username or qref.status != "out":
                     # has been claimed by someone else.
                     return
                 # update status, Student-number, name, id-time.
@@ -936,7 +949,7 @@ class PlomDB:
 
                 # update status, mark, annotate-file-name, time, and
                 # time spent marking the image
-                qref.status = "marked"
+                qref.status = "done"
                 qref.mark = mark
                 qref.annotatedFile = aname
                 qref.md5sum = md5
@@ -966,19 +979,20 @@ class PlomDB:
                 tot = 0
                 for qd in QuestionData.select().where(QuestionData.test == tref):
                     tot += qd.mark
-                sref = SumData.get_or_none(SumData.test == tref)
-                if sref is not None:
-                    sref.username = "automatic"
-                    sref.time = datetime.now()
-                    sref.sumMark = tot
-                    sref.summed = True
-                    sref.save()
+                sref = tref.sumdata[0]
+                sref.username = "automatic"
+                sref.time = datetime.now()
+                sref.sumMark = tot
+                sref.summed = True
+                sref.status = "done"
+                sref.save()
                 print(
                     "All of test {} is marked - total updated = {}".format(
                         tref.testNumber, tot
                     )
                 )
                 tref.marked = True
+                tref.totalled = True
                 tref.save()
                 return True
 
@@ -1060,3 +1074,151 @@ class PlomDB:
                 pageNames.append(pref.pageNumber)
                 pageFiles.append(pref.fileName)
         return [True, pageNames] + pageFiles
+
+    # ----- totaller stuff
+    def TcountAll(self):
+        """Count all the records"""
+        try:
+            return (
+                Test.select()
+                .where(Test.scanned == True, Test.hasCollisions == False,)
+                .count()
+            )
+        except Test.DoesNotExist:
+            return 0
+
+    def TcountTotalled(self):
+        """Count all the records"""
+        try:
+            return (
+                Test.select()
+                .where(
+                    Test.totalled == True,
+                    Test.scanned == True,
+                    Test.hasCollisions == False,
+                )
+                .count()
+            )
+        except Test.DoesNotExist:
+            return 0
+
+    def TgetNextTask(self):
+        """Find unid'd test and send testNumber to client"""
+        with plomdb.atomic():
+            try:
+                x = SumData.get(SumData.status == "todo",)
+            except SumData.DoesNotExist:
+                print("Nothing left on to-do pile")
+                return None
+
+            print("Next Totalling task = {}".format(x.test.testNumber))
+            return x.test.testNumber
+
+    def TgetDoneTasks(self, username):
+        """When a id-client logs on they request a list of papers they have already IDd.
+        Send back the list."""
+        query = SumData.select().where(
+            SumData.username == username, SumData.status == "done"
+        )
+        tList = []
+        for x in query:
+            tList.append([x.test.testNumber, x.status, x.sumMark])
+        return tList
+
+    def TgiveTaskToClient(self, username, testNumber):
+        try:
+            with plomdb.atomic():
+                tref = Test.get_or_none(Test.testNumber == testNumber)
+                if tref.scanned == False:
+                    return [False]
+                sref = tref.sumdata[0]
+                if sref.username != "" and sref.username != username:
+                    # has been claimed by someone else.
+                    return [False]
+                # update status, Student-number, name, id-time.
+                sref.status = "out"
+                sref.username = username
+                sref.time = datetime.now()
+                sref.save()
+                # return [true, page1]
+                pref = Page.get(Page.test == tref, Page.pageNumber == 1)
+                return [True, pref.fileName]
+                print(
+                    "Giving totalling task {} to user {}".format(testNumber, username)
+                )
+                return rval
+
+        except Test.DoesNotExist:
+            print("That test number {} not known".format(testNumber))
+            return False
+
+    def TdidNotFinish(self, username, testNumber):
+        """When user logs off, any images they have still out should be put
+        back on todo pile
+        """
+        # Log user returning given tgv.
+        print("User {} did not total task {}".format(username, testNumber))
+        try:
+            with plomdb.atomic():
+                tref = Test.get_or_none(Test.testNumber == testNumber)
+                if tref.scanned == False:
+                    return
+                sref = tref.sumdata[0]
+                if sref.username != username or sref.status != "out":
+                    # has been claimed by someone else.
+                    return
+                # update status, Student-number, name, id-time.
+                sref.status = "todo"
+                sref.username = ""
+                sref.time = datetime.now()
+                sref.summed = False
+                sref.save()
+                tref.summed = False
+                tref.save()
+        except Test.DoesNotExist:
+            print("That test number {} not known".format(testNumber))
+            return False
+
+    def TgetImage(self, username, t):
+        tref = Test.get_or_none(Test.testNumber == t)
+        if tref.scanned == False:
+            return [False]
+        sref = tref.sumdata[0]
+        # check if task given to user
+        if sref.username != username:
+            return [False]
+        pref = Page.get(Page.test == tref, Page.pageNumber == 1)
+        print(
+            "Sending cover-page of test {} to user {} = {}".format(
+                t, username, pref.fileName
+            )
+        )
+        return [True, pref.fileName]
+
+    def TtakeTaskFromClient(self, testNumber, username, totalMark):
+        print(
+            "User {} returning totalled-task {} with {}".format(
+                username, testNumber, totalMark
+            )
+        )
+        try:
+            with plomdb.atomic():
+                tref = Test.get_or_none(Test.testNumber == testNumber)
+                if tref.scanned == False:
+                    return [False]
+                sref = tref.sumdata[0]
+                if sref.username != username:
+                    # that belongs to someone else - this is a serious error
+                    return [False]
+                # update status, Student-number, name, id-time.
+                sref.status = "done"
+                sref.sumMark = totalMark
+                sref.summed = True
+                sref.time = datetime.now()
+                sref.save()
+                tref.totalled = True
+                tref.save()
+                return [True]
+        except Test.DoesNotExist:
+            print("That test number {} not known".format(testNumber))
+            return [False]
