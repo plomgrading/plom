@@ -9,6 +9,7 @@ import glob
 import json
 import os
 import shutil
+import subprocess
 import sys
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QBrush, QColor, QGuiApplication, QPainter, QPen, QPixmap
@@ -301,6 +302,13 @@ class ImageTable(QTableWidget):
         self.item(r, 4).setText("Extra")
         self.resizeColumnsToContents()
 
+    def setDiscard(self):
+        """Set to 'discard'
+        """
+        r = self.currentRow()
+        self.item(r, 4).setText("Discard")
+        self.resizeColumnsToContents()
+
     def rotateCurrent(self):
         """If the current page is not in right orientation, then this uses
         imagemagick to rotate it
@@ -308,10 +316,15 @@ class ImageTable(QTableWidget):
         r = self.currentRow()
         if r is not None:
             # turn 90 in case in landscape.
-            os.system(
-                "mogrify -rotate 90 -compress lossless "
-                "pageImages/problemImages/{}".format(self.item(r, 0).text())
-            )
+            cmd = [
+                "mogrify",
+                "-rotate",
+                "90",
+                "-compress",
+                "lossless",
+                "pageImages/problemImages/{}".format(self.item(r, 0).text()),
+            ]
+            subprocess.check_call(cmd)
         return r
 
     def saveValid(self):
@@ -386,6 +399,18 @@ class ImageTable(QTableWidget):
                 shutil.move(
                     "pageImages/problemImages/{}".format(fname),
                     "./pageImages/alreadyProcessed",
+                )
+
+    def discardImages(self):
+        """Go through the list of identified discard pages
+        (which are marked as 'discard') and move the file
+         into the discards directory.
+        """
+        for r in range(self.rowCount()):
+            if self.item(r, 4).text() == "Discard":
+                fname = self.item(r, 0).text()
+                shutil.move(
+                    "pageImages/problemImages/{}".format(fname), "./discardedPages",
                 )
 
 
@@ -579,6 +604,11 @@ class PageIdentifier(QWidget):
         self.remRectB.clicked.connect(self.remRect)
         grid.addWidget(self.remRectB, 5, 3)
 
+        # Discard image button and connect to discardImage command:
+        self.discardB = QPushButton("Discard Image")
+        self.discardB.clicked.connect(self.discardImage)
+        grid.addWidget(self.discardB, 6, 3)
+
         # Save all entered data and close
         self.closeB = QPushButton("Save && Close")
         self.closeB.clicked.connect(self.saveValid)
@@ -608,6 +638,7 @@ class PageIdentifier(QWidget):
         Write the results to files and close."""
         self.imageT.saveValid()
         self.imageT.saveExtras()
+        self.imageT.discardImages()
         writeExamsScanned()
         self.close()
 
@@ -636,6 +667,10 @@ class PageIdentifier(QWidget):
             self.imageT.setTPV(t, p, v)
             self.imageT.setFocus()
             self.imageT.moveToNext()
+
+    def discardImage(self):
+        self.imageT.setDiscard()
+        pass
 
 
 def main():

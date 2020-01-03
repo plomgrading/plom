@@ -17,6 +17,7 @@ import sys
 # this allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
+from resources.misc_utils import format_int_list_with_runs
 
 # Do we need this?
 # sys.path.append("../imageServer")
@@ -90,29 +91,33 @@ def readExamsGrouped():
             examsGrouped = json.load(data_file)
 
 
-def checkExam(n):
+def checkExam(n, verb=False):
     """Look at test number n and see if ID'd and marked. Report to user.
     Return true if both marked and ID'd and false otherwise
     """
-    print("Exam {}".format(n), end="")
+    if verb:
+        print("Exam {}".format(n), end="")
     cm = checkMarked(n)
     ci = checkIDed(n)
     if cm:
         if ci:
             completeTests.append(n)
-            print("\tComplete - build front page and reassemble.")
+            if verb:
+                print("\tComplete - build front page and reassemble.")
             return True
         else:
-            print("\tMarked but not ID'd")
+            if verb:
+                print("\tMarked but not ID'd")
             return False
     else:
         unmarkedTests.append(n)
-        if ci:
-            print("\tID'd but not marked", end="")
-        else:
-            print("\tNeither ID'd nor marked", end="")
-        # now print a diagnostic of what is actually marked/not
-        print("\t{}".format(displayMarked(n)))
+        if verb:
+            if ci:
+                print("\tID'd but not marked", end="")
+            else:
+                print("\tNeither ID'd nor marked", end="")
+            # now print a diagnostic of what is actually marked/not
+            print("\t{}".format(displayMarked(n)))
         return False
 
 
@@ -231,12 +236,14 @@ if __name__ == '__main__':
     pgStatus = defaultdict(int)
     # check each of the grouped exams.
     for n in sorted(examsGrouped.keys(), key=int):
-        examsCompleted[int(n)] = checkExam(n)
+        examsCompleted[int(n)] = checkExam(n, verb=True)
     # print summary
     print("###################### ")
-    print("Complete papers are: " + ", ".join(completeTests))
+    s = format_int_list_with_runs(completeTests) if completeTests else u"None"
+    print("Complete papers are: " + s)
     print("###################### ")
-    print("Not completely marked papers are: " + ", ".join(unmarkedTests))
+    s = format_int_list_with_runs(unmarkedTests) if unmarkedTests else u"None"
+    print("Not completely marked papers are: " + s)
     print("###################### ")
     print("Pagegroup status: ")
     printPGStatus(len(examsGrouped))

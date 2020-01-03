@@ -1,7 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
-__license__ = "AGPLv3"
+__license__ = "AGPL-3.0-or-later"
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import glob
 import json
@@ -11,6 +15,7 @@ import sys
 # this allows us to import from ../resources
 sys.path.append("..")
 from resources.testspecification import TestSpecification
+from resources.misc_utils import format_int_list_with_runs
 
 
 def readExamsScanned():
@@ -43,42 +48,45 @@ def checkTestComplete(t):
         return True
 
 
-spec = TestSpecification()
-spec.readSpec()
-readExamsScanned()
+if __name__ == '__main__':
+    spec = TestSpecification()
+    spec.readSpec()
+    readExamsScanned()
 
-# lists for complete / incomplete tests
-completeTests = []
-incompleteTests = []
-# Check tests in numerical order
-for t in sorted(examsScanned.keys(), key=int):
-    if checkTestComplete(t):
-        completeTests.append(t)
-    else:
-        incompleteTests.append(t)
+    # lists for complete / incomplete tests
+    completeTests = []
+    incompleteTests = []
+    # Check tests in numerical order
+    for t in sorted(examsScanned.keys(), key=int):
+        if checkTestComplete(t):
+            completeTests.append(t)
+        else:
+            incompleteTests.append(t)
 
-print("###################### ")
-print("Complete test papers are: ", completeTests)
-print("###################### ")
-print("Incomplete test papers are: ", incompleteTests)
-print("###################### ")
-print(">>> NOTE <<<")
-print('Any of the papers in the above list of "complete" papers may have extra pages.')
+    print("###################### ")
+    s = format_int_list_with_runs(completeTests) if completeTests else u"None"
+    print("Complete test papers are: " + s)
+    print("###################### ")
+    s = format_int_list_with_runs(incompleteTests) if incompleteTests else u"None"
+    print("Incomplete test papers are: " + s)
+    print("###################### ")
+    print(">>> NOTE <<<")
+    print('Any of the papers in the above list of "complete" papers may have extra pages.')
 
-n = len(glob.glob("pageImages/problemImages/*.png"))
-if n == 0:
-    print(
-        'There are currently no pages in "pageimages/problemImages/" - so no extra pages at present.'
-    )
-elif n == 1:
-    print(
-        'There is currently 1 page in "pageimages/problemImages/". It might be an extra-page'
-    )
-    print("You can process that page using the manual-page-identifier script.")
-else:
-    print(
-        'There are currently {} pages in "pageimages/problemImages/". They might be extra-pages'.format(
-            n
+    n = len(glob.glob("pageImages/problemImages/*.png"))
+    if n == 0:
+        print(
+            'There are currently no pages in "pageimages/problemImages/" - so no extra pages at present.'
         )
-    )
-    print("You can process those pages using the manual-page-identifier script.")
+    elif n == 1:
+        print(
+            'There is currently 1 page in "pageimages/problemImages/". It might be an extra-page'
+        )
+        print("You can process that page using the manual-page-identifier script.")
+    else:
+        print(
+            'There are currently {} pages in "pageimages/problemImages/". They might be extra-pages'.format(
+                n
+            )
+        )
+        print("You can process those pages using the manual-page-identifier script.")

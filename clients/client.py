@@ -7,8 +7,8 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import toml
 import argparse
-import json
 import os
 import marker
 import identifier
@@ -20,6 +20,10 @@ from PyQt5.QtCore import pyqtSlot, QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 from uiFiles.ui_chooser import Ui_Chooser
+from useful_classes import ErrorMessage, SimpleMessage
+from plom_exceptions import *
+
+import messenger
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
@@ -40,23 +44,21 @@ def readLastTime():
     lastTime["user"] = ""
     lastTime["server"] = "localhost"
     lastTime["mport"] = "41984"
-    lastTime["wport"] = "41985"
     lastTime["pg"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
     lastTime["upDown"] = "up"
     lastTime["mouse"] = "right"
-    # If exists, read from json file.
-    if os.path.isfile("lastTime.json"):
-        with open("lastTime.json") as data_file:
-            # update values from the json
-            lastTime.update(json.load(data_file))
+    # If config file exists, use it to update the defaults
+    if os.path.isfile("plomConfig.toml"):
+        with open("plomConfig.toml") as data_file:
+            lastTime.update(toml.load(data_file))
 
 
 def writeLastTime():
-    # Write the options to json file.
-    fh = open("lastTime.json", "w")
-    fh.write(json.dumps(lastTime, indent=4, sort_keys=True))
+    """Write the options to the config file."""
+    fh = open("plomConfig.toml", "w")
+    fh.write(toml.dumps(lastTime))
     fh.close()
 
 
@@ -92,7 +94,6 @@ class Chooser(QDialog):
         self.ui.userLE.setText(lastTime["user"])
         self.ui.serverLE.setText(lastTime["server"])
         self.ui.mportSB.setValue(int(lastTime["mport"]))
-        self.ui.wportSB.setValue(int(lastTime["wport"]))
         self.ui.pgSB.setValue(int(lastTime["pg"]))
         self.ui.vSB.setValue(int(lastTime["v"]))
         self.ui.fontSB.setValue(int(lastTime["fontSize"]))
@@ -107,12 +108,34 @@ class Chooser(QDialog):
         pwd = self.ui.passwordLE.text()
         if len(pwd) < 4:
             return
-        # set server, message port, webdave port.
         server = self.ui.serverLE.text()
         mport = self.ui.mportSB.value()
-        wport = self.ui.wportSB.value()
         # save those settings
         self.saveDetails()
+
+        # Have Messenger login into to server
+        messenger.setServerDetails(server, mport)
+        messenger.startMessenger()
+
+        try:
+            messenger.requestAndSaveToken(user, pwd)
+        except PlomAPIException as e:
+            ErrorMessage(
+                "Could not authenticate due to API mismatch."
+                "Your client version is {}.\n\n"
+                "Error was: {}".format(__version__, e)
+            ).exec_()
+            return
+        except PlomAuthenticationException as e:
+            ErrorMessage("Could not authenticate: {}".format(e)).exec_()
+            return
+        except PlomSeriousException as e:
+            ErrorMessage(
+                "Could not get authentication token.\n\n"
+                "Unexpected error: {}".format(e)
+            ).exec_()
+            return
+
         # Now run the appropriate client sub-application
         if self.runIt == "Marker":
             # Run the marker client.
@@ -120,27 +143,28 @@ class Chooser(QDialog):
             v = str(self.ui.vSB.value())
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient(
-                user, pwd, server, mport, wport, pg, v, lastTime
-            )
+            markerwin = marker.MarkerClient()
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
+            markerwin.getToWork(messenger, pg, v, lastTime)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
             self.setEnabled(False)
             self.hide()
-            idwin = identifier.IDClient(user, pwd, server, mport, wport)
+            idwin = identifier.IDClient()
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
+            idwin.getToWork(messenger)
             self.parent.identifier = idwin
         else:
             # Run the Total client.
             self.setEnabled(False)
             self.hide()
-            totalerwin = totaler.TotalClient(user, pwd, server, mport, wport)
+            totalerwin = totaler.TotalClient()
             totalerwin.my_shutdown_signal.connect(self.on_other_window_close)
             totalerwin.show()
+            totalerwin.getToWork(messenger)
             self.parent.totaler = totalerwin
 
     def runMarker(self):
@@ -159,7 +183,6 @@ class Chooser(QDialog):
         lastTime["user"] = self.ui.userLE.text()
         lastTime["server"] = self.ui.serverLE.text()
         lastTime["mport"] = self.ui.mportSB.value()
-        lastTime["wport"] = self.ui.wportSB.value()
         lastTime["pg"] = self.ui.pgSB.value()
         lastTime["v"] = self.ui.vSB.value()
         lastTime["fontSize"] = self.ui.fontSB.value()
@@ -203,7 +226,6 @@ class Chooser(QDialog):
             lastTime["mouse"] = "left"
         else:
             raise RuntimeError("tertium non datur")
-
 
 
 # Pop up a dialog for unhandled exceptions and then exit

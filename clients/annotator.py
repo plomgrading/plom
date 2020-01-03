@@ -7,7 +7,17 @@ import json
 import os
 import sys
 
-from PyQt5.QtCore import Qt, QByteArray, QRectF, QSettings, QSize, QTimer, pyqtSlot
+from PyQt5.QtCore import (
+    Qt,
+    QByteArray,
+    QRectF,
+    QSettings,
+    QSize,
+    QTimer,
+    QElapsedTimer,
+    pyqtSlot,
+    pyqtSignal,
+)
 from PyQt5.QtGui import (
     QCursor,
     QGuiApplication,
@@ -20,6 +30,8 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QAction,
     QDialog,
+    QWidget,
+    QMainWindow,
     QGridLayout,
     QLabel,
     QMenu,
@@ -69,19 +81,34 @@ tipText = {
 }
 
 
-class Annotator(QDialog):
+class Annotator(QWidget):
     """The main annotation window for annotating group-images
     and assigning marks.
     """
 
+    ann_finished_accept = pyqtSignal(str, list)
+    ann_finished_reject = pyqtSignal(str, list)
+
     def __init__(
-        self, fname, maxMark, markStyle, mouseHand, parent=None, plomDict=None
+        self,
+        tgv,
+        paperdir,
+        fname,
+        maxMark,
+        markStyle,
+        mouseHand,
+        parent=None,
+        plomDict=None,
     ):
-        super(Annotator, self).__init__(parent)
+        super(Annotator, self).__init__()
+        # Temporary hack: None means "just close", can be True/False
+        self._relaunch = None
         # remember parent
         self.parent = parent
         # Grab filename of image, max mark, mark style (total/up/down)
         # and mouse-hand (left/right)
+        self.tgv = tgv
+        self.paperdir = paperdir
         self.imageFile = fname
         self.maxMark = maxMark
         # get markstyle from plomDict
@@ -173,6 +200,8 @@ class Annotator(QDialog):
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
             self.unpickleIt(plomDict)
+        self.timer = QElapsedTimer()
+        self.timer.start()
 
     def setCurrentMarkMode(self):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
@@ -486,32 +515,29 @@ class Annotator(QDialog):
 
     def keyPressEvent(self, event):
         """Translates key-presses into tool-button presses if
-        appropriate. Also captures the escape-key since this would
-        normally close a qdialog.
+        appropriate.
         """
         # Check to see if no mousebutton pressed
         # If a key-press detected use the keycodes dict to translate
         # the press into a function call (if exists)
         if QGuiApplication.mouseButtons() == Qt.NoButton:
             self.keycodes.get(event.key(), lambda *args: None)()
-        # If escape key pressed then do not process it because
-        # esc in a qdialog closes the window as a "reject".
-        if event.key() != Qt.Key_Escape:
-            super(Annotator, self).keyPressEvent(event)
+        super(Annotator, self).keyPressEvent(event)
 
     def setMode(self, newMode, newCursor):
         """Change the current tool mode.
         Changes the styling of the corresponding button, and
         also the cursor.
         """
-        # TODO: clean up this function. Is a bit of a mess
-
+        # self.currentButton should only ever be set to a button - nothing else.
         # Clear styling of the what was until now the current button
         if self.currentButton is not None:
             self.currentButton.setStyleSheet("")
         # A bit of a hack to take care of comment-mode and delta-mode
         if self.scene.mode == "comment" and newMode != "comment":
+            # clear the comment button styling
             self.ui.commentButton.setStyleSheet("")
+            self.commentW.CL.setStyleSheet("")
         if self.scene.mode == "delta" and newMode != "delta":
             self.ui.deltaButton.setStyleSheet("")
         # We change currentbutton to which ever widget sent us
@@ -524,21 +550,23 @@ class Annotator(QDialog):
             # has come from mark-change button in handler, so
             # set button=none, since markHandler does its own styling
             self.currentButton = None
-        else:
+        elif isinstance(
+            self.sender(), QToolButton
+        ):  # only toolbuttons are the mode-changing ones.
+            self.currentButton = self.sender()
+            self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
+        elif self.sender() is self.commentW.CL:
+            self.markHandler.clearButtonStyle()
+            self.commentW.CL.setStyleSheet(self.currentButtonStyleOutline)
+            self.ui.commentButton.setStyleSheet(self.currentButtonStyleBackground)
+        elif self.sender() is self.markHandler:
             # Clear the style of the mark-handler (this will mostly not do
             # anything, but saves us testing if we had styled it)
             self.markHandler.clearButtonStyle()
-            # the current button = whoever sent us here.
-            self.currentButton = self.sender()
-            # Set the style of that button - be careful of the
-            # comment list - since it needs different styling
-            if self.currentButton == self.commentW.CL:
-                self.currentButton.setStyleSheet(self.currentButtonStyleOutline)
-                self.ui.commentButton.setStyleSheet(self.currentButtonStyleBackground)
-            else:
-                self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
-                # make sure comment button style is cleared
-                self.ui.commentButton.setStyleSheet("")
+            # this should not happen
+        else:
+            # this should also not happen - except by strange async race issues. So we don't change anything.
+            pass
         # pass the new mode to the graphicsview, and set the cursor in view
         self.scene.setMode(newMode)
         self.view.setCursor(newCursor)
@@ -593,8 +621,9 @@ class Annotator(QDialog):
     # unmarked image and fires up the annotator on that.
     @pyqtSlot()
     def endAndRelaunch(self):
+        self._relaunch = True
         self.commentW.saveComments()
-        self.closeEvent(True)
+        self.close()
 
     def setMiscShortCuts(self):
         # Set alt-enter or alt-return to end the annotator
@@ -634,7 +663,7 @@ class Annotator(QDialog):
         self.setMode("box", self.cursorBox)
 
     def commentMode(self):
-        if self.currentButton == self.commentW.CL:
+        if self.scene.mode == "comment":
             self.commentW.nextItem()
         else:
             self.commentW.currentItem()
@@ -813,10 +842,12 @@ class Annotator(QDialog):
         self.updateDeltaMarkMenu()
 
     def closeEventRelaunch(self):
-        self.closeEvent(True)
+        self._relaunch = True
+        self.close()
 
     def closeEventNoRelaunch(self):
-        self.closeEvent(False)
+        self._relaunch = False
+        self.close()
 
     def loadWindowSettings(self):
         # load the window geometry, else maximise.
@@ -902,10 +933,9 @@ class Annotator(QDialog):
     def cleanUpCancel(self):
         # clean up after a testview
         self.doneViewingPaper()
-        self.reject()
-        return
+        self.close()
 
-    def closeEvent(self, relaunch):
+    def closeEvent(self, ce):
         """When the user closes the window - either by clicking on the
         little standard all windows have them close icon in the titlebar
         or by clicking on 'finished' - do some basic checks.
@@ -917,21 +947,23 @@ class Annotator(QDialog):
         Be careful of max-score when marking down.
         In either case - get user to confirm the score before closing.
         """
+        relaunch = self._relaunch
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
 
-        # If the titlebar close clicked then don't relauch and close the
-        # annotator (QDialog) with a 'reject'
-        if type(relaunch) == QCloseEvent:
-            self.launchAgain = False
+        # Close button/titlebar: reject (do not save) result, do not launch again
+        if relaunch is None:
+            print("ann emitting signal: Reject/Cancel")
+            self.ann_finished_reject.emit(self.tgv, [])
             # clean up after a testview
             self.doneViewingPaper()
-            self.reject()
+            ce.accept()
             return
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
             msg = ErrorMessage("Please make an annotation, even if the page is blank.")
             msg.exec_()
+            ce.ignore()
             return
 
         # check if comments have been left.
@@ -942,6 +974,7 @@ class Annotator(QDialog):
                     "You have given no comments.\n Please confirm."
                 )
                 if msg.exec_() == QMessageBox.No:
+                    ce.ignore()
                     return
                 if msg.cb.checkState() == Qt.Checked:
                     self.commentWarn = False
@@ -950,6 +983,7 @@ class Annotator(QDialog):
         if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
             msg = SimpleMessageCheckBox("You have given 0 - please confirm")
             if msg.exec_() == QMessageBox.No:
+                ce.ignore()
                 return
             if msg.cb.checkState() == Qt.Checked:
                 self.markWarn = False
@@ -963,15 +997,13 @@ class Annotator(QDialog):
                 "You have given {} - please confirm".format(self.maxMark)
             )
             if msg.exec_() == QMessageBox.No:
+                ce.ignore()
                 return
             if msg.cb.checkState() == Qt.Checked:
                 self.markWarn = False
-        if relaunch:
-            self.launchAgain = True
-        else:
-            self.launchAgain = False
 
         if not self.checkAllObjectsInside():
+            ce.ignore()
             return
 
         # clean up after a testview
@@ -986,7 +1018,22 @@ class Annotator(QDialog):
         # Save the window settings
         self.saveWindowSettings()
         # Close the annotator(QDialog) with an 'accept'.
-        self.accept()
+        print("ann emitting signal: ACCEPT")
+        tim = self.timer.elapsed() // 1000
+        # some things here hardcoded elsewhere too, and up in marker
+        plomFile = self.imageFile[:-3] + "plom"
+        commentFile = self.imageFile[:-3] + "json"
+        stuff = [
+            self.score,
+            relaunch,
+            tim,
+            self.paperdir,
+            self.imageFile,
+            plomFile,
+            commentFile,
+        ]
+        self.ann_finished_accept.emit(self.tgv, stuff)
+        ce.accept()
 
     def checkAllObjectsInside(self):
         if self.scene.checkAllObjectsInside():

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
@@ -7,6 +9,8 @@ from collections import defaultdict
 import glob
 import os
 import shutil
+import shlex
+import subprocess
 
 # move into extraPages directory
 os.chdir("extraPages")
@@ -60,7 +64,8 @@ for gname in mergeFiles.keys():
     for fname in mergeFiles[gname]:
         cmd += " {}".format(fname)
     cmd += " -border 5 -geometry +1+1 merged/{}".format(gname)
-    os.system(cmd)
+    cmd = shlex.split(cmd)
+    subprocess.run(cmd, check=True)
 
 # Then copy the merged files back into place
 for gname in mergeFiles.keys():
