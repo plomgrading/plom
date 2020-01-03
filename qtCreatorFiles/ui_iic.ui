@@ -205,7 +205,7 @@
           <item>
            <widget class="QPushButton" name="loginButton">
             <property name="text">
-             <string>Login</string>
+             <string>&amp;Login</string>
             </property>
            </widget>
           </item>
@@ -225,7 +225,7 @@
           <item>
            <widget class="QPushButton" name="closeButton">
             <property name="text">
-             <string>Close</string>
+             <string>&amp;Close</string>
             </property>
            </widget>
           </item>
@@ -383,7 +383,7 @@
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
-            <widget class="QWidget" name="scrollAreaWidgetContents_2">
+            <widget class="QWidget" name="markBucket">
              <property name="geometry">
               <rect>
                <x>0</x>

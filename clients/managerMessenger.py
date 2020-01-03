@@ -188,6 +188,29 @@ def getIncompleteTests():
     return rval
 
 
+def getProgress(q, v):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/progress".format(server, message_port),
+            verify=False,
+            json={"q": q, "v": v},
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
 def startMessenger():
     """Start the messenger session"""
     print("Starting a requests-session")

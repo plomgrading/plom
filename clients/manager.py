@@ -21,9 +21,14 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QApplication,
     QDialog,
-    QStyleFactory,
+    QGridLayout,
+    QGroupBox,
+    QLabel,
     QMessageBox,
+    QProgressBar,
+    QStyleFactory,
     QTreeWidgetItem,
+    QVBoxLayout,
     QWidget,
 )
 from uiFiles.ui_iic import Ui_IIC
@@ -35,6 +40,44 @@ import managerMessenger
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
 from resources.version import Plom_API_Version
+
+
+class ProgressBox(QGroupBox):
+    def __init__(self, qu, v, stats):
+        super(ProgressBox, self).__init__()
+        self.question = qu
+        self.version = v
+        self.setTitle("Q-{} V-{}".format(qu, v))
+
+        self.stats = stats
+        grid = QVBoxLayout()
+        self.avgL = QLabel()
+        grid.addWidget(self.avgL)
+        self.mtL = QLabel()
+        grid.addWidget(self.mtL)
+        self.lhL = QLabel()
+        grid.addWidget(self.lhL)
+
+        self.pb = QProgressBar()
+        self.pb.setFormat("%v / %m")
+        grid.addWidget(self.pb)
+
+        self.setLayout(grid)
+        self.show()
+        self.refresh(self.stats)
+
+    def refresh(self, stats):
+        self.stats = stats
+        if self.stats["NScanned"] == 0:
+            self.setEnabled(False)
+            return
+
+        self.setEnabled(True)
+        self.pb.setMaximum(self.stats["NScanned"])
+        self.pb.setValue(self.stats["NMarked"])
+        self.avgL.setText("Average mark = {}".format(self.stats["avgMark"]))
+        self.mtL.setText("Marking time = {}".format(self.stats["avgMTime"]))
+        self.lhL.setText("# in last hour = {}".format(self.stats["NRecent"]))
 
 
 class Manager(QWidget):
@@ -55,6 +98,9 @@ class Manager(QWidget):
         self.ui.loginButton.clicked.connect(self.login)
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontButton.clicked.connect(self.setFont)
+        self.ui.refreshIButton.clicked.connect(self.refreshIList)
+        self.ui.refreshPButton.clicked.connect(self.refreshMTab)
+        self.ui.refreshSButton.clicked.connect(self.refreshSList)
 
     def closeWindow(self):
         self.close()
@@ -108,6 +154,7 @@ class Manager(QWidget):
 
         self.getPQV()
         self.initScanTab()
+        self.initMarkTab()
 
     # -------------------
     def getPQV(self):
@@ -133,6 +180,28 @@ class Manager(QWidget):
             for p in range(self.numberOfPages):
                 l0.addChild(QTreeWidgetItem(["", "{}".format(p + 1)]))
             self.ui.scanTW.addTopLevelItem(l0)
+
+    def refreshIList(self):
+        pass
+
+    def refreshSList(self):
+        pass
+
+    def initMarkTab(self):
+        grid = QGridLayout()
+        self.pd = {}
+        for q in range(1, self.numberOfQuestions + 1):
+            for v in range(1, self.numberOfVersions + 1):
+                stats = managerMessenger.getProgress(q, v)
+                self.pd[(q, v)] = ProgressBox(q, v, stats)
+                grid.addWidget(self.pd[(q, v)], q, v)
+        self.ui.markBucket.setLayout(grid)
+
+    def refreshMTab(self):
+        for q in range(1, self.numberOfQuestions + 1):
+            for v in range(1, self.numberOfVersions + 1):
+                stats = managerMessenger.getProgress(q, v)
+                self.pd[(q, v)].refresh(stats)
 
 
 # Pop up a dialog for unhandled exceptions and then exit

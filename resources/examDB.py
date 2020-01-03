@@ -548,7 +548,7 @@ class PlomDB:
             rval.append(tref.testNumber)
         return rval
 
-    def RgetProgress(self, qu, v):
+    def RgetProgress(self, q, v):
         # return [numberScanned, numberMarked, numberRecent, avgMark, avgTimetaken]
         oneHour = timedelta(hours=1)
         NScanned = 0
@@ -580,7 +580,7 @@ class PlomDB:
                 "NMarked": NMarked,
                 "NRecent": NRecent,
                 "avgMark": None,
-                "avgTimeTaken": None,
+                "avgMTime": None,
             }
         else:
             return {
@@ -914,7 +914,7 @@ class PlomDB:
                 qref.marked = False
                 qref.save()
                 qref.test.marked = False
-                tref.save()
+                qref.test.save()
 
         except Group.DoesNotExist:
             print("That task {} not known".format(groupID))
@@ -951,7 +951,9 @@ class PlomDB:
                 tref = qref.test
                 # check if there are any unmarked questions
                 if (
-                    QuestionData.get_or_none(QuestionData.test == tref, marked == False)
+                    QuestionData.get_or_none(
+                        QuestionData.test == tref, QuestionData.marked == False
+                    )
                     is not None
                 ):
                     print(
@@ -962,9 +964,9 @@ class PlomDB:
                     return True
                 # update the sum-mark
                 tot = 0
-                for qd in QuestionData.select().where(test == tref):
+                for qd in QuestionData.select().where(QuestionData.test == tref):
                     tot += qd.mark
-                sref = SumData.get_or_none(test == tref)
+                sref = SumData.get_or_none(SumData.test == tref)
                 if sref is not None:
                     sref.username = "automatic"
                     sref.time = datetime.now()
