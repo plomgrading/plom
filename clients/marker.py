@@ -424,6 +424,16 @@ class ProxyModel(QSortFilterProxyModel):
         self.setFilterKeyColumn(4)
         self.filterString = ""
 
+    def lessThan(self, left, right):
+        # Check to see if data is integer, and compare that
+        try:
+            lv = int(left.data())
+            rv = int(right.data())
+            return lv < rv
+        except ValueError:
+            # else let qt handle it.
+            return left.data() < right.data()
+
     def setFilterString(self, flt):
         self.filterString = flt
 
