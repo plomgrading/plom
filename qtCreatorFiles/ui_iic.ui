@@ -24,7 +24,7 @@
      </property>
      <widget class="QWidget" name="loginTab">
       <attribute name="title">
-       <string>Login</string>
+       <string>&amp;Login</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -205,7 +205,7 @@
           <item>
            <widget class="QPushButton" name="loginButton">
             <property name="text">
-             <string>&amp;Login</string>
+             <string>L&amp;ogin</string>
             </property>
            </widget>
           </item>
@@ -239,7 +239,7 @@
        <bool>false</bool>
       </property>
       <attribute name="title">
-       <string>Scans</string>
+       <string>&amp;Scans</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
@@ -288,7 +288,7 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_4">
+             <widget class="QPushButton" name="removePageB">
               <property name="text">
                <string>Remove page from server</string>
               </property>
@@ -345,7 +345,7 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButton_2">
+             <widget class="QPushButton" name="subsPageB">
               <property name="text">
                <string>Substitute missing page with blank</string>
               </property>
@@ -363,7 +363,7 @@
        <bool>false</bool>
       </property>
       <attribute name="title">
-       <string>Marking</string>
+       <string>&amp;Marking</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
@@ -388,8 +388,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>882</width>
-               <height>505</height>
+               <width>48</width>
+               <height>16</height>
               </rect>
              </property>
             </widget>

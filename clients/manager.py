@@ -51,12 +51,16 @@ class ProgressBox(QGroupBox):
 
         self.stats = stats
         grid = QVBoxLayout()
-        self.avgL = QLabel()
-        grid.addWidget(self.avgL)
-        self.mtL = QLabel()
-        grid.addWidget(self.mtL)
+        self.nscL = QLabel()
+        grid.addWidget(self.nscL)
+        self.nmkL = QLabel()
+        grid.addWidget(self.nmkL)
         self.lhL = QLabel()
         grid.addWidget(self.lhL)
+        self.mtL = QLabel()
+        grid.addWidget(self.mtL)
+        self.avgL = QLabel()
+        grid.addWidget(self.avgL)
 
         self.pb = QProgressBar()
         self.pb.setFormat("%v / %m")
@@ -75,9 +79,11 @@ class ProgressBox(QGroupBox):
         self.setEnabled(True)
         self.pb.setMaximum(self.stats["NScanned"])
         self.pb.setValue(self.stats["NMarked"])
+        self.nscL.setText("# Scanned = {}".format(self.stats["NScanned"]))
+        self.nmkL.setText("# Marked = {}".format(self.stats["NMarked"]))
         self.avgL.setText("Average mark = {}".format(self.stats["avgMark"]))
         self.mtL.setText("Marking time = {}".format(self.stats["avgMTime"]))
-        self.lhL.setText("# in last hour = {}".format(self.stats["NRecent"]))
+        self.lhL.setText("# Marked in last hour = {}".format(self.stats["NRecent"]))
 
 
 class Manager(QWidget):
@@ -101,6 +107,8 @@ class Manager(QWidget):
         self.ui.refreshIButton.clicked.connect(self.refreshIList)
         self.ui.refreshPButton.clicked.connect(self.refreshMTab)
         self.ui.refreshSButton.clicked.connect(self.refreshSList)
+        self.ui.removePageB.clicked.connect(self.removePage)
+        self.ui.subsPageB.clicked.connect(self.subsPage)
 
     def closeWindow(self):
         self.close()
@@ -181,11 +189,20 @@ class Manager(QWidget):
                 l0.addChild(QTreeWidgetItem(["", "{}".format(p + 1)]))
             self.ui.scanTW.addTopLevelItem(l0)
 
+    def todo(self):
+        ErrorMessage("This is on our to-do list").exec_()
+
     def refreshIList(self):
-        pass
+        self.todo()
 
     def refreshSList(self):
-        pass
+        self.todo()
+
+    def removePage(self):
+        self.todo()
+
+    def subsPage(self):
+        self.todo()
 
     def initMarkTab(self):
         grid = QGridLayout()
