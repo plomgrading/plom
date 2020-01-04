@@ -16,4 +16,7 @@ print(
 print(
     '3. Run the "013_readQRCodes.py" script - this reads barcodes from the pages and files them away accordingly'
 )
-print("4. Profit")
+print(
+    "4. Make sure the newserver is running and that the password for the 'scanner' user has been set."
+)
+print('5. Run the "014_sendPagesToServer.py" script')
