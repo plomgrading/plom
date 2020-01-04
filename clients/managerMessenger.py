@@ -138,6 +138,8 @@ def getInfoPQV():
             raise PlomSeriousException(
                 "Server could not find the spec - this should not happen!"
             )
+        elif response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
         else:
             raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
@@ -150,7 +152,9 @@ def getScannedTests():
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/REP/scanned".format(server, message_port), verify=False,
+            "https://{}:{}/REP/scanned".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token},
         )
         response.raise_for_status()
         rval = response.json()
@@ -159,6 +163,8 @@ def getScannedTests():
             raise PlomSeriousException(
                 "Server could not find the spec - this should not happen!"
             )
+        elif response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
         else:
             raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
@@ -171,7 +177,9 @@ def getIncompleteTests():
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/REP/incomplete".format(server, message_port), verify=False,
+            "https://{}:{}/REP/incomplete".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token},
         )
         response.raise_for_status()
         rval = response.json()
@@ -180,6 +188,8 @@ def getIncompleteTests():
             raise PlomSeriousException(
                 "Server could not find the spec - this should not happen!"
             )
+        elif response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
         else:
             raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
@@ -194,7 +204,7 @@ def getProgress(q, v):
         response = session.get(
             "https://{}:{}/REP/progress".format(server, message_port),
             verify=False,
-            json={"q": q, "v": v},
+            json={"user": _userName, "token": _token, "q": q, "v": v},
         )
         response.raise_for_status()
         rval = response.json()
@@ -203,6 +213,8 @@ def getProgress(q, v):
             raise PlomSeriousException(
                 "Server could not find the spec - this should not happen!"
             )
+        elif response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
         else:
             raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:

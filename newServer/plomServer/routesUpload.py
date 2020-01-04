@@ -6,68 +6,91 @@ class UploadHandler:
         self.server = plomServer
 
     async def uploadKnownPage(self, request):
-        reader = MultipartReader.from_response(request)
-        code = request.match_info["tpv"]
+        data = await request.json()
+        if self.server.validate(data["user"], data["token"]) and data["user"] in [
+            "manager",
+            "scanner",
+        ]:
+            reader = MultipartReader.from_response(request)
+            code = request.match_info["tpv"]
 
-        part0 = await reader.next()  # should be parameters
-        if part0 is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        param = await part0.json()
+            part0 = await reader.next()  # should be parameters
+            if part0 is None:  # weird error
+                return web.Response(status=406)  # should have sent 3 parts
+            param = await part0.json()
 
-        part1 = await reader.next()  # should be the image file
-        if part1 is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        image = await part1.read()
-        # file it away.
-        rmsg = self.server.addKnownPage(
-            param["test"],
-            param["page"],
-            param["version"],
-            param["fileName"],
-            image,
-            param["md5sum"],
-        )
-        return web.json_response(rmsg, status=200)  # all good
+            part1 = await reader.next()  # should be the image file
+            if part1 is None:  # weird error
+                return web.Response(status=406)  # should have sent 3 parts
+            image = await part1.read()
+            # file it away.
+            rmsg = self.server.addKnownPage(
+                param["test"],
+                param["page"],
+                param["version"],
+                param["fileName"],
+                image,
+                param["md5sum"],
+            )
+            return web.json_response(rmsg, status=200)  # all good
+        else:
+            return web.Response(status=401)
 
     async def uploadUnknownPage(self, request):
-        reader = MultipartReader.from_response(request)
+        data = await request.json()
+        if self.server.validate(data["user"], data["token"]) and data["user"] in [
+            "manager",
+            "scanner",
+        ]:
+            reader = MultipartReader.from_response(request)
 
-        part0 = await reader.next()  # should be parameters
-        if part0 is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        param = await part0.json()
+            part0 = await reader.next()  # should be parameters
+            if part0 is None:  # weird error
+                return web.Response(status=406)  # should have sent 3 parts
+            param = await part0.json()
 
-        part1 = await reader.next()  # should be the image file
-        if part1 is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        image = await part1.read()
-        # file it away.
-        rmsg = self.server.addUnknownPage(param["fileName"], image, param["md5sum"],)
-        return web.json_response(rmsg, status=200)  # all good
+            part1 = await reader.next()  # should be the image file
+            if part1 is None:  # weird error
+                return web.Response(status=406)  # should have sent 3 parts
+            image = await part1.read()
+            # file it away.
+            rmsg = self.server.addUnknownPage(
+                param["fileName"], image, param["md5sum"],
+            )
+            return web.json_response(rmsg, status=200)  # all good
+        else:
+            return web.Response(status=401)
 
     async def uploadCollidingPage(self, request):
-        reader = MultipartReader.from_response(request)
-        code = request.match_info["tpv"]
+        data = await request.json()
+        if self.server.validate(data["user"], data["token"]) and data["user"] in [
+            "manager",
+            "scanner",
+        ]:
+            reader = MultipartReader.from_response(request)
+            code = request.match_info["tpv"]
 
-        part0 = await reader.next()  # should be parameters
-        if part0 is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        param = await part0.json()
+            part0 = await reader.next()  # should be parameters
+            if part0 is None:  # weird error
+                return web.Response(status=406)  # should have sent 3 parts
+            param = await part0.json()
 
-        part1 = await reader.next()  # should be the image file
-        if part1 is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        image = await part1.read()
-        # file it away.
-        rmsg = self.server.addCollidingPage(
-            param["test"],
-            param["page"],
-            param["version"],
-            param["fileName"],
-            image,
-            param["md5sum"],
-        )
-        return web.json_response(rmsg, status=200)  # all good
+            part1 = await reader.next()  # should be the image file
+            if part1 is None:  # weird error
+                return web.Response(status=406)  # should have sent 3 parts
+            image = await part1.read()
+            # file it away.
+            rmsg = self.server.addCollidingPage(
+                param["test"],
+                param["page"],
+                param["version"],
+                param["fileName"],
+                image,
+                param["md5sum"],
+            )
+            return web.json_response(rmsg, status=200)  # all good
+        else:
+            return web.Response(status=401)
 
     def setUpRoutes(self, router):
         router.add_put("/admin/knownPages/{tpv}", self.uploadKnownPage)
