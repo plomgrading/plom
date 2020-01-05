@@ -115,6 +115,7 @@ def uploadKnownPage(code, test, page, version, sname, fname, md5sum):
     try:
         param = {
             "user": _userName,
+            "token": _token,
             "fileName": sname,
             "test": test,
             "page": page,
@@ -129,6 +130,7 @@ def uploadKnownPage(code, test, page, version, sname, fname, md5sum):
         )
         response = session.put(
             "https://{}:{}/admin/knownPages/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token,},
             data=dat,
             headers={"Content-Type": dat.content_type},
             verify=False,
@@ -256,4 +258,4 @@ if __name__ == "__main__":
                 continue
             fileList = glob("decodedPages/page_{}/version_{}/t*.png".format(sp, v))
             sendKnownFiles(fileList)
-    closeUser("scanner")
+    closeUser()

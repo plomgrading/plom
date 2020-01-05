@@ -1,5 +1,8 @@
 import hashlib
 import os
+import shlex
+import shutil
+import subprocess
 import uuid
 
 
@@ -63,4 +66,33 @@ def addCollidingPage(self, t, p, v, fname, image, md5o):
     else:
         print("Did not store page")
         print("From database = {}".format(val[1]))
+    return val
+
+
+def replaceMissingPage(self, testNumber, pageNumber, version):
+    rval = self.DB.checkTestPageUnscanned(testNumber, pageNumber, version)
+    if not (rval[0] and rval[1]):
+        return rval
+    # build a "pageNotSubmitted page"
+    cmd = "python3 ./pageNotSubmitted.py {} {} {}".format(
+        testNumber, pageNumber, version
+    )
+    subprocess.check_call(shlex.split(cmd))
+    # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
+    originalName = "pns.{}.{}.{}.png".format(testNumber, pageNumber, version)
+    prefix = "pages/originalPages/pns.{}p{}v{}".format(
+        str(testNumber).zfill(4), str(pageNumber).zfill(2), version
+    )
+    while True:
+        unique = "." + str(uuid.uuid4())[:8]
+        newName = prefix + unique + ".png"
+        if not os.path.isfile(newName):
+            break
+        newName = "pages/originalPages/" + prefix + unique + ".png"
+
+    md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
+    val = self.DB.replaceMissingPage(
+        testNumber, pageNumber, version, originalName, newName, md5
+    )
+    shutil.move(originalName, newName)
     return val

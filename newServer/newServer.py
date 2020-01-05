@@ -102,7 +102,12 @@ class Server(object):
         giveUserToken,
         closeUser,
     )
-    from plomServer.serverUpload import addKnownPage, addUnknownPage, addCollidingPage
+    from plomServer.serverUpload import (
+        addKnownPage,
+        addUnknownPage,
+        addCollidingPage,
+        replaceMissingPage,
+    )
     from plomServer.serverID import (
         IDprogressCount,
         IDgetNextTask,

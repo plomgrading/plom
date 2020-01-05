@@ -397,6 +397,35 @@ class PlomDB:
         if sflag:
             self.checkTestAllUploaded(gref)
 
+    def replaceMissingPage(self, t, p, v, oname, nname, md5):
+        tref = Test.get_or_none(testNumber=t)
+        if tref is None:
+            return [False, "testError", "Cannot find test {}".format(t)]
+        pref = Page.get_or_none(test=tref, pageNumber=p, version=v)
+        if pref is None:
+            return [
+                False,
+                "pageError",
+                "Cannot find page {} for test {}".format(p, t),
+            ]
+        if pref.scanned:
+            return [
+                False,
+                "pageScanned",
+                "Page is already scanned",
+            ]
+        else:  # this is a new page.
+            with plomdb.atomic():
+                pref.originalName = oname
+                pref.fileName = nname
+                pref.md5sum = md5
+                pref.scanned = True
+                pref.save()
+                tref.used = True
+                tref.save()
+            self.checkGroupAllUploaded(pref)
+            return [True, "success", "Page saved as {}".format(pref.pid)]
+
     def uploadKnownPage(self, t, p, v, oname, nname, md5):
         # return value is either [True, <success message>] or
         # [False, stuff] - but need to distinguish between "discard this image" and "you should perhaps keep this image"
@@ -528,6 +557,20 @@ class PlomDB:
                 gref.save()
                 tref.save()
 
+    def checkTestPageUnscanned(self, testNumber, pageNumber, version):
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        pref = Page.get_or_none(
+            Page.test == tref, Page.pageNumber == pageNumber, Page.version == version
+        )
+        if pref is None:
+            return [False]
+        if pref.scanned == True:
+            return [True, False]
+        else:
+            return [True, True, pref.version]
+
     # ------------------
     # Reporting functions
 
@@ -543,7 +586,7 @@ class PlomDB:
             pMissing = []
             for p in tref.pages:
                 if p.scanned == False:
-                    pMissing.append(p.pageNumber)
+                    pMissing.append([p.pageNumber, p.version])
             rval[tref.testNumber] = pMissing
         return rval
 

@@ -36,10 +36,10 @@ def InfoPQV(self):
 def reloadUsers(self, password):
     """Reload the user list."""
     # Check user is manager.
-    if not self.authority.authoriseUser("Manager", password):
-        self.logger.info("Unauthorised attempt to reload users")
+    if not self.authority.authoriseUser("manager", password):
+        print("Unauthorised attempt to reload users")
         return False
-    self.logger.info("Reloading the user list")
+    print("Reloading the user list")
     # Load in the user list and check against existing user list for differences
     if os.path.exists("../resources/userList.json"):
         with open("../resources/userList.json") as data_file:
@@ -60,7 +60,7 @@ def reloadUsers(self, password):
                     self.DB.resetUsersToDo(u)
                     # remove user's authorisation token.
                     self.authority.detoken(u)
-    self.logger.info("Current user list = {}".format(list(self.userList.keys())))
+    print("Current user list = {}".format(list(self.userList.keys())))
     # return acknowledgement
     print(">> User list reloaded")
     return True
