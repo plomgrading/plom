@@ -7,6 +7,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import getpass
 from glob import glob
 import hashlib
 import json
@@ -23,8 +24,9 @@ import threading
 sys.path.append("..")
 from resources.specParser import SpecParser
 from resources.plom_exceptions import *
+from resources.version import Plom_API_Version
 
-_userName = "kenneth"
+_userName = "scanner"
 
 # ----------------------
 
@@ -42,11 +44,77 @@ SRmutex = threading.Lock()
 # ----------------------
 
 
+def requestAndSaveToken(user, pw):
+    """Get a authorisation token from the server.
+
+    The token is then used to authenticate future transactions with the server.
+
+    """
+    global _userName, _token
+
+    SRmutex.acquire()
+    try:
+        print("Requesting authorisation token from server")
+        response = authSession.put(
+            "https://{}:{}/users/{}".format(server, message_port, user),
+            json={"user": user, "pw": pw, "api": Plom_API_Version},
+            verify=False,
+            timeout=5,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        _token = response.json()
+        _userName = user
+        print("Success!")
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            print(
+                "Password problem - you are not authorised to upload pages to server."
+            )
+        elif response.status_code == 400:  # API error
+            raise PlomAPIException()
+            print("An API problem - {}".format(response.json()))
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+        quit()
+    except requests.ConnectionError as err:
+        raise PlomSeriousException(
+            "Cannot connect to\n server:port = {}:{}\n Please check details before trying again.".format(
+                server, message_port
+            )
+        )
+        quit()
+    finally:
+        SRmutex.release()
+
+
+def closeUser():
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/users/{}".format(server, message_port, _userName),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return True
+
+
 def uploadUnknownPage(sname, fname, md5sum):
     SRmutex.acquire()
     try:
         param = {
             "user": _userName,
+            "token": _token,
             "fileName": sname,
             "md5sum": md5sum,
         }
@@ -114,6 +182,15 @@ def sendUnknownFiles(fileList):
 
 
 if __name__ == "__main__":
+    try:
+        pwd = getpass.getpass("Please enter the 'scanner' password:")
+    except Exception as error:
+        print("ERROR", error)
+
+    authSession = requests.Session()
+    authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
+    requestAndSaveToken("scanner", pwd)
+
     # Look for pages in unknowns
     spec = SpecParser().spec
     buildDirectories(spec)

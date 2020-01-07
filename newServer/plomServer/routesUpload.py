@@ -36,29 +36,26 @@ class UploadHandler:
         return web.json_response(rmsg, status=200)  # all good
 
     async def uploadUnknownPage(self, request):
-        data = await request.json()
-        if self.server.validate(data["user"], data["token"]) and data["user"] in [
-            "manager",
-            "scanner",
-        ]:
-            reader = MultipartReader.from_response(request)
+        reader = MultipartReader.from_response(request)
 
-            part0 = await reader.next()  # should be parameters
-            if part0 is None:  # weird error
-                return web.Response(status=406)  # should have sent 3 parts
-            param = await part0.json()
+        part0 = await reader.next()  # should be parameters
+        if part0 is None:  # weird error
+            return web.Response(status=406)  # should have sent 3 parts
+        param = await part0.json()
 
-            part1 = await reader.next()  # should be the image file
-            if part1 is None:  # weird error
-                return web.Response(status=406)  # should have sent 3 parts
-            image = await part1.read()
-            # file it away.
-            rmsg = self.server.addUnknownPage(
-                param["fileName"], image, param["md5sum"],
-            )
-            return web.json_response(rmsg, status=200)  # all good
-        else:
+        if not (
+            self.server.validate(param["user"], param["token"])
+            and param["user"] in ["manager", "scanner",]
+        ):  # not authorised!
             return web.Response(status=401)
+
+        part1 = await reader.next()  # should be the image file
+        if part1 is None:  # weird error
+            return web.Response(status=406)  # should have sent 3 parts
+        image = await part1.read()
+        # file it away.
+        rmsg = self.server.addUnknownPage(param["fileName"], image, param["md5sum"],)
+        return web.json_response(rmsg, status=200)  # all good
 
     async def uploadCollidingPage(self, request):
         data = await request.json()
@@ -128,9 +125,21 @@ class UploadHandler:
         else:
             return web.Response(status=401)
 
+    async def getUnknownPageNames(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rval = self.server.getUnknownPageNames()
+            return web.json_response(rval, status=200)  # all fine
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_put("/admin/knownPages/{tpv}", self.uploadKnownPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
         router.add_put("/admin/missingPage/{tpv}", self.replaceMissingPage)
         router.add_delete("/admin/scannedPage/{tpv}", self.removeScannedPage)
+        router.add_get("/admin/unknownPages", self.getUnknownPageNames)

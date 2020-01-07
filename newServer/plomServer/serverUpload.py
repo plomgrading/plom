@@ -130,3 +130,7 @@ def removeScannedPage(self, testNumber, pageNumber, version):
             "annot{}p{}v{}".format(testNumber, pageNumber, version),
         )
     return [True]
+
+
+def getUnknownPageNames(self):
+    return self.DB.getUnknownPageNames()

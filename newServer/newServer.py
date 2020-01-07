@@ -108,6 +108,7 @@ class Server(object):
         addCollidingPage,
         replaceMissingPage,
         removeScannedPage,
+        getUnknownPageNames,
     )
     from plomServer.serverID import (
         IDprogressCount,

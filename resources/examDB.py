@@ -677,6 +677,12 @@ class PlomDB:
         else:
             return [True, True, pref.version]
 
+    def getUnknownPageNames(self):
+        rval = []
+        for uref in UnknownPages.select():
+            rval.append(uref.fileName)
+        return rval
+
     # ------------------
     # Reporting functions
 

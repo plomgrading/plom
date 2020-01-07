@@ -17,7 +17,7 @@ import signal
 import sys
 import traceback as tblib
 from PyQt5.QtCore import pyqtSlot, QTimer
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QApplication,
     QDialog,
@@ -163,6 +163,7 @@ class Manager(QWidget):
         self.getPQV()
         self.initScanTab()
         self.initMarkTab()
+        self.initUnknownTab()
 
     # -------------------
     def getPQV(self):
@@ -182,9 +183,6 @@ class Manager(QWidget):
             for (p, v) in scanned[t]:
                 l0.addChild(QTreeWidgetItem(["", str(p), str(v)]))
             self.ui.scanTW.addTopLevelItem(l0)
-
-    def todo(self, msg=""):
-        ErrorMessage("This is on our to-do list" + msg).exec_()
 
     def refreshIList(self):
         # delete the children of each toplevel items
@@ -283,6 +281,19 @@ class Manager(QWidget):
             for v in range(1, self.numberOfVersions + 1):
                 stats = managerMessenger.getProgress(q, v)
                 self.pd[(q, v)].refresh(stats)
+
+    def todo(self, msg=""):
+        ErrorMessage("This is on our to-do list" + msg).exec_()
+
+    def initUnknownTab(self):
+        self.unknownModel = QStandardItemModel(self.ui.unknownLV)
+        self.ui.unknownLV.setModel(self.unknownModel)
+        self.refreshUList()
+
+    def refreshUList(self):
+        unkList = managerMessenger.getUnknownPageNames()
+        for u in unkList:
+            self.unknownModel.appendRow(QStandardItem(u))
 
 
 # Pop up a dialog for unhandled exceptions and then exit
