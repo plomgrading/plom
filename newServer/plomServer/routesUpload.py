@@ -111,8 +111,26 @@ class UploadHandler:
         else:
             return web.Response(status=401)
 
+    async def removeScannedPage(self, request):
+        code = request.match_info["tpv"]
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rval = self.server.removeScannedPage(
+                data["test"], data["page"], data["version"]
+            )
+            if rval[0]:
+                return web.json_response(rval, status=200)  # all fine
+            else:
+                return web.Response(status=404)  # page not found at all
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_put("/admin/knownPages/{tpv}", self.uploadKnownPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
         router.add_put("/admin/missingPage/{tpv}", self.replaceMissingPage)
+        router.add_delete("/admin/scannedPage/{tpv}", self.removeScannedPage)

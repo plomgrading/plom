@@ -254,6 +254,37 @@ def replaceMissingPage(code, t, p, v):
     return rval
 
 
+def removeScannedPage(code, t, p, v):
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/admin/scannedPage/{}".format(server, message_port, code),
+            verify=False,
+            json={
+                "user": _userName,
+                "token": _token,
+                "test": t,
+                "page": p,
+                "version": v,
+            },
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the TPV - this should not happen!"
+            )
+        elif response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
 def startMessenger():
     """Start the messenger session"""
     print("Starting a requests-session")

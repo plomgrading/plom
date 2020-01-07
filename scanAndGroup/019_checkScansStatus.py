@@ -184,7 +184,10 @@ if __name__ == "__main__":
     IT = getIncompleteTests()
     print("Test papers unused: [{}]".format(format_int_list_with_runs(UT)))
 
-    print("Scanned tests in the system: [{}]".format(format_int_list_with_runs(ST)))
+    print("Scanned tests in the system:")
+    for t in ST:
+        scannedPages = [x[0] for x in ST[t]]
+        print("\t{}: [{}]".format(t, format_int_list_with_runs(scannedPages)))
 
     print("Incomplete scans - listed with their missing pages: ")
     for t in IT:

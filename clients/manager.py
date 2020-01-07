@@ -172,22 +172,21 @@ class Manager(QWidget):
         self.numberOfVersions = pqv[2]
 
     def initScanTab(self):
-        self.ui.scanTW.setHeaderLabels(["Test number", "Page number"])
+        self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
         self.ui.incompTW.setHeaderLabels(["Test number", "Missing page", "Version"])
         self.refreshIList()
 
         scanned = managerMessenger.getScannedTests()
         for t in scanned:
             l0 = QTreeWidgetItem(["{}".format(t)])
-            for p in range(self.numberOfPages):
-                l0.addChild(QTreeWidgetItem(["", "{}".format(p + 1)]))
+            for (p, v) in scanned[t]:
+                l0.addChild(QTreeWidgetItem(["", str(p), str(v)]))
             self.ui.scanTW.addTopLevelItem(l0)
 
     def todo(self, msg=""):
         ErrorMessage("This is on our to-do list" + msg).exec_()
 
     def refreshIList(self):
-        incomplete = managerMessenger.getIncompleteTests()  # pairs [p,v]
         # delete the children of each toplevel items
         root = self.ui.incompTW.invisibleRootItem()
         for l0 in range(self.ui.incompTW.topLevelItemCount()):
@@ -196,6 +195,7 @@ class Manager(QWidget):
                 l0i.removeChild(l0i.child(0))
             root.removeChild(l0i)
 
+        incomplete = managerMessenger.getIncompleteTests()  # pairs [p,v]
         for t in incomplete:
             l0 = QTreeWidgetItem(["{}".format(t), ""])
             for (p, v) in incomplete[t]:
@@ -203,10 +203,45 @@ class Manager(QWidget):
             self.ui.incompTW.addTopLevelItem(l0)
 
     def refreshSList(self):
-        self.todo()
+        # delete the children of each toplevel items
+        root = self.ui.scanTW.invisibleRootItem()
+        for l0 in range(self.ui.scanTW.topLevelItemCount()):
+            l0i = self.ui.scanTW.topLevelItem(0)
+            for l1 in range(self.ui.scanTW.topLevelItem(0).childCount()):
+                l0i.removeChild(l0i.child(0))
+            root.removeChild(l0i)
+
+        scanned = managerMessenger.getScannedTests()  # pairs [p,v]
+        for t in scanned:
+            l0 = QTreeWidgetItem(["{}".format(t), ""])
+            for (p, v) in scanned[t]:
+                l0.addChild(QTreeWidgetItem(["", str(p), str(v)]))
+            self.ui.scanTW.addTopLevelItem(l0)
 
     def removePage(self):
-        self.todo()
+        # THIS SHOULD KEEP VERSION INFORMATION
+        pvi = self.ui.scanTW.selectedItems()
+        # if nothing selected - return
+        if len(pvi) == 0:
+            return
+        # if selected a top-level item (ie a test) - return
+        if pvi[0].childCount() > 0:
+            return
+        pp = int(pvi[0].text(1))
+        pv = int(pvi[0].text(2))
+        pt = int(pvi[0].parent().text(0))  # grab test number from parent
+        msg = SimpleMessage(
+            "Are you sure you want to remove (p/v) = ({}/{}) of test {}?".format(
+                pp, pv, pt
+            )
+        )
+        if msg.exec_() == QMessageBox.No:
+            return
+        else:
+            code = "t{}p{}v{}".format(str(pt).zfill(4), str(pp).zfill(2), pv)
+            rval = managerMessenger.removeScannedPage(code, pt, pp, pv)
+            ErrorMessage("{}".format(rval)).exec_()
+            self.refreshSList()
 
     def subsPage(self):
         # THIS SHOULD KEEP VERSION INFORMATION

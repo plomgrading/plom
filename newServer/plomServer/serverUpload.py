@@ -96,3 +96,37 @@ def replaceMissingPage(self, testNumber, pageNumber, version):
     )
     shutil.move(originalName, newName)
     return val
+
+
+def removeScannedPage(self, testNumber, pageNumber, version):
+    fnon = self.DB.checkScannedPage(testNumber, pageNumber, version)
+    # returns either None or [filename, originalName, md5sum]
+    if fnon is None:
+        return [False, "Cannot find page"]
+    # need to create a discardedPage object and move files
+    newFilename = "pages/discardedPages/" + os.path.split(fnon[0])[1]
+    shutil.move(fnon[0], newFilename)
+    self.DB.createDiscardedPage(
+        fnon[1],  # originalName
+        newFilename,
+        fnon[2],  # md5sum
+        "Manager removed page",
+        "t{}p{}v{}".format(testNumber, pageNumber, version),
+    )
+    rval = self.DB.removeScannedPage(testNumber, pageNumber, version)
+    if (
+        len(rval) == 5
+    ):  # the page belonged to a marked question group - have to do something with the files
+        # rval = [True, annotatedFile, md5sum, plomFile, commentFile] - save the annot file
+        os.unlink(rval[3])
+        os.unlink(rval[4])
+        newFilename = "pages/discardedPages/" + os.path.split(rval[2])[1]
+        shutil.move(rval[2], newFilename)
+        self.DB.createDiscardedPage(
+            "",
+            newFilename,
+            rval[3],
+            "Page removed post annotation",
+            "annot{}p{}v{}".format(testNumber, pageNumber, version),
+        )
+    return [True]

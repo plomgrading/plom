@@ -426,6 +426,112 @@ class PlomDB:
             self.checkGroupAllUploaded(pref)
             return [True, "success", "Page saved as {}".format(pref.pid)]
 
+    def checkScannedPage(self, t, p, v):
+        tref = Test.get_or_none(testNumber=t)
+        if tref is None:
+            return None
+        pref = Page.get_or_none(test=tref, pageNumber=p, version=v)
+        if pref is None:
+            return None
+        return [pref.fileName, pref.originalName, pref.md5sum]
+
+    def createDiscardedPage(self, oname, fname, md5, r, tpv):
+        DiscardedPages.create(
+            originalName=oname, fileName=fname, md5sum=md5, reason=r, tpv=tpv
+        )
+
+    def removeScannedPage(self, t, p, v):
+        tref = Test.get_or_none(testNumber=t)
+        # first update the page
+        with plomdb.atomic():
+            pref = Page.get_or_none(test=tref, pageNumber=p, version=v)
+            pref.scanned = False
+            pref.originalName = None
+            pref.fileName = None
+            pref.md5sum = None
+            pref.scanned = False
+            pref.save()
+        # now update the group
+        gref = pref.group
+        if gref.groupType == "d":
+            return self.invalidateDNMGroup(tref, gref)
+        elif gref.groupType == "i":
+            return self.invalidateIDGroup(tref, gref)
+        elif gref.groupType == "m":
+            return self.invalidateQGroup(tref, gref)
+        else:
+            print("There is a big problem here.")
+
+    def invalidateDNMGroup(self, gref):
+        with plomdb.atomic():
+            tref.scanned = False
+            tref.finished = False
+            tref.save()
+            gref.scanned = False
+            gref.save()
+        return [True]
+
+    def invalidateIDGroup(self, tref, gref):
+        iref = gref.iddata[0]
+        with plomdb.atomic():
+            tref.scanned = False
+            tref.identified = False
+            tref.finished = False
+            tref.save()
+            gref.scanned = False
+            gref.save()
+            iref.status = ""
+            iref.username = ""
+            iref.time = datetime.now()
+            iref.studentID = None
+            iref.studentName = None
+            iref.save()
+        return [True]
+
+    def invalidateQGroup(self, tref, gref):
+        qref = gref.questiondata[0]
+        sref = tref.sumdata[0]
+        with plomdb.atomic():
+            # update the test
+            tref.scanned = False
+            tref.marked = False
+            tref.totalled = False
+            tref.finished = False
+            tref.save()
+            # update the group
+            gref.scanned = False
+            gref.save()
+            # update the sumdata
+            sref.status = ""
+            sref.sumMark = None
+            sref.username = ""
+            sref.time = datetime.now()
+            sref.summed = False
+            sref.save()
+            # update the questionData - first get filenames if they exist
+            if qref.marked:
+                rval = [
+                    True,
+                    qref.annotatedFile,
+                    qref.md5sum,
+                    qref.plomFile,
+                    qref.commentFile,
+                ]
+            else:
+                rval = [True]
+            qref.marked = False
+            qref.status = ""
+            qref.annotatedFile = None
+            qref.plomFile = None
+            qref.commentFile = None
+            qref.mark = None
+            qref.markingTime = None
+            qref.tags = ""
+            qref.username = ""
+            qref.time = datetime.now()
+            qref.save
+        return rval
+
     def uploadKnownPage(self, t, p, v, oname, nname, md5):
         # return value is either [True, <success message>] or
         # [False, stuff] - but need to distinguish between "discard this image" and "you should perhaps keep this image"
@@ -575,9 +681,13 @@ class PlomDB:
     # Reporting functions
 
     def RgetScannedTests(self):
-        rval = []
-        for t in Test.select().where(Test.scanned == True):
-            rval.append(t.testNumber)
+        rval = {}
+        for tref in Test.select().where(Test.scanned == True):
+            pScanned = []
+            for p in tref.pages:
+                if p.scanned == True:
+                    pScanned.append([p.pageNumber, p.version])
+            rval[tref.testNumber] = pScanned
         return rval
 
     def RgetIncompleteTests(self):
