@@ -81,23 +81,19 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     #df['Student Number'] = df['Student Number'].map(int)
     #df[testheader] = df['Student Number'].map(marks)
 
-    print('Performing "Left Merge"')
-    # TODO: could 'left' lose someone who is in Plom, but missing in Canvas?
-    # https://gitlab.math.ubc.ca/andrewr/MLP/issues/159
-       
-    # MC_edit: i think this works for 159
     dfID = df['Student Number'].tolist()
     marksID = marks['StudentID'].tolist()
     diffList = list(set(marksID).difference(dfID))
     if diffList:
         print('')
-        print('***************************************************************************')
-        print('found the following students in PLOM who do not appear in the Canvas sheet:')
+        print('*'*75)
+        print("Continuing with a 'Left Merge', students in the list above may/will be lost in the output")
         print(diffList)
-        print('***************************************************************************')
+        print('*'*75)
         print('')
     else: 
-        print('all PLOM students found in Canvas')
+        print("Performing 'Left Merge'")
+   
     
     df = pandas.merge(df, marks, how='left',
                       left_on='SIS User ID', right_on='StudentID')
