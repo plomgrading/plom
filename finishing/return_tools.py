@@ -87,12 +87,12 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     if diffList:
         print('')
         print('*'*75)
-        print("Continuing with a 'Left Merge', students in the list above may/will be lost in the output")
+        print("Continuing with a 'Left Merge', students in the list below may/will be lost in the output")
         print(diffList)
         print('*'*75)
         print('')
     else: 
-        print("Performing 'Left Merge'")
+        print("All PLOM students found in Canvas. Performing 'Left Merge'")
    
     
     df = pandas.merge(df, marks, how='left',
