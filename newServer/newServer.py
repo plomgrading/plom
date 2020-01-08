@@ -109,6 +109,7 @@ class Server(object):
         replaceMissingPage,
         removeScannedPage,
         getUnknownPageNames,
+        getPageImage,
     )
     from plomServer.serverID import (
         IDprogressCount,

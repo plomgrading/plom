@@ -136,10 +136,25 @@ class UploadHandler:
         else:
             return web.Response(status=401)
 
+    async def getPageImage(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rval = self.server.getPageImage(data["test"], data["page"], data["version"])
+            if rval[0]:
+                return web.FileResponse(rval[1], status=200)  # all fine
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_put("/admin/knownPages/{tpv}", self.uploadKnownPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
         router.add_put("/admin/missingPage/{tpv}", self.replaceMissingPage)
         router.add_delete("/admin/scannedPage/{tpv}", self.removeScannedPage)
+        router.add_get("/admin/scannedPage/{tpv}", self.getPageImage)
         router.add_get("/admin/unknownPages", self.getUnknownPageNames)

@@ -10,14 +10,12 @@ __license__ = "AGPL-3.0-or-later"
 import toml
 import argparse
 import os
-import marker
-import identifier
-import totaler
 import signal
 import sys
+import tempfile
 import traceback as tblib
-from PyQt5.QtCore import pyqtSlot, QTimer
-from PyQt5.QtGui import QFont, QStandardItem, QStandardItemModel
+from PyQt5.QtCore import pyqtSlot, QSize, QTimer
+from PyQt5.QtGui import QFont, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QApplication,
     QDialog,
@@ -33,6 +31,7 @@ from PyQt5.QtWidgets import (
 )
 from uiFiles.ui_iic import Ui_IIC
 from useful_classes import ErrorMessage, SimpleMessage
+from test_view import GroupView
 from plom_exceptions import *
 
 import managerMessenger
@@ -174,15 +173,10 @@ class Manager(QWidget):
 
     def initScanTab(self):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
+        self.ui.scanTW.doubleClicked.connect(self.viewSPage)
         self.ui.incompTW.setHeaderLabels(["Test number", "Missing page", "Version"])
         self.refreshIList()
-
-        scanned = managerMessenger.getScannedTests()
-        for t in scanned:
-            l0 = QTreeWidgetItem(["{}".format(t)])
-            for (p, v) in scanned[t]:
-                l0.addChild(QTreeWidgetItem(["", str(p), str(v)]))
-            self.ui.scanTW.addTopLevelItem(l0)
+        self.refreshSList()
 
     def refreshIList(self):
         # delete the children of each toplevel items
@@ -216,8 +210,25 @@ class Manager(QWidget):
                 l0.addChild(QTreeWidgetItem(["", str(p), str(v)]))
             self.ui.scanTW.addTopLevelItem(l0)
 
+    def viewSPage(self):
+        pvi = self.ui.scanTW.selectedItems()
+        if len(pvi) == 0:
+            return
+        # if selected a top-level item (ie a test) - return
+        if pvi[0].childCount() > 0:
+            return
+        pp = int(pvi[0].text(1))
+        pv = int(pvi[0].text(2))
+        pt = int(pvi[0].parent().text(0))  # grab test number from parent
+
+        vp = managerMessenger.getPageImage(pt, pp, pv)
+        if vp is None:
+            return
+        with tempfile.NamedTemporaryFile() as fh:
+            fh.write(vp)
+            GroupView([fh.name]).exec_()
+
     def removePage(self):
-        # THIS SHOULD KEEP VERSION INFORMATION
         pvi = self.ui.scanTW.selectedItems()
         # if nothing selected - return
         if len(pvi) == 0:
@@ -288,12 +299,16 @@ class Manager(QWidget):
     def initUnknownTab(self):
         self.unknownModel = QStandardItemModel(self.ui.unknownLV)
         self.ui.unknownLV.setModel(self.unknownModel)
+        self.ui.unknownLV.setIconSize(QSize(128, 128))
         self.refreshUList()
 
     def refreshUList(self):
         unkList = managerMessenger.getUnknownPageNames()
         for u in unkList:
-            self.unknownModel.appendRow(QStandardItem(u))
+            it = QStandardItem(os.path.split(u)[1])
+            it.setIcon(QIcon(QPixmap("./icons/manager_unknown.svg")))
+            it.setEditable(False)
+            self.unknownModel.appendRow(it)
 
 
 # Pop up a dialog for unhandled exceptions and then exit

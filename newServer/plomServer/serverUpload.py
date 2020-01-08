@@ -132,5 +132,9 @@ def removeScannedPage(self, testNumber, pageNumber, version):
     return [True]
 
 
+def getPageImage(self, testNumber, pageNumber, version):
+    return self.DB.getPageImage(testNumber, pageNumber, version)
+
+
 def getUnknownPageNames(self):
     return self.DB.getUnknownPageNames()

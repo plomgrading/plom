@@ -683,6 +683,18 @@ class PlomDB:
             rval.append(uref.fileName)
         return rval
 
+    def getPageImage(self, testNumber, pageNumber, version):
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        pref = Page.get_or_none(
+            Page.test == tref, Page.pageNumber == pageNumber, Page.version == version
+        )
+        if pref is None:
+            return [False]
+        else:
+            return [True, pref.fileName]
+
     # ------------------
     # Reporting functions
 

@@ -306,6 +306,36 @@ def getUnknownPageNames():
     return rval
 
 
+def getPageImage(t, p, v):
+    code = "t{}p{}v{}".format(str(t).zfill(4), str(p).zfill(2), str(v))
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/admin/scannedPage/{}".format(server, message_port, code),
+            verify=False,
+            json={
+                "user": _userName,
+                "token": _token,
+                "test": t,
+                "page": p,
+                "version": v,
+            },
+        )
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        elif response.status_code == 404:
+            return None
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return image
+
+
 def startMessenger():
     """Start the messenger session"""
     print("Starting a requests-session")
