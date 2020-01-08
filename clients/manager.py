@@ -173,7 +173,7 @@ class Manager(QWidget):
 
     def initScanTab(self):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
-        self.ui.scanTW.doubleClicked.connect(self.viewSPage)
+        self.ui.scanTW.activated.connect(self.viewSPage)
         self.ui.incompTW.setHeaderLabels(["Test number", "Missing page", "Version"])
         self.refreshIList()
         self.refreshSList()
