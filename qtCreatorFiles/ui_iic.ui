@@ -407,11 +407,7 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_6">
        <item>
-        <widget class="QListView" name="unknownLV">
-         <property name="viewMode">
-          <enum>QListView::IconMode</enum>
-         </property>
-        </widget>
+        <widget class="QTableView" name="unknownTV"/>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_6">

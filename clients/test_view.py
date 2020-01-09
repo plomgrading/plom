@@ -67,7 +67,7 @@ class GroupView(QDialog):
         super(GroupView, self).__init__()
         grid = QGridLayout()
         self.testImg = ExamViewWindow(fnames)
-        self.closeButton = QPushButton("Close")
+        self.closeButton = QPushButton("&Close")
         self.maxNormButton = QPushButton("Max/Norm")
         grid.addWidget(self.testImg, 1, 1, 6, 6)
         grid.addWidget(self.closeButton, 7, 7)

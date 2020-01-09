@@ -14,9 +14,10 @@ import signal
 import sys
 import tempfile
 import traceback as tblib
-from PyQt5.QtCore import pyqtSlot, QSize, QTimer
+from PyQt5.QtCore import Qt, pyqtSlot, QSize, QTimer
 from PyQt5.QtGui import QFont, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
+    QAbstractItemView,
     QApplication,
     QDialog,
     QGridLayout,
@@ -297,18 +298,45 @@ class Manager(QWidget):
         ErrorMessage("This is on our to-do list" + msg).exec_()
 
     def initUnknownTab(self):
-        self.unknownModel = QStandardItemModel(self.ui.unknownLV)
-        self.ui.unknownLV.setModel(self.unknownModel)
-        self.ui.unknownLV.setIconSize(QSize(128, 128))
+        self.unknownModel = QStandardItemModel(0, 5)
+        self.ui.unknownTV.setModel(self.unknownModel)
+        self.ui.unknownTV.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.unknownTV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.unknownModel.setHorizontalHeaderLabels(
+            ["FullFile", "File", "Action", "Rotation-angle", "TPV"]
+        )
+        self.ui.unknownTV.setIconSize(QSize(96, 96))
+        self.ui.unknownTV.activated.connect(self.viewUPage)
+        self.ui.unknownTV.setColumnHidden(0, True)
         self.refreshUList()
 
     def refreshUList(self):
         unkList = managerMessenger.getUnknownPageNames()
+        r = 0
         for u in unkList:
-            it = QStandardItem(os.path.split(u)[1])
-            it.setIcon(QIcon(QPixmap("./icons/manager_unknown.svg")))
-            it.setEditable(False)
-            self.unknownModel.appendRow(it)
+            it0 = QStandardItem(os.path.split(u)[1])
+            it0.setIcon(QIcon(QPixmap("./icons/manager_unknown.svg")))
+            it1 = QStandardItem("?")
+            it1.setTextAlignment(Qt.AlignCenter)
+            it2 = QStandardItem("0")
+            it2.setTextAlignment(Qt.AlignCenter)
+            self.unknownModel.insertRow(r, [QStandardItem(u), it0, it1, it2])
+            r += 1
+        self.ui.unknownTV.resizeRowsToContents()
+        self.ui.unknownTV.resizeColumnsToContents()
+
+    def viewUPage(self):
+        pvi = self.ui.unknownTV.selectedIndexes()
+        if len(pvi) == 0:
+            return
+        r = pvi[0].row()
+        fname = self.unknownModel.item(r, 0).text()
+        vp = managerMessenger.getUnknownImage(fname)
+        if vp is None:
+            return
+        with tempfile.NamedTemporaryFile() as fh:
+            fh.write(vp)
+            GroupView([fh.name]).exec_()
 
 
 # Pop up a dialog for unhandled exceptions and then exit

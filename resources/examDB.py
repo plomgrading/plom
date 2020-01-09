@@ -695,6 +695,13 @@ class PlomDB:
         else:
             return [True, pref.fileName]
 
+    def getUnknownImage(self, fname):
+        uref = UnknownPages.get_or_none(UnknownPages.fileName == fname)
+        if uref is None:
+            return [False]
+        else:
+            return [True, uref.fileName]
+
     # ------------------
     # Reporting functions
 

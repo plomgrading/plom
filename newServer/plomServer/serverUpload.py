@@ -136,5 +136,9 @@ def getPageImage(self, testNumber, pageNumber, version):
     return self.DB.getPageImage(testNumber, pageNumber, version)
 
 
+def getUnknownImage(self, fname):
+    return self.DB.getUnknownImage(fname)
+
+
 def getUnknownPageNames(self):
     return self.DB.getUnknownPageNames()
