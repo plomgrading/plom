@@ -81,18 +81,19 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     #df['Student Number'] = df['Student Number'].map(int)
     #df[testheader] = df['Student Number'].map(marks)
 
-    dfID = df['Student Number'].tolist()
-    marksID = marks['StudentID'].tolist()
+    dfID = df["Student Number"].tolist()
+    marksID = marks["StudentID"].tolist()
     diffList = list(set(marksID).difference(dfID))
     if diffList:
-        print('')
-        print('*'*75)
-        print("Continuing with a 'Left Merge', students in the list below may/will be lost in the output")
+        print("")
+        print("*"*75)
+        print("Found the following students who do not appear in the Canvas sheet:")
         print(diffList)
-        print('*'*75)
-        print('')
+        print('Continuing with a "Left Merge", students listed above may be lost in the output.')
+        print("*"*75)
+        print("")
     else:
-        print("All PLOM students found in Canvas. Performing 'Left Merge'")
+        print('All students found in Canvas. Performing "Left Merge"')
 
     df = pandas.merge(df, marks, how='left',
                       left_on='SIS User ID', right_on='StudentID')
