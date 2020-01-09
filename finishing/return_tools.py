@@ -91,10 +91,9 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
         print(diffList)
         print('*'*75)
         print('')
-    else: 
+    else:
         print("All PLOM students found in Canvas. Performing 'Left Merge'")
-   
-    
+
     df = pandas.merge(df, marks, how='left',
                       left_on='SIS User ID', right_on='StudentID')
     df[testheader] = df['Total']
