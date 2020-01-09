@@ -86,11 +86,11 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     diffList = list(set(marksID).difference(dfID))
     if diffList:
         print("")
-        print("*"*75)
-        print("Found the following students who do not appear in the Canvas sheet:")
-        print(diffList)
-        print('Continuing with a "Left Merge", students listed above may be lost in the output.')
-        print("*"*75)
+        print("*"*72)
+        print("Warning: the following students who do not appear in the Canvas sheet:")
+        print(", ".join(diffList))
+        print('Continuing with "Left Merge": students above may be lost in the output.')
+        print("*"*72)
         print("")
     else:
         print('All students found in Canvas. Performing "Left Merge"')
