@@ -2,8 +2,8 @@
 
 """Misc tools related to digital return"""
 
-__author__ = "Colin B. Macdonald"
-__copyright__ = "Copyright (C) 2018-2019 Colin B. Macdonald"
+__author__ = "Colin B. Macdonald, Matthew Coles"
+__copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald, Matthew Coles"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -81,9 +81,20 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     #df['Student Number'] = df['Student Number'].map(int)
     #df[testheader] = df['Student Number'].map(marks)
 
-    print('Performing "Left Merge"')
-    # TODO: could 'left' lose someone who is in Plom, but missing in Canvas?
-    # https://gitlab.math.ubc.ca/andrewr/MLP/issues/159
+    dfID = df["Student Number"].tolist()
+    marksID = marks["StudentID"].tolist()
+    diffList = list(set(marksID).difference(dfID))
+    if diffList:
+        print("")
+        print("*"*72)
+        print("Warning: the following students do not appear in the Canvas sheet:")
+        print(", ".join(diffList))
+        print('Continuing with "Left Merge": students above may be lost in the output!')
+        print("*"*72)
+        print("")
+    else:
+        print('All students found in Canvas. Performing "Left Merge"')
+
     df = pandas.merge(df, marks, how='left',
                       left_on='SIS User ID', right_on='StudentID')
     df[testheader] = df['Total']
