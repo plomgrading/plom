@@ -92,6 +92,7 @@ class Annotator(QWidget):
     def __init__(
         self,
         tgv,
+        testname,
         paperdir,
         fname,
         maxMark,
@@ -108,6 +109,7 @@ class Annotator(QWidget):
         # Grab filename of image, max mark, mark style (total/up/down)
         # and mouse-hand (left/right)
         self.tgv = tgv
+        self.testname = testname
         self.paperdir = paperdir
         self.imageFile = fname
         self.maxMark = maxMark

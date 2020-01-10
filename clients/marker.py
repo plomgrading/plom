@@ -493,13 +493,14 @@ class MarkerClient(QWidget):
     def __init__(self):
         super(MarkerClient, self).__init__()
 
-    def getToWork(self, mess, pageGroup, version, lastTime):
+    def getToWork(self, mess, testname, pageGroup, version, lastTime):
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
         # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # Save the group and version.
+        self.testname = testname
         self.pageGroup = pageGroup
         self.version = version
         # create max-mark, but not set until we get info from server
@@ -509,9 +510,10 @@ class MarkerClient(QWidget):
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
+        self.setWindowTitle('Plom Marker: "{}"'.format(self.testname))
         # Paste the username, pagegroup and version into GUI.
         self.ui.userBox.setTitle("User: {}".format(messenger.whoami()))
-        self.ui.pgLabel.setText(str(self.pageGroup).zfill(2))
+        self.ui.pgLabel.setText("{} of {}".format(str(self.pageGroup).zfill(2), self.testname))
         self.ui.vLabel.setText(str(self.version))
         # Exam model for the table of groupimages - connect to table
         self.exM = ExamModel()
@@ -869,6 +871,7 @@ class MarkerClient(QWidget):
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
             tgv,
+            self.testname,
             paperdir,
             fname,
             self.maxScore,
