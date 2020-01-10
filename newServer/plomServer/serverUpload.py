@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 import shlex
 import shutil
@@ -142,3 +143,48 @@ def getUnknownImage(self, fname):
 
 def getUnknownPageNames(self):
     return self.DB.getUnknownPageNames()
+
+
+def getQuestionImages(self, testNumber, questionNumber):
+    return self.DB.getQuestionImages(testNumber, questionNumber)
+
+
+def getTestImages(self, testNumber):
+    return self.DB.getTestImages(testNumber)
+
+
+def checkPage(self, testNumber, pageNumber):
+    return self.DB.checkPage(testNumber, pageNumber)
+
+
+def removeUnknownImage(self, fname):
+    fnon = self.DB.checkUnknownImage(fname)
+    # returns either None or [filename, originalName, md5sum]
+    if fnon is None:
+        return [False, "Cannot find page"]
+    # need to create a discardedPage object and move files
+    newFilename = "pages/discardedPages/" + os.path.split(fnon[0])[1]
+    shutil.move(fnon[0], newFilename)
+    self.DB.createDiscardedPage(
+        fnon[1],  # originalName
+        newFilename,
+        fnon[2],  # md5sum
+        "Manager removed page",
+        "",
+    )
+    rval = self.DB.removeUnknownImage(fname)
+    return [True]
+
+def unknowToTestPage(self, fname, tp, rotation)
+    return False
+    # [t,p]= json.loads(tp)
+    # fnon = self.DB.checkUnknownImage(fname)
+    # # returns either None or [filename, originalName, md5sum]
+    # if fnon is None:
+    #     return [False, "Cannot find page"]
+    # # need to create a discardedPage object and move files
+    # newFilename = "pages/discardedPages/" + os.path.split(fnon[0])[1]
+
+
+    # rval = self.DB.removeUnknownImage(fname)
+    # return [True]

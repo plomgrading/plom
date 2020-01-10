@@ -164,6 +164,94 @@ class UploadHandler:
         else:
             return web.Response(status=401)
 
+    async def getQuestionImages(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rmsg = self.server.getQuestionImages(data["test"], data["question"])
+            # returns either [True, fname1,fname2,..,fname.n] or [False, error]
+            if rmsg[0]:
+                with MultipartWriter("images") as mpwriter:
+                    for fn in rmsg[1:]:
+                        mpwriter.append(open(fn, "rb"))
+                return web.Response(body=mpwriter, status=200)
+            else:
+                return web.Response(status=404)  # couldnt find that test/question
+        else:
+            return web.Response(status=401)  # not authorised at all
+
+    async def getTestImages(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rmsg = self.server.getTestImages(data["test"])
+            # returns either [True, fname1,fname2,..,fname.n] or [False, error]
+            if rmsg[0]:
+                with MultipartWriter("images") as mpwriter:
+                    for fn in rmsg[1:]:
+                        if fn is "":
+                            mpwriter.append("")
+                        else:
+                            mpwriter.append(open(fn, "rb"))
+                return web.Response(body=mpwriter, status=200)
+            else:
+                return web.Response(status=404)  # couldnt find that test/question
+        else:
+            return web.Response(status=401)  # not authorised at all
+
+    async def checkPage(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rmsg = self.server.checkPage(data["test"], data["page"])
+            # returns either [True, version, fname], [True, version] or [False]
+            if rmsg[0]:
+                with MultipartWriter("images") as mpwriter:
+                    mpwriter.append("{}".format(rmsg[1]))
+                    if len(rmsg) == 3:
+                        mpwriter.append(open(rmsg[2], "rb"))
+                return web.Response(body=mpwriter, status=200)
+            else:
+                return web.Response(status=404)  # couldnt find that test/question
+        else:
+            return web.Response(status=401)  # not authorised at all
+
+    async def removeUnknownImage(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rval = self.server.removeUnknownImage(data["fileName"])
+            if rval[0]:
+                return web.Response(status=200)  # all fine
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=401)
+
+    async def unknownToTestPage(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rval = self.server.unknownToTestPage(
+                data["fileName"], data["tp"], data["rotation"]
+            )
+            if rval[0]:
+                return web.FileResponse(status=200)  # all fine
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_put("/admin/knownPages/{tpv}", self.uploadKnownPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
@@ -172,4 +260,9 @@ class UploadHandler:
         router.add_delete("/admin/scannedPage/{tpv}", self.removeScannedPage)
         router.add_get("/admin/scannedPage/{tpv}", self.getPageImage)
         router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)
-        router.add_get("/admin/unknownPage", self.getUnknownImage)
+        router.add_get("/admin/unknownImage", self.getUnknownImage)
+        router.add_get("/admin/questionImages", self.getQuestionImages)
+        router.add_get("/admin/testImages", self.getTestImages)
+        router.add_get("/admin/checkPage", self.checkPage)
+        router.add_delete("/admin/unknownImage", self.removeUnknownImage)
+        router.add_put("/admin/unknowToTestPage", self.unknowToTestPage)

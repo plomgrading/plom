@@ -98,6 +98,7 @@ class Server(object):
         InfoShortName,
         InfoQuestionsVersions,
         InfoPQV,
+        InfoTPQV,
         reloadUsers,
         giveUserToken,
         closeUser,
@@ -111,6 +112,10 @@ class Server(object):
         getUnknownPageNames,
         getUnknownImage,
         getPageImage,
+        getQuestionImages,
+        getTestImages,
+        checkPage,
+        removeUnknownImage,
     )
     from plomServer.serverID import (
         IDprogressCount,

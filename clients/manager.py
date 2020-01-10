@@ -32,7 +32,8 @@ from PyQt5.QtWidgets import (
 )
 from uiFiles.ui_iic import Ui_IIC
 from useful_classes import ErrorMessage, SimpleMessage
-from test_view import GroupView
+from test_view import WholeTestView, GroupView
+from unknownpageview import UnknownViewWindow
 from plom_exceptions import *
 
 import managerMessenger
@@ -107,8 +108,10 @@ class Manager(QWidget):
         self.ui.refreshIButton.clicked.connect(self.refreshIList)
         self.ui.refreshPButton.clicked.connect(self.refreshMTab)
         self.ui.refreshSButton.clicked.connect(self.refreshSList)
+        self.ui.refreshUButton.clicked.connect(self.refreshUList)
         self.ui.removePageB.clicked.connect(self.removePage)
         self.ui.subsPageB.clicked.connect(self.subsPage)
+        self.ui.actionUButton.clicked.connect(self.doUActions)
 
     def closeWindow(self):
         self.close()
@@ -160,17 +163,18 @@ class Manager(QWidget):
         self.ui.serverGBox.setEnabled(False)
         self.ui.loginButton.setEnabled(False)
 
-        self.getPQV()
+        self.getTPQV()
         self.initScanTab()
         self.initMarkTab()
         self.initUnknownTab()
 
     # -------------------
-    def getPQV(self):
-        pqv = managerMessenger.getInfoPQV()
-        self.numberOfPages = pqv[0]
-        self.numberOfQuestions = pqv[1]
-        self.numberOfVersions = pqv[2]
+    def getTPQV(self):
+        pqv = managerMessenger.getInfoTPQV()
+        self.numberOfTests = pqv[0]
+        self.numberOfPages = pqv[1]
+        self.numberOfQuestions = pqv[2]
+        self.numberOfVersions = pqv[3]
 
     def initScanTab(self):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
@@ -276,7 +280,7 @@ class Manager(QWidget):
             code = "t{}p{}v{}".format(str(pt).zfill(4), str(pp).zfill(2), pv)
             rval = managerMessenger.replaceMissingPage(code, pt, pp, pv)
             ErrorMessage("{}".format(rval)).exec_()
-            self.refeshIList()
+            self.refreshIList()
 
     def initMarkTab(self):
         grid = QGridLayout()
@@ -303,7 +307,13 @@ class Manager(QWidget):
         self.ui.unknownTV.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.unknownTV.setSelectionMode(QAbstractItemView.SingleSelection)
         self.unknownModel.setHorizontalHeaderLabels(
-            ["FullFile", "File", "Action", "Rotation-angle", "TPV"]
+            [
+                "FullFile",
+                "File",
+                "Action to be taken",
+                "Rotation-angle",
+                "[Test,Page] or [Test,Question]",
+            ]
         )
         self.ui.unknownTV.setIconSize(QSize(96, 96))
         self.ui.unknownTV.activated.connect(self.viewUPage)
@@ -311,6 +321,7 @@ class Manager(QWidget):
         self.refreshUList()
 
     def refreshUList(self):
+        self.unknownModel.removeRows(0, self.unknownModel.rowCount())
         unkList = managerMessenger.getUnknownPageNames()
         r = 0
         for u in unkList:
@@ -320,7 +331,9 @@ class Manager(QWidget):
             it1.setTextAlignment(Qt.AlignCenter)
             it2 = QStandardItem("0")
             it2.setTextAlignment(Qt.AlignCenter)
-            self.unknownModel.insertRow(r, [QStandardItem(u), it0, it1, it2])
+            it3 = QStandardItem("")
+            it3.setTextAlignment(Qt.AlignCenter)
+            self.unknownModel.insertRow(r, [QStandardItem(u), it0, it1, it2, it3])
             r += 1
         self.ui.unknownTV.resizeRowsToContents()
         self.ui.unknownTV.resizeColumnsToContents()
@@ -336,6 +349,110 @@ class Manager(QWidget):
             return
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(vp)
+            uvw = UnknownViewWindow(
+                self,
+                [fh.name],
+                [self.numberOfTests, self.numberOfPages, self.numberOfQuestions],
+            )
+            if uvw.exec_() == QDialog.Accepted:
+                self.unknownModel.item(r, 2).setText(uvw.action)
+                self.unknownModel.item(r, 3).setText("{}".format(uvw.theta))
+                self.unknownModel.item(r, 4).setText("{}".format(uvw.tptq))
+                if uvw.action == "discard":
+                    self.unknownModel.item(r, 1).setIcon(
+                        QIcon(QPixmap("./icons/manager_discard.svg"))
+                    )
+                elif uvw.action == "extra":
+                    self.unknownModel.item(r, 1).setIcon(
+                        QIcon(QPixmap("./icons/manager_extra.svg"))
+                    )
+                elif uvw.action == "test":
+                    self.unknownModel.item(r, 1).setIcon(
+                        QIcon(QPixmap("./icons/manager_test.svg"))
+                    )
+
+    def doUActions(self):
+        for r in range(self.unknownModel.rowCount()):
+            if self.unknownModel.item(r, 2).text() == "discard":
+                managerMessenger.discardUnknownImage(
+                    self.unknownModel.item(r, 0).text()
+                )
+            elif self.unknownModel.item(r, 2).text() == "extra":
+                # managerMessenger.unknowToExtraPage(
+                #     self.unknownModel.item(r, 0).text(),
+                #     self.unknownModel.item(r, 4).text(),
+                #     self.unknownModel.item(r, 3).text(),
+                # )
+                print(
+                    "File {} is extra page for test/question = {}. Rotate {}".format(
+                        self.unknownModel.item(r, 0).text(),
+                        self.unknownModel.item(r, 4).text(),
+                        self.unknownModel.item(r, 3).text(),
+                    )
+                )
+            elif self.unknownModel.item(r, 2).text() == "test":
+                managerMessenger.unknowToTestPage(
+                    self.unknownModel.item(r, 0).text(),
+                    self.unknownModel.item(r, 4).text(),
+                    self.unknownModel.item(r, 3).text(),
+                )
+                # print(
+                #     "File {} is identified as test/page = {}. Rotate {}".format(
+                #         self.unknownModel.item(r, 0).text(),
+                #         self.unknownModel.item(r, 4).text(),
+                #         self.unknownModel.item(r, 3).text(),
+                #     )
+                # )
+            else:
+                print(
+                    "No action for file {}.".format(self.unknownModel.item(r, 0).text())
+                )
+
+    def viewWholeTest(self, testNumber):
+        vt = managerMessenger.getTestImages(testNumber)
+        if vt is None:
+            return
+        with tempfile.TemporaryDirectory() as td:
+            inames = []
+            for i in range(len(vt)):
+                iname = td + "img.{}.png".format(i)
+                with open(iname, "wb") as fh:
+                    fh.write(vt[i])
+                inames.append(iname)
+            tv = WholeTestView(inames)
+            tv.exec_()
+
+    def viewQuestion(self, testNumber, questionNumber):
+        vq = managerMessenger.getQuestionImages(testNumber, questionNumber)
+        if vq is None:
+            return
+        with tempfile.TemporaryDirectory() as td:
+            inames = []
+            for i in range(len(vq)):
+                iname = td + "img.{}.png".format(i)
+                with open(iname, "wb") as fh:
+                    fh.write(vq[i])
+                inames.append(iname)
+            qv = GroupView(inames)
+            qv.exec_()
+
+    def checkPage(self, testNumber, pageNumber):
+        cp = managerMessenger.checkPage(testNumber, pageNumber)
+        # returns [v, image] or [v, imageBytes]
+        if cp[1] == None:
+            ErrorMessage(
+                "Page {} of test {} is not scanned - should be version {}".format(
+                    pageNumber, testNumber, cp[0]
+                )
+            ).exec_()
+            return
+        with tempfile.NamedTemporaryFile() as fh:
+            fh.write(cp[1])
+            ErrorMessage(
+                "WARNING: potential collision! Page {} of test {} has been scanned already.".format(
+                    pageNumber, testNumber
+                )
+            ).exec_()
             GroupView([fh.name]).exec_()
 
 

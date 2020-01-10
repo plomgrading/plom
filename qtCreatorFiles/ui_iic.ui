@@ -412,7 +412,7 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_6">
          <item>
-          <widget class="QPushButton" name="pushButton">
+          <widget class="QPushButton" name="refreshUButton">
            <property name="text">
             <string>Refresh</string>
            </property>
@@ -430,6 +430,13 @@
             </size>
            </property>
           </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="actionUButton">
+           <property name="text">
+            <string>Perform actions</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>

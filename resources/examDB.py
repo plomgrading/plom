@@ -702,6 +702,57 @@ class PlomDB:
         else:
             return [True, uref.fileName]
 
+    def getQuestionImages(self, testNumber, questionNumber):
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        qref = QuestionData.get_or_none(
+            QuestionData.test == tref, QuestionData.questionNumber == questionNumber
+        )
+        if qref is None:
+            return [False]
+        rval = [True]
+        for p in qref.group.pages.order_by(Page.pageNumber):
+            rval.append(p.fileName)
+        return rval
+
+    def getTestImages(self, testNumber):
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        rval = [True]
+        for p in tref.pages.order_by(Page.pageNumber):
+            rval.append(p.fileName)
+        return rval
+
+    def checkPage(self, testNumber, pageNumber):
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        pref = Page.get_or_none(Page.test == tref, Page.pageNumber == pageNumber)
+        if pref is None:
+            return [False]
+        if pref.scanned:
+            return [True, pref.version, pref.fileName]
+        else:
+            return [True, pref.version]
+
+    def checkUnknownImage(self, fname):
+        print("BAH {} {}".format(type(fname), fname))
+        uref = UnknownPages.get_or_none(UnknownPages.fileName == fname)
+        if uref is None:
+            return None
+        return [uref.fileName, uref.originalName, uref.md5sum]
+
+    def removeUnknownImage(self, fname):
+        print("ARGH {} {}".format(type(fname), fname))
+        uref = UnknownPages.get_or_none(UnknownPages.fileName == fname)
+        if uref is None:
+            return False
+        with plomdb.atomic():
+            uref.delete_instance()
+        return True
+
     # ------------------
     # Reporting functions
 

@@ -148,6 +148,30 @@ def getInfoPQV():
     return pqv
 
 
+def getInfoTPQV():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/info/numberOfTPQV".format(server, message_port),
+            verify=False,
+        )
+        response.raise_for_status()
+        tpqv = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            )
+        elif response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return tpqv
+
+
 def getScannedTests():
     SRmutex.acquire()
     try:
@@ -340,7 +364,7 @@ def getUnknownImage(fname):
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/admin/unknownPage".format(server, message_port),
+            "https://{}:{}/admin/unknownImage".format(server, message_port),
             verify=False,
             json={"user": _userName, "token": _token, "fileName": fname,},
         )
@@ -355,8 +379,151 @@ def getUnknownImage(fname):
             raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
-
     return image
+
+
+def discardUnknownImage(fname):
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/admin/unknownImage".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token, "fileName": fname,},
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        elif response.status_code == 404:
+            return False
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+    return True
+
+
+def getQuestionImages(testNumber, questionNumber):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/admin/questionImages".format(server, message_port),
+            json={
+                "user": _userName,
+                "token": _token,
+                "test": testNumber,
+                "question": questionNumber,
+            },
+            verify=False,
+        )
+        response.raise_for_status()
+        # response is [image1, image2,... image.n]
+        imageList = []
+        for img in MultipartDecoder.from_response(response).parts:
+            imageList.append(BytesIO(img.content).getvalue())
+
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException(
+                "Cannot find image file for {}/{}.".format(testNumber, questionNumber)
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return imageList
+
+
+def getTestImages(testNumber):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/admin/testImages".format(server, message_port),
+            json={"user": _userName, "token": _token, "test": testNumber,},
+            verify=False,
+        )
+        response.raise_for_status()
+        # response is [image1, image2,... image.n]
+        imageList = []
+        for img in MultipartDecoder.from_response(response).parts:
+            imageList.append(BytesIO(img.content).getvalue())
+
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException(
+                "Cannot find image file for {}.".format(testNumber)
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return imageList
+
+
+def checkPage(testNumber, pageNumber):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/admin/checkPage".format(server, message_port),
+            json={
+                "user": _userName,
+                "token": _token,
+                "test": testNumber,
+                "page": pageNumber,
+            },
+            verify=False,
+        )
+        response.raise_for_status()
+        # response is [v, None] or [v, image1]
+        vimg = MultipartDecoder.from_response(response).parts
+        ver = int(vimg[0].content)
+        if len(vimg) == 2:
+            rval = [ver, BytesIO(vimg[1].content).getvalue()]
+        else:
+            rval = [ver, None]
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException(
+                "Cannot find image file for {}.".format(testNumber)
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+    return rval
+
+
+def unknowToTestPage(fname, tp, theta):
+    SRmutex.acquire()
+    try:
+        response = session.put(
+            "https://{}:{}/admin/unknownToTestPage".format(server, message_port),
+            json={
+                "user": _userName,
+                "token": _token,
+                "testPage": tp,
+                "rotation": theta,
+            },
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException("Cannot find test/page {}.".format(tp))
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
 
 
 def startMessenger():
