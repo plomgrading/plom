@@ -29,7 +29,6 @@ class Test(Model):
     marked = BooleanField(default=False)
     finished = BooleanField(default=False)
     totalled = BooleanField(default=False)
-    hasCollisions = BooleanField(default=False)
 
     class Meta:
         database = plomdb
@@ -43,7 +42,6 @@ class Group(Model):
     groupType = CharField()  # to distinguish between ID, DNM, and Mark groups
     # flags
     scanned = BooleanField(default=False)
-    hasCollisions = BooleanField(default=False)
 
     class Meta:
         database = plomdb
@@ -114,7 +112,6 @@ class Page(Model):
     md5sum = CharField(null=True)  # to check for duplications
     # flags
     scanned = BooleanField(default=False)
-    hasCollisions = BooleanField(default=False)
 
     class Meta:
         database = plomdb
@@ -122,7 +119,7 @@ class Page(Model):
 
 # Colliding pages should be attached to the page their are duplicating
 # When collision status resolved we can move them about.
-class CollidingPages(Model):
+class CollidingPage(Model):
     page = ForeignKeyField(Page, backref="collisions")
     originalName = CharField(null=True)
     fileName = CharField(null=True)
@@ -133,7 +130,7 @@ class CollidingPages(Model):
 
 
 # Unknown pages are basically just the file
-class UnknownPages(Model):
+class UnknownPage(Model):
     originalName = CharField(null=True)
     fileName = CharField(null=True)
     md5sum = CharField()
@@ -144,7 +141,7 @@ class UnknownPages(Model):
 
 # Discarded pages are basically just the file and a reason
 # reason could be "garbage", "duplicate of tpv-code", ...?
-class DiscardedPages(Model):
+class DiscardedPage(Model):
     originalName = CharField(null=True)
     fileName = CharField(null=True)
     md5sum = CharField()
@@ -166,9 +163,9 @@ class PlomDB:
                     QuestionData,
                     SumData,
                     Page,
-                    UnknownPages,
-                    CollidingPages,
-                    DiscardedPages,
+                    UnknownPage,
+                    CollidingPage,
+                    DiscardedPage,
                 ]
             )
 
@@ -436,7 +433,7 @@ class PlomDB:
         return [pref.fileName, pref.originalName, pref.md5sum]
 
     def createDiscardedPage(self, oname, fname, md5, r, tpv):
-        DiscardedPages.create(
+        DiscardedPage.create(
             originalName=oname, fileName=fname, md5sum=md5, reason=r, tpv=tpv
         )
 
@@ -577,7 +574,7 @@ class PlomDB:
         # return value is either [True, <success message>] or
         # [False, <duplicate message>]
         # check if md5 is already in Unknown pages
-        uref = UnknownPages.get_or_none(md5sum=md5)
+        uref = UnknownPage.get_or_none(md5sum=md5)
         if uref is not None:
             return [
                 False,
@@ -585,9 +582,9 @@ class PlomDB:
                 "Exact duplicate of page already in database",
             ]
         with plomdb.atomic():
-            uref = UnknownPages.create(originalName=oname, fileName=nname, md5sum=md5)
+            uref = UnknownPage.create(originalName=oname, fileName=nname, md5sum=md5)
             uref.save()
-        return [True, "success", "Page saved in unknownPages list"]
+        return [True, "success", "Page saved in UnknownPage list"]
 
     def uploadCollidingPage(self, t, p, v, oname, nname, md5):
         tref = Test.get_or_none(testNumber=t)
@@ -616,52 +613,15 @@ class PlomDB:
                     "Exact duplicate of page already in database",
                 ]
         with plomdb.atomic():
-            cref = CollidingPages.create(
+            cref = CollidingPage.create(
                 originalName=oname, fileName=nname, md5sum=md5, page=pref
             )
             cref.save()
-        self.flagCollisions(pref)
         return [
             True,
             "success",
             "Colliding page saved, attached to {}".format(pref.pid),
         ]
-
-    def flagCollisions(self, pref):
-        # TODO - Colin we need to think about this very carefully.
-        with plomdb.atomic():
-            pref.hasCollisions = True
-            pref.save()
-
-            gref = pref.group
-            tref = gref.test
-            if gref.groupType == "d":  # we don't care
-                pass
-            else:  # for either i or m groups the test is not finished.
-                gref.hasCollisions = True
-                gref.status = (
-                    ""  # TODO - will this mess up any papers that are out with clients?
-                )
-                tref.hasCollisions = True
-                tref.finished = False
-                if gref.groupType == "i":  # if ID-group then invalidate any IDs
-                    tref.identified = False
-                    iref = gref.iddata[0]
-                    iref.studentName = None
-                    iref.studentID = None
-                    iref.identified = False
-                    iref.save()
-                elif gref.groupType == "m":
-                    # invalidate the marking
-                    tref.marked = False
-                    qref = gref.questiondata[0]
-                    qref.marked = False
-                    qref.mark = None
-                    qref.annotatedFile = None
-                    # should we delete that? - else move to DiscardedPages
-                    qref.save()
-                gref.save()
-                tref.save()
 
     def checkTestPageUnscanned(self, testNumber, pageNumber, version):
         tref = Test.get_or_none(Test.testNumber == testNumber)
@@ -679,7 +639,7 @@ class PlomDB:
 
     def getUnknownPageNames(self):
         rval = []
-        for uref in UnknownPages.select():
+        for uref in UnknownPage.select():
             rval.append(uref.fileName)
         return rval
 
@@ -696,7 +656,7 @@ class PlomDB:
             return [True, pref.fileName]
 
     def getUnknownImage(self, fname):
-        uref = UnknownPages.get_or_none(UnknownPages.fileName == fname)
+        uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
             return [False]
         else:
@@ -738,13 +698,13 @@ class PlomDB:
             return [True, pref.version]
 
     def checkUnknownImage(self, fname):
-        uref = UnknownPages.get_or_none(UnknownPages.fileName == fname)
+        uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
             return None
         return [uref.fileName, uref.originalName, uref.md5sum]
 
     def removeUnknownImage(self, fname):
-        uref = UnknownPages.get_or_none(UnknownPages.fileName == fname)
+        uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
             return False
         with plomdb.atomic():
@@ -752,7 +712,7 @@ class PlomDB:
         return True
 
     def moveUnknownToPage(self, fname, testNumber, pageNumber):
-        uref = UnknownPages.get_or_none(UnknownPages.fileName == fname)
+        uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
             return [False]
         tref = Test.get_or_none(Test.testNumber == testNumber)
@@ -771,7 +731,7 @@ class PlomDB:
         return [True]
 
     def moveExtraToPage(self, fname, testNumber, questionNumber):
-        uref = UnknownPages.get_or_none(UnknownPages.fileName == fname)
+        uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
             return [False]
         print("uref = {}".format(uref))
@@ -856,7 +816,6 @@ class PlomDB:
                 QuestionData.questionNumber == q,
                 QuestionData.version == v,
                 Group.scanned == True,
-                Group.hasCollisions == False,
             )
         ):
             NScanned += 1
@@ -919,7 +878,7 @@ class PlomDB:
 
     # ------------------
     # Identifier stuff
-    # The ID-able tasks have grouptype ="i", group.scanned=True, group.collisions=false
+    # The ID-able tasks have grouptype ="i", group.scanned=True,
     # The todo id-tasks are iddata.status="todo"
     # the done id-tasks have iddata.status="done"
 
@@ -928,11 +887,7 @@ class PlomDB:
         try:
             return (
                 Group.select()
-                .where(
-                    Group.groupType == "i",
-                    Group.scanned == True,
-                    Group.hasCollisions == False,
-                )
+                .where(Group.groupType == "i", Group.scanned == True,)
                 .count()
             )
         except Group.DoesNotExist:
@@ -944,11 +899,7 @@ class PlomDB:
             return (
                 IDData.select()
                 .join(Group)
-                .where(
-                    Group.scanned == True,
-                    Group.hasCollisions == False,
-                    IDData.identified == True,
-                )
+                .where(Group.scanned == True, IDData.identified == True,)
                 .count()
             )
         except IDData.DoesNotExist:
@@ -961,11 +912,7 @@ class PlomDB:
                 x = (
                     IDData.select()
                     .join(Group)
-                    .where(
-                        IDData.status == "todo",
-                        Group.scanned == True,
-                        Group.hasCollisions == False,
-                    )
+                    .where(IDData.status == "todo", Group.scanned == True,)
                     .get()
                 )
             except IDData.DoesNotExist:
@@ -1102,7 +1049,6 @@ class PlomDB:
                     QuestionData.questionNumber == q,
                     QuestionData.version == v,
                     Group.scanned == True,
-                    Group.hasCollisions == False,
                 )
                 .count()
             )
@@ -1120,7 +1066,6 @@ class PlomDB:
                     QuestionData.version == v,
                     QuestionData.status == "done",
                     Group.scanned == True,
-                    Group.hasCollisions == False,
                 )
                 .count()
             )
@@ -1153,7 +1098,6 @@ class PlomDB:
                         QuestionData.questionNumber == q,
                         QuestionData.version == v,
                         Group.scanned == True,
-                        Group.hasCollisions == False,
                     )
                     .get()
                 )
@@ -1367,11 +1311,7 @@ class PlomDB:
     def TcountAll(self):
         """Count all the records"""
         try:
-            return (
-                Test.select()
-                .where(Test.scanned == True, Test.hasCollisions == False,)
-                .count()
-            )
+            return Test.select().where(Test.scanned == True).count()
         except Test.DoesNotExist:
             return 0
 
@@ -1380,11 +1320,7 @@ class PlomDB:
         try:
             return (
                 Test.select()
-                .where(
-                    Test.totalled == True,
-                    Test.scanned == True,
-                    Test.hasCollisions == False,
-                )
+                .where(Test.totalled == True, Test.scanned == True,)
                 .count()
             )
         except Test.DoesNotExist:
