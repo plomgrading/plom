@@ -110,6 +110,7 @@ class Server(object):
         replaceMissingPage,
         removeScannedPage,
         getUnknownPageNames,
+        getCollidingPageNames,
         getUnknownImage,
         getPageImage,
         getQuestionImages,

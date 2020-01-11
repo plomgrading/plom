@@ -144,6 +144,10 @@ def getUnknownPageNames(self):
     return self.DB.getUnknownPageNames()
 
 
+def getCollidingPageNames(self):
+    return self.DB.getCollidingPageNames()
+
+
 def getQuestionImages(self, testNumber, questionNumber):
     return self.DB.getQuestionImages(testNumber, questionNumber)
 

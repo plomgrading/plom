@@ -167,6 +167,7 @@ class Manager(QWidget):
         self.initScanTab()
         self.initMarkTab()
         self.initUnknownTab()
+        self.initCollideTab()
 
     # -------------------
     def getTPQV(self):
@@ -448,6 +449,39 @@ class Manager(QWidget):
                 )
             ).exec_()
             GroupView([fh.name]).exec_()
+
+    def initCollideTab(self):
+        self.collideModel = QStandardItemModel(0, 5)
+        self.ui.collideTV.setModel(self.collideModel)
+        self.ui.collideTV.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.collideTV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.collideModel.setHorizontalHeaderLabels(
+            ["FullFile", "File", "Action to be taken", "Test", "Page",]
+        )
+        self.ui.collideTV.setIconSize(QSize(96, 96))
+        # self.ui.collideTV.activated.connect(self.viewCPage)
+        self.ui.collideTV.setColumnHidden(0, True)
+        self.refreshCList()
+
+    def refreshCList(self):
+        self.collideModel.removeRows(0, self.collideModel.rowCount())
+        colList = managerMessenger.getCollidingPageNames()
+        r = 0
+        for u in colList:
+            it0 = QStandardItem(os.path.split(u)[1])
+            it0.setIcon(QIcon(QPixmap("./icons/manager_collide.svg")))
+            it1 = QStandardItem("?")
+            it1.setTextAlignment(Qt.AlignCenter)
+            it2 = QStandardItem("0")
+            it2.setTextAlignment(Qt.AlignCenter)
+            it3 = QStandardItem("")
+            it3.setTextAlignment(Qt.AlignCenter)
+            it4 = QStandardItem("")
+            it4.setTextAlignment(Qt.AlignCenter)
+            self.collideModel.insertRow(r, [QStandardItem(u), it0, it1, it2, it3, it4])
+            r += 1
+        self.ui.collideTV.resizeRowsToContents()
+        self.ui.collideTV.resizeColumnsToContents()
 
 
 # Pop up a dialog for unhandled exceptions and then exit

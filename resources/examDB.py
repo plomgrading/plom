@@ -643,6 +643,12 @@ class PlomDB:
             rval.append(uref.fileName)
         return rval
 
+    def getCollidingPageNames(self):
+        rval = []
+        for cref in CollidingPage.select():
+            rval.append(cref.fileName)
+        return rval
+
     def getPageImage(self, testNumber, pageNumber, version):
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:

@@ -135,6 +135,17 @@ class UploadHandler:
         else:
             return web.Response(status=401)
 
+    async def getCollidingPageNames(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rval = self.server.getCollidingPageNames()
+            return web.json_response(rval, status=200)  # all fine
+        else:
+            return web.Response(status=401)
+
     async def getPageImage(self, request):
         data = await request.json()
         if (
@@ -275,6 +286,7 @@ class UploadHandler:
         router.add_delete("/admin/scannedPage/{tpv}", self.removeScannedPage)
         router.add_get("/admin/scannedPage/{tpv}", self.getPageImage)
         router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)
+        router.add_get("/admin/collidingPageNames", self.getCollidingPageNames)
         router.add_get("/admin/unknownImage", self.getUnknownImage)
         router.add_get("/admin/questionImages", self.getQuestionImages)
         router.add_get("/admin/testImages", self.getTestImages)
