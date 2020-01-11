@@ -145,7 +145,7 @@ def uploadUnknownPage(sname, fname, md5sum):
 # ----------------------
 
 
-def buildDirectories(spec):
+def buildDirectories():
     """Build the directories that this script needs"""
     # the list of directories. Might need updating.
     lst = ["sentPages", "sentPages/unknowns"]
@@ -191,12 +191,11 @@ if __name__ == "__main__":
     authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
     requestAndSaveToken("scanner", pwd)
 
-    # Look for pages in unknowns
-    spec = SpecParser().spec
-    buildDirectories(spec)
+    buildDirectories()
     session = requests.Session()
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
 
+    # Look for pages in unknowns
     fileList = glob("unknownPages/*.png")
     print(fileList)
     sendUnknownFiles(fileList)
