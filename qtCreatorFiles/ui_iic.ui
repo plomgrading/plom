@@ -237,7 +237,7 @@
        <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
-          <string>Scanned papers</string>
+          <string>Completely scanned papers</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
@@ -441,6 +441,16 @@
         </layout>
        </item>
       </layout>
+     </widget>
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
+       <string>Colliding Pages</string>
+      </attribute>
+     </widget>
+     <widget class="QWidget" name="tab_2">
+      <attribute name="title">
+       <string>Discarded Pages</string>
+      </attribute>
      </widget>
     </widget>
    </item>

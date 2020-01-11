@@ -1,5 +1,4 @@
 import hashlib
-import json
 import os
 import shlex
 import shutil
@@ -175,16 +174,30 @@ def removeUnknownImage(self, fname):
     rval = self.DB.removeUnknownImage(fname)
     return [True]
 
-def unknowToTestPage(self, fname, tp, rotation)
-    return False
-    # [t,p]= json.loads(tp)
-    # fnon = self.DB.checkUnknownImage(fname)
-    # # returns either None or [filename, originalName, md5sum]
-    # if fnon is None:
-    #     return [False, "Cannot find page"]
-    # # need to create a discardedPage object and move files
-    # newFilename = "pages/discardedPages/" + os.path.split(fnon[0])[1]
+
+def unknownToTestPage(self, fname, test, page, rotation):
+    if self.DB.moveUnknownToPage(fname, test, page)[0]:
+        # moved successfully. now rotate the page
+        subprocess.run(
+            ["mogrify", "-quiet", "-rotate", rotation, fname],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
+    else:
+        return [False]
+    return [True]
 
 
-    # rval = self.DB.removeUnknownImage(fname)
-    # return [True]
+def unknownToExtraPage(self, fname, test, question, rotation):
+    if self.DB.moveExtraToPage(fname, test, question)[0]:
+        # moved successfully. now rotate the page
+        subprocess.run(
+            ["mogrify", "-quiet", "-rotate", rotation, fname],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
+    else:
+        return [False]
+    return [True]

@@ -302,7 +302,7 @@ class Manager(QWidget):
         ErrorMessage("This is on our to-do list" + msg).exec_()
 
     def initUnknownTab(self):
-        self.unknownModel = QStandardItemModel(0, 5)
+        self.unknownModel = QStandardItemModel(0, 6)
         self.ui.unknownTV.setModel(self.unknownModel)
         self.ui.unknownTV.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.unknownTV.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -312,7 +312,8 @@ class Manager(QWidget):
                 "File",
                 "Action to be taken",
                 "Rotation-angle",
-                "[Test,Page] or [Test,Question]",
+                "Test",
+                "Page or Question",
             ]
         )
         self.ui.unknownTV.setIconSize(QSize(96, 96))
@@ -333,7 +334,9 @@ class Manager(QWidget):
             it2.setTextAlignment(Qt.AlignCenter)
             it3 = QStandardItem("")
             it3.setTextAlignment(Qt.AlignCenter)
-            self.unknownModel.insertRow(r, [QStandardItem(u), it0, it1, it2, it3])
+            it4 = QStandardItem("")
+            it4.setTextAlignment(Qt.AlignCenter)
+            self.unknownModel.insertRow(r, [QStandardItem(u), it0, it1, it2, it3, it4])
             r += 1
         self.ui.unknownTV.resizeRowsToContents()
         self.ui.unknownTV.resizeColumnsToContents()
@@ -357,7 +360,8 @@ class Manager(QWidget):
             if uvw.exec_() == QDialog.Accepted:
                 self.unknownModel.item(r, 2).setText(uvw.action)
                 self.unknownModel.item(r, 3).setText("{}".format(uvw.theta))
-                self.unknownModel.item(r, 4).setText("{}".format(uvw.tptq))
+                self.unknownModel.item(r, 4).setText("{}".format(uvw.test))
+                self.unknownModel.item(r, 5).setText("{}".format(uvw.pq))
                 if uvw.action == "discard":
                     self.unknownModel.item(r, 1).setIcon(
                         QIcon(QPixmap("./icons/manager_discard.svg"))
@@ -378,31 +382,21 @@ class Manager(QWidget):
                     self.unknownModel.item(r, 0).text()
                 )
             elif self.unknownModel.item(r, 2).text() == "extra":
-                # managerMessenger.unknowToExtraPage(
-                #     self.unknownModel.item(r, 0).text(),
-                #     self.unknownModel.item(r, 4).text(),
-                #     self.unknownModel.item(r, 3).text(),
-                # )
-                print(
-                    "File {} is extra page for test/question = {}. Rotate {}".format(
-                        self.unknownModel.item(r, 0).text(),
-                        self.unknownModel.item(r, 4).text(),
-                        self.unknownModel.item(r, 3).text(),
-                    )
-                )
-            elif self.unknownModel.item(r, 2).text() == "test":
-                managerMessenger.unknowToTestPage(
+                managerMessenger.unknownToExtraPage(
                     self.unknownModel.item(r, 0).text(),
                     self.unknownModel.item(r, 4).text(),
+                    self.unknownModel.item(r, 5).text(),
                     self.unknownModel.item(r, 3).text(),
                 )
-                # print(
-                #     "File {} is identified as test/page = {}. Rotate {}".format(
-                #         self.unknownModel.item(r, 0).text(),
-                #         self.unknownModel.item(r, 4).text(),
-                #         self.unknownModel.item(r, 3).text(),
-                #     )
-                # )
+                self.todo()
+            elif self.unknownModel.item(r, 2).text() == "test":
+                self.todo("Handle collisions")
+                managerMessenger.unknownToTestPage(
+                    self.unknownModel.item(r, 0).text(),
+                    self.unknownModel.item(r, 4).text(),
+                    self.unknownModel.item(r, 5).text(),
+                    self.unknownModel.item(r, 3).text(),
+                )
             else:
                 print(
                     "No action for file {}.".format(self.unknownModel.item(r, 0).text())

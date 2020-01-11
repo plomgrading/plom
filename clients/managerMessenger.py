@@ -501,7 +501,7 @@ def checkPage(testNumber, pageNumber):
     return rval
 
 
-def unknowToTestPage(fname, tp, theta):
+def unknownToTestPage(fname, test, page, theta):
     SRmutex.acquire()
     try:
         response = session.put(
@@ -509,7 +509,9 @@ def unknowToTestPage(fname, tp, theta):
             json={
                 "user": _userName,
                 "token": _token,
-                "testPage": tp,
+                "fileName": fname,
+                "test": test,
+                "page": page,
                 "rotation": theta,
             },
             verify=False,
@@ -520,6 +522,35 @@ def unknowToTestPage(fname, tp, theta):
             raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 404:
             raise PlomSeriousException("Cannot find test/page {}.".format(tp))
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+
+def unknownToExtraPage(fname, test, question, theta):
+    SRmutex.acquire()
+    try:
+        response = session.put(
+            "https://{}:{}/admin/unknownToExtraPage".format(server, message_port),
+            json={
+                "user": _userName,
+                "token": _token,
+                "fileName": fname,
+                "test": test,
+                "question": question,
+                "rotation": theta,
+            },
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException(
+                "Cannot find test/question {}/{}.".format(test, question)
+            )
         else:
             raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:

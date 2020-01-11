@@ -116,6 +116,8 @@ class Server(object):
         getTestImages,
         checkPage,
         removeUnknownImage,
+        unknownToTestPage,
+        unknownToExtraPage,
     )
     from plomServer.serverID import (
         IDprogressCount,

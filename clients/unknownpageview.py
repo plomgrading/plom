@@ -109,7 +109,8 @@ class ExtraTab(QWidget):
 
     def confirm(self):
         self.parent.action = "extra"
-        self.parent.tptq = [self.tsb.value(), self.qsb.value()]
+        self.parent.test = self.tsb.value()
+        self.parent.pq = self.qsb.value()
         self.parent.accept()
 
     def viewQuestion(self):
@@ -157,7 +158,8 @@ class TestTab(QWidget):
 
     def confirm(self):
         self.parent.action = "test"
-        self.parent.tptq = [self.tsb.value(), self.psb.value()]
+        self.parent.test = self.tsb.value()
+        self.parent.pq = self.psb.value()
         self.parent.accept()
 
     def checkPage(self):
@@ -185,7 +187,8 @@ class UnknownViewWindow(QDialog):
         else:
             self.initUI([fnames])
         self.action = ""
-        self.tptq = []
+        self.test = 0
+        self.pq = 0
 
     def initUI(self, fnames):
         # Grab an UnknownView widget (QGraphicsView)

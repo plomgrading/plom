@@ -738,20 +738,79 @@ class PlomDB:
             return [True, pref.version]
 
     def checkUnknownImage(self, fname):
-        print("BAH {} {}".format(type(fname), fname))
         uref = UnknownPages.get_or_none(UnknownPages.fileName == fname)
         if uref is None:
             return None
         return [uref.fileName, uref.originalName, uref.md5sum]
 
     def removeUnknownImage(self, fname):
-        print("ARGH {} {}".format(type(fname), fname))
         uref = UnknownPages.get_or_none(UnknownPages.fileName == fname)
         if uref is None:
             return False
         with plomdb.atomic():
             uref.delete_instance()
         return True
+
+    def moveUnknownToPage(self, fname, testNumber, pageNumber):
+        uref = UnknownPages.get_or_none(UnknownPages.fileName == fname)
+        if uref is None:
+            return [False]
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        pref = Page.get_or_none(Page.test == tref, Page.pageNumber == pageNumber)
+        if pref is None:
+            return [False]
+        with plomdb.atomic():
+            pref.fileName = fname
+            pref.md5sum = uref.md5sum
+            pref.originalName = uref.originalName
+            pref.scanned = True
+            pref.save()
+            uref.delete_instance()
+        return [True]
+
+    def moveExtraToPage(self, fname, testNumber, questionNumber):
+        uref = UnknownPages.get_or_none(UnknownPages.fileName == fname)
+        if uref is None:
+            return [False]
+        print("uref = {}".format(uref))
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        print("uref = {}".format(tref))
+        # find the group to which the new page should belong
+        qref = QuestionData.get_or_none(test=tref, questionNumber=questionNumber)
+        if qref is None:
+            return [False]
+        print("qref = {}".format(qref))
+        version = qref.version
+        # get the last page in the test.
+        pref = (
+            Page.select()
+            .where(Page.test == tref)
+            .order_by(Page.pageNumber.desc())
+            .get()
+        )
+        print("pref = {}".format(pref))
+        # extra pages start with page-number 1001
+        nextPageNumber = max(pref.pageNumber + 1, 1001)
+        print("Got to here = {}".format(nextPageNumber))
+        with plomdb.atomic():
+            npref = Page.create(
+                test=tref,
+                group=qref.group,
+                gid=qref.group.gid,
+                pageNumber=nextPageNumber,
+                version=version,
+                pid="t{}p{}".format(testNumber, nextPageNumber),
+                originalName=uref.originalName,
+                fileName=uref.fileName,
+                md5sum=uref.md5sum,
+                scanned=True,
+            )
+            uref.delete_instance()
+        return [True]
 
     # ------------------
     # Reporting functions

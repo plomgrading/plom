@@ -243,7 +243,23 @@ class UploadHandler:
             and data["user"] == "manager"
         ):
             rval = self.server.unknownToTestPage(
-                data["fileName"], data["tp"], data["rotation"]
+                data["fileName"], data["test"], data["page"], data["rotation"]
+            )
+            if rval[0]:
+                return web.FileResponse(status=200)  # all fine
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=401)
+
+    async def unknownToExtraPage(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rval = self.server.unknownToExtraPage(
+                data["fileName"], data["test"], data["question"], data["rotation"]
             )
             if rval[0]:
                 return web.FileResponse(status=200)  # all fine
@@ -265,4 +281,5 @@ class UploadHandler:
         router.add_get("/admin/testImages", self.getTestImages)
         router.add_get("/admin/checkPage", self.checkPage)
         router.add_delete("/admin/unknownImage", self.removeUnknownImage)
-        router.add_put("/admin/unknowToTestPage", self.unknowToTestPage)
+        router.add_put("/admin/unknownToTestPage", self.unknownToTestPage)
+        router.add_put("/admin/unknownToExtraPage", self.unknownToExtraPage)
