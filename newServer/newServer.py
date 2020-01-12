@@ -51,9 +51,11 @@ def buildDirectories(spec):
     lst = [
         "pages",
         "pages/discardedPages",
-        "pages/duplicatePages",
         "pages/collidingPages",
         "pages/originalPages",
+        "pages/markedQuestions",
+        "pages/markedQuestions/plomFiles",
+        "pages/markedQuestions/commentFiles",
     ]
     for dir in lst:
         try:
