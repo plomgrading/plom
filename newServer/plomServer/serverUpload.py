@@ -190,7 +190,12 @@ def unknownToTestPage(self, fname, test, page, rotation):
 
 
 def unknownToExtraPage(self, fname, test, question, rotation):
-    if self.DB.moveExtraToPage(fname, test, question)[0]:
+    rval = self.DB.moveExtraToPage(fname, test, question)[0]
+    # returns [True, [file1,file2,..]] or [False]
+    if rval[0]:
+        # clean up any annotations
+        for fn in rval[1]:
+            os.unlink(fn)
         # moved successfully. now rotate the page
         subprocess.run(
             ["mogrify", "-quiet", "-rotate", rotation, fname],

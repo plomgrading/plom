@@ -354,6 +354,7 @@ class PlomDB:
             tref.save()
 
     def setGroupReady(self, gref):
+        print("All of group {} is scanned".format(gref.gid))
         if gref.groupType == "i":
             iref = gref.iddata[0]
             # check if group already identified - can happen if printed tests with names
@@ -371,7 +372,6 @@ class PlomDB:
                 )
             )
         elif gref.groupType == "m":
-            # todo - sanity check here?
             print("Group {} is ready to be marked.".format(gref.gid))
             qref = gref.questiondata[0]
             qref.status = "todo"
@@ -836,7 +836,9 @@ class PlomDB:
                 scanned=True,
             )
             uref.delete_instance()
-        return [True]
+        ## Now invalidate any work on the associated group
+        # now update the group
+        return [True, self.invalidateQGroup(tref, qref.group)]
 
     # ------------------
     # Reporting functions
