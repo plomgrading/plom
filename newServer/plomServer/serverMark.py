@@ -85,6 +85,13 @@ def MreturnMarkedTask(
     aname = "markedQuestions/G{}.png".format(task[1:])
     pname = "markedQuestions/plomFiles/G{}.plom".format(task[1:])
     cname = "markedQuestions/commentFiles/G{}.json".format(task[1:])
+    #  check if those files exist already - back up if so
+    for fn in [aname, pname, cname]:
+        if os.path.isfile(fn):
+            os.rename(
+                fn, fn + ".rgd" + datetime.now().strftime("%d_%H-%M-%S"),
+            )
+    # now write in the files
     with open(aname, "wb") as fh:
         fh.write(image)
     with open(pname, "wb") as fh:
