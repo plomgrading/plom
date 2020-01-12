@@ -403,11 +403,54 @@ def getUnknownImage(fname):
     return image
 
 
-def discardUnknownImage(fname):
+def getCollidingImage(fname):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/admin/collidingImage".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token, "fileName": fname,},
+        )
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        elif response.status_code == 404:
+            return None
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+    return image
+
+
+def removeUnknownImage(fname):
     SRmutex.acquire()
     try:
         response = session.delete(
             "https://{}:{}/admin/unknownImage".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token, "fileName": fname,},
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        elif response.status_code == 404:
+            return False
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+    return True
+
+
+def removeCollidingImage(fname):
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/admin/collidingImage".format(server, message_port),
             verify=False,
             json={"user": _userName, "token": _token, "fileName": fname,},
         )
@@ -538,6 +581,7 @@ def unknownToTestPage(fname, test, page, theta):
             verify=False,
         )
         response.raise_for_status()
+        collisionTest = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")
@@ -547,6 +591,8 @@ def unknownToTestPage(fname, test, page, theta):
             raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
+
+    return collisionTest  # "collision" if colliding page created.
 
 
 def unknownToExtraPage(fname, test, question, theta):
@@ -572,6 +618,33 @@ def unknownToExtraPage(fname, test, question, theta):
             raise PlomSeriousException(
                 "Cannot find test/question {}/{}.".format(test, question)
             )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+
+def collidingToTestPage(fname, test, page, version):
+    SRmutex.acquire()
+    try:
+        response = session.put(
+            "https://{}:{}/admin/collidingToTestPage".format(server, message_port),
+            json={
+                "user": _userName,
+                "token": _token,
+                "fileName": fname,
+                "test": test,
+                "page": page,
+                "version": version,
+            },
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException("Cannot find test/page {}.".format(tp))
         else:
             raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:

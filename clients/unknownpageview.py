@@ -1,5 +1,5 @@
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
@@ -350,3 +350,119 @@ class UnknownView(QGraphicsView):
     def rotateImage(self, dTheta):
         self.rotate(dTheta)
         self.resetView()
+
+
+class UnknownViewWindow(QDialog):
+    """Simple view window for pageimages"""
+
+    def __init__(self, parent, fnames, tpq):
+        QWidget.__init__(self)
+        self.parent = parent
+        self.numberOfTests = tpq[0]
+        self.numberOfPages = tpq[1]
+        self.numberOfQuestions = tpq[2]
+
+        if type(fnames) == list:
+            self.initUI(fnames)
+        else:
+            self.initUI([fnames])
+        self.action = ""
+        self.test = 0
+        self.pq = 0
+
+    def initUI(self, fnames):
+        # Grab an UnknownView widget (QGraphicsView)
+        self.view = UnknownView(fnames)
+        # Render nicely
+        self.view.setRenderHint(QPainter.HighQualityAntialiasing)
+        self.optionTW = QTabWidget()
+
+        # reset view button passes to the UnknownView.
+        self.resetB = QPushButton("reset view")
+        self.rotatePlusB = QPushButton("rotate +90")
+        self.rotateMinusB = QPushButton("rotate -90")
+        self.cancelB = QPushButton("&cancel")
+        self.maxNormB = QPushButton("&max/norm")
+
+        self.cancelB.clicked.connect(self.reject)
+        self.resetB.clicked.connect(lambda: self.view.resetView())
+        self.rotatePlusB.clicked.connect(self.rotatePlus)
+        self.rotateMinusB.clicked.connect(self.rotateMinus)
+        self.maxNormB.clicked.connect(self.swapMaxNorm)
+
+        self.resetB.setAutoDefault(False)  # return wont click the button by default.
+        self.rotatePlusB.setAutoDefault(False)
+        self.rotateMinusB.setAutoDefault(False)
+
+        # Layout simply
+        grid = QGridLayout()
+        grid.addWidget(self.view, 1, 1, 10, 6)
+        grid.addWidget(self.optionTW, 2, 17, 8, 4)
+        grid.addWidget(self.resetB, 20, 1)
+        grid.addWidget(self.rotatePlusB, 20, 2)
+        grid.addWidget(self.rotateMinusB, 20, 3)
+        grid.addWidget(self.cancelB, 20, 20)
+        grid.addWidget(self.maxNormB, 1, 20)
+        self.setLayout(grid)
+        self.show()
+        # Store the current exam view as a qtransform
+        self.viewTrans = self.view.transform()
+        self.dx = self.view.horizontalScrollBar().value()
+        self.dy = self.view.verticalScrollBar().value()
+        self.theta = 0
+        self.initTabs()
+
+    def updateImage(self, fnames):
+        """Pass file to the view to update the image"""
+        # first store the current view transform and scroll values
+        self.viewTrans = self.view.transform()
+        self.dx = self.view.horizontalScrollBar().value()
+        self.dy = self.view.verticalScrollBar().value()
+        # update the image
+        if type(fnames) == list:
+            self.view.updateImage(fnames)
+        else:
+            self.view.updateImage([fnames])
+
+        # re-set the view transform and scroll values
+        self.view.setTransform(self.viewTrans)
+        self.view.horizontalScrollBar().setValue(self.dx)
+        self.view.verticalScrollBar().setValue(self.dy)
+
+    def initTabs(self):
+        self.t0 = ActionTab(self)
+        self.t1 = ExtraTab(self, self.numberOfTests, self.numberOfQuestions)
+        self.t2 = TestTab(self, self.numberOfTests, self.numberOfPages)
+        self.t3 = DiscardTab(self)
+        self.optionTW.addTab(self.t0, "Actions")
+        self.optionTW.addTab(self.t1, "Extra Page")
+        self.optionTW.addTab(self.t2, "Test Page")
+        self.optionTW.addTab(self.t3, "Discard")
+
+    def rotatePlus(self):
+        self.theta += 90
+        if self.theta == 360:
+            self.theta = 0
+        self.view.rotateImage(90)
+
+    def rotateMinus(self):
+        self.theta -= 90
+        if self.theta == -90:
+            self.theta = 270
+        self.view.rotateImage(-90)
+
+    def swapMaxNorm(self):
+        """Toggles the window size between max and normal"""
+        if self.windowState() != Qt.WindowMaximized:
+            self.setWindowState(Qt.WindowMaximized)
+        else:
+            self.setWindowState(Qt.WindowNoState)
+
+    def viewQuestion(self, testNumber, questionNumber):
+        self.parent.viewQuestion(testNumber, questionNumber)
+
+    def viewWholeTest(self, testNumber):
+        self.parent.viewWholeTest(testNumber)
+
+    def checkPage(self, testNumber, pageNumber):
+        self.parent.checkPage(testNumber, pageNumber)

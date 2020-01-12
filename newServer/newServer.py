@@ -112,13 +112,16 @@ class Server(object):
         getUnknownPageNames,
         getCollidingPageNames,
         getUnknownImage,
+        getCollidingImage,
         getPageImage,
         getQuestionImages,
         getTestImages,
         checkPage,
         removeUnknownImage,
+        removeCollidingImage,
         unknownToTestPage,
         unknownToExtraPage,
+        collidingToTestPage,
     )
     from plomServer.serverID import (
         IDprogressCount,

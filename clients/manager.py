@@ -15,7 +15,7 @@ import sys
 import tempfile
 import traceback as tblib
 from PyQt5.QtCore import Qt, pyqtSlot, QSize, QTimer
-from PyQt5.QtGui import QFont, QIcon, QPixmap, QStandardItem, QStandardItemModel
+from PyQt5.QtGui import QBrush, QFont, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -34,6 +34,7 @@ from uiFiles.ui_iic import Ui_IIC
 from useful_classes import ErrorMessage, SimpleMessage
 from test_view import WholeTestView, GroupView
 from unknownpageview import UnknownViewWindow
+from collideview import CollideViewWindow
 from plom_exceptions import *
 
 import managerMessenger
@@ -109,9 +110,11 @@ class Manager(QWidget):
         self.ui.refreshPButton.clicked.connect(self.refreshMTab)
         self.ui.refreshSButton.clicked.connect(self.refreshSList)
         self.ui.refreshUButton.clicked.connect(self.refreshUList)
+        self.ui.refreshCButton.clicked.connect(self.refreshCList)
         self.ui.removePageB.clicked.connect(self.removePage)
         self.ui.subsPageB.clicked.connect(self.subsPage)
         self.ui.actionUButton.clicked.connect(self.doUActions)
+        self.ui.actionCButton.clicked.connect(self.doCActions)
 
     def closeWindow(self):
         self.close()
@@ -194,6 +197,7 @@ class Manager(QWidget):
             root.removeChild(l0i)
 
         incomplete = managerMessenger.getIncompleteTests()  # pairs [p,v]
+        print(incomplete)
         for t in incomplete:
             l0 = QTreeWidgetItem(["{}".format(t), ""])
             for (p, v) in incomplete[t]:
@@ -210,10 +214,19 @@ class Manager(QWidget):
             root.removeChild(l0i)
 
         scanned = managerMessenger.getScannedTests()  # pairs [p,v]
+        colDict = managerMessenger.getCollidingPageNames()  # dict [fname]=[t,p,v]
+        cdtp = {u: "{}.{}".format(colDict[u][0], colDict[u][1]) for u in colDict}
+
         for t in scanned:
             l0 = QTreeWidgetItem(["{}".format(t), ""])
             for (p, v) in scanned[t]:
-                l0.addChild(QTreeWidgetItem(["", str(p), str(v)]))
+                l1 = QTreeWidgetItem(["", str(p), str(v)])
+                if "{}.{}".format(t, p) in cdtp.values():
+                    l0.setBackground(0, QBrush(Qt.cyan))
+                    l0.setToolTip(0, "Has collisions")
+                    l1.setBackground(1, QBrush(Qt.cyan))
+                    l0.setToolTip(1, "Has collisions")
+                l0.addChild(l1)
             self.ui.scanTW.addTopLevelItem(l0)
 
     def viewSPage(self):
@@ -379,9 +392,7 @@ class Manager(QWidget):
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
             if self.unknownModel.item(r, 2).text() == "discard":
-                managerMessenger.discardUnknownImage(
-                    self.unknownModel.item(r, 0).text()
-                )
+                managerMessenger.removeUnknownImage(self.unknownModel.item(r, 0).text())
             elif self.unknownModel.item(r, 2).text() == "extra":
                 managerMessenger.unknownToExtraPage(
                     self.unknownModel.item(r, 0).text(),
@@ -391,13 +402,21 @@ class Manager(QWidget):
                 )
                 self.todo()
             elif self.unknownModel.item(r, 2).text() == "test":
-                self.todo("Handle collisions")
-                managerMessenger.unknownToTestPage(
-                    self.unknownModel.item(r, 0).text(),
-                    self.unknownModel.item(r, 4).text(),
-                    self.unknownModel.item(r, 5).text(),
-                    self.unknownModel.item(r, 3).text(),
-                )
+                if (
+                    managerMessenger.unknownToTestPage(
+                        self.unknownModel.item(r, 0).text(),
+                        self.unknownModel.item(r, 4).text(),
+                        self.unknownModel.item(r, 5).text(),
+                        self.unknownModel.item(r, 3).text(),
+                    )
+                    == "collision"
+                ):
+                    ErrorMessage(
+                        "Collision created in test {}".format(
+                            self.unknownModel.item(r, 4).text()
+                        )
+                    )
+
             else:
                 print(
                     "No action for file {}.".format(self.unknownModel.item(r, 0).text())
@@ -451,37 +470,86 @@ class Manager(QWidget):
             GroupView([fh.name]).exec_()
 
     def initCollideTab(self):
-        self.collideModel = QStandardItemModel(0, 5)
+        self.collideModel = QStandardItemModel(0, 6)
         self.ui.collideTV.setModel(self.collideModel)
         self.ui.collideTV.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.collideTV.setSelectionMode(QAbstractItemView.SingleSelection)
         self.collideModel.setHorizontalHeaderLabels(
-            ["FullFile", "File", "Action to be taken", "Test", "Page",]
+            ["FullFile", "File", "Action to be taken", "Test", "Page", "Version"]
         )
         self.ui.collideTV.setIconSize(QSize(96, 96))
-        # self.ui.collideTV.activated.connect(self.viewCPage)
+        self.ui.collideTV.activated.connect(self.viewCPage)
         self.ui.collideTV.setColumnHidden(0, True)
         self.refreshCList()
 
     def refreshCList(self):
         self.collideModel.removeRows(0, self.collideModel.rowCount())
-        colList = managerMessenger.getCollidingPageNames()
+        colDict = managerMessenger.getCollidingPageNames()  # dict [fname]=[t,p,v]
         r = 0
-        for u in colList:
-            it0 = QStandardItem(os.path.split(u)[1])
-            it0.setIcon(QIcon(QPixmap("./icons/manager_collide.svg")))
-            it1 = QStandardItem("?")
-            it1.setTextAlignment(Qt.AlignCenter)
-            it2 = QStandardItem("0")
+        for u in colDict.keys():
+            it0 = QStandardItem(u)
+            it1 = QStandardItem(os.path.split(u)[1])
+            it1.setIcon(QIcon(QPixmap("./icons/manager_collide.svg")))
+            it2 = QStandardItem("?")
             it2.setTextAlignment(Qt.AlignCenter)
-            it3 = QStandardItem("")
+            it3 = QStandardItem("{}".format(colDict[u][0]))
             it3.setTextAlignment(Qt.AlignCenter)
-            it4 = QStandardItem("")
+            it4 = QStandardItem("{}".format(colDict[u][1]))
             it4.setTextAlignment(Qt.AlignCenter)
-            self.collideModel.insertRow(r, [QStandardItem(u), it0, it1, it2, it3, it4])
+            it5 = QStandardItem("{}".format(colDict[u][2]))
+            it5.setTextAlignment(Qt.AlignCenter)
+            self.collideModel.insertRow(r, [QStandardItem(u), it1, it2, it3, it4, it5])
             r += 1
         self.ui.collideTV.resizeRowsToContents()
         self.ui.collideTV.resizeColumnsToContents()
+
+    def viewCPage(self):
+        pvi = self.ui.collideTV.selectedIndexes()
+        if len(pvi) == 0:
+            return
+        r = pvi[0].row()
+        fname = self.collideModel.item(r, 0).text()
+        test = int(self.collideModel.item(r, 3).text())
+        page = int(self.collideModel.item(r, 4).text())
+        version = int(self.collideModel.item(r, 5).text())
+        vop = managerMessenger.getPageImage(test, page, version)
+        vcp = managerMessenger.getCollidingImage(fname)
+        if vop is None or vcp is None:
+            return
+        with tempfile.NamedTemporaryFile() as oh:
+            with tempfile.NamedTemporaryFile() as ch:
+                oh.write(vop)
+                ch.write(vcp)
+                cvw = CollideViewWindow(self, oh.name, ch.name, test, page,)
+                if cvw.exec_() == QDialog.Accepted:
+                    if cvw.action == "original":
+                        self.collideModel.item(r, 1).setIcon(
+                            QIcon(QPixmap("./icons/manager_discard.svg"))
+                        )
+                        self.collideModel.item(r, 2).setText("discard")
+                    elif cvw.action == "collide":
+                        self.collideModel.item(r, 1).setIcon(
+                            QIcon(QPixmap("./icons/manager_test.svg"))
+                        )
+                        self.collideModel.item(r, 2).setText("replace")
+
+    def doCActions(self):
+        for r in range(self.collideModel.rowCount()):
+            if self.collideModel.item(r, 2).text() == "discard":
+                managerMessenger.removeCollidingImage(
+                    self.collideModel.item(r, 0).text()
+                )
+            elif self.collideModel.item(r, 2).text() == "replace":
+                managerMessenger.collidingToTestPage(
+                    self.collideModel.item(r, 0).text(),
+                    self.collideModel.item(r, 3).text(),
+                    self.collideModel.item(r, 4).text(),
+                    self.collideModel.item(r, 5).text(),
+                )
+            else:
+                print(
+                    "No action for file {}.".format(self.collideModel.item(r, 0).text())
+                )
 
 
 # Pop up a dialog for unhandled exceptions and then exit

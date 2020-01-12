@@ -368,8 +368,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>898</width>
-            <height>505</height>
+            <width>64</width>
+            <height>16</height>
            </rect>
           </property>
          </widget>
@@ -444,7 +444,7 @@
      </widget>
      <widget class="QWidget" name="tab">
       <attribute name="title">
-       <string>Colliding &amp;Pages</string>
+       <string>&amp;Colliding Pages</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_8">
        <item>
@@ -508,7 +508,7 @@
      <item>
       <widget class="QPushButton" name="closeButton">
        <property name="text">
-        <string>&amp;Close</string>
+        <string>Close</string>
        </property>
       </widget>
      </item>

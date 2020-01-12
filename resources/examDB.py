@@ -466,7 +466,7 @@ class PlomDB:
             tref.save()
             gref.scanned = False
             gref.save()
-        return [True]
+        return []
 
     def invalidateIDGroup(self, tref, gref):
         iref = gref.iddata[0]
@@ -483,11 +483,12 @@ class PlomDB:
             iref.studentID = None
             iref.studentName = None
             iref.save()
-        return [True]
+        return []
 
     def invalidateQGroup(self, tref, gref):
         qref = gref.questiondata[0]
         sref = tref.sumdata[0]
+        rval = []
         with plomdb.atomic():
             # update the test
             tref.scanned = False
@@ -508,14 +509,10 @@ class PlomDB:
             # update the questionData - first get filenames if they exist
             if qref.marked:
                 rval = [
-                    True,
                     qref.annotatedFile,
-                    qref.md5sum,
                     qref.plomFile,
                     qref.commentFile,
                 ]
-            else:
-                rval = [True]
             qref.marked = False
             qref.status = ""
             qref.annotatedFile = None
@@ -644,9 +641,13 @@ class PlomDB:
         return rval
 
     def getCollidingPageNames(self):
-        rval = []
+        rval = {}
         for cref in CollidingPage.select():
-            rval.append(cref.fileName)
+            rval[cref.fileName] = [
+                cref.page.test.testNumber,
+                cref.page.pageNumber,
+                cref.page.version,
+            ]
         return rval
 
     def getPageImage(self, testNumber, pageNumber, version):
@@ -667,6 +668,13 @@ class PlomDB:
             return [False]
         else:
             return [True, uref.fileName]
+
+    def getCollidingImage(self, fname):
+        cref = CollidingPage.get_or_none(CollidingPage.fileName == fname)
+        if cref is None:
+            return [False]
+        else:
+            return [True, cref.fileName]
 
     def getQuestionImages(self, testNumber, questionNumber):
         tref = Test.get_or_none(Test.testNumber == testNumber)
@@ -709,12 +717,26 @@ class PlomDB:
             return None
         return [uref.fileName, uref.originalName, uref.md5sum]
 
+    def checkCollidingImage(self, fname):
+        cref = CollidingPage.get_or_none(CollidingPage.fileName == fname)
+        if cref is None:
+            return None
+        return [cref.fileName, cref.originalName, cref.md5sum]
+
     def removeUnknownImage(self, fname):
         uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
             return False
         with plomdb.atomic():
             uref.delete_instance()
+        return True
+
+    def removeCollidingImage(self, fname):
+        cref = CollidingPage.get_or_none(CollidingPage.fileName == fname)
+        if cref is None:
+            return False
+        with plomdb.atomic():
+            cref.delete_instance()
         return True
 
     def moveUnknownToPage(self, fname, testNumber, pageNumber):
@@ -734,22 +756,62 @@ class PlomDB:
             pref.scanned = True
             pref.save()
             uref.delete_instance()
+        self.checkGroupAllUploaded(pref)
+        return [True]
+
+    def moveUnknownToCollision(self, fname, nname, testNumber, pageNumber):
+        uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
+        if uref is None:
+            return [False]
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        pref = Page.get_or_none(Page.test == tref, Page.pageNumber == pageNumber)
+        if pref is None:
+            return [False]
+        with plomdb.atomic():
+            CollidingPage.create(
+                page=pref,
+                originalName=uref.originalName,
+                fileName=nname,
+                md5sum=uref.md5sum,
+            )
+            uref.delete_instance()
+            return [True]
+
+    def moveCollidingToPage(self, fname, nname, testNumber, pageNumber, version):
+        cref = CollidingPage.get_or_none(CollidingPage.fileName == fname)
+        if cref is None:
+            return [False]
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        pref = Page.get_or_none(
+            Page.test == tref, Page.pageNumber == pageNumber, Page.version == version
+        )
+        if pref is None:
+            return [False]
+        with plomdb.atomic():
+            pref.fileName = nname
+            pref.md5sum = cref.md5sum
+            pref.originalName = cref.originalName
+            pref.scanned = True
+            pref.save()
+            cref.delete_instance()
+        self.checkGroupAllUploaded(pref)
         return [True]
 
     def moveExtraToPage(self, fname, testNumber, questionNumber):
         uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
             return [False]
-        print("uref = {}".format(uref))
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:
             return [False]
-        print("uref = {}".format(tref))
         # find the group to which the new page should belong
         qref = QuestionData.get_or_none(test=tref, questionNumber=questionNumber)
         if qref is None:
             return [False]
-        print("qref = {}".format(qref))
         version = qref.version
         # get the last page in the test.
         pref = (
@@ -758,10 +820,8 @@ class PlomDB:
             .order_by(Page.pageNumber.desc())
             .get()
         )
-        print("pref = {}".format(pref))
         # extra pages start with page-number 1001
         nextPageNumber = max(pref.pageNumber + 1, 1001)
-        print("Got to here = {}".format(nextPageNumber))
         with plomdb.atomic():
             npref = Page.create(
                 test=tref,
