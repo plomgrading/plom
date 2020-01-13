@@ -5,7 +5,7 @@ Backend bits n bobs to talk to the server
 """
 
 __author__ = "Andrew Rechnitzer, Colin B. Macdonald"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer, Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer, Colin B. Macdonald"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
@@ -220,6 +220,29 @@ def getIncompleteTests():
         SRmutex.release()
 
     return rval
+
+
+def IDprogressCount():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/progress".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
 
 
 def getProgress(q, v):

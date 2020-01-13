@@ -108,6 +108,7 @@ class Manager(QWidget):
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontButton.clicked.connect(self.setFont)
         self.ui.refreshIButton.clicked.connect(self.refreshIList)
+        self.ui.refreshIDButon.clicked.connect(self.refreshIDTab)
         self.ui.refreshPButton.clicked.connect(self.refreshMTab)
         self.ui.refreshSButton.clicked.connect(self.refreshSList)
         self.ui.refreshUButton.clicked.connect(self.refreshUList)
@@ -171,6 +172,7 @@ class Manager(QWidget):
 
         self.getTPQV()
         self.initScanTab()
+        self.initIDTab()
         self.initMarkTab()
         self.initUnknownTab()
         self.initCollideTab()
@@ -298,6 +300,15 @@ class Manager(QWidget):
             rval = managerMessenger.replaceMissingPage(code, pt, pp, pv)
             ErrorMessage("{}".format(rval)).exec_()
             self.refreshIList()
+
+    def initIDTab(self):
+        self.refreshIDTab()
+        self.ui.idPB.setFormat("%v / %m")
+
+    def refreshIDTab(self):
+        ti = managerMessenger.IDprogressCount()
+        self.ui.papersLE.setText(str(ti[1]))
+        self.ui.idPB.setValue(ti[0])
 
     def initMarkTab(self):
         grid = QGridLayout()
