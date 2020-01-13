@@ -134,9 +134,11 @@ class Server(object):
         IDgetNextTask,
         IDgetDoneTasks,
         IDgetImage,
+        IDgetRandomImage,
         IDclaimThisTask,
         IDdidNotFinish,
         IDreturnIDdTask,
+        IDdeletePredictions,
     )
     from plomServer.serverMark import (
         MprogressCount,

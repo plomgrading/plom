@@ -127,6 +127,35 @@ class IDHandler:
         else:
             return web.Response(status=401)
 
+    # @routes.get("/ID/randomImage")
+    async def IDgetRandomImage(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rmsg = self.server.IDgetRandomImage()
+            print("Appending file {}".format(rmsg))
+            with MultipartWriter("images") as mpwriter:
+                for fn in rmsg[1:]:
+                    if os.path.isfile(fn):
+                        mpwriter.append(open(fn, "rb"))
+                    else:
+                        return web.Response(status=404)
+                return web.Response(body=mpwriter, status=200)
+        else:
+            return web.Response(status=401)  # not authorised at all
+
+    async def IDdeletePredictions(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            return web.json_response(self.server.IDdeletePredictions(), status=200)
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_get("/ID/progress", self.IDprogressCount)
         router.add_get("/ID/classlist", self.IDgetClasslist)
@@ -137,3 +166,5 @@ class IDHandler:
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/tasks/{task}", self.IDreturnIDdTask)
         router.add_delete("/ID/tasks/{task}", self.IDdidNotFinishTask)
+        router.add_get("/ID/randomImage", self.IDgetRandomImage)
+        router.add_delete("/ID/predictedID", self.IDdeletePredictions)

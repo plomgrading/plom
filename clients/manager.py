@@ -119,6 +119,7 @@ class Manager(QWidget):
         self.ui.actionUButton.clicked.connect(self.doUActions)
         self.ui.actionCButton.clicked.connect(self.doCActions)
         self.ui.actionDButton.clicked.connect(self.doDActions)
+        self.ui.delPredButton.clicked.connect(self.deletePredictions)
 
     def closeWindow(self):
         self.close()
@@ -304,11 +305,25 @@ class Manager(QWidget):
     def initIDTab(self):
         self.refreshIDTab()
         self.ui.idPB.setFormat("%v / %m")
+        # idimg = managerMessenger.IDgetRandomImage()
+        # with tempfile.NamedTemporaryFile(delete=False) as ntf:
+        #     fh = open(ntf, "wb")
+        #     fh.write(idimg)
+        # self.idGV = GroupView(idimg)
 
     def refreshIDTab(self):
         ti = managerMessenger.IDprogressCount()
         self.ui.papersLE.setText(str(ti[1]))
         self.ui.idPB.setValue(ti[0])
+        self.ui.idPB.setMaximum(ti[1])
+
+    def deletePredictions(self):
+        msg = SimpleMessage(
+            "Are you sure you want the server to delete predicted IDs? (note that this does not delete user-inputted IDs)"
+        )
+        if msg.exec_() == QMessageBox.No:
+            return
+        managerMessenger.IDdeletePredictions()
 
     def initMarkTab(self):
         grid = QGridLayout()

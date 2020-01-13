@@ -1138,6 +1138,16 @@ class PlomDB:
             print("Student number {} already entered".format(sid))
             return [False, True]
 
+    def IDgetRandomImage(self):
+        # TODO - make random image rather than 1st
+        gref = Group.get_or_none(Group.groupType == "i", Group.scanned == True)
+        if gref is None:
+            return [False]
+        rval = [True]
+        for p in gref.pages.order_by(Page.pageNumber):
+            rval.append(p.fileName)
+        return rval
+
     # ------------------
     # Marker stuff
 

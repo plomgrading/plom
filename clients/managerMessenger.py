@@ -245,6 +245,37 @@ def IDprogressCount():
     return progress
 
 
+def IDgetRandomImage():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/randomImage".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        imageList = []
+        for img in MultipartDecoder.from_response(response).parts:
+            imageList.append(
+                BytesIO(img.content).getvalue()
+            )  # pass back image as bytes
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException("Cannot find image file for {}.".format(code))
+        elif response.status_code == 409:
+            raise PlomSeriousException(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return imageList
+
+
 def getProgress(q, v):
     SRmutex.acquire()
     try:
@@ -738,6 +769,27 @@ def discardToUnknown(fname):
     finally:
         SRmutex.release()
     return True
+
+
+def IDdeletePredictions():
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/ID/predictedID".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token,},
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
 
 
 def startMessenger():

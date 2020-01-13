@@ -393,7 +393,7 @@
               <item>
                <widget class="QProgressBar" name="idPB">
                 <property name="value">
-                 <number>24</number>
+                 <number>0</number>
                 </property>
                </widget>
               </item>
@@ -420,49 +420,65 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="selectRectButton">
-              <property name="text">
-               <string>Select ID rectangle</string>
+             <widget class="QGroupBox" name="groupBox_4">
+              <property name="title">
+               <string>Read student numbers from ID pages</string>
               </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="verticalSpacer_2">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="predictButton">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Run predictions</string>
-              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_12">
+               <item>
+                <widget class="QPushButton" name="selectRectButton">
+                 <property name="text">
+                  <string>Select ID rectangle</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="predictButton">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="text">
+                  <string>Run predictions</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="verticalSpacer_2">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="delPredButton">
+                 <property name="text">
+                  <string>Delete predictions</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </widget>
             </item>
            </layout>
           </item>
           <item>
-           <widget class="QGroupBox" name="idGB">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>1</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+           <spacer name="horizontalSpacer_9">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
-            <property name="title">
-             <string>Sample ID page</string>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
             </property>
-           </widget>
+           </spacer>
           </item>
          </layout>
         </widget>
@@ -487,8 +503,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>898</width>
-            <height>505</height>
+            <width>64</width>
+            <height>16</height>
            </rect>
           </property>
          </widget>

@@ -1,5 +1,6 @@
 import hashlib
 import os
+import shutil
 import uuid
 
 
@@ -56,3 +57,18 @@ def IDdidNotFinish(self, user, testNumber):
     """
     self.DB.IDdidNotFinish(user, testNumber)
     return
+
+
+def IDgetRandomImage(self):
+    return self.DB.IDgetRandomImage()
+
+
+def IDdeletePredictions(self):
+    # move old file out of way
+    if not os.path.isfile("../resources/predictionlist.csv"):
+        return False
+    shutil.move("../resources/predictionlist.csv", "../resources/predictionlist.bak")
+    with open("../resources/predictionlist.csv", "w") as fh:
+        fh.write("test, id\n")
+
+    return True
