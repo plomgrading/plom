@@ -98,10 +98,7 @@ class UploadHandler:
                 data["test"], data["page"], data["version"]
             )
             if rval[0]:
-                if rval[1]:
-                    return web.json_response(rval, status=200)  # all fine
-                else:
-                    return web.Response(status=409)  # page already scanned
+                return web.json_response(rval, status=200)  # all fine
             else:
                 return web.Response(status=404)  # page not found at all
         else:
@@ -131,6 +128,17 @@ class UploadHandler:
             and data["user"] == "manager"
         ):
             rval = self.server.getUnknownPageNames()
+            return web.json_response(rval, status=200)  # all fine
+        else:
+            return web.Response(status=401)
+
+    async def getDiscardNames(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rval = self.server.getDiscardNames()
             return web.json_response(rval, status=200)  # all fine
         else:
             return web.Response(status=401)
@@ -167,6 +175,20 @@ class UploadHandler:
             and data["user"] == "manager"
         ):
             rval = self.server.getUnknownImage(data["fileName"])
+            if rval[0]:
+                return web.FileResponse(rval[1], status=200)  # all fine
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=401)
+
+    async def getDiscardImage(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rval = self.server.getDiscardImage(data["fileName"])
             if rval[0]:
                 return web.FileResponse(rval[1], status=200)  # all fine
             else:
@@ -284,7 +306,7 @@ class UploadHandler:
                 data["fileName"], data["test"], data["page"], data["rotation"]
             )
             if rval[0]:
-                return web.json_response(json=rval[1], status=200)  # all fine
+                return web.json_response(rval[1], status=200)  # all fine
             else:
                 return web.Response(status=404)
         else:
@@ -322,6 +344,20 @@ class UploadHandler:
         else:
             return web.Response(status=401)
 
+    async def discardToUnknown(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rval = self.server.discardToUnknown(data["fileName"])
+            if rval[0]:
+                return web.Response(status=200)  # all fine
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_put("/admin/knownPages/{tpv}", self.uploadKnownPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
@@ -330,8 +366,10 @@ class UploadHandler:
         router.add_delete("/admin/scannedPage/{tpv}", self.removeScannedPage)
         router.add_get("/admin/scannedPage/{tpv}", self.getPageImage)
         router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)
+        router.add_get("/admin/discardNames", self.getDiscardNames)
         router.add_get("/admin/collidingPageNames", self.getCollidingPageNames)
         router.add_get("/admin/unknownImage", self.getUnknownImage)
+        router.add_get("/admin/discardImage", self.getDiscardImage)
         router.add_get("/admin/collidingImage", self.getCollidingImage)
         router.add_get("/admin/questionImages", self.getQuestionImages)
         router.add_get("/admin/testImages", self.getTestImages)
@@ -341,3 +379,4 @@ class UploadHandler:
         router.add_put("/admin/unknownToTestPage", self.unknownToTestPage)
         router.add_put("/admin/unknownToExtraPage", self.unknownToExtraPage)
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
+        router.add_put("/admin/discardToUnknown", self.discardToUnknown)

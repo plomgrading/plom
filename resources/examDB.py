@@ -423,41 +423,42 @@ class PlomDB:
             self.checkGroupAllUploaded(pref)
             return [True, "success", "Page saved as {}".format(pref.pid)]
 
-    def checkScannedPage(self, t, p, v):
+    def fileOfScannedPage(self, t, p, v):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return None
         pref = Page.get_or_none(test=tref, pageNumber=p, version=v)
         if pref is None:
             return None
-        return [pref.fileName, pref.originalName, pref.md5sum]
+        return pref.fileName
 
     def createDiscardedPage(self, oname, fname, md5, r, tpv):
         DiscardedPage.create(
             originalName=oname, fileName=fname, md5sum=md5, reason=r, tpv=tpv
         )
 
-    def removeScannedPage(self, t, p, v):
-        tref = Test.get_or_none(testNumber=t)
-        # first update the page
+    def removeScannedPage(self, fname, nname):
+        pref = Page.get_or_none(fileName=fname)
+        if pref is None:
+            return False
         with plomdb.atomic():
-            pref = Page.get_or_none(test=tref, pageNumber=p, version=v)
             pref.scanned = False
             pref.originalName = None
             pref.fileName = None
             pref.md5sum = None
             pref.scanned = False
             pref.save()
-        # now update the group
+
+        tref = pref.test
         gref = pref.group
+        # now update the group
         if gref.groupType == "d":
-            return self.invalidateDNMGroup(tref, gref)
+            rlist = self.invalidateDNMGroup(tref, gref)
         elif gref.groupType == "i":
-            return self.invalidateIDGroup(tref, gref)
+            rlist = self.invalidateIDGroup(tref, gref)
         elif gref.groupType == "m":
-            return self.invalidateQGroup(tref, gref)
-        else:
-            print("There is a big problem here.")
+            rlist = self.invalidateQGroup(tref, gref)
+        return [True, rlist]
 
     def invalidateDNMGroup(self, gref):
         with plomdb.atomic():
@@ -620,24 +621,32 @@ class PlomDB:
             "Colliding page saved, attached to {}".format(pref.pid),
         ]
 
-    def checkTestPageUnscanned(self, testNumber, pageNumber, version):
-        tref = Test.get_or_none(Test.testNumber == testNumber)
-        if tref is None:
-            return [False]
-        pref = Page.get_or_none(
-            Page.test == tref, Page.pageNumber == pageNumber, Page.version == version
-        )
-        if pref is None:
-            return [False]
-        if pref.scanned == True:
-            return [True, False]
-        else:
-            return [True, True, pref.version]
+    # def checkTestPageUnscanned(self, testNumber, pageNumber, version):
+    #     # returns True only if we can find test+page and page is unscanned
+    #
+    #     tref = Test.get_or_none(Test.testNumber == testNumber)
+    #     if tref is None:
+    #         return [False, "Test not found"]
+    #     pref = Page.get_or_none(
+    #         Page.test == tref, Page.pageNumber == pageNumber, Page.version == version
+    #     )
+    #     if pref is None:
+    #         return [False, "Page not found"]
+    #     if pref.scanned == False:
+    #         return [True, "Missing page replaced"]
+    #     else:
+    #         return [False, "Already scanned"]
 
     def getUnknownPageNames(self):
         rval = []
         for uref in UnknownPage.select():
             rval.append(uref.fileName)
+        return rval
+
+    def getDiscardNames(self):
+        rval = []
+        for dref in DiscardedPage.select():
+            rval.append(dref.fileName)
         return rval
 
     def getCollidingPageNames(self):
@@ -668,6 +677,13 @@ class PlomDB:
             return [False]
         else:
             return [True, uref.fileName]
+
+    def getDiscardImage(self, fname):
+        dref = DiscardedPage.get_or_none(DiscardedPage.fileName == fname)
+        if dref is None:
+            return [False]
+        else:
+            return [True, dref.fileName]
 
     def getCollidingImage(self, fname):
         cref = CollidingPage.get_or_none(CollidingPage.fileName == fname)
@@ -723,23 +739,29 @@ class PlomDB:
             return None
         return [cref.fileName, cref.originalName, cref.md5sum]
 
-    def removeUnknownImage(self, fname):
+    def removeUnknownImage(self, fname, nname):
         uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
             return False
         with plomdb.atomic():
+            DiscardedPage.create(
+                filename=nname, originalName=uref.originalName, md5sum=uref.md5sum
+            )
             uref.delete_instance()
         return True
 
-    def removeCollidingImage(self, fname):
-        cref = CollidingPage.get_or_none(CollidingPage.fileName == fname)
+    def removeCollidingImage(self, fname, nname):
+        cref = CollidingPage.get_or_none(fileName=fname)
         if cref is None:
             return False
         with plomdb.atomic():
+            DiscardedPage.create(
+                filename=nname, originalName=cref.originalName, md5sum=cref.md5sum
+            )
             cref.delete_instance()
         return True
 
-    def moveUnknownToPage(self, fname, testNumber, pageNumber):
+    def moveUnknownToPage(self, fname, nname, testNumber, pageNumber):
         uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
             return [False]
@@ -750,7 +772,7 @@ class PlomDB:
         if pref is None:
             return [False]
         with plomdb.atomic():
-            pref.fileName = fname
+            pref.fileName = nname
             pref.md5sum = uref.md5sum
             pref.originalName = uref.originalName
             pref.scanned = True
@@ -801,7 +823,7 @@ class PlomDB:
         self.checkGroupAllUploaded(pref)
         return [True]
 
-    def moveExtraToPage(self, fname, testNumber, questionNumber):
+    def moveExtraToPage(self, fname, nname, testNumber, questionNumber):
         uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
             return [False]
@@ -831,7 +853,7 @@ class PlomDB:
                 version=version,
                 pid="t{}p{}".format(testNumber, nextPageNumber),
                 originalName=uref.originalName,
-                fileName=uref.fileName,
+                fileName=nname,  # since the file is moved
                 md5sum=uref.md5sum,
                 scanned=True,
             )
@@ -839,6 +861,18 @@ class PlomDB:
         ## Now invalidate any work on the associated group
         # now update the group
         return [True, self.invalidateQGroup(tref, qref.group)]
+
+    def moveDiscardToUnknown(self, fname, nname):
+        dref = DiscardedPage.get_or_none(fileName=fname)
+        if dref is None:
+            return [False]
+        with plomdb.atomic():
+            uref = UnknownPage.create(
+                originalName=dref.originalName, fileName=nname, md5sum=dref.md5sum
+            )
+            uref.save()
+            dref.delete_instance()
+        return [True]
 
     # ------------------
     # Reporting functions

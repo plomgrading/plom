@@ -35,6 +35,7 @@ from useful_classes import ErrorMessage, SimpleMessage
 from test_view import WholeTestView, GroupView
 from unknownpageview import UnknownViewWindow
 from collideview import CollideViewWindow
+from discardview import DiscardViewWindow
 from plom_exceptions import *
 
 import managerMessenger
@@ -111,10 +112,12 @@ class Manager(QWidget):
         self.ui.refreshSButton.clicked.connect(self.refreshSList)
         self.ui.refreshUButton.clicked.connect(self.refreshUList)
         self.ui.refreshCButton.clicked.connect(self.refreshCList)
+        self.ui.refreshDButton.clicked.connect(self.refreshDList)
         self.ui.removePageB.clicked.connect(self.removePage)
         self.ui.subsPageB.clicked.connect(self.subsPage)
         self.ui.actionUButton.clicked.connect(self.doUActions)
         self.ui.actionCButton.clicked.connect(self.doCActions)
+        self.ui.actionDButton.clicked.connect(self.doDActions)
 
     def closeWindow(self):
         self.close()
@@ -171,6 +174,7 @@ class Manager(QWidget):
         self.initMarkTab()
         self.initUnknownTab()
         self.initCollideTab()
+        self.initDiscardTab()
 
     # -------------------
     def getTPQV(self):
@@ -197,7 +201,6 @@ class Manager(QWidget):
             root.removeChild(l0i)
 
         incomplete = managerMessenger.getIncompleteTests()  # pairs [p,v]
-        print(incomplete)
         for t in incomplete:
             l0 = QTreeWidgetItem(["{}".format(t), ""])
             for (p, v) in incomplete[t]:
@@ -421,6 +424,7 @@ class Manager(QWidget):
                 print(
                     "No action for file {}.".format(self.unknownModel.item(r, 0).text())
                 )
+        self.refreshUList()
 
     def viewWholeTest(self, testNumber):
         vt = managerMessenger.getTestImages(testNumber)
@@ -550,6 +554,69 @@ class Manager(QWidget):
                 print(
                     "No action for file {}.".format(self.collideModel.item(r, 0).text())
                 )
+        self.refreshCList()
+
+    def initDiscardTab(self):
+        self.discardModel = QStandardItemModel(0, 3)
+        self.ui.discardTV.setModel(self.discardModel)
+        self.ui.discardTV.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.discardTV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.discardModel.setHorizontalHeaderLabels(
+            ["FullFile", "File", "Action to be taken",]
+        )
+        self.ui.discardTV.setIconSize(QSize(96, 96))
+        self.ui.discardTV.activated.connect(self.viewDPage)
+        self.ui.discardTV.setColumnHidden(0, True)
+        self.refreshDList()
+
+    def refreshDList(self):
+        self.discardModel.removeRows(0, self.discardModel.rowCount())
+        disList = managerMessenger.getDiscardNames()  # list
+        r = 0
+        for u in disList:
+            it0 = QStandardItem(u)
+            it1 = QStandardItem(os.path.split(u)[1])
+            it1.setIcon(QIcon(QPixmap("./icons/manager_none.svg")))
+            it2 = QStandardItem("none")
+            it2.setTextAlignment(Qt.AlignCenter)
+            self.discardModel.insertRow(r, [it0, it1, it2])
+            r += 1
+        self.ui.discardTV.resizeRowsToContents()
+        self.ui.discardTV.resizeColumnsToContents()
+
+    def viewDPage(self):
+        pvi = self.ui.discardTV.selectedIndexes()
+        if len(pvi) == 0:
+            return
+        r = pvi[0].row()
+        fname = self.discardModel.item(r, 0).text()
+        vdp = managerMessenger.getDiscardImage(fname)
+        if vdp is None:
+            return
+        with tempfile.NamedTemporaryFile() as dh:
+            dh.write(vdp)
+            dvw = DiscardViewWindow(self, dh.name)
+            if dvw.exec_() == QDialog.Accepted:
+                if dvw.action == "unknown":
+                    self.discardModel.item(r, 1).setIcon(
+                        QIcon(QPixmap("./icons/manager_move.svg"))
+                    )
+                    self.discardModel.item(r, 2).setText("move")
+                elif dvw.action == "none":
+                    self.discardModel.item(r, 1).setIcon(
+                        QIcon(QPixmap("./icons/manager_none.svg"))
+                    )
+                    self.discardModel.item(r, 2).setText("none")
+
+    def doDActions(self):
+        for r in range(self.discardModel.rowCount()):
+            if self.discardModel.item(r, 2).text() == "move":
+                managerMessenger.discardToUnknown(self.discardModel.item(r, 0).text())
+            else:
+                print(
+                    "No action for file {}.".format(self.discardModel.item(r, 0).text())
+                )
+        self.refreshDList()
 
 
 # Pop up a dialog for unhandled exceptions and then exit

@@ -37,7 +37,9 @@ def buildSubstitute(test, page, ver):
 
     DNS.save("pns.pdf", garbage=4, deflate=True, clean=True)
     cmd = shlex.split(
-        "convert -density 200 pns.pdf pns.{}.{}.{}.png".format(test, page, ver)
+        "convert -background white -alpha remove -alpha off -density 200 pns.pdf pns.{}.{}.{}.png".format(
+            test, page, ver
+        )
     )
     subprocess.check_call(cmd)
     os.unlink("pns.pdf")

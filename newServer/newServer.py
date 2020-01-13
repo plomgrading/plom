@@ -52,6 +52,7 @@ def buildDirectories(spec):
         "pages",
         "pages/discardedPages",
         "pages/collidingPages",
+        "pages/unknownPages",
         "pages/originalPages",
         "pages/markedQuestions",
         "pages/markedQuestions/plomFiles",
@@ -112,9 +113,11 @@ class Server(object):
         replaceMissingPage,
         removeScannedPage,
         getUnknownPageNames,
+        getDiscardNames,
         getCollidingPageNames,
         getUnknownImage,
         getCollidingImage,
+        getDiscardImage,
         getPageImage,
         getQuestionImages,
         getTestImages,
@@ -124,6 +127,7 @@ class Server(object):
         unknownToTestPage,
         unknownToExtraPage,
         collidingToTestPage,
+        discardToUnknown,
     )
     from plomServer.serverID import (
         IDprogressCount,

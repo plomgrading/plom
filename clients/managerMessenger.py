@@ -330,6 +330,27 @@ def getUnknownPageNames():
     return rval
 
 
+def getDiscardNames():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/admin/discardNames".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token,},
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
 def getCollidingPageNames():
     SRmutex.acquire()
     try:
@@ -386,6 +407,28 @@ def getUnknownImage(fname):
     try:
         response = session.get(
             "https://{}:{}/admin/unknownImage".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token, "fileName": fname,},
+        )
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        elif response.status_code == 404:
+            return None
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+    return image
+
+
+def getDiscardImage(fname):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/admin/discardImage".format(server, message_port),
             verify=False,
             json={"user": _userName, "token": _token, "fileName": fname,},
         )
@@ -644,11 +687,34 @@ def collidingToTestPage(fname, test, page, version):
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 404:
-            raise PlomSeriousException("Cannot find test/page {}.".format(tp))
+            raise PlomSeriousException(
+                "Cannot find test/page {}/{}.".format(test, page)
+            )
         else:
             raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
         SRmutex.release()
+
+
+def discardToUnknown(fname):
+    SRmutex.acquire()
+    try:
+        response = session.put(
+            "https://{}:{}/admin/discardToUnknown".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token, "fileName": fname,},
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        elif response.status_code == 404:
+            return False
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+    return True
 
 
 def startMessenger():

@@ -32,7 +32,7 @@ def addUnknownPage(self, fname, image, md5o):
     prefix = "unk."
     while True:
         unique = str(uuid.uuid4())[:8]
-        newName = "pages/originalPages/" + prefix + unique + ".png"
+        newName = "pages/unknownPages/" + prefix + unique + ".png"
         if not os.path.isfile(newName):
             break
     val = self.DB.uploadUnknownPage(fname, newName, md5o)
@@ -70,9 +70,6 @@ def addCollidingPage(self, t, p, v, fname, image, md5o):
 
 
 def replaceMissingPage(self, testNumber, pageNumber, version):
-    rval = self.DB.checkTestPageUnscanned(testNumber, pageNumber, version)
-    if not (rval[0] and rval[1]):
-        return rval
     # build a "pageNotSubmitted page"
     cmd = "python3 ./pageNotSubmitted.py {} {} {}".format(
         testNumber, pageNumber, version
@@ -83,19 +80,25 @@ def replaceMissingPage(self, testNumber, pageNumber, version):
     prefix = "pages/originalPages/pns.{}p{}v{}".format(
         str(testNumber).zfill(4), str(pageNumber).zfill(2), version
     )
+    # make a non-colliding name
     while True:
         unique = "." + str(uuid.uuid4())[:8]
         newName = prefix + unique + ".png"
         if not os.path.isfile(newName):
             break
         newName = "pages/originalPages/" + prefix + unique + ".png"
-
+    # compute md5sum and put into database
     md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
-    val = self.DB.replaceMissingPage(
+    # now try to put it into place
+    rval = self.DB.replaceMissingPage(
         testNumber, pageNumber, version, originalName, newName, md5
     )
-    shutil.move(originalName, newName)
-    return val
+    # if move successful then actually move file into place, else delete it
+    if rval[0]:
+        shutil.move(originalName, newName)
+    else:
+        os.unlink(originalName)
+    return rval
 
 
 def getPageImage(self, testNumber, pageNumber, version):
@@ -106,12 +109,20 @@ def getUnknownImage(self, fname):
     return self.DB.getUnknownImage(fname)
 
 
+def getDiscardImage(self, fname):
+    return self.DB.getDiscardImage(fname)
+
+
 def getCollidingImage(self, fname):
     return self.DB.getCollidingImage(fname)
 
 
 def getUnknownPageNames(self):
     return self.DB.getUnknownPageNames()
+
+
+def getDiscardNames(self):
+    return self.DB.getDiscardNames()
 
 
 def getCollidingPageNames(self):
@@ -131,41 +142,21 @@ def checkPage(self, testNumber, pageNumber):
 
 
 def removeUnknownImage(self, fname):
-    fnon = self.DB.checkUnknownImage(fname)
-    # returns either None or [filename, originalName, md5sum]
-    if fnon is None:
-        return [False, "Cannot find page"]
-    # need to create a discardedPage object and move files
-    newFilename = "pages/discardedPages/" + os.path.split(fnon[0])[1]
-    shutil.move(fnon[0], newFilename)
-    self.DB.createDiscardedPage(
-        fnon[1],  # originalName
-        newFilename,
-        fnon[2],  # md5sum
-        "Manager removed page",
-        "",
-    )
-    rval = self.DB.removeUnknownImage(fname)
-    return [True]
+    newFilename = "pages/discardedPages/" + os.path.split(fname)[1]
+    if self.DB.removeUnknownImage(fname, newFilename):
+        shutil.move(fname, newFilename)
+        return [True]
+    else:
+        return [False]
 
 
 def removeCollidingImage(self, fname):
-    fnon = self.DB.checkCollidingImage(fname)
-    # returns either None or [filename, originalName, md5sum]
-    if fnon is None:
-        return [False, "Cannot find page"]
-    # need to create a discardedPage object and move files
-    newFilename = "pages/discardedPages/" + os.path.split(fnon[0])[1]
-    shutil.move(fnon[0], newFilename)
-    self.DB.createDiscardedPage(
-        fnon[1],  # originalName
-        newFilename,
-        fnon[2],  # md5sum
-        "Manager removed page",
-        "",
-    )
-    rval = self.DB.removeCollidingImage(fname)
-    return [True]
+    newFilename = "pages/discardedPages/" + os.path.split(fname)[1]
+    if self.DB.removeCollidingImage(fname, newFilename):
+        shutil.move(fname, newFilename)
+        return [True]
+    else:
+        return [False]
 
 
 def unknownToTestPage(self, fname, test, page, rotation):
@@ -178,31 +169,37 @@ def unknownToTestPage(self, fname, test, page, rotation):
     )
     if self.DB.checkPage(test, page)[0]:
         # existing page in place - create a colliding page
-        newFilename = "pages/collidingPages/" + os.path.split(fnon[0])[1]
+        newFilename = "pages/collidingPages/" + os.path.split(fname)[1]
         if self.DB.moveUnknownToCollision(fname, newFilename, test, page)[0]:
             shutil.move(fname, newFilename)
             return [True, "collision"]
     else:
-        if self.DB.moveUnknownToPage(fname, test, page)[0]:
+        newFilename = "pages/originalPages/" + os.path.split(fname)[1]
+        if self.DB.moveUnknownToPage(fname, newFilename, test, page)[0]:
+            shutil.move(fname, newFilename)
             return [True, "testPage"]
     # some sort of problem occurred
     return [False]
 
 
 def unknownToExtraPage(self, fname, test, question, rotation):
-    rval = self.DB.moveExtraToPage(fname, test, question)[0]
+    newFilename = "pages/originalPages/" + os.path.split(fname)[1]
+    rval = self.DB.moveExtraToPage(fname, newFilename, test, question)
     # returns [True, [file1,file2,..]] or [False]
+    # the files are annotations to be deleted
     if rval[0]:
-        # clean up any annotations
-        for fn in rval[1]:
-            os.unlink(fn)
+        # move file into place
+        shutil.move(fname, newFilename)
         # moved successfully. now rotate the page
         subprocess.run(
-            ["mogrify", "-quiet", "-rotate", rotation, fname],
+            ["mogrify", "-quiet", "-rotate", rotation, newFilename],
             stderr=subprocess.STDOUT,
             shell=False,
             check=True,
         )
+        # clean up any annotation files
+        for fn in rval[1]:
+            os.unlink(fn)
     else:
         return [False]
     return [True]
@@ -211,26 +208,20 @@ def unknownToExtraPage(self, fname, test, question, rotation):
 def removeScannedPage(self, testNumber, pageNumber, version):
     # the scanned page moves to a discardedPage
     # any annotations are deleted.
-    fnon = self.DB.checkScannedPage(testNumber, pageNumber, version)
+    fname = self.DB.fileOfScannedPage(testNumber, pageNumber, version)
     # returns either None or [filename, originalName, md5sum]
-    if fnon is None:
+    if fname is None:
         return [False, "Cannot find page"]
     # need to create a discardedPage object and move files
-    newFilename = "pages/discardedPages/" + os.path.split(fnon[0])[1]
-    shutil.move(fnon[0], newFilename)
-    self.DB.createDiscardedPage(
-        fnon[1],  # originalName
-        newFilename,
-        fnon[2],  # md5sum
-        "Manager removed page",
-        "t{}p{}v{}".format(testNumber, pageNumber, version),
-    )
-    # clean up any annotated files
-    rval = self.DB.removeScannedPage(testNumber, pageNumber, version)
-    for fn in rval:
-        os.unlink(fn)
-
-    return [True]
+    newFilename = "pages/discardedPages/" + os.path.split(fname)[1]
+    rval = self.DB.removeScannedPage(fname, newFilename)
+    if rval[0]:
+        shutil.move(fname, newFilename)
+        for fn in rval[1]:
+            os.unlink(fn)
+        return [True]
+    else:
+        return [False]
 
 
 def collidingToTestPage(self, fname, test, page, version):
@@ -244,3 +235,12 @@ def collidingToTestPage(self, fname, test, page, version):
         return [True]
     # some sort of problem occurred
     return [False]
+
+
+def discardToUnknown(self, fname):
+    newFilename = "pages/unknownPages/" + os.path.split(fname)[1]
+    if self.DB.moveDiscardToUnknown(fname, newFilename):
+        shutil.move(fname, newFilename)
+        return [True]
+    else:
+        return [False]
