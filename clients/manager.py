@@ -341,8 +341,9 @@ class Manager(QWidget):
                     fh.write(imageList[i])
             srw = SelectRectangleWindow(self, inames)
             if srw.exec_() == QDialog.Accepted:
-                self.rectangle = srw.rectangle
-                print("Rectangle = {}".format(self.rectangle))
+                self.IDrectangle = srw.rectangle
+                self.IDfileNum = srw.vTW.currentIndex()
+                print("Rectangle = {} of {}".format(self.IDrectangle, self.IDfileNum))
                 self.ui.predictButton.setEnabled(True)
 
     def viewIDPage(self):
@@ -359,6 +360,7 @@ class Manager(QWidget):
                 inames.append(tmp)
                 with open(tmp, "wb+") as fh:
                     fh.write(imageList[i])
+            print(inames)
             IDViewWindow(self, inames, sid).exec_()
 
     def runPredictor(self):
