@@ -145,7 +145,7 @@ class DiscardedPage(Model):
     originalName = CharField(null=True)
     fileName = CharField(null=True)
     md5sum = CharField()
-    reason = CharField()
+    reason = CharField(null=True)
     tpv = CharField(null=True)  # if the discard is a duplicate of a given tpv
 
     class Meta:
@@ -745,7 +745,7 @@ class PlomDB:
             return False
         with plomdb.atomic():
             DiscardedPage.create(
-                filename=nname, originalName=uref.originalName, md5sum=uref.md5sum
+                fileName=nname, originalName=uref.originalName, md5sum=uref.md5sum
             )
             uref.delete_instance()
         return True
@@ -756,7 +756,7 @@ class PlomDB:
             return False
         with plomdb.atomic():
             DiscardedPage.create(
-                filename=nname, originalName=cref.originalName, md5sum=cref.md5sum
+                fileName=nname, originalName=cref.originalName, md5sum=cref.md5sum
             )
             cref.delete_instance()
         return True
@@ -1068,7 +1068,7 @@ class PlomDB:
             return [False]
         iref = tref.iddata[0]
         # check if task given to user
-        if iref.username != username:
+        if username not in [iref.username, "manager"]:
             return [False]
         gref = iref.group
         rval = [True]

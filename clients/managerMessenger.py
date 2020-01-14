@@ -245,11 +245,88 @@ def IDprogressCount():
     return progress
 
 
+def TprogressCount():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/TOT/progress".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        # throw errors when response code != 200.
+        response.raise_for_status()
+        # convert the content of the response to a textfile for identifier
+        progress = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return progress
+
+
+def IDrequestPredictions():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/predictions".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        predictions = TextIOWrapper(BytesIO(response.content))
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException("Server cannot find the prediction list.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return predictions
+
+
 def IDgetRandomImage():
     SRmutex.acquire()
     try:
         response = session.get(
             "https://{}:{}/ID/randomImage".format(server, message_port),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        imageList = []
+        for img in MultipartDecoder.from_response(response).parts:
+            imageList.append(
+                BytesIO(img.content).getvalue()
+            )  # pass back image as bytes
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException("Cannot find image file for {}.".format(code))
+        elif response.status_code == 409:
+            raise PlomSeriousException(
+                "Another user has the image for {}. This should not happen".format(code)
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return imageList
+
+
+def IDrequestImage(code):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/ID/images/{}".format(server, message_port, code),
             json={"user": _userName, "token": _token},
             verify=False,
         )

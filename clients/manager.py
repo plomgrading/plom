@@ -10,11 +10,12 @@ __license__ = "AGPL-3.0-or-later"
 import toml
 import argparse
 import os
+import csv
 import signal
 import sys
 import tempfile
 import traceback as tblib
-from PyQt5.QtCore import Qt, pyqtSlot, QSize, QTimer
+from PyQt5.QtCore import Qt, pyqtSlot, QRectF, QSize, QTimer
 from PyQt5.QtGui import QBrush, QFont, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -26,6 +27,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QStyleFactory,
+    QTableWidgetItem,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
@@ -36,6 +38,7 @@ from test_view import WholeTestView, GroupView
 from unknownpageview import UnknownViewWindow
 from collideview import CollideViewWindow
 from discardview import DiscardViewWindow
+from selectrectangle import SelectRectangleWindow, IDViewWindow
 from plom_exceptions import *
 
 import managerMessenger
@@ -119,7 +122,10 @@ class Manager(QWidget):
         self.ui.actionUButton.clicked.connect(self.doUActions)
         self.ui.actionCButton.clicked.connect(self.doCActions)
         self.ui.actionDButton.clicked.connect(self.doDActions)
+        self.ui.selectRectButton.clicked.connect(self.selectRectangle)
+        self.ui.predictButton.clicked.connect(self.runPredictor)
         self.ui.delPredButton.clicked.connect(self.deletePredictions)
+        self.ui.predListRefreshB.clicked.connect(self.getPredictions)
 
     def closeWindow(self):
         self.close()
@@ -305,17 +311,74 @@ class Manager(QWidget):
     def initIDTab(self):
         self.refreshIDTab()
         self.ui.idPB.setFormat("%v / %m")
-        # idimg = managerMessenger.IDgetRandomImage()
-        # with tempfile.NamedTemporaryFile(delete=False) as ntf:
-        #     fh = open(ntf, "wb")
-        #     fh.write(idimg)
-        # self.idGV = GroupView(idimg)
+        self.ui.totPB.setFormat("%v / %m")
+        self.ui.predictionTW.setColumnCount(2)
+        self.ui.predictionTW.setHorizontalHeaderLabels(["Test", "Student ID"])
+        self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.predictionTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.predictionTW.setAlternatingRowColors(True)
+        self.ui.predictionTW.activated.connect(self.viewIDPage)
 
     def refreshIDTab(self):
         ti = managerMessenger.IDprogressCount()
+        tt = managerMessenger.TprogressCount()
         self.ui.papersLE.setText(str(ti[1]))
         self.ui.idPB.setValue(ti[0])
         self.ui.idPB.setMaximum(ti[1])
+        self.ui.totPB.setMaximum(tt[1])
+        self.ui.totPB.setValue(tt[0])
+        self.getPredictions()
+
+    def selectRectangle(self):
+        imageList = managerMessenger.IDgetRandomImage()
+        # Image names = "i<testnumber>.<imagenumber>.png"
+        inames = []
+        with tempfile.TemporaryDirectory() as td:
+            for i in range(len(imageList)):
+                tmp = os.path.join(td, "id.{}.png".format(i))
+                inames.append(tmp)
+                with open(tmp, "wb+") as fh:
+                    fh.write(imageList[i])
+            srw = SelectRectangleWindow(self, inames)
+            if srw.exec_() == QDialog.Accepted:
+                self.rectangle = srw.rectangle
+                print("Rectangle = {}".format(self.rectangle))
+                self.ui.predictButton.setEnabled(True)
+
+    def viewIDPage(self):
+        idi = self.ui.predictionTW.selectedIndexes()
+        if len(idi) == 0:
+            return
+        test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
+        sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
+        imageList = managerMessenger.IDrequestImage(test)
+        inames = []
+        with tempfile.TemporaryDirectory() as td:
+            for i in range(len(imageList)):
+                tmp = os.path.join(td, "id.{}.png".format(i))
+                inames.append(tmp)
+                with open(tmp, "wb+") as fh:
+                    fh.write(imageList[i])
+            IDViewWindow(self, inames, sid).exec_()
+
+    def runPredictor(self):
+        pass
+
+    def getPredictions(self):
+        csvfile = managerMessenger.IDrequestPredictions()
+        pdict = {}
+        reader = csv.DictReader(csvfile, skipinitialspace=True)
+        for row in reader:
+            pdict[int(row["test"])] = str(row["id"])
+
+        self.ui.predictionTW.clearContents()
+        self.ui.predictionTW.setRowCount(0)
+        r = 0
+        for t in pdict.keys():
+            self.ui.predictionTW.insertRow(r)
+            self.ui.predictionTW.setItem(r, 0, QTableWidgetItem("{}".format(t)))
+            self.ui.predictionTW.setItem(r, 1, QTableWidgetItem("{}".format(pdict[t])))
+            r += 1
 
     def deletePredictions(self):
         msg = SimpleMessage(
@@ -324,6 +387,7 @@ class Manager(QWidget):
         if msg.exec_() == QMessageBox.No:
             return
         managerMessenger.IDdeletePredictions()
+        self.getPredictions()
 
     def initMarkTab(self):
         grid = QGridLayout()
