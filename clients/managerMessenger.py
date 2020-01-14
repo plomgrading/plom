@@ -869,6 +869,27 @@ def IDdeletePredictions():
     return rval
 
 
+def getIdentified():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/identified".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token,},
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
 def startMessenger():
     """Start the messenger session"""
     print("Starting a requests-session")

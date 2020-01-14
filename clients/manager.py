@@ -342,8 +342,7 @@ class Manager(QWidget):
             srw = SelectRectangleWindow(self, inames)
             if srw.exec_() == QDialog.Accepted:
                 self.IDrectangle = srw.rectangle
-                self.IDfileNum = srw.vTW.currentIndex()
-                print("Rectangle = {} of {}".format(self.IDrectangle, self.IDfileNum))
+                self.IDwhichFile = srw.whichFile
                 self.ui.predictButton.setEnabled(True)
 
     def viewIDPage(self):
@@ -364,7 +363,11 @@ class Manager(QWidget):
             IDViewWindow(self, inames, sid).exec_()
 
     def runPredictor(self):
-        pass
+        print(
+            "Run predictor with rectangle = {} of {}th file".format(
+                self.IDrectangle, self.IDwhichFile
+            )
+        )
 
     def getPredictions(self):
         csvfile = managerMessenger.IDrequestPredictions()
@@ -372,6 +375,9 @@ class Manager(QWidget):
         reader = csv.DictReader(csvfile, skipinitialspace=True)
         for row in reader:
             pdict[int(row["test"])] = str(row["id"])
+        iDict = managerMessenger.getIdentified()
+        for t in iDict.keys():
+            pdict[int(t)] = str(iDict[t])
 
         self.ui.predictionTW.clearContents()
         self.ui.predictionTW.setRowCount(0)
@@ -379,7 +385,11 @@ class Manager(QWidget):
         for t in pdict.keys():
             self.ui.predictionTW.insertRow(r)
             self.ui.predictionTW.setItem(r, 0, QTableWidgetItem("{}".format(t)))
-            self.ui.predictionTW.setItem(r, 1, QTableWidgetItem("{}".format(pdict[t])))
+            it = QTableWidgetItem("{}".format(pdict[t]))
+            if str(t) in iDict:
+                it.setBackground(QBrush(Qt.cyan))
+                it.setToolTip("Has been identified")
+            self.ui.predictionTW.setItem(r, 1, it)
             r += 1
 
     def deletePredictions(self):

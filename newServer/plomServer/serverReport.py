@@ -17,3 +17,7 @@ def RgetUnusedTests(self):
 
 def RgetProgress(self, qu, v):
     return self.DB.RgetProgress(qu, v)
+
+
+def RgetIdentified(self):
+    return self.DB.RgetIdentified()

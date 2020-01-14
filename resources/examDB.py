@@ -903,6 +903,12 @@ class PlomDB:
             rval.append(tref.testNumber)
         return rval
 
+    def RgetIdentified(self):
+        rval = {}
+        for iref in IDData.select().where(IDData.identified == True):
+            rval[iref.test.testNumber] = iref.studentID
+        return rval
+
     def RgetProgress(self, q, v):
         # return [numberScanned, numberMarked, numberRecent, avgMark, avgTimetaken]
         oneHour = timedelta(hours=1)
