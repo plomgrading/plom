@@ -20,7 +20,6 @@ import threading
 import time
 import toml
 import queue
-import math
 
 from PyQt5.QtCore import (
     Qt,
@@ -151,9 +150,17 @@ class BackgroundUploader(QThread):
             from queue import Empty as EmptyQueueException
 
             try:
-                code, gr, aname, pname, cname, mtime, pg, ver, tags = (
-                    self.q.get_nowait()
-                )
+                (
+                    code,
+                    gr,
+                    aname,
+                    pname,
+                    cname,
+                    mtime,
+                    pg,
+                    ver,
+                    tags,
+                ) = self.q.get_nowait()
             except EmptyQueueException:
                 return
             print(
@@ -416,6 +423,16 @@ class ProxyModel(QSortFilterProxyModel):
         QSortFilterProxyModel.__init__(self, parent)
         self.setFilterKeyColumn(4)
         self.filterString = ""
+
+    def lessThan(self, left, right):
+        # Check to see if data is integer, and compare that
+        try:
+            lv = int(left.data())
+            rv = int(right.data())
+            return lv < rv
+        except ValueError:
+            # else let qt handle it.
+            return left.data() < right.data()
 
     def setFilterString(self, flt):
         self.filterString = flt
@@ -727,7 +744,7 @@ class MarkerClient(QWidget):
             fh.write(image)
         self.exM.addPaper(TestPageGroup(test, fname, tags=tags))
         pr = self.prxM.rowFromTGV(test)
-        if pr:
+        if pr is not None:
             # if newly-added row is visible, select it and redraw
             self.ui.tableView.selectRow(pr)
             self.updateImage(pr)
@@ -924,7 +941,8 @@ class MarkerClient(QWidget):
             while self.backgroundDownloader.isRunning():
                 time.sleep(0.1)
                 count += 1
-                if math.remainder(count, 10) == 0:
+                # if .remainder(count, 10) == 0: # this is only python3.7 and later. - see #509
+                if (count % 10) == 0:
                     print("Debug: waiting for downloader: {}".format(fname))
                 if count >= 40:
                     msg = SimpleMessage(

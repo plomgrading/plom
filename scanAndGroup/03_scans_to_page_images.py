@@ -26,6 +26,8 @@ def buildDirectories():
         "pageImages/alreadyProcessed",
         "pageImages/problemImages",
         "decodedPages",
+        "discardedPages",
+        "extraPages",
         "readyForMarking",
         "readyForMarking/idgroup/",
     ]
@@ -104,6 +106,9 @@ def processScans():
 
 
 if __name__ == "__main__":
+    spec = TestSpecification()
+    spec.readSpec()
+    buildDirectories()
     # Look for pdfs in scanned exams.
     counter = 0
     for fname in os.listdir("./scannedExams"):
@@ -111,9 +116,6 @@ if __name__ == "__main__":
             counter = counter + 1
     # If there are some then process them else return a warning.
     if not counter == 0:
-        spec = TestSpecification()
-        spec.readSpec()
-        buildDirectories()
         processScans()
         print("Successfully converted scans to page images")
     else:
