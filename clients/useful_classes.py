@@ -229,12 +229,15 @@ class CommentWidget(QWidget):
         grid.addWidget(self.CL, 1, 1, 2, 3)
         self.addB = QPushButton("Add")
         self.delB = QPushButton("Delete")
+        self.filtB = QPushButton("Filter...")
         grid.addWidget(self.addB, 3, 1)
+        grid.addWidget(self.filtB, 3, 2)
         grid.addWidget(self.delB, 3, 3)
         self.setLayout(grid)
         # connect the buttons to functions.
         self.addB.clicked.connect(self.addFromTextList)
         self.delB.clicked.connect(self.deleteItem)
+        self.filtB.clicked.connect(self.changeFilter)
 
     def setStyle(self, markStyle):
         # The list needs a style-delegate because the display
@@ -261,6 +264,9 @@ class CommentWidget(QWidget):
 
     def deleteItem(self):
         self.CL.deleteItem()
+
+    def changeFilter(self):
+        self.CL.changeFilter()
 
     def currentItem(self):
         # grab focus and trigger a "row selected" signal
@@ -459,6 +465,7 @@ class SimpleCommentTable(QTableView):
         self.viewport().setAcceptDrops(True)
         self.setDragDropOverwriteMode(False)
         self.setDropIndicatorShown(True)
+        self.filters = [True, True]
 
         # When clicked, the selection changes, so must emit signal
         # to the annotator.
@@ -545,9 +552,10 @@ class SimpleCommentTable(QTableView):
             # TODO: YUCK! (how do I get the pagegroup)
             questnum = int(self.parent.parent.tgv[5:7])
             testname = self.parent.parent.testname
-            if not commentVisibleInQuestion(com, questnum):
+            filters = self.filters
+            if filters[0] and not commentVisibleInQuestion(com, questnum):
                 continue
-            if com["testname"] and not com["testname"] == testname:
+            if filters[1] and com["testname"] and not com["testname"] == testname:
                 continue
             txti = QStandardItem(com["text"])
             txti.setEditable(True)
@@ -594,6 +602,14 @@ class SimpleCommentTable(QTableView):
         #self.cmodel.removeRow(sel[0].row())
         # TODO: maybe sloppy to rebuild, need automatic cmodel ontop of clist
         self.populateTable()
+
+    def changeFilter(self):
+        d = ChangeFiltersDialog(self, self.filters)
+        if d.exec_() == QDialog.Accepted:
+            newfilters = d.getFilters()
+            self.filters = newfilters
+            # TODO: maybe sloppy to rebuild, need automatic cmodel ontop of clist
+            self.populateTable()
 
     def currentItem(self):
         # If no selected row, then select row 0.
@@ -789,3 +805,31 @@ class AddTagBox(QDialog):
     def changedCB(self):
         self.TE.clear()
         self.TE.insertPlainText(self.CB.currentText())
+
+
+class ChangeFiltersDialog(QDialog):
+    def __init__(self, parent, curFilters):
+        super(QDialog, self).__init__()
+        self.parent = parent
+        self.cb1 = QCheckBox("Hide comments from other questions")
+        self.cb2 = QCheckBox("Hide comments from other tests")
+        self.cb1.setCheckState(Qt.Checked if curFilters[0] else Qt.Unchecked)
+        if curFilters[1]:
+            self.cb2.setCheckState(Qt.Checked)
+        else:
+            self.cb2.setCheckState(Qt.Unchecked)
+
+        flay = QVBoxLayout()
+        flay.addWidget(self.cb1)
+        flay.addWidget(self.cb2)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+    def getFilters(self):
+        return [self.cb1.checkState() == Qt.Checked,
+                self.cb2.checkState() == Qt.Checked]
