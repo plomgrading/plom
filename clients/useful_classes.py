@@ -260,9 +260,6 @@ class CommentWidget(QWidget):
     def saveComments(self):
         self.CL.saveCommentList()
 
-    def addItem(self):
-        self.CL.addItem()
-
     def deleteItem(self):
         self.CL.deleteItem()
 
@@ -791,7 +788,6 @@ class AddTagBox(QDialog):
         self.setLayout(vlay)
 
         # set up widgets
-        buttons.accepted.connect(self.accept)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         self.CB.addItem("")
