@@ -951,6 +951,46 @@ class PlomDB:
                 "avgMTime": SMTime / NMarked,
             }
 
+    def RgetCompletions(self):
+        rval = {}
+        for tref in Test.select().where(Test.scanned == True):
+            numMarked = (
+                QuestionData.select()
+                .where(QuestionData.test == tref, QuestionData.marked == True)
+                .count()
+            )
+            rval[tref.testNumber] = [tref.identified, tref.totalled, numMarked]
+        return rval
+
+    def RgetStatus(self, testNumber):
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        rval = {
+            "number": tref.testNumber,
+            "identified": tref.identified,
+            "marked": tref.marked,
+            "totalled": tref.totalled,
+        }
+        if tref.identified:
+            iref = tref.iddata[0]
+            rval["sid"] = iref.studentID
+            rval["sname"] = iref.studentName
+            rval["iwho"] = iref.username
+        if tref.totalled:
+            sref = tref.sumdata[0]
+            rval["total"] = sref.sumMark
+            rval["twho"] = sref.username
+        for qref in tref.questiondata:
+            rval[qref.questionNumber] = {
+                "marked": qref.marked,
+                "mark": qref.mark,
+                "version": qref.version,
+                "who": qref.username,
+            }
+
+        return [True, rval]
+
     # ------------------
     # For user login - we reset all their stuff that is out
 

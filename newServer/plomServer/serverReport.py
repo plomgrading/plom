@@ -21,3 +21,11 @@ def RgetProgress(self, qu, v):
 
 def RgetIdentified(self):
     return self.DB.RgetIdentified()
+
+
+def RgetCompletions(self):
+    return self.DB.RgetCompletions()
+
+
+def RgetStatus(self, testNumber):
+    return self.DB.RgetStatus(testNumber)

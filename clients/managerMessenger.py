@@ -172,6 +172,48 @@ def getInfoTPQV():
     return tpqv
 
 
+def RgetCompletions():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/completion".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token},
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return response.json()
+
+
+def RgetStatus(test):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/status/{}".format(server, message_port, test),
+            verify=False,
+            json={"user": _userName, "token": _token},
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException("Could not find test {}.".format(test))
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return response.json()
+
+
 def getScannedTests():
     SRmutex.acquire()
     try:

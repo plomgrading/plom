@@ -20,12 +20,15 @@ from PyQt5.QtGui import QBrush, QFont, QIcon, QPixmap, QStandardItem, QStandardI
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QApplication,
+    QCheckBox,
     QDialog,
+    QGroupBox,
     QGridLayout,
     QGroupBox,
     QLabel,
     QMessageBox,
     QProgressBar,
+    QPushButton,
     QStyleFactory,
     QTableWidgetItem,
     QTreeWidgetItem,
@@ -46,6 +49,73 @@ import managerMessenger
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
 from resources.version import Plom_API_Version
+
+
+class TestStatus(QDialog):
+    def __init__(self, nq, status):
+        super(TestStatus, self).__init__()
+        self.status = status
+        print(status)
+        self.setWindowTitle("Status of test {}".format(self.status["number"]))
+
+        grid = QGridLayout()
+        self.idCB = QCheckBox("Identified: ")
+        self.idCB.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.idCB.setFocusPolicy(Qt.NoFocus)
+        if status["identified"]:
+            self.idCB.setCheckState(Qt.Checked)
+        self.totCB = QCheckBox("Totalled: ")
+        self.totCB.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.totCB.setFocusPolicy(Qt.NoFocus)
+        if status["totalled"]:
+            self.totCB.setCheckState(Qt.Checked)
+        self.mkCB = QCheckBox("Marked: ")
+        self.mkCB.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.mkCB.setFocusPolicy(Qt.NoFocus)
+        if status["marked"]:
+            self.mkCB.setCheckState(Qt.Checked)
+
+        self.clB = QPushButton("&close")
+        self.clB.clicked.connect(self.accept)
+
+        grid.addWidget(self.idCB, 1, 1)
+        grid.addWidget(self.totCB, 1, 2)
+        grid.addWidget(self.mkCB, 1, 3)
+
+        if status["identified"]:
+            self.iG = QGroupBox("Identification")
+            gg = QVBoxLayout()
+            gg.addWidget(QLabel("ID: {}".format(status["sid"])))
+            gg.addWidget(QLabel("Name: {}".format(status["sname"])))
+            gg.addWidget(QLabel("Username: {}".format(status["iwho"])))
+            self.iG.setLayout(gg)
+            grid.addWidget(self.iG, 2, 1, 3, 3)
+
+        if status["totalled"]:
+            self.tG = QGroupBox("Totalling")
+            gg = QVBoxLayout()
+            gg.addWidget(QLabel("Total: {}".format(status["total"])))
+            gg.addWidget(QLabel("Username: {}".format(status["twho"])))
+            self.tG.setLayout(gg)
+            grid.addWidget(self.tG, 5, 1, 3, 3)
+
+        self.qG = {}
+        for q in range(1, nq + 1):
+            sq = str(q)
+            self.qG[q] = QGroupBox("Question {}.{}:".format(q, status[sq]["version"]))
+            gg = QVBoxLayout()
+            if status[sq]["marked"]:
+                gg.addWidget(QLabel("Marked"))
+                gg.addWidget(QLabel("Mark: {}".format(status[sq]["mark"])))
+                gg.addWidget(QLabel("Username: {}".format(status[sq]["who"])))
+            else:
+                gg.addWidget(QLabel("Unmarked"))
+
+            self.qG[q].setLayout(gg)
+            grid.addWidget(self.qG[q], 10 * q + 1, 1, 3, 3)
+
+        grid.addWidget(self.clB, 100, 10)
+        self.setLayout(grid)
 
 
 class ProgressBox(QGroupBox):
@@ -110,8 +180,9 @@ class Manager(QWidget):
         self.ui.loginButton.clicked.connect(self.login)
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontButton.clicked.connect(self.setFont)
-        self.ui.refreshIButton.clicked.connect(self.refreshIList)
+        self.ui.refreshOButton.clicked.connect(self.refreshOTab)
         self.ui.refreshIDButon.clicked.connect(self.refreshIDTab)
+        self.ui.refreshIButton.clicked.connect(self.refreshIList)
         self.ui.refreshPButton.clicked.connect(self.refreshMTab)
         self.ui.refreshSButton.clicked.connect(self.refreshSList)
         self.ui.refreshUButton.clicked.connect(self.refreshUList)
@@ -178,6 +249,7 @@ class Manager(QWidget):
         self.ui.loginButton.setEnabled(False)
 
         self.getTPQV()
+        self.initOTab()
         self.initScanTab()
         self.initIDTab()
         self.initMarkTab()
@@ -192,6 +264,52 @@ class Manager(QWidget):
         self.numberOfPages = pqv[1]
         self.numberOfQuestions = pqv[2]
         self.numberOfVersions = pqv[3]
+
+    def initOTab(self):
+        self.ui.overallTW.setHorizontalHeaderLabels(
+            ["Test number", "Identified", "Totalled", "Questions Marked"]
+        )
+        self.ui.overallTW.activated.connect(self.viewTestStatus)
+        self.refreshOTab()
+
+    def viewTestStatus(self):
+        pvi = self.ui.overallTW.selectedItems()
+        if len(pvi) == 0:
+            return
+        r = pvi[0].row()
+        testNumber = int(self.ui.overallTW.item(r, 0).text())
+        stats = managerMessenger.RgetStatus(testNumber)
+        TestStatus(self.numberOfQuestions, stats).exec_()
+
+    def refreshOTab(self):
+        self.ui.overallTW.clearContents()
+        self.ui.overallTW.setRowCount(0)
+
+        opDict = managerMessenger.RgetCompletions()
+        tk = list(opDict.keys())
+        tk.sort(key=int)  # sort in numeric order
+        r = 0
+        for t in tk:
+            self.ui.overallTW.insertRow(r)
+            self.ui.overallTW.setItem(r, 0, QTableWidgetItem("{}".format(t)))
+            it = QTableWidgetItem("{}".format(opDict[t][0]))
+            if opDict[t][0]:
+                it.setBackground(QBrush(Qt.green))
+                it.setToolTip("Has been identified")
+            self.ui.overallTW.setItem(r, 1, it)
+
+            it = QTableWidgetItem("{}".format(opDict[t][1]))
+            if opDict[t][1]:
+                it.setBackground(QBrush(Qt.green))
+                it.setToolTip("Has been totalled")
+            self.ui.overallTW.setItem(r, 2, it)
+
+            it = QTableWidgetItem("{}".format(opDict[t][2]))
+            if opDict[t][2] == self.numberOfQuestions:
+                it.setBackground(QBrush(Qt.green))
+                it.setToolTip("Has been marked")
+            self.ui.overallTW.setItem(r, 3, it)
+            r += 1
 
     def initScanTab(self):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
@@ -368,6 +486,7 @@ class Manager(QWidget):
                 self.IDrectangle, self.IDwhichFile
             )
         )
+        self.todo()
 
     def getPredictions(self):
         csvfile = managerMessenger.IDrequestPredictions()
