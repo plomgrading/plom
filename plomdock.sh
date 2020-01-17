@@ -31,7 +31,7 @@ rm -rf plom
 /bin/cp -ra plomsrc plom
 
 # docker pull ${BASEIMG}
-sudo docker run -p 41984:41984 -p 41985:41985 --name=$PD --detach --init --env=LC_ALL=C.UTF-8 --volume=$PWD/plom:/plom:z ${BASEIMG} sleep inf
+sudo docker run -p 41984:41984 --name=$PD --detach --init --env=LC_ALL=C.UTF-8 --volume=$PWD/plom:/plom:z ${BASEIMG} sleep inf
 sudo docker exec $PD adduser -u $UID --no-create-home --disabled-password --gecos "" $USER
 
 # TODO: could also clone within the docker image:
