@@ -25,6 +25,7 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QTableView,
     QTextEdit,
+    QLineEdit,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -144,6 +145,7 @@ text = "be careful"
 [[comment]]
 delta = 1
 text = "good"
+meta = "give constructive feedback"
 
 [[comment]]
 delta = 1
@@ -157,9 +159,12 @@ tags = "Q2 foo bar"
 """
     comment_defaults = {
         "tags": "",
+        "testname": "",
+        "meta": "",
         "created": time.gmtime(0),
         "modified": time.gmtime(0),
     }
+    # TODO: don't save empty tags/testnames/etc to file
     if os.path.exists("plomComments.toml"):
         cdict = toml.load("plomComments.toml")
     else:
@@ -291,8 +296,9 @@ class CommentWidget(QWidget):
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
 
-        questnum = int(self.parent.parent.pageGroup)  # YUCK!
-        acb = AddCommentBox(self, self.maxMark, alist, questnum)
+        questnum = int(self.parent.tgv[5:7])
+        testname = self.parent.testname
+        acb = AddCommentBox(self, self.maxMark, alist, questnum, testname)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = acb.SB.value()
@@ -300,12 +306,16 @@ class CommentWidget(QWidget):
                 dlt = "."
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
+            meta = acb.TEmeta.toPlainText().strip()
+            testnames = acb.TEtestname.text().strip()
             # check if txt has any content
             if len(txt) > 0:
                 com = {
                     "delta": dlt,
                     "text": txt,
                     "tags": tag,
+                    "testname": testnames,
+                    "meta": meta,
                     "created": time.gmtime(),
                     "modified": time.gmtime(),
                 }
@@ -324,18 +334,23 @@ class CommentWidget(QWidget):
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
         questnum = int(self.parent.parent.pageGroup)  # YUCK!
-        acb = AddCommentBox(self, self.maxMark, alist, questnum, com)
+        testname = self.parent.testname
+        acb = AddCommentBox(self, self.maxMark, alist, questnum, testname, com)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
-                dlt = str(acb.SB.value())
+                dlt = acb.SB.value()
             else:
                 dlt = "."
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
+            meta = acb.TEmeta.toPlainText().strip()
+            testnames = acb.TEtestname.text().strip()
             # update the comment with new values
             com["delta"] = dlt
             com["text"] = txt
             com["tags"] = tag
+            com["testname"] = testnames
+            com["meta"] = meta
             com["modified"] = time.gmtime()
             return com
         else:
@@ -528,8 +543,11 @@ class SimpleCommentTable(QTableView):
         for i, com in enumerate(self.clist):
             # User can edit the text, but doesn't handle drops.
             # TODO: YUCK! (how do I get the pagegroup)
-            pg = int(self.parent.parent.parent.pageGroup)
-            if not commentVisibleInQuestion(com, pg):
+            questnum = int(self.parent.parent.tgv[5:7])
+            testname = self.parent.parent.testname
+            if not commentVisibleInQuestion(com, questnum):
+                continue
+            if com["testname"] and not com["testname"] == testname:
                 continue
             txti = QStandardItem(com["text"])
             txti.setEditable(True)
@@ -629,7 +647,7 @@ class SimpleCommentTable(QTableView):
 
 
 class AddCommentBox(QDialog):
-    def __init__(self, parent, maxMark, lst, questnum, com=None):
+    def __init__(self, parent, maxMark, lst, questnum, curtestname, com=None):
         super(QDialog, self).__init__()
         self.parent = parent
         self.questnum = questnum
@@ -641,22 +659,25 @@ class AddCommentBox(QDialog):
         self.DE.setCheckState(Qt.Checked)
         self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QTextEdit()
+        self.TEmeta = QTextEdit()
+        self.TEtestname = QLineEdit()
         # TODO: how to make it smaller vertically than the TE?
         #self.TEtag.setMinimumHeight(self.TE.minimumHeight() // 2)
         #self.TEtag.setMaximumHeight(self.TE.maximumHeight() // 2)
         self.QSpecific = QCheckBox("Available only in question {}".format(questnum))
         self.QSpecific.stateChanged.connect(self.toggleQSpecific)
-        self.quickHelp = QLabel('Prepend with "tex:" to use math.  You can "Choose text" from an existing annotation.')
-        self.quickHelp.setWordWrap(True)
 
         flay = QFormLayout()
         flay.addRow("Enter text", self.TE)
-        flay.addRow("", self.quickHelp)
         flay.addRow("Choose text", self.CB)
         flay.addRow("Set delta", self.SB)
         flay.addRow("", self.DE)
         flay.addRow("", self.QSpecific)
         flay.addRow("Tags", self.TEtag)
+        # TODO: support multiple tests, change label to "test(s)" here
+        flay.addRow("Specific to test", self.TEtestname)
+        flay.addRow("", QLabel("(leave blank to share between tests)"))
+        flay.addRow("Meta", self.TEmeta)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -681,19 +702,33 @@ class AddCommentBox(QDialog):
             if com["tags"]:
                 self.TEtag.clear()
                 self.TEtag.insertPlainText(com["tags"])
+            if com["meta"]:
+                self.TEmeta.clear()
+                self.TEmeta.insertPlainText(com["meta"])
             if com["delta"]:
                 if com["delta"] == ".":
                     self.SB.setValue(0)
                     self.DE.setCheckState(Qt.Unchecked)
                 else:
                     self.SB.setValue(int(com["delta"]))
-        # TODO: ideally we would do this on TE change signal
-        if commentHasMultipleQTags(com):
-            self.QSpecific.setEnabled(False)
-        elif commentTaggedQn(com, self.questnum):
-            self.QSpecific.setCheckState(Qt.Checked)
+            if com["testname"]:
+                self.TEtestname.setText(com["testname"])
+            # TODO: ideally we would do this on TE change signal
+            # TODO: textEdited() signal (not textChanged())
+            if commentHasMultipleQTags(com):
+                self.QSpecific.setEnabled(False)
+            elif commentTaggedQn(com, self.questnum):
+                self.QSpecific.setCheckState(Qt.Checked)
+            else:
+                self.QSpecific.setCheckState(Qt.Unchecked)
         else:
-            self.QSpecific.setCheckState(Qt.Unchecked)
+            self.TEtestname.setText(curtestname)
+            self.QSpecific.setCheckState(Qt.Checked)
+            self.TE.setPlaceholderText('Prepend with "tex:" to use math.\n\n'
+                                       'You can "Choose text" to harvest comments from an existing annotation.\n\n'
+                                       'Change "delta" below to set a point-change associated with this comment.')
+            self.TEmeta.setPlaceholderText("notes to self, hints on when to use this comment, etc.\n\n"
+                                           "Not shown to student!")
 
     def changedCB(self):
         self.TE.clear()
