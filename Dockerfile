@@ -8,5 +8,6 @@ RUN apt-get --no-install-recommends --yes install \
     python3-pip python3-setuptools python3-wheel python3-toml \
     python3-requests-toolbelt texlive-latex-extra
 RUN pip3 install --upgrade pip
+RUN python3 -m pip install --upgrade setuptools
 RUN python3 -m pip install --upgrade \
     pymupdf weasyprint imutils lapsolver peewee cheroot aiohttp
