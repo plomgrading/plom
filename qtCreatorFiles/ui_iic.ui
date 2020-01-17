@@ -350,7 +350,10 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_4">
+     <widget class="QWidget" name="overallTab">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <attribute name="title">
        <string>Overall &amp;Progress</string>
       </attribute>
@@ -407,7 +410,10 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_3">
+     <widget class="QWidget" name="idTab">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <attribute name="title">
        <string>&amp;ID Progress</string>
       </attribute>
@@ -648,6 +654,9 @@
       </layout>
      </widget>
      <widget class="QWidget" name="unknownTab">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <attribute name="title">
        <string>&amp;Unknown Pages</string>
       </attribute>
@@ -688,7 +697,10 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab">
+     <widget class="QWidget" name="collideTab">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <attribute name="title">
        <string>&amp;Colliding Pages</string>
       </attribute>
@@ -729,7 +741,10 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_2">
+     <widget class="QWidget" name="discardTab">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <attribute name="title">
        <string>&amp;Discarded Pages</string>
       </attribute>

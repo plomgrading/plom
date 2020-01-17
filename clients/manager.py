@@ -55,7 +55,6 @@ class TestStatus(QDialog):
     def __init__(self, nq, status):
         super(TestStatus, self).__init__()
         self.status = status
-        print(status)
         self.setWindowTitle("Status of test {}".format(self.status["number"]))
 
         grid = QGridLayout()
@@ -243,7 +242,12 @@ class Manager(QWidget):
             return
 
         self.ui.scanTab.setEnabled(True)
+        self.ui.overallTab.setEnabled(True)
+        self.ui.idTab.setEnabled(True)
         self.ui.progressTab.setEnabled(True)
+        self.ui.unknownTab.setEnabled(True)
+        self.ui.collideTab.setEnabled(True)
+        self.ui.discardTab.setEnabled(True)
         self.ui.userGBox.setEnabled(False)
         self.ui.serverGBox.setEnabled(False)
         self.ui.loginButton.setEnabled(False)
@@ -270,6 +274,7 @@ class Manager(QWidget):
             ["Test number", "Identified", "Totalled", "Questions Marked"]
         )
         self.ui.overallTW.activated.connect(self.viewTestStatus)
+        self.ui.overallTW.setSortingEnabled(True)
         self.refreshOTab()
 
     def viewTestStatus(self):
@@ -291,7 +296,7 @@ class Manager(QWidget):
         r = 0
         for t in tk:
             self.ui.overallTW.insertRow(r)
-            self.ui.overallTW.setItem(r, 0, QTableWidgetItem("{}".format(t)))
+            self.ui.overallTW.setItem(r, 0, QTableWidgetItem(str(t).rjust(4)))
             it = QTableWidgetItem("{}".format(opDict[t][0]))
             if opDict[t][0]:
                 it.setBackground(QBrush(Qt.green))
@@ -304,7 +309,7 @@ class Manager(QWidget):
                 it.setToolTip("Has been totalled")
             self.ui.overallTW.setItem(r, 2, it)
 
-            it = QTableWidgetItem("{}".format(opDict[t][2]))
+            it = QTableWidgetItem(str(opDict[t][2]).rjust(2))
             if opDict[t][2] == self.numberOfQuestions:
                 it.setBackground(QBrush(Qt.green))
                 it.setToolTip("Has been marked")
@@ -477,7 +482,6 @@ class Manager(QWidget):
                 inames.append(tmp)
                 with open(tmp, "wb+") as fh:
                     fh.write(imageList[i])
-            print(inames)
             IDViewWindow(self, inames, sid).exec_()
 
     def runPredictor(self):
