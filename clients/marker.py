@@ -1253,4 +1253,7 @@ class MarkerClient(QWidget):
         with open(ifile.name, "wb") as fh:
             fh.write(image)
         tvw = GroupView(ifile.name)
+        tvw.setWindowTitle(
+            "Original ungraded image for question {} of test {}".format(gn, tn)
+        )
         tvw.exec_()
