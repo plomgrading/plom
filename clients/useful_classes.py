@@ -1,5 +1,5 @@
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 import os
@@ -184,6 +184,11 @@ def commentSaveList(clist):
     with open("plomComments.toml", "w") as fname:
         toml.dump({"comment": clist}, fname)
 
+# Eventually there may be more "state" to the filters and something like a dict
+# might make more sense here, but for now its list of booleans:
+#    hide-comments-not-for-this-question
+#    hide-comments-not-for-this-test
+comDefaultFilters = [True, True]
 
 def commentVisibleInQuestion(com, n):
     """Return True if comment would be visible in Question n.
@@ -197,6 +202,18 @@ def commentVisibleInQuestion(com, n):
     return any([t == Qn for t in tags]) or not any(
         [re.match("^Q\d+$", t) for t in tags]
     )
+
+
+def commentIsVisible(com, questnum, testname, filters=None):
+    """Is comment visible for this question, testname and filters?"""
+    if not filters:
+        filters = comDefaultFilters
+    viz = True
+    if filters[0] and not commentVisibleInQuestion(com, questnum):
+        viz = False
+    if filters[1] and com["testname"] and not com["testname"] == testname:
+        viz = False
+    return viz
 
 
 def commentTaggedQn(com, n):
@@ -463,7 +480,7 @@ class SimpleCommentTable(QTableView):
         self.viewport().setAcceptDrops(True)
         self.setDragDropOverwriteMode(False)
         self.setDropIndicatorShown(True)
-        self.filters = [True, True]
+        self.filters = comDefaultFilters
 
         # When clicked, the selection changes, so must emit signal
         # to the annotator.
@@ -550,10 +567,7 @@ class SimpleCommentTable(QTableView):
             # TODO: YUCK! (how do I get the pagegroup)
             questnum = int(self.parent.parent.tgv[5:7])
             testname = self.parent.parent.testname
-            filters = self.filters
-            if filters[0] and not commentVisibleInQuestion(com, questnum):
-                continue
-            if filters[1] and com["testname"] and not com["testname"] == testname:
+            if not commentIsVisible(com, questnum, testname, filters=self.filters):
                 continue
             txti = QStandardItem(com["text"])
             txti.setEditable(True)

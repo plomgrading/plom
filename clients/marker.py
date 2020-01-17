@@ -5,7 +5,7 @@ The Plom Marker client
 """
 
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
@@ -50,7 +50,8 @@ from examviewwindow import ExamViewWindow
 import messenger
 from annotator import Annotator
 from plom_exceptions import *
-from useful_classes import AddTagBox, ErrorMessage, SimpleMessage, commentLoadAll
+from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
+from useful_classes import commentLoadAll, commentIsVisible
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
 from test_view import GroupView
@@ -1146,8 +1147,10 @@ class MarkerClient(QWidget):
         pd.setAutoClose(True)
         # Start caching.
         c = 0
+        n = int(self.pageGroup)
+        testname = self.testname
         for X in clist:
-            if X["text"][:4].upper() == "TEX:":
+            if commentIsVisible(X, n, testname) and X["text"][:4].upper() == "TEX:":
                 txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version
