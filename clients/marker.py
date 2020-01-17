@@ -54,7 +54,7 @@ from plom_exceptions import *
 from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
-from test_view import GroupView
+from test_view import GroupView, TestGroupSelect
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -151,9 +151,17 @@ class BackgroundUploader(QThread):
             from queue import Empty as EmptyQueueException
 
             try:
-                code, gr, aname, pname, cname, mtime, pg, ver, tags = (
-                    self.q.get_nowait()
-                )
+                (
+                    code,
+                    gr,
+                    aname,
+                    pname,
+                    cname,
+                    mtime,
+                    pg,
+                    ver,
+                    tags,
+                ) = self.q.get_nowait()
             except EmptyQueueException:
                 return
             print(
@@ -521,6 +529,9 @@ class MarkerClient(QWidget):
             if lastTime["POWERUSER"]:
                 self.annotatorSettings["markWarnings"] = False
                 self.annotatorSettings["commentWarnings"] = False
+                self.viewAll = True
+        else:
+            self.viewAll = False
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -1206,30 +1217,32 @@ class MarkerClient(QWidget):
         self.prxM.filterTags()
 
     def viewSpecificImage(self):
-        testNumber, ok = QInputDialog.getInt(
-            self,
-            "View another test",
-            "From which test do you want to view pageGroup {}?".format(
-                int(self.pageGroup)
-            ),
-            1,
-            1,
-            9999,
-            1,
-        )
-        if ok:
-            try:
-                image = messenger.MrequestOriginalImage(testNumber, self.pageGroup)
-            except PlomNoMoreException as err:
-                msg = ErrorMessage(
-                    "No image corresponding to test {} pageGroup".format(
-                        testNumber, self.pageGroup
-                    )
-                )
-                msg.exec_()
+        if self.viewAll:
+            tgs = TestGroupSelect(self.pageGroup)
+            if tgs.exec_() == QDialog.Accepted:
+                tn = tgs.tsb.value()
+                gn = tgs.gsb.value()
+            else:
                 return
-            ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory)
-            with open(ifile.name, "wb") as fh:
-                fh.write(image)
-            tvw = GroupView(ifile.name)
-            tvw.exec_()
+        else:
+            tgs = TestGroupSelect()
+            if tgs.exec_() == QDialog.Accepted:
+                tn = tgs.tsb.value()
+                gn = self.pageGroup
+            else:
+                return
+        try:
+            image = messenger.MrequestOriginalImage(tn, gn)
+        except PlomNoMoreException as err:
+            msg = ErrorMessage(
+                "No image corresponding to test {} pageGroup {}".format(
+                    tn, self.pageGroup
+                )
+            )
+            msg.exec_()
+            return
+        ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory)
+        with open(ifile.name, "wb") as fh:
+            fh.write(image)
+        tvw = GroupView(ifile.name)
+        tvw.exec_()

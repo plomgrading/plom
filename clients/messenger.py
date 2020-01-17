@@ -773,7 +773,9 @@ def MrequestOriginalImage(testNumber, pageGroup):
             verify=False,
         )
         if response.status_code == 204:
-            raise PlomNoMoreException("No paper with code {}.".format(code))
+            raise PlomNoMoreException(
+                "No paper with test/pageGroup {}/{}.".format(testNumber, pageGroup)
+            )
         response.raise_for_status()
         # response is either [image] or [image, annotatedImage, plom-data]
         image = BytesIO(response.content).getvalue()  # pass back image as bytes
@@ -782,7 +784,9 @@ def MrequestOriginalImage(testNumber, pageGroup):
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")
         elif response.status_code == 404:
-            raise PlomSeriousException("Cannot find image file for {}.".format(code))
+            raise PlomNoMoreException(
+                "Cannot find image file for {}.{}.".format(testNumber, pageGroup)
+            )
         else:
             raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
