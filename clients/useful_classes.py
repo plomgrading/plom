@@ -184,6 +184,10 @@ def commentSaveList(clist):
     with open("plomComments.toml", "w") as fname:
         toml.dump({"comment": clist}, fname)
 
+# Eventually there may be more "state" to the filters and something like a dict
+# might make more sense here, but for now its list of booleans:
+#    hide-comments-not-for-this-question
+#    hide-comments-not-for-this-test
 comDefaultFilters = [True, True]
 
 def commentVisibleInQuestion(com, n):
