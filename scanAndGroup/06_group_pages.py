@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
@@ -141,11 +143,12 @@ def checkTests():
     os.chdir("../")
 
 
-spec = TestSpecification()
-spec.readSpec()
-examsScanned = defaultdict(dict)
-examsGrouped = defaultdict(list)
-readExamsScanned()
-readExamsGrouped()
-checkTests()
-writeExamsGrouped()
+if __name__ == "__main__":
+    spec = TestSpecification()
+    spec.readSpec()
+    examsScanned = defaultdict(dict)
+    examsGrouped = defaultdict(list)
+    readExamsScanned()
+    readExamsGrouped()
+    checkTests()
+    writeExamsGrouped()

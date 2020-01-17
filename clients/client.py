@@ -116,6 +116,8 @@ class Chooser(QDialog):
         # Have Messenger login into to server
         messenger.setServerDetails(server, mport)
         messenger.startMessenger()
+        testname = messenger.getInfoShortName()
+
         try:
             messenger.requestAndSaveToken(user, pwd)
         except PlomAPIException as e:
@@ -145,7 +147,7 @@ class Chooser(QDialog):
             markerwin = marker.MarkerClient()
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
-            markerwin.getToWork(messenger, pg, v, lastTime)
+            markerwin.getToWork(messenger, testname, pg, v, lastTime)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
@@ -225,7 +227,6 @@ class Chooser(QDialog):
             lastTime["mouse"] = "left"
         else:
             raise RuntimeError("tertium non datur")
-
 
 
 # Pop up a dialog for unhandled exceptions and then exit
@@ -325,7 +326,6 @@ if __name__ == "__main__":
             window.ui.serverLE.setText(args.server)
         if args.port:
             window.ui.mportSB.setValue(int(args.port))
-            window.ui.wportSB.setValue(int(args.port) + 1)
 
         if args.identifier:
             window.ui.identifyButton.animateClick()

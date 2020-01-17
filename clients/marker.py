@@ -5,7 +5,7 @@ The Plom Marker client
 """
 
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
@@ -20,7 +20,6 @@ import threading
 import time
 import toml
 import queue
-import math
 
 from PyQt5.QtCore import (
     Qt,
@@ -52,6 +51,7 @@ import messenger
 from annotator import Annotator
 from plom_exceptions import *
 from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
+from useful_classes import commentLoadAll, commentIsVisible
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
 from test_view import GroupView, TestGroupSelect
@@ -425,6 +425,16 @@ class ProxyModel(QSortFilterProxyModel):
         self.setFilterKeyColumn(4)
         self.filterString = ""
 
+    def lessThan(self, left, right):
+        # Check to see if data is integer, and compare that
+        try:
+            lv = int(left.data())
+            rv = int(right.data())
+            return lv < rv
+        except ValueError:
+            # else let qt handle it.
+            return left.data() < right.data()
+
     def setFilterString(self, flt):
         self.filterString = flt
 
@@ -484,13 +494,14 @@ class MarkerClient(QWidget):
     def __init__(self):
         super(MarkerClient, self).__init__()
 
-    def getToWork(self, mess, pageGroup, version, lastTime):
+    def getToWork(self, mess, testname, pageGroup, version, lastTime):
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
         # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # Save the group and version.
+        self.testname = testname
         self.pageGroup = pageGroup
         self.version = version
         # create max-mark, but not set until we get info from server
@@ -500,9 +511,10 @@ class MarkerClient(QWidget):
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
+        self.setWindowTitle('Plom Marker: "{}"'.format(self.testname))
         # Paste the username, pagegroup and version into GUI.
         self.ui.userBox.setTitle("User: {}".format(messenger.whoami()))
-        self.ui.pgLabel.setText(str(self.pageGroup).zfill(2))
+        self.ui.pgLabel.setText("{} of {}".format(str(self.pageGroup).zfill(2), self.testname))
         self.ui.vLabel.setText(str(self.version))
         # Exam model for the table of groupimages - connect to table
         self.exM = ExamModel()
@@ -736,7 +748,7 @@ class MarkerClient(QWidget):
             fh.write(image)
         self.exM.addPaper(TestPageGroup(test, fname, tags=tags))
         pr = self.prxM.rowFromTGV(test)
-        if pr:
+        if pr is not None:
             # if newly-added row is visible, select it and redraw
             self.ui.tableView.selectRow(pr)
             self.updateImage(pr)
@@ -863,6 +875,7 @@ class MarkerClient(QWidget):
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
             tgv,
+            self.testname,
             paperdir,
             fname,
             self.maxScore,
@@ -932,7 +945,8 @@ class MarkerClient(QWidget):
             while self.backgroundDownloader.isRunning():
                 time.sleep(0.1)
                 count += 1
-                if math.remainder(count, 10) == 0:
+                # if .remainder(count, 10) == 0: # this is only python3.7 and later. - see #509
+                if (count % 10) == 0:
                     print("Debug: waiting for downloader: {}".format(fname))
                 if count >= 40:
                     msg = SimpleMessage(
@@ -1125,17 +1139,9 @@ class MarkerClient(QWidget):
         self.viewFiles = []
 
     def cacheLatexComments(self):
-        # grab the list of comments from disk
-        if not os.path.exists("plomComments.toml"):
-            return
-        # note by default toml creates dictionaries
-        cdict = toml.load(open("plomComments.toml"))
-        if "comments" in cdict:
-            clist = cdict["comments"]
-        else:
-            clist = []
+        clist = commentLoadAll()
         # sort list in order of longest comment to shortest comment
-        clist.sort(key=lambda C: -len(C[1]))
+        clist.sort(key=lambda C: -len(C["text"]))
 
         # Build a progress dialog to warn user
         pd = QProgressDialog("Caching latex comments", None, 0, 2 * len(clist), self)
@@ -1144,9 +1150,11 @@ class MarkerClient(QWidget):
         pd.setAutoClose(True)
         # Start caching.
         c = 0
+        n = int(self.pageGroup)
+        testname = self.testname
         for X in clist:
-            if X[1][:4].upper() == "TEX:":
-                txt = X[1][4:].strip()
+            if commentIsVisible(X, n, testname) and X["text"][:4].upper() == "TEX:":
+                txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version
                 self.latexAFragment(txt)
