@@ -233,6 +233,7 @@ class CommentWidget(QWidget):
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.filtB, 3, 2)
         grid.addWidget(self.delB, 3, 3)
+        grid.setSpacing(0)
         self.setLayout(grid)
         # connect the buttons to functions.
         self.addB.clicked.connect(self.addFromTextList)
