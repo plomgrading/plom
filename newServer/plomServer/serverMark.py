@@ -20,6 +20,13 @@ def MgetQuestionMax(self, q, v):
     return [True, self.testSpec["question"][str(iq)]["mark"]]
 
 
+def MgetAllMax(self):
+    rval = {}
+    for q in range(1, self.testSpec["numberOfQuestions"] + 1):
+        rval[q] = self.testSpec["question"][str(q)]["mark"]
+    return rval
+
+
 def MprogressCount(self, q, v):
     """Send back current ID progress counts to the client"""
     iv = int(v)

@@ -176,7 +176,7 @@ def RgetCompletions():
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/REP/completion".format(server, message_port),
+            "https://{}:{}/REP/completions".format(server, message_port),
             verify=False,
             json={"user": _userName, "token": _token},
         )

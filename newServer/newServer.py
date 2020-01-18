@@ -141,6 +141,7 @@ class Server(object):
         IDdeletePredictions,
     )
     from plomServer.serverMark import (
+        MgetAllMax,
         MprogressCount,
         MgetQuestionMax,
         MgetDoneTasks,
@@ -175,7 +176,9 @@ class Server(object):
         RgetCompletions,
         RgetStatus,
         RgetSpreadsheet,
+        RgetCoverPageInfo,
         RgetOriginalFiles,
+        RgetAnnotatedFiles,
     )
 
 

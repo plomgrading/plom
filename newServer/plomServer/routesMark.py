@@ -214,7 +214,16 @@ class MarkHandler:
         else:
             return web.Response(status=401)
 
+    # @routes.get("/MK/allMax")
+    async def MgetAllMax(self, request):
+        data = await request.json()
+        if self.server.validate(data["user"], data["token"]):
+            return web.json_response(self.server.MgetAllMax(), status=200)
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
+        router.add_get("/MK/allMax", self.MgetAllMax)
         router.add_get("/MK/maxMark", self.MgetQuestionMark)
         router.add_get("/MK/progress", self.MprogressCount)
         router.add_get("/MK/tasks/complete", self.MgetDoneTasks)

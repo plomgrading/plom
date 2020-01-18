@@ -1163,7 +1163,7 @@ class MarkerClient(QWidget):
         pd.setAutoClose(True)
         # Start caching.
         c = 0
-        n = int(self.pageGroup)
+        n = int(self.question)
         testname = self.testname
         for X in clist:
             if commentIsVisible(X, n, testname) and X["text"][:4].upper() == "TEX:":

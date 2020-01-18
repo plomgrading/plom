@@ -35,5 +35,13 @@ def RgetSpreadsheet(self):
     return self.DB.RgetSpreadsheet()
 
 
+def RgetCoverPageInfo(self, testNumber):
+    return self.DB.RgetCoverPageInfo(testNumber)
+
+
 def RgetOriginalFiles(self, testNumber):
     return self.DB.RgetOriginalFiles(testNumber)
+
+
+def RgetAnnotatedFiles(self, testNumber):
+    return self.DB.RgetAnnotatedFiles(testNumber)

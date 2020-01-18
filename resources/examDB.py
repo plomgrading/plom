@@ -1023,6 +1023,36 @@ class PlomDB:
             rval.append(p.fileName)
         return rval
 
+    def RgetCoverPageInfo(self, testNumber):
+        tref = Test.get_or_none(testNumber=testNumber)
+        if tref is None:
+            return []
+        # [ID, Name]
+        iref = tref.iddata[0]
+        rval = [[iref.studentID, iref.studentName]]
+        # then [q, v, mark]
+        for g in tref.questiondata.order_by(QuestionData.questionNumber):
+            rval.append([g.questionNumber, g.version, g.mark])
+        return rval
+
+    def RgetAnnotatedFiles(self, testNumber):
+        rval = []
+        tref = Test.get_or_none(testNumber=testNumber)
+        if tref is None:
+            return []
+        # append ID-pages, then DNM-pages, then QuestionGroups
+        gref = Group.get_or_none(Group.test == tref, Group.groupType == "i")
+        for p in gref.pages.order_by(Page.pageNumber):
+            rval.append(p.fileName)
+        # append DNM pages
+        gref = Group.get_or_none(Group.test == tref, Group.groupType == "d")
+        for p in gref.pages.order_by(Page.pageNumber):
+            rval.append(p.fileName)
+        # append questiongroups
+        for g in tref.questiondata.order_by(QuestionData.questionNumber):
+            rval.append(g.annotatedFile)
+        return rval
+
     # ------------------
     # For user login - we reset all their stuff that is out
 

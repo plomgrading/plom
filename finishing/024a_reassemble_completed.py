@@ -171,6 +171,48 @@ def RgetIdentified():
     return rval
 
 
+def RgetCompletions():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/completions".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token,},
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
+def RgetCoverPageInfo(test):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/coverPageInfo/{}".format(server, message_port, test),
+            verify=False,
+            json={"user": _userName, "token": _token,},
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
 def RgetAnnotatedFiles(testNumber):
     SRmutex.acquire()
     try:
@@ -193,8 +235,40 @@ def RgetAnnotatedFiles(testNumber):
     return response.json()
 
 
+def MgetAllMax():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/allMax".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token},
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return response.json()
+
+
+def buildCoverPage(shortName, outDir, t, maxMarks):
+    # should be [ [sid, sname], [q,v,m], [q,v,m] etc]
+    cpi = RgetCoverPageInfo(t)
+    sid = cpi[0][0]
+    sname = cpi[0][1]
+    arg = [sid, sname, int(t)]
+    for qvm in cpi[1:]:
+        # append quads of [q,v,m,Max]
+        arg.append([qvm[0], qvm[1], qvm[2], maxMarks[str(qvm[0])]])
+    return 'python3 coverPageBuilder.py "{}"\n'.format(arg)
+
+
 def reassembleTestCMD(shortName, outDir, t, sid):
-    fnames = RgetOriginalFiles(t)
+    fnames = RgetAnnotatedFiles(t)
     if len(fnames) == 0:
         return
     rnames = ["../newServer/" + fn for fn in fnames]
@@ -216,23 +290,37 @@ if __name__ == "__main__":
     session = requests.Session()
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
 
-    outDir = "reassembled"
+    outDir = "reassembled_ID_but_not_marked"
     try:
         os.mkdir(outDir)
     except FileExistsError:
         pass
 
+    tpqv = getInfoTPQV()
+    numberOfQuestions = tpqv[2]
     shortName = getInfoShortName()
+    completedTests = RgetCompletions()
     identifiedTests = RgetIdentified()
-    # Open a file for the list of commands to process to reassemble papers
-    fh = open("./commandlist.txt", "w")
-    for t in identifiedTests:
-        fh.write(reassembleTestCMD(shortName, outDir, t, identifiedTests[t]))
-    fh.close()
+    maxMarks = MgetAllMax()
+
+    # Build coverpages
+    for t in completedTests:
+        if completedTests[t][0] == True and completedTests[t][2] == numberOfQuestions:
+            print(buildCoverPage(shortName, outDir, t, maxMarks))
+    # now reassemble papers
+    for t in completedTests:
+        if completedTests[t][0] == True and completedTests[t][2] == numberOfQuestions:
+            print(reassembleTestCMD(shortName, outDir, t, identifiedTests[t]))
+
+    # fh = open("./commandlist.txt", "w")
+    # for t in completedTests:
+    #     if completedTests[t][0] == True and completedTests[t][2] == numberOfQuestions:
+    #         fh.write(reassembleTestCMD(shortName, outDir, t, identifiedTests[t]))
+    # fh.close()
     # pipe the commandlist into gnu-parallel
-    cmd = shlex.split("parallel --bar -a commandlist.txt")
-    subprocess.run(cmd, check=True)
-    os.unlink("commandlist.txt")
+    # cmd = shlex.split("parallel --bar -a commandlist.txt")
+    # subprocess.run(cmd, check=True)
+    # os.unlink("commandlist.txt")
 
     print(">>> Warning <<<")
     print(
