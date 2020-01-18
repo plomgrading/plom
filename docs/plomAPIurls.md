@@ -7,6 +7,7 @@
 * get "/Version" - return server+API versions as test string
 * get "/info/shortName" - return the shortname of the test (from spec)
 * get "/info/numberOfGroupsAndVersions" - return a pair (#groups, #versions)
+* get "/info/numberOfTPQV" - return a list (#tests, #pages, #groups, #versions)
 
 ## Authentication + misc Admin tasks
 * put "/users/{user}" - verify user/password + return auth-token
@@ -60,6 +61,7 @@ Placed a checkmark next to each if appears in lists above.
 * put("/admin/reloadScans") ✓
 * get("/info/shortName") ✓
 * get("/info/numberOfGroupsAndVersions") ✓
+* get("/info/numberOfTPQV") ✓
 * get("/ID/progress") ✓
 * get("/ID/tasks/available") ✓
 * get("/ID/classlist") ✓
