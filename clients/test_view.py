@@ -99,7 +99,7 @@ class GroupView(QDialog):
 
 
 class TestGroupSelect(QDialog):
-    def __init__(self, gn=None):
+    def __init__(self, tpqv, gn=None):
         super(TestGroupSelect, self).__init__()
         self.setModal(True)
         self.setWindowTitle("View another test")
@@ -111,12 +111,12 @@ class TestGroupSelect(QDialog):
 
         fg = QFormLayout()
         self.tsb = QSpinBox()
-        self.tsb.setRange(1, 9999)
+        self.tsb.setRange(1, tpqv[0])
         self.tsb.setValue(1)
         fg.addRow("Select test:", self.tsb)
         if gn is not None:
             self.gsb = QSpinBox()
-            self.gsb.setRange(1, 99)
+            self.gsb.setRange(1, tpqv[3])
             self.gsb.setValue(int(gn))
             fg.addRow("Select pageGroup:", self.gsb)
             self.iL.setText("Which test/group do you wish to view?")

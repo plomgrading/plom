@@ -132,6 +132,17 @@ async def InfoPagesVersions(request):
         return web.Response(status=404)
 
 
+@routes.get("/info/numberOfTPQV")
+async def InfoPagesVersions(request):
+    if spec is not None:
+        return web.json_response(
+            [spec.Tests, spec.Length, spec.getNumberOfGroups(), spec.Versions],
+            status=200,
+        )
+    else:  # this should not happen
+        return web.Response(status=404)
+
+
 # ----------------------
 # ----------------------
 # Identifier stuff

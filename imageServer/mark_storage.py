@@ -375,7 +375,11 @@ class MarkDatabase:
                 x = GroupImage.get(number=testNumber, pageGroup=pageGroup)
                 return x.originalFile
         except GroupImage.DoesNotExist:
-            print("Request for non-existant tgv={}".format(code))
+            print(
+                "Request for non-existant test/group={}/{}".format(
+                    testNumber, pageGroup
+                )
+            )
             return None
 
     def getTestAll(self, number):

@@ -169,6 +169,28 @@ def getInfoPagesVersions():
     return pv
 
 
+def getInfoTPQV():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/info/numberOfTPQV".format(server, message_port),
+            verify=False,
+        )
+        response.raise_for_status()
+        pv = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return pv
+
+
 # ------------------------
 # ------------------------
 # ID client API stuff
@@ -818,6 +840,7 @@ def MrequestOriginalImage(testNumber, pageGroup):
             json={"user": _userName, "token": _token},
             verify=False,
         )
+        print("Asking for {} {}".format(testNumber, pageGroup))
         if response.status_code == 204:
             raise PlomNoMoreException(
                 "No paper with test/pageGroup {}/{}.".format(testNumber, pageGroup)

@@ -514,7 +514,9 @@ class MarkerClient(QWidget):
         self.setWindowTitle('Plom Marker: "{}"'.format(self.testname))
         # Paste the username, pagegroup and version into GUI.
         self.ui.userBox.setTitle("User: {}".format(messenger.whoami()))
-        self.ui.pgLabel.setText("{} of {}".format(str(self.pageGroup).zfill(2), self.testname))
+        self.ui.pgLabel.setText(
+            "{} of {}".format(str(self.pageGroup).zfill(2), self.testname)
+        )
         self.ui.vLabel.setText(str(self.version))
         # Exam model for the table of groupimages - connect to table
         self.exM = ExamModel()
@@ -584,7 +586,14 @@ class MarkerClient(QWidget):
         elif lastTime["mouse"] == "left":
             self.ui.leftMouseRB.animateClick()
 
-        # Start using connection to serverself.
+        # Start using connection to server.
+        # Get the number of Tests, Pages, Questions and Versions
+        try:
+            self.TPQV = messenger.getInfoTPQV()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+            return
+
         # Get the max-mark for the question from the server.
         try:
             self.getMaxMark()
@@ -1226,14 +1235,14 @@ class MarkerClient(QWidget):
 
     def viewSpecificImage(self):
         if self.viewAll:
-            tgs = TestGroupSelect(self.pageGroup)
+            tgs = TestGroupSelect(self.TPQV, self.pageGroup)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
                 gn = tgs.gsb.value()
             else:
                 return
         else:
-            tgs = TestGroupSelect()
+            tgs = TestGroupSelect(self.TPQV)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
                 gn = self.pageGroup
