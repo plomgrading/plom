@@ -5,7 +5,7 @@ The Plom Marker client
 """
 
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
@@ -50,7 +50,8 @@ from examviewwindow import ExamViewWindow
 import messenger
 from annotator import Annotator
 from plom_exceptions import *
-from useful_classes import AddTagBox, ErrorMessage, SimpleMessage, commentLoadAll
+from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
+from useful_classes import commentLoadAll, commentIsVisible
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
 from test_view import GroupView
@@ -426,6 +427,16 @@ class ProxyModel(QSortFilterProxyModel):
         self.setFilterKeyColumn(4)
         self.filterString = ""
 
+    def lessThan(self, left, right):
+        # Check to see if data is integer, and compare that
+        try:
+            lv = int(left.data())
+            rv = int(right.data())
+            return lv < rv
+        except ValueError:
+            # else let qt handle it.
+            return left.data() < right.data()
+
     def setFilterString(self, flt):
         self.filterString = flt
 
@@ -485,13 +496,14 @@ class MarkerClient(QWidget):
     def __init__(self):
         super(MarkerClient, self).__init__()
 
-    def getToWork(self, mess, question, version, lastTime):
+    def getToWork(self, mess, testname, question, version, lastTime):
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
         # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # Save the group and version.
+        self.testname = testname
         self.question = question
         self.version = version
         # create max-mark, but not set until we get info from server
@@ -501,9 +513,13 @@ class MarkerClient(QWidget):
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
+
         # Paste the username, question and version into GUI.
+        self.setWindowTitle('Plom Marker: "{}"'.format(self.testname))
         self.ui.userBox.setTitle("User: {}".format(messenger.whoami()))
-        self.ui.pgLabel.setText(str(self.question).zfill(2))
+        self.ui.pgLabel.setText(
+            "{} of {}".format(str(self.question).zfill(2), self.testname)
+        )
         self.ui.vLabel.setText(str(self.version))
         # Exam model for the table of groupimages - connect to table
         self.exM = ExamModel()
@@ -869,6 +885,7 @@ class MarkerClient(QWidget):
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
             task,
+            self.testname,
             paperdir,
             fnames,
             saveName,
@@ -1146,8 +1163,10 @@ class MarkerClient(QWidget):
         pd.setAutoClose(True)
         # Start caching.
         c = 0
+        n = int(self.pageGroup)
+        testname = self.testname
         for X in clist:
-            if X["text"][:4].upper() == "TEX:":
+            if commentIsVisible(X, n, testname) and X["text"][:4].upper() == "TEX:":
                 txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version

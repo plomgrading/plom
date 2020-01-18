@@ -1,5 +1,5 @@
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 import os
@@ -25,6 +25,7 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QTableView,
     QTextEdit,
+    QLineEdit,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -144,6 +145,7 @@ text = "be careful"
 [[comment]]
 delta = 1
 text = "good"
+meta = "give constructive feedback"
 
 [[comment]]
 delta = 1
@@ -157,9 +159,12 @@ tags = "Q2 foo bar"
 """
     comment_defaults = {
         "tags": "",
+        "testname": "",
+        "meta": "",
         "created": time.gmtime(0),
         "modified": time.gmtime(0),
     }
+    # TODO: don't save empty tags/testnames/etc to file
     if os.path.exists("plomComments.toml"):
         cdict = toml.load("plomComments.toml")
     else:
@@ -180,6 +185,13 @@ def commentSaveList(clist):
         toml.dump({"comment": clist}, fname)
 
 
+# Eventually there may be more "state" to the filters and something like a dict
+# might make more sense here, but for now its list of booleans:
+#    hide-comments-not-for-this-question
+#    hide-comments-not-for-this-test
+comDefaultFilters = [True, True]
+
+
 def commentVisibleInQuestion(com, n):
     """Return True if comment would be visible in Question n.
 
@@ -192,6 +204,18 @@ def commentVisibleInQuestion(com, n):
     return any([t == Qn for t in tags]) or not any(
         [re.match("^Q\d+$", t) for t in tags]
     )
+
+
+def commentIsVisible(com, questnum, testname, filters=None):
+    """Is comment visible for this question, testname and filters?"""
+    if not filters:
+        filters = comDefaultFilters
+    viz = True
+    if filters[0] and not commentVisibleInQuestion(com, questnum):
+        viz = False
+    if filters[1] and com["testname"] and not com["testname"] == testname:
+        viz = False
+    return viz
 
 
 def commentTaggedQn(com, n):
@@ -224,12 +248,16 @@ class CommentWidget(QWidget):
         grid.addWidget(self.CL, 1, 1, 2, 3)
         self.addB = QPushButton("Add")
         self.delB = QPushButton("Delete")
+        self.filtB = QPushButton("Filter...")
         grid.addWidget(self.addB, 3, 1)
+        grid.addWidget(self.filtB, 3, 2)
         grid.addWidget(self.delB, 3, 3)
+        grid.setSpacing(0)
         self.setLayout(grid)
         # connect the buttons to functions.
         self.addB.clicked.connect(self.addFromTextList)
         self.delB.clicked.connect(self.deleteItem)
+        self.filtB.clicked.connect(self.changeFilter)
 
     def setStyle(self, markStyle):
         # The list needs a style-delegate because the display
@@ -251,11 +279,11 @@ class CommentWidget(QWidget):
     def saveComments(self):
         self.CL.saveCommentList()
 
-    def addItem(self):
-        self.CL.addItem()
-
     def deleteItem(self):
         self.CL.deleteItem()
+
+    def changeFilter(self):
+        self.CL.changeFilter()
 
     def currentItem(self):
         # grab focus and trigger a "row selected" signal
@@ -291,8 +319,9 @@ class CommentWidget(QWidget):
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
 
-        questnum = int(self.parent.parent.question)  # YUCK!
-        acb = AddCommentBox(self, self.maxMark, alist, questnum)
+        questnum = int(self.parent.tgv[5:7])
+        testname = self.parent.testname
+        acb = AddCommentBox(self, self.maxMark, alist, questnum, testname)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = acb.SB.value()
@@ -300,12 +329,16 @@ class CommentWidget(QWidget):
                 dlt = "."
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
+            meta = acb.TEmeta.toPlainText().strip()
+            testnames = acb.TEtestname.text().strip()
             # check if txt has any content
             if len(txt) > 0:
                 com = {
                     "delta": dlt,
                     "text": txt,
                     "tags": tag,
+                    "testname": testnames,
+                    "meta": meta,
                     "created": time.gmtime(),
                     "modified": time.gmtime(),
                 }
@@ -323,19 +356,24 @@ class CommentWidget(QWidget):
             clist.append(self.CL.cmodel.index(r, 1).data())
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
-        questnum = int(self.parent.parent.question)  # YUCK!
-        acb = AddCommentBox(self, self.maxMark, alist, questnum, com)
+        questnum = int(self.parent.tgv[5:7])
+        testname = self.parent.testname
+        acb = AddCommentBox(self, self.maxMark, alist, questnum, testname, com)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
-                dlt = str(acb.SB.value())
+                dlt = acb.SB.value()
             else:
                 dlt = "."
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
+            meta = acb.TEmeta.toPlainText().strip()
+            testnames = acb.TEtestname.text().strip()
             # update the comment with new values
             com["delta"] = dlt
             com["text"] = txt
             com["tags"] = tag
+            com["testname"] = testnames
+            com["meta"] = meta
             com["modified"] = time.gmtime()
             return com
         else:
@@ -444,6 +482,7 @@ class SimpleCommentTable(QTableView):
         self.viewport().setAcceptDrops(True)
         self.setDragDropOverwriteMode(False)
         self.setDropIndicatorShown(True)
+        self.filters = comDefaultFilters
 
         # When clicked, the selection changes, so must emit signal
         # to the annotator.
@@ -527,9 +566,11 @@ class SimpleCommentTable(QTableView):
         self.cmodel.setRowCount(0)
         for i, com in enumerate(self.clist):
             # User can edit the text, but doesn't handle drops.
+
             # TODO: YUCK! (how do I get the question)
-            qu = int(self.parent.parent.parent.question)
-            if not commentVisibleInQuestion(com, qu):
+            questnum = int(self.parent.parent.tgv[5:7])
+            testname = self.parent.parent.testname
+            if not commentIsVisible(com, questnum, testname, filters=self.filters):
                 continue
             txti = QStandardItem(com["text"])
             txti.setEditable(True)
@@ -576,6 +617,14 @@ class SimpleCommentTable(QTableView):
         # self.cmodel.removeRow(sel[0].row())
         # TODO: maybe sloppy to rebuild, need automatic cmodel ontop of clist
         self.populateTable()
+
+    def changeFilter(self):
+        d = ChangeFiltersDialog(self, self.filters)
+        if d.exec_() == QDialog.Accepted:
+            newfilters = d.getFilters()
+            self.filters = newfilters
+            # TODO: maybe sloppy to rebuild, need automatic cmodel ontop of clist
+            self.populateTable()
 
     def currentItem(self):
         # If no selected row, then select row 0.
@@ -629,7 +678,7 @@ class SimpleCommentTable(QTableView):
 
 
 class AddCommentBox(QDialog):
-    def __init__(self, parent, maxMark, lst, questnum, com=None):
+    def __init__(self, parent, maxMark, lst, questnum, curtestname, com=None):
         super(QDialog, self).__init__()
         self.parent = parent
         self.questnum = questnum
@@ -641,6 +690,8 @@ class AddCommentBox(QDialog):
         self.DE.setCheckState(Qt.Checked)
         self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QTextEdit()
+        self.TEmeta = QTextEdit()
+        self.TEtestname = QLineEdit()
         # TODO: how to make it smaller vertically than the TE?
         # self.TEtag.setMinimumHeight(self.TE.minimumHeight() // 2)
         # self.TEtag.setMaximumHeight(self.TE.maximumHeight() // 2)
@@ -653,12 +704,15 @@ class AddCommentBox(QDialog):
 
         flay = QFormLayout()
         flay.addRow("Enter text", self.TE)
-        flay.addRow("", self.quickHelp)
         flay.addRow("Choose text", self.CB)
         flay.addRow("Set delta", self.SB)
         flay.addRow("", self.DE)
         flay.addRow("", self.QSpecific)
         flay.addRow("Tags", self.TEtag)
+        # TODO: support multiple tests, change label to "test(s)" here
+        flay.addRow("Specific to test", self.TEtestname)
+        flay.addRow("", QLabel("(leave blank to share between tests)"))
+        flay.addRow("Meta", self.TEmeta)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -683,19 +737,37 @@ class AddCommentBox(QDialog):
             if com["tags"]:
                 self.TEtag.clear()
                 self.TEtag.insertPlainText(com["tags"])
+            if com["meta"]:
+                self.TEmeta.clear()
+                self.TEmeta.insertPlainText(com["meta"])
             if com["delta"]:
                 if com["delta"] == ".":
                     self.SB.setValue(0)
                     self.DE.setCheckState(Qt.Unchecked)
                 else:
                     self.SB.setValue(int(com["delta"]))
-        # TODO: ideally we would do this on TE change signal
-        if commentHasMultipleQTags(com):
-            self.QSpecific.setEnabled(False)
-        elif commentTaggedQn(com, self.questnum):
-            self.QSpecific.setCheckState(Qt.Checked)
+            if com["testname"]:
+                self.TEtestname.setText(com["testname"])
+            # TODO: ideally we would do this on TE change signal
+            # TODO: textEdited() signal (not textChanged())
+            if commentHasMultipleQTags(com):
+                self.QSpecific.setEnabled(False)
+            elif commentTaggedQn(com, self.questnum):
+                self.QSpecific.setCheckState(Qt.Checked)
+            else:
+                self.QSpecific.setCheckState(Qt.Unchecked)
         else:
-            self.QSpecific.setCheckState(Qt.Unchecked)
+            self.TEtestname.setText(curtestname)
+            self.QSpecific.setCheckState(Qt.Checked)
+            self.TE.setPlaceholderText(
+                'Prepend with "tex:" to use math.\n\n'
+                'You can "Choose text" to harvest comments from an existing annotation.\n\n'
+                'Change "delta" below to set a point-change associated with this comment.'
+            )
+            self.TEmeta.setPlaceholderText(
+                "notes to self, hints on when to use this comment, etc.\n\n"
+                "Not shown to student!"
+            )
 
     def changedCB(self):
         self.TE.clear()
@@ -742,7 +814,6 @@ class AddTagBox(QDialog):
 
         # set up widgets
         buttons.accepted.connect(self.accept)
-        buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         self.CB.addItem("")
         self.CB.addItems(tagList)
@@ -756,3 +827,33 @@ class AddTagBox(QDialog):
     def changedCB(self):
         self.TE.clear()
         self.TE.insertPlainText(self.CB.currentText())
+
+
+class ChangeFiltersDialog(QDialog):
+    def __init__(self, parent, curFilters):
+        super(QDialog, self).__init__()
+        self.parent = parent
+        self.cb1 = QCheckBox("Hide comments from other questions")
+        self.cb2 = QCheckBox("Hide comments from other tests")
+        self.cb1.setCheckState(Qt.Checked if curFilters[0] else Qt.Unchecked)
+        if curFilters[1]:
+            self.cb2.setCheckState(Qt.Checked)
+        else:
+            self.cb2.setCheckState(Qt.Unchecked)
+
+        flay = QVBoxLayout()
+        flay.addWidget(self.cb1)
+        flay.addWidget(self.cb2)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+    def getFilters(self):
+        return [
+            self.cb1.checkState() == Qt.Checked,
+            self.cb2.checkState() == Qt.Checked,
+        ]
