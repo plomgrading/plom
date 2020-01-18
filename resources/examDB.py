@@ -991,6 +991,29 @@ class PlomDB:
 
         return [True, rval]
 
+    def RgetSpreadsheet(self):
+        rval = {}
+        for tref in Test.select().where(Test.scanned == True):
+            thisTest = {
+                "identified": tref.identified,
+                "marked": tref.marked,
+                "totalled": tref.totalled,
+                "finished": tref.finished,
+                "sid": "",
+                "sname": "",
+            }
+            iref = tref.iddata[0]
+            if tref.identified:
+                thisTest["sid"] = iref.studentID
+                thisTest["sname"] = iref.studentName
+            for qref in tref.questiondata:
+                thisTest["q{}v".format(qref.questionNumber)] = qref.version
+                thisTest["q{}m".format(qref.questionNumber)] = ""
+                if qref.marked:
+                    thisTest["q{}m".format(qref.questionNumber)] = qref.mark
+            rval[tref.testNumber] = thisTest
+        return rval
+
     # ------------------
     # For user login - we reset all their stuff that is out
 

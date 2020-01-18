@@ -29,3 +29,7 @@ def RgetCompletions(self):
 
 def RgetStatus(self, testNumber):
     return self.DB.RgetStatus(testNumber)
+
+
+def RgetSpreadsheet(self):
+    return self.DB.RgetSpreadsheet()

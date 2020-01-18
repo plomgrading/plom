@@ -87,6 +87,20 @@ class ReportHandler:
         else:
             return web.Response(status=401)
 
+    async def RgetSpreadsheet(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rmsg = self.server.RgetSpreadsheet()
+            return web.json_response(rmsg, status=200)
+        else:
+            return web.Response(status=401)
+
+    async def RgetReassembledIDOnly(self, request):
+        pass
+
     def setUpRoutes(self, router):
         router.add_get("/REP/scanned", self.RgetScannedTests)
         router.add_get("/REP/incomplete", self.RgetIncompleteTests)
@@ -95,3 +109,5 @@ class ReportHandler:
         router.add_get("/REP/identified", self.RgetIdentified)
         router.add_get("/REP/completion", self.RgetCompletions)
         router.add_get("/REP/status/{test}", self.RgetStatus)
+        router.add_get("/REP/spreadSheet", self.RgetSpreadsheet)
+        router.add_get("/REP/IDreassembled/{test}", self.RgetReassembledIDOnly)

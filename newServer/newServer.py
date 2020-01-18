@@ -174,6 +174,7 @@ class Server(object):
         RgetIdentified,
         RgetCompletions,
         RgetStatus,
+        RgetSpreadsheet,
     )
 
 
