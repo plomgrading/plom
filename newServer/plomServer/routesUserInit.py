@@ -91,7 +91,7 @@ class UserInitHandler:
         router.add_delete("/users/{user}", self.closeUser)
         router.add_put("/users/{user}", self.giveUserToken)
         router.add_put("/admin/reloadUsers", self.adminReloadUsers)
-        router.add_get("/info/shortname", self.InfoShortName)
+        router.add_get("/info/shortName", self.InfoShortName)
         router.add_get("/info/numberOfQuestionsAndVersions", self.InfoQuestionsVersions)
         router.add_get("/info/numberOfPQV", self.InfoPQV)
         router.add_get("/info/numberOfTPQV", self.InfoTPQV)

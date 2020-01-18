@@ -8,16 +8,12 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 
-import csv
-from glob import glob
 import getpass
-import hashlib
-import json
 import os
 import requests
-from requests_toolbelt import MultipartEncoder
-import shutil
+import shlex
 import ssl
+import subprocess
 import sys
 import urllib3
 import threading
@@ -108,6 +104,28 @@ def closeUser():
     return True
 
 
+# Test information
+def getInfoShortName():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/info/shortName".format(server, message_port), verify=False
+        )
+        response.raise_for_status()
+        shortName = response.text
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return shortName
+
+
 def getInfoTPQV():
     SRmutex.acquire()
     try:
@@ -132,6 +150,59 @@ def getInfoTPQV():
     return tpqv
 
 
+def RgetIdentified():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/identified".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token,},
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
+def RgetOriginalFiles(testNumber):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/originalFiles/{}".format(
+                server, message_port, testNumber
+            ),
+            verify=False,
+            json={"user": _userName, "token": _token},
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return response.json()
+
+
+def reassembleTestCMD(shortName, outDir, t, sid):
+    fnames = RgetOriginalFiles(t)
+    if len(fnames) == 0:
+        return
+    rnames = ["../newServer/" + fn for fn in fnames]
+    return 'python3 testReassembler.py {} {} {} "" "{}"\n'.format(
+        shortName, sid, outDir, rnames
+    )
+
+
 if __name__ == "__main__":
     try:
         pwd = getpass.getpass("Please enter the 'manager' password:")
@@ -145,8 +216,20 @@ if __name__ == "__main__":
     session = requests.Session()
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
 
-    pqv = getInfoTPQV()
-    numberOfTests = pqv[0]
-    numberOfQuestions = pqv[2]
+    outDir = "reassembled_ID_but_not_marked"
+    try:
+        os.mkdir(outDir)
+    except FileExistsError:
+        pass
 
-    print(">>> This is all it does so far <<<")
+    shortName = getInfoShortName()
+    identifiedTests = RgetIdentified()
+    # Open a file for the list of commands to process to reassemble papers
+    fh = open("./commandlist.txt", "w")
+    for t in identifiedTests:
+        fh.write(reassembleTestCMD(shortName, outDir, t, identifiedTests[t]))
+    fh.close()
+    # pipe the commandlist into gnu-parallel
+    cmd = shlex.split("parallel --bar -a commandlist.txt")
+    subprocess.run(cmd, check=True)
+    os.unlink("commandlist.txt")

@@ -33,3 +33,7 @@ def RgetStatus(self, testNumber):
 
 def RgetSpreadsheet(self):
     return self.DB.RgetSpreadsheet()
+
+
+def RgetOriginalFiles(self, testNumber):
+    return self.DB.RgetOriginalFiles(testNumber)

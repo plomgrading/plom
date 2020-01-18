@@ -175,6 +175,7 @@ class Server(object):
         RgetCompletions,
         RgetStatus,
         RgetSpreadsheet,
+        RgetOriginalFiles,
     )
 
 

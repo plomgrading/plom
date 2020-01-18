@@ -1014,6 +1014,15 @@ class PlomDB:
             rval[tref.testNumber] = thisTest
         return rval
 
+    def RgetOriginalFiles(self, testNumber):
+        rval = []
+        tref = Test.get_or_none(testNumber=testNumber)
+        if tref is None:
+            return []
+        for p in tref.pages.order_by(Page.pageNumber):
+            rval.append(p.fileName)
+        return rval
+
     # ------------------
     # For user login - we reset all their stuff that is out
 
