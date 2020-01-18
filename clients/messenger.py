@@ -162,7 +162,7 @@ def getInfoPagesVersions():
                 "Server could not find the spec - this should not happen!"
             )
         else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
+            raise PlomSeriousException("Some other sort of error: {}".format(e)) from None
     finally:
         SRmutex.release()
 
