@@ -233,3 +233,8 @@ if __name__ == "__main__":
     cmd = shlex.split("parallel --bar -a commandlist.txt")
     subprocess.run(cmd, check=True)
     os.unlink("commandlist.txt")
+
+    print(">>> Warning <<<")
+    print(
+        "This still gets files by looking into server directory. In future this should be done over http."
+    )
