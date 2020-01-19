@@ -22,26 +22,25 @@ from PyQt5.QtWidgets import (
 )
 from resources.uiFiles.ui_launcher import Ui_Launcher
 
-directories = ["build", "finishing", "imageServer", "resources", "scanAndGroup"]
+directories = ["build", "finishing", "newServer", "resources", "scanAndUpload"]
 
 directories += ["build/examsToPrint", "build/sourceVersions"]
 
 directories += [
-    "scanAndGroup/archivedPDFs",
-    "scanAndGroup/collidingPages",
-    "scanAndGroup/decodedPages",
-    "scanAndGroup/discardedPages",
-    "scanAndGroup/pageImages",
-    "scanAndGroup/scannedExams",
-    "scanAndGroup/sentPages",
-    "scanAndGroup/extraPages/",
-    "scanAndGroup/discardedPages/",
+    "scanAndUpload/archivedPDFs",
+    "scanAndUpload/collidingPages",
+    "scanAndUpload/decodedPages",
+    "scanAndUpload/discardedPages",
+    "scanAndUpload/pageImages",
+    "scanAndUpload/scannedExams",
+    "scanAndUpload/sentPages",
+    "scanAndUpload/extraPages/",
+    "scanAndUpload/discardedPages/",
 ]
 
 directories += [
-    "imageServer/markedPapers",
-    "imageServer/markedPapers/plomFiles",
-    "imageServer/markedPapers/commentFiles",
+    "newServer/pages",
+    "newServer/plomServer",
 ]
 
 directories += ["clients", "clients/uiFiles", "clients/icons"]
@@ -70,33 +69,37 @@ files += [
 ]
 
 files += [
-    "scanAndGroup/cleanAll.py",
-    "scanAndGroup/extractQR.py",
-    "scanAndGroup/011_startHere.py",
-    "scanAndGroup/012_scansToImages.py",
-    "scanAndGroup/013_readQRCodes.py",
-    "scanAndGroup/014_sendPagesToServer.py",
-    "scanAndGroup/015_sendUnknownsToServer.py",
+    "scanAndUpload/cleanAll.py",
+    "scanAndUpload/extractQR.py",
+    "scanAndUpload/fasterQRExtract.py",
+    "scanAndUpload/011_startHere.py",
+    "scanAndUpload/012_scansToImages.py",
+    "scanAndUpload/013_readQRCodes.py",
+    "scanAndUpload/014_sendPagesToServer.py",
+    "scanAndUpload/015_sendUnknownsToServer.py",
+    "scanAndUpload/016_sendCollisionsToServer.py",
+    "scanAndUpload/019_checkScansStatus.py",
 ]
 
 files += [
-    "imageServer/aliceBob.py",
-    "imageServer/authenticate.py",
-    "imageServer/examviewwindow.py",
-    "imageServer/identify_manager.py",
-    "imageServer/identify_reverter.py",
-    "imageServer/id_storage.py",
-    "imageServer/image_server.py",
-    "imageServer/latex2png.py",
-    "imageServer/mark_manager.py",
-    "imageServer/mark_reverter.py",
-    "imageServer/mark_storage.py",
-    "imageServer/moreScansAdded.py",
-    "imageServer/serverSetup.py",
-    "imageServer/total_reverter.py",
-    "imageServer/total_storage.py",
-    "imageServer/ui_server_setup.py",
-    "imageServer/userManager.py",
+    "newServer/aliceBob.py",
+    "newServer/authenticate.py",
+    "newServer/latex2png.py",
+    "newServer/newServer.py",
+    "newServer/pageNotSubmitted.py",
+    "newServer/userManager.py",
+    "newServer/plomServer/routesID.py"
+    "newServer/plomServer/routesMark.py"
+    "newServer/plomServer/routesReport.py"
+    "newServer/plomServer/routesTotal.py"
+    "newServer/plomServer/routesUpload.py"
+    "newServer/plomServer/routesUserInit.py"
+    "newServer/plomServer/serverID.py"
+    "newServer/plomServer/serverMark.py"
+    "newServer/plomServer/serverReport.py"
+    "newServer/plomServer/serverTotal.py"
+    "newServer/plomServer/serverUpload.py"
+    "newServer/plomServer/serverUserInit.py",
 ]
 
 files += [
@@ -116,6 +119,12 @@ files += [
     "clients/test_view.py",
     "clients/useful_classes.py",
     "clients/tools.py",
+    "clients/manager.py",
+    "clients/managerMessenger.py",
+    "clients/collideview.py"
+    "clients/discardview.py"
+    "clients/selectrectangle.py"
+    "clients/unknownpageview.py",
 ]
 
 files += [
@@ -123,6 +132,7 @@ files += [
     "clients/uiFiles/ui_annotator_rhm.py",
     "clients/uiFiles/ui_chooser.py",
     "clients/uiFiles/ui_identify.py",
+    "clients/uiFiles/ui_iic.py",
     "clients/uiFiles/ui_marker.py",
     "clients/uiFiles/ui_test_view.py",
     "clients/uiFiles/ui_totaler.py",
@@ -144,14 +154,22 @@ files += [
     "clients/icons/move.svg",
     "clients/icons/redo.svg",
     "clients/icons/zoom.svg",
+    "clients/icons/manager_collide.svg",
+    "clients/icons/manager_discard.svg",
+    "clients/icons/manager_extra.svg",
+    "clients/icons/manager_move.svg",
+    "clients/icons/manager_none.svg",
+    "clients/icons/manager_test.svg",
+    "clients/icons/manager_unknown.svg",
 ]
 
 files += [
-    "finishing/07_check_completed.py",
-    "finishing/07alt_check_ID_total.py",
-    "finishing/08_build_cover_pages.py",
-    "finishing/09_reassemble.py",
-    "finishing/09alt_reassembled_ided_but_unmarked.py",
+    "finishing/021_startHere.py",
+    "finishing/022_check_completed.py",
+    "finishing/023_spreadsheet.py",
+    "finishing/024_reassemble.py",
+    "finishing/024a_reassemble_completed.py",
+    "finishing/024b_reassemble_ID_only.py",
     "finishing/10_prepare_coded_return.py",
     "finishing/11_write_to_canvas_spreadsheet.py",
     "finishing/12_archive.py",
