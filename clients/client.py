@@ -115,7 +115,15 @@ class Chooser(QDialog):
 
         # Have Messenger login into to server
         messenger.setServerDetails(server, mport)
-        messenger.startMessenger()
+        try:
+            messenger.startMessenger()
+        except PlomBenignException as e:
+            ErrorMessage(
+                "Could not get authentication token.\n\n"
+                "Unexpected error: {}".format(e)
+            ).exec_()
+            return
+
         testname = messenger.getInfoShortName()
 
         try:

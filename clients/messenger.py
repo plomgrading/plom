@@ -947,6 +947,14 @@ def startMessenger():
     # nn times already, are you sure you want to keep retrying" message.
     authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
+    try:
+        response = session.get(
+            "https://{}:{}/version".format(server, message_port), verify=False,
+        )
+    except requests.ConnectionError as err:
+        raise PlomBenignException(
+            "Cannot connect to server. Please check server details."
+        ) from None
 
 
 def stopMessenger():
