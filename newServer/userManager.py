@@ -379,7 +379,7 @@ class userManager(QWidget):
             # If dialog accepted then encrypt password
             # add manager to list, save and refresh list.
             np = tmp.getNamePassword()
-            self.users.update({np[0]: mlpctx.encrypt(np[1])})
+            self.users.update({np[0]: mlpctx.hash(np[1])})
             self.saveUsers()
             self.refreshUserList()
 
@@ -390,7 +390,7 @@ class userManager(QWidget):
             # If dialog accepted then encrypt password
             # add user to list, save and refresh list.
             np = tmp.getNamePassword()
-            self.users.update({np[0]: mlpctx.encrypt(np[1])})
+            self.users.update({np[0]: mlpctx.hash(np[1])})
             self.saveUsers()
             self.refreshUserList()
 
@@ -446,7 +446,7 @@ class userManager(QWidget):
         with open("../resources/cannedUserList.txt", "a+") as fh:
             for (n, p) in doList:
                 if n not in self.users:
-                    self.users.update({n: mlpctx.encrypt(p)})
+                    self.users.update({n: mlpctx.hash(p)})
                     fh.write("{}\t{}\n".format(n, p))
                 else:
                     print("User {} already present".format(n))

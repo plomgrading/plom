@@ -39,6 +39,9 @@ directories += [
 
 directories += [
     "newServer/pages",
+    "newServer/markedPages",
+    "newServer/markedPages/plomFiles",
+    "newServer/markedPages/commentFiles",
     "newServer/plomServer",
 ]
 
@@ -89,17 +92,17 @@ files += [
     "newServer/serverSetup.py",
     "newServer/ui_server_setup.py",
     "newServer/userManager.py",
-    "newServer/plomServer/routesID.py"
-    "newServer/plomServer/routesMark.py"
-    "newServer/plomServer/routesReport.py"
-    "newServer/plomServer/routesTotal.py"
-    "newServer/plomServer/routesUpload.py"
-    "newServer/plomServer/routesUserInit.py"
-    "newServer/plomServer/serverID.py"
-    "newServer/plomServer/serverMark.py"
-    "newServer/plomServer/serverReport.py"
-    "newServer/plomServer/serverTotal.py"
-    "newServer/plomServer/serverUpload.py"
+    "newServer/plomServer/routesID.py",
+    "newServer/plomServer/routesMark.py",
+    "newServer/plomServer/routesReport.py",
+    "newServer/plomServer/routesTotal.py",
+    "newServer/plomServer/routesUpload.py",
+    "newServer/plomServer/routesUserInit.py",
+    "newServer/plomServer/serverID.py",
+    "newServer/plomServer/serverMark.py",
+    "newServer/plomServer/serverReport.py",
+    "newServer/plomServer/serverTotal.py",
+    "newServer/plomServer/serverUpload.py",
     "newServer/plomServer/serverUserInit.py",
 ]
 
@@ -122,10 +125,11 @@ files += [
     "clients/tools.py",
     "clients/manager.py",
     "clients/managerMessenger.py",
-    "clients/collideview.py"
-    "clients/discardview.py"
-    "clients/selectrectangle.py"
+    "clients/collideview.py",
+    "clients/discardview.py",
+    "clients/selectrectangle.py",
     "clients/unknownpageview.py",
+    "clients/plom_exceptions",
 ]
 
 files += [

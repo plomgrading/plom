@@ -45,7 +45,7 @@ from plomServer.routesTotal import TotalHandler
 from plomServer.routesReport import ReportHandler
 
 # ----------------------
-def buildDirectories(spec):
+def buildDirectories():
     """Build the directories that this script needs"""
     # the list of directories. Might need updating.
     lst = [
@@ -54,9 +54,9 @@ def buildDirectories(spec):
         "pages/collidingPages",
         "pages/unknownPages",
         "pages/originalPages",
-        "pages/markedQuestions",
-        "pages/markedQuestions/plomFiles",
-        "pages/markedQuestions/commentFiles",
+        "markedQuestions",
+        "markedQuestions/plomFiles",
+        "markedQuestions/commentFiles",
     ]
     for dir in lst:
         try:
@@ -184,7 +184,7 @@ class Server(object):
 
 examDB = PlomDB()
 spec = SpecParser().spec
-buildDirectories(spec)
+buildDirectories()
 peon = Server(spec, examDB)
 userIniter = UserInitHandler(peon)
 uploader = UploadHandler(peon)
