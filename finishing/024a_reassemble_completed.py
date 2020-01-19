@@ -271,7 +271,9 @@ def reassembleTestCMD(shortName, outDir, t, sid):
     fnames = RgetAnnotatedFiles(t)
     if len(fnames) == 0:
         return
-    rnames = ["../newServer/" + fn for fn in fnames]
+    rnames = ["coverPages/cover_{}.pdf".format(sid)] + [
+        "../newServer/" + fn for fn in fnames
+    ]
     return 'python3 testReassembler.py {} {} {} "" "{}"\n'.format(
         shortName, sid, outDir, rnames
     )
@@ -290,7 +292,12 @@ if __name__ == "__main__":
     session = requests.Session()
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
 
-    outDir = "reassembled_ID_but_not_marked"
+    try:
+        os.mkdir("coverPages")
+    except FileExistsError:
+        pass
+
+    outDir = "reassembled"
     try:
         os.mkdir(outDir)
     except FileExistsError:
@@ -304,23 +311,33 @@ if __name__ == "__main__":
     maxMarks = MgetAllMax()
 
     # Build coverpages
-    for t in completedTests:
-        if completedTests[t][0] == True and completedTests[t][2] == numberOfQuestions:
-            print(buildCoverPage(shortName, outDir, t, maxMarks))
-    # now reassemble papers
-    for t in completedTests:
-        if completedTests[t][0] == True and completedTests[t][2] == numberOfQuestions:
-            print(reassembleTestCMD(shortName, outDir, t, identifiedTests[t]))
-
-    # fh = open("./commandlist.txt", "w")
-    # for t in completedTests:
-    #     if completedTests[t][0] == True and completedTests[t][2] == numberOfQuestions:
-    #         fh.write(reassembleTestCMD(shortName, outDir, t, identifiedTests[t]))
-    # fh.close()
+    with open("./commandlist.txt", "w") as fh:
+        for t in completedTests:
+            if (
+                completedTests[t][0] == True
+                and completedTests[t][2] == numberOfQuestions
+            ):
+                # print(buildCoverPage(shortName, outDir, t, maxMarks))
+                fh.write(buildCoverPage(shortName, outDir, t, maxMarks))
     # pipe the commandlist into gnu-parallel
-    # cmd = shlex.split("parallel --bar -a commandlist.txt")
-    # subprocess.run(cmd, check=True)
-    # os.unlink("commandlist.txt")
+    cmd = shlex.split("parallel --bar -a commandlist.txt")
+    subprocess.run(cmd, check=True)
+    os.unlink("commandlist.txt")
+
+    # now reassemble papers
+    with open("./commandlist.txt", "w") as fh:
+        for t in completedTests:
+            if (
+                completedTests[t][0] == True
+                and completedTests[t][2] == numberOfQuestions
+            ):
+                # print(reassembleTestCMD(shortName, outDir, t, identifiedTests[t]))
+                fh.write(reassembleTestCMD(shortName, outDir, t, identifiedTests[t]))
+
+    # pipe the commandlist into gnu-parallel
+    cmd = shlex.split("parallel --bar -a commandlist.txt")
+    subprocess.run(cmd, check=True)
+    os.unlink("commandlist.txt")
 
     print(">>> Warning <<<")
     print(
