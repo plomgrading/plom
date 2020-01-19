@@ -61,7 +61,7 @@ files += [
     "build/003_buildPlomDB.py",
     "build/004_buildPDFs.py",
     "build/004a_buildPDFs_no_names.py",
-    "build/004b_buildPDF_with_names.py",
+    "build/004b_buildPDFs_with_names.py",
     "build/cleanAll.py",
     "build/mergeAndCodePages.py",
     "build/template_testSpec.toml",
