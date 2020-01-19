@@ -35,7 +35,6 @@ directories += [
     "scanAndUpload/scannedExams",
     "scanAndUpload/sentPages",
     "scanAndUpload/extraPages/",
-    "scanAndUpload/discardedPages/",
 ]
 
 directories += [
@@ -87,6 +86,8 @@ files += [
     "newServer/latex2png.py",
     "newServer/newServer.py",
     "newServer/pageNotSubmitted.py",
+    "newServer/serverSetup.py",
+    "newServer/ui_server_setup.py",
     "newServer/userManager.py",
     "newServer/plomServer/routesID.py"
     "newServer/plomServer/routesMark.py"
@@ -197,71 +198,71 @@ class SimpleMessage(QMessageBox):
         self.setDefaultButton(QMessageBox.Yes)
 
 
-class LeftToDo(QDialog):
-    def __init__(self):
-        super(LeftToDo, self).__init__()
-        tasks = {}
-        tasks["0: Right now"] = ["Go to project"]
-        tasks["1: Build"] = [
-            "Name test",
-            "Set number of source tests",
-            "Copy source tests into place",
-            "Set up page grouping",
-            "Set up version choices for groups",
-            "Set total number of tests to produce",
-            "Produce test-files",
-        ]
-        tasks["2: Run the test"] = [
-            "Print tests",
-            "Run test",
-            "Make students very happy",
-            "Scan tests",
-        ]
-        tasks["3: Scan and Group"] = [
-            "Copy test scans to scannedExams",
-            "Convert scans to page images",
-            "Decode page images",
-            "Manual identification" "Check for missing pages",
-            "Group page images into page-groups",
-            "Add an extra pages",
-        ]
-        tasks["4: Image server"] = [
-            "Make sure you have access to two ports",
-            "Set up users",
-            "Get your class list csv",
-            "Run the image server",
-            "Check progress with ID-manager",
-            "Check progress with Marking-manager",
-        ]
-        tasks["5: Clients"] = ["Give markers client apps"]
-        tasks["6: Finishing"] = [
-            "Check tests are completed",
-            "Build cover pages",
-            "Reassemble papers",
-        ]
-        self.setWindowTitle("What to do next")
-        self.setModal(True)
-        grid = QGridLayout()
-
-        self.taskTW = QTreeWidget()
-        self.taskTW.setColumnCount(1)
-        self.taskTW.setHeaderLabel("Tasks")
-        grid.addWidget(self.taskTW, 1, 1, 3, 2)
-        for t in sorted(tasks.keys()):
-            tmp = QTreeWidgetItem(self.taskTW)
-            tmp.setText(0, t)
-            self.taskTW.addTopLevelItem(tmp)
-            for tx in tasks[t]:
-                tmp2 = QTreeWidgetItem(tmp)
-                tmp2.setText(0, tx)
-                tmp.addChild(tmp2)
-
-        self.taskTW.adjustSize()
-
-        self.closeB = QPushButton("Close")
-        grid.addWidget(self.closeB, 4, 4)
-        self.closeB.clicked.connect(self.accept)
-        self.setLayout(grid)
+# class LeftToDo(QDialog):
+#     def __init__(self):
+#         super(LeftToDo, self).__init__()
+#         tasks = {}
+#         tasks["0: Right now"] = ["Go to project"]
+#         tasks["1: Build"] = [
+#             "Name test",
+#             "Set number of source tests",
+#             "Copy source tests into place",
+#             "Set up page grouping",
+#             "Set up version choices for groups",
+#             "Set total number of tests to produce",
+#             "Produce test-files",
+#         ]
+#         tasks["2: Run the test"] = [
+#             "Print tests",
+#             "Run test",
+#             "Make students very happy",
+#             "Scan tests",
+#         ]
+#         tasks["3: Scan and Group"] = [
+#             "Copy test scans to scannedExams",
+#             "Convert scans to page images",
+#             "Decode page images",
+#             "Manual identification" "Check for missing pages",
+#             "Group page images into page-groups",
+#             "Add an extra pages",
+#         ]
+#         tasks["4: Image server"] = [
+#             "Make sure you have access to two ports",
+#             "Set up users",
+#             "Get your class list csv",
+#             "Run the image server",
+#             "Check progress with ID-manager",
+#             "Check progress with Marking-manager",
+#         ]
+#         tasks["5: Clients"] = ["Give markers client apps"]
+#         tasks["6: Finishing"] = [
+#             "Check tests are completed",
+#             "Build cover pages",
+#             "Reassemble papers",
+#         ]
+#         self.setWindowTitle("What to do next")
+#         self.setModal(True)
+#         grid = QGridLayout()
+#
+#         self.taskTW = QTreeWidget()
+#         self.taskTW.setColumnCount(1)
+#         self.taskTW.setHeaderLabel("Tasks")
+#         grid.addWidget(self.taskTW, 1, 1, 3, 2)
+#         for t in sorted(tasks.keys()):
+#             tmp = QTreeWidgetItem(self.taskTW)
+#             tmp.setText(0, t)
+#             self.taskTW.addTopLevelItem(tmp)
+#             for tx in tasks[t]:
+#                 tmp2 = QTreeWidgetItem(tmp)
+#                 tmp2.setText(0, tx)
+#                 tmp.addChild(tmp2)
+#
+#         self.taskTW.adjustSize()
+#
+#         self.closeB = QPushButton("Close")
+#         grid.addWidget(self.closeB, 4, 4)
+#         self.closeB.clicked.connect(self.accept)
+#         self.setLayout(grid)
 
 
 def buildDirs(projPath):
@@ -329,12 +330,12 @@ def doThings(projPath):
     )
     msg.exec_()
     cpwd = os.getcwd()
-    os.chdir(projPath + "/imageServer")
+    os.chdir(projPath + "/newServer")
     subprocess.check_call(["python3", "serverSetup.py"])
     os.chdir(cpwd)
 
-    msg = LeftToDo()
-    msg.exec_()
+    # msg = LeftToDo()
+    # msg.exec_()
 
 
 class ProjectLauncher(QWidget):
