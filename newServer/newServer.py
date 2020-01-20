@@ -172,6 +172,7 @@ class Server(object):
         RgetScannedTests,
         RgetIncompleteTests,
         RgetProgress,
+        RgetMarkHistogram,
         RgetIdentified,
         RgetCompletions,
         RgetStatus,

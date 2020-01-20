@@ -25,6 +25,7 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QGridLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QMessageBox,
     QProgressBar,
@@ -49,6 +50,76 @@ import managerMessenger
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
 from resources.version import Plom_API_Version
+
+
+class QVHistogram(QDialog):
+    def __init__(self, q, v, hist):
+        super(QVHistogram, self).__init__()
+        self.question = q
+        self.version = v
+        self.setWindowTitle("Histograms")
+        self.hist = hist
+        tot = 0
+        mx = 0
+        dist = {}
+        for u in self.hist:
+            for m in self.hist[u]:
+                im = int(m)
+                s = int(self.hist[u][m])
+                mx = max(mx, im)
+                tot += s
+                if im not in dist:
+                    dist[im] = 0
+                dist[im] += s
+
+        grid = QVBoxLayout()
+        grid.addWidget(QLabel("Histograms for question {} version {}".format(q, v)))
+
+        self.eG = QGroupBox("All markers")
+        gg = QVBoxLayout()
+        gg.addWidget(QLabel("Number of papers: {}".format(tot)))
+        gp = QHBoxLayout()
+        for im in range(0, mx + 1):
+            pb = QProgressBar()
+            pb.setOrientation(Qt.Vertical)
+            if im not in dist:
+                pb.setValue(0)
+            else:
+                pb.setValue((100 * dist[im]) // tot)
+            pb.setToolTip("{} = {}%".format(im, pb.value()))
+            gp.addWidget(pb)
+        gg.addLayout(gp)
+        self.eG.setLayout(gg)
+        grid.addWidget(self.eG)
+
+        self.uG = {}
+        for u in self.hist:
+            utot = 0
+            for m in self.hist[u]:
+                utot += self.hist[u][m]
+            self.uG[u] = QGroupBox("Marker: {}".format(u))
+            gg = QVBoxLayout()
+            gg.addWidget(QLabel("Number of papers: {}".format(utot)))
+            gp = QHBoxLayout()
+            for im in range(0, mx + 1):
+                m = str(im)
+                pb = QProgressBar()
+                pb.setOrientation(Qt.Vertical)
+                if m not in self.hist[u]:
+                    pb.setValue(0)
+                else:
+                    pb.setValue((100 * self.hist[u][m]) // utot)
+                pb.setToolTip("{} = {}%".format(m, pb.value()))
+                gp.addWidget(pb)
+            gg.addLayout(gp)
+            self.uG[u].setLayout(gg)
+            grid.addWidget(self.uG[u])
+
+        self.cB = QPushButton("Close")
+        self.cB.clicked.connect(self.accept)
+        grid.addWidget(self.cB)
+        self.setLayout(grid)
+        self.show()
 
 
 class TestStatus(QDialog):
@@ -118,8 +189,9 @@ class TestStatus(QDialog):
 
 
 class ProgressBox(QGroupBox):
-    def __init__(self, qu, v, stats):
+    def __init__(self, parent, qu, v, stats):
         super(ProgressBox, self).__init__()
+        self.parent = parent
         self.question = qu
         self.version = v
         self.setTitle("Q-{} V-{}".format(qu, v))
@@ -140,6 +212,9 @@ class ProgressBox(QGroupBox):
         self.pb = QProgressBar()
         self.pb.setFormat("%v / %m")
         grid.addWidget(self.pb)
+        self.vhB = QPushButton("View histograms")
+        self.vhB.clicked.connect(self.viewHist)
+        grid.addWidget(self.vhB)
 
         self.setLayout(grid)
         self.show()
@@ -159,6 +234,9 @@ class ProgressBox(QGroupBox):
         self.avgL.setText("Average mark = {}".format(self.stats["avgMark"]))
         self.mtL.setText("Marking time = {}".format(self.stats["avgMTime"]))
         self.lhL.setText("# Marked in last hour = {}".format(self.stats["NRecent"]))
+
+    def viewHist(self):
+        self.parent.viewMarkHistogram(self.question, self.version)
 
 
 class Manager(QWidget):
@@ -530,7 +608,7 @@ class Manager(QWidget):
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
                 stats = managerMessenger.getProgress(q, v)
-                self.pd[(q, v)] = ProgressBox(q, v, stats)
+                self.pd[(q, v)] = ProgressBox(self, q, v, stats)
                 grid.addWidget(self.pd[(q, v)], q, v)
         self.ui.markBucket.setLayout(grid)
 
@@ -539,6 +617,11 @@ class Manager(QWidget):
             for v in range(1, self.numberOfVersions + 1):
                 stats = managerMessenger.getProgress(q, v)
                 self.pd[(q, v)].refresh(stats)
+
+    def viewMarkHistogram(self, question, version):
+        mhist = managerMessenger.getMarkHistogram(question, version)
+        QVHistogram(question, version, mhist).exec_()
+        # print(mhist)
 
     def todo(self, msg=""):
         ErrorMessage("This is on our to-do list" + msg).exec_()

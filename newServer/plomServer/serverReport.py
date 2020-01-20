@@ -19,6 +19,10 @@ def RgetProgress(self, qu, v):
     return self.DB.RgetProgress(qu, v)
 
 
+def RgetMarkHistogram(self, qu, v):
+    return self.DB.RgetMarkHistogram(qu, v)
+
+
 def RgetIdentified(self):
     return self.DB.RgetIdentified()
 

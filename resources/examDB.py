@@ -951,6 +951,27 @@ class PlomDB:
                 "avgMTime": SMTime / NMarked,
             }
 
+    def RgetMarkHistogram(self, q, v):
+        rhist = {}
+        # defaultdict(lambda: defaultdict(int))
+        for x in (
+            QuestionData.select()
+            .join(Group)
+            .where(
+                QuestionData.questionNumber == q,
+                QuestionData.version == v,
+                QuestionData.marked == True,
+                Group.scanned == True,
+            )
+        ):
+            # make sure username and mark both in histogram
+            if x.username not in rhist:
+                rhist[x.username] = {}
+            if x.mark not in rhist[x.username]:
+                rhist[x.username][x.mark] = 0
+            rhist[x.username][x.mark] += 1
+        return rhist
+
     def RgetCompletions(self):
         rval = {}
         for tref in Test.select().where(Test.scanned == True):
