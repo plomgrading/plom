@@ -81,6 +81,7 @@ files += [
     "scanAndUpload/015_sendUnknownsToServer.py",
     "scanAndUpload/016_sendCollisionsToServer.py",
     "scanAndUpload/019_checkScansStatus.py",
+    "scanAndUpload/server.toml",
 ]
 
 files += [

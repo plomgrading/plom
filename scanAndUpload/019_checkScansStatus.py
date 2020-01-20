@@ -164,8 +164,20 @@ def getIncompleteTests():
 
 
 # ----------------------
+def getServerInfo():
+    global server
+    global message_port
+    if os.path.isfile("server.toml"):
+        with open("server.toml") as fh:
+            si = toml.load(fh)
+        server = si["server"]
+        message_port = si["port"]
+
 
 if __name__ == "__main__":
+    getServerInfo()
+    print("Uploading to {} port {}".format(server, message_port))
+
     try:
         pwd = getpass.getpass("Please enter the 'scanner' password:")
     except Exception as error:
