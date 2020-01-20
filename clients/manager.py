@@ -115,7 +115,7 @@ class QVHistogram(QDialog):
             self.uG[u].setLayout(gg)
             grid.addWidget(self.uG[u])
 
-        self.cB = QPushButton("Close")
+        self.cB = QPushButton("&Close")
         self.cB.clicked.connect(self.accept)
         grid.addWidget(self.cB)
         self.setLayout(grid)
