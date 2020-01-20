@@ -589,7 +589,7 @@ class MarkerClient(QWidget):
         # Start using connection to server.
         # Get the number of Tests, Pages, Questions and Versions
         try:
-            self.TPQV = messenger.getInfoTPQV()
+            self.testInfo = messenger.getInfoGeneral()
         except PlomSeriousException as err:
             self.throwSeriousError(err)
             return
@@ -1235,14 +1235,14 @@ class MarkerClient(QWidget):
 
     def viewSpecificImage(self):
         if self.viewAll:
-            tgs = TestGroupSelect(self.TPQV, self.pageGroup)
+            tgs = TestGroupSelect(self.testInfo, self.pageGroup)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
                 gn = tgs.gsb.value()
             else:
                 return
         else:
-            tgs = TestGroupSelect(self.TPQV)
+            tgs = TestGroupSelect(self.testInfo)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
                 gn = self.pageGroup

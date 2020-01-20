@@ -177,11 +177,11 @@ def getInfoPagesVersions():
     return pv
 
 
-def getInfoTPQV():
+def getInfoGeneral():
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/info/numberOfTPQV".format(server, message_port),
+            "https://{}:{}/info/general".format(server, message_port),
             verify=False,
         )
         response.raise_for_status()
@@ -196,7 +196,8 @@ def getInfoTPQV():
     finally:
         SRmutex.release()
 
-    return pv
+    fields = ("testName", "numTests", "numTotalPages", "numGroups", "numVersions")
+    return dict(zip(fields, pv))
 
 
 # ------------------------
