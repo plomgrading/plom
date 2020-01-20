@@ -195,10 +195,6 @@ def getServerInfo():
 if __name__ == "__main__":
     getServerInfo()
     print("Uploading to {} port {}".format(server, message_port))
-    try:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
-    except Exception as error:
-        print("ERROR", error)
 
     try:
         pwd = getpass.getpass("Please enter the 'scanner' password:")

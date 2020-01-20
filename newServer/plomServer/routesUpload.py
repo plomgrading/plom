@@ -322,7 +322,7 @@ class UploadHandler:
                 data["fileName"], data["test"], data["question"], data["rotation"]
             )
             if rval[0]:
-                return web.FileResponse(status=200)  # all fine
+                return web.Response(status=200)  # all fine
             else:
                 return web.Response(status=404)
         else:
