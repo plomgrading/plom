@@ -7,6 +7,7 @@
 * get "/Version" - return server+API versions as test string
 * get "/info/shortName" - return the shortname of the test (from spec)
 * get "/info/numberOfGroupsAndVersions" - return a pair (#groups, #versions)
+* get "/info/numberOfTPQV" - return a list (#tests, #pages, #groups, #versions)
 
 ## Authentication + misc Admin tasks
 * put "/users/{user}" - verify user/password + return auth-token
@@ -42,7 +43,7 @@
 * get "/MK/tasks/available" - return next available task
 * get "/MK/latex" - take latex-fragment, process and return png
 * get "/MK/images/{tgv}" - return original imagefile of that tgv plus the annotated version plus the plom-file
-* get "/MK/originalImage/{tgv}" - return (original, unannotated) imagefile of that tgv
+* get "/MK/originalImage/{test}/{group}" - return (original, unannotated) imagefile
 * get "/MK/whole/{number}" - return group-images of entire paper (except id-page)
 * patch "/MK/tags/{tgv}" - save user-tags of that tgv
 * put "/MK/tasks/{tgv}" - send back marked-image, plom-file, comments, mark etc.
@@ -60,6 +61,7 @@ Placed a checkmark next to each if appears in lists above.
 * put("/admin/reloadScans") ✓
 * get("/info/shortName") ✓
 * get("/info/numberOfGroupsAndVersions") ✓
+* get("/info/numberOfTPQV") ✓
 * get("/ID/progress") ✓
 * get("/ID/tasks/available") ✓
 * get("/ID/classlist") ✓
@@ -85,7 +87,7 @@ Placed a checkmark next to each if appears in lists above.
 * patch("/MK/tasks/{task}") ✓
 * get("/MK/latex") ✓
 * get("/MK/images/{tgv}") ✓
-* get("/MK/originalImage/{tgv}") ✓
+* get("/MK/originalImage/{test}/{group}") ✓
 * put("/MK/tasks/{tgv}") ✓
 * patch("/MK/tags/{tgv}") ✓
 * get("/MK/whole/{number}") ✓

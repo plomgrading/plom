@@ -177,6 +177,28 @@ def getInfoPagesVersions():
     return pv
 
 
+def getInfoTPQV():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/info/numberOfTPQV".format(server, message_port),
+            verify=False,
+        )
+        response.raise_for_status()
+        pv = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return pv
+
+
 # ------------------------
 # ------------------------
 # ID client API stuff
@@ -878,16 +900,20 @@ def MrequestImages(code):
     return [image, anImage, plDat]
 
 
-def MrequestOriginalImage(code):
+def MrequestOriginalImage(testNumber, pageGroup):
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/MK/originalImage/{}".format(server, message_port, code),
+            "https://{}:{}/MK/originalImage/{}/{}".format(
+                server, message_port, testNumber, pageGroup
+            ),
             json={"user": _userName, "token": _token},
             verify=False,
         )
         if response.status_code == 204:
-            raise PlomNoMoreException("No paper with code {}.".format(code))
+            raise PlomNoMoreException(
+                "No paper with test/pageGroup {}/{}.".format(testNumber, pageGroup)
+            )
         response.raise_for_status()
         # response is either [image] or [image, annotatedImage, plom-data]
         image = BytesIO(response.content).getvalue()  # pass back image as bytes
@@ -896,8 +922,8 @@ def MrequestOriginalImage(code):
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.") from None
         elif response.status_code == 404:
-            raise PlomSeriousException(
-                "Cannot find image file for {}.".format(code)
+            raise PlomNoMoreException(
+                "Cannot find image file for {}.{}.".format(testNumber, pageGroup)
             ) from None
         else:
             raise PlomSeriousException(
