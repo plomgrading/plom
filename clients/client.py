@@ -254,6 +254,10 @@ class Chooser(QDialog):
         # save those settings
         #self.saveDetails()   # TODO?
 
+        # TODO: might be nice, but needs another thread?
+        #self.ui.infoLabel.setText("connecting...")
+        #self.ui.infoLabel.repaint()
+
         # Have Messenger login into to server
         messenger.setServerDetails(server, mport)
         try:
