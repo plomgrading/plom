@@ -246,6 +246,7 @@ class Chooser(QDialog):
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.clear()
         self.ui.pgDrop.setVisible(False)
+        self.ui.infoLabel2.setText("")
 
     def getInfo(self):
         server = self.ui.serverLE.text()
@@ -256,13 +257,14 @@ class Chooser(QDialog):
         # Have Messenger login into to server
         messenger.setServerDetails(server, mport)
         try:
-            messenger.startMessenger()
+            r = messenger.startMessenger()
         except PlomBenignException as e:
             ErrorMessage(
                 "Could not get authentication token.\n\n"
                 "{}".format(e)
             ).exec_()
             return
+        self.ui.infoLabel2.setText(r)
 
         info = messenger.getInfoGeneral()
         self.ui.markGBox.setTitle("Marking information for {}".format(info["testName"]))
