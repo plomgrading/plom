@@ -246,7 +246,7 @@ class Chooser(QDialog):
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.clear()
         self.ui.pgDrop.setVisible(False)
-        self.ui.infoLabel2.setText("")
+        self.ui.infoLabel.setText("")
 
     def getInfo(self):
         server = self.ui.serverLE.text()
@@ -264,10 +264,10 @@ class Chooser(QDialog):
                 "{}".format(e)
             ).exec_()
             return
-        self.ui.infoLabel2.setText(r)
+        self.ui.infoLabel.setText(r)
 
         info = messenger.getInfoGeneral()
-        self.ui.markGBox.setTitle("Marking information for {}".format(info["testName"]))
+        self.ui.markGBox.setTitle('Marking information for “{}”'.format(info["testName"]))
         pg = self.getpg()
         v = self.getv()
         self.ui.pgSB.setVisible(False)

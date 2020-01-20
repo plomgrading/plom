@@ -66,9 +66,9 @@
      </property>
      <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,1,1">
       <item row="3" column="0">
-       <widget class="QLabel" name="infoLabel">
+       <widget class="QLabel" name="infoLabelStatic">
         <property name="text">
-         <string>Server info:</string>
+         <string>Info:</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -83,7 +83,7 @@
        </widget>
       </item>
       <item row="3" column="1" colspan="3">
-       <widget class="QLabel" name="infoLabel2">
+       <widget class="QLabel" name="infoLabel">
         <property name="text">
          <string/>
         </property>
