@@ -711,7 +711,6 @@ class Manager(QWidget):
                     self.unknownModel.item(r, 5).text(),
                     self.unknownModel.item(r, 3).text(),
                 )
-                self.todo()
             elif self.unknownModel.item(r, 2).text() == "test":
                 if (
                     managerMessenger.unknownToTestPage(

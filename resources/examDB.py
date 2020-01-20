@@ -486,20 +486,24 @@ class PlomDB:
             iref.save()
         return []
 
-    def invalidateQGroup(self, tref, gref):
+    def invalidateQGroup(self, tref, gref, delPage=True):
+        # When we delete a page, set "scanned" to false for group+test
+        # If we are adding a page then we don't have to do that.
         qref = gref.questiondata[0]
         sref = tref.sumdata[0]
         rval = []
         with plomdb.atomic():
             # update the test
-            tref.scanned = False
+            if delPage:
+                tref.scanned = False
             tref.marked = False
             tref.totalled = False
             tref.finished = False
             tref.save()
             # update the group
-            gref.scanned = False
-            gref.save()
+            if delPage:
+                gref.scanned = False
+                gref.save()
             # update the sumdata
             sref.status = ""
             sref.sumMark = None
@@ -862,8 +866,8 @@ class PlomDB:
             )
             uref.delete_instance()
         ## Now invalidate any work on the associated group
-        # now update the group
-        return [True, self.invalidateQGroup(tref, qref.group)]
+        # now update the group and keep list of files to delete potentially
+        return [True, self.invalidateQGroup(tref, qref.group, delPage=False)]
 
     def moveDiscardToUnknown(self, fname, nname):
         dref = DiscardedPage.get_or_none(fileName=fname)
