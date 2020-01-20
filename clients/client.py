@@ -155,8 +155,8 @@ class Chooser(QDialog):
             else:
                 pg = self.ui.pgSB.value()
                 v = self.ui.vSB.value()
-            pg = str(pg).zfill(2)  # TODO: why?
-            v = str(v)
+            pg = int(pg)
+            v = int(v)
             self.setEnabled(False)
             self.hide()
             markerwin = marker.MarkerClient()

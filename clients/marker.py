@@ -521,7 +521,7 @@ class MarkerClient(QWidget):
         # Paste the username, pagegroup and version into GUI.
         self.ui.userBox.setTitle("User: {}".format(messenger.whoami()))
         self.ui.pgLabel.setText(
-            "{} of {}".format(str(self.pageGroup).zfill(2), self.testInfo["testName"])
+            "Q{} of {}".format(str(self.pageGroup), self.testInfo["testName"])
         )
         self.ui.vLabel.setText(str(self.version))
         # Exam model for the table of groupimages - connect to table
@@ -1157,7 +1157,7 @@ class MarkerClient(QWidget):
         pd.setAutoClose(True)
         # Start caching.
         c = 0
-        n = int(self.pageGroup)
+        n = self.pageGroup
         testname = self.testInfo["testName"]
         for X in clist:
             if commentIsVisible(X, n, testname) and X["text"][:4].upper() == "TEX:":
