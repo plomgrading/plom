@@ -87,6 +87,9 @@ class Chooser(QDialog):
         self.ui.totalButton.clicked.connect(self.runTotaler)
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontButton.clicked.connect(self.setFont)
+        self.ui.pgGet.clicked.connect(self.getInfo)
+        self.ui.vDrop.setVisible(False)
+        self.ui.pgDrop.setVisible(False)
 
     def setLastTime(self):
         # set login etc from last time client ran.
@@ -146,8 +149,14 @@ class Chooser(QDialog):
         # Now run the appropriate client sub-application
         if self.runIt == "Marker":
             # Run the marker client.
-            pg = str(self.ui.pgSB.value()).zfill(2)
-            v = str(self.ui.vSB.value())
+            if self.ui.pgDrop.isVisible():
+                pg = self.ui.pgDrop.currentText().lstrip("Q")
+                v = self.ui.vDrop.currentText()
+            else:
+                pg = self.ui.pgSB.value()
+                v = self.ui.vSB.value()
+            pg = str(pg).zfill(2)  # TODO: why?
+            v = str(v)
             self.setEnabled(False)
             self.hide()
             markerwin = marker.MarkerClient()
@@ -204,6 +213,49 @@ class Chooser(QDialog):
         fnt = self.parent.font()
         fnt.setPointSize(v)
         self.parent.setFont(fnt)
+
+    def getInfo(self):
+        server = self.ui.serverLE.text()
+        mport = self.ui.mportSB.value()
+        # save those settings
+        #self.saveDetails()   # TODO?
+
+        # Have Messenger login into to server
+        messenger.setServerDetails(server, mport)
+        try:
+            messenger.startMessenger()
+        except PlomBenignException as e:
+            ErrorMessage(
+                "Could not get authentication token.\n\n"
+                "{}".format(e)
+            ).exec_()
+            return
+
+        info = messenger.getInfoGeneral()
+        self.ui.markGBox.setTitle("Marking information for {}".format(info["testName"]))
+        self.ui.pgSB.setVisible(False)
+        self.ui.vSB.setVisible(False)
+        pg = self.ui.pgSB.value()
+        v = self.ui.vSB.value()
+        self.ui.vDrop.clear()
+        self.ui.vDrop.addItems([str(x+1) for x in range(0, info["numVersions"])])
+        if v:
+            v = int(v)
+            if v >= 1 and v <= info["numVersions"]:
+                self.ui.vDrop.setCurrentIndex(v)
+        self.ui.vDrop.setVisible(True)
+
+        self.ui.pgDrop.clear()
+        self.ui.pgDrop.addItems(["Q{}".format(x+1) for x in range(0, info["numGroups"])])
+        if pg:
+            pg = int(pg)
+            if pg >= 1 and pg <= info["numGroups"]:
+                self.ui.pgDrop.setCurrentIndex(int(pg) - 1)
+
+        self.ui.pgDrop.setVisible(True)
+        # TODO should we also let people type in?
+        self.ui.pgDrop.setEditable(False)
+        self.ui.vDrop.setEditable(False)
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):
