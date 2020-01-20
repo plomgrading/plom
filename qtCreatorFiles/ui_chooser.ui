@@ -22,7 +22,7 @@
      <property name="title">
       <string>User Information</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_3" columnstretch="1,4">
+     <layout class="QGridLayout" name="gridLayout_3" columnstretch="1,3">
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="text">
@@ -64,24 +64,7 @@
      <property name="title">
       <string>Server Information</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout" columnstretch="1,2,2">
-      <item row="1" column="1" colspan="2">
-       <widget class="QLineEdit" name="serverLE">
-        <property name="text">
-         <string>127.0.0.1</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QSpinBox" name="mportSB">
-        <property name="maximum">
-         <number>65535</number>
-        </property>
-        <property name="value">
-         <number>41984</number>
-        </property>
-       </widget>
-      </item>
+     <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,1,1">
       <item row="3" column="0">
        <widget class="QLabel" name="infoLabel">
         <property name="text">
@@ -89,6 +72,20 @@
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" colspan="3">
+       <widget class="QLineEdit" name="serverLE">
+        <property name="text">
+         <string>127.0.0.1</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1" colspan="3">
+       <widget class="QLabel" name="infoLabel2">
+        <property name="text">
+         <string/>
         </property>
        </widget>
       </item>
@@ -112,14 +109,23 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="1" colspan="2">
-       <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="6,1">
+      <item row="2" column="3">
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
         <item>
-         <widget class="QLabel" name="infoLabel2">
-          <property name="text">
-           <string/>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
-         </widget>
+          <property name="sizeType">
+           <enum>QSizePolicy::Expanding</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
         <item>
          <widget class="QPushButton" name="pgGet">
@@ -129,6 +135,29 @@
          </widget>
         </item>
        </layout>
+      </item>
+      <item row="2" column="1">
+       <widget class="QSpinBox" name="mportSB">
+        <property name="maximum">
+         <number>65535</number>
+        </property>
+        <property name="value">
+         <number>41984</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </widget>
@@ -141,48 +170,52 @@
      <property name="title">
       <string>Marking information</string>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <item>
-       <layout class="QGridLayout" name="gridLayout_2">
-        <item row="0" column="6">
+     <layout class="QGridLayout" name="gridLayout_2" columnstretch="1,1,1,1" columnminimumwidth="0,0,0,0">
+      <item row="0" column="2">
+       <widget class="QLabel" name="vlabel">
+        <property name="text">
+         <string>Version:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QSpinBox" name="pgSB">
+          <property name="value">
+           <number>1</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="pgDrop"/>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="pgLabel">
+        <property name="text">
+         <string>Page group:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
          <widget class="QSpinBox" name="vSB">
           <property name="value">
            <number>1</number>
           </property>
          </widget>
         </item>
-        <item row="0" column="4">
-         <widget class="QLabel" name="vlabel">
-          <property name="text">
-           <string>Version</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
-         <widget class="QComboBox" name="pgDrop"/>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLabel" name="pgLabel">
-          <property name="text">
-           <string>Page group</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="5">
+        <item>
          <widget class="QComboBox" name="vDrop"/>
-        </item>
-        <item row="0" column="3">
-         <widget class="QSpinBox" name="pgSB">
-          <property name="value">
-           <number>1</number>
-          </property>
-         </widget>
         </item>
        </layout>
       </item>
@@ -194,7 +227,20 @@
      <property name="title">
       <string>Font size</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_4">
+     <layout class="QGridLayout" name="gridLayout_4" columnstretch="5,5,4,6">
+      <item row="0" column="2">
+       <widget class="QPushButton" name="fontButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Set font</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="1">
        <widget class="QSpinBox" name="fontSB">
         <property name="sizePolicy">
@@ -223,25 +269,25 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>Font size</string>
+         <string>Font size:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
-      <item row="0" column="2">
-       <widget class="QPushButton" name="fontButton">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+      <item row="0" column="3">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
-        <property name="text">
-         <string>Set font</string>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
         </property>
-       </widget>
+       </spacer>
       </item>
      </layout>
     </widget>
@@ -291,10 +337,10 @@
   <tabstop>serverLE</tabstop>
   <tabstop>mportSB</tabstop>
   <tabstop>pgGet</tabstop>
-  <tabstop>pgDrop</tabstop>
   <tabstop>pgSB</tabstop>
-  <tabstop>vDrop</tabstop>
+  <tabstop>pgDrop</tabstop>
   <tabstop>vSB</tabstop>
+  <tabstop>vDrop</tabstop>
   <tabstop>fontSB</tabstop>
   <tabstop>fontButton</tabstop>
   <tabstop>markButton</tabstop>
