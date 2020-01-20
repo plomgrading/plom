@@ -9,7 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 
 print("To start the scan process")
 print("0. Copy your PDF scans of the tests into the directory scannedExams")
-print("1. Copy verifiedSpec.toml from the build directory to here.")
+print("1. Edit the server.toml file with the relevant server data.")
 print(
     '2. Run the "012_scansToImages.py" script - this processes your PDFs into individual pages'
 )

@@ -94,6 +94,16 @@ class SpecVerifier:
         except ValueError:
             return False
 
+    def isNonNegInt(self, s):
+        try:
+            n = int(s)
+            if n >= 0:
+                return True
+            else:
+                return False
+        except ValueError:
+            return False
+
     def isContiguousListPosInt(self, l, lastPage):
         # check it is a list
         if type(l) is not list:
@@ -182,7 +192,6 @@ class SpecVerifier:
             "numberOfVersions",
             "numberOfPages",
             "numberToProduce",
-            "numberToName",
             "numberOfQuestions",
         ]:
             if self.isPositiveInt(self.spec[x]):
@@ -192,6 +201,16 @@ class SpecVerifier:
             else:
                 print('Specification error - "{}" must be a positive integer.')
                 exit(1)
+        # Should be non-neg ints
+        for x in ["numberToName"]:
+            if self.isNonNegInt(self.spec[x]):
+                print(
+                    '\t\t"{}" = {} is positive integer - check'.format(x, self.spec[x])
+                )
+            else:
+                print('Specification error - "{}" must be a non-negative integer.')
+                exit(1)
+
         # have to produce more papers than named papers - preferably with some margin of spares
         if self.spec["numberToProduce"] < self.spec["numberToName"]:
             print(

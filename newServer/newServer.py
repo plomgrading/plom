@@ -183,6 +183,18 @@ class Server(object):
     )
 
 
+def getServerInfo():
+    """Read the server info from json."""
+    global serverInfo
+    if os.path.isfile("../resources/serverDetails.json"):
+        with open("../resources/serverDetails.json") as data_file:
+            serverInfo = json.load(data_file)
+            print("Server details loaded: ", serverInfo)
+    else:
+        print("Cannot find server details.")
+
+
+getServerInfo()
 examDB = PlomDB()
 spec = SpecParser().spec
 buildDirectories()
