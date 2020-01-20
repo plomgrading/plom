@@ -764,12 +764,15 @@ class PlomDB:
     def moveUnknownToPage(self, fname, nname, testNumber, pageNumber):
         uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
+            print("No uref")
             return [False]
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:
+            print("No tref")
             return [False]
         pref = Page.get_or_none(Page.test == tref, Page.pageNumber == pageNumber)
         if pref is None:
+            print("No pref")
             return [False]
         with plomdb.atomic():
             pref.fileName = nname
