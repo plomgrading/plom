@@ -494,28 +494,34 @@ class MarkerClient(QWidget):
     def __init__(self):
         super(MarkerClient, self).__init__()
 
-    def getToWork(self, mess, testname, pageGroup, version, lastTime):
+    def getToWork(self, mess, pageGroup, version, lastTime):
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
         # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
-        # Save the group and version.
-        self.testname = testname
         self.pageGroup = pageGroup
         self.version = version
         # create max-mark, but not set until we get info from server
         self.maxScore = -1
         # For viewing the whole paper we'll need these two lists.
         self.viewFiles = []
+
+        # Get the number of Tests, Pages, Questions and Versions
+        try:
+            self.testInfo = messenger.getInfoGeneral()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+            return
+
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
-        self.setWindowTitle('Plom Marker: "{}"'.format(self.testname))
+        self.setWindowTitle('Plom Marker: "{}"'.format(self.testInfo["testName"]))
         # Paste the username, pagegroup and version into GUI.
         self.ui.userBox.setTitle("User: {}".format(messenger.whoami()))
         self.ui.pgLabel.setText(
-            "{} of {}".format(str(self.pageGroup).zfill(2), self.testname)
+            "{} of {}".format(str(self.pageGroup).zfill(2), self.testInfo["testName"])
         )
         self.ui.vLabel.setText(str(self.version))
         # Exam model for the table of groupimages - connect to table
@@ -585,14 +591,6 @@ class MarkerClient(QWidget):
             self.ui.rightMouseRB.animateClick()
         elif lastTime["mouse"] == "left":
             self.ui.leftMouseRB.animateClick()
-
-        # Start using connection to server.
-        # Get the number of Tests, Pages, Questions and Versions
-        try:
-            self.testInfo = messenger.getInfoGeneral()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
 
         # Get the max-mark for the question from the server.
         try:
@@ -884,7 +882,7 @@ class MarkerClient(QWidget):
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
             tgv,
-            self.testname,
+            self.testInfo["testName"],
             paperdir,
             fname,
             self.maxScore,
@@ -1160,7 +1158,7 @@ class MarkerClient(QWidget):
         # Start caching.
         c = 0
         n = int(self.pageGroup)
-        testname = self.testname
+        testname = self.testInfo["testName"]
         for X in clist:
             if commentIsVisible(X, n, testname) and X["text"][:4].upper() == "TEX:":
                 txt = X["text"][4:].strip()
