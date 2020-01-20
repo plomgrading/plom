@@ -28,7 +28,7 @@ class ExamViewWindow(QWidget):
         # Render nicely
         self.view.setRenderHint(QPainter.HighQualityAntialiasing)
         # reset view button passes to the examview.
-        self.resetB = QPushButton("&reset view")
+        self.resetB = QPushButton("reset view")
         self.resetB.clicked.connect(lambda: self.view.resetView())
         self.resetB.setAutoDefault(False)  # return wont click the button by default.
         # Layout simply
