@@ -53,7 +53,7 @@ routes = web.RouteTableDef()
 @routes.get("/Version")
 async def version(request):
     return web.Response(
-        text="Running Plom server version {} with API {}".format(
+        text="Plom server version {} with API {}".format(
             __version__, serverAPI
         ),
         status=200,
