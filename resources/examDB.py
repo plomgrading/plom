@@ -722,10 +722,10 @@ class PlomDB:
         pref = Page.get_or_none(Page.test == tref, Page.pageNumber == pageNumber)
         if pref is None:
             return [False]
-        if pref.scanned:
+        if pref.scanned:  # we have a collision
             return [True, pref.version, pref.fileName]
-        else:
-            return [True, pref.version]
+        else:  # no collision since the page hasn't been scanned yet
+            return [False, pref.version]
 
     def checkUnknownImage(self, fname):
         uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)

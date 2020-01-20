@@ -161,7 +161,6 @@ def removeCollidingImage(self, fname):
 
 def unknownToTestPage(self, fname, test, page, rotation):
     # first rotate the page
-    print("Rotating {}".format(rotation))
     subprocess.run(
         ["mogrify", "-quiet", "-rotate", rotation, fname],
         stderr=subprocess.STDOUT,
@@ -169,14 +168,12 @@ def unknownToTestPage(self, fname, test, page, rotation):
         check=True,
     )
     if self.DB.checkPage(test, page)[0]:
-        print("Checking page = collision")
         # existing page in place - create a colliding page
         newFilename = "pages/collidingPages/" + os.path.split(fname)[1]
         if self.DB.moveUnknownToCollision(fname, newFilename, test, page)[0]:
             shutil.move(fname, newFilename)
             return [True, "collision"]
     else:
-        print("Checking page = nothing there")
         newFilename = "pages/originalPages/" + os.path.split(fname)[1]
         if self.DB.moveUnknownToPage(fname, newFilename, test, page)[0]:
             shutil.move(fname, newFilename)
