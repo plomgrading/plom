@@ -153,30 +153,6 @@ def getInfoShortName():
     return shortName
 
 
-def getInfoPagesVersions():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/info/numberOfGroupsAndVersions".format(server, message_port),
-            verify=False,
-        )
-        response.raise_for_status()
-        pv = response.json()
-    except requests.HTTPError as e:
-        if response.status_code == 404:
-            raise PlomSeriousException(
-                "Server could not find the spec - this should not happen!"
-            ) from None
-        else:
-            raise PlomSeriousException(
-                "Some other sort of error: {}".format(e)
-            ) from None
-    finally:
-        SRmutex.release()
-
-    return pv
-
-
 def getInfoGeneral():
     SRmutex.acquire()
     try:
