@@ -269,8 +269,13 @@
   <tabstop>passwordLE</tabstop>
   <tabstop>serverLE</tabstop>
   <tabstop>mportSB</tabstop>
+  <tabstop>pgGet</tabstop>
+  <tabstop>pgDrop</tabstop>
   <tabstop>pgSB</tabstop>
+  <tabstop>vDrop</tabstop>
   <tabstop>vSB</tabstop>
+  <tabstop>fontSB</tabstop>
+  <tabstop>fontButton</tabstop>
   <tabstop>markButton</tabstop>
   <tabstop>identifyButton</tabstop>
   <tabstop>totalButton</tabstop>
