@@ -840,7 +840,6 @@ def MrequestOriginalImage(testNumber, pageGroup):
             json={"user": _userName, "token": _token},
             verify=False,
         )
-        print("Asking for {} {}".format(testNumber, pageGroup))
         if response.status_code == 204:
             raise PlomNoMoreException(
                 "No paper with test/pageGroup {}/{}.".format(testNumber, pageGroup)
