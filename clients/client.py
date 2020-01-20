@@ -115,7 +115,15 @@ class Chooser(QDialog):
 
         # Have Messenger login into to server
         messenger.setServerDetails(server, mport)
-        messenger.startMessenger()
+        try:
+            messenger.startMessenger()
+        except PlomBenignException as e:
+            ErrorMessage(
+                "Could not get authentication token.\n\n"
+                "{}".format(e)
+            ).exec_()
+            return
+
         testname = messenger.getInfoShortName()
 
         try:
@@ -326,7 +334,6 @@ if __name__ == "__main__":
             window.ui.serverLE.setText(args.server)
         if args.port:
             window.ui.mportSB.setValue(int(args.port))
-            window.ui.wportSB.setValue(int(args.port) + 1)
 
         if args.identifier:
             window.ui.identifyButton.animateClick()
