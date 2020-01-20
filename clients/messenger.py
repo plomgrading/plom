@@ -1055,8 +1055,9 @@ def startMessenger():
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
     try:
         response = session.get(
-            "https://{}:{}/version".format(server, message_port), verify=False,
+            "https://{}:{}/Version".format(server, message_port), verify=False,
         )
+        response.raise_for_status()
     except requests.ConnectionError as err:
         raise PlomBenignException(
             "Cannot connect to server. Please check server details."
