@@ -124,14 +124,6 @@ async def InfoShortName(request):
         return web.Response(status=404)
 
 
-@routes.get("/info/numberOfGroupsAndVersions")
-async def InfoPagesVersions(request):
-    if spec is not None:
-        return web.json_response([spec.getNumberOfGroups(), spec.Versions], status=200)
-    else:  # this should not happen
-        return web.Response(status=404)
-
-
 @routes.get("/info/general")
 async def InfoGeneral(request):
     if spec is not None:
