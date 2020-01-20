@@ -120,7 +120,7 @@ class Chooser(QDialog):
         except PlomBenignException as e:
             ErrorMessage(
                 "Could not get authentication token.\n\n"
-                "Unexpected error: {}".format(e)
+                "{}".format(e)
             ).exec_()
             return
 
