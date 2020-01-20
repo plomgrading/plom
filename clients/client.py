@@ -88,6 +88,8 @@ class Chooser(QDialog):
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontButton.clicked.connect(self.setFont)
         self.ui.pgGet.clicked.connect(self.getInfo)
+        self.ui.serverLE.textEdited.connect(self.ungetInfo)
+        self.ui.mportSB.valueChanged.connect(self.ungetInfo)
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
 
@@ -229,6 +231,21 @@ class Chooser(QDialog):
             return int(v)
         except:
             return None
+
+    def ungetInfo(self):
+        self.ui.markGBox.setTitle("Marking information")
+        pg = self.getpg()
+        v = self.getv()
+        self.ui.pgSB.setVisible(True)
+        self.ui.vSB.setVisible(True)
+        if pg:
+            self.ui.pgSB.setValue(pg)
+        if v:
+            self.ui.vSB.setValue(v)
+        self.ui.vDrop.clear()
+        self.ui.vDrop.setVisible(False)
+        self.ui.pgDrop.clear()
+        self.ui.pgDrop.setVisible(False)
 
     def getInfo(self):
         server = self.ui.serverLE.text()
