@@ -127,7 +127,18 @@ async def InfoShortName(request):
 @routes.get("/info/numberOfGroupsAndVersions")
 async def InfoPagesVersions(request):
     if spec is not None:
-        return web.json_response([spec.Length, spec.Versions], status=200)
+        return web.json_response([spec.getNumberOfGroups(), spec.Versions], status=200)
+    else:  # this should not happen
+        return web.Response(status=404)
+
+
+@routes.get("/info/numberOfTPQV")
+async def InfoPagesVersions(request):
+    if spec is not None:
+        return web.json_response(
+            [spec.Tests, spec.Length, spec.getNumberOfGroups(), spec.Versions],
+            status=200,
+        )
     else:  # this should not happen
         return web.Response(status=404)
 
@@ -488,12 +499,13 @@ async def MrequestImages(request):
         return web.Response(status=401)  # not authorised at all
 
 
-@routes.get("/MK/originalImage/{tgv}")
+@routes.get("/MK/originalImage/{test}/{group}")
 async def MrequestOriginalImage(request):
     data = await request.json()
-    code = request.match_info["tgv"]
+    testNumber = request.match_info["test"]
+    pageGroup = request.match_info["group"]
     if peon.validate(data["user"], data["token"]):
-        rmsg = peon.MrequestOriginalImage(code)
+        rmsg = peon.MrequestOriginalImage(testNumber, pageGroup)
         # returns either [True, fname] or [False]
         if rmsg[0]:  # user allowed access - returns [true, fname]
             return web.FileResponse(rmsg[1], status=200)
@@ -1069,8 +1081,8 @@ class Server(object):
         else:
             return [False]
 
-    def MrequestOriginalImage(self, tgv):
-        fname = self.MDB.getOriginalGroupImage(tgv)
+    def MrequestOriginalImage(self, testNumber, pageGroup):
+        fname = self.MDB.getOriginalGroupImage(testNumber, pageGroup)
         if fname is not None:
             return [True, fname]
         else:

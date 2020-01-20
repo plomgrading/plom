@@ -369,13 +369,17 @@ class MarkDatabase:
             print("Request for non-existant tgv={}".format(code))
             return (None, None)
 
-    def getOriginalGroupImage(self, code):
+    def getOriginalGroupImage(self, testNumber, pageGroup):
         try:
             with markdb.atomic():
-                x = GroupImage.get(tgv=code)
+                x = GroupImage.get(number=testNumber, pageGroup=pageGroup)
                 return x.originalFile
         except GroupImage.DoesNotExist:
-            print("Request for non-existant tgv={}".format(code))
+            print(
+                "Request for non-existant test/group={}/{}".format(
+                    testNumber, pageGroup
+                )
+            )
             return None
 
     def getTestAll(self, number):
