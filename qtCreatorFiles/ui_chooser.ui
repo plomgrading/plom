@@ -71,7 +71,7 @@
         <item>
          <widget class="QPushButton" name="getServerInfoButton">
           <property name="text">
-           <string>Validate server</string>
+           <string>&amp;Validate server</string>
           </property>
          </widget>
         </item>

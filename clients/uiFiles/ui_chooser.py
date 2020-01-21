@@ -202,7 +202,7 @@ class Ui_Chooser(object):
         self.serverGBox.setTitle(_translate("Chooser", "Server Information"))
         self.infoLabelStatic.setText(_translate("Chooser", "Info:"))
         self.serverLabel.setText(_translate("Chooser", "Server name:"))
-        self.getServerInfoButton.setText(_translate("Chooser", "Validate server"))
+        self.getServerInfoButton.setText(_translate("Chooser", "&Validate server"))
         self.mportLabel.setText(_translate("Chooser", "Port:"))
         self.serverLE.setText(_translate("Chooser", "127.0.0.1"))
         self.markGBox.setTitle(_translate("Chooser", "Marking information"))
