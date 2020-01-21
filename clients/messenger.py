@@ -1031,7 +1031,7 @@ def startMessenger():
     authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
     try:
-        response = session.get(
+        response = authSession.get(
             "https://{}:{}/Version".format(server, message_port), verify=False,
         )
         response.raise_for_status()
