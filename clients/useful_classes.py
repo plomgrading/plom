@@ -354,7 +354,7 @@ class CommentWidget(QWidget):
             clist.append(self.CL.cmodel.index(r, 1).data())
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
-        questnum = int(self.parent.parent.pageGroup)  # YUCK!
+        questnum = int(self.parent.tgv[5:7])
         testname = self.parent.testname
         acb = AddCommentBox(self, self.maxMark, alist, questnum, testname, com)
         if acb.exec_() == QDialog.Accepted:
