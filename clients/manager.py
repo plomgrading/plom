@@ -514,8 +514,8 @@ class Manager(QWidget):
         self.refreshIDTab()
         self.ui.idPB.setFormat("%v / %m")
         self.ui.totPB.setFormat("%v / %m")
-        self.ui.predictionTW.setColumnCount(2)
-        self.ui.predictionTW.setHorizontalHeaderLabels(["Test", "Student ID"])
+        self.ui.predictionTW.setColumnCount(3)
+        self.ui.predictionTW.setHorizontalHeaderLabels(["Test", "Student ID", "Name"])
         self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.predictionTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.predictionTW.setAlternatingRowColors(True)
@@ -579,7 +579,7 @@ class Manager(QWidget):
             pdict[int(row["test"])] = str(row["id"])
         iDict = managerMessenger.getIdentified()
         for t in iDict.keys():
-            pdict[int(t)] = str(iDict[t])
+            pdict[int(t)] = str(iDict[t][0])
 
         self.ui.predictionTW.clearContents()
         self.ui.predictionTW.setRowCount(0)
@@ -588,10 +588,15 @@ class Manager(QWidget):
             self.ui.predictionTW.insertRow(r)
             self.ui.predictionTW.setItem(r, 0, QTableWidgetItem("{}".format(t)))
             it = QTableWidgetItem("{}".format(pdict[t]))
+            it2 = QTableWidgetItem("")
             if str(t) in iDict:
                 it.setBackground(QBrush(Qt.cyan))
                 it.setToolTip("Has been identified")
+                it2.setText(iDict[str(t)][1])
+                it2.setBackground(QBrush(Qt.cyan))
+                it2.setToolTip("Has been identified")
             self.ui.predictionTW.setItem(r, 1, it)
+            self.ui.predictionTW.setItem(r, 2, it2)
             r += 1
 
     def deletePredictions(self):

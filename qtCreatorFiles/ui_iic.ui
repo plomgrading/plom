@@ -57,6 +57,9 @@
             <property name="text">
              <string>manager</string>
             </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
             <property name="placeholderText">
              <string/>
             </property>
@@ -557,8 +560,11 @@
                <property name="selectionBehavior">
                 <enum>QAbstractItemView::SelectColumns</enum>
                </property>
+               <property name="sortingEnabled">
+                <bool>true</bool>
+               </property>
                <property name="columnCount">
-                <number>2</number>
+                <number>3</number>
                </property>
                <attribute name="horizontalHeaderStretchLastSection">
                 <bool>true</bool>
@@ -566,6 +572,7 @@
                <attribute name="verticalHeaderVisible">
                 <bool>false</bool>
                </attribute>
+               <column/>
                <column/>
                <column/>
               </widget>
@@ -620,8 +627,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>898</width>
-            <height>505</height>
+            <width>64</width>
+            <height>16</height>
            </rect>
           </property>
          </widget>
@@ -805,7 +812,7 @@
      <item>
       <widget class="QPushButton" name="closeButton">
        <property name="text">
-        <string>Close</string>
+        <string>&amp;Quit</string>
        </property>
       </widget>
      </item>
@@ -813,6 +820,43 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>passwordLE</tabstop>
+  <tabstop>serverLE</tabstop>
+  <tabstop>mportSB</tabstop>
+  <tabstop>loginButton</tabstop>
+  <tabstop>fontSB</tabstop>
+  <tabstop>fontButton</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>userLE</tabstop>
+  <tabstop>scanTW</tabstop>
+  <tabstop>refreshSButton</tabstop>
+  <tabstop>removePageB</tabstop>
+  <tabstop>incompTW</tabstop>
+  <tabstop>refreshIButton</tabstop>
+  <tabstop>subsPageB</tabstop>
+  <tabstop>overallTW</tabstop>
+  <tabstop>refreshOButton</tabstop>
+  <tabstop>papersLE</tabstop>
+  <tabstop>refreshIDButon</tabstop>
+  <tabstop>selectRectButton</tabstop>
+  <tabstop>predictButton</tabstop>
+  <tabstop>delPredButton</tabstop>
+  <tabstop>predictionTW</tabstop>
+  <tabstop>predListRefreshB</tabstop>
+  <tabstop>scrollArea</tabstop>
+  <tabstop>refreshPButton</tabstop>
+  <tabstop>unknownTV</tabstop>
+  <tabstop>refreshUButton</tabstop>
+  <tabstop>actionUButton</tabstop>
+  <tabstop>collideTV</tabstop>
+  <tabstop>refreshCButton</tabstop>
+  <tabstop>actionCButton</tabstop>
+  <tabstop>discardTV</tabstop>
+  <tabstop>refreshDButton</tabstop>
+  <tabstop>actionDButton</tabstop>
+  <tabstop>closeButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -900,7 +900,7 @@ class PlomDB:
     def RgetIdentified(self):
         rval = {}
         for iref in IDData.select().where(IDData.identified == True):
-            rval[iref.test.testNumber] = iref.studentID
+            rval[iref.test.testNumber] = (iref.studentID, iref.studentName)
         return rval
 
     def RgetProgress(self, q, v):
