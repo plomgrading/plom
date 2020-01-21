@@ -1028,7 +1028,7 @@ def startMessenger():
     # nn times already, are you sure you want to keep retrying" message.
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
     try:
-        response = authSession.get(
+        response = session.get(
             "https://{}:{}/Version".format(server, message_port), verify=False,
         )
         response.raise_for_status()
