@@ -1068,6 +1068,41 @@ class PlomDB:
             rval.append(g.annotatedFile)
         return rval
 
+    def RgetMarkReview(self, filterQ, filterV, filterU):
+        # at most one of the filters is "*"
+        if filterQ == "*":
+            query = QuestionData.select().where(
+                QuestionData.version == filterV, QuestionData.username == filterU
+            )
+        elif filterV == "*":
+            query = QuestionData.select().where(
+                QuestionData.questionNumber == filterQ, QuestionData.username == filterU
+            )
+        elif filterU == "*":
+            query = QuestionData.select().where(
+                QuestionData.questionNumber == filterQ, QuestionData.version == filterV
+            )
+        else:
+            query = QuestionData.select().where(
+                QuestionData.questionNumber == filterQ,
+                QuestionData.version == filterV,
+                QuestionData.username == filterU,
+            )
+        rval = []
+        for x in query:
+            rval.append(
+                [
+                    x.test.testNumber,
+                    x.questionNumber,
+                    x.version,
+                    x.mark,
+                    x.username,
+                    x.markingTime,
+                    x.time,
+                ]
+            )
+        return rval
+
     # ------------------
     # For user login - we reset all their stuff that is out
 

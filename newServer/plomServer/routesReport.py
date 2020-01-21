@@ -153,6 +153,30 @@ class ReportHandler:
         else:
             return web.Response(status=401)
 
+    async def RgetUserList(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rmsg = sorted([x for x in self.server.userList.keys()])
+            return web.json_response(rmsg, status=200)
+        else:
+            return web.Response(status=401)
+
+    async def RgetMarkReview(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rmsg = self.server.RgetMarkReview(
+                data["filterQ"], data["filterV"], data["filterU"]
+            )
+            return web.json_response(rmsg, status=200)
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_get("/REP/scanned", self.RgetScannedTests)
         router.add_get("/REP/incomplete", self.RgetIncompleteTests)
@@ -166,3 +190,5 @@ class ReportHandler:
         router.add_get("/REP/originalFiles/{test}", self.RgetOriginalFiles)
         router.add_get("/REP/coverPageInfo/{test}", self.RgetCoverPageInfo)
         router.add_get("/REP/annotatedFiles/{test}", self.RgetAnnotatedFiles)
+        router.add_get("/REP/userList", self.RgetUserList)
+        router.add_get("/REP/markReview", self.RgetMarkReview)

@@ -327,6 +327,7 @@ class Manager(QWidget):
         self.ui.unknownTab.setEnabled(True)
         self.ui.collideTab.setEnabled(True)
         self.ui.discardTab.setEnabled(True)
+        self.ui.reviewTab.setEnabled(True)
         self.ui.userGBox.setEnabled(False)
         self.ui.serverGBox.setEnabled(False)
         self.ui.loginButton.setEnabled(False)
@@ -339,6 +340,7 @@ class Manager(QWidget):
         self.initUnknownTab()
         self.initCollideTab()
         self.initDiscardTab()
+        self.initRevTab()
 
     # -------------------
     def getTPQV(self):
@@ -931,6 +933,43 @@ class Manager(QWidget):
                     "No action for file {}.".format(self.discardModel.item(r, 0).text())
                 )
         self.refreshDList()
+
+    def initRevTab(self):
+        self.ui.reviewTW.setColumnCount(7)
+        self.ui.reviewTW.setHorizontalHeaderLabels(
+            ["Test", "Question", "Version", "Mark", "Username", "Marking Time", "When"]
+        )
+        self.ui.questionCB.addItem("*")
+        for q in range(self.numberOfQuestions):
+            self.ui.questionCB.addItem(str(q + 1))
+        self.ui.versionCB.addItem("*")
+        for v in range(self.numberOfVersions):
+            self.ui.versionCB.addItem(str(v + 1))
+        ulist = managerMessenger.getUserList()
+        self.ui.userCB.addItem("*")
+        for u in ulist:
+            self.ui.userCB.addItem(u)
+        self.ui.filterB.clicked.connect(self.filterReview)
+
+    def filterReview(self):
+        nall = 0
+        if self.ui.questionCB.currentText() == "*":
+            nall += 1
+        if self.ui.versionCB.currentText() == "*":
+            nall += 1
+        if self.ui.userCB.currentText() == "*":
+            nall += 1
+        if nall > 1:
+            ErrorMessage(
+                'Please set at two or more of "Question", "Version", "User" to specific values.'
+            ).exec_()
+            return
+
+        WORKING ON THIS - HOOK UP FUNCTIONS.
+
+        print("Question: ", self.ui.questionCB.currentText())
+        print("Version: ", self.ui.versionCB.currentText())
+        print("User: ", self.ui.userCB.currentText())
 
 
 # Pop up a dialog for unhandled exceptions and then exit

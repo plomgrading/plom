@@ -180,6 +180,7 @@ class Server(object):
         RgetCoverPageInfo,
         RgetOriginalFiles,
         RgetAnnotatedFiles,
+        RgetMarkReview,
     )
 
 
