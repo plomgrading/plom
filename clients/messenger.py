@@ -75,7 +75,7 @@ def requestAndSaveToken(user, pw):
 
     SRmutex.acquire()
     try:
-        response = authSession.put(
+        response = session.put(
             "https://{}:{}/users/{}".format(server, message_port, user),
             json={"user": user, "pw": pw, "api": Plom_API_Version},
             verify=False,
@@ -1016,24 +1016,19 @@ def MrequestWholePaper(code):
 # ------------------------
 
 session = None
-authSession = None
 
 
 def startMessenger():
     """Start the messenger session"""
-    global authSession
     global session
-    if session and authSession:
+    if session:
         print("Messenger: already have an requests-session")
     else:
         print("Messenger: starting a new requests-session")
-        authSession = requests.Session()
         session = requests.Session()
-        # set max_retries to large number because UBC-wifi is pretty crappy.
-        # TODO - set smaller number and have some sort of "hey you've retried
+        # TODO - UBC wifi is crappy: have some sort of "hey you've retried
         # nn times already, are you sure you want to keep retrying" message.
-        authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
-        session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
+        session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
     try:
         response = session.get(
             "https://{}:{}/Version".format(server, message_port), verify=False,
@@ -1049,12 +1044,8 @@ def startMessenger():
 
 def stopMessenger():
     """Stop the messenger"""
-    global authSession
     global session
     if session:
         print("Messenger: stopping requests-session")
         session.close()
         session = None
-    if authSession:
-        authSession.close()
-        authSession = None
