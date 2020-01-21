@@ -442,6 +442,9 @@ class PlomDB:
         if pref is None:
             return False
         with plomdb.atomic():
+            DiscardedPage.create(
+                fileName=nname, originalName=pref.originalName, md5sum=pref.md5sum
+            )
             pref.scanned = False
             pref.originalName = None
             pref.fileName = None
@@ -624,22 +627,6 @@ class PlomDB:
             "success",
             "Colliding page saved, attached to {}".format(pref.pid),
         ]
-
-    # def checkTestPageUnscanned(self, testNumber, pageNumber, version):
-    #     # returns True only if we can find test+page and page is unscanned
-    #
-    #     tref = Test.get_or_none(Test.testNumber == testNumber)
-    #     if tref is None:
-    #         return [False, "Test not found"]
-    #     pref = Page.get_or_none(
-    #         Page.test == tref, Page.pageNumber == pageNumber, Page.version == version
-    #     )
-    #     if pref is None:
-    #         return [False, "Page not found"]
-    #     if pref.scanned == False:
-    #         return [True, "Missing page replaced"]
-    #     else:
-    #         return [False, "Already scanned"]
 
     def getUnknownPageNames(self):
         rval = []

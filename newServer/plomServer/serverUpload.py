@@ -185,7 +185,6 @@ def unknownToTestPage(self, fname, test, page, rotation):
 def unknownToExtraPage(self, fname, test, question, rotation):
     newFilename = "pages/originalPages/" + os.path.split(fname)[1]
     rval = self.DB.moveExtraToPage(fname, newFilename, test, question)
-    print("RVAL = {}".format(rval))
     # returns [True, [file1,file2,..]] or [False]
     # the files are annotations to be deleted
     if rval[0]:

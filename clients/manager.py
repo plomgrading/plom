@@ -251,6 +251,7 @@ class Manager(QWidget):
         )
         self.ui = Ui_IIC()
         self.ui.setupUi(self)
+        self.ui.passwordLE.setFocus(True)
         self.connectButtons()
 
     def connectButtons(self):
@@ -823,7 +824,7 @@ class Manager(QWidget):
         test = int(self.collideModel.item(r, 3).text())
         page = int(self.collideModel.item(r, 4).text())
         version = int(self.collideModel.item(r, 5).text())
-        print("Asking for page {} {} {}".format(test, page, version))
+
         vop = managerMessenger.getPageImage(test, page, version)
         vcp = managerMessenger.getCollidingImage(fname)
         if vop is None or vcp is None:
