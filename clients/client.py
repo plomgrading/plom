@@ -114,6 +114,8 @@ class Chooser(QDialog):
         if len(pwd) < 4:
             return
         server = self.ui.serverLE.text()
+        if not server:
+            return
         mport = self.ui.mportSB.value()
         # save those settings
         self.saveDetails()
@@ -252,6 +254,8 @@ class Chooser(QDialog):
 
     def getInfo(self):
         server = self.ui.serverLE.text()
+        if not server:
+            return
         mport = self.ui.mportSB.value()
         # save those settings
         #self.saveDetails()   # TODO?
