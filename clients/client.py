@@ -126,7 +126,7 @@ class Chooser(QDialog):
             messenger.startMessenger()
         except PlomBenignException as e:
             ErrorMessage(
-                "Could not get authentication token.\n\n"
+                "Could not connect to server.\n\n"
                 "{}".format(e)
             ).exec_()
             return
@@ -270,7 +270,7 @@ class Chooser(QDialog):
             r = messenger.startMessenger()
         except PlomBenignException as e:
             ErrorMessage(
-                "Could not get authentication token.\n\n"
+                "Could not connect to server.\n\n"
                 "{}".format(e)
             ).exec_()
             return
