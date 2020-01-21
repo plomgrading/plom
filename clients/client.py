@@ -124,8 +124,6 @@ class Chooser(QDialog):
             ).exec_()
             return
 
-        testname = messenger.getInfoShortName()
-
         try:
             messenger.requestAndSaveToken(user, pwd)
         except PlomAPIException as e:
@@ -155,7 +153,7 @@ class Chooser(QDialog):
             markerwin = marker.MarkerClient()
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
-            markerwin.getToWork(messenger, testname, pg, v, lastTime)
+            markerwin.getToWork(messenger, pg, v, lastTime)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
