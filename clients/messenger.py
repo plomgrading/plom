@@ -1023,10 +1023,9 @@ def startMessenger():
     print("Starting a requests-session")
     global session
     session = requests.Session()
-    # set max_retries to large number because UBC-wifi is pretty crappy.
-    # TODO - set smaller number and have some sort of "hey you've retried
+    # TODO - UBC wifi is crappy: have some sort of "hey you've retried
     # nn times already, are you sure you want to keep retrying" message.
-    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
+    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
     try:
         response = session.get(
             "https://{}:{}/Version".format(server, message_port), verify=False,
