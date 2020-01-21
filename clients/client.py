@@ -87,7 +87,7 @@ class Chooser(QDialog):
         self.ui.totalButton.clicked.connect(self.runTotaler)
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontButton.clicked.connect(self.setFont)
-        self.ui.pgGet.clicked.connect(self.getInfo)
+        self.ui.getServerInfoButton.clicked.connect(self.getInfo)
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
         self.ui.vDrop.setVisible(False)

@@ -69,7 +69,7 @@
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="pgGet">
+         <widget class="QPushButton" name="getServerInfoButton">
           <property name="text">
            <string>Validate server</string>
           </property>
@@ -325,7 +325,7 @@
  <tabstops>
   <tabstop>serverLE</tabstop>
   <tabstop>mportSB</tabstop>
-  <tabstop>pgGet</tabstop>
+  <tabstop>getServerInfoButton</tabstop>
   <tabstop>pgSB</tabstop>
   <tabstop>pgDrop</tabstop>
   <tabstop>vSB</tabstop>
