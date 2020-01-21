@@ -1016,20 +1016,24 @@ def MrequestWholePaper(code):
 # ------------------------
 
 session = None
+authSession = None
 
 
 def startMessenger():
     """Start the messenger session"""
-    print("Starting a requests-session")
     global authSession
     global session
-    authSession = requests.Session()
-    session = requests.Session()
-    # set max_retries to large number because UBC-wifi is pretty crappy.
-    # TODO - set smaller number and have some sort of "hey you've retried
-    # nn times already, are you sure you want to keep retrying" message.
-    authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
-    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
+    if session and authSession:
+        print("Messenger: already have an requests-session")
+    else:
+        print("Messenger: starting a new requests-session")
+        authSession = requests.Session()
+        session = requests.Session()
+        # set max_retries to large number because UBC-wifi is pretty crappy.
+        # TODO - set smaller number and have some sort of "hey you've retried
+        # nn times already, are you sure you want to keep retrying" message.
+        authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
+        session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
     try:
         response = session.get(
             "https://{}:{}/Version".format(server, message_port), verify=False,
@@ -1045,6 +1049,12 @@ def startMessenger():
 
 def stopMessenger():
     """Stop the messenger"""
-    print("Stopped messenger session")
-    session.close()
-    authSession.close()
+    global authSession
+    global session
+    if session:
+        print("Messenger: stopping requests-session")
+        session.close()
+        session = None
+    if authSession:
+        authSession.close()
+        authSession = None

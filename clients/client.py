@@ -202,6 +202,7 @@ class Chooser(QDialog):
 
     def closeWindow(self):
         self.saveDetails()
+        messenger.stopMessenger()
         self.close()
 
     def setFont(self):
@@ -247,6 +248,7 @@ class Chooser(QDialog):
         self.ui.pgDrop.clear()
         self.ui.pgDrop.setVisible(False)
         self.ui.infoLabel.setText("")
+        messenger.stopMessenger()
 
     def getInfo(self):
         server = self.ui.serverLE.text()
