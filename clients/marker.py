@@ -5,7 +5,7 @@ The Plom Marker client
 """
 
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
@@ -50,10 +50,11 @@ from examviewwindow import ExamViewWindow
 import messenger
 from annotator import Annotator
 from plom_exceptions import *
-from useful_classes import AddTagBox, ErrorMessage, SimpleMessage, commentLoadAll
+from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
+from useful_classes import commentLoadAll, commentIsVisible
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
-from test_view import GroupView
+from test_view import GroupView, TestGroupSelect
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -493,27 +494,35 @@ class MarkerClient(QWidget):
     def __init__(self):
         super(MarkerClient, self).__init__()
 
-    def getToWork(self, mess, testname, pageGroup, version, lastTime):
+    def getToWork(self, mess, pageGroup, version, lastTime):
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
         # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
-        # Save the group and version.
-        self.testname = testname
         self.pageGroup = pageGroup
         self.version = version
         # create max-mark, but not set until we get info from server
         self.maxScore = -1
         # For viewing the whole paper we'll need these two lists.
         self.viewFiles = []
+
+        # Get the number of Tests, Pages, Questions and Versions
+        try:
+            self.testInfo = messenger.getInfoGeneral()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+            return
+
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
-        self.setWindowTitle('Plom Marker: "{}"'.format(self.testname))
+        self.setWindowTitle('Plom Marker: "{}"'.format(self.testInfo["testName"]))
         # Paste the username, pagegroup and version into GUI.
         self.ui.userBox.setTitle("User: {}".format(messenger.whoami()))
-        self.ui.pgLabel.setText("{} of {}".format(str(self.pageGroup).zfill(2), self.testname))
+        self.ui.pgLabel.setText(
+            "{} of {}".format(str(self.pageGroup).zfill(2), self.testInfo["testName"])
+        )
         self.ui.vLabel.setText(str(self.version))
         # Exam model for the table of groupimages - connect to table
         self.exM = ExamModel()
@@ -540,6 +549,9 @@ class MarkerClient(QWidget):
             if lastTime["POWERUSER"]:
                 self.annotatorSettings["markWarnings"] = False
                 self.annotatorSettings["commentWarnings"] = False
+                self.viewAll = True
+        else:
+            self.viewAll = False
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -580,7 +592,6 @@ class MarkerClient(QWidget):
         elif lastTime["mouse"] == "left":
             self.ui.leftMouseRB.animateClick()
 
-        # Start using connection to serverself.
         # Get the max-mark for the question from the server.
         try:
             self.getMaxMark()
@@ -871,7 +882,7 @@ class MarkerClient(QWidget):
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
             tgv,
-            self.testname,
+            self.testInfo["testName"],
             paperdir,
             fname,
             self.maxScore,
@@ -1146,8 +1157,10 @@ class MarkerClient(QWidget):
         pd.setAutoClose(True)
         # Start caching.
         c = 0
+        n = int(self.pageGroup)
+        testname = self.testInfo["testName"]
         for X in clist:
-            if X["text"][:4].upper() == "TEX:":
+            if commentIsVisible(X, n, testname) and X["text"][:4].upper() == "TEX:":
                 txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version
@@ -1219,29 +1232,35 @@ class MarkerClient(QWidget):
         self.prxM.filterTags()
 
     def viewSpecificImage(self):
-        testNumber, ok = QInputDialog.getInt(
-            self,
-            "View another test",
-            "From which test do you want to view (pageGroup, version)=({}, {})?".format(
-                int(self.pageGroup), int(self.version)
-            ),
-            1,
-            1,
-            9999,
-            1,
-        )
-        if ok:
-            tgv = "t{}g{}v{}".format(
-                str(testNumber).zfill(4), self.pageGroup, self.version
-            )
-            try:
-                image = messenger.MrequestOriginalImage(tgv)
-            except PlomNoMoreException as err:
-                msg = ErrorMessage("No image corresponding to code {}".format(tgv))
-                msg.exec_()
+        if self.viewAll:
+            tgs = TestGroupSelect(self.testInfo, self.pageGroup)
+            if tgs.exec_() == QDialog.Accepted:
+                tn = tgs.tsb.value()
+                gn = tgs.gsb.value()
+            else:
                 return
-            ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory)
-            with open(ifile.name, "wb") as fh:
-                fh.write(image)
-            tvw = GroupView(ifile.name)
-            tvw.exec_()
+        else:
+            tgs = TestGroupSelect(self.testInfo)
+            if tgs.exec_() == QDialog.Accepted:
+                tn = tgs.tsb.value()
+                gn = self.pageGroup
+            else:
+                return
+        try:
+            image = messenger.MrequestOriginalImage(tn, gn)
+        except PlomNoMoreException as err:
+            msg = ErrorMessage(
+                "No image corresponding to test {} pageGroup {}".format(
+                    tn, self.pageGroup
+                )
+            )
+            msg.exec_()
+            return
+        ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory)
+        with open(ifile.name, "wb") as fh:
+            fh.write(image)
+        tvw = GroupView(ifile.name)
+        tvw.setWindowTitle(
+            "Original ungraded image for question {} of test {}".format(gn, tn)
+        )
+        tvw.exec_()

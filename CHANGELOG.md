@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * saved comments are filtered per question and per test.
+* Marker has a "view" button to look at any test number.
 
 ### Changed
 * The manual-identifier now has a "discard" option for unneeded pageimages, such as blank extra pages.

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
@@ -115,8 +115,14 @@ class Chooser(QDialog):
 
         # Have Messenger login into to server
         messenger.setServerDetails(server, mport)
-        messenger.startMessenger()
-        testname = messenger.getInfoShortName()
+        try:
+            messenger.startMessenger()
+        except PlomBenignException as e:
+            ErrorMessage(
+                "Could not get authentication token.\n\n"
+                "{}".format(e)
+            ).exec_()
+            return
 
         try:
             messenger.requestAndSaveToken(user, pwd)
@@ -147,7 +153,7 @@ class Chooser(QDialog):
             markerwin = marker.MarkerClient()
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
-            markerwin.getToWork(messenger, testname, pg, v, lastTime)
+            markerwin.getToWork(messenger, pg, v, lastTime)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
@@ -326,7 +332,6 @@ if __name__ == "__main__":
             window.ui.serverLE.setText(args.server)
         if args.port:
             window.ui.mportSB.setValue(int(args.port))
-            window.ui.wportSB.setValue(int(args.port) + 1)
 
         if args.identifier:
             window.ui.identifyButton.animateClick()

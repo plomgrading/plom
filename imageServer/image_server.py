@@ -1,5 +1,5 @@
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
@@ -124,10 +124,13 @@ async def InfoShortName(request):
         return web.Response(status=404)
 
 
-@routes.get("/info/numberOfGroupsAndVersions")
-async def InfoPagesVersions(request):
+@routes.get("/info/general")
+async def InfoGeneral(request):
     if spec is not None:
-        return web.json_response([spec.Length, spec.Versions], status=200)
+        return web.json_response(
+            [spec.Name, spec.Tests, spec.Length, spec.getNumberOfGroups(), spec.Versions],
+            status=200,
+        )
     else:  # this should not happen
         return web.Response(status=404)
 
@@ -488,12 +491,13 @@ async def MrequestImages(request):
         return web.Response(status=401)  # not authorised at all
 
 
-@routes.get("/MK/originalImage/{tgv}")
+@routes.get("/MK/originalImage/{test}/{group}")
 async def MrequestOriginalImage(request):
     data = await request.json()
-    code = request.match_info["tgv"]
+    testNumber = request.match_info["test"]
+    pageGroup = request.match_info["group"]
     if peon.validate(data["user"], data["token"]):
-        rmsg = peon.MrequestOriginalImage(code)
+        rmsg = peon.MrequestOriginalImage(testNumber, pageGroup)
         # returns either [True, fname] or [False]
         if rmsg[0]:  # user allowed access - returns [true, fname]
             return web.FileResponse(rmsg[1], status=200)
@@ -1069,8 +1073,8 @@ class Server(object):
         else:
             return [False]
 
-    def MrequestOriginalImage(self, tgv):
-        fname = self.MDB.getOriginalGroupImage(tgv)
+    def MrequestOriginalImage(self, testNumber, pageGroup):
+        fname = self.MDB.getOriginalGroupImage(testNumber, pageGroup)
         if fname is not None:
             return [True, fname]
         else:
