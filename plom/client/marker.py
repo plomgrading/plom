@@ -519,11 +519,10 @@ class MarkerClient(QWidget):
         self.ui.setupUi(self)
         self.setWindowTitle('Plom Marker: "{}"'.format(self.testInfo["testName"]))
         # Paste the username, question and version into GUI.
-        self.ui.userBox.setTitle("User: {}".format(messenger.whoami()))
-        self.ui.pgLabel.setText(
-            "Q{} of {}".format(str(self.question), self.testInfo["testName"])
+        self.ui.userLabel.setText(messenger.whoami())
+        self.ui.infoBox.setTitle(
+            "Marking Q{} of {} (version {})".format(self.question, self.testInfo["testName"], self.version)
         )
-        self.ui.vLabel.setText(str(self.version))
         # Exam model for the table of groupimages - connect to table
         self.exM = ExamModel()
         # set proxy for filtering and sorting
@@ -607,7 +606,7 @@ class MarkerClient(QWidget):
             self.throwSeriousError(err, rethrow=False)
             return
         # Paste the max-mark into the gui.
-        self.ui.scoreLabel.setText(str(self.maxScore))
+        self.ui.maxscoreLabel.setText(str(self.maxScore))
 
         # Get list of papers already marked and add to table.
         try:

@@ -30,50 +30,36 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QGroupBox" name="userBox">
+       <widget class="QGroupBox" name="infoBox">
         <property name="title">
-         <string>User</string>
+         <string>Question Info</string>
         </property>
         <layout class="QFormLayout" name="formLayout_2">
          <item row="0" column="0">
           <widget class="QLabel" name="label_2">
            <property name="text">
-            <string>Pagegroup </string>
+            <string>Username </string>
            </property>
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QLabel" name="pgLabel">
+          <widget class="QLabel" name="userLabel">
            <property name="text">
-            <string>NUMBER</string>
+            <string notr="true">&lt;username&gt;</string>
            </property>
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label_3">
-           <property name="text">
-            <string>Version</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLabel" name="vLabel">
-           <property name="text">
-            <string>NUMBER</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
           <widget class="QLabel" name="label_5">
            <property name="text">
             <string>Max score</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="1">
-          <widget class="QLabel" name="scoreLabel">
+         <item row="1" column="1">
+          <widget class="QLabel" name="maxscoreLabel">
            <property name="text">
-            <string>NUMBER</string>
+            <string notr="true">&lt;number&gt;</string>
            </property>
           </widget>
          </item>
@@ -442,7 +428,7 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="markStyleGroup"/>
   <buttongroup name="mouseHandGroup"/>
+  <buttongroup name="markStyleGroup"/>
  </buttongroups>
 </ui>

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './qtCreatorFiles/ui_marker.ui'
+# Form implementation generated from reading ui file 'qtCreatorFiles/ui_marker.ui'
 #
-# Created by: PyQt5 UI code generator 5.14.2
+# Created by: PyQt5 UI code generator 5.13.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -27,29 +27,25 @@ class Ui_MarkerWindow(object):
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.widget)
         self.verticalLayout_2.setContentsMargins(-1, -1, -1, 0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.userBox = QtWidgets.QGroupBox(self.widget)
-        self.userBox.setObjectName("userBox")
-        self.formLayout_2 = QtWidgets.QFormLayout(self.userBox)
+        self.infoBox = QtWidgets.QGroupBox(self.widget)
+        self.infoBox.setObjectName("infoBox")
+        self.formLayout_2 = QtWidgets.QFormLayout(self.infoBox)
         self.formLayout_2.setObjectName("formLayout_2")
-        self.label_2 = QtWidgets.QLabel(self.userBox)
+        self.label_2 = QtWidgets.QLabel(self.infoBox)
         self.label_2.setObjectName("label_2")
         self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label_2)
-        self.pgLabel = QtWidgets.QLabel(self.userBox)
-        self.pgLabel.setObjectName("pgLabel")
-        self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.pgLabel)
-        self.label_3 = QtWidgets.QLabel(self.userBox)
-        self.label_3.setObjectName("label_3")
-        self.formLayout_2.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.label_3)
-        self.vLabel = QtWidgets.QLabel(self.userBox)
-        self.vLabel.setObjectName("vLabel")
-        self.formLayout_2.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.vLabel)
-        self.label_5 = QtWidgets.QLabel(self.userBox)
+        self.userLabel = QtWidgets.QLabel(self.infoBox)
+        self.userLabel.setText("<username>")
+        self.userLabel.setObjectName("userLabel")
+        self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.userLabel)
+        self.label_5 = QtWidgets.QLabel(self.infoBox)
         self.label_5.setObjectName("label_5")
-        self.formLayout_2.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.label_5)
-        self.scoreLabel = QtWidgets.QLabel(self.userBox)
-        self.scoreLabel.setObjectName("scoreLabel")
-        self.formLayout_2.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.scoreLabel)
-        self.verticalLayout_2.addWidget(self.userBox)
+        self.formLayout_2.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.label_5)
+        self.maxscoreLabel = QtWidgets.QLabel(self.infoBox)
+        self.maxscoreLabel.setText("<number>")
+        self.maxscoreLabel.setObjectName("maxscoreLabel")
+        self.formLayout_2.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.maxscoreLabel)
+        self.verticalLayout_2.addWidget(self.infoBox)
         self.tableBox = QtWidgets.QGroupBox(self.widget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -233,13 +229,9 @@ class Ui_MarkerWindow(object):
     def retranslateUi(self, MarkerWindow):
         _translate = QtCore.QCoreApplication.translate
         MarkerWindow.setWindowTitle(_translate("MarkerWindow", "Mark papers"))
-        self.userBox.setTitle(_translate("MarkerWindow", "User"))
-        self.label_2.setText(_translate("MarkerWindow", "Pagegroup "))
-        self.pgLabel.setText(_translate("MarkerWindow", "NUMBER"))
-        self.label_3.setText(_translate("MarkerWindow", "Version"))
-        self.vLabel.setText(_translate("MarkerWindow", "NUMBER"))
+        self.infoBox.setTitle(_translate("MarkerWindow", "Question Info"))
+        self.label_2.setText(_translate("MarkerWindow", "Username "))
         self.label_5.setText(_translate("MarkerWindow", "Max score"))
-        self.scoreLabel.setText(_translate("MarkerWindow", "NUMBER"))
         self.tableBox.setTitle(_translate("MarkerWindow", "Paper list"))
         self.annButton.setText(_translate("MarkerWindow", "&Annotate && mark"))
         self.getNextButton.setText(_translate("MarkerWindow", "&Get next"))
