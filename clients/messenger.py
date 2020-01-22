@@ -1020,12 +1020,15 @@ session = None
 
 def startMessenger():
     """Start the messenger session"""
-    print("Starting a requests-session")
     global session
-    session = requests.Session()
-    # TODO - UBC wifi is crappy: have some sort of "hey you've retried
-    # nn times already, are you sure you want to keep retrying" message.
-    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
+    if session:
+        print("Messenger: already have an requests-session")
+    else:
+        print("Messenger: starting a new requests-session")
+        session = requests.Session()
+        # TODO - UBC wifi is crappy: have some sort of "hey you've retried
+        # nn times already, are you sure you want to keep retrying" message.
+        session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
     try:
         response = session.get(
             "https://{}:{}/Version".format(server, message_port), verify=False,
@@ -1035,9 +1038,14 @@ def startMessenger():
         raise PlomBenignException(
             "Cannot connect to server. Please check server details."
         ) from None
+    r = response.text
+    return r
 
 
 def stopMessenger():
     """Stop the messenger"""
-    print("Stopped messenger session")
-    session.close()
+    global session
+    if session:
+        print("Messenger: stopping requests-session")
+        session.close()
+        session = None

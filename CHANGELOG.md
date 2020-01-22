@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * The manual-identifier now has a "discard" option for unneeded pageimages, such as blank extra pages.
 * More robust networking by moving to https (rather than raw sockets). This is handled by the "requests" library on the client side and the "aiohttp" library on the server side.
 * Client: config and saved comments now more human-readable in toml files.
+* Client: can download test/server info before logging in.
 
 ### Fixed
 * many fixes, especially related to client crashes due to networking.
