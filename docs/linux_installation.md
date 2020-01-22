@@ -58,6 +58,7 @@ Other stuff we get from pip:
   # pip3 install --upgrade pip
   # python3 -m pip install --upgrade --user pymupdf weasyprint imutils aiohttp
   # python3 -m pip install --upgrade --user lapsolver "tensorflow<2"
+  # pip3 install xcffib
 ```
 (Note `python3 -m pip` to use the newly upgraded pip).
 
