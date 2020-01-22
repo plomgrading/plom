@@ -1069,27 +1069,43 @@ class PlomDB:
         return rval
 
     def RgetMarkReview(self, filterQ, filterV, filterU):
-        # at most one of the filters is "*"
-        if filterQ == "*":
-            query = QuestionData.select().where(
-                QuestionData.version == filterV, QuestionData.username == filterU
-            )
-        elif filterV == "*":
-            query = QuestionData.select().where(
-                QuestionData.questionNumber == filterQ, QuestionData.username == filterU
-            )
-        elif filterU == "*":
-            query = QuestionData.select().where(
-                QuestionData.questionNumber == filterQ, QuestionData.version == filterV
-            )
-        else:
-            query = QuestionData.select().where(
-                QuestionData.questionNumber == filterQ,
-                QuestionData.version == filterV,
-                QuestionData.username == filterU,
-            )
+        query = QuestionData.select().where(QuestionData.marked == True)
+        if filterQ != "*":
+            query = query.where(QuestionData.questionNumber == filterQ)
+        if filterV != "*":
+            query = query.where(QuestionData.version == filterV)
+        if filterU != "*":
+            query = query.where(QuestionData.username == filterU)
+        #
+        # # at most one of the filters is "*"
+        # if filterQ == "*":
+        #     query = QuestionData.select().where(
+        #         QuestionData.version == filterV,
+        #         QuestionData.username == filterU,
+        #         QuestionData.marked == True,
+        #     )
+        # elif filterV == "*":
+        #     query = QuestionData.select().where(
+        #         QuestionData.questionNumber == filterQ,
+        #         QuestionData.username == filterU,
+        #         QuestionData.marked == True,
+        #     )
+        # elif filterU == "*":
+        #     query = QuestionData.select().where(
+        #         QuestionData.questionNumber == filterQ,
+        #         QuestionData.version == filterV,
+        #         QuestionData.marked == True,
+        #     )
+        # else:
+        #     query = QuestionData.select().where(
+        #         QuestionData.questionNumber == filterQ,
+        #         QuestionData.version == filterV,
+        #         QuestionData.username == filterU,
+        #         QuestionData.marked == True,
+        #     )
         rval = []
         for x in query:
+            # CANNOT JSON DATETIMEFIELD.
             rval.append(
                 [
                     x.test.testNumber,
@@ -1098,7 +1114,7 @@ class PlomDB:
                     x.mark,
                     x.username,
                     x.markingTime,
-                    x.time,
+                    x.time.strftime("%y:%m:%d-%H:%M:%S"),
                 ]
             )
         return rval

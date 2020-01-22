@@ -982,7 +982,7 @@ def getMarkReview(filterQ, filterV, filterU):
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/REP/getMarkReview".format(server, message_port),
+            "https://{}:{}/REP/markReview".format(server, message_port),
             verify=False,
             json={
                 "user": _userName,

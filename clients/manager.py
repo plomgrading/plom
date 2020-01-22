@@ -952,24 +952,24 @@ class Manager(QWidget):
         self.ui.filterB.clicked.connect(self.filterReview)
 
     def filterReview(self):
-        nall = 0
-        if self.ui.questionCB.currentText() == "*":
-            nall += 1
-        if self.ui.versionCB.currentText() == "*":
-            nall += 1
-        if self.ui.userCB.currentText() == "*":
-            nall += 1
-        if nall > 1:
+        if (
+            (self.ui.questionCB.currentText() == "*")
+            and (self.ui.versionCB.currentText() == "*")
+            and (self.ui.userCB.currentText() == "*")
+        ):
             ErrorMessage(
-                'Please set at two or more of "Question", "Version", "User" to specific values.'
+                'Please set at least one of "Question", "Version", "User" to specific values.'
             ).exec_()
             return
-
-        WORKING ON THIS - HOOK UP FUNCTIONS.
-
         print("Question: ", self.ui.questionCB.currentText())
         print("Version: ", self.ui.versionCB.currentText())
         print("User: ", self.ui.userCB.currentText())
+        mrDict = managerMessenger.getMarkReview(
+            self.ui.questionCB.currentText(),
+            self.ui.versionCB.currentText(),
+            self.ui.userCB.currentText(),
+        )
+        print(mrDict)
 
 
 # Pop up a dialog for unhandled exceptions and then exit
