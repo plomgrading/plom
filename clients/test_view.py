@@ -117,7 +117,7 @@ class TestGroupSelect(QDialog):
         if gn is not None:
             self.gsb = QSpinBox()
             self.gsb.setRange(1, info["numGroups"])
-            self.gsb.setValue(int(gn))
+            self.gsb.setValue(gn)
             fg.addRow("Select pageGroup:", self.gsb)
             self.iL.setText("Which test/group do you wish to view?")
         grid = QGridLayout()
