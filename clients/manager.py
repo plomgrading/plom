@@ -222,18 +222,24 @@ class ProgressBox(QGroupBox):
 
     def refresh(self, stats):
         self.stats = stats
-        if self.stats["NScanned"] == 0:
-            self.setEnabled(False)
-            return
 
         self.setEnabled(True)
         self.pb.setMaximum(self.stats["NScanned"])
         self.pb.setValue(self.stats["NMarked"])
         self.nscL.setText("# Scanned = {}".format(self.stats["NScanned"]))
         self.nmkL.setText("# Marked = {}".format(self.stats["NMarked"]))
-        self.avgL.setText("Average mark = {}".format(self.stats["avgMark"]))
-        self.mtL.setText("Marking time = {}".format(self.stats["avgMTime"]))
-        self.lhL.setText("# Marked in last hour = {}".format(self.stats["NRecent"]))
+
+        if self.stats["NScanned"] == 0:
+            self.setEnabled(False)
+            return
+        if self.stats["NMarked"] > 0:
+            self.avgL.setText("Average mark = {:0.2f}".format(self.stats["avgMark"]))
+            self.mtL.setText("Marking time = {:0.2f}".format(self.stats["avgMTime"]))
+            self.lhL.setText("# Marked in last hour = {}".format(self.stats["NRecent"]))
+        else:
+            self.avgL.setText("Average mark = N/A")
+            self.mtL.setText("Marking time = N/A")
+            self.lhL.setText("# Marked in last hour = N/A")
 
     def viewHist(self):
         self.parent.viewMarkHistogram(self.question, self.version)
@@ -939,6 +945,11 @@ class Manager(QWidget):
         self.ui.reviewTW.setHorizontalHeaderLabels(
             ["Test", "Question", "Version", "Mark", "Username", "Marking Time", "When"]
         )
+        self.ui.reviewTW.setSortingEnabled(True)
+        self.ui.reviewTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.reviewTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.reviewTW.activated.connect(self.reviewAnnotated)
+
         self.ui.questionCB.addItem("*")
         for q in range(self.numberOfQuestions):
             self.ui.questionCB.addItem(str(q + 1))
@@ -964,12 +975,36 @@ class Manager(QWidget):
         print("Question: ", self.ui.questionCB.currentText())
         print("Version: ", self.ui.versionCB.currentText())
         print("User: ", self.ui.userCB.currentText())
-        mrDict = managerMessenger.getMarkReview(
+        mrList = managerMessenger.getMarkReview(
             self.ui.questionCB.currentText(),
             self.ui.versionCB.currentText(),
             self.ui.userCB.currentText(),
         )
-        print(mrDict)
+
+        self.ui.reviewTW.clearContents()
+        self.ui.reviewTW.setRowCount(0)
+        r = 0
+        for dat in mrList:
+            self.ui.reviewTW.insertRow(r)
+            # rjust(4) entries so that they can sort like integers... without actually being integers
+            for k in range(len(dat)):
+                self.ui.reviewTW.setItem(
+                    r, k, QTableWidgetItem("{}".format(dat[k]).rjust(4))
+                )
+            r += 1
+
+    def reviewAnnotated(self):
+        rvi = self.ui.reviewTW.selectedIndexes()
+        if len(rvi) == 0:
+            return
+        r = rvi[0].row()
+        test = int(self.ui.reviewTW.item(r, 0).text())
+        question = int(self.ui.reviewTW.item(r, 1).text())
+        version = int(self.ui.reviewTW.item(r, 2).text())
+        img = managerMessenger.RgetAnnotatedImage(test, question, version)
+        with tempfile.NamedTemporaryFile() as fh:
+            fh.write(img)
+            GroupView([fh.name]).exec_()
 
 
 # Pop up a dialog for unhandled exceptions and then exit

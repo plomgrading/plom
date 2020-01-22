@@ -1005,6 +1005,40 @@ def getMarkReview(filterQ, filterV, filterU):
     return rval
 
 
+def RgetAnnotatedImage(testNumber, questionNumber, version):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/annotatedImage".format(server, message_port),
+            json={
+                "user": _userName,
+                "token": _token,
+                "testNumber": testNumber,
+                "questionNumber": questionNumber,
+                "version": version,
+            },
+            verify=False,
+        )
+        response.raise_for_status()
+        img = BytesIO(response.content).getvalue()
+
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        elif response.status_code == 404:
+            raise PlomSeriousException(
+                "Cannot find image file for {}.{}.{}".format(
+                    testNumber, questionNumber, version
+                )
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return img
+
+
 def startMessenger():
     """Start the messenger session"""
     print("Starting a requests-session")

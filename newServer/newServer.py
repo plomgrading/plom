@@ -181,6 +181,7 @@ class Server(object):
         RgetOriginalFiles,
         RgetAnnotatedFiles,
         RgetMarkReview,
+        RgetAnnotatedImage,
     )
 
 

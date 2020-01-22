@@ -1076,36 +1076,8 @@ class PlomDB:
             query = query.where(QuestionData.version == filterV)
         if filterU != "*":
             query = query.where(QuestionData.username == filterU)
-        #
-        # # at most one of the filters is "*"
-        # if filterQ == "*":
-        #     query = QuestionData.select().where(
-        #         QuestionData.version == filterV,
-        #         QuestionData.username == filterU,
-        #         QuestionData.marked == True,
-        #     )
-        # elif filterV == "*":
-        #     query = QuestionData.select().where(
-        #         QuestionData.questionNumber == filterQ,
-        #         QuestionData.username == filterU,
-        #         QuestionData.marked == True,
-        #     )
-        # elif filterU == "*":
-        #     query = QuestionData.select().where(
-        #         QuestionData.questionNumber == filterQ,
-        #         QuestionData.version == filterV,
-        #         QuestionData.marked == True,
-        #     )
-        # else:
-        #     query = QuestionData.select().where(
-        #         QuestionData.questionNumber == filterQ,
-        #         QuestionData.version == filterV,
-        #         QuestionData.username == filterU,
-        #         QuestionData.marked == True,
-        #     )
         rval = []
         for x in query:
-            # CANNOT JSON DATETIMEFIELD.
             rval.append(
                 [
                     x.test.testNumber,
@@ -1114,10 +1086,25 @@ class PlomDB:
                     x.mark,
                     x.username,
                     x.markingTime,
+                    # CANNOT JSON DATETIMEFIELD.
                     x.time.strftime("%y:%m:%d-%H:%M:%S"),
                 ]
             )
         return rval
+
+    def RgetAnnotatedImage(self, testNumber, questionNumber, version):
+        tref = Test.get_or_none(testNumber=testNumber)
+        if tref is None:
+            return [False]
+        qref = QuestionData.get_or_none(
+            QuestionData.test == tref,
+            QuestionData.questionNumber == questionNumber,
+            QuestionData.version == version,
+            QuestionData.marked == True,
+        )
+        if qref is None:
+            return [False]
+        return [True, qref.annotatedFile]
 
     # ------------------
     # For user login - we reset all their stuff that is out

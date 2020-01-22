@@ -53,3 +53,7 @@ def RgetAnnotatedFiles(self, testNumber):
 
 def RgetMarkReview(self, filterQ, filterV, filterU):
     return self.DB.RgetMarkReview(filterQ, filterV, filterU)
+
+
+def RgetAnnotatedImage(self, testNumber, questionNumber, version):
+    return self.DB.RgetAnnotatedImage(testNumber, questionNumber, version)
