@@ -235,7 +235,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>mode: comment</string>
+            <string notr="true">&lt;mode&gt;</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
