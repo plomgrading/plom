@@ -410,10 +410,6 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
             self.ui.toolLayout.addWidget(self.ui.commentDownButton, 2, 3)
             self.ui.toolLayout.addWidget(self.ui.lineButton, 2, 4)
-            # end buttons
-            self.ui.ebLayout.addWidget(self.ui.finishedButton)
-            self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
-            self.ui.ebLayout.addWidget(self.ui.cancelButton)
         else:  # left-hand mouse
             self.ui.modeLayout.addWidget(self.ui.markLabel)
             self.ui.modeLayout.addWidget(self.ui.modeLabel)
@@ -432,11 +428,10 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 6, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.tickButton, 2, 6, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.boxButton, 3, 6, 1, 1)
-
-            # end buttons
-            self.ui.ebLayout.addWidget(self.ui.finishedButton)
-            self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
-            self.ui.ebLayout.addWidget(self.ui.cancelButton)
+        # end buttons
+        self.ui.ebLayout.addWidget(self.ui.finishedButton)
+        self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
+        self.ui.ebLayout.addWidget(self.ui.cancelButton)
         # zoom QComboBox
         self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
 
