@@ -410,8 +410,6 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.panButton, 0, 2, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 2, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 2, 1, 1)
-            # zoom QComboBox
-            self.ui.toolLayout.addWidget(self.ui.zoomCB, 4, 5, 1, 2)
 
             # end buttons
             self.ui.ebLayout.addWidget(self.ui.finishedButton)
@@ -429,7 +427,6 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 8, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.panButton, 0, 8, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.lineButton, 3, 2, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.zoomCB, 4, 7, 1, 2)
             self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 7, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.deleteButton, 3, 7, 1, 1)
             self.ui.toolLayout.addWidget(self.ui.textButton, 2, 2, 1, 1)
@@ -441,6 +438,8 @@ class Annotator(QWidget):
             self.ui.ebLayout.addWidget(self.ui.finishedButton)
             self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
             self.ui.ebLayout.addWidget(self.ui.cancelButton)
+        # zoom QComboBox
+        self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
 
     def viewWholePaper(self):
         # grab the files if needed.
