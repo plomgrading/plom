@@ -130,7 +130,7 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <layout class="QGridLayout" name="toolLayout" rowstretch="0,0,0,0">
+        <layout class="QGridLayout" name="toolLayout">
          <property name="leftMargin">
           <number>3</number>
          </property>
