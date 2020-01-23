@@ -42,6 +42,7 @@ from test_view import WholeTestView, GroupView
 from unknownpageview import UnknownViewWindow
 from collideview import CollideViewWindow
 from discardview import DiscardViewWindow
+from reviewview import ReviewViewWindow
 from selectrectangle import SelectRectangleWindow, IDViewWindow
 from plom_exceptions import *
 
@@ -1004,7 +1005,10 @@ class Manager(QWidget):
         img = managerMessenger.RgetAnnotatedImage(test, question, version)
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(img)
-            GroupView([fh.name]).exec_()
+            rvw = ReviewViewWindow(self, [fh.name])
+            if rvw.exec() == QDialog.Accepted:
+                if rvw.action == "revert":
+                    managerMessenger.MrevertQuestion(test, question, version)
 
 
 # Pop up a dialog for unhandled exceptions and then exit

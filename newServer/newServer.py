@@ -155,6 +155,7 @@ class Server(object):
         MgetOriginalImages,
         MsetTag,
         MgetWholePaper,
+        MrevertQuestion,
     )
     from plomServer.serverTotal import (
         TgetMaxMark,

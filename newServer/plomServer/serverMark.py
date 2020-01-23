@@ -160,3 +160,12 @@ def MsetTag(self, user, task, tag):
 
 def MgetWholePaper(self, testNumber):
     return self.DB.MgetWholePaper(testNumber)
+
+
+def MrevertQuestion(self, testNumber, questionNumber, version):
+    rval = self.DB.MrevertQuestion(testNumber, questionNumber, version)
+    if rval[0]:
+        for fn in rval[1:]:
+            os.unlink(fn)
+        return True
+    return False

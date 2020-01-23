@@ -1580,6 +1580,47 @@ class PlomDB:
                 pageFiles.append(pref.fileName)
         return [True, pageNames] + pageFiles
 
+    def MrevertQuestion(self, testNumber, questionNumber, version):
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        qref = QuestionData.get_or_none(
+            QuestionData.test == tref,
+            QuestionData.questionNumber == questionNumber,
+            QuestionData.version == version,
+            QuestionData.marked == True,
+        )
+        if qref is None:
+            return [False]
+        sref = tref.sumdata[0]
+        with plomdb.atomic():
+            # clean up test
+            tref.marked = False
+            tref.totalled = False
+            tref.finished = False
+            tref.save()
+            # clean up sum-data
+            sref.status = "todo"
+            sref.sumMark = None
+            sref.username = ""
+            sref.time = datetime.now()
+            sref.summed = False
+            sref.save()
+            # clean off the question data
+            rval = [True, qref.annotatedFile, qref.plomFile, qref.commentFile]
+            qref.marked = False
+            qref.status = "todo"
+            qref.annotatedFile = None
+            qref.plomFile = None
+            qref.commentFile = None
+            qref.mark = None
+            qref.markingTime = None
+            qref.tags = ""
+            qref.username = ""
+            qref.time = datetime.now()
+            qref.save()
+        return rval
+
     # ----- totaller stuff
     def TcountAll(self):
         """Count all the records"""

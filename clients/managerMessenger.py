@@ -1039,6 +1039,37 @@ def RgetAnnotatedImage(testNumber, questionNumber, version):
     return img
 
 
+def MrevertQuestion(testNumber, questionNumber, version):
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/MK/revert".format(server, message_port),
+            verify=False,
+            json={
+                "user": _userName,
+                "token": _token,
+                "testNumber": testNumber,
+                "questionNumber": questionNumber,
+                "version": version,
+            },
+        )
+        response.raise_for_status()
+        # rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        elif response.status_code == 404:  # authentication error
+            raise PlomAuthenticationException(
+                "Could not find t/q/v = {}/{}/{}.".format(
+                    testNumber, questionNumber, version
+                )
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+
 def startMessenger():
     """Start the messenger session"""
     print("Starting a requests-session")

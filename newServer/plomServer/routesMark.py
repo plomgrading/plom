@@ -222,6 +222,19 @@ class MarkHandler:
         else:
             return web.Response(status=401)
 
+    # @routes.delete("/MK/revert")
+    async def MrevertQuestion(self, request):
+        data = await request.json()
+        if self.server.validate(data["user"], data["token"]):
+            if self.server.MrevertQuestion(
+                data["testNumber"], data["questionNumber"], data["version"]
+            ):
+                return web.Response(status=200)
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_get("/MK/allMax", self.MgetAllMax)
         router.add_get("/MK/maxMark", self.MgetQuestionMark)
@@ -236,3 +249,4 @@ class MarkHandler:
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}", self.MgetWholePaper)
+        router.add_delete("/MK/revert", self.MrevertQuestion)
