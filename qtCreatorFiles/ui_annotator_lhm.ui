@@ -419,7 +419,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Key Help</string>
+            <string>Key help</string>
            </property>
           </widget>
          </item>
@@ -432,7 +432,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>View Paper</string>
+            <string>View all</string>
            </property>
           </widget>
          </item>

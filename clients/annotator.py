@@ -1083,9 +1083,9 @@ class Annotator(QWidget):
 
     def setZoomComboBox(self):
         self.ui.zoomCB.addItem("User")
-        self.ui.zoomCB.addItem("Fit Page")
-        self.ui.zoomCB.addItem("Fit Width")
-        self.ui.zoomCB.addItem("Fit Height")
+        self.ui.zoomCB.addItem("Fit page")
+        self.ui.zoomCB.addItem("Fit width")
+        self.ui.zoomCB.addItem("Fit height")
         self.ui.zoomCB.addItem("200%")
         self.ui.zoomCB.addItem("150%")
         self.ui.zoomCB.addItem("100%")
@@ -1099,11 +1099,11 @@ class Annotator(QWidget):
         self.ui.zoomCB.blockSignals(old)
 
     def zoomCBChanged(self):
-        if self.ui.zoomCB.currentText() == "Fit Page":
+        if self.ui.zoomCB.currentText() == "Fit page":
             self.view.zoomAll()
-        elif self.ui.zoomCB.currentText() == "Fit Width":
+        elif self.ui.zoomCB.currentText() == "Fit width":
             self.view.zoomWidth()
-        elif self.ui.zoomCB.currentText() == "Fit Height":
+        elif self.ui.zoomCB.currentText() == "Fit height":
             self.view.zoomHeight()
         elif self.ui.zoomCB.currentText() == "100%":
             self.view.zoomReset(1)
