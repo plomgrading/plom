@@ -554,6 +554,9 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="toolTip">
+            <string>List shortcut keys</string>
+           </property>
            <property name="text">
             <string>Key help</string>
            </property>
@@ -566,6 +569,9 @@
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Show entire paper in new window</string>
            </property>
            <property name="text">
             <string>View all</string>
