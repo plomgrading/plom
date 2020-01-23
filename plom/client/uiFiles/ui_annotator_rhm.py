@@ -95,6 +95,7 @@ class Ui_annotator_rhm(object):
         self.frame_3.setObjectName("frame_3")
         self.modeLayout = QtWidgets.QHBoxLayout(self.frame_3)
         self.modeLayout.setContentsMargins(3, 3, 3, 3)
+        self.modeLayout.setSpacing(3)
         self.modeLayout.setObjectName("modeLayout")
         self.hideButton = QtWidgets.QPushButton(self.frame_3)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)

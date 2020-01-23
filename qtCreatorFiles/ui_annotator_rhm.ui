@@ -198,6 +198,9 @@
          <enum>QFrame::Plain</enum>
         </property>
         <layout class="QHBoxLayout" name="modeLayout" stretch="0,0,0">
+         <property name="spacing">
+          <number>3</number>
+         </property>
          <property name="leftMargin">
           <number>3</number>
          </property>
