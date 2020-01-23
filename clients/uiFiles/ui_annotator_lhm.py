@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator_lhm.ui'
 #
-# Created by: PyQt5 UI code generator 5.12.3
+# Created by: PyQt5 UI code generator 5.13.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -143,7 +143,7 @@ class Ui_annotator_lhm(object):
         self.toolLayout.addWidget(self.textButton, 2, 2, 1, 1)
         self.verticalLayout.addWidget(self.frame, 0, QtCore.Qt.AlignHCenter)
         self.frame_4 = QtWidgets.QFrame(self.hideableBox)
-        self.frame_4.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_4.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.frame_4.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame_4.setObjectName("frame_4")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.frame_4)
