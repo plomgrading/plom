@@ -448,7 +448,8 @@ class Annotator(QWidget):
             self.testViewFiles = self.parent.viewWholePaper()
         # if we haven't built a testview, built it now
         if self.testView is None:
-            self.testView = TestView(self, self.testViewFiles)
+            tn = int(self.tgv[1:4])  # get test number from tgv
+            self.testView = TestView(self, self.testViewFiles, tn)
         else:
             # must have closed it, so re-show it.
             self.testView.show()
