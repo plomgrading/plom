@@ -17,6 +17,18 @@
    <string>Annotate paper</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <widget class="QFrame" name="hideableBox">
      <property name="frameShape">
@@ -33,12 +45,9 @@
        <number>0</number>
       </property>
       <property name="topMargin">
-       <number>0</number>
+       <number>3</number>
       </property>
       <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
        <number>0</number>
       </property>
       <item>
@@ -404,6 +413,18 @@
          <enum>QFrame::Plain</enum>
         </property>
         <layout class="QHBoxLayout" name="buttonsLayout">
+         <property name="leftMargin">
+          <number>12</number>
+         </property>
+         <property name="topMargin">
+          <number>3</number>
+         </property>
+         <property name="rightMargin">
+          <number>12</number>
+         </property>
+         <property name="bottomMargin">
+          <number>1</number>
+         </property>
          <item>
           <widget class="QPushButton" name="keyHelpButton">
            <property name="sizePolicy">
@@ -462,13 +483,13 @@
           <number>3</number>
          </property>
          <property name="topMargin">
-          <number>3</number>
+          <number>1</number>
          </property>
          <property name="rightMargin">
           <number>3</number>
          </property>
          <property name="bottomMargin">
-          <number>3</number>
+          <number>1</number>
          </property>
          <property name="spacing">
           <number>3</number>
@@ -526,7 +547,7 @@
           <number>3</number>
          </property>
          <property name="topMargin">
-          <number>3</number>
+          <number>1</number>
          </property>
          <property name="rightMargin">
           <number>3</number>
@@ -542,6 +563,12 @@
       </item>
       <item>
        <widget class="QFrame" name="frame_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -559,9 +586,6 @@
           <number>3</number>
          </property>
          <property name="rightMargin">
-          <number>3</number>
-         </property>
-         <property name="bottomMargin">
           <number>3</number>
          </property>
          <item>
