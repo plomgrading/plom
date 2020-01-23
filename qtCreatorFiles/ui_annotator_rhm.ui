@@ -545,7 +545,7 @@
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout">
+        <layout class="QHBoxLayout" name="buttonsLayout">
          <item>
           <widget class="QPushButton" name="keyHelpButton">
            <property name="sizePolicy">
