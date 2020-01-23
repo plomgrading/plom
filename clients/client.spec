@@ -19,7 +19,7 @@ a = Analysis(['client.py'],
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
-for icon in ['cross', 'delete', 'line', 'move', 'pan', 'pen', 'rectangle', 'redo', 'text', 'tick', 'undo', 'zoom', 'comment', 'comment_up', 'comment_down']:
+for icon in ['cross', 'delete', 'line', 'move', 'pan', 'pen', 'rectangle', 'redo', 'text', 'tick', 'undo', 'zoom', 'comment', 'comment_up', 'comment_down', 'delta']:
   a.datas += [('{}.svg'.format(icon), 'icons/{}.svg'.format(icon), 'DATA')]
 
 for cursor in ['box', 'cross', 'delete', 'line', 'pen', 'tick',]:
