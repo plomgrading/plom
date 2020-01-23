@@ -936,9 +936,7 @@ class Annotator(QWidget):
         if self.scene.mode == "comment":
             self.parent.annotatorSettings["comment"] = self.commentW.getCurrentItemRow()
 
-        if self.ui.hideableBox.isVisible():
-            self.parent.annotatorSettings["compact"] = False
-        else:
+        if not self.ui.hideableBox.isVisible():
             self.parent.annotatorSettings["compact"] = True
 
     def cleanUpCancel(self):
