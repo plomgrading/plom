@@ -908,7 +908,7 @@ class Annotator(QWidget):
             )
         # wide vs compact
         if self.parent.annotatorSettings["compact"] is True:
-            print("Debug: compacting UI (b/c of last use setting)"
+            print("Debug: compacting UI (b/c of last use setting")
             self.ui.hideButton.animateClick()
 
     def saveWindowSettings(self):
