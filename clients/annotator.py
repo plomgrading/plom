@@ -285,7 +285,7 @@ class Annotator(QWidget):
             Qt.Key_Equal: lambda: self.view.zoomIn(),
             Qt.Key_Minus: lambda: self.view.zoomOut(),
             Qt.Key_Underscore: lambda: self.view.zoomOut(),
-            # Only change-mark shortcuts 0-5.
+            # Change-mark shortcuts
             Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
             Qt.Key_1: lambda: self.keyToChangeMark(1),
             Qt.Key_2: lambda: self.keyToChangeMark(2),
