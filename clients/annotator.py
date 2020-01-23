@@ -906,6 +906,10 @@ class Annotator(QWidget):
                     self.parent.annotatorSettings["zoomState"]
                 ),
             )
+        # wide vs compact
+        if self.parent.annotatorSettings["compact"] is True:
+            print("Compact things")
+            self.ui.hideButton.animateClick()
 
     def saveWindowSettings(self):
         # TODO - delete below
@@ -931,6 +935,13 @@ class Annotator(QWidget):
             self.parent.annotatorSettings["delta"] = self.scene.markDelta
         if self.scene.mode == "comment":
             self.parent.annotatorSettings["comment"] = self.commentW.getCurrentItemRow()
+
+        if self.ui.hideableBox.isVisible():
+            print("Compact")
+            self.parent.annotatorSettings["compact"] = False
+        else:
+            print("Wide")
+            self.parent.annotatorSettings["compact"] = True
 
     def cleanUpCancel(self):
         # clean up after a testview
