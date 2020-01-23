@@ -908,7 +908,7 @@ class Annotator(QWidget):
             )
         # wide vs compact
         if self.parent.annotatorSettings["compact"] is True:
-            print("Compact things")
+            print("Debug: compacting UI (b/c of last use setting)"
             self.ui.hideButton.animateClick()
 
     def saveWindowSettings(self):
@@ -937,10 +937,8 @@ class Annotator(QWidget):
             self.parent.annotatorSettings["comment"] = self.commentW.getCurrentItemRow()
 
         if self.ui.hideableBox.isVisible():
-            print("Compact")
             self.parent.annotatorSettings["compact"] = False
         else:
-            print("Wide")
             self.parent.annotatorSettings["compact"] = True
 
     def cleanUpCancel(self):
