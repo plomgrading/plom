@@ -1017,7 +1017,6 @@ class MarkerClient(QWidget):
     @pyqtSlot(str, list)
     def callbackAnnIsDoneAccept(self, tgv, stuff):
         print("XXX annotator gave Done signal")
-        self.setEnabled(True)
         gr, launchAgain, mtime, paperdir, aname, pname, cname = stuff
 
         if not (0 <= gr and gr <= self.maxScore):
@@ -1028,6 +1027,7 @@ class MarkerClient(QWidget):
             )
             msg.exec_()
             # TODO: what do do here?  revert?
+            self.setEnabled(True)
             return
 
         # Copy the mark, annotated filename and the markingtime into the table
@@ -1051,6 +1051,7 @@ class MarkerClient(QWidget):
         )
 
         if launchAgain is False:
+            self.setEnabled(True)
             # update image view, if the row we just finished is selected
             prIndex = self.ui.tableView.selectedIndexes()
             if len(prIndex) == 0:
@@ -1061,8 +1062,8 @@ class MarkerClient(QWidget):
             return
         print("XXX: want to launch again, can we?")
         if self.moveToNextUnmarkedTest("t" + tgv):
-            # self.annotateTest()
-            self.ui.annButton.animateClick()
+            self.annotateTest()
+        self.setEnabled(True)
         print("XXX: no more papers?  Want to launch again but moveToNextUnmarkedTest failed?")
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
