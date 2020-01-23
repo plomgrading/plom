@@ -63,10 +63,10 @@ def writeLastTime():
 
 
 class Chooser(QDialog):
-    def __init__(self, parent):
+    def __init__(self, Qapp):
         self.APIVersion = Plom_API_Version
         super(Chooser, self).__init__()
-        self.parent = parent
+        self.parent = Qapp
         print(
             "Plom Client {} (communicates with api {})".format(
                 __version__, self.APIVersion
@@ -157,7 +157,7 @@ class Chooser(QDialog):
             v = self.getv()
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient()
+            markerwin = marker.MarkerClient(self.parent)
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
             markerwin.getToWork(messenger, pg, v, lastTime)

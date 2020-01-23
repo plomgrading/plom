@@ -491,8 +491,9 @@ class ProxyModel(QSortFilterProxyModel):
 class MarkerClient(QWidget):
     my_shutdown_signal = pyqtSignal(int, list)
 
-    def __init__(self):
+    def __init__(self, Qapp):
         super(MarkerClient, self).__init__()
+        self.Qapp = Qapp
 
     def getToWork(self, mess, pageGroup, version, lastTime):
         # TODO or `self.msgr = mess`?  trouble in threads?
@@ -805,20 +806,20 @@ class MarkerClient(QWidget):
             print("ZZZ: we have a background downloader")
             count = 0
             while self.backgroundDownloader.isRunning():
-                time.sleep(0.01)
+                time.sleep(0.05)
+                self.Qapp.processEvents()
                 count += 1
-                if (count % 10) == 0:
-                    print("ZZZ Debug: waiting for downloader to fill table")
-                if count >= 40:
+                #if (count % 10) == 0:
+                print("ZZZ Debug: waiting for downloader to fill table")
+                if count >= 1000:
                     msg = SimpleMessage(
                         "Still waiting for download.  Do you want to wait a bit longer?"
                     )
                     if msg.exec_() == QMessageBox.No:
                         return
                     count = 0
+            self.Qapp.processEvents()
             print("ZZZ Debug: downloader is done")
-            time.sleep(1)
-            print("ZZZ Debug: extra sleep done")
 
         # Move to the next unmarked test in the table.
         # Be careful not to get stuck in a loop if all marked
@@ -837,8 +838,10 @@ class MarkerClient(QWidget):
             if pr == prstart:
                 break
         if pr == prstart:
+            print("ZZZ: pr is prstart")
             return False
         self.ui.tableView.selectRow(pr)
+        print("ZZZ: returning true")
         return True
 
     def revertTest(self):
