@@ -43,6 +43,8 @@ from PyQt5.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QToolButton,
+    QSpacerItem,
+    QSizePolicy,
 )
 
 from .mark_handler import MarkHandler
@@ -213,21 +215,24 @@ class Annotator(QWidget):
         self.timer.start()
 
         # TODO: various mucking around, should be done in qtCreator
-        self.ui.hideButton.setVisible(False)
-        self.ui.buttonsLayout.addWidget(self.ui.modeLabel)
-        self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
+        #self.ui.buttonsLayout.addWidget(self.ui.modeLabel)
+        #self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
         # TODO: end changes for qtCreator
 
         m = QMenu()
-        m.addAction("Next paper (ctrl-N)", self.menu1)
+        m.addAction("Next paper ** (ctrl-n)", self.menu1)
+        m.addAction("Done **", self.menu1)
+        m.addAction("Cancel (ctrl-c)", self.close)
+
+        m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
         m.addSeparator()
         m.addAction("Compact UI", self.narrowLayout)
         m.addAction("&Wide UI", self.wideLayout)
         m.addSeparator()
-        m.addAction("Help", self.menu2)
+        m.addAction("Help **", self.menu2)
         m.addAction("Show shortcut keys... (?)", self.keyPopUp)
-        m.addAction("About Plom", self.menu1)
+        m.addAction("About Plom **", self.menu1)
         self.ui.hamMenuButton.setMenu(m)
 
     def menu1(self):
@@ -350,13 +355,12 @@ class Annotator(QWidget):
     def narrowLayout(self):
         self.ui.revealBox0.show()
         self.ui.hideableBox.hide()
-        self.ui.hideButton.setVisible(False)
-        self.ui.hideButton.setText("Wide")
-        self.ui.revealLayout.addWidget(self.ui.hamMenuButton, 0, 1, 1, 2)
+        self.ui.revealLayout.addWidget(self.ui.hamMenuButton, 0, 1, 1, 1)
+        self.ui.revealLayout.addWidget(self.ui.finishedButton, 0, 2, 1, 1)
+        #self.ui.finishedButton.setText("N")
         self.ui.revealLayout.addWidget(
-            self.ui.hideButton, 1, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+            self.ui.zoomCB, 1, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
         )
-
         self.ui.revealLayout.addWidget(
             self.ui.markLabel, 2, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
         )
@@ -411,29 +415,19 @@ class Annotator(QWidget):
         self.ui.revealLayout.addWidget(
             self.ui.modeLabel, 10, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
         )
-        # dropdown zoom menu thing
-        self.ui.revealLayout.addWidget(
-            self.ui.zoomCB, 11, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
-        )
-
-        # end buttons
-        self.ui.revealLayout2.addWidget(self.ui.finishedButton, Qt.AlignHCenter)
-        self.ui.revealLayout2.addWidget(self.ui.finishNoRelaunchButton, Qt.AlignHCenter)
-        self.ui.revealLayout2.addWidget(self.ui.cancelButton, Qt.AlignHCenter)
+        #self.ui.revealLayout.addWidget(
+        #    self.ui.frame_2, 10, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+        #)
 
     def wideLayout(self):
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
-        self.ui.hideButton.setText("Compact")
-        self.ui.hideButton.setVisible(False)
         # right-hand mouse = 0, left-hand mouse = 1
         if self.mouseHand == 0:
             self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
             self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
             self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
             self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
-            self.ui.modeLayout.addWidget(self.ui.hideButton, 0, Qt.AlignCenter)
-            self.ui.modeLayout.addWidget(self.ui.markLabel, 0, Qt.AlignRight)
             # tools
             self.ui.toolLayout.addWidget(self.ui.panButton, 0, 0)
             self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 1)
@@ -454,9 +448,6 @@ class Annotator(QWidget):
             self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
             self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
             self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
-            self.ui.modeLayout.addWidget(self.ui.markLabel, 0, Qt.AlignRight)
-            #self.ui.modeLayout.addWidget(self.ui.modeLabel)
-            self.ui.modeLayout.addWidget(self.ui.hideButton)
             self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
             # tools
             self.ui.toolLayout.addWidget(self.ui.penButton, 0, 0)
@@ -474,12 +465,19 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
             self.ui.toolLayout.addWidget(self.ui.deleteButton, 2, 3)
             self.ui.toolLayout.addWidget(self.ui.moveButton, 2, 4)
-        # end buttons
-        self.ui.ebLayout.addWidget(self.ui.finishedButton)
-        self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
-        self.ui.ebLayout.addWidget(self.ui.cancelButton)
-        # zoom QComboBox
-        self.ui.buttonsLayout.addWidget(self.ui.modeLabel)
+        # TODO
+        #self.ui.revealLayout.addWidget(
+        #    self.ui.frame_2, 10, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+        #)
+        self.ui.ebLayout.addWidget(self.ui.modeLabel)
+        self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
+        #spacerItem = QSpacerItem(6, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        #self.ui.modeLayout.addItem(spacerItem)
+        self.ui.modeLayout.addWidget(self.ui.finishedButton)
+        self.ui.modeLayout.addWidget(self.ui.finishNoRelaunchButton)
+        self.ui.buttonsLayout.addWidget(self.ui.markLabel)
+        #spacerItem = QSpacerItem(6, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        #self.ui.buttonsLayout.addItem(spacerItem)
         self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
 
     def viewWholePaper(self):
@@ -816,14 +814,13 @@ class Annotator(QWidget):
         # TODO: messy viz hacks
         #self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
         self.ui.keyHelpButton.setVisible(False)
+        self.ui.cancelButton.setVisible(False)
         # The view button connects to the viewWholePaper
         #self.ui.viewButton.clicked.connect(self.viewWholePaper)
         self.ui.viewButton.setVisible(False)
 
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
         self.ui.cancelButton.clicked.connect(self.close)
-        # Hide button connects to the toggleTools command
-        self.ui.hideButton.clicked.connect(self.toggleTools)
 
         # Connect the comment buttons to the comment list
         # They select the item and trigger its handleClick which fires
@@ -975,7 +972,7 @@ class Annotator(QWidget):
         # wide vs compact
         if self.parent.annotatorSettings["compact"] is True:
             log.debug("compacting UI (b/c of last use setting")
-            self.ui.hideButton.animateClick()
+            self.toggleTools()
 
     def saveWindowSettings(self):
         # TODO - delete below
