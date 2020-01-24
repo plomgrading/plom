@@ -55,7 +55,7 @@ in anyway, not sure why.
 
 Other stuff we get from pip:
 ```
-  # pip3 install --upgrade pip
+  # pip3 install --upgrade --user pip
   # python3 -m pip install --upgrade --user setuptools
   # python3 -m pip install --upgrade --user pymupdf weasyprint imutils aiohttp
   # python3 -m pip install --upgrade --user lapsolver "tensorflow<2"
