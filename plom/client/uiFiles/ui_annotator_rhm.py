@@ -34,6 +34,11 @@ class Ui_annotator_rhm(object):
         self.modeLayout.setContentsMargins(12, 3, 12, 3)
         self.modeLayout.setSpacing(3)
         self.modeLayout.setObjectName("modeLayout")
+        self.hamMenuButton = QtWidgets.QPushButton(self.frame_1)
+        self.hamMenuButton.setMinimumSize(QtCore.QSize(40, 0))
+        self.hamMenuButton.setMaximumSize(QtCore.QSize(40, 16777215))
+        self.hamMenuButton.setObjectName("hamMenuButton")
+        self.modeLayout.addWidget(self.hamMenuButton)
         self.hideButton = QtWidgets.QPushButton(self.frame_1)
         self.hideButton.setObjectName("hideButton")
         self.modeLayout.addWidget(self.hideButton, 0, QtCore.Qt.AlignRight)
@@ -294,6 +299,7 @@ class Ui_annotator_rhm(object):
     def retranslateUi(self, annotator_rhm):
         _translate = QtCore.QCoreApplication.translate
         annotator_rhm.setWindowTitle(_translate("annotator_rhm", "Annotate paper"))
+        self.hamMenuButton.setText(_translate("annotator_rhm", "三"))
         self.hideButton.setText(_translate("annotator_rhm", "Compact"))
         self.markLabel.setText(_translate("annotator_rhm", "kk out of nn"))
         self.penButton.setToolTip(_translate("annotator_rhm", "press t"))

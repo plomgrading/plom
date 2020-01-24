@@ -212,6 +212,30 @@ class Annotator(QWidget):
         self.timer = QElapsedTimer()
         self.timer.start()
 
+        # TODO: various mucking around, should be done in qtCreator
+        self.ui.hideButton.setVisible(False)
+        self.ui.buttonsLayout.addWidget(self.ui.modeLabel)
+        self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
+        # TODO: end changes for qtCreator
+
+        m = QMenu()
+        m.addAction("Next paper (ctrl-N)", self.menu1)
+        m.addAction("View whole paper", self.viewWholePaper)
+        m.addSeparator()
+        m.addAction("Compact UI", self.narrowLayout)
+        m.addAction("&Wide UI", self.wideLayout)
+        m.addSeparator()
+        m.addAction("Help", self.menu2)
+        m.addAction("Show shortcut keys... (?)", self.keyPopUp)
+        m.addAction("About Plom", self.menu1)
+        self.ui.hamMenuButton.setMenu(m)
+
+    def menu1(self):
+        print("TODO: menu placeholder 1")
+    def menu2(self):
+        print("TODO: menu placeholder 2")
+
+
     def setCurrentMarkMode(self):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
         self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
@@ -326,17 +350,16 @@ class Annotator(QWidget):
     def narrowLayout(self):
         self.ui.revealBox0.show()
         self.ui.hideableBox.hide()
+        self.ui.hideButton.setVisible(False)
         self.ui.hideButton.setText("Wide")
+        self.ui.revealLayout.addWidget(self.ui.hamMenuButton, 0, 1, 1, 2)
         self.ui.revealLayout.addWidget(
             self.ui.hideButton, 1, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
         )
+
         self.ui.revealLayout.addWidget(
             self.ui.markLabel, 2, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
         )
-        self.ui.revealLayout.addWidget(
-            self.ui.modeLabel, 3, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
-        )
-
         self.ui.revealLayout.addWidget(
             self.ui.penButton, 4, 1, Qt.AlignHCenter | Qt.AlignTop
         )
@@ -385,9 +408,12 @@ class Annotator(QWidget):
         self.ui.revealLayout.addWidget(
             self.ui.moveButton, 9, 2, Qt.AlignHCenter | Qt.AlignTop
         )
+        self.ui.revealLayout.addWidget(
+            self.ui.modeLabel, 10, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+        )
         # dropdown zoom menu thing
         self.ui.revealLayout.addWidget(
-            self.ui.zoomCB, 10, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
+            self.ui.zoomCB, 11, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
         )
 
         # end buttons
@@ -399,13 +425,14 @@ class Annotator(QWidget):
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
         self.ui.hideButton.setText("Compact")
+        self.ui.hideButton.setVisible(False)
         # right-hand mouse = 0, left-hand mouse = 1
         if self.mouseHand == 0:
             self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
             self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
             self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
-            self.ui.modeLayout.addWidget(self.ui.hideButton, 0, Qt.AlignRight)
-            self.ui.modeLayout.addWidget(self.ui.modeLabel, 0, Qt.AlignCenter)
+            self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
+            self.ui.modeLayout.addWidget(self.ui.hideButton, 0, Qt.AlignCenter)
             self.ui.modeLayout.addWidget(self.ui.markLabel, 0, Qt.AlignRight)
             # tools
             self.ui.toolLayout.addWidget(self.ui.panButton, 0, 0)
@@ -428,8 +455,9 @@ class Annotator(QWidget):
             self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
             self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
             self.ui.modeLayout.addWidget(self.ui.markLabel, 0, Qt.AlignRight)
-            self.ui.modeLayout.addWidget(self.ui.modeLabel, 0, Qt.AlignCenter)
-            self.ui.modeLayout.addWidget(self.ui.hideButton, 0, Qt.AlignRight)
+            #self.ui.modeLayout.addWidget(self.ui.modeLabel)
+            self.ui.modeLayout.addWidget(self.ui.hideButton)
+            self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
             # tools
             self.ui.toolLayout.addWidget(self.ui.penButton, 0, 0)
             self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 1)
@@ -451,6 +479,7 @@ class Annotator(QWidget):
         self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
         self.ui.ebLayout.addWidget(self.ui.cancelButton)
         # zoom QComboBox
+        self.ui.buttonsLayout.addWidget(self.ui.modeLabel)
         self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
 
     def viewWholePaper(self):
@@ -784,9 +813,12 @@ class Annotator(QWidget):
         self.ui.undoButton.clicked.connect(self.scene.undo)
         self.ui.redoButton.clicked.connect(self.scene.redo)
         # The key-help button connects to the keyPopUp command.
-        self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
+        # TODO: messy viz hacks
+        #self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
+        self.ui.keyHelpButton.setVisible(False)
         # The view button connects to the viewWholePaper
-        self.ui.viewButton.clicked.connect(self.viewWholePaper)
+        #self.ui.viewButton.clicked.connect(self.viewWholePaper)
+        self.ui.viewButton.setVisible(False)
 
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
         self.ui.cancelButton.clicked.connect(self.close)
