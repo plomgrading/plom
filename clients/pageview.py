@@ -22,8 +22,8 @@ class PageView(QGraphicsView):
         super(PageView, self).__init__(parent)
         self.parent = parent
         # Set scrollbars
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # set the area outside the groupimage to be dark-cyan.
         self.setBackgroundBrush(QBrush(Qt.darkCyan))
         # Nice antialiasing and scaling of objects (esp the groupimage)
