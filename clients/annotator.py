@@ -395,52 +395,47 @@ class Annotator(QWidget):
             self.ui.modeLayout.addWidget(self.ui.modeLabel)
             self.ui.modeLayout.addWidget(self.ui.markLabel)
             # tools
-            self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 4, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 5, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.tickButton, 2, 4, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.commentButton, 2, 5, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.boxButton, 3, 4, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.commentDownButton, 3, 5, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.penButton, 0, 6, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.textButton, 2, 6, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.lineButton, 3, 6, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.deleteButton, 3, 3, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.undoButton, 2, 3, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 3, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.panButton, 0, 2, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 2, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 2, 1, 1)
-            # zoom QComboBox
-            self.ui.toolLayout.addWidget(self.ui.zoomCB, 4, 5, 1, 2)
-
-            # end buttons
-            self.ui.ebLayout.addWidget(self.ui.finishedButton)
-            self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
-            self.ui.ebLayout.addWidget(self.ui.cancelButton)
+            self.ui.toolLayout.addWidget(self.ui.panButton, 0, 0)
+            self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 1)
+            self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 2)
+            self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 3)
+            self.ui.toolLayout.addWidget(self.ui.penButton, 0, 4)
+            self.ui.toolLayout.addWidget(self.ui.zoomButton, 1, 0)
+            self.ui.toolLayout.addWidget(self.ui.undoButton, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.tickButton, 1, 2)
+            self.ui.toolLayout.addWidget(self.ui.commentButton, 1, 3)
+            self.ui.toolLayout.addWidget(self.ui.textButton, 1, 4)
+            self.ui.toolLayout.addWidget(self.ui.moveButton, 2, 0)
+            self.ui.toolLayout.addWidget(self.ui.deleteButton, 2, 1)
+            self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
+            self.ui.toolLayout.addWidget(self.ui.commentDownButton, 2, 3)
+            self.ui.toolLayout.addWidget(self.ui.lineButton, 2, 4)
         else:  # left-hand mouse
             self.ui.modeLayout.addWidget(self.ui.markLabel)
             self.ui.modeLayout.addWidget(self.ui.modeLabel)
             self.ui.modeLayout.addWidget(self.ui.hideButton)
-
-            self.ui.toolLayout.addWidget(self.ui.commentButton, 2, 5, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.penButton, 0, 2, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.undoButton, 2, 7, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 8, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 8, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.panButton, 0, 8, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.lineButton, 3, 2, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.zoomCB, 4, 7, 1, 2)
-            self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 7, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.deleteButton, 3, 7, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.textButton, 2, 2, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 6, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.tickButton, 2, 6, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.boxButton, 3, 6, 1, 1)
-
-            # end buttons
-            self.ui.ebLayout.addWidget(self.ui.finishedButton)
-            self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
-            self.ui.ebLayout.addWidget(self.ui.cancelButton)
+            # tools
+            self.ui.toolLayout.addWidget(self.ui.penButton, 0, 0)
+            self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 1)
+            self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 2)
+            self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 3)
+            self.ui.toolLayout.addWidget(self.ui.panButton, 0, 4)
+            self.ui.toolLayout.addWidget(self.ui.textButton, 1, 0)
+            self.ui.toolLayout.addWidget(self.ui.commentButton, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.tickButton, 1, 2)
+            self.ui.toolLayout.addWidget(self.ui.undoButton, 1, 3)
+            self.ui.toolLayout.addWidget(self.ui.zoomButton, 1, 4)
+            self.ui.toolLayout.addWidget(self.ui.lineButton, 2, 0)
+            self.ui.toolLayout.addWidget(self.ui.commentDownButton, 2, 1)
+            self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
+            self.ui.toolLayout.addWidget(self.ui.deleteButton, 2, 3)
+            self.ui.toolLayout.addWidget(self.ui.moveButton, 2, 4)
+        # end buttons
+        self.ui.ebLayout.addWidget(self.ui.finishedButton)
+        self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
+        self.ui.ebLayout.addWidget(self.ui.cancelButton)
+        # zoom QComboBox
+        self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
 
     def viewWholePaper(self):
         # grab the files if needed.
@@ -448,7 +443,8 @@ class Annotator(QWidget):
             self.testViewFiles = self.parent.viewWholePaper()
         # if we haven't built a testview, built it now
         if self.testView is None:
-            self.testView = TestView(self, self.testViewFiles)
+            tn = int(self.tgv[1:4])  # get test number from tgv
+            self.testView = TestView(self, self.testViewFiles, tn)
         else:
             # must have closed it, so re-show it.
             self.testView.show()
@@ -1096,9 +1092,9 @@ class Annotator(QWidget):
 
     def setZoomComboBox(self):
         self.ui.zoomCB.addItem("User")
-        self.ui.zoomCB.addItem("Fit Page")
-        self.ui.zoomCB.addItem("Fit Width")
-        self.ui.zoomCB.addItem("Fit Height")
+        self.ui.zoomCB.addItem("Fit page")
+        self.ui.zoomCB.addItem("Fit width")
+        self.ui.zoomCB.addItem("Fit height")
         self.ui.zoomCB.addItem("200%")
         self.ui.zoomCB.addItem("150%")
         self.ui.zoomCB.addItem("100%")
@@ -1112,11 +1108,11 @@ class Annotator(QWidget):
         self.ui.zoomCB.blockSignals(old)
 
     def zoomCBChanged(self):
-        if self.ui.zoomCB.currentText() == "Fit Page":
+        if self.ui.zoomCB.currentText() == "Fit page":
             self.view.zoomAll()
-        elif self.ui.zoomCB.currentText() == "Fit Width":
+        elif self.ui.zoomCB.currentText() == "Fit width":
             self.view.zoomWidth()
-        elif self.ui.zoomCB.currentText() == "Fit Height":
+        elif self.ui.zoomCB.currentText() == "Fit height":
             self.view.zoomHeight()
         elif self.ui.zoomCB.currentText() == "100%":
             self.view.zoomReset(1)

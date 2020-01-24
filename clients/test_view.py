@@ -19,7 +19,7 @@ from examviewwindow import ExamViewWindow
 
 
 class TestView(QWidget):
-    def __init__(self, parent, groups):
+    def __init__(self, parent, groups, testNumber):
         super(TestView, self).__init__()
         self.parent = parent
         self.numberGroups = len(groups)
@@ -29,6 +29,8 @@ class TestView(QWidget):
         self.connectButtons()
         self.tabs = {}
         self.buildTabs()
+        self.setWindowTitle("Original scans of test {}".format(testNumber))
+        print("Original scans of test {}".format(testNumber))
         self.show()
 
     def connectButtons(self):
