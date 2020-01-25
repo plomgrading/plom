@@ -409,6 +409,10 @@ class ExamModel(QStandardItemModel):
         # Do not erase any files: could still be uploading
         self._clearPaperDir(r)
 
+    def removePaper(self, task):
+        r = self._findTask(task)
+        self.removeRow(r)
+
     def countReadyToMark(self):
         """Count how many are untouched or reverted."""
         count = 0
@@ -671,6 +675,10 @@ class MarkerClient(QWidget):
             [imageList, anImage, plImage] = messenger.MrequestImages(task)
         except PlomSeriousException as e:
             self.throwSeriousError(e)
+            return
+        except PlomBenignException as e:
+            self.throwBenign(e)
+            self.exM.removePaper(task)
             return
 
         paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)

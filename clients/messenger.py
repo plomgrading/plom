@@ -823,9 +823,7 @@ def MrequestImages(code):
         elif response.status_code == 404:
             raise PlomSeriousException("Cannot find image file for {}.".format(code))
         elif response.status_code == 409:
-            raise PlomSeriousException(
-                "Another user has the image for {}. This should not happen".format(code)
-            )
+            raise PlomBenignException("Another user has the image for {}.".format(code))
         else:
             raise PlomSeriousException("Some other sort of error {}".format(e))
     finally:
