@@ -125,10 +125,7 @@ class Chooser(QDialog):
         try:
             messenger.startMessenger()
         except PlomBenignException as e:
-            ErrorMessage(
-                "Could not connect to server.\n\n"
-                "{}".format(e)
-            ).exec_()
+            ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
             return
 
         try:
@@ -143,6 +140,17 @@ class Chooser(QDialog):
         except PlomAuthenticationException as e:
             ErrorMessage("Could not authenticate: {}".format(e)).exec_()
             return
+        except PlomExistingLoginException as e:
+            ErrorMessage("You appear to be logged in already").exec_()
+            if (
+                SimpleMessage(
+                    "Should I force-logout the existing authorisation?"
+                ).exec_()
+                == QMessageBox.Yes
+            ):
+                messenger.clearAuthorisation(user, pwd)
+            return
+
         except PlomSeriousException as e:
             ErrorMessage(
                 "Could not get authentication token.\n\n"
@@ -258,40 +266,41 @@ class Chooser(QDialog):
             return
         mport = self.ui.mportSB.value()
         # save those settings
-        #self.saveDetails()   # TODO?
+        # self.saveDetails()   # TODO?
 
         # TODO: might be nice, but needs another thread?
-        #self.ui.infoLabel.setText("connecting...")
-        #self.ui.infoLabel.repaint()
+        # self.ui.infoLabel.setText("connecting...")
+        # self.ui.infoLabel.repaint()
 
         # Have Messenger login into to server
         messenger.setServerDetails(server, mport)
         try:
             r = messenger.startMessenger()
         except PlomBenignException as e:
-            ErrorMessage(
-                "Could not connect to server.\n\n"
-                "{}".format(e)
-            ).exec_()
+            ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
             return
         self.ui.infoLabel.setText(r)
 
         info = messenger.getInfoGeneral()
-        self.ui.markGBox.setTitle('Marking information for “{}”'.format(info["testName"]))
+        self.ui.markGBox.setTitle(
+            "Marking information for “{}”".format(info["testName"])
+        )
         pg = self.getpg()
         v = self.getv()
         self.ui.pgSB.setVisible(False)
         self.ui.vSB.setVisible(False)
 
         self.ui.vDrop.clear()
-        self.ui.vDrop.addItems([str(x+1) for x in range(0, info["numVersions"])])
+        self.ui.vDrop.addItems([str(x + 1) for x in range(0, info["numVersions"])])
         if v:
             if v >= 1 and v <= info["numVersions"]:
                 self.ui.vDrop.setCurrentIndex(v - 1)
         self.ui.vDrop.setVisible(True)
 
         self.ui.pgDrop.clear()
-        self.ui.pgDrop.addItems(["Q{}".format(x+1) for x in range(0, info["numGroups"])])
+        self.ui.pgDrop.addItems(
+            ["Q{}".format(x + 1) for x in range(0, info["numGroups"])]
+        )
         if pg:
             if pg >= 1 and pg <= info["numGroups"]:
                 self.ui.pgDrop.setCurrentIndex(pg - 1)
@@ -299,6 +308,8 @@ class Chooser(QDialog):
         # TODO should we also let people type in?
         self.ui.pgDrop.setEditable(False)
         self.ui.vDrop.setEditable(False)
+        # put focus at password line-edit
+        self.ui.passwordLE.setFocus(True)
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):
