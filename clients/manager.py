@@ -985,10 +985,13 @@ class Manager(QWidget):
         for dat in mrList:
             self.ui.reviewTW.insertRow(r)
             # rjust(4) entries so that they can sort like integers... without actually being integers
-            for k in range(len(dat)):
+            for k in range(7):
                 self.ui.reviewTW.setItem(
                     r, k, QTableWidgetItem("{}".format(dat[k]).rjust(4))
                 )
+            if dat[4] == "reviewer":
+                for k in range(7):
+                    self.ui.reviewTW.item(r, k).setBackground(QBrush(Qt.green))
             r += 1
 
     def reviewAnnotated(self):
