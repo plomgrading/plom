@@ -144,7 +144,7 @@ class SimpleMessage(QMessageBox):
 
 
 class ManagerDialog(QDialog):
-    """Simple dialog to set manager (+scanner) password"""
+    """Simple dialog to set manager (+scanner, reviewer) password"""
 
     def __init__(self, name):
         super(ManagerDialog, self).__init__()
@@ -152,7 +152,7 @@ class ManagerDialog(QDialog):
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Please enter {} password".format(self.name))
+        self.setWindowTitle('Please enter "{}" password'.format(self.name))
         self.pwL = QLabel("Password:")
         self.pwL2 = QLabel("and again:")
         self.pwLE = QLineEdit("")
@@ -173,6 +173,7 @@ class ManagerDialog(QDialog):
         grid.addWidget(self.pwCB, 2, 3)
         grid.addWidget(self.pwL2, 3, 1)
         grid.addWidget(self.pwLE2, 3, 2)
+        grid.addWidget(self.cnB, 4, 1)
         grid.addWidget(self.okB, 4, 3)
 
         self.setLayout(grid)
@@ -311,12 +312,12 @@ class userManager(QWidget):
         # Populate the table.
         r = 0
         ulist = []
-        if "manager" in self.users:
-            ulist.append("manager")
-        if "scanner" in self.users:
-            ulist.append("scanner")
+        for x in ["manager", "scanner", "reviewer"]:
+            if x in self.users:
+                ulist.append(x)
+
         for u in sorted(self.users.keys()):
-            if u not in ["manager", "scanner"]:
+            if u not in ["manager", "scanner", "reviewer"]:
                 ulist.append(u)
 
         for u in ulist:
@@ -347,6 +348,10 @@ class userManager(QWidget):
         self.addB = QPushButton("set scanner")
         self.addB.clicked.connect(lambda: self.setManager("scanner"))
         grid.addWidget(self.addB, 6, 2)
+
+        self.addB = QPushButton("set reviewer")
+        self.addB.clicked.connect(lambda: self.setManager("reviewer"))
+        grid.addWidget(self.addB, 6, 3)
 
         self.addB = QPushButton("add user")
         self.addB.clicked.connect(lambda: self.addUser())
