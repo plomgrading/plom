@@ -222,11 +222,11 @@ class MarkHandler:
         else:
             return web.Response(status=401)
 
-    # @routes.delete("/MK/revert")
-    async def MrevertQuestion(self, request):
+    # @routes.delete("/MK/review")
+    async def MreviewQuestion(self, request):
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
-            if self.server.MrevertQuestion(
+            if self.server.MreviewQuestion(
                 data["testNumber"], data["questionNumber"], data["version"]
             ):
                 return web.Response(status=200)
@@ -249,4 +249,4 @@ class MarkHandler:
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}", self.MgetWholePaper)
-        router.add_delete("/MK/revert", self.MrevertQuestion)
+        router.add_delete("/MK/review", self.MreviewQuestion)

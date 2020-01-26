@@ -648,7 +648,7 @@ class MarkerClient(QWidget):
         self.shutDownError()
 
     def throwBenign(self, err):
-        ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
+        ErrorMessage("{}".format(err)).exec_()
 
     def getMaxMark(self):
         """Get max mark from server and set."""

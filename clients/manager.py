@@ -973,9 +973,6 @@ class Manager(QWidget):
                 'Please set at least one of "Question", "Version", "User" to specific values.'
             ).exec_()
             return
-        print("Question: ", self.ui.questionCB.currentText())
-        print("Version: ", self.ui.versionCB.currentText())
-        print("User: ", self.ui.userCB.currentText())
         mrList = managerMessenger.getMarkReview(
             self.ui.questionCB.currentText(),
             self.ui.versionCB.currentText(),
@@ -1007,8 +1004,8 @@ class Manager(QWidget):
             fh.write(img)
             rvw = ReviewViewWindow(self, [fh.name])
             if rvw.exec() == QDialog.Accepted:
-                if rvw.action == "revert":
-                    managerMessenger.MrevertQuestion(test, question, version)
+                if rvw.action == "review":
+                    managerMessenger.MreviewQuestion(test, question, version)
 
 
 # Pop up a dialog for unhandled exceptions and then exit

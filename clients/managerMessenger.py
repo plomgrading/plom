@@ -1039,11 +1039,11 @@ def RgetAnnotatedImage(testNumber, questionNumber, version):
     return img
 
 
-def MrevertQuestion(testNumber, questionNumber, version):
+def MreviewQuestion(testNumber, questionNumber, version):
     SRmutex.acquire()
     try:
         response = session.delete(
-            "https://{}:{}/MK/revert".format(server, message_port),
+            "https://{}:{}/MK/review".format(server, message_port),
             verify=False,
             json={
                 "user": _userName,

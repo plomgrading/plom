@@ -1580,6 +1580,25 @@ class PlomDB:
                 pageFiles.append(pref.fileName)
         return [True, pageNames] + pageFiles
 
+    def MreviewQuestion(self, testNumber, questionNumber, version):
+        # shift ownership to "reviewer"
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        qref = QuestionData.get_or_none(
+            QuestionData.test == tref,
+            QuestionData.questionNumber == questionNumber,
+            QuestionData.version == version,
+            QuestionData.marked == True,
+        )
+        if qref is None:
+            return [False]
+        with plomdb.atomic():
+            qref.username = "reviewer"
+            qref.time = datetime.now()
+            qref.save()
+        return [True]
+
     def MrevertQuestion(self, testNumber, questionNumber, version):
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:
