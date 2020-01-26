@@ -144,7 +144,7 @@ class Chooser(QDialog):
             ErrorMessage("You appear to be logged in already").exec_()
             if (
                 SimpleMessage(
-                    "Should I force-logout the existing authorisation?"
+                    "Should I force-logout the existing authorisation? (and then you can try to log in again)"
                 ).exec_()
                 == QMessageBox.Yes
             ):
