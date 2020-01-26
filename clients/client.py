@@ -308,8 +308,11 @@ class Chooser(QDialog):
         # TODO should we also let people type in?
         self.ui.pgDrop.setEditable(False)
         self.ui.vDrop.setEditable(False)
-        # put focus at password line-edit
-        self.ui.passwordLE.setFocus(True)
+        # put focus at username or password line-edit
+        if len(self.ui.userLE.text()) > 0:
+            self.ui.passwordLE.setFocus(True)
+        else:
+            self.ui.userLE.setFocus(True)
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):
