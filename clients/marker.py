@@ -105,6 +105,7 @@ class BackgroundDownloader(QThread):
             except PlomSeriousException as err:
                 self.downloadFail.emit(str(err))
                 self.quit()
+                return
 
             try:
                 image, tags = messenger.MclaimThisTask(test)
@@ -116,7 +117,6 @@ class BackgroundDownloader(QThread):
                 self.downloadFail.emit(str(err))
                 self.quit()
 
-        # Return message should be [ACK, True, code, temp-filename, tags]
         # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
         fname = os.path.join(self.workingDirectory, test + ".png")
         # save it
@@ -642,7 +642,7 @@ class MarkerClient(QWidget):
 
     def throwSeriousError(self, err):
         ErrorMessage(
-            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down totaller.'.format(
+            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down Marker.'.format(
                 err
             )
         ).exec_()
@@ -723,8 +723,13 @@ class MarkerClient(QWidget):
             self.throwSeriousError(err)
 
     def requestNext(self):
-        """Ask the server for an unmarked paper.  Get file, add to
-        the list of papers and update the image.
+        """Ask server for unmarked paper, get file, add to list, update view.
+
+        Retry a view times in case two clients are asking for same.
+
+        Side effects: on success, updates the table of tasks
+        TODO: return value on success?  Currently None.
+        TODO: rationalize return values
         """
         attempts = 0
         while True:
@@ -734,13 +739,9 @@ class MarkerClient(QWidget):
             if attempts > 5:
                 return
             # ask server for tgv of next task
-            try:
-                test = messenger.MaskNextTask(self.pageGroup, self.version)
-                if not test:
-                    return False
-            except PlomSeriousException as err:
-                self.throwSeriousError(err)
-
+            test = messenger.MaskNextTask(self.pageGroup, self.version)
+            if not test:
+                return False
             try:
                 [image, tags] = messenger.MclaimThisTask(test)
                 break
