@@ -91,7 +91,7 @@ def requestAndSaveToken(user, pw):
             raise PlomAuthenticationException("You are not authenticated.") from None
         elif response.status_code == 400:  # API error
             raise PlomAPIException(response.json()) from None
-        elif response.status_code == 409:  # API error
+        elif response.status_code == 409:
             raise PlomExistingLoginException(response.json()) from None
         else:
             raise PlomSeriousException(
@@ -125,8 +125,6 @@ def clearAuthorisation(user, pw):
             ) from None
     finally:
         SRmutex.release()
-
-    return True
 
 
 def closeUser():
