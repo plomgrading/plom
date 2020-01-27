@@ -745,6 +745,7 @@ class MarkerClient(QWidget):
                     return False
             except PlomSeriousException as err:
                 self.throwSeriousError(err)
+                continue
 
             try:
                 [image, tags] = messenger.MclaimThisTask(test)
