@@ -747,6 +747,10 @@ def MprogressCount(pg, v):
 
 
 def MaskNextTask(pg, v):
+    """Ask server for a new marking task, return tgv or None.
+
+    None indicated no more tasks available.
+    """
     SRmutex.acquire()
     try:
         response = session.get(
@@ -759,7 +763,7 @@ def MaskNextTask(pg, v):
             return None
         response.raise_for_status()
         # convert the content of the response to a textfile for identifier
-        progress = response.json()
+        tgv = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.") from None
@@ -770,7 +774,7 @@ def MaskNextTask(pg, v):
     finally:
         SRmutex.release()
 
-    return progress
+    return tgv
 
 
 def MclaimThisTask(code):
