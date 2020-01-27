@@ -739,14 +739,9 @@ class MarkerClient(QWidget):
             if attempts > 5:
                 return
             # ask server for tgv of next task
-            try:
-                test = messenger.MaskNextTask(self.pageGroup, self.version)
-                if not test:
-                    return False
-            except PlomSeriousException as err:
-                self.throwSeriousError(err)
-                continue
-
+            test = messenger.MaskNextTask(self.pageGroup, self.version)
+            if not test:
+                return False
             try:
                 [image, tags] = messenger.MclaimThisTask(test)
                 break
