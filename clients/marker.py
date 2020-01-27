@@ -723,8 +723,13 @@ class MarkerClient(QWidget):
             self.throwSeriousError(err)
 
     def requestNext(self):
-        """Ask the server for an unmarked paper.  Get file, add to
-        the list of papers and update the image.
+        """Ask server for unmarked paper, get file, add to list, update view.
+
+        Retry a view times in case two clients are asking for same.
+
+        Side effects: on success, updates the table of tasks
+        TODO: return value on success?  Currently None.
+        TODO: rationalize return values
         """
         attempts = 0
         while True:
