@@ -141,10 +141,13 @@ class Chooser(QDialog):
             ErrorMessage("Could not authenticate: {}".format(e)).exec_()
             return
         except PlomExistingLoginException as e:
-            ErrorMessage("You appear to be logged in already").exec_()
             if (
                 SimpleMessage(
-                    "Should I force-logout the existing authorisation? (and then you can try to log in again)"
+                    "You appear to be already logged in!\n\n"
+                    "  * Perhaps a previous session crashed?\n"
+                    "  * Or are you sharing accounts? (dangerous!)\n\n"
+                    "Should I force-logout the existing authorisation?"
+                    " (and then you can try to log in again)"
                 ).exec_()
                 == QMessageBox.Yes
             ):
