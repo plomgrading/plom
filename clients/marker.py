@@ -116,7 +116,6 @@ class BackgroundDownloader(QThread):
                 self.downloadFail.emit(str(err))
                 self.quit()
 
-        # Return message should be [ACK, True, code, temp-filename, tags]
         # Code is tXXXXgYYvZ - so save as tXXXXgYYvZ.png
         fname = os.path.join(self.workingDirectory, test + ".png")
         # save it
