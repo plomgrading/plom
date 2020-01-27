@@ -105,6 +105,7 @@ class BackgroundDownloader(QThread):
             except PlomSeriousException as err:
                 self.downloadFail.emit(str(err))
                 self.quit()
+                return
 
             try:
                 image, tags = messenger.MclaimThisTask(test)
