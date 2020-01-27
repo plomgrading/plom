@@ -36,7 +36,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from uiFiles.ui_iic import Ui_IIC
+from uiFiles.ui_manager import Ui_Manager
 from useful_classes import ErrorMessage, SimpleMessage
 from test_view import WholeTestView, GroupView
 from unknownpageview import UnknownViewWindow
@@ -256,7 +256,7 @@ class Manager(QWidget):
                 __version__, self.APIVersion
             )
         )
-        self.ui = Ui_IIC()
+        self.ui = Ui_Manager()
         self.ui.setupUi(self)
         self.ui.passwordLE.setFocus(True)
         self.connectButtons()
@@ -327,14 +327,10 @@ class Manager(QWidget):
             ).exec_()
             return
 
-        self.ui.scanTab.setEnabled(True)
-        self.ui.overallTab.setEnabled(True)
-        self.ui.idTab.setEnabled(True)
-        self.ui.progressTab.setEnabled(True)
-        self.ui.unknownTab.setEnabled(True)
-        self.ui.collideTab.setEnabled(True)
-        self.ui.discardTab.setEnabled(True)
-        self.ui.reviewTab.setEnabled(True)
+        self.ui.scanningAllTab.setEnabled(True)
+        self.ui.progressAllTab.setEnabled(True)
+        self.ui.reviewAllTab.setEnabled(True)
+
         self.ui.userGBox.setEnabled(False)
         self.ui.serverGBox.setEnabled(False)
         self.ui.loginButton.setEnabled(False)
