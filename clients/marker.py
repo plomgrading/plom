@@ -642,7 +642,7 @@ class MarkerClient(QWidget):
 
     def throwSeriousError(self, err):
         ErrorMessage(
-            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down totaller.'.format(
+            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down Marker.'.format(
                 err
             )
         ).exec_()
