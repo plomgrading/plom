@@ -139,6 +139,7 @@ class Server(object):
         IDdidNotFinish,
         IDreturnIDdTask,
         IDdeletePredictions,
+        IDreviewID,
     )
     from plomServer.serverMark import (
         MgetAllMax,
@@ -182,6 +183,7 @@ class Server(object):
         RgetOriginalFiles,
         RgetAnnotatedFiles,
         RgetMarkReview,
+        RgetIDReview,
         RgetAnnotatedImage,
     )
 

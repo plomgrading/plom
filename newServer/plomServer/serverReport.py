@@ -55,5 +55,9 @@ def RgetMarkReview(self, filterQ, filterV, filterU):
     return self.DB.RgetMarkReview(filterQ, filterV, filterU)
 
 
+def RgetIDReview(self):
+    return self.DB.RgetIDReview()
+
+
 def RgetAnnotatedImage(self, testNumber, questionNumber, version):
     return self.DB.RgetAnnotatedImage(testNumber, questionNumber, version)

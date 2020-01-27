@@ -1005,6 +1005,27 @@ def getMarkReview(filterQ, filterV, filterU):
     return rval
 
 
+def getIDReview():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/idReview".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token,},
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
 def RgetAnnotatedImage(testNumber, questionNumber, version):
     SRmutex.acquire()
     try:
@@ -1042,7 +1063,7 @@ def RgetAnnotatedImage(testNumber, questionNumber, version):
 def MreviewQuestion(testNumber, questionNumber, version):
     SRmutex.acquire()
     try:
-        response = session.delete(
+        response = session.patch(
             "https://{}:{}/MK/review".format(server, message_port),
             verify=False,
             json={
@@ -1063,6 +1084,28 @@ def MreviewQuestion(testNumber, questionNumber, version):
                 "Could not find t/q/v = {}/{}/{}.".format(
                     testNumber, questionNumber, version
                 )
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+
+def IDreviewID(testNumber):
+    SRmutex.acquire()
+    try:
+        response = session.patch(
+            "https://{}:{}/ID/review".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token, "testNumber": testNumber,},
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        elif response.status_code == 404:  # authentication error
+            raise PlomAuthenticationException(
+                "Could not find test = {}.".format(testNumber)
             )
         else:
             raise PlomSeriousException("Some other sort of error {}".format(e))

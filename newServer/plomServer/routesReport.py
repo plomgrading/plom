@@ -177,6 +177,17 @@ class ReportHandler:
         else:
             return web.Response(status=401)
 
+    async def RgetIDReview(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            rmsg = self.server.RgetIDReview()
+            return web.json_response(rmsg, status=200)
+        else:
+            return web.Response(status=401)
+
     async def RgetAnnotatedImage(self, request):
         data = await request.json()
         if (
@@ -208,4 +219,5 @@ class ReportHandler:
         router.add_get("/REP/annotatedFiles/{test}", self.RgetAnnotatedFiles)
         router.add_get("/REP/userList", self.RgetUserList)
         router.add_get("/REP/markReview", self.RgetMarkReview)
+        router.add_get("/REP/idReview", self.RgetIDReview)
         router.add_get("/REP/annotatedImage", self.RgetAnnotatedImage)

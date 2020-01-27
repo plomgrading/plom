@@ -72,3 +72,7 @@ def IDdeletePredictions(self):
         fh.write("test, id\n")
 
     return True
+
+
+def IDreviewID(self, testNumber):
+    return self.DB.IDreviewID(testNumber)

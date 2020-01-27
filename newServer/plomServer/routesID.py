@@ -156,6 +156,17 @@ class IDHandler:
         else:
             return web.Response(status=401)
 
+    # @routes.patch("/ID/review")
+    async def IDreviewID(self, request):
+        data = await request.json()
+        if self.server.validate(data["user"], data["token"]):
+            if self.server.IDreviewID(data["testNumber"]):
+                return web.Response(status=200)
+            else:
+                return web.Response(status=404)
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_get("/ID/progress", self.IDprogressCount)
         router.add_get("/ID/classlist", self.IDgetClasslist)
@@ -168,3 +179,4 @@ class IDHandler:
         router.add_delete("/ID/tasks/{task}", self.IDdidNotFinishTask)
         router.add_get("/ID/randomImage", self.IDgetRandomImage)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
+        router.add_patch("/ID/review", self.IDreviewID)

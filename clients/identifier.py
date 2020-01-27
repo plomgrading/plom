@@ -402,6 +402,10 @@ class IDClient(QWidget):
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
+        except PlomBenignException as e:
+            self.throwBenign(e)
+            # self.exM.removePaper(r)
+            return
 
         # Image names = "i<testnumber>.<imagenumber>.png"
         inames = []

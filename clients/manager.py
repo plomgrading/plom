@@ -273,6 +273,7 @@ class Manager(QWidget):
         self.ui.refreshUButton.clicked.connect(self.refreshUList)
         self.ui.refreshCButton.clicked.connect(self.refreshCList)
         self.ui.refreshDButton.clicked.connect(self.refreshDList)
+        self.ui.refreshIDB.clicked.connect(self.refreshIDRev)
         self.ui.removePageB.clicked.connect(self.removePage)
         self.ui.subsPageB.clicked.connect(self.subsPage)
         self.ui.actionUButton.clicked.connect(self.doUActions)
@@ -344,6 +345,7 @@ class Manager(QWidget):
         self.initCollideTab()
         self.initDiscardTab()
         self.initRevTab()
+        self.initRevIDTab()
 
     # -------------------
     def getTPQV(self):
@@ -1005,6 +1007,55 @@ class Manager(QWidget):
             if rvw.exec() == QDialog.Accepted:
                 if rvw.action == "review":
                     managerMessenger.MreviewQuestion(test, question, version)
+                    self.ui.reviewTW.item(r, 4).setText("reviewer")
+
+    def initRevIDTab(self):
+        self.ui.reviewIDTW.setColumnCount(5)
+        self.ui.reviewIDTW.setHorizontalHeaderLabels(
+            ["Test", "Username", "When", "Student ID", "Student Name"]
+        )
+        self.ui.reviewIDTW.setSortingEnabled(True)
+        self.ui.reviewIDTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.reviewIDTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.reviewIDTW.activated.connect(self.reviewIDd)
+
+    def refreshIDRev(self):
+        irList = managerMessenger.getIDReview()
+        self.ui.reviewIDTW.clearContents()
+        self.ui.reviewIDTW.setRowCount(0)
+        r = 0
+        for dat in irList:
+            print("inserting ", dat)
+            self.ui.reviewIDTW.insertRow(r)
+            # rjust(4) entries so that they can sort like integers... without actually being integers
+            for k in range(5):
+                self.ui.reviewIDTW.setItem(
+                    r, k, QTableWidgetItem("{}".format(dat[k]).rjust(4))
+                )
+            if dat[1] == "reviewer":
+                for k in range(5):
+                    self.ui.reviewIDTW.item(r, k).setBackground(QBrush(Qt.green))
+            r += 1
+
+    def reviewIDd(self):
+        rvi = self.ui.reviewIDTW.selectedIndexes()
+        if len(rvi) == 0:
+            return
+        r = rvi[0].row()
+        test = int(self.ui.reviewIDTW.item(r, 0).text())
+        imageList = managerMessenger.IDrequestImage(test)
+        inames = []
+        with tempfile.TemporaryDirectory() as td:
+            for i in range(len(imageList)):
+                tmp = os.path.join(td, "id.{}.png".format(i))
+                inames.append(tmp)
+                with open(tmp, "wb+") as fh:
+                    fh.write(imageList[i])
+            rvw = ReviewViewWindow(self, inames, "ID pages")
+            if rvw.exec() == QDialog.Accepted:
+                if rvw.action == "review":
+                    self.ui.reviewIDTW.item(r, 1).setText("reviewer")
+                    managerMessenger.IDreviewID(test)
 
 
 # Pop up a dialog for unhandled exceptions and then exit

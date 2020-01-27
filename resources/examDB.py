@@ -1106,6 +1106,21 @@ class PlomDB:
             return [False]
         return [True, qref.annotatedFile]
 
+    def RgetIDReview(self):
+        rval = []
+        query = IDData.select().where(IDData.identified == True)
+        for x in query:
+            rval.append(
+                [
+                    x.test.testNumber,
+                    x.username,
+                    x.time.strftime("%y:%m:%d-%H:%M:%S"),
+                    x.studentID,
+                    x.studentName,
+                ]
+            )
+        return rval
+
     # ------------------
     # For user login - we reset all their stuff that is out
 
@@ -1308,6 +1323,20 @@ class PlomDB:
         for p in gref.pages.order_by(Page.pageNumber):
             rval.append(p.fileName)
         return rval
+
+    def IDreviewID(self, testNumber):
+        # shift ownership to "reviewer"
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        iref = IDData.get_or_none(IDData.test == tref, IDData.identified == True,)
+        if iref is None:
+            return [False]
+        with plomdb.atomic():
+            iref.username = "reviewer"
+            iref.time = datetime.now()
+            iref.save()
+        return [True]
 
     # ------------------
     # Marker stuff

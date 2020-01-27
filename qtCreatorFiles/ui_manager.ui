@@ -240,7 +240,7 @@
        <item>
         <widget class="QTabWidget" name="scanTabW">
          <property name="enabled">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <property name="tabPosition">
           <enum>QTabWidget::North</enum>
@@ -250,7 +250,7 @@
          </property>
          <widget class="QWidget" name="scanTab">
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <attribute name="title">
            <string>&amp;Scan Status</string>
@@ -380,7 +380,7 @@
          </widget>
          <widget class="QWidget" name="unknownTab">
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <attribute name="title">
            <string>&amp;Unknown Pages</string>
@@ -424,7 +424,7 @@
          </widget>
          <widget class="QWidget" name="collideTab">
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <attribute name="title">
            <string>&amp;Colliding Pages</string>
@@ -468,7 +468,7 @@
          </widget>
          <widget class="QWidget" name="discardTab">
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <attribute name="title">
            <string>&amp;Discarded Pages</string>
@@ -525,14 +525,14 @@
        <item>
         <widget class="QTabWidget" name="progressTabW">
          <property name="enabled">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <property name="currentIndex">
           <number>0</number>
          </property>
          <widget class="QWidget" name="overallTab">
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <attribute name="title">
            <string>&amp;Overall Progress</string>
@@ -592,7 +592,7 @@
          </widget>
          <widget class="QWidget" name="progressTab">
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <attribute name="title">
            <string>&amp;Marking Progress</string>
@@ -642,12 +642,12 @@
           </layout>
          </widget>
          <widget class="QWidget" name="idTab">
-           <attribute name="title">
-            <string>&amp;ID Progress</string>
-           </attribute>
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
+          <attribute name="title">
+           <string>&amp;ID Progress</string>
+          </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_10">
            <item>
             <widget class="QGroupBox" name="groupBox_2">
@@ -839,7 +839,7 @@
          </widget>
          <widget class="QWidget" name="tab_2">
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <attribute name="title">
            <string>&amp;Totalling Progress</string>
@@ -864,7 +864,7 @@
          </property>
          <widget class="QWidget" name="reviewMTab">
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <attribute name="title">
            <string>Review &amp;Marking</string>
@@ -979,7 +979,17 @@
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_18">
            <item>
-            <widget class="QTableWidget" name="reviewIDTW"/>
+            <widget class="QTableWidget" name="reviewIDTW">
+             <property name="sortingEnabled">
+              <bool>true</bool>
+             </property>
+             <attribute name="horizontalHeaderStretchLastSection">
+              <bool>true</bool>
+             </attribute>
+             <attribute name="verticalHeaderVisible">
+              <bool>false</bool>
+             </attribute>
+            </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_16">
@@ -1009,14 +1019,18 @@
          </widget>
          <widget class="QWidget" name="reviewTTab">
           <property name="enabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <attribute name="title">
            <string>Review &amp;Totalling</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_20">
            <item>
-            <widget class="QTableWidget" name="reviewTOTTW"/>
+            <widget class="QTableWidget" name="reviewTOTTW">
+             <attribute name="horizontalHeaderCascadingSectionResizes">
+              <bool>true</bool>
+             </attribute>
+            </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_17">

@@ -222,7 +222,7 @@ class MarkHandler:
         else:
             return web.Response(status=401)
 
-    # @routes.delete("/MK/review")
+    # @routes.patch("/MK/review")
     async def MreviewQuestion(self, request):
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
@@ -249,4 +249,4 @@ class MarkHandler:
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}", self.MgetWholePaper)
-        router.add_delete("/MK/review", self.MreviewQuestion)
+        router.add_patch("/MK/review", self.MreviewQuestion)
