@@ -173,12 +173,12 @@ class TestGroupSelect(QDialog):
 
         fg = QFormLayout()
         self.tsb = QSpinBox()
-        self.tsb.setRange(1, info["numTests"])
+        self.tsb.setRange(1, info["numberOfTests"])
         self.tsb.setValue(1)
         fg.addRow("Select test:", self.tsb)
         if gn is not None:
             self.gsb = QSpinBox()
-            self.gsb.setRange(1, info["numQuestions"])
+            self.gsb.setRange(1, info["numberOfQuestions"])
             self.gsb.setValue(gn)
             fg.addRow("Select question:", self.gsb)
             self.iL.setText("Which test/group do you wish to view?")

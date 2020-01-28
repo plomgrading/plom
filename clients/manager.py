@@ -260,6 +260,9 @@ class Manager(QWidget):
         self.ui.setupUi(self)
         self.ui.passwordLE.setFocus(True)
         self.connectButtons()
+        self.ui.scanningAllTab.setEnabled(False)
+        self.ui.progressAllTab.setEnabled(False)
+        self.ui.reviewAllTab.setEnabled(False)
 
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)
@@ -349,11 +352,11 @@ class Manager(QWidget):
 
     # -------------------
     def getTPQV(self):
-        pqv = managerMessenger.getInfoTPQV()
-        self.numberOfTests = pqv[0]
-        self.numberOfPages = pqv[1]
-        self.numberOfQuestions = pqv[2]
-        self.numberOfVersions = pqv[3]
+        info = managerMessenger.getInfoGeneral()
+        self.numberOfTests = info["numberOfTests"]
+        self.numberOfPages = info["numberOfPages"]
+        self.numberOfQuestions = info["numberOfQuestions"]
+        self.numberOfVersions = info["numberOfVersions"]
 
     def initOTab(self):
         self.ui.overallTW.setHorizontalHeaderLabels(

@@ -231,7 +231,7 @@
      </widget>
      <widget class="QWidget" name="scanningAllTab">
       <property name="enabled">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
       <attribute name="title">
        <string>&amp;Scanning</string>
@@ -240,7 +240,7 @@
        <item>
         <widget class="QTabWidget" name="scanTabW">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="tabPosition">
           <enum>QTabWidget::North</enum>
@@ -250,7 +250,7 @@
          </property>
          <widget class="QWidget" name="scanTab">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <attribute name="title">
            <string>&amp;Scan Status</string>
@@ -380,7 +380,7 @@
          </widget>
          <widget class="QWidget" name="unknownTab">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <attribute name="title">
            <string>&amp;Unknown Pages</string>
@@ -424,7 +424,7 @@
          </widget>
          <widget class="QWidget" name="collideTab">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <attribute name="title">
            <string>&amp;Colliding Pages</string>
@@ -468,7 +468,7 @@
          </widget>
          <widget class="QWidget" name="discardTab">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <attribute name="title">
            <string>&amp;Discarded Pages</string>
@@ -516,7 +516,7 @@
      </widget>
      <widget class="QWidget" name="progressAllTab">
       <property name="enabled">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
       <attribute name="title">
        <string>&amp;Progress</string>
@@ -525,14 +525,14 @@
        <item>
         <widget class="QTabWidget" name="progressTabW">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="currentIndex">
           <number>0</number>
          </property>
          <widget class="QWidget" name="overallTab">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <attribute name="title">
            <string>&amp;Overall Progress</string>
@@ -592,7 +592,7 @@
          </widget>
          <widget class="QWidget" name="progressTab">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <attribute name="title">
            <string>&amp;Marking Progress</string>
@@ -608,8 +608,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>64</width>
-                <height>16</height>
+                <width>968</width>
+                <height>466</height>
                </rect>
               </property>
              </widget>
@@ -643,7 +643,7 @@
          </widget>
          <widget class="QWidget" name="idTab">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <attribute name="title">
            <string>&amp;ID Progress</string>
@@ -851,7 +851,7 @@
      </widget>
      <widget class="QWidget" name="reviewAllTab">
       <property name="enabled">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
       <attribute name="title">
        <string>&amp;Review</string>
@@ -859,12 +859,15 @@
       <layout class="QHBoxLayout" name="horizontalLayout_15">
        <item>
         <widget class="QTabWidget" name="tabWidget_4">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
          <property name="currentIndex">
           <number>0</number>
          </property>
          <widget class="QWidget" name="reviewMTab">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <attribute name="title">
            <string>Review &amp;Marking</string>

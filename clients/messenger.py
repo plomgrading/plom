@@ -172,7 +172,13 @@ def getInfoGeneral():
     finally:
         SRmutex.release()
 
-    fields = ("testName", "numTests", "numTotalPages", "numQuestions", "numVersions")
+    fields = (
+        "testName",
+        "numberOfTests",
+        "numberOfPages",
+        "numberOfQuestions",
+        "numberOfVersions",
+    )
     return dict(zip(fields, pv))
 
 
