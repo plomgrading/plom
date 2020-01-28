@@ -647,6 +647,8 @@ class MarkerClient(QWidget):
             )
         ).exec_()
         self.shutDownError()
+        # TODO: Decide on case-by-case basis what can survive.  For now, crash
+        raise(err)
 
     def throwBenign(self, err):
         ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
