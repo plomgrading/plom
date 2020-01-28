@@ -1,5 +1,5 @@
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer"]
 __license__ = "AGPLv3"
 
@@ -7,8 +7,11 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QApplication,
     QDialog,
+    QFormLayout,
     QGridLayout,
+    QLabel,
     QPushButton,
+    QSpinBox,
     QTabWidget,
     QWidget,
 )
@@ -28,6 +31,8 @@ class TestView(QWidget):
         self.connectButtons()
         self.tabs = {}
         self.buildTabs()
+        self.setWindowTitle("Original scans of test {}".format(testNumber))
+        print("Original scans of test {}".format(testNumber))
         self.show()
 
     def connectButtons(self):
@@ -153,3 +158,33 @@ class WholeTestView(QDialog):
         for k in range(0, self.numberOfPages):
             self.tabs[k] = ExamViewWindow(self.pageList[k])
             self.pageTabs.addTab(self.tabs[k], "{}".format(k + 1))
+
+
+class TestGroupSelect(QDialog):
+    def __init__(self, info, gn=None):
+        super(TestGroupSelect, self).__init__()
+        self.setModal(True)
+        self.setWindowTitle("View another test")
+        self.iL = QLabel("From which test do you wish to view the current group?")
+        self.ab = QPushButton("&Accept")
+        self.ab.clicked.connect(self.accept)
+        self.cb = QPushButton("&Cancel")
+        self.cb.clicked.connect(self.reject)
+
+        fg = QFormLayout()
+        self.tsb = QSpinBox()
+        self.tsb.setRange(1, info["numTests"])
+        self.tsb.setValue(1)
+        fg.addRow("Select test:", self.tsb)
+        if gn is not None:
+            self.gsb = QSpinBox()
+            self.gsb.setRange(1, info["numGroups"])
+            self.gsb.setValue(gn)
+            fg.addRow("Select pageGroup:", self.gsb)
+            self.iL.setText("Which test/group do you wish to view?")
+        grid = QGridLayout()
+        grid.addWidget(self.iL, 0, 1, 1, 3)
+        grid.addLayout(fg, 1, 1, 3, 3)
+        grid.addWidget(self.ab, 4, 1)
+        grid.addWidget(self.cb, 4, 3)
+        self.setLayout(grid)

@@ -1,5 +1,5 @@
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
@@ -288,7 +288,7 @@ class Annotator(QWidget):
             Qt.Key_Equal: lambda: self.view.zoomIn(),
             Qt.Key_Minus: lambda: self.view.zoomOut(),
             Qt.Key_Underscore: lambda: self.view.zoomOut(),
-            # Only change-mark shortcuts 0-5.
+            # Change-mark shortcuts
             Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
             Qt.Key_1: lambda: self.keyToChangeMark(1),
             Qt.Key_2: lambda: self.keyToChangeMark(2),
@@ -398,52 +398,47 @@ class Annotator(QWidget):
             self.ui.modeLayout.addWidget(self.ui.modeLabel)
             self.ui.modeLayout.addWidget(self.ui.markLabel)
             # tools
-            self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 4, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 5, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.tickButton, 2, 4, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.commentButton, 2, 5, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.boxButton, 3, 4, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.commentDownButton, 3, 5, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.penButton, 0, 6, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.textButton, 2, 6, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.lineButton, 3, 6, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.deleteButton, 3, 3, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.undoButton, 2, 3, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 3, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.panButton, 0, 2, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 2, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 2, 1, 1)
-            # zoom QComboBox
-            self.ui.toolLayout.addWidget(self.ui.zoomCB, 4, 5, 1, 2)
-
-            # end buttons
-            self.ui.ebLayout.addWidget(self.ui.finishedButton)
-            self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
-            self.ui.ebLayout.addWidget(self.ui.cancelButton)
+            self.ui.toolLayout.addWidget(self.ui.panButton, 0, 0)
+            self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 1)
+            self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 2)
+            self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 3)
+            self.ui.toolLayout.addWidget(self.ui.penButton, 0, 4)
+            self.ui.toolLayout.addWidget(self.ui.zoomButton, 1, 0)
+            self.ui.toolLayout.addWidget(self.ui.undoButton, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.tickButton, 1, 2)
+            self.ui.toolLayout.addWidget(self.ui.commentButton, 1, 3)
+            self.ui.toolLayout.addWidget(self.ui.textButton, 1, 4)
+            self.ui.toolLayout.addWidget(self.ui.moveButton, 2, 0)
+            self.ui.toolLayout.addWidget(self.ui.deleteButton, 2, 1)
+            self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
+            self.ui.toolLayout.addWidget(self.ui.commentDownButton, 2, 3)
+            self.ui.toolLayout.addWidget(self.ui.lineButton, 2, 4)
         else:  # left-hand mouse
             self.ui.modeLayout.addWidget(self.ui.markLabel)
             self.ui.modeLayout.addWidget(self.ui.modeLabel)
             self.ui.modeLayout.addWidget(self.ui.hideButton)
-
-            self.ui.toolLayout.addWidget(self.ui.commentButton, 2, 5, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.penButton, 0, 2, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.undoButton, 2, 7, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.moveButton, 3, 8, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.zoomButton, 2, 8, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.panButton, 0, 8, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.lineButton, 3, 2, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.zoomCB, 4, 7, 1, 2)
-            self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 7, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.deleteButton, 3, 7, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.textButton, 2, 2, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 6, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.tickButton, 2, 6, 1, 1)
-            self.ui.toolLayout.addWidget(self.ui.boxButton, 3, 6, 1, 1)
-
-            # end buttons
-            self.ui.ebLayout.addWidget(self.ui.finishedButton)
-            self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
-            self.ui.ebLayout.addWidget(self.ui.cancelButton)
+            # tools
+            self.ui.toolLayout.addWidget(self.ui.penButton, 0, 0)
+            self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 1)
+            self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 2)
+            self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 3)
+            self.ui.toolLayout.addWidget(self.ui.panButton, 0, 4)
+            self.ui.toolLayout.addWidget(self.ui.textButton, 1, 0)
+            self.ui.toolLayout.addWidget(self.ui.commentButton, 1, 1)
+            self.ui.toolLayout.addWidget(self.ui.tickButton, 1, 2)
+            self.ui.toolLayout.addWidget(self.ui.undoButton, 1, 3)
+            self.ui.toolLayout.addWidget(self.ui.zoomButton, 1, 4)
+            self.ui.toolLayout.addWidget(self.ui.lineButton, 2, 0)
+            self.ui.toolLayout.addWidget(self.ui.commentDownButton, 2, 1)
+            self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
+            self.ui.toolLayout.addWidget(self.ui.deleteButton, 2, 3)
+            self.ui.toolLayout.addWidget(self.ui.moveButton, 2, 4)
+        # end buttons
+        self.ui.ebLayout.addWidget(self.ui.finishedButton)
+        self.ui.ebLayout.addWidget(self.ui.finishNoRelaunchButton)
+        self.ui.ebLayout.addWidget(self.ui.cancelButton)
+        # zoom QComboBox
+        self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
 
     def viewWholePaper(self):
         # grab the files if needed.
@@ -915,6 +910,10 @@ class Annotator(QWidget):
                     self.parent.annotatorSettings["zoomState"]
                 ),
             )
+        # wide vs compact
+        if self.parent.annotatorSettings["compact"] is True:
+            print("Debug: compacting UI (b/c of last use setting")
+            self.ui.hideButton.animateClick()
 
     def saveWindowSettings(self):
         # TODO - delete below
@@ -940,6 +939,11 @@ class Annotator(QWidget):
             self.parent.annotatorSettings["delta"] = self.scene.markDelta
         if self.scene.mode == "comment":
             self.parent.annotatorSettings["comment"] = self.commentW.getCurrentItemRow()
+
+        if self.ui.hideableBox.isVisible():
+            self.parent.annotatorSettings["compact"] = False
+        else:
+            self.parent.annotatorSettings["compact"] = True
 
     def cleanUpCancel(self):
         # clean up after a testview
@@ -1098,9 +1102,9 @@ class Annotator(QWidget):
 
     def setZoomComboBox(self):
         self.ui.zoomCB.addItem("User")
-        self.ui.zoomCB.addItem("Fit Page")
-        self.ui.zoomCB.addItem("Fit Width")
-        self.ui.zoomCB.addItem("Fit Height")
+        self.ui.zoomCB.addItem("Fit page")
+        self.ui.zoomCB.addItem("Fit width")
+        self.ui.zoomCB.addItem("Fit height")
         self.ui.zoomCB.addItem("200%")
         self.ui.zoomCB.addItem("150%")
         self.ui.zoomCB.addItem("100%")
@@ -1114,11 +1118,11 @@ class Annotator(QWidget):
         self.ui.zoomCB.blockSignals(old)
 
     def zoomCBChanged(self):
-        if self.ui.zoomCB.currentText() == "Fit Page":
+        if self.ui.zoomCB.currentText() == "Fit page":
             self.view.zoomAll()
-        elif self.ui.zoomCB.currentText() == "Fit Width":
+        elif self.ui.zoomCB.currentText() == "Fit width":
             self.view.zoomWidth()
-        elif self.ui.zoomCB.currentText() == "Fit Height":
+        elif self.ui.zoomCB.currentText() == "Fit height":
             self.view.zoomHeight()
         elif self.ui.zoomCB.currentText() == "100%":
             self.view.zoomReset(1)

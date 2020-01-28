@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
@@ -87,6 +87,11 @@ class Chooser(QDialog):
         self.ui.totalButton.clicked.connect(self.runTotaler)
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontButton.clicked.connect(self.setFont)
+        self.ui.getServerInfoButton.clicked.connect(self.getInfo)
+        self.ui.serverLE.textEdited.connect(self.ungetInfo)
+        self.ui.mportSB.valueChanged.connect(self.ungetInfo)
+        self.ui.vDrop.setVisible(False)
+        self.ui.pgDrop.setVisible(False)
 
     def setLastTime(self):
         # set login etc from last time client ran.
@@ -109,14 +114,22 @@ class Chooser(QDialog):
         if len(pwd) < 4:
             return
         server = self.ui.serverLE.text()
+        if not server:
+            return
         mport = self.ui.mportSB.value()
         # save those settings
         self.saveDetails()
 
         # Have Messenger login into to server
         messenger.setServerDetails(server, mport)
-        messenger.startMessenger()
-        testname = messenger.getInfoShortName()
+        try:
+            messenger.startMessenger()
+        except PlomBenignException as e:
+            ErrorMessage(
+                "Could not connect to server.\n\n"
+                "{}".format(e)
+            ).exec_()
+            return
 
         try:
             messenger.requestAndSaveToken(user, pwd)
@@ -140,14 +153,14 @@ class Chooser(QDialog):
         # Now run the appropriate client sub-application
         if self.runIt == "Marker":
             # Run the marker client.
-            pg = str(self.ui.pgSB.value()).zfill(2)
-            v = str(self.ui.vSB.value())
+            pg = self.getpg()
+            v = self.getv()
             self.setEnabled(False)
             self.hide()
             markerwin = marker.MarkerClient()
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
-            markerwin.getToWork(messenger, testname, pg, v, lastTime)
+            markerwin.getToWork(messenger, pg, v, lastTime)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
@@ -184,13 +197,14 @@ class Chooser(QDialog):
         lastTime["user"] = self.ui.userLE.text()
         lastTime["server"] = self.ui.serverLE.text()
         lastTime["mport"] = self.ui.mportSB.value()
-        lastTime["pg"] = self.ui.pgSB.value()
-        lastTime["v"] = self.ui.vSB.value()
+        lastTime["pg"] = self.getpg()
+        lastTime["v"] = self.getv()
         lastTime["fontSize"] = self.ui.fontSB.value()
         writeLastTime()
 
     def closeWindow(self):
         self.saveDetails()
+        messenger.stopMessenger()
         self.close()
 
     def setFont(self):
@@ -198,6 +212,93 @@ class Chooser(QDialog):
         fnt = self.parent.font()
         fnt.setPointSize(v)
         self.parent.setFont(fnt)
+
+    def getpg(self):
+        """Return the integer pagegroup or None"""
+        if self.ui.pgDrop.isVisible():
+            pg = self.ui.pgDrop.currentText().lstrip("Q")
+        else:
+            pg = self.ui.pgSB.value()
+        try:
+            return int(pg)
+        except:
+            return None
+
+    def getv(self):
+        """Return the integer version or None"""
+        if self.ui.vDrop.isVisible():
+            v = self.ui.vDrop.currentText()
+        else:
+            v = self.ui.vSB.value()
+        try:
+            return int(v)
+        except:
+            return None
+
+    def ungetInfo(self):
+        self.ui.markGBox.setTitle("Marking information")
+        pg = self.getpg()
+        v = self.getv()
+        self.ui.pgSB.setVisible(True)
+        self.ui.vSB.setVisible(True)
+        if pg:
+            self.ui.pgSB.setValue(pg)
+        if v:
+            self.ui.vSB.setValue(v)
+        self.ui.vDrop.clear()
+        self.ui.vDrop.setVisible(False)
+        self.ui.pgDrop.clear()
+        self.ui.pgDrop.setVisible(False)
+        self.ui.infoLabel.setText("")
+        messenger.stopMessenger()
+
+    def getInfo(self):
+        server = self.ui.serverLE.text()
+        if not server:
+            return
+        mport = self.ui.mportSB.value()
+        # save those settings
+        #self.saveDetails()   # TODO?
+
+        # TODO: might be nice, but needs another thread?
+        #self.ui.infoLabel.setText("connecting...")
+        #self.ui.infoLabel.repaint()
+
+        # Have Messenger login into to server
+        messenger.setServerDetails(server, mport)
+        try:
+            r = messenger.startMessenger()
+        except PlomBenignException as e:
+            ErrorMessage(
+                "Could not connect to server.\n\n"
+                "{}".format(e)
+            ).exec_()
+            return
+        self.ui.infoLabel.setText(r)
+
+        info = messenger.getInfoGeneral()
+        self.ui.markGBox.setTitle('Marking information for “{}”'.format(info["testName"]))
+        pg = self.getpg()
+        v = self.getv()
+        self.ui.pgSB.setVisible(False)
+        self.ui.vSB.setVisible(False)
+
+        self.ui.vDrop.clear()
+        self.ui.vDrop.addItems([str(x+1) for x in range(0, info["numVersions"])])
+        if v:
+            if v >= 1 and v <= info["numVersions"]:
+                self.ui.vDrop.setCurrentIndex(v - 1)
+        self.ui.vDrop.setVisible(True)
+
+        self.ui.pgDrop.clear()
+        self.ui.pgDrop.addItems(["Q{}".format(x+1) for x in range(0, info["numGroups"])])
+        if pg:
+            if pg >= 1 and pg <= info["numGroups"]:
+                self.ui.pgDrop.setCurrentIndex(pg - 1)
+        self.ui.pgDrop.setVisible(True)
+        # TODO should we also let people type in?
+        self.ui.pgDrop.setEditable(False)
+        self.ui.vDrop.setEditable(False)
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):

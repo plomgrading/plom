@@ -54,7 +54,7 @@ from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 from useful_classes import commentLoadAll, commentIsVisible
 from reorientationwindow import ExamReorientWindow
 from uiFiles.ui_marker import Ui_MarkerWindow
-from test_view import GroupView
+from test_view import GroupView, TestGroupSelect
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -105,6 +105,7 @@ class BackgroundDownloader(QThread):
             except PlomSeriousException as err:
                 self.downloadFail.emit(str(err))
                 self.quit()
+                return
 
             try:
                 imageList, tags = messenger.MclaimThisTask(task)
@@ -500,29 +501,35 @@ class MarkerClient(QWidget):
     def __init__(self):
         super(MarkerClient, self).__init__()
 
-    def getToWork(self, mess, testname, question, version, lastTime):
+    def getToWork(self, mess, question, version, lastTime):
+
         # TODO or `self.msgr = mess`?  trouble in threads?
         global messenger
         messenger = mess
         # local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
-        # Save the group and version.
-        self.testname = testname
         self.question = question
         self.version = version
         # create max-mark, but not set until we get info from server
         self.maxScore = -1
         # For viewing the whole paper we'll need these two lists.
         self.viewFiles = []
+
+        # Get the number of Tests, Pages, Questions and Versions
+        try:
+            self.testInfo = messenger.getInfoGeneral()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+            return
+
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
-
-        # Paste the username, question and version into GUI.
-        self.setWindowTitle('Plom Marker: "{}"'.format(self.testname))
+        self.setWindowTitle('Plom Marker: "{}"'.format(self.testInfo["testName"]))
+        # Paste the username, pagegroup and version into GUI.
         self.ui.userBox.setTitle("User: {}".format(messenger.whoami()))
         self.ui.pgLabel.setText(
-            "{} of {}".format(str(self.question).zfill(2), self.testname)
+            "Q{} of {}".format(str(self.question), self.testInfo["testName"])
         )
         self.ui.vLabel.setText(str(self.version))
         # Exam model for the table of groupimages - connect to table
@@ -550,6 +557,9 @@ class MarkerClient(QWidget):
             if lastTime["POWERUSER"]:
                 self.annotatorSettings["markWarnings"] = False
                 self.annotatorSettings["commentWarnings"] = False
+                self.viewAll = True
+        else:
+            self.viewAll = False
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -590,7 +600,6 @@ class MarkerClient(QWidget):
         elif lastTime["mouse"] == "left":
             self.ui.leftMouseRB.animateClick()
 
-        # Start using connection to serverself.
         # Get the max-mark for the question from the server.
         try:
             self.getMaxMark()
@@ -641,7 +650,7 @@ class MarkerClient(QWidget):
 
     def throwSeriousError(self, err):
         ErrorMessage(
-            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down totaller.'.format(
+            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down Marker.'.format(
                 err
             )
         ).exec_()
@@ -731,8 +740,13 @@ class MarkerClient(QWidget):
             self.throwSeriousError(err)
 
     def requestNext(self):
-        """Ask the server for an unmarked paper.  Get file, add to
-        the list of papers and update the image.
+        """Ask server for unmarked paper, get file, add to list, update view.
+
+        Retry a view times in case two clients are asking for same.
+
+        Side effects: on success, updates the table of tasks
+        TODO: return value on success?  Currently None.
+        TODO: rationalize return values
         """
         attempts = 0
         while True:
@@ -893,7 +907,7 @@ class MarkerClient(QWidget):
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
             task,
-            self.testname,
+            self.testInfo["testName"],
             paperdir,
             fnames,
             saveName,
@@ -1172,7 +1186,8 @@ class MarkerClient(QWidget):
         # Start caching.
         c = 0
         n = int(self.question)
-        testname = self.testname
+        testname = self.testInfo["testName"]
+
         for X in clist:
             if commentIsVisible(X, n, testname) and X["text"][:4].upper() == "TEX:":
                 txt = X["text"][4:].strip()
@@ -1246,33 +1261,35 @@ class MarkerClient(QWidget):
         self.prxM.filterTags()
 
     def viewSpecificImage(self):
-        testNumber, ok = QInputDialog.getInt(
-            self,
-            "View another test",
-            "From which test do you want to view question {}?".format(
-                int(self.question)
-            ),
-            1,
-            1,
-            9999,
-            1,
-        )
-        if ok:
-            task = "m{}g{}".format(str(testNumber).zfill(4), int(self.question))
-            try:
-                imageList = messenger.MrequestOriginalImages(task)
-            except PlomNoMoreException as err:
-                msg = ErrorMessage("No image corresponding to code {}".format(task))
-                msg.exec_()
+        if self.viewAll:
+            tgs = TestGroupSelect(self.testInfo, self.pageGroup)
+            if tgs.exec_() == QDialog.Accepted:
+                tn = tgs.tsb.value()
+                gn = tgs.gsb.value()
+            else:
                 return
-            # put imagefiles into a temp-dir so they are removed afterwards
-            with tempfile.TemporaryDirectory() as tdir:
-                inames = []
-                i = 0
-                for img in imageList:
-                    inames.append("{}/{}.{}".format(tdir, task, i))
-                    with open(inames[-1], "wb") as fh:
-                        fh.write(img)
-                    i += 1
-                tvw = GroupView(inames)
-                tvw.exec_()
+        else:
+            tgs = TestGroupSelect(self.testInfo)
+            if tgs.exec_() == QDialog.Accepted:
+                tn = tgs.tsb.value()
+                gn = self.pageGroup
+            else:
+                return
+        task = "m{}g{}".format(str(testNumber).zfill(4), int(self.question))
+        try:
+            imageList = messenger.MrequestOriginalImages(task)
+        except PlomNoMoreException as err:
+            msg = ErrorMessage("No image corresponding to code {}".format(task))
+            msg.exec_()
+            return
+        # put imagefiles into a temp-dir so they are removed afterwards
+        with tempfile.TemporaryDirectory() as tdir:
+            inames = []
+            i = 0
+            for img in imageList:
+                inames.append("{}/{}.{}".format(tdir, task, i))
+                with open(inames[-1], "wb") as fh:
+                    fh.write(img)
+                i += 1
+            tvw = GroupView(inames)
+            tvw.exec_()
