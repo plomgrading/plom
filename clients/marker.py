@@ -802,30 +802,32 @@ class MarkerClient(QWidget):
         ).exec_()
 
     def moveToNextUnmarkedTest(self, tgv):
+        # Might need to wait for a background downloader.  Important part is to
+        # processEvents() so Marker can receive the downloader-finished signal.
+        # TODO: this code assumes the downloader tries to stay just one ahead.
         if self.backgroundDownloader:
-            print("ZZZ: we have a background downloader")
             count = 0
             while self.backgroundDownloader.isRunning():
                 time.sleep(0.05)
                 self.Qapp.processEvents()
                 count += 1
-                #if (count % 10) == 0:
-                print("ZZZ Debug: waiting for downloader to fill table")
-                if count >= 1000:
+                if (count % 10) == 0:
+                    print("Debug: waiting for downloader to fill table...")
+                if count >= 100:
                     msg = SimpleMessage(
-                        "Still waiting for download.  Do you want to wait a bit longer?"
+                        "Still waiting for downloader to get the next image.  "
+                        "Do you want to wait a few more seconds?\n\n"
+                        "(It is safe to choose 'no': the Annotator will simply close)"
                     )
                     if msg.exec_() == QMessageBox.No:
                         return
                     count = 0
             self.Qapp.processEvents()
-            print("ZZZ Debug: downloader is done")
 
         # Move to the next unmarked test in the table.
         # Be careful not to get stuck in a loop if all marked
         prt = self.prxM.rowCount()
         if prt == 0:
-            print("ZZZ prt is zero!")
             return  # TODO True or False?
         # get current position from the tgv
         prstart = self.prxM.rowFromTGV(tgv)
@@ -838,10 +840,8 @@ class MarkerClient(QWidget):
             if pr == prstart:
                 break
         if pr == prstart:
-            print("ZZZ: pr is prstart")
             return False
         self.ui.tableView.selectRow(pr)
-        print("ZZZ: returning true")
         return True
 
     def revertTest(self):
@@ -1001,7 +1001,6 @@ class MarkerClient(QWidget):
             self.startTheAnnotator(tgv[1:], paperdir, aname, pname)
         else:
             self.startTheAnnotator(tgv[1:], paperdir, aname, None)
-        print("XXX annotator started, waiting for signal")
         # we started the annotator, we'll get a signal back when its done
 
     # when the annotator is done, we end up here...
@@ -1016,7 +1015,6 @@ class MarkerClient(QWidget):
     # ... or here
     @pyqtSlot(str, list)
     def callbackAnnIsDoneAccept(self, tgv, stuff):
-        print("XXX annotator gave Done signal")
         gr, launchAgain, mtime, paperdir, aname, pname, cname = stuff
 
         if not (0 <= gr and gr <= self.maxScore):
@@ -1060,11 +1058,10 @@ class MarkerClient(QWidget):
             if self.prxM.getPrefix(pr) == "t" + tgv:
                 self.updateImage(pr)
             return
-        print("XXX: want to launch again, can we?")
         if self.moveToNextUnmarkedTest("t" + tgv):
             self.annotateTest()
         self.setEnabled(True)
-        print("XXX: no more papers?  Want to launch again but moveToNextUnmarkedTest failed?")
+        print("Debug: either we are done or problems downloading...")
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
