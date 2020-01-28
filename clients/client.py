@@ -145,9 +145,11 @@ class Chooser(QDialog):
                 SimpleMessage(
                     "You appear to be already logged in!\n\n"
                     "  * Perhaps a previous session crashed?\n"
-                    "  * Or are you sharing accounts? (dangerous!)\n\n"
+                    "  * Do you have another client running,\n"
+                    "    e.g., on another computer?\n\n"
                     "Should I force-logout the existing authorisation?"
-                    " (and then you can try to log in again)"
+                    " (and then you can try to log in again)\n\n"
+                    "The other client will likely crash."
                 ).exec_()
                 == QMessageBox.Yes
             ):
