@@ -74,9 +74,9 @@ def giveUserToken(self, user, password, clientAPI):
                 clientAPI, self.API, self.Version
             ),
         ]
-
     if self.authority.authoriseUser(user, password):
         # On token request also make sure anything "out" with that user is reset as todo.
+        # We keep this here in case of client crash - todo's get reset on login and logout.
         self.DB.resetUsersToDo(user)
         print("Authorising user {}".format(user))
         return [True, self.authority.getToken(user)]
@@ -88,3 +88,5 @@ def closeUser(self, user):
     """Client is closing down their app, so remove the authorisation token
     """
     self.authority.detoken(user)
+    # make sure all their out tasks are returned to "todo"
+    self.DB.resetUsersToDo(user)

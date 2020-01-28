@@ -59,5 +59,9 @@ def RgetIDReview(self):
     return self.DB.RgetIDReview()
 
 
+def RgetTotReview(self):
+    return self.DB.RgetTotReview()
+
+
 def RgetAnnotatedImage(self, testNumber, questionNumber, version):
     return self.DB.RgetAnnotatedImage(testNumber, questionNumber, version)

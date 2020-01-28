@@ -277,6 +277,7 @@ class Manager(QWidget):
         self.ui.refreshCButton.clicked.connect(self.refreshCList)
         self.ui.refreshDButton.clicked.connect(self.refreshDList)
         self.ui.refreshIDB.clicked.connect(self.refreshIDRev)
+        self.ui.refreshTOTB.clicked.connect(self.refreshTOTRev)
         self.ui.removePageB.clicked.connect(self.removePage)
         self.ui.subsPageB.clicked.connect(self.subsPage)
         self.ui.actionUButton.clicked.connect(self.doUActions)
@@ -349,6 +350,7 @@ class Manager(QWidget):
         self.initDiscardTab()
         self.initRevTab()
         self.initRevIDTab()
+        self.initRevTOTTab()
 
     # -------------------
     def getTPQV(self):
@@ -1009,6 +1011,12 @@ class Manager(QWidget):
             rvw = ReviewViewWindow(self, [fh.name])
             if rvw.exec() == QDialog.Accepted:
                 if rvw.action == "review":
+                    # first remove auth from that user - safer.
+                    if self.ui.reviewTW.item(r, 4).text() != "reviwer":
+                        managerMessenger.clearAuthorisation(
+                            self.ui.reviewTW.item(r, 4).text()
+                        )
+                    # then map that question's owner "reviewer"
                     managerMessenger.MreviewQuestion(test, question, version)
                     self.ui.reviewTW.item(r, 4).setText("reviewer")
 
@@ -1028,7 +1036,6 @@ class Manager(QWidget):
         self.ui.reviewIDTW.setRowCount(0)
         r = 0
         for dat in irList:
-            print("inserting ", dat)
             self.ui.reviewIDTW.insertRow(r)
             # rjust(4) entries so that they can sort like integers... without actually being integers
             for k in range(5):
@@ -1038,6 +1045,9 @@ class Manager(QWidget):
             if dat[1] == "reviewer":
                 for k in range(5):
                     self.ui.reviewIDTW.item(r, k).setBackground(QBrush(Qt.green))
+            elif dat[1] == "automatic":
+                for k in range(5):
+                    self.ui.reviewIDTW.item(r, k).setBackground(QBrush(Qt.cyan))
             r += 1
 
     def reviewIDd(self):
@@ -1045,6 +1055,16 @@ class Manager(QWidget):
         if len(rvi) == 0:
             return
         r = rvi[0].row()
+        # check if ID was computed automatically
+        if self.ui.reviewIDTW.item(r, 1).text() == "automatic":
+            if (
+                SimpleMessage(
+                    "This paper was ID'd automatically, are you sure you wish to review it?"
+                ).exec_()
+                != QMessageBox.Yes
+            ):
+                return
+
         test = int(self.ui.reviewIDTW.item(r, 0).text())
         imageList = managerMessenger.IDrequestImage(test)
         inames = []
@@ -1057,8 +1077,75 @@ class Manager(QWidget):
             rvw = ReviewViewWindow(self, inames, "ID pages")
             if rvw.exec() == QDialog.Accepted:
                 if rvw.action == "review":
+                    # first remove auth from that user - safer.
+                    if self.ui.reviewIDTW.item(r, 1).text() != "reviwer":
+                        managerMessenger.clearAuthorisation(
+                            self.ui.reviewIDTW.item(r, 1).text()
+                        )
+                    # then map that question's owner "reviewer"
                     self.ui.reviewIDTW.item(r, 1).setText("reviewer")
                     managerMessenger.IDreviewID(test)
+
+    def initRevTOTTab(self):
+        self.ui.reviewTOTTW.setColumnCount(4)
+        self.ui.reviewTOTTW.setHorizontalHeaderLabels(
+            ["Test", "Username", "When", "Total Mark"]
+        )
+        self.ui.reviewTOTTW.setSortingEnabled(True)
+        self.ui.reviewTOTTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.reviewTOTTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.reviewTOTTW.activated.connect(self.reviewTotalled)
+
+    def refreshTOTRev(self):
+        irList = managerMessenger.getTOTReview()
+        self.ui.reviewTOTTW.clearContents()
+        self.ui.reviewTOTTW.setRowCount(0)
+        r = 0
+        for dat in irList:
+            self.ui.reviewTOTTW.insertRow(r)
+            # rjust(4) entries so that they can sort like integers... without actually being integers
+            for k in range(4):
+                self.ui.reviewTOTTW.setItem(
+                    r, k, QTableWidgetItem("{}".format(dat[k]).rjust(4))
+                )
+            if dat[1] == "reviewer":
+                for k in range(4):
+                    self.ui.reviewTOTTW.item(r, k).setBackground(QBrush(Qt.green))
+            elif dat[1] == "automatic":
+                for k in range(4):
+                    self.ui.reviewTOTTW.item(r, k).setBackground(QBrush(Qt.cyan))
+            r += 1
+
+    def reviewTotalled(self):
+        rvi = self.ui.reviewTOTTW.selectedIndexes()
+        if len(rvi) == 0:
+            return
+        r = rvi[0].row()
+        # check if total was computed automatically
+        if self.ui.reviewTOTTW.item(r, 1).text() == "automatic":
+            if (
+                SimpleMessage(
+                    "The total was computed automatically, are you sure you wish to review it?"
+                ).exec_()
+                != QMessageBox.Yes
+            ):
+                return
+
+        test = int(self.ui.reviewTOTTW.item(r, 0).text())
+        image = managerMessenger.TrequestImage(test)
+        with tempfile.NamedTemporaryFile() as fh:
+            fh.write(image)
+            rvw = ReviewViewWindow(self, [fh.name], "Total page")
+            if rvw.exec() == QDialog.Accepted:
+                if rvw.action == "review":
+                    # first remove auth from that user - safer.
+                    if self.ui.reviewTOTTW.item(r, 1).text() != "reviwer":
+                        managerMessenger.clearAuthorisation(
+                            self.ui.reviewTOTTW.item(r, 1).text()
+                        )
+                    # then map that question's owner "reviewer"
+                    self.ui.reviewTOTTW.item(r, 1).setText("reviewer")
+                    managerMessenger.TreviewTOT(test)
 
 
 # Pop up a dialog for unhandled exceptions and then exit

@@ -1121,6 +1121,20 @@ class PlomDB:
             )
         return rval
 
+    def RgetTotReview(self):
+        rval = []
+        query = SumData.select().where(SumData.summed == True)
+        for x in query:
+            rval.append(
+                [
+                    x.test.testNumber,
+                    x.username,
+                    x.time.strftime("%y:%m:%d-%H:%M:%S"),
+                    x.sumMark,
+                ]
+            )
+        return rval
+
     # ------------------
     # For user login - we reset all their stuff that is out
 
@@ -1770,8 +1784,8 @@ class PlomDB:
         if tref.scanned == False:
             return [False]
         sref = tref.sumdata[0]
-        # check if task given to user
-        if sref.username != username:
+        # check if task given to user or user=manager
+        if username not in [sref.username, "manager"]:
             return [False]
         pref = Page.get(Page.test == tref, Page.pageNumber == 1)
         print(

@@ -1030,6 +1030,27 @@ def getIDReview():
     return rval
 
 
+def getTOTReview():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/totReview".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token,},
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
 def RgetAnnotatedImage(testNumber, questionNumber, version):
     SRmutex.acquire()
     try:
@@ -1062,6 +1083,57 @@ def RgetAnnotatedImage(testNumber, questionNumber, version):
         SRmutex.release()
 
     return img
+
+
+def TrequestImage(testNumber):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/TOT/image/{}".format(server, message_port, testNumber),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        image = BytesIO(response.content).getvalue()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.") from None
+        elif response.status_code == 404:
+            raise PlomSeriousException(
+                "Cannot find image file for {}.".format(code)
+            ) from None
+        elif response.status_code == 409:
+            raise PlomSeriousException(
+                "Another user has the image for {}. This should not happen".format(code)
+            ) from None
+        else:
+            raise PlomSeriousException(
+                "Some other sort of error {}".format(e)
+            ) from None
+    finally:
+        SRmutex.release()
+
+    return image
+
+
+def clearAuthorisation(user):
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/authorisation".format(server, message_port),
+            json={"user": _userName, "token": _token, "userToClear": user},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.") from None
+        else:
+            raise PlomSeriousException(
+                "Some other sort of error {}".format(e)
+            ) from None
+    finally:
+        SRmutex.release()
 
 
 def MreviewQuestion(testNumber, questionNumber, version):

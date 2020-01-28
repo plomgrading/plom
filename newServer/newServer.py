@@ -182,6 +182,7 @@ class Server(object):
         RgetAnnotatedFiles,
         RgetMarkReview,
         RgetIDReview,
+        RgetTotReview,
         RgetAnnotatedImage,
     )
 

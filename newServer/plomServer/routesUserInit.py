@@ -28,6 +28,18 @@ class UserInitHandler:
         else:
             return web.Response(status=401)
 
+    # @routes.delete("/authorisation")
+    async def clearAuthorisation(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            self.server.closeUser(data["userToClear"])
+            return web.Response(status=200)
+        else:
+            return web.Response(status=401)
+
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
         data = await request.json()
@@ -76,6 +88,4 @@ class UserInitHandler:
         router.add_put("/admin/reloadUsers", self.adminReloadUsers)
         router.add_get("/info/shortName", self.InfoShortName)
         router.add_get("/info/general", self.InfoGeneral)
-        # router.add_get("/info/numberOfQuestionsAndVersions", self.InfoQuestionsVersions)
-        # router.add_get("/info/numberOfPQV", self.InfoPQV)
-        # router.add_get("/info/numberOfTPQV", self.InfoTPQV)
+        router.add_delete("/authorisation", self.clearAuthorisation)
