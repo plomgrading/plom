@@ -805,10 +805,10 @@ class MarkerClient(QWidget):
         """Move the list to the next unmarked test, if possible.
 
         Return True if we moved and False if not, for any reason."""
-        # Might need to wait for a background downloader.  Important part is to
-        # processEvents() so Marker can receive the downloader-finished signal.
-        # TODO: this code assumes the downloader tries to stay just one ahead.
         if self.backgroundDownloader:
+            # Might need to wait for a background downloader.  Important to
+            # processEvents() so we can receive the downloader-finished signal.
+            # TODO: assumes the downloader tries to stay just one ahead.
             count = 0
             while self.backgroundDownloader.isRunning():
                 time.sleep(0.05)
