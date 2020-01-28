@@ -1135,6 +1135,20 @@ class PlomDB:
             )
         return rval
 
+    def RgetUserDetails(self, username):
+        # return [#IDd, #tot, #marked]
+        return [
+            IDData.select()
+            .where(IDData.username == username, IDData.identified == True)
+            .count(),
+            SumData.select()
+            .where(SumData.username == username, SumData.summed == True)
+            .count(),
+            QuestionData.select()
+            .where(QuestionData.username == username, QuestionData.marked == True)
+            .count(),
+        ]
+
     # ------------------
     # For user login - we reset all their stuff that is out
 

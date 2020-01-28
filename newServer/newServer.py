@@ -184,6 +184,8 @@ class Server(object):
         RgetIDReview,
         RgetTotReview,
         RgetAnnotatedImage,
+        RgetUserList,
+        RgetUserDetails,
     )
 
 

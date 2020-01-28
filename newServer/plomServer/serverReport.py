@@ -65,3 +65,18 @@ def RgetTotReview(self):
 
 def RgetAnnotatedImage(self, testNumber, questionNumber, version):
     return self.DB.RgetAnnotatedImage(testNumber, questionNumber, version)
+
+
+def RgetUserList(self):
+    return sorted([x for x in self.userList.keys()])
+
+
+def RgetUserDetails(self):
+    rval = {}
+    for x in self.userList.keys():
+        if self.authority.checkToken(x):
+            rval[x] = [True]
+        else:
+            rval[x] = [False]
+        rval[x] += self.DB.RgetUserDetails(x)
+    return rval

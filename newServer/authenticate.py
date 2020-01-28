@@ -46,6 +46,12 @@ class Authority:
         else:
             return False
 
+    def checkToken(self, user):
+        if user in self.tokenList:
+            return True
+        else:
+            return False
+
     def detoken(self, user):
         """Remove given user's token from list"""
         if user in self.tokenList:

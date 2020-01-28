@@ -263,6 +263,7 @@ class Manager(QWidget):
         self.ui.scanningAllTab.setEnabled(False)
         self.ui.progressAllTab.setEnabled(False)
         self.ui.reviewAllTab.setEnabled(False)
+        self.ui.userAllTab.setEnabled(False)
 
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)
@@ -278,6 +279,7 @@ class Manager(QWidget):
         self.ui.refreshDButton.clicked.connect(self.refreshDList)
         self.ui.refreshIDB.clicked.connect(self.refreshIDRev)
         self.ui.refreshTOTB.clicked.connect(self.refreshTOTRev)
+        self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.removePageB.clicked.connect(self.removePage)
         self.ui.subsPageB.clicked.connect(self.subsPage)
         self.ui.actionUButton.clicked.connect(self.doUActions)
@@ -335,6 +337,7 @@ class Manager(QWidget):
         self.ui.scanningAllTab.setEnabled(True)
         self.ui.progressAllTab.setEnabled(True)
         self.ui.reviewAllTab.setEnabled(True)
+        self.ui.userAllTab.setEnabled(True)
 
         self.ui.userGBox.setEnabled(False)
         self.ui.serverGBox.setEnabled(False)
@@ -351,6 +354,7 @@ class Manager(QWidget):
         self.initRevTab()
         self.initRevIDTab()
         self.initRevTOTTab()
+        self.initUserListTab()
 
     # -------------------
     def getTPQV(self):
@@ -1146,6 +1150,43 @@ class Manager(QWidget):
                     # then map that question's owner "reviewer"
                     self.ui.reviewTOTTW.item(r, 1).setText("reviewer")
                     managerMessenger.TreviewTOT(test)
+
+    def initUserListTab(self):
+        self.ui.userListTW.setColumnCount(5)
+        self.ui.userListTW.setHorizontalHeaderLabels(
+            [
+                "Username",
+                "Logged in",
+                "Papers IDd",
+                "Papers Totalled",
+                "Questions Marked",
+            ]
+        )
+        self.ui.userListTW.setSortingEnabled(True)
+        self.ui.userListTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.userListTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # self.ui.userListTW.activated.connect()
+
+    def refreshUserList(self):
+        uDict = managerMessenger.getUserDetails()
+        self.ui.userListTW.clearContents()
+        self.ui.userListTW.setRowCount(0)
+        r = 0
+        for u in uDict:
+            dat = uDict[u]
+            self.ui.userListTW.insertRow(r)
+            # rjust(4) entries so that they can sort like integers... without actually being integers
+            self.ui.userListTW.setItem(r, 0, QTableWidgetItem("{}".format(u)))
+            for k in range(4):
+                self.ui.userListTW.setItem(
+                    r, k + 1, QTableWidgetItem("{}".format(dat[k]))
+                )
+            if dat[0]:
+                self.ui.userListTW.item(r, 1).setBackground(QBrush(Qt.green))
+            if u in ["manager", "scanner", "reviewer"]:
+                self.ui.userListTW.item(r, 0).setBackground(QBrush(Qt.green))
+
+            r += 1
 
 
 # Pop up a dialog for unhandled exceptions and then exit
