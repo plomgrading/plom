@@ -491,8 +491,9 @@ class ProxyModel(QSortFilterProxyModel):
 class MarkerClient(QWidget):
     my_shutdown_signal = pyqtSignal(int, list)
 
-    def __init__(self):
+    def __init__(self, Qapp):
         super(MarkerClient, self).__init__()
+        self.Qapp = Qapp
 
     def getToWork(self, mess, pageGroup, version, lastTime):
         # TODO or `self.msgr = mess`?  trouble in threads?
@@ -802,11 +803,36 @@ class MarkerClient(QWidget):
         ).exec_()
 
     def moveToNextUnmarkedTest(self, tgv):
+        """Move the list to the next unmarked test, if possible.
+
+        Return True if we moved and False if not, for any reason."""
+        if self.backgroundDownloader:
+            # Might need to wait for a background downloader.  Important to
+            # processEvents() so we can receive the downloader-finished signal.
+            # TODO: assumes the downloader tries to stay just one ahead.
+            count = 0
+            while self.backgroundDownloader.isRunning():
+                time.sleep(0.05)
+                self.Qapp.processEvents()
+                count += 1
+                if (count % 10) == 0:
+                    print("Debug: waiting for downloader to fill table...")
+                if count >= 100:
+                    msg = SimpleMessage(
+                        "Still waiting for downloader to get the next image.  "
+                        "Do you want to wait a few more seconds?\n\n"
+                        "(It is safe to choose 'no': the Annotator will simply close)"
+                    )
+                    if msg.exec_() == QMessageBox.No:
+                        return False
+                    count = 0
+            self.Qapp.processEvents()
+
         # Move to the next unmarked test in the table.
         # Be careful not to get stuck in a loop if all marked
         prt = self.prxM.rowCount()
         if prt == 0:
-            return  # TODO True or False?
+            return False
         # get current position from the tgv
         prstart = self.prxM.rowFromTGV(tgv)
         if not prstart:
@@ -966,6 +992,7 @@ class MarkerClient(QWidget):
 
         # maybe the downloader failed for some (rare) reason
         if not os.path.exists(fname):
+            print("Debug: some kind of downloader fail?")
             return
         print("Debug: original image {} copy to paperdir {}".format(fname, paperdir))
         shutil.copyfile(fname, aname)
@@ -992,7 +1019,6 @@ class MarkerClient(QWidget):
     # ... or here
     @pyqtSlot(str, list)
     def callbackAnnIsDoneAccept(self, tgv, stuff):
-        self.setEnabled(True)
         gr, launchAgain, mtime, paperdir, aname, pname, cname = stuff
 
         if not (0 <= gr and gr <= self.maxScore):
@@ -1003,6 +1029,7 @@ class MarkerClient(QWidget):
             )
             msg.exec_()
             # TODO: what do do here?  revert?
+            self.setEnabled(True)
             return
 
         # Copy the mark, annotated filename and the markingtime into the table
@@ -1026,6 +1053,7 @@ class MarkerClient(QWidget):
         )
 
         if launchAgain is False:
+            self.setEnabled(True)
             # update image view, if the row we just finished is selected
             prIndex = self.ui.tableView.selectedIndexes()
             if len(prIndex) == 0:
@@ -1035,8 +1063,9 @@ class MarkerClient(QWidget):
                 self.updateImage(pr)
             return
         if self.moveToNextUnmarkedTest("t" + tgv):
-            # self.annotateTest()
-            self.ui.annButton.animateClick()
+            self.annotateTest()
+        self.setEnabled(True)
+        print("Debug: either we are done or problems downloading...")
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
