@@ -802,6 +802,9 @@ class MarkerClient(QWidget):
         ).exec_()
 
     def moveToNextUnmarkedTest(self, tgv):
+        """Move the list to the next unmarked test, if possible.
+
+        Return True if we moved and False if not, for any reason."""
         # Might need to wait for a background downloader.  Important part is to
         # processEvents() so Marker can receive the downloader-finished signal.
         # TODO: this code assumes the downloader tries to stay just one ahead.
@@ -820,7 +823,7 @@ class MarkerClient(QWidget):
                         "(It is safe to choose 'no': the Annotator will simply close)"
                     )
                     if msg.exec_() == QMessageBox.No:
-                        return
+                        return False
                     count = 0
             self.Qapp.processEvents()
 
@@ -828,7 +831,7 @@ class MarkerClient(QWidget):
         # Be careful not to get stuck in a loop if all marked
         prt = self.prxM.rowCount()
         if prt == 0:
-            return  # TODO True or False?
+            return False
         # get current position from the tgv
         prstart = self.prxM.rowFromTGV(tgv)
         if not prstart:
