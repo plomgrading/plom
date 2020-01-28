@@ -20,9 +20,10 @@ from examviewwindow import ExamViewWindow
 
 
 class TestView(QWidget):
-    def __init__(self, parent, pageNames, pages):
+    def __init__(self, parent, testNumber, pageNames, pages):
         super(TestView, self).__init__()
         self.parent = parent
+        self.testNumber = testNumber
         self.numberOfPages = len(pages)
         self.pageList = pages
         self.pageNames = pageNames
@@ -31,8 +32,7 @@ class TestView(QWidget):
         self.connectButtons()
         self.tabs = {}
         self.buildTabs()
-        self.setWindowTitle("Original scans of test {}".format(testNumber))
-        print("Original scans of test {}".format(testNumber))
+        self.setWindowTitle("Original scans of test {}".format(self.testNumber))
         self.show()
 
     def connectButtons(self):
@@ -165,7 +165,7 @@ class TestGroupSelect(QDialog):
         super(TestGroupSelect, self).__init__()
         self.setModal(True)
         self.setWindowTitle("View another test")
-        self.iL = QLabel("From which test do you wish to view the current group?")
+        self.iL = QLabel("From which test do you wish to view the current question?")
         self.ab = QPushButton("&Accept")
         self.ab.clicked.connect(self.accept)
         self.cb = QPushButton("&Cancel")
@@ -178,9 +178,9 @@ class TestGroupSelect(QDialog):
         fg.addRow("Select test:", self.tsb)
         if gn is not None:
             self.gsb = QSpinBox()
-            self.gsb.setRange(1, info["numGroups"])
+            self.gsb.setRange(1, info["numQuestions"])
             self.gsb.setValue(gn)
-            fg.addRow("Select pageGroup:", self.gsb)
+            fg.addRow("Select question:", self.gsb)
             self.iL.setText("Which test/group do you wish to view?")
         grid = QGridLayout()
         grid.addWidget(self.iL, 0, 1, 1, 3)

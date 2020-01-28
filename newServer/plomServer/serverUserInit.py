@@ -10,40 +10,18 @@ def InfoShortName(self):
         return [True, self.testSpec["name"]]
 
 
-def InfoQuestionsVersions(self):
-    if self.testSpec is None:
-        return [False]
-    else:
+def InfoGeneral(self):
+    if self.testSpec is not None:
         return [
             True,
-            self.testSpec["numberOfQuestions"],
-            self.testSpec["numberOfVersions"],
-        ]
-
-
-def InfoPQV(self):
-    if self.testSpec is None:
-        return [False]
-    else:
-        return [
-            True,
-            self.testSpec["numberOfPages"],
-            self.testSpec["numberOfQuestions"],
-            self.testSpec["numberOfVersions"],
-        ]
-
-
-def InfoTPQV(self):
-    if self.testSpec is None:
-        return [False]
-    else:
-        return [
-            True,
+            self.testSpec["name"],
             self.testSpec["numberToProduce"],
             self.testSpec["numberOfPages"],
             self.testSpec["numberOfQuestions"],
             self.testSpec["numberOfVersions"],
         ]
+    else:  # this should not happen
+        return [False]
 
 
 def reloadUsers(self, password):

@@ -54,35 +54,18 @@ class UserInitHandler:
         else:
             return web.Response(status=401)  # you are not authorised
 
+    async def InfoGeneral(self, request):
+        rmsg = self.server.InfoGeneral()
+        if rmsg[0]:
+            return web.json_response(rmsg[1:], status=200)
+        else:  # this should not happen
+            return web.Response(status=404)
+
     # @routes.get("/info/shortName")
     async def InfoShortName(self, request):
         rmsg = self.server.InfoShortName()
         if rmsg[0]:
             return web.Response(text=rmsg[1], status=200)
-        else:  # this should not happen
-            return web.Response(status=404)
-
-    # @routes.get("/info/numberOfQuestionsAndVersions")
-    async def InfoQuestionsVersions(self, request):
-        rmsg = self.server.InfoQuestionsVersions()
-        if rmsg[0]:
-            return web.json_response(rmsg[1:], status=200)
-        else:  # this should not happen
-            return web.Response(status=404)
-
-    # @routes.get("/info/numberOfPQV")
-    async def InfoPQV(self, request):
-        rmsg = self.server.InfoPQV()
-        if rmsg[0]:
-            return web.json_response(rmsg[1:], status=200)
-        else:  # this should not happen
-            return web.Response(status=404)
-
-    # @routes.get("/info/numberOfTPQV")
-    async def InfoTPQV(self, request):
-        rmsg = self.server.InfoTPQV()
-        if rmsg[0]:
-            return web.json_response(rmsg[1:], status=200)
         else:  # this should not happen
             return web.Response(status=404)
 
@@ -92,6 +75,7 @@ class UserInitHandler:
         router.add_put("/users/{user}", self.giveUserToken)
         router.add_put("/admin/reloadUsers", self.adminReloadUsers)
         router.add_get("/info/shortName", self.InfoShortName)
-        router.add_get("/info/numberOfQuestionsAndVersions", self.InfoQuestionsVersions)
-        router.add_get("/info/numberOfPQV", self.InfoPQV)
-        router.add_get("/info/numberOfTPQV", self.InfoTPQV)
+        router.add_get("/info/general", self.InfoGeneral)
+        # router.add_get("/info/numberOfQuestionsAndVersions", self.InfoQuestionsVersions)
+        # router.add_get("/info/numberOfPQV", self.InfoPQV)
+        # router.add_get("/info/numberOfTPQV", self.InfoTPQV)

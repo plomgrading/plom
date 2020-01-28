@@ -172,7 +172,7 @@ def getInfoGeneral():
     finally:
         SRmutex.release()
 
-    fields = ("testName", "numTests", "numTotalPages", "numGroups", "numVersions")
+    fields = ("testName", "numTests", "numTotalPages", "numQuestions", "numVersions")
     return dict(zip(fields, pv))
 
 
@@ -399,7 +399,7 @@ def IDreturnIDdTask(code, studentID, studentName):
         )
         response.raise_for_status()
     except requests.HTTPError as e:
-        if resposne.status_code == 409:
+        if response.status_code == 409:
             raise PlomBenignException(
                 "Student number {} already in use".format(e)
             ) from None

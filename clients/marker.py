@@ -526,7 +526,7 @@ class MarkerClient(QWidget):
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
         self.setWindowTitle('Plom Marker: "{}"'.format(self.testInfo["testName"]))
-        # Paste the username, pagegroup and version into GUI.
+        # Paste the username, question and version into GUI.
         self.ui.userBox.setTitle("User: {}".format(messenger.whoami()))
         self.ui.pgLabel.setText(
             "Q{} of {}".format(str(self.question), self.testInfo["testName"])
@@ -1152,9 +1152,9 @@ class MarkerClient(QWidget):
     def viewWholePaper(self):
         index = self.ui.tableView.selectedIndexes()
         task = self.prxM.getPrefix(index[0].row())
-        testnumber = task[1:5]  # since task = mXXXXgYY
+        testNumber = task[1:5]  # since task = mXXXXgYY
         try:
-            pageNames, imagesAsBytes = messenger.MrequestWholePaper(testnumber)
+            pageNames, imagesAsBytes = messenger.MrequestWholePaper(testNumber)
         except PlomBenignException as err:
             self.throwBenign(err)
 
@@ -1165,7 +1165,7 @@ class MarkerClient(QWidget):
             with open(tfn, "wb") as fh:
                 fh.write(iab)
 
-        return [pageNames, self.viewFiles]
+        return [testNumber, pageNames, self.viewFiles]
 
     def doneWithViewFiles(self):
         for f in self.viewFiles:
@@ -1262,7 +1262,7 @@ class MarkerClient(QWidget):
 
     def viewSpecificImage(self):
         if self.viewAll:
-            tgs = TestGroupSelect(self.testInfo, self.pageGroup)
+            tgs = TestGroupSelect(self.testInfo, self.question)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
                 gn = tgs.gsb.value()
@@ -1272,10 +1272,10 @@ class MarkerClient(QWidget):
             tgs = TestGroupSelect(self.testInfo)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
-                gn = self.pageGroup
+                gn = self.question
             else:
                 return
-        task = "m{}g{}".format(str(testNumber).zfill(4), int(self.question))
+        task = "m{}g{}".format(str(tn).zfill(4), int(self.question))
         try:
             imageList = messenger.MrequestOriginalImages(task)
         except PlomNoMoreException as err:
