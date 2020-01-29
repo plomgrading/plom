@@ -20,6 +20,9 @@ export PD=plom0
 export UID=`id -u`
 
 git clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
+cd plommintestdata
+git checkout $BRANCH
+cd ..
 
 #before_install:
 git clone https://gitlab.math.ubc.ca/andrewr/MLP.git plomsrc
