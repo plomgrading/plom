@@ -69,7 +69,8 @@ job serverStarts:
     - pushd newServer
     - ip addr
     - python3 newServer.py &
-    - sleep 4
+    - sleep 3
+    - sleep 3
     - echo "Server should be in background"
     - jobs -l
     - echo "We should be able to connect to it"
