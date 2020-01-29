@@ -19,6 +19,7 @@ def InfoGeneral(self):
             self.testSpec["numberOfPages"],
             self.testSpec["numberOfQuestions"],
             self.testSpec["numberOfVersions"],
+            self.testSpec["publicCode"],
         ]
     else:  # this should not happen
         return [False]
