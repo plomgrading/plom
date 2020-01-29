@@ -67,7 +67,7 @@ class MarkHandler(QWidget):
             ncolumn = 2
 
         for k in range(0, self.numButtons + 1):
-            self.markButtons["p{}".format(k)] = QPushButton("+&{}".format(k))
+            self.markButtons["p{}".format(k)] = QPushButton("+{}".format(k))
             grid.addWidget(
                 self.markButtons["p{}".format(k)], k // ncolumn + 1, k % ncolumn, 1, 1
             )
@@ -90,7 +90,7 @@ class MarkHandler(QWidget):
             ncolumn = 2
 
         for k in range(0, self.numButtons + 1):
-            self.markButtons["m{}".format(k)] = QPushButton("-&{}".format(k))
+            self.markButtons["m{}".format(k)] = QPushButton("-{}".format(k))
             grid.addWidget(
                 self.markButtons["m{}".format(k)], k // ncolumn + 1, k % ncolumn, 1, 1
             )
@@ -113,7 +113,7 @@ class MarkHandler(QWidget):
             ncolumn = 2
 
         for k in range(0, self.maxScore + 1):
-            self.markButtons["{}".format(k)] = QPushButton("&{}".format(k))
+            self.markButtons["{}".format(k)] = QPushButton("{}".format(k))
             grid.addWidget(self.markButtons["{}".format(k)], k // ncolumn, k % ncolumn)
             self.markButtons["{}".format(k)].clicked.connect(self.setTotalMark)
             self.markButtons["{}".format(k)].setSizePolicy(
@@ -128,14 +128,14 @@ class MarkHandler(QWidget):
         self.pdmb.setStyleSheet("")
         self.pdmb = self.sender()
         self.pdmb.setStyleSheet(self.greenStyle)
-        self.currentDelta = self.sender().text().replace("&", "")
+        self.currentDelta = self.sender().text()
         self.parent.deltaMarkSet(self.currentDelta)
 
     def setTotalMark(self):
         self.ptmb.setStyleSheet("")
         self.ptmb = self.sender()
         self.ptmb.setStyleSheet(self.redStyle)
-        self.currentScore = int(self.sender().text().replace("&", ""))
+        self.currentScore = int(self.sender().text())
         self.parent.totalMarkSet(self.currentScore)
 
     def setMark(self, newScore):

@@ -91,6 +91,8 @@ def requestAndSaveToken(user, pw):
             raise PlomAuthenticationException("You are not authenticated.") from None
         elif response.status_code == 400:  # API error
             raise PlomAPIException(response.json()) from None
+        elif response.status_code == 409:
+            raise PlomExistingLoginException(response.json()) from None
         else:
             raise PlomSeriousException(
                 "Some other sort of error {}".format(e)
@@ -101,6 +103,26 @@ def requestAndSaveToken(user, pw):
                 server, message_port
             )
         ) from None
+    finally:
+        SRmutex.release()
+
+
+def clearAuthorisation(user, pw):
+    SRmutex.acquire()
+    try:
+        response = session.delete(
+            "https://{}:{}/authorisation".format(server, message_port),
+            json={"user": user, "pw": pw},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.") from None
+        else:
+            raise PlomSeriousException(
+                "Some other sort of error {}".format(e)
+            ) from None
     finally:
         SRmutex.release()
 
@@ -157,8 +179,7 @@ def getInfoGeneral():
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/info/general".format(server, message_port),
-            verify=False,
+            "https://{}:{}/info/general".format(server, message_port), verify=False,
         )
         response.raise_for_status()
         pv = response.json()
@@ -747,6 +768,11 @@ def MprogressCount(pg, v):
 
 
 def MaskNextTask(pg, v):
+    """Ask server for a new marking task, return tgv or None.
+
+    None indicated no more tasks available.
+    TODO: why are we using json for a string return?
+    """
     SRmutex.acquire()
     try:
         response = session.get(
@@ -759,7 +785,7 @@ def MaskNextTask(pg, v):
             return None
         response.raise_for_status()
         # convert the content of the response to a textfile for identifier
-        progress = response.json()
+        tgv = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.") from None
@@ -770,7 +796,7 @@ def MaskNextTask(pg, v):
     finally:
         SRmutex.release()
 
-    return progress
+    return tgv
 
 
 def MclaimThisTask(code):

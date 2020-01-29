@@ -53,11 +53,18 @@ routes = web.RouteTableDef()
 @routes.get("/Version")
 async def version(request):
     return web.Response(
-        text="Plom server version {} with API {}".format(
-            __version__, serverAPI
-        ),
+        text="Plom server version {} with API {}".format(__version__, serverAPI),
         status=200,
     )
+
+
+@routes.delete("/authorisation")
+async def clearAuthorisation(request):
+    data = await request.json()
+    if peon.clearAuthorisation(data["user"], data["pw"]):
+        return web.Response(status=200)
+    else:
+        return web.Response(status=401)
 
 
 @routes.delete("/users/{user}")
@@ -85,6 +92,8 @@ async def giveUserToken(request):
         return web.json_response(
             rmsg[1], status=400
         )  # api error - return the error message
+    elif rmsg[1].startswith("UHT"):
+        return web.json_response(rmsg[1], status=409)  # user already has token.
     else:
         return web.Response(status=401)  # you are not authorised
 
@@ -128,7 +137,13 @@ async def InfoShortName(request):
 async def InfoGeneral(request):
     if spec is not None:
         return web.json_response(
-            [spec.Name, spec.Tests, spec.Length, spec.getNumberOfGroups(), spec.Versions],
+            [
+                spec.Name,
+                spec.Tests,
+                spec.Length,
+                spec.getNumberOfGroups(),
+                spec.Versions,
+            ],
             status=200,
         )
     else:  # this should not happen
@@ -758,7 +773,10 @@ class Server(object):
                 ),
             ]
 
-        if self.authority.authoriseUser(user, password):
+        if self.authority.checkPassword(user, password):
+            if self.authority.userHasToken(user):
+                return [False, "UHT"]
+            self.authority.allocateToken(user)
             # On token request also make sure anything "out" with that user is reset as todo.
             self.IDDB.resetUsersToDo(user)
             self.MDB.resetUsersToDo(user)
@@ -767,6 +785,13 @@ class Server(object):
             return [True, self.authority.getToken(user)]
         else:
             return [False, "NAU"]
+
+    def clearAuthorisation(self, user, password):
+        if self.authority.checkPassword(user, password):
+            self.authority.detoken(user)
+            return True
+        else:
+            return False
 
     def validate(self, user, token):
         """Check the user's token is valid"""
