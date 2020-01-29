@@ -18,11 +18,10 @@ import threading
 import toml
 
 # ----------------------
-sys.path.append("..")
-from resources.specParser import SpecParser
-from resources.plom_exceptions import *
-from resources.misc_utils import format_int_list_with_runs
-from resources.version import Plom_API_Version
+
+from plom_exceptions import *
+from misc_utils import format_int_list_with_runs
+from version import Plom_API_Version
 
 _userName = "scanner"
 
@@ -103,6 +102,35 @@ def closeUser():
         SRmutex.release()
 
     return True
+
+
+def getInfoGeneral():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/info/general".format(server, message_port), verify=False,
+        )
+        response.raise_for_status()
+        pv = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    fields = (
+        "testName",
+        "numberOfTests",
+        "numberOfPages",
+        "numberOfQuestions",
+        "numberOfVersions",
+        "publicCode",
+    )
+    return dict(zip(fields, pv))
 
 
 def getScannedTests():
@@ -189,13 +217,16 @@ if __name__ == "__main__":
     authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
     requestAndSaveToken("scanner", pwd)
 
-    spec = SpecParser().spec
     session = requests.Session()
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
+
+    spec = getInfoGeneral()
 
     ST = getScannedTests()  # returns pairs of [page,version] - only display pages
     UT = getUnusedTests()
     IT = getIncompleteTests()
+    closeUser()
+
     print("Test papers unused: [{}]".format(format_int_list_with_runs(UT)))
 
     print("Scanned tests in the system:")

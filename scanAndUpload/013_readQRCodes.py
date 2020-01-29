@@ -22,7 +22,6 @@ import threading
 import urllib3
 
 from plom_exceptions import *
-from specParser import SpecParser
 from version import Plom_API_Version
 from tpv_utils import (
     parseTPV,

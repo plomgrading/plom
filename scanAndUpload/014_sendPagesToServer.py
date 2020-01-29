@@ -25,7 +25,6 @@ import threading
 from plom_exceptions import *
 
 sys.path.append("..")
-from specParser import SpecParser
 from version import Plom_API_Version
 
 _userName = "scanner"
