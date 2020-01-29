@@ -74,7 +74,13 @@ def giveUserToken(self, user, password, clientAPI):
                 clientAPI, self.API, self.Version
             ),
         ]
-    if self.authority.authoriseUser(user, password):
+    # check password
+    if self.authority.checkPassword(user, password):
+        # Now check if user already logged in - ie has token already.
+        if self.authority.userHasToken(user):
+            return [False, "UHT", "User already has token."]
+        # give user a token.
+        self.authority.allocateToken(user)
         # On token request also make sure anything "out" with that user is reset as todo.
         # We keep this here in case of client crash - todo's get reset on login and logout.
         self.DB.resetUsersToDo(user)
