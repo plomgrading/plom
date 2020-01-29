@@ -22,10 +22,10 @@ import toml
 import threading
 
 # ----------------------
+from plom_exceptions import *
+
 sys.path.append("..")
-from resources.specParser import SpecParser
-from resources.plom_exceptions import *
-from resources.version import Plom_API_Version
+from version import Plom_API_Version
 
 _userName = "scanner"
 
@@ -109,6 +109,35 @@ def closeUser():
         SRmutex.release()
 
     return True
+
+
+def getInfoGeneral():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/info/general".format(server, message_port), verify=False,
+        )
+        response.raise_for_status()
+        pv = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            )
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    fields = (
+        "testName",
+        "numberOfTests",
+        "numberOfPages",
+        "numberOfQuestions",
+        "numberOfVersions",
+        "publicCode",
+    )
+    return dict(zip(fields, pv))
 
 
 def uploadKnownPage(code, test, page, version, sname, fname, md5sum):
@@ -254,12 +283,12 @@ if __name__ == "__main__":
     authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
     requestAndSaveToken("scanner", pwd)
 
-    # Look for pages in decodedPages
-    spec = SpecParser().spec
-    buildDirectories(spec)
-
     session = requests.Session()
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
+
+    # Look for pages in decodedPages
+    spec = getInfoGeneral()
+    buildDirectories(spec)
 
     for p in range(1, spec["numberOfPages"] + 1):
         sp = str(p).zfill(2)

@@ -13,17 +13,11 @@ import subprocess
 import sys
 import toml
 
-sys.path.append("..")
-from resources.specParser import SpecParser
 
-
-def buildDirectories(spec):
+def buildDirectories():
     """Build the directories that this scripts needs"""
     # the list of directories. Might need updating.
     lst = [
-        "archivedPDFs",
-        "scannedExams",
-        "scannedExams/png/",
         "pageImages",
         "pageImages/problemImages",
     ]
@@ -154,8 +148,7 @@ if __name__ == "__main__":
             counter = counter + 1
     # If there are some then process them else return a warning.
     if not counter == 0:
-        spec = SpecParser().spec
-        buildDirectories(spec)
+        buildDirectories()
         processScans()
         print("Successfully converted scans to page images")
         sys.exit(0)

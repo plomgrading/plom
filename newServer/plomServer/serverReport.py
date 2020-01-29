@@ -74,7 +74,7 @@ def RgetUserList(self):
 def RgetUserDetails(self):
     rval = {}
     for x in self.userList.keys():
-        if self.authority.checkToken(x):
+        if self.authority.userHasToken(x):
             rval[x] = [True]
         else:
             rval[x] = [False]

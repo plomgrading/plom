@@ -22,10 +22,8 @@ import threading
 import toml
 
 # ----------------------
-sys.path.append("..")
-from resources.specParser import SpecParser
-from resources.plom_exceptions import *
-from resources.version import Plom_API_Version
+from plom_exceptions import *
+from version import Plom_API_Version
 
 _userName = "scanner"
 
@@ -213,3 +211,4 @@ if __name__ == "__main__":
     fileList = glob("unknownPages/*.png")
     print(fileList)
     sendUnknownFiles(fileList)
+    closeUser()

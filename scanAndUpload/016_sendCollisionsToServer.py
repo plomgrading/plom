@@ -22,10 +22,9 @@ import threading
 import toml
 
 # ----------------------
-sys.path.append("..")
-from resources.specParser import SpecParser
-from resources.plom_exceptions import *
-from resources.version import Plom_API_Version
+
+from plom_exceptions import *
+from version import Plom_API_Version
 
 _userName = "kenneth"
 
@@ -239,3 +238,4 @@ if __name__ == "__main__":
     fileList = glob("collidingPages/*.png")
     print(fileList)
     sendCollidingFiles(fileList)
+    closeUser()

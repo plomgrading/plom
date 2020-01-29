@@ -113,7 +113,7 @@ def clearAuthorisation(user, pw):
     try:
         response = session.delete(
             "https://{}:{}/authorisation".format(server, message_port),
-            json={"user": user, "pw": pw},
+            json={"user": user, "password": pw},
             verify=False,
         )
         response.raise_for_status()
@@ -200,6 +200,7 @@ def getInfoGeneral():
         "numberOfPages",
         "numberOfQuestions",
         "numberOfVersions",
+        "publicCode",
     )
     return dict(zip(fields, pv))
 

@@ -31,14 +31,18 @@ class UserInitHandler:
     # @routes.delete("/authorisation")
     async def clearAuthorisation(self, request):
         data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            self.server.closeUser(data["userToClear"])
-            return web.Response(status=200)
-        else:
-            return web.Response(status=401)
+        # manager to auth with their token - unless trying to clear self.
+        if data["user"] == "manager" and data["userToClear"] != "manager":
+            if self.server.validate(data["user"], data["token"]):
+                self.server.closeUser(data["userToClear"])
+                print("Manager force-logout user {}".format(data["userToClear"]))
+                return web.Response(status=200)
+        else:  # everyone else has to check their pwd
+            if self.server.authority.checkPassword(data["user"], data["password"]):
+                print("User {} force-logout self".format(data["user"]))
+                self.server.closeUser(data["user"])
+                return web.Response(status=200)
+        return web.Response(status=401)
 
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
@@ -52,6 +56,8 @@ class UserInitHandler:
             return web.json_response(
                 rmsg[1], status=400
             )  # api error - return the error message
+        elif rmsg[1].startswith("UHT"):
+            return web.json_response(rmsg[1], status=409)  # user has token already.
         else:
             return web.Response(status=401)  # you are not authorised
 

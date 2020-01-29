@@ -277,7 +277,7 @@ class Manager(QWidget):
         self.ui.refreshUButton.clicked.connect(self.refreshUList)
         self.ui.refreshCButton.clicked.connect(self.refreshCList)
         self.ui.refreshDButton.clicked.connect(self.refreshDList)
-        self.ui.refreshIDB.clicked.connect(self.refreshIDRev)
+        self.ui.refreshIDRevB.clicked.connect(self.refreshIDRev)
         self.ui.refreshTOTB.clicked.connect(self.refreshTOTRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.removePageB.clicked.connect(self.removePage)
@@ -289,6 +289,7 @@ class Manager(QWidget):
         self.ui.predictButton.clicked.connect(self.runPredictor)
         self.ui.delPredButton.clicked.connect(self.deletePredictions)
         self.ui.predListRefreshB.clicked.connect(self.getPredictions)
+        self.ui.forceLogoutB.clicked.connect(self.forceLogout)
 
     def closeWindow(self):
         self.close()
@@ -323,6 +324,21 @@ class Manager(QWidget):
                 "Your client version is {}.\n\n"
                 "Error was: {}".format(__version__, e)
             ).exec_()
+            return
+        except PlomExistingLoginException as e:
+            if (
+                SimpleMessage(
+                    "You appear to be already logged in!\n\n"
+                    "  * Perhaps a previous session crashed?\n"
+                    "  * Do you have another client running,\n"
+                    "    e.g., on another computer?\n\n"
+                    "Should I force-logout the existing authorisation?"
+                    " (and then you can try to log in again)\n\n"
+                    "The other client will likely crash."
+                ).exec_()
+                == QMessageBox.Yes
+            ):
+                managerMessenger.clearAuthorisation("manager", pwd)
             return
         except PlomAuthenticationException as e:
             ErrorMessage("Could not authenticate: {}".format(e)).exec_()
@@ -1166,6 +1182,20 @@ class Manager(QWidget):
         self.ui.userListTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.userListTW.setSelectionBehavior(QAbstractItemView.SelectRows)
         # self.ui.userListTW.activated.connect()
+
+    def forceLogout(self):
+        ri = self.ui.userListTW.selectedIndexes()
+        if len(ri) == 0:
+            return
+        r = ri[0].row()
+        user = self.ui.userListTW.item(r, 0).text()
+        if (
+            SimpleMessage(
+                'Are you sure you want to force-logout user "{}"?'.format(user)
+            ).exec_()
+            == QMessageBox.Yes
+        ):
+            managerMessenger.clearAuthorisation(user)
 
     def refreshUserList(self):
         uDict = managerMessenger.getUserDetails()
