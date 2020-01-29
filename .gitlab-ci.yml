@@ -52,17 +52,19 @@ stages:
 job imageServerStarts:
   stage: test
   script:
-    - mkdir scanAndGroup/scannedExams/
+    - pushd scanAndUpload
+    - python3 011_startHere.py
+    # supposed to fail:
+    - if (python3 012_scansToImages.py); then false; else true; fi
+    - popd
     # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
-    - curl https://www.math.ubc.ca/~cbm/tmp/namesAdded.pdf > scanAndGroup/scannedExams/foo.pdf
+    - curl https://www.math.ubc.ca/~cbm/tmp/namesAdded.pdf > scanAndUpload/scannedExams/foo.pdf
     - curl https://www.math.ubc.ca/~cbm/tmp/resources.tar.gz | tar -zx
     - ls resources
-    - ls scanAndGroup/scannedExams
-    - pushd scanAndGroup
-    - python3 03_scans_to_page_images.py
-    - python3 04_decode_images.py
-    - python3 05_missing_pages.py
-    - python3 06_group_pages.py
+    - ls scanAndUpload/scannedExams
+    - pushd scanAndUpload
+    - python3 011_startHere.py
+    - python3 012_scansToImages.py
     - popd
     - pushd imageServer
     - ip addr
