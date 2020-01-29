@@ -8,7 +8,9 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 print("To start the scan process")
-print("0. Copy your PDF scans of the tests into the directory scannedExams")
+print(
+    '0. Copy your PDF scans of the tests into the directory scannedExams. If the directory "scannedExams" does not exist, then create it first.'
+)
 print("1. Edit the server.toml file with the relevant server data.")
 print(
     '2. Run the "012_scansToImages.py" script - this processes your PDFs into individual pages'
