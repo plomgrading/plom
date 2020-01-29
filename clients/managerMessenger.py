@@ -46,7 +46,7 @@ sslContext.check_hostname = False
 server = "127.0.0.1"
 message_port = 41984
 SRmutex = threading.Lock()
-_userName = None
+_userName = "manager"
 _token = None
 session = None
 
@@ -1148,7 +1148,7 @@ def clearAuthorisation(user, password=None):
         if user == "manager":
             response = session.delete(
                 "https://{}:{}/authorisation".format(server, message_port),
-                json={"user": _userName, "password": password, "userToClear": user},
+                json={"user": user, "password": password, "userToClear": user},
                 verify=False,
             )
         else:
