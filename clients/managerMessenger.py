@@ -172,6 +172,7 @@ def getInfoGeneral():
         "numberOfPages",
         "numberOfQuestions",
         "numberOfVersions",
+        "publicCode",
     )
     return dict(zip(fields, pv))
 

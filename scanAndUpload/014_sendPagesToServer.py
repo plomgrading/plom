@@ -22,10 +22,11 @@ import toml
 import threading
 
 # ----------------------
+from plom_exceptions import *
+
 sys.path.append("..")
-from resources.specParser import SpecParser
-from resources.plom_exceptions import *
-from resources.version import Plom_API_Version
+from specParser import SpecParser
+from version import Plom_API_Version
 
 _userName = "scanner"
 
