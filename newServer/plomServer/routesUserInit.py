@@ -31,13 +31,13 @@ class UserInitHandler:
     # @routes.delete("/authorisation")
     async def clearAuthorisation(self, request):
         data = await request.json()
-        # manager to auth with their token
-        if data["user"] == "manager":
+        # manager to auth with their token - unless trying to clear self.
+        if data["user"] == "manager" and data["userToClear"] != "manager":
             if self.server.validate(data["user"], data["token"]):
                 self.server.closeUser(data["userToClear"])
                 print("Manager force-logout user {}".format(data["userToClear"]))
                 return web.Response(status=200)
-        else:  # everyone else checks the password
+        else:  # everyone else has to check their pwd
             if self.server.authority.checkPassword(data["user"], data["password"]):
                 print("User {} force-logout self".format(data["user"]))
                 self.server.closeUser(data["user"])

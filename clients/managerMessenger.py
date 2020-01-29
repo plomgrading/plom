@@ -77,7 +77,7 @@ def requestAndSaveToken(user, pw):
 
     SRmutex.acquire()
     try:
-        response = authSession.put(
+        response = session.put(
             "https://{}:{}/users/{}".format(server, message_port, user),
             json={"user": user, "pw": pw, "api": Plom_API_Version},
             verify=False,
@@ -90,17 +90,21 @@ def requestAndSaveToken(user, pw):
         _userName = user
     except requests.HTTPError as e:
         if response.status_code == 401:  # authentication error
-            raise PlomAuthenticationException("You are not authenticated.")
+            raise PlomAuthenticationException("You are not authenticated.") from None
         elif response.status_code == 400:  # API error
-            raise PlomAPIException(response.json())
+            raise PlomAPIException(response.json()) from None
+        elif response.status_code == 409:
+            raise PlomExistingLoginException(response.json()) from None
         else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
+            raise PlomSeriousException(
+                "Some other sort of error {}".format(e)
+            ) from None
     except requests.ConnectionError as err:
         raise PlomSeriousException(
             "Cannot connect to\n server:port = {}:{}\n Please check details before trying again.".format(
                 server, message_port
             )
-        )
+        ) from None
     finally:
         SRmutex.release()
 
@@ -1138,14 +1142,21 @@ def TrequestImage(testNumber):
     return image
 
 
-def clearAuthorisation(user):
+def clearAuthorisation(user, password=None):
     SRmutex.acquire()
     try:
-        response = session.delete(
-            "https://{}:{}/authorisation".format(server, message_port),
-            json={"user": _userName, "token": _token, "userToClear": user},
-            verify=False,
-        )
+        if user == "manager":
+            response = session.delete(
+                "https://{}:{}/authorisation".format(server, message_port),
+                json={"user": _userName, "password": password, "userToClear": user},
+                verify=False,
+            )
+        else:
+            response = session.delete(
+                "https://{}:{}/authorisation".format(server, message_port),
+                json={"user": _userName, "token": _token, "userToClear": user},
+                verify=False,
+            )
         response.raise_for_status()
     except requests.HTTPError as e:
         if response.status_code == 401:
