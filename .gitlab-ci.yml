@@ -49,6 +49,19 @@ stages:
   - build
   - test
 
+job buildPapers:
+  stage: test
+  script:
+    - pushd build
+    - ./001_startHere.py
+    - cp template_testSpec.toml testSpec.toml
+    - ./002_verifySpec.py
+    - ls ../resources/verifiedSpec.toml
+    - ./003_buildPlomDB.py
+    - ./004_buildPDFs.py
+    # TODO: copy source pdf files from testTemplates
+    - popd
+
 job serverStarts:
   stage: test
   script:
