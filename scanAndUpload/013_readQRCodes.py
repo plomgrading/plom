@@ -21,6 +21,7 @@ import toml
 import threading
 import urllib3
 
+from plom_exceptions import *
 from specParser import SpecParser
 from version import Plom_API_Version
 from tpv_utils import (
@@ -373,7 +374,9 @@ def validateQRsAgainstSpec(spec):
             v = examsScannedNow[t][p][0]
             # make a valid flag
             flag = True
-            if t < 0 or t > spec["numberToProduce"]:
+            if (
+                t < 0 or t > spec["numberOfTests"]
+            ):  # slight bastardisation of normal spec
                 flag = False
             if p < 0 or p > spec["numberOfPages"]:
                 flag = False
@@ -386,7 +389,7 @@ def validateQRsAgainstSpec(spec):
                 print(">> Produced t{} p{} v{}".format(t, p, tfv[1]))
                 print(
                     ">> Must have t-code in [1,{}], p-code in [1,{}], v-code in [1,{}]".format(
-                        spec["numberToProduce"],
+                        spec["numberOfTests"],
                         spec["numberOfPages"],
                         spec["numberOfVersions"],
                     )
@@ -439,8 +442,11 @@ if __name__ == "__main__":
     authSession = requests.Session()
     authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
     requestAndSaveToken("scanner", pwd)
+    session = requests.Session()
+    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
 
     spec = getInfoGeneral()
+    closeUser()
 
     buildDirectories()
     decodeQRs()
