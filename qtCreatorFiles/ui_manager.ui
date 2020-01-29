@@ -992,7 +992,7 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_16">
              <item>
-              <widget class="QPushButton" name="refreshIDB">
+              <widget class="QPushButton" name="refreshIDRevB">
                <property name="text">
                 <string>Refresh</string>
                </property>
@@ -1073,20 +1073,92 @@
       <layout class="QVBoxLayout" name="verticalLayout_21">
        <item>
         <widget class="QTabWidget" name="tabWidget_2">
+         <property name="currentIndex">
+          <number>0</number>
+         </property>
          <widget class="QWidget" name="tab_2">
           <attribute name="title">
            <string>User &amp;List</string>
           </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_22">
+          <layout class="QVBoxLayout" name="verticalLayout_23">
            <item>
-            <widget class="QTableWidget" name="userListTW">
-             <property name="alternatingRowColors">
-              <bool>true</bool>
-             </property>
-             <attribute name="verticalHeaderVisible">
-              <bool>false</bool>
-             </attribute>
-            </widget>
+            <layout class="QHBoxLayout" name="horizontalLayout_20">
+             <item>
+              <widget class="QTableWidget" name="userListTW">
+               <property name="alternatingRowColors">
+                <bool>true</bool>
+               </property>
+               <attribute name="verticalHeaderVisible">
+                <bool>false</bool>
+               </attribute>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="groupBox_5">
+               <property name="title">
+                <string>User management tools</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_22">
+                <item>
+                 <spacer name="verticalSpacer_5">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="forceLogoutB">
+                  <property name="text">
+                   <string>Force logout</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="verticalSpacer_3">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>113</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_10">
+                  <property name="text">
+                   <string>More in the future</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="verticalSpacer_4">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>114</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_18">
@@ -1116,8 +1188,20 @@
          </widget>
          <widget class="QWidget" name="tab_3">
           <attribute name="title">
-           <string>Tab 2</string>
+           <string>Future use</string>
           </attribute>
+          <layout class="QHBoxLayout" name="horizontalLayout_19">
+           <item>
+            <widget class="QLabel" name="label_9">
+             <property name="text">
+              <string>This Tab will be used for more user-management tools in the future. For now it is just occupying space. Enjoy.</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </widget>
        </item>
