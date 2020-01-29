@@ -7,6 +7,8 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+
+import datetime
 import toml
 import argparse
 import os
@@ -357,9 +359,9 @@ def _exception_hook(exctype, value, traceback):
     s = "".join(tblib.format_exception(exctype, value, traceback))
     mb = QMessageBox()
     mb.setText(
-        "Something unexpected has happened!\n\n"
+        "!! Something unexpected has happened at {}\n\n"
         "Please file a bug and copy-paste the following:\n\n"
-        "{0}".format(s)
+        "{}".format(datetime.datetime.now().strftime("%y:%m:%d-%H:%M:%S"), s)
     )
     mb.setStandardButtons(QMessageBox.Ok)
     mb.exec_()
