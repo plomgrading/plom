@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '../qtCreatorFiles/ui_chooser.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.2
+# Created by: PyQt5 UI code generator 5.12.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -207,7 +207,7 @@ class Ui_Chooser(object):
         self.serverLE.setText(_translate("Chooser", "127.0.0.1"))
         self.markGBox.setTitle(_translate("Chooser", "Marking information"))
         self.vlabel.setText(_translate("Chooser", "Version:"))
-        self.pgLabel.setText(_translate("Chooser", "Page group:"))
+        self.pgLabel.setText(_translate("Chooser", "Question"))
         self.userGBox.setTitle(_translate("Chooser", "User Information"))
         self.label.setText(_translate("Chooser", "Username:"))
         self.label_2.setText(_translate("Chooser", "Password:"))

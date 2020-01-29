@@ -274,7 +274,9 @@ class ArrowItem(QGraphicsPathItem):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
@@ -410,7 +412,9 @@ class ArrowDoubleItem(QGraphicsPathItem):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
@@ -499,7 +503,9 @@ class BoxItem(QGraphicsRectItem):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             # paint a bounding rectangle out-of-bounds warning
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
@@ -589,7 +595,9 @@ class CrossItem(QGraphicsPathItem):
         return ["Cross", self.pt.x() + self.x(), self.pt.y() + self.y()]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
@@ -650,7 +658,9 @@ class DeltaItem(QGraphicsTextItem):
         self.moveBy(0, self.offset)
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             if self.group() is None:
                 painter.setPen(QPen(QColor(255, 165, 0), 4))
                 painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
@@ -784,7 +794,9 @@ class EllipseItem(QGraphicsEllipseItem):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
@@ -879,7 +891,9 @@ class HighLightItem(QGraphicsPathItem):
         return ["Highlight", pth]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
@@ -968,7 +982,9 @@ class LineItem(QGraphicsLineItem):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
@@ -1058,7 +1074,9 @@ class PenItem(QGraphicsPathItem):
         return ["Pen", pth]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
@@ -1202,7 +1220,9 @@ class PenArrowItem(QGraphicsItemGroup):
         return ["PenArrow", pth]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
@@ -1292,7 +1312,9 @@ class QMarkItem(QGraphicsPathItem):
         return ["QMark", self.pt.x() + self.x(), self.pt.y() + self.y()]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
@@ -1377,7 +1399,9 @@ class TickItem(QGraphicsPathItem):
         return ["Tick", self.pt.x() + self.x(), self.pt.y() + self.y()]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
@@ -1514,7 +1538,9 @@ class TextItem(QGraphicsTextItem):
         super(TextItem, self).keyPressEvent(event)
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             if self.group() is None:
                 painter.setPen(QPen(QColor(255, 165, 0), 8))
                 painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
@@ -1647,7 +1673,9 @@ class GroupDTItem(QGraphicsItemGroup):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().imageItem, mode=Qt.ContainsItemShape):
+        if not self.collidesWithItem(
+            self.scene().underImage, mode=Qt.ContainsItemShape
+        ):
             painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())

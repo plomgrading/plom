@@ -49,20 +49,18 @@ class Paper:
     store the studentName and ID-numer.
     """
 
-    def __init__(self, tgv, fname, stat="unidentified", id="", name=""):
+    def __init__(self, test, fnames=[], stat="unidentified", id="", name=""):
         # tgv = t0000p00v0
         # ... = 0123456789
-        # The test-IDgroup code
-        self.prefix = tgv
         # The test number
-        self.test = tgv[1:5]
+        self.test = test
         # Set status as unid'd
         self.status = stat
         # no name or id-number yet.
         self.sname = name
         self.sid = id
-        # the filename of the image.
-        self.originalFile = fname
+        # the list filenames of the images.
+        self.originalFiles = fnames
 
     def setStatus(self, st):
         self.status = st
@@ -90,7 +88,7 @@ class ExamModel(QAbstractTableModel):
         # Data stored in this ordered list.
         self.paperList = []
         # Headers.
-        self.header = ["Code", "Status", "ID", "Name"]
+        self.header = ["Test", "Status", "ID", "Name"]
 
     def setData(self, index, value, role=Qt.EditRole):
         # Columns are [code, status, ID and Name]
@@ -98,7 +96,7 @@ class ExamModel(QAbstractTableModel):
         if role != Qt.EditRole:
             return False
         if index.column() == 0:
-            self.paperList[index.row()].prefix = value
+            self.paperList[index.row()].test = value
             self.dataChanged.emit(index, index)
             return True
         elif index.column() == 1:
@@ -147,7 +145,7 @@ class ExamModel(QAbstractTableModel):
         if role != Qt.DisplayRole:
             return QVariant()
         elif index.column() == 0:
-            return self.paperList[index.row()].prefix
+            return self.paperList[index.row()].test
         elif index.column() == 1:
             return self.paperList[index.row()].status
         elif index.column() == 2:
@@ -380,7 +378,7 @@ class IDClient(QWidget):
         idList = messenger.IDrequestDoneTasks()
         for x in idList:
             self.addPaperToList(
-                Paper(x[0], fname="", stat="identified", id=x[2], name=x[3]),
+                Paper(x[0], fnames=[], stat="identified", id=x[2], name=x[3]),
                 update=False,
             )
 
@@ -395,28 +393,36 @@ class IDClient(QWidget):
 
     def checkFiles(self, r):
         # grab the selected tgv
-        tgv = self.exM.paperList[r].prefix
+        test = self.exM.paperList[r].test
         # check if we have a copy
-        if self.exM.paperList[r].originalFile is not "":
+        if len(self.exM.paperList[r].originalFiles) > 0:
             return
         # else try to grab it from server
         try:
-            image = messenger.IDrequestImage(tgv)
+            imageList = messenger.IDrequestImage(test)
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
-        # save the image to appropriate filename
-        fname = os.path.join(self.workingDirectory, "{}.png".format(tgv))
-        with open(fname, "wb+") as fh:
-            fh.write(image)
+        except PlomBenignException as e:
+            self.throwBenign(e)
+            # self.exM.removePaper(r)
+            return
 
-        self.exM.paperList[r].originalFile = fname
+        # Image names = "i<testnumber>.<imagenumber>.png"
+        inames = []
+        for i in range(len(imageList)):
+            tmp = os.path.join(self.workingDirectory, "i{}.{}.png".format(test, i))
+            inames.append(tmp)
+            with open(tmp, "wb+") as fh:
+                fh.write(imageList[i])
+
+        self.exM.paperList[r].originalFiles = inames
 
     def updateImage(self, r=0):
         # Here the system should check if imagefile exist and grab if needed.
         self.checkFiles(r)
         # Update the test-image pixmap with the image in the indicated file.
-        self.testImg.updateImage(self.exM.paperList[r].originalFile)
+        self.testImg.updateImage(self.exM.paperList[r].originalFiles)
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
         if self.exM.paperList[r].status == "identified":
@@ -483,19 +489,21 @@ class IDClient(QWidget):
                 return False
 
             try:
-                image = messenger.IDclaimThisTask(test)
+                imageList = messenger.IDclaimThisTask(test)
                 break
             except PlomBenignException as err:
                 # task already taken.
                 continue
-        # Image name will be <code>.png
-        iname = os.path.join(self.workingDirectory, test + ".png")
-        # save it
-        with open(iname, "wb+") as fh:
-            fh.write(image)
+        # Image names = "i<testnumber>.<imagenumber>.png"
+        inames = []
+        for i in range(len(imageList)):
+            tmp = os.path.join(self.workingDirectory, "i{}.{}.png".format(test, i))
+            inames.append(tmp)
+            with open(tmp, "wb+") as fh:
+                fh.write(imageList[i])
 
         # Add the paper [code, filename, etc] to the list
-        self.addPaperToList(Paper(test, iname))
+        self.addPaperToList(Paper(test, inames))
 
         # Clean up table - and set focus on the ID-lineedit so user can
         # just start typing in the next ID-number.

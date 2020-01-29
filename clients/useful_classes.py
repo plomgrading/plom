@@ -184,11 +184,13 @@ def commentSaveList(clist):
     with open("plomComments.toml", "w") as fname:
         toml.dump({"comment": clist}, fname)
 
+
 # Eventually there may be more "state" to the filters and something like a dict
 # might make more sense here, but for now its list of booleans:
 #    hide-comments-not-for-this-question
 #    hide-comments-not-for-this-test
 comDefaultFilters = [True, True]
+
 
 def commentVisibleInQuestion(com, n):
     """Return True if comment would be visible in Question n.
@@ -564,7 +566,8 @@ class SimpleCommentTable(QTableView):
         self.cmodel.setRowCount(0)
         for i, com in enumerate(self.clist):
             # User can edit the text, but doesn't handle drops.
-            # TODO: YUCK! (how do I get the pagegroup)
+
+            # TODO: YUCK! (how do I get the question)
             questnum = int(self.parent.parent.tgv[5:7])
             testname = self.parent.parent.testname
             if not commentIsVisible(com, questnum, testname, filters=self.filters):
@@ -611,7 +614,7 @@ class SimpleCommentTable(QTableView):
             return
         idx = int(self.cmodel.index(sel[0].row(), 2).data())
         self.clist.pop(idx)
-        #self.cmodel.removeRow(sel[0].row())
+        # self.cmodel.removeRow(sel[0].row())
         # TODO: maybe sloppy to rebuild, need automatic cmodel ontop of clist
         self.populateTable()
 
@@ -690,10 +693,14 @@ class AddCommentBox(QDialog):
         self.TEmeta = QTextEdit()
         self.TEtestname = QLineEdit()
         # TODO: how to make it smaller vertically than the TE?
-        #self.TEtag.setMinimumHeight(self.TE.minimumHeight() // 2)
-        #self.TEtag.setMaximumHeight(self.TE.maximumHeight() // 2)
+        # self.TEtag.setMinimumHeight(self.TE.minimumHeight() // 2)
+        # self.TEtag.setMaximumHeight(self.TE.maximumHeight() // 2)
         self.QSpecific = QCheckBox("Available only in question {}".format(questnum))
         self.QSpecific.stateChanged.connect(self.toggleQSpecific)
+        self.quickHelp = QLabel(
+            'Prepend with "tex:" to use math.  You can "Choose text" from an existing annotation.'
+        )
+        self.quickHelp.setWordWrap(True)
 
         flay = QFormLayout()
         flay.addRow("Enter text", self.TE)
@@ -752,11 +759,15 @@ class AddCommentBox(QDialog):
         else:
             self.TEtestname.setText(curtestname)
             self.QSpecific.setCheckState(Qt.Checked)
-            self.TE.setPlaceholderText('Prepend with "tex:" to use math.\n\n'
-                                       'You can "Choose text" to harvest comments from an existing annotation.\n\n'
-                                       'Change "delta" below to set a point-change associated with this comment.')
-            self.TEmeta.setPlaceholderText("notes to self, hints on when to use this comment, etc.\n\n"
-                                           "Not shown to student!")
+            self.TE.setPlaceholderText(
+                'Prepend with "tex:" to use math.\n\n'
+                'You can "Choose text" to harvest comments from an existing annotation.\n\n'
+                'Change "delta" below to set a point-change associated with this comment.'
+            )
+            self.TEmeta.setPlaceholderText(
+                "notes to self, hints on when to use this comment, etc.\n\n"
+                "Not shown to student!"
+            )
 
     def changedCB(self):
         self.TE.clear()
@@ -842,5 +853,7 @@ class ChangeFiltersDialog(QDialog):
         buttons.rejected.connect(self.reject)
 
     def getFilters(self):
-        return [self.cb1.checkState() == Qt.Checked,
-                self.cb2.checkState() == Qt.Checked]
+        return [
+            self.cb1.checkState() == Qt.Checked,
+            self.cb2.checkState() == Qt.Checked,
+        ]

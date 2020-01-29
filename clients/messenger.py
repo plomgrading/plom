@@ -20,6 +20,7 @@ import urllib3
 from useful_classes import ErrorMessage
 import time
 import threading
+import hashlib
 
 # from http.client import HTTPConnection
 # import logging
@@ -193,7 +194,13 @@ def getInfoGeneral():
     finally:
         SRmutex.release()
 
-    fields = ("testName", "numTests", "numTotalPages", "numGroups", "numVersions")
+    fields = (
+        "testName",
+        "numberOfTests",
+        "numberOfPages",
+        "numberOfQuestions",
+        "numberOfVersions",
+    )
     return dict(zip(fields, pv))
 
 
@@ -347,7 +354,11 @@ def IDrequestImage(code):
             verify=False,
         )
         response.raise_for_status()
-        image = BytesIO(response.content).getvalue()
+        imageList = []
+        for img in MultipartDecoder.from_response(response).parts:
+            imageList.append(
+                BytesIO(img.content).getvalue()
+            )  # pass back image as bytes
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.") from None
@@ -366,7 +377,7 @@ def IDrequestImage(code):
     finally:
         SRmutex.release()
 
-    return image
+    return imageList
 
 
 # ------------------------
@@ -395,8 +406,10 @@ def IDclaimThisTask(code):
     finally:
         SRmutex.release()
 
-    image = BytesIO(response.content).getvalue()  # pass back image as bytes
-    return image
+    imageList = []
+    for img in MultipartDecoder.from_response(response).parts:
+        imageList.append(BytesIO(img.content).getvalue())  # pass back image as bytes
+    return imageList
 
 
 def IDreturnIDdTask(code, studentID, studentName):
@@ -414,7 +427,7 @@ def IDreturnIDdTask(code, studentID, studentName):
         )
         response.raise_for_status()
     except requests.HTTPError as e:
-        if resposne.status_code == 409:
+        if response.status_code == 409:
             raise PlomBenignException(
                 "Student number {} already in use".format(e)
             ) from None
@@ -562,11 +575,11 @@ def TaskNextTask():
     return progress
 
 
-def TclaimThisTask(code):
+def TclaimThisTask(task):
     SRmutex.acquire()
     try:
         response = session.patch(
-            "https://{}:{}/TOT/tasks/{}".format(server, message_port, code),
+            "https://{}:{}/TOT/tasks/{}".format(server, message_port, task),
             json={"user": _userName, "token": _token},
             verify=False,
         )
@@ -609,11 +622,11 @@ def TdidNotFinishTask(code):
     return True
 
 
-def TrequestImage(code):
+def TrequestImage(testNumber):
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/TOT/images/{}".format(server, message_port, code),
+            "https://{}:{}/TOT/image/{}".format(server, message_port, testNumber),
             json={"user": _userName, "token": _token},
             verify=False,
         )
@@ -670,12 +683,12 @@ def TreturnTotaledTask(code, mark):
 # ------------------------
 # ------------------------
 # Marker stuff
-def MgetMaxMark(pageGroup, version):
+def MgetMaxMark(question, version):
     SRmutex.acquire()
     try:
         response = session.get(
             "https://{}:{}/MK/maxMark".format(server, message_port),
-            json={"user": _userName, "token": _token, "pg": pageGroup, "v": version},
+            json={"user": _userName, "token": _token, "q": question, "v": version},
             verify=False,
         )
         # throw errors when response code != 200.
@@ -719,16 +732,16 @@ def MdidNotFinishTask(code):
     return True
 
 
-def MrequestDoneTasks(pg, v):
+def MrequestDoneTasks(q, v):
     SRmutex.acquire()
     try:
         response = session.get(
             "https://{}:{}/MK/tasks/complete".format(server, message_port),
-            json={"user": _userName, "token": _token, "pg": pg, "v": v},
+            json={"user": _userName, "token": _token, "q": q, "v": v},
             verify=False,
         )
         response.raise_for_status()
-        idList = response.json()
+        mList = response.json()
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.") from None
@@ -739,15 +752,15 @@ def MrequestDoneTasks(pg, v):
     finally:
         SRmutex.release()
 
-    return idList
+    return mList
 
 
-def MprogressCount(pg, v):
+def MprogressCount(q, v):
     SRmutex.acquire()
     try:
         response = session.get(
             "https://{}:{}/MK/progress".format(server, message_port),
-            json={"user": _userName, "token": _token, "pg": pg, "v": v},
+            json={"user": _userName, "token": _token, "q": q, "v": v},
             verify=False,
         )
         # throw errors when response code != 200.
@@ -767,17 +780,18 @@ def MprogressCount(pg, v):
     return progress
 
 
-def MaskNextTask(pg, v):
+def MaskNextTask(q, v):
     """Ask server for a new marking task, return tgv or None.
 
     None indicated no more tasks available.
     TODO: why are we using json for a string return?
     """
+
     SRmutex.acquire()
     try:
         response = session.get(
             "https://{}:{}/MK/tasks/available".format(server, message_port),
-            json={"user": _userName, "token": _token, "pg": pg, "v": v},
+            json={"user": _userName, "token": _token, "q": q, "v": v},
             verify=False,
         )
         # throw errors when response code != 200.
@@ -811,10 +825,6 @@ def MclaimThisTask(code):
         if response.status_code == 204:
             raise PlomBenignException("Task taken by another user.")
 
-        # response should be multipart = [image, tags]
-        imageAndTags = MultipartDecoder.from_response(response).parts
-        image = BytesIO(imageAndTags[0].content).getvalue()  # pass back image as bytes
-        tags = imageAndTags[1].text  # this is raw text.
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.") from None
@@ -825,7 +835,19 @@ def MclaimThisTask(code):
     finally:
         SRmutex.release()
 
-    return image, tags
+    # should be multipart = [tags, image1, image2, ....]
+    tags = "tagsAndImages[0].text  # this is raw text"
+    imageList = []
+    i = 0
+    for img in MultipartDecoder.from_response(response).parts:
+        if i == 0:
+            tags = img.text
+        else:
+            imageList.append(
+                BytesIO(img.content).getvalue()
+            )  # pass back image as bytes
+        i += 1
+    return imageList, tags
 
 
 def MlatexFragment(latex):
@@ -865,23 +887,30 @@ def MrequestImages(code):
         )
         response.raise_for_status()
 
-        # response is either [image] or [image, annotatedImage, plom-data]
-        imageAnImageAndPlom = MultipartDecoder.from_response(response).parts
-        image = BytesIO(
-            imageAnImageAndPlom[0].content
-        ).getvalue()  # pass back image as bytes
-        if len(imageAnImageAndPlom) == 3:
-            anImage = BytesIO(
-                imageAnImageAndPlom[1].content
-            ).getvalue()  # pass back annotated-image as bytes
-            plDat = BytesIO(
-                imageAnImageAndPlom[2].content
-            ).getvalue()  # pass back plomData as bytes
-
-        else:
+        # response is either [n, image1,..,image.n] or [n, image1,...,image.n, annotatedImage, plom-data]
+        imagesAnnotAndPlom = MultipartDecoder.from_response(response).parts
+        n = int(imagesAnnotAndPlom[0].content)  # 'n' sent as string
+        imageList = [
+            BytesIO(imagesAnnotAndPlom[i].content).getvalue() for i in range(1, n + 1)
+        ]
+        if len(imagesAnnotAndPlom) == n + 1:
+            # all is fine - no annotated image or plom data
             anImage = None
             plDat = None
-
+        elif len(imagesAnnotAndPlom) == n + 3:
+            # all fine - last two parts are annotated image + plom-data
+            anImage = BytesIO(
+                imagesAnnotAndPlom[n + 1].content
+            ).getvalue()  # pass back annotated-image as bytes
+            plDat = BytesIO(
+                imagesAnnotAndPlom[n + 2].content
+            ).getvalue()  # pass back plomData as bytes
+        else:
+            raise PlomSeriousException(
+                "Number of images passed doesn't make sense {} vs {}".format(
+                    n, len(imagesAnnotAndPlom)
+                )
+            )
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.") from None
@@ -900,26 +929,24 @@ def MrequestImages(code):
     finally:
         SRmutex.release()
 
-    return [image, anImage, plDat]
+    return [imageList, anImage, plDat]
 
 
-def MrequestOriginalImage(testNumber, pageGroup):
+def MrequestOriginalImages(task):
     SRmutex.acquire()
     try:
         response = session.get(
-            "https://{}:{}/MK/originalImage/{}/{}".format(
-                server, message_port, testNumber, pageGroup
-            ),
+            "https://{}:{}/MK/originalImages/{}".format(server, message_port, task),
             json={"user": _userName, "token": _token},
             verify=False,
         )
         if response.status_code == 204:
-            raise PlomNoMoreException(
-                "No paper with test/pageGroup {}/{}.".format(testNumber, pageGroup)
-            )
+            raise PlomNoMoreException("No task = {}.".format(task))
         response.raise_for_status()
-        # response is either [image] or [image, annotatedImage, plom-data]
-        image = BytesIO(response.content).getvalue()  # pass back image as bytes
+        # response is [image1, image2,... image.n]
+        imageList = []
+        for img in MultipartDecoder.from_response(response).parts:
+            imageList.append(BytesIO(img.content).getvalue())
 
     except requests.HTTPError as e:
         if response.status_code == 401:
@@ -935,7 +962,7 @@ def MrequestOriginalImage(testNumber, pageGroup):
     finally:
         SRmutex.release()
 
-    return image
+    return imageList
 
 
 def MreturnMarkedTask(code, pg, ver, score, mtime, tags, aname, pname, cname):
@@ -951,6 +978,7 @@ def MreturnMarkedTask(code, pg, ver, score, mtime, tags, aname, pname, cname):
             "mtime": str(mtime),
             "tags": tags,
             "comments": open(cname, "r").read(),
+            "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
         }
 
         dat = MultipartEncoder(
@@ -1018,11 +1046,19 @@ def MrequestWholePaper(code):
         )
         response.raise_for_status()
 
-        # response should be multipart = [image, tags]
+        # response should be multipart = [[pageNames], f1,f2,f3..]
         imagesAsBytes = MultipartDecoder.from_response(response).parts
         images = []
+        i = 0
         for iab in imagesAsBytes:
-            images.append(BytesIO(iab.content).getvalue())  # pass back image as bytes
+            if i == 0:
+                pageNames = json.loads(iab.content)
+            else:
+                images.append(
+                    BytesIO(iab.content).getvalue()
+                )  # pass back image as bytes
+            i += 1
+
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.") from None
@@ -1035,7 +1071,7 @@ def MrequestWholePaper(code):
     finally:
         SRmutex.release()
 
-    return images
+    return [pageNames, images]
 
 
 # ------------------------

@@ -20,6 +20,7 @@ from PyQt5.QtGui import (
 )
 from PyQt5.QtWidgets import (
     QGraphicsEllipseItem,
+    QGraphicsItemGroup,
     QGraphicsLineItem,
     QGraphicsPathItem,
     QGraphicsPixmapItem,
@@ -97,6 +98,22 @@ class ScoreBox(QGraphicsTextItem):
         super(ScoreBox, self).paint(painter, option, widget)
 
 
+class UnderlyingImage(QGraphicsItemGroup):
+    def __init__(self, imageNames):
+        super(QGraphicsItemGroup, self).__init__()
+        self.imageNames = imageNames
+        self.images = {}
+        x = 0
+        n = 0
+        for img in self.imageNames:
+            self.images[n] = QGraphicsPixmapItem(QPixmap(img))
+            self.images[n].setTransformationMode(Qt.SmoothTransformation)
+            self.images[n].setPos(x, 0)
+            x += self.images[n].boundingRect().width()
+            self.addToGroup(self.images[n])
+            n += 1
+
+
 # Dictionaries to translate tool-modes into functions
 # for mouse press, move and release
 mousePress = {
@@ -138,23 +155,24 @@ class PageScene(QGraphicsScene):
     textitems.
     """
 
-    def __init__(self, parent, imgName, maxMark, score, markStyle):
+    def __init__(self, parent, imgNames, saveName, maxMark, score, markStyle):
         super(PageScene, self).__init__(parent)
         self.parent = parent
-        # Grab filename of groupimage,
-        self.imageName = imgName
+        # Grab filename of groupimage
+        self.imageNames = imgNames
+        self.saveName = saveName
         self.maxMark = maxMark
         self.score = score
         self.markStyle = markStyle
         # Tool mode - initially set it to "move"
         self.mode = "move"
-        # build pixmap and graphicsitem.
-        self.image = QPixmap(imgName)
-        self.imageItem = QGraphicsPixmapItem(self.image)
-        self.imageItem.setTransformationMode(Qt.SmoothTransformation)
+        # build pixmap and graphicsitemgroup.
+        self.underImage = UnderlyingImage(self.imageNames)
+        self.addItem(self.underImage)
+
         # Build scene rectangle to fit the image, and place image into it.
-        self.setSceneRect(0, 0, self.image.width(), self.image.height())
-        self.addItem(self.imageItem)
+        self.setSceneRect(self.underImage.boundingRect())
+        # self.addItem(self.underImage)
         # initialise the undo-stack
         self.undoStack = QUndoStack()
 
@@ -207,6 +225,20 @@ class PageScene(QGraphicsScene):
         # make a box around the scorebox where mouse-press-event won't work.
         self.avoidBox = self.scoreBox.boundingRect().adjusted(0, 0, 24, 24)
 
+    # def patchImagesTogether(self, imageList):
+    #     x = 0
+    #     n = 0
+    #     for img in imageList:
+    #         self.images[n] = QGraphicsPixmapItem(QPixmap(img))
+    #         self.images[n].setTransformationMode(Qt.SmoothTransformation)
+    #         self.images[n].setPos(x, 0)
+    #         self.addItem(self.images[n])
+    #         x += self.images[n].boundingRect().width()
+    #         self.underImage.addToGroup(self.images[n])
+    #         n += 1
+    #
+    #     self.addItem(self.underImage)
+
     def setMode(self, mode):
         self.mode = mode
         # if current mode is not comment or delta, make sure the ghostcomment is hidden
@@ -250,8 +282,9 @@ class PageScene(QGraphicsScene):
         # Make sure the ghostComment is hidden
         self.ghostItem.hide()
         # Get the width and height of the image
-        w = self.image.width()
-        h = self.image.height()
+        br = self.underImage.boundingRect()
+        w = br.width()
+        h = br.height()
         # Create an output pixmap and painter (to export it)
         oimg = QPixmap(w, h)
         exporter = QPainter(oimg)
@@ -259,7 +292,7 @@ class PageScene(QGraphicsScene):
         self.render(exporter)
         exporter.end()
         # Save the result to file.
-        oimg.save(self.imageName)
+        oimg.save(self.saveName)
 
     def keyPressEvent(self, event):
         # The escape key removes focus from the graphicsscene.
@@ -546,6 +579,7 @@ class PageScene(QGraphicsScene):
                 for Y in [
                     ScoreBox,
                     QGraphicsPixmapItem,
+                    QGraphicsItemGroup,
                     GhostComment,
                     GhostDelta,
                     GhostText,
@@ -570,6 +604,7 @@ class PageScene(QGraphicsScene):
                 for Y in [
                     ScoreBox,
                     QGraphicsPixmapItem,
+                    UnderlyingImage,
                     GhostComment,
                     GhostDelta,
                     GhostText,
@@ -1025,7 +1060,7 @@ class PageScene(QGraphicsScene):
     def deleteIfLegal(self, item):
         # can't delete the pageimage, scorebox, delete-box, ghostitem and its constituents
         if item in [
-            self.imageItem,
+            self.underImage,
             self.scoreBox,
             self.delBoxItem,
             self.ghostItem,
@@ -1082,7 +1117,10 @@ class PageScene(QGraphicsScene):
     def checkAllObjectsInside(self):
         for X in self.items():
             # check all items that are not the image or scorebox
-            if (X is self.imageItem) or (X is self.scoreBox):
+            if (X is self.underImage) or (X is self.scoreBox):
+                continue
+            # make sure that it is not one of the images inside the underlying image.
+            if X.parentItem() is self.underImage:
                 continue
             # And be careful - there might be a GhostComment floating about
             if (
@@ -1092,7 +1130,7 @@ class PageScene(QGraphicsScene):
             ):
                 continue
             # make sure is inside image
-            if not X.collidesWithItem(self.imageItem, mode=Qt.ContainsItemShape):
+            if not X.collidesWithItem(self.underImage, mode=Qt.ContainsItemShape):
                 return False
         return True
 

@@ -94,7 +94,8 @@ class Annotator(QWidget):
         tgv,
         testname,
         paperdir,
-        fname,
+        fnames,
+        saveName,
         maxMark,
         markStyle,
         mouseHand,
@@ -111,7 +112,9 @@ class Annotator(QWidget):
         self.tgv = tgv
         self.testname = testname
         self.paperdir = paperdir
-        self.imageFile = fname
+        self.imageFiles = fnames
+        self.saveName = saveName
+        print("Savename = {}".format(saveName))
         self.maxMark = maxMark
         # get markstyle from plomDict
         if plomDict is None:
@@ -440,11 +443,11 @@ class Annotator(QWidget):
     def viewWholePaper(self):
         # grab the files if needed.
         if self.testViewFiles is None:
-            self.testViewFiles = self.parent.viewWholePaper()
+            testNumber, pageNames, self.testViewFiles = self.parent.viewWholePaper()
+            print("Pagenames = {}".format(pageNames))
         # if we haven't built a testview, built it now
         if self.testView is None:
-            tn = int(self.tgv[1:4])  # get test number from tgv
-            self.testView = TestView(self, self.testViewFiles, tn)
+            self.testView = TestView(self, testNumber, pageNames, self.testViewFiles)
         else:
             # must have closed it, so re-show it.
             self.testView.show()
@@ -472,7 +475,12 @@ class Annotator(QWidget):
         # back to us) and the filename of the image.
         self.view = PageView(self)
         self.scene = PageScene(
-            self, self.imageFile, self.maxMark, self.score, self.markStyle
+            self,
+            self.imageFiles,
+            self.saveName,
+            self.maxMark,
+            self.score,
+            self.markStyle,
         )
         # connect view to scene
         self.view.connectScene(self.scene)
@@ -1028,14 +1036,15 @@ class Annotator(QWidget):
         print("ann emitting signal: ACCEPT")
         tim = self.timer.elapsed() // 1000
         # some things here hardcoded elsewhere too, and up in marker
-        plomFile = self.imageFile[:-3] + "plom"
-        commentFile = self.imageFile[:-3] + "json"
+        plomFile = self.saveName[:-3] + "plom"
+        commentFile = self.saveName[:-3] + "json"
         stuff = [
             self.score,
             relaunch,
             tim,
             self.paperdir,
-            self.imageFile,
+            self.imageFiles,
+            self.saveName,
             plomFile,
             commentFile,
         ]
@@ -1060,8 +1069,8 @@ class Annotator(QWidget):
 
     def saveMarkerComments(self):
         commentList = self.getComments()
-        # image file is <blah>.png, save comments as <blah>.json
-        with open(self.imageFile[:-3] + "json", "w") as commentFile:
+        # savefile is <blah>.png, save comments as <blah>.json
+        with open(self.saveName[:-3] + "json", "w") as commentFile:
             json.dump(commentList, commentFile)
 
     def latexAFragment(self, txt):
@@ -1071,14 +1080,15 @@ class Annotator(QWidget):
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
         plomDict = {
-            "fileName": os.path.basename(self.imageFile),
+            "fileNames": [os.path.basename(fn) for fn in self.imageFiles],
+            "saveName": os.path.basename(self.saveName),
             "markStyle": self.markStyle,
             "maxMark": self.maxMark,
             "currentMark": self.score,
             "sceneItems": lst,
         }
         # save pickled file as <blah>.plom
-        plomFile = self.imageFile[:-3] + "plom"
+        plomFile = self.saveName[:-3] + "plom"
         with open(plomFile, "w") as fh:
             json.dump(plomDict, fh)
 

@@ -1,0 +1,4 @@
+# Set to the name of the server
+server = "hinge.math.ubc.ca"
+# Set to the message port number of that server
+port = 41984

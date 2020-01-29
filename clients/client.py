@@ -227,7 +227,7 @@ class Chooser(QDialog):
         self.parent.setFont(fnt)
 
     def getpg(self):
-        """Return the integer pagegroup or None"""
+        """Return the integer question or None"""
         if self.ui.pgDrop.isVisible():
             pg = self.ui.pgDrop.currentText().lstrip("Q")
         else:
@@ -296,18 +296,18 @@ class Chooser(QDialog):
         self.ui.vSB.setVisible(False)
 
         self.ui.vDrop.clear()
-        self.ui.vDrop.addItems([str(x + 1) for x in range(0, info["numVersions"])])
+        self.ui.vDrop.addItems([str(x + 1) for x in range(0, info["numberOfVersions"])])
         if v:
-            if v >= 1 and v <= info["numVersions"]:
+            if v >= 1 and v <= info["numberOfVersions"]:
                 self.ui.vDrop.setCurrentIndex(v - 1)
         self.ui.vDrop.setVisible(True)
 
         self.ui.pgDrop.clear()
         self.ui.pgDrop.addItems(
-            ["Q{}".format(x + 1) for x in range(0, info["numGroups"])]
+            ["Q{}".format(x + 1) for x in range(0, info["numberOfQuestions"])]
         )
         if pg:
-            if pg >= 1 and pg <= info["numGroups"]:
+            if pg >= 1 and pg <= info["numberOfQuestions"]:
                 self.ui.pgDrop.setCurrentIndex(pg - 1)
         self.ui.pgDrop.setVisible(True)
         # TODO should we also let people type in?

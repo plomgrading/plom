@@ -2,11 +2,13 @@
 
 # Form implementation generated from reading ui file '../qtCreatorFiles/ui_test_view.ui'
 #
-# Created by: PyQt5 UI code generator 5.10.1
+# Created by: PyQt5 UI code generator 5.12.3
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_TestView(object):
     def setupUi(self, TestView):
@@ -52,9 +54,8 @@ class Ui_TestView(object):
 
     def retranslateUi(self, TestView):
         _translate = QtCore.QCoreApplication.translate
-        TestView.setWindowTitle(_translate("TestView", "Form"))
-        self.prevGroupButton.setText(_translate("TestView", "Previous Group"))
-        self.nextGroupButton.setText(_translate("TestView", "Next Group"))
+        TestView.setWindowTitle(_translate("TestView", "View test pages"))
+        self.prevGroupButton.setText(_translate("TestView", "Previous Page"))
+        self.nextGroupButton.setText(_translate("TestView", "Next Page"))
         self.closeButton.setText(_translate("TestView", "Close"))
         self.maxNormButton.setText(_translate("TestView", "Toggle Maximise"))
-

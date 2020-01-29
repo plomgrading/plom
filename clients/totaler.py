@@ -41,13 +41,11 @@ class Paper:
     store the studentName and ID-numer.
     """
 
-    def __init__(self, tgv, fname, stat="noTotal", mark=""):
+    def __init__(self, task, fname, stat="noTotal", mark=""):
         # tgv = t0000p00v0
         # ... = 0123456789
-        # The test-IDgroup code
-        self.prefix = tgv
         # The test number
-        self.test = tgv[1:5]
+        self.test = task
         # Set status as noTotal
         self.status = stat
         # no total yet
@@ -87,7 +85,7 @@ class ExamModel(QAbstractTableModel):
         if role != Qt.EditRole:
             return False
         if index.column() == 0:
-            self.paperList[index.row()].prefix = value
+            self.paperList[index.row()].test = value
             self.dataChanged.emit(index, index)
             return True
         elif index.column() == 1:
@@ -130,7 +128,7 @@ class ExamModel(QAbstractTableModel):
         if role != Qt.DisplayRole:
             return QVariant()
         elif index.column() == 0:
-            return self.paperList[index.row()].prefix
+            return self.paperList[index.row()].test
         elif index.column() == 1:
             return self.paperList[index.row()].status
         elif index.column() == 2:
@@ -284,18 +282,18 @@ class TotalClient(QWidget):
         self.updateImage(selnew.indexes()[0].row())
 
     def checkFiles(self, r):
-        tgv = self.exM.paperList[r].prefix
+        task = self.exM.paperList[r].test
         # check if we have the image file
         if self.exM.paperList[r].originalFile is not "":
             return
         # else try to grab it from server
         try:
-            image = messenger.TrequestImage(tgv)
+            image = messenger.TrequestImage(task)
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
         # save the image to appropriate filename
-        fname = os.path.join(self.workingDirectory, "{}.png".format(tgv))
+        fname = os.path.join(self.workingDirectory, "t{}.png".format(task))
         with open(fname, "wb+") as fh:
             fh.write(image)
 
@@ -355,8 +353,8 @@ class TotalClient(QWidget):
                 # task already taken.
                 continue
 
-        # Image name will be <code>.png
-        iname = os.path.join(self.workingDirectory, test + ".png")
+        # Image name will be t<code>.png
+        iname = os.path.join(self.workingDirectory, "t{}.png".format(test))
         # save it
         with open(iname, "wb+") as fh:
             fh.write(image)

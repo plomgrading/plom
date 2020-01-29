@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QGuiApplication, QPainter, QPixmap
 from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
+    QGraphicsItemGroup,
     QGraphicsScene,
     QGraphicsView,
     QGridLayout,
@@ -18,17 +19,20 @@ from PyQt5.QtWidgets import (
 class ExamViewWindow(QWidget):
     """Simple view window for pageimages"""
 
-    def __init__(self, fname=None):
+    def __init__(self, fnames=None):
         QWidget.__init__(self)
-        self.initUI(fname)
+        if type(fnames) == list:
+            self.initUI(fnames)
+        else:
+            self.initUI([fnames])
 
-    def initUI(self, fname):
+    def initUI(self, fnames):
         # Grab an examview widget (QGraphicsView)
-        self.view = ExamView(fname)
+        self.view = ExamView(fnames)
         # Render nicely
         self.view.setRenderHint(QPainter.HighQualityAntialiasing)
         # reset view button passes to the examview.
-        self.resetB = QPushButton("reset view")
+        self.resetB = QPushButton("&reset view")
         self.resetB.clicked.connect(lambda: self.view.resetView())
         self.resetB.setAutoDefault(False)  # return wont click the button by default.
         # Layout simply
@@ -42,14 +46,18 @@ class ExamViewWindow(QWidget):
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
 
-    def updateImage(self, fname):
+    def updateImage(self, fnames):
         """Pass file to the view to update the image"""
         # first store the current view transform and scroll values
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
         # update the image
-        self.view.updateImage(fname)
+        if type(fnames) == list:
+            self.view.updateImage(fnames)
+        else:
+            self.view.updateImage([fnames])
+
         # re-set the view transform and scroll values
         self.view.setTransform(self.viewTrans)
         self.view.horizontalScrollBar().setValue(self.dx)
@@ -61,31 +69,44 @@ class ExamView(QGraphicsView):
     - containing an image and click-to-zoom/unzoom
     """
 
-    def __init__(self, fname):
+    def __init__(self, fnames):
         QGraphicsView.__init__(self)
-        self.initUI(fname)
+        self.initUI(fnames)
 
-    def initUI(self, fname):
+    def initUI(self, fnames):
         # Make QGraphicsScene
         self.scene = QGraphicsScene()
-        # Pixmap, pixmapitem from the filename, render nicely.
-        self.image = QPixmap(fname)
-        self.imageItem = QGraphicsPixmapItem(self.image)
-        self.imageItem.setTransformationMode(Qt.SmoothTransformation)
-        # Set sensible sizes and put into the view, and fit view to the image.
-        self.scene.setSceneRect(
-            0, 0, max(1000, self.image.width()), max(1000, self.image.height())
-        )
-        self.scene.addItem(self.imageItem)
-        self.setScene(self.scene)
-        self.fitInView(self.imageItem, Qt.KeepAspectRatio)
+        # TODO = handle different image sizes.
+        self.images = {}
+        self.imageGItem = QGraphicsItemGroup()
+        self.scene.addItem(self.imageGItem)
+        self.updateImage(fnames)
 
-    def updateImage(self, fname):
+    def updateImage(self, fnames):
         """Update the image with that from filename"""
-        self.image = QPixmap(fname)
-        self.imageItem.setPixmap(self.image)
-        self.scene.setSceneRect(0, 0, self.image.width(), self.image.height())
-        self.fitInView(self.imageItem, Qt.KeepAspectRatio)
+        for n in self.images:
+            self.imageGItem.removeFromGroup(self.images[n])
+            self.images[n].setVisible(False)
+        if fnames is not None:
+            x = 0
+            n = 0
+            for fn in fnames:
+                self.images[n] = QGraphicsPixmapItem(QPixmap(fn))
+                self.images[n].setTransformationMode(Qt.SmoothTransformation)
+                self.images[n].setPos(x, 0)
+                self.images[n].setVisible(True)
+                self.scene.addItem(self.images[n])
+                x += self.images[n].boundingRect().width() + 10
+                self.imageGItem.addToGroup(self.images[n])
+                n += 1
+
+        # Set sensible sizes and put into the view, and fit view to the image.
+        br = self.imageGItem.boundingRect()
+        self.scene.setSceneRect(
+            0, 0, max(1000, br.width()), max(1000, br.height()),
+        )
+        self.setScene(self.scene)
+        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
 
     def mouseReleaseEvent(self, event):
         """Left/right click to zoom in and out"""
@@ -99,4 +120,4 @@ class ExamView(QGraphicsView):
 
     def resetView(self):
         """Reset the view to its reasonable initial state."""
-        self.fitInView(self.imageItem, Qt.KeepAspectRatio)
+        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
