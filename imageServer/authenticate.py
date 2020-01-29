@@ -36,6 +36,12 @@ class Authority:
     def getToken(self, user):
         return self.tokenList[user]
 
+    def userHasToken(self, user):
+        if user in self.tokenList:
+            return True
+        else:
+            return False
+
     def authoriseUser(self, user, password):
         """Check the user's password against list.
         If successful allocate a token and return true.

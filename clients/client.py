@@ -63,10 +63,10 @@ def writeLastTime():
 
 
 class Chooser(QDialog):
-    def __init__(self, parent):
+    def __init__(self, Qapp):
         self.APIVersion = Plom_API_Version
         super(Chooser, self).__init__()
-        self.parent = parent
+        self.parent = Qapp
         print(
             "Plom Client {} (communicates with api {})".format(
                 __version__, self.APIVersion
@@ -140,6 +140,22 @@ class Chooser(QDialog):
         except PlomAuthenticationException as e:
             ErrorMessage("Could not authenticate: {}".format(e)).exec_()
             return
+        except PlomExistingLoginException as e:
+            if (
+                SimpleMessage(
+                    "You appear to be already logged in!\n\n"
+                    "  * Perhaps a previous session crashed?\n"
+                    "  * Do you have another client running,\n"
+                    "    e.g., on another computer?\n\n"
+                    "Should I force-logout the existing authorisation?"
+                    " (and then you can try to log in again)\n\n"
+                    "The other client will likely crash."
+                ).exec_()
+                == QMessageBox.Yes
+            ):
+                messenger.clearAuthorisation(user, pwd)
+            return
+
         except PlomSeriousException as e:
             ErrorMessage(
                 "Could not get authentication token.\n\n"
@@ -154,7 +170,7 @@ class Chooser(QDialog):
             v = self.getv()
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient()
+            markerwin = marker.MarkerClient(self.parent)
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
             markerwin.getToWork(messenger, pg, v, lastTime)
@@ -297,6 +313,11 @@ class Chooser(QDialog):
         # TODO should we also let people type in?
         self.ui.pgDrop.setEditable(False)
         self.ui.vDrop.setEditable(False)
+        # put focus at username or password line-edit
+        if len(self.ui.userLE.text()) > 0:
+            self.ui.passwordLE.setFocus(True)
+        else:
+            self.ui.userLE.setFocus(True)
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):

@@ -216,6 +216,7 @@ class TotalClient(QWidget):
             )
         ).exec_()
         self.shutDownError()
+        raise(err)
 
     def throwBenign(self, err):
         ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
