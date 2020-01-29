@@ -7,9 +7,28 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import os
+
+
+def buildDirectories():
+    """Build the directories that this scripts needs"""
+    # the list of directories. Might need updating.
+    lst = [
+        "archivedPDFs",
+        "scannedExams",
+    ]
+    for dir in lst:
+        try:
+            os.mkdir(dir)
+        except FileExistsError:
+            pass
+
+
+buildDirectories()
+
 print("To start the scan process")
 print(
-    '0. Copy your PDF scans of the tests into the directory scannedExams. If the directory "scannedExams" does not exist, then create it first.'
+    "0. Copy your PDF scans of the tests into the directory scannedExams. This script has created that directory if it did not already exist."
 )
 print("1. Edit the server.toml file with the relevant server data.")
 print(
