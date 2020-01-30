@@ -111,33 +111,33 @@ def closeUser():
     return True
 
 
-def getInfoGeneral():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/info/general".format(server, message_port), verify=False,
-        )
-        response.raise_for_status()
-        pv = response.json()
-    except requests.HTTPError as e:
-        if response.status_code == 404:
-            raise PlomSeriousException(
-                "Server could not find the spec - this should not happen!"
-            )
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    fields = (
-        "testName",
-        "numberOfTests",
-        "numberOfPages",
-        "numberOfQuestions",
-        "numberOfVersions",
-        "publicCode",
-    )
-    return dict(zip(fields, pv))
+# def getInfoGeneral():
+#     SRmutex.acquire()
+#     try:
+#         response = session.get(
+#             "https://{}:{}/info/general".format(server, message_port), verify=False,
+#         )
+#         response.raise_for_status()
+#         pv = response.json()
+#     except requests.HTTPError as e:
+#         if response.status_code == 404:
+#             raise PlomSeriousException(
+#                 "Server could not find the spec - this should not happen!"
+#             )
+#         else:
+#             raise PlomSeriousException("Some other sort of error {}".format(e))
+#     finally:
+#         SRmutex.release()
+#
+#     fields = (
+#         "testName",
+#         "numberOfTests",
+#         "numberOfPages",
+#         "numberOfQuestions",
+#         "numberOfVersions",
+#         "publicCode",
+#     )
+#     return dict(zip(fields, pv))
 
 
 def uploadKnownPage(code, test, page, version, sname, fname, md5sum):
@@ -180,7 +180,7 @@ def uploadKnownPage(code, test, page, version, sname, fname, md5sum):
 # ----------------------
 
 
-def buildDirectories(spec):
+def buildDirectories():
     """Build the directories that this script needs"""
     # the list of directories. Might need updating.
     lst = ["sentPages", "discardedPages", "collidingPages"]
@@ -189,10 +189,6 @@ def buildDirectories(spec):
             os.mkdir(dir)
         except FileExistsError:
             pass
-    for p in range(1, spec["numberOfPages"] + 1):
-        for v in range(1, spec["numberOfVersions"] + 1):
-            dir = "sentPages/page_{}/version_{}".format(str(p).zfill(2), v)
-            os.makedirs(dir, exist_ok=True)
 
 
 def extractTPV(name):
@@ -223,12 +219,9 @@ def extractTPV(name):
 
 def doFiling(rmsg, ts, ps, vs, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
+        shutil.move(fname, "sentPages/{}".format(shortName))
         shutil.move(
-            fname, "sentPages/page_{}/version_{}/{}".format(ps.zfill(2), vs, shortName)
-        )
-        shutil.move(
-            fname + ".qr",
-            "sentPages/page_{}/version_{}/{}.qr".format(ps.zfill(2), vs, shortName),
+            fname + ".qr", "sentPages/{}.qr".format(shortName),
         )
     else:  # msg = [False, reason, message]
         print(rmsg[1], rmsg[2])
@@ -286,18 +279,9 @@ if __name__ == "__main__":
     session = requests.Session()
     session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
 
-    # Look for pages in decodedPages
-    spec = getInfoGeneral()
-    buildDirectories(spec)
+    buildDirectories()
 
-    for p in range(1, spec["numberOfPages"] + 1):
-        sp = str(p).zfill(2)
-        if not os.path.isdir("decodedPages/page_{}".format(sp)):
-            continue
-        for v in range(1, spec["numberOfVersions"] + 1):
-            print("Looking for page {} version {}".format(sp, v))
-            if not os.path.isdir("decodedPages/page_{}/version_{}".format(sp, v)):
-                continue
-            fileList = glob("decodedPages/page_{}/version_{}/t*.png".format(sp, v))
-            sendKnownFiles(fileList)
+    # Look for pages in decodedPages
+    fileList = glob("decodedPages/t*.png")
+    sendKnownFiles(fileList)
     closeUser()
