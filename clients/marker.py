@@ -649,7 +649,7 @@ class MarkerClient(QWidget):
         ).exec_()
         self.shutDownError()
         # TODO: Decide on case-by-case basis what can survive.  For now, crash
-        raise(err)
+        raise (err)
 
     def throwBenign(self, err):
         ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
@@ -1288,11 +1288,11 @@ class MarkerClient(QWidget):
             )
             msg.exec_()
             return
-        ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory)
-        with open(ifile.name, "wb") as fh:
-            fh.write(image)
-        tvw = GroupView(ifile.name)
-        tvw.setWindowTitle(
-            "Original ungraded image for question {} of test {}".format(gn, tn)
-        )
-        tvw.exec_()
+        with tempfile.NamedTemporaryFile(dir=self.workingDirectory) as ifile:
+            with open(ifile.name, "wb") as fh:
+                fh.write(image)
+            tvw = GroupView(ifile.name)
+            tvw.setWindowTitle(
+                "Original ungraded image for question {} of test {}".format(gn, tn)
+            )
+            tvw.exec_()
