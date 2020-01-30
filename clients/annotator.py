@@ -674,7 +674,13 @@ class Annotator(QWidget):
         self.setMode("delete", self.cursorDelete)
 
     def deltaButtonMode(self):
-        self.setMode("delta", Qt.IBeamCursor)
+        if (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+            or QGuiApplication.mouseButtons == Qt.RightButton
+        ):
+            self.ui.deltaButton.showMenu()
+        else:
+            self.setMode("delta", Qt.IBeamCursor)
 
     def lineMode(self):
         self.setMode("line", self.cursorLine)
