@@ -1288,7 +1288,7 @@ class MarkerClient(QWidget):
             )
             msg.exec_()
             return
-        ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory, mode="w")
+        ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory, mode="wb")
         # with open(ifile.name, "wb") as fh:
         ifile.write(image)
         tvw = GroupView(ifile.name)
