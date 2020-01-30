@@ -1288,10 +1288,11 @@ class MarkerClient(QWidget):
             )
             msg.exec_()
             return
-        with tempfile.NamedTemporaryFile(dir=self.workingDirectory) as fh:
-            fh.write(image)
-            tvw = GroupView(fh.name)
-            tvw.setWindowTitle(
-                "Original ungraded image for question {} of test {}".format(gn, tn)
-            )
-            tvw.exec_()
+        ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory, mode="w")
+        # with open(ifile.name, "wb") as fh:
+        ifile.write(image)
+        tvw = GroupView(ifile.name)
+        tvw.setWindowTitle(
+            "Original ungraded image for question {} of test {}".format(gn, tn)
+        )
+        tvw.exec_()
