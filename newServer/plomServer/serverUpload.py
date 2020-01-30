@@ -167,19 +167,27 @@ def unknownToTestPage(self, fname, test, page, rotation):
         shell=False,
         check=True,
     )
-    if self.DB.checkPage(test, page)[0]:
-        # existing page in place - create a colliding page
-        newFilename = "pages/collidingPages/" + os.path.split(fname)[1]
-        if self.DB.moveUnknownToCollision(fname, newFilename, test, page)[0]:
-            shutil.move(fname, newFilename)
-            return [True, "collision"]
-    else:
-        newFilename = "pages/originalPages/" + os.path.split(fname)[1]
-        if self.DB.moveUnknownToPage(fname, newFilename, test, page)[0]:
-            shutil.move(fname, newFilename)
-            return [True, "testPage"]
-    # some sort of problem occurred
-    return [False]
+    # checkpage returns
+    # -- [False] no such page exists
+    # -- [True, version] page exists but hasnt been scanned
+    # -- or [True, version, image] page exists and has been scanned
+    val = self.DB.checkPage(test, page)
+    if val[0]:
+        if len(val) == 3:
+            # existing page in place - create a colliding page
+            newFilename = "pages/collidingPages/" + os.path.split(fname)[1]
+            print("Collide = {}".format(newFilename))
+            if self.DB.moveUnknownToCollision(fname, newFilename, test, page)[0]:
+                shutil.move(fname, newFilename)
+                return [True, "collision"]
+        else:
+            newFilename = "pages/originalPages/" + os.path.split(fname)[1]
+            print("Original = {}".format(newFilename))
+            if self.DB.moveUnknownToPage(fname, newFilename, test, page)[0]:
+                shutil.move(fname, newFilename)
+                return [True, "testPage"]
+    else:  # some sort of problem occurred
+        return [False]
 
 
 def unknownToExtraPage(self, fname, test, question, rotation):

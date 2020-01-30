@@ -794,13 +794,14 @@ def checkPage(testNumber, pageNumber):
             verify=False,
         )
         response.raise_for_status()
-        # response is [v, None] or [v, image1]
+        # either [version] or [version, image]
         vimg = MultipartDecoder.from_response(response).parts
         ver = int(vimg[0].content)
         if len(vimg) == 2:
             rval = [ver, BytesIO(vimg[1].content).getvalue()]
         else:
             rval = [ver, None]
+        # response is [v, None] or [v, image1]
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.")
