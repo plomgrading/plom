@@ -53,8 +53,8 @@ job imageServerStarts:
   script:
     - mkdir scanAndGroup/scannedExams/
     # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
-    - curl https://www.math.ubc.ca/~cbm/tmp/namesAdded.pdf > scanAndGroup/scannedExams/foo.pdf
-    - curl https://www.math.ubc.ca/~cbm/tmp/resources.tar.gz | tar -zx
+    - curl https://www.math.ubc.ca/~cbm/tmp/namesAdded_77cdbe0b.pdf > scanAndGroup/scannedExams/foo.pdf
+    - curl https://www.math.ubc.ca/~cbm/tmp/resources_77cdbe0b.tar.gz | tar -zx
     - ls resources
     - ls scanAndGroup/scannedExams
     - pushd scanAndGroup
