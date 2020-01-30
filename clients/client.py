@@ -398,7 +398,7 @@ def sigint_handler(*args):
         )
         == QMessageBox.Yes
     ):
-        QApplication.quit()
+        QApplication.exit(42)
 
 
 if __name__ == "__main__":
