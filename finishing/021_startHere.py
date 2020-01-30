@@ -9,7 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 
 print("To start the scan process")
 print(
-    "0. Wait until most of the marking and identifying is done before running any finishing scripts - otherwise you won't acheive much running things the scripts in this directory."
+    "0. Wait until most of the marking and identifying is done before running any finishing scripts - otherwise you won't achieve much running things the scripts in this directory."
 )
 print('1. Run the "022_check completed.py" script.')
 print(
