@@ -37,14 +37,10 @@ def buildSubstitute(test, page, ver):
     )
     DNS[0].drawRect(rect, color=[0, 0, 0])
 
-    DNS.save("pns.pdf", garbage=4, deflate=True, clean=True)
-    cmd = shlex.split(
-        "convert -background white -alpha remove -alpha off -density 200 pns.pdf pns.{}.{}.{}.png".format(
-            test, page, ver
-        )
-    )
-    subprocess.check_call(cmd)
-    os.unlink("pns.pdf")
+    scale = 200 / 72
+    img = DNS[0].getPixmap(alpha=False, matrix=fitz.Matrix(scale, scale))
+    img.writePNG("pns.{}.{}.{}.png".format(test, page, ver))
+    DNS.close()
 
 
 def main():
