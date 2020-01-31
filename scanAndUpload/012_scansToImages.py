@@ -151,5 +151,7 @@ if __name__ == "__main__":
         buildDirectories()
         processScans()
         print("Successfully converted scans to page images")
+        sys.exit(0)
     else:
         print("Warning: please put scanned exams in scannedExams directory")
+        sys.exit(1)
