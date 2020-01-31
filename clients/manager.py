@@ -432,6 +432,7 @@ class Manager(QWidget):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
         self.ui.scanTW.activated.connect(self.viewSPage)
         self.ui.incompTW.setHeaderLabels(["Test number", "Missing page", "Version"])
+        self.ui.incompTW.activated.connect(self.viewISTest)
         self.refreshIList()
         self.refreshSList()
 
@@ -493,6 +494,16 @@ class Manager(QWidget):
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(vp)
             GroupView([fh.name]).exec_()
+
+    def viewISTest(self):
+        pvi = self.ui.incompTW.selectedItems()
+        if len(pvi) == 0:
+            return
+        # if selected a lower-level item (ie a missing page) - return
+        if pvi[0].childCount() == 0:
+            return
+        pt = int(pvi[0].text(0))  # grab test number
+        self.viewWholeTest(pt)
 
     def removePage(self):
         pvi = self.ui.scanTW.selectedItems()

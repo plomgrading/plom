@@ -703,7 +703,8 @@ class PlomDB:
             return [False]
         rval = [True]
         for p in tref.pages.order_by(Page.pageNumber):
-            rval.append(p.fileName)
+            if p.scanned == True:
+                rval.append(p.fileName)
         return rval
 
     def checkPage(self, testNumber, pageNumber):
