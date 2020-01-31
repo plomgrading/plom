@@ -78,7 +78,31 @@ def sendCollidingFiles(fileList):
         doFiling(rmsg, shortName, fname)
 
 
+def warnUser(fileList):
+    if len(fileList) == 0:
+        print("No colliding pages. Nothing to do.")
+        return False
+
+    print(">>>>>>>>>> WARNING <<<<<<<<<<")
+    print("In most use cases you should have no colliding pages.")
+    print("Detected the following colliding files:\n\t", fileList)
+    print(
+        'We strongly recommend that you review the images in the "collidingPages" directory before proceeding.'
+    )
+    yn = input("********** Are you sure you want to proceed [y/N] **********  ")
+    if yn == "y":
+        print("Proceeding.")
+        return True
+    else:
+        print("Terminating.")
+
+
 if __name__ == "__main__":
+    # Look for pages in collisions
+    fileList = glob("collidingPages/*.png")
+    if warnUser(fileList) == False:
+        quit()
+
     scanMessenger.startMessenger()
 
     try:
@@ -90,9 +114,6 @@ if __name__ == "__main__":
 
     buildDirectories()
 
-    # Look for pages in collisions
-    fileList = glob("collidingPages/*.png")
-    print(fileList)
     sendCollidingFiles(fileList)
     scanMessenger.closeUser()
     scanMessenger.stopMessenger()
