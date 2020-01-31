@@ -17,13 +17,6 @@ import tempfile
 # If all is good then build a substitute page and save it in the correct place
 def buildSubstitute(test, page, ver):
     tpImage = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-    # create the test/page stamp using imagemagick
-    cmd = shlex.split(
-        "convert -pointsize 36 -size 200x42 caption:'{}.{}' -trim "
-        "-gravity Center -extent 200x42 -bordercolor black "
-        "-border 1 {}".format(str(test).zfill(4), str(page).zfill(2), tpImage.name)
-    )
-    subprocess.check_call(cmd)
 
     DNS = fitz.open(
         "../resources/pageNotSubmitted.pdf"
@@ -31,9 +24,18 @@ def buildSubstitute(test, page, ver):
     # create a box for the test number near top-centre
     # Get page width
     pW = DNS[0].bound().width
-    rTC = fitz.Rect(pW // 2 - 50, 20, pW // 2 + 50, 40)
-    testnumber = fitz.Pixmap(tpImage.name)
-    DNS[0].insertImage(rTC, pixmap=testnumber, overlay=True, keep_proportion=False)
+    rect = fitz.Rect(pW // 2 - 40, 20, pW // 2 + 40, 44)
+    text = "{}.{}".format(str(test).zfill(4), str(page).zfill(2))
+    rc = DNS[0].insertTextbox(
+        rect,
+        text,
+        fontsize=18,
+        color=[0, 0, 0],
+        fontname="Helvetica",
+        fontfile=None,
+        align=1,
+    )
+    DNS[0].drawRect(rect, color=[0, 0, 0])
 
     DNS.save("pns.pdf", garbage=4, deflate=True, clean=True)
     cmd = shlex.split(
