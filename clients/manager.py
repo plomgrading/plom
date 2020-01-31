@@ -481,8 +481,10 @@ class Manager(QWidget):
         pvi = self.ui.scanTW.selectedItems()
         if len(pvi) == 0:
             return
-        # if selected a top-level item (ie a test) - return
+        # if selected a top-level item (ie a test) - view the whole test
         if pvi[0].childCount() > 0:
+            pt = int(pvi[0].text(0))
+            self.viewWholeTest(pt)
             return
         pp = int(pvi[0].text(1))
         pv = int(pvi[0].text(2))

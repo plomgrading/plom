@@ -95,13 +95,14 @@ def warnUser(fileList):
         return True
     else:
         print("Terminating.")
+        return False
 
 
 if __name__ == "__main__":
     # Look for pages in collisions
     fileList = glob("collidingPages/*.png")
     if warnUser(fileList) == False:
-        quit()
+        exit()
 
     scanMessenger.startMessenger()
 
