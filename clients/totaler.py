@@ -216,7 +216,7 @@ class TotalClient(QWidget):
             )
         ).exec_()
         self.shutDownError()
-        raise(err)
+        raise (err)
 
     def throwBenign(self, err):
         ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
@@ -317,10 +317,16 @@ class TotalClient(QWidget):
         # update progressbars
         try:
             v, m = messenger.TprogressCount()
-            self.ui.idProgressBar.setMaximum(m)
-            self.ui.idProgressBar.setValue(v)
         except PlomSeriousException as err:
             self.throwSeriousError(err)
+        if m == 0:
+            v, m = (0, 1)  # avoid (0, 0) indeterminate animation
+            self.ui.idProgressBar.setFormat("No papers to total")
+            ErrorMessage("No papers to total.").exec_()
+        else:
+            self.ui.idProgressBar.resetFormat()
+        self.ui.idProgressBar.setMaximum(m)
+        self.ui.idProgressBar.setValue(v)
 
     def requestNext(self):
         """Ask the server for an untotaled paper.  Get file, add to the
