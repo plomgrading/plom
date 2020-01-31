@@ -1315,6 +1315,5 @@ if __name__ == "__main__":
             window.ui.serverLE.setText(args.server)
         if args.port:
             window.ui.mportSB.setValue(int(args.port))
-            window.ui.wportSB.setValue(int(args.port) + 1)
 
     sys.exit(app.exec_())
