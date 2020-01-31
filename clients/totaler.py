@@ -216,7 +216,7 @@ class TotalClient(QWidget):
             )
         ).exec_()
         self.shutDownError()
-        raise(err)
+        raise (err)
 
     def throwBenign(self, err):
         ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
@@ -319,6 +319,8 @@ class TotalClient(QWidget):
             v, m = messenger.TprogressCount()
             self.ui.idProgressBar.setMaximum(m)
             self.ui.idProgressBar.setValue(v)
+            if m == 0:  # nothing to do here
+                ErrorMessage("No papers to total.").exec_()
         except PlomSeriousException as err:
             self.throwSeriousError(err)
 

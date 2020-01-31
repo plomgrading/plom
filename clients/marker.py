@@ -739,6 +739,9 @@ class MarkerClient(QWidget):
             v, m = messenger.MprogressCount(self.question, self.version)
             self.ui.mProgressBar.setMaximum(m)
             self.ui.mProgressBar.setValue(v)
+            if m == 0:  # nothing to do here
+                ErrorMessage("No papers to mark.").exec_()
+
         except PlomSeriousException as err:
             self.throwSeriousError(err)
 
