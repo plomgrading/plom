@@ -461,12 +461,16 @@ class IDClient(QWidget):
         # update progressbars
         try:
             v, m = messenger.IDprogressCount()
-            self.ui.idProgressBar.setMaximum(m)
-            self.ui.idProgressBar.setValue(v)
-            if m == 0:  # nothing to do here
-                ErrorMessage("No papers to identify.").exec_()
         except PlomSeriousException as err:
             self.throwSeriousError(err)
+        if m == 0:
+            v, m = (0, 1)  # avoid (0, 0) indeterminate animation
+            self.ui.idProgressBar.setFormat("No papers to identify")
+            ErrorMessage("No papers to identify.").exec_()
+        else:
+            self.ui.idProgressBar.resetFormat()
+        self.ui.idProgressBar.setMaximum(m)
+        self.ui.idProgressBar.setValue(v)
 
     def requestNext(self):
         """Ask the server for an unID'd paper.   Get file, add to the

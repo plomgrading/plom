@@ -737,13 +737,16 @@ class MarkerClient(QWidget):
         # ask server for progress update
         try:
             v, m = messenger.MprogressCount(self.question, self.version)
-            self.ui.mProgressBar.setMaximum(m)
-            self.ui.mProgressBar.setValue(v)
-            if m == 0:  # nothing to do here
-                ErrorMessage("No papers to mark.").exec_()
-
         except PlomSeriousException as err:
             self.throwSeriousError(err)
+        if m == 0:
+            v, m = (0, 1)  # avoid (0, 0) indeterminate animation
+            self.ui.mProgressBar.setFormat("No papers to mark")
+            ErrorMessage("No papers to mark.").exec_()
+        else:
+            self.ui.mProgressBar.resetFormat()
+        self.ui.mProgressBar.setMaximum(m)
+        self.ui.mProgressBar.setValue(v)
 
     def requestNext(self):
         """Ask server for unmarked paper, get file, add to list, update view.
