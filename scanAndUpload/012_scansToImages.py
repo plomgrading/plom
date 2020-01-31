@@ -20,8 +20,10 @@ archivedir = "archivedPDFs"
 def buildDirectories():
     """Build the directories that this scripts needs"""
     # the list of directories. Might need updating.
+    os.makedirs("scannedExams", exist_ok=True)
     os.makedirs("pageImages", exist_ok=True)
     os.makedirs(os.path.join("pageImages", "problemImages"), exist_ok=True)
+    os.makedirs(archivedir, exist_ok=True)
 
 
 def archivePDF(fname):
