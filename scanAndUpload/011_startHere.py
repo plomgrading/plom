@@ -13,15 +13,8 @@ import os
 def buildDirectories():
     """Build the directories that this scripts needs"""
     # the list of directories. Might need updating.
-    lst = [
-        "archivedPDFs",
-        "scannedExams",
-    ]
-    for dir in lst:
-        try:
-            os.mkdir(dir)
-        except FileExistsError:
-            pass
+    os.makedirs("archivedPDFs", exist_ok=True)
+    os.makedirs("scannedExams", exist_ok=True)
 
 
 buildDirectories()
