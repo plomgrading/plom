@@ -733,12 +733,17 @@ class MarkerClient(QWidget):
         # Give focus to the table (so enter-key fires up annotator)
         self.ui.tableView.setFocus()
 
-    def updateProgress(self):
-        # ask server for progress update
-        try:
-            v, m = messenger.MprogressCount(self.question, self.version)
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
+    def updateProgress(self, v=None, m=None):
+        """Update the progress bars.
+
+        When called with no arguments, get info from server.
+        """
+        if not v and not m:
+            # ask server for progress update
+            try:
+                v, m = messenger.MprogressCount(self.question, self.version)
+            except PlomSeriousException as err:
+                self.throwSeriousError(err)
         if m == 0:
             v, m = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
@@ -1109,9 +1114,7 @@ class MarkerClient(QWidget):
         # maybe it changed while we waited for the upload
         if stat == "uploading...":
             self.exM.setStatusByTask(code, "marked")
-        if numdone > 0 and numtotal > 0:
-            self.ui.mProgressBar.setValue(numdone)
-            self.ui.mProgressBar.setMaximum(numtotal)
+        self.updateProgress(numdone, numtotal)
 
     def backgroundUploadFailed(self, code, errmsg):
         """An upload has failed, not sure what to do but do to it LOADLY"""
