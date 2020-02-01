@@ -71,7 +71,7 @@ class QuestionData(Model):
     questionNumber = IntegerField(null=False)
     version = IntegerField(null=False)
     annotatedFile = CharField(null=True)
-    m5dsum = CharField(null=True)
+    md5sum = CharField(null=True)
     plomFile = CharField(null=True)
     commentFile = CharField(null=True)
     mark = IntegerField(null=True)
