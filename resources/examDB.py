@@ -1,6 +1,11 @@
 from peewee import *
 from datetime import datetime, timedelta
-from logIt import logIt
+
+# this allows us to import from ../resources
+import sys
+
+sys.path.append("..")
+from resources.logIt import logIt
 
 # import logging
 # logger = logging.getLogger("peewee")
@@ -176,7 +181,7 @@ class PlomDB:
             # also create the sum-mark objects
             sref = SumData.create(test=tref)
         except IntegrityError as e:
-            logit("DB", "Test {} error - {}".format(t, e))
+            logIt("DB", "Test {} error - {}".format(t, e))
             return False
         return True
 
@@ -196,33 +201,33 @@ class PlomDB:
                         fileName="",
                     )
                 except IntegrityError as e:
-                    logit("DB", "Page {} for test {} error - {}".format(p, t, e))
+                    logIt("DB", "Page {} for test {} error - {}".format(p, t, e))
                     flag = False
         return flag
 
     def createIDGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
-            logit("DB", "No test with number {}".format(t))
+            logIt("DB", "No test with number {}".format(t))
             return False
 
         gid = "i{}".format(str(t).zfill(4))
         try:
             gref = Group.create(test=tref, gid=gid, groupType="i")  # must be unique
         except IntegrityError as e:
-            logit("DB", "Group {} of Test {} error - {}".format(gid, t, e))
+            logIt("DB", "Group {} of Test {} error - {}".format(gid, t, e))
             return False
         try:
             iref = IDData.create(test=tref, group=gref)
         except IntegrityError as e:
-            logit("DB", "IDData {} of group {} error - {}.".format(qref, gref, e))
+            logIt("DB", "IDData {} of group {} error - {}.".format(qref, gref, e))
             return False
         return self.addPages(tref, gref, t, pages, 1)
 
     def createDNMGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
-            logit("DB", "No test with number {}".format(t))
+            logIt("DB", "No test with number {}".format(t))
             return False
 
         gid = "d{}".format(str(t).zfill(4))
@@ -233,14 +238,14 @@ class PlomDB:
             gref = Group.create(test=tref, gid=gid, groupType="d", scanned=sc)
 
         except IntegrityError as e:
-            logit("DB", "Group {} of Test {} error - {}".format(gid, t, e))
+            logIt("DB", "Group {} of Test {} error - {}".format(gid, t, e))
             return False
         return self.addPages(tref, gref, t, pages, 1)
 
     def createQGroup(self, t, g, v, pages):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
-            logit("DB", "No test with number {}".format(t))
+            logIt("DB", "No test with number {}".format(t))
             return False
 
         gid = "m{}g{}".format(str(t).zfill(4), g)
@@ -248,14 +253,14 @@ class PlomDB:
         try:
             gref = Group.create(test=tref, gid=gid, groupType="m", version=v)
         except IntegrityError as e:
-            logit("DB", "Question {} of Test {} error - {}".format(gid, t, e))
+            logIt("DB", "Question {} of Test {} error - {}".format(gid, t, e))
             return False
         try:
             qref = QuestionData.create(
                 test=tref, group=gref, questionNumber=g, version=v
             )
         except IntegrityError as e:
-            logit(
+            logIt(
                 "DB", "QuestionData {} of question {} error - {}.".format(qref, gid, e)
             )
             return False
@@ -339,12 +344,12 @@ class PlomDB:
             if g.scanned == False:
                 # TODO - deal with empty DO NOT MARK groups correctly
                 sflag = False
-                logit("DB", "Group {} not scanned".format(g.gid))
+                logIt("DB", "Group {} not scanned".format(g.gid))
                 break
         with plomdb.atomic():
             if sflag:
                 tref.scanned = True
-                logit("DB", "Test {} is all scanned".format(tref.testNumber))
+                logIt("DB", "Test {} is all scanned".format(tref.testNumber))
                 # set the status of the sumdata
                 sdref = tref.sumdata[0]
                 sdref.status = "todo"
@@ -354,26 +359,26 @@ class PlomDB:
             tref.save()
 
     def setGroupReady(self, gref):
-        logit("DB", "All of group {} is scanned".format(gref.gid))
+        logIt("DB", "All of group {} is scanned".format(gref.gid))
         if gref.groupType == "i":
             iref = gref.iddata[0]
             # check if group already identified - can happen if printed tests with names
             if iref.status == "done":
-                logit("DB", "Group {} is already identified.".format(gref.gid))
+                logIt("DB", "Group {} is already identified.".format(gref.gid))
             else:
                 iref.status = "todo"
-                logit("DB", "Group {} is ready to be identified.".format(gref.gid))
+                logIt("DB", "Group {} is ready to be identified.".format(gref.gid))
             iref.save()
         elif gref.groupType == "d":
             # we don't do anything with these groups
-            logit(
+            logIt(
                 "DB",
                 "Group {} is DoNotMark - all scanned, nothing to be done.".format(
                     gref.gid
                 ),
             )
         elif gref.groupType == "m":
-            logit("DB", "Group {} is ready to be marked.".format(gref.gid))
+            logIt("DB", "Group {} is ready to be marked.".format(gref.gid))
             qref = gref.questiondata[0]
             qref.status = "todo"
             qref.save()
@@ -552,7 +557,7 @@ class PlomDB:
             ]
         if pref.scanned:
             # have already loaded an image for this page - so this is actually a duplicate
-            logit("DB", "This appears to be a duplicate. Checking md5sums")
+            logIt("DB", "This appears to be a duplicate. Checking md5sums")
             if md5 == pref.md5sum:
                 # Exact duplicate - md5sum of this image is sames as the one already in database
                 return [
@@ -1221,10 +1226,10 @@ class PlomDB:
                     .get()
                 )
             except IDData.DoesNotExist:
-                logit("DB", "Nothing left on ID to-do pile")
+                logIt("DB", "Nothing left on ID to-do pile")
                 return None
 
-            logit("DB", "Next ID task = {}".format(x.test.testNumber))
+            logIt("DB", "Next ID task = {}".format(x.test.testNumber))
             return x.test.testNumber
 
     def IDgiveTaskToClient(self, username, testNumber):
@@ -1247,11 +1252,11 @@ class PlomDB:
                 rval = [True]
                 for p in gref.pages.order_by(Page.pageNumber):
                     rval.append(p.fileName)
-                logit("DB", "Giving ID task {} to user {}".format(testNumber, username))
+                logIt("DB", "Giving ID task {} to user {}".format(testNumber, username))
                 return rval
 
         except Test.DoesNotExist:
-            logit("DB", "That test number {} not known".format(testNumber))
+            logIt("DB", "That test number {} not known".format(testNumber))
             return False
 
     def IDgetDoneTasks(self, username):
@@ -1277,7 +1282,7 @@ class PlomDB:
         rval = [True]
         for p in gref.pages.order_by(Page.pageNumber):
             rval.append(p.fileName)
-        logit("DB", "Sending IDpages of test {} to user {}".format(t, username))
+        logIt("DB", "Sending IDpages of test {} to user {}".format(t, username))
         return rval
 
     def IDdidNotFinish(self, username, testNumber):
@@ -1285,7 +1290,7 @@ class PlomDB:
         back on todo pile
         """
         # Log user returning given tgv.
-        logit("DB", "User {} did not ID task {}".format(username, testNumber))
+        logIt("DB", "User {} did not ID task {}".format(username, testNumber))
         try:
             with plomdb.atomic():
                 tref = Test.get_or_none(Test.testNumber == testNumber)
@@ -1305,12 +1310,12 @@ class PlomDB:
                 tref.save()
 
         except Test.DoesNotExist:
-            logit("DB", "That test number {} not known".format(testNumber))
+            logIt("DB", "That test number {} not known".format(testNumber))
             return False
 
     def IDtakeTaskFromClient(self, testNumber, username, sid, sname):
         """Get ID'dimage back from client - update record in database."""
-        logit(
+        logIt(
             "DB",
             "User {} returning ID-task {} with {} {}".format(
                 username, testNumber, sid, sname
@@ -1336,10 +1341,10 @@ class PlomDB:
                 tref.save()
                 return [True]
         except IDData.DoesNotExist:
-            logit("DB", "That test number {} not known".format(testNumber))
+            logIt("DB", "That test number {} not known".format(testNumber))
             return [False, False]
         except IntegrityError:
-            logit("DB", "Student number {} already entered".format(sid))
+            logIt("DB", "Student number {} already entered".format(sid))
             return [False, True]
 
     def IDgetRandomImage(self):
@@ -1432,10 +1437,10 @@ class PlomDB:
                     .get()
                 )
             except QuestionData.DoesNotExist as e:
-                logit("DB", "Nothing left on Q/V {}/V to-do pile - {}".format(q, v, e))
+                logIt("DB", "Nothing left on Q/V {}/V to-do pile - {}".format(q, v, e))
                 return None
 
-            logit("DB", "Next q/v={}/{} task = {}".format(q, v, x.group.gid))
+            logIt("DB", "Next q/v={}/{} task = {}".format(q, v, x.group.gid))
             return x.group.gid
 
     def MgiveTaskToClient(self, username, groupID):
@@ -1460,12 +1465,12 @@ class PlomDB:
                 ]
                 for p in gref.pages.order_by(Page.pageNumber):
                     rval.append(p.fileName)
-                logit(
+                logIt(
                     "DB", "Giving marking task {} to user {}".format(groupID, username)
                 )
                 return rval
         except Group.DoesNotExist:
-            logit("DB", "That question {} not known".format(groupID))
+            logIt("DB", "That question {} not known".format(groupID))
             return False
 
     def MdidNotFinish(self, username, groupID):
@@ -1473,13 +1478,14 @@ class PlomDB:
         back on todo pile
         """
         # Log user returning given tgv.
-        logit("DB", "User {} did not mark task {}".format(username, groupID))
+        logIt("DB", "User {} did not mark task {}".format(username, groupID))
         try:
             with plomdb.atomic():
                 gref = Group.get_or_none(Group.gid == groupID)
                 if gref.scanned == False:
                     return
                 qref = gref.questiondata[0]
+                print("ret", [qref.username, qref.status, qref.mark])
                 if qref.username != username or qref.status != "out":
                     # has been claimed by someone else.
                     return
@@ -1492,9 +1498,10 @@ class PlomDB:
                 qref.save()
                 qref.test.marked = False
                 qref.test.save()
+                print("ret", [qref.username, qref.status, qref.mark])
 
         except Group.DoesNotExist:
-            logit("DB", "That task {} not known".format(groupID))
+            logIt("DB", "That task {} not known".format(groupID))
             return False
 
     def MtakeTaskFromClient(
@@ -1533,10 +1540,10 @@ class PlomDB:
                     )
                     is not None
                 ):
-                    logit(
+                    logIt(
                         "DB",
-                        "Task {} marked {} by user {} and placed at {}".format(
-                            task, mark, username, aname
+                        "Task {} marked {} by user {} and placed at {} with md5 = {}".format(
+                            task, mark, username, aname, md5
                         ),
                     )
                     return True
@@ -1551,7 +1558,7 @@ class PlomDB:
                 sref.summed = True
                 sref.status = "done"
                 sref.save()
-                logit(
+                logIt(
                     "DB",
                     "All of test {} is marked - total updated = {}".format(
                         tref.testNumber, tot
@@ -1563,7 +1570,7 @@ class PlomDB:
                 return True
 
         except Group.DoesNotExist:
-            logit(
+            logIt(
                 "DB",
                 "That task number {} / username {} pair not known".format(
                     task, username
@@ -1595,7 +1602,7 @@ class PlomDB:
                 else:
                     return [True, len(pp)] + pp
         except Group.DoesNotExist:
-            logit("DB", "That task {} not known".format(task))
+            logIt("DB", "That task {} not known".format(task))
             return False
 
     def MgetOriginalImages(self, task):
@@ -1623,10 +1630,10 @@ class PlomDB:
                 # update tag
                 qref.tags = tag
                 qref.save()
-                logit("DB", "Task {} tagged {} by user {}".format(task, tag, username))
+                logIt("DB", "Task {} tagged {} by user {}".format(task, tag, username))
                 return True
         except Group.DoesNotExist:
-            logit(
+            logIt(
                 "DB", "That task {} / username {} pair not known".format(task, username)
             )
             return False
@@ -1729,10 +1736,10 @@ class PlomDB:
             try:
                 x = SumData.get(SumData.status == "todo",)
             except SumData.DoesNotExist:
-                logit("DB", "Nothing left on totaller to-do pile")
+                logIt("DB", "Nothing left on totaller to-do pile")
                 return None
 
-            logit("DB", "Next Totalling task = {}".format(x.test.testNumber))
+            logIt("DB", "Next Totalling task = {}".format(x.test.testNumber))
             return x.test.testNumber
 
     def TgetDoneTasks(self, username):
@@ -1764,14 +1771,14 @@ class PlomDB:
                 # return [true, page1]
                 pref = Page.get(Page.test == tref, Page.pageNumber == 1)
                 return [True, pref.fileName]
-                logit(
+                logIt(
                     "DB",
                     "Giving totalling task {} to user {}".format(testNumber, username),
                 )
                 return rval
 
         except Test.DoesNotExist:
-            logit("DB", "That test number {} not known".format(testNumber))
+            logIt("DB", "That test number {} not known".format(testNumber))
             return False
 
     def TdidNotFinish(self, username, testNumber):
@@ -1779,7 +1786,7 @@ class PlomDB:
         back on todo pile
         """
         # Log user returning given tgv.
-        logit("DB", "User {} did not total task {}".format(username, testNumber))
+        logIt("DB", "User {} did not total task {}".format(username, testNumber))
         try:
             with plomdb.atomic():
                 tref = Test.get_or_none(Test.testNumber == testNumber)
@@ -1798,7 +1805,7 @@ class PlomDB:
                 tref.summed = False
                 tref.save()
         except Test.DoesNotExist:
-            logit("DB", "That test number {} not known".format(testNumber))
+            logIt("DB", "That test number {} not known".format(testNumber))
             return False
 
     def TgetImage(self, username, t):
@@ -1810,7 +1817,7 @@ class PlomDB:
         if username not in [sref.username, "manager"]:
             return [False]
         pref = Page.get(Page.test == tref, Page.pageNumber == 1)
-        logit(
+        logIt(
             "DB",
             "Sending cover-page of test {} to user {} = {}".format(
                 t, username, pref.fileName
@@ -1819,7 +1826,7 @@ class PlomDB:
         return [True, pref.fileName]
 
     def TtakeTaskFromClient(self, testNumber, username, totalMark):
-        logit(
+        logIt(
             "DB",
             "User {} returning totalled-task {} with {}".format(
                 username, testNumber, totalMark
@@ -1844,5 +1851,5 @@ class PlomDB:
                 tref.save()
                 return [True]
         except Test.DoesNotExist:
-            logit("DB", "That test number {} not known".format(testNumber))
+            logIt("DB", "That test number {} not known".format(testNumber))
             return [False]
