@@ -240,8 +240,10 @@ def checkQRsValid():
             # to unknownPages
             print("[F] {0}: {1} - moving to unknownPages".format(fname, msg))
             # move blah.png and blah.png.qr
-            shutil.move(fname, "../unknownPages/" + fname)
-            shutil.move(fname + ".qr", "../unknownPages/" + fname + ".qr")
+            shutil.move(fname, os.path.join("..", "unknownPages", fname))
+            shutil.move(
+                fname + ".qr", os.path.join("..", "unknownPages", fname + ".qr")
+            )
 
     os.chdir("../")
 
@@ -277,8 +279,8 @@ def validateQRsAgainstSpec(spec):
             # move the blah.png and blah.png.qr
             # this means that they won't be added to the
             # list of correctly scanned page images
-            shutil.move(fn, "../unknownPages")
-            shutil.move(fn + ".qr", "../unknownPages")
+            shutil.move(fn, os.path.join("..", "unknownPages"))
+            shutil.move(fn + ".qr", os.path.join("..", "unknownPages"))
 
 
 def moveScansIntoPlace():
@@ -289,11 +291,10 @@ def moveScansIntoPlace():
         p = examsScannedNow[fname][1]
         v = examsScannedNow[fname][2]
 
-        destName = "../decodedPages/t{}p{}v{}.{}".format(
-            str(t).zfill(4), str(p).zfill(2), str(v), fname
-        )
-        shutil.move(fname, destName)
-        shutil.move(fname + ".qr", destName + ".qr")
+        dpath = os.path.join("..", "decodedPages")
+        dname = "t{}p{}v{}.{}".format(str(t).zfill(4), str(p).zfill(2), str(v), fname)
+        shutil.move(fname, os.path.join(dpath, dname))
+        shutil.move(fname + ".qr", os.path.join(dpath, dname + ".qr"))
 
     os.chdir("../")
 
