@@ -30,15 +30,17 @@ def buildDirectories():
 def doFiling(rmsg, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
         # print(rmsg[2])
-        shutil.move(fname, "sentPages/unknowns/{}".format(shortName))
+        shutil.move(fname, os.path.join("sentPages", "unknowns", shortName))
         shutil.move(
-            fname + ".qr", "sentPages/unknowns/{}.qr".format(shortName),
+            fname + ".qr", os.path.join("sentPages", "unknowns", shortName + "qr")
         )
     else:  # msg = [False, reason, message]
         if rmsg[1] == "duplicate":
             print(rmsg[2])
-            shutil.move(fname, "discardedPages/{}".format(shortName))
-            shutil.move(fname + ".qr", "discardedPages/{}.qr".format(shortName))
+            shutil.move(fname, os.path.join("discardedPages", shortName))
+            shutil.move(
+                fname + ".qr", os.path.join("discardedPages", shortName + ".qr")
+            )
         else:
             print(rmsg[2])
             print("This should not happen - todo = log error in sensible way")

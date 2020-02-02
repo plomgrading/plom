@@ -211,20 +211,20 @@ def extractTPV(name):
 
 def doFiling(rmsg, ts, ps, vs, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
-        shutil.move(fname, "sentPages/{}".format(shortName))
-        shutil.move(
-            fname + ".qr", "sentPages/{}.qr".format(shortName),
-        )
+        shutil.move(fname, os.path.join("sentPages", shortName))
+        shutil.move(fname + ".qr", os.path.join("sentPages", shortName + ".qr"))
     else:  # msg = [False, reason, message]
         print(rmsg[1], rmsg[2])
         if rmsg[1] == "duplicate":
-            shutil.move(fname, "discardedPages/{}".format(shortName))
-            shutil.move(fname + ".qr", "discardedPages/{}.qr".format(shortName))
+            shutil.move(fname, os.path.join("discardedPages", shortName))
+            shutil.move(
+                fname + ".qr", os.path.join("discardedPages", shortName + ".qr")
+            )
 
         elif rmsg[1] == "collision":
-            nname = "collidingPages/{}".format(shortName)
+            nname = os.path.join("collidingPages", shortName)
             shutil.move(fname, nname)
-            shutil.move(fname + ".qr", nname + ".qr".format(shortName))
+            shutil.move(fname + ".qr", nname + ".qr")
             # and write the name of the colliding file
             with open(nname + ".collide", "w+") as fh:
                 json.dump(rmsg[2], fh)  # this is [collidingFile, test, page, version]
