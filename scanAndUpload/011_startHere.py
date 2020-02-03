@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019 Andrew Rechnitzer and Colin Macdonald"
+__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and Colin Macdonald"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
@@ -13,15 +13,8 @@ import os
 def buildDirectories():
     """Build the directories that this scripts needs"""
     # the list of directories. Might need updating.
-    lst = [
-        "archivedPDFs",
-        "scannedExams",
-    ]
-    for dir in lst:
-        try:
-            os.mkdir(dir)
-        except FileExistsError:
-            pass
+    os.makedirs("archivedPDFs", exist_ok=True)
+    os.makedirs("scannedExams", exist_ok=True)
 
 
 buildDirectories()

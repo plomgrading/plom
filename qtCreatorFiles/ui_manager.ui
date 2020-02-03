@@ -264,6 +264,9 @@
              <layout class="QVBoxLayout" name="verticalLayout_3">
               <item>
                <widget class="QTreeWidget" name="scanTW">
+                <property name="editTriggers">
+                 <set>QAbstractItemView::NoEditTriggers</set>
+                </property>
                 <property name="alternatingRowColors">
                  <bool>true</bool>
                 </property>
@@ -324,6 +327,9 @@
              <layout class="QVBoxLayout" name="verticalLayout_4">
               <item>
                <widget class="QTreeWidget" name="incompTW">
+                <property name="editTriggers">
+                 <set>QAbstractItemView::NoEditTriggers</set>
+                </property>
                 <property name="alternatingRowColors">
                  <bool>true</bool>
                 </property>
@@ -392,7 +398,11 @@
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_6">
            <item>
-            <widget class="QTableView" name="unknownTV"/>
+            <widget class="QTableView" name="unknownTV">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
+            </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_6">
@@ -436,7 +446,11 @@
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_8">
            <item>
-            <widget class="QTableView" name="collideTV"/>
+            <widget class="QTableView" name="collideTV">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
+            </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -480,7 +494,11 @@
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_9">
            <item>
-            <widget class="QTableView" name="discardTV"/>
+            <widget class="QTableView" name="discardTV">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
+            </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_8">
@@ -545,6 +563,9 @@
           <layout class="QVBoxLayout" name="verticalLayout_14">
            <item>
             <widget class="QTableWidget" name="overallTW">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
              <property name="alternatingRowColors">
               <bool>true</bool>
              </property>
@@ -613,8 +634,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>64</width>
-                <height>16</height>
+                <width>968</width>
+                <height>466</height>
                </rect>
               </property>
              </widget>
@@ -784,6 +805,9 @@
                 <layout class="QVBoxLayout" name="verticalLayout_13">
                  <item>
                   <widget class="QTableWidget" name="predictionTW">
+                   <property name="editTriggers">
+                    <set>QAbstractItemView::NoEditTriggers</set>
+                   </property>
                    <property name="alternatingRowColors">
                     <bool>true</bool>
                    </property>
@@ -947,6 +971,9 @@
            </item>
            <item>
             <widget class="QTableWidget" name="reviewTW">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
              <property name="alternatingRowColors">
               <bool>true</bool>
              </property>
@@ -980,6 +1007,9 @@
           <layout class="QVBoxLayout" name="verticalLayout_18">
            <item>
             <widget class="QTableWidget" name="reviewIDTW">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
              <property name="alternatingRowColors">
               <bool>true</bool>
              </property>
@@ -1030,6 +1060,9 @@
           <layout class="QVBoxLayout" name="verticalLayout_20">
            <item>
             <widget class="QTableWidget" name="reviewTOTTW">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
              <property name="alternatingRowColors">
               <bool>true</bool>
              </property>
@@ -1090,6 +1123,9 @@
             <layout class="QHBoxLayout" name="horizontalLayout_20">
              <item>
               <widget class="QTableWidget" name="userListTW">
+               <property name="editTriggers">
+                <set>QAbstractItemView::NoEditTriggers</set>
+               </property>
                <property name="alternatingRowColors">
                 <bool>true</bool>
                </property>
