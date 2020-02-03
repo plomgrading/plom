@@ -521,8 +521,8 @@ class MarkerClient(QWidget):
         # Paste the username, question and version into GUI.
         self.ui.userLabel.setText(messenger.whoami())
         self.ui.infoBox.setTitle(
-            "Marking Q{} of {} (version {})".format(
-                self.question, self.testInfo["testName"], self.version
+            "Marking Q{} (ver. {}) of “{}”".format(
+                self.question, self.version, self.testInfo["testName"]
             )
         )
         # Exam model for the table of groupimages - connect to table
