@@ -53,10 +53,14 @@ job buildPapers:
   stage: test
   script:
     - pushd build
+    - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
+    - mv resources cannedResources
     - ./001_startHere.py
-    - cp template_testSpec.toml testSpec.toml
+    - cp cannedResources/verifiedSpec.toml testSpec.toml
     - ./002_verifySpec.py
     - ls ../resources/verifiedSpec.toml
+    # TODO: decide if should be the same:
+    - diff -u ../resources/verifiedSpec.toml cannedResources/verifiedSpec.toml
     - ./003_buildPlomDB.py
     - ./004_buildPDFs.py
     # TODO: copy source pdf files from testTemplates
