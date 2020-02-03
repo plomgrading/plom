@@ -129,7 +129,6 @@ class MarkHandler:
 
     # @routes.put("/MK/tasks/{task}")
     async def MreturnMarkedTask(self, request):
-        task = request.match_info["task"]
         # the put will be in 3 parts - use multipart reader
         # in order we expect those 3 parts - [parameters (inc comments), image, plom-file]
         reader = MultipartReader.from_response(request)
@@ -137,7 +136,30 @@ class MarkHandler:
         if part0 is None:  # weird error
             return web.Response(status=406)  # should have sent 3 parts
         param = await part0.json()
+        if not validFields(
+            param,
+            [
+                "user",
+                "token",
+                "comments",
+                "pg",
+                "ver",
+                "score",
+                "mtime",
+                "tags",
+                "md5sum",
+            ],
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(param["user"], param["token"]):
+            return web.Response(status=401)
+
         comments = param["comments"]
+        task = request.match_info["task"]
+        # TODO: put task inside param as well for sanity check?
+
+        # Note: if user isn't validated, we don't parse their binary junk
+        # TODO: is it safe to abort during a multi-part thing?
 
         # image file
         part1 = await reader.next()
@@ -151,28 +173,25 @@ class MarkHandler:
             return web.Response(status=406)  # should have sent 3 parts
         plomdat = await part2.read()
 
-        if self.server.validate(param["user"], param["token"]):
-            rmsg = self.server.MreturnMarkedTask(
-                param["user"],
-                task,
-                int(param["pg"]),
-                int(param["ver"]),
-                int(param["score"]),
-                image,
-                plomdat,
-                comments,
-                int(param["mtime"]),
-                param["tags"],
-                param["md5sum"],
-            )
-            # rmsg = either [True, numDone, numTotal] or [False] if error.
-            if rmsg[0]:
-                return web.json_response([rmsg[1], rmsg[2]], status=200)
-            else:
-                print("Returning with error 400 = {}".format(rmsg))
-                return web.Response(status=400)  # some sort of error with image file
+        rmsg = self.server.MreturnMarkedTask(
+            param["user"],
+            task,
+            int(param["pg"]),
+            int(param["ver"]),
+            int(param["score"]),
+            image,
+            plomdat,
+            comments,
+            int(param["mtime"]),
+            param["tags"],
+            param["md5sum"],
+        )
+        # rmsg = either [True, numDone, numTotal] or [False] if error.
+        if rmsg[0]:
+            return web.json_response([rmsg[1], rmsg[2]], status=200)
         else:
-            return web.Response(status=401)  # not authorised at all
+            print("Returning with error 400 = {}".format(rmsg))
+            return web.Response(status=400)  # some sort of error with image file
 
     # @routes.get("/MK/images/{task}")
     async def MgetImages(self, request):
