@@ -93,15 +93,12 @@ class MarkHandler:
     # @routes.patch("/MK/tasks/{task}")
     async def MclaimThisTask(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "task"]):
+        if not validFields(data, ["user", "token"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
 
         task = request.match_info["task"]
-        if data["task"] != task:
-            return web.Response(status=400)  # malformed request.
-
         rmesg = self.server.MclaimThisTask(data["user"], task)
         if rmesg[0]:  # return [True, tag, filename1, filename2,...]
             with MultipartWriter("imageAndTags") as mpwriter:
@@ -115,15 +112,12 @@ class MarkHandler:
     # @routes.delete("/MK/tasks/{task}")
     async def MdidNotFinishTask(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "task"]):
+        if not validFields(data, ["user", "token"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
 
         task = request.match_info["task"]
-        if data["task"] != task:
-            return web.Response(status=400)  # malformed request.
-
         self.server.MdidNotFinish(data["user"], task)
         return web.json_response(status=200)
 
