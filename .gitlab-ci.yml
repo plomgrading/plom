@@ -61,7 +61,7 @@ job buildPapers:
     - pdflatex --interaction=batchmode latexTemplatev2.tex
     - pdflatex --interaction=batchmode latexTemplatev2.tex
     - cp latexTemplate.pdf ../build/sourceVersions/version1.pdf
-    - cp latexTemplatev2.pdf ../biuld/sourceVersions/version2.pdf
+    - cp latexTemplatev2.pdf ../build/sourceVersions/version2.pdf
     - popd testTemplates
     # Now build tests
     - pushd build
