@@ -885,11 +885,10 @@ class PlomDB:
     def RgetIncompleteTests(self):
         rval = {}
         for tref in Test.select().where(Test.scanned == False, Test.used == True):
-            pMissing = []
+            pState = []
             for p in tref.pages:
-                if p.scanned == False:
-                    pMissing.append([p.pageNumber, p.version])
-            rval[tref.testNumber] = pMissing
+                pState.append([p.pageNumber, p.version, p.scanned])
+            rval[tref.testNumber] = pState
         return rval
 
     def RgetUnusedTests(self):
