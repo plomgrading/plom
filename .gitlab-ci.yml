@@ -71,8 +71,8 @@ job serverStarts:
     - if (python3 012_scansToImages.py); then false; else true; fi
     - popd
     # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
-    - curl https://www.math.ubc.ca/~cbm/tmp/namesAdded.pdf > scanAndUpload/scannedExams/foo.pdf
-    - curl https://www.math.ubc.ca/~cbm/tmp/resources.tar.gz | tar -zx
+    - curl https://www.math.ubc.ca/~cbm/tmp/testThis.pdf > scanAndUpload/scannedExams/foo.pdf
+    - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
     - ls resources
     - ls scanAndUpload/scannedExams
     - pushd scanAndUpload
