@@ -13,8 +13,6 @@ class UploadHandler:
 
     async def uploadKnownPage(self, request):
         reader = MultipartReader.from_response(request)
-        # TODO: unused, we should ensure this matches the data
-        code = request.match_info["tpv"]
 
         part0 = await reader.next()  # should be parameters
         if part0 is None:  # weird error
@@ -27,9 +25,12 @@ class UploadHandler:
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
             return web.Response(status=401)
-
         if not param["user"] in ("manager", "scanner"):
             return web.Response(status=401)
+
+        # TODO: unused, we should ensure this matches the data
+        # TODO: or why bother passing those in to param?
+        code = request.match_info["tpv"]
 
         part1 = await reader.next()  # should be the image file
         if part1 is None:  # weird error
@@ -54,10 +55,11 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         param = await part0.json()
 
-        if not (
-            self.server.validate(param["user"], param["token"])
-            and param["user"] in ["manager", "scanner",]
-        ):  # not authorised!
+        if not validFields(param, ["user", "token", "fileName", "md5sum"]):
+            return web.Response(status=400)
+        if not self.server.validate(param["user"], param["token"]):
+            return web.Response(status=401)
+        if not param["user"] in ("manager", "scanner"):
             return web.Response(status=401)
 
         part1 = await reader.next()  # should be the image file
@@ -70,18 +72,23 @@ class UploadHandler:
 
     async def uploadCollidingPage(self, request):
         reader = MultipartReader.from_response(request)
-        code = request.match_info["tpv"]
 
         part0 = await reader.next()  # should be parameters
         if part0 is None:  # weird error
             return web.Response(status=406)  # should have sent 2 parts
         param = await part0.json()
 
-        if not (
-            self.server.validate(param["user"], param["token"])
-            and param["user"] in ["manager", "scanner",]
-        ):  # not authorised!
+        if not validFields(
+            param, ["user", "token", "fileName", "md5sum", "test", "page", "version"]
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(param["user"], param["token"]):
             return web.Response(status=401)
+        if not param["user"] in ("manager", "scanner"):
+            return web.Response(status=401)
+
+        # TODO: unused, we should ensure this matches the data
+        code = request.match_info["tpv"]
 
         part1 = await reader.next()  # should be the image file
         if part1 is None:  # weird error
@@ -99,85 +106,98 @@ class UploadHandler:
         return web.json_response(rmsg, status=200)  # all good
 
     async def replaceMissingPage(self, request):
-        code = request.match_info["tpv"]
         data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rval = self.server.replaceMissingPage(
-                data["test"], data["page"], data["version"]
-            )
-            if rval[0]:
-                return web.json_response(rval, status=200)  # all fine
-            else:
-                return web.Response(status=404)  # page not found at all
-        else:
+        if not validFields(data, ["user", "token", "test", "page", "version"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] == "manager":
             return web.Response(status=401)
 
-    async def removeScannedPage(self, request):
+        # TODO: unused, we should ensure this matches the data
         code = request.match_info["tpv"]
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rval = self.server.removeScannedPage(
-                data["test"], data["page"], data["version"]
-            )
-            if rval[0]:
-                return web.json_response(rval, status=200)  # all fine
-            else:
-                return web.Response(status=404)  # page not found at all
+
+        rval = self.server.replaceMissingPage(
+            data["test"], data["page"], data["version"]
+        )
+        if rval[0]:
+            return web.json_response(rval, status=200)  # all fine
         else:
+            return web.Response(status=404)  # page not found at all
+
+    async def removeScannedPage(self, request):
+        data = await request.json()
+        if not validFields(data, ["user", "token", "test", "page", "version"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        # TODO: unused, we should ensure this matches the data
+        code = request.match_info["tpv"]
+
+        rval = self.server.removeScannedPage(
+            data["test"], data["page"], data["version"]
+        )
+        if rval[0]:
+            return web.json_response(rval, status=200)  # all fine
+        else:
+            return web.Response(status=404)  # page not found at all
 
     async def getUnknownPageNames(self, request):
         data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rval = self.server.getUnknownPageNames()
-            return web.json_response(rval, status=200)  # all fine
-        else:
+        if not validFields(data, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.getUnknownPageNames()
+        return web.json_response(rval, status=200)  # all fine
 
     async def getDiscardNames(self, request):
         data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rval = self.server.getDiscardNames()
-            return web.json_response(rval, status=200)  # all fine
-        else:
+        if not validFields(data, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.getDiscardNames()
+        return web.json_response(rval, status=200)  # all fine
 
     async def getCollidingPageNames(self, request):
         data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rval = self.server.getCollidingPageNames()
-            return web.json_response(rval, status=200)  # all fine
-        else:
+        if not validFields(data, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.getCollidingPageNames()
+        return web.json_response(rval, status=200)  # all fine
 
     async def getPageImage(self, request):
         data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rval = self.server.getPageImage(data["test"], data["page"], data["version"])
-            if rval[0]:
-                return web.FileResponse(rval[1], status=200)  # all fine
-            else:
-                return web.Response(status=404)
-        else:
+        if not validFields(data, ["user", "token", "test", "page", "version"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        # TODO: unused, we should ensure this matches the data
+        code = request.match_info["tpv"]
+
+        rval = self.server.getPageImage(data["test"], data["page"], data["version"])
+        if rval[0]:
+            return web.FileResponse(rval[1], status=200)  # all fine
+        else:
+            return web.Response(status=404)
 
     async def getUnknownImage(self, request):
         data = await request.json()
