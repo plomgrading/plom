@@ -52,6 +52,16 @@ stages:
 job buildPapers:
   stage: test
   script:
+    # First build sources pdfs
+    - pushd testTemplates
+    - pdflatex --interaction=batchmode latexTemplate.tex
+    - pdflatex --interaction=batchmode latexTemplate.tex
+    - pdflatex --interaction=batchmode latexTemplate.tex
+    - pdflatex --interaction=batchmode latexTemplatev2.tex
+    - pdflatex --interaction=batchmode latexTemplatev2.tex
+    - pdflatex --interaction=batchmode latexTemplatev2.tex
+    - popd testTemplates
+    # Now build tests
     - pushd build
     - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
     - mv resources cannedResources
