@@ -60,6 +60,8 @@ job buildPapers:
     - pdflatex --interaction=batchmode latexTemplatev2.tex
     - pdflatex --interaction=batchmode latexTemplatev2.tex
     - pdflatex --interaction=batchmode latexTemplatev2.tex
+    - cp latexTemplate.pdf ../build/sourceVersions/version1.pdf
+    - cp latexTemplatev2.pdf ../biuld/sourceVersions/version2.pdf
     - popd testTemplates
     # Now build tests
     - pushd build
@@ -74,7 +76,11 @@ job buildPapers:
     - diff -u ../resources/verifiedSpec.toml cannedResources/verifiedSpec.toml
     - ./003_buildPlomDB.py
     - ./004_buildPDFs.py
-    # TODO: copy source pdf files from testTemplates
+    - ./004a_buildPDFs_no_names.py
+    # TODO: compare to downloaded canned versions?
+    # TODO: https://github.com/vslavik/diff-pdf, not in Ubuntu repos?
+    - A=`ls examsToPrint/ | wc -l`   # How many files?
+    - bash -c "[[ $A == 20 ]]"       # should be 20
     - popd
 
 job serverStarts:
