@@ -57,9 +57,17 @@ def readLastTime():
 
 def writeLastTime():
     """Write the options to the config file."""
-    fh = open("plomConfig.toml", "w")
-    fh.write(toml.dumps(lastTime))
-    fh.close()
+    try:
+        with open("plomConfig.toml", "w") as fh:
+            fh.write(toml.dumps(lastTime))
+    except PermissionError as e:
+        ErrorMessage(
+            "Cannot write config file!\n\n"
+            "Try moving the Plom client to somewhere else on your"
+            "system where you have write permissions.\n\n"
+            "{}.".format(e)
+        ).exec_()
+        QApplication.exit(1)
 
 
 class Chooser(QDialog):
@@ -390,7 +398,7 @@ def sigint_handler(*args):
         )
         == QMessageBox.Yes
     ):
-        QApplication.quit()
+        QApplication.exit(42)
 
 
 if __name__ == "__main__":
