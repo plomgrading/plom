@@ -54,10 +54,10 @@ job buildPapers:
   script:
     # First build sources pdfs
     - pushd testTemplates
+    - pdflatex latexTemplate.tex
     - pdflatex --interaction=batchmode latexTemplate.tex
     - pdflatex --interaction=batchmode latexTemplate.tex
-    - pdflatex --interaction=batchmode latexTemplate.tex
-    - pdflatex --interaction=batchmode latexTemplatev2.tex
+    - pdflatex latexTemplatev2.tex
     - pdflatex --interaction=batchmode latexTemplatev2.tex
     - pdflatex --interaction=batchmode latexTemplatev2.tex
     - cp latexTemplate.pdf ../build/sourceVersions/version1.pdf
