@@ -62,7 +62,7 @@ job buildPapers:
     - pdflatex --interaction=batchmode latexTemplatev2.tex
     - cp latexTemplate.pdf ../build/sourceVersions/version1.pdf
     - cp latexTemplatev2.pdf ../build/sourceVersions/version2.pdf
-    - popd testTemplates
+    - popd
     # Now build tests
     - pushd build
     - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
