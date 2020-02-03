@@ -3,6 +3,12 @@ import json
 import os
 
 
+# TODO: in some common_utils.py?
+def validFields(d, fields):
+    """Check that input dict has (and only has) expected fields."""
+    return set(d.keys()) == set(fields)
+
+
 class UserInitHandler:
     def __init__(self, plomServer):
         self.server = plomServer
@@ -19,6 +25,8 @@ class UserInitHandler:
     # @routes.delete("/users/{user}")
     async def closeUser(self, request):
         data = await request.json()
+        if not validFields(data, ["user", "token"]):
+            return web.Response(status=400)  # malformed request.
         if data["user"] != request.match_info["user"]:
             return web.Response(status=400)  # malformed request.
         elif self.server.validate(data["user"], data["token"]):
@@ -30,6 +38,12 @@ class UserInitHandler:
     # @routes.delete("/authorisation")
     async def clearAuthorisation(self, request):
         data = await request.json()
+        if not (
+            validFields(data, ["user", "password"])
+            or validFields(data, ["user", "token", "userToClear"])
+        ):
+            return web.Response(status=400)  # malformed request.
+
         # manager to auth with their token - unless trying to clear self.
         if data["user"] == "manager" and data["userToClear"] != "manager":
             if self.server.validate(data["user"], data["token"]):
@@ -46,6 +60,8 @@ class UserInitHandler:
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
         data = await request.json()
+        if not validFields(data, ["user", "pw", "api"]):
+            return web.Response(status=400)  # malformed request.
         if data["user"] != request.match_info["user"]:
             return web.Response(status=400)  # malformed request.
 
@@ -64,6 +80,9 @@ class UserInitHandler:
     # @routes.put("/admin/reloadUsers")
     async def adminReloadUsers(self, request):
         data = await request.json()
+        # TODO: future proof by requiring username here too?
+        if not validFields(data, ["pw"]):
+            return web.Response(status=400)  # malformed request.
 
         rmsg = self.server.reloadUsers(data["pw"])
         # returns either True (success) or False (auth-error)
