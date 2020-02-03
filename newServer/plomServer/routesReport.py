@@ -1,6 +1,12 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 
 
+# TODO: in some common_utils.py?
+def validFields(d, fields):
+    """Check that input dict has (and only has) expected fields."""
+    return set(d.keys()) == set(fields)
+
+
 class ReportHandler:
     def __init__(self, plomServer):
         self.server = plomServer
