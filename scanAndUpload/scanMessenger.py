@@ -326,12 +326,18 @@ def getIncompleteTests():
     return response.json()
 
 
-def startMessenger():
+def startMessenger(altServer=None, altPort=None):
     """Start the messenger session"""
     print("Starting a requests-session")
     global authSession
     global session
-    getServerInfo()
+    global server
+    global message_port
+    if altServer is not None:
+        server = altServer
+    if altPort is not None:
+        message_port = altPort
+
     authSession = requests.Session()
     session = requests.Session()
     # set max_retries to large number because UBC-wifi is pretty crappy.

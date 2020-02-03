@@ -1,6 +1,6 @@
 import os
 
-os.system("rm -rf decodedPages/*")
-os.system("rm -rf scannedPages/*")
-os.system("rm -rf pageImages/*")
-os.system("rm -rf readyForGrading/*")
+# TODO: this script is handy for dev work but maybe we shouldn't ship it...
+os.system("rm -rf collidingPages decodedPages discardedPages sentPages unknownPages pageImages")
+# TODO: bit scary for a production system
+#os.system("rm -rf archivedPDFs")

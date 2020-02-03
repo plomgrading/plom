@@ -5,6 +5,7 @@ __copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
+import argparse
 from collections import defaultdict
 import getpass
 import glob
@@ -240,8 +241,10 @@ def checkQRsValid():
             # to unknownPages
             print("[F] {0}: {1} - moving to unknownPages".format(fname, msg))
             # move blah.png and blah.png.qr
-            shutil.move(fname, "../unknownPages/" + fname)
-            shutil.move(fname + ".qr", "../unknownPages/" + fname + ".qr")
+            shutil.move(fname, os.path.join("..", "unknownPages", fname))
+            shutil.move(
+                fname + ".qr", os.path.join("..", "unknownPages", fname + ".qr")
+            )
 
     os.chdir("../")
 
@@ -277,8 +280,8 @@ def validateQRsAgainstSpec(spec):
             # move the blah.png and blah.png.qr
             # this means that they won't be added to the
             # list of correctly scanned page images
-            shutil.move(fn, "../unknownPages")
-            shutil.move(fn + ".qr", "../unknownPages")
+            shutil.move(fn, os.path.join("..", "unknownPages"))
+            shutil.move(fn + ".qr", os.path.join("..", "unknownPages"))
 
 
 def moveScansIntoPlace():
@@ -289,23 +292,49 @@ def moveScansIntoPlace():
         p = examsScannedNow[fname][1]
         v = examsScannedNow[fname][2]
 
-        destName = "../decodedPages/t{}p{}v{}.{}".format(
-            str(t).zfill(4), str(p).zfill(2), str(v), fname
-        )
-        shutil.move(fname, destName)
-        shutil.move(fname + ".qr", destName + ".qr")
+        dpath = os.path.join("..", "decodedPages")
+        dname = "t{}p{}v{}.{}".format(str(t).zfill(4), str(p).zfill(2), str(v), fname)
+        shutil.move(fname, os.path.join(dpath, dname))
+        shutil.move(fname + ".qr", os.path.join(dpath, dname + ".qr"))
 
     os.chdir("../")
 
 
 if __name__ == "__main__":
     examsScannedNow = defaultdict(list)
-    scanMessenger.startMessenger()
-    try:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
-    except Exception as error:
-        print("ERROR", error)
 
+    # get commandline args if needed
+    parser = argparse.ArgumentParser(
+        description="Run the QR-code reading script. No arguments = run as normal."
+    )
+    parser.add_argument("-pwd", "--password", type=str)
+    parser.add_argument(
+        "-s", "--server", help="Which server to contact (must specify port as well)."
+    )
+    parser.add_argument(
+        "-p", "--port", help="Which port to use (must specify server as well)."
+    )
+    args = parser.parse_args()
+
+    # must spec both server+port or neither.
+    if args.server and args.port:
+        scanMessenger.startMessenger(altServer=args.server, altPort=args.port)
+    elif args.server is None and args.port is None:
+        scanMessenger.startMessenger()
+    else:
+        print("You must specify both the server and the port. Quitting.")
+        quit()
+
+    # get the password if not specified
+    if args.password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'scanner' password:")
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = args.password
+
+    # get started
     scanMessenger.requestAndSaveToken("scanner", pwd)
     spec = scanMessenger.getInfoGeneral()
     scanMessenger.closeUser()

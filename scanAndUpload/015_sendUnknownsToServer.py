@@ -7,6 +7,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import argparse
 import getpass
 from glob import glob
 import hashlib
@@ -30,15 +31,17 @@ def buildDirectories():
 def doFiling(rmsg, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
         # print(rmsg[2])
-        shutil.move(fname, "sentPages/unknowns/{}".format(shortName))
+        shutil.move(fname, os.path.join("sentPages", "unknowns", shortName))
         shutil.move(
-            fname + ".qr", "sentPages/unknowns/{}.qr".format(shortName),
+            fname + ".qr", os.path.join("sentPages", "unknowns", shortName + "qr")
         )
     else:  # msg = [False, reason, message]
         if rmsg[1] == "duplicate":
             print(rmsg[2])
-            shutil.move(fname, "discardedPages/{}".format(shortName))
-            shutil.move(fname + ".qr", "discardedPages/{}.qr".format(shortName))
+            shutil.move(fname, os.path.join("discardedPages", shortName))
+            shutil.move(
+                fname + ".qr", os.path.join("discardedPages", shortName + ".qr")
+            )
         else:
             print(rmsg[2])
             print("This should not happen - todo = log error in sensible way")
@@ -53,12 +56,38 @@ def sendUnknownFiles(fileList):
 
 
 if __name__ == "__main__":
-    scanMessenger.startMessenger()
+    # get commandline args if needed
+    parser = argparse.ArgumentParser(
+        description="Run the QR-code reading script. No arguments = run as normal."
+    )
+    parser.add_argument("-pwd", "--password", type=str)
+    parser.add_argument(
+        "-s", "--server", help="Which server to contact (must specify port as well)."
+    )
+    parser.add_argument(
+        "-p", "--port", help="Which port to use (must specify server as well)."
+    )
+    args = parser.parse_args()
 
-    try:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
-    except Exception as error:
-        print("ERROR", error)
+    # must spec both server+port or neither.
+    if args.server and args.port:
+        scanMessenger.startMessenger(altServer=args.server, altPort=args.port)
+    elif args.server is None and args.port is None:
+        scanMessenger.startMessenger()
+    else:
+        print("You must specify both the server and the port. Quitting.")
+        quit()
+
+    # get the password if not specified
+    if args.password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'scanner' password:")
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = args.password
+
+    # get started
 
     scanMessenger.requestAndSaveToken("scanner", pwd)
 
