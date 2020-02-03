@@ -7,36 +7,39 @@ class ReportHandler:
 
     # @routes.get("/REP/scanned")
     async def RgetScannedTests(self, request):
-        data = await request.json()
-        if self.server.validate(data["user"], data["token"]) and data["user"] in [
-            "manager",
-            "scanner",
-        ]:
-            return web.json_response(self.server.RgetScannedTests(), status=200)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] in ("manager", "scanner"):
+            return web.Response(status=401)
+
+        return web.json_response(self.server.RgetScannedTests(), status=200)
 
     # @routes.get("/REP/incomplete")
     async def RgetIncompleteTests(self, request):
-        data = await request.json()
-        if self.server.validate(data["user"], data["token"]) and data["user"] in [
-            "manager",
-            "scanner",
-        ]:
-            return web.json_response(self.server.RgetIncompleteTests(), status=200)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] in ("manager", "scanner"):
+            return web.Response(status=401)
+
+        return web.json_response(self.server.RgetIncompleteTests(), status=200)
 
     # @routes.get("/REP/unused")
     async def RgetUnusedTests(self, request):
-        data = await request.json()
-        if self.server.validate(data["user"], data["token"]) and data["user"] in [
-            "manager",
-            "scanner",
-        ]:
-            return web.json_response(self.server.RgetUnusedTests(), status=200)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] in ("manager", "scanner"):
+            return web.Response(status=401)
+
+        return web.json_response(self.server.RgetUnusedTests(), status=200)
 
     # @routes.get("/REP/progress")
     async def RgetProgress(self, request):
