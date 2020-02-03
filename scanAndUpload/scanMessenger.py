@@ -56,8 +56,7 @@ def requestAndSaveToken(user, pw):
 
     SRmutex.acquire()
     try:
-        print("Requesting authorisation token from server")
-        response = authSession.put(
+        response = session.put(
             "https://{}:{}/users/{}".format(server, message_port, user),
             json={"user": user, "pw": pw, "api": Plom_API_Version},
             verify=False,
@@ -68,25 +67,23 @@ def requestAndSaveToken(user, pw):
         # convert the content of the response to a textfile for identifier
         _token = response.json()
         _userName = user
-        print("Success!")
     except requests.HTTPError as e:
         if response.status_code == 401:  # authentication error
-            print(
-                "Password problem - you are not authorised to upload pages to server."
-            )
+            raise PlomAuthenticationException("You are not authenticated.") from None
         elif response.status_code == 400:  # API error
-            raise PlomAPIException()
-            print("An API problem - {}".format(response.json()))
+            raise PlomAPIException(response.json()) from None
+        elif response.status_code == 409:
+            raise PlomExistingLoginException(response.json()) from None
         else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-        quit()
+            raise PlomSeriousException(
+                "Some other sort of error {}".format(e)
+            ) from None
     except requests.ConnectionError as err:
         raise PlomSeriousException(
             "Cannot connect to\n server:port = {}:{}\n Please check details before trying again.".format(
                 server, message_port
             )
-        )
-        quit()
+        ) from None
     finally:
         SRmutex.release()
 

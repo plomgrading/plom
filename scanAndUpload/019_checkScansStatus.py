@@ -11,6 +11,7 @@ import argparse
 import getpass
 from misc_utils import format_int_list_with_runs
 import scanMessenger
+from plom_exceptions import *
 
 
 if __name__ == "__main__":
@@ -46,8 +47,17 @@ if __name__ == "__main__":
         pwd = args.password
 
     # get started
-
-    scanMessenger.requestAndSaveToken("scanner", pwd)
+    try:
+        scanMessenger.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException as e:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            "In order to force-logout the existing authorisation run the 018_clearScannerLogin.py script."
+        )
+        exit(0)
 
     spec = scanMessenger.getInfoGeneral()
 

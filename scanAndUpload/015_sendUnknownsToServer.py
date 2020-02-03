@@ -15,6 +15,7 @@ import json
 import os
 import shutil
 import scanMessenger
+from plom_exceptions import *
 
 
 def buildDirectories():
@@ -88,8 +89,17 @@ if __name__ == "__main__":
         pwd = args.password
 
     # get started
-
-    scanMessenger.requestAndSaveToken("scanner", pwd)
+    try:
+        scanMessenger.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            "In order to force-logout the existing authorisation run the 018_clearScannerLogin.py script."
+        )
+        exit(0)
 
     buildDirectories()
 
