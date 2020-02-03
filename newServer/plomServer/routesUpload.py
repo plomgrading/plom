@@ -1,12 +1,19 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 
 
+# TODO: in some common_utils.py?
+def validFields(d, fields):
+    """Check that input dict has (and only has) expected fields."""
+    return set(d.keys()) == set(fields)
+
+
 class UploadHandler:
     def __init__(self, plomServer):
         self.server = plomServer
 
     async def uploadKnownPage(self, request):
         reader = MultipartReader.from_response(request)
+        # TODO: unused, we should ensure this matches the data
         code = request.match_info["tpv"]
 
         part0 = await reader.next()  # should be parameters
@@ -14,10 +21,14 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         param = await part0.json()
 
-        if not (
-            self.server.validate(param["user"], param["token"])
-            and param["user"] in ["manager", "scanner",]
-        ):  # not authorised!
+        if not validFields(
+            param, ["user", "token", "test", "page", "version", "fileName", "md5sum"]
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(param["user"], param["token"]):
+            return web.Response(status=401)
+
+        if not param["user"] in ("manager", "scanner"):
             return web.Response(status=401)
 
         part1 = await reader.next()  # should be the image file
