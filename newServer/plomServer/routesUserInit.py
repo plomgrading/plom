@@ -19,7 +19,6 @@ class UserInitHandler:
     # @routes.delete("/users/{user}")
     async def closeUser(self, request):
         data = await request.json()
-        user = request.match_info["user"]
         if data["user"] != request.match_info["user"]:
             return web.Response(status=400)  # malformed request.
         elif self.server.validate(data["user"], data["token"]):
@@ -47,7 +46,6 @@ class UserInitHandler:
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
         data = await request.json()
-        user = request.match_info["user"]
 
         rmsg = self.server.giveUserToken(data["user"], data["pw"], data["api"])
         if rmsg[0]:
