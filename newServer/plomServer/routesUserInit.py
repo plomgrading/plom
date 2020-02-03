@@ -46,6 +46,8 @@ class UserInitHandler:
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
         data = await request.json()
+        if data["user"] != request.match_info["user"]:
+            return web.Response(status=400)  # malformed request.
 
         rmsg = self.server.giveUserToken(data["user"], data["pw"], data["api"])
         if rmsg[0]:
