@@ -40,189 +40,202 @@ class ReportHandler:
 
     # @routes.get("/REP/progress")
     async def RgetProgress(self, request):
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            return web.json_response(
-                self.server.RgetProgress(data["q"], data["v"]), status=200
-            )
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token", "q", "v"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        return web.json_response(self.server.RgetProgress(d["q"], d["v"]), status=200)
 
     # @routes.get("/REP/markHistogram")
     async def RgetMarkHistogram(self, request):
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            return web.json_response(
-                self.server.RgetMarkHistogram(data["q"], data["v"]), status=200
-            )
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token", "q", "v"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        return web.json_response(
+            self.server.RgetMarkHistogram(d["q"], d["v"]), status=200
+        )
 
     # @routes.get("/REP/progress")
     async def RgetIdentified(self, request):
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            return web.json_response(self.server.RgetIdentified(), status=200)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        return web.json_response(self.server.RgetIdentified(), status=200)
 
     async def RgetCompletions(self, request):
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            return web.json_response(self.server.RgetCompletions(), status=200)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        return web.json_response(self.server.RgetCompletions(), status=200)
 
     async def RgetStatus(self, request):
-        testNumber = request.match_info["test"]
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rmsg = self.server.RgetStatus(testNumber)
-            if rmsg[0]:
-                return web.json_response(rmsg[1], status=200)
-            else:
-                return web.Response(status=404)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        testNumber = request.match_info["test"]
+        rmsg = self.server.RgetStatus(testNumber)
+        if rmsg[0]:
+            return web.json_response(rmsg[1], status=200)
+        else:
+            return web.Response(status=404)
 
     async def RgetSpreadsheet(self, request):
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rmsg = self.server.RgetSpreadsheet()
-            return web.json_response(rmsg, status=200)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        rmsg = self.server.RgetSpreadsheet()
+        return web.json_response(rmsg, status=200)
 
     async def RgetCoverPageInfo(self, request):
-        testNumber = request.match_info["test"]
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rmsg = self.server.RgetCoverPageInfo(testNumber)
-            return web.json_response(rmsg, status=200)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        testNumber = request.match_info["test"]
+        rmsg = self.server.RgetCoverPageInfo(testNumber)
+        return web.json_response(rmsg, status=200)
 
     async def RgetOriginalFiles(self, request):
-        testNumber = request.match_info["test"]
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rmsg = self.server.RgetOriginalFiles(testNumber)
-            if len(rmsg) > 0:
-                return web.json_response(rmsg, status=200)
-            else:
-                return web.Response(status=404)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        testNumber = request.match_info["test"]
+        rmsg = self.server.RgetOriginalFiles(testNumber)
+        if len(rmsg) > 0:
+            return web.json_response(rmsg, status=200)
+        else:
+            return web.Response(status=404)
 
     async def RgetAnnotatedFiles(self, request):
-        testNumber = request.match_info["test"]
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rmsg = self.server.RgetAnnotatedFiles(testNumber)
-            if len(rmsg) > 0:
-                return web.json_response(rmsg, status=200)
-            else:
-                return web.Response(status=404)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        testNumber = request.match_info["test"]
+        rmsg = self.server.RgetAnnotatedFiles(testNumber)
+        if len(rmsg) > 0:
+            return web.json_response(rmsg, status=200)
+        else:
+            return web.Response(status=404)
 
     async def RgetUserList(self, request):
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            return web.json_response(self.server.RgetUserList(), status=200)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        return web.json_response(self.server.RgetUserList(), status=200)
 
     async def RgetUserDetails(self, request):
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            return web.json_response(self.server.RgetUserDetails(), status=200)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        return web.json_response(self.server.RgetUserDetails(), status=200)
 
     async def RgetMarkReview(self, request):
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rmsg = self.server.RgetMarkReview(
-                data["filterQ"], data["filterV"], data["filterU"]
-            )
-            return web.json_response(rmsg, status=200)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token", "filterQ", "filterV", "filterU"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        rmsg = self.server.RgetMarkReview(d["filterQ"], d["filterV"], d["filterU"])
+        return web.json_response(rmsg, status=200)
 
     async def RgetIDReview(self, request):
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rmsg = self.server.RgetIDReview()
-            return web.json_response(rmsg, status=200)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        rmsg = self.server.RgetIDReview()
+        return web.json_response(rmsg, status=200)
 
     async def RgetTotReview(self, request):
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            rmsg = self.server.RgetTotReview()
-            return web.json_response(rmsg, status=200)
-        else:
+        d = await request.json()
+        if not validFields(d, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
+            return web.Response(status=401)
+        if not d["user"] == "manager":
             return web.Response(status=401)
 
+        rmsg = self.server.RgetTotReview()
+        return web.json_response(rmsg, status=200)
+
     async def RgetAnnotatedImage(self, request):
-        data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
+        d = await request.json()
+        if not validFields(
+            d, ["user", "token", "testNumber", "questionNumber", "version"]
         ):
-            rmsg = self.server.RgetAnnotatedImage(
-                data["testNumber"], data["questionNumber"], data["version"]
-            )
-            if rmsg[0]:
-                return web.FileResponse(rmsg[1], status=200)
-            else:
-                return web.Response(status=404)
-        else:
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        rmsg = self.server.RgetAnnotatedImage(
+            d["testNumber"], d["questionNumber"], d["version"]
+        )
+        if rmsg[0]:
+            return web.FileResponse(rmsg[1], status=200)
+        else:
+            return web.Response(status=404)
 
     def setUpRoutes(self, router):
         router.add_get("/REP/scanned", self.RgetScannedTests)
