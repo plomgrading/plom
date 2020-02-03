@@ -29,11 +29,10 @@ class UserInitHandler:
             return web.Response(status=400)  # malformed request.
         if data["user"] != request.match_info["user"]:
             return web.Response(status=400)  # malformed request.
-        elif self.server.validate(data["user"], data["token"]):
-            self.server.closeUser(data["user"])
-            return web.Response(status=200)
-        else:
+        if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
+        self.server.closeUser(data["user"])
+        return web.Response(status=200)
 
     # @routes.delete("/authorisation")
     async def clearAuthorisation(self, request):
