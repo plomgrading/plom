@@ -988,7 +988,7 @@ class Annotator(QWidget):
             return
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
-            msg = ErrorMessage("Please make an annotation, even if the page is blank.")
+            msg = ErrorMessage("Please make an annotation, even if there is no answer.")
             msg.exec_()
             ce.ignore()
             return

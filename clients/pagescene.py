@@ -238,9 +238,11 @@ class PageScene(QGraphicsScene):
         return count
 
     def areThereAnnotations(self):
-        # there are at least 2 items = the pageimage and the scorebox
-        # there must be more than 2 items for there to be any annotations
-        return len(self.items()) > 2
+        # there are at least 5 items because TODO ... the pageimage and
+        # the scorebox...
+        # TODO: this is very fragile, should be more closely connected to
+        # the pickling code
+        return len(self.items()) > 5
 
     def save(self):
         """ Save the annotated group-image.

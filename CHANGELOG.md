@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Client is more pessimistic about errors and will crash instead of trying to continue
 in most cases.
 * Client checks for double-logins and can force logout a previous session.
+* Client: you must make at least one annotation on the page.
 
 ### Fixed
 * many fixes, especially related to client crashes due to networking.
