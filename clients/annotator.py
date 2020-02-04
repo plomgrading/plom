@@ -961,8 +961,11 @@ class Annotator(QWidget):
         relaunch = self._relaunch
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
+        # User might ignore close (eg, say no to dialog) so preemptively reset
+        # to ensure next Cancel/window-close is interpreted as cancel.
+        self._relaunch = None
 
-        # Close button/titlebar: reject (do not save) result, do not launch again
+        # Cancel button/titlebar close: reject (do not save) result, do relaunch
         if relaunch is None:
             print("ann emitting signal: Reject/Cancel")
             self.ann_finished_reject.emit(self.tgv, [])
