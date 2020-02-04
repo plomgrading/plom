@@ -1039,9 +1039,6 @@ class Annotator(QWidget):
 
         Window close or Cancel are currently treated the same way:
         discard all annotations.
-
-        TODO: perhaps window close should ask "are you sure?" if there are
-        annotations.  Maybe "Cancel" button should as well.
         """
         # weird hacking to force close if we came from saving.
         # Appropriate signals have already been sent so just close
@@ -1050,8 +1047,16 @@ class Annotator(QWidget):
             ce.accept()
             return
 
-        # Cancel button/titlebar close: reject (do not save result, do not relaunch)
-        print("ann emitting reject/cancel signal")
+        # We are here b/c of cancel button, titlebar close, or related
+        if self.scene.areThereAnnotations():
+            msg = SimpleMessage(
+                "There are annotations on the page.\n\n"
+                "Do you want to discard them and close the annotator?"
+            )
+            if msg.exec_() == QMessageBox.No:
+                ce.ignore()
+                return
+        print("ann emitting reject/cancel signal, discarding, and closing")
         self.ann_finished_reject.emit(self.tgv, [])
         # clean up after a testview
         self.doneViewingPaper()
