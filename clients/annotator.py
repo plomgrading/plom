@@ -941,8 +941,6 @@ class Annotator(QWidget):
             self.parent.annotatorSettings["compact"] = True
 
     def cleanUpCancel(self):
-        # clean up after a testview
-        self.doneViewingPaper()
         self._relaunch = None
         self.close()
 
@@ -972,8 +970,6 @@ class Annotator(QWidget):
         Also confirm various "not enough feedback" cases.
         """
         relaunch = self._relaunch
-        # Save the current window settings for next time annotator is launched
-        self.saveWindowSettings()
         # User might ignore close (eg, say no to dialog) so preemptively reset
         # to ensure next Cancel/window-close is interpreted as cancel.
         self._relaunch = None
@@ -1042,7 +1038,7 @@ class Annotator(QWidget):
         self.saveMarkerComments()
         # Pickle the scene as a plom-file
         self.pickleIt()
-        # Save the window settings
+        # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
         # Close the annotator(QDialog) with an 'accept'.
         print("ann emitting signal: ACCEPT")
