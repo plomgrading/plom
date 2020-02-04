@@ -978,7 +978,7 @@ class Annotator(QWidget):
         # to ensure next Cancel/window-close is interpreted as cancel.
         self._relaunch = None
 
-        # Cancel button/titlebar close: reject (do not save) result, do relaunch
+        # Cancel button/titlebar close: reject (do not save result, do not relaunch)
         if relaunch is None:
             print("ann emitting signal: Reject/Cancel")
             self.ann_finished_reject.emit(self.tgv, [])
