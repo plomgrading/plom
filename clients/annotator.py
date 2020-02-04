@@ -612,34 +612,35 @@ class Annotator(QWidget):
         self.setIcon(self.ui.undoButton, "undo", "{}/undo.svg".format(base_path))
         self.setIcon(self.ui.zoomButton, "zoom", "{}/zoom.svg".format(base_path))
 
-    # The 'endAndRelaunch' slot - this saves the comment-list, closes
-    # the annotator. The marker window then asks the server for the next
-    # unmarked image and fires up the annotator on that.
     @pyqtSlot()
-    def endAndRelaunch(self):
+    def saveAndGetNext(self):
+        """Save the current annotations, and move on to the next paper.
+
+        This saves the comment-list, closes the annotator. The marker
+        window then asks the server for the next unmarked image and
+        fires up a new annotator on that.
+        """
         if self.saveAnnotations():
             self._priv_force_close = True
             self.close()
 
     @pyqtSlot()
-    def endNoRelaunch(self):
+    def saveAndClose(self):
+        """Save the current annotations, and then close."""
         if self.saveAnnotations(gimmeMore=False):
             self._priv_force_close = True
             self.close()
 
     def setMiscShortCuts(self):
-        # Set alt-enter or alt-return to end the annotator
-        # The key-shortcuts fire a signal, which triggers the
-        # endAndRelaunch slot.
-        self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
-        self.endShortCut.activated.connect(self.endAndRelaunch)
-        self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
-        self.endShortCutb.activated.connect(self.endAndRelaunch)
         # shortcuts for next paper
+        self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
+        self.endShortCut.activated.connect(self.saveAndGetNext)
+        self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
+        self.endShortCutb.activated.connect(self.saveAndGetNext)
         self.endShortCutc = QShortcut(QKeySequence("Ctrl+n"), self)
-        self.endShortCutc.activated.connect(self.endAndRelaunch)
+        self.endShortCutc.activated.connect(self.saveAndGetNext)
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
-        self.endShortCutd.activated.connect(self.endAndRelaunch)
+        self.endShortCutd.activated.connect(self.saveAndGetNext)
         self.cancelShortCut = QShortcut(QKeySequence("Ctrl+c"), self)
         self.cancelShortCut.activated.connect(self.close)
         # shortcuts for zoom-states
@@ -770,8 +771,8 @@ class Annotator(QWidget):
         self.ui.commentDownButton.clicked.connect(self.commentW.nextItem)
         self.ui.commentDownButton.clicked.connect(self.commentW.CL.handleClick)
         # Connect up the finishing buttons
-        self.ui.finishedButton.clicked.connect(self.endAndRelaunch)
-        self.ui.finishNoRelaunchButton.clicked.connect(self.endNoRelaunch)
+        self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
+        self.ui.finishNoRelaunchButton.clicked.connect(self.saveAndClose)
 
     def handleComment(self, dlt_txt):
         """When the user selects a comment this function will be triggered.
