@@ -1676,17 +1676,18 @@ class PlomDB:
             tref.totalled = False
             tref.finished = False
             tref.save()
-            # clean up sum-data
+            # clean up sum-data - no one should be totalling and marking at same time.
+            # TODO = sort out the possible idiocy caused by simultaneous marking+totalling by client.
             sref.status = "todo"
             sref.sumMark = None
             sref.username = ""
             sref.time = datetime.now()
             sref.summed = False
             sref.save()
-            # clean off the question data
+            # clean off the question data - but keep user and state = "out"
             rval = [True, qref.annotatedFile, qref.plomFile, qref.commentFile]
             qref.marked = False
-            qref.status = "todo"
+            qref.status = "out"
             qref.annotatedFile = None
             qref.md5sum = None
             qref.plomFile = None
@@ -1694,7 +1695,6 @@ class PlomDB:
             qref.mark = None
             qref.markingTime = None
             qref.tags = ""
-            qref.username = ""
             qref.time = datetime.now()
             qref.save()
         return rval
