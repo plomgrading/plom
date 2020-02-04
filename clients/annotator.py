@@ -620,6 +620,8 @@ class Annotator(QWidget):
     @pyqtSlot()
     def endAndRelaunch(self):
         self._relaunch = True
+        # TODO: its weird to save the comments even if we cancel?
+        # TODO: especially as we don't do that on actual "Cancel"
         self.commentW.saveComments()
         self.close()
 
