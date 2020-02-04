@@ -1066,8 +1066,9 @@ class MarkerClient(QWidget):
             return
         if self.moveToNextUnmarkedTest("t" + tgv):
             self.annotateTest()
-        self.setEnabled(True)
-        print("Debug: either we are done or problems downloading...")
+        else:
+            print("Debug: either we are done or problems downloading...")
+            self.setEnabled(True)
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
