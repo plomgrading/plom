@@ -960,6 +960,9 @@ class Annotator(QWidget):
         Window close or Cancel are currently treated the same way:
         discard all annotations.
 
+        TODO: perhaps window close should ask "are you sure?" if there are
+        annotations.  Maybe "Cancel" button should as well.
+
         Next and Done save the annotations and differ in whether the
         Annotator should "relaunch" or not.
 
