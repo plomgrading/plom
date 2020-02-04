@@ -19,12 +19,6 @@
   <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,3">
    <item>
     <widget class="QFrame" name="frame">
-     <property name="minimumSize">
-      <size>
-       <width>150</width>
-       <height>0</height>
-      </size>
-     </property>
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
      </property>

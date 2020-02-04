@@ -18,7 +18,6 @@ class Ui_MarkerWindow(object):
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(MarkerWindow)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.frame = QtWidgets.QFrame(MarkerWindow)
-        self.frame.setMinimumSize(QtCore.QSize(150, 0))
         self.frame.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.frame.setFrameShadow(QtWidgets.QFrame.Plain)
         self.frame.setObjectName("frame")
