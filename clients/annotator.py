@@ -623,6 +623,12 @@ class Annotator(QWidget):
         self.commentW.saveComments()
         self.close()
 
+    @pyqtSlot()
+    def endNoRelaunch(self):
+        self._relaunch = False
+        self.commentW.saveComments()
+        self.close()
+
     def setMiscShortCuts(self):
         # Set alt-enter or alt-return to end the annotator
         # The key-shortcuts fire a signal, which triggers the
@@ -766,10 +772,8 @@ class Annotator(QWidget):
         self.ui.commentDownButton.clicked.connect(self.commentW.nextItem)
         self.ui.commentDownButton.clicked.connect(self.commentW.CL.handleClick)
         # Connect up the finishing buttons
-        self.ui.finishedButton.clicked.connect(self.commentW.saveComments)
-        self.ui.finishedButton.clicked.connect(self.closeEventRelaunch)
-        self.ui.finishNoRelaunchButton.clicked.connect(self.commentW.saveComments)
-        self.ui.finishNoRelaunchButton.clicked.connect(self.closeEventNoRelaunch)
+        self.ui.finishedButton.clicked.connect(self.endAndRelaunch)
+        self.ui.finishNoRelaunchButton.clicked.connect(self.endNoRelaunch)
 
     def handleComment(self, dlt_txt):
         """When the user selects a comment this function will be triggered.
@@ -841,14 +845,6 @@ class Annotator(QWidget):
         self.markHandler.repaint()
         # update the delta-mark-menu
         self.updateDeltaMarkMenu()
-
-    def closeEventRelaunch(self):
-        self._relaunch = True
-        self.close()
-
-    def closeEventNoRelaunch(self):
-        self._relaunch = False
-        self.close()
 
     def loadWindowSettings(self):
         # load the window geometry, else maximise.
