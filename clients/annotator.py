@@ -947,16 +947,26 @@ class Annotator(QWidget):
         self.close()
 
     def closeEvent(self, ce):
-        """When the user closes the window - either by clicking on the
-        little standard all windows have them close icon in the titlebar
-        or by clicking on 'finished' - do some basic checks.
-        If the titlebar close has been clicked then we assume the user
-        is cancelling the annotations.
-        Otherwise - we assume they want to accept them. Simple sanity check
-        that user meant to close the window.
+        """Deal with various cases of window trying to close.
+
+        There are various things that can happen.
+          * User closes window via titlebar close icon (or alt-f4 or...)
+          * User clicks "Cancel"
+          * User clicks "Next"
+          * User clicks "Done"
+
+        Currently all these events end up here and we choose what to do.
+
+        Window close or Cancel are currently treated the same way:
+        discard all annotations.
+
+        Next and Done save the annotations and differ in whether the
+        Annotator should "relaunch" or not.
+
         Be careful of a score of 0 - when mark total or mark up.
         Be careful of max-score when marking down.
         In either case - get user to confirm the score before closing.
+        Also confirm various "not enough feedback" cases.
         """
         relaunch = self._relaunch
         # Save the current window settings for next time annotator is launched
