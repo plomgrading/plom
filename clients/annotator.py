@@ -102,8 +102,6 @@ class Annotator(QWidget):
         plomDict=None,
     ):
         super(Annotator, self).__init__()
-        # Temporary hack: None means "just close", can be True/False
-        self._relaunch = None
         # remember parent
         self.parent = parent
         # Grab filename of image, max mark, mark style (total/up/down)
@@ -619,17 +617,15 @@ class Annotator(QWidget):
     # unmarked image and fires up the annotator on that.
     @pyqtSlot()
     def endAndRelaunch(self):
-        self._relaunch = True
-        # TODO: its weird to save the comments even if we cancel?
-        # TODO: especially as we don't do that on actual "Cancel"
-        self.commentW.saveComments()
-        self.close()
+        if self.saveAnnotations():
+            self._priv_force_close = True
+            self.close()
 
     @pyqtSlot()
     def endNoRelaunch(self):
-        self._relaunch = False
-        self.commentW.saveComments()
-        self.close()
+        if self.saveAnnotations(gimmeMore=False):
+            self._priv_force_close = True
+            self.close()
 
     def setMiscShortCuts(self):
         # Set alt-enter or alt-return to end the annotator
@@ -938,50 +934,26 @@ class Annotator(QWidget):
         else:
             self.parent.annotatorSettings["compact"] = True
 
-    def closeEvent(self, ce):
-        """Deal with various cases of window trying to close.
+    def saveAnnotations(self, gimmeMore=True):
+        """Try to save the annotations and signal Marker to upload them.
 
-        There are various things that can happen.
-          * User closes window via titlebar close icon (or alt-f4 or...)
-          * User clicks "Cancel"
-          * User clicks "Next"
-          * User clicks "Done"
+        There are various sanity checks and user interaction to be
+        done.  Return `False` if user cancels.  Return `True` if we
+        should move on (for example, to close the Annotator).
 
-        Currently all these events end up here and we choose what to do.
-
-        Window close or Cancel are currently treated the same way:
-        discard all annotations.
-
-        TODO: perhaps window close should ask "are you sure?" if there are
-        annotations.  Maybe "Cancel" button should as well.
-
-        Next and Done save the annotations and differ in whether the
-        Annotator should "relaunch" or not.
+        The signal to Marker also indicates whether we want another
+        paper to annotator via the `gimmeMore`.
 
         Be careful of a score of 0 - when mark total or mark up.
         Be careful of max-score when marking down.
         In either case - get user to confirm the score before closing.
         Also confirm various "not enough feedback" cases.
         """
-        relaunch = self._relaunch
-        # User might ignore close (eg, say no to dialog) so preemptively reset
-        # to ensure next Cancel/window-close is interpreted as cancel.
-        self._relaunch = None
-
-        # Cancel button/titlebar close: reject (do not save result, do not relaunch)
-        if relaunch is None:
-            print("ann emitting signal: Reject/Cancel")
-            self.ann_finished_reject.emit(self.tgv, [])
-            # clean up after a testview
-            self.doneViewingPaper()
-            ce.accept()
-            return
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
             msg = ErrorMessage("Please make an annotation, even if there is no answer.")
             msg.exec_()
-            ce.ignore()
-            return
+            return False
 
         # check if comments have been left.
         if self.scene.countComments() == 0:
@@ -991,17 +963,16 @@ class Annotator(QWidget):
                     "You have given no comments.\n Please confirm."
                 )
                 if msg.exec_() == QMessageBox.No:
-                    ce.ignore()
-                    return
+                    return False
                 if msg.cb.checkState() == Qt.Checked:
+                    # TODO: only saved if we ultimately accept
                     self.commentWarn = False
 
         # if marking total or up, be careful when giving 0-marks
         if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
             msg = SimpleMessageCheckBox("You have given 0 - please confirm")
             if msg.exec_() == QMessageBox.No:
-                ce.ignore()
-                return
+                return False
             if msg.cb.checkState() == Qt.Checked:
                 self.markWarn = False
         # if marking down, be careful of giving max-marks
@@ -1014,14 +985,12 @@ class Annotator(QWidget):
                 "You have given {} - please confirm".format(self.maxMark)
             )
             if msg.exec_() == QMessageBox.No:
-                ce.ignore()
-                return
+                return False
             if msg.cb.checkState() == Qt.Checked:
                 self.markWarn = False
 
         if not self.checkAllObjectsInside():
-            ce.ignore()
-            return
+            return False
 
         # clean up after a testview
         self.doneViewingPaper()
@@ -1032,17 +1001,22 @@ class Annotator(QWidget):
         self.saveMarkerComments()
         # Pickle the scene as a plom-file
         self.pickleIt()
+
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
-        # Close the annotator(QDialog) with an 'accept'.
-        print("ann emitting signal: ACCEPT")
+        self.commentW.saveComments()
+
+        if gimmeMore:
+            print("ann emitting accept signal (and asking for a new paper)")
+        else:
+            print("ann emitting accept signal (and done)")
         tim = self.timer.elapsed() // 1000
         # some things here hardcoded elsewhere too, and up in marker
         plomFile = self.imageFile[:-3] + "plom"
         commentFile = self.imageFile[:-3] + "json"
         stuff = [
             self.score,
-            relaunch,
+            gimmeMore,
             tim,
             self.paperdir,
             self.imageFile,
@@ -1050,6 +1024,37 @@ class Annotator(QWidget):
             commentFile,
         ]
         self.ann_finished_accept.emit(self.tgv, stuff)
+        return True
+
+    def closeEvent(self, ce):
+        """Deal with various cases of window trying to close.
+
+        There are various things that can happen.
+          * User closes window via titlebar close icon (or alt-f4 or...)
+          * User clicks "Cancel"
+          * User clicks "Next"
+          * User clicks "Done"
+
+        Currently all these events end up here, eventually.
+
+        Window close or Cancel are currently treated the same way:
+        discard all annotations.
+
+        TODO: perhaps window close should ask "are you sure?" if there are
+        annotations.  Maybe "Cancel" button should as well.
+        """
+        # weird hacking to force close if we came from saving.
+        # Appropriate signals have already been sent so just close
+        force = getattr(self, "_priv_force_close", False)
+        if force:
+            ce.accept()
+            return
+
+        # Cancel button/titlebar close: reject (do not save result, do not relaunch)
+        print("ann emitting reject/cancel signal")
+        self.ann_finished_reject.emit(self.tgv, [])
+        # clean up after a testview
+        self.doneViewingPaper()
         ce.accept()
 
     def checkAllObjectsInside(self):
