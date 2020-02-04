@@ -431,7 +431,7 @@ class Manager(QWidget):
     def initScanTab(self):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
         self.ui.scanTW.activated.connect(self.viewSPage)
-        self.ui.incompTW.setHeaderLabels(["Test number", "Missing page", "Version"])
+        self.ui.incompTW.setHeaderLabels(["Test number", "Page", "Version", "Status"])
         self.ui.incompTW.activated.connect(self.viewISTest)
         self.refreshIList()
         self.refreshSList()
@@ -445,11 +445,16 @@ class Manager(QWidget):
                 l0i.removeChild(l0i.child(0))
             root.removeChild(l0i)
 
-        incomplete = managerMessenger.getIncompleteTests()  # pairs [p,v]
+        incomplete = managerMessenger.getIncompleteTests()  # triples [p,v,true/false]
         for t in incomplete:
             l0 = QTreeWidgetItem(["{}".format(t), ""])
-            for (p, v) in incomplete[t]:
-                l0.addChild(QTreeWidgetItem(["", str(p), str(v)]))
+            for (p, v, s) in incomplete[t]:
+                if s:
+                    l0.addChild(QTreeWidgetItem(["", str(p), str(v), "scanned"]))
+                else:
+                    it = QTreeWidgetItem(["", str(p), str(v), "missing"])
+                    it.setBackground(3, QBrush(Qt.red))
+                    l0.addChild(it)
             self.ui.incompTW.addTopLevelItem(l0)
 
     def refreshSList(self):
@@ -477,6 +482,14 @@ class Manager(QWidget):
                 l0.addChild(l1)
             self.ui.scanTW.addTopLevelItem(l0)
 
+    def viewPage(self, t, p, v):
+        vp = managerMessenger.getPageImage(t, p, v)
+        if vp is None:
+            return
+        with tempfile.NamedTemporaryFile() as fh:
+            fh.write(vp)
+            GroupView([fh.name]).exec_()
+
     def viewSPage(self):
         pvi = self.ui.scanTW.selectedItems()
         if len(pvi) == 0:
@@ -489,23 +502,23 @@ class Manager(QWidget):
         pp = int(pvi[0].text(1))
         pv = int(pvi[0].text(2))
         pt = int(pvi[0].parent().text(0))  # grab test number from parent
-
-        vp = managerMessenger.getPageImage(pt, pp, pv)
-        if vp is None:
-            return
-        with tempfile.NamedTemporaryFile() as fh:
-            fh.write(vp)
-            GroupView([fh.name]).exec_()
+        self.viewPage(pt, pp, pv)
 
     def viewISTest(self):
         pvi = self.ui.incompTW.selectedItems()
         if len(pvi) == 0:
             return
-        # if selected a lower-level item (ie a missing page) - return
+        # if selected a lower-level item (ie a missing page) - check if scanned
         if pvi[0].childCount() == 0:
+            if pvi[0].text(3) == "scanned":
+                self.viewPage(
+                    int(pvi[0].parent().text(0)),
+                    int(pvi[0].text(1)),
+                    int(pvi[0].text(2)),
+                )
             return
-        pt = int(pvi[0].text(0))  # grab test number
-        self.viewWholeTest(pt)
+        # else fire up the whole test.
+        self.viewWholeTest(int(pvi[0].text(0)))
 
     def removePage(self):
         pvi = self.ui.scanTW.selectedItems()
