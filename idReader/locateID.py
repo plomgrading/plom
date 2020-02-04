@@ -99,7 +99,7 @@ class IDLocator(QWidget):
         t = int(max(0, self.ui.topSlider.value() - 5) / 100 * h)
         b = int(min(100, 105 - self.ui.bottomSlider.value()) / 100 * h)
         print("Run ID-code on image height range {} to {}".format(t, b))
-        cmd = ["python3" "./readStudentID.py" str(t) str(b)]
+        cmd = ["python3", "./readStudentID.py", str(t), str(b)]
         subprocess.check_call(cmd)
         self.close()
 
