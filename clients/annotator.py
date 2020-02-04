@@ -943,6 +943,7 @@ class Annotator(QWidget):
     def cleanUpCancel(self):
         # clean up after a testview
         self.doneViewingPaper()
+        self._relaunch = None
         self.close()
 
     def closeEvent(self, ce):
