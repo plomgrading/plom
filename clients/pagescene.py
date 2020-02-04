@@ -573,27 +573,9 @@ class PageScene(QGraphicsScene):
     def pickleSceneItems(self):
         lst = []
         for X in self.items():
-            # don't pickle the scorebox or background image, or ghostcomment
-            if any(
-                isinstance(X, Y)
-                for Y in [
-                    ScoreBox,
-                    QGraphicsPixmapItem,
-                    QGraphicsItemGroup,
-                    GhostComment,
-                    GhostDelta,
-                    GhostText,
-                ]
-            ):
-                continue
-            # If text or delta, check if part of GroupDeltaText
-            if isinstance(X, DeltaItem) or isinstance(X, TextItem):
-                if X.group() is not None:  # object part of GroupDeltaText
-                    continue
-            if isinstance(X, QGraphicsPathItem):
-                if X.group() is not None:  # object part of penarrowitem
-                    continue
-            lst.append(X.pickle())
+            # check if object as "pickle" attribute and it is set to true.
+            if getattr(X, "pickleable", False):
+                lst.append(X.pickle())
         return lst
 
     def unpickleSceneItems(self, lst):
