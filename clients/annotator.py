@@ -637,7 +637,7 @@ class Annotator(QWidget):
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
         self.endShortCutd.activated.connect(self.endAndRelaunch)
         self.cancelShortCut = QShortcut(QKeySequence("Ctrl+c"), self)
-        self.cancelShortCut.activated.connect(self.cleanUpCancel)
+        self.cancelShortCut.activated.connect(self.close)
         # shortcuts for zoom-states
         self.zoomToggleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
         self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
@@ -746,7 +746,7 @@ class Annotator(QWidget):
         self.ui.viewButton.clicked.connect(self.viewWholePaper)
 
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
-        self.ui.cancelButton.clicked.connect(self.cleanUpCancel)
+        self.ui.cancelButton.clicked.connect(self.close)
         # Hide button connects to the toggleTools command
         self.ui.hideButton.clicked.connect(self.toggleTools)
 
@@ -939,10 +939,6 @@ class Annotator(QWidget):
             self.parent.annotatorSettings["compact"] = False
         else:
             self.parent.annotatorSettings["compact"] = True
-
-    def cleanUpCancel(self):
-        self._relaunch = None
-        self.close()
 
     def closeEvent(self, ce):
         """Deal with various cases of window trying to close.
