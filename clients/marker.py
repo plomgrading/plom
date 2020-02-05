@@ -923,7 +923,6 @@ class MarkerClient(QWidget):
         # run the annotator
         annotator.ann_finished_accept.connect(self.callbackAnnIsDoneAccept)
         annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
-        annotator.destroyed.connect(self.annotatorDestroyed)
         self.setEnabled(False)
         annotator.show()
         # We had (have?) a bug: when `annotator` var goes out of scope, it can
@@ -931,10 +930,6 @@ class MarkerClient(QWidget):
         # TODO: the old one might still be closing when we get here, but dropping
         # the ref now won't hurt (I think).
         self._annotator = annotator
-
-    def annotatorDestroyed(self):
-        # TODO try Qt::WA_DeleteOnClose flag applied in Annotator
-        print("Debug: Marker: ANNOTATOR WAS DESTROYED (may be delayed)")
 
     def annotateTest(self):
         """Grab current test from table, do checks, start annotator."""
