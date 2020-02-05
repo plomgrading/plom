@@ -244,10 +244,10 @@ class MarkHandler:
             rval = self.server.MrevertTask(data["user"], task)
             if rval[0]:
                 return web.Response(status=200)
-            elif rval[1] == "NST":  # cannot find that task
-                return web.Response(status=404)
-            else:  # nothing to be done here.
+            elif rval[1] == "NAC":  # nothing to be done here.
                 return web.Response(status=204)
+            else:  # cannot find that task
+                return web.Response(status=404)
         else:
             return web.Response(status=401)
 
