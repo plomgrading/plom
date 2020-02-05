@@ -923,6 +923,7 @@ class MarkerClient(QWidget):
         # run the annotator
         annotator.ann_finished_accept.connect(self.callbackAnnIsDoneAccept)
         annotator.ann_finished_gimmemore.connect(self.callbackAnnWantsMore)
+        annotator.ann_finished_closing.connect(self.callbackAnnClosing)
         annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
         self.setEnabled(False)
         annotator.show()
@@ -1019,7 +1020,6 @@ class MarkerClient(QWidget):
         # TODO: could also erase the paperdir
         self.exM.setStatusByTGV("t" + tgv, prevState)
 
-    # ... or here
     @pyqtSlot(str, list)
     def callbackAnnIsDoneAccept(self, tgv, stuff):
         gr, mtime, paperdir, aname, pname, cname = stuff
@@ -1055,19 +1055,21 @@ class MarkerClient(QWidget):
         )
 
     # ... or here
-    @pyqtSlot(str, bool)
-    def callbackAnnWantsMore(self, tgv, launchAgain):
-        print("Marker is back and Ann Wants More: relaunch='{}'".format(launchAgain))
-        if launchAgain is False:
-            self.setEnabled(True)
-            # update image view, if the row we just finished is selected
-            prIndex = self.ui.tableView.selectedIndexes()
-            if len(prIndex) == 0:
-                return
-            pr = prIndex[0].row()
-            if self.prxM.getPrefix(pr) == "t" + tgv:
-                self.updateImage(pr)
+    @pyqtSlot(str)
+    def callbackAnnClosing(self, tgv):
+        self.setEnabled(True)
+        # update image view, if the row we just finished is selected
+        prIndex = self.ui.tableView.selectedIndexes()
+        if len(prIndex) == 0:
             return
+        pr = prIndex[0].row()
+        if self.prxM.getPrefix(pr) == "t" + tgv:
+            self.updateImage(pr)
+
+    # ... or here
+    @pyqtSlot(str)
+    def callbackAnnWantsMore(self, tgv):
+        print("Debug: Marker is back and Ann Wants More")
         if self.moveToNextUnmarkedTest("t" + tgv):
             self.annotateTest()
         else:

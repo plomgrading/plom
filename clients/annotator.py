@@ -87,7 +87,8 @@ class Annotator(QWidget):
     """
 
     ann_finished_accept = pyqtSignal(str, list)
-    ann_finished_gimmemore = pyqtSignal(str, bool)
+    ann_finished_gimmemore = pyqtSignal(str)
+    ann_finished_closing = pyqtSignal(str)
     ann_finished_reject = pyqtSignal(str, list)
 
     def __init__(
@@ -1041,8 +1042,12 @@ class Annotator(QWidget):
         # Appropriate signals have already been sent so just close
         force = getattr(self, "_priv_force_close", False)
         if force:
-            print("ann emitting the gimmemore signal (relaunch={})".format(self._priv_relaunch))
-            self.ann_finished_gimmemore.emit(self.tgv, self._priv_relaunch)
+            if self._priv_relaunch:
+                print("ann emitting the gimmemore signal")
+                self.ann_finished_gimmemore.emit(self.tgv)
+            else:
+                print("ann emitting the closing signal")
+                self.ann_finished_closing.emit(self.tgv)
             ce.accept()
             return
 
