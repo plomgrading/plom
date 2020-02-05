@@ -926,6 +926,19 @@ class MarkerClient(QWidget):
         annotator.destroyed.connect(self.annotatorDestroyed)
         self.setEnabled(False)
         annotator.show()
+        # We had (have?) a bug: when `annotator` var goes out of scope, it can
+        # get GC'd, killing the new Annotator.  Fix: keep a ref in self.
+        if not getattr(self, "_annotators", False):
+            self._annotator = None
+        if self._annotator:
+            # TODO: may need to keep a dict, pop them in their close callbacks
+            if self._annotator.isVisible():
+                ErrorMessage(
+                    "Marker: expected the old Annotator to be gone before we "
+                    "opened this new one.  Some bug or race condition?\n\n"
+                    "File an issue if this happens often."
+                ).exec_()
+        self._annotator = annotator
 
     def annotatorDestroyed(self):
         # TODO try Qt::WA_DeleteOnClose flag applied in Annotator
