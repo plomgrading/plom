@@ -292,7 +292,7 @@ class Manager(QWidget):
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
 
     def closeWindow(self):
-        if managerMessenger.session is not None:
+        if managerMessenger.session:
             managerMessenger.closeUser()
         self.close()
 
