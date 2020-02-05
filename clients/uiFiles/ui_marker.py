@@ -188,7 +188,6 @@ class Ui_MarkerWindow(object):
         self.horizontalLayout_3.addWidget(self.rightMouseRB)
         self.verticalLayout_2.addWidget(self.handChoiceBox)
         self.frameProgress = QtWidgets.QFrame(self.widget)
-        self.frameProgress.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.frameProgress.setObjectName("frameProgress")
         self.layoutProgress = QtWidgets.QHBoxLayout(self.frameProgress)
         self.layoutProgress.setContentsMargins(0, -1, 0, -1)

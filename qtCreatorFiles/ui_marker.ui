@@ -354,9 +354,6 @@
       </item>
       <item>
        <widget class="QFrame" name="frameProgress">
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
-        </property>
         <layout class="QHBoxLayout" name="layoutProgress">
          <property name="leftMargin">
           <number>0</number>
