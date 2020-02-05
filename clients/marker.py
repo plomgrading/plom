@@ -925,8 +925,13 @@ class MarkerClient(QWidget):
         annotator.ann_finished_gimmemore.connect(self.callbackAnnWantsMore)
         annotator.ann_finished_closing.connect(self.callbackAnnClosing)
         annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
+        annotator.destroyed.connect(self.annotatorDestroyed)
         self.setEnabled(False)
         annotator.show()
+
+    def annotatorDestroyed(self):
+        # TODO try Qt::WA_DeleteOnClose flag applied in Annotator
+        print("Debug: Marker: ANNOTATOR WAS DESTROYED (may be delayed)")
 
     def annotateTest(self):
         """Grab current test from table, do checks, start annotator."""
