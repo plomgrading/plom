@@ -923,8 +923,26 @@ class MarkerClient(QWidget):
         # run the annotator
         annotator.ann_finished_accept.connect(self.callbackAnnIsDoneAccept)
         annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
+        annotator.destroyed.connect(self.annotatorDestroyed)
         self.setEnabled(False)
         annotator.show()
+        # We had (have?) a bug: when `annotator` var goes out of scope, it can
+        # get GC'd, killing the new Annotator.  Fix: keep a ref in self.
+        if not getattr(self, "_annotator", False):
+            self._annotator = None
+        if self._annotator:
+            # TODO: may need to keep a dict, pop them in their close callbacks
+            if self._annotator.isVisible():
+                ErrorMessage(
+                    "Marker: expected the old Annotator to be gone before we "
+                    "opened this new one.  Some bug or race condition?\n\n"
+                    "File an issue if this happens often."
+                ).exec_()
+        self._annotator = annotator
+
+    def annotatorDestroyed(self):
+        # TODO try Qt::WA_DeleteOnClose flag applied in Annotator
+        print("Debug: Marker: ANNOTATOR WAS DESTROYED (may be delayed)")
 
     def annotateTest(self):
         """Grab current test from table, do checks, start annotator."""
@@ -1066,8 +1084,9 @@ class MarkerClient(QWidget):
             return
         if self.moveToNextUnmarkedTest("t" + tgv):
             self.annotateTest()
-        self.setEnabled(True)
-        print("Debug: either we are done or problems downloading...")
+        else:
+            print("Debug: either we are done or problems downloading...")
+            self.setEnabled(True)
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
