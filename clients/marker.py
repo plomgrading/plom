@@ -1012,10 +1012,9 @@ class MarkerClient(QWidget):
         # we started the annotator, we'll get a signal back when its done
 
     # when the annotator is done, we end up here...
-    @pyqtSlot(str, list)
-    def callbackAnnIsDoneCancel(self, tgv, stuff):
+    @pyqtSlot(str)
+    def callbackAnnIsDoneCancel(self, tgv):
         self.setEnabled(True)
-        assert not stuff  # currently nothing given back on cancel
         prevState = self.exM.getStatusByTGV("t" + tgv).split(":")[-1]
         # TODO: could also erase the paperdir
         self.exM.setStatusByTGV("t" + tgv, prevState)

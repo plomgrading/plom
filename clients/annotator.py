@@ -89,7 +89,7 @@ class Annotator(QWidget):
     ann_finished_accept = pyqtSignal(str, list)
     ann_finished_gimmemore = pyqtSignal(str)
     ann_finished_closing = pyqtSignal(str)
-    ann_finished_reject = pyqtSignal(str, list)
+    ann_finished_reject = pyqtSignal(str)
 
     def __init__(
         self,
@@ -1061,7 +1061,7 @@ class Annotator(QWidget):
                 ce.ignore()
                 return
         print("ann emitting reject/cancel signal, discarding, and closing")
-        self.ann_finished_reject.emit(self.tgv, [])
+        self.ann_finished_reject.emit(self.tgv)
         # clean up after a testview
         self.doneViewingPaper()
         ce.accept()
