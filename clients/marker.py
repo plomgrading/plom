@@ -617,6 +617,9 @@ class MarkerClient(QWidget):
             self.throwSeriousError(err)
             return
 
+        # Keep the original format around in case we need to change it
+        self.ui._cachedProgressFormatStr = self.ui.mProgressBar.format()
+
         # Update counts
         self.updateProgress()
         # Connect the view **after** list updated.
@@ -749,7 +752,10 @@ class MarkerClient(QWidget):
             self.ui.mProgressBar.setFormat("No papers to mark")
             ErrorMessage("No papers to mark.").exec_()
         else:
-            self.ui.mProgressBar.resetFormat()
+            # self.ui.mProgressBar.resetFormat()
+            # self.ui.mProgressBar.setFormat("%v of %m")
+            # Neither is quite right, instead, we cache on init
+            self.ui.mProgressBar.setFormat(self.ui._cachedProgressFormatStr)
         self.ui.mProgressBar.setMaximum(m)
         self.ui.mProgressBar.setValue(v)
 
