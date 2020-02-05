@@ -238,11 +238,12 @@ class PageScene(QGraphicsScene):
         return count
 
     def areThereAnnotations(self):
-        # there are at least 5 items because TODO ... the pageimage and
-        # the scorebox...
-        # TODO: this is very fragile, should be more closely connected to
-        # the pickling code
-        return len(self.items()) > 5
+        # look through items in scene for anything pickle-able - this will catch any annotations.
+        for X in self.items():
+            if hasattr(X, "saveable"):
+                return True
+        # no pickle-able items means no annotations.
+        return False
 
     def save(self):
         """ Save the annotated group-image.
@@ -542,26 +543,9 @@ class PageScene(QGraphicsScene):
     def pickleSceneItems(self):
         lst = []
         for X in self.items():
-            # don't pickle the scorebox or background image, or ghostcomment
-            if any(
-                isinstance(X, Y)
-                for Y in [
-                    ScoreBox,
-                    QGraphicsPixmapItem,
-                    GhostComment,
-                    GhostDelta,
-                    GhostText,
-                ]
-            ):
-                continue
-            # If text or delta, check if part of GroupDeltaText
-            if isinstance(X, DeltaItem) or isinstance(X, TextItem):
-                if X.group() is not None:  # object part of GroupDeltaText
-                    continue
-            if isinstance(X, QGraphicsPathItem):
-                if X.group() is not None:  # object part of penarrowitem
-                    continue
-            lst.append(X.pickle())
+            # check if object as "saveable" attribute and it is set to true.
+            if getattr(X, "saveable", False):
+                lst.append(X.pickle())
         return lst
 
     def unpickleSceneItems(self, lst):
