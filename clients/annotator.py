@@ -991,8 +991,13 @@ class Annotator(QWidget):
             if msg.cb.checkState() == Qt.Checked:
                 self.markWarn = False
 
-        if not self.checkAllObjectsInside():
-            return False
+        if not self.scene.checkAllObjectsInside():
+            msg = SimpleMessage(
+                "Some annotations are outside the page image. "
+                "Do you really want to finish?"
+            )
+            if msg.exec_() == QMessageBox.No:
+                return False
 
         # clean up after a testview
         self.doneViewingPaper()
@@ -1065,19 +1070,6 @@ class Annotator(QWidget):
         # clean up after a testview
         self.doneViewingPaper()
         ce.accept()
-
-    def checkAllObjectsInside(self):
-        if self.scene.checkAllObjectsInside():
-            return True
-        else:
-            # some objects outside the image, check if user really wants to finish
-            msg = SimpleMessage(
-                "Some annotations outside pageimage. Do you really want to finish?"
-            )
-            if msg.exec_() == QMessageBox.No:
-                return False
-            else:
-                return True
 
     def getComments(self):
         return self.scene.getComments()
