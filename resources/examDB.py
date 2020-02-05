@@ -966,6 +966,29 @@ class PlomDB:
             rhist[x.username][x.mark] += 1
         return rhist
 
+    def RgetQuestionUserProgress(self, q, v):
+        # return [ nScanned, [user, nmarked], [user, nmarked], etc]
+        rdat = {}
+        nScan = 0
+        for x in (
+            QuestionData.select()
+            .join(Group)
+            .where(
+                QuestionData.questionNumber == q,
+                QuestionData.version == v,
+                Group.scanned == True,
+            )
+        ):
+            nScan += 1
+            if x.marked == True:
+                if x.username not in rdat:
+                    rdat[x.username] = 0
+                rdat[x.username] += 1
+        rval = [nScan]
+        for x in rdat:
+            rval.append([x, rdat[x]])
+        return rval
+
     def RgetCompletions(self):
         rval = {}
         for tref in Test.select().where(Test.scanned == True):

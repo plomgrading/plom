@@ -51,6 +51,19 @@ class ReportHandler:
         else:
             return web.Response(status=401)
 
+    # @routes.get("/REP/questionUserProgress")
+    async def RgetQuestionUserProgress(self, request):
+        data = await request.json()
+        if (
+            self.server.validate(data["user"], data["token"])
+            and data["user"] == "manager"
+        ):
+            return web.json_response(
+                self.server.RgetQuestionUserProgress(data["q"], data["v"]), status=200
+            )
+        else:
+            return web.Response(status=401)
+
     # @routes.get("/REP/markHistogram")
     async def RgetMarkHistogram(self, request):
         data = await request.json()
@@ -229,6 +242,7 @@ class ReportHandler:
         router.add_get("/REP/incomplete", self.RgetIncompleteTests)
         router.add_get("/REP/unused", self.RgetUnusedTests)
         router.add_get("/REP/progress", self.RgetProgress)
+        router.add_get("/REP/questionUserProgress", self.RgetQuestionUserProgress)
         router.add_get("/REP/markHistogram", self.RgetMarkHistogram)
         router.add_get("/REP/identified", self.RgetIdentified)
         router.add_get("/REP/completions", self.RgetCompletions)
