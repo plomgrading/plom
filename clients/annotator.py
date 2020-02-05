@@ -87,6 +87,7 @@ class Annotator(QWidget):
     """
 
     ann_finished_accept = pyqtSignal(str, list)
+    ann_finished_gimmemore = pyqtSignal(str, bool)
     ann_finished_reject = pyqtSignal(str, list)
 
     def __init__(
@@ -622,13 +623,15 @@ class Annotator(QWidget):
         """
         if self.saveAnnotations():
             self._priv_force_close = True
+            self._priv_relaunch = True
             self.close()
 
     @pyqtSlot()
     def saveAndClose(self):
         """Save the current annotations, and then close."""
-        if self.saveAnnotations(gimmeMore=False):
+        if self.saveAnnotations():
             self._priv_force_close = True
+            self._priv_relaunch = False
             self.close()
 
     def setMiscShortCuts(self):
@@ -935,15 +938,12 @@ class Annotator(QWidget):
         else:
             self.parent.annotatorSettings["compact"] = True
 
-    def saveAnnotations(self, gimmeMore=True):
+    def saveAnnotations(self):
         """Try to save the annotations and signal Marker to upload them.
 
         There are various sanity checks and user interaction to be
         done.  Return `False` if user cancels.  Return `True` if we
         should move on (for example, to close the Annotator).
-
-        The signal to Marker also indicates whether we want another
-        paper to annotator via the `gimmeMore`.
 
         Be careful of a score of 0 - when mark total or mark up.
         Be careful of max-score when marking down.
@@ -1007,17 +1007,13 @@ class Annotator(QWidget):
         self.saveWindowSettings()
         self.commentW.saveComments()
 
-        if gimmeMore:
-            print("ann emitting accept signal (and asking for a new paper)")
-        else:
-            print("ann emitting accept signal (and done)")
+        print("ann emitting accept signal")
         tim = self.timer.elapsed() // 1000
         # some things here hardcoded elsewhere too, and up in marker
         plomFile = self.imageFile[:-3] + "plom"
         commentFile = self.imageFile[:-3] + "json"
         stuff = [
             self.score,
-            gimmeMore,
             tim,
             self.paperdir,
             self.imageFile,
@@ -1045,6 +1041,8 @@ class Annotator(QWidget):
         # Appropriate signals have already been sent so just close
         force = getattr(self, "_priv_force_close", False)
         if force:
+            print("ann emitting the gimmemore signal (relaunch={})".format(self._priv_relaunch))
+            self.ann_finished_gimmemore.emit(self.tgv, self._priv_relaunch)
             ce.accept()
             return
 

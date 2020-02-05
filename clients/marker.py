@@ -922,6 +922,7 @@ class MarkerClient(QWidget):
         )
         # run the annotator
         annotator.ann_finished_accept.connect(self.callbackAnnIsDoneAccept)
+        annotator.ann_finished_gimmemore.connect(self.callbackAnnWantsMore)
         annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
         self.setEnabled(False)
         annotator.show()
@@ -1021,7 +1022,7 @@ class MarkerClient(QWidget):
     # ... or here
     @pyqtSlot(str, list)
     def callbackAnnIsDoneAccept(self, tgv, stuff):
-        gr, launchAgain, mtime, paperdir, aname, pname, cname = stuff
+        gr, mtime, paperdir, aname, pname, cname = stuff
 
         if not (0 <= gr and gr <= self.maxScore):
             msg = ErrorMessage(
@@ -1031,7 +1032,6 @@ class MarkerClient(QWidget):
             )
             msg.exec_()
             # TODO: what do do here?  revert?
-            self.setEnabled(True)
             return
 
         # Copy the mark, annotated filename and the markingtime into the table
@@ -1054,6 +1054,10 @@ class MarkerClient(QWidget):
             tags,
         )
 
+    # ... or here
+    @pyqtSlot(str, bool)
+    def callbackAnnWantsMore(self, tgv, launchAgain):
+        print("Marker is back and Ann Wants More: relaunch='{}'".format(launchAgain))
         if launchAgain is False:
             self.setEnabled(True)
             # update image view, if the row we just finished is selected
