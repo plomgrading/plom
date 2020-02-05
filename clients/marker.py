@@ -928,7 +928,7 @@ class MarkerClient(QWidget):
         annotator.show()
         # We had (have?) a bug: when `annotator` var goes out of scope, it can
         # get GC'd, killing the new Annotator.  Fix: keep a ref in self.
-        if not getattr(self, "_annotators", False):
+        if not getattr(self, "_annotator", False):
             self._annotator = None
         if self._annotator:
             # TODO: may need to keep a dict, pop them in their close callbacks
