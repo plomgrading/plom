@@ -967,7 +967,7 @@ class Annotator(QWidget):
                 if msg.exec_() == QMessageBox.No:
                     return False
                 if msg.cb.checkState() == Qt.Checked:
-                    # TODO: only saved if we ultimately accept
+                    # Note: these are only saved if we ultimately accept
                     self.commentWarn = False
 
         # if marking total or up, be careful when giving 0-marks
