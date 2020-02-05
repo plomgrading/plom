@@ -1266,7 +1266,6 @@ class Manager(QWidget):
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
                 qpu = managerMessenger.getQuestionUserProgress(q, v)
-                print(qpu)
                 for (u, n) in qpu[1:]:
                     self.ui.QPUserTW.insertRow(r)
                     self.ui.QPUserTW.setItem(r, 0, QTableWidgetItem(str(q).rjust(4)))
