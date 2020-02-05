@@ -159,6 +159,57 @@
       <property name="sizeConstraint">
        <enum>QLayout::SetNoConstraint</enum>
       </property>
+      <item row="0" column="0">
+       <widget class="QGroupBox" name="userBox">
+        <property name="title">
+         <string>User</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetDefaultConstraint</enum>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="userLabel">
+           <property name="text">
+            <string>Username</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QPushButton" name="nextButton">
+        <property name="text">
+         <string>Skip (for now) and &amp;get next</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QGroupBox" name="tableBox">
+        <property name="title">
+         <string>Table of papers</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetDefaultConstraint</enum>
+         </property>
+         <item row="0" column="0">
+          <widget class="QTableView" name="tableView">
+           <property name="editTriggers">
+            <set>QAbstractItemView::NoEditTriggers</set>
+           </property>
+           <property name="selectionMode">
+            <enum>QAbstractItemView::SingleSelection</enum>
+           </property>
+           <property name="selectionBehavior">
+            <enum>QAbstractItemView::SelectRows</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
       <item row="2" column="0">
        <widget class="QGroupBox" name="studentBox">
         <property name="title">
@@ -191,55 +242,11 @@
         </layout>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QPushButton" name="nextButton">
-        <property name="text">
-         <string>Skip (for now) and &amp;get next</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QGroupBox" name="userBox">
-        <property name="title">
-         <string>User</string>
-        </property>
-        <layout class="QGridLayout" name="gridLayout">
-         <property name="sizeConstraint">
-          <enum>QLayout::SetDefaultConstraint</enum>
-         </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="userLabel">
-           <property name="text">
-            <string>Username</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
       <item row="4" column="0">
-       <widget class="QGroupBox" name="tableBox">
-        <property name="title">
-         <string>Table of papers</string>
+       <widget class="QPushButton" name="blankButton">
+        <property name="text">
+         <string>Blank page</string>
         </property>
-        <layout class="QGridLayout" name="gridLayout_2">
-         <property name="sizeConstraint">
-          <enum>QLayout::SetDefaultConstraint</enum>
-         </property>
-         <item row="0" column="0">
-          <widget class="QTableView" name="tableView">
-           <property name="editTriggers">
-            <set>QAbstractItemView::NoEditTriggers</set>
-           </property>
-           <property name="selectionMode">
-            <enum>QAbstractItemView::SingleSelection</enum>
-           </property>
-           <property name="selectionBehavior">
-            <enum>QAbstractItemView::SelectRows</enum>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </widget>
       </item>
      </layout>

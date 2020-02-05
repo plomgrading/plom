@@ -213,6 +213,7 @@ class IDClient(QWidget):
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.nextButton.clicked.connect(self.skipOnClick)
         self.ui.predButton.clicked.connect(self.acceptPrediction)
+        self.ui.blankButton.clicked.connect(self.blankPaper)
 
         # Make sure no button is clicked by a return-press
         self.ui.nextButton.setAutoDefault(False)
@@ -734,3 +735,22 @@ class IDClient(QWidget):
                 if self.requestNext():
                     return
             self.moveToNextUnID()
+
+    def blankPaper(self):
+        # first check currently selected paper is unidentified - else do nothing
+        index = self.ui.tableView.selectedIndexes()
+        status = self.exM.data(index[1])
+        if status != "unidentified":
+            return
+        code = self.exM.data(index[0])
+        sname = "Blank paper"
+        sid = None
+
+        self.identifyStudent(index, sid, sname)
+
+        if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
+            self.requestNext()  # updates progressbars.
+        else:  # else move to the next unidentified paper.
+            self.moveToNextUnID()  # doesn't
+            self.updateProgress()
+        return
