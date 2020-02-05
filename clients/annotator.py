@@ -55,6 +55,7 @@ from useful_classes import (
     ErrorMessage,
     SimpleMessage,
     SimpleMessageCheckBox,
+    NoAnswerBox,
 )
 from test_view import TestView
 from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
@@ -775,6 +776,8 @@ class Annotator(QWidget):
         self.ui.finishedButton.clicked.connect(self.closeEventRelaunch)
         self.ui.finishNoRelaunchButton.clicked.connect(self.commentW.saveComments)
         self.ui.finishNoRelaunchButton.clicked.connect(self.closeEventNoRelaunch)
+        # Connect the "no answer" button
+        self.ui.noAnswerButton.clicked.connect(self.noAnswer)
 
     def handleComment(self, dlt_txt):
         """When the user selects a comment this function will be triggered.
@@ -1176,3 +1179,33 @@ class Annotator(QWidget):
                     self.deltaActions[k].setEnabled(True)
                 else:
                     self.deltaActions[k].setEnabled(False)
+
+    def noAnswer(self):
+        if self.markStyle == 2:
+            if self.score > 0:  # is mark-up
+                ErrorMessage(
+                    'You have added marks - cannot then set "No answer given". Delete deltas before trying again.'
+                ).exec_()
+                return
+            else:
+                self.scene.noAnswer(0)
+        elif self.markStyle == 3:
+            if self.score < self.maxMark:  # is mark-down
+                ErrorMessage(
+                    'You have deducted marks - cannot then set "No answer given". Delete deltas before trying again.'
+                ).exec()
+                return
+            else:
+                self.scene.noAnswer(-self.maxMark)
+        nabValue = NoAnswerBox().exec_()
+        if nabValue == 0:
+            # equivalent to cancel - apply undo three times (to remove the noanswer lines+comment)
+            self.scene.undo()
+            self.scene.undo()
+            self.scene.undo()
+        elif nabValue == 1:
+            # equivalent to "yes - give me next paper"
+            self.ui.finishedButton.animateClick()
+        else:
+            # equiv to "yes, but I'm done"
+            self.ui.finishNoRelaunchButton.animateClick()
