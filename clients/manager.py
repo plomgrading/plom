@@ -280,6 +280,8 @@ class Manager(QWidget):
         self.ui.refreshIDRevB.clicked.connect(self.refreshIDRev)
         self.ui.refreshTOTB.clicked.connect(self.refreshTOTRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
+        self.ui.refreshQPUB.clicked.connect(self.refreshQPU)
+
         self.ui.removePageB.clicked.connect(self.removePage)
         self.ui.subsPageB.clicked.connect(self.subsPage)
         self.ui.actionUButton.clicked.connect(self.doUActions)
@@ -373,6 +375,7 @@ class Manager(QWidget):
         self.initRevIDTab()
         self.initRevTOTTab()
         self.initUserListTab()
+        self.initQPUTab()
 
     # -------------------
     def getTPQV(self):
@@ -1245,6 +1248,35 @@ class Manager(QWidget):
                 self.ui.userListTW.item(r, 0).setBackground(QBrush(Qt.green))
 
             r += 1
+
+    def initQPUTab(self):
+        self.ui.QPUserTW.setColumnCount(5)
+        self.ui.QPUserTW.setHorizontalHeaderLabels(
+            ["Question", "Version", "User", "Number Marked", "Percentage of Q/V marked"]
+        )
+        self.ui.QPUserTW.setSortingEnabled(True)
+        self.ui.QPUserTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.QPUserTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.QPUserTW.resizeColumnsToContents()
+
+    def refreshQPU(self):
+        self.ui.userListTW.clearContents()
+        self.ui.userListTW.setRowCount(0)
+        r = 0
+        for q in range(1, self.numberOfQuestions + 1):
+            for v in range(1, self.numberOfVersions + 1):
+                qpu = managerMessenger.getQuestionUserProgress(q, v)
+                for (u, n) in qpu[1:]:
+                    self.ui.QPUserTW.insertRow(r)
+                    self.ui.QPUserTW.setItem(r, 0, QTableWidgetItem(str(q).rjust(4)))
+                    self.ui.QPUserTW.setItem(r, 1, QTableWidgetItem(str(v).rjust(2)))
+                    self.ui.QPUserTW.setItem(r, 2, QTableWidgetItem("{}".format(u)))
+                    self.ui.QPUserTW.setItem(r, 3, QTableWidgetItem(str(n).rjust(4)))
+                    pb = QProgressBar()
+                    pb.setMaximum(qpu[0])
+                    pb.setValue(n)
+                    self.ui.QPUserTW.setCellWidget(r, 4, pb)
+                    r += 1
 
 
 # Pop up a dialog for unhandled exceptions and then exit
