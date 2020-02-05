@@ -292,7 +292,8 @@ class Manager(QWidget):
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
 
     def closeWindow(self):
-        managerMessenger.closeUser()
+        if managerMessenger.session is not None:
+            managerMessenger.closeUser()
         self.close()
 
     def setFont(self):
