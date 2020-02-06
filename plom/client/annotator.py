@@ -235,6 +235,71 @@ class Annotator(QWidget):
     def menudummy(self):
         print("TODO: menu placeholder 1")
 
+
+    def closeCurrentTGV(self):
+        """Stop looking at the current TGV, reset things safely."""
+        pass
+
+
+    def loadNewTGV(self, tgv, testname, paperdir, fname, maxMark, markStyle, plomDict=None):
+        self.tgv = tgv
+        self.testname = testname
+        self.setWindowTitle("Annotator: {} of test {}".format(tgv, testname))
+        print("========= Annotator: {} of test {}".format(tgv, testname))
+
+        self.paperdir = paperdir
+        self.imageFile = fname
+
+        assert self.maxMark == maxMark, "TODO: changing maxMark in running Annotator not supported"
+
+        # get markstyle from plomDict
+        if plomDict is None:
+            self.markStyle = markStyle
+        else:
+            self.markStyle = plomDict["markStyle"]
+        # TODO: not clear you're allowed to chnage this
+        #assert self.markStyle == markStyle, "TODO: changing markStyle in running Annotator not supprted"
+
+        # pass the marking style to the mark entry widget.
+        # also when we set this up we have to connect various
+        # mark set, delta-set, mark change functions
+        self.setMarkHandler(self.markStyle)
+        self.setDeltaButtonMenu()
+
+        # TODO: doit or init?
+        # a test view pop-up window - initially set to None
+        # for viewing whole paper
+        self.testView = None
+        self.testViewFiles = None
+        # Set current mark to 0.
+        self.score = 0
+
+        # TODO: comment might need to hide different things...  for now, assume Q hasn't changed nor version, etc.
+        if False:
+            # Create the comment list widget and put into gui.
+            self.commentW = CommentWidget(self, self.maxMark)
+            self.ui.commentGrid.addWidget(self.commentW, 1, 1)
+            # pass this to the comment table too - it needs to know if we are
+            # marking up/down/total to correctly shade deltas.
+            self.commentW.setStyle(self.markStyle)
+        self.commentW.changeMark(self.score)
+
+        # Set up the graphicsview and graphicsscene of the group-image
+        # loads in the image etc
+        self.view = None
+        self.scene = None
+        self.setViewAndScene()
+
+        self.setMarkHandler(self.markStyle)
+
+        # TODO: shortcut keys that talk to view should be broken?  If not why not?
+
+        # Very last thing = unpickle scene from plomDict
+        if plomDict is not None:
+            self.unpickleIt(plomDict)
+        self.timer = QElapsedTimer()
+        self.timer.start()
+
     def setCurrentMarkMode(self):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
         self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
@@ -670,10 +735,17 @@ class Annotator(QWidget):
         window then asks the server for the next unmarked image and
         fires up a new annotator on that.
         """
-        if self.saveAnnotations():
-            self._priv_force_close = True
-            self._priv_relaunch = True
-            self.close()
+        if not self.saveAnnotations():
+            return
+        print("We have surrendered {}".format(self.tgv))
+        self.closeCurrentTGV()
+        stuff = self.parent.gimmeMore(self.tgv)
+        if not stuff:
+            ErrorMessage("No more to grade?").exec_()
+            # Not really safe to give it back? (at least we did the view...)
+            return
+        print(stuff)
+        self.loadNewTGV(*stuff)
 
     @pyqtSlot()
     def saveAndClose(self):
@@ -1108,6 +1180,9 @@ class Annotator(QWidget):
         # Pickle the scene as a plom-file
         self.pickleIt()
 
+        # TODO: we should assume its dead
+        self.view.setHidden(True)
+
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
         self.commentW.saveComments()
@@ -1135,7 +1210,6 @@ class Annotator(QWidget):
         There are various things that can happen.
           * User closes window via titlebar close icon (or alt-f4 or...)
           * User clicks "Cancel"
-          * User clicks "Next"
           * User clicks "Done"
 
         Currently all these events end up here, eventually.
@@ -1143,6 +1217,7 @@ class Annotator(QWidget):
         Window close or Cancel are currently treated the same way:
         discard all annotations.
         """
+        print("========CLOSE EVENT======: {}".format(self))
         # weird hacking to force close if we came from saving.
         # Appropriate signals have already been sent so just close
         force = getattr(self, "_priv_force_close", False)
