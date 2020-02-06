@@ -174,6 +174,7 @@ class PlomDB:
                     DiscardedPage,
                 ]
             )
+        printLog("DB", "Database initialised.")
 
     def createTest(self, t):
         try:
@@ -1009,7 +1010,7 @@ class PlomDB:
                 if datetime.now() - x.time < oneHour:
                     NRecent += 1
 
-        printLog("DB", "Sending progress summary for qv = {}.{}", q, v)
+        printLog("DB", "Sending progress summary for qv = {}.{}".format(q, v))
         if NMarked == 0:
             return {
                 "NScanned": NScanned,
@@ -1046,7 +1047,7 @@ class PlomDB:
             if x.mark not in rhist[x.username]:
                 rhist[x.username][x.mark] = 0
             rhist[x.username][x.mark] += 1
-        printLog("DB", "Sending mark histogram for qv = {}.{}", q, v)
+        printLog("DB", "Sending mark histogram for qv = {}.{}".format(q, v))
         return rhist
 
     def RgetQuestionUserProgress(self, q, v):
@@ -1070,7 +1071,7 @@ class PlomDB:
         rval = [nScan]
         for x in rdat:
             rval.append([x, rdat[x]])
-        printLog("DB", "Sending question/user progress for qv = {}.{}", q, v)
+        printLog("DB", "Sending question/user progress for qv = {}.{}".format(q, v))
         return rval
 
     def RgetCompletions(self):
@@ -1582,9 +1583,7 @@ class PlomDB:
                     .get()
                 )
             except QuestionData.DoesNotExist as e:
-                printLog(
-                    "DB", "Nothing left on qv {}.{} to-do pile - {}".format(q, v, e)
-                )
+                printLog("DB", "Nothing left on qv {}.{} to-do pile".format(q, v))
                 return None
 
             printLog("DB", "Next qv={}{} task = {}".format(q, v, x.group.gid))

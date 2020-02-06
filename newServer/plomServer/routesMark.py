@@ -1,13 +1,21 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import os
 
+# this allows us to import from ../resources
+import sys
+
+sys.path.append("..")
+from resources.logIt import printLog
+
 
 class MarkHandler:
     def __init__(self, plomServer):
+        printLog("MKH", "Starting marking handler")
         self.server = plomServer
 
     # @routes.get("/MK/maxMark")
     async def MgetQuestionMark(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             rmsg = self.server.MgetQuestionMax(data["q"], data["v"])
@@ -30,6 +38,7 @@ class MarkHandler:
 
     # @routes.get("/MK/progress")
     async def MprogressCount(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             return web.json_response(
@@ -40,6 +49,7 @@ class MarkHandler:
 
     # @routes.get("/MK/tasks/complete")
     async def MgetDoneTasks(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             # return the completed list
@@ -52,6 +62,7 @@ class MarkHandler:
 
     # @routes.get("/MK/tasks/available")
     async def MgetNextTask(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             rmsg = self.server.MgetNextTask(data["q"], data["v"])
@@ -65,6 +76,7 @@ class MarkHandler:
 
     # @routes.get("/MK/latex")
     async def MlatexFragment(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             rmsg = self.server.MlatexFragment(data["user"], data["fragment"])
@@ -77,6 +89,7 @@ class MarkHandler:
 
     # @routes.patch("/MK/tasks/{task}")
     async def MclaimThisTask(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         task = request.match_info["task"]
         if self.server.validate(data["user"], data["token"]):
@@ -94,6 +107,7 @@ class MarkHandler:
 
     # @routes.delete("/MK/tasks/{task}")
     async def MdidNotFinishTask(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         task = request.match_info["task"]
         if self.server.validate(data["user"], data["token"]):
@@ -104,6 +118,7 @@ class MarkHandler:
 
     # @routes.put("/MK/tasks/{task}")
     async def MreturnMarkedTask(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         task = request.match_info["task"]
         # the put will be in 3 parts - use multipart reader
         # in order we expect those 3 parts - [parameters (inc comments), image, plom-file]
@@ -151,6 +166,7 @@ class MarkHandler:
 
     # @routes.get("/MK/images/{task}")
     async def MgetImages(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         task = request.match_info["task"]
         if self.server.validate(data["user"], data["token"]):
@@ -169,6 +185,7 @@ class MarkHandler:
 
     # @routes.get("/MK/originalImage/{task}")
     async def MgetOriginalImages(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         task = request.match_info["task"]
         if self.server.validate(data["user"], data["token"]):
@@ -186,6 +203,7 @@ class MarkHandler:
 
     # @routes.patch("/MK/tags/{task}")
     async def MsetTag(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         task = request.match_info["task"]
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
@@ -199,6 +217,7 @@ class MarkHandler:
 
     # @routes.get("/MK/whole/{number}")
     async def MgetWholePaper(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         number = request.match_info["number"]
         if self.server.validate(data["user"], data["token"]):
@@ -216,6 +235,7 @@ class MarkHandler:
 
     # @routes.get("/MK/allMax")
     async def MgetAllMax(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             return web.json_response(self.server.MgetAllMax(), status=200)
@@ -224,6 +244,7 @@ class MarkHandler:
 
     # @routes.patch("/MK/review")
     async def MreviewQuestion(self, request):
+        printLog("MKH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             if self.server.MreviewQuestion(

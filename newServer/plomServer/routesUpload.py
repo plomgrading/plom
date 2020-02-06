@@ -1,11 +1,19 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 
+# this allows us to import from ../resources
+import sys
+
+sys.path.append("..")
+from resources.logIt import printLog
+
 
 class UploadHandler:
     def __init__(self, plomServer):
         self.server = plomServer
+        printLog("UPH", "Starting upload handler")
 
     async def uploadKnownPage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         reader = MultipartReader.from_response(request)
         code = request.match_info["tpv"]
 
@@ -36,6 +44,7 @@ class UploadHandler:
         return web.json_response(rmsg, status=200)  # all good
 
     async def uploadUnknownPage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         reader = MultipartReader.from_response(request)
 
         part0 = await reader.next()  # should be parameters
@@ -58,6 +67,7 @@ class UploadHandler:
         return web.json_response(rmsg, status=200)  # all good
 
     async def uploadCollidingPage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         reader = MultipartReader.from_response(request)
         code = request.match_info["tpv"]
 
@@ -88,6 +98,7 @@ class UploadHandler:
         return web.json_response(rmsg, status=200)  # all good
 
     async def replaceMissingPage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         code = request.match_info["tpv"]
         data = await request.json()
         if (
@@ -105,6 +116,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def removeScannedPage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         code = request.match_info["tpv"]
         data = await request.json()
         if (
@@ -122,6 +134,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def getUnknownPageNames(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -133,6 +146,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def getDiscardNames(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -144,6 +158,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def getCollidingPageNames(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -155,6 +170,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def getPageImage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -169,6 +185,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def getUnknownImage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -183,6 +200,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def getDiscardImage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -197,6 +215,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def getCollidingImage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -211,6 +230,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def getQuestionImages(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -229,6 +249,7 @@ class UploadHandler:
             return web.Response(status=401)  # not authorised at all
 
     async def getTestImages(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -250,6 +271,7 @@ class UploadHandler:
             return web.Response(status=401)  # not authorised at all
 
     async def checkPage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -269,6 +291,7 @@ class UploadHandler:
             return web.Response(status=401)  # not authorised at all
 
     async def removeUnknownImage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -283,6 +306,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def removeCollidingImage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -297,6 +321,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def unknownToTestPage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -313,6 +338,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def unknownToExtraPage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -329,6 +355,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def collidingToTestPage(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -345,6 +372,7 @@ class UploadHandler:
             return web.Response(status=401)
 
     async def discardToUnknown(self, request):
+        printLog("UPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])

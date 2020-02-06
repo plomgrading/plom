@@ -2,6 +2,12 @@ import hashlib
 import os
 import uuid
 
+# this allows us to import from ../resources
+import sys
+
+sys.path.append("..")
+from resources.logIt import printLog
+
 
 def InfoShortName(self):
     if self.testSpec is None:
@@ -29,9 +35,9 @@ def reloadUsers(self, password):
     """Reload the user list."""
     # Check user is manager.
     if not self.authority.authoriseUser("manager", password):
-        print("Unauthorised attempt to reload users")
+        printLog("SUI", "Unauthorised attempt to reload users")
         return False
-    print("Reloading the user list")
+    printLog("SUI", "Reloading the user list")
     # Load in the user list and check against existing user list for differences
     if os.path.exists("../resources/userList.json"):
         with open("../resources/userList.json") as data_file:
@@ -42,19 +48,18 @@ def reloadUsers(self, password):
                     # This is a new user - add them in.
                     self.userList[u] = newUserList[u]
                     self.authority.addUser(u, newUserList[u])
-                    print("New user = {}".format(u))
+                    printLog("SUI", "Adding new user = {}".format(u))
             # for each user in the old list..
             for u in self.userList:
                 if u not in newUserList:
                     # this user has been removed
-                    print("Removing user = {}".format(u))
+                    printLog("SUI", "Removing user = {}".format(u))
                     # Anything out at user should go back on todo pile.
                     self.DB.resetUsersToDo(u)
                     # remove user's authorisation token.
                     self.authority.detoken(u)
-    print("Current user list = {}".format(list(self.userList.keys())))
+    printLog("SUI", "Current user list = {}".format(list(self.userList.keys())))
     # return acknowledgement
-    print(">> User list reloaded")
     return True
 
 
@@ -85,7 +90,7 @@ def giveUserToken(self, user, password, clientAPI):
         # On token request also make sure anything "out" with that user is reset as todo.
         # We keep this here in case of client crash - todo's get reset on login and logout.
         self.DB.resetUsersToDo(user)
-        print("Authorising user {}".format(user))
+        printLog("SUI", "Authorising user {}".format(user))
         return [True, self.authority.getToken(user)]
     else:
         return [False, "The name / password pair is not authorised".format(user)]
@@ -94,6 +99,7 @@ def giveUserToken(self, user, password, clientAPI):
 def closeUser(self, user):
     """Client is closing down their app, so remove the authorisation token
     """
+    printLog("SUI", "Revoking auth token from user {}".format(user))
     self.authority.detoken(user)
     # make sure all their out tasks are returned to "todo"
     self.DB.resetUsersToDo(user)

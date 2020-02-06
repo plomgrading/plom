@@ -2,13 +2,21 @@ from aiohttp import web, MultipartWriter, MultipartReader
 import json
 import os
 
+# this allows us to import from ../resources
+import sys
+
+sys.path.append("..")
+from resources.logIt import printLog
+
 
 class UserInitHandler:
     def __init__(self, plomServer):
         self.server = plomServer
+        printLog("UIH", "Starting user-init handler")
 
     # @routes.get("/Version")
     async def version(self, request):
+        printLog("UIH", "{} {}".format(request.method, request.rel_url))
         return web.Response(
             text="Running Plom server version {} with API {}".format(
                 self.server.Version, self.server.API
@@ -18,6 +26,8 @@ class UserInitHandler:
 
     # @routes.delete("/users/{user}")
     async def closeUser(self, request):
+        printLog("UIH", "{} {}".format(request.method, request.rel_url))
+
         data = await request.json()
         user = request.match_info["user"]
         if data["user"] != request.match_info["user"]:
@@ -30,6 +40,8 @@ class UserInitHandler:
 
     # @routes.delete("/authorisation")
     async def clearAuthorisation(self, request):
+        printLog("UIH", "{} {}".format(request.method, request.rel_url))
+
         data = await request.json()
         # manager to auth with their token - unless trying to clear self.
         if data["user"] == "manager" and data["userToClear"] != "manager":
@@ -46,6 +58,8 @@ class UserInitHandler:
 
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
+        printLog("UIH", "{} {}".format(request.method, request.rel_url))
+
         data = await request.json()
         user = request.match_info["user"]
 
@@ -63,6 +77,8 @@ class UserInitHandler:
 
     # @routes.put("/admin/reloadUsers")
     async def adminReloadUsers(self, request):
+        printLog("UIH", "{} {}".format(request.method, request.rel_url))
+
         data = await request.json()
 
         rmsg = self.server.reloadUsers(data["pw"])
@@ -73,6 +89,7 @@ class UserInitHandler:
             return web.Response(status=401)  # you are not authorised
 
     async def InfoGeneral(self, request):
+        printLog("UIH", "{} {}".format(request.method, request.rel_url))
         rmsg = self.server.InfoGeneral()
         if rmsg[0]:
             return web.json_response(rmsg[1:], status=200)
@@ -81,6 +98,8 @@ class UserInitHandler:
 
     # @routes.get("/info/shortName")
     async def InfoShortName(self, request):
+        printLog("UIH", "{} {}".format(request.method, request.rel_url))
+
         rmsg = self.server.InfoShortName()
         if rmsg[0]:
             return web.Response(text=rmsg[1], status=200)

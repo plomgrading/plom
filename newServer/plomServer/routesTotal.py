@@ -1,13 +1,21 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import os
 
+# this allows us to import from ../resources
+import sys
+
+sys.path.append("..")
+from resources.logIt import printLog
+
 
 class TotalHandler:
     def __init__(self, plomServer):
+        printLog("TOH", "Starting totaller handler")
         self.server = plomServer
 
     # @routes.get("/TOT/maxMark")
     async def TgetMarkMark(self, request):
+        printLog("TOH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             return web.json_response(self.server.TgetMaxMark(), status=200)
@@ -16,6 +24,7 @@ class TotalHandler:
 
     # @routes.get("/TOT/progress")
     async def TprogressCount(self, request):
+        printLog("TOH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             return web.json_response(self.server.TprogressCount(), status=200)
@@ -24,6 +33,7 @@ class TotalHandler:
 
     # @routes.get("/TOT/tasks/complete")
     async def TgetDoneTasks(self, request):
+        printLog("TOH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             # return the completed list
@@ -35,6 +45,7 @@ class TotalHandler:
 
     # @routes.get("/TOT/image/{test}")
     async def TgetImage(self, request):
+        printLog("TOH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         test = request.match_info["test"]
         if self.server.validate(data["user"], data["token"]):
@@ -48,6 +59,7 @@ class TotalHandler:
 
     # @routes.get("/TOT/tasks/available")
     async def TgetNextTask(self, request):
+        printLog("TOH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]):
             rmsg = self.server.TgetNextTask()  # returns [True, code] or [False]
@@ -60,6 +72,7 @@ class TotalHandler:
 
     # @routes.patch("/TOT/tasks/{task}")
     async def TclaimThisTask(self, request):
+        printLog("TOH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         testNumber = request.match_info["task"]
         if self.server.validate(data["user"], data["token"]):
@@ -73,6 +86,7 @@ class TotalHandler:
 
     # @routes.put("/TOT/tasks/{task}")
     async def TreturnTotalledTask(self, request):
+        printLog("TOH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         testNumber = request.match_info["task"]
         if self.server.validate(data["user"], data["token"]):
@@ -90,6 +104,7 @@ class TotalHandler:
 
     # @routes.delete("/TOT/tasks/{task}")
     async def TdidNotFinish(self, request):
+        printLog("TOH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         testNumber = request.match_info["task"]
         if self.server.validate(data["user"], data["token"]):

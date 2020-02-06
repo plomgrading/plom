@@ -1,12 +1,20 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 
+# this allows us to import from ../resources
+import sys
+
+sys.path.append("..")
+from resources.logIt import printLog
+
 
 class ReportHandler:
     def __init__(self, plomServer):
+        printLog("RPH", "Starting report handler")
         self.server = plomServer
 
     # @routes.get("/REP/scanned")
     async def RgetScannedTests(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]) and data["user"] in [
             "manager",
@@ -18,6 +26,7 @@ class ReportHandler:
 
     # @routes.get("/REP/incomplete")
     async def RgetIncompleteTests(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]) and data["user"] in [
             "manager",
@@ -29,6 +38,7 @@ class ReportHandler:
 
     # @routes.get("/REP/unused")
     async def RgetUnusedTests(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if self.server.validate(data["user"], data["token"]) and data["user"] in [
             "manager",
@@ -40,6 +50,7 @@ class ReportHandler:
 
     # @routes.get("/REP/progress")
     async def RgetProgress(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -53,6 +64,7 @@ class ReportHandler:
 
     # @routes.get("/REP/questionUserProgress")
     async def RgetQuestionUserProgress(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -66,6 +78,7 @@ class ReportHandler:
 
     # @routes.get("/REP/markHistogram")
     async def RgetMarkHistogram(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -79,6 +92,7 @@ class ReportHandler:
 
     # @routes.get("/REP/progress")
     async def RgetIdentified(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -89,6 +103,7 @@ class ReportHandler:
             return web.Response(status=401)
 
     async def RgetCompletions(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -99,6 +114,7 @@ class ReportHandler:
             return web.Response(status=401)
 
     async def RgetStatus(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         testNumber = request.match_info["test"]
         data = await request.json()
         if (
@@ -114,6 +130,7 @@ class ReportHandler:
             return web.Response(status=401)
 
     async def RgetSpreadsheet(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -125,6 +142,7 @@ class ReportHandler:
             return web.Response(status=401)
 
     async def RgetCoverPageInfo(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         testNumber = request.match_info["test"]
         data = await request.json()
         if (
@@ -137,6 +155,7 @@ class ReportHandler:
             return web.Response(status=401)
 
     async def RgetOriginalFiles(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         testNumber = request.match_info["test"]
         data = await request.json()
         if (
@@ -152,6 +171,7 @@ class ReportHandler:
             return web.Response(status=401)
 
     async def RgetAnnotatedFiles(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         testNumber = request.match_info["test"]
         data = await request.json()
         if (
@@ -167,6 +187,7 @@ class ReportHandler:
             return web.Response(status=401)
 
     async def RgetUserList(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -177,6 +198,7 @@ class ReportHandler:
             return web.Response(status=401)
 
     async def RgetUserDetails(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -187,6 +209,7 @@ class ReportHandler:
             return web.Response(status=401)
 
     async def RgetMarkReview(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -200,6 +223,7 @@ class ReportHandler:
             return web.Response(status=401)
 
     async def RgetIDReview(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -211,6 +235,7 @@ class ReportHandler:
             return web.Response(status=401)
 
     async def RgetTotReview(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])
@@ -222,6 +247,7 @@ class ReportHandler:
             return web.Response(status=401)
 
     async def RgetAnnotatedImage(self, request):
+        printLog("RPH", "{} {}".format(request.method, request.rel_url))
         data = await request.json()
         if (
             self.server.validate(data["user"], data["token"])

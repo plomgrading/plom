@@ -27,6 +27,7 @@ from resources.version import __version__
 from resources.version import Plom_API_Version as serverAPI
 from resources.specParser import SpecParser
 from resources.examDB import *
+from resources.logIt import printLog
 
 # ----------------------
 
@@ -61,6 +62,7 @@ def buildDirectories():
     for dir in lst:
         try:
             os.mkdir(dir)
+            printLog("Server", "Building directory {}".format(dir))
         except FileExistsError:
             pass
 
@@ -70,6 +72,7 @@ def buildDirectories():
 
 class Server(object):
     def __init__(self, spec, db):
+        printLog("Server", "Initialising server")
         self.testSpec = spec
         self.DB = db
         self.API = serverAPI
@@ -88,13 +91,15 @@ class Server(object):
                 # Load the users and pass them to the authority.
                 self.userList = json.load(data_file)
                 self.authority = Authority(self.userList)
+            printLog("Server", "Loading users")
         else:
             # Cannot find users - give error and quit out.
-            print("Where is user/password file?")
+            printLog("Server", "Cannot find user/password file - aborting.")
             quit()
 
     def validate(self, user, token):
         """Check the user's token is valid"""
+        # printLog("Server", "Validating user {}.".format(user))
         return self.authority.validateToken(user, token)
 
     from plomServer.serverUserInit import (
@@ -196,9 +201,9 @@ def getServerInfo():
     if os.path.isfile("../resources/serverDetails.json"):
         with open("../resources/serverDetails.json") as data_file:
             serverInfo = json.load(data_file)
-            print("Server details loaded: ", serverInfo)
+            printLog("Server", "Server details loaded: {}".format(serverInfo))
     else:
-        print("Cannot find server details.")
+        printLog("Server", "Cannot find server details.")
 
 
 getServerInfo()
@@ -217,6 +222,7 @@ try:
     # construct the web server
     app = web.Application()
     # add the routes
+    printLog("Server", "Setting up routes")
     userIniter.setUpRoutes(app.router)
     uploader.setUpRoutes(app.router)
     ider.setUpRoutes(app.router)
@@ -224,7 +230,8 @@ try:
     totaller.setUpRoutes(app.router)
     reporter.setUpRoutes(app.router)
     # run the web server
+    printLog("Server", "Start the server!")
     web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
 except KeyboardInterrupt:
-    print("Closing down")
+    printLog("Server", "Closing down")
     pass

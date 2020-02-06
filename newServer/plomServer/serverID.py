@@ -70,6 +70,7 @@ def IDdeletePredictions(self):
     shutil.move("../resources/predictionlist.csv", "../resources/predictionlist.bak")
     with open("../resources/predictionlist.csv", "w") as fh:
         fh.write("test, id\n")
+    printLog("SID", "ID prediction list deleted")
 
     return True
 
