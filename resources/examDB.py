@@ -77,7 +77,7 @@ class QuestionData(Model):
     questionNumber = IntegerField(null=False)
     version = IntegerField(null=False)
     annotatedFile = CharField(null=True)
-    m5dsum = CharField(null=True)
+    md5sum = CharField(null=True)
     plomFile = CharField(null=True)
     commentFile = CharField(null=True)
     mark = IntegerField(null=True)
@@ -888,11 +888,10 @@ class PlomDB:
     def RgetIncompleteTests(self):
         rval = {}
         for tref in Test.select().where(Test.scanned == False, Test.used == True):
-            pMissing = []
+            pState = []
             for p in tref.pages:
-                if p.scanned == False:
-                    pMissing.append([p.pageNumber, p.version])
-            rval[tref.testNumber] = pMissing
+                pState.append([p.pageNumber, p.version, p.scanned])
+            rval[tref.testNumber] = pState
         return rval
 
     def RgetUnusedTests(self):
@@ -969,6 +968,29 @@ class PlomDB:
                 rhist[x.username][x.mark] = 0
             rhist[x.username][x.mark] += 1
         return rhist
+
+    def RgetQuestionUserProgress(self, q, v):
+        # return [ nScanned, [user, nmarked], [user, nmarked], etc]
+        rdat = {}
+        nScan = 0
+        for x in (
+            QuestionData.select()
+            .join(Group)
+            .where(
+                QuestionData.questionNumber == q,
+                QuestionData.version == v,
+                Group.scanned == True,
+            )
+        ):
+            nScan += 1
+            if x.marked == True:
+                if x.username not in rdat:
+                    rdat[x.username] = 0
+                rdat[x.username] += 1
+        rval = [nScan]
+        for x in rdat:
+            rval.append([x, rdat[x]])
+        return rval
 
     def RgetCompletions(self):
         rval = {}

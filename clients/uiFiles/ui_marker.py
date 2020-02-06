@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './ui_marker.ui'
+# Form implementation generated from reading ui file '../qtCreatorFiles/ui_marker.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.1
+# Created by: PyQt5 UI code generator 5.13.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -17,15 +17,6 @@ class Ui_MarkerWindow(object):
         MarkerWindow.resize(1024, 768)
         self.gridLayout_3 = QtWidgets.QGridLayout(MarkerWindow)
         self.gridLayout_3.setObjectName("gridLayout_3")
-        self.horizontalLayout = QtWidgets.QHBoxLayout()
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem)
-        self.closeButton = QtWidgets.QPushButton(MarkerWindow)
-        self.closeButton.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.closeButton.setObjectName("closeButton")
-        self.horizontalLayout.addWidget(self.closeButton)
-        self.gridLayout_3.addLayout(self.horizontalLayout, 2, 0, 1, 1)
         self.widget = QtWidgets.QWidget(MarkerWindow)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(1)
@@ -34,6 +25,7 @@ class Ui_MarkerWindow(object):
         self.widget.setSizePolicy(sizePolicy)
         self.widget.setObjectName("widget")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.widget)
+        self.verticalLayout_2.setContentsMargins(-1, -1, -1, 0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.userBox = QtWidgets.QGroupBox(self.widget)
         self.userBox.setObjectName("userBox")
@@ -187,16 +179,32 @@ class Ui_MarkerWindow(object):
         self.mouseHandGroup.addButton(self.rightMouseRB)
         self.horizontalLayout_3.addWidget(self.rightMouseRB)
         self.verticalLayout_2.addWidget(self.handChoiceBox)
-        self.gridLayout_3.addWidget(self.widget, 0, 0, 1, 1)
-        self.groupBox = QtWidgets.QGroupBox(MarkerWindow)
-        self.groupBox.setObjectName("groupBox")
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.groupBox)
-        self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.mProgressBar = QtWidgets.QProgressBar(self.groupBox)
+        self.frameProgress = QtWidgets.QFrame(self.widget)
+        self.frameProgress.setObjectName("frameProgress")
+        self.layoutProgress = QtWidgets.QHBoxLayout(self.frameProgress)
+        self.layoutProgress.setContentsMargins(0, -1, 0, -1)
+        self.layoutProgress.setObjectName("layoutProgress")
+        self.labelProgress = QtWidgets.QLabel(self.frameProgress)
+        self.labelProgress.setObjectName("labelProgress")
+        self.layoutProgress.addWidget(self.labelProgress)
+        self.mProgressBar = QtWidgets.QProgressBar(self.frameProgress)
         self.mProgressBar.setProperty("value", 1)
         self.mProgressBar.setObjectName("mProgressBar")
-        self.verticalLayout_3.addWidget(self.mProgressBar)
-        self.gridLayout_3.addWidget(self.groupBox, 1, 0, 1, 1)
+        self.layoutProgress.addWidget(self.mProgressBar)
+        self.verticalLayout_2.addWidget(self.frameProgress)
+        self.frameClose = QtWidgets.QFrame(self.widget)
+        self.frameClose.setObjectName("frameClose")
+        self.layoutClose = QtWidgets.QHBoxLayout(self.frameClose)
+        self.layoutClose.setContentsMargins(0, 0, 0, 0)
+        self.layoutClose.setObjectName("layoutClose")
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.layoutClose.addItem(spacerItem)
+        self.closeButton = QtWidgets.QPushButton(self.frameClose)
+        self.closeButton.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.closeButton.setObjectName("closeButton")
+        self.layoutClose.addWidget(self.closeButton)
+        self.verticalLayout_2.addWidget(self.frameClose)
+        self.gridLayout_3.addWidget(self.widget, 0, 0, 1, 1)
         self.widget_2 = QtWidgets.QWidget(MarkerWindow)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(2)
@@ -220,7 +228,6 @@ class Ui_MarkerWindow(object):
     def retranslateUi(self, MarkerWindow):
         _translate = QtCore.QCoreApplication.translate
         MarkerWindow.setWindowTitle(_translate("MarkerWindow", "Mark papers"))
-        self.closeButton.setText(_translate("MarkerWindow", "&Close"))
         self.userBox.setTitle(_translate("MarkerWindow", "User"))
         self.label_2.setText(_translate("MarkerWindow", "Pagegroup "))
         self.pgLabel.setText(_translate("MarkerWindow", "NUMBER"))
@@ -244,7 +251,8 @@ class Ui_MarkerWindow(object):
         self.handChoiceBox.setTitle(_translate("MarkerWindow", "Mouse Hand"))
         self.leftMouseRB.setText(_translate("MarkerWindow", "&Left"))
         self.rightMouseRB.setText(_translate("MarkerWindow", "Ri&ght"))
-        self.groupBox.setTitle(_translate("MarkerWindow", "Progress"))
+        self.labelProgress.setText(_translate("MarkerWindow", "Progress:"))
         self.mProgressBar.setFormat(_translate("MarkerWindow", "%v of %m"))
+        self.closeButton.setText(_translate("MarkerWindow", "&Close"))
         self.paperBox.setTitle(_translate("MarkerWindow", "Current paper"))
 from useful_classes import SimpleTableView

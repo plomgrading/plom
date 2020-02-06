@@ -617,6 +617,9 @@ class MarkerClient(QWidget):
             self.throwSeriousError(err)
             return
 
+        # Keep the original format around in case we need to change it
+        self.ui._cachedProgressFormatStr = self.ui.mProgressBar.format()
+
         # Update counts
         self.updateProgress()
         # Connect the view **after** list updated.
@@ -733,14 +736,28 @@ class MarkerClient(QWidget):
         # Give focus to the table (so enter-key fires up annotator)
         self.ui.tableView.setFocus()
 
-    def updateProgress(self):
-        # ask server for progress update
-        try:
-            v, m = messenger.MprogressCount(self.question, self.version)
-            self.ui.mProgressBar.setMaximum(m)
-            self.ui.mProgressBar.setValue(v)
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
+    def updateProgress(self, v=None, m=None):
+        """Update the progress bars.
+
+        When called with no arguments, get info from server.
+        """
+        if not v and not m:
+            # ask server for progress update
+            try:
+                v, m = messenger.MprogressCount(self.question, self.version)
+            except PlomSeriousException as err:
+                self.throwSeriousError(err)
+        if m == 0:
+            v, m = (0, 1)  # avoid (0, 0) indeterminate animation
+            self.ui.mProgressBar.setFormat("No papers to mark")
+            ErrorMessage("No papers to mark.").exec_()
+        else:
+            # self.ui.mProgressBar.resetFormat()
+            # self.ui.mProgressBar.setFormat("%v of %m")
+            # Neither is quite right, instead, we cache on init
+            self.ui.mProgressBar.setFormat(self.ui._cachedProgressFormatStr)
+        self.ui.mProgressBar.setMaximum(m)
+        self.ui.mProgressBar.setValue(v)
 
     def requestNext(self):
         """Ask server for unmarked paper, get file, add to list, update view.
@@ -1103,9 +1120,7 @@ class MarkerClient(QWidget):
         # maybe it changed while we waited for the upload
         if stat == "uploading...":
             self.exM.setStatusByTask(code, "marked")
-        if numdone > 0 and numtotal > 0:
-            self.ui.mProgressBar.setValue(numdone)
-            self.ui.mProgressBar.setMaximum(numtotal)
+        self.updateProgress(numdone, numtotal)
 
     def backgroundUploadFailed(self, code, errmsg):
         """An upload has failed, not sure what to do but do to it LOADLY"""

@@ -280,6 +280,8 @@ class Manager(QWidget):
         self.ui.refreshIDRevB.clicked.connect(self.refreshIDRev)
         self.ui.refreshTOTB.clicked.connect(self.refreshTOTRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
+        self.ui.refreshQPUB.clicked.connect(self.refreshQPU)
+
         self.ui.removePageB.clicked.connect(self.removePage)
         self.ui.subsPageB.clicked.connect(self.subsPage)
         self.ui.actionUButton.clicked.connect(self.doUActions)
@@ -292,7 +294,8 @@ class Manager(QWidget):
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
 
     def closeWindow(self):
-        managerMessenger.closeUser()
+        if managerMessenger.session:
+            managerMessenger.closeUser()
         self.close()
 
     def setFont(self):
@@ -372,6 +375,7 @@ class Manager(QWidget):
         self.initRevIDTab()
         self.initRevTOTTab()
         self.initUserListTab()
+        self.initQPUTab()
 
     # -------------------
     def getTPQV(self):
@@ -431,7 +435,7 @@ class Manager(QWidget):
     def initScanTab(self):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
         self.ui.scanTW.activated.connect(self.viewSPage)
-        self.ui.incompTW.setHeaderLabels(["Test number", "Missing page", "Version"])
+        self.ui.incompTW.setHeaderLabels(["Test number", "Page", "Version", "Status"])
         self.ui.incompTW.activated.connect(self.viewISTest)
         self.refreshIList()
         self.refreshSList()
@@ -445,11 +449,16 @@ class Manager(QWidget):
                 l0i.removeChild(l0i.child(0))
             root.removeChild(l0i)
 
-        incomplete = managerMessenger.getIncompleteTests()  # pairs [p,v]
+        incomplete = managerMessenger.getIncompleteTests()  # triples [p,v,true/false]
         for t in incomplete:
             l0 = QTreeWidgetItem(["{}".format(t), ""])
-            for (p, v) in incomplete[t]:
-                l0.addChild(QTreeWidgetItem(["", str(p), str(v)]))
+            for (p, v, s) in incomplete[t]:
+                if s:
+                    l0.addChild(QTreeWidgetItem(["", str(p), str(v), "scanned"]))
+                else:
+                    it = QTreeWidgetItem(["", str(p), str(v), "missing"])
+                    it.setBackground(3, QBrush(Qt.red))
+                    l0.addChild(it)
             self.ui.incompTW.addTopLevelItem(l0)
 
     def refreshSList(self):
@@ -477,6 +486,14 @@ class Manager(QWidget):
                 l0.addChild(l1)
             self.ui.scanTW.addTopLevelItem(l0)
 
+    def viewPage(self, t, p, v):
+        vp = managerMessenger.getPageImage(t, p, v)
+        if vp is None:
+            return
+        with tempfile.NamedTemporaryFile() as fh:
+            fh.write(vp)
+            GroupView([fh.name]).exec_()
+
     def viewSPage(self):
         pvi = self.ui.scanTW.selectedItems()
         if len(pvi) == 0:
@@ -489,23 +506,23 @@ class Manager(QWidget):
         pp = int(pvi[0].text(1))
         pv = int(pvi[0].text(2))
         pt = int(pvi[0].parent().text(0))  # grab test number from parent
-
-        vp = managerMessenger.getPageImage(pt, pp, pv)
-        if vp is None:
-            return
-        with tempfile.NamedTemporaryFile() as fh:
-            fh.write(vp)
-            GroupView([fh.name]).exec_()
+        self.viewPage(pt, pp, pv)
 
     def viewISTest(self):
         pvi = self.ui.incompTW.selectedItems()
         if len(pvi) == 0:
             return
-        # if selected a lower-level item (ie a missing page) - return
+        # if selected a lower-level item (ie a missing page) - check if scanned
         if pvi[0].childCount() == 0:
+            if pvi[0].text(3) == "scanned":
+                self.viewPage(
+                    int(pvi[0].parent().text(0)),
+                    int(pvi[0].text(1)),
+                    int(pvi[0].text(2)),
+                )
             return
-        pt = int(pvi[0].text(0))  # grab test number
-        self.viewWholeTest(pt)
+        # else fire up the whole test.
+        self.viewWholeTest(int(pvi[0].text(0)))
 
     def removePage(self):
         pvi = self.ui.scanTW.selectedItems()
@@ -1232,6 +1249,35 @@ class Manager(QWidget):
 
             r += 1
 
+    def initQPUTab(self):
+        self.ui.QPUserTW.setColumnCount(5)
+        self.ui.QPUserTW.setHorizontalHeaderLabels(
+            ["Question", "Version", "User", "Number Marked", "Percentage of Q/V marked"]
+        )
+        self.ui.QPUserTW.setSortingEnabled(True)
+        self.ui.QPUserTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.QPUserTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.QPUserTW.resizeColumnsToContents()
+
+    def refreshQPU(self):
+        self.ui.userListTW.clearContents()
+        self.ui.userListTW.setRowCount(0)
+        r = 0
+        for q in range(1, self.numberOfQuestions + 1):
+            for v in range(1, self.numberOfVersions + 1):
+                qpu = managerMessenger.getQuestionUserProgress(q, v)
+                for (u, n) in qpu[1:]:
+                    self.ui.QPUserTW.insertRow(r)
+                    self.ui.QPUserTW.setItem(r, 0, QTableWidgetItem(str(q).rjust(4)))
+                    self.ui.QPUserTW.setItem(r, 1, QTableWidgetItem(str(v).rjust(2)))
+                    self.ui.QPUserTW.setItem(r, 2, QTableWidgetItem("{}".format(u)))
+                    self.ui.QPUserTW.setItem(r, 3, QTableWidgetItem(str(n).rjust(4)))
+                    pb = QProgressBar()
+                    pb.setMaximum(qpu[0])
+                    pb.setValue(n)
+                    self.ui.QPUserTW.setCellWidget(r, 4, pb)
+                    r += 1
+
 
 # Pop up a dialog for unhandled exceptions and then exit
 sys._excepthook = sys.excepthook
@@ -1315,6 +1361,5 @@ if __name__ == "__main__":
             window.ui.serverLE.setText(args.server)
         if args.port:
             window.ui.mportSB.setValue(int(args.port))
-            window.ui.wportSB.setValue(int(args.port) + 1)
 
     sys.exit(app.exec_())
