@@ -29,8 +29,9 @@ from PyQt5.QtCore import (
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QCompleter, QWidget, QMainWindow, QInputDialog, QMessageBox
 from examviewwindow import ExamViewWindow
-from useful_classes import ErrorMessage, SimpleMessage
+from useful_classes import ErrorMessage, SimpleMessage, BlankIDBox
 from uiFiles.ui_identify import Ui_IdentifyWindow
+from test_view import WholeTestView
 
 from plom_exceptions import *
 
@@ -214,6 +215,7 @@ class IDClient(QWidget):
         self.ui.nextButton.clicked.connect(self.skipOnClick)
         self.ui.predButton.clicked.connect(self.acceptPrediction)
         self.ui.blankButton.clicked.connect(self.blankPaper)
+        self.ui.viewButton.clicked.connect(self.viewWholePaper)
 
         # Make sure no button is clicked by a return-press
         self.ui.nextButton.setAutoDefault(False)
@@ -736,15 +738,42 @@ class IDClient(QWidget):
                     return
             self.moveToNextUnID()
 
+    def viewWholePaper(self):
+        index = self.ui.tableView.selectedIndexes()
+        if len(index) == 0:
+            return
+        testNumber = self.exM.data(index[0])
+        try:
+            pageNames, imagesAsBytes = messenger.MrequestWholePaper(testNumber)
+        except PlomBenignException as err:
+            self.throwBenign(err)
+
+        viewFiles = []
+        for iab in imagesAsBytes:
+            tfn = tempfile.NamedTemporaryFile(delete=False).name
+            viewFiles.append(tfn)
+            with open(tfn, "wb") as fh:
+                fh.write(iab)
+        WholeTestView(viewFiles).exec_()
+
     def blankPaper(self):
         # first check currently selected paper is unidentified - else do nothing
         index = self.ui.tableView.selectedIndexes()
-        status = self.exM.data(index[1])
-        if status != "unidentified":
+        if len(index) == 0:
             return
+        status = self.exM.data(index[1])
+        # if status != "unidentified":
+        # return
         code = self.exM.data(index[0])
-        sname = "Blank paper"
-        sid = None
+        rv = BlankIDBox(self, code).exec_()
+        if rv == 0:
+            return
+        elif rv == 1:
+            sname = "Blank paper"
+            sid = None
+        else:
+            sname = "No ID given"
+            sid = None
 
         self.identifyStudent(index, sid, sname)
 

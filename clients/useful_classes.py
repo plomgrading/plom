@@ -883,3 +883,37 @@ class NoAnswerBox(QDialog):
         grid.addWidget(self.yesDoneB, 2, 1)
         grid.addWidget(self.noB, 3, 1)
         self.setLayout(grid)
+
+
+class BlankIDBox(QDialog):
+    def __init__(self, parent, testNumber):
+        super(BlankIDBox, self).__init__()
+        self.parent = parent
+        self.testNumber = testNumber
+        grid = QGridLayout()
+
+        grid.addWidget(
+            QLabel("Please scan through the whole paper before continuing."), 0, 1, 1, 2
+        )
+
+        self.blankB = QPushButton("Blank paper")
+        self.noIDB = QPushButton("No ID given")
+        self.noB = QPushButton("Cancel")
+
+        self.blankB.clicked.connect(lambda: self.done(1))
+        self.noIDB.clicked.connect(lambda: self.done(2))
+        self.noB.clicked.connect(self.reject)
+        grid.addWidget(
+            QLabel('The question is "No answer given" - are you sure?'), 2, 1, 1, 2
+        )
+        grid.addWidget(QLabel("The whole paper is blank"), 3, 2)
+        grid.addWidget(
+            QLabel("No ID given, but there is writing on other pages."), 4, 2,
+        )
+        grid.addWidget(
+            QLabel("No - go back to ID-ing"), 5, 2,
+        )
+        grid.addWidget(self.blankB, 3, 1)
+        grid.addWidget(self.noIDB, 4, 1)
+        grid.addWidget(self.noB, 5, 1)
+        self.setLayout(grid)

@@ -178,13 +178,6 @@
         </layout>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QPushButton" name="nextButton">
-        <property name="text">
-         <string>Skip (for now) and &amp;get next</string>
-        </property>
-       </widget>
-      </item>
       <item row="5" column="0">
        <widget class="QGroupBox" name="tableBox">
         <property name="title">
@@ -208,6 +201,13 @@
           </widget>
          </item>
         </layout>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QPushButton" name="nextButton">
+        <property name="text">
+         <string>Skip (for now) and &amp;get next</string>
+        </property>
        </widget>
       </item>
       <item row="2" column="0">
@@ -243,11 +243,22 @@
        </widget>
       </item>
       <item row="4" column="0">
-       <widget class="QPushButton" name="blankButton">
-        <property name="text">
-         <string>Blank page</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QPushButton" name="blankButton">
+          <property name="text">
+           <string>Blank page</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="viewButton">
+          <property name="text">
+           <string>View whole</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
