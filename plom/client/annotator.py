@@ -239,6 +239,12 @@ class Annotator(QWidget):
     def closeCurrentTGV(self):
         """Stop looking at the current TGV, reset things safely."""
         self.commentW.reset()
+        self.view = None
+        # TODO: is this the right way to reset the scene?
+        self.scene = None
+        # TODO: ??
+        #self.tgv = None
+        #self.testname = None
 
     def loadNewTGV(self, tgv, testname, paperdir, fname, maxMark, markStyle, plomDict=None):
         self.tgv = tgv
@@ -1226,7 +1232,7 @@ class Annotator(QWidget):
             return
 
         # We are here b/c of cancel button, titlebar close, or related
-        if self.scene.areThereAnnotations():
+        if self.scene and self.scene.areThereAnnotations():
             msg = SimpleMessage(
                 "<p>There are annotations on the page.</p>\n"
                 "<p>Do you want to discard them and close the annotator?</p>"
