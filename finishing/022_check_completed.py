@@ -94,7 +94,7 @@ if __name__ == "__main__":
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another finishing-script or manager-client running,\n"
             "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run the 018_clearScannerLogin.py script."
+            "In order to force-logout the existing authorisation run the 029_clearManagerLogin.py script."
         )
         exit(0)
 

@@ -7,260 +7,33 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-
+import argparse
 import getpass
 import os
-import requests
 import shlex
-import ssl
 import subprocess
-import sys
-import urllib3
-import threading
+
 
 # ----------------------
-sys.path.append("..")
-from resources.plom_exceptions import *
-from resources.version import Plom_API_Version
 
-_userName = "manager"
+import finishMessenger
+from plom_exceptions import *
 
-# If we use unverified ssl certificates we get lots of warnings,
-# so put in this to hide them.
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-sslContext.check_hostname = False
-# Server defaults
-server = "0.0.0.0"
-message_port = 41984
-SRmutex = threading.Lock()
 numberOfTests = 0
 numberOfQuestions = 0
 
 # ----------------------
 
 
-def requestAndSaveToken(user, pw):
-    """Get a authorisation token from the server.
-
-    The token is then used to authenticate future transactions with the server.
-
-    """
-    global _userName, _token
-
-    SRmutex.acquire()
-    try:
-        response = authSession.put(
-            "https://{}:{}/users/{}".format(server, message_port, user),
-            json={"user": user, "pw": pw, "api": Plom_API_Version},
-            verify=False,
-            timeout=5,
-        )
-        # throw errors when response code != 200.
-        response.raise_for_status()
-        # convert the content of the response to a textfile for identifier
-        _token = response.json()
-        _userName = user
-        print("Success!")
-    except requests.HTTPError as e:
-        if response.status_code == 401:  # authentication error
-            print(
-                "Password problem - you are not authorised to upload pages to server."
-            )
-        elif response.status_code == 400:  # API error
-            raise PlomAPIException()
-            print("An API problem - {}".format(response.json()))
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-        quit()
-    except requests.ConnectionError as err:
-        raise PlomSeriousException(
-            "Cannot connect to\n server:port = {}:{}\n Please check details before trying again.".format(
-                server, message_port
-            )
-        )
-        quit()
-    finally:
-        SRmutex.release()
-
-
-def closeUser():
-    SRmutex.acquire()
-    try:
-        response = session.delete(
-            "https://{}:{}/users/{}".format(server, message_port, _userName),
-            json={"user": _userName, "token": _token},
-            verify=False,
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return True
-
-
-# Test information
-def getInfoShortName():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/info/shortName".format(server, message_port), verify=False
-        )
-        response.raise_for_status()
-        shortName = response.text
-    except requests.HTTPError as e:
-        if response.status_code == 404:
-            raise PlomSeriousException(
-                "Server could not find the spec - this should not happen!"
-            )
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return shortName
-
-
-def getInfoTPQV():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/info/numberOfTPQV".format(server, message_port),
-            verify=False,
-        )
-        response.raise_for_status()
-        tpqv = response.json()
-    except requests.HTTPError as e:
-        if response.status_code == 404:
-            raise PlomSeriousException(
-                "Server could not find the spec - this should not happen!"
-            )
-        elif response.status_code == 401:  # authentication error
-            raise PlomAuthenticationException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return tpqv
-
-
-def RgetIdentified():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/REP/identified".format(server, message_port),
-            verify=False,
-            json={"user": _userName, "token": _token,},
-        )
-        response.raise_for_status()
-        rval = response.json()
-    except requests.HTTPError as e:
-        if response.status_code == 401:  # authentication error
-            raise PlomAuthenticationException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return rval
-
-
-def RgetCompletions():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/REP/completions".format(server, message_port),
-            verify=False,
-            json={"user": _userName, "token": _token,},
-        )
-        response.raise_for_status()
-        rval = response.json()
-    except requests.HTTPError as e:
-        if response.status_code == 401:  # authentication error
-            raise PlomAuthenticationException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return rval
-
-
-def RgetCoverPageInfo(test):
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/REP/coverPageInfo/{}".format(server, message_port, test),
-            verify=False,
-            json={"user": _userName, "token": _token,},
-        )
-        response.raise_for_status()
-        rval = response.json()
-    except requests.HTTPError as e:
-        if response.status_code == 401:  # authentication error
-            raise PlomAuthenticationException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return rval
-
-
-def RgetAnnotatedFiles(testNumber):
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/REP/annotatedFiles/{}".format(
-                server, message_port, testNumber
-            ),
-            verify=False,
-            json={"user": _userName, "token": _token},
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return response.json()
-
-
-def MgetAllMax():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/MK/allMax".format(server, message_port),
-            verify=False,
-            json={"user": _userName, "token": _token},
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return response.json()
-
-
 def buildCoverPage(shortName, outDir, t, maxMarks):
     # should be [ [sid, sname], [q,v,m], [q,v,m] etc]
-    cpi = RgetCoverPageInfo(t)
+    cpi = finishMessenger.RgetCoverPageInfo(t)
     sid = cpi[0][0]
     sname = cpi[0][1]
-    arg = [sid, sname, int(t)]
+    # The args should be
+    # [TestNumber, Name, ID,]
+    # and then for each Q [q, v, mark, maxPossibleMark]
+    arg = [int(t), sid, sname]
     for qvm in cpi[1:]:
         # append quads of [q,v,m,Max]
         arg.append([qvm[0], qvm[1], qvm[2], maxMarks[str(qvm[0])]])
@@ -268,29 +41,67 @@ def buildCoverPage(shortName, outDir, t, maxMarks):
 
 
 def reassembleTestCMD(shortName, outDir, t, sid):
-    fnames = RgetAnnotatedFiles(t)
+    fnames = finishMessenger.RgetAnnotatedFiles(t)
     if len(fnames) == 0:
         return
-    rnames = ["coverPages/cover_{}.pdf".format(sid)] + [
+    rnames = ["coverPages/cover_{}.pdf".format(str(t).zfill(4))] + [
         "../newServer/" + fn for fn in fnames
     ]
+
     return 'python3 testReassembler.py {} {} {} "" "{}"\n'.format(
         shortName, sid, outDir, rnames
     )
 
 
 if __name__ == "__main__":
+    # get commandline args if needed
+    parser = argparse.ArgumentParser(
+        description="Returns list of tests that have been completed. No arguments = run as normal."
+    )
+    parser.add_argument("-pwd", "--password", type=str)
+    parser.add_argument(
+        "-s", "--server", help="Which server to contact (must specify port as well)."
+    )
+    parser.add_argument(
+        "-p", "--port", help="Which port to use (must specify server as well)."
+    )
+    args = parser.parse_args()
+
+    # must spec both server+port or neither.
+    if args.server and args.port:
+        finishMessenger.startMessenger(altServer=args.server, altPort=args.port)
+    elif args.server is None and args.port is None:
+        finishMessenger.startMessenger()
+    else:
+        print("You must specify both the server and the port. Quitting.")
+        quit()
+
+    # get the password if not specified
+    if args.password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'manager' password:")
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = args.password
+
+    # get started
     try:
-        pwd = getpass.getpass("Please enter the 'manager' password:")
-    except Exception as error:
-        print("ERROR", error)
+        finishMessenger.requestAndSaveToken("manager", pwd)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another finishing-script or manager-client running,\n"
+            "    e.g., on another computer?\n\n"
+            "In order to force-logout the existing authorisation run the 029_clearManagerLogin.py script."
+        )
+        exit(0)
 
-    authSession = requests.Session()
-    authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
-    requestAndSaveToken("manager", pwd)
-
-    session = requests.Session()
-    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
+    shortName = finishMessenger.getInfoShortName()
+    spec = finishMessenger.getInfoGeneral()
+    numberOfTests = spec["numberOfTests"]
+    numberOfQuestions = spec["numberOfQuestions"]
 
     try:
         os.mkdir("coverPages")
@@ -303,12 +114,11 @@ if __name__ == "__main__":
     except FileExistsError:
         pass
 
-    tpqv = getInfoTPQV()
-    numberOfQuestions = tpqv[2]
-    shortName = getInfoShortName()
-    completedTests = RgetCompletions()
-    identifiedTests = RgetIdentified()
-    maxMarks = MgetAllMax()
+    completedTests = finishMessenger.RgetCompletions()
+    # dict key = testnumber, then list id'd, tot'd, #q's marked
+    identifiedTests = finishMessenger.RgetIdentified()
+    # dict key = testNumber, then pairs [sid, sname]
+    maxMarks = finishMessenger.MgetAllMax()
 
     # Build coverpages
     with open("./commandlist.txt", "w") as fh:
@@ -317,7 +127,6 @@ if __name__ == "__main__":
                 completedTests[t][0] == True
                 and completedTests[t][2] == numberOfQuestions
             ):
-                # print(buildCoverPage(shortName, outDir, t, maxMarks))
                 fh.write(buildCoverPage(shortName, outDir, t, maxMarks))
     # pipe the commandlist into gnu-parallel
     cmd = shlex.split("parallel --bar -a commandlist.txt")
@@ -331,13 +140,15 @@ if __name__ == "__main__":
                 completedTests[t][0] == True
                 and completedTests[t][2] == numberOfQuestions
             ):
-                # print(reassembleTestCMD(shortName, outDir, t, identifiedTests[t]))
-                fh.write(reassembleTestCMD(shortName, outDir, t, identifiedTests[t]))
+                fh.write(reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0]))
 
     # pipe the commandlist into gnu-parallel
     cmd = shlex.split("parallel --bar -a commandlist.txt")
     subprocess.run(cmd, check=True)
     os.unlink("commandlist.txt")
+
+    finishMessenger.closeUser()
+    finishMessenger.stopMessenger()
 
     print(">>> Warning <<<")
     print(

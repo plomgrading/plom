@@ -135,6 +135,29 @@ def clearAuthorisation(user, password=None):
         SRmutex.release()
 
 
+def getInfoShortName():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/info/shortName".format(server, message_port), verify=False
+        )
+        response.raise_for_status()
+        shortName = response.text
+    except requests.HTTPError as e:
+        if response.status_code == 404:
+            raise PlomSeriousException(
+                "Server could not find the spec - this should not happen!"
+            ) from None
+        else:
+            raise PlomSeriousException(
+                "Some other sort of error {}".format(e)
+            ) from None
+    finally:
+        SRmutex.release()
+
+    return shortName
+
+
 def getInfoGeneral():
     SRmutex.acquire()
     try:
@@ -189,6 +212,111 @@ def RgetSpreadsheet():
     try:
         response = session.get(
             "https://{}:{}/REP/spreadSheet".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token},
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return response.json()
+
+
+def RgetIdentified():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/identified".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token,},
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
+def RgetCompletions():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/completions".format(server, message_port),
+            verify=False,
+            json={"user": _userName, "token": _token,},
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
+def RgetCoverPageInfo(test):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/coverPageInfo/{}".format(server, message_port, test),
+            verify=False,
+            json={"user": _userName, "token": _token,},
+        )
+        response.raise_for_status()
+        rval = response.json()
+    except requests.HTTPError as e:
+        if response.status_code == 401:  # authentication error
+            raise PlomAuthenticationException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return rval
+
+
+def RgetAnnotatedFiles(testNumber):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/annotatedFiles/{}".format(
+                server, message_port, testNumber
+            ),
+            verify=False,
+            json={"user": _userName, "token": _token},
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return response.json()
+
+
+def MgetAllMax():
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/MK/allMax".format(server, message_port),
             verify=False,
             json={"user": _userName, "token": _token},
         )
