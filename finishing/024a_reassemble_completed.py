@@ -140,7 +140,12 @@ if __name__ == "__main__":
                 completedTests[t][0] == True
                 and completedTests[t][2] == numberOfQuestions
             ):
-                fh.write(reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0]))
+                if identifiedTests[t][0] is not None:
+                    fh.write(
+                        reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
+                    )
+                else:
+                    print(">>WARNING<< Test {} has no ID".format(t))
 
     # pipe the commandlist into gnu-parallel
     cmd = shlex.split("parallel --bar -a commandlist.txt")

@@ -312,6 +312,28 @@ def RgetAnnotatedFiles(testNumber):
     return response.json()
 
 
+def RgetOriginalFiles(testNumber):
+    SRmutex.acquire()
+    try:
+        response = session.get(
+            "https://{}:{}/REP/originalFiles/{}".format(
+                server, message_port, testNumber
+            ),
+            verify=False,
+            json={"user": _userName, "token": _token},
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.")
+        else:
+            raise PlomSeriousException("Some other sort of error {}".format(e))
+    finally:
+        SRmutex.release()
+
+    return response.json()
+
+
 def MgetAllMax():
     SRmutex.acquire()
     try:
