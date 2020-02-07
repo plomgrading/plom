@@ -247,14 +247,14 @@
         <item>
          <widget class="QPushButton" name="blankButton">
           <property name="text">
-           <string>Blank page</string>
+           <string>&amp;Blank page</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="viewButton">
           <property name="text">
-           <string>View whole</string>
+           <string>&amp;View whole</string>
           </property>
          </widget>
         </item>
