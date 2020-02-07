@@ -51,13 +51,8 @@ from .pagescene import PageScene
 # import the key-help popup window class
 from .key_help import KeyHelp
 
-from .useful_classes import (
-    CommentWidget,
-    ErrorMessage,
-    SimpleMessage,
-    SimpleMessageCheckBox,
-    NoAnswerBox,
-)
+from .useful_classes importErrorMessage, SimpleMessage, SimpleMessageCheckBox, NoAnswerBox
+from .comment_list import CommentWidget
 from .test_view import TestView
 from .uiFiles.ui_annotator_lhm import Ui_annotator_lhm
 from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm
