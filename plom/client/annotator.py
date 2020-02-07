@@ -238,8 +238,7 @@ class Annotator(QWidget):
 
     def closeCurrentTGV(self):
         """Stop looking at the current TGV, reset things safely."""
-        pass
-
+        self.commentW.reset()
 
     def loadNewTGV(self, tgv, testname, paperdir, fname, maxMark, markStyle, plomDict=None):
         self.tgv = tgv
@@ -274,15 +273,10 @@ class Annotator(QWidget):
         # Set current mark to 0.
         self.score = 0
 
-        # TODO: comment might need to hide different things...  for now, assume Q hasn't changed nor version, etc.
-        if False:
-            # Create the comment list widget and put into gui.
-            self.commentW = CommentWidget(self, self.maxMark)
-            self.ui.commentGrid.addWidget(self.commentW, 1, 1)
-            # pass this to the comment table too - it needs to know if we are
-            # marking up/down/total to correctly shade deltas.
-            self.commentW.setStyle(self.markStyle)
+        # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
         self.commentW.changeMark(self.score)
+        self.commentW.setQuestionNumberFromTGV(tgv)
+        self.commentW.setTestname(testname)
 
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc

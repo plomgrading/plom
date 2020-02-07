@@ -210,6 +210,13 @@ class CommentWidget(QWidget):
         self.CL.delegate.currentMark = currentMark
         self.CL.viewport().update()
 
+    def reset(self):
+        """Return the widget to a "no-TGV" specified state."""
+        self.setQuestionNumber(None)
+        self.setTestname(None)
+        print("TODO: need to do something about maxMark, currentMax, markStyle")
+        self.CL.populateTable()
+
     def saveComments(self):
         self.CL.saveCommentList()
 
