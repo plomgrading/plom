@@ -112,6 +112,8 @@ def commentVisibleInQuestion(com, n):
 
     TODO: eventually should have a comment class: `com.isVisibileInQ(n)`
     """
+    if n is None:
+        return True
     Qn = "Q{}".format(n)
     tags = com["tags"].split()
     return any([t == Qn for t in tags]) or not any(
@@ -153,6 +155,8 @@ class CommentWidget(QWidget):
     def __init__(self, parent, maxMark):
         # layout the widget - a table and add/delete buttons.
         super(CommentWidget, self).__init__()
+        self.testname = None
+        self.questnum = None
         self.parent = parent
         self.maxMark = maxMark
         grid = QGridLayout()
@@ -171,6 +175,23 @@ class CommentWidget(QWidget):
         self.addB.clicked.connect(self.addFromTextList)
         self.delB.clicked.connect(self.deleteItem)
         self.filtB.clicked.connect(self.changeFilter)
+
+    def setTestname(self, s):
+        """Set testname and refresh view."""
+        self.testname = s
+        self.CL.populateTable()
+
+    def setQuestionNumber(self, n):
+        """Set question number and refresh view.
+
+        Question number can be an integer or `None`."""
+        self.questnum = n
+        self.CL.populateTable()
+
+    def setQuestionNumberFromTGV(self, tgv):
+        """Extract question number from TGV, set, and refresh view."""
+        n = int(self.parent.tgv[5:7])
+        self.setQuestionNumber(n)
 
     def setStyle(self, markStyle):
         # The list needs a style-delegate because the display
@@ -232,9 +253,7 @@ class CommentWidget(QWidget):
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
 
-        questnum = int(self.parent.tgv[5:7])
-        testname = self.parent.testname
-        acb = AddCommentBox(self, self.maxMark, alist, questnum, testname)
+        acb = AddCommentBox(self, self.maxMark, alist, self.questnum, self.testname)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = acb.SB.value()
@@ -269,8 +288,8 @@ class CommentWidget(QWidget):
             clist.append(self.CL.cmodel.index(r, 1).data())
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
-        questnum = int(self.parent.tgv[5:7])
-        testname = self.parent.testname
+        questnum = self.questnum
+        testname = self.testname
         acb = AddCommentBox(self, self.maxMark, alist, questnum, testname, com)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
@@ -479,9 +498,8 @@ class SimpleCommentTable(QTableView):
         self.cmodel.setRowCount(0)
         for i, com in enumerate(self.clist):
             # User can edit the text, but doesn't handle drops.
-            # TODO: YUCK! (how do I get the pagegroup)
-            questnum = int(self.parent.parent.tgv[5:7])
-            testname = self.parent.parent.testname
+            questnum = self.parent.questnum
+            testname = self.parent.testname
             if not commentIsVisible(com, questnum, testname, filters=self.filters):
                 continue
             txti = QStandardItem(com["text"])

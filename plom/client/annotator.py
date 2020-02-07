@@ -159,6 +159,8 @@ class Annotator(QWidget):
 
         # Create the comment list widget and put into gui.
         self.commentW = CommentWidget(self, self.maxMark)
+        self.commentW.setTestname(testname)
+        self.commentW.setQuestionNumberFromTGV(tgv)
         self.ui.commentGrid.addWidget(self.commentW, 1, 1)
         # pass the marking style to the mark entry widget.
         # also when we set this up we have to connect various
