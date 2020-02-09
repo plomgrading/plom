@@ -902,13 +902,15 @@ class MarkerClient(QWidget):
         else:
             return
         task = self.prxM.getPrefix(pr)
-        # If test is untouched or already reverted, nothing to do
-        if self.exM.getStatusByTask(task) in ("untouched", "reverted"):
+        # If test does not have status "marked" then nothing to do
+        if self.exM.getStatusByTask(task) != "marked":
             return
         # Check user really wants to revert
         msg = SimpleMessage("Do you want to revert to original scan?")
         if msg.exec_() == QMessageBox.No:
             return
+        # send revert message to server
+        messenger.MrevertTask(task)
         # Revert the test in the table (set status, mark etc)
         self.exM.revertPaper(task)
         # Update the image (is now back to original untouched image)
