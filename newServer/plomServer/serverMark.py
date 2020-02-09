@@ -164,3 +164,14 @@ def MgetWholePaper(self, testNumber):
 
 def MreviewQuestion(self, testNumber, questionNumber, version):
     return self.DB.MreviewQuestion(testNumber, questionNumber, version)
+
+
+def MrevertTask(self, username, code):
+    rval = self.DB.MrevertTask(username, code)
+    # response is [False, "NST"] or [False, "NAC"] or [True, f1,f2,f3]
+    if rval[0]:
+        for fn in rval[1:]:  # clean up any annotation files
+            os.unlink(fn)
+        return [True]
+    else:
+        return rval
