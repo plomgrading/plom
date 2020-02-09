@@ -211,7 +211,7 @@ class SceneParent(QWidget):
         self.score += delta
 
 
-def annotatePaper(task, imageList, tags):
+def annotatePaper(task, imageList, aname, tags):
     print("Do stuff to task ", task)
     print("Tags are ", tags)
     # Image names = "<task>.<imagenumber>.png"
@@ -224,7 +224,7 @@ def annotatePaper(task, imageList, tags):
                 with open(tmp, "wb+") as fh:
                     fh.write(imageList[i])
             annot = SceneParent()
-            annot.doStuff(inames, "argh.png", 10, random.choice([2, 3]))
+            annot.doStuff(inames, aname, 10, random.choice([2, 3]))
             annot.doRandomAnnotations()
             return annot.doneAnnotating()
     except Exception as e:
@@ -246,22 +246,27 @@ def startMarking(question, version):
         try:
             print("Marking task ", task)
             imageList, tags = messenger.MclaimThisTask(task)
-            score = annotatePaper(task, imageList, tags)
-
-            messenger.MreturnMarkedTask(
-                task,
-                question,
-                version,
-                score,
-                random.randint(1, 100),
-                "",
-                "argh.png",
-                "argh.plom",
-                "argh.json",
-            )
+            with tempfile.TemporaryDirectory() as td:
+                aFile = os.path.join(td, "argh.png")
+                plomFile = aFile[:-3] + "plom"
+                commentFile = aFile[:-3] + "json"
+                score = annotatePaper(task, imageList, aFile, tags)
+                messenger.MreturnMarkedTask(
+                    task,
+                    question,
+                    version,
+                    score,
+                    random.randint(1, 20),
+                    "",
+                    aFile,
+                    plomFile,
+                    commentFile,
+                )
 
         except PlomBenignException as e:
             print("Another user got that task. Trying again.")
+        except PlomSeriousException as e:
+            print("EEK.", e)
         except Exception as e:
             print("Nasty error trying to return task {} = {}".format(task, e))
 

@@ -76,37 +76,6 @@ def startReverting(question, version):
             print("Error trying to revert task {} = {}".format(task, err))
             exit(1)
 
-    # mx = messenger.MgetMaxMark(question, version)
-    # print("Maximum mark = ", mx)
-    # k = 0
-    # while True:
-    #     task = messenger.MaskNextTask(question, version)
-    #     if task is None:
-    #         print("No more tasks.")
-    #         break
-    #     # print("Trying to claim next ask = ", task)
-    #     try:
-    #         print("Marking task ", task)
-    #         imageList, tags = messenger.MclaimThisTask(task)
-    #         score = annotatePaper(task, imageList, tags)
-    #
-    #         messenger.MreturnMarkedTask(
-    #             task,
-    #             question,
-    #             version,
-    #             score,
-    #             random.randint(1, 100),
-    #             "",
-    #             "argh.png",
-    #             "argh.plom",
-    #             "argh.json",
-    #         )
-    #
-    #     except PlomBenignException as e:
-    #         print("Another user got that task. Trying again.")
-    #     except Exception as e:
-    #         print("Nasty error trying to return task {} = {}".format(task, e))
-
 
 # -------------------------------------------
 
