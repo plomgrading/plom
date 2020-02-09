@@ -215,17 +215,21 @@ def annotatePaper(task, imageList, tags):
     print("Do stuff to task ", task)
     print("Tags are ", tags)
     # Image names = "<task>.<imagenumber>.png"
-    with tempfile.TemporaryDirectory() as td:
-        inames = []
-        for i in range(len(imageList)):
-            tmp = os.path.join(td, "{}.{}.png".format(task, i))
-            inames.append(tmp)
-            with open(tmp, "wb+") as fh:
-                fh.write(imageList[i])
-        annot = SceneParent()
-        annot.doStuff(inames, "argh.png", 10, random.choice([2, 3]))
-        annot.doRandomAnnotations()
-        return annot.doneAnnotating()
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            inames = []
+            for i in range(len(imageList)):
+                tmp = os.path.join(td, "{}.{}.png".format(task, i))
+                inames.append(tmp)
+                with open(tmp, "wb+") as fh:
+                    fh.write(imageList[i])
+            annot = SceneParent()
+            annot.doStuff(inames, "argh.png", 10, random.choice([2, 3]))
+            annot.doRandomAnnotations()
+            return annot.doneAnnotating()
+    except Exception as e:
+        print("Error making random annotations to task {} = {}".format(task, e))
+        exit(1)
 
 
 def startMarking(question, version):
@@ -243,6 +247,7 @@ def startMarking(question, version):
             print("Marking task ", task)
             imageList, tags = messenger.MclaimThisTask(task)
             score = annotatePaper(task, imageList, tags)
+
             messenger.MreturnMarkedTask(
                 task,
                 question,
@@ -257,8 +262,8 @@ def startMarking(question, version):
 
         except PlomBenignException as e:
             print("Another user got that task. Trying again.")
-
-    pass
+        except Exception as e:
+            print("Nasty error trying to return task {} = {}".format(task, e))
 
 
 # -------------------------------------------
@@ -269,6 +274,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument("-pwd", "--password", type=str)
+    parser.add_argument("-u", "--user", type=str)
     parser.add_argument(
         "-s", "--server", help="Which server to contact (must specify port as well)."
     )
@@ -276,7 +282,6 @@ if __name__ == "__main__":
         "-p", "--port", help="Which port to use (must specify server as well)."
     )
     args = parser.parse_args()
-
     # must spec both server+port or neither.
     if args.server and args.port:
         messenger.startMessenger(altServer=args.server, altPort=args.port)
@@ -284,39 +289,61 @@ if __name__ == "__main__":
         messenger.startMessenger()
     else:
         print("You must specify both the server and the port. Quitting.")
-        quit()
+        exit(1)
+
+    # If user not specified then default to scanner
+    if args.user is None:
+        user = "scanner"
+    else:
+        user = args.user
 
     # get the password if not specified
     if args.password is None:
         try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
+            pwd = getpass.getpass("Please enter the '{}' password:".format(user))
         except Exception as error:
-            print("ERROR", error)
+            print("Password entry error = ", error)
+            exit(1)
     else:
         pwd = args.password
 
     # get started
     try:
-        messenger.requestAndSaveToken("scanner", pwd)
+        messenger.requestAndSaveToken(user, pwd)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another scanner-script running,\n"
             "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run the 018_clearScannerLogin.py script."
+            "This script has automatically force-logout'd that user."
         )
-        messenger.clearAuthorisation("scanner", pwd)
-        exit(0)
+        messenger.clearAuthorisation(user, pwd)
+        exit(1)
 
-    spec = messenger.getInfoGeneral()
+    try:
+        spec = messenger.getInfoGeneral()
+    except Exception as e:
+        print("Error getting general info from server = ", e)
+        exit(1)
+
     print(spec)
 
     app = QApplication(sys.argv)
     for q in range(1, spec["numberOfQuestions"] + 1):
         for v in range(1, spec["numberOfVersions"] + 1):
             print("Annotating question {} version {}".format(q, v))
-            startMarking(q, v)
+            try:
+                startMarking(q, v)
+            except Exception as e:
+                print("Error marking q.v {}.{} = {}".format(q, v, e))
+                exit(1)
 
-    messenger.closeUser()
-    messenger.stopMessenger()
+    try:
+        messenger.closeUser()
+        messenger.stopMessenger()
+    except Exception as e:
+        print("Closing down error = ", e)
+        exit(1)
+
+    exit(0)
