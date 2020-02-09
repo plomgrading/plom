@@ -71,7 +71,7 @@ def startReverting(question, version):
     print("Tasks to revert  = ", tasksToRevert)
     for task in tasksToRevert:
         try:
-            messenger.MdidNotFinishTask(task)
+            messenger.MrevertTask(task)
         except Exception as err:
             print("Error trying to revert task {} = {}".format(task, err))
             exit(1)
