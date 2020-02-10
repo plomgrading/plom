@@ -729,6 +729,8 @@ class Annotator(QWidget):
         window then asks the server for the next unmarked image and
         fires up a new annotator on that.
         """
+        if not self.scene:
+            return
         if not self.saveAnnotations():
             return
         print("We have surrendered {}".format(self.tgv))
@@ -744,9 +746,10 @@ class Annotator(QWidget):
     @pyqtSlot()
     def saveAndClose(self):
         """Save the current annotations, and then close."""
-        if self.saveAnnotations():
-            self._priv_force_close = True
-            self.close()
+        if self.scene and not self.saveAnnotations():
+            return
+        self._priv_force_close = True
+        self.close()
 
     def setMiscShortCuts(self):
         # shortcuts for next paper
