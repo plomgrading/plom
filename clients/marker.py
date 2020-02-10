@@ -553,13 +553,13 @@ class MarkerClient(QWidget):
         # create a settings variable for saving annotator window settings
         # initially all settings are "none"
         self.annotatorSettings = defaultdict(lambda: None)
-        # if lasttime["POWERUSER"] is true, the disable warnings in annotator
+
+        self.viewAll = False
         if lastTime.get("POWERUSER", False):
+            # if POWERUSER is set, disable warnings and allow viewing all
             self.annotatorSettings["markWarnings"] = False
             self.annotatorSettings["commentWarnings"] = False
             self.viewAll = True
-        else:
-            self.viewAll = False
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
