@@ -36,5 +36,5 @@ These are as best I can recall
 | 322 | Midterm | 50 | Nike+Abhishek |
 | <>| <> | <> | <> |
 | 101 | Midterm | 1300 | AnthonyW (soon)|
-| 152 | 3 Midterms | 900 | Kalle + Maricela (TA) Trained on Server Side|
+| 152 | 3 Midterms | 900 | Kalle + MaricelaM (TA) Trained on Server Side|
 | 302 | Midterm | ??? | Yinon (soon)|
