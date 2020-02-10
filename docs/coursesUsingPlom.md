@@ -36,5 +36,5 @@ These are as best I can recall
 | 322 | Midterm | 50 | Nike+Abhishek |
 | <>| <> | <> | <> |
 | 101 | Midterm | 1200 | AnthonyW (soon)|
-| 152 | Midterm1+2+3 | 900 | Kalle |
+| 152 | 3 Midterms | 900 | Kalle |
 | 302 | Midterm | ??? | Yinon (soon)|
