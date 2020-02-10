@@ -308,7 +308,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Run the QR-code reading script. No arguments = run as normal."
     )
-    parser.add_argument("-pwd", "--password", type=str)
+    parser.add_argument("-w", "--password", type=str)
     parser.add_argument(
         "-s", "--server", help="Which server to contact (must specify port as well)."
     )
