@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* Annotator has a "no answer given" button which places crossed lines on page, leaves a comment, sets mark to 0.
 
 ### Changed
 
