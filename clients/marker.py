@@ -212,7 +212,7 @@ class BackgroundUploader(QThread):
         self.exec_()
 
 
-def upload(code, gr, aname, pname, cname, mtime, pg, ver, tags, hack):
+def upload(code, gr, aname, pname, cname, mtime, pg, ver, tags, _hack=[]):
     # TODO: this is a copy-paste from BackgroundUploader, better to refactor
     # TODO: improve this hack, how can we get the callbacks in here?
     uploadFail, uploadSuccess = hack
@@ -1103,7 +1103,7 @@ class MarkerClient(QWidget):
             self.backgroundUploader.enqueueNewUpload(*_data)
         else:
             upload(*_data,
-                (self.backgroundUploadFailed, self.backgroundUploadFinished)
+                _hack=(self.backgroundUploadFailed, self.backgroundUploadFinished)
             )
 
         if launchAgain is False:
