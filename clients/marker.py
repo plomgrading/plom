@@ -151,51 +151,20 @@ class BackgroundUploader(QThread):
             from queue import Empty as EmptyQueueException
 
             try:
-                (
-                    code,
-                    gr,
-                    aname,
-                    pname,
-                    cname,
-                    mtime,
-                    pg,
-                    ver,
-                    tags,
-                ) = self.q.get_nowait()
+                data = self.q.get_nowait()
             except EmptyQueueException:
                 return
+            code = data[0]  # TODO: remove so that queue needs no knowledge of args
             print(
                 "Debug: upQ (thread {}): popped code {} from queue, uploading".format(
                     str(threading.get_ident()), code
                 )
             )
-            # do name sanity check here
-            if not (
-                code.startswith("t")
-                and os.path.basename(aname) == "G{}.png".format(code[1:])
-                and os.path.basename(pname) == "G{}.plom".format(code[1:])
-                and os.path.basename(cname) == "G{}.json".format(code[1:])
-            ):
-                raise PlomSeriousException(
-                    "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
-                        fname, pname, cname
-                    )
-                )
-            try:
-                msg = messenger.MreturnMarkedTask(
-                    code, pg, ver, gr, mtime, tags, aname, pname, cname
-                )
-            except Exception as ex:
-                # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
-                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-                errmsg = template.format(type(ex).__name__, ex.args)
-                self.uploadFail.emit(code, errmsg)
-                return
-
-            numdone = msg[0]
-            numtotal = msg[1]
-            print("Debug: upQ: emitting SUCCESS signal for {}".format(code))
-            self.uploadSuccess.emit(code, numdone, numtotal)
+            upload(
+                *data,
+                failcallback=self.uploadFail.emit,
+                successcallback=self.uploadSuccess.emit
+            )
 
         print("upQ.run: thread " + str(threading.get_ident()))
         self.q = queue.Queue()
@@ -206,6 +175,38 @@ class BackgroundUploader(QThread):
         timer.timeout.connect(tryToUpload)
         timer.start(250)
         self.exec_()
+
+
+def upload(
+    code, gr, filenames, mtime, pg, ver, tags, failcallback=None, successcallback=None,
+):
+    # do name sanity checks here
+    aname, pname, cname = filenames
+    if not (
+        code.startswith("t")
+        and os.path.basename(aname) == "G{}.png".format(code[1:])
+        and os.path.basename(pname) == "G{}.plom".format(code[1:])
+        and os.path.basename(cname) == "G{}.json".format(code[1:])
+    ):
+        raise PlomSeriousException(
+            "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
+                fname, pname, cname
+            )
+        )
+    try:
+        msg = messenger.MreturnMarkedTask(
+            code, pg, ver, gr, mtime, tags, aname, pname, cname
+        )
+    except Exception as ex:
+        # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
+        template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+        errmsg = template.format(type(ex).__name__, ex.args)
+        failcallback(code, errmsg)
+        return
+
+    numdone = msg[0]
+    numtotal = msg[1]
+    successcallback(code, numdone, numtotal)
 
 
 class TestPageGroup:
@@ -553,6 +554,10 @@ class MarkerClient(QWidget):
                 self.viewAll = True
         else:
             self.viewAll = False
+        self.allowBackgroundOps = True
+        # unless special key was set:
+        if lastTime.get("FOREGROUND", False):
+            self.allowBackgroundOps = False
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -617,6 +622,7 @@ class MarkerClient(QWidget):
         # A simple cache table for latex'd comments
         self.commentCache = {}
         self.backgroundDownloader = None
+        self.backgroundUploader = None
         # Get a pagegroup to mark from the server
         self.requestNext()
         # reset the view so whole exam shown.
@@ -624,10 +630,11 @@ class MarkerClient(QWidget):
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
         print("Debug: Marker main thread: " + str(threading.get_ident()))
-        self.backgroundUploader = BackgroundUploader()
-        self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
-        self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
-        self.backgroundUploader.start()
+        if self.allowBackgroundOps:
+            self.backgroundUploader = BackgroundUploader()
+            self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
+            self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
+            self.backgroundUploader.start()
         # Now cache latex for comments:
         self.cacheLatexComments()
 
@@ -903,10 +910,11 @@ class MarkerClient(QWidget):
             # TODO: there should be a filename sanity check here to
             # make sure plom file matches current image-file
 
-        # while annotator is firing up request next paper in background
-        # after giving system a moment to do `annotator.exec_()`
-        if self.exM.countReadyToMark() == 0:
-            self.requestNextInBackgroundStart()
+        if self.allowBackgroundOps:
+            # while annotator is firing up request next paper in background
+            # after giving system a moment to do `annotator.exec_()`
+            if self.exM.countReadyToMark() == 0:
+                self.requestNextInBackgroundStart()
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
@@ -925,26 +933,13 @@ class MarkerClient(QWidget):
         annotator.ann_finished_gimmemore.connect(self.callbackAnnWantsMore)
         annotator.ann_finished_closing.connect(self.callbackAnnClosing)
         annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
-        annotator.destroyed.connect(self.annotatorDestroyed)
         self.setEnabled(False)
         annotator.show()
         # We had (have?) a bug: when `annotator` var goes out of scope, it can
         # get GC'd, killing the new Annotator.  Fix: keep a ref in self.
-        if not getattr(self, "_annotator", False):
-            self._annotator = None
-        if self._annotator:
-            # TODO: may need to keep a dict, pop them in their close callbacks
-            if self._annotator.isVisible():
-                ErrorMessage(
-                    "Marker: expected the old Annotator to be gone before we "
-                    "opened this new one.  Some bug or race condition?\n\n"
-                    "File an issue if this happens often."
-                ).exec_()
+        # TODO: the old one might still be closing when we get here, but dropping
+        # the ref now won't hurt (I think).
         self._annotator = annotator
-
-    def annotatorDestroyed(self):
-        # TODO try Qt::WA_DeleteOnClose flag applied in Annotator
-        print("Debug: Marker: ANNOTATOR WAS DESTROYED (may be delayed)")
 
     def annotateTest(self):
         """Grab current test from table, do checks, start annotator."""
@@ -1058,18 +1053,24 @@ class MarkerClient(QWidget):
         totmtime = self.exM.getMTimeByTGV("t" + tgv)
         tags = self.exM.getTagsByTGV("t" + tgv)
 
-        # the actual upload will happen in another thread
-        self.backgroundUploader.enqueueNewUpload(
+        _data = (
             "t" + tgv,  # current tgv
             gr,  # grade
-            aname,  # annotated file
-            pname,  # plom file
-            cname,  # comment file
+            (aname, pname, cname),  # annotated, plom, and comment filenames
             totmtime,  # total marking time
             self.pageGroup,
             self.version,
             tags,
         )
+        if self.allowBackgroundOps:
+            # the actual upload will happen in another thread
+            self.backgroundUploader.enqueueNewUpload(*_data)
+        else:
+            upload(
+                *_data,
+                failcallback=self.backgroundUploadFailed,
+                successcallback=self.backgroundUploadFinished
+            )
 
     # ... or here
     @pyqtSlot(str)
@@ -1087,6 +1088,8 @@ class MarkerClient(QWidget):
     @pyqtSlot(str)
     def callbackAnnWantsMore(self, tgv):
         print("Debug: Marker is back and Ann Wants More")
+        if not self.allowBackgroundOps:
+            self.requestNext()
         if self.moveToNextUnmarkedTest("t" + tgv):
             self.annotateTest()
         else:
