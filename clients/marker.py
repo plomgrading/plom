@@ -74,7 +74,7 @@ directoryPath = tempDirectory.name
 
 # TODO: testing disabling of background upload/download
 # TODO: replace all occurences with logic from toml?
-BACKGROUND_OPS = True
+BACKGROUND_OPS = False
 
 # Read https://mayaposch.wordpress.com/2011/11/01/how-to-really-truly-use-qthreads-the-full-explanation/
 # and https://stackoverflow.com/questions/6783194/background-thread-with-qthread-in-pyqt
@@ -1072,8 +1072,10 @@ class MarkerClient(QWidget):
             # the actual upload will happen in another thread
             self.backgroundUploader.enqueueNewUpload(*_data)
         else:
-            upload(*_data,
-                _hack=(self.backgroundUploadFailed, self.backgroundUploadFinished)
+            upload(
+                *_data,
+                failcallback=self.backgroundUploadFailed,
+                successcallback=self.backgroundUploadFinished
             )
 
         if launchAgain is False:
