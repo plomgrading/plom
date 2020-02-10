@@ -1219,3 +1219,25 @@ class PageScene(QGraphicsScene):
         self.commentDelta = delta
         self.commentText = text
         self.updateGhost(delta, text)
+
+    def noAnswer(self, delta):
+        br = self.underImage.boundingRect()
+        # put lines through the page
+        w = br.right()
+        h = br.bottom()
+        command = CommandLine(
+            self, QPointF(w * 0.1, h * 0.1), QPointF(w * 0.9, h * 0.9)
+        )
+        self.undoStack.push(command)
+        command = CommandLine(
+            self, QPointF(w * 0.9, h * 0.1), QPointF(w * 0.1, h * 0.9)
+        )
+        self.undoStack.push(command)
+
+        # build a delta-comment
+        self.blurb = TextItem(self, self.fontSize)
+        self.blurb.setPlainText("NO ANSWER GIVEN")
+        command = CommandGDT(
+            self, br.center() + br.topRight() / 8, delta, self.blurb, self.fontSize
+        )
+        self.undoStack.push(command)

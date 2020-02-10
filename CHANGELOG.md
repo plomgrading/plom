@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * saved comments are filtered per question and per test.
 * Marker has a "view" button to look at any test number.
+* Annotator has a "no answer given" button which places crossed lines on page, leaves a comment, sets mark to 0.
 
 ### Changed
 * The manual-identifier now has a "discard" option for unneeded pageimages, such as blank extra pages.
@@ -17,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Client: config and saved comments now more human-readable in toml files.
 * Client: can download test/server info before logging in.
 * Client is more pessimistic about errors and will crash instead of trying to continue
-in most cases.	
+in most cases.
 * Client checks for double-logins and can force logout a previous session.
 
 ### Fixed

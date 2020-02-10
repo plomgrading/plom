@@ -857,3 +857,59 @@ class ChangeFiltersDialog(QDialog):
             self.cb1.checkState() == Qt.Checked,
             self.cb2.checkState() == Qt.Checked,
         ]
+
+
+class NoAnswerBox(QDialog):
+    def __init__(self):
+        super(NoAnswerBox, self).__init__()
+        self.setWindowTitle("Is this answer blank?")
+        self.yesNextB = QPushButton("Yes and &Next")
+        self.yesDoneB = QPushButton("&Yes")
+        self.noB = QPushButton("No, &cancel")
+        self.yesNextB.clicked.connect(lambda: self.done(1))
+        self.yesDoneB.clicked.connect(lambda: self.done(2))
+        self.noB.clicked.connect(self.reject)
+        grid = QGridLayout()
+        moreinfo = QLabel(
+            "<p>Is this answer blank or nearly blank?</p>"
+            "<p>Please answer &ldquo;no&rdquo; if there is "
+            "<em>any possibility</em> of relevant writing on the page.</p>"
+        )
+        moreinfo.setWordWrap(True)
+        grid.addWidget(moreinfo, 0, 1, 1, 2)
+        grid.addWidget(QLabel("advance to next paper"), 1, 2)
+        grid.addWidget(QLabel("keep annotating"), 2, 2)
+        grid.addWidget(QLabel("keep annotating"), 3, 2)
+        grid.addWidget(self.yesNextB, 1, 1)
+        grid.addWidget(self.yesDoneB, 2, 1)
+        grid.addWidget(self.noB, 3, 1)
+        self.setLayout(grid)
+
+
+class BlankIDBox(QDialog):
+    def __init__(self, parent, testNumber):
+        super(BlankIDBox, self).__init__()
+        self.parent = parent
+        self.testNumber = testNumber
+        self.setWindowTitle("What is blank on test/paper {}?".format(testNumber))
+        grid = QGridLayout()
+
+        grid.addWidget(
+            QLabel("Please scan through the whole paper before continuing."), 0, 1, 1, 2
+        )
+
+        self.blankB = QPushButton("Whole paper is &blank")
+        self.noIDB = QPushButton("&No ID given but not blank")
+        self.noB = QPushButton("&Cancel")
+
+        self.blankB.clicked.connect(lambda: self.done(1))
+        self.noIDB.clicked.connect(lambda: self.done(2))
+        self.noB.clicked.connect(self.reject)
+        grid.addWidget(QLabel("Please check to confirm!"), 1, 2)
+        grid.addWidget(
+            QLabel("There is writing on other this or other pages."), 2, 2,
+        )
+        grid.addWidget(self.blankB, 1, 1)
+        grid.addWidget(self.noIDB, 2, 1)
+        grid.addWidget(self.noB, 3, 1)
+        self.setLayout(grid)
