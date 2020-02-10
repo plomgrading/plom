@@ -82,7 +82,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Returns list of tests that have been completed. No arguments = run as normal."
     )
-    parser.add_argument("-pwd", "--password", type=str)
+    parser.add_argument("-w", "--password", type=str)
     parser.add_argument(
         "-s", "--server", help="Which server to contact (must specify port as well)."
     )
