@@ -173,33 +173,7 @@ class BackgroundUploader(QThread):
                     str(threading.get_ident()), code
                 )
             )
-            # do name sanity check here
-            if not (
-                code.startswith("t")
-                and os.path.basename(aname) == "G{}.png".format(code[1:])
-                and os.path.basename(pname) == "G{}.plom".format(code[1:])
-                and os.path.basename(cname) == "G{}.json".format(code[1:])
-            ):
-                raise PlomSeriousException(
-                    "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
-                        fname, pname, cname
-                    )
-                )
-            try:
-                msg = messenger.MreturnMarkedTask(
-                    code, pg, ver, gr, mtime, tags, aname, pname, cname
-                )
-            except Exception as ex:
-                # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
-                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-                errmsg = template.format(type(ex).__name__, ex.args)
-                self.uploadFail.emit(code, errmsg)
-                return
-
-            numdone = msg[0]
-            numtotal = msg[1]
-            print("Debug: upQ: emitting SUCCESS signal for {}".format(code))
-            self.uploadSuccess.emit(code, numdone, numtotal)
+            upload(code, gr, aname, pname, cname, mtime, pg, ver, tags, failcallback=self.uploadFail.emit, successcallback=self.uploadSuccess.emit)
 
         print("upQ.run: thread " + str(threading.get_ident()))
         self.q = queue.Queue()
@@ -212,11 +186,7 @@ class BackgroundUploader(QThread):
         self.exec_()
 
 
-def upload(code, gr, aname, pname, cname, mtime, pg, ver, tags, _hack=[]):
-    # TODO: this is a copy-paste from BackgroundUploader, better to refactor
-    # TODO: improve this hack, how can we get the callbacks in here?
-    uploadFail, uploadSuccess = hack
-    print("Debug: direct uploading code {}".format(code))
+def upload(code, gr, aname, pname, cname, mtime, pg, ver, tags, failcallback=None, successcallback=None):
     # do name sanity check here
     if not (
         code.startswith("t")
@@ -237,12 +207,12 @@ def upload(code, gr, aname, pname, cname, mtime, pg, ver, tags, _hack=[]):
         # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
         errmsg = template.format(type(ex).__name__, ex.args)
-        uploadFail(code, errmsg)
+        failcallback(code, errmsg)
         return
 
     numdone = msg[0]
     numtotal = msg[1]
-    uploadSuccess(code, numdone, numtotal)
+    successcallback(code, numdone, numtotal)
 
 
 class TestPageGroup:
