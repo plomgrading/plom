@@ -264,12 +264,6 @@ class Annotator(QWidget):
         # TODO: not clear you're allowed to chnage this
         #assert self.markStyle == markStyle, "TODO: changing markStyle in running Annotator not supprted"
 
-        # pass the marking style to the mark entry widget.
-        # also when we set this up we have to connect various
-        # mark set, delta-set, mark change functions
-        self.setMarkHandler(self.markStyle)
-        self.setDeltaButtonMenu()
-
         # TODO: doit or init?
         # a test view pop-up window - initially set to None
         # for viewing whole paper
@@ -278,18 +272,19 @@ class Annotator(QWidget):
         # Set current mark to 0.
         self.score = 0
 
-        # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
-        self.commentW.changeMark(self.score)
-        self.commentW.setQuestionNumberFromTGV(tgv)
-        self.commentW.setTestname(testname)
-
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
         self.view = None
         self.scene = None
         self.setViewAndScene()
 
+        # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
+        self.commentW.changeMark(self.score)
+        self.commentW.setQuestionNumberFromTGV(tgv)
+        self.commentW.setTestname(testname)
+
         self.setMarkHandler(self.markStyle)
+        self.setDeltaButtonMenu()
 
         # TODO: shortcut keys that talk to view should be broken?  If not why not?
 
