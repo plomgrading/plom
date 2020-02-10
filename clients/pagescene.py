@@ -573,8 +573,8 @@ class PageScene(QGraphicsScene):
     def pickleSceneItems(self):
         lst = []
         for X in self.items():
-            # check if object as "pickle" attribute and it is set to true.
-            if getattr(X, "pickleable", False):
+            # check if object has "saveable" attribute and it is set to true.
+            if getattr(X, "saveable", False):
                 lst.append(X.pickle())
         return lst
 
