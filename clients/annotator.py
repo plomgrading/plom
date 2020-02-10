@@ -86,10 +86,10 @@ class Annotator(QWidget):
     and assigning marks.
     """
 
-    ann_finished_accept = pyqtSignal(str, list)
-    ann_finished_gimmemore = pyqtSignal(str)
-    ann_finished_closing = pyqtSignal(str)
-    ann_finished_reject = pyqtSignal(str)
+    ann_upload = pyqtSignal(str, list)
+    ann_done_wants_more = pyqtSignal(str)
+    ann_done_closing = pyqtSignal(str)
+    ann_done_reject = pyqtSignal(str)
 
     def __init__(
         self,
@@ -1026,7 +1026,7 @@ class Annotator(QWidget):
             plomFile,
             commentFile,
         ]
-        self.ann_finished_accept.emit(self.tgv, stuff)
+        self.ann_upload.emit(self.tgv, stuff)
         return True
 
     def closeEvent(self, ce):
@@ -1048,11 +1048,11 @@ class Annotator(QWidget):
         force = getattr(self, "_priv_force_close", False)
         if force:
             if self._priv_relaunch:
-                print("ann emitting the gimmemore signal")
-                self.ann_finished_gimmemore.emit(self.tgv)
+                print("ann emitting the WantsMore signal")
+                self.ann_done_wants_more.emit(self.tgv)
             else:
                 print("ann emitting the closing signal")
-                self.ann_finished_closing.emit(self.tgv)
+                self.ann_done_closing.emit(self.tgv)
             ce.accept()
             return
 
@@ -1066,7 +1066,7 @@ class Annotator(QWidget):
                 ce.ignore()
                 return
         print("ann emitting reject/cancel signal, discarding, and closing")
-        self.ann_finished_reject.emit(self.tgv)
+        self.ann_done_reject.emit(self.tgv)
         # clean up after a testview
         self.doneViewingPaper()
         ce.accept()
