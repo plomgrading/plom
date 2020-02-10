@@ -256,6 +256,22 @@ class MarkHandler:
         else:
             return web.Response(status=401)
 
+    # @routes.patch("/MK/revert/{task}")
+    async def MrevertTask(self, request):
+        data = await request.json()
+        task = request.match_info["task"]
+
+        if self.server.validate(data["user"], data["token"]):
+            rval = self.server.MrevertTask(data["user"], task)
+            if rval[0]:
+                return web.Response(status=200)
+            elif rval[1] == "NAC":  # nothing to be done here.
+                return web.Response(status=204)
+            else:  # cannot find that task
+                return web.Response(status=404)
+        else:
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_get("/MK/allMax", self.MgetAllMax)
         router.add_get("/MK/maxMark", self.MgetQuestionMark)
@@ -271,3 +287,4 @@ class MarkHandler:
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}", self.MgetWholePaper)
         router.add_patch("/MK/review", self.MreviewQuestion)
+        router.add_patch("/MK/revert/{task}", self.MrevertTask)

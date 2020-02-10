@@ -553,14 +553,13 @@ class MarkerClient(QWidget):
         # create a settings variable for saving annotator window settings
         # initially all settings are "none"
         self.annotatorSettings = defaultdict(lambda: None)
-        # if lasttime["POWERUSER"] is true, the disable warnings in annotator
-        if "POWERUSER" in lastTime:
-            if lastTime["POWERUSER"]:
-                self.annotatorSettings["markWarnings"] = False
-                self.annotatorSettings["commentWarnings"] = False
-                self.viewAll = True
-        else:
-            self.viewAll = False
+
+        self.canViewAll = False
+        if lastTime.get("POWERUSER", False):
+            # if POWERUSER is set, disable warnings and allow viewing all
+            self.annotatorSettings["markWarnings"] = False
+            self.annotatorSettings["commentWarnings"] = False
+            self.canViewAll = True
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -902,13 +901,15 @@ class MarkerClient(QWidget):
         else:
             return
         task = self.prxM.getPrefix(pr)
-        # If test is untouched or already reverted, nothing to do
-        if self.exM.getStatusByTask(task) in ("untouched", "reverted"):
+        # If test does not have status "marked" then nothing to do
+        if self.exM.getStatusByTask(task) != "marked":
             return
         # Check user really wants to revert
         msg = SimpleMessage("Do you want to revert to original scan?")
         if msg.exec_() == QMessageBox.No:
             return
+        # send revert message to server
+        messenger.MrevertTask(task)
         # Revert the test in the table (set status, mark etc)
         self.exM.revertPaper(task)
         # Update the image (is now back to original untouched image)
@@ -968,6 +969,11 @@ class MarkerClient(QWidget):
         annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
         self.setEnabled(False)
         annotator.show()
+        # We had (have?) a bug: when `annotator` var goes out of scope, it can
+        # get GC'd, killing the new Annotator.  Fix: keep a ref in self.
+        # TODO: the old one might still be closing when we get here, but dropping
+        # the ref now won't hurt (I think).
+        self._annotator = annotator
 
     def annotateTest(self):
         """Grab current test from table, do checks, start annotator."""
@@ -1108,11 +1114,11 @@ class MarkerClient(QWidget):
                 self.updateImage(pr)
             return
 
-        if self.moveToNextUnmarkedTest("m" + task):
-            # self.annotateTest()
-            self.ui.annButton.animateClick()
-        self.setEnabled(True)
-        print("Debug: either we are done or problems downloading...")
+        if self.moveToNextUnmarkedTest("m" + tgv):
+            self.annotateTest()
+        else:
+            print("Debug: either we are done or problems downloading...")
+            self.setEnabled(True)
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
@@ -1308,7 +1314,7 @@ class MarkerClient(QWidget):
         self.prxM.filterTags()
 
     def viewSpecificImage(self):
-        if self.viewAll:
+        if self.canViewAll:
             tgs = TestGroupSelect(self.testInfo, self.question)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
@@ -1329,14 +1335,13 @@ class MarkerClient(QWidget):
             msg = ErrorMessage("No image corresponding to code {}".format(task))
             msg.exec_()
             return
-        # put imagefiles into a temp-dir so they are removed afterwards
-        with tempfile.TemporaryDirectory() as tdir:
-            inames = []
-            i = 0
-            for img in imageList:
-                inames.append("{}/{}.{}".format(tdir, task, i))
-                with open(inames[-1], "wb") as fh:
-                    fh.write(img)
-                i += 1
-            tvw = GroupView(inames)
-            tvw.exec_()
+        ifilenames = []
+        for img in imageList:
+            ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory, delete=False)
+            ifile.write(img)
+            ifiles.append(ifilenames.name)
+        tvw = GroupView(ifilenamess)
+        tvw.setWindowTitle(
+            "Original ungraded image for question {} of test {}".format(gn, tn)
+        )
+        tvw.exec_()

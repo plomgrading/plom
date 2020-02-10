@@ -270,9 +270,12 @@ class PageScene(QGraphicsScene):
         return count
 
     def areThereAnnotations(self):
-        # there are at least 2 items = the pageimage and the scorebox
-        # there must be more than 2 items for there to be any annotations
-        return len(self.items()) > 2
+        # look through items in scene for anything pickle-able - this will catch any annotations.
+        for X in self.items():
+            if hasattr(X, "saveable"):
+                return True
+        # no pickle-able items means no annotations.
+        return False
 
     def save(self):
         """ Save the annotated group-image.
@@ -573,8 +576,8 @@ class PageScene(QGraphicsScene):
     def pickleSceneItems(self):
         lst = []
         for X in self.items():
-            # check if object as "pickle" attribute and it is set to true.
-            if getattr(X, "pickleable", False):
+            # check if object has "saveable" attribute and it is set to true.
+            if getattr(X, "saveable", False):
                 lst.append(X.pickle())
         return lst
 
@@ -1219,3 +1222,25 @@ class PageScene(QGraphicsScene):
         self.commentDelta = delta
         self.commentText = text
         self.updateGhost(delta, text)
+
+    def noAnswer(self, delta):
+        br = self.underImage.boundingRect()
+        # put lines through the page
+        w = br.right()
+        h = br.bottom()
+        command = CommandLine(
+            self, QPointF(w * 0.1, h * 0.1), QPointF(w * 0.9, h * 0.9)
+        )
+        self.undoStack.push(command)
+        command = CommandLine(
+            self, QPointF(w * 0.9, h * 0.1), QPointF(w * 0.1, h * 0.9)
+        )
+        self.undoStack.push(command)
+
+        # build a delta-comment
+        self.blurb = TextItem(self, self.fontSize)
+        self.blurb.setPlainText("NO ANSWER GIVEN")
+        command = CommandGDT(
+            self, br.center() + br.topRight() / 8, delta, self.blurb, self.fontSize
+        )
+        self.undoStack.push(command)

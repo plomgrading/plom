@@ -126,6 +126,9 @@ class WholeTestView(QDialog):
         self.nButton.clicked.connect(self.nextTab)
         self.closeButton.clicked.connect(self.closeWindow)
         self.maxNormButton.clicked.connect(self.swapMaxNorm)
+
+        self.setMinimumSize(500, 500)
+
         self.show()
         self.buildTabs()
 

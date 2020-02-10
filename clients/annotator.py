@@ -55,6 +55,7 @@ from useful_classes import (
     ErrorMessage,
     SimpleMessage,
     SimpleMessageCheckBox,
+    NoAnswerBox,
 )
 from test_view import TestView
 from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
@@ -682,7 +683,10 @@ class Annotator(QWidget):
         self.setMode("delete", self.cursorDelete)
 
     def deltaButtonMode(self):
-        self.setMode("delta", Qt.IBeamCursor)
+        if QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier:
+            self.ui.deltaButton.showMenu()
+        else:
+            self.setMode("delta", Qt.IBeamCursor)
 
     def lineMode(self):
         self.setMode("line", self.cursorLine)
@@ -775,6 +779,8 @@ class Annotator(QWidget):
         self.ui.finishedButton.clicked.connect(self.closeEventRelaunch)
         self.ui.finishNoRelaunchButton.clicked.connect(self.commentW.saveComments)
         self.ui.finishNoRelaunchButton.clicked.connect(self.closeEventNoRelaunch)
+        # Connect the "no answer" button
+        self.ui.noAnswerButton.clicked.connect(self.noAnswer)
 
     def handleComment(self, dlt_txt):
         """When the user selects a comment this function will be triggered.
@@ -948,25 +954,42 @@ class Annotator(QWidget):
     def cleanUpCancel(self):
         # clean up after a testview
         self.doneViewingPaper()
+        self._relaunch = None
         self.close()
 
     def closeEvent(self, ce):
-        """When the user closes the window - either by clicking on the
-        little standard all windows have them close icon in the titlebar
-        or by clicking on 'finished' - do some basic checks.
-        If the titlebar close has been clicked then we assume the user
-        is cancelling the annotations.
-        Otherwise - we assume they want to accept them. Simple sanity check
-        that user meant to close the window.
+        """Deal with various cases of window trying to close.
+
+        There are various things that can happen.
+          * User closes window via titlebar close icon (or alt-f4 or...)
+          * User clicks "Cancel"
+          * User clicks "Next"
+          * User clicks "Done"
+
+        Currently all these events end up here and we choose what to do.
+
+        Window close or Cancel are currently treated the same way:
+        discard all annotations.
+
+        TODO: perhaps window close should ask "are you sure?" if there are
+        annotations.  Maybe "Cancel" button should as well.
+
+        Next and Done save the annotations and differ in whether the
+        Annotator should "relaunch" or not.
+
         Be careful of a score of 0 - when mark total or mark up.
         Be careful of max-score when marking down.
         In either case - get user to confirm the score before closing.
+        Also confirm various "not enough feedback" cases.
         """
         relaunch = self._relaunch
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
+        # User might ignore close (eg, say no to dialog) so preemptively reset
+        # to ensure next Cancel/window-close is interpreted as cancel.
+        self._relaunch = None
 
-        # Close button/titlebar: reject (do not save) result, do not launch again
+        # Cancel button/titlebar close: reject (do not save result, do not relaunch)
         if relaunch is None:
             print("ann emitting signal: Reject/Cancel")
             self.ann_finished_reject.emit(self.tgv, [])
@@ -976,7 +999,7 @@ class Annotator(QWidget):
             return
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
-            msg = ErrorMessage("Please make an annotation, even if the page is blank.")
+            msg = ErrorMessage("Please make an annotation, even if there is no answer.")
             msg.exec_()
             ce.ignore()
             return
@@ -1176,3 +1199,32 @@ class Annotator(QWidget):
                     self.deltaActions[k].setEnabled(True)
                 else:
                     self.deltaActions[k].setEnabled(False)
+
+    def noAnswer(self):
+        if self.markStyle == 2:
+            if self.score > 0:  # is mark-up
+                ErrorMessage(
+                    'You have added marks - cannot then set "No answer given". Delete deltas before trying again.'
+                ).exec_()
+                return
+            else:
+                self.scene.noAnswer(0)
+        elif self.markStyle == 3:
+            if self.score < self.maxMark:  # is mark-down
+                ErrorMessage(
+                    'You have deducted marks - cannot then set "No answer given". Delete deltas before trying again.'
+                ).exec()
+                return
+            else:
+                self.scene.noAnswer(-self.maxMark)
+        nabValue = NoAnswerBox().exec_()
+        if nabValue == 0:
+            # equivalent to cancel - apply undo three times (to remove the noanswer lines+comment)
+            self.scene.undo()
+            self.scene.undo()
+            self.scene.undo()
+        elif nabValue == 1:
+            # equivalent to "yes - give me next paper"
+            self.ui.finishedButton.animateClick()
+        else:
+            pass
