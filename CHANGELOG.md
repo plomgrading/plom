@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Annotator has a "no answer given" button which places crossed lines on page, leaves a comment, sets mark to 0.
 
 ### Changed
 
@@ -19,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * saved comments are filtered per question and per test.
 * Marker has a "view" button to look at any test number.
-* Annotator has a "no answer given" button which places crossed lines on page, leaves a comment, sets mark to 0.
 
 ### Changed
 * The manual-identifier now has a "discard" option for unneeded pageimages, such as blank extra pages.
