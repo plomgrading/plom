@@ -155,25 +155,16 @@ class BackgroundUploader(QThread):
             from queue import Empty as EmptyQueueException
 
             try:
-                (
-                    code,
-                    gr,
-                    aname,
-                    pname,
-                    cname,
-                    mtime,
-                    pg,
-                    ver,
-                    tags,
-                ) = self.q.get_nowait()
+                data = self.q.get_nowait()
             except EmptyQueueException:
                 return
+            code = data[0]  # TODO: remove so that queue needs no knowledge of args
             print(
                 "Debug: upQ (thread {}): popped code {} from queue, uploading".format(
                     str(threading.get_ident()), code
                 )
             )
-            upload(code, gr, aname, pname, cname, mtime, pg, ver, tags, failcallback=self.uploadFail.emit, successcallback=self.uploadSuccess.emit)
+            upload(*data, failcallback=self.uploadFail.emit, successcallback=self.uploadSuccess.emit)
 
         print("upQ.run: thread " + str(threading.get_ident()))
         self.q = queue.Queue()
