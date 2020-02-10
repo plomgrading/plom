@@ -72,10 +72,6 @@ from resources.version import Plom_API_Version
 tempDirectory = tempfile.TemporaryDirectory(prefix="plom_")
 directoryPath = tempDirectory.name
 
-# TODO: testing disabling of background upload/download
-# TODO: replace all occurences with logic from toml?
-BACKGROUND_OPS = False
-
 # Read https://mayaposch.wordpress.com/2011/11/01/how-to-really-truly-use-qthreads-the-full-explanation/
 # and https://stackoverflow.com/questions/6783194/background-thread-with-qthread-in-pyqt
 # and finally https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
@@ -558,11 +554,10 @@ class MarkerClient(QWidget):
                 self.viewAll = True
         else:
             self.viewAll = False
-        # if lasttime["FOREGROUND"] is true, then disable background download/upload
-        if lastTime.get("FOREGROUND", False) is True:
-            BACKGROUND_OPS = False
-        else:
-            BACKGROUND_OPS = True
+        self.allowBackgroundOps = True
+        # unless special key was set:
+        if lastTime.get("FOREGROUND", False):
+            self.allowBackgroundOps = False
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -635,7 +630,7 @@ class MarkerClient(QWidget):
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
         print("Debug: Marker main thread: " + str(threading.get_ident()))
-        if BACKGROUND_OPS:
+        if self.allowBackgroundOps:
             self.backgroundUploader = BackgroundUploader()
             self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
             self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
@@ -915,7 +910,7 @@ class MarkerClient(QWidget):
             # TODO: there should be a filename sanity check here to
             # make sure plom file matches current image-file
 
-        if BACKGROUND_OPS:
+        if self.allowBackgroundOps:
             # while annotator is firing up request next paper in background
             # after giving system a moment to do `annotator.exec_()`
             if self.exM.countReadyToMark() == 0:
@@ -1068,7 +1063,7 @@ class MarkerClient(QWidget):
             self.version,
             tags,
         )
-        if BACKGROUND_OPS:
+        if self.allowBackgroundOps:
             # the actual upload will happen in another thread
             self.backgroundUploader.enqueueNewUpload(*_data)
         else:
@@ -1088,7 +1083,7 @@ class MarkerClient(QWidget):
             if self.prxM.getPrefix(pr) == "t" + tgv:
                 self.updateImage(pr)
             return
-        if not BACKGROUND_OPS:
+        if not self.allowBackgroundOps:
             self.requestNext()
         if self.moveToNextUnmarkedTest("t" + tgv):
             self.annotateTest()
