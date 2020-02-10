@@ -969,6 +969,11 @@ class MarkerClient(QWidget):
         annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
         self.setEnabled(False)
         annotator.show()
+        # We had (have?) a bug: when `annotator` var goes out of scope, it can
+        # get GC'd, killing the new Annotator.  Fix: keep a ref in self.
+        # TODO: the old one might still be closing when we get here, but dropping
+        # the ref now won't hurt (I think).
+        self._annotator = annotator
 
     def annotateTest(self):
         """Grab current test from table, do checks, start annotator."""
@@ -1109,11 +1114,11 @@ class MarkerClient(QWidget):
                 self.updateImage(pr)
             return
 
-        if self.moveToNextUnmarkedTest("m" + task):
-            # self.annotateTest()
-            self.ui.annButton.animateClick()
-        self.setEnabled(True)
-        print("Debug: either we are done or problems downloading...")
+        if self.moveToNextUnmarkedTest("m" + tgv):
+            self.annotateTest()
+        else:
+            print("Debug: either we are done or problems downloading...")
+            self.setEnabled(True)
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
@@ -1330,14 +1335,13 @@ class MarkerClient(QWidget):
             msg = ErrorMessage("No image corresponding to code {}".format(task))
             msg.exec_()
             return
-        # put imagefiles into a temp-dir so they are removed afterwards
-        with tempfile.TemporaryDirectory() as tdir:
-            inames = []
-            i = 0
-            for img in imageList:
-                inames.append("{}/{}.{}".format(tdir, task, i))
-                with open(inames[-1], "wb") as fh:
-                    fh.write(img)
-                i += 1
-            tvw = GroupView(inames)
-            tvw.exec_()
+        ifiles = []
+        for img in imageList:
+            ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory, delete=False)
+            ifile.write(img)
+            ifiles.append(ifile)
+        tvw = GroupView(ifile.name)
+        tvw.setWindowTitle(
+            "Original ungraded image for question {} of test {}".format(gn, tn)
+        )
+        tvw.exec_()

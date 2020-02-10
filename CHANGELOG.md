@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+
+## [0.3.0] - 2020-02-10
+
+### Added
 * saved comments are filtered per question and per test.
 * Marker has a "view" button to look at any test number.
 * Annotator has a "no answer given" button which places crossed lines on page, leaves a comment, sets mark to 0.
@@ -20,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Client is more pessimistic about errors and will crash instead of trying to continue
 in most cases.
 * Client checks for double-logins and can force logout a previous session.
+* Client: you must make at least one annotation on the page.
 
 ### Fixed
 * many fixes, especially related to client crashes due to networking.
@@ -109,7 +119,8 @@ in most cases.
 
 This is the first release of Plom, PaperLessOpenMarking.
 
-[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.2...master
+[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...master
+[0.3.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.2...v0.3.0
 [0.2.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...v0.2.2
 [0.2.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.0...v0.2.1
 [0.2.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.1.0...v0.2.0
