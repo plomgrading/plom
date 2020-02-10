@@ -1114,7 +1114,7 @@ class MarkerClient(QWidget):
                 self.updateImage(pr)
             return
 
-        if self.moveToNextUnmarkedTest("m" + tgv):
+        if self.moveToNextUnmarkedTest("m" + task):
             self.annotateTest()
         else:
             print("Debug: either we are done or problems downloading...")
