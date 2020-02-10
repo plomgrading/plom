@@ -182,19 +182,10 @@ class BackgroundUploader(QThread):
 
 
 def upload(
-    code,
-    gr,
-    aname,
-    pname,
-    cname,
-    mtime,
-    pg,
-    ver,
-    tags,
-    failcallback=None,
-    successcallback=None,
+    code, gr, filenames, mtime, pg, ver, tags, failcallback=None, successcallback=None,
 ):
-    # do name sanity check here
+    # do name sanity checks here
+    aname, pname, cname = filenames
     if not (
         code.startswith("t")
         and os.path.basename(aname) == "G{}.png".format(code[1:])
@@ -1071,9 +1062,7 @@ class MarkerClient(QWidget):
         _data = (
             "t" + tgv,  # current tgv
             gr,  # grade
-            aname,  # annotated file
-            pname,  # plom file
-            cname,  # comment file
+            (aname, pname, cname),  # annotated, plom, and comment filenames
             totmtime,  # total marking time
             self.pageGroup,
             self.version,
