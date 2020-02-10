@@ -862,23 +862,24 @@ class ChangeFiltersDialog(QDialog):
 class NoAnswerBox(QDialog):
     def __init__(self):
         super(NoAnswerBox, self).__init__()
-        self.yesNextB = QPushButton("Yes and next")
-        self.yesDoneB = QPushButton("Yes but done")
-        self.noB = QPushButton("No")
+        self.setWindowTitle("Is this answer blank?")
+        self.yesNextB = QPushButton("Yes and &Next")
+        self.yesDoneB = QPushButton("&Yes")
+        self.noB = QPushButton("No, &cancel")
         self.yesNextB.clicked.connect(lambda: self.done(1))
         self.yesDoneB.clicked.connect(lambda: self.done(2))
         self.noB.clicked.connect(self.reject)
         grid = QGridLayout()
-        grid.addWidget(
-            QLabel('The question is "No answer given" - are you sure?'), 0, 1, 1, 2
+        moreinfo = QLabel(
+            "<p>Is this answer blank or nearly blank?</p>"
+            "<p>Please answer &ldquo;no&rdquo; if there is "
+            "<em>any possibility</em> of relevant writing on the page.</p>"
         )
-        grid.addWidget(QLabel("Yes and take me to the next paper"), 1, 2)
-        grid.addWidget(
-            QLabel("Yes but take me back to the main window"), 2, 2,
-        )
-        grid.addWidget(
-            QLabel("No - keep annotating"), 3, 2,
-        )
+        moreinfo.setWordWrap(True)
+        grid.addWidget(moreinfo, 0, 1, 1, 2)
+        grid.addWidget(QLabel("advance to next paper"), 1, 2)
+        grid.addWidget(QLabel("keep annotating"), 2, 2)
+        grid.addWidget(QLabel("keep annotating"), 3, 2)
         grid.addWidget(self.yesNextB, 1, 1)
         grid.addWidget(self.yesDoneB, 2, 1)
         grid.addWidget(self.noB, 3, 1)

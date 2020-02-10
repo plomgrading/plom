@@ -1207,5 +1207,4 @@ class Annotator(QWidget):
             # equivalent to "yes - give me next paper"
             self.ui.finishedButton.animateClick()
         else:
-            # equiv to "yes, but I'm done"
-            self.ui.finishNoRelaunchButton.animateClick()
+            pass
