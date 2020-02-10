@@ -554,12 +554,12 @@ class MarkerClient(QWidget):
         # initially all settings are "none"
         self.annotatorSettings = defaultdict(lambda: None)
 
-        self.viewAll = False
+        self.canViewAll = False
         if lastTime.get("POWERUSER", False):
             # if POWERUSER is set, disable warnings and allow viewing all
             self.annotatorSettings["markWarnings"] = False
             self.annotatorSettings["commentWarnings"] = False
-            self.viewAll = True
+            self.canViewAll = True
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -1309,7 +1309,7 @@ class MarkerClient(QWidget):
         self.prxM.filterTags()
 
     def viewSpecificImage(self):
-        if self.viewAll:
+        if self.canViewAll:
             tgs = TestGroupSelect(self.testInfo, self.question)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
