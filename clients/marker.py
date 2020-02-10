@@ -72,6 +72,10 @@ from resources.version import Plom_API_Version
 tempDirectory = tempfile.TemporaryDirectory(prefix="plom_")
 directoryPath = tempDirectory.name
 
+# TODO: testing disabling of background upload/download
+# TODO: replace all occurences with logic from toml?
+BACKGROUND_OPS = True
+
 # Read https://mayaposch.wordpress.com/2011/11/01/how-to-really-truly-use-qthreads-the-full-explanation/
 # and https://stackoverflow.com/questions/6783194/background-thread-with-qthread-in-pyqt
 # and finally https://woboq.com/blog/qthread-you-were-not-doing-so-wrong.html
@@ -206,6 +210,39 @@ class BackgroundUploader(QThread):
         timer.timeout.connect(tryToUpload)
         timer.start(250)
         self.exec_()
+
+
+def upload(code, gr, aname, pname, cname, mtime, pg, ver, tags, hack):
+    # TODO: this is a copy-paste from BackgroundUploader, better to refactor
+    # TODO: improve this hack, how can we get the callbacks in here?
+    uploadFail, uploadSuccess = hack
+    print("Debug: direct uploading code {}".format(code))
+    # do name sanity check here
+    if not (
+        code.startswith("t")
+        and os.path.basename(aname) == "G{}.png".format(code[1:])
+        and os.path.basename(pname) == "G{}.plom".format(code[1:])
+        and os.path.basename(cname) == "G{}.json".format(code[1:])
+    ):
+        raise PlomSeriousException(
+            "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
+                fname, pname, cname
+            )
+        )
+    try:
+        msg = messenger.MreturnMarkedTask(
+            code, pg, ver, gr, mtime, tags, aname, pname, cname
+        )
+    except Exception as ex:
+        # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
+        template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+        errmsg = template.format(type(ex).__name__, ex.args)
+        uploadFail(code, errmsg)
+        return
+
+    numdone = msg[0]
+    numtotal = msg[1]
+    uploadSuccess(code, numdone, numtotal)
 
 
 class TestPageGroup:
@@ -617,6 +654,7 @@ class MarkerClient(QWidget):
         # A simple cache table for latex'd comments
         self.commentCache = {}
         self.backgroundDownloader = None
+        self.backgroundUploader = None
         # Get a pagegroup to mark from the server
         self.requestNext()
         # reset the view so whole exam shown.
@@ -624,10 +662,11 @@ class MarkerClient(QWidget):
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
         print("Debug: Marker main thread: " + str(threading.get_ident()))
-        self.backgroundUploader = BackgroundUploader()
-        self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
-        self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
-        self.backgroundUploader.start()
+        if BACKGROUND_OPS:
+            self.backgroundUploader = BackgroundUploader()
+            self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
+            self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
+            self.backgroundUploader.start()
         # Now cache latex for comments:
         self.cacheLatexComments()
 
@@ -903,10 +942,11 @@ class MarkerClient(QWidget):
             # TODO: there should be a filename sanity check here to
             # make sure plom file matches current image-file
 
-        # while annotator is firing up request next paper in background
-        # after giving system a moment to do `annotator.exec_()`
-        if self.exM.countReadyToMark() == 0:
-            self.requestNextInBackgroundStart()
+        if BACKGROUND_OPS:
+            # while annotator is firing up request next paper in background
+            # after giving system a moment to do `annotator.exec_()`
+            if self.exM.countReadyToMark() == 0:
+                self.requestNextInBackgroundStart()
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
@@ -1046,8 +1086,8 @@ class MarkerClient(QWidget):
         totmtime = self.exM.getMTimeByTGV("t" + tgv)
         tags = self.exM.getTagsByTGV("t" + tgv)
 
-        # the actual upload will happen in another thread
-        self.backgroundUploader.enqueueNewUpload(
+
+        _data = (
             "t" + tgv,  # current tgv
             gr,  # grade
             aname,  # annotated file
@@ -1058,6 +1098,13 @@ class MarkerClient(QWidget):
             self.version,
             tags,
         )
+        if BACKGROUND_OPS:
+            # the actual upload will happen in another thread
+            self.backgroundUploader.enqueueNewUpload(*_data)
+        else:
+            upload(*_data,
+                (self.backgroundUploadFailed, self.backgroundUploadFinished)
+            )
 
         if launchAgain is False:
             self.setEnabled(True)
@@ -1069,6 +1116,8 @@ class MarkerClient(QWidget):
             if self.prxM.getPrefix(pr) == "t" + tgv:
                 self.updateImage(pr)
             return
+        if not BACKGROUND_OPS:
+            self.requestNext()
         if self.moveToNextUnmarkedTest("t" + tgv):
             self.annotateTest()
         else:
