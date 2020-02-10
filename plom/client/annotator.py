@@ -729,12 +729,11 @@ class Annotator(QWidget):
         window then asks the server for the next unmarked image and
         fires up a new annotator on that.
         """
-        if not self.scene:
-            return
-        if not self.saveAnnotations():
-            return
-        print("We have surrendered {}".format(self.tgv))
-        self.closeCurrentTGV()
+        if self.scene:
+            if not self.saveAnnotations():
+                return
+            print("We have surrendered {}".format(self.tgv))
+            self.closeCurrentTGV()
         stuff = self.parent.gimmeMore(self.tgv)
         if not stuff:
             ErrorMessage("No more to grade?").exec_()
