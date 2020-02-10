@@ -91,7 +91,6 @@ class Annotator(QWidget):
     """
 
     ann_upload = pyqtSignal(str, list)
-    ann_done_wants_more = pyqtSignal(str)
     ann_done_closing = pyqtSignal(str)
     ann_done_reject = pyqtSignal(str)
 
@@ -752,7 +751,6 @@ class Annotator(QWidget):
         """Save the current annotations, and then close."""
         if self.saveAnnotations():
             self._priv_force_close = True
-            self._priv_relaunch = False
             self.close()
 
     def setMiscShortCuts(self):
@@ -1222,12 +1220,8 @@ class Annotator(QWidget):
         # Appropriate signals have already been sent so just close
         force = getattr(self, "_priv_force_close", False)
         if force:
-            if self._priv_relaunch:
-                log.debug("emitting the WantsMore signal")
-                self.ann_done_wants_more.emit(self.tgv)
-            else:
-                log.debug("emitting the closing signal")
-                self.ann_done_closing.emit(self.tgv)
+            log.debug("emitting the closing signal")
+            self.ann_done_closing.emit(self.tgv)
             ce.accept()
             return
 

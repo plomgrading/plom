@@ -960,7 +960,6 @@ class MarkerClient(QWidget):
         )
         # run the annotator
         annotator.ann_upload.connect(self.callbackAnnWantsUsToUpload)
-        annotator.ann_done_wants_more.connect(self.callbackAnnDoneWantsMore)
         annotator.ann_done_closing.connect(self.callbackAnnDoneClosing)
         annotator.ann_done_reject.connect(self.callbackAnnDoneCancel)
         self.setEnabled(False)
@@ -1080,17 +1079,6 @@ class MarkerClient(QWidget):
         if self.prxM.getPrefix(pr) == "m" + task:
             self.updateImage(pr)
 
-    @pyqtSlot(str)
-    def callbackAnnDoneWantsMore(self, task):
-        log.debug("Marker is back and Ann Wants More")
-        if not self.allowBackgroundOps:
-            self.requestNext()
-        if self.moveToNextUnmarkedTest("m" + task):
-            self.annotateTest()
-        else:
-            log.debug("either we are done or problems downloading...")
-            self.setEnabled(True)
-
     @pyqtSlot(str, list)
     def callbackAnnWantsUsToUpload(self, task, stuff):
         gr, mtime, paperdir, fnames, aname, pname, cname = stuff
@@ -1133,6 +1121,8 @@ class MarkerClient(QWidget):
 
     def gimmeMore(self, oldtgv):
         print("Debug: Marker: Ann Wants More (w/o closing)")
+        if not self.allowBackgroundOps:
+            self.requestNext()
         if not self.moveToNextUnmarkedTest("t" + oldtgv):
             return False  # TOD
         # TODO: copy paste of annotateTest()
