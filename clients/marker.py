@@ -164,7 +164,11 @@ class BackgroundUploader(QThread):
                     str(threading.get_ident()), code
                 )
             )
-            upload(*data, failcallback=self.uploadFail.emit, successcallback=self.uploadSuccess.emit)
+            upload(
+                *data,
+                failcallback=self.uploadFail.emit,
+                successcallback=self.uploadSuccess.emit
+            )
 
         print("upQ.run: thread " + str(threading.get_ident()))
         self.q = queue.Queue()
@@ -177,7 +181,19 @@ class BackgroundUploader(QThread):
         self.exec_()
 
 
-def upload(code, gr, aname, pname, cname, mtime, pg, ver, tags, failcallback=None, successcallback=None):
+def upload(
+    code,
+    gr,
+    aname,
+    pname,
+    cname,
+    mtime,
+    pg,
+    ver,
+    tags,
+    failcallback=None,
+    successcallback=None,
+):
     # do name sanity check here
     if not (
         code.startswith("t")
@@ -551,6 +567,11 @@ class MarkerClient(QWidget):
                 self.viewAll = True
         else:
             self.viewAll = False
+        # if lasttime["FOREGROUND"] is true, then disable background download/upload
+        if lastTime.get("FOREGROUND", False) is True:
+            BACKGROUND_OPS = False
+        else:
+            BACKGROUND_OPS = True
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -1046,7 +1067,6 @@ class MarkerClient(QWidget):
         # update the mtime to be the total marking time
         totmtime = self.exM.getMTimeByTGV("t" + tgv)
         tags = self.exM.getTagsByTGV("t" + tgv)
-
 
         _data = (
             "t" + tgv,  # current tgv
