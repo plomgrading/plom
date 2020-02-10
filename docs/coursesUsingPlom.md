@@ -35,6 +35,6 @@ These are as best I can recall
 | 344 | Midterm + Exam | 100 | Omer |
 | 322 | Midterm | 50 | Nike+Abhishek |
 | <>| <> | <> | <> |
-| 101 | Midterm | 1200 | AnthonyW (soon)|
+| 101 | Midterm | 1300 | AnthonyW (soon)|
 | 152 | 3 Midterms | 900 | Kalle |
 | 302 | Midterm | ??? | Yinon (soon)|
