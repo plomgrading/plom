@@ -1335,12 +1335,12 @@ class MarkerClient(QWidget):
             msg = ErrorMessage("No image corresponding to code {}".format(task))
             msg.exec_()
             return
-        ifiles = []
+        ifilenames = []
         for img in imageList:
             ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory, delete=False)
             ifile.write(img)
-            ifiles.append(ifile)
-        tvw = GroupView(ifile.name)
+            ifiles.append(ifilenames.name)
+        tvw = GroupView(ifilenamess)
         tvw.setWindowTitle(
             "Original ungraded image for question {} of test {}".format(gn, tn)
         )
