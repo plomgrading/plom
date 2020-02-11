@@ -77,9 +77,9 @@ class Chooser(QDialog):
         self.parent = Qapp
         #now = datetime.datetime.now().isoformat('T', 'seconds')
         logging.basicConfig(
-            format="%(asctime)s %(levelname)s %(message)s",
+            format="%(asctime)s %(levelname)s:%(name)s  %(message)s",
             level=logging.DEBUG,
-            datefmt="%m-%d %I:%M:%S",
+            datefmt="%m-%d %H:%M:%S",
             #filename="plom-{}.log".format(now),
         )
         s = "Plom Client {} (communicates with api {})".format(
