@@ -1208,16 +1208,21 @@ class PageScene(QGraphicsScene):
         # delta calcs, the ghost item knows how to handle it.
         if delta != ".":
             id = int(delta)
-            if self.markStyle == 2:  # mark up
-                # if delta is too positive, set to "."
-                if id < 0 or self.score + id > self.maxMark:
-                    delta = "."
-            elif self.markStyle == 3:  # mark down
-                # if delta is too negative, set to "."
-                if id > 0 or self.score + id < 0:
-                    delta = "."
-            else:  # mark total
-                # no delta is used, so set it to ".".
+            # check if this new delta is "legal" - this handles mark-out-of range issues
+            lookingAhead = self.score + id
+            if lookingAhead < 0 or lookingAhead > self.maxMark:
+                self.legalDelta = False
+            else:
+                self.legalDelta = True
+
+            # we pass the actual comment-delta to this (though it might be suppressed in the commentlistwidget).. so we have to
+            # check the the delta is legal for the marking style.
+            # if delta<0 when mark up OR delta>0 when mark down OR mark-total then pass delta="."
+            if (
+                (id < 0 and self.markStyle == 2)
+                or (id > 0 and self.markStyle == 3)
+                or self.markStyle == 1
+            ):
                 delta = "."
         self.commentDelta = delta
         self.commentText = text
