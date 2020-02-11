@@ -1,11 +1,7 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import os
-
-
-# TODO: in some common_utils.py?
-def validFields(d, fields):
-    """Check that input dict has (and only has) expected fields."""
-    return set(d.keys()) == set(fields)
+from plomServer.plom_routeutils import tokenauth
+from plomServer.plom_routeutils import validFields
 
 
 class MarkHandler:
@@ -13,13 +9,8 @@ class MarkHandler:
         self.server = plomServer
 
     # @routes.get("/MK/maxMark")
-    async def MgetQuestionMark(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token", "q", "v"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @tokenauth(fields=["q", "v"])
+    def MgetQuestionMark(self, data):
         rmsg = self.server.MgetQuestionMax(data["q"], data["v"])
         if rmsg[0]:
             return web.json_response(rmsg[1], status=200)
@@ -37,13 +28,8 @@ class MarkHandler:
             )
 
     # @routes.get("/MK/progress")
-    async def MprogressCount(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token", "q", "v"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @tokenauth(fields=["q", "v"])
+    def MprogressCount(self, data):
         return web.json_response(
             self.server.MprogressCount(data["q"], data["v"]), status=200
         )
@@ -261,13 +247,8 @@ class MarkHandler:
             return web.Response(status=404)  # not found
 
     # @routes.get("/MK/allMax")
-    async def MgetAllMax(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @tokenauth
+    def MgetAllMax(self, data):
         return web.json_response(self.server.MgetAllMax(), status=200)
 
     # @routes.patch("/MK/review")
