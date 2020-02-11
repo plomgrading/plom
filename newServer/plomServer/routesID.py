@@ -48,16 +48,15 @@ class IDHandler:
     def IDgetImage(self, data, request):
         test = request.match_info["test"]
         rmsg = self.server.IDgetImage(data["user"], test)
-        if rmsg[0]:  # user allowed access - returns [true, fname0, fname1,...]
-            with MultipartWriter("images") as mpwriter:
-                for fn in rmsg[1:]:
-                    if os.path.isfile(fn):
-                        mpwriter.append(open(fn, "rb"))
-                    else:
-                        return web.Response(status=404)
-                return web.Response(body=mpwriter, status=200)
-        else:
+        if not rmsg[0]:  # user allowed access - returns [true, fname0, fname1,...]
             return web.Response(status=409)  # someone else has that image
+        with MultipartWriter("images") as mpwriter:
+            for fn in rmsg[1:]:
+                if os.path.isfile(fn):
+                    mpwriter.append(open(fn, "rb"))
+                else:
+                    return web.Response(status=404)
+            return web.Response(body=mpwriter, status=200)
 
     # @routes.get("/ID/tasks/available")
     async def IDgetNextTask(self, request):
