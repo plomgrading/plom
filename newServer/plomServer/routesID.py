@@ -152,7 +152,7 @@ class IDHandler:
             return web.Response(status=204)  # that task already taken.
 
     # @routes.put("/ID/tasks/{task}")
-    @tokenauth(fields=["sid", "sname"])
+    @tokenauth(fields=["user", "sid", "sname"])
     def IDreturnIDdTask(self, data):
         testNumber = request.match_info["task"]
         rmsg = self.server.IDreturnIDdTask(
