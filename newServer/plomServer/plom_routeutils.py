@@ -43,7 +43,7 @@ def tokenauth(origf=None, *, fields=[]):
     """
 
     def _decorate(f):
-        # @functools.wrap(f)
+        @functools.wraps(f)
         async def wrapped(zelf, request):
             print("INFO: {}: {} {}".format(f.__name__, request.method, request.rel_url))
             data = await request.json()
