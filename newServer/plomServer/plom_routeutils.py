@@ -30,6 +30,7 @@ def tokenauth(f):
     must not contain any other fields: if this is not so, see the
     `@tokenauth_validfields` decorator.
     """
+
     @functools.wraps(f)
     async def wrapped(zelf, request):
         print("INFO: {}: {} {}".format(f.__name__, request.method, request.rel_url))
@@ -40,6 +41,7 @@ def tokenauth(f):
             return web.Response(status=401)
         print('DEBUG: authenticated "{}" via token'.format(data["user"]))
         return f(zelf)
+
     return wrapped
 
 
@@ -60,6 +62,7 @@ def tokenauth_validfields(fields):
     original request (don't try to take data from it again!)
     """
     fields.extend(["user", "token"])
+
     def _decorate(f):
         @functools.wraps(f)
         async def wrapped(zelf, request):
@@ -72,5 +75,7 @@ def tokenauth_validfields(fields):
                 return web.Response(status=401)
             print('DEBUG: authenticated "{}" via token'.format(data["user"]))
             return f(zelf, data, request)
+
         return wrapped
+
     return _decorate
