@@ -28,7 +28,7 @@ def tokenauth(origf=None, *, fields=[]):
     You can instead use `@tokenauth(fields=<list>)` to pass any fields
     that must be present in the request.
 
-    Implemenation is complicated (because `fields` is optional)[1].
+    Implemenation is complicated [because `fields` is optional][1].
 
     References
     ----------
