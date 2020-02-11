@@ -1074,9 +1074,7 @@ class MarkerClient(QWidget):
 
         if not (0 <= gr and gr <= self.maxScore):
             msg = ErrorMessage(
-                "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(
-                    self.annotator.score
-                )
+                "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(gr)
             )
             msg.exec_()
             # TODO: what do do here?  revert?
