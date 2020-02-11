@@ -1,6 +1,6 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import os
-from plomServer.plom_routeutils import tokenauth
+from plomServer.plom_routeutils import tokenauth, tokenauth_validfields
 from plomServer.plom_routeutils import validFields
 
 
@@ -10,12 +10,12 @@ class IDHandler:
 
     # @routes.get("/ID/progress")
     @tokenauth
-    def IDprogressCount(self, data):
+    def IDprogressCount(self):
         return web.json_response(self.server.IDprogressCount(), status=200)
 
     # @routes.get("/ID/classlist")
     @tokenauth
-    def IDgetClasslist(self, data):
+    def IDgetClasslist(self):
         if os.path.isfile("../resources/classlist.csv"):
             return web.FileResponse("../resources/classlist.csv", status=200)
         else:
@@ -100,7 +100,7 @@ class IDHandler:
             return web.Response(status=204)  # that task already taken.
 
     # @routes.put("/ID/tasks/{task}")
-    @tokenauth(fields=["user", "sid", "sname"])
+    @tokenauth_validfields(["user", "sid", "sname"])
     def IDreturnIDdTask(self, data):
         testNumber = request.match_info["task"]
         rmsg = self.server.IDreturnIDdTask(

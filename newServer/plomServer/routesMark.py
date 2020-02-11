@@ -1,6 +1,6 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import os
-from plomServer.plom_routeutils import tokenauth
+from plomServer.plom_routeutils import tokenauth, tokenauth_validfields
 from plomServer.plom_routeutils import validFields
 
 
@@ -9,7 +9,7 @@ class MarkHandler:
         self.server = plomServer
 
     # @routes.get("/MK/maxMark")
-    @tokenauth(fields=["q", "v"])
+    @tokenauth_validfields(["q", "v"])
     def MgetQuestionMark(self, data):
         rmsg = self.server.MgetQuestionMax(data["q"], data["v"])
         if rmsg[0]:
@@ -28,7 +28,7 @@ class MarkHandler:
             )
 
     # @routes.get("/MK/progress")
-    @tokenauth(fields=["q", "v"])
+    @tokenauth_validfields(["q", "v"])
     def MprogressCount(self, data):
         return web.json_response(
             self.server.MprogressCount(data["q"], data["v"]), status=200
@@ -248,7 +248,7 @@ class MarkHandler:
 
     # @routes.get("/MK/allMax")
     @tokenauth
-    def MgetAllMax(self, data):
+    def MgetAllMax(self):
         return web.json_response(self.server.MgetAllMax(), status=200)
 
     # @routes.patch("/MK/review")
