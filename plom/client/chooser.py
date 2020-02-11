@@ -10,6 +10,9 @@ __license__ = "AGPL-3.0-or-later"
 
 import toml
 import os
+import datetime
+import logging
+
 from PyQt5.QtCore import pyqtSlot, QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
@@ -71,11 +74,18 @@ class Chooser(QDialog):
         self.APIVersion = Plom_API_Version
         super(Chooser, self).__init__()
         self.parent = Qapp
-        print(
-            "Plom Client {} (communicates with api {})".format(
-                __version__, self.APIVersion
-            )
+        #now = datetime.datetime.now().isoformat('T', 'seconds')
+        logging.basicConfig(
+            format="%(asctime)s %(levelname)s %(message)s",
+            level=logging.DEBUG,
+            datefmt="%m-%d %I:%M:%S",
+            #filename="plom-{}.log".format(now),
         )
+        s = "Plom Client {} (communicates with api {})".format(
+            __version__, self.APIVersion
+        )
+        print(s)
+        logging.info(s)
         # runit = either marker or identifier clients.
         self.runIt = None
 
