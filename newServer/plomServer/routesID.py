@@ -44,13 +44,8 @@ class IDHandler:
         return web.json_response(self.server.IDgetDoneTasks(data["user"]), status=200)
 
     # @routes.get("/ID/images/{test}")
-    async def IDgetImage(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @tokenauth_validfields(["user"])
+    def IDgetImage(self, data, request):
         test = request.match_info["test"]
         rmsg = self.server.IDgetImage(data["user"], test)
         if rmsg[0]:  # user allowed access - returns [true, fname0, fname1,...]

@@ -53,10 +53,11 @@ def tokenauth_validfields(fields):
     -------
     ```
     @tokenauth_validfields(["bar", "baz"])
-    def foo(self, data):
+    def foo(self, data, request):
         return ...
     ```
-    Here `data` is the result of `request.json()`.
+    Here `data` is the result of `request.json()` and `request` is the
+    original request (don't try to take data from it again!)
     """
     fields.extend(["user", "token"])
     def _decorate(f):

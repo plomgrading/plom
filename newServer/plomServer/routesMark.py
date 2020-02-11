@@ -10,7 +10,7 @@ class MarkHandler:
 
     # @routes.get("/MK/maxMark")
     @tokenauth_validfields(["q", "v"])
-    def MgetQuestionMark(self, data):
+    def MgetQuestionMark(self, data, request):
         rmsg = self.server.MgetQuestionMax(data["q"], data["v"])
         if rmsg[0]:
             return web.json_response(rmsg[1], status=200)
@@ -29,7 +29,7 @@ class MarkHandler:
 
     # @routes.get("/MK/progress")
     @tokenauth_validfields(["q", "v"])
-    def MprogressCount(self, data):
+    def MprogressCount(self, data, request):
         return web.json_response(
             self.server.MprogressCount(data["q"], data["v"]), status=200
         )
@@ -77,13 +77,8 @@ class MarkHandler:
             return web.Response(status=406)  # a latex error
 
     # @routes.patch("/MK/tasks/{task}")
-    async def MclaimThisTask(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @tokenauth_validfields(["user"])
+    def MclaimThisTask(self, data, request):
         task = request.match_info["task"]
         rmesg = self.server.MclaimThisTask(data["user"], task)
         if rmesg[0]:  # return [True, tag, filename1, filename2,...]
