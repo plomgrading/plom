@@ -20,12 +20,9 @@ import urllib3
 import time
 import threading
 import hashlib
+import logging
 
-# from http.client import HTTPConnection
-# import logging
-#
-# logging.basicConfig()  # you need to initialize logging, otherwise you will not see anything from requests
-# logging.getLogger().setLevel(logging.DEBUG)
+log = logging.getLogger("messenger")
 # requests_log = logging.getLogger("urllib3")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
@@ -1116,9 +1113,9 @@ def startMessenger(altServer=None, port=None):
         message_port = port
 
     if session:
-        print("Messenger: already have an requests-session")
+        log.debug("already have an requests-session")
     else:
-        print("Messenger: starting a new requests-session")
+        log.debug("starting a new requests-session")
         session = requests.Session()
         # TODO - UBC wifi is crappy: have some sort of "hey you've retried
         # nn times already, are you sure you want to keep retrying" message.
@@ -1140,6 +1137,6 @@ def stopMessenger():
     """Stop the messenger"""
     global session
     if session:
-        print("Messenger: stopping requests-session")
+        log.debug("stopping requests-session")
         session.close()
         session = None
