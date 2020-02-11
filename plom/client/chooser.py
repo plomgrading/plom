@@ -56,6 +56,7 @@ def readLastTime():
 
 def writeLastTime():
     """Write the options to the config file."""
+    logging.info("Saving config file: plomConfig.toml")
     try:
         with open("plomConfig.toml", "w") as fh:
             fh.write(toml.dumps(lastTime))
@@ -136,9 +137,11 @@ class Chooser(QDialog):
         # check password at least 4 char long
         pwd = self.ui.passwordLE.text()
         if len(pwd) < 4:
+            logging.warning("Password too short")
             return
         server = self.ui.serverLE.text()
         if not server:
+            logging.warning("No server URI")
             return
         mport = self.ui.mportSB.value()
         # save those settings
@@ -293,6 +296,7 @@ class Chooser(QDialog):
     def getInfo(self):
         server = self.ui.serverLE.text()
         if not server:
+            logging.warning("No server URI")
             return
         mport = self.ui.mportSB.value()
         # save those settings
