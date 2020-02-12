@@ -60,17 +60,16 @@ def buildCoverPage(n):
     Script needs [TestNumber, Name, ID,]
     and then for each group [group, version, mark, maxPossibleMark]
     """
-    arg = []
     sname = examsIDed[n][2]
     sid = examsIDed[n][1]
-    arg.append(int(n))
-    arg.append(sname)
-    arg.append(int(sid))
+    arg = []
     # Each entry in exam scores is a list of [group, version, mark]
     for x in examScores[n]:
         arg.append([x[0], x[1], x[2], spec.Marks[x[0]]])
     # return string of the command.
-    return 'python3 coverPageBuilder.py "{}"\n'.format(arg)
+    escname = shlex.quote(sname)
+    esclist = shlex.quote(str(arg))
+    return "python3 coverPageBuilder.py {} {} {} {}\n".format(n, escname, sid, esclist)
 
 
 # read test specification
