@@ -1,5 +1,5 @@
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
@@ -37,23 +37,28 @@ def findCorner(qr, dim):
     return NS + EW
 
 
-# Take the png file name as argument.
-imgName = sys.argv[1]
-# First check if the image is in portrait or landscape by aspect ratio
-# Should be in portrait.
-cmd = ["identify", "-format", "%[fx:w/h]", imgName]
-ratio = subprocess.check_output(cmd).decode().rstrip()
-if float(ratio) > 1:  # landscape
-    subprocess.check_call(["mogrify", "-quiet", "-rotate", "90", imgName])
+def QRextract(imgName):
+    # First check if the image is in portrait or landscape by aspect ratio
+    # Should be in portrait.
+    cmd = ["identify", "-format", "%[fx:w/h]", imgName]
+    ratio = subprocess.check_output(cmd).decode().rstrip()
+    if float(ratio) > 1:  # landscape
+        subprocess.check_call(["mogrify", "-quiet", "-rotate", "90", imgName])
 
-cornerQR = {"NW": [], "NE": [], "SW": [], "SE": []}
+    cornerQR = {"NW": [], "NE": [], "SW": [], "SE": []}
 
-img = Image.open(imgName)
-qrlist = decode(img)
-for qr in qrlist:
-    cnr = findCorner(qr, img.size)
-    if cnr in ["NW", "NE", "SW", "SE"]:
-        cornerQR[cnr].append(qr.data.decode())
+    img = Image.open(imgName)
+    qrlist = decode(img)
+    for qr in qrlist:
+        cnr = findCorner(qr, img.size)
+        if cnr in ["NW", "NE", "SW", "SE"]:
+            cornerQR[cnr].append(qr.data.decode())
 
-with open("{}.qr".format(imgName), "w") as fh:
-    json.dump(cornerQR, fh)
+    with open("{}.qr".format(imgName), "w") as fh:
+        json.dump(cornerQR, fh)
+
+
+if __name__ == "__main__":
+    # Take the png file name as argument.
+    imgName = sys.argv[1]
+    QRextract(imgName)
