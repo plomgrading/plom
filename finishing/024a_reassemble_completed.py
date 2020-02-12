@@ -103,16 +103,9 @@ if __name__ == "__main__":
     numberOfTests = spec["numberOfTests"]
     numberOfQuestions = spec["numberOfQuestions"]
 
-    try:
-        os.mkdir("coverPages")
-    except FileExistsError:
-        pass
-
     outDir = "reassembled"
-    try:
-        os.mkdir(outDir)
-    except FileExistsError:
-        pass
+    os.makedirs("coverPages", exist_ok=True)
+    os.makedirs(outDir, exist_ok=True)
 
     completedTests = finishMessenger.RgetCompletions()
     # dict key = testnumber, then list id'd, tot'd, #q's marked
