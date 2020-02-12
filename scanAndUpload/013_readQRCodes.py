@@ -54,7 +54,7 @@ def decodeQRs_loop():
     #if (not os.path.exists(fname + ".qr")) or os.path.getsize(fname + ".qr") == 0:
     #        QRextract(fname)
 
-    results = [pool.apply(QRextract, args=(x,)) for x in glob.glob("*.png")]
+    results = pool.map(QRextract, glob.glob("*.png"))
 
     # serial
     #for x in glob.glob("*.png"):
