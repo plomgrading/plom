@@ -37,6 +37,32 @@ def buildDirectories():
             pass
 
 
+def decodeQRs_loop():
+    """Go into pageimage directory
+    Look at all the png files
+    If their QRcodes have not been successfully decoded previously
+    then decode them using another script.
+    The results are stored in blah.png.qr files.
+    """
+    os.chdir("./pageImages/")
+
+    from fasterQRExtract import QRextract
+    import multiprocessing as mp
+    pool = mp.Pool(processes=8)
+
+    # TODO: this not dealt with yet.
+    #if (not os.path.exists(fname + ".qr")) or os.path.getsize(fname + ".qr") == 0:
+    #        QRextract(fname)
+
+    results = [pool.apply(QRextract, args=(x,)) for x in glob.glob("*.png")]
+
+    # serial
+    #for x in glob.glob("*.png"):
+    #    QRextract(x)
+
+    os.chdir("../")
+
+
 def decodeQRs():
     """Go into pageimage directory
     Look at all the png files
@@ -353,7 +379,7 @@ if __name__ == "__main__":
     scanMessenger.stopMessenger()
 
     buildDirectories()
-    decodeQRs()
+    decodeQRs_loop()
     checkQRsValid()
     validateQRsAgainstSpec(spec)
     moveScansIntoPlace()
