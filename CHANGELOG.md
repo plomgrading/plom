@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added expert option to disable background upload/download.
 
 ### Changed
+* Client: if there are annotations, confirm before closing/cancelling
 
 ### Fixed
 

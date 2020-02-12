@@ -86,8 +86,10 @@ class Annotator(QWidget):
     and assigning marks.
     """
 
-    ann_finished_accept = pyqtSignal(str, list)
-    ann_finished_reject = pyqtSignal(str, list)
+    ann_upload = pyqtSignal(str, list)
+    ann_done_wants_more = pyqtSignal(str)
+    ann_done_closing = pyqtSignal(str)
+    ann_done_reject = pyqtSignal(str)
 
     def __init__(
         self,
@@ -102,8 +104,6 @@ class Annotator(QWidget):
         plomDict=None,
     ):
         super(Annotator, self).__init__()
-        # Temporary hack: None means "just close", can be True/False
-        self._relaunch = None
         # remember parent
         self.parent = parent
         # Grab filename of image, max mark, mark style (total/up/down)
@@ -614,30 +614,39 @@ class Annotator(QWidget):
         self.setIcon(self.ui.undoButton, "undo", "{}/undo.svg".format(base_path))
         self.setIcon(self.ui.zoomButton, "zoom", "{}/zoom.svg".format(base_path))
 
-    # The 'endAndRelaunch' slot - this saves the comment-list, closes
-    # the annotator. The marker window then asks the server for the next
-    # unmarked image and fires up the annotator on that.
     @pyqtSlot()
-    def endAndRelaunch(self):
-        self._relaunch = True
-        self.commentW.saveComments()
-        self.close()
+    def saveAndGetNext(self):
+        """Save the current annotations, and move on to the next paper.
+
+        This saves the comment-list, closes the annotator. The marker
+        window then asks the server for the next unmarked image and
+        fires up a new annotator on that.
+        """
+        if self.saveAnnotations():
+            self._priv_force_close = True
+            self._priv_relaunch = True
+            self.close()
+
+    @pyqtSlot()
+    def saveAndClose(self):
+        """Save the current annotations, and then close."""
+        if self.saveAnnotations():
+            self._priv_force_close = True
+            self._priv_relaunch = False
+            self.close()
 
     def setMiscShortCuts(self):
-        # Set alt-enter or alt-return to end the annotator
-        # The key-shortcuts fire a signal, which triggers the
-        # endAndRelaunch slot.
-        self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
-        self.endShortCut.activated.connect(self.endAndRelaunch)
-        self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
-        self.endShortCutb.activated.connect(self.endAndRelaunch)
         # shortcuts for next paper
+        self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
+        self.endShortCut.activated.connect(self.saveAndGetNext)
+        self.endShortCutb = QShortcut(QKeySequence("Alt+Return"), self)
+        self.endShortCutb.activated.connect(self.saveAndGetNext)
         self.endShortCutc = QShortcut(QKeySequence("Ctrl+n"), self)
-        self.endShortCutc.activated.connect(self.endAndRelaunch)
+        self.endShortCutc.activated.connect(self.saveAndGetNext)
         self.endShortCutd = QShortcut(QKeySequence("Ctrl+b"), self)
-        self.endShortCutd.activated.connect(self.endAndRelaunch)
+        self.endShortCutd.activated.connect(self.saveAndGetNext)
         self.cancelShortCut = QShortcut(QKeySequence("Ctrl+c"), self)
-        self.cancelShortCut.activated.connect(self.cleanUpCancel)
+        self.cancelShortCut.activated.connect(self.close)
         # shortcuts for zoom-states
         self.zoomToggleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
         self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
@@ -746,7 +755,7 @@ class Annotator(QWidget):
         self.ui.viewButton.clicked.connect(self.viewWholePaper)
 
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
-        self.ui.cancelButton.clicked.connect(self.cleanUpCancel)
+        self.ui.cancelButton.clicked.connect(self.close)
         # Hide button connects to the toggleTools command
         self.ui.hideButton.clicked.connect(self.toggleTools)
 
@@ -766,10 +775,8 @@ class Annotator(QWidget):
         self.ui.commentDownButton.clicked.connect(self.commentW.nextItem)
         self.ui.commentDownButton.clicked.connect(self.commentW.CL.handleClick)
         # Connect up the finishing buttons
-        self.ui.finishedButton.clicked.connect(self.commentW.saveComments)
-        self.ui.finishedButton.clicked.connect(self.closeEventRelaunch)
-        self.ui.finishNoRelaunchButton.clicked.connect(self.commentW.saveComments)
-        self.ui.finishNoRelaunchButton.clicked.connect(self.closeEventNoRelaunch)
+        self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
+        self.ui.finishNoRelaunchButton.clicked.connect(self.saveAndClose)
 
     def handleComment(self, dlt_txt):
         """When the user selects a comment this function will be triggered.
@@ -841,14 +848,6 @@ class Annotator(QWidget):
         self.markHandler.repaint()
         # update the delta-mark-menu
         self.updateDeltaMarkMenu()
-
-    def closeEventRelaunch(self):
-        self._relaunch = True
-        self.close()
-
-    def closeEventNoRelaunch(self):
-        self._relaunch = False
-        self.close()
 
     def loadWindowSettings(self):
         # load the window geometry, else maximise.
@@ -940,58 +939,23 @@ class Annotator(QWidget):
         else:
             self.parent.annotatorSettings["compact"] = True
 
-    def cleanUpCancel(self):
-        # clean up after a testview
-        self.doneViewingPaper()
-        self._relaunch = None
-        self.close()
+    def saveAnnotations(self):
+        """Try to save the annotations and signal Marker to upload them.
 
-    def closeEvent(self, ce):
-        """Deal with various cases of window trying to close.
-
-        There are various things that can happen.
-          * User closes window via titlebar close icon (or alt-f4 or...)
-          * User clicks "Cancel"
-          * User clicks "Next"
-          * User clicks "Done"
-
-        Currently all these events end up here and we choose what to do.
-
-        Window close or Cancel are currently treated the same way:
-        discard all annotations.
-
-        TODO: perhaps window close should ask "are you sure?" if there are
-        annotations.  Maybe "Cancel" button should as well.
-
-        Next and Done save the annotations and differ in whether the
-        Annotator should "relaunch" or not.
+        There are various sanity checks and user interaction to be
+        done.  Return `False` if user cancels.  Return `True` if we
+        should move on (for example, to close the Annotator).
 
         Be careful of a score of 0 - when mark total or mark up.
         Be careful of max-score when marking down.
         In either case - get user to confirm the score before closing.
         Also confirm various "not enough feedback" cases.
         """
-        relaunch = self._relaunch
-        # Save the current window settings for next time annotator is launched
-        self.saveWindowSettings()
-        # User might ignore close (eg, say no to dialog) so preemptively reset
-        # to ensure next Cancel/window-close is interpreted as cancel.
-        self._relaunch = None
-
-        # Cancel button/titlebar close: reject (do not save result, do not relaunch)
-        if relaunch is None:
-            print("ann emitting signal: Reject/Cancel")
-            self.ann_finished_reject.emit(self.tgv, [])
-            # clean up after a testview
-            self.doneViewingPaper()
-            ce.accept()
-            return
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
             msg = ErrorMessage("Please make an annotation, even if there is no answer.")
             msg.exec_()
-            ce.ignore()
-            return
+            return False
 
         # check if comments have been left.
         if self.scene.countComments() == 0:
@@ -1001,17 +965,16 @@ class Annotator(QWidget):
                     "You have given no comments.\n Please confirm."
                 )
                 if msg.exec_() == QMessageBox.No:
-                    ce.ignore()
-                    return
+                    return False
                 if msg.cb.checkState() == Qt.Checked:
+                    # Note: these are only saved if we ultimately accept
                     self.commentWarn = False
 
         # if marking total or up, be careful when giving 0-marks
         if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
             msg = SimpleMessageCheckBox("You have given 0 - please confirm")
             if msg.exec_() == QMessageBox.No:
-                ce.ignore()
-                return
+                return False
             if msg.cb.checkState() == Qt.Checked:
                 self.markWarn = False
         # if marking down, be careful of giving max-marks
@@ -1024,14 +987,17 @@ class Annotator(QWidget):
                 "You have given {} - please confirm".format(self.maxMark)
             )
             if msg.exec_() == QMessageBox.No:
-                ce.ignore()
-                return
+                return False
             if msg.cb.checkState() == Qt.Checked:
                 self.markWarn = False
 
-        if not self.checkAllObjectsInside():
-            ce.ignore()
-            return
+        if not self.scene.checkAllObjectsInside():
+            msg = SimpleMessage(
+                "Some annotations are outside the page image. "
+                "Do you really want to finish?"
+            )
+            if msg.exec_() == QMessageBox.No:
+                return False
 
         # clean up after a testview
         self.doneViewingPaper()
@@ -1042,38 +1008,68 @@ class Annotator(QWidget):
         self.saveMarkerComments()
         # Pickle the scene as a plom-file
         self.pickleIt()
-        # Save the window settings
+
+        # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
-        # Close the annotator(QDialog) with an 'accept'.
-        print("ann emitting signal: ACCEPT")
+        self.commentW.saveComments()
+
+        print("ann emitting accept signal")
         tim = self.timer.elapsed() // 1000
         # some things here hardcoded elsewhere too, and up in marker
         plomFile = self.imageFile[:-3] + "plom"
         commentFile = self.imageFile[:-3] + "json"
         stuff = [
             self.score,
-            relaunch,
             tim,
             self.paperdir,
             self.imageFile,
             plomFile,
             commentFile,
         ]
-        self.ann_finished_accept.emit(self.tgv, stuff)
-        ce.accept()
+        self.ann_upload.emit(self.tgv, stuff)
+        return True
 
-    def checkAllObjectsInside(self):
-        if self.scene.checkAllObjectsInside():
-            return True
-        else:
-            # some objects outside the image, check if user really wants to finish
+    def closeEvent(self, ce):
+        """Deal with various cases of window trying to close.
+
+        There are various things that can happen.
+          * User closes window via titlebar close icon (or alt-f4 or...)
+          * User clicks "Cancel"
+          * User clicks "Next"
+          * User clicks "Done"
+
+        Currently all these events end up here, eventually.
+
+        Window close or Cancel are currently treated the same way:
+        discard all annotations.
+        """
+        # weird hacking to force close if we came from saving.
+        # Appropriate signals have already been sent so just close
+        force = getattr(self, "_priv_force_close", False)
+        if force:
+            if self._priv_relaunch:
+                print("ann emitting the WantsMore signal")
+                self.ann_done_wants_more.emit(self.tgv)
+            else:
+                print("ann emitting the closing signal")
+                self.ann_done_closing.emit(self.tgv)
+            ce.accept()
+            return
+
+        # We are here b/c of cancel button, titlebar close, or related
+        if self.scene.areThereAnnotations():
             msg = SimpleMessage(
-                "Some annotations outside pageimage. Do you really want to finish?"
+                "There are annotations on the page.\n\n"
+                "Do you want to discard them and close the annotator?"
             )
             if msg.exec_() == QMessageBox.No:
-                return False
-            else:
-                return True
+                ce.ignore()
+                return
+        print("ann emitting reject/cancel signal, discarding, and closing")
+        self.ann_done_reject.emit(self.tgv)
+        # clean up after a testview
+        self.doneViewingPaper()
+        ce.accept()
 
     def getComments(self):
         return self.scene.getComments()

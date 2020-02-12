@@ -929,8 +929,10 @@ class MarkerClient(QWidget):
             plomDict=pdict,
         )
         # run the annotator
-        annotator.ann_finished_accept.connect(self.callbackAnnIsDoneAccept)
-        annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
+        annotator.ann_upload.connect(self.callbackAnnWantsUsToUpload)
+        annotator.ann_done_wants_more.connect(self.callbackAnnDoneWantsMore)
+        annotator.ann_done_closing.connect(self.callbackAnnDoneClosing)
+        annotator.ann_done_reject.connect(self.callbackAnnDoneCancel)
         self.setEnabled(False)
         annotator.show()
         # We had (have?) a bug: when `annotator` var goes out of scope, it can
@@ -1022,19 +1024,39 @@ class MarkerClient(QWidget):
             self.startTheAnnotator(tgv[1:], paperdir, aname, None)
         # we started the annotator, we'll get a signal back when its done
 
-    # when the annotator is done, we end up here...
-    @pyqtSlot(str, list)
-    def callbackAnnIsDoneCancel(self, tgv, stuff):
+    # when Annotator done, we come back to one of these callbackAnnDone* fcns
+    @pyqtSlot(str)
+    def callbackAnnDoneCancel(self, tgv):
         self.setEnabled(True)
-        assert not stuff  # currently nothing given back on cancel
         prevState = self.exM.getStatusByTGV("t" + tgv).split(":")[-1]
         # TODO: could also erase the paperdir
         self.exM.setStatusByTGV("t" + tgv, prevState)
 
-    # ... or here
+    @pyqtSlot(str)
+    def callbackAnnDoneClosing(self, tgv):
+        self.setEnabled(True)
+        # update image view, if the row we just finished is selected
+        prIndex = self.ui.tableView.selectedIndexes()
+        if len(prIndex) == 0:
+            return
+        pr = prIndex[0].row()
+        if self.prxM.getPrefix(pr) == "t" + tgv:
+            self.updateImage(pr)
+
+    @pyqtSlot(str)
+    def callbackAnnDoneWantsMore(self, tgv):
+        print("Debug: Marker is back and Ann Wants More")
+        if not self.allowBackgroundOps:
+            self.requestNext()
+        if self.moveToNextUnmarkedTest("t" + tgv):
+            self.annotateTest()
+        else:
+            print("Debug: either we are done or problems downloading...")
+            self.setEnabled(True)
+
     @pyqtSlot(str, list)
-    def callbackAnnIsDoneAccept(self, tgv, stuff):
-        gr, launchAgain, mtime, paperdir, aname, pname, cname = stuff
+    def callbackAnnWantsUsToUpload(self, tgv, stuff):
+        gr, mtime, paperdir, aname, pname, cname = stuff
 
         if not (0 <= gr and gr <= self.maxScore):
             msg = ErrorMessage(
@@ -1042,7 +1064,6 @@ class MarkerClient(QWidget):
             )
             msg.exec_()
             # TODO: what do do here?  revert?
-            self.setEnabled(True)
             return
 
         # Copy the mark, annotated filename and the markingtime into the table
@@ -1070,24 +1091,6 @@ class MarkerClient(QWidget):
                 failcallback=self.backgroundUploadFailed,
                 successcallback=self.backgroundUploadFinished
             )
-
-        if launchAgain is False:
-            self.setEnabled(True)
-            # update image view, if the row we just finished is selected
-            prIndex = self.ui.tableView.selectedIndexes()
-            if len(prIndex) == 0:
-                return
-            pr = prIndex[0].row()
-            if self.prxM.getPrefix(pr) == "t" + tgv:
-                self.updateImage(pr)
-            return
-        if not self.allowBackgroundOps:
-            self.requestNext()
-        if self.moveToNextUnmarkedTest("t" + tgv):
-            self.annotateTest()
-        else:
-            print("Debug: either we are done or problems downloading...")
-            self.setEnabled(True)
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
