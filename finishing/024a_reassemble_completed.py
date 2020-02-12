@@ -16,6 +16,7 @@ import subprocess
 
 # ----------------------
 
+from coverPageBuilder import makeCover
 import finishMessenger
 from plom_exceptions import *
 
@@ -35,9 +36,7 @@ def buildCoverPage(shortName, outDir, t, maxMarks):
     for qvm in cpi[1:]:
         # append quads of [q,v,m,Max]
         arg.append([qvm[0], qvm[1], qvm[2], maxMarks[str(qvm[0])]])
-    escname = shlex.quote(sname)
-    esclist = shlex.quote(str(arg))
-    return "python3 coverPageBuilder.py {} {} {} {}\n".format(int(t), escname, sid, esclist)
+    makeCover(int(t), sname, sid, arg)
 
 
 def reassembleTestCMD(shortName, outDir, t, sid):
@@ -114,17 +113,13 @@ if __name__ == "__main__":
     maxMarks = finishMessenger.MgetAllMax()
 
     # Build coverpages
-    with open("./commandlist.txt", "w") as fh:
-        for t in completedTests:
-            if (
-                completedTests[t][0] == True
-                and completedTests[t][2] == numberOfQuestions
-            ):
-                fh.write(buildCoverPage(shortName, outDir, t, maxMarks))
-    # pipe the commandlist into gnu-parallel
-    cmd = shlex.split("parallel --bar -a commandlist.txt")
-    subprocess.run(cmd, check=True)
-    os.unlink("commandlist.txt")
+    # Doing this in a loop approx 4 times faster than using GNU Parallel
+    for t in completedTests:
+        if (
+            completedTests[t][0] == True
+            and completedTests[t][2] == numberOfQuestions
+        ):
+            buildCoverPage(shortName, outDir, t, maxMarks)
 
     # now reassemble papers
     with open("./commandlist.txt", "w") as fh:
