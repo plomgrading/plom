@@ -8,10 +8,15 @@ from weasyprint import HTML, CSS
 
 # Take the arguments from the commandline.
 # The args should be
-# [TestNumber, Name, ID,]
-# and then for each group [group, version, mark, maxPossibleMark]
-# all as a list.
-arg = eval(sys.argv[1])
+#   TestNumber, 'The Name', ID
+# and then for a list of lists of 4 numbers for each group:
+#   '[[group, version, mark, maxPossibleMark], [...], [...]]'
+arg = []
+arg.append(sys.argv[1])
+arg.append(sys.argv[2])
+arg.append(sys.argv[3])
+arg.extend(eval(sys.argv[4]))
+
 # A simple CSS header to style the cover page nicely.
 css = CSS(
     string="""

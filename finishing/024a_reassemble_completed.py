@@ -30,14 +30,14 @@ def buildCoverPage(shortName, outDir, t, maxMarks):
     cpi = finishMessenger.RgetCoverPageInfo(t)
     sid = cpi[0][0]
     sname = cpi[0][1]
-    # The args should be
-    # [TestNumber, Name, ID,]
-    # and then for each Q [q, v, mark, maxPossibleMark]
-    arg = [int(t), sid, sname]
+    # for each Q [q, v, mark, maxPossibleMark]
+    arg = []
     for qvm in cpi[1:]:
         # append quads of [q,v,m,Max]
         arg.append([qvm[0], qvm[1], qvm[2], maxMarks[str(qvm[0])]])
-    return 'python3 coverPageBuilder.py "{}"\n'.format(arg)
+    escname = shlex.quote(sname)
+    esclist = shlex.quote(str(arg))
+    return "python3 coverPageBuilder.py {} {} {} {}\n".format(int(t), escname, sid, esclist)
 
 
 def reassembleTestCMD(shortName, outDir, t, sid):
