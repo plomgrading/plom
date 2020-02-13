@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Client: if there are annotations, confirm before closing/cancelling
 
 ### Fixed
+* In some regrade cases, delta-comments did not apply correctly.
 
 
 ## [0.3.0] - 2020-02-10
