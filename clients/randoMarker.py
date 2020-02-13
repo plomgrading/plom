@@ -275,7 +275,7 @@ def startMarking(question, version):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Run the marker-server test script. No arguments = run as normal."
+        description="Perform marking tasks randomly, generally for testing."
     )
 
     parser.add_argument("-w", "--password", type=str)
