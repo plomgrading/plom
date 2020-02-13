@@ -16,7 +16,7 @@ def validFields(d, fields):
 
 
 # TODO: try to work the @routes decorator in too
-def tokenauth(f):
+def authByToken(f):
     """Decorator for authentication by token, logging and field validation.
 
     This deals with authenication and logging so your function doesn't
@@ -28,7 +28,7 @@ def tokenauth(f):
 
     The request input must contain the fields "user" and "token".  It
     must not contain any other fields: if this is not so, see the
-    `@tokenauth_validfields` decorator.
+    `@authByToken_validFields` decorator.
     """
 
     @functools.wraps(f)
@@ -45,7 +45,7 @@ def tokenauth(f):
     return wrapped
 
 
-def tokenauth_validfields(fields):
+def authByToken_validFields(fields):
     """Decorator for field validation, authentication by token, and logging.
 
     Return `web.Response(status=400)` if the input request does not
@@ -54,7 +54,7 @@ def tokenauth_validfields(fields):
     Example
     -------
     ```
-    @tokenauth_validfields(["bar", "baz"])
+    @authByToken_validFields(["bar", "baz"])
     def foo(self, data, request):
         return ...
     ```

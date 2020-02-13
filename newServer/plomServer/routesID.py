@@ -1,6 +1,6 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import os
-from plomServer.plom_routeutils import tokenauth, tokenauth_validfields
+from plomServer.plom_routeutils import authByToken, authByToken_validFields
 from plomServer.plom_routeutils import validFields
 
 
@@ -9,12 +9,12 @@ class IDHandler:
         self.server = plomServer
 
     # @routes.get("/ID/progress")
-    @tokenauth
+    @authByToken
     def IDprogressCount(self):
         return web.json_response(self.server.IDprogressCount(), status=200)
 
     # @routes.get("/ID/classlist")
-    @tokenauth
+    @authByToken
     def IDgetClasslist(self):
         if os.path.isfile("../resources/classlist.csv"):
             return web.FileResponse("../resources/classlist.csv", status=200)
@@ -44,7 +44,7 @@ class IDHandler:
         return web.json_response(self.server.IDgetDoneTasks(data["user"]), status=200)
 
     # @routes.get("/ID/images/{test}")
-    @tokenauth_validfields(["user"])
+    @authByToken_validFields(["user"])
     def IDgetImage(self, data, request):
         test = request.match_info["test"]
         rmsg = self.server.IDgetImage(data["user"], test)
@@ -94,7 +94,7 @@ class IDHandler:
             return web.Response(status=204)  # that task already taken.
 
     # @routes.put("/ID/tasks/{task}")
-    @tokenauth_validfields(["user", "sid", "sname"])
+    @authByToken_validFields(["user", "sid", "sname"])
     def IDreturnIDdTask(self, data):
         testNumber = request.match_info["task"]
         rmsg = self.server.IDreturnIDdTask(

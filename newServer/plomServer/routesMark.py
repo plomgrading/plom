@@ -1,6 +1,6 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import os
-from plomServer.plom_routeutils import tokenauth, tokenauth_validfields
+from plomServer.plom_routeutils import authByToken, authByToken_validFields
 from plomServer.plom_routeutils import validFields
 
 
@@ -9,7 +9,7 @@ class MarkHandler:
         self.server = plomServer
 
     # @routes.get("/MK/maxMark")
-    @tokenauth_validfields(["q", "v"])
+    @authByToken_validFields(["q", "v"])
     def MgetQuestionMark(self, data, request):
         rmsg = self.server.MgetQuestionMax(data["q"], data["v"])
         if rmsg[0]:
@@ -28,7 +28,7 @@ class MarkHandler:
             )
 
     # @routes.get("/MK/progress")
-    @tokenauth_validfields(["q", "v"])
+    @authByToken_validFields(["q", "v"])
     def MprogressCount(self, data, request):
         return web.json_response(
             self.server.MprogressCount(data["q"], data["v"]), status=200
@@ -77,7 +77,7 @@ class MarkHandler:
             return web.Response(status=406)  # a latex error
 
     # @routes.patch("/MK/tasks/{task}")
-    @tokenauth_validfields(["user"])
+    @authByToken_validFields(["user"])
     def MclaimThisTask(self, data, request):
         task = request.match_info["task"]
         rmesg = self.server.MclaimThisTask(data["user"], task)
@@ -242,7 +242,7 @@ class MarkHandler:
             return web.Response(status=404)  # not found
 
     # @routes.get("/MK/allMax")
-    @tokenauth
+    @authByToken
     def MgetAllMax(self):
         return web.json_response(self.server.MgetAllMax(), status=200)
 
