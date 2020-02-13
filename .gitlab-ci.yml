@@ -122,6 +122,9 @@ job serverStarts:
     # echo "The 07 script should fail as we did not grade and ID"
     # if (python3 07_check_completed.py); then false; else true; fi
     - popd
+    - pushd clients
+    - ./autoMarker.py -s localhost -p 41984 -u anne -w enna
+    - popd
 
 job backgroundTest:
   before_script:
