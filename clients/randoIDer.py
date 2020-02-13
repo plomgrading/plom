@@ -78,9 +78,15 @@ def startIdentifying():
             # task already taken.
             continue
 
+        n = 0
         while True:
+            n += 1
             try:
+                if n > 5 and random.random() < 0.5:
+                    # after a while, choose non-ascii 50% of time
+                    c = idList[14]
                 c = random.choice(idList)
+                print(c)
                 messenger.IDreturnIDdTask(task, c[0], c[1])
                 break
             except PlomBenignException as e:
