@@ -3,10 +3,14 @@ import os
 from plomServer.plom_routeutils import authByToken, authByToken_validFields
 from plomServer.plom_routeutils import validFields
 
+# I couldn't make this work with the auth deco
+# routes = web.RouteTableDef()
+
 
 class IDHandler:
     def __init__(self, plomServer):
         self.server = plomServer
+        # self.local_route_table = routes
 
     # @routes.get("/ID/progress")
     @authByToken
@@ -171,6 +175,8 @@ class IDHandler:
             return web.Response(status=404)
 
     def setUpRoutes(self, router):
+        # router.add_routes(self.local_route_table)
+        # But see above: doesn't work with auth deco
         router.add_get("/ID/progress", self.IDprogressCount)
         router.add_get("/ID/classlist", self.IDgetClasslist)
         router.add_get("/ID/predictions", self.IDgetPredictions)
