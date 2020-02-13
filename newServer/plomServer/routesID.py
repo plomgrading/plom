@@ -26,15 +26,12 @@ class IDHandler:
             return web.Response(status=404)
 
     # @routes.get("/ID/predictions")
-    async def IDgetPredictions(self, request):
-        data = await request.json()
-        if self.server.validate(data["user"], data["token"]):
-            if os.path.isfile("../resources/predictionlist.csv"):
-                return web.FileResponse("../resources/predictionlist.csv", status=200)
-            else:
-                return web.Response(status=404)
+    @authByToken
+    def IDgetPredictions(self):
+        if os.path.isfile("../resources/predictionlist.csv"):
+            return web.FileResponse("../resources/predictionlist.csv", status=200)
         else:
-            return web.Response(status=401)
+            return web.Response(status=404)
 
     # @routes.get("/ID/tasks/complete")
     async def IDgetDoneTasks(self, request):
