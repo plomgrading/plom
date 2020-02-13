@@ -38,6 +38,10 @@ def findCorner(qr, dim):
 
 
 def QRextract(imgName):
+    qrname = "{}.qr".format(imgName)
+    if os.path.exists(qrname) and os.path.getsize(qrname) != 0:
+        return
+
     # First check if the image is in portrait or landscape by aspect ratio
     # Should be in portrait.
     cmd = ["identify", "-format", "%[fx:w/h]", imgName]
@@ -54,7 +58,7 @@ def QRextract(imgName):
         if cnr in ["NW", "NE", "SW", "SE"]:
             cornerQR[cnr].append(qr.data.decode())
 
-    with open("{}.qr".format(imgName), "w") as fh:
+    with open(qrname, "w") as fh:
         json.dump(cornerQR, fh)
 
 

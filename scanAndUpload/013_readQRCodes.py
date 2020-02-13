@@ -14,6 +14,7 @@ import os
 import shutil
 import subprocess
 import toml
+import multiprocessing as mp
 
 from tpv_utils import (
     parseTPV,
@@ -24,6 +25,7 @@ from tpv_utils import (
 )
 import scanMessenger
 from plom_exceptions import *
+from fasterQRExtract import QRextract
 
 
 def buildDirectories():
@@ -37,57 +39,21 @@ def buildDirectories():
             pass
 
 
-def decodeQRs_loop():
-    """Go into pageimage directory
-    Look at all the png files
+def decodeQRs():
+    """Find all png files in pageImages dir and decode their QR codes.
+
     If their QRcodes have not been successfully decoded previously
-    then decode them using another script.
-    The results are stored in blah.png.qr files.
+    then decode them.  The results are stored in blah.png.qr files.
     """
     os.chdir("./pageImages/")
-
-    from fasterQRExtract import QRextract
-    import multiprocessing as mp
-    pool = mp.Pool(processes=8)
-
-    # TODO: this not dealt with yet.
-    #if (not os.path.exists(fname + ".qr")) or os.path.getsize(fname + ".qr") == 0:
-    #        QRextract(fname)
+    # TODO: processes=8?  Seems its chosen automatically (?)
+    pool = mp.Pool()
 
     results = pool.map(QRextract, glob.glob("*.png"))
+    # This does the same as the following serial loop but in parallel
+    # for x in glob.glob("*.png"):
+    #     QRextract(x)
 
-    # serial
-    #for x in glob.glob("*.png"):
-    #    QRextract(x)
-
-    os.chdir("../")
-
-
-def decodeQRs():
-    """Go into pageimage directory
-    Look at all the png files
-    If their QRcodes have not been successfully decoded previously
-    then decode them using another script.
-    The results are stored in blah.png.qr files.
-    Commands piped through gnu-parallel.
-    """
-    os.chdir("./pageImages/")
-    fh = open("commandlist.txt", "w")
-    for fname in glob.glob("*.png"):
-        # If the .qr file does not exist, or if it has length 0
-        # then run extract/orient script on that png.
-        if (not os.path.exists(fname + ".qr")) or os.path.getsize(fname + ".qr") == 0:
-            fh.write("python3 ../fasterQRExtract.py {}\n".format(fname))
-    fh.close()
-    # run those commands through gnu-parallel then delete.
-    subprocess.run(
-        ["parallel", "--bar", "-a", "commandlist.txt"],
-        stderr=subprocess.STDOUT,
-        shell=False,
-        check=True,
-    )
-    # os.system("parallel --bar < commandlist.txt")
-    os.unlink("commandlist.txt")
     os.chdir("../")
 
 
@@ -379,7 +345,7 @@ if __name__ == "__main__":
     scanMessenger.stopMessenger()
 
     buildDirectories()
-    decodeQRs_loop()
+    decodeQRs()
     checkQRsValid()
     validateQRsAgainstSpec(spec)
     moveScansIntoPlace()
