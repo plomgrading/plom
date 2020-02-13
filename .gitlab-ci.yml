@@ -95,11 +95,6 @@ job serverStarts:
     - curl https://www.math.ubc.ca/~cbm/tmp/testThis.pdf > scanAndUpload/scannedExams/foo.pdf
     - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
     - ls resources
-    - ls scanAndUpload/scannedExams
-    - pushd scanAndUpload
-    - python3 011_startHere.py
-    - python3 012_scansToImages.py
-    - popd
     - pushd newServer
     - ip addr
     - python3 newServer.py &
@@ -110,8 +105,10 @@ job serverStarts:
     - curl -k https://localhost:41984/Version
     - popd
     - pushd scanAndUpload
-    - python3 013_readQRCodes.py -s localhost -p 41984 -w rennacs
-    - python3 014_sendPagesToServer.py -s localhost -p 41984 -w rennacs
+    - ./011_startHere.py
+    - ./012_scansToImages.py
+    - ./013_readQRCodes.py -s localhost -p 41984 -w rennacs
+    - ./014_sendPagesToServer.py -s localhost -p 41984 -w rennacs
     - popd
     ## not supposed to be done yet
     - pushd finishing
