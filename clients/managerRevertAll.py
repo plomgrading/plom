@@ -85,7 +85,6 @@ if __name__ == "__main__":
     )
 
     parser.add_argument("-w", "--password", type=str)
-    parser.add_argument("-u", "--user", type=str)
     parser.add_argument(
         "-s", "--server", help="Which server to contact (must specify port as well)."
     )
@@ -102,11 +101,7 @@ if __name__ == "__main__":
         print("You must specify both the server and the port. Quitting.")
         exit(1)
 
-    # If user not specified then default to scanner
-    if args.user is None:
-        user = "scanner"
-    else:
-        user = args.user
+    user = "manager"
 
     # get the password if not specified
     if args.password is None:
