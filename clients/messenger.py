@@ -280,7 +280,7 @@ def IDrequestClasslist():
         # throw errors when response code != 200.
         response.raise_for_status()
         # convert the content of the response to a textfile for identifier
-        classlist = TextIOWrapper(BytesIO(response.content))
+        classlist = TextIOWrapper(BytesIO(response.content), encoding="UTF-8")
     except requests.HTTPError as e:
         if response.status_code == 401:
             raise PlomSeriousException("You are not authenticated.") from None
