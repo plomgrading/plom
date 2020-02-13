@@ -215,7 +215,6 @@ class PageScene(QGraphicsScene):
         self.markDelta = "0"
         self.commentText = ""
         self.commentDelta = "0"
-        self.legalDelta = True
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
         # set up "k out of n" where k=current score, n = max score.
@@ -375,7 +374,7 @@ class PageScene(QGraphicsScene):
         # create a delta-object with a different offset.
         # else just place the comment.
 
-        if self.commentDelta == "." or not self.legalDelta:
+        if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
             # make sure blurb has text interaction turned off
             prevState = self.blurb.textInteractionFlags()
             self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
@@ -429,7 +428,7 @@ class PageScene(QGraphicsScene):
         ):
             command = CommandQMark(self, pt)
         else:
-            if self.legalDelta:
+            if self.isLegalDelta(self.markDelta):
                 command = CommandDelta(self, pt, self.markDelta, self.fontSize)
             else:
                 # don't do anything
@@ -1152,12 +1151,6 @@ class PageScene(QGraphicsScene):
         else:
             self.score += deltaMark
         self.scoreBox.changeScore(self.score)
-        # now look ahead to see what happens if we redo this delta
-        lookingAhead = self.score + deltaMark
-        if lookingAhead < 0 or lookingAhead > self.maxMark:
-            self.legalDelta = False
-        else:
-            self.legalDelta = True
         self.parent.changeMark(self.score)
         # if we are in comment mode then the comment might need updating
         if self.mode == "comment":
@@ -1166,12 +1159,8 @@ class PageScene(QGraphicsScene):
             )
 
     def changeTheDelta(self, newDelta, annotatorUpdate=False):
+        legalDelta = self.isLegalDelta(newDelta)
         self.markDelta = newDelta
-        lookingAhead = self.score + int(self.markDelta)
-        if lookingAhead < 0 or lookingAhead > self.maxMark:
-            self.legalDelta = False
-        else:
-            self.legalDelta = True
 
         if annotatorUpdate:
             gpt = QCursor.pos()  # global mouse pos
@@ -1184,13 +1173,22 @@ class PageScene(QGraphicsScene):
         self.updateGhost(self.commentDelta, self.commentText)
         self.exposeGhost()
 
-        return self.legalDelta
+        return legalDelta
 
     def undo(self):
         self.undoStack.undo()
 
     def redo(self):
         self.undoStack.redo()
+
+    def isLegalDelta(self, n):
+        """Would this (signed) delta push us below 0 or above maxMark?"""
+        # TODO: try, return True if not int?
+        n = int(n)
+        lookingAhead = self.score + n
+        if lookingAhead < 0 or lookingAhead > self.maxMark:
+            return False
+        return True
 
     def changeTheComment(self, delta, text, annotatorUpdate=True):
         # if this update comes from the annotator, then
@@ -1208,12 +1206,6 @@ class PageScene(QGraphicsScene):
         # delta calcs, the ghost item knows how to handle it.
         if delta != ".":
             id = int(delta)
-            # check if this new delta is "legal" - this handles mark-out-of range issues
-            lookingAhead = self.score + id
-            if lookingAhead < 0 or lookingAhead > self.maxMark:
-                self.legalDelta = False
-            else:
-                self.legalDelta = True
 
             # we pass the actual comment-delta to this (though it might be suppressed in the commentlistwidget).. so we have to
             # check the the delta is legal for the marking style.
