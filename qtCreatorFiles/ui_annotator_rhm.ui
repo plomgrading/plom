@@ -167,7 +167,7 @@
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,0">
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,0,0">
       <property name="spacing">
        <number>2</number>
       </property>
@@ -282,8 +282,8 @@
          <property name="spacing">
           <number>3</number>
          </property>
-         <item row="0" column="1">
-          <widget class="QToolButton" name="redoButton">
+         <item row="0" column="5">
+          <widget class="QToolButton" name="penButton">
            <property name="minimumSize">
             <size>
              <width>45</width>
@@ -291,14 +291,14 @@
             </size>
            </property>
            <property name="toolTip">
-            <string>press w</string>
+            <string>press t</string>
            </property>
            <property name="text">
             <string>...</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="4">
+         <item row="1" column="5">
           <widget class="QToolButton" name="textButton">
            <property name="minimumSize">
             <size>
@@ -314,160 +314,7 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
-          <widget class="QToolButton" name="moveButton">
-           <property name="minimumSize">
-            <size>
-             <width>45</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>press z</string>
-           </property>
-           <property name="text">
-            <string>...</string>
-           </property>
-          </widget>
-         </item>
          <item row="2" column="4">
-          <widget class="QToolButton" name="lineButton">
-           <property name="minimumSize">
-            <size>
-             <width>45</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>press b</string>
-           </property>
-           <property name="text">
-            <string>...</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QToolButton" name="tickButton">
-           <property name="minimumSize">
-            <size>
-             <width>45</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>press d</string>
-           </property>
-           <property name="toolTipDuration">
-            <number>-1</number>
-           </property>
-           <property name="text">
-            <string>...</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="3">
-          <widget class="QToolButton" name="commentUpButton">
-           <property name="minimumSize">
-            <size>
-             <width>45</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>press r</string>
-           </property>
-           <property name="toolTipDuration">
-            <number>-1</number>
-           </property>
-           <property name="text">
-            <string>...</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QToolButton" name="crossButton">
-           <property name="minimumSize">
-            <size>
-             <width>45</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>press e</string>
-           </property>
-           <property name="text">
-            <string>...</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="3">
-          <widget class="QToolButton" name="commentButton">
-           <property name="minimumSize">
-            <size>
-             <width>45</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>press f</string>
-           </property>
-           <property name="toolTipDuration">
-            <number>-1</number>
-           </property>
-           <property name="text">
-            <string>...</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QToolButton" name="zoomButton">
-           <property name="minimumSize">
-            <size>
-             <width>45</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>press a</string>
-           </property>
-           <property name="text">
-            <string>...</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QToolButton" name="undoButton">
-           <property name="minimumSize">
-            <size>
-             <width>45</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>press s</string>
-           </property>
-           <property name="text">
-            <string>...</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QToolButton" name="deleteButton">
-           <property name="minimumSize">
-            <size>
-             <width>45</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>press x</string>
-           </property>
-           <property name="text">
-            <string>...</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="3">
           <widget class="QToolButton" name="commentDownButton">
            <property name="minimumSize">
             <size>
@@ -486,8 +333,8 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="2">
-          <widget class="QToolButton" name="boxButton">
+         <item row="0" column="4">
+          <widget class="QToolButton" name="commentUpButton">
            <property name="minimumSize">
             <size>
              <width>45</width>
@@ -495,7 +342,10 @@
             </size>
            </property>
            <property name="toolTip">
-            <string>press c</string>
+            <string>press r</string>
+           </property>
+           <property name="toolTipDuration">
+            <number>-1</number>
            </property>
            <property name="text">
             <string>...</string>
@@ -518,8 +368,8 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="4">
-          <widget class="QToolButton" name="penButton">
+         <item row="2" column="5">
+          <widget class="QToolButton" name="lineButton">
            <property name="minimumSize">
             <size>
              <width>45</width>
@@ -527,7 +377,157 @@
             </size>
            </property>
            <property name="toolTip">
-            <string>press t</string>
+            <string>press b</string>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="3">
+          <widget class="QToolButton" name="tickButton">
+           <property name="minimumSize">
+            <size>
+             <width>45</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>press d</string>
+           </property>
+           <property name="toolTipDuration">
+            <number>-1</number>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QToolButton" name="moveButton">
+           <property name="minimumSize">
+            <size>
+             <width>45</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>press z</string>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QToolButton" name="redoButton">
+           <property name="minimumSize">
+            <size>
+             <width>45</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>press w</string>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QToolButton" name="zoomButton">
+           <property name="minimumSize">
+            <size>
+             <width>45</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>press a</string>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QToolButton" name="deleteButton">
+           <property name="minimumSize">
+            <size>
+             <width>45</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>press x</string>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="4">
+          <widget class="QToolButton" name="commentButton">
+           <property name="minimumSize">
+            <size>
+             <width>45</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>press f</string>
+           </property>
+           <property name="toolTipDuration">
+            <number>-1</number>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QToolButton" name="undoButton">
+           <property name="minimumSize">
+            <size>
+             <width>45</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>press s</string>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QToolButton" name="crossButton">
+           <property name="minimumSize">
+            <size>
+             <width>45</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>press e</string>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="3">
+          <widget class="QToolButton" name="boxButton">
+           <property name="minimumSize">
+            <size>
+             <width>45</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>press c</string>
            </property>
            <property name="text">
             <string>...</string>
@@ -617,6 +617,43 @@
          </property>
         </layout>
        </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="noAnswerButton">
+          <property name="text">
+           <string>No answer given</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QFrame" name="frame_3">

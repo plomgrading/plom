@@ -214,7 +214,7 @@ class ArrowItem(QGraphicsPathItem):
         Some manipulations required to draw the arrow head.
         """
         super(ArrowItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.ptf = ptf
@@ -351,7 +351,7 @@ class ArrowDoubleItem(QGraphicsPathItem):
         Some manipulations required to draw the arrow head.
         """
         super(ArrowDoubleItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.ptf = ptf
@@ -480,7 +480,7 @@ class BoxItem(QGraphicsRectItem):
     # Very similar to the arrowitem but simpler to draw the box.
     def __init__(self, rect, parent=None):
         super(BoxItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.rect = rect
@@ -573,7 +573,7 @@ class CrossItem(QGraphicsPathItem):
     # Very similar to the arrowitem.
     def __init__(self, pt, parent=None):
         super(CrossItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.pt = pt
@@ -639,7 +639,7 @@ class DeltaItem(QGraphicsTextItem):
     # Similar to textitem
     def __init__(self, pt, delta, fontsize=10):
         super(DeltaItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.animator = [self]
         self.animateFlag = False
         self.thick = 2
@@ -774,7 +774,7 @@ class EllipseItem(QGraphicsEllipseItem):
     # Very similar to the arrowitem
     def __init__(self, rect, parent=None):
         super(EllipseItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.rect = rect
@@ -867,7 +867,7 @@ class HighLightItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but much simpler
     def __init__(self, path, parent=None):
         super(HighLightItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.path = path
@@ -964,7 +964,7 @@ class LineItem(QGraphicsLineItem):
     # Very similar to the arrowitem, but no arrowhead
     def __init__(self, pti, ptf, parent=None):
         super(LineItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.pti = pti
@@ -1053,7 +1053,7 @@ class PenItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but much simpler
     def __init__(self, path, parent=None):
         super(PenItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.path = path
@@ -1148,7 +1148,7 @@ class PenArrowItemObject(QGraphicsObject):
 class PenArrowItem(QGraphicsItemGroup):
     def __init__(self, path, parent=None):
         super(PenArrowItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.pi = QGraphicsPathItem()
         self.path = path
         self.animator = [parent]
@@ -1294,7 +1294,7 @@ class QMarkItem(QGraphicsPathItem):
     # Very similar to the arrowitem, but careful drawing the "?"
     def __init__(self, pt, parent=None):
         super(QMarkItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.pt = pt
@@ -1387,7 +1387,7 @@ class TickItem(QGraphicsPathItem):
     # Very similar to the arrowitem
     def __init__(self, pt, parent=None):
         super(TickItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.pt = pt
@@ -1459,7 +1459,7 @@ class TextItem(QGraphicsTextItem):
     # Shift-return ends the editor
     def __init__(self, parent, fontsize=10):
         super(TextItem, self).__init__()
-        self.pickleable = True
+        self.saveable = True
         self.animator = [self]
         self.animateFlag = False
         self.parent = parent
@@ -1646,9 +1646,9 @@ class GroupDTItem(QGraphicsItemGroup):
         self.blurb = blurb  # is a textitem already
         self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
         # Set the underlying delta and text to not pickle - since the GDTI will handle that
-        self.pickleable = True
-        self.di.pickleable = False
-        self.blurb.pickleable = False
+        self.saveable = True
+        self.di.saveable = False
+        self.blurb.saveable = False
 
         # check if needs tex->latex
         self.blurb.textToPng()

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator_lhm.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.2
+# Created by: PyQt5 UI code generator 5.12.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -185,6 +185,16 @@ class Ui_annotator_lhm(object):
         self.markGrid.setSpacing(3)
         self.markGrid.setObjectName("markGrid")
         self.verticalLayout.addWidget(self.markBox)
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
+        self.pushButton = QtWidgets.QPushButton(self.hideableBox)
+        self.pushButton.setObjectName("pushButton")
+        self.horizontalLayout.addWidget(self.pushButton)
+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem1)
+        self.verticalLayout.addLayout(self.horizontalLayout)
         self.frame_31 = QtWidgets.QFrame(self.hideableBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -336,6 +346,7 @@ class Ui_annotator_lhm(object):
         self.keyHelpButton.setText(_translate("annotator_lhm", "Key help"))
         self.viewButton.setToolTip(_translate("annotator_lhm", "Show entire paper in new window"))
         self.viewButton.setText(_translate("annotator_lhm", "View all"))
+        self.pushButton.setText(_translate("annotator_lhm", "No answer given"))
         self.finishedButton.setToolTip(_translate("annotator_lhm", "Save and move to the next paper"))
         self.finishedButton.setText(_translate("annotator_lhm", "Next"))
         self.finishNoRelaunchButton.setToolTip(_translate("annotator_lhm", "Save and return to marker window"))
