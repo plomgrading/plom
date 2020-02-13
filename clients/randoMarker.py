@@ -266,7 +266,7 @@ def startMarking(question, version):
         except PlomBenignException as e:
             print("Another user got that task. Trying again.")
         except PlomSeriousException as e:
-            print("EEK.", e)
+            print("EEK, some error: {}".format(e))
         except Exception as e:
             print("Nasty error trying to return task {} = {}".format(task, e))
 
@@ -307,7 +307,7 @@ if __name__ == "__main__":
         try:
             pwd = getpass.getpass("Please enter the '{}' password:".format(user))
         except Exception as error:
-            print("Password entry error = ", error)
+            print("Password entry error: {}".format(error))
             exit(1)
     else:
         pwd = args.password
@@ -329,7 +329,7 @@ if __name__ == "__main__":
     try:
         spec = messenger.getInfoGeneral()
     except Exception as e:
-        print("Error getting general info from server = ", e)
+        print("Error getting general info from server: {}".format(e))
         exit(1)
 
     print(spec)
@@ -354,7 +354,7 @@ if __name__ == "__main__":
             try:
                 startMarking(q, v)
             except Exception as e:
-                print("Error marking q.v {}.{} = {}".format(q, v, e))
+                print("Error marking q.v {}.{}: {}".format(q, v, e))
                 exit(1)
 
     if vdisplay:
@@ -364,7 +364,7 @@ if __name__ == "__main__":
         messenger.closeUser()
         messenger.stopMessenger()
     except Exception as e:
-        print("Closing down error = ", e)
+        print("Closing down error: {}".format(e))
         exit(1)
 
     exit(0)

@@ -123,7 +123,7 @@ if __name__ == "__main__":
         try:
             pwd = getpass.getpass("Please enter the '{}' password:".format(user))
         except Exception as error:
-            print("Password entry error = ", error)
+            print("Password entry error: {}".format(error))
             exit(1)
     else:
         pwd = args.password
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     try:
         spec = messenger.getInfoGeneral()
     except Exception as e:
-        print("Error getting general info from server = ", e)
+        print("Error getting general info from server: {}".format(e))
         exit(1)
 
     print(spec)
@@ -153,14 +153,14 @@ if __name__ == "__main__":
     try:
         startIdentifying()
     except Exception as e:
-        print("Error identifying papers = {}".format(e))
+        print("Error identifying papers: {}".format(e))
         exit(1)
 
     try:
         messenger.closeUser()
         messenger.stopMessenger()
     except Exception as e:
-        print("Closing down error = ", e)
+        print("Closing down error: {}".format(e))
         exit(1)
 
     exit(0)
