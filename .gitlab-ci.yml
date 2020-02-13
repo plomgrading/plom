@@ -109,10 +109,9 @@ job serverStarts:
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
     - popd
+    ## not supposed to be done yet
     - pushd finishing
-    # TODO: fix this up
-    # echo "The 07 script should fail as we did not grade and ID"
-    # if (python3 07_check_completed.py); then false; else true; fi
+    - if (./022_check_completed.py -s localhost -p 41984 -w hackhack); then false; else true; fi
     - popd
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
