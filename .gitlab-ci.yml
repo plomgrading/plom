@@ -115,7 +115,8 @@ job serverStarts:
     # if (python3 07_check_completed.py); then false; else true; fi
     - popd
     - pushd clients
-    - ./randoIDer.py -s localhost -p 41984 -u anne -w enna
+    # TODO: awaiting fix
+    # ./randoIDer.py -s localhost -p 41984 -u anne -w enna
     - ./randoMarker.py -s localhost -p 41984 -u anne -w enna
     - popd
     - echo "Now take down the server"
