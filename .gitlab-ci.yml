@@ -118,6 +118,10 @@ job serverStarts:
     # ./randoIDer.py -s localhost -p 41984 -u anne -w enna
     - ./randoMarker.py -s localhost -p 41984 -u anne -w enna
     - popd
+    ## TODO: once randoIDer is fixed above, invert this
+    - pushd finishing
+    - if (./022_check_completed.py -s localhost -p 41984 -w hackhack); then false; else true; fi
+    - popd
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
