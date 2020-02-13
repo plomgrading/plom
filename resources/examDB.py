@@ -1255,9 +1255,12 @@ class PlomDB:
         try:
             with plomdb.atomic():
                 tref = Test.get_or_none(Test.testNumber == testNumber)
-                if tref.scanned == False:
+                if tref is None:
                     return [False]
                 iref = tref.iddata[0]
+                # verify the id-group has been scanned - it should always be scanned.if we get here.
+                if iref.group.scanned == False:
+                    return [False]
                 if iref.username != "" and iref.username != username:
                     # has been claimed by someone else.
                     return [False]
@@ -1342,9 +1345,13 @@ class PlomDB:
         try:
             with plomdb.atomic():
                 tref = Test.get_or_none(Test.testNumber == testNumber)
-                if tref.scanned == False:
+                if tref is None:
                     return [False, False]
                 iref = tref.iddata[0]
+                # verify the id-group has been scanned - it should always be scanned.if we get here.
+                if iref.group.scanned == False:
+                    return [False, False]
+
                 if iref.username != username:
                     # that belongs to someone else - this is a serious error
                     return [False, False]

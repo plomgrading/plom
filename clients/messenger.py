@@ -1104,9 +1104,16 @@ def MrequestWholePaper(code):
 session = None
 
 
-def startMessenger():
+def startMessenger(altServer=None, altPort=None):
     """Start the messenger session"""
     global session
+    global server
+    global message_port
+    if altServer is not None:
+        server = altServer
+    if altPort is not None:
+        message_port = altPort
+
     if session:
         print("Messenger: already have an requests-session")
     else:
