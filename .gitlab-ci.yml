@@ -116,7 +116,7 @@ job serverStarts:
     - popd
     - pushd clients
     # TODO: awaiting fix
-    - # ./randoIDer.py -s localhost -p 41984 -u anne -w enna
+    # ./randoIDer.py -s localhost -p 41984 -u anne -w enna
     - Xvfb :99 &
     - DISPLAY=:99 ./randoMarker.py -s localhost -p 41984 -u anne -w enna
     - popd
