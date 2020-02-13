@@ -99,7 +99,7 @@ class IDHandler:
 
     # @routes.put("/ID/tasks/{task}")
     @authByToken_validFields(["user", "sid", "sname"])
-    def IDreturnIDdTask(self, data):
+    def IDreturnIDdTask(self, data, request):
         testNumber = request.match_info["task"]
         rmsg = self.server.IDreturnIDdTask(
             data["user"], testNumber, data["sid"], data["sname"]
