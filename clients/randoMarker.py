@@ -304,11 +304,7 @@ if __name__ == "__main__":
 
     # get the password if not specified
     if args.password is None:
-        try:
-            pwd = getpass.getpass("Please enter the '{}' password:".format(user))
-        except Exception as error:
-            print("Password entry error: {}".format(error))
-            exit(1)
+        pwd = getpass.getpass("Please enter the '{}' password:".format(user))
     else:
         pwd = args.password
 
@@ -326,11 +322,7 @@ if __name__ == "__main__":
         messenger.clearAuthorisation(user, pwd)
         exit(1)
 
-    try:
-        spec = messenger.getInfoGeneral()
-    except Exception as e:
-        print("Error getting general info from server: {}".format(e))
-        exit(1)
+    spec = messenger.getInfoGeneral()
 
     print(spec)
 
@@ -360,11 +352,7 @@ if __name__ == "__main__":
     if vdisplay:
         vdisplay.stop()
 
-    try:
-        messenger.closeUser()
-        messenger.stopMessenger()
-    except Exception as e:
-        print("Closing down error: {}".format(e))
-        exit(1)
+    messenger.closeUser()
+    messenger.stopMessenger()
 
     exit(0)
