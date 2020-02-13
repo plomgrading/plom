@@ -116,9 +116,9 @@ job serverStarts:
     - popd
     - pushd clients
     # TODO: awaiting fix
-    - # ./autoIDer.py -s localhost -p 41984 -u anne -w enna
+    - # ./randoIDer.py -s localhost -p 41984 -u anne -w enna
     - Xvfb :99 &
-    - DISPLAY=:99 ./autoMarker.py -s localhost -p 41984 -u anne -w enna
+    - DISPLAY=:99 ./randoMarker.py -s localhost -p 41984 -u anne -w enna
     - popd
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
