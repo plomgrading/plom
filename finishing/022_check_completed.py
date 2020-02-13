@@ -96,7 +96,7 @@ if __name__ == "__main__":
             "    e.g., on another computer?\n\n"
             "In order to force-logout the existing authorisation run the 029_clearManagerLogin.py script."
         )
-        exit(0)
+        exit(1)
 
     spec = finishMessenger.getInfoGeneral()
     numberOfTests = spec["numberOfTests"]
