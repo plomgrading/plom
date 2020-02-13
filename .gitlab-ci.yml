@@ -120,11 +120,13 @@ job serverStarts:
     - Xvfb :99 &
     - DISPLAY=:99 ./randoMarker.py -s localhost -p 41984 -u anne -w enna
     - popd
-    - echo "Now take down the server"
+    - echo "Now take down the server and virtual framebuffer"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
     - kill %1
-    - sleep 2
+    - sleep 1
+    - kill %2
+    - sleep 1
     - echo "Should be no jobs and this should succeed"
     - jobs -l
 
