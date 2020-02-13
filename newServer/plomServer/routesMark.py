@@ -290,18 +290,19 @@ class MarkHandler:
     # @routes.patch("/MK/revert/{task}")
     async def MrevertTask(self, request):
         data = await request.json()
-        task = request.match_info["task"]
-
-        if self.server.validate(data["user"], data["token"]):
-            rval = self.server.MrevertTask(data["user"], task)
-            if rval[0]:
-                return web.Response(status=200)
-            elif rval[1] == "NAC":  # nothing to be done here.
-                return web.Response(status=204)
-            else:  # cannot find that task
-                return web.Response(status=404)
-        else:
+        if not validFields(data, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
+
+        task = request.match_info["task"]
+        rval = self.server.MrevertTask(data["user"], task)
+        if rval[0]:
+            return web.Response(status=200)
+        elif rval[1] == "NAC":  # nothing to be done here.
+            return web.Response(status=204)
+        else:  # cannot find that task
+            return web.Response(status=404)
 
     def setUpRoutes(self, router):
         router.add_get("/MK/allMax", self.MgetAllMax)

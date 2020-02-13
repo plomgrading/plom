@@ -62,15 +62,16 @@ class ReportHandler:
     # @routes.get("/REP/questionUserProgress")
     async def RgetQuestionUserProgress(self, request):
         data = await request.json()
-        if (
-            self.server.validate(data["user"], data["token"])
-            and data["user"] == "manager"
-        ):
-            return web.json_response(
-                self.server.RgetQuestionUserProgress(data["q"], data["v"]), status=200
-            )
-        else:
+        if not validFields(d, ["user", "token", "q", "v"]):
+            return web.Response(status=400)
+        if not self.server.validate(d["user"], d["token"]):
             return web.Response(status=401)
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+
+        return web.json_response(
+            self.server.RgetQuestionUserProgress(data["q"], data["v"]), status=200
+        )
 
     # @routes.get("/REP/markHistogram")
     async def RgetMarkHistogram(self, request):
