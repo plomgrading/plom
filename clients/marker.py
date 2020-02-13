@@ -153,51 +153,20 @@ class BackgroundUploader(QThread):
             from queue import Empty as EmptyQueueException
 
             try:
-                (
-                    code,
-                    gr,
-                    aname,
-                    pname,
-                    cname,
-                    mtime,
-                    qu,
-                    ver,
-                    tags,
-                ) = self.q.get_nowait()
+                data = self.q.get_nowait()
             except EmptyQueueException:
                 return
+            code = data[0]  # TODO: remove so that queue needs no knowledge of args
             print(
                 "Debug: upQ (thread {}): popped code {} from queue, uploading".format(
                     str(threading.get_ident()), code
                 )
             )
-            # do name sanity check here
-            if not (
-                code.startswith("m")
-                and os.path.basename(aname) == "G{}.png".format(code[1:])
-                and os.path.basename(pname) == "G{}.plom".format(code[1:])
-                and os.path.basename(cname) == "G{}.json".format(code[1:])
-            ):
-                raise PlomSeriousException(
-                    "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
-                        fname, pname, cname
-                    )
-                )
-            try:
-                msg = messenger.MreturnMarkedTask(
-                    code, qu, ver, gr, mtime, tags, aname, pname, cname
-                )
-            except Exception as ex:
-                # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
-                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-                errmsg = template.format(type(ex).__name__, ex.args)
-                self.uploadFail.emit(code, errmsg)
-                return
-
-            numdone = msg[0]
-            numtotal = msg[1]
-            print("Debug: upQ: emitting SUCCESS signal for {}".format(code))
-            self.uploadSuccess.emit(code, numdone, numtotal)
+            upload(
+                *data,
+                failcallback=self.uploadFail.emit,
+                successcallback=self.uploadSuccess.emit
+            )
 
         print("upQ.run: thread " + str(threading.get_ident()))
         self.q = queue.Queue()
@@ -208,6 +177,38 @@ class BackgroundUploader(QThread):
         timer.timeout.connect(tryToUpload)
         timer.start(250)
         self.exec_()
+
+
+def upload(
+    code, gr, filenames, mtime, qu, ver, tags, failcallback=None, successcallback=None,
+):
+    # do name sanity checks here
+    aname, pname, cname = filenames
+    if not (
+        code.startswith("m")
+        and os.path.basename(aname) == "G{}.png".format(code[1:])
+        and os.path.basename(pname) == "G{}.plom".format(code[1:])
+        and os.path.basename(cname) == "G{}.json".format(code[1:])
+    ):
+        raise PlomSeriousException(
+            "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
+                fname, pname, cname
+            )
+        )
+    try:
+        msg = messenger.MreturnMarkedTask(
+            code, qu, ver, gr, mtime, tags, aname, pname, cname
+        )
+    except Exception as ex:
+        # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
+        template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+        errmsg = template.format(type(ex).__name__, ex.args)
+        failcallback(code, errmsg)
+        return
+
+    numdone = msg[0]
+    numtotal = msg[1]
+    successcallback(code, numdone, numtotal)
 
 
 class Testquestion:
@@ -553,14 +554,17 @@ class MarkerClient(QWidget):
         # create a settings variable for saving annotator window settings
         # initially all settings are "none"
         self.annotatorSettings = defaultdict(lambda: None)
-        # if lasttime["POWERUSER"] is true, the disable warnings in annotator
-        if "POWERUSER" in lastTime:
-            if lastTime["POWERUSER"]:
-                self.annotatorSettings["markWarnings"] = False
-                self.annotatorSettings["commentWarnings"] = False
-                self.viewAll = True
-        else:
-            self.viewAll = False
+
+        self.canViewAll = False
+        if lastTime.get("POWERUSER", False):
+            # if POWERUSER is set, disable warnings and allow viewing all
+            self.annotatorSettings["markWarnings"] = False
+            self.annotatorSettings["commentWarnings"] = False
+            self.canViewAll = True
+        self.allowBackgroundOps = True
+        # unless special key was set:
+        if lastTime.get("FOREGROUND", False):
+            self.allowBackgroundOps = False
 
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
@@ -617,6 +621,9 @@ class MarkerClient(QWidget):
             self.throwSeriousError(err)
             return
 
+        # Keep the original format around in case we need to change it
+        self.ui._cachedProgressFormatStr = self.ui.mProgressBar.format()
+
         # Update counts
         self.updateProgress()
         # Connect the view **after** list updated.
@@ -625,6 +632,7 @@ class MarkerClient(QWidget):
         # A simple cache table for latex'd comments
         self.commentCache = {}
         self.backgroundDownloader = None
+        self.backgroundUploader = None
         # Get a question to mark from the server
         self.requestNext()
         # reset the view so whole exam shown.
@@ -632,10 +640,11 @@ class MarkerClient(QWidget):
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
         print("Debug: Marker main thread: " + str(threading.get_ident()))
-        self.backgroundUploader = BackgroundUploader()
-        self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
-        self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
-        self.backgroundUploader.start()
+        if self.allowBackgroundOps:
+            self.backgroundUploader = BackgroundUploader()
+            self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
+            self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
+            self.backgroundUploader.start()
         # Now cache latex for comments:
         self.cacheLatexComments()
 
@@ -749,7 +758,10 @@ class MarkerClient(QWidget):
             self.ui.mProgressBar.setFormat("No papers to mark")
             ErrorMessage("No papers to mark.").exec_()
         else:
-            self.ui.mProgressBar.resetFormat()
+            # self.ui.mProgressBar.resetFormat()
+            # self.ui.mProgressBar.setFormat("%v of %m")
+            # Neither is quite right, instead, we cache on init
+            self.ui.mProgressBar.setFormat(self.ui._cachedProgressFormatStr)
         self.ui.mProgressBar.setMaximum(m)
         self.ui.mProgressBar.setValue(v)
 
@@ -896,13 +908,15 @@ class MarkerClient(QWidget):
         else:
             return
         task = self.prxM.getPrefix(pr)
-        # If test is untouched or already reverted, nothing to do
-        if self.exM.getStatusByTask(task) in ("untouched", "reverted"):
+        # If test does not have status "marked" then nothing to do
+        if self.exM.getStatusByTask(task) != "marked":
             return
         # Check user really wants to revert
         msg = SimpleMessage("Do you want to revert to original scan?")
         if msg.exec_() == QMessageBox.No:
             return
+        # send revert message to server
+        messenger.MrevertTask(task)
         # Revert the test in the table (set status, mark etc)
         self.exM.revertPaper(task)
         # Update the image (is now back to original untouched image)
@@ -939,10 +953,11 @@ class MarkerClient(QWidget):
             # TODO: there should be a filename sanity check here to
             # make sure plom file matches current image-file
 
-        # while annotator is firing up request next paper in background
-        # after giving system a moment to do `annotator.exec_()`
-        if self.exM.countReadyToMark() == 0:
-            self.requestNextInBackgroundStart()
+        if self.allowBackgroundOps:
+            # while annotator is firing up request next paper in background
+            # after giving system a moment to do `annotator.exec_()`
+            if self.exM.countReadyToMark() == 0:
+                self.requestNextInBackgroundStart()
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
@@ -958,10 +973,17 @@ class MarkerClient(QWidget):
             plomDict=pdict,
         )
         # run the annotator
-        annotator.ann_finished_accept.connect(self.callbackAnnIsDoneAccept)
-        annotator.ann_finished_reject.connect(self.callbackAnnIsDoneCancel)
+        annotator.ann_upload.connect(self.callbackAnnWantsUsToUpload)
+        annotator.ann_done_wants_more.connect(self.callbackAnnDoneWantsMore)
+        annotator.ann_done_closing.connect(self.callbackAnnDoneClosing)
+        annotator.ann_done_reject.connect(self.callbackAnnDoneCancel)
         self.setEnabled(False)
         annotator.show()
+        # We had (have?) a bug: when `annotator` var goes out of scope, it can
+        # get GC'd, killing the new Annotator.  Fix: keep a ref in self.
+        # TODO: the old one might still be closing when we get here, but dropping
+        # the ref now won't hurt (I think).
+        self._annotator = annotator
 
     def annotateTest(self):
         """Grab current test from table, do checks, start annotator."""
@@ -1045,30 +1067,46 @@ class MarkerClient(QWidget):
             self.startTheAnnotator(task[1:], paperdir, fnames, aname, None)
         # we started the annotator, we'll get a signal back when its done
 
-    # when the annotator is done, we end up here...
-    @pyqtSlot(str, list)
-    def callbackAnnIsDoneCancel(self, task, stuff):
+    # when Annotator done, we come back to one of these callbackAnnDone* fcns
+    @pyqtSlot(str)
+    def callbackAnnDoneCancel(self, task):
         self.setEnabled(True)
-        assert not stuff  # currently nothing given back on cancel
         prevState = self.exM.getStatusByTask("m" + task).split(":")[-1]
         # TODO: could also erase the paperdir
         self.exM.setStatusByTask("m" + task, prevState)
 
-    # ... or here
-    @pyqtSlot(str, list)
-    def callbackAnnIsDoneAccept(self, task, stuff):
+    @pyqtSlot(str)
+    def callbackAnnDoneClosing(self, task):
         self.setEnabled(True)
-        gr, launchAgain, mtime, paperdir, fnames, aname, pname, cname = stuff
+        # update image view, if the row we just finished is selected
+        prIndex = self.ui.tableView.selectedIndexes()
+        if len(prIndex) == 0:
+            return
+        pr = prIndex[0].row()
+        if self.prxM.getPrefix(pr) == "m" + task:
+            self.updateImage(pr)
+
+    @pyqtSlot(str)
+    def callbackAnnDoneWantsMore(self, task):
+        print("Debug: Marker is back and Ann Wants More")
+        if not self.allowBackgroundOps:
+            self.requestNext()
+        if self.moveToNextUnmarkedTest("m" + task):
+            self.annotateTest()
+        else:
+            print("Debug: either we are done or problems downloading...")
+            self.setEnabled(True)
+
+    @pyqtSlot(str, list)
+    def callbackAnnWantsUsToUpload(self, task, stuff):
+        gr, mtime, paperdir, fnames, aname, pname, cname = stuff
 
         if not (0 <= gr and gr <= self.maxScore):
             msg = ErrorMessage(
-                "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(
-                    self.annotator.score
-                )
+                "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(gr)
             )
             msg.exec_()
             # TODO: what do do here?  revert?
-            self.setEnabled(True)
             return
 
         # Copy the mark, annotated filename and the markingtime into the table
@@ -1078,35 +1116,24 @@ class MarkerClient(QWidget):
         totmtime = self.exM.getMTimeByTask("m" + task)
         tags = self.exM.getTagsByTask("m" + task)
 
-        # the actual upload will happen in another thread
-        self.backgroundUploader.enqueueNewUpload(
+        _data = (
             "m" + task,  # current task
             gr,  # grade
-            aname,  # annotated file
-            pname,  # plom file
-            cname,  # comment file
+            (aname, pname, cname),  # annotated, plom, and comment filenames
             totmtime,  # total marking time
             self.question,
             self.version,
             tags,
         )
-
-        if launchAgain is False:
-            self.setEnabled(True)
-            # update image view, if the row we just finished is selected
-            prIndex = self.ui.tableView.selectedIndexes()
-            if len(prIndex) == 0:
-                return
-            pr = prIndex[0].row()
-            if self.prxM.getPrefix(pr) == "m" + task:
-                self.updateImage(pr)
-            return
-
-        if self.moveToNextUnmarkedTest("m" + task):
-            # self.annotateTest()
-            self.ui.annButton.animateClick()
-        self.setEnabled(True)
-        print("Debug: either we are done or problems downloading...")
+        if self.allowBackgroundOps:
+            # the actual upload will happen in another thread
+            self.backgroundUploader.enqueueNewUpload(*_data)
+        else:
+            upload(
+                *_data,
+                failcallback=self.backgroundUploadFailed,
+                successcallback=self.backgroundUploadFinished
+            )
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
@@ -1302,7 +1329,7 @@ class MarkerClient(QWidget):
         self.prxM.filterTags()
 
     def viewSpecificImage(self):
-        if self.viewAll:
+        if self.canViewAll:
             tgs = TestGroupSelect(self.testInfo, self.question)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
@@ -1323,14 +1350,13 @@ class MarkerClient(QWidget):
             msg = ErrorMessage("No image corresponding to code {}".format(task))
             msg.exec_()
             return
-        # put imagefiles into a temp-dir so they are removed afterwards
-        with tempfile.TemporaryDirectory() as tdir:
-            inames = []
-            i = 0
-            for img in imageList:
-                inames.append("{}/{}.{}".format(tdir, task, i))
-                with open(inames[-1], "wb") as fh:
-                    fh.write(img)
-                i += 1
-            tvw = GroupView(inames)
-            tvw.exec_()
+        ifilenames = []
+        for img in imageList:
+            ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory, delete=False)
+            ifile.write(img)
+            ifiles.append(ifilenames.name)
+        tvw = GroupView(ifilenamess)
+        tvw.setWindowTitle(
+            "Original ungraded image for question {} of test {}".format(gn, tn)
+        )
+        tvw.exec_()

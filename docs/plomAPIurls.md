@@ -48,6 +48,7 @@
 * put "/MK/tasks/{tgv}" - send back marked-image, plom-file, comments, mark etc.
 * patch "/MK/tasks/{task}" - claim the task (if still available) - return imagefile
 * delete "/MK/tasks/{task}" - unclaim the task.
+* patch "/MK/revert/{task}" - revert the task
 
 
 ## List of routes from grep of image_server.py

@@ -814,6 +814,29 @@ def MaskNextTask(q, v):
     return tgv
 
 
+def MrevertTask(code):
+    SRmutex.acquire()
+    try:
+        response = session.patch(
+            "https://{}:{}/MK/revert/{}".format(server, message_port, code),
+            json={"user": _userName, "token": _token},
+            verify=False,
+        )
+        response.raise_for_status()
+        if response.status_code == 204:
+            raise PlomBenignException("No action to be taken.")
+
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomSeriousException("You are not authenticated.") from None
+        else:
+            raise PlomSeriousException(
+                "Some other sort of error {}".format(e)
+            ) from None
+    finally:
+        SRmutex.release()
+
+
 def MclaimThisTask(code):
     SRmutex.acquire()
     try:

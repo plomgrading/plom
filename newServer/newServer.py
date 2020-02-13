@@ -155,6 +155,7 @@ class Server(object):
         MsetTag,
         MgetWholePaper,
         MreviewQuestion,
+        MrevertTask,
     )
     from plomServer.serverTotal import (
         TgetMaxMark,
@@ -172,6 +173,7 @@ class Server(object):
         RgetScannedTests,
         RgetIncompleteTests,
         RgetProgress,
+        RgetQuestionUserProgress,
         RgetMarkHistogram,
         RgetIdentified,
         RgetCompletions,

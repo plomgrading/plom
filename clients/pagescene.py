@@ -215,7 +215,6 @@ class PageScene(QGraphicsScene):
         self.markDelta = "0"
         self.commentText = ""
         self.commentDelta = "0"
-        self.legalDelta = True
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
         # set up "k out of n" where k=current score, n = max score.
@@ -270,9 +269,12 @@ class PageScene(QGraphicsScene):
         return count
 
     def areThereAnnotations(self):
-        # there are at least 2 items = the pageimage and the scorebox
-        # there must be more than 2 items for there to be any annotations
-        return len(self.items()) > 2
+        # look through items in scene for anything pickle-able - this will catch any annotations.
+        for X in self.items():
+            if hasattr(X, "saveable"):
+                return True
+        # no pickle-able items means no annotations.
+        return False
 
     def save(self):
         """ Save the annotated group-image.
@@ -372,7 +374,7 @@ class PageScene(QGraphicsScene):
         # create a delta-object with a different offset.
         # else just place the comment.
 
-        if self.commentDelta == "." or not self.legalDelta:
+        if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
             # make sure blurb has text interaction turned off
             prevState = self.blurb.textInteractionFlags()
             self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
@@ -426,7 +428,7 @@ class PageScene(QGraphicsScene):
         ):
             command = CommandQMark(self, pt)
         else:
-            if self.legalDelta:
+            if self.isLegalDelta(self.markDelta):
                 command = CommandDelta(self, pt, self.markDelta, self.fontSize)
             else:
                 # don't do anything
@@ -573,27 +575,9 @@ class PageScene(QGraphicsScene):
     def pickleSceneItems(self):
         lst = []
         for X in self.items():
-            # don't pickle the scorebox or background image, or ghostcomment
-            if any(
-                isinstance(X, Y)
-                for Y in [
-                    ScoreBox,
-                    QGraphicsPixmapItem,
-                    QGraphicsItemGroup,
-                    GhostComment,
-                    GhostDelta,
-                    GhostText,
-                ]
-            ):
-                continue
-            # If text or delta, check if part of GroupDeltaText
-            if isinstance(X, DeltaItem) or isinstance(X, TextItem):
-                if X.group() is not None:  # object part of GroupDeltaText
-                    continue
-            if isinstance(X, QGraphicsPathItem):
-                if X.group() is not None:  # object part of penarrowitem
-                    continue
-            lst.append(X.pickle())
+            # check if object has "saveable" attribute and it is set to true.
+            if getattr(X, "saveable", False):
+                lst.append(X.pickle())
         return lst
 
     def unpickleSceneItems(self, lst):
@@ -1167,12 +1151,6 @@ class PageScene(QGraphicsScene):
         else:
             self.score += deltaMark
         self.scoreBox.changeScore(self.score)
-        # now look ahead to see what happens if we redo this delta
-        lookingAhead = self.score + deltaMark
-        if lookingAhead < 0 or lookingAhead > self.maxMark:
-            self.legalDelta = False
-        else:
-            self.legalDelta = True
         self.parent.changeMark(self.score)
         # if we are in comment mode then the comment might need updating
         if self.mode == "comment":
@@ -1181,12 +1159,8 @@ class PageScene(QGraphicsScene):
             )
 
     def changeTheDelta(self, newDelta, annotatorUpdate=False):
+        legalDelta = self.isLegalDelta(newDelta)
         self.markDelta = newDelta
-        lookingAhead = self.score + int(self.markDelta)
-        if lookingAhead < 0 or lookingAhead > self.maxMark:
-            self.legalDelta = False
-        else:
-            self.legalDelta = True
 
         if annotatorUpdate:
             gpt = QCursor.pos()  # global mouse pos
@@ -1199,13 +1173,22 @@ class PageScene(QGraphicsScene):
         self.updateGhost(self.commentDelta, self.commentText)
         self.exposeGhost()
 
-        return self.legalDelta
+        return legalDelta
 
     def undo(self):
         self.undoStack.undo()
 
     def redo(self):
         self.undoStack.redo()
+
+    def isLegalDelta(self, n):
+        """Would this (signed) delta push us below 0 or above maxMark?"""
+        # TODO: try, return True if not int?
+        n = int(n)
+        lookingAhead = self.score + n
+        if lookingAhead < 0 or lookingAhead > self.maxMark:
+            return False
+        return True
 
     def changeTheComment(self, delta, text, annotatorUpdate=True):
         # if this update comes from the annotator, then
@@ -1223,17 +1206,38 @@ class PageScene(QGraphicsScene):
         # delta calcs, the ghost item knows how to handle it.
         if delta != ".":
             id = int(delta)
-            if self.markStyle == 2:  # mark up
-                # if delta is too positive, set to "."
-                if id < 0 or self.score + id > self.maxMark:
-                    delta = "."
-            elif self.markStyle == 3:  # mark down
-                # if delta is too negative, set to "."
-                if id > 0 or self.score + id < 0:
-                    delta = "."
-            else:  # mark total
-                # no delta is used, so set it to ".".
+
+            # we pass the actual comment-delta to this (though it might be suppressed in the commentlistwidget).. so we have to
+            # check the the delta is legal for the marking style.
+            # if delta<0 when mark up OR delta>0 when mark down OR mark-total then pass delta="."
+            if (
+                (id < 0 and self.markStyle == 2)
+                or (id > 0 and self.markStyle == 3)
+                or self.markStyle == 1
+            ):
                 delta = "."
         self.commentDelta = delta
         self.commentText = text
         self.updateGhost(delta, text)
+
+    def noAnswer(self, delta):
+        br = self.underImage.boundingRect()
+        # put lines through the page
+        w = br.right()
+        h = br.bottom()
+        command = CommandLine(
+            self, QPointF(w * 0.1, h * 0.1), QPointF(w * 0.9, h * 0.9)
+        )
+        self.undoStack.push(command)
+        command = CommandLine(
+            self, QPointF(w * 0.9, h * 0.1), QPointF(w * 0.1, h * 0.9)
+        )
+        self.undoStack.push(command)
+
+        # build a delta-comment
+        self.blurb = TextItem(self, self.fontSize)
+        self.blurb.setPlainText("NO ANSWER GIVEN")
+        command = CommandGDT(
+            self, br.center() + br.topRight() / 8, delta, self.blurb, self.fontSize
+        )
+        self.undoStack.push(command)

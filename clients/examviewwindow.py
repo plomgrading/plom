@@ -21,10 +21,9 @@ class ExamViewWindow(QWidget):
 
     def __init__(self, fnames=None):
         QWidget.__init__(self)
-        if type(fnames) == list:
-            self.initUI(fnames)
-        else:
-            self.initUI([fnames])
+        if isinstance(fnames, str):
+            fnames = [fnames]
+        self.initUI(fnames)
 
     def initUI(self, fnames):
         # Grab an examview widget (QGraphicsView)
