@@ -109,6 +109,10 @@ job serverStarts:
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
     - popd
+    - pushd scanAndUpload
+    - python3 013_readQRCodes.py -s localhost -p 41984 -w rennacs
+    - python3 014_sendPagesToServer.py -s localhost -p 41984 -w rennacs
+    - popd
     ## not supposed to be done yet
     - pushd finishing
     - if (./022_check_completed.py -s localhost -p 41984 -w hackhack); then false; else true; fi
