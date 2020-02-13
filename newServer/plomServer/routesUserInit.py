@@ -1,12 +1,7 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import json
 import os
-
-
-# TODO: in some common_utils.py?
-def validFields(d, fields):
-    """Check that input dict has (and only has) expected fields."""
-    return set(d.keys()) == set(fields)
+from plomServer.plom_routeutils import validFields
 
 
 class UserInitHandler:

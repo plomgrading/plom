@@ -1,11 +1,7 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import os
-
-
-# TODO: in some common_utils.py?
-def validFields(d, fields):
-    """Check that input dict has (and only has) expected fields."""
-    return set(d.keys()) == set(fields)
+from plomServer.plom_routeutils import authByToken, authByToken_validFields
+from plomServer.plom_routeutils import validFields
 
 
 class MarkHandler:
@@ -13,13 +9,8 @@ class MarkHandler:
         self.server = plomServer
 
     # @routes.get("/MK/maxMark")
-    async def MgetQuestionMark(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token", "q", "v"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken_validFields(["q", "v"])
+    def MgetQuestionMark(self, data, request):
         rmsg = self.server.MgetQuestionMax(data["q"], data["v"])
         if rmsg[0]:
             return web.json_response(rmsg[1], status=200)
@@ -37,13 +28,8 @@ class MarkHandler:
             )
 
     # @routes.get("/MK/progress")
-    async def MprogressCount(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token", "q", "v"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken_validFields(["q", "v"])
+    def MprogressCount(self, data, request):
         return web.json_response(
             self.server.MprogressCount(data["q"], data["v"]), status=200
         )
@@ -91,13 +77,8 @@ class MarkHandler:
             return web.Response(status=406)  # a latex error
 
     # @routes.patch("/MK/tasks/{task}")
-    async def MclaimThisTask(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken_validFields(["user"])
+    def MclaimThisTask(self, data, request):
         task = request.match_info["task"]
         rmesg = self.server.MclaimThisTask(data["user"], task)
         if rmesg[0]:  # return [True, tag, filename1, filename2,...]
@@ -261,13 +242,8 @@ class MarkHandler:
             return web.Response(status=404)  # not found
 
     # @routes.get("/MK/allMax")
-    async def MgetAllMax(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken
+    def MgetAllMax(self):
         return web.json_response(self.server.MgetAllMax(), status=200)
 
     # @routes.patch("/MK/review")

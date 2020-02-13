@@ -1,11 +1,7 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import os
-
-
-# TODO: in some common_utils.py?
-def validFields(d, fields):
-    """Check that input dict has (and only has) expected fields."""
-    return set(d.keys()) == set(fields)
+from plomServer.plom_routeutils import authByToken, authByToken_validFields
+from plomServer.plom_routeutils import validFields
 
 
 class IDHandler:
@@ -13,23 +9,13 @@ class IDHandler:
         self.server = plomServer
 
     # @routes.get("/ID/progress")
-    async def IDprogressCount(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken
+    def IDprogressCount(self):
         return web.json_response(self.server.IDprogressCount(), status=200)
 
     # @routes.get("/ID/classlist")
-    async def IDgetClasslist(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken
+    def IDgetClasslist(self):
         if os.path.isfile("../resources/classlist.csv"):
             return web.FileResponse("../resources/classlist.csv", status=200)
         else:
@@ -58,25 +44,19 @@ class IDHandler:
         return web.json_response(self.server.IDgetDoneTasks(data["user"]), status=200)
 
     # @routes.get("/ID/images/{test}")
-    async def IDgetImage(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken_validFields(["user"])
+    def IDgetImage(self, data, request):
         test = request.match_info["test"]
         rmsg = self.server.IDgetImage(data["user"], test)
-        if rmsg[0]:  # user allowed access - returns [true, fname0, fname1,...]
-            with MultipartWriter("images") as mpwriter:
-                for fn in rmsg[1:]:
-                    if os.path.isfile(fn):
-                        mpwriter.append(open(fn, "rb"))
-                    else:
-                        return web.Response(status=404)
-                return web.Response(body=mpwriter, status=200)
-        else:
+        if not rmsg[0]:  # user allowed access - returns [true, fname0, fname1,...]
             return web.Response(status=409)  # someone else has that image
+        with MultipartWriter("images") as mpwriter:
+            for fn in rmsg[1:]:
+                if os.path.isfile(fn):
+                    mpwriter.append(open(fn, "rb"))
+                else:
+                    return web.Response(status=404)
+            return web.Response(body=mpwriter, status=200)
 
     # @routes.get("/ID/tasks/available")
     async def IDgetNextTask(self, request):
@@ -114,13 +94,8 @@ class IDHandler:
             return web.Response(status=204)  # that task already taken.
 
     # @routes.put("/ID/tasks/{task}")
-    async def IDreturnIDdTask(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token", "sid", "sname"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken_validFields(["user", "sid", "sname"])
+    def IDreturnIDdTask(self, data):
         testNumber = request.match_info["task"]
         rmsg = self.server.IDreturnIDdTask(
             data["user"], testNumber, data["sid"], data["sname"]
