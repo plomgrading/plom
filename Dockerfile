@@ -10,5 +10,5 @@ RUN apt-get --no-install-recommends --yes install  \
     python3-xvfbwrapper
 RUN pip3 install --upgrade pip
 RUN pip3 install --upgrade \
-       pymupdf weasyprint imutils lapsolver peewee toml \
-       requests requests-toolbelt aiohttp pyzbar pyinstaller
+    pymupdf weasyprint imutils lapsolver peewee toml \
+    requests requests-toolbelt aiohttp pyzbar pyinstaller
