@@ -34,13 +34,8 @@ class IDHandler:
             return web.Response(status=404)
 
     # @routes.get("/ID/tasks/complete")
-    async def IDgetDoneTasks(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken_validFields(["user"])
+    def IDgetDoneTasks(self, data, request):
         # return the completed list
         return web.json_response(self.server.IDgetDoneTasks(data["user"]), status=200)
 
@@ -60,13 +55,8 @@ class IDHandler:
             return web.Response(body=mpwriter, status=200)
 
     # @routes.get("/ID/tasks/available")
-    async def IDgetNextTask(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken
+    def IDgetNextTask(self):
         rmsg = self.server.IDgetNextTask()  # returns [True, code] or [False]
         if rmsg[0]:
             return web.json_response(rmsg[1], status=200)
@@ -74,13 +64,8 @@ class IDHandler:
             return web.Response(status=204)  # no papers left
 
     # @routes.patch("/ID/tasks/{task}")
-    async def IDclaimThisTask(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken_validFields(["user"])
+    def IDclaimThisTask(self, data, request):
         testNumber = request.match_info["task"]
         rmsg = self.server.IDclaimThisTask(data["user"], testNumber)
         if rmsg[0]:  # user allowed access - returns [true, fname0, fname1,...]
