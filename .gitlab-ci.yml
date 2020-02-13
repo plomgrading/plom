@@ -115,7 +115,8 @@ job serverStarts:
     # if (python3 07_check_completed.py); then false; else true; fi
     - popd
     - pushd clients
-    - ./autoMarker.py -s localhost -p 41984 -u anne -w enna
+    # TODO: does it need X in some way?
+    - DISPLAY= ./autoMarker.py -s localhost -p 41984 -u anne -w enna
     - popd
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
