@@ -471,7 +471,7 @@ if __name__ == "__main__":
                     print(
                         "When you use -m, there should either be no argument, or an argument of the form n:k where n,k are integers."
                     )
-                    quit()
+                    sys.exit(43)
 
             window.ui.markButton.animateClick()
     sys.exit(app.exec_())
