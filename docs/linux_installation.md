@@ -23,7 +23,7 @@ Tested on Fedora 31.  Some stuff from the package manager:
 
 Other stuff we install locally with `pip`:
 ```
-  # pip3 install --upgrade --user pyqrcode cheroot
+  # pip3 install --upgrade --user pyqrcode cheroot pyzbar
 ```
 
 More dependencies for the tensorflow-based ID reader:
@@ -57,7 +57,7 @@ Other stuff we get from pip:
 ```
   # pip3 install --upgrade --user pip
   # python3 -m pip install --upgrade --user setuptools
-  # python3 -m pip install --upgrade --user pymupdf weasyprint imutils aiohttp
+  # python3 -m pip install --upgrade --user pymupdf weasyprint imutils aiohttp pyzbar
   # python3 -m pip install --upgrade --user lapsolver "tensorflow<2"
 ```
 (Note `python3 -m pip` to use the newly upgraded pip).
