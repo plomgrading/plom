@@ -95,8 +95,6 @@ if __name__ == "__main__":
     # must spec both server+port or neither.
     if args.server and args.port:
         messenger.startMessenger(altServer=args.server, altPort=args.port)
-    elif args.server is None and args.port is None:
-        messenger.startMessenger()
     else:
         print("You must specify both the server and the port. Quitting.")
         exit(1)
