@@ -31,14 +31,14 @@ def print_everything(comps):
     mList = [0 for j in range(numberOfQuestions + 1)]
     sList = [[] for j in range(numberOfQuestions + 1)]
     cList = []
-    for t in comps:
-        if comps[t][0]:
+    for t, v in comps.items():
+        if v[0]:
             idList.append(int(t))
-        if comps[t][1]:
+        if v[1]:
             tList.append(int(t))
-        mList[comps[t][2]] += 1
-        sList[comps[t][2]].append(t)
-        if comps[t][0] and comps[t][1] and comps[t][2] == numberOfQuestions:
+        mList[v[2]] += 1
+        sList[v[2]].append(t)
+        if v[0] and v[1] and v[2] == numberOfQuestions:
             cList.append(t)
     idList.sort(key=int)
     tList.sort(key=int)
