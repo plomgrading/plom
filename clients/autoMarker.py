@@ -278,7 +278,7 @@ if __name__ == "__main__":
         description="Run the marker-server test script. No arguments = run as normal."
     )
 
-    parser.add_argument("-pwd", "--password", type=str)
+    parser.add_argument("-w", "--password", type=str)
     parser.add_argument("-u", "--user", type=str)
     parser.add_argument(
         "-s", "--server", help="Which server to contact (must specify port as well)."
