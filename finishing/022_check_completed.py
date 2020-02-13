@@ -23,9 +23,8 @@ numberOfQuestions = 0
 # ----------------------
 
 
-def print_everything(comps):
-    print("*********************")
-    print("** Completion data **")
+
+def proc_everything(comps):
     idList = []
     tList = []
     mList = [0 for j in range(numberOfQuestions + 1)]
@@ -42,6 +41,13 @@ def print_everything(comps):
             cList.append(t)
     idList.sort(key=int)
     tList.sort(key=int)
+    return idList, tList, mList, sList, cList
+
+
+def print_everything(comps):
+    idList, tList, mList, sList, cList = proc_everything(comps)
+    print("*********************")
+    print("** Completion data **")
     print("Completed papers: {}".format(format_int_list_with_runs(cList)))
     print("Identified papers: {}".format(format_int_list_with_runs(idList)))
     print("Totalled papers: {}".format(format_int_list_with_runs(tList)))
@@ -96,7 +102,7 @@ if __name__ == "__main__":
             "    e.g., on another computer?\n\n"
             "In order to force-logout the existing authorisation run the 029_clearManagerLogin.py script."
         )
-        exit(1)
+        exit(-1)
 
     spec = finishMessenger.getInfoGeneral()
     numberOfTests = spec["numberOfTests"]
@@ -106,3 +112,14 @@ if __name__ == "__main__":
     finishMessenger.stopMessenger()
 
     print_everything(completions)
+
+    idList, tList, mList, sList, cList = proc_everything(completions)
+    numberComplete = len(cList)
+    print("{} of {} complete".format(numberComplete, numberOfTests))
+    if numberComplete == numberOfTests:
+        exit(0)
+    elif numberComplete < numberOfTests:
+        exit(numberOfTests - numberComplete)
+    else:
+        print("Something terrible has happened")
+        exit(-42)
