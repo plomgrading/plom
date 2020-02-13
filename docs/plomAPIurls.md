@@ -13,7 +13,6 @@
 * delete "/users/{user}" - close user-session + revoke auth-token
 * delete "/authorisation" - removes authorisation token from a user
 * put "/admin/reloadUsers" - force server to reload user list
-* put "/admin/reloadScans" - force server to reload scans
 
 ## Identifier
 * get "/ID/progress" - return [#done, #total]
@@ -49,6 +48,7 @@
 * put "/MK/tasks/{tgv}" - send back marked-image, plom-file, comments, mark etc.
 * patch "/MK/tasks/{task}" - claim the task (if still available) - return imagefile
 * delete "/MK/tasks/{task}" - unclaim the task.
+* patch "/MK/revert/{task}" - revert the task
 
 
 ## List of routes from grep of image_server.py

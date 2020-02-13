@@ -1255,9 +1255,12 @@ class PlomDB:
         try:
             with plomdb.atomic():
                 tref = Test.get_or_none(Test.testNumber == testNumber)
-                if tref.scanned == False:
+                if tref is None:
                     return [False]
                 iref = tref.iddata[0]
+                # verify the id-group has been scanned - it should always be scanned.if we get here.
+                if iref.group.scanned == False:
+                    return [False]
                 if iref.username != "" and iref.username != username:
                     # has been claimed by someone else.
                     return [False]
@@ -1342,9 +1345,13 @@ class PlomDB:
         try:
             with plomdb.atomic():
                 tref = Test.get_or_none(Test.testNumber == testNumber)
-                if tref.scanned == False:
+                if tref is None:
                     return [False, False]
                 iref = tref.iddata[0]
+                # verify the id-group has been scanned - it should always be scanned.if we get here.
+                if iref.group.scanned == False:
+                    return [False, False]
+
                 if iref.username != username:
                     # that belongs to someone else - this is a serious error
                     return [False, False]
@@ -1679,43 +1686,44 @@ class PlomDB:
             qref.save()
         return [True]
 
-    def MrevertQuestion(self, testNumber, questionNumber, version):
-        tref = Test.get_or_none(Test.testNumber == testNumber)
-        if tref is None:
-            return [False]
-        qref = QuestionData.get_or_none(
-            QuestionData.test == tref,
-            QuestionData.questionNumber == questionNumber,
-            QuestionData.version == version,
-            QuestionData.marked == True,
-        )
-        if qref is None:
-            return [False]
+    def MrevertTask(self, username, task):
+        gref = Group.get_or_none(Group.gid == task)
+        if gref is None:
+            return [False, "NST"]  # no such task
+        # from the group get the test, question and sumdata - all need cleaning.
+        qref = gref.questiondata[0]
+        tref = gref.test
         sref = tref.sumdata[0]
+        # check user owns question and is "marked"
+        if qref.username != username or qref.status != "done" or qref.marked is False:
+            return [False, "NAC"]  # nothing to do here
+        # now update things
+        print("User {} reverting task {}".format(username, task))
         with plomdb.atomic():
             # clean up test
             tref.marked = False
             tref.totalled = False
             tref.finished = False
             tref.save()
-            # clean up sum-data
+            # clean up sum-data - no one should be totalling and marking at same time.
+            # TODO = sort out the possible idiocy caused by simultaneous marking+totalling by client.
             sref.status = "todo"
             sref.sumMark = None
             sref.username = ""
             sref.time = datetime.now()
             sref.summed = False
             sref.save()
-            # clean off the question data
+            # clean off the question data - but keep user and state = "out"
             rval = [True, qref.annotatedFile, qref.plomFile, qref.commentFile]
             qref.marked = False
-            qref.status = "todo"
+            qref.status = "out"
             qref.annotatedFile = None
+            qref.md5sum = None
             qref.plomFile = None
             qref.commentFile = None
             qref.mark = None
             qref.markingTime = None
             qref.tags = ""
-            qref.username = ""
             qref.time = datetime.now()
             qref.save()
         return rval

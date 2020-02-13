@@ -1,6 +1,7 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import json
 import os
+from plomServer.plom_routeutils import validFields
 
 
 class UserInitHandler:
@@ -19,18 +20,24 @@ class UserInitHandler:
     # @routes.delete("/users/{user}")
     async def closeUser(self, request):
         data = await request.json()
-        user = request.match_info["user"]
+        if not validFields(data, ["user", "token"]):
+            return web.Response(status=400)  # malformed request.
         if data["user"] != request.match_info["user"]:
             return web.Response(status=400)  # malformed request.
-        elif self.server.validate(data["user"], data["token"]):
-            self.server.closeUser(data["user"])
-            return web.Response(status=200)
-        else:
+        if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
+        self.server.closeUser(data["user"])
+        return web.Response(status=200)
 
     # @routes.delete("/authorisation")
     async def clearAuthorisation(self, request):
         data = await request.json()
+        if not (
+            validFields(data, ["user", "password"])
+            or validFields(data, ["user", "token", "userToClear"])
+        ):
+            return web.Response(status=400)  # malformed request.
+
         # manager to auth with their token - unless trying to clear self.
         if data["user"] == "manager" and data["userToClear"] != "manager":
             if self.server.validate(data["user"], data["token"]):
@@ -47,7 +54,10 @@ class UserInitHandler:
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
         data = await request.json()
-        user = request.match_info["user"]
+        if not validFields(data, ["user", "pw", "api"]):
+            return web.Response(status=400)  # malformed request.
+        if data["user"] != request.match_info["user"]:
+            return web.Response(status=400)  # malformed request.
 
         rmsg = self.server.giveUserToken(data["user"], data["pw"], data["api"])
         if rmsg[0]:
@@ -64,6 +74,9 @@ class UserInitHandler:
     # @routes.put("/admin/reloadUsers")
     async def adminReloadUsers(self, request):
         data = await request.json()
+        # TODO: future proof by requiring username here too?
+        if not validFields(data, ["pw"]):
+            return web.Response(status=400)  # malformed request.
 
         rmsg = self.server.reloadUsers(data["pw"])
         # returns either True (success) or False (auth-error)
