@@ -115,7 +115,7 @@ job serverStarts:
     # if (python3 07_check_completed.py); then false; else true; fi
     - popd
     - pushd clients
-    # TODO: awaiting fix
+    # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/608
     # ./randoIDer.py -s localhost -p 41984 -u anne -w enna
     - ./randoMarker.py -s localhost -p 41984 -u anne -w enna
     - popd
