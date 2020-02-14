@@ -15,8 +15,9 @@ sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
 
 # hardcoded for letter, https://gitlab.math.ubc.ca/andrewr/MLP/issues/276
-sizeportrait = "612x792"
-sizelandscape = "792x612"
+papersize_portrait = (612, 792)
+papersize_landscape = (792, 612)
+margin = 10
 
 
 def iswider(f):
@@ -45,31 +46,20 @@ if __name__ == "__main__":
     if os.path.isfile(outname):
         exit(0)
 
-    # use imagemagick to convert each group-image into a temporary pdf.
-    pdfpages = [tempfile.NamedTemporaryFile(suffix=".pdf") for x in imgl]
-    for img, TF in zip(imgl, pdfpages):
-        cmd = ["convert", img, "-quality", "100"]
-        # TODO: want to center the image but then it doesn't fit page
-        # cmd += ["-gravity", "center", "-background", "white"]
-        # Rotate page not the image: we want landscape on screen
-        if iswider(img):
-            cmd += ["-page", sizelandscape]
-        else:
-            cmd += ["-page", sizeportrait]
-        cmd += ["pdf:{}".format(TF.name)]
-        subprocess.check_call(cmd)
-
     exam = fitz.open()
     if coverfname:
         exam.insertPDF(fitz.open(coverfname))
-    for pg in pdfpages:
-        exam.insertPDF(fitz.open(pg.name))
 
-    # clean up temp files
-    for pg in pdfpages:
-        pg.close()
+    for img in imgl:
+        # Rotate page not the image: we want landscape on screen
+        if iswider(img):
+            w, h = papersize_landscape
+        else:
+            w, h = papersize_portrait
+        pg = exam.newPage(width=w, height=h)
+        rec = [margin, margin, w - margin, h - margin]
+        pg.insertImage(rec, filename=img)
 
-    # title of PDF is "<testname> <sid>"
     exam.setMetadata(
         {
             "title": "{} {}".format(shortName, sid),
