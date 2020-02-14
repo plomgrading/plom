@@ -31,27 +31,26 @@ def iswider(f):
     return float(ratio) > 1
 
 
-if __name__ == "__main__":
-    shortName = sys.argv[1]
-    sid = sys.argv[2]
-    outdir = sys.argv[3]
-    coverfname = sys.argv[4]
-    # the groupimage files
-    imgl = eval(sys.argv[5])
+def reassemble(outname, shortName, sid, coverfname, imglist):
+    """Reassemble a pdf from the cover and question images.
 
-    # note we know the shortname is alphanumeric with no strings
-    # so this is safe.
-    outname = os.path.join(outdir, "{}_{}.pdf".format(shortName, sid))
-    # TODO: check if anything changed (either here or in 09/08)
-    # https://gitlab.math.ubc.ca/andrewr/MLP/issues/392
+    Leave coverfname as None to omit it (e.g., when totalling).
+
+    Return True if successful or False if the pdf file already exists.
+    Note: no attempt is made to check if its correct; merely that it
+    exists.  TODO: check if anything changed here or later [1].
+
+    [1] https://gitlab.math.ubc.ca/andrewr/MLP/issues/392
+
+    """
     if os.path.isfile(outname):
-        exit(0)
+        return False
 
     exam = fitz.open()
     if coverfname:
         exam.insertPDF(fitz.open(coverfname))
 
-    for img in imgl:
+    for img in imglist:
         # Rotate page not the image: we want landscape on screen
         if iswider(img):
             w, h = papersize_landscape
@@ -70,3 +69,17 @@ if __name__ == "__main__":
 
     with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
         exam.save(outname)
+
+
+if __name__ == "__main__":
+    shortName = sys.argv[1]
+    sid = sys.argv[2]
+    outdir = sys.argv[3]
+    coverfname = sys.argv[4]
+    # the groupimage files
+    imglist = eval(sys.argv[5])
+
+    # note we know the shortname is alphanumeric with no strings
+    # so this is safe.
+    outname = os.path.join(outdir, "{}_{}.pdf".format(shortName, sid))
+    reassemble(outname, shortName, sid, coverfname, imglist)
