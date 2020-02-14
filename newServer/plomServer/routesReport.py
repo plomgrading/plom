@@ -1,5 +1,5 @@
 from aiohttp import web, MultipartWriter, MultipartReader
-from plomServer.plom_routeutils import validFields
+from plomServer.plom_routeutils import authByToken, authByToken_validFields
 
 
 class ReportHandler:
@@ -7,113 +7,70 @@ class ReportHandler:
         self.server = plomServer
 
     # @routes.get("/REP/scanned")
-    async def RgetScannedTests(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    @authByToken_validFields(["user"])
+    def RgetScannedTests(self, d, request):
         if not d["user"] in ("manager", "scanner"):
             return web.Response(status=401)
-
         return web.json_response(self.server.RgetScannedTests(), status=200)
 
     # @routes.get("/REP/incomplete")
-    async def RgetIncompleteTests(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    @authByToken_validFields(["user"])
+    def RgetIncompleteTests(self, d, request):
         if not d["user"] in ("manager", "scanner"):
             return web.Response(status=401)
-
         return web.json_response(self.server.RgetIncompleteTests(), status=200)
 
     # @routes.get("/REP/unused")
-    async def RgetUnusedTests(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    @authByToken_validFields(["user"])
+    def RgetUnusedTests(self, d, request):
         if not d["user"] in ("manager", "scanner"):
             return web.Response(status=401)
-
         return web.json_response(self.server.RgetUnusedTests(), status=200)
 
     # @routes.get("/REP/progress")
-    async def RgetProgress(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token", "q", "v"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    @authByToken_validFields(["user", "q", "v"])
+    def RgetProgress(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         return web.json_response(self.server.RgetProgress(d["q"], d["v"]), status=200)
 
     # @routes.get("/REP/questionUserProgress")
-    async def RgetQuestionUserProgress(self, request):
-        data = await request.json()
-        if not validFields(d, ["user", "token", "q", "v"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    @authByToken_validFields(["user", "q", "v"])
+    def RgetQuestionUserProgress(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         return web.json_response(
             self.server.RgetQuestionUserProgress(d["q"], d["v"]), status=200
         )
 
     # @routes.get("/REP/markHistogram")
-    async def RgetMarkHistogram(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token", "q", "v"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    @authByToken_validFields(["user", "q", "v"])
+    def RgetMarkHistogram(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         return web.json_response(
             self.server.RgetMarkHistogram(d["q"], d["v"]), status=200
         )
 
     # @routes.get("/REP/progress")
-    async def RgetIdentified(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    @authByToken_validFields(["user"])
+    def RgetIdentified(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         return web.json_response(self.server.RgetIdentified(), status=200)
 
-    async def RgetCompletions(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    # @routes.get("/REP/completions")
+    @authByToken_validFields(["user"])
+    def RgetCompletions(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         return web.json_response(self.server.RgetCompletions(), status=200)
 
-    async def RgetStatus(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    # @routes.get("/REP/status/{test}")
+    @authByToken_validFields(["user"])
+    def RgetStatus(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         testNumber = request.match_info["test"]
         rmsg = self.server.RgetStatus(testNumber)
         if rmsg[0]:
@@ -121,40 +78,28 @@ class ReportHandler:
         else:
             return web.Response(status=404)
 
-    async def RgetSpreadsheet(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    # @routes.get("/REP/spreadSheet")
+    @authByToken_validFields(["user"])
+    def RgetSpreadsheet(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         rmsg = self.server.RgetSpreadsheet()
         return web.json_response(rmsg, status=200)
 
-    async def RgetCoverPageInfo(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    # @routes.get("/REP/coverPageInfo/{test}")
+    @authByToken_validFields(["user"])
+    def RgetCoverPageInfo(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         testNumber = request.match_info["test"]
         rmsg = self.server.RgetCoverPageInfo(testNumber)
         return web.json_response(rmsg, status=200)
 
-    async def RgetOriginalFiles(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    # @routes.get("/REP/originalFiles/{test}")
+    @authByToken_validFields(["user"])
+    def RgetOriginalFiles(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         testNumber = request.match_info["test"]
         rmsg = self.server.RgetOriginalFiles(testNumber)
         if len(rmsg) > 0:
@@ -162,15 +107,11 @@ class ReportHandler:
         else:
             return web.Response(status=404)
 
-    async def RgetAnnotatedFiles(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    # @routes.get("/REP/annotatedFiles/{test}")
+    @authByToken_validFields(["user"])
+    def RgetAnnotatedFiles(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         testNumber = request.match_info["test"]
         rmsg = self.server.RgetAnnotatedFiles(testNumber)
         if len(rmsg) > 0:
@@ -178,75 +119,49 @@ class ReportHandler:
         else:
             return web.Response(status=404)
 
-    async def RgetUserList(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    # @routes.get("/REP/userList")
+    @authByToken_validFields(["user"])
+    def RgetUserList(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         return web.json_response(self.server.RgetUserList(), status=200)
 
-    async def RgetUserDetails(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    # @routes.get("/REP/userDetails")
+    @authByToken_validFields(["user"])
+    def RgetUserDetails(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         return web.json_response(self.server.RgetUserDetails(), status=200)
 
-    async def RgetMarkReview(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token", "filterQ", "filterV", "filterU"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    # @routes.get("/REP/markReview")
+    @authByToken_validFields(["user", "filterQ", "filterV", "filterU"])
+    def RgetMarkReview(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         rmsg = self.server.RgetMarkReview(d["filterQ"], d["filterV"], d["filterU"])
         return web.json_response(rmsg, status=200)
 
-    async def RgetIDReview(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    # @routes.get("/REP/idReview")
+    @authByToken_validFields(["user"])
+    def RgetIDReview(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         rmsg = self.server.RgetIDReview()
         return web.json_response(rmsg, status=200)
 
-    async def RgetTotReview(self, request):
-        d = await request.json()
-        if not validFields(d, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    # @routes.get("/REP/totReview")
+    @authByToken_validFields(["user"])
+    def RgetTotReview(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         rmsg = self.server.RgetTotReview()
         return web.json_response(rmsg, status=200)
 
-    async def RgetAnnotatedImage(self, request):
-        d = await request.json()
-        if not validFields(
-            d, ["user", "token", "testNumber", "questionNumber", "version"]
-        ):
-            return web.Response(status=400)
-        if not self.server.validate(d["user"], d["token"]):
-            return web.Response(status=401)
+    # @routes.get("/REP/annotatedImage")
+    @authByToken_validFields(["user", "testNumber", "questionNumber", "version"])
+    def RgetAnnotatedImage(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-
         rmsg = self.server.RgetAnnotatedImage(
             d["testNumber"], d["questionNumber"], d["version"]
         )
