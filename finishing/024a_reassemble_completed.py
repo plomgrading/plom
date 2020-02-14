@@ -43,12 +43,11 @@ def reassembleTestCMD(shortName, outDir, t, sid):
     fnames = finishMessenger.RgetAnnotatedFiles(t)
     if len(fnames) == 0:
         return
-    rnames = ["coverPages/cover_{}.pdf".format(str(t).zfill(4))] + [
-        "../newServer/" + fn for fn in fnames
-    ]
+    covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
+    rnames = ["../newServer/" + fn for fn in fnames]
 
-    return 'python3 testReassembler.py {} {} {} "" "{}"\n'.format(
-        shortName, sid, outDir, rnames
+    return 'python3 testReassembler.py {} {} {} {} "{}"\n'.format(
+        shortName, sid, outDir, covername, rnames
     )
 
 
