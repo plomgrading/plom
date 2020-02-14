@@ -65,7 +65,7 @@ class ReportHandler:
             return web.Response(status=401)
 
         return web.json_response(
-            self.server.RgetQuestionUserProgress(data["q"], data["v"]), status=200
+            self.server.RgetQuestionUserProgress(d["q"], d["v"]), status=200
         )
 
     # @routes.get("/REP/markHistogram")
