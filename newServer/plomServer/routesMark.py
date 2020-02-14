@@ -1,7 +1,7 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import os
 from plomServer.plom_routeutils import authByToken, authByToken_validFields
-from plomServer.plom_routeutils import validFields
+from plomServer.plom_routeutils import validFields, logRequest
 
 
 class MarkHandler:
@@ -84,6 +84,7 @@ class MarkHandler:
 
     # @routes.put("/MK/tasks/{task}")
     async def MreturnMarkedTask(self, request):
+        logRequest("MreturnMarkedTask", request)
         # the put will be in 3 parts - use multipart reader
         # in order we expect those 3 parts - [parameters (inc comments), image, plom-file]
         reader = MultipartReader.from_response(request)
