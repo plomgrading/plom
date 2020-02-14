@@ -38,7 +38,8 @@ def buildCoverPage(shortName, outDir, t, maxMarks):
     for qvm in cpi[1:]:
         # append quads of [q,v,m,Max]
         arg.append([qvm[0], qvm[1], qvm[2], maxMarks[str(qvm[0])]])
-    makeCover(int(t), sname, sid, arg)
+    return (int(t), sname, sid, arg)
+    #makeCover(int(t), sname, sid, arg)
 
 
 def reassembleTestCMD(shortName, outDir, t, sid):
@@ -48,8 +49,8 @@ def reassembleTestCMD(shortName, outDir, t, sid):
     covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
     rnames = ["../newServer/" + fn for fn in fnames]
     outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
-
-    reassemble(outname, shortName, sid, covername, rnames)
+    return (outname, shortName, sid, covername, rnames)
+    #reassemble(outname, shortName, sid, covername, rnames)
 
 
 if __name__ == "__main__":
@@ -112,16 +113,9 @@ if __name__ == "__main__":
     # dict key = testNumber, then pairs [sid, sname]
     maxMarks = finishMessenger.MgetAllMax()
 
-    # Build coverpages
-    # Doing this in a loop approx 4 times faster than using GNU Parallel
-    for t in completedTests:
-        if (
-            completedTests[t][0] == True
-            and completedTests[t][2] == numberOfQuestions
-        ):
-            buildCoverPage(shortName, outDir, t, maxMarks)
-
-    # now reassemble papers
+    # get data for cover pages and reassembly
+    pagelists = []
+    coverpagelist = []
     if True:
         for t in completedTests:
             if (
@@ -129,10 +123,24 @@ if __name__ == "__main__":
                 and completedTests[t][2] == numberOfQuestions
             ):
                 if identifiedTests[t][0] is not None:
-                    reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
+                    dat1 = buildCoverPage(shortName, outDir, t, maxMarks)
+                    dat2 = reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
+                    coverpagelist.append(dat1)
+                    pagelists.append(dat2)
                 else:
                     print(">>WARNING<< Test {} has no ID".format(t))
 
+    def f(z):
+        x, y = z
+        if x and y:
+            makeCover(*x)
+            reassemble(*y)
+    from multiprocessing import Pool
+    pool = Pool()
+    pool.map(f, zip(coverpagelist, pagelists))
+    # Serial
+    #for z in zip(coverpagelist, pagelists):
+    #    f(z)
     finishMessenger.closeUser()
     finishMessenger.stopMessenger()
 
