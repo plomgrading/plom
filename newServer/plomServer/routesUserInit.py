@@ -22,6 +22,7 @@ class UserInitHandler:
     # @routes.delete("/users/{user}")
     @authByToken_validFields(["user"])
     def closeUser(self, data, request):
+        # TODO: should manager be allowed to do this for anyone?
         if data["user"] != request.match_info["user"]:
             return web.Response(status=400)  # malformed request.
         self.server.closeUser(data["user"])
@@ -74,6 +75,8 @@ class UserInitHandler:
     # @routes.put("/admin/reloadUsers")
     async def adminReloadUsers(self, request):
         logRequest("adminReloadUsers", request)
+        # TODO: future proof: require user here and check for manager
+        # TODO: safer to do this with token auth, to centralize pw auth?
         data = await request.json()
         # TODO: future proof by requiring username here too?
         if not validFields(data, ["pw"]):
