@@ -21,18 +21,22 @@ sizelandscape = "792x612"
 
 def iswider(f):
     """True if image is wider than it is high"""
-    ratio = subprocess.check_output(["identify", "-format",
-                                     "%[fx:w/h]", f]).decode().rstrip()
+    ratio = (
+        subprocess.check_output(["identify", "-format", "%[fx:w/h]", f])
+        .decode()
+        .rstrip()
+    )
     return float(ratio) > 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     shortName = sys.argv[1]
     sid = sys.argv[2]
     outdir = sys.argv[3]
     coverfname = sys.argv[4]
     # the groupimage files
     imgl = eval(sys.argv[5])
+
     # note we know the shortname is alphanumeric with no strings
     # so this is safe.
     outname = os.path.join(outdir, "{}_{}.pdf".format(shortName, sid))
@@ -46,7 +50,7 @@ if __name__ == '__main__':
     for img, TF in zip(imgl, pdfpages):
         cmd = ["convert", img, "-quality", "100"]
         # TODO: want to center the image but then it doesn't fit page
-        #cmd += ["-gravity", "center", "-background", "white"]
+        # cmd += ["-gravity", "center", "-background", "white"]
         # Rotate page not the image: we want landscape on screen
         if iswider(img):
             cmd += ["-page", sizelandscape]
@@ -66,8 +70,12 @@ if __name__ == '__main__':
         pg.close()
 
     # title of PDF is "<testname> <sid>"
-    exam.setMetadata({"title": "{} {}".format(shortName, sid),
-                      "producer": "Plom {}".format(__version__)})
+    exam.setMetadata(
+        {
+            "title": "{} {}".format(shortName, sid),
+            "producer": "Plom {}".format(__version__),
+        }
+    )
 
     with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
         exam.save(outname)

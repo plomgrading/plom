@@ -18,12 +18,13 @@ Tested on Fedora 31.  Some stuff from the package manager:
                      python3-urllib3 python3-more-itertools \
                      python3-seaborn python3-matplotlib-qt5 python3-aiohttp \
                      python3-peewee python3-pandas python3-requests-toolbelt \
-                     python3-pip python3-toml python3-weasyprint
+                     python3-pip python3-toml python3-weasyprint \
+                     python3-xvfbwrapper
 ```
 
 Other stuff we install locally with `pip`:
 ```
-  # pip3 install --upgrade --user pyqrcode cheroot
+  # pip3 install --upgrade --user pyqrcode cheroot pyzbar
 ```
 
 More dependencies for the tensorflow-based ID reader:
@@ -45,7 +46,7 @@ Some stuff from the package manager:
         python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
         python3-pip python3-setuptools python3-wheel python3-toml \
         python3-requests-toolbelt python3-opencv texlive-latex-extra \
-        python3-peewee
+        python3-peewee python3-xvfbwrapper
 ```
 These (and others) should work from the package manager but pip pulls them
 in anyway, not sure why.
@@ -57,7 +58,7 @@ Other stuff we get from pip:
 ```
   # pip3 install --upgrade --user pip
   # python3 -m pip install --upgrade --user setuptools
-  # python3 -m pip install --upgrade --user pymupdf weasyprint imutils aiohttp
+  # python3 -m pip install --upgrade --user pymupdf weasyprint imutils aiohttp pyzbar
   # python3 -m pip install --upgrade --user lapsolver "tensorflow<2"
 ```
 (Note `python3 -m pip` to use the newly upgraded pip).

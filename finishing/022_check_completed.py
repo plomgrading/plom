@@ -8,169 +8,46 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 
-from glob import glob
+import argparse
 import getpass
-import hashlib
-import json
-import os
-import requests
-from requests_toolbelt import MultipartEncoder
-import shutil
-import ssl
 import sys
-import urllib3
-import threading
 
 # ----------------------
-sys.path.append("..")
-from resources.plom_exceptions import *
-from resources.version import Plom_API_Version
-from resources.misc_utils import format_int_list_with_runs
+from misc_utils import format_int_list_with_runs
+import finishMessenger
+from plom_exceptions import *
 
-_userName = "manager"
-
-# If we use unverified ssl certificates we get lots of warnings,
-# so put in this to hide them.
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-sslContext.check_hostname = False
-# Server defaults
-server = "0.0.0.0"
-message_port = 41984
-SRmutex = threading.Lock()
 numberOfTests = 0
 numberOfQuestions = 0
 
 # ----------------------
 
 
-def requestAndSaveToken(user, pw):
-    """Get a authorisation token from the server.
 
-    The token is then used to authenticate future transactions with the server.
-
-    """
-    global _userName, _token
-
-    SRmutex.acquire()
-    try:
-        response = authSession.put(
-            "https://{}:{}/users/{}".format(server, message_port, user),
-            json={"user": user, "pw": pw, "api": Plom_API_Version},
-            verify=False,
-            timeout=5,
-        )
-        # throw errors when response code != 200.
-        response.raise_for_status()
-        # convert the content of the response to a textfile for identifier
-        _token = response.json()
-        _userName = user
-        print("Success!")
-    except requests.HTTPError as e:
-        if response.status_code == 401:  # authentication error
-            print(
-                "Password problem - you are not authorised to upload pages to server."
-            )
-        elif response.status_code == 400:  # API error
-            raise PlomAPIException()
-            print("An API problem - {}".format(response.json()))
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-        quit()
-    except requests.ConnectionError as err:
-        raise PlomSeriousException(
-            "Cannot connect to\n server:port = {}:{}\n Please check details before trying again.".format(
-                server, message_port
-            )
-        )
-        quit()
-    finally:
-        SRmutex.release()
-
-
-def closeUser():
-    SRmutex.acquire()
-    try:
-        response = session.delete(
-            "https://{}:{}/users/{}".format(server, message_port, _userName),
-            json={"user": _userName, "token": _token},
-            verify=False,
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return True
-
-
-def RgetCompletions():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/REP/completions".format(server, message_port),
-            verify=False,
-            json={"user": _userName, "token": _token},
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return response.json()
-
-
-def getInfoTPQV():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/info/numberOfTPQV".format(server, message_port),
-            verify=False,
-        )
-        response.raise_for_status()
-        tpqv = response.json()
-    except requests.HTTPError as e:
-        if response.status_code == 404:
-            raise PlomSeriousException(
-                "Server could not find the spec - this should not happen!"
-            )
-        elif response.status_code == 401:  # authentication error
-            raise PlomAuthenticationException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return tpqv
-
-
-def print_everything(comps):
-    print("*********************")
-    print("** Completion data **")
+def proc_everything(comps):
     idList = []
     tList = []
     mList = [0 for j in range(numberOfQuestions + 1)]
     sList = [[] for j in range(numberOfQuestions + 1)]
     cList = []
-    for t in comps:
-        if comps[t][0]:
+    for t, v in comps.items():
+        if v[0]:
             idList.append(int(t))
-        if comps[t][1]:
+        if v[1]:
             tList.append(int(t))
-        mList[comps[t][2]] += 1
-        sList[comps[t][2]].append(t)
-        if comps[t][0] and comps[t][1] and comps[t][2] == numberOfQuestions:
+        mList[v[2]] += 1
+        sList[v[2]].append(t)
+        if v[0] and v[1] and v[2] == numberOfQuestions:
             cList.append(t)
     idList.sort(key=int)
     tList.sort(key=int)
+    return idList, tList, mList, sList, cList
+
+
+def print_everything(comps):
+    idList, tList, mList, sList, cList = proc_everything(comps)
+    print("*********************")
+    print("** Completion data **")
     print("Completed papers: {}".format(format_int_list_with_runs(cList)))
     print("Identified papers: {}".format(format_int_list_with_runs(idList)))
     print("Totalled papers: {}".format(format_int_list_with_runs(tList)))
@@ -183,21 +60,66 @@ def print_everything(comps):
 
 
 if __name__ == "__main__":
+    # get commandline args if needed
+    parser = argparse.ArgumentParser(
+        description="Returns list of tests that have been completed. No arguments = run as normal."
+    )
+    parser.add_argument("-w", "--password", type=str)
+    parser.add_argument(
+        "-s", "--server", help="Which server to contact (must specify port as well)."
+    )
+    parser.add_argument(
+        "-p", "--port", help="Which port to use (must specify server as well)."
+    )
+    args = parser.parse_args()
+
+    # must spec both server+port or neither.
+    if args.server and args.port:
+        finishMessenger.startMessenger(altServer=args.server, altPort=args.port)
+    elif args.server is None and args.port is None:
+        finishMessenger.startMessenger()
+    else:
+        print("You must specify both the server and the port. Quitting.")
+        quit()
+
+    # get the password if not specified
+    if args.password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'manager' password:")
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = args.password
+
+    # get started
     try:
-        pwd = getpass.getpass("Please enter the 'manager' password:")
-    except Exception as error:
-        print("ERROR", error)
+        finishMessenger.requestAndSaveToken("manager", pwd)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another finishing-script or manager-client running,\n"
+            "    e.g., on another computer?\n\n"
+            "In order to force-logout the existing authorisation run the 029_clearManagerLogin.py script."
+        )
+        exit(-1)
 
-    authSession = requests.Session()
-    authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
-    requestAndSaveToken("manager", pwd)
+    spec = finishMessenger.getInfoGeneral()
+    numberOfTests = spec["numberOfTests"]
+    numberOfQuestions = spec["numberOfQuestions"]
+    completions = finishMessenger.RgetCompletions()
+    finishMessenger.closeUser()
+    finishMessenger.stopMessenger()
 
-    session = requests.Session()
-    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
-
-    pqv = getInfoTPQV()
-    numberOfTests = pqv[0]
-    numberOfQuestions = pqv[2]
-
-    completions = RgetCompletions()
     print_everything(completions)
+
+    idList, tList, mList, sList, cList = proc_everything(completions)
+    numberComplete = len(cList)
+    print("{} of {} complete".format(numberComplete, numberOfTests))
+    if numberComplete == numberOfTests:
+        exit(0)
+    elif numberComplete < numberOfTests:
+        exit(numberOfTests - numberComplete)
+    else:
+        print("Something terrible has happened")
+        exit(-42)

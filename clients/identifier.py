@@ -16,7 +16,6 @@ import json
 import os
 import sys
 import tempfile
-from io import StringIO, BytesIO, TextIOWrapper
 from PyQt5.QtCore import (
     Qt,
     QAbstractTableModel,
