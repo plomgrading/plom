@@ -22,6 +22,7 @@ margin = 10
 
 def iswider(f):
     """True if image is wider than it is high"""
+    # TODO: shell likely SLOW for this task...?
     ratio = (
         subprocess.check_output(["identify", "-format", "%[fx:w/h]", f])
         .decode()
