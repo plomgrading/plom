@@ -1,7 +1,6 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import os
 from plomServer.plom_routeutils import authByToken, authByToken_validFields
-from plomServer.plom_routeutils import validFields
 
 # I couldn't make this work with the auth deco
 # routes = web.RouteTableDef()
@@ -97,25 +96,15 @@ class IDHandler:
             return web.Response(status=404)
 
     # @routes.delete("/ID/tasks/{task}")
-    async def IDdidNotFinishTask(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken_validFields(["user"])
+    def IDdidNotFinishTask(self, data, request):
         testNumber = request.match_info["task"]
         self.server.IDdidNotFinish(data["user"], testNumber)
         return web.json_response(status=200)
 
     # @routes.get("/ID/randomImage")
-    async def IDgetRandomImage(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken_validFields(["user"])
+    def IDgetRandomImage(self, data, request):
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
             return web.Response(status=401)  # only manager
@@ -130,13 +119,8 @@ class IDHandler:
                     return web.Response(status=404)
             return web.Response(body=mpwriter, status=200)
 
-    async def IDdeletePredictions(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken_validFields(["user"])
+    def IDdeletePredictions(self, data, request):
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
             return web.Response(status=401)
@@ -144,13 +128,8 @@ class IDHandler:
         return web.json_response(self.server.IDdeletePredictions(), status=200)
 
     # @routes.patch("/ID/review")
-    async def IDreviewID(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token", "testNumber"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-
+    @authByToken_validFields(["testNumber"])
+    def IDreviewID(self, data, request):
         if self.server.IDreviewID(data["testNumber"]):
             return web.Response(status=200)
         else:
