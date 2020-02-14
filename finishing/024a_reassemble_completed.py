@@ -17,6 +17,8 @@ import subprocess
 # ----------------------
 
 from coverPageBuilder import makeCover
+from testReassembler import reassemble
+
 import finishMessenger
 from plom_exceptions import *
 
@@ -45,10 +47,9 @@ def reassembleTestCMD(shortName, outDir, t, sid):
         return
     covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
     rnames = ["../newServer/" + fn for fn in fnames]
+    outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
 
-    return 'python3 testReassembler.py {} {} {} {} "{}"\n'.format(
-        shortName, sid, outDir, covername, rnames
-    )
+    reassemble(outname, shortName, sid, covername, rnames)
 
 
 if __name__ == "__main__":
@@ -121,23 +122,16 @@ if __name__ == "__main__":
             buildCoverPage(shortName, outDir, t, maxMarks)
 
     # now reassemble papers
-    with open("./commandlist.txt", "w") as fh:
+    if True:
         for t in completedTests:
             if (
                 completedTests[t][0] == True
                 and completedTests[t][2] == numberOfQuestions
             ):
                 if identifiedTests[t][0] is not None:
-                    fh.write(
-                        reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
-                    )
+                    reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
                 else:
                     print(">>WARNING<< Test {} has no ID".format(t))
-
-    # pipe the commandlist into gnu-parallel
-    cmd = shlex.split("parallel --bar -a commandlist.txt")
-    subprocess.run(cmd, check=True)
-    os.unlink("commandlist.txt")
 
     finishMessenger.closeUser()
     finishMessenger.stopMessenger()
