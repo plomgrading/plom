@@ -67,7 +67,7 @@ def checkNonCanvasCSV(fname):
     if "id" in df.columns:
         print('"id" column present')
         # strip excess whitespace
-        df["id"] = df["id"].apply(lambda X: X.strip())
+        df["id"] = df["id"].apply(lambda X: X.strip() if isinstance(X, str) else X)
     else:
         print('Cannot find "id" column')
         print("Columns present = {}".format(df.columns))
