@@ -1,7 +1,8 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import json
 import os
-from plomServer.plom_routeutils import validFields
+from plomServer.plom_routeutils import authByToken, authByToken_validFields, noAuthOnlyLog
+from plomServer.plom_routeutils import validFields, logRequest
 
 
 class UserInitHandler:
@@ -9,6 +10,7 @@ class UserInitHandler:
         self.server = plomServer
 
     # @routes.get("/Version")
+    @noAuthOnlyLog
     async def version(self, request):
         return web.Response(
             text="Running Plom server version {} with API {}".format(
@@ -18,19 +20,17 @@ class UserInitHandler:
         )
 
     # @routes.delete("/users/{user}")
-    async def closeUser(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token"]):
-            return web.Response(status=400)  # malformed request.
+    @authByToken_validFields(["user"])
+    def closeUser(self, data, request):
+        # TODO: should manager be allowed to do this for anyone?
         if data["user"] != request.match_info["user"]:
             return web.Response(status=400)  # malformed request.
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
         self.server.closeUser(data["user"])
         return web.Response(status=200)
 
     # @routes.delete("/authorisation")
     async def clearAuthorisation(self, request):
+        logRequest("clearAuthorisation", request)
         data = await request.json()
         if not (
             validFields(data, ["user", "password"])
@@ -53,6 +53,7 @@ class UserInitHandler:
 
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
+        logRequest("giveUserToken", request)
         data = await request.json()
         if not validFields(data, ["user", "pw", "api"]):
             return web.Response(status=400)  # malformed request.
@@ -73,6 +74,9 @@ class UserInitHandler:
 
     # @routes.put("/admin/reloadUsers")
     async def adminReloadUsers(self, request):
+        logRequest("adminReloadUsers", request)
+        # TODO: future proof: require user here and check for manager
+        # TODO: safer to do this with token auth, to centralize pw auth?
         data = await request.json()
         # TODO: future proof by requiring username here too?
         if not validFields(data, ["pw"]):
@@ -85,6 +89,8 @@ class UserInitHandler:
         else:
             return web.Response(status=401)  # you are not authorised
 
+    # @routes.get("/info/general")
+    @noAuthOnlyLog
     async def InfoGeneral(self, request):
         rmsg = self.server.InfoGeneral()
         if rmsg[0]:
@@ -93,6 +99,7 @@ class UserInitHandler:
             return web.Response(status=404)
 
     # @routes.get("/info/shortName")
+    @noAuthOnlyLog
     async def InfoShortName(self, request):
         rmsg = self.server.InfoShortName()
         if rmsg[0]:

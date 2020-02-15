@@ -15,6 +15,10 @@ def validFields(d, fields):
     return set(d.keys()) == set(fields)
 
 
+def logRequest(name, request):
+    print("INFO: {}: {} {}".format(name, request.method, request.rel_url))
+
+
 # TODO: try to work the @routes decorator in too
 def authByToken(f):
     """Decorator for authentication by token, logging and field validation.
@@ -33,7 +37,7 @@ def authByToken(f):
 
     @functools.wraps(f)
     async def wrapped(zelf, request):
-        print("INFO: {}: {} {}".format(f.__name__, request.method, request.rel_url))
+        logRequest(f.__name__, request)
         data = await request.json()
         if not validFields(data, ["user", "token"]):
             return web.Response(status=400)
@@ -66,7 +70,7 @@ def authByToken_validFields(fields):
     def _decorate(f):
         @functools.wraps(f)
         async def wrapped(zelf, request):
-            print("INFO: {}: {} {}".format(f.__name__, request.method, request.rel_url))
+            logRequest(f.__name__, request)
             data = await request.json()
             print("DEBUG: validating fields {}".format(fields))
             if not validFields(data, fields):
@@ -79,3 +83,12 @@ def authByToken_validFields(fields):
         return wrapped
 
     return _decorate
+
+
+def noAuthOnlyLog(f):
+    """Decorator for logging requests."""
+    @functools.wraps(f)
+    def wrapped(self, request):
+        logRequest(f.__name__, request)
+        return f(self, request)
+    return wrapped
