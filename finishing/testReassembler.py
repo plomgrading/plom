@@ -15,12 +15,14 @@ sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
 
 # hardcoded for letter, https://gitlab.math.ubc.ca/andrewr/MLP/issues/276
-sizeportrait = "612x792"
-sizelandscape = "792x612"
+papersize_portrait = (612, 792)
+papersize_landscape = (792, 612)
+margin = 10
 
 
 def iswider(f):
     """True if image is wider than it is high"""
+    # TODO: shell likely SLOW for this task...?
     ratio = (
         subprocess.check_output(["identify", "-format", "%[fx:w/h]", f])
         .decode()
@@ -29,47 +31,35 @@ def iswider(f):
     return float(ratio) > 1
 
 
-if __name__ == "__main__":
-    shortName = sys.argv[1]
-    sid = sys.argv[2]
-    outdir = sys.argv[3]
-    coverfname = sys.argv[4]
-    # the groupimage files
-    imgl = eval(sys.argv[5])
+def reassemble(outname, shortName, sid, coverfname, imglist):
+    """Reassemble a pdf from the cover and question images.
 
-    # note we know the shortname is alphanumeric with no strings
-    # so this is safe.
-    outname = os.path.join(outdir, "{}_{}.pdf".format(shortName, sid))
-    # TODO: check if anything changed (either here or in 09/08)
-    # https://gitlab.math.ubc.ca/andrewr/MLP/issues/392
+    Leave coverfname as None to omit it (e.g., when totalling).
+
+    Return True if successful or False if the pdf file already exists.
+    Note: no attempt is made to check if its correct; merely that it
+    exists.  TODO: check if anything changed here or later [1].
+
+    [1] https://gitlab.math.ubc.ca/andrewr/MLP/issues/392
+
+    """
     if os.path.isfile(outname):
-        exit(0)
-
-    # use imagemagick to convert each group-image into a temporary pdf.
-    pdfpages = [tempfile.NamedTemporaryFile(suffix=".pdf") for x in imgl]
-    for img, TF in zip(imgl, pdfpages):
-        cmd = ["convert", img, "-quality", "100"]
-        # TODO: want to center the image but then it doesn't fit page
-        # cmd += ["-gravity", "center", "-background", "white"]
-        # Rotate page not the image: we want landscape on screen
-        if iswider(img):
-            cmd += ["-page", sizelandscape]
-        else:
-            cmd += ["-page", sizeportrait]
-        cmd += ["pdf:{}".format(TF.name)]
-        subprocess.check_call(cmd)
+        return False
 
     exam = fitz.open()
     if coverfname:
         exam.insertPDF(fitz.open(coverfname))
-    for pg in pdfpages:
-        exam.insertPDF(fitz.open(pg.name))
 
-    # clean up temp files
-    for pg in pdfpages:
-        pg.close()
+    for img in imglist:
+        # Rotate page not the image: we want landscape on screen
+        if iswider(img):
+            w, h = papersize_landscape
+        else:
+            w, h = papersize_portrait
+        pg = exam.newPage(width=w, height=h)
+        rec = [margin, margin, w - margin, h - margin]
+        pg.insertImage(rec, filename=img)
 
-    # title of PDF is "<testname> <sid>"
     exam.setMetadata(
         {
             "title": "{} {}".format(shortName, sid),
@@ -79,3 +69,17 @@ if __name__ == "__main__":
 
     with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
         exam.save(outname)
+
+
+if __name__ == "__main__":
+    shortName = sys.argv[1]
+    sid = sys.argv[2]
+    outdir = sys.argv[3]
+    coverfname = sys.argv[4]
+    # the groupimage files
+    imglist = eval(sys.argv[5])
+
+    # note we know the shortname is alphanumeric with no strings
+    # so this is safe.
+    outname = os.path.join(outdir, "{}_{}.pdf".format(shortName, sid))
+    reassemble(outname, shortName, sid, coverfname, imglist)
