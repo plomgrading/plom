@@ -86,18 +86,18 @@ if __name__ == "__main__":
 
     parser.add_argument("-w", "--password", type=str)
     parser.add_argument(
-        "-s", "--server", help="Which server to contact (must specify port as well)."
-    )
-    parser.add_argument(
-        "-p", "--port", help="Which port to use (must specify server as well)."
+        "-s",
+        "--server",
+        metavar="SERVER[:PORT]",
+        action="store",
+        help="Which server to contact.",
     )
     args = parser.parse_args()
-    # must spec both server+port or neither.
-    if args.server and args.port:
-        messenger.startMessenger(altServer=args.server, altPort=args.port)
+    if args.server and ":" in args.server:
+        s, p = args.server.split(":")
+        messenger.startMessenger(altServer=s, altPort=p)
     else:
-        print("You must specify both the server and the port. Quitting.")
-        exit(1)
+        messenger.startMessenger(args.server)
 
     user = "manager"
 

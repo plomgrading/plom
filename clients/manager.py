@@ -50,7 +50,7 @@ import managerMessenger
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
-from resources.version import Plom_API_Version
+from resources.version import Plom_API_Version, Default_Port
 
 
 class QVHistogram(QDialog):
@@ -297,6 +297,17 @@ class Manager(QWidget):
         if managerMessenger.session:
             managerMessenger.closeUser()
         self.close()
+
+    def setServer(self, s):
+        """Set the server and port UI widgets from a string.
+
+        If port is missing, a default will be used."""
+        try:
+            s, p = s.split(":")
+        except ValueError:
+            p = Default_Port
+        self.ui.serverLE.setText(s)
+        self.ui.mportSB.setValue(int(p))
 
     def setFont(self):
         v = self.ui.fontSB.value()
@@ -1349,17 +1360,16 @@ if __name__ == "__main__":
         parser.add_argument("user", type=str)
         parser.add_argument("password", type=str)
         parser.add_argument(
-            "-s", "--server", action="store", help="Which server to contact."
+            "-s",
+            "--server",
+            metavar="SERVER[:PORT]",
+            action="store",
+            help="Which server to contact, port defaults to {}.".format(Default_Port),
         )
-        parser.add_argument("-p", "--port", action="store", help="Which port to use.")
-
-        args = parser.parse_args()
 
         window.ui.userLE.setText(args.user)
         window.ui.passwordLE.setText(args.password)
         if args.server:
-            window.ui.serverLE.setText(args.server)
-        if args.port:
-            window.ui.mportSB.setValue(int(args.port))
+            window.setServer(args.server)
 
     sys.exit(app.exec_())
