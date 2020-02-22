@@ -302,21 +302,18 @@ if __name__ == "__main__":
     )
     parser.add_argument("-w", "--password", type=str)
     parser.add_argument(
-        "-s", "--server", help="Which server to contact (must specify port as well)."
-    )
-    parser.add_argument(
-        "-p", "--port", help="Which port to use (must specify server as well)."
+        "-s",
+        "--server",
+        metavar="SERVER[:PORT]",
+        action="store",
+        help="Which server to contact.",
     )
     args = parser.parse_args()
-
-    # must spec both server+port or neither.
-    if args.server and args.port:
-        scanMessenger.startMessenger(altServer=args.server, altPort=args.port)
-    elif args.server is None and args.port is None:
-        scanMessenger.startMessenger()
+    if args.server and ":" in args.server:
+        s, p = args.server.split(":")
+        scanMessenger.startMessenger(s, port=p)
     else:
-        print("You must specify both the server and the port. Quitting.")
-        quit()
+        scanMessenger.startMessenger(args.server)
 
     # get the password if not specified
     if args.password is None:

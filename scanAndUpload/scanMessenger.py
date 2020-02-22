@@ -17,7 +17,7 @@ import toml
 import urllib3
 
 from plom_exceptions import *
-from version import Plom_API_Version
+from version import Plom_API_Version, Default_Port
 
 _userName = "scanner"
 
@@ -31,7 +31,7 @@ sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 # Server defaults
 server = "0.0.0.0"
-message_port = 41984
+message_port = Default_Port
 SRmutex = threading.Lock()
 session = None
 
@@ -323,7 +323,7 @@ def getIncompleteTests():
     return response.json()
 
 
-def startMessenger(altServer=None, altPort=None):
+def startMessenger(altServer=None, port=None):
     """Start the messenger session"""
     print("Starting a requests-session")
     global authSession
@@ -332,8 +332,8 @@ def startMessenger(altServer=None, altPort=None):
     global message_port
     if altServer is not None:
         server = altServer
-    if altPort is not None:
-        message_port = altPort
+    if port:
+        message_port = port
 
     authSession = requests.Session()
     session = requests.Session()

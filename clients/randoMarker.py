@@ -261,7 +261,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.server and ":" in args.server:
         s, p = args.server.split(":")
-        messenger.startMessenger(altServer=s, altPort=p)
+        messenger.startMessenger(s, port=p)
     else:
         messenger.startMessenger(args.server)
 
