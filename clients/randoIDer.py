@@ -26,35 +26,6 @@ sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
 from resources.version import Plom_API_Version
 
-lastTime = {}
-
-
-def readLastTime():
-    """Read the login + server options that were used on
-    the last run of the client.
-    """
-    global lastTime
-    # set some reasonable defaults.
-    lastTime["user"] = ""
-    lastTime["server"] = "localhost"
-    lastTime["mport"] = "41984"
-    lastTime["pg"] = 1
-    lastTime["v"] = 1
-    lastTime["fontSize"] = 10
-    lastTime["upDown"] = "up"
-    lastTime["mouse"] = "right"
-    # If config file exists, use it to update the defaults
-    if os.path.isfile("plomConfig.toml"):
-        with open("plomConfig.toml") as data_file:
-            lastTime.update(toml.load(data_file))
-
-
-def writeLastTime():
-    """Write the options to the config file."""
-    fh = open("plomConfig.toml", "w")
-    fh.write(toml.dumps(lastTime))
-    fh.close()
-
 
 # -------------------------------------------
 
