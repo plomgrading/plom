@@ -1355,7 +1355,7 @@ if __name__ == "__main__":
     # either nothing, or the following
     if len(sys.argv) > 1:
         parser = argparse.ArgumentParser(
-            description="Run the Plom client. No arguments = run as normal."
+            description="Plom management tasks."
         )
         parser.add_argument("user", type=str)
         parser.add_argument("password", type=str)
