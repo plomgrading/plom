@@ -29,7 +29,8 @@ import messenger
 
 sys.path.append("..")  # this allows us to import from ../resources
 from resources.version import __version__
-from resources.version import Plom_API_Version
+from resources.version import Plom_API_Version, Default_Port
+
 
 # set up variables to store paths for marker and id clients
 global tempDirectory, directoryPath
@@ -45,7 +46,6 @@ def readLastTime():
     # set some reasonable defaults.
     lastTime["user"] = ""
     lastTime["server"] = "localhost"
-    lastTime["mport"] = "41984"
     lastTime["pg"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
@@ -107,12 +107,22 @@ class Chooser(QDialog):
         # set login etc from last time client ran.
         readLastTime()
         self.ui.userLE.setText(lastTime["user"])
-        self.ui.serverLE.setText(lastTime["server"])
-        self.ui.mportSB.setValue(int(lastTime["mport"]))
+        self.setServer(lastTime["server"])
         self.ui.pgSB.setValue(int(lastTime["pg"]))
         self.ui.vSB.setValue(int(lastTime["v"]))
         self.ui.fontSB.setValue(int(lastTime["fontSize"]))
         self.setFont()
+
+    def setServer(self, s):
+        """Set the server and port UI widgets from a string.
+
+        If port is missing, a default will be used."""
+        try:
+            s, p = s.split(":")
+        except ValueError:
+            p = Default_Port
+        self.ui.serverLE.setText(s)
+        self.ui.mportSB.setValue(int(p))
 
     def validate(self):
         # Check username is a reasonable string
@@ -218,8 +228,9 @@ class Chooser(QDialog):
 
     def saveDetails(self):
         lastTime["user"] = self.ui.userLE.text()
-        lastTime["server"] = self.ui.serverLE.text()
-        lastTime["mport"] = self.ui.mportSB.value()
+        lastTime["server"] = "{}:{}".format(
+            self.ui.serverLE.text(), self.ui.mportSB.value()
+        )
         lastTime["pg"] = self.getpg()
         lastTime["v"] = self.getv()
         lastTime["fontSize"] = self.ui.fontSB.value()
@@ -429,10 +440,12 @@ if __name__ == "__main__":
         parser.add_argument("user", type=str)
         parser.add_argument("password", type=str)
         parser.add_argument(
-            "-s", "--server", action="store", help="Which server to contact."
+            "-s",
+            "--server",
+            metavar="SERVER[:PORT]",
+            action="store",
+            help="Which server to contact, port defaults to {}.".format(Default_Port),
         )
-        parser.add_argument("-p", "--port", action="store", help="Which port to use.")
-
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
             "-i", "--identifier", action="store_true", help="Run the identifier"
@@ -453,9 +466,7 @@ if __name__ == "__main__":
         window.ui.userLE.setText(args.user)
         window.ui.passwordLE.setText(args.password)
         if args.server:
-            window.ui.serverLE.setText(args.server)
-        if args.port:
-            window.ui.mportSB.setValue(int(args.port))
+            window.setServer(args.server)
 
         if args.identifier:
             window.ui.identifyButton.animateClick()
