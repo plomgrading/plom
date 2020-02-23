@@ -12,7 +12,8 @@ import getpass
 import os
 import shlex
 import subprocess
-
+from multiprocessing import Pool
+from tqdm import tqdm
 
 # ----------------------
 
@@ -135,9 +136,14 @@ if __name__ == "__main__":
         if x and y:
             makeCover(*x)
             reassemble(*y)
-    from multiprocessing import Pool
-    pool = Pool()
-    pool.map(f, zip(coverpagelist, pagelists))
+
+    with Pool() as p:
+        r = list(
+            tqdm(
+                p.imap_unordered(f, list(zip(coverpagelist, pagelists))),
+                total=len(coverpagelist),
+            )
+        )
     # Serial
     #for z in zip(coverpagelist, pagelists):
     #    f(z)
