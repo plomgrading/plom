@@ -45,12 +45,13 @@ def find_partial_column_name(df, parthead, atStart=True):
     else:
         print('Searching for column containing "{0}":'.format(parthead))
         possible_matches = [s for s in df.columns if s.lower().find(parthead) >= 0]
-    print('  We found: ' + str(possible_matches))
+    print("  We found: " + str(possible_matches))
     try:
-        col, = possible_matches
+        (col,) = possible_matches
     except ValueError as e:
-        print('  Unfortunately we could not a find a unique column match!')
-        raise(e)
+        raise ValueError(
+            'Column match for "{}" not found/not unique'.format(parthead)
+        ) from None
     return col
 
 
