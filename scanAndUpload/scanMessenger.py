@@ -43,7 +43,8 @@ def getServerInfo():
         with open("server.toml") as fh:
             si = toml.load(fh)
         server = si["server"]
-        message_port = si["port"]
+        if server and ":" in server:
+            server, message_port = server.split(":")
 
 
 def requestAndSaveToken(user, pw):
