@@ -84,10 +84,7 @@ if __name__ == "__main__":
     # numberOfQuestions = spec["numberOfQuestions"]
 
     outDir = "reassembled_ID_but_not_marked"
-    try:
-        os.mkdir(outDir)
-    except FileExistsError:
-        pass
+    os.makedirs(outDir, exist_ok=True)
 
     identifiedTests = finishMessenger.RgetIdentified()
     # Open a file for the list of commands to process to reassemble papers
