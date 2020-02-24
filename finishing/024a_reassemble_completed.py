@@ -46,6 +46,7 @@ def buildCoverPage(shortName, outDir, t, maxMarks):
 def reassembleTestCMD(shortName, outDir, t, sid):
     fnames = finishMessenger.RgetAnnotatedFiles(t)
     if len(fnames) == 0:
+        # TODO: what is supposed to happen here?
         return
     covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
     rnames = ["../newServer/" + fn for fn in fnames]
@@ -131,6 +132,9 @@ if __name__ == "__main__":
                 else:
                     print(">>WARNING<< Test {} has no ID".format(t))
 
+    finishMessenger.closeUser()
+    finishMessenger.stopMessenger()
+
     def f(z):
         x, y = z
         if x and y:
@@ -147,8 +151,6 @@ if __name__ == "__main__":
     # Serial
     #for z in zip(coverpagelist, pagelists):
     #    f(z)
-    finishMessenger.closeUser()
-    finishMessenger.stopMessenger()
 
     print(">>> Warning <<<")
     print(
