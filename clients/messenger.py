@@ -35,7 +35,7 @@ from io import StringIO, BytesIO
 from plom_exceptions import *
 
 sys.path.append("..")  # this allows us to import from ../resources
-from resources.version import Plom_API_Version
+from resources.version import Plom_API_Version, Default_Port
 
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.
@@ -44,7 +44,7 @@ sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 # Server defaults
 server = "127.0.0.1"
-message_port = 41984
+message_port = Default_Port
 SRmutex = threading.Lock()
 _userName = None
 _token = None
@@ -1108,15 +1108,15 @@ def MrequestWholePaper(code):
 session = None
 
 
-def startMessenger(altServer=None, altPort=None):
+def startMessenger(altServer=None, port=None):
     """Start the messenger session"""
     global session
     global server
     global message_port
     if altServer is not None:
         server = altServer
-    if altPort is not None:
-        message_port = altPort
+    if port:
+        message_port = port
 
     if session:
         print("Messenger: already have an requests-session")

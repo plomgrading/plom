@@ -108,20 +108,20 @@ job serverStarts:
     - pushd scanAndUpload
     - ./011_startHere.py
     - ./012_scansToImages.py
-    - ./013_readQRCodes.py -s localhost -p 41984 -w rennacs
-    - ./014_sendPagesToServer.py -s localhost -p 41984 -w rennacs
+    - ./013_readQRCodes.py -s localhost -w rennacs
+    - ./014_sendPagesToServer.py -s localhost -w rennacs
     - popd
     ## not supposed to be done yet
     - pushd finishing
-    - if (./022_check_completed.py -s localhost -p 41984 -w hackhack); then false; else true; fi
+    - if (./022_check_completed.py -s localhost -w hackhack); then false; else true; fi
     - popd
     - pushd clients
-    - ./randoIDer.py -s localhost -p 41984 -u anne -w enna
-    - ./randoMarker.py -s localhost -p 41984 -u anne -w enna
+    - ./randoIDer.py -s localhost -u anne -w enna
+    - ./randoMarker.py -s localhost -u anne -w enna
     - popd
     ## TODO: once randoIDer is fixed above, invert this
     - pushd finishing
-    - if (./022_check_completed.py -s localhost -p 41984 -w hackhack); then false; else true; fi
+    - if (./022_check_completed.py -s localhost -w hackhack); then false; else true; fi
     - popd
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880

@@ -1,4 +1,2 @@
-# Set to the name of the server
+# Set to the name:port of the server
 server = "localhost"
-# Set to the message port number of that server
-port = 41984
