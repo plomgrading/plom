@@ -14,7 +14,8 @@ import os
 import shutil
 import subprocess
 import toml
-import multiprocessing as mp
+from multiprocessing import Pool
+from tqdm import tqdm
 
 from tpv_utils import (
     parseTPV,
@@ -46,10 +47,12 @@ def decodeQRs():
     then decode them.  The results are stored in blah.png.qr files.
     """
     os.chdir("./pageImages/")
+    # list and len bit crude here: more pythonic to leave as iterator?
+    stuff = list(glob.glob("*.png"))
+    N = len(stuff)
     # TODO: processes=8?  Seems its chosen automatically (?)
-    pool = mp.Pool()
-
-    results = pool.map(QRextract, glob.glob("*.png"))
+    with Pool() as p:
+        r = list(tqdm(p.imap_unordered(QRextract, stuff), total=N))
     # This does the same as the following serial loop but in parallel
     # for x in glob.glob("*.png"):
     #     QRextract(x)

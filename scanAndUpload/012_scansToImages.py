@@ -12,6 +12,8 @@ import shutil
 import subprocess
 import sys
 import toml
+from multiprocessing import Pool
+from tqdm import tqdm
 
 # TODO: make some common util file to store all these names?
 archivedir = "archivedPDFs"
@@ -78,6 +80,16 @@ def processFileToPng(fname):
         print("Error running gs: {}".format(suberror.stdout.decode("utf-8")))
 
 
+def gamma_adjust(fn):
+    """Apply a simple gamma shift to an image"""
+    subprocess.run(
+        ["mogrify", "-quiet", "-gamma", "0.5", "-quality", "100", fn],
+        stderr=subprocess.STDOUT,
+        shell=False,
+        check=True,
+    )
+
+
 def processScans():
     """Look in the scanned exams directory
     Process each pdf into png pageimages in the png subdir
@@ -109,28 +121,16 @@ def processScans():
         archivePDF(fname)
         # go into png directory
         os.chdir("png")
-        fh = open("commandlist.txt", "w")
-        # build list of mogrify commands to do
-        # each does simple gamma shift to image
-        for fn in glob.glob("*.png"):
-            fh.write("mogrify -quiet -gamma 0.5 -quality 100 " + fn + "\n")
-        fh.close()
-        # run the command list through parallel then delete
-        try:
-            subprocess.run(
-                ["parallel", "--bar", "-a", "commandlist.txt"],
-                stderr=subprocess.STDOUT,
-                shell=False,
-                check=True,
-            )
-        except subprocess.CalledProcessError as suberror:
-            print(
-                "Error running post-processing mogrify: {}".format(
-                    suberror.stdout.decode("utf-8")
-                )
-            )
 
-        os.unlink("commandlist.txt")
+        # Gamma shift the images
+        # list and len bit crude here: more pythonic to leave as iterator?
+        stuff = list(glob.glob("*.png"))
+        N = len(stuff)
+        with Pool() as p:
+            r = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
+        # Pool does this loop, but in parallel
+        # for x in glob.glob("*.png"):
+        #     gamma_adjust(x)
 
         # move all the pngs into pageimages directory
         for pngfile in glob.glob("*.png"):

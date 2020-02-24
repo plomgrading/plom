@@ -13,7 +13,10 @@ import getpass
 import os
 import shlex
 import subprocess
+from multiprocessing import Pool
+from tqdm import tqdm
 
+from testReassembler import reassemble
 import finishMessenger
 from plom_exceptions import *
 
@@ -26,11 +29,12 @@ numberOfQuestions = 0
 def reassembleTestCMD(shortName, outDir, t, sid):
     fnames = finishMessenger.RgetOriginalFiles(t)
     if len(fnames) == 0:
+        # TODO: what is supposed to happen here?
         return
     rnames = ["../newServer/" + fn for fn in fnames]
-    return 'python3 testReassembler.py {} {} {} "" "{}"\n'.format(
-        shortName, sid, outDir, rnames
-    )
+    outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
+    #reassemble(outname, shortName, sid, None, rnames)
+    return (outname, shortName, sid, None, rnames)
 
 
 if __name__ == "__main__":
@@ -84,24 +88,30 @@ if __name__ == "__main__":
     # numberOfQuestions = spec["numberOfQuestions"]
 
     outDir = "reassembled_ID_but_not_marked"
-    try:
-        os.mkdir(outDir)
-    except FileExistsError:
-        pass
+    os.makedirs(outDir, exist_ok=True)
 
     identifiedTests = finishMessenger.RgetIdentified()
-    # Open a file for the list of commands to process to reassemble papers
-    fh = open("./commandlist.txt", "w")
+    pagelists = []
     for t in identifiedTests:
         if identifiedTests[t][0] is not None:
-            fh.write(reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0]))
+            dat = reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
+            pagelists.append(dat)
         else:
             print(">>WARNING<< Test {} has no ID".format(t))
-    fh.close()
-    # pipe the commandlist into gnu-parallel
-    cmd = shlex.split("parallel --bar -a commandlist.txt")
-    subprocess.run(cmd, check=True)
-    os.unlink("commandlist.txt")
+
+    finishMessenger.closeUser()
+    finishMessenger.stopMessenger()
+
+    def _f(y):
+        reassemble(*y)
+
+    with Pool() as p:
+        r = list(
+            tqdm(
+                p.imap_unordered(_f, pagelists),
+                total=len(pagelists),
+            )
+        )
 
     print(">>> Warning <<<")
     print(

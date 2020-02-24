@@ -7,7 +7,7 @@ RUN apt-get --no-install-recommends --yes install  \
     python3-pyqt5.qtsql python3-pyqrcode python3-png \
     python3-pip python3-setuptools python3-wheel imagemagick \
     texlive-latex-extra dvipng g++ make python3-dev \
-    python3-xvfbwrapper
+    python3-xvfbwrapper python3-tqdm
 RUN pip3 install --upgrade pip
 RUN pip3 install --upgrade \
     pymupdf weasyprint imutils lapsolver peewee toml \

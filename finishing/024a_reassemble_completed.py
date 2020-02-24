@@ -12,11 +12,14 @@ import getpass
 import os
 import shlex
 import subprocess
-
+from multiprocessing import Pool
+from tqdm import tqdm
 
 # ----------------------
 
 from coverPageBuilder import makeCover
+from testReassembler import reassemble
+
 import finishMessenger
 from plom_exceptions import *
 
@@ -36,19 +39,20 @@ def buildCoverPage(shortName, outDir, t, maxMarks):
     for qvm in cpi[1:]:
         # append quads of [q,v,m,Max]
         arg.append([qvm[0], qvm[1], qvm[2], maxMarks[str(qvm[0])]])
-    makeCover(int(t), sname, sid, arg)
+    return (int(t), sname, sid, arg)
+    #makeCover(int(t), sname, sid, arg)
 
 
 def reassembleTestCMD(shortName, outDir, t, sid):
     fnames = finishMessenger.RgetAnnotatedFiles(t)
     if len(fnames) == 0:
+        # TODO: what is supposed to happen here?
         return
     covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
     rnames = ["../newServer/" + fn for fn in fnames]
-
-    return 'python3 testReassembler.py {} {} {} {} "{}"\n'.format(
-        shortName, sid, outDir, covername, rnames
-    )
+    outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
+    return (outname, shortName, sid, covername, rnames)
+    #reassemble(outname, shortName, sid, covername, rnames)
 
 
 if __name__ == "__main__":
@@ -111,36 +115,42 @@ if __name__ == "__main__":
     # dict key = testNumber, then pairs [sid, sname]
     maxMarks = finishMessenger.MgetAllMax()
 
-    # Build coverpages
-    # Doing this in a loop approx 4 times faster than using GNU Parallel
-    for t in completedTests:
-        if (
-            completedTests[t][0] == True
-            and completedTests[t][2] == numberOfQuestions
-        ):
-            buildCoverPage(shortName, outDir, t, maxMarks)
-
-    # now reassemble papers
-    with open("./commandlist.txt", "w") as fh:
+    # get data for cover pages and reassembly
+    pagelists = []
+    coverpagelist = []
+    if True:
         for t in completedTests:
             if (
                 completedTests[t][0] == True
                 and completedTests[t][2] == numberOfQuestions
             ):
                 if identifiedTests[t][0] is not None:
-                    fh.write(
-                        reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
-                    )
+                    dat1 = buildCoverPage(shortName, outDir, t, maxMarks)
+                    dat2 = reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
+                    coverpagelist.append(dat1)
+                    pagelists.append(dat2)
                 else:
                     print(">>WARNING<< Test {} has no ID".format(t))
 
-    # pipe the commandlist into gnu-parallel
-    cmd = shlex.split("parallel --bar -a commandlist.txt")
-    subprocess.run(cmd, check=True)
-    os.unlink("commandlist.txt")
-
     finishMessenger.closeUser()
     finishMessenger.stopMessenger()
+
+    def f(z):
+        x, y = z
+        if x and y:
+            makeCover(*x)
+            reassemble(*y)
+
+    with Pool() as p:
+        r = list(
+            tqdm(
+                p.imap_unordered(f, list(zip(coverpagelist, pagelists))),
+                total=len(coverpagelist),
+            )
+        )
+    # Serial
+    #for z in zip(coverpagelist, pagelists):
+    #    f(z)
 
     print(">>> Warning <<<")
     print(
