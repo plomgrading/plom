@@ -26,7 +26,7 @@ from plom.tpv_utils import (
 )
 import plom.scanMessenger as scanMessenger
 from plom.plom_exceptions import *
-from plom.fasterQRExtract import QRextract
+from plom.scan import QRextract
 
 
 def buildDirectories():

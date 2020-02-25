@@ -1,0 +1,1 @@
+from .fasterQRExtract import QRextract

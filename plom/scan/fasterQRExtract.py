@@ -38,6 +38,12 @@ def findCorner(qr, dim):
 
 
 def QRextract(imgName):
+    """Decode qr codes from an image file, save them in .qr file.
+
+    Currently, those are written into a `imgName.qr` file but this could
+    change in the future.  TODO: document whether `imgName` is a full path
+    or just a filename and where the `.qr` file gets written.
+    """
     qrname = "{}.qr".format(imgName)
     if os.path.exists(qrname) and os.path.getsize(qrname) != 0:
         return
