@@ -1,0 +1,97 @@
+#! /user/bin/env python3
+
+# from resources import version
+import argparse
+import os
+import shutil
+
+# import tools for dealing with resource files
+from importlib import resources
+from plom.resources.specParser import SpecVerifier, SpecParser
+
+
+def checkTomlExtension(fname):
+    ext = os.path.splitext(fname)[1]
+    if ext == ".toml":
+        return fname
+    elif len(ext) == 0:
+        return fname + ".toml"
+    else:
+        print(
+            'Your specification file name should either have no extension or end in ".toml".'
+        )
+        exit(1)
+
+
+def createSpecificationFile(fname):
+    print('Creating specification file with name "{}"'.format(fname))
+    with resources.path("plom.resources", "templateTestSpec.toml") as fn:
+        shutil.copy(fn, fname)
+    print("Please edit the file.")
+
+
+def parseAndVerifySpecification(fname):
+    print('Parsing and verifying the specification "{}"'.format(fname))
+    sv = SpecVerifier(fname)
+    sv.verifySpec()
+    sv.checkCodes()
+    sv.saveVerifiedSpec()
+    sp = SpecParser()
+    sp.printSpec()
+
+
+
+def buildDatabaseAndPapers(blankOrID):
+    if blankOrID == "blank":
+        print("Build blank papers + database")
+    else:
+        print("Build named papers + database")
+
+
+parser = argparse.ArgumentParser()
+sub = parser.add_subparsers(help="sub-command help", dest="command")
+#
+spC = sub.add_parser("create")
+spC.add_argument(
+    "specFile",
+    nargs="?",
+    default="testSpec.toml",
+    help="Create test-specification toml file with name specFile. If no argument given then defaults to 'testSpec.toml'",
+)
+#
+spP = sub.add_parser("parse")
+spP.add_argument(
+    "specFile",
+    nargs="?",
+    default="testSpec.toml",
+    help="Parse and verify test-specification toml file with name specFile. If no argument given then defaults to 'testSpec.toml'",
+)
+
+#
+spB = sub.add_parser("build")
+spB.add_argument(
+    "naming",
+    nargs="?",
+    choices=["blank", "named"],
+    default="blank",
+    help='Build papers and database from the specification either blank or pre-named. If no argument given then defaults to "blank"',
+)
+
+# Now parse things
+args = parser.parse_args()
+
+if args.command == "create":
+    # check the file extension
+    fname = checkTomlExtension(args.specFile)
+    # copy the template spec into place
+    createSpecificationFile(fname)
+elif args.command == "parse":
+    # check the file extension
+    fname = checkTomlExtension(args.specFile)
+    # copy the template spec into place
+    parseAndVerifySpecification(fname)
+elif args.command == "build":
+    buildDatabaseAndPapers(args.naming)
+else:
+    parser.print_help()
+    exit(0)
