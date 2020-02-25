@@ -17,8 +17,8 @@ import shutil
 import sys
 import toml
 
-import scanMessenger
-from plom_exceptions import *
+import plom.scanMessenger as scanMessenger
+from plom.plom_exceptions import *
 
 # ----------------------
 

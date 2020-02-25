@@ -9,6 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import getpass
+
 from plom.misc_utils import format_int_list_with_runs
 import plom.scanMessenger as scanMessenger
 from plom.plom_exceptions import *

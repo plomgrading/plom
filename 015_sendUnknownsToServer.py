@@ -15,16 +15,14 @@ import json
 import os
 import shutil
 
-import scanMessenger
-from plom_exceptions import *
-
-# ----------------------
+import plom.scanMessenger as scanMessenger
+from plom.plom_exceptions import *
 
 
 def buildDirectories():
     """Build the directories that this script needs"""
     # the list of directories. Might need updating.
-    lst = ["sentPages", "sentPages/collisions"]
+    lst = ["sentPages", "sentPages/unknowns"]
     for dir in lst:
         try:
             os.mkdir(dir)
@@ -35,73 +33,31 @@ def buildDirectories():
 def doFiling(rmsg, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
         # print(rmsg[2])
-        for suf in ["", ".qr", ".collide"]:
-            shutil.move(
-                fname + suf, os.path.join("sentPages", "collisions", shortName + suf)
-            )
+        shutil.move(fname, os.path.join("sentPages", "unknowns", shortName))
+        shutil.move(
+            fname + ".qr", os.path.join("sentPages", "unknowns", shortName + "qr")
+        )
     else:  # msg = [False, reason, message]
         if rmsg[1] == "duplicate":
             print(rmsg[2])
-            for suf in ["", ".qr", ".collide"]:
-                shutil.move(
-                    fname + suf, os.path.join("discardedPages", shortName + suf)
-                )
-        elif rmsg[1] == "original":
-            print(rmsg[2])
-            print("This should not happen - todo = log error in a sensible way")
+            shutil.move(fname, os.path.join("discardedPages", shortName))
+            shutil.move(
+                fname + ".qr", os.path.join("discardedPages", shortName + ".qr")
+            )
         else:
             print(rmsg[2])
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendCollidingFiles(fileList):
+def sendUnknownFiles(fileList):
     for fname in fileList:
-        cname = fname + ".collide"
-        with open(cname, "r") as fh:
-            cdat = json.load(fh)
-        print(
-            "File {} collides with {} - has tpv = {} {} {}".format(
-                fname, cdat[0], cdat[1], cdat[2], cdat[3]
-            )
-        )
-        ts = str(cdat[1]).zfill(4)
-        ps = str(cdat[2]).zfill(2)
-        vs = str(cdat[3])
-        code = "t{}p{}v{}".format(ts, ps, vs)
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         shortName = os.path.split(fname)[1]
-        rmsg = scanMessenger.uploadCollidingPage(
-            code, int(ts), int(ps), int(vs), shortName, fname, md5
-        )
+        rmsg = scanMessenger.uploadUnknownPage(shortName, fname, md5)
         doFiling(rmsg, shortName, fname)
 
 
-def warnUser(fileList):
-    if len(fileList) == 0:
-        print("No colliding pages. Nothing to do.")
-        return False
-
-    print(">>>>>>>>>> WARNING <<<<<<<<<<")
-    print("In most use cases you should have no colliding pages.")
-    print("Detected the following colliding files:\n\t", fileList)
-    print(
-        'We strongly recommend that you review the images in the "collidingPages" directory before proceeding.'
-    )
-    yn = input("********** Are you sure you want to proceed [y/N] **********  ")
-    if yn == "y":
-        print("Proceeding.")
-        return True
-    else:
-        print("Terminating.")
-        return False
-
-
 if __name__ == "__main__":
-    # Look for pages in collisions
-    fileList = glob("collidingPages/*.png")
-    if warnUser(fileList) == False:
-        exit()
-
     # get commandline args if needed
     parser = argparse.ArgumentParser(
         description="Run the QR-code reading script. No arguments = run as normal."
@@ -145,6 +101,9 @@ if __name__ == "__main__":
 
     buildDirectories()
 
-    sendCollidingFiles(fileList)
+    # Look for pages in unknowns
+    fileList = glob("unknownPages/*.png")
+    print(fileList)
+    sendUnknownFiles(fileList)
     scanMessenger.closeUser()
     scanMessenger.stopMessenger()

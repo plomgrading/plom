@@ -17,16 +17,16 @@ import toml
 from multiprocessing import Pool
 from tqdm import tqdm
 
-from tpv_utils import (
+from plom.tpv_utils import (
     parseTPV,
     isValidTPV,
     hasCurrentAPI,
     getCode,
     getPosition,
 )
-import scanMessenger
-from plom_exceptions import *
-from fasterQRExtract import QRextract
+import plom.scanMessenger as scanMessenger
+from plom.plom_exceptions import *
+from plom.fasterQRExtract import QRextract
 
 
 def buildDirectories():
