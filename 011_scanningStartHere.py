@@ -23,10 +23,16 @@ print("To start the scan process")
 print(
     "0. Copy your PDF scans of the tests into the directory scannedExams. This script has created that directory if it did not already exist."
 )
-print("1. Edit the server.toml file with the relevant server data.")
 print(
-    '2. Run the "012_scansToImages.py" script - this processes your PDFs into individual pages'
+    '1. Run the "012_scansToImages.py" script - this processes your PDFs into individual pages'
 )
+print("""
+2. Optionally create a "server.toml" text file containing a single line such as:
+server = "localhost"
+server = "localhost:1234"
+server = "plom.foo.bar:41982"
+NOTE: not implemented yet!
+""")
 print(
     "3. Make sure the newserver is running and that the password for the 'scanner' user has been set."
 )
