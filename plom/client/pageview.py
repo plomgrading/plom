@@ -3,13 +3,12 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+import time
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QPainter, QCursor
 from PyQt5.QtWidgets import QGraphicsView, QApplication
 
-# Import the pagescene class.
-from pagescene import PageScene
-import time
+from .pagescene import PageScene
 
 
 class PageView(QGraphicsView):

@@ -15,8 +15,8 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QWidget,
 )
-from uiFiles.ui_test_view import Ui_TestView
-from examviewwindow import ExamViewWindow
+from .uiFiles.ui_test_view import Ui_TestView
+from .examviewwindow import ExamViewWindow
 
 
 class TestView(QWidget):

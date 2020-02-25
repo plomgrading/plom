@@ -12,24 +12,23 @@ import datetime
 import toml
 import argparse
 import os
-import marker
-import identifier
-import totaler
 import signal
 import sys
 import traceback as tblib
 from PyQt5.QtCore import pyqtSlot, QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
-from uiFiles.ui_chooser import Ui_Chooser
-from useful_classes import ErrorMessage, SimpleMessage
-from plom_exceptions import *
 
-import messenger
-
-sys.path.append("..")  # this allows us to import from ../resources
-from resources.version import __version__
-from resources.version import Plom_API_Version, Default_Port
+from .uiFiles.ui_chooser import Ui_Chooser
+from .useful_classes import ErrorMessage, SimpleMessage
+from plom.plom_exceptions import *
+from . import marker
+from . import identifier
+from . import totaler
+from plom import __version__
+from plom import Plom_API_Version
+import plom.messenger as messenger
+from plom.version import Default_Port
 
 
 # set up variables to store paths for marker and id clients

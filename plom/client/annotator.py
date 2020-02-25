@@ -43,23 +43,23 @@ from PyQt5.QtWidgets import (
     QToolButton,
 )
 
-from mark_handler import MarkHandler
-from pageview import PageView
-from pagescene import PageScene
+from .mark_handler import MarkHandler
+from .pageview import PageView
+from .pagescene import PageScene
 
 # import the key-help popup window class
-from key_help import KeyHelp
+from .key_help import KeyHelp
 
-from useful_classes import (
+from .useful_classes import (
     CommentWidget,
     ErrorMessage,
     SimpleMessage,
     SimpleMessageCheckBox,
     NoAnswerBox,
 )
-from test_view import TestView
-from uiFiles.ui_annotator_lhm import Ui_annotator_lhm
-from uiFiles.ui_annotator_rhm import Ui_annotator_rhm
+from .test_view import TestView
+from .uiFiles.ui_annotator_lhm import Ui_annotator_lhm
+from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm
 
 # Short descriptions of each tool to display to user.
 tipText = {

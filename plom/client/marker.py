@@ -45,16 +45,16 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-
-from examviewwindow import ExamViewWindow
-import messenger
-from annotator import Annotator
-from plom_exceptions import *
-from useful_classes import AddTagBox, ErrorMessage, SimpleMessage
-from useful_classes import commentLoadAll, commentIsVisible
-from reorientationwindow import ExamReorientWindow
-from uiFiles.ui_marker import Ui_MarkerWindow
-from test_view import GroupView, TestGroupSelect
+from .examviewwindow import ExamViewWindow
+import plom.messenger as messenger
+from .annotator import Annotator
+from plom.plom_exceptions import *
+from .useful_classes import AddTagBox, ErrorMessage, SimpleMessage
+from .useful_classes import commentLoadAll, commentIsVisible
+from .reorientationwindow import ExamReorientWindow
+from .uiFiles.ui_marker import Ui_MarkerWindow
+from .test_view import GroupView, TestGroupSelect
+from plom import Plom_API_Version
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -65,8 +65,6 @@ if platform.system() == "Darwin":
 
     qt_set_sequence_auto_mnemonic(True)
 
-sys.path.append("..")  # this allows us to import from ../resources
-from resources.version import Plom_API_Version
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory(prefix="plom_")

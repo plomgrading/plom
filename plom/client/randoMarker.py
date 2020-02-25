@@ -20,13 +20,12 @@ from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QPainterPath, QPen
 from PyQt5.QtWidgets import QApplication, QWidget
 
+from plom.plom_exceptions import *
+import plom.messenger as messenger
+from plom.client.pageview import PageView
+from plom.client.pagescene import PageScene
 
-from plom_exceptions import *
-import messenger
-from pageview import PageView
-from pagescene import PageScene
-
-from tools import (
+from plom.client.tools import (
     CommandArrow,
     CommandArrowDouble,
     CommandBox,
@@ -47,10 +46,7 @@ from tools import (
     GroupDTItem,
 )
 
-
-sys.path.append("..")  # this allows us to import from ../resources
-from resources.version import __version__
-from resources.version import Plom_API_Version
+from plom import __version__, Plom_API_Version
 
 
 # -------------------------------------------

@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import (
 )
 
 # Import all the tool commands for undo/redo stack.
-from tools import (
+from .tools import (
     CommandArrow,
     CommandArrowDouble,
     CommandBox,

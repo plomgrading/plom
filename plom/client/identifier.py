@@ -27,16 +27,14 @@ from PyQt5.QtCore import (
 )
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QCompleter, QWidget, QMainWindow, QInputDialog, QMessageBox
-from examviewwindow import ExamViewWindow
-from useful_classes import ErrorMessage, SimpleMessage, BlankIDBox
-from uiFiles.ui_identify import Ui_IdentifyWindow
-from test_view import WholeTestView
 
-from plom_exceptions import *
+from .examviewwindow import ExamViewWindow
+from .useful_classes import ErrorMessage, SimpleMessage, BlankIDBox
+from .uiFiles.ui_identify import Ui_IdentifyWindow
+from .test_view import WholeTestView
 
-
-sys.path.append("..")  # this allows us to import from ../resources
-from resources.version import Plom_API_Version
+from plom.plom_exceptions import *
+from plom import Plom_API_Version
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
