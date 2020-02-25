@@ -62,12 +62,13 @@ files += [
 files += [
     "plom/__init__.py",
     "plom/version.py",
-    "plom/fasterQRExtract.py",
+    "plom/scan/__init__.py",
+    "plom/scan/fasterQRExtract.py",
+    "plom/scanMessenger.py",
     "plom/plom_exceptions.py",
     "plom/specParser.py",
     "plom/tpv_utils.py",
     "plom/misc_utils.py",
-    "plom/scanMessenger.py",
 ]
 
 files += [
