@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from examviewwindow import ExamViewWindow
+from plom.client.examviewwindow import ExamViewWindow
 
 
 class ActionTab(QWidget):

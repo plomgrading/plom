@@ -17,7 +17,6 @@ import json
 import ssl
 from PyQt5.QtWidgets import QMessageBox
 import urllib3
-from useful_classes import ErrorMessage
 import time
 import threading
 import hashlib
@@ -32,10 +31,10 @@ import hashlib
 # requests_log.propagate = True
 
 from io import StringIO, BytesIO
-from plom_exceptions import *
 
-sys.path.append("..")  # this allows us to import from ../resources
-from resources.version import Plom_API_Version, Default_Port
+from plom.plom_exceptions import *
+from plom import Plom_API_Version
+from plom.version import Default_Port
 
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.

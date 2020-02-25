@@ -36,21 +36,22 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from uiFiles.ui_manager import Ui_Manager
-from useful_classes import ErrorMessage, SimpleMessage
-from test_view import WholeTestView, GroupView
-from unknownpageview import UnknownViewWindow
-from collideview import CollideViewWindow
-from discardview import DiscardViewWindow
-from reviewview import ReviewViewWindow
-from selectrectangle import SelectRectangleWindow, IDViewWindow
-from plom_exceptions import *
 
-import managerMessenger
+# TODO: client references to be avoided, refactor to common utils?
+from plom.client.useful_classes import ErrorMessage, SimpleMessage
+from plom.client.test_view import WholeTestView, GroupView
 
-sys.path.append("..")  # this allows us to import from ../resources
-from resources.version import __version__
-from resources.version import Plom_API_Version, Default_Port
+from .uiFiles.ui_manager import Ui_Manager
+from .unknownpageview import UnknownViewWindow
+from .collideview import CollideViewWindow
+from .discardview import DiscardViewWindow
+from .reviewview import ReviewViewWindow
+from .selectrectangle import SelectRectangleWindow, IDViewWindow
+from plom.plom_exceptions import *
+import plom.managerMessenger as managerMessenger
+
+from plom import __version__, Plom_API_Version
+from plom.version import Default_Port
 
 
 class QVHistogram(QDialog):
