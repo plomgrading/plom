@@ -8,7 +8,7 @@ import shutil
 from importlib import resources
 from plom.specParser import SpecVerifier, SpecParser
 
-import plom.produce.buildPlomDB
+from plom.produce import buildPlomDB
 
 
 def checkTomlExtension(fname):

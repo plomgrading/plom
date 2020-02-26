@@ -6,159 +6,161 @@ from datetime import datetime, timedelta
 # logger.addHandler(logging.StreamHandler())
 # logger.setLevel(logging.DEBUG)
 
+plomdb = SqliteDatabase(None)
+
+######################################################################
+# TODO: could this data base scheme stuff live in another file?
+
+# the test contains groups
+# test bools something like
+# produced = we've built the PDF
+# used = we've scanned at least one page
+# scanned = we've fed it to students, scanned it into system.
+# identified = ID-ing is done
+# marked = marking is done
+# finished = we've rebuilt the PDF at the end with coverpages etc etc
+
+
+class Test(Model):
+    testNumber = IntegerField(primary_key=True, unique=True)
+    # some state bools
+    produced = BooleanField(default=False)
+    used = BooleanField(default=False)
+    scanned = BooleanField(default=False)
+    identified = BooleanField(default=False)
+    marked = BooleanField(default=False)
+    finished = BooleanField(default=False)
+    totalled = BooleanField(default=False)
+
+    class Meta:
+        database = plomdb
+
+
+# group knows its test
+# group status will evolve something like... [todo, outwithclient, done]
+class Group(Model):
+    test = ForeignKeyField(Test, backref="groups")
+    gid = CharField(unique=True)  # must be unique
+    groupType = CharField()  # to distinguish between ID, DNM, and Mark groups
+    # flags
+    scanned = BooleanField(default=False)
+
+    class Meta:
+        database = plomdb
+
+
+# Data for id-group
+class IDData(Model):
+    test = ForeignKeyField(Test, backref="iddata")
+    group = ForeignKeyField(Group, backref="iddata")
+    status = CharField(default="")
+    studentID = CharField(unique=True, null=True)
+    studentName = CharField(null=True)
+    username = CharField(default="")
+    time = DateTimeField(null=True)
+    # flags
+    identified = BooleanField(default=False)
+
+    class Meta:
+        database = plomdb
+
+
+# Data for question-groups
+class QuestionData(Model):
+    test = ForeignKeyField(Test, backref="questiondata")
+    group = ForeignKeyField(Group, backref="questiondata")
+    status = CharField(default="")
+    questionNumber = IntegerField(null=False)
+    version = IntegerField(null=False)
+    annotatedFile = CharField(null=True)
+    md5sum = CharField(null=True)
+    plomFile = CharField(null=True)
+    commentFile = CharField(null=True)
+    mark = IntegerField(null=True)
+    markingTime = IntegerField(null=True)
+    tags = CharField(default="")
+    username = CharField(default="")
+    time = DateTimeField(null=True)
+    # flags
+    marked = BooleanField(default=False)
+
+    class Meta:
+        database = plomdb
+
+
+# Data for totalling the marks
+class SumData(Model):
+    test = ForeignKeyField(Test, backref="sumdata")
+    status = CharField(default="")
+    sumMark = IntegerField(null=True)
+    username = CharField(default="")
+    time = DateTimeField(null=True)
+    # flags
+    summed = BooleanField(default=False)
+
+    class Meta:
+        database = plomdb
+
+
+# Page knows its group and its test
+class Page(Model):
+    test = ForeignKeyField(Test, backref="pages")
+    group = ForeignKeyField(Group, backref="pages")  # note - not the GID
+    pageNumber = IntegerField(null=False)
+    pid = CharField(unique=True)  # to ensure uniqueness
+    version = IntegerField(default=1)
+    originalName = CharField(null=True)
+    fileName = CharField(null=True)
+    md5sum = CharField(null=True)  # to check for duplications
+    # flags
+    scanned = BooleanField(default=False)
+
+    class Meta:
+        database = plomdb
+
+
+# Colliding pages should be attached to the page their are duplicating
+# When collision status resolved we can move them about.
+class CollidingPage(Model):
+    page = ForeignKeyField(Page, backref="collisions")
+    originalName = CharField(null=True)
+    fileName = CharField(null=True)
+    md5sum = CharField()
+
+    class Meta:
+        database = plomdb
+
+
+# Unknown pages are basically just the file
+class UnknownPage(Model):
+    originalName = CharField(null=True)
+    fileName = CharField(null=True)
+    md5sum = CharField()
+
+    class Meta:
+        database = plomdb
+
+
+# Discarded pages are basically just the file and a reason
+# reason could be "garbage", "duplicate of tpv-code", ...?
+class DiscardedPage(Model):
+    originalName = CharField(null=True)
+    fileName = CharField(null=True)
+    md5sum = CharField()
+    reason = CharField(null=True)
+    tpv = CharField(null=True)  # if the discard is a duplicate of a given tpv
+
+    class Meta:
+        database = plomdb
+
+
+# TODO: end of database scheme stuff
+######################################################################
+
 
 class PlomDB:
     def __init__(self, dbFilename="plom.db"):
-        plomdb = SqliteDatabase(dbFilename)
-
-        ######################################################################
-        # TODO: could this data base scheme stuff live in another file?
-
-        # the test contains groups
-        # test bools something like
-        # produced = we've built the PDF
-        # used = we've scanned at least one page
-        # scanned = we've fed it to students, scanned it into system.
-        # identified = ID-ing is done
-        # marked = marking is done
-        # finished = we've rebuilt the PDF at the end with coverpages etc etc
-
-
-        class Test(Model):
-            testNumber = IntegerField(primary_key=True, unique=True)
-            # some state bools
-            produced = BooleanField(default=False)
-            used = BooleanField(default=False)
-            scanned = BooleanField(default=False)
-            identified = BooleanField(default=False)
-            marked = BooleanField(default=False)
-            finished = BooleanField(default=False)
-            totalled = BooleanField(default=False)
-
-            class Meta:
-                database = plomdb
-
-
-        # group knows its test
-        # group status will evolve something like... [todo, outwithclient, done]
-        class Group(Model):
-            test = ForeignKeyField(Test, backref="groups")
-            gid = CharField(unique=True)  # must be unique
-            groupType = CharField()  # to distinguish between ID, DNM, and Mark groups
-            # flags
-            scanned = BooleanField(default=False)
-
-            class Meta:
-                database = plomdb
-
-
-        # Data for id-group
-        class IDData(Model):
-            test = ForeignKeyField(Test, backref="iddata")
-            group = ForeignKeyField(Group, backref="iddata")
-            status = CharField(default="")
-            studentID = CharField(unique=True, null=True)
-            studentName = CharField(null=True)
-            username = CharField(default="")
-            time = DateTimeField(null=True)
-            # flags
-            identified = BooleanField(default=False)
-
-            class Meta:
-                database = plomdb
-
-
-        # Data for question-groups
-        class QuestionData(Model):
-            test = ForeignKeyField(Test, backref="questiondata")
-            group = ForeignKeyField(Group, backref="questiondata")
-            status = CharField(default="")
-            questionNumber = IntegerField(null=False)
-            version = IntegerField(null=False)
-            annotatedFile = CharField(null=True)
-            md5sum = CharField(null=True)
-            plomFile = CharField(null=True)
-            commentFile = CharField(null=True)
-            mark = IntegerField(null=True)
-            markingTime = IntegerField(null=True)
-            tags = CharField(default="")
-            username = CharField(default="")
-            time = DateTimeField(null=True)
-            # flags
-            marked = BooleanField(default=False)
-
-            class Meta:
-                database = plomdb
-
-
-        # Data for totalling the marks
-        class SumData(Model):
-            test = ForeignKeyField(Test, backref="sumdata")
-            status = CharField(default="")
-            sumMark = IntegerField(null=True)
-            username = CharField(default="")
-            time = DateTimeField(null=True)
-            # flags
-            summed = BooleanField(default=False)
-
-            class Meta:
-                database = plomdb
-
-
-        # Page knows its group and its test
-        class Page(Model):
-            test = ForeignKeyField(Test, backref="pages")
-            group = ForeignKeyField(Group, backref="pages")  # note - not the GID
-            pageNumber = IntegerField(null=False)
-            pid = CharField(unique=True)  # to ensure uniqueness
-            version = IntegerField(default=1)
-            originalName = CharField(null=True)
-            fileName = CharField(null=True)
-            md5sum = CharField(null=True)  # to check for duplications
-            # flags
-            scanned = BooleanField(default=False)
-
-            class Meta:
-                database = plomdb
-
-
-        # Colliding pages should be attached to the page their are duplicating
-        # When collision status resolved we can move them about.
-        class CollidingPage(Model):
-            page = ForeignKeyField(Page, backref="collisions")
-            originalName = CharField(null=True)
-            fileName = CharField(null=True)
-            md5sum = CharField()
-
-            class Meta:
-                database = plomdb
-
-
-        # Unknown pages are basically just the file
-        class UnknownPage(Model):
-            originalName = CharField(null=True)
-            fileName = CharField(null=True)
-            md5sum = CharField()
-
-            class Meta:
-                database = plomdb
-
-
-        # Discarded pages are basically just the file and a reason
-        # reason could be "garbage", "duplicate of tpv-code", ...?
-        class DiscardedPage(Model):
-            originalName = CharField(null=True)
-            fileName = CharField(null=True)
-            md5sum = CharField()
-            reason = CharField(null=True)
-            tpv = CharField(null=True)  # if the discard is a duplicate of a given tpv
-
-            class Meta:
-                database = plomdb
-
-        # TODO: end of database scheme stuff
-        ######################################################################
-
+        plomdb.init(dbFilename)
 
         with plomdb:
             plomdb.create_tables(
