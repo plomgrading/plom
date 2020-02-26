@@ -55,7 +55,7 @@ job buildPapers:
   script:
     - python3 ./setup.py build bdist_wheel
     - pushd dist
-    - pip3 install plom-*.whl
+    - python3 -m pip install plom-*.whl
     - popd
     # First build sources pdfs
     - pushd testTemplates
@@ -96,7 +96,7 @@ job serverStarts:
   script:
     - python3 ./setup.py build bdist_wheel
     - pushd dist
-    - pip3 install plom-*.whl
+    - python3 -m pip install plom-*.whl
     - popd
     # scan and upload
     - mkdir play
