@@ -33,34 +33,22 @@ def readClassList():
     return students
 
 
-def buildCommandList(spec, students):
-    cmdList = []
+def buildAllPapers(spec, students):
+    # TODO: slow serial look, awaiting Pool ||ism
     for t in range(1, spec["numberToProduce"] + 1):
         pv = examDB.getPageVersions(t)
         # have to add name/id to pv
         if t <= spec["numberToName"]:
             pv["id"] = students[t][0]
             pv["name"] = students[t][1]
-        cmdList.append(
-            'python3 mergeAndCodePages.py {} {} {} {} {} "{}"\n'.format(
-                spec["name"],
-                spec["publicCode"],
-                spec["numberOfPages"],
-                spec["numberOfVersions"],
-                t,
-                pv,
-            )
+        makePDF(
+            spec["name"],
+            spec["publicCode"],
+            spec["numberOfPages"],
+            spec["numberOfVersions"],
+            t,
+            pv,
         )
-    return cmdList
-
-
-def runCommandList(cmdList):
-    with open("./commandlist.txt", "w") as fh:
-        for c in cmdList:
-            fh.write(c)
-
-    cmd = shlex.split("parallel --bar -a commandlist.txt")
-    subprocess.run(cmd, check=True)
 
 
 def confirmProcessedAndNamed(spec, students):
@@ -78,6 +66,5 @@ if __name__ == "__main__":
     # read the spec
     spec = SpecParser().spec
     students = readClassList()
-    cmdList = buildCommandList(spec, students)
-    runCommandList(cmdList)
+    buildAllPapers(spec, students)
     confirmProcessedAndNamed(spec, students)
