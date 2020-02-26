@@ -1,7 +1,7 @@
 <!--
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald"
 __license__ = "GFDL"
  -->
 Installing on Popular GNU/Linux Distros
@@ -12,7 +12,7 @@ Fedora
 
 Tested on Fedora 31.  Some stuff from the package manager:
 ```
-  # sudo dnf install parallel ImageMagick zbar \
+  # sudo dnf install ImageMagick zbar \
                      python3-PyMuPDF python3-passlib python3-pypng \
                      python3-jsmin python3-defusedxml python3-yaml \
                      python3-urllib3 python3-more-itertools \
@@ -41,7 +41,7 @@ Ubuntu
 Some stuff from the package manager:
 ```
   # sudo apt install \
-        parallel zbar-tools cmake make imagemagick dvipng g++ \
+        zbar-tools cmake make imagemagick dvipng g++ \
         python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
         python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
         python3-pip python3-setuptools python3-wheel python3-toml \
