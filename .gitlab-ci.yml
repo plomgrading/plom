@@ -129,8 +129,8 @@ job serverStarts:
     #- pushd finishing
     #- if (./022_check_completed.py -s localhost -w hackhack); then false; else true; fi
     #- popd
-    - python3 -m plom.client.randoIDer.py -s localhost -u anne -w enna
-    - python3 -m plom.client.randoMarker.py -s localhost -u anne -w enna
+    - python3 -m plom.client.randoIDer -s localhost -u anne -w enna
+    - python3 -m plom.client.randoMarker -s localhost -u anne -w enna
     - popd
     ## TODO: once randoIDer is fixed above, invert this
     # TODO: finishing WIP in plom module
