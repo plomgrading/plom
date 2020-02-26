@@ -25,7 +25,7 @@ def checkTomlExtension(fname):
 def createSpecificationFile(fname):
     print('Creating specification file with name "{}"'.format(fname))
     template = resources.read_text("plom", "templateTestSpec.toml")
-    with open(fn, "w+") as fh:
+    with open(fname, "w+") as fh:
         fh.write(template)
     # print("Please edit the file.")
 
