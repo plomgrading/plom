@@ -7,21 +7,18 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-
 import argparse
 import getpass
 import sys
 
-# ----------------------
-from misc_utils import format_int_list_with_runs
-import finishMessenger
-from plom_exceptions import *
+from plom.misc_utils import format_int_list_with_runs
+import plom.finishMessenger as finishMessenger
+from plom.plom_exceptions import *
 
 numberOfTests = 0
 numberOfQuestions = 0
 
 # ----------------------
-
 
 
 def proc_everything(comps):

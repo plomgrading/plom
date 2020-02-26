@@ -7,7 +7,6 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-
 import argparse
 import getpass
 import os
@@ -16,9 +15,11 @@ import subprocess
 from multiprocessing import Pool
 from tqdm import tqdm
 
-from testReassembler import reassemble
-import finishMessenger
-from plom_exceptions import *
+from .coverPageBuilder import makeCover
+from .testReassembler import reassemble
+
+import plom.finishMessenger as finishMessenger
+from plom.plom_exceptions import *
 
 numberOfTests = 0
 numberOfQuestions = 0
@@ -26,15 +27,30 @@ numberOfQuestions = 0
 # ----------------------
 
 
+def buildCoverPage(shortName, outDir, t, maxMarks):
+    # should be [ [sid, sname], [q,v,m], [q,v,m] etc]
+    cpi = finishMessenger.RgetCoverPageInfo(t)
+    sid = cpi[0][0]
+    sname = cpi[0][1]
+    # for each Q [q, v, mark, maxPossibleMark]
+    arg = []
+    for qvm in cpi[1:]:
+        # append quads of [q,v,m,Max]
+        arg.append([qvm[0], qvm[1], qvm[2], maxMarks[str(qvm[0])]])
+    return (int(t), sname, sid, arg)
+    #makeCover(int(t), sname, sid, arg)
+
+
 def reassembleTestCMD(shortName, outDir, t, sid):
-    fnames = finishMessenger.RgetOriginalFiles(t)
+    fnames = finishMessenger.RgetAnnotatedFiles(t)
     if len(fnames) == 0:
         # TODO: what is supposed to happen here?
         return
+    covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
     rnames = ["../newServer/" + fn for fn in fnames]
     outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
-    #reassemble(outname, shortName, sid, None, rnames)
-    return (outname, shortName, sid, None, rnames)
+    return (outname, shortName, sid, covername, rnames)
+    #reassemble(outname, shortName, sid, covername, rnames)
 
 
 if __name__ == "__main__":
@@ -80,35 +96,56 @@ if __name__ == "__main__":
         exit(0)
 
     shortName = finishMessenger.getInfoShortName()
-    # spec = finishMessenger.getInfoGeneral()
-    # numberOfTests = spec["numberOfTests"]
-    # numberOfQuestions = spec["numberOfQuestions"]
+    spec = finishMessenger.getInfoGeneral()
+    numberOfTests = spec["numberOfTests"]
+    numberOfQuestions = spec["numberOfQuestions"]
 
-    outDir = "reassembled_ID_but_not_marked"
+    outDir = "reassembled"
+    os.makedirs("coverPages", exist_ok=True)
     os.makedirs(outDir, exist_ok=True)
 
+    completedTests = finishMessenger.RgetCompletions()
+    # dict key = testnumber, then list id'd, tot'd, #q's marked
     identifiedTests = finishMessenger.RgetIdentified()
+    # dict key = testNumber, then pairs [sid, sname]
+    maxMarks = finishMessenger.MgetAllMax()
+
+    # get data for cover pages and reassembly
     pagelists = []
-    for t in identifiedTests:
-        if identifiedTests[t][0] is not None:
-            dat = reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
-            pagelists.append(dat)
-        else:
-            print(">>WARNING<< Test {} has no ID".format(t))
+    coverpagelist = []
+    if True:
+        for t in completedTests:
+            if (
+                completedTests[t][0] == True
+                and completedTests[t][2] == numberOfQuestions
+            ):
+                if identifiedTests[t][0] is not None:
+                    dat1 = buildCoverPage(shortName, outDir, t, maxMarks)
+                    dat2 = reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
+                    coverpagelist.append(dat1)
+                    pagelists.append(dat2)
+                else:
+                    print(">>WARNING<< Test {} has no ID".format(t))
 
     finishMessenger.closeUser()
     finishMessenger.stopMessenger()
 
-    def _f(y):
-        reassemble(*y)
+    def f(z):
+        x, y = z
+        if x and y:
+            makeCover(*x)
+            reassemble(*y)
 
     with Pool() as p:
         r = list(
             tqdm(
-                p.imap_unordered(_f, pagelists),
-                total=len(pagelists),
+                p.imap_unordered(f, list(zip(coverpagelist, pagelists))),
+                total=len(coverpagelist),
             )
         )
+    # Serial
+    #for z in zip(coverpagelist, pagelists):
+    #    f(z)
 
     print(">>> Warning <<<")
     print(

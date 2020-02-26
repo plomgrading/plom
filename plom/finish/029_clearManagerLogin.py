@@ -10,7 +10,7 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import getpass
 
-import finishMessenger
+import plom.finishMessenger as finishMessenger
 
 
 if __name__ == "__main__":
