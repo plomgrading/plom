@@ -107,10 +107,7 @@ job serverStarts:
     - popd
     # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
     - curl https://www.math.ubc.ca/~cbm/tmp/testThis.pdf > play/scannedExams/foo.pdf
-    - mkdir tmp
-    - pushd tmp
     - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
-    - popd
     # Start server
     - pushd newServer
     - ip addr
