@@ -1,10 +1,9 @@
-# Courses (UBC Maths-centric) that have used Plom
+# Courses that have used Plom
 
-These are as best I can recall
+These are as best we can recall.  Currently UBC Maths-centric.
 
 
-# 2018-19
-
+## 2018-19
 
 | Course | Task | Approx student count | Notes |
 |--------|------|----------------------|----|
@@ -21,14 +20,22 @@ These are as best I can recall
 | 318 | Midterm + Exam | 100 | Omer becomes energetic |
 | 264 | Quizzes | 200 | Seckin |
 
-# 2019-Summer
+Approx 5000 papers.
+
+
+## 2019-Summer
+
 | Course | Task | Approx student count | Notes |
 |--------|------|----------------------|----|
 | 220 | Midterm | 40 | Elyse|
-| 253 | 4 Midterms + Exam | 150 | Colin |
+| 253 | 4 Midterms + Exam | 160 | Colin |
 | 300 | Quizzes | 50 | Seckin - double check |
 
-# 2019-2020
+Approx 1000 papers.
+
+
+## 2019-2020
+
 | Course | Task | Approx student count | Notes |
 |--------|------|----------------------| ----- |
 | 100 | Midterm + Exam | 1300 | MikeB |
@@ -39,3 +46,5 @@ These are as best I can recall
 | 101 | Midterm | 1300 | AnthonyW (soon)|
 | 152 | 3 Midterms | 900 | Kalle + MaricelaM (TA) Trained on Server Side|
 | 302 | Midterm | ??? | Yinon (soon)|
+
+Approx 6000 papers (?)
