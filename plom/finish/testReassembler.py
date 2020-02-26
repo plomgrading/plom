@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
@@ -11,8 +11,7 @@ import sys
 import tempfile
 import subprocess
 
-sys.path.append("..")  # this allows us to import from ../resources
-from resources.version import __version__
+from plom import __version__
 
 # hardcoded for letter, https://gitlab.math.ubc.ca/andrewr/MLP/issues/276
 papersize_portrait = (612, 792)
