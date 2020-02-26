@@ -4,6 +4,6 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
 
-__version__ = "0.4.0~"
+__version__ = "0.3.90"
 Plom_API_Version = "10"  # updated for restified API for get-next-task.
 Default_Port = 41984
