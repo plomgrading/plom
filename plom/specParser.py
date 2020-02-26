@@ -3,9 +3,9 @@ import toml
 
 
 class SpecParser:
-    def __init__(self):
+    def __init__(self, specFileName="./specAndDatabase/verifiedSpec.toml"):
         # read the whole spec toml file into a dict
-        self.spec = toml.load("./specAndDatabase/verifiedSpec.toml")
+        self.spec = toml.load(specFileName)
 
     def printSpec(self):
         """Print out the specification provided it is valid"""
@@ -43,7 +43,7 @@ class SpecParser:
 class SpecVerifier:
     def __init__(self, fname="testSpec.toml"):
         # read the whole spec toml file into a dict - it will have single key = "plom" with value being a dict
-        self.spec = toml.load("testSpec.toml")
+        self.spec = toml.load(fname)
 
     def verifySpec(self):
         # check that spec contains required attributes
