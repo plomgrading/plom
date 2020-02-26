@@ -14,8 +14,7 @@ import subprocess
 import sys
 
 from plom import SpecParser
-# TODO:
-from resources.examDB import *
+from plom.db.examDB import PlomDB
 
 examDB = PlomDB()
 

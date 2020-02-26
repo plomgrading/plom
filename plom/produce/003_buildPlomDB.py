@@ -12,8 +12,7 @@ import random
 import sys
 
 from plom import SpecParser
-# TODO: examDB needed in plom package
-from resources.examDB import *
+from plom.db.examDB import *
 
 examDB = PlomDB()
 
