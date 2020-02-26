@@ -14,6 +14,7 @@ import sys
 from plom import SpecParser
 from plom.db.examDB import *
 
+# TODO: would be nice if this indicated it was creating a new database.
 examDB = PlomDB()
 
 
