@@ -15,34 +15,23 @@ import sys
 
 from plom import SpecParser
 from plom.db.examDB import PlomDB
+from .mergeAndCodePages import makePDF
 
 examDB = PlomDB()
 
 
-def buildCommandList(spec):
-    cmdList = []
+def buildAllPapers(spec):
+    # TODO: slow serial loop, awaiting Pool ||ism
     for t in range(1, spec["numberToProduce"] + 1):
         pv = examDB.getPageVersions(t)
-        cmdList.append(
-            'python3 mergeAndCodePages.py {} {} {} {} {} "{}"\n'.format(
-                spec["name"],
-                spec["publicCode"],
-                spec["numberOfPages"],
-                spec["numberOfVersions"],
-                t,
-                pv,
-            )
+        makePDF(
+            spec["name"],
+            spec["publicCode"],
+            spec["numberOfPages"],
+            spec["numberOfVersions"],
+            t,
+            pv,
         )
-    return cmdList
-
-
-def runCommandList(cmdList):
-    with open("./commandlist.txt", "w") as fh:
-        for c in cmdList:
-            fh.write(c)
-
-    cmd = shlex.split("parallel --bar -a commandlist.txt")
-    subprocess.run(cmd, check=True)
 
 
 def confirmProcessed(spec):
@@ -57,6 +46,5 @@ def confirmProcessed(spec):
 if __name__ == "__main__":
     # read the spec
     spec = SpecParser().spec
-    cmdList = buildCommandList(spec)
-    runCommandList(cmdList)
+    buildAllPapers(spec)
     confirmProcessed(spec)
