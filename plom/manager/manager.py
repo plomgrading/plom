@@ -50,8 +50,7 @@ from .selectrectangle import SelectRectangleWindow, IDViewWindow
 from plom.plom_exceptions import *
 import plom.managerMessenger as managerMessenger
 
-from plom import __version__, Plom_API_Version
-from plom.version import Default_Port
+from plom import __version__, Plom_API_Version, Default_Port
 
 
 class QVHistogram(QDialog):

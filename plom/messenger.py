@@ -31,9 +31,8 @@ import hashlib
 # requests_log.propagate = True
 
 from io import StringIO, BytesIO
-from .plom_exceptions import *
-from plom import Plom_API_Version
-from .version import Default_Port
+from plom.plom_exceptions import *
+from plom import Plom_API_Version, Default_Port
 
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.

@@ -33,8 +33,7 @@ import hashlib
 from io import StringIO, BytesIO
 
 from plom.plom_exceptions import *
-from plom import Plom_API_Version
-from plom.version import Default_Port
+from plom import Plom_API_Version, Default_Port
 
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.

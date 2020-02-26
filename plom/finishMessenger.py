@@ -17,8 +17,7 @@ import toml
 import urllib3
 
 from plom.plom_exceptions import *
-from plom import Plom_API_Version
-from plom.version import Default_Port
+from plom import Plom_API_Version, Default_Port
 
 _userName = "manager"
 

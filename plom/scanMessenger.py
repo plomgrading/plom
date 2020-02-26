@@ -16,8 +16,8 @@ import threading
 import toml
 import urllib3
 
-from .plom_exceptions import *
-from .version import Plom_API_Version, Default_Port
+from plom.plom_exceptions import *
+from plom import Plom_API_Version, Default_Port
 
 _userName = "scanner"
 

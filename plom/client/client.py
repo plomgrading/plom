@@ -27,8 +27,8 @@ from . import identifier
 from . import totaler
 from plom import __version__
 from plom import Plom_API_Version
+from plom import Default_Port
 import plom.messenger as messenger
-from plom.version import Default_Port
 
 
 # set up variables to store paths for marker and id clients
