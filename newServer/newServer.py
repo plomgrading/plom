@@ -26,7 +26,7 @@ sys.path.append("..")
 from plom import __version__
 from plom import Plom_API_Version as serverAPI
 from plom import SpecParser
-from plom.db.examDB import *
+from plom.db.examDB import PlomDB
 
 # ----------------------
 
@@ -203,7 +203,7 @@ def getServerInfo():
 
 
 getServerInfo()
-examDB = PlomDB()
+examDB = PlomDB("../resources/plom.db")
 spec = SpecParser("../resources/verifiedSpec.toml").spec
 buildDirectories()
 peon = Server(spec, examDB)
