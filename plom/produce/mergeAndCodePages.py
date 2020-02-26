@@ -10,9 +10,7 @@ import fitz
 import pyqrcode
 import tempfile
 
-# this allows us to import from ../resources
-sys.path.append("..")
-from resources.tpv_utils import encodeTPV
+from plom.tpv_utils import encodeTPV
 
 
 # Take command line parameters
