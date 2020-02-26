@@ -110,7 +110,7 @@ job serverStarts:
     - mkdir tmp
     - pushd tmp
     - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
-    - popd tmp
+    - popd
     # Start server
     - pushd newServer
     - ip addr
