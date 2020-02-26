@@ -10,7 +10,8 @@ These are as best I can recall
 |--------|------|----------------------|----|
 | 220 | Midterm | 350 | Very first Plom |
 | 405 | Midterm | 50  | Colin becomes addicted |
-| 104 | Midterm1 | 200 | MacLean section: online return |
+| 104 | Midterm | 200 | MacLean section: online return |
+| 253 | Midterm1 | 100 | MacLean section graded + online return |
 | 253 | Midterm2 | 600 | Colin all 5 sections + online return |
 | 253 | Exam     | 600 | Plom + assigned seating, grading done offline |
 | 221 | Midterm | 650 | BenW and MattC |
