@@ -8,7 +8,11 @@ setup(
     author="Andrew Rechnitzer",
     license="AGPL3",
     packages=find_packages(),
-    scripts=["plom/scripts/plom-init", "plom/scripts/plom-build"],
+    scripts=[
+        "plom/scripts/plom-init",
+        "plom/scripts/plom-build",
+        "plom/scripts/plom-client",
+    ],
     include_package_data=True,
     data_files=[("share/plom", ["plom/templateTestSpec.toml"])],
 )
