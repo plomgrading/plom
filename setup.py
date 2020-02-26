@@ -17,7 +17,7 @@ setup(
     license="AGPL3",
     packages=find_packages(),
     scripts=[
-        "plom/scripts/plom-init",
+        "plom/scripts/plom-init.py",
         "plom/scripts/plom-build",
         "plom/scripts/plom-client",
     ],
