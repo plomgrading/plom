@@ -8,6 +8,8 @@ import shutil
 from importlib import resources
 from plom.specParser import SpecVerifier, SpecParser
 
+import plom.produce.buildPlomDB
+
 
 def checkTomlExtension(fname):
     ext = os.path.splitext(fname)[1]
@@ -45,11 +47,29 @@ def parseAndVerifySpecification(fname):
     sp.printSpec()
 
 
+def buildDatabase():
+    print("Reading specification")
+    spec = SpecParser().spec
+    print("Creating plom database")
+    buildPlomDB.buildExamDatabase(spec, "specAndDatabase/plom.db")
+
+
+def buildBlankPapers():
+    print("Building blank papers")
+    pass
+
+
+def buildNamedPapers():
+    print("Building named papers")
+    pass
+
+
 def buildDatabaseAndPapers(blankOrID):
+    buildDatabase()
     if blankOrID == "blank":
-        print("Build blank papers + database")
+        buildBlankPapers()
     else:
-        print("Build named papers + database")
+        buildNamedPapers()
 
 
 parser = argparse.ArgumentParser()
