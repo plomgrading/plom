@@ -1,4 +1,5 @@
 #! /user/bin/env python3
+# -*- coding: utf-8 -*-
 
 import argparse
 import os
@@ -7,9 +8,9 @@ import shutil
 # import tools for dealing with resource files
 from importlib import resources
 from plom.specParser import SpecVerifier, SpecParser
-
 from plom.produce import buildPlomDB
 from plom.produce import buildNoNamePDF
+from plom.produce import buildClasslist
 
 
 def checkTomlExtension(fname):
@@ -51,20 +52,24 @@ def parseAndVerifySpecification(fname):
     sv.saveVerifiedSpec()
     sp = SpecParser()
     if sp.spec["numberToName"] > 0:
-        print(">>> WARNING <<<")
         print(
-            'Your spec indicates that you wish to print named papers. Please copy your correctly formatted classlist to "specAndDatabase/classlist.csv".'
+            'Your spec indicates that you wish to print named papers. Please process your class list using "plom-build class ".'
         )
-        print(
-            "If you do not know the correct format we strongly recommend that you do not do this."
-        )
-        print(">>> TODO = handle classlist <<<")
 
 
 def processClasslist(fname):
-    print(">>> TODO <<<")
-    print('Process classlist file {} and put result in "specAndDatabase/classlist.csv"')
-    print(">>> NOT WORKING YET <<<")
+    # check if a filename given
+    if fname is None:
+        print("Please provide a classlist file.")
+        buildClasslist.acceptedFormats()
+        exit(1)
+    # grab the file, process it and copy it into place.
+
+    if os.path.isfile(fname):
+        buildClasslist.getClassList(fname)
+    else:
+        print('Cannot find file "{}"'.format(fname))
+        exit(1)
 
 
 def buildDatabase(spec):
@@ -86,8 +91,7 @@ def buildBlankPapers(spec):
 
 def buildNamedPapers(spec):
     print("Building named papers")
-    print("Currently do not support this.")
-    print(">>> TODO = handle classlist <<<")
+    print(">>> TODO = handle building named papers. coming soon. <<<")
     exit(1)
 
 
@@ -145,7 +149,7 @@ spP.add_argument(
 spL = sub.add_parser("class")
 spL.add_argument(
     "classlist",
-    nargs=1,
+    nargs="?",
     help="Process the given classlist file and copy the result into place.",
 )
 
