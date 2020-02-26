@@ -1,6 +1,7 @@
 # Temp file for documenting changes on dev branch, hopefully to simplify merging with master
 
 ### Added
+* Plom is now a python package.
 * Annotator has a "no answer given" button which places crossed lines on page, leaves a comment, sets mark to 0.
 * Server management UI.
 
