@@ -6,9 +6,6 @@ from datetime import datetime, timedelta
 # logger.addHandler(logging.StreamHandler())
 # logger.setLevel(logging.DEBUG)
 
-
-plomdb = SqliteDatabase("../resources/plom.db")
-
 # the test contains groups
 # test bools something like
 # produced = we've built the PDF
@@ -153,7 +150,9 @@ class DiscardedPage(Model):
 
 
 class PlomDB:
-    def __init__(self):
+    def __init__(self, dbFilename="plom.db"):
+        plomdb = SqliteDatabase(dbFilename)
+
         with plomdb:
             plomdb.create_tables(
                 [
