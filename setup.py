@@ -10,5 +10,5 @@ setup(
     packages=find_packages(),
     scripts=["plom/scripts/plom-init", "plom/scripts/plom-build"],
     include_package_data=True,
-    data_files=[("share/plom/resources", ["plom/resources/templateTestSpec.toml"])],
+    data_files=[("share/plom", ["plom/templateTestSpec.toml"])],
 )

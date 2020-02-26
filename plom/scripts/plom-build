@@ -1,13 +1,12 @@
 #! /user/bin/env python3
 
-# from resources import version
 import argparse
 import os
 import shutil
 
 # import tools for dealing with resource files
 from importlib import resources
-from plom.resources.specParser import SpecVerifier, SpecParser
+from plom.specParser import SpecVerifier, SpecParser
 
 
 def checkTomlExtension(fname):
@@ -25,9 +24,10 @@ def checkTomlExtension(fname):
 
 def createSpecificationFile(fname):
     print('Creating specification file with name "{}"'.format(fname))
-    with resources.path("plom.resources", "templateTestSpec.toml") as fn:
-        shutil.copy(fn, fname)
-    print("Please edit the file.")
+    template = resources.read_text("plom", "templateTestSpec.toml")
+    with open(fn, "w+") as fh:
+        fh.write(template)
+    # print("Please edit the file.")
 
 
 def parseAndVerifySpecification(fname):
@@ -38,7 +38,6 @@ def parseAndVerifySpecification(fname):
     sv.saveVerifiedSpec()
     sp = SpecParser()
     sp.printSpec()
-
 
 
 def buildDatabaseAndPapers(blankOrID):
