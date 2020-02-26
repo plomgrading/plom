@@ -29,7 +29,11 @@ def createSpecificationFile(fname):
     template = resources.read_text("plom", "templateTestSpec.toml")
     with open(fname, "w+") as fh:
         fh.write(template)
-    # print("Please edit the file.")
+    print('Creating "sourceVersions" directory for your test source PDFs.')
+    os.makedirs("sourceVersions", exist_ok=True)
+    print(
+        "Please edit the template specification file and copy your source test PDFs into the sourceVersions directory as version1.pdf, version2.pdf etc."
+    )
 
 
 def parseAndVerifySpecification(fname):
