@@ -129,6 +129,7 @@ job serverStarts:
     #- pushd finishing
     #- if (./022_check_completed.py -s localhost -w hackhack); then false; else true; fi
     #- popd
+    - pushd play
     - python3 -m plom.client.randoIDer -s localhost -u anne -w enna
     - python3 -m plom.client.randoMarker -s localhost -u anne -w enna
     - popd
