@@ -9,9 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import sys
 
-# this allows us to import from ../resources
-sys.path.append("..")
-from resources.specParser import SpecVerifier, SpecParser
+from plom import SpecVerifier, SpecParser
 
 sv = SpecVerifier()
 sv.verifySpec()

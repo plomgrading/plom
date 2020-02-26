@@ -14,9 +14,8 @@ import shlex
 import subprocess
 import sys
 
-# this allows us to import from ../resources
-sys.path.append("..")
-from resources.specParser import SpecParser
+from plom import SpecParser
+# TODO
 from resources.examDB import *
 
 examDB = PlomDB()

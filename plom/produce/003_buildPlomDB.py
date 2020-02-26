@@ -11,9 +11,8 @@ import os
 import random
 import sys
 
-# this allows us to import from ../resources
-sys.path.append("..")
-from resources.specParser import SpecParser
+from plom import SpecParser
+# TODO: examDB needed in plom package
 from resources.examDB import *
 
 examDB = PlomDB()
