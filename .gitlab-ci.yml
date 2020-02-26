@@ -53,6 +53,10 @@ stages:
 job buildPapers:
   stage: test
   script:
+    - python3 ./setup.py build bdist_wheel
+    - pushd dist
+    - pip3 install plom-*.whl
+    - popd
     # First build sources pdfs
     - pushd testTemplates
     - pdflatex latexTemplate.tex
@@ -61,41 +65,53 @@ job buildPapers:
     - pdflatex latexTemplatev2.tex
     - pdflatex --interaction=batchmode latexTemplatev2.tex
     - pdflatex --interaction=batchmode latexTemplatev2.tex
-    - cp latexTemplate.pdf ../build/sourceVersions/version1.pdf
-    - cp latexTemplatev2.pdf ../build/sourceVersions/version2.pdf
+    - popd
+    # download some pre-existing files
+    - mkdir tmp
+    - pushd tmp
+    - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
     - popd
     # Now build tests
-    - pushd build
-    - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
-    - mv resources cannedResources
-    - ./001_startHere.py
-    - cp cannedResources/verifiedSpec.toml testSpec.toml
-    - ./002_verifySpec.py
-    - ls ../resources/verifiedSpec.toml
+    - mkdir play
+    - pushd play
+    - plom-build create
+    - cp ../testTemplates/latexTemplate.pdf sourceVersions/version1.pdf
+    - cp ../testTemplates/latexTemplatev2.pdf sourceVersions/version2.pdf
+    # overwrite the testSpec with our prepared one
+    - cp ../tmp/resources/verifiedSpec.toml testSpec.toml
+    - plom-build parse
     # TODO: override the private seed
-    - sed ../resources/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
-    - diff -u ../resources/verifiedSpec.toml cannedResources/verifiedSpec.toml
-    - ./003_buildPlomDB.py
-    - ./004_buildPDFs.py
-    - ./004a_buildPDFs_no_names.py
+    - sed ../specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
+    # TODO: reenable this later (comments have changed)
+    #- diff -u ../specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
+    - plom-build build blank
     # TODO: compare to downloaded canned versions?
     # TODO: https://github.com/vslavik/diff-pdf, not in Ubuntu repos?
-    - A=`ls examsToPrint/ | wc -l`   # How many files?
+    - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
     - popd
 
 job serverStarts:
   stage: test
   script:
-    - pushd scanAndUpload
-    - python3 011_startHere.py
+    - python3 ./setup.py build bdist_wheel
+    - pushd dist
+    - pip3 install plom-*.whl
+    - popd
+    # scan and upload
+    - mkdir play
+    - pushd play
+    - python3 -m plom.scan.011_scanningStartHere
     # supposed to fail:
-    - if (python3 012_scansToImages.py); then false; else true; fi
+    - if (python3 -m plom.scan.012_scansToImages); then false; else true; fi
     - popd
     # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
-    - curl https://www.math.ubc.ca/~cbm/tmp/testThis.pdf > scanAndUpload/scannedExams/foo.pdf
+    - curl https://www.math.ubc.ca/~cbm/tmp/testThis.pdf > play/scannedExams/foo.pdf
+    - mkdir tmp
+    - pushd tmp
     - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
-    - ls resources
+    - popd tmp
+    # Start server
     - pushd newServer
     - ip addr
     - python3 newServer.py &
@@ -105,24 +121,25 @@ job serverStarts:
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
     - popd
-    - pushd scanAndUpload
-    - ./011_startHere.py
-    - ./012_scansToImages.py
-    - ./013_readQRCodes.py -s localhost -w rennacs
-    - ./014_sendPagesToServer.py -s localhost -w rennacs
+    - pushd play
+    - python3 -m plom.scan.011_scanningStartHere
+    - python3 -m plom.scan.012_scansToImages
+    - python3 -m plom.scan.013_readQRCodes -s localhost -w rennacs
+    - python3 -m plom.scan.014_sendPagesToServer -s localhost -w rennacs
     - popd
-    ## not supposed to be done yet
-    - pushd finishing
-    - if (./022_check_completed.py -s localhost -w hackhack); then false; else true; fi
-    - popd
-    - pushd clients
-    - ./randoIDer.py -s localhost -u anne -w enna
-    - ./randoMarker.py -s localhost -u anne -w enna
+    ## not supposed to be done yet:
+    # TODO: finishing WIP in plom module
+    #- pushd finishing
+    #- if (./022_check_completed.py -s localhost -w hackhack); then false; else true; fi
+    #- popd
+    - python3 -m plom.client.randoIDer.py -s localhost -u anne -w enna
+    - python3 -m plom.client.randoMarker.py -s localhost -u anne -w enna
     - popd
     ## TODO: once randoIDer is fixed above, invert this
-    - pushd finishing
-    - if (./022_check_completed.py -s localhost -w hackhack); then false; else true; fi
-    - popd
+    # TODO: finishing WIP in plom module
+    #- pushd finishing
+    #- if (./022_check_completed.py -s localhost -w hackhack); then false; else true; fi
+    #- popd
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
