@@ -31,7 +31,12 @@ def createSpecificationFile(fname):
 
 
 def parseAndVerifySpecification(fname):
+    os.makedirs("specAndDatabase", exist_ok=True)
     print('Parsing and verifying the specification "{}"'.format(fname))
+    if not os.path.isfile(fname):
+        print('Cannot find "{}" - have you run "plom-build create" yet?'.format(fname))
+        exit(1)
+
     sv = SpecVerifier(fname)
     sv.verifySpec()
     sv.checkCodes()
