@@ -28,7 +28,7 @@ def buildAllPapers(spec, dbFilename):
         )
 
 
-def confirmProcessed(spec, dbFile):
+def confirmProcessed(spec, dbFilename):
     examDB = PlomDB(dbFilename)
     for t in range(1, spec["numberToProduce"] + 1):
         fname = "papersToPrint/exam_{}.pdf".format(str(t).zfill(4))
