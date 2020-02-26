@@ -8,9 +8,6 @@ import shutil
 # import tools for dealing with resource files
 from importlib import resources
 from plom.specParser import SpecVerifier, SpecParser
-from plom.produce import buildPlomDB
-from plom.produce import buildNoNamePDF
-from plom.produce import buildClasslist
 
 
 def checkTomlExtension(fname):
@@ -58,6 +55,8 @@ def parseAndVerifySpecification(fname):
 
 
 def processClasslist(fname):
+    from plom.produce import buildClasslist
+
     # check if a filename given
     if fname is None:
         print("Please provide a classlist file.")
@@ -73,6 +72,8 @@ def processClasslist(fname):
 
 
 def buildDatabase(spec):
+    from plom.produce import buildPlomDB
+
     if os.path.isfile("specAndDatabase/plom.db"):
         print("Database already exists - aborting.")
         exit(1)
@@ -83,16 +84,21 @@ def buildDatabase(spec):
 
 
 def buildBlankPapers(spec):
+    from plom.produce import buildBlankPDF
+
     print("Building blank papers")
-    buildNoNamePDF.buildAllPapers(spec, "specAndDatabase/plom.db")
+    buildBlankPDF.buildAllPapers(spec, "specAndDatabase/plom.db")
     print("Checking papers all produced")
-    buildNoNamePDF.confirmProcessed(spec, "specAndDatabase/plom.db")
+    buildBlankPDF.confirmProcessed(spec, "specAndDatabase/plom.db")
 
 
 def buildNamedPapers(spec):
+    from plom.produce import buildNamedPDF
+
     print("Building named papers")
-    print(">>> TODO = handle building named papers. coming soon. <<<")
-    exit(1)
+    buildNamedPDF.buildAllPapers(spec, "specAndDatabase/plom.db")
+    print("Checking papers all produced")
+    buildNamedPDF.confirmProcessedAndNamed(spec, "specAndDatabase/plom.db")
 
 
 def buildDatabaseAndPapers(blankOrID):
