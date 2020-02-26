@@ -149,7 +149,9 @@ def makePDF(name, code, length, versions, test, pageVersions):
             sidRect = fitz.Rect(
                 pW // 2 - sidW, pH * YSHIFT - sidH, pW // 2 + sidW, pH * YSHIFT + sidH
             )
-            sidRect2 = fitz.Rect(sidRect.x0, sidRect.y1, sidRect.x1, sidRect.y1 + 48 * 1.3)
+            sidRect2 = fitz.Rect(
+                sidRect.x0, sidRect.y1, sidRect.x1, sidRect.y1 + 48 * 1.3
+            )
             sidRect3 = fitz.Rect(
                 sidRect.x0 - 8, sidRect.y0 - 8, sidRect.x1 + 8, sidRect2.y1 + 8
             )
@@ -193,7 +195,6 @@ def makePDF(name, code, length, versions, test, pageVersions):
                 align=1,
             )
 
-
     # Finally save the resulting pdf.
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
@@ -201,7 +202,7 @@ def makePDF(name, code, length, versions, test, pageVersions):
     # and try to clean up as much as possible.
     # `linear=True` causes https://gitlab.math.ubc.ca/andrewr/MLP/issues/284
     exam.save(
-        "examsToPrint/exam_{}.pdf".format(str(test).zfill(4)),
+        "papersToPrint/exam_{}.pdf".format(str(test).zfill(4)),
         garbage=4,
         deflate=True,
         clean=True,

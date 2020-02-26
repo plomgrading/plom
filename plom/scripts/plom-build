@@ -39,6 +39,7 @@ def createSpecificationFile(fname):
 
 def parseAndVerifySpecification(fname):
     os.makedirs("specAndDatabase", exist_ok=True)
+    os.makedirs("sourceVersions", exist_ok=True)
     print('Parsing and verifying the specification "{}"'.format(fname))
     if not os.path.isfile(fname):
         print('Cannot find "{}" - have you run "plom-build create" yet?'.format(fname))
@@ -49,7 +50,7 @@ def parseAndVerifySpecification(fname):
     sv.checkCodes()
     sv.saveVerifiedSpec()
     sp = SpecParser()
-    if sp.spec("numberToName") > 0:
+    if sp.spec["numberToName"] > 0:
         print(">>> WARNING <<<")
         print(
             'Your spec indicates that you wish to print named papers. Please copy your correctly formatted classlist to "specAndDatabase/classlist.csv".'
@@ -78,9 +79,9 @@ def buildDatabase(spec):
 
 def buildBlankPapers(spec):
     print("Building blank papers")
-    buildPlomDB.buildAllPapers(spec)
+    buildNoNamePDF.buildAllPapers(spec, "specAndDatabase/plom.db")
     print("Checking papers all produced")
-    buildPlomDB.confirmProcessed(spec)
+    buildNoNamePDF.confirmProcessed(spec, "specAndDatabase/plom.db")
 
 
 def buildNamedPapers(spec):
@@ -93,18 +94,9 @@ def buildNamedPapers(spec):
 def buildDatabaseAndPapers(blankOrID):
     print("Reading specification")
     if not os.path.isfile("specAndDatabase/verifiedSpec.toml"):
-        print(
-            'Cannot find verified specFile - have you run "plom-build parse" yet?'.format(
-                fname
-            )
-        )
+        print('Cannot find verified specFile - have you run "plom-build parse" yet?')
         exit(1)
     spec = SpecParser().spec
-
-    if spec["numberToName"] > 0:
-        print('Based on your spec it looks like you should run "004b".')
-    else:
-        print('Based on your spec it looks like you should run "004a".')
 
     if blankOrID == "blank" and spec["numberToName"] > 0:
         print(
@@ -121,6 +113,9 @@ def buildDatabaseAndPapers(blankOrID):
         exit(1)
 
     buildDatabase(spec)
+
+    print("Making directory for papers.")
+    os.makedirs("papersToPrint", exist_ok=True)
     if blankOrID == "blank":
         buildBlankPapers(spec)
     else:
@@ -150,8 +145,8 @@ spP.add_argument(
 spL = sub.add_parser("class")
 spL.add_argument(
     "classlist",
-    nargs="1",
-    help="Process the classlist and copy the result into place.",
+    nargs=1,
+    help="Process the given classlist file and copy the result into place.",
 )
 
 #
