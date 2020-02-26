@@ -123,21 +123,14 @@ job serverStarts:
     - python3 -m plom.scan.012_scansToImages
     - python3 -m plom.scan.013_readQRCodes -s localhost -w rennacs
     - python3 -m plom.scan.014_sendPagesToServer -s localhost -w rennacs
-    - popd
     ## not supposed to be done yet:
-    # TODO: finishing WIP in plom module
-    #- pushd finishing
-    #- if (./022_check_completed.py -s localhost -w hackhack); then false; else true; fi
-    #- popd
-    - pushd play
+    - if (python3 -m plom.finish.022_check_completed -s localhost -w hackhack); then false; else true; fi
     - python3 -m plom.client.randoIDer -s localhost -u anne -w enna
     - python3 -m plom.client.randoMarker -s localhost -u anne -w enna
-    - popd
     ## TODO: once randoIDer is fixed above, invert this
-    # TODO: finishing WIP in plom module
-    #- pushd finishing
-    #- if (./022_check_completed.py -s localhost -w hackhack); then false; else true; fi
-    #- popd
+    - python3 -m plom.finish.021_startHere
+    - if (python3 -m plom.finish.022_check_completed -s localhost -w hackhack); then false; else true; fi
+    - popd
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
