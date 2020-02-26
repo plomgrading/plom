@@ -113,6 +113,7 @@ files += [
     "clients/test_view.py",
     "clients/useful_classes.py",
     "clients/tools.py",
+    "clients/plom_exceptions.py",
 ]
 
 files += [
