@@ -1,4 +1,12 @@
 from setuptools import setup, find_packages
+from glob import glob
+
+iconList = []
+for fn in glob("plom/client/icons/*.svg"):
+    iconList.append(fn)
+cursorList = []
+for fn in glob("plom/client/cursors/*.png"):
+    cursorList.append(fn)
 
 setup(
     name="plom",
@@ -14,5 +22,9 @@ setup(
         "plom/scripts/plom-client",
     ],
     include_package_data=True,
-    data_files=[("share/plom", ["plom/templateTestSpec.toml"])],
+    data_files=[
+        ("share/plom", ["plom/templateTestSpec.toml"]),
+        ("share/plom/icons", iconList),
+        ("share/plom/cursors", cursorList),
+    ],
 )

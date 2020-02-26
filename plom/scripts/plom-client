@@ -2,15 +2,19 @@
 # -*- coding: utf-8 -*-
 
 
+import argparse
+import signal
+import sys
+import traceback as tblib
 
-from plom.client import client
+from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 
-argh = client.Plom()
-
+from plom.client.chooser import Chooser
+from plom.version import Default_Port
 
 # Pop up a dialog for unhandled exceptions and then exit
 sys._excepthook = sys.excepthook
-
 
 def _exception_hook(exctype, value, traceback):
     s = "".join(tblib.format_exception(exctype, value, traceback))
@@ -45,20 +49,74 @@ def sigint_handler(*args):
     ):
         QApplication.exit(42)
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    app.setStyle(QStyleFactory.create("Fusion"))
+app = QApplication(sys.argv)
+app.setStyle(QStyleFactory.create("Fusion"))
 
-    signal.signal(signal.SIGINT, sigint_handler)
+signal.signal(signal.SIGINT, sigint_handler)
 
-    # create a small timer here, so that we can
-    # kill the app with ctrl-c.
-    timer = QTimer()
-    timer.timeout.connect(lambda: None)
-    timer.start(1000)
-    # got this solution from
-    # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
+# create a small timer here, so that we can
+# kill the app with ctrl-c.
+timer = QTimer()
+timer.timeout.connect(lambda: None)
+timer.start(1000)
+# got this solution from
+# https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
 
-    window = Chooser(app)
-    window.show()
-    sys.exit(app.exec_())
+window = Chooser(app)
+window.show()
+
+# Command line arguments (currently undocumented/unsupported)
+# either nothing, or the following
+if len(sys.argv) > 1:
+    parser = argparse.ArgumentParser(
+        description="Run the Plom client. No arguments = run as normal."
+    )
+    parser.add_argument("user", type=str)
+    parser.add_argument("password", type=str)
+    parser.add_argument(
+        "-s",
+        "--server",
+        metavar="SERVER[:PORT]",
+        action="store",
+        help="Which server to contact, port defaults to {}.".format(Default_Port),
+    )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "-i", "--identifier", action="store_true", help="Run the identifier"
+    )
+    group.add_argument(
+        "-t", "--totaler", action="store_true", help="Run the totaler"
+    )
+    group.add_argument(
+        "-m",
+        "--marker",
+        const="json",
+        nargs="?",
+        type=str,
+        help="Run the marker. Pass either -m n:k (to run on pagegroup n, version k) or -m (to run on whatever was used last time).",
+    )
+    args = parser.parse_args()
+
+    window.ui.userLE.setText(args.user)
+    window.ui.passwordLE.setText(args.password)
+    if args.server:
+        window.setServer(args.server)
+
+    if args.identifier:
+        window.ui.identifyButton.animateClick()
+    if args.totaler:
+        window.ui.totalButton.animateClick()
+    if args.marker:
+        if args.marker != "json":
+            pg, v = args.marker.split(":")
+            try:
+                window.ui.pgSB.setValue(int(pg))
+                window.ui.vSB.setValue(int(v))
+            except ValueError:
+                print(
+                    "When you use -m, there should either be no argument, or an argument of the form n:k where n,k are integers."
+                )
+                sys.exit(43)
+
+        window.ui.markButton.animateClick()
+sys.exit(app.exec_())
