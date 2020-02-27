@@ -133,6 +133,8 @@ job serverStarts:
     - python3 -m plom.finish.024a_reassemble_completed -s localhost -w hackhack
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 16 ]]"
+    - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
+    - bash -c "[[ $A -lt 5 ]]"           # not more than 5 MB
     - popd
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880

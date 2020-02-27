@@ -67,7 +67,7 @@ def reassemble(outname, shortName, sid, coverfname, imglist):
     )
 
     with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
-        exam.save(outname)
+        exam.save(outname, deflate=True)
 
 
 if __name__ == "__main__":
