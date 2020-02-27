@@ -79,7 +79,7 @@ if __name__ == "__main__":
         fromdir = reassembles[1]
     else:
         print("I cannot find any of the dirs: " + ", ".join(reassembles))
-        print('  Have you called one of the "09" scripts first?')
+        print('  Have you called one of the "024" scripts first?')
         sys.exit()
     print('Going to take pdf files from "{0}".'.format(fromdir))
 
@@ -99,9 +99,9 @@ if __name__ == "__main__":
         sys.exit()
 
     print("Adding codedReturn/index.html file")
-    print("TODO: this is going to break... put this file inline?")
-    with open("view_test_template.html", "r") as htmlfile:
-        html = htmlfile.read()
+    from .view_test_template import html
+    #with open("view_test_template.html", "r") as htmlfile:
+    #    html = htmlfile.read()
     html = html.replace("__COURSENAME__", longname)
     html = html.replace("__TESTNAME__", shortname)
 
