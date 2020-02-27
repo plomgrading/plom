@@ -20,21 +20,42 @@ __credits__ = ["Matt Coles"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
-from return_tools import make_canvas_gradefile
+import argparse
+
+from .return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
+from .return_tools import make_canvas_gradefile
 
 canvas_fromfile = 'canvas_from_export.csv'
 canvas_return_tofile = 'canvas_return_codes_for_import.csv'
 canvas_grades_tofile = 'canvas_grades_for_import.csv'
 
 # TODO: should get this from project?!
-canvas_test_name = 'Midterm ('  # almost certainly wrong
+Default_canvas_test_name = 'Midterm ('  # almost certainly wrong
 
 # TODO: check if former exists and latter does not, and give some
 # basic instructions
 
 
 if __name__ == '__main__':
+    # get commandline args if needed
+    parser = argparse.ArgumentParser(
+        description="Make csv file for upload to Canvas."
+    )
+    parser.add_argument("--saltstr", type=str, help="Per-course secret salt string (see docs)")
+    parser.add_argument("--findcol", type=str, help='Partial Canvas column name, as detailed as possible (defaults to "{}", see docs)'.format(Default_canvas_test_name))
+
+    args = parser.parse_args()
+    if not args.saltstr:
+        print("TODO: how can we should help here instead?")
+        raise ValueError("You must set the Salt String")
+    saltstr = args.saltstr
+    print('Salt is "{0}"'.format(saltstr))
+
+    if not args.findcol:
+        canvas_test_name = Default_canvas_test_name
+    else:
+        canvas_test_name = args.findcol
+
     print("""
     *** Warning: this script is "alpha" software ***
 
@@ -56,7 +77,7 @@ if __name__ == '__main__':
     input('Press Enter to continue...')
 
     print()
-    sns = canvas_csv_add_return_codes(canvas_fromfile, canvas_return_tofile)
+    sns = canvas_csv_add_return_codes(canvas_fromfile, canvas_return_tofile, saltstr=saltstr)
 
     print()
     canvas_csv_check_pdf(sns)
