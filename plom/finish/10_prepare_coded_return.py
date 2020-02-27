@@ -99,7 +99,7 @@ if __name__ == "__main__":
         sys.exit()
 
     print("Adding codedReturn/index.html file")
-    from .view_test_template import html
+    from .html_view_test_template import html
     #with open("view_test_template.html", "r") as htmlfile:
     #    html = htmlfile.read()
     html = html.replace("__COURSENAME__", longname)
