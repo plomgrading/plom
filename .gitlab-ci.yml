@@ -98,16 +98,16 @@ job serverStarts:
     - pushd dist
     - python3 -m pip install plom-*.whl
     - popd
-    # scan and upload
-    - mkdir play
-    - pushd play
-    - python3 -m plom.scan.011_scanningStartHere
-    # supposed to fail:
-    - if (python3 -m plom.scan.012_scansToImages); then false; else true; fi
-    - popd
     # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
     - curl https://www.math.ubc.ca/~cbm/tmp/testThis.pdf > play/scannedExams/foo.pdf
     - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
+    # scan and upload
+    - mkdir play
+    - pushd play
+    # supposed to fail:
+    - if (plom-scan.py process); then false; else true; fi
+    - plom-scan.py process foo.pdf
+    - popd
     # Start server
     - pushd newServer
     - ip addr
@@ -119,10 +119,9 @@ job serverStarts:
     - curl -k https://localhost:41984/Version
     - popd
     - pushd play
-    - python3 -m plom.scan.011_scanningStartHere
-    - python3 -m plom.scan.012_scansToImages
-    - python3 -m plom.scan.013_readQRCodes -s localhost -w rennacs
-    - python3 -m plom.scan.014_sendPagesToServer -s localhost -w rennacs
+    # TODO: -s, -w should go with the subcommand (after "read")
+    - plom-scan.py -s localhost -w rennacs read
+    - plom-scan.py -s localhost -w rennacs upload
     ## not supposed to be done yet:
     - if (python3 -m plom.finish.022_check_completed -s localhost -w hackhack); then false; else true; fi
     - python3 -m plom.client.randoIDer -s localhost -u anne -w enna
