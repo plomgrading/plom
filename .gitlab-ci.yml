@@ -99,7 +99,7 @@ job serverStarts:
     - python3 -m pip install plom-*.whl
     - popd
     # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
-    - curl https://www.math.ubc.ca/~cbm/tmp/testThis.pdf > play/scannedExams/foo.pdf
+    - curl https://www.math.ubc.ca/~cbm/tmp/testThis.pdf > play/foo.pdf
     - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
     # scan and upload
     - mkdir play
