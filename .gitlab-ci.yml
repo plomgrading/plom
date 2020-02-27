@@ -127,9 +127,12 @@ job serverStarts:
     - python3 -m plom.finish.021_startHere
     - python3 -m plom.finish.022_check_completed -s localhost -w hackhack
     - python3 -m plom.finish.023_spreadsheet -s localhost -w hackhack
-    - A=`cat testMarks.csv  | wc -l`  # How many files?
+    - A=`cat testMarks.csv  | wc -l`  # How many lines?
     - bash -c "[[ $A == 17 ]]"        # should be 16 + 1
     - file -b testMarks.csv  | grep ASCII   # should be ascii test
+    - python3 -m plom.finish.024a_reassemble_completed -s localhost -w hackhack
+    - A=`ls reassembled/ | wc -l`    # How many files?
+    - bash -c "[[ $A == 16 ]]"
     - popd
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
