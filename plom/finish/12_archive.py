@@ -23,18 +23,17 @@ __license__ = "AGPL-3.0-or-later"
 
 import os, sys, shutil
 
+from plom import SpecParser
+
 archivename = "{COURSE}_{YEAR}{TERM}_{SHORTNAME}"
 
 
 if __name__ == "__main__":
-    # this allows us to import from ../resources
-    sys.path.append("..")
-    from resources.testspecification import TestSpecification
-
-    spec = TestSpecification()
-    spec.readSpec()
-    basename = spec.Name
+    spec = SpecParser().spec
+    basename = spec['name']
     archivename = archivename.replace("{SHORTNAME}", basename)
+
+    print("\n\nTODO: THIS SCRIPT NEEDS RETHINKING FOR 0.4!\n\n")
 
     # TODO: someday we can get this from spec file?
     # https://gitlab.math.ubc.ca/andrewr/MLP/issues/94
