@@ -38,13 +38,17 @@ def proc_everything(comps):
             cList.append(t)
     idList.sort(key=int)
     tList.sort(key=int)
-    return idList, tList, mList, sList, cList
+    # TODO bit crude, better to get from server
+    numScanned = sum(mList)
+    return idList, tList, mList, sList, cList, numScanned
 
 
-def print_everything(comps):
-    idList, tList, mList, sList, cList = proc_everything(comps)
+def print_everything(comps, numPapersProduced):
+    idList, tList, mList, sList, cList, numScanned = proc_everything(comps)
     print("*********************")
     print("** Completion data **")
+    print("Produced papers: {}".format(numPapersProduced))
+    print("Scanned papers: {} (currently)".format(numScanned))
     print("Completed papers: {}".format(format_int_list_with_runs(cList)))
     print("Identified papers: {}".format(format_int_list_with_runs(idList)))
     print("Totalled papers: {}".format(format_int_list_with_runs(tList)))
@@ -105,15 +109,15 @@ if __name__ == "__main__":
     finishMessenger.closeUser()
     finishMessenger.stopMessenger()
 
-    print_everything(completions)
+    print_everything(completions, numberOfTests)
 
-    idList, tList, mList, sList, cList = proc_everything(completions)
+    idList, tList, mList, sList, cList, numScanned = proc_everything(completions)
     numberComplete = len(cList)
-    print("{} of {} complete".format(numberComplete, numberOfTests))
-    if numberComplete == numberOfTests:
+    print("{} of {} complete".format(numberComplete, numScanned))
+    if numberComplete == numScanned:
         exit(0)
-    elif numberComplete < numberOfTests:
-        exit(numberOfTests - numberComplete)
+    elif numberComplete < numScanned:
+        exit(numScanned - numberComplete)
     else:
         print("Something terrible has happened")
         exit(-42)

@@ -46,8 +46,11 @@ Some stuff from the package manager:
         python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
         python3-pip python3-setuptools python3-wheel python3-toml \
         python3-requests-toolbelt python3-opencv texlive-latex-extra \
-        python3-peewee python3-xvfbwrapper python3-tqdm
+        python3-peewee python3-xvfbwrapper python3-tqdm \
+        libpango-1.0 libpangocairo-1.0
 ```
+The pango stuff is needed for weasyprint.
+
 These (and others) should work from the package manager but pip pulls them
 in anyway, not sure why.
 ```

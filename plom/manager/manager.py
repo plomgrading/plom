@@ -1357,7 +1357,7 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser(
             description="Plom management tasks."
         )
-        parser.add_argument("user", type=str)
+        parser.add_argument("user", type=str, help='Probably has to be "manager"')
         parser.add_argument("password", type=str)
         parser.add_argument(
             "-s",
@@ -1366,7 +1366,7 @@ if __name__ == "__main__":
             action="store",
             help="Which server to contact, port defaults to {}.".format(Default_Port),
         )
-
+        args = parser.parse_args()
         window.ui.userLE.setText(args.user)
         window.ui.passwordLE.setText(args.password)
         if args.server:
