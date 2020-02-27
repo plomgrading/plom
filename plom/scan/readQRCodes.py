@@ -5,7 +5,6 @@ __copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPLv3"
 
-import argparse
 from collections import defaultdict
 import getpass
 import glob

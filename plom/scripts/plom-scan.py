@@ -6,14 +6,16 @@ import os
 import shutil
 
 
-def clearLogin():
-    print('Clear "scanner" login from server.')
-    print("Not working yet.")
+def clearLogin(server, password):
+    from plom.scan import clearScannerLogin
+
+    clearScannerLogin.clearLogin(server, password)
 
 
-def scanStatus():
-    print("Get scanning status report from server.")
-    print("Not working yet.")
+def scanStatus(server, password):
+    from plom.scan import checkScanStatus
+
+    checkScanStatus.checkStatus(server, password)
 
 
 def processScans(PDFs):
@@ -106,9 +108,9 @@ elif args.command == "read":
 elif args.command == "upload":
     uploadImages(args.server, args.password, args.unknowns, args.collisions)
 elif args.command == "status":
-    scanStatus()
+    scanStatus(args.server, args.password)
 elif args.command == "clear":
-    clearLogin()
+    clearLogin(args.server, args.password)
 else:
     parser.print_help()
 exit(0)

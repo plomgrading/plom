@@ -7,7 +7,6 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import argparse
 from glob import glob
 import getpass
 import hashlib
