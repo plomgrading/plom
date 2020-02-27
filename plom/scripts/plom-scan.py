@@ -44,9 +44,13 @@ def processScans(PDFs):
         scansToImages.processScans(fname)
 
 
-def readImages():
-    print("Read QR codes from images and collate.")
-    print("Not working yet.")
+def readImages(server, password):
+    from plom.scan import readQRCodes
+
+    # make decodedPages and unknownPages directories
+    os.makedirs("decodedPages", exist_ok=True)
+    os.makedirs("unknownPages", exist_ok=True)
+    readQRCodes.processPNGs(server, password)
 
 
 parser = argparse.ArgumentParser()
@@ -71,14 +75,27 @@ spU.add_argument(
     action="store_true",
     help="Upload 'collisions'. Collisions are pages which appear to be already on the server. You should not need this option except under exceptional circumstances.",
 )
-
+# server + password stuff
+parser.add_argument(
+    "-w",
+    "--password",
+    type=str,
+    help='Password of "scanner". Not needed for "process" subcommand',
+)
+parser.add_argument(
+    "-s",
+    "--server",
+    metavar="SERVER[:PORT]",
+    action="store",
+    help='Which server to contact. Not needed for "process" subcommand',
+)
 # Now parse things
 args = parser.parse_args()
 
 if args.command == "process":
     processScans(args.scanPDF)
 elif args.command == "read":
-    readImages()
+    readImages(args.server, args.password)
 elif args.command == "upload":
     uploadImages(args.unknowns, args.collisions)
 elif args.command == "status":

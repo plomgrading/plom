@@ -29,24 +29,13 @@ from plom.plom_exceptions import *
 from plom.scan import QRextract
 
 
-def buildDirectories():
-    """Build the directories that this script needs"""
-    # the list of directories. Might need updating.
-    lst = ["decodedPages", "unknownPages"]
-    for dir in lst:
-        try:
-            os.mkdir(dir)
-        except FileExistsError:
-            pass
-
-
 def decodeQRs():
     """Find all png files in pageImages dir and decode their QR codes.
 
     If their QRcodes have not been successfully decoded previously
     then decode them.  The results are stored in blah.png.qr files.
     """
-    os.chdir("./pageImages/")
+    os.chdir("pageImages")
     # list and len bit crude here: more pythonic to leave as iterator?
     stuff = list(glob.glob("*.png"))
     N = len(stuff)
@@ -124,7 +113,7 @@ def reOrientPage(fname, qrs):
         return False
 
 
-def checkQRsValid():
+def checkQRsValid(spec, examsScannedNow):
     """Check that the QRcodes in each pageimage are valid.
 
     When each png is scanned a png.qr is produced.  Load the dict of
@@ -245,7 +234,7 @@ def checkQRsValid():
     os.chdir("../")
 
 
-def validateQRsAgainstSpec(spec):
+def validateQRsAgainstSpec(spec, examsScannedNow):
     """After pageimages have been decoded we need to check the results
     against the spec. A simple check of test-name and magic-code were
     done already, but now the test-page-version triples are checked.
@@ -280,7 +269,7 @@ def validateQRsAgainstSpec(spec):
             shutil.move(fn + ".qr", os.path.join("..", "unknownPages"))
 
 
-def moveScansIntoPlace():
+def moveScansIntoPlace(examsScannedNow):
     os.chdir("./pageImages")
     # For each test we have just scanned
     for fname in examsScannedNow:
@@ -296,36 +285,24 @@ def moveScansIntoPlace():
     os.chdir("../")
 
 
-if __name__ == "__main__":
+def processPNGs(server=None, password=None):
     examsScannedNow = defaultdict(list)
 
-    # get commandline args if needed
-    parser = argparse.ArgumentParser(
-        description="Run the QR-code reading script. No arguments = run as normal."
-    )
-    parser.add_argument("-w", "--password", type=str)
-    parser.add_argument(
-        "-s",
-        "--server",
-        metavar="SERVER[:PORT]",
-        action="store",
-        help="Which server to contact.",
-    )
-    args = parser.parse_args()
-    if args.server and ":" in args.server:
+    if server and ":" in server:
         s, p = args.server.split(":")
         scanMessenger.startMessenger(s, port=p)
     else:
-        scanMessenger.startMessenger(args.server)
+        scanMessenger.startMessenger(server)
 
     # get the password if not specified
-    if args.password is None:
+    if password is None:
         try:
             pwd = getpass.getpass("Please enter the 'scanner' password:")
         except Exception as error:
             print("ERROR", error)
+            exit(1)
     else:
-        pwd = args.password
+        pwd = password
 
     # get started
     try:
@@ -344,8 +321,7 @@ if __name__ == "__main__":
     scanMessenger.closeUser()
     scanMessenger.stopMessenger()
 
-    buildDirectories()
     decodeQRs()
-    checkQRsValid()
-    validateQRsAgainstSpec(spec)
-    moveScansIntoPlace()
+    checkQRsValid(spec, examsScannedNow)
+    validateQRsAgainstSpec(spec, examsScannedNow)
+    moveScansIntoPlace(examsScannedNow)
