@@ -13,7 +13,7 @@ print(
 )
 print('1. Run the "022_check completed.py" script.')
 print(
-    '2. When you are satisfied with the amount of progress, run the "023_check completed.py" script, to produce a spreadsheet of completed papers and their marks.'
+    '2. When you are satisfied with the amount of progress, run the "023_spreadsheet.py" script, to produce a spreadsheet of completed papers and their marks.'
 )
 print(
     '3. Run the "024_reassemble.py" script to start building PDFs of processed papers.'
