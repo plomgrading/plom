@@ -23,7 +23,7 @@ def archivePDF(fname):
     # TODO: is ".." portable?  maybe we should keep some absolute paths handy
     shutil.move(fname, os.path.join("..", archivedir))
     # open the existing archive if it is there
-    arcName = os.path.join("..", archivedir, "archive.toml")
+    arcName = os.path.join(archivedir, "archive.toml")
     if os.path.isfile(arcName):
         arch = toml.load(arcName)
     else:
@@ -35,7 +35,7 @@ def archivePDF(fname):
 
 
 def isInArchive(fname):
-    arcName = os.path.join("..", archivedir, "archive.toml")
+    arcName = os.path.join(archivedir, "archive.toml")
     if not os.path.isfile(arcName):
         return [False]
     arch = toml.load(arcName)
@@ -58,7 +58,7 @@ def processFileToPng(fname):
                 "-dNOPAUSE",
                 "-sDEVICE=png256",
                 "-o",
-                os.path.join("scannedPNGs", safeScan + "-%d.png"),
+                os.path.join("scanPNGs", safeScan + "-%d.png"),
                 "-r200",
                 fname,
             ],
@@ -105,7 +105,7 @@ def processScans(fname):
     # archive the scan PDF
     archivePDF(fname)
     # go into png directory
-    os.chdir("scannedPNGs")
+    os.chdir("scanPNGs")
 
     # Gamma shift the images
     # list and len bit crude here: more pythonic to leave as iterator?
