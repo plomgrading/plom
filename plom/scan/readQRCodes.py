@@ -289,7 +289,7 @@ def processPNGs(server=None, password=None):
     examsScannedNow = defaultdict(list)
 
     if server and ":" in server:
-        s, p = args.server.split(":")
+        s, p = server.split(":")
         scanMessenger.startMessenger(s, port=p)
     else:
         scanMessenger.startMessenger(server)

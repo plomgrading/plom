@@ -16,15 +16,6 @@ def scanStatus():
     print("Not working yet.")
 
 
-def uploadImages(unknowns=False, collisions=False):
-    print("Upload images to server")
-    if unknowns:
-        print("Also upload unknowns")
-    if collisions:
-        print("Also collisions unknowns")
-    print("Not working yet.")
-
-
 def processScans(PDFs):
     from plom.scan import scansToImages
 
@@ -51,6 +42,22 @@ def readImages(server, password):
     os.makedirs("decodedPages", exist_ok=True)
     os.makedirs("unknownPages", exist_ok=True)
     readQRCodes.processPNGs(server, password)
+
+
+def uploadImages(server, password, unknowns=False, collisions=False):
+    from plom.scan import sendPagesToServer
+
+    # make directories for upload
+    os.makedirs("sentPages", exist_ok=True)
+    os.makedirs("discardedPages", exist_ok=True)
+    os.makedirs("collidingPages", exist_ok=True)
+
+    print("Upload images to server")
+    sendPagesToServer.uploadPages(server, password)
+    if unknowns:
+        print("Also upload unknowns")
+    if collisions:
+        print("Also collisions unknowns")
 
 
 parser = argparse.ArgumentParser()
@@ -97,7 +104,7 @@ if args.command == "process":
 elif args.command == "read":
     readImages(args.server, args.password)
 elif args.command == "upload":
-    uploadImages(args.unknowns, args.collisions)
+    uploadImages(args.server, args.password, args.unknowns, args.collisions)
 elif args.command == "status":
     scanStatus()
 elif args.command == "clear":
