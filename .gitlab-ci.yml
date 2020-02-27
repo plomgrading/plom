@@ -156,12 +156,13 @@ job backgroundTest:
     - echo "Should be no jobs and this should succeed"
     - jobs -p
 
-job someUnitTests:
-  stage: test
-  script:
-    - pushd finishing
-    - ./run_unit_tests.sh
-    - popd
-    - pushd resources
-    - ./run_unit_tests.sh
-    - popd
+# TODO: maybe she'll come back one day...
+#job someUnitTests:
+#  stage: test
+#  script:
+#    - pushd finishing
+#    - ./run_unit_tests.sh
+#    - popd
+#    - pushd resources
+#    - ./run_unit_tests.sh
+#    - popd
