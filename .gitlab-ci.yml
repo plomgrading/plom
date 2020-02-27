@@ -81,9 +81,9 @@ job buildPapers:
     - cp ../tmp/resources/verifiedSpec.toml testSpec.toml
     - plom-build parse
     # TODO: override the private seed
-    - sed ../specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
+    - sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
     # TODO: reenable this later (comments have changed)
-    #- diff -u ../specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
+    #- diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
     - plom-build build blank
     # TODO: compare to downloaded canned versions?
     # TODO: https://github.com/vslavik/diff-pdf, not in Ubuntu repos?
