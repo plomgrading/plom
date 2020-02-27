@@ -18,6 +18,7 @@ setup(
     packages=find_packages(),
     scripts=[
         "plom/scripts/plom-init.py",
+        "plom/scripts/plom-scan.py",
         "plom/scripts/plom-build",
         "plom/scripts/plom-client",
     ],
