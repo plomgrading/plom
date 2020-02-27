@@ -12,8 +12,7 @@ import csv
 from io import StringIO
 import pandas
 
-import utils
-from utils import myhash
+from .utils import myhash
 
 
 def import_canvas_csv(canvas_fromfile):
@@ -107,7 +106,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     return df
 
 
-def canvas_csv_add_return_codes(csvin, csvout):
+def canvas_csv_add_return_codes(csvin, csvout, saltstr):
     print('*** Generating Return Codes Spreadsheet ***')
     df = import_canvas_csv(csvin)
 
@@ -132,7 +131,7 @@ def canvas_csv_add_return_codes(csvin, csvout):
         assert len(name) > 0, "Student name is empty"
         assert len(sn) == 8, "Student number is not 8 characters: row = " + str(row)
 
-        code = myhash(sn)
+        code = myhash(sn, saltstr)
 
         oldcode = row[rcode]
         if pandas.isnull(oldcode):
@@ -227,14 +226,14 @@ Jane Smith,43,12345679,ABCDEFGHIJ02,Math 123 S102v,12345679,919005618467
 """
     infile = StringIO(s1)
     outfile = StringIO('')
-    sns = canvas_csv_add_return_codes(infile, outfile);
+    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default");
     s = outfile.getvalue()
     assert s == s2 or s.replace('\r\n', '\n') == s2
 
     # return codes already exist
     infile = StringIO(s2)
     outfile = StringIO('')
-    sns = canvas_csv_add_return_codes(infile, outfile);
+    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default");
     s = outfile.getvalue()
     assert s == s2 or s.replace('\r\n', '\n') == s2
 
@@ -255,7 +254,7 @@ D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,149766785804
 """
     infile = StringIO(s1)
     outfile = StringIO('')
-    sns = canvas_csv_add_return_codes(infile, outfile);
+    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default");
     s = outfile.getvalue()
     assert s == s2 or s.replace('\r\n', '\n') == s2
 
@@ -266,22 +265,22 @@ Points Possible,,,,,,999999999999
 John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,111222333444
 """)
     outfile = StringIO('')
-    raises(ValueError, lambda: canvas_csv_add_return_codes(infile, outfile))
+    raises(ValueError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
 
     # missing "Student" header
     infile = StringIO("""xxStudentxx,SIS User ID,Return Code ()""")
     outfile = StringIO('')
-    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile))
+    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
 
     # missing "SIS User ID" header
     infile = StringIO("""Student,SISTER User IDLE,Return Code ()""")
     outfile = StringIO('')
-    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile))
+    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
 
     # can't find "return code"
     infile = StringIO("""Student,SIS User ID,Retrun C0de ()""")
     outfile = StringIO('')
-    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile))
+    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
 
     # student number too long
     infile = StringIO("""Student,SIS User ID,Return Code ()
@@ -290,7 +289,7 @@ John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,111222333444
 John Smith,12345678910,
 """)
     outfile = StringIO('')
-    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile))
+    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
 
     # empty student name
     infile = StringIO("""Student,SIS User ID,Return Code ()
@@ -300,14 +299,14 @@ John Smith,12345678,
 ,12348888,
 """)
     outfile = StringIO('')
-    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile))
+    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
 
     # missing header rows
     infile = StringIO("""Student,SIS User ID,Return Code ()
 John Smith,12345678,
 """)
     outfile = StringIO('')
-    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile))
+    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
 
     print("""
     *** All tests passed ***
