@@ -6,25 +6,18 @@ Gather reassembled papers with html page for digital return.
 """
 
 __author__ = "Colin B. Macdonald"
-__copyright__ = "Copyright (C) 2018-2019 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald"
 __credits__ = ["Matt Coles"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import os, sys, shutil
+import argparse
 
-from utils import myhash, SALTSTR as saltstr
+from plom import SpecParser
+from .utils import myhash
 
-# check saltstr is set to something other than "salt"
-if saltstr == "default":
-    print(
-        'You need to edit utils.py and change SALTSTR to something other than "default".'
-    )
-    print("Rerun this script after you have done that.")
-    exit()
-
-# TODO: should get this from project, something like 'Math 253 Midterm 2'
-longname = "Math Exam"  # bland default for now
+saltstr = None
 
 
 def do_renaming(fromdir, todir):
@@ -36,7 +29,7 @@ def do_renaming(fromdir, todir):
             sn = oldname[-8:]
             assert len(sn) == 8
             assert sn.isdigit()
-            code = myhash(sn)
+            code = myhash(sn, saltstr)
             newname = "{0}_{1}.pdf".format(oldname, code)
             newname = os.path.join(todir, newname)
             print(
@@ -50,15 +43,29 @@ def do_renaming(fromdir, todir):
 
 
 if __name__ == "__main__":
-    # this allows us to import from ../resources
-    sys.path.append("..")
-    from resources.testspecification import TestSpecification
+    # get commandline args if needed
+    parser = argparse.ArgumentParser(
+        description="Prepare an html page for return via a secret code hashed from student number."
+    )
+    parser.add_argument("--saltstr", type=str, help="Per-course secret salt string (see docs)")
+
+    # TODO: more docs
+    # If you know the salt string and you know someone's student
+    # number, you can determine their code.  You should set this
+    # per course (not per test).
+
+    args = parser.parse_args()
+    if not args.saltstr:
+        print("TODO: how can we should help here instead?")
+        raise ValueError("You must set the Salt String")
+
+    saltstr = args.saltstr
 
     print('Salt is "{0}"'.format(saltstr))
 
-    spec = TestSpecification()
-    spec.readSpec()
-    shortname = spec.Name
+    spec = SpecParser().spec
+    shortname = spec["name"]
+    longname = spec["longName"]
 
     # TODO: but "reassembed" is created even if I use 09alt
     reassembles = ["reassembled", "reassembled_ID_but_not_marked"]
@@ -92,6 +99,7 @@ if __name__ == "__main__":
         sys.exit()
 
     print("Adding codedReturn/index.html file")
+    print("TODO: this is going to break... put this file inline?")
     with open("view_test_template.html", "r") as htmlfile:
         html = htmlfile.read()
     html = html.replace("__COURSENAME__", longname)
