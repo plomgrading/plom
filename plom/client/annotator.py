@@ -6,6 +6,7 @@ __license__ = "AGPLv3"
 import json
 import os
 import sys
+import pkg_resources
 
 from PyQt5.QtCore import (
     Qt,
@@ -219,10 +220,13 @@ class Annotator(QWidget):
     def loadCursors(self):
         # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
         # pyinstaller creates a temp folder and stores path in _MEIPASS
+
         try:
             base_path = sys._MEIPASS
         except Exception:
-            base_path = "./cursors"
+            # a hack - fix soon.
+            base_path = os.path.join(os.path.dirname(__file__), "cursors")
+            # base_path = "./cursors"
 
         # load pixmaps for cursors and set the hotspots
         self.cursorBox = QCursor(QPixmap("{}/box.png".format(base_path)), 4, 4)
@@ -600,7 +604,9 @@ class Annotator(QWidget):
         try:
             base_path = sys._MEIPASS
         except Exception:
-            base_path = "./icons"
+            # a hack - fix soon.
+            base_path = os.path.join(os.path.dirname(__file__), "icons")
+            # base_path = "./icons"
 
         self.setIcon(self.ui.boxButton, "box", "{}/rectangle.svg".format(base_path))
         self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
