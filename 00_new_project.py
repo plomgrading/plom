@@ -41,7 +41,7 @@ directories += [
     "imageServer/markedPapers/commentFiles",
 ]
 
-directories += ["clients", "clients/uiFiles", "clients/icons"]
+directories += ["clients", "clients/uiFiles", "clients/icons", "clients/cursors"]
 
 files = [
     "resources/testspecification.py",
@@ -142,6 +142,18 @@ files += [
     "clients/icons/move.svg",
     "clients/icons/redo.svg",
     "clients/icons/zoom.svg",
+]
+
+files += [
+    "./clients/cursors/box.png",
+    "./clients/cursors/text-comment.png",
+    "./clients/cursors/pen.png",
+    "./clients/cursors/cross.png",
+    "./clients/cursors/delete.png",
+    "./clients/cursors/line.png",
+    "./clients/cursors/text-delta.png",
+    "./clients/cursors/text.png",
+    "./clients/cursors/tick.png",
 ]
 
 files += [
