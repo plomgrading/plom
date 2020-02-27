@@ -21,7 +21,7 @@ archivedir = "archivedPDFs"
 def archivePDF(fname):
     md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
     # TODO: is ".." portable?  maybe we should keep some absolute paths handy
-    shutil.move(fname, os.path.join("..", archivedir))
+    shutil.move(fname, archivedir)
     # open the existing archive if it is there
     arcName = os.path.join(archivedir, "archive.toml")
     if os.path.isfile(arcName):

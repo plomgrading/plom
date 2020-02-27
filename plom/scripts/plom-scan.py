@@ -74,12 +74,10 @@ spU.add_argument(
 
 # Now parse things
 args = parser.parse_args()
-# parser.print_help()
-# print(args)
 
 if args.command == "process":
     processScans(args.scanPDF)
-if args.command == "read":
+elif args.command == "read":
     readImages()
 elif args.command == "upload":
     uploadImages(args.unknowns, args.collisions)
@@ -89,5 +87,4 @@ elif args.command == "clear":
     clearLogin()
 else:
     parser.print_help()
-
 exit(0)
