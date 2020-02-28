@@ -1355,8 +1355,8 @@ class MarkerClient(QWidget):
         for img in imageList:
             ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory, delete=False)
             ifile.write(img)
-            ifiles.append(ifilenames.name)
-        tvw = GroupView(ifilenamess)
+            ifilenames.append(ifile.name)
+        tvw = GroupView(ifilenames)
         tvw.setWindowTitle(
             "Original ungraded image for question {} of test {}".format(gn, tn)
         )
