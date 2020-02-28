@@ -6,6 +6,7 @@ __license__ = "AGPLv3"
 import json
 import os
 import sys
+import logging
 import pkg_resources
 
 from PyQt5.QtCore import (
@@ -62,6 +63,8 @@ from .test_view import TestView
 from .uiFiles.ui_annotator_lhm import Ui_annotator_lhm
 from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm
 
+log = logging.getLogger("annotr")
+
 # Short descriptions of each tool to display to user.
 tipText = {
     "box": "Box: L = highlighted box, R/Shift = highlighted ellipse.",
@@ -116,7 +119,7 @@ class Annotator(QWidget):
         self.paperdir = paperdir
         self.imageFiles = fnames
         self.saveName = saveName
-        print("Savename = {}".format(saveName))
+        log.debug("Savename = {}".format(saveName))
         self.maxMark = maxMark
         # get markstyle from plomDict
         if plomDict is None:
@@ -449,7 +452,7 @@ class Annotator(QWidget):
         # grab the files if needed.
         if self.testViewFiles is None:
             testNumber, pageNames, self.testViewFiles = self.parent.viewWholePaper()
-            print("Pagenames = {}".format(pageNames))
+            log.debug("viewWholePage: pageNames = {}".format(pageNames))
         # if we haven't built a testview, built it now
         if self.testView is None:
             self.testView = TestView(self, testNumber, pageNames, self.testViewFiles)
@@ -923,7 +926,7 @@ class Annotator(QWidget):
             )
         # wide vs compact
         if self.parent.annotatorSettings["compact"] is True:
-            print("Debug: compacting UI (b/c of last use setting")
+            log.debug("compacting UI (b/c of last use setting")
             self.ui.hideButton.animateClick()
 
     def saveWindowSettings(self):
@@ -1030,7 +1033,7 @@ class Annotator(QWidget):
         self.saveWindowSettings()
         self.commentW.saveComments()
 
-        print("ann emitting accept signal")
+        log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
         # some things here hardcoded elsewhere too, and up in marker
         plomFile = self.saveName[:-3] + "plom"
@@ -1066,10 +1069,10 @@ class Annotator(QWidget):
         force = getattr(self, "_priv_force_close", False)
         if force:
             if self._priv_relaunch:
-                print("ann emitting the WantsMore signal")
+                log.debug("emitting the WantsMore signal")
                 self.ann_done_wants_more.emit(self.tgv)
             else:
-                print("ann emitting the closing signal")
+                log.debug("emitting the closing signal")
                 self.ann_done_closing.emit(self.tgv)
             ce.accept()
             return
@@ -1083,7 +1086,7 @@ class Annotator(QWidget):
             if msg.exec_() == QMessageBox.No:
                 ce.ignore()
                 return
-        print("ann emitting reject/cancel signal, discarding, and closing")
+        log.debug("emitting reject/cancel signal, discarding, and closing")
         self.ann_done_reject.emit(self.tgv)
         # clean up after a testview
         self.doneViewingPaper()

@@ -20,6 +20,7 @@ import threading
 import time
 import toml
 import queue
+import logging
 
 from PyQt5.QtCore import (
     Qt,
@@ -65,6 +66,7 @@ if platform.system() == "Darwin":
 
     qt_set_sequence_auto_mnemonic(True)
 
+log = logging.getLogger("marker")
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory(prefix="plom_")
@@ -138,7 +140,7 @@ class BackgroundUploader(QThread):
         important to be aware, not all code in this object runs in the new
         thread: it depends where that code is called!
         """
-        print("Debug: upQ enqueing new in thread " + str(threading.get_ident()))
+        log.debug("upQ enqueing item from main thread " + str(threading.get_ident()))
         self.q.put(args)
 
     def empty(self):
@@ -155,20 +157,15 @@ class BackgroundUploader(QThread):
             except EmptyQueueException:
                 return
             code = data[0]  # TODO: remove so that queue needs no knowledge of args
-            print(
-                "Debug: upQ (thread {}): popped code {} from queue, uploading".format(
-                    str(threading.get_ident()), code
-                )
-            )
+            log.info("upQ thread: popped code {} from queue, uploading".format(code))
             upload(
                 *data,
                 failcallback=self.uploadFail.emit,
                 successcallback=self.uploadSuccess.emit
             )
 
-        print("upQ.run: thread " + str(threading.get_ident()))
         self.q = queue.Queue()
-        print("Debug: upQ: starting with new empty queue and starting timer")
+        log.info("upQ thread: starting with new empty queue and starting timer")
         # TODO: Probably don't need the timer: after each enqueue, signal the
         # QThread (in the new thread's event loop) to call tryToUpload.
         timer = QTimer()
@@ -637,7 +634,7 @@ class MarkerClient(QWidget):
         self.testImg.resetB.animateClick()
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
-        print("Debug: Marker main thread: " + str(threading.get_ident()))
+        log.debug("Marker main thread: " + str(threading.get_ident()))
         if self.allowBackgroundOps:
             self.backgroundUploader = BackgroundUploader()
             self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
@@ -701,7 +698,7 @@ class MarkerClient(QWidget):
             return
 
         paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
-        print("Debug: create paperdir {} for already-graded download".format(paperdir))
+        log.debug("create paperdir {} for already-graded download".format(paperdir))
 
         # Image names = "<task>.<imagenumber>.png"
         inames = []
@@ -814,7 +811,11 @@ class MarkerClient(QWidget):
 
     def requestNextInBackgroundStart(self):
         if self.backgroundDownloader:
-            print("Previous Downloader: " + str(self.backgroundDownloader))
+            log.info(
+                "Previous Downloader ({}) still here, waiting".format(
+                    str(self.backgroundDownloader)
+                )
+            )
             # if prev downloader still going than wait.  might block the gui
             self.backgroundDownloader.wait()
         self.backgroundDownloader = BackgroundDownloader(self.question, self.version)
@@ -863,7 +864,7 @@ class MarkerClient(QWidget):
                 self.Qapp.processEvents()
                 count += 1
                 if (count % 10) == 0:
-                    print("Debug: waiting for downloader to fill table...")
+                    log.info("waiting for downloader to fill table...")
                 if count >= 100:
                     msg = SimpleMessage(
                         "Still waiting for downloader to get the next image.  "
@@ -1000,7 +1001,7 @@ class MarkerClient(QWidget):
         assert task.startswith("m")
         Gtask = "G" + task[1:]
         paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
-        print("Debug: create paperdir {} for annotating".format(paperdir))
+        log.debug("create paperdir {} for annotating".format(paperdir))
         aname = os.path.join(paperdir, Gtask + ".png")
         cname = os.path.join(paperdir, Gtask + ".json")
         pname = os.path.join(paperdir, Gtask + ".plom")
@@ -1015,7 +1016,7 @@ class MarkerClient(QWidget):
                 return
             remarkFlag = True
             oldpaperdir = self.exM.getPaperDirByTask(task)
-            print("Debug: oldpaperdir is " + oldpaperdir)
+            log.debug("oldpaperdir is " + oldpaperdir)
             assert oldpaperdir is not None
             oldaname = os.path.join(oldpaperdir, Gtask + ".png")
             oldpname = os.path.join(oldpaperdir, Gtask + ".plom")
@@ -1040,7 +1041,7 @@ class MarkerClient(QWidget):
                 count += 1
                 # if .remainder(count, 10) == 0: # this is only python3.7 and later. - see #509
                 if (count % 10) == 0:
-                    print("Debug: waiting for downloader: {}".format(fnames))
+                    log.info("waiting for downloader: {}".format(fnames))
                 if count >= 40:
                     msg = SimpleMessage(
                         "Still waiting for download.  Do you want to wait a bit longer?"
@@ -1052,7 +1053,9 @@ class MarkerClient(QWidget):
         # maybe the downloader failed for some (rare) reason
         for fn in fnames:
             if not os.path.exists(fn):
-                print("Debug: some kind of downloader fail?")
+                log.warning(
+                    "some kind of downloader fail? (unexpected, but probably harmless"
+                )
                 return
 
         # stash the previous state, not ideal because makes column wider
@@ -1086,13 +1089,13 @@ class MarkerClient(QWidget):
 
     @pyqtSlot(str)
     def callbackAnnDoneWantsMore(self, task):
-        print("Debug: Marker is back and Ann Wants More")
+        log.debug("Marker is back and Ann Wants More")
         if not self.allowBackgroundOps:
             self.requestNext()
         if self.moveToNextUnmarkedTest("m" + task):
             self.annotateTest()
         else:
-            print("Debug: either we are done or problems downloading...")
+            log.debug("either we are done or problems downloading...")
             self.setEnabled(True)
 
     @pyqtSlot(str, list)
@@ -1162,7 +1165,7 @@ class MarkerClient(QWidget):
         self.close()
 
     def shutDown(self):
-        print("Debug: Marker shutdown from thread " + str(threading.get_ident()))
+        log.debug("Marker shutdown from thread " + str(threading.get_ident()))
         if self.backgroundUploader:
             count = 42
             while self.backgroundUploader.isRunning():
