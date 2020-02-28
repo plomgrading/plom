@@ -4,6 +4,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPLv3"
 
 import json
+import logging
 
 from PyQt5.QtCore import Qt, QElapsedTimer, QEvent, QLineF, QPointF, QRectF
 from PyQt5.QtGui import (
@@ -54,6 +55,8 @@ from .tools import (
     GhostDelta,
     GhostText,
 )
+
+log = logging.getLogger("pagescene")
 
 
 class ScoreBox(QGraphicsTextItem):
@@ -567,7 +570,7 @@ class PageScene(QGraphicsScene):
         else:
             return super(PageScene, self).event(event)
 
-    def printUndoStack(self):
+    def _debug_printUndoStack(self):
         c = self.undoStack.count()
         for k in range(c):
             print(k, self.undoStack.text(k))
@@ -607,7 +610,8 @@ class PageScene(QGraphicsScene):
             X.setFocus(False)
 
     def unpickleError(self, X):
-        print("Unpickle error - What is {}".format(X))
+        # Shouldn't this just throw an exception?
+        log.error("Unpickle error - What is {}".format(X))
 
     def unpickleCross(self, X):
         if len(X) == 2:
@@ -972,7 +976,7 @@ class PageScene(QGraphicsScene):
             self.zoomFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.zoomBoxItem is None:
-                print("EEK - should not be here")
+                log.error("EEK - should not be here")
                 # somehow missed the mouse-press
                 self.zoomBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
@@ -1030,7 +1034,7 @@ class PageScene(QGraphicsScene):
             self.deleteFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.delBoxItem is None:
-                print("EEK - should not be here")
+                log.error("EEK - should not be here")
                 # somehow missed the mouse-press
                 self.delBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
