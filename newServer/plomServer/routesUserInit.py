@@ -13,7 +13,7 @@ class UserInitHandler:
     @noAuthOnlyLog
     async def version(self, request):
         return web.Response(
-            text="Running Plom server version {} with API {}".format(
+            text="Plom server version {} with API {}".format(
                 self.server.Version, self.server.API
             ),
             status=200,

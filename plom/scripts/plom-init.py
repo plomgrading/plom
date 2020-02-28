@@ -3,7 +3,7 @@
 from plom import version
 
 print(
-    "Running Plom version {} and API version {}".format(
+    "Plom version {} and API version {}".format(
         version.__version__, version.Plom_API_Version
     )
 )
