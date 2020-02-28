@@ -22,7 +22,6 @@ from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import QCompleter, QWidget, QMainWindow, QInputDialog, QMessageBox
 
 from .examviewwindow import ExamViewWindow
-import plom.messenger as messenger
 from .useful_classes import ErrorMessage, SimpleMessage
 from .uiFiles.ui_totaler import Ui_TotalWindow
 from plom.plom_exceptions import *
