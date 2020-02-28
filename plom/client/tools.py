@@ -4,6 +4,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPLv3"
 
 import json
+import logging
 from math import sqrt
 from PyQt5.QtCore import Qt, QLineF, QPointF, pyqtProperty, QPropertyAnimation, QTimer
 from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainterPath, QPen, QPixmap
@@ -18,6 +19,9 @@ from PyQt5.QtWidgets import (
     QGraphicsTextItem,
     QUndoCommand,
 )
+
+log = logging.getLogger("tools")
+
 
 ## move and delete commands
 class CommandDelete(QUndoCommand):
@@ -894,7 +898,7 @@ class HighLightItem(QGraphicsPathItem):
                 if e.isLineTo():
                     pth.append(["l", e.x + self.x(), e.y + self.y()])
                 else:
-                    print("Problem pickling highlightitem path {}".format(self.path))
+                    log.error("Problem pickling highlightitem path {}".format(self.path))
         return ["Highlight", pth]
 
     def paint(self, painter, option, widget):
@@ -1079,7 +1083,7 @@ class PenItem(QGraphicsPathItem):
                 if e.isLineTo():
                     pth.append(["l", e.x + self.x(), e.y + self.y()])
                 else:
-                    print("Problem pickling penitem path {}".format(self.path))
+                    log.error("Problem pickling penitem path {}".format(self.path))
         return ["Pen", pth]
 
     def paint(self, painter, option, widget):
@@ -1226,7 +1230,7 @@ class PenArrowItem(QGraphicsItemGroup):
                 if e.isLineTo():
                     pth.append(["l", e.x + self.x(), e.y + self.y()])
                 else:
-                    print("Problem pickling penarrowitem path {}".format(self.path))
+                    log.error("Problem pickling penarrowitem path {}".format(self.path))
         return ["PenArrow", pth]
 
     def paint(self, painter, option, widget):

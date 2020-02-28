@@ -8,6 +8,13 @@ from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QGridLayout,
+    QFormLayout,
+    QFrame,
+    QLabel,
     QMessageBox,
     QTableView,
     QToolButton,
@@ -153,3 +160,78 @@ class BlankIDBox(QDialog):
         grid.addWidget(self.noIDB, 2, 1)
         grid.addWidget(self.noB, 3, 1)
         self.setLayout(grid)
+
+
+class ClientSettingsDialog(QDialog):
+    def __init__(self, s):
+        super(QDialog, self).__init__()
+        # self.parent = parent
+        self.setWindowTitle("Plom client options")
+
+        flay = QFormLayout()
+
+        self.comboLog = QComboBox()
+        self.comboLog.addItems(["Debug", "Info", "Warning", "Error", "Critical"])
+        self.comboLog.setCurrentText(s.get("LogLevel", "Info"))
+        flay.addRow("Logging level:", self.comboLog)
+        moreinfo = QLabel(
+            "(In order of severity; less serious messages will not be logged)"
+        )
+        flay.addWidget(moreinfo)
+
+        self.checkLogFile = QCheckBox("Log to file (requires restart)")
+        self.checkLogFile.setCheckState(
+            Qt.Checked if s.get("LogToFile") else Qt.Unchecked
+        )
+        flay.addWidget(self.checkLogFile)
+
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        flay.addRow(line)
+
+        self.checkFore = QCheckBox("Force foreground upload/downloads")
+        self.checkFore.setCheckState(
+            Qt.Checked if s.get("FOREGROUND") else Qt.Unchecked
+        )
+        flay.addWidget(self.checkFore)
+
+        moreinfo = QLabel(
+            "By default, Plom does these operations in background threads.\n"
+            "Checking this (e.g., for debugging or paranoia) will result in\n"
+            "delays between papers."
+        )
+        # moreinfo.setWordWrap(True)
+        flay.addWidget(moreinfo)
+
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        flay.addRow(line)
+
+        # TODO: for future expansion
+        self.cb2 = QCheckBox("Warn if no comments were made")
+        self.cb3 = QCheckBox("Warn if score inconsistent with annotations")
+        self.cb2.setCheckState(Qt.Checked)
+        self.cb3.setCheckState(Qt.Checked)
+        self.cb2.setEnabled(False)
+        self.cb3.setEnabled(False)
+        flay.addWidget(self.cb2)
+        flay.addWidget(self.cb3)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+    def getStuff(self):
+        return (
+            self.checkFore.checkState() == Qt.Checked,
+            self.comboLog.currentText(),
+            self.checkLogFile.checkState() == Qt.Checked,
+        )
