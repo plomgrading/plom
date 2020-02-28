@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Server: improved database
 * Server: new upload procedure/tools
 * Reassembly tasks are now faster.
+* Client can generate a log file for debugging
 
 ### Fixed
 * Server: manager-related database locks fixed

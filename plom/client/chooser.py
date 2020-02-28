@@ -18,7 +18,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 
 from .uiFiles.ui_chooser import Ui_Chooser
-from .useful_classes import ErrorMessage, SimpleMessage
+from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
 from plom.plom_exceptions import *
 from . import marker
 from . import identifier
@@ -75,17 +75,27 @@ class Chooser(QDialog):
         self.APIVersion = Plom_API_Version
         super(Chooser, self).__init__()
         self.parent = Qapp
-        #now = datetime.datetime.now().isoformat('T', 'seconds')
-        logging.basicConfig(
-            format="%(asctime)s %(levelname)s:%(name)s  %(message)s",
-            level=logging.DEBUG,
-            datefmt="%m-%d %H:%M:%S",
-            #filename="plom-{}.log".format(now),
-        )
+
+        readLastTime()
+
+        if lastTime.get("LogToFile"):
+            now = datetime.datetime.now().isoformat("T", "seconds")
+            logging.basicConfig(
+                format="%(asctime)s %(levelname)s:%(name)s %(message)s",
+                datefmt="%m-%d %H:%M:%S",
+                filename="plom-{}.log".format(now),
+            )
+        else:
+            logging.basicConfig(
+                format="%(asctime)s %(levelname)s:%(name)s %(message)s",
+                datefmt="%m-%d %H:%M:%S",
+            )
+        # Default to INFO log level
+        logging.getLogger().setLevel(lastTime.get("LogLevel", "Info").upper()),
+
         s = "Plom Client {} (communicates with api {})".format(
             __version__, self.APIVersion
         )
-        print(s)
         logging.info(s)
         # runit = either marker or identifier clients.
         self.runIt = None
@@ -94,7 +104,6 @@ class Chooser(QDialog):
         self.ui.setupUi(self)
         # Append version to window title
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
-        # load in the login etc from last time (if exists)
         self.setLastTime()
         # connect buttons to functions.
         self.ui.markButton.clicked.connect(self.runMarker)
@@ -102,6 +111,7 @@ class Chooser(QDialog):
         self.ui.totalButton.clicked.connect(self.runTotaler)
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontButton.clicked.connect(self.setFont)
+        self.ui.optionsButton.clicked.connect(self.options)
         self.ui.getServerInfoButton.clicked.connect(self.getInfo)
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
@@ -110,7 +120,6 @@ class Chooser(QDialog):
 
     def setLastTime(self):
         # set login etc from last time client ran.
-        readLastTime()
         self.ui.userLE.setText(lastTime["user"])
         self.setServer(lastTime["server"])
         self.ui.pgSB.setValue(int(lastTime["pg"]))
@@ -128,6 +137,16 @@ class Chooser(QDialog):
             p = Default_Port
         self.ui.serverLE.setText(s)
         self.ui.mportSB.setValue(int(p))
+
+    def options(self):
+        d = ClientSettingsDialog(lastTime)
+        d.exec_()
+        # TODO: do something more proper like QSettings
+        stuff = d.getStuff()
+        lastTime["FOREGROUND"] = stuff[0]
+        lastTime["LogLevel"] = stuff[1]
+        lastTime["LogToFile"] = stuff[2]
+        logging.getLogger().setLevel(lastTime["LogLevel"].upper())
 
     def validate(self):
         # Check username is a reasonable string
