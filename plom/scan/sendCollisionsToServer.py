@@ -113,6 +113,10 @@ def uploadCollisions(server=None, password=None):
         )
         exit(0)
 
+    fileList = glob("collidingPages/*.png")
+    if warnUser(fileList) == False:
+        exit(0)
+
     sendCollidingFiles(fileList)
     scanMessenger.closeUser()
     scanMessenger.stopMessenger()

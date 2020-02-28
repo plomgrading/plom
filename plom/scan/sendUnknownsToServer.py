@@ -11,7 +11,7 @@ import getpass
 from glob import glob
 import hashlib
 import os
-import shutils
+import shutil
 
 import plom.scanMessenger as scanMessenger
 from plom.plom_exceptions import *
