@@ -50,8 +50,8 @@ from .examviewwindow import ExamViewWindow
 import plom.messenger as messenger
 from .annotator import Annotator
 from plom.plom_exceptions import *
-from .useful_classes import AddTagBox, ErrorMessage, SimpleMessage
-from .useful_classes import commentLoadAll, commentIsVisible
+from .useful_classes import ErrorMessage, SimpleMessage
+from .comment_list import AddTagBox, commentLoadAll, commentIsVisible
 from .reorientationwindow import ExamReorientWindow
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .test_view import GroupView, TestGroupSelect
