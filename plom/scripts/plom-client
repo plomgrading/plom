@@ -16,6 +16,7 @@ from plom import Default_Port
 # Pop up a dialog for unhandled exceptions and then exit
 sys._excepthook = sys.excepthook
 
+
 def _exception_hook(exctype, value, traceback):
     s = "".join(tblib.format_exception(exctype, value, traceback))
     mb = QMessageBox()
@@ -48,6 +49,7 @@ def sigint_handler(*args):
         == QMessageBox.Yes
     ):
         QApplication.exit(42)
+
 
 app = QApplication(sys.argv)
 app.setStyle(QStyleFactory.create("Fusion"))
@@ -84,9 +86,7 @@ if len(sys.argv) > 1:
     group.add_argument(
         "-i", "--identifier", action="store_true", help="Run the identifier"
     )
-    group.add_argument(
-        "-t", "--totaler", action="store_true", help="Run the totaler"
-    )
+    group.add_argument("-t", "--totaler", action="store_true", help="Run the totaler")
     group.add_argument(
         "-m",
         "--marker",
