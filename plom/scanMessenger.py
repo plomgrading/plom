@@ -17,9 +17,11 @@ import toml
 import urllib3
 
 from plom.plom_exceptions import *
-from plom import Plom_API_Version, Default_Port
+from plom.messenger import BaseMessenger
 
-_userName = "scanner"
+# TODO: how to do this in subclass?
+# TODO: set username method?
+# _userName = "scanner"
 
 # ----------------------
 
@@ -27,326 +29,180 @@ _userName = "scanner"
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-sslContext.check_hostname = False
-# Server defaults
-server = "0.0.0.0"
-message_port = Default_Port
-SRmutex = threading.Lock()
-session = None
 
 
-def getServerInfo():
-    global server
-    global message_port
-    if os.path.isfile("server.toml"):
-        with open("server.toml") as fh:
-            si = toml.load(fh)
-        server = si["server"]
-        if server and ":" in server:
-            server, message_port = server.split(":")
+class ScanMessenger(BaseMessenger):
+    """Scanner-related communications."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-def requestAndSaveToken(user, pw):
-    """Get a authorisation token from the server.
-
-    The token is then used to authenticate future transactions with the server.
-
-    """
-    global _userName, _token
-
-    SRmutex.acquire()
-    try:
-        response = session.put(
-            "https://{}:{}/users/{}".format(server, message_port, user),
-            json={"user": user, "pw": pw, "api": Plom_API_Version},
-            verify=False,
-            timeout=5,
-        )
-        # throw errors when response code != 200.
-        response.raise_for_status()
-        # convert the content of the response to a textfile for identifier
-        _token = response.json()
-        _userName = user
-    except requests.HTTPError as e:
-        if response.status_code == 401:  # authentication error
-            raise PlomAuthenticationException("You are not authenticated.") from None
-        elif response.status_code == 400:  # API error
-            raise PlomAPIException(response.json()) from None
-        elif response.status_code == 409:
-            raise PlomExistingLoginException(response.json()) from None
-        else:
-            raise PlomSeriousException(
-                "Some other sort of error {}".format(e)
-            ) from None
-    except requests.ConnectionError as err:
-        raise PlomSeriousException(
-            "Cannot connect to\n server:port = {}:{}\n Please check details before trying again.".format(
-                server, message_port
+    def uploadKnownPage(self, code, test, page, version, sname, fname, md5sum):
+        self.SRmutex.acquire()
+        try:
+            param = {
+                "user": self.user,
+                "token": self.token,
+                "fileName": sname,
+                "test": test,
+                "page": page,
+                "version": version,
+                "md5sum": md5sum,
+            }
+            dat = MultipartEncoder(
+                fields={
+                    "param": json.dumps(param),
+                    "originalImage": (sname, open(fname, "rb"), "image/png"),  # image
+                }
             )
-        ) from None
-    finally:
-        SRmutex.release()
-
-
-def closeUser():
-    SRmutex.acquire()
-    try:
-        response = session.delete(
-            "https://{}:{}/users/{}".format(server, message_port, _userName),
-            json={"user": _userName, "token": _token},
-            verify=False,
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return True
-
-
-def clearAuthorisation(user, pw):
-    SRmutex.acquire()
-    try:
-        response = session.delete(
-            "https://{}:{}/authorisation".format(server, message_port),
-            json={"user": user, "password": pw},
-            verify=False,
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.") from None
-        else:
-            raise PlomSeriousException(
-                "Some other sort of error {}".format(e)
-            ) from None
-    finally:
-        SRmutex.release()
-
-
-def getInfoGeneral():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/info/general".format(server, message_port), verify=False,
-        )
-        response.raise_for_status()
-        pv = response.json()
-    except requests.HTTPError as e:
-        if response.status_code == 404:
-            raise PlomSeriousException(
-                "Server could not find the spec - this should not happen!"
+            response = self.session.put(
+                "https://{}/admin/knownPages/{}".format(self.server, code),
+                json={"user": self.user, "token": self.token},
+                data=dat,
+                headers={"Content-Type": dat.content_type},
+                verify=False,
             )
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
 
-    fields = (
-        "testName",
-        "numberOfTests",
-        "numberOfPages",
-        "numberOfQuestions",
-        "numberOfVersions",
-        "publicCode",
-    )
-    return dict(zip(fields, pv))
+        return response.json()
 
-
-def uploadKnownPage(code, test, page, version, sname, fname, md5sum):
-    SRmutex.acquire()
-    try:
-        param = {
-            "user": _userName,
-            "token": _token,
-            "fileName": sname,
-            "test": test,
-            "page": page,
-            "version": version,
-            "md5sum": md5sum,
-        }
-        dat = MultipartEncoder(
-            fields={
-                "param": json.dumps(param),
-                "originalImage": (sname, open(fname, "rb"), "image/png"),  # image
+    def uploadUnknownPage(self, sname, fname, md5sum):
+        self.SRmutex.acquire()
+        try:
+            param = {
+                "user": self.user,
+                "token": self.token,
+                "fileName": sname,
+                "md5sum": md5sum,
             }
-        )
-        response = session.put(
-            "https://{}:{}/admin/knownPages/{}".format(server, message_port, code),
-            json={"user": _userName, "token": _token,},
-            data=dat,
-            headers={"Content-Type": dat.content_type},
-            verify=False,
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
+            dat = MultipartEncoder(
+                fields={
+                    "param": json.dumps(param),
+                    "originalImage": (sname, open(fname, "rb"), "image/png"),  # image
+                }
+            )
+            response = self.session.put(
+                "https://{}/admin/unknownPages".format(self.server),
+                data=dat,
+                headers={"Content-Type": dat.content_type},
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
 
-    return response.json()
+        return response.json()
 
-
-def uploadUnknownPage(sname, fname, md5sum):
-    SRmutex.acquire()
-    try:
-        param = {
-            "user": _userName,
-            "token": _token,
-            "fileName": sname,
-            "md5sum": md5sum,
-        }
-        dat = MultipartEncoder(
-            fields={
-                "param": json.dumps(param),
-                "originalImage": (sname, open(fname, "rb"), "image/png"),  # image
+    def uploadCollidingPage(self, code, test, page, version, sname, fname, md5sum):
+        self.SRmutex.acquire()
+        try:
+            param = {
+                "user": self.user,
+                "token": self.token,
+                "fileName": sname,
+                "test": test,
+                "page": page,
+                "version": version,
+                "md5sum": md5sum,
             }
-        )
-        response = session.put(
-            "https://{}:{}/admin/unknownPages".format(server, message_port),
-            data=dat,
-            headers={"Content-Type": dat.content_type},
-            verify=False,
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
+            dat = MultipartEncoder(
+                fields={
+                    "param": json.dumps(param),
+                    "originalImage": (sname, open(fname, "rb"), "image/png"),  # image
+                }
+            )
+            response = self.session.put(
+                "https://{}/admin/collidingPages/{}".format(self.server, code),
+                data=dat,
+                headers={"Content-Type": dat.content_type},
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
 
-    return response.json()
+        return response.json()
 
+    def getScannedTests(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/REP/scanned".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
 
-def uploadCollidingPage(code, test, page, version, sname, fname, md5sum):
-    SRmutex.acquire()
-    try:
-        param = {
-            "user": _userName,
-            "token": _token,
-            "fileName": sname,
-            "test": test,
-            "page": page,
-            "version": version,
-            "md5sum": md5sum,
-        }
-        dat = MultipartEncoder(
-            fields={
-                "param": json.dumps(param),
-                "originalImage": (sname, open(fname, "rb"), "image/png"),  # image
-            }
-        )
-        response = session.put(
-            "https://{}:{}/admin/collidingPages/{}".format(server, message_port, code),
-            data=dat,
-            headers={"Content-Type": dat.content_type},
-            verify=False,
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
+        return response.json()
 
-    return response.json()
+    def getUnusedTests(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/REP/unused".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException("Some other sort of error {}".format(e))
+        finally:
+            self.SRmutex.release()
 
+        return response.json()
 
-def getScannedTests():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/REP/scanned".format(server, message_port),
-            verify=False,
-            json={"user": _userName, "token": _token},
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
+    def getIncompleteTests(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/REP/incomplete".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
 
-    return response.json()
-
-
-def getUnusedTests():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/REP/unused".format(server, message_port),
-            verify=False,
-            json={"user": _userName, "token": _token},
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return response.json()
-
-
-def getIncompleteTests():
-    SRmutex.acquire()
-    try:
-        response = session.get(
-            "https://{}:{}/REP/incomplete".format(server, message_port),
-            verify=False,
-            json={"user": _userName, "token": _token},
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomSeriousException("You are not authenticated.")
-        else:
-            raise PlomSeriousException("Some other sort of error {}".format(e))
-    finally:
-        SRmutex.release()
-
-    return response.json()
-
-
-def startMessenger(altServer=None, port=None):
-    """Start the messenger session"""
-    print("Starting a requests-session")
-    global authSession
-    global session
-    global server
-    global message_port
-    if altServer is not None:
-        server = altServer
-    if port:
-        message_port = port
-
-    authSession = requests.Session()
-    session = requests.Session()
-    # set max_retries to large number because UBC-wifi is pretty crappy.
-    # TODO - set smaller number and have some sort of "hey you've retried
-    # nn times already, are you sure you want to keep retrying" message.
-    authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
-    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=50))
-
-
-def stopMessenger():
-    """Stop the messenger"""
-    print("Stopped messenger session")
-    session.close()
-    authSession.close()
+        return response.json()

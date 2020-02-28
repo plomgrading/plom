@@ -23,7 +23,7 @@ from plom.tpv_utils import (
     getCode,
     getPosition,
 )
-import plom.scanMessenger as scanMessenger
+from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 from plom.scan import QRextract
 
@@ -289,9 +289,10 @@ def processPNGs(server=None, password=None):
 
     if server and ":" in server:
         s, p = server.split(":")
-        scanMessenger.startMessenger(s, port=p)
+        scanMessenger = ScanMessenger(s, port=p)
     else:
-        scanMessenger.startMessenger(server)
+        scanMessenger = ScanMessenger(server)
+    scanMessenger.start()
 
     # get the password if not specified
     if password is None:
@@ -318,7 +319,7 @@ def processPNGs(server=None, password=None):
 
     spec = scanMessenger.getInfoGeneral()
     scanMessenger.closeUser()
-    scanMessenger.stopMessenger()
+    scanMessenger.stop()
 
     decodeQRs()
     checkQRsValid(spec, examsScannedNow)

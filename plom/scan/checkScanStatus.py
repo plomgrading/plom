@@ -10,16 +10,17 @@ __license__ = "AGPL-3.0-or-later"
 import getpass
 
 from plom.misc_utils import format_int_list_with_runs
-import plom.scanMessenger as scanMessenger
+from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 
 
 def checkStatus(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
-        scanMessenger.startMessenger(s, port=p)
+        scanMessenger = ScanMessenger(s, port=p)
     else:
-        scanMessenger.startMessenger(server)
+        scanMessenger = ScanMessenger(server)
+    scanMessenger.start()
 
     # get the password if not specified
     if password is None:
@@ -52,7 +53,7 @@ def checkStatus(server=None, password=None):
     UT = scanMessenger.getUnusedTests()
     IT = scanMessenger.getIncompleteTests()
     scanMessenger.closeUser()
-    scanMessenger.stopMessenger()
+    scanMessenger.stop()
 
     print("Test papers unused: [{}]".format(format_int_list_with_runs(UT)))
 

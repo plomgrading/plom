@@ -15,7 +15,7 @@ import json
 import os
 import shutil
 
-import plom.scanMessenger as scanMessenger
+from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 
 # ----------------------
@@ -117,9 +117,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.server and ":" in args.server:
         s, p = args.server.split(":")
-        scanMessenger.startMessenger(s, port=p)
+        scanMessenger = ScanMessenger(s, port=p)
     else:
-        scanMessenger.startMessenger(args.server)
+        scanMessenger = ScanMessenger(args.server)
+    scanMessenger.start()
 
     # get the password if not specified
     if args.password is None:
@@ -147,4 +148,4 @@ if __name__ == "__main__":
 
     sendCollidingFiles(fileList)
     scanMessenger.closeUser()
-    scanMessenger.stopMessenger()
+    scanMessenger.stop()

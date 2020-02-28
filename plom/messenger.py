@@ -177,6 +177,34 @@ class BaseMessenger(object):
 
         return True
 
+    def getInfoGeneral(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/info/general".format(self.server), verify=False,
+            )
+            response.raise_for_status()
+            pv = response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 404:
+                raise PlomSeriousException(
+                    "Server could not find the spec - this should not happen!"
+                )
+            else:
+                raise PlomSeriousException("Some other sort of error {}".format(e))
+        finally:
+            self.SRmutex.release()
+
+        fields = (
+            "testName",
+            "numberOfTests",
+            "numberOfPages",
+            "numberOfQuestions",
+            "numberOfVersions",
+            "publicCode",
+        )
+        return dict(zip(fields, pv))
+
 
 class Messenger(BaseMessenger):
     """Handle communication with a Plom Server."""
@@ -209,33 +237,6 @@ class Messenger(BaseMessenger):
 
         return shortName
 
-    def getInfoGeneral(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/info/general".format(self.server), verify=False,
-            )
-            response.raise_for_status()
-            pv = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server could not find the spec - this should not happen!"
-                )
-            else:
-                raise PlomSeriousException("Some other sort of error {}".format(e))
-        finally:
-            self.SRmutex.release()
-
-        fields = (
-            "testName",
-            "numberOfTests",
-            "numberOfPages",
-            "numberOfQuestions",
-            "numberOfVersions",
-            "publicCode",
-        )
-        return dict(zip(fields, pv))
 
     # ------------------------
     # ------------------------
@@ -1119,3 +1120,6 @@ class Messenger(BaseMessenger):
 
     # ------------------------
     # ------------------------
+
+
+from .scanMessenger import ScanMessenger

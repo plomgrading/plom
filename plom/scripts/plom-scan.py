@@ -6,6 +6,15 @@ import os
 import shutil
 
 
+# TODO: this bit of code from messenger could be useful here
+#    if os.path.isfile("server.toml"):
+#        with open("server.toml") as fh:
+#            si = toml.load(fh)
+#        server = si["server"]
+#        if server and ":" in server:
+#            server, message_port = server.split(":")
+
+
 def clearLogin(server, password):
     from plom.scan import clearScannerLogin
 
