@@ -118,10 +118,8 @@ class BaseMessenger(object):
             self.token = response.json()
             self.user = user
         except requests.HTTPError as e:
-            if response.status_code == 401:  # authentication error
-                raise PlomAuthenticationException(
-                    "You are not authenticated."
-                ) from None
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
             elif response.status_code == 400:  # API error
                 raise PlomAPIException(response.json()) from None
             elif response.status_code == 409:
@@ -150,7 +148,7 @@ class BaseMessenger(object):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -169,7 +167,7 @@ class BaseMessenger(object):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -257,7 +255,7 @@ class Messenger(BaseMessenger):
             progress = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -290,7 +288,7 @@ class Messenger(BaseMessenger):
             tgv = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -317,7 +315,7 @@ class Messenger(BaseMessenger):
             classlist = StringIO(response.text)
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomSeriousException(
                     "Server cannot find the class list"
@@ -344,7 +342,7 @@ class Messenger(BaseMessenger):
             predictions = StringIO(response.text)
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomSeriousException(
                     "Server cannot find the prediction list."
@@ -370,7 +368,7 @@ class Messenger(BaseMessenger):
             idList = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -396,7 +394,7 @@ class Messenger(BaseMessenger):
                 )  # pass back image as bytes
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomSeriousException(
                     "Cannot find image file for {}.".format(code)
@@ -434,7 +432,7 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -469,7 +467,7 @@ class Messenger(BaseMessenger):
                     "Student number {} already in use".format(e)
                 ) from None
             elif response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomSeriousException(
                     "Another user has the image for {}. This should not happen".format(
@@ -497,7 +495,7 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -525,7 +523,7 @@ class Messenger(BaseMessenger):
             maxMark = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -547,7 +545,7 @@ class Messenger(BaseMessenger):
             idList = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -571,7 +569,7 @@ class Messenger(BaseMessenger):
             progress = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -597,7 +595,7 @@ class Messenger(BaseMessenger):
             progress = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -621,7 +619,7 @@ class Messenger(BaseMessenger):
             image = BytesIO(response.content).getvalue()  # pass back image as bytes
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -642,7 +640,7 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -664,7 +662,7 @@ class Messenger(BaseMessenger):
             image = BytesIO(response.content).getvalue()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomSeriousException(
                     "Cannot find image file for {}.".format(code)
@@ -695,7 +693,7 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomSeriousException(
                     "Another user has the image for {}. This should not happen".format(
@@ -729,7 +727,7 @@ class Messenger(BaseMessenger):
             maxMark = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 416:
                 raise PlomSeriousException(response.text) from None
             else:
@@ -752,7 +750,7 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -774,7 +772,7 @@ class Messenger(BaseMessenger):
             mList = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -798,7 +796,7 @@ class Messenger(BaseMessenger):
             progress = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -830,7 +828,7 @@ class Messenger(BaseMessenger):
             tgv = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -854,7 +852,7 @@ class Messenger(BaseMessenger):
 
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -876,7 +874,7 @@ class Messenger(BaseMessenger):
 
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -910,7 +908,7 @@ class Messenger(BaseMessenger):
             image = BytesIO(response.content).getvalue()
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 406:
                 raise PlomLatexException(
                     "There is an error in your latex fragment"
@@ -961,7 +959,7 @@ class Messenger(BaseMessenger):
                 )
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomSeriousException(
                     "Cannot find image file for {}.".format(code)
@@ -999,7 +997,7 @@ class Messenger(BaseMessenger):
 
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomNoMoreException(
                     "Cannot find image file for {}.{}.".format(testNumber, pageGroup)
@@ -1046,7 +1044,7 @@ class Messenger(BaseMessenger):
             ret = response.json()  # this is [#done, #total]
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 400:
                 raise PlomSeriousException(
                     "Image file is corrupted. This should not happen".format(code)
@@ -1072,7 +1070,7 @@ class Messenger(BaseMessenger):
 
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 409:
                 raise PlomBenignException("Task taken by another user.") from None
             else:
@@ -1107,7 +1105,7 @@ class Messenger(BaseMessenger):
 
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomSeriousException("You are not authenticated.") from None
+                raise PlomAuthenticationException() from None
             elif response.status_code == 409:
                 raise PlomBenignException("Task taken by another user.") from None
             else:
