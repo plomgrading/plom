@@ -57,9 +57,17 @@ def uploadImages(server, password, unknowns=False, collisions=False):
     print("Upload images to server")
     sendPagesToServer.uploadPages(server, password)
     if unknowns:
+        from plom.scan import sendUnknownsToServer
+
         print("Also upload unknowns")
+        os.makedirs("sentPages/unknowns", exist_ok=True)
+        sendUnknownsToServer.uploadUnknowns(server, password)
     if collisions:
+        from plom.scan import sendCollisionsToServer
+
         print("Also collisions unknowns")
+        os.makedirs("sentPages/collisions", exist_ok=True)
+        sendCollisionsToServer.uploadCollisions(server, password)
 
 
 parser = argparse.ArgumentParser()
