@@ -34,7 +34,7 @@ directories += [
     "newServer/plomServer",
 ]
 
-directories += ["clients", "clients/uiFiles", "clients/icons"]
+directories += ["clients", "clients/uiFiles", "clients/icons", "clients/cursors"]
 
 files = [
     "resources/plom_exceptions.py",
@@ -128,7 +128,7 @@ files += [
     "clients/discardview.py",
     "clients/selectrectangle.py",
     "clients/unknownpageview.py",
-    "clients/plom_exceptions",
+    "clients/plom_exceptions.py",
 ]
 
 files += [
@@ -165,6 +165,18 @@ files += [
     "clients/icons/manager_none.svg",
     "clients/icons/manager_test.svg",
     "clients/icons/manager_unknown.svg",
+]
+
+files += [
+    "./clients/cursors/box.png",
+    "./clients/cursors/text-comment.png",
+    "./clients/cursors/pen.png",
+    "./clients/cursors/cross.png",
+    "./clients/cursors/delete.png",
+    "./clients/cursors/line.png",
+    "./clients/cursors/text-delta.png",
+    "./clients/cursors/text.png",
+    "./clients/cursors/tick.png",
 ]
 
 files += [
