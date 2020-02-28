@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QTableView,
     QToolButton,
+    QVBoxLayout,
 )
 
 
