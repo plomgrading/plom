@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../qtCreatorFiles/ui_chooser.ui'
+# Form implementation generated from reading ui file 'qtCreatorFiles/ui_chooser.ui'
 #
-# Created by: PyQt5 UI code generator 5.12.3
+# Created by: PyQt5 UI code generator 5.13.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -119,11 +119,11 @@ class Ui_Chooser(object):
         self.gridLayout_3.setColumnStretch(0, 1)
         self.gridLayout_3.setColumnStretch(1, 3)
         self.verticalLayout.addWidget(self.userGBox)
-        self.fontBox = QtWidgets.QGroupBox(Chooser)
-        self.fontBox.setObjectName("fontBox")
-        self.gridLayout_4 = QtWidgets.QGridLayout(self.fontBox)
+        self.settingsBox = QtWidgets.QGroupBox(Chooser)
+        self.settingsBox.setObjectName("settingsBox")
+        self.gridLayout_4 = QtWidgets.QGridLayout(self.settingsBox)
         self.gridLayout_4.setObjectName("gridLayout_4")
-        self.fontLabel = QtWidgets.QLabel(self.fontBox)
+        self.fontLabel = QtWidgets.QLabel(self.settingsBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -132,7 +132,7 @@ class Ui_Chooser(object):
         self.fontLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.fontLabel.setObjectName("fontLabel")
         self.gridLayout_4.addWidget(self.fontLabel, 0, 0, 1, 1)
-        self.fontSB = QtWidgets.QSpinBox(self.fontBox)
+        self.fontSB = QtWidgets.QSpinBox(self.settingsBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -145,7 +145,7 @@ class Ui_Chooser(object):
         self.gridLayout_4.addWidget(self.fontSB, 0, 1, 1, 1)
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.fontButton = QtWidgets.QPushButton(self.fontBox)
+        self.fontButton = QtWidgets.QPushButton(self.settingsBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -155,12 +155,15 @@ class Ui_Chooser(object):
         self.horizontalLayout_3.addWidget(self.fontButton)
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem1)
+        self.optionsButton = QtWidgets.QPushButton(self.settingsBox)
+        self.optionsButton.setObjectName("optionsButton")
+        self.horizontalLayout_3.addWidget(self.optionsButton)
         self.gridLayout_4.addLayout(self.horizontalLayout_3, 0, 2, 1, 2)
         self.gridLayout_4.setColumnStretch(0, 1)
         self.gridLayout_4.setColumnStretch(1, 1)
         self.gridLayout_4.setColumnStretch(2, 1)
         self.gridLayout_4.setColumnStretch(3, 1)
-        self.verticalLayout.addWidget(self.fontBox)
+        self.verticalLayout.addWidget(self.settingsBox)
         self.taskGBox = QtWidgets.QGroupBox(Chooser)
         self.taskGBox.setObjectName("taskGBox")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.taskGBox)
@@ -191,7 +194,8 @@ class Ui_Chooser(object):
         Chooser.setTabOrder(self.userLE, self.passwordLE)
         Chooser.setTabOrder(self.passwordLE, self.fontSB)
         Chooser.setTabOrder(self.fontSB, self.fontButton)
-        Chooser.setTabOrder(self.fontButton, self.markButton)
+        Chooser.setTabOrder(self.fontButton, self.optionsButton)
+        Chooser.setTabOrder(self.optionsButton, self.markButton)
         Chooser.setTabOrder(self.markButton, self.identifyButton)
         Chooser.setTabOrder(self.identifyButton, self.totalButton)
         Chooser.setTabOrder(self.totalButton, self.closeButton)
@@ -211,9 +215,10 @@ class Ui_Chooser(object):
         self.userGBox.setTitle(_translate("Chooser", "User Information"))
         self.label.setText(_translate("Chooser", "Username:"))
         self.label_2.setText(_translate("Chooser", "Password:"))
-        self.fontBox.setTitle(_translate("Chooser", "Font size"))
+        self.settingsBox.setTitle(_translate("Chooser", "Settings"))
         self.fontLabel.setText(_translate("Chooser", "Font size:"))
         self.fontButton.setText(_translate("Chooser", "Set font"))
+        self.optionsButton.setText(_translate("Chooser", "More &options..."))
         self.taskGBox.setTitle(_translate("Chooser", "Choose task"))
         self.markButton.setText(_translate("Chooser", "&Mark"))
         self.identifyButton.setText(_translate("Chooser", "&Identify"))
