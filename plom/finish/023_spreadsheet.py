@@ -11,7 +11,7 @@ import argparse
 import csv
 import getpass
 
-import plom.finishMessenger as finishMessenger
+from plom.messenger import FinishMessenger
 from plom.plom_exceptions import *
 
 numberOfTests = 0
@@ -92,9 +92,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.server and ":" in args.server:
         s, p = args.server.split(":")
-        finishMessenger.startMessenger(s, port=p)
+        msgr = FinishMessenger(s, port=p)
     else:
-        finishMessenger.startMessenger(args.server)
+        msgr = FinishMessenger(args.server)
+    msgr.start()
 
     # get the password if not specified
     if args.password is None:
@@ -107,7 +108,7 @@ if __name__ == "__main__":
 
     # get started
     try:
-        finishMessenger.requestAndSaveToken("manager", pwd)
+        msgr.requestAndSaveToken("manager", pwd)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -118,12 +119,12 @@ if __name__ == "__main__":
         )
         exit(0)
 
-    spec = finishMessenger.getInfoGeneral()
+    spec = msgr.getInfoGeneral()
     numberOfTests = spec["numberOfTests"]
     numberOfQuestions = spec["numberOfQuestions"]
-    spreadSheetDict = finishMessenger.RgetSpreadsheet()
+    spreadSheetDict = msgr.RgetSpreadsheet()
 
-    finishMessenger.closeUser()
-    finishMessenger.stopMessenger()
+    msgr.closeUser()
+    msgr.stop()
 
     writeSpreadsheet(spreadSheetDict)

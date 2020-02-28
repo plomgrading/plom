@@ -177,6 +177,32 @@ class BaseMessenger(object):
 
         return True
 
+    # ----------------------
+    # ----------------------
+    # Test information
+
+    def getInfoShortName(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/info/shortName".format(self.server), verify=False
+            )
+            response.raise_for_status()
+            shortName = response.text
+        except requests.HTTPError as e:
+            if response.status_code == 404:
+                raise PlomSeriousException(
+                    "Server could not find the spec - this should not happen!"
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return shortName
+
     def getInfoGeneral(self):
         self.SRmutex.acquire()
         try:
@@ -211,32 +237,6 @@ class Messenger(BaseMessenger):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    # ----------------------
-    # ----------------------
-    # Test information
-    def getInfoShortName(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/info/shortName".format(self.server), verify=False
-            )
-            response.raise_for_status()
-            shortName = response.text
-        except requests.HTTPError as e:
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server could not find the spec - this should not happen!"
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return shortName
-
 
     # ------------------------
     # ------------------------
@@ -1123,3 +1123,4 @@ class Messenger(BaseMessenger):
 
 
 from .scanMessenger import ScanMessenger
+from .finishMessenger import FinishMessenger
