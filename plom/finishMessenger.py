@@ -150,7 +150,7 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/annotatedFiles/{}".format(
-                    server, message_port, testNumber
+                    self.server, testNumber
                 ),
                 verify=False,
                 json={"user": self.user, "token": self.token},
@@ -173,7 +173,7 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/originalFiles/{}".format(
-                    server, message_port, testNumber
+                    self.server, testNumber
                 ),
                 verify=False,
                 json={"user": self.user, "token": self.token},
