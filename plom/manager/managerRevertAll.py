@@ -18,7 +18,7 @@ import toml
 
 from plom import __version__, Plom_API_Version
 from plom.plom_exceptions import *
-import plom.messenger as messenger
+from plom.messenger import ManagerMessenger
 
 
 # -------------------------------------------
@@ -58,12 +58,14 @@ if __name__ == "__main__":
         action="store",
         help="Which server to contact.",
     )
+    global messenger
     args = parser.parse_args()
     if args.server and ":" in args.server:
         s, p = args.server.split(":")
-        messenger.startMessenger(s, port=p)
+        messenger = ManagerMessenger(s, port=p)
     else:
-        messenger.startMessenger(args.server)
+        messenger = ManagerMessenger(args.server)
+    messenger.start()
 
     user = "manager"
 
@@ -110,7 +112,7 @@ if __name__ == "__main__":
 
     try:
         messenger.closeUser()
-        messenger.stopMessenger()
+        messenger.stop()
     except Exception as e:
         print("Closing down error = ", e)
         exit(1)
