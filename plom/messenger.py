@@ -1124,3 +1124,4 @@ class Messenger(BaseMessenger):
 
 from .scanMessenger import ScanMessenger
 from .finishMessenger import FinishMessenger
+from .managerMessenger import ManagerMessenger
