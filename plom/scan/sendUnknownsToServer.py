@@ -20,6 +20,7 @@ from plom.plom_exceptions import *
 def doFiling(rmsg, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
         # print(rmsg[2])
+        print("{} uploaded as unknown page.".format(fname))
         shutil.move(fname, os.path.join("sentPages", "unknowns", shortName))
         shutil.move(
             fname + ".qr", os.path.join("sentPages", "unknowns", shortName + "qr")
