@@ -1099,7 +1099,7 @@ class ManagerMessenger(BaseMessenger):
             if user == "manager":
                 response = self.session.delete(
                     "https://{}/authorisation".format(self.server),
-                    json={"user": user, "password": password, "userToClear": user},
+                    json={"user": user, "password": password},
                     verify=False,
                 )
             else:
