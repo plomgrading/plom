@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['plom/scripts/plom-client'],
-             pathex=['/home/andrew/Projects/MLP'],
+             pathex=['./'],
              binaries=[],
              datas=[],
              hiddenimports=[],
