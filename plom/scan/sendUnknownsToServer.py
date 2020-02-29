@@ -7,11 +7,9 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import argparse
 import getpass
 from glob import glob
 import hashlib
-import json
 import os
 import shutil
 
@@ -19,20 +17,10 @@ from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 
 
-def buildDirectories():
-    """Build the directories that this script needs"""
-    # the list of directories. Might need updating.
-    lst = ["sentPages", "sentPages/unknowns"]
-    for dir in lst:
-        try:
-            os.mkdir(dir)
-        except FileExistsError:
-            pass
-
-
 def doFiling(rmsg, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
         # print(rmsg[2])
+        print("{} uploaded as unknown page.".format(fname))
         shutil.move(fname, os.path.join("sentPages", "unknowns", shortName))
         shutil.move(
             fname + ".qr", os.path.join("sentPages", "unknowns", shortName + "qr")
@@ -57,35 +45,22 @@ def sendUnknownFiles(scanMessenger, fileList):
         doFiling(rmsg, shortName, fname)
 
 
-if __name__ == "__main__":
-    # get commandline args if needed
-    parser = argparse.ArgumentParser(
-        description="Run the QR-code reading script. No arguments = run as normal."
-    )
-    parser.add_argument("-w", "--password", type=str)
-    parser.add_argument(
-        "-s",
-        "--server",
-        metavar="SERVER[:PORT]",
-        action="store",
-        help="Which server to contact.",
-    )
-    args = parser.parse_args()
-    if args.server and ":" in args.server:
-        s, p = args.server.split(":")
+def uploadUnknowns(server=None, password=None):
+    if server and ":" in server:
+        s, p = server.split(":")
         scanMessenger = ScanMessenger(s, port=p)
     else:
         scanMessenger = ScanMessenger(args.server)
     scanMessenger.start()
 
     # get the password if not specified
-    if args.password is None:
+    if password is None:
         try:
             pwd = getpass.getpass("Please enter the 'scanner' password:")
         except Exception as error:
             print("ERROR", error)
     else:
-        pwd = args.password
+        pwd = password
 
     # get started
     try:
@@ -100,11 +75,8 @@ if __name__ == "__main__":
         )
         exit(0)
 
-    buildDirectories()
-
     # Look for pages in unknowns
     fileList = glob("unknownPages/*.png")
-    print(fileList)
     sendUnknownFiles(scanMessenger, fileList)
     scanMessenger.closeUser()
     scanMessenger.stop()
