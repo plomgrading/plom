@@ -89,7 +89,7 @@ def uploadCollisions(server=None, password=None):
         s, p = server.split(":")
         scanMessenger = ScanMessenger(s, port=p)
     else:
-        scanMessenger = ScanMessenger(args.server)
+        scanMessenger = ScanMessenger(server)
     scanMessenger.start()
 
     # get the password if not specified
