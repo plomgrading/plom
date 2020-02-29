@@ -1096,7 +1096,7 @@ class ManagerMessenger(BaseMessenger):
     def clearAuthorisation(self, user, password=None):
         self.SRmutex.acquire()
         try:
-            if user == "manager":
+            if password:
                 response = self.session.delete(
                     "https://{}/authorisation".format(self.server),
                     json={"user": user, "password": password},
