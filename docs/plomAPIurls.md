@@ -11,7 +11,8 @@
 ## Authentication + misc Admin tasks
 * put "/users/{user}" - verify user/password + return auth-token
 * delete "/users/{user}" - close user-session + revoke auth-token
-* delete "/authorisation" - removes authorisation token from a user
+* delete "/authorisation" - removes authorisation token from current user
+* delete "/authorisation/{user}" - removes authorisation token from a particular user
 * put "/admin/reloadUsers" - force server to reload user list
 
 ## Identifier

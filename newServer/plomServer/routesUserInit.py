@@ -19,6 +19,18 @@ class UserInitHandler:
             status=200,
         )
 
+    # @routes.delete("/authorisation")
+    async def clearAuthorisation(self, request):
+        logRequest("clearAuthorisation", request)
+        data = await request.json()
+        if not validFields(data, ["user", "password"]):
+            return web.Response(status=400)  # malformed request.
+        if not self.server.authority.checkPassword(data["user"], data["password"]):
+            return web.Response(status=401)
+        print("User {} force-logout self".format(data["user"]))
+        self.server.closeUser(data["user"])
+        return web.Response(status=200)
+
     # @routes.delete("/users/{user}")
     @authByToken_validFields(["user"])
     def closeUser(self, data, request):
@@ -28,31 +40,18 @@ class UserInitHandler:
         self.server.closeUser(data["user"])
         return web.Response(status=200)
 
-    # @routes.delete("/authorisation")
-    async def clearAuthorisation(self, request):
-        logRequest("clearAuthorisation", request)
-        data = await request.json()
-        if not (
-            validFields(data, ["user", "password"])
-            or validFields(data, ["user", "token", "userToClear"])
-        ):
-            return web.Response(status=400)  # malformed request.
-
+    # @routes.delete("/authorisation/{user}")
+    @authByToken_validFields(["user"])
+    def clearAuthorisationUser(self, data, request):
         # Only manager can clear other users, via token auth
-        # TODO: ok to clear self via token auth?
-        if data.get("userToClear"):
-            if not data["user"] == "manager":
-                return web.Response(status=400)  # malformed request.
-            if self.server.validate(data["user"], data["token"]):
-                self.server.closeUser(data["userToClear"])
-                print("Manager force-logout user {}".format(data["userToClear"]))
-                return web.Response(status=200)
-        else:  # everyone else has to check their pwd
-            if self.server.authority.checkPassword(data["user"], data["password"]):
-                print("User {} force-logout self".format(data["user"]))
-                self.server.closeUser(data["user"])
-                return web.Response(status=200)
-        return web.Response(status=401)
+        # TODO: ok for manager to clear manager via token auth?
+        # TODO: should other users be able to use this on themselves?
+        if not data["user"] == "manager":
+            return web.Response(status=400)  # malformed request.
+        theuser = request.match_info["user"]
+        self.server.closeUser(theuser)
+        print("Manager force-logout user {}".format(theuser))
+        return web.Response(status=200)
 
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
@@ -118,3 +117,4 @@ class UserInitHandler:
         router.add_get("/info/shortName", self.InfoShortName)
         router.add_get("/info/general", self.InfoGeneral)
         router.add_delete("/authorisation", self.clearAuthorisation)
+        router.add_delete("/authorisation/{user}", self.clearAuthorisationUser)
