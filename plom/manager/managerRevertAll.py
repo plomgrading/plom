@@ -18,7 +18,7 @@ import toml
 
 from plom import __version__, Plom_API_Version
 from plom.plom_exceptions import *
-from plom.messenger import ManagerMessenger
+from plom.messenger import Messenger
 
 
 # -------------------------------------------
@@ -62,9 +62,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.server and ":" in args.server:
         s, p = args.server.split(":")
-        messenger = ManagerMessenger(s, port=p)
+        messenger = Messenger(s, port=p)
     else:
-        messenger = ManagerMessenger(args.server)
+        messenger = Messenger(args.server)
     messenger.start()
 
     user = "manager"
