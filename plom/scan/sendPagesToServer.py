@@ -72,7 +72,7 @@ def doFiling(rmsg, ts, ps, vs, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendKnownFiles(fileList):
+def sendKnownFiles(msgr, fileList):
     for fname in fileList:
         shortName = os.path.split(fname)[1]
         ts, ps, vs = extractTPV(shortName)
@@ -117,6 +117,6 @@ def uploadPages(server=None, password=None):
 
     # Look for pages in decodedPages
     fileList = glob("decodedPages/t*.png")
-    sendKnownFiles(fileList)
+    sendKnownFiles(msgr, fileList)
     msgr.closeUser()
     msgr.stop()

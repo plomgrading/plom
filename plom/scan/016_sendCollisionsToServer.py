@@ -54,7 +54,7 @@ def doFiling(rmsg, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendCollidingFiles(fileList):
+def sendCollidingFiles(scanMessenger, fileList):
     for fname in fileList:
         cname = fname + ".collide"
         with open(cname, "r") as fh:
@@ -146,6 +146,6 @@ if __name__ == "__main__":
 
     buildDirectories()
 
-    sendCollidingFiles(fileList)
+    sendCollidingFiles(scanMessenger, fileList)
     scanMessenger.closeUser()
     scanMessenger.stop()

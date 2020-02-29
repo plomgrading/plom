@@ -25,7 +25,7 @@ numberOfQuestions = 0
 # ----------------------
 
 
-def reassembleTestCMD(shortName, outDir, t, sid):
+def reassembleTestCMD(msgr, shortName, outDir, t, sid):
     fnames = msgr.RgetOriginalFiles(t)
     if len(fnames) == 0:
         # TODO: what is supposed to happen here?
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     pagelists = []
     for t in identifiedTests:
         if identifiedTests[t][0] is not None:
-            dat = reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
+            dat = reassembleTestCMD(msgr, shortName, outDir, t, identifiedTests[t][0])
             pagelists.append(dat)
         else:
             print(">>WARNING<< Test {} has no ID".format(t))

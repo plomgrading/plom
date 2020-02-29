@@ -27,7 +27,7 @@ numberOfQuestions = 0
 # ----------------------
 
 
-def buildCoverPage(shortName, outDir, t, maxMarks):
+def buildCoverPage(msgr, shortName, outDir, t, maxMarks):
     # should be [ [sid, sname], [q,v,m], [q,v,m] etc]
     cpi = msgr.RgetCoverPageInfo(t)
     sid = cpi[0][0]
@@ -41,7 +41,7 @@ def buildCoverPage(shortName, outDir, t, maxMarks):
     #makeCover(int(t), sname, sid, arg)
 
 
-def reassembleTestCMD(shortName, outDir, t, sid):
+def reassembleTestCMD(msgr, shortName, outDir, t, sid):
     fnames = msgr.RgetAnnotatedFiles(t)
     if len(fnames) == 0:
         # TODO: what is supposed to happen here?
@@ -121,8 +121,8 @@ if __name__ == "__main__":
                 and completedTests[t][2] == numberOfQuestions
             ):
                 if identifiedTests[t][0] is not None:
-                    dat1 = buildCoverPage(shortName, outDir, t, maxMarks)
-                    dat2 = reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
+                    dat1 = buildCoverPage(msgr, shortName, outDir, t, maxMarks)
+                    dat2 = reassembleTestCMD(msgr, shortName, outDir, t, identifiedTests[t][0])
                     coverpagelist.append(dat1)
                     pagelists.append(dat2)
                 else:

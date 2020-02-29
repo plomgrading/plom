@@ -49,7 +49,7 @@ def doFiling(rmsg, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendUnknownFiles(fileList):
+def sendUnknownFiles(scanMessenger, fileList):
     for fname in fileList:
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         shortName = os.path.split(fname)[1]
@@ -105,6 +105,6 @@ if __name__ == "__main__":
     # Look for pages in unknowns
     fileList = glob("unknownPages/*.png")
     print(fileList)
-    sendUnknownFiles(fileList)
+    sendUnknownFiles(scanMessenger, fileList)
     scanMessenger.closeUser()
     scanMessenger.stop()
