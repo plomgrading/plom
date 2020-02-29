@@ -8,6 +8,7 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import functools
+from aiohttp import web
 
 
 def validFields(d, fields):
