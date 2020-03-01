@@ -334,10 +334,6 @@ class IDClient(QWidget):
         # Make sure both lineedits have little "Clear this" buttons.
         self.ui.idEdit.setClearButtonEnabled(True)
         self.ui.nameEdit.setClearButtonEnabled(True)
-        # TODO: this needs to be less-UBC specific, just check "manually" in the enter-handler code?
-        # the id-line edit needs a validator to make sure that only 8 digit numbers entered
-        self.idValidator = QIntValidator(10000000, 10 ** 8 - 1)
-        self.ui.idEdit.setValidator(self.idValidator)
 
     def shutDownError(self):
         self.my_shutdown_signal.emit(1)
@@ -629,6 +625,13 @@ class IDClient(QWidget):
         else:
             # Number is not in class list - ask user if they really want to
             # enter that number.
+            if not isValidStudentNumber(self.ui.idEdit.text()):
+                ErrorMessage(
+                    "<p>&ldquo;{}&rdquo; is an invalid form for a student ID.</p>".format(
+                        self.ui.idEdit.text()
+                    )
+                ).exec_()
+                return
             msg = SimpleMessage(
                 "Student ID {} not in list. Do you want to enter it anyway?".format(
                     self.ui.idEdit.text()
