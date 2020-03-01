@@ -718,13 +718,9 @@ class IDClient(QWidget):
             num, ok = QInputDialog.getText(
                 self, "Enter number", "Enter student number:"
             )
-            # If okay, then set number accordingly, else give error
-            if ok:
-                self.ui.idEdit.setText(str(num))
-            else:
-                msg = ErrorMessage("Cannot enter without a student number.")
-                msg.exec_()
+            if not ok:
                 return
+            self.ui.idEdit.setText(str(num))
         # Run identify student command (which talks to server)
         if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text()):
             if alreadyIDd:
