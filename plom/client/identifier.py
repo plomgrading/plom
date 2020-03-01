@@ -728,6 +728,7 @@ class IDClient(QWidget):
             )
             if not ok:
                 return
+            # TODO: or just check if its non-blank `if not num:`
             if not isValidStudentNumber(num):
                 msg = ErrorMessage(
                     "<p>&ldquo;{}&rdquo; is not a valid student number.</p>"
