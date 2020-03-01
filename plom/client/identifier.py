@@ -334,6 +334,7 @@ class IDClient(QWidget):
         # Make sure both lineedits have little "Clear this" buttons.
         self.ui.idEdit.setClearButtonEnabled(True)
         self.ui.nameEdit.setClearButtonEnabled(True)
+        # TODO: this needs to be less-UBC specific, just check "manually" in the enter-handler code?
         # the id-line edit needs a validator to make sure that only 8 digit numbers entered
         self.idValidator = QIntValidator(10000000, 10 ** 8 - 1)
         self.ui.idEdit.setValidator(self.idValidator)
