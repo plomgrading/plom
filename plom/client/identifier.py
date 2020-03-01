@@ -641,11 +641,18 @@ class IDClient(QWidget):
             self.msgPosition = msg.pos()
             # Otherwise get a name from the user (and the okay)
             name, ok = QInputDialog.getText(self, "Enter name", "Enter student name:")
-            # If okay, then set name accordingly, else set name to "unknown"
-            if ok:
-                self.ui.nameEdit.setText(str(name))
-            else:
-                self.ui.nameEdit.setText("Unknown")
+            if not ok:
+                return
+            if not name:
+                msg = ErrorMessage(
+                    "<p>Student name should not be blank.</p>"
+                    "<p>(If you cannot read it, use &ldquo;{}&rdquo;.)".format(
+                        name, "Unknown",
+                    )
+                )
+                msg.exec_()
+                return
+            self.ui.nameEdit.setText(str(name))
         # Run identify student command (which talks to server)
         if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text()):
             if alreadyIDd:
