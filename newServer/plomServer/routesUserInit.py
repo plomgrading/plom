@@ -38,8 +38,11 @@ class UserInitHandler:
         ):
             return web.Response(status=400)  # malformed request.
 
-        # manager to auth with their token - unless trying to clear self.
-        if data["user"] == "manager" and data["userToClear"] != "manager":
+        # Only manager can clear other users, via token auth
+        # TODO: ok to clear self via token auth?
+        if data.get("userToClear"):
+            if not data["user"] == "manager":
+                return web.Response(status=400)  # malformed request.
             if self.server.validate(data["user"], data["token"]):
                 self.server.closeUser(data["userToClear"])
                 print("Manager force-logout user {}".format(data["userToClear"]))

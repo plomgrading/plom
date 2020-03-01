@@ -48,7 +48,7 @@ from .discardview import DiscardViewWindow
 from .reviewview import ReviewViewWindow
 from .selectrectangle import SelectRectangleWindow, IDViewWindow
 from plom.plom_exceptions import *
-import plom.managerMessenger as managerMessenger
+from plom.messenger import ManagerMessenger
 
 from plom import __version__, Plom_API_Version, Default_Port
 
@@ -328,8 +328,9 @@ class Manager(QWidget):
         mport = self.ui.mportSB.value()
 
         # Have Messenger login into to server
-        managerMessenger.setServerDetails(server, mport)
-        managerMessenger.startMessenger()
+        global managerMessenger
+        managerMessenger = ManagerMessenger(server, mport)
+        managerMessenger.start()
 
         try:
             managerMessenger.requestAndSaveToken(user, pwd)
