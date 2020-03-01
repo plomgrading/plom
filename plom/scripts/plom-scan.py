@@ -135,7 +135,7 @@ else:
         "0. Decide on a working directory for your scans, copy your PDFs into that directory and then cd into it."
     )
     print(
-        "1. Run 'plom-scan process' - this processes your PDFs into PNGs of each page."
+        "1. Run 'plom-scan process <filename>' - this processes your PDF <filename> into PNGs of each page."
     )
     print(
         """2. NOT IMPLEMENTED YET, BUT COMING SOON - Optionally create a \"server.toml\" text file containing a single line with the server name and port such as:
