@@ -313,7 +313,7 @@ def processPNGs(server=None, password=None):
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another scanner-script running,\n"
             "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run the 018_clearScannerLogin.py script."
+            'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
         exit(0)
 
