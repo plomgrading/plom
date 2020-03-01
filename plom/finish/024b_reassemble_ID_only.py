@@ -16,7 +16,7 @@ from multiprocessing import Pool
 from tqdm import tqdm
 
 from .testReassembler import reassemble
-import plom.finishMessenger as finishMessenger
+from plom.messenger import FinishMessenger
 from plom.plom_exceptions import *
 
 numberOfTests = 0
@@ -25,8 +25,8 @@ numberOfQuestions = 0
 # ----------------------
 
 
-def reassembleTestCMD(shortName, outDir, t, sid):
-    fnames = finishMessenger.RgetOriginalFiles(t)
+def reassembleTestCMD(msgr, shortName, outDir, t, sid):
+    fnames = msgr.RgetOriginalFiles(t)
     if len(fnames) == 0:
         # TODO: what is supposed to happen here?
         return
@@ -52,9 +52,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.server and ":" in args.server:
         s, p = args.server.split(":")
-        finishMessenger.startMessenger(s, port=p)
+        msgr = FinishMessenger(s, port=p)
     else:
-        finishMessenger.startMessenger(args.server)
+        msgr = FinishMessenger(args.server)
+    msgr.start()
 
     # get the password if not specified
     if args.password is None:
@@ -67,7 +68,7 @@ if __name__ == "__main__":
 
     # get started
     try:
-        finishMessenger.requestAndSaveToken("manager", pwd)
+        msgr.requestAndSaveToken("manager", pwd)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -78,25 +79,25 @@ if __name__ == "__main__":
         )
         exit(0)
 
-    shortName = finishMessenger.getInfoShortName()
-    # spec = finishMessenger.getInfoGeneral()
+    shortName = msgr.getInfoShortName()
+    # spec = msgr.getInfoGeneral()
     # numberOfTests = spec["numberOfTests"]
     # numberOfQuestions = spec["numberOfQuestions"]
 
     outDir = "reassembled_ID_but_not_marked"
     os.makedirs(outDir, exist_ok=True)
 
-    identifiedTests = finishMessenger.RgetIdentified()
+    identifiedTests = msgr.RgetIdentified()
     pagelists = []
     for t in identifiedTests:
         if identifiedTests[t][0] is not None:
-            dat = reassembleTestCMD(shortName, outDir, t, identifiedTests[t][0])
+            dat = reassembleTestCMD(msgr, shortName, outDir, t, identifiedTests[t][0])
             pagelists.append(dat)
         else:
             print(">>WARNING<< Test {} has no ID".format(t))
 
-    finishMessenger.closeUser()
-    finishMessenger.stopMessenger()
+    msgr.closeUser()
+    msgr.stop()
 
     def _f(y):
         reassemble(*y)

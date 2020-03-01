@@ -47,7 +47,6 @@ from PyQt5.QtWidgets import (
 )
 
 from .examviewwindow import ExamViewWindow
-import plom.messenger as messenger
 from .annotator import Annotator
 from plom.plom_exceptions import *
 from .useful_classes import ErrorMessage, SimpleMessage

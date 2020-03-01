@@ -16,7 +16,7 @@ import shutil
 import sys
 import toml
 
-import plom.scanMessenger as scanMessenger
+from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 
 
@@ -72,14 +72,14 @@ def doFiling(rmsg, ts, ps, vs, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendKnownFiles(fileList):
+def sendKnownFiles(msgr, fileList):
     for fname in fileList:
         shortName = os.path.split(fname)[1]
         ts, ps, vs = extractTPV(shortName)
         print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
-        rmsg = scanMessenger.uploadKnownPage(
+        rmsg = msgr.uploadKnownPage(
             code, int(ts), int(ps), int(vs), shortName, fname, md5
         )
         doFiling(rmsg, ts, ps, vs, shortName, fname)
@@ -88,9 +88,10 @@ def sendKnownFiles(fileList):
 def uploadPages(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
-        scanMessenger.startMessenger(s, port=p)
+        msgr = ScanMessenger(s, port=p)
     else:
-        scanMessenger.startMessenger(server)
+        msgr = ScanMessenger(server)
+    msgr.start()
 
     # get the password if not specified
     if password is None:
@@ -103,7 +104,7 @@ def uploadPages(server=None, password=None):
 
     # get started
     try:
-        scanMessenger.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", pwd)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -116,6 +117,6 @@ def uploadPages(server=None, password=None):
 
     # Look for pages in decodedPages
     fileList = glob("decodedPages/t*.png")
-    sendKnownFiles(fileList)
-    scanMessenger.closeUser()
-    scanMessenger.stopMessenger()
+    sendKnownFiles(msgr, fileList)
+    msgr.closeUser()
+    msgr.stop()

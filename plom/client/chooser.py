@@ -26,8 +26,9 @@ from . import totaler
 from plom import __version__
 from plom import Plom_API_Version
 from plom import Default_Port
-import plom.messenger as messenger
-
+from plom.messenger import Messenger
+# TODO: for now, a global (to this module), later maybe in the QApp?
+messenger = None
 
 # set up variables to store paths for marker and id clients
 global tempDirectory, directoryPath
@@ -166,10 +167,10 @@ class Chooser(QDialog):
         # save those settings
         self.saveDetails()
 
-        # Have Messenger login into to server
-        messenger.setServerDetails(server, mport)
         try:
-            messenger.startMessenger()
+            # TODO: re-use existing messenger?
+            messenger = Messenger(server, mport)
+            messenger.start()
         except PlomBenignException as e:
             ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
             return
@@ -264,7 +265,8 @@ class Chooser(QDialog):
 
     def closeWindow(self):
         self.saveDetails()
-        messenger.stopMessenger()
+        if messenger:
+            messenger.stop()
         self.close()
 
     def setFont(self):
@@ -310,7 +312,11 @@ class Chooser(QDialog):
         self.ui.pgDrop.clear()
         self.ui.pgDrop.setVisible(False)
         self.ui.infoLabel.setText("")
-        messenger.stopMessenger()
+        # TODO: just `del messenger`?
+        global messenger
+        if messenger:
+            messenger.stop()
+        messenger = None
 
     def getInfo(self):
         server = self.ui.serverLE.text()
@@ -325,10 +331,9 @@ class Chooser(QDialog):
         # self.ui.infoLabel.setText("connecting...")
         # self.ui.infoLabel.repaint()
 
-        # Have Messenger login into to server
-        messenger.setServerDetails(server, mport)
         try:
-            r = messenger.startMessenger()
+            messenger = Messenger(server, mport)
+            r = messenger.start()
         except PlomBenignException as e:
             ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
             return

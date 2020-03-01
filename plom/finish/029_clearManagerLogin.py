@@ -10,7 +10,7 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import getpass
 
-import plom.finishMessenger as finishMessenger
+from plom.messenger import FinishMessenger
 
 
 if __name__ == "__main__":
@@ -29,9 +29,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.server and ":" in args.server:
         s, p = args.server.split(":")
-        finishMessenger.startMessenger(s, port=p)
+        msgr = FinishMessenger(s, port=p)
     else:
-        finishMessenger.startMessenger(args.server)
+        msgr = FinishMessenger(args.server)
+    msgr.start()
 
     # get the password if not specified
     if args.password is None:
@@ -44,6 +45,6 @@ if __name__ == "__main__":
 
     # get started
 
-    finishMessenger.clearAuthorisation("manager", pwd)
+    msgr.clearAuthorisation("manager", pwd)
     print("Scanner login cleared.")
-    finishMessenger.stopMessenger()
+    msgr.stop()

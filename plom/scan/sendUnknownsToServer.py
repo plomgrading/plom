@@ -13,7 +13,7 @@ import hashlib
 import os
 import shutil
 
-import plom.scanMessenger as scanMessenger
+from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 
 
@@ -37,7 +37,7 @@ def doFiling(rmsg, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendUnknownFiles(fileList):
+def sendUnknownFiles(scanMessenger, fileList):
     for fname in fileList:
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         shortName = os.path.split(fname)[1]
@@ -48,9 +48,10 @@ def sendUnknownFiles(fileList):
 def uploadUnknowns(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
-        scanMessenger.startMessenger(s, port=p)
+        scanMessenger = ScanMessenger(s, port=p)
     else:
-        scanMessenger.startMessenger(server)
+        scanMessenger = ScanMessenger(server)
+    scanMessenger.start()
 
     # get the password if not specified
     if password is None:
@@ -76,6 +77,6 @@ def uploadUnknowns(server=None, password=None):
 
     # Look for pages in unknowns
     fileList = glob("unknownPages/*.png")
-    sendUnknownFiles(fileList)
+    sendUnknownFiles(scanMessenger, fileList)
     scanMessenger.closeUser()
-    scanMessenger.stopMessenger()
+    scanMessenger.stop()

@@ -18,9 +18,8 @@ import tempfile
 import toml
 
 from plom.plom_exceptions import *
-import plom.messenger as messenger
 from plom import __version__, Plom_API_Version
-
+from plom.messenger import Messenger
 
 # -------------------------------------------
 
@@ -69,12 +68,14 @@ if __name__ == "__main__":
         action="store",
         help="Which server to contact.",
     )
+    global messenger
     args = parser.parse_args()
     if args.server and ":" in args.server:
         s, p = args.server.split(":")
-        messenger.startMessenger(s, port=p)
+        messenger = Messenger(s, port=p)
     else:
-        messenger.startMessenger(args.server)
+        messenger = Messenger(args.server)
+    messenger.start()
 
     # If user not specified then default to scanner
     if args.user is None:
@@ -113,6 +114,6 @@ if __name__ == "__main__":
         exit(1)
 
     messenger.closeUser()
-    messenger.stopMessenger()
+    messenger.stop()
 
     exit(0)

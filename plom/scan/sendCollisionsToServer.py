@@ -14,7 +14,7 @@ import json
 import os
 import shutil
 
-import plom.scanMessenger as scanMessenger
+from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 
 # ----------------------
@@ -42,7 +42,7 @@ def doFiling(rmsg, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendCollidingFiles(fileList):
+def sendCollidingFiles(scanMessenger, fileList):
     for fname in fileList:
         cname = fname + ".collide"
         with open(cname, "r") as fh:
@@ -87,9 +87,10 @@ def warnUser(fileList):
 def uploadCollisions(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
-        scanMessenger.startMessenger(s, port=p)
+        scanMessenger = ScanMessenger(s, port=p)
     else:
-        scanMessenger.startMessenger(server)
+        scanMessenger = ScanMessenger(server)
+    scanMessenger.start()
 
     # get the password if not specified
     if password is None:
@@ -117,6 +118,6 @@ def uploadCollisions(server=None, password=None):
     if warnUser(fileList) == False:
         exit(0)
 
-    sendCollidingFiles(fileList)
+    sendCollidingFiles(scanMessenger, fileList)
     scanMessenger.closeUser()
-    scanMessenger.stopMessenger()
+    scanMessenger.stop()

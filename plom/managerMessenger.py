@@ -1213,8 +1213,8 @@ def MreviewQuestion(testNumber, questionNumber, version):
     except requests.HTTPError as e:
         if response.status_code == 401:  # authentication error
             raise PlomAuthenticationException("You are not authenticated.")
-        elif response.status_code == 404:  # authentication error
-            raise PlomAuthenticationException(
+        elif response.status_code == 404:
+            raise PlomSeriousException(
                 "Could not find t/q/v = {}/{}/{}.".format(
                     testNumber, questionNumber, version
                 )
@@ -1237,8 +1237,8 @@ def IDreviewID(testNumber):
     except requests.HTTPError as e:
         if response.status_code == 401:  # authentication error
             raise PlomAuthenticationException("You are not authenticated.")
-        elif response.status_code == 404:  # authentication error
-            raise PlomAuthenticationException(
+        elif response.status_code == 404:
+            raise PlomSeriousException(
                 "Could not find test = {}.".format(testNumber)
             )
         else:
