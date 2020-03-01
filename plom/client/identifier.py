@@ -35,6 +35,7 @@ from .test_view import WholeTestView
 
 from plom.plom_exceptions import *
 from plom import Plom_API_Version
+from plom import isValidStudentNumber
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
@@ -727,15 +728,6 @@ class IDClient(QWidget):
             )
             if not ok:
                 return
-
-            def isValidStudentNumber(x):
-                # TODO: later centralize/reuse this function
-                try:
-                    sid = int(str(x))
-                except:
-                    return False
-                return True
-
             if not isValidStudentNumber(num):
                 msg = ErrorMessage(
                     "<p>&ldquo;{}&rdquo; is not a valid student number.</p>"
