@@ -720,6 +720,23 @@ class IDClient(QWidget):
             )
             if not ok:
                 return
+
+            def isValidStudentNumber(x):
+                # TODO: later centralize/reuse this function
+                try:
+                    sid = int(str(x))
+                except:
+                    return False
+                return True
+
+            if not isValidStudentNumber(num):
+                msg = ErrorMessage(
+                    "<p>&ldquo;{}&rdquo; is not a valid student number.</p>"
+                    "<p>(If you need to indicate a blank page, use the "
+                    "<em>&ldquo;{}&rdquo;</em> button.)</p>".format(num, "Blank page",)
+                )
+                msg.exec_()
+                return
             self.ui.idEdit.setText(str(num))
         # Run identify student command (which talks to server)
         if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text()):
