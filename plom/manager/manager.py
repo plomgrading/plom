@@ -254,7 +254,7 @@ class Manager(QWidget):
         global managerMessenger
         managerMessenger = None
         print(
-            "Plom Client {} (communicates with api {})".format(
+            "Plom Manager Client {} (communicates with api {})".format(
                 __version__, self.APIVersion
             )
         )
