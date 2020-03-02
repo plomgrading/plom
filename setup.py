@@ -21,6 +21,7 @@ setup(
         "plom/scripts/plom-scan.py",
         "plom/scripts/plom-build",
         "plom/scripts/plom-client",
+        "plom/scripts/plom-manager.py",
     ],
     include_package_data=True,
     data_files=[
