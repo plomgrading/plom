@@ -1093,21 +1093,14 @@ class ManagerMessenger(BaseMessenger):
 
         return image
 
-    def clearAuthorisation(self, user, password=None):
+    def clearAuthorisationUser(self, someuser):
         self.SRmutex.acquire()
         try:
-            if password:
-                response = self.session.delete(
-                    "https://{}/authorisation".format(self.server),
-                    json={"user": user, "password": password},
-                    verify=False,
-                )
-            else:
-                response = self.session.delete(
-                    "https://{}/authorisation".format(self.server),
-                    json={"user": self.user, "token": self.token, "userToClear": user},
-                    verify=False,
-                )
+            response = self.session.delete(
+                "https://{}/authorisation/{}".format(self.server, someuser),
+                json={"user": self.user, "token": self.token},
+                verify=False,
+            )
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:

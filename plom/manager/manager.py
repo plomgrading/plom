@@ -1076,7 +1076,7 @@ class Manager(QWidget):
                 if rvw.action == "review":
                     # first remove auth from that user - safer.
                     if self.ui.reviewTW.item(r, 4).text() != "reviwer":
-                        managerMessenger.clearAuthorisation(
+                        managerMessenger.clearAuthorisationUser(
                             self.ui.reviewTW.item(r, 4).text()
                         )
                     # then map that question's owner "reviewer"
@@ -1142,7 +1142,7 @@ class Manager(QWidget):
                 if rvw.action == "review":
                     # first remove auth from that user - safer.
                     if self.ui.reviewIDTW.item(r, 1).text() != "reviwer":
-                        managerMessenger.clearAuthorisation(
+                        managerMessenger.clearAuthorisationUser(
                             self.ui.reviewIDTW.item(r, 1).text()
                         )
                     # then map that question's owner "reviewer"
@@ -1203,7 +1203,7 @@ class Manager(QWidget):
                 if rvw.action == "review":
                     # first remove auth from that user - safer.
                     if self.ui.reviewTOTTW.item(r, 1).text() != "reviwer":
-                        managerMessenger.clearAuthorisation(
+                        managerMessenger.clearAuthorisationUser(
                             self.ui.reviewTOTTW.item(r, 1).text()
                         )
                     # then map that question's owner "reviewer"
@@ -1238,7 +1238,7 @@ class Manager(QWidget):
             ).exec_()
             == QMessageBox.Yes
         ):
-            managerMessenger.clearAuthorisation(user)
+            managerMessenger.clearAuthorisationUser(user)
 
     def refreshUserList(self):
         uDict = managerMessenger.getUserDetails()
