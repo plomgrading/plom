@@ -158,8 +158,8 @@ class Annotator(QWidget):
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
         self.view = PageView(self)
+        self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
         self.setViewAndScene()
-        self.ui.pageFrameGrid.addWidget(self.view, 1, 1)  # TODO: ahead of setViewAndScene?
 
         # Create the comment list widget and put into gui.
         self.commentW = CommentWidget(self, self.maxMark)
