@@ -1050,9 +1050,9 @@ class MarkerClient(QWidget):
 
         if _hack:
             if remarkFlag:
-                return task, paperdir, aname, pname, remarkFlag
+                return task, paperdir, fnames, aname, pname, remarkFlag
             else:
-                return task, paperdir, aname, None, remarkFlag
+                return task, paperdir, fnames, aname, None, remarkFlag
 
         if remarkFlag:
             self.startTheAnnotator(task[1:], paperdir, fnames, aname, pname)
@@ -1134,8 +1134,8 @@ class MarkerClient(QWidget):
             return False
         tgv = self.prxM.getPrefix(row)
 
-        tgv2, paperdir, aname, pname, remarkFlag = self.annotateTest_doit(tgv, _hack=True)
-        print(tgv2, paperdir, aname, pname, remarkFlag)
+        tgv2, paperdir, fnames, saveName, pname, remarkFlag = self.annotateTest_doit(tgv, _hack=True)
+        print("gimme me: {}".format((tgv2, paperdir, fnames, saveName, pname, remarkFlag)))
         assert tgv == tgv2
 
         # TODO: copy paste from startTheAnnotator
@@ -1153,20 +1153,21 @@ class MarkerClient(QWidget):
             # TODO: there should be a filename sanity check here to
             # make sure plom file matches current image-file
 
-        # while annotator is firing up request next paper in background
-        # after giving system a moment to do `annotator.exec_()`
-        if self.exM.countReadyToMark() == 0:
-            self.requestNextInBackgroundStart()
+        if self.allowBackgroundOps:
+            # while annotator is firing up request next paper in background
+            # after giving system a moment to do `annotator.exec_()`
+            if self.exM.countReadyToMark() == 0:
+                self.requestNextInBackgroundStart()
 
         # TODO: all the stuff we used to build a new annatator, except markStyle and mouseHand
-        fname = aname
         tgv = tgv[1:]
 
         return (
             tgv,
             self.testInfo["testName"],
             paperdir,
-            fname,
+            fnames,
+            saveName,
             self.maxScore,
             markStyle,
             pdict,

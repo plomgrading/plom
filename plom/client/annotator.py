@@ -245,14 +245,14 @@ class Annotator(QWidget):
         #self.tgv = None
         #self.testname = None
 
-    def loadNewTGV(self, tgv, testname, paperdir, fname, maxMark, markStyle, plomDict=None):
+    def loadNewTGV(self, tgv, testname, paperdir, fnames, saveName, maxMark, markStyle, plomDict=None):
         self.tgv = tgv
         self.testname = testname
         self.setWindowTitle("Annotator: {} of test {}".format(tgv, testname))
         print("========= Annotator: {} of test {}".format(tgv, testname))
-
         self.paperdir = paperdir
-        self.imageFile = fname
+        self.imageFiles = fnames
+        self.saveName = saveName
 
         assert self.maxMark == maxMark, "TODO: changing maxMark in running Annotator not supported"
 
@@ -739,7 +739,7 @@ class Annotator(QWidget):
             ErrorMessage("No more to grade?").exec_()
             # Not really safe to give it back? (at least we did the view...)
             return
-        print(stuff)
+        log.debug("saveAndGetNext: new stuff is {}".format(stuff))
         self.loadNewTGV(*stuff)
 
     @pyqtSlot()
