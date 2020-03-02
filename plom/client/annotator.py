@@ -295,8 +295,6 @@ class Annotator(QWidget):
         self.setMarkHandler(self.markStyle)
         self.setDeltaButtonMenu()
 
-        # TODO: shortcut keys that talk to scene are broken
-
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
             self.unpickleIt(plomDict)
@@ -776,9 +774,9 @@ class Annotator(QWidget):
         self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
         # shortcuts for undo/redo
         self.undoShortCut = QShortcut(QKeySequence("Ctrl+z"), self)
-        self.undoShortCut.activated.connect(self.scene.undo)
+        self.undoShortCut.activated.connect(self.undo)
         self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
-        self.redoShortCut.activated.connect(self.scene.redo)
+        self.redoShortCut.activated.connect(self.redo)
         # pan shortcuts
         self.panShortCut = QShortcut(QKeySequence("space"), self)
         self.panShortCut.activated.connect(self.view.panThrough)
@@ -788,6 +786,12 @@ class Annotator(QWidget):
         self.slowPanShortCut.activated.connect(lambda: self.view.panThrough(0.02))
         self.slowDepanShortCut = QShortcut(QKeySequence("Ctrl+Shift+space"), self)
         self.slowDepanShortCut.activated.connect(lambda: self.view.depanThrough(0.02))
+
+    def undo(self):
+        self.scene.undo()
+
+    def redo(self):
+        self.scene.redo()
 
     # Simple mode change functions
     def boxMode(self):
@@ -871,8 +875,8 @@ class Annotator(QWidget):
         self.ui.deltaButton.clicked.connect(self.deltaButtonMode)
 
         # Pass the undo/redo button clicks on to the view
-        self.ui.undoButton.clicked.connect(self.scene.undo)
-        self.ui.redoButton.clicked.connect(self.scene.redo)
+        self.ui.undoButton.clicked.connect(self.undo)
+        self.ui.redoButton.clicked.connect(self.redo)
         # The key-help button connects to the keyPopUp command.
         # TODO: messy viz hacks
         # self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
