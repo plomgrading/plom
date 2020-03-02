@@ -284,6 +284,8 @@ class Annotator(QWidget):
         # loads in the image etc
         self.view.setHidden(False)  # or try not hiding it...
         self.setViewAndScene()
+        # TODO: see above, can we maintain our zoom b/w images?  Would anyone want that?
+        # TODO: see above, don't click a different button: want to keep same tool
 
         # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
         self.commentW.changeMark(self.score)
