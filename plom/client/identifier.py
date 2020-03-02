@@ -35,6 +35,7 @@ from .test_view import WholeTestView
 
 from plom.plom_exceptions import *
 from plom import Plom_API_Version
+from plom import isValidStudentNumber
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
@@ -333,9 +334,6 @@ class IDClient(QWidget):
         # Make sure both lineedits have little "Clear this" buttons.
         self.ui.idEdit.setClearButtonEnabled(True)
         self.ui.nameEdit.setClearButtonEnabled(True)
-        # the id-line edit needs a validator to make sure that only 8 digit numbers entered
-        self.idValidator = QIntValidator(10000000, 10 ** 8 - 1)
-        self.ui.idEdit.setValidator(self.idValidator)
 
     def shutDownError(self):
         self.my_shutdown_signal.emit(1)
@@ -627,6 +625,13 @@ class IDClient(QWidget):
         else:
             # Number is not in class list - ask user if they really want to
             # enter that number.
+            if not isValidStudentNumber(self.ui.idEdit.text()):
+                ErrorMessage(
+                    "<p>&ldquo;{}&rdquo; is an invalid form for a student ID.</p>".format(
+                        self.ui.idEdit.text()
+                    )
+                ).exec_()
+                return
             msg = SimpleMessage(
                 "Student ID {} not in list. Do you want to enter it anyway?".format(
                     self.ui.idEdit.text()
@@ -641,11 +646,18 @@ class IDClient(QWidget):
             self.msgPosition = msg.pos()
             # Otherwise get a name from the user (and the okay)
             name, ok = QInputDialog.getText(self, "Enter name", "Enter student name:")
-            # If okay, then set name accordingly, else set name to "unknown"
-            if ok:
-                self.ui.nameEdit.setText(str(name))
-            else:
-                self.ui.nameEdit.setText("Unknown")
+            if not ok:
+                return
+            if not name:
+                msg = ErrorMessage(
+                    "<p>Student name should not be blank.</p>"
+                    "<p>(If you cannot read it, use &ldquo;{}&rdquo;.)".format(
+                        name, "Unknown",
+                    )
+                )
+                msg.exec_()
+                return
+            self.ui.nameEdit.setText(str(name))
         # Run identify student command (which talks to server)
         if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text()):
             if alreadyIDd:
@@ -718,13 +730,18 @@ class IDClient(QWidget):
             num, ok = QInputDialog.getText(
                 self, "Enter number", "Enter student number:"
             )
-            # If okay, then set number accordingly, else give error
-            if ok:
-                self.ui.idEdit.setText(str(num))
-            else:
-                msg = ErrorMessage("Cannot enter without a student number.")
+            if not ok:
+                return
+            # TODO: or just check if its non-blank `if not num:`
+            if not isValidStudentNumber(num):
+                msg = ErrorMessage(
+                    "<p>&ldquo;{}&rdquo; is not a valid student number.</p>"
+                    "<p>(If you need to indicate a blank page, use the "
+                    "<em>&ldquo;{}&rdquo;</em> button.)</p>".format(num, "Blank page",)
+                )
                 msg.exec_()
                 return
+            self.ui.idEdit.setText(str(num))
         # Run identify student command (which talks to server)
         if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text()):
             if alreadyIDd:
