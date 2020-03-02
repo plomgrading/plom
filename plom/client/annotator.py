@@ -244,9 +244,14 @@ class Annotator(QWidget):
         # This may be heavy handed, but for now we delete the old scene
         del self.scene
         self.scene = None
-        # TODO: ??
-        #self.tgv = None
-        #self.testname = None
+
+        self.tgv = None
+        self.testname = None
+        self.setWindowTitle("Annotator")
+        self.paperdir = None
+        self.imageFiles = None
+        self.saveName = None
+        # TODO: maxMark, markStyle
 
     def loadNewTGV(self, tgv, testname, paperdir, fnames, saveName, maxMark, markStyle, plomDict=None):
         self.tgv = tgv
