@@ -859,7 +859,7 @@ class MarkerClient(QWidget):
             "safe to continue from here...".format(errmsg)
         ).exec_()
 
-    def moveToNextUnmarkedTest(self, task):
+    def moveToNextUnmarkedTest(self, task=None):
         """Move the list to the next unmarked test, if possible.
 
         Return True if we moved and False if not, for any reason."""
@@ -890,9 +890,11 @@ class MarkerClient(QWidget):
         prt = self.prxM.rowCount()
         if prt == 0:
             return False
-        # get current position from the tgv
-        prstart = self.prxM.rowFromTask(task)
 
+        prstart = None
+        if task:
+            # get current position from the task,
+            prstart = self.prxM.rowFromTask(task)
         if not prstart:
             # it might be hidden by filters
             prstart = 0
@@ -1064,9 +1066,11 @@ class MarkerClient(QWidget):
     @pyqtSlot(str)
     def callbackAnnDoneCancel(self, task):
         self.setEnabled(True)
-        prevState = self.exM.getStatusByTask("m" + task).split(":")[-1]
-        # TODO: could also erase the paperdir
-        self.exM.setStatusByTask("m" + task, prevState)
+        if task:
+            prevState = self.exM.getStatusByTask("m" + task).split(":")[-1]
+            # TODO: could also erase the paperdir
+            self.exM.setStatusByTask("m" + task, prevState)
+        # TODO: see below re "done grading".
 
     @pyqtSlot(str)
     def callbackAnnDoneClosing(self, task):
@@ -1076,8 +1080,10 @@ class MarkerClient(QWidget):
         if len(prIndex) == 0:
             return
         pr = prIndex[0].row()
-        if self.prxM.getPrefix(pr) == "m" + task:
-            self.updateImage(pr)
+        # TODO: when done grading, if ann stays open, then close, this doesn't happen
+        if task:
+            if self.prxM.getPrefix(pr) == "m" + task:
+                self.updateImage(pr)
 
     @pyqtSlot(str, list)
     def callbackAnnWantsUsToUpload(self, task, stuff):
@@ -1123,8 +1129,8 @@ class MarkerClient(QWidget):
         print("Debug: Marker: Ann Wants More (w/o closing)")
         if not self.allowBackgroundOps:
             self.requestNext()
-        if not self.moveToNextUnmarkedTest("t" + oldtgv):
-            return False  # TOD
+        if not self.moveToNextUnmarkedTest("t" + oldtgv if oldtgv else None):
+            return False
         # TODO: copy paste of annotateTest()
         # probably don't need len check
         if len(self.ui.tableView.selectedIndexes()):

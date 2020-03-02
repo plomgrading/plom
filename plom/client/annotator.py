@@ -739,8 +739,11 @@ class Annotator(QWidget):
             if not self.saveAnnotations():
                 return
             print("We have surrendered {}".format(self.tgv))
+            oldtgv = self.tgv
             self.closeCurrentTGV()
-        stuff = self.parent.gimmeMore(self.tgv)
+        else:
+            oldtgv = None
+        stuff = self.parent.gimmeMore(oldtgv)
         if not stuff:
             ErrorMessage("No more to grade?").exec_()
             # Not really safe to give it back? (at least we did the view...)
