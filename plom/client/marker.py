@@ -186,7 +186,7 @@ def upload(
     ):
         raise PlomSeriousException(
             "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
-                fname, pname, cname
+                aname, pname, cname
             )
         )
     try:
