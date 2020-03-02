@@ -1182,6 +1182,11 @@ class Annotator(QWidget):
         self.saveWindowSettings()
         self.commentW.saveComments()
 
+        # This may be heavy handed, but for now we delete the old scene/view
+        self.ui.pageFrameGrid.removeWidget(self.view)
+        del self.scene
+        del self.view
+
         log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
         # some things here hardcoded elsewhere too, and up in marker
