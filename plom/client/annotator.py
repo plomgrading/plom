@@ -291,7 +291,7 @@ class Annotator(QWidget):
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
             self.unpickleIt(plomDict)
-        self.timer = QElapsedTimer()
+        # reset the timer (its not needed to make a new one)
         self.timer.start()
 
     def setCurrentMarkMode(self):
