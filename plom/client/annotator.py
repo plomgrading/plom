@@ -157,7 +157,6 @@ class Annotator(QWidget):
         self.wideLayout()
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
-        self.scene = None
         self.view = PageView(self)
         self.setViewAndScene()
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)  # TODO: ahead of setViewAndScene?
@@ -239,8 +238,11 @@ class Annotator(QWidget):
     def closeCurrentTGV(self):
         """Stop looking at the current TGV, reset things safely."""
         self.commentW.reset()
+        #TODO: self.view.disconnectFrom(self.scene)
         #self.view = None
-        # TODO: is this the right way to reset the scene?
+        # TODO: how to reset the scene?
+        # This may be heavy handed, but for now we delete the old scene
+        del self.scene
         self.scene = None
         # TODO: ??
         #self.tgv = None
@@ -275,7 +277,6 @@ class Annotator(QWidget):
 
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
-        self.scene = None
         self.view.setHidden(False)  # or try not hiding it...
         self.setViewAndScene()
 
@@ -287,7 +288,7 @@ class Annotator(QWidget):
         self.setMarkHandler(self.markStyle)
         self.setDeltaButtonMenu()
 
-        # TODO: shortcut keys that talk to view should be broken?  If not why not?
+        # TODO: shortcut keys that talk to scene are broken
 
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
@@ -1179,11 +1180,6 @@ class Annotator(QWidget):
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
         self.commentW.saveComments()
-
-        # This may be heavy handed, but for now we delete the old scene
-        del self.scene
-        #self.ui.pageFrameGrid.removeWidget(self.view)
-        #del self.view
 
         log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
