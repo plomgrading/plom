@@ -157,9 +157,10 @@ class Annotator(QWidget):
         self.wideLayout()
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
-        self.view = None
         self.scene = None
+        self.view = PageView(self)
         self.setViewAndScene()
+        self.ui.pageFrameGrid.addWidget(self.view, 1, 1)  # TODO: ahead of setViewAndScene?
 
         # Create the comment list widget and put into gui.
         self.commentW = CommentWidget(self, self.maxMark)
@@ -238,7 +239,7 @@ class Annotator(QWidget):
     def closeCurrentTGV(self):
         """Stop looking at the current TGV, reset things safely."""
         self.commentW.reset()
-        self.view = None
+        #self.view = None
         # TODO: is this the right way to reset the scene?
         self.scene = None
         # TODO: ??
@@ -274,8 +275,8 @@ class Annotator(QWidget):
 
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
-        self.view = None
         self.scene = None
+        self.view.setHidden(False)  # or try not hiding it...
         self.setViewAndScene()
 
         # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
@@ -561,16 +562,14 @@ class Annotator(QWidget):
         kp.exec_()
 
     def setViewAndScene(self):
-        """Starts the pageview.
+        """Makes a new scene and connects it to the view.
+
         The pageview (which is a qgraphicsview) which is (mostly) a layer
         between the annotation widget and the qgraphicsscene which
         actually stores all the graphics objects (the image, lines, boxes,
         text etc etc). The view allows us to zoom pan etc over image and
         its annotations.
         """
-        # Start the pageview - pass it this widget (so it can communicate
-        # back to us) and the filename of the image.
-        self.view = PageView(self)
         self.scene = PageScene(
             self,
             self.imageFiles,
@@ -582,9 +581,8 @@ class Annotator(QWidget):
         # connect view to scene
         self.view.connectScene(self.scene)
         # scene knows which views are connected via self.views()
-
+        log.debug("Scene has this list of views: {}".format(self.scene.views()))
         # put the view into the gui.
-        self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
         # set the initial view to contain the entire scene which at
         # this stage is just the image.
         self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
@@ -1175,17 +1173,17 @@ class Annotator(QWidget):
         # Pickle the scene as a plom-file
         self.pickleIt()
 
-        # TODO: we should assume its dead
+        # TODO: we should assume its dead?  Or not... let it be and fix scene?
         self.view.setHidden(True)
 
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
         self.commentW.saveComments()
 
-        # This may be heavy handed, but for now we delete the old scene/view
-        self.ui.pageFrameGrid.removeWidget(self.view)
+        # This may be heavy handed, but for now we delete the old scene
         del self.scene
-        del self.view
+        #self.ui.pageFrameGrid.removeWidget(self.view)
+        #del self.view
 
         log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
