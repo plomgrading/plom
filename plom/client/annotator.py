@@ -245,6 +245,11 @@ class Annotator(QWidget):
         del self.scene
         self.scene = None
 
+        # clean up after a testview
+        self.doneViewingPaper()
+        self.testView = None
+        self.testViewFiles = None
+
         self.tgv = None
         self.testname = None
         self.setWindowTitle("Annotator")
@@ -272,11 +277,6 @@ class Annotator(QWidget):
         # TODO: not clear you're allowed to chnage this
         #assert self.markStyle == markStyle, "TODO: changing markStyle in running Annotator not supprted"
 
-        # TODO: doit or init?
-        # a test view pop-up window - initially set to None
-        # for viewing whole paper
-        self.testView = None
-        self.testViewFiles = None
         # Set current mark to 0.
         self.score = 0
 
@@ -1177,9 +1177,6 @@ class Annotator(QWidget):
             )
             if msg.exec_() == QMessageBox.No:
                 return False
-
-        # clean up after a testview
-        self.doneViewingPaper()
 
         # Save the scene to file.
         self.scene.save()
