@@ -1350,7 +1350,9 @@ class MarkerClient(QWidget):
             return
         ifilenames = []
         for img in imageList:
-            ifile = tempfile.NamedTemporaryFile(dir=self.workingDirectory, delete=False)
+            ifile = tempfile.NamedTemporaryFile(
+                dir=self.workingDirectory, suffix=".png", delete=False
+            )
             ifile.write(img)
             ifilenames.append(ifile.name)
         tvw = GroupView(ifilenames)
