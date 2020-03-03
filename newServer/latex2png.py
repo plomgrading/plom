@@ -29,11 +29,10 @@ cdir = os.getcwd()
 td = tempfile.TemporaryDirectory()
 os.chdir(td.name)
 
-frag = ""
 with open(sys.argv[1], "r") as fh:
     frag = fh.read()
 
-with open("frag.tex".format(td.name), "w") as fh:
+with open(os.path.join(td.name, "frag.tex"), "w") as fh:
     fh.write(head)
     fh.write(frag)
     fh.write(foot)
