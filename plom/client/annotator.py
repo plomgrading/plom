@@ -110,15 +110,10 @@ class Annotator(QWidget):
         super(Annotator, self).__init__()
         # remember parent
         self.parent = parent
-        # Grab filename of image, max mark, mark style (total/up/down)
-        # and mouse-hand (left/right)
-        self.tgv = tgv
-        self.testname = testname
-        self.paperdir = paperdir
-        self.imageFiles = fnames
-        self.saveName = saveName
-        log.debug("Savename = {}".format(saveName))
+        # maxMark, mark style (total/up/down) and mouse-hand (left/right) currently
+        # don't change throughout life of the annotator
         self.maxMark = maxMark
+
         # get markstyle from plomDict
         if plomDict is None:
             self.markStyle = markStyle
@@ -133,8 +128,7 @@ class Annotator(QWidget):
         # for viewing whole paper
         self.testView = None
         self.testViewFiles = None
-        # Set current mark to 0.
-        self.score = 0
+
         # make styling of currently selected button/tool.
         self.currentButtonStyleBackground = (
             "border: 2px solid #00aaaa; "
@@ -159,16 +153,14 @@ class Annotator(QWidget):
         # loads in the image etc
         self.view = PageView(self)
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
-        self.setViewAndScene()
 
         # Create the comment list widget and put into gui.
-        self.commentW = CommentWidget(self, self.maxMark)
-        self.commentW.setTestname(testname)
-        self.commentW.setQuestionNumberFromTGV(tgv)
+        self.commentW = CommentWidget(self, maxMark)  # TODO: maxmark to None ok
         self.ui.commentGrid.addWidget(self.commentW, 1, 1)
         # pass the marking style to the mark entry widget.
         # also when we set this up we have to connect various
         # mark set, delta-set, mark change functions
+        self.scene = None  # TODO?
         self.setMarkHandler(self.markStyle)
         self.setDeltaButtonMenu()
         # set alt-enter / alt-return as shortcut to finish annotating
@@ -199,17 +191,12 @@ class Annotator(QWidget):
         # Keyboard shortcuts.
         self.keycodes = self.getKeyCodes()
 
-        # set up current-mark / current-mode label
+        # set up current-mark / current-mode label  # TODO: delete?
         self.setCurrentMarkMode()
 
-        # Connect various key-presses to associated tool-button clicks
-        # Allows us to translate a key-press into a button-press.
-        # Key layout (mostly) matches tool-button layout
-        # Very last thing = unpickle scene from plomDict
-        if plomDict is not None:
-            self.unpickleIt(plomDict)
         self.timer = QElapsedTimer()
-        self.timer.start()
+
+        self.loadNewTGV(tgv, testname, paperdir, fnames, saveName, maxMark, markStyle, plomDict)
 
         # TODO: use QAction, share with other UI, shortcut keys written once
         m = QMenu()
@@ -288,6 +275,7 @@ class Annotator(QWidget):
         # TODO: see above, don't click a different button: want to keep same tool
 
         # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
+        self.commentW.maxMark = maxMark  # TODO: add helper?  combine with changeMark?
         self.commentW.changeMark(self.score)
         self.commentW.setQuestionNumberFromTGV(tgv)
         self.commentW.setTestname(testname)
@@ -303,9 +291,10 @@ class Annotator(QWidget):
 
     def setCurrentMarkMode(self):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
-        self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
+        if self.scene:
+            self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
         self.ui.markLabel.setText(
-            "{} out of {}".format(self.scene.score, self.scene.maxMark)
+            "{} out of {}".format(self.score, self.maxMark)
         )
 
     def loadCursors(self):
@@ -945,7 +934,8 @@ class Annotator(QWidget):
         self.score = tm
         self.commentW.changeMark(self.score)
         # also tell the scene what the new mark is
-        self.scene.setTheMark(self.score)
+        if self.scene:   # TODO: bit of a hack
+            self.scene.setTheMark(self.score)
 
     def deltaMarkSet(self, dm):
         """When a delta-mark button is clicked, or a comment selected
@@ -1013,29 +1003,29 @@ class Annotator(QWidget):
             else:
                 self.loadModeFromBefore(self.parent.annotatorSettings["tool"])
 
-        # if zoom-state is none, set it to index 1 (fit page) - but delay.
-        if self.parent.annotatorSettings["zoomState"] is None:
-            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
-        elif self.parent.annotatorSettings["zoomState"] == 0:
-            # is set to "user", so set the view-rectangle
-            if self.parent.annotatorSettings["viewRectangle"] is not None:
-                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
-                QTimer.singleShot(
-                    200,
-                    lambda: self.view.initialZoom(
-                        self.parent.annotatorSettings["viewRectangle"]
-                    ),
-                )
-            else:
-                # no view-rectangle, so set to "fit-page"
-                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
-        else:
-            QTimer.singleShot(
-                200,
-                lambda: self.ui.zoomCB.setCurrentIndex(
-                    self.parent.annotatorSettings["zoomState"]
-                ),
-            )
+        # # if zoom-state is none, set it to index 1 (fit page) - but delay.
+        # if self.parent.annotatorSettings["zoomState"] is None:
+        #     QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+        # elif self.parent.annotatorSettings["zoomState"] == 0:
+        #     # is set to "user", so set the view-rectangle
+        #     if self.parent.annotatorSettings["viewRectangle"] is not None:
+        #         QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
+        #         QTimer.singleShot(
+        #             200,
+        #             lambda: self.view.initialZoom(
+        #                 self.parent.annotatorSettings["viewRectangle"]
+        #             ),
+        #         )
+        #     else:
+        #         # no view-rectangle, so set to "fit-page"
+        #         QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+        # else:
+        #     QTimer.singleShot(
+        #         200,
+        #         lambda: self.ui.zoomCB.setCurrentIndex(
+        #             self.parent.annotatorSettings["zoomState"]
+        #         ),
+        #     )
         # wide vs compact
         if self.parent.annotatorSettings["compact"] is True:
             log.debug("compacting UI (b/c of last use setting")
