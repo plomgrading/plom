@@ -1225,7 +1225,9 @@ class MarkerClient(QWidget):
 
         viewFiles = []
         for iab in imagesAsBytes:
-            tfn = tempfile.NamedTemporaryFile(delete=False).name
+            tfn = tempfile.NamedTemporaryFile(
+                dir=self.workingDirectory, suffix=".png", delete=False
+            ).name
             viewFiles.append(tfn)
             with open(tfn, "wb") as fh:
                 fh.write(iab)
