@@ -9,20 +9,20 @@ import subprocess
 import tempfile
 import shutil
 
-head = """
-\\documentclass[12pt]{article}
-\\usepackage[letterpaper, textwidth=5in]{geometry}
-\\usepackage{amsmath, amsfonts}
-\\usepackage{xcolor}
-\\usepackage[active, tightpage]{preview}
-\\begin{document}
-\\begin{preview}
-\\color{red}
+head = r"""
+\documentclass[12pt]{article}
+\usepackage[letterpaper, textwidth=5in]{geometry}
+\usepackage{amsmath, amsfonts}
+\usepackage{xcolor}
+\usepackage[active, tightpage]{preview}
+\begin{document}
+\begin{preview}
+\color{red}
 """
 
-foot = """
-\\end{preview}
-\\end{document}
+foot = r"""
+\end{preview}
+\end{document}
 """
 
 cdir = os.getcwd()
