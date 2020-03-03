@@ -8,8 +8,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QPainter, QCursor
 from PyQt5.QtWidgets import QGraphicsView, QApplication
 
-from .pagescene import PageScene
-
 
 class PageView(QGraphicsView):
     """Extend the graphicsview so that it can pass undo/redo
