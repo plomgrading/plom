@@ -115,7 +115,7 @@ dmypy.json
 .pyre/
 
 # backups
-~
+*~
 
 # mac detritus
 .DS_Store
