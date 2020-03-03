@@ -453,8 +453,14 @@ class Annotator(QWidget):
     def viewWholePaper(self):
         # grab the files if needed.
         if self.testViewFiles is None:
-            testNumber, pageNames, self.testViewFiles = self.parent.viewWholePaper()
-            log.debug("viewWholePage: pageNames = {}".format(pageNames))
+            testNumber = self.tgv[:4]
+            log.debug("wholePage: downloading files for testnum {}".format(testNumber))
+            pageNames, self.testViewFiles = self.parent.downloadWholePaper(testNumber)
+            log.debug(
+                "wholePage: pageNames = {}, viewFiles = {}".format(
+                    pageNames, self.testViewFiles
+                )
+            )
         # if we haven't built a testview, built it now
         if self.testView is None:
             self.testView = TestView(self, testNumber, pageNames, self.testViewFiles)
@@ -463,9 +469,14 @@ class Annotator(QWidget):
             self.testView.show()
 
     def doneViewingPaper(self):
-        self.parent.doneWithViewFiles()
-        if self.testView is not None:
+        if self.testViewFiles:
+            log.debug("wholePage: done with viewFiles {}".format(self.testViewFiles))
+            # could just delete them here but maybe Marker wants to cache
+            self.parent.doneWithWholePaperFiles(self.testViewFiles)
+            self.testViewFiles = None
+        if self.testView:
             self.testView.close()
+            self.testView = None
 
     def keyPopUp(self):
         # build KeyPress shortcuts dialog

@@ -1217,29 +1217,25 @@ class MarkerClient(QWidget):
                 except PlomSeriousException as err:
                     self.throwSeriousError(err)
 
-    def viewWholePaper(self):
-        index = self.ui.tableView.selectedIndexes()
-        task = self.prxM.getPrefix(index[0].row())
-        testNumber = task[1:5]  # since task = mXXXXgYY
+    def downloadWholePaper(self, testNumber):
         try:
             pageNames, imagesAsBytes = messenger.MrequestWholePaper(testNumber)
         except PlomBenignException as err:
             self.throwBenign(err)
 
-        self.viewFiles = []
+        viewFiles = []
         for iab in imagesAsBytes:
             tfn = tempfile.NamedTemporaryFile(delete=False).name
-            self.viewFiles.append(tfn)
+            viewFiles.append(tfn)
             with open(tfn, "wb") as fh:
                 fh.write(iab)
 
-        return [testNumber, pageNames, self.viewFiles]
+        return [pageNames, viewFiles]
 
-    def doneWithViewFiles(self):
-        for f in self.viewFiles:
+    def doneWithWholePaperFiles(self, viewFiles):
+        for f in viewFiles:
             if os.path.isfile(f):
                 os.unlink(f)
-        self.viewFiles = []
 
     def cacheLatexComments(self):
         clist = commentLoadAll()
