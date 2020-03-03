@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [Unreleased]
+
+### Added
+* Plom is now a python package.
+* Annotator has a "no answer given" button which places crossed lines on page, leaves a comment, sets mark to 0.
+* Server management UI.
+
+### Changed
+* Server: improved database
+* Server: new upload procedure/tools
+* Reassembly tasks are now faster.
+* Client can generate a log file for debugging
+
+### Fixed
+* Server: manager-related database locks fixed
+
+
+## [Unreleased 0.3.1]
 
 ### Added
 * Added expert option to disable background upload/download.
@@ -122,6 +140,7 @@ in most cases.
 This is the first release of Plom, PaperLessOpenMarking.
 
 [Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...master
+[Unreleased 0.3.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...0.3
 [0.3.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.2...v0.3.0
 [0.2.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...v0.2.2
 [0.2.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.0...v0.2.1

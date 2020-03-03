@@ -1,0 +1,239 @@
+__author__ = "Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
+__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
+__license__ = "AGPLv3"
+
+from PyQt5.QtCore import Qt, pyqtSignal, QSize
+from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtWidgets import (
+    QAbstractItemView,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QGridLayout,
+    QFormLayout,
+    QFrame,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QTableView,
+    QToolButton,
+    QVBoxLayout,
+)
+
+
+class ErrorMessage(QMessageBox):
+    """A simple error message pop-up"""
+
+    def __init__(self, txt):
+        super(ErrorMessage, self).__init__()
+        fnt = self.font()
+        fnt.setPointSize((fnt.pointSize() * 3) // 2)
+        self.setFont(fnt)
+        self.setText(txt)
+        self.setStandardButtons(QMessageBox.Ok)
+
+
+class SimpleMessage(QMessageBox):
+    """A simple message pop-up with yes/no buttons and
+    large font.
+    """
+
+    def __init__(self, txt):
+        super(SimpleMessage, self).__init__()
+        self.setText(txt)
+        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        self.setDefaultButton(QMessageBox.Yes)
+        fnt = self.font()
+        fnt.setPointSize((fnt.pointSize() * 3) // 2)
+        self.setFont(fnt)
+
+
+class SimpleMessageCheckBox(QMessageBox):
+    """A simple message pop-up with yes/no buttons, a checkbox and
+    large font.
+    """
+
+    def __init__(self, txt):
+        super(SimpleMessageCheckBox, self).__init__()
+        self.cb = QCheckBox("Don't show this message again")
+        self.setText(txt)
+        self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        self.setDefaultButton(QMessageBox.Yes)
+        self.setCheckBox(self.cb)
+
+        fnt = self.font()
+        fnt.setPointSize((fnt.pointSize() * 3) // 2)
+        self.setFont(fnt)
+
+
+class SimpleTableView(QTableView):
+    """A table-view widget that emits annotateSignal when
+    the user hits enter or return.
+    """
+
+    # This is picked up by the marker, lets it know to annotate
+    annotateSignal = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(SimpleTableView, self).__init__()
+        # User can sort, cannot edit, selects by rows.
+        self.setSortingEnabled(True)
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # Resize to fit the contents
+        self.resizeRowsToContents()
+        self.horizontalHeader().setStretchLastSection(True)
+
+    def keyPressEvent(self, event):
+        # If user hits enter or return, then fire off
+        # the annotateSignal, else pass the event on.
+        key = event.key()
+        if key == Qt.Key_Return or key == Qt.Key_Enter:
+            self.annotateSignal.emit()
+        else:
+            super(SimpleTableView, self).keyPressEvent(event)
+
+
+class SimpleToolButton(QToolButton):
+    """Specialise the tool button to be an icon above text."""
+
+    def __init__(self, txt, icon):
+        super(SimpleToolButton, self).__init__()
+        self.setText(txt)
+        self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.setIcon(QIcon(QPixmap(icon)))
+        self.setIconSize(QSize(24, 24))
+        self.setMinimumWidth(100)
+
+
+class NoAnswerBox(QDialog):
+    def __init__(self):
+        super(NoAnswerBox, self).__init__()
+        self.setWindowTitle("Is this answer blank?")
+        self.yesNextB = QPushButton("Yes and &Next")
+        self.yesDoneB = QPushButton("&Yes")
+        self.noB = QPushButton("No, &cancel")
+        self.yesNextB.clicked.connect(lambda: self.done(1))
+        self.yesDoneB.clicked.connect(lambda: self.done(2))
+        self.noB.clicked.connect(self.reject)
+        grid = QGridLayout()
+        moreinfo = QLabel(
+            "<p>Is this answer blank or nearly blank?</p>"
+            "<p>Please answer &ldquo;no&rdquo; if there is "
+            "<em>any possibility</em> of relevant writing on the page.</p>"
+        )
+        moreinfo.setWordWrap(True)
+        grid.addWidget(moreinfo, 0, 1, 1, 2)
+        grid.addWidget(QLabel("advance to next paper"), 1, 2)
+        grid.addWidget(QLabel("keep annotating"), 2, 2)
+        grid.addWidget(QLabel("keep annotating"), 3, 2)
+        grid.addWidget(self.yesNextB, 1, 1)
+        grid.addWidget(self.yesDoneB, 2, 1)
+        grid.addWidget(self.noB, 3, 1)
+        self.setLayout(grid)
+
+
+class BlankIDBox(QDialog):
+    def __init__(self, parent, testNumber):
+        super(BlankIDBox, self).__init__()
+        self.parent = parent
+        self.testNumber = testNumber
+        self.setWindowTitle("What is blank on test/paper {}?".format(testNumber))
+        grid = QGridLayout()
+
+        grid.addWidget(
+            QLabel("Please scan through the whole paper before continuing."), 0, 1, 1, 2
+        )
+
+        self.blankB = QPushButton("Whole paper is &blank")
+        self.noIDB = QPushButton("&No ID given but not blank")
+        self.noB = QPushButton("&Cancel")
+
+        self.blankB.clicked.connect(lambda: self.done(1))
+        self.noIDB.clicked.connect(lambda: self.done(2))
+        self.noB.clicked.connect(self.reject)
+        grid.addWidget(QLabel("Please check to confirm!"), 1, 2)
+        grid.addWidget(
+            QLabel("There is writing on other this or other pages."), 2, 2,
+        )
+        grid.addWidget(self.blankB, 1, 1)
+        grid.addWidget(self.noIDB, 2, 1)
+        grid.addWidget(self.noB, 3, 1)
+        self.setLayout(grid)
+
+
+class ClientSettingsDialog(QDialog):
+    def __init__(self, s):
+        super(QDialog, self).__init__()
+        # self.parent = parent
+        self.setWindowTitle("Plom client options")
+
+        flay = QFormLayout()
+
+        self.comboLog = QComboBox()
+        self.comboLog.addItems(["Debug", "Info", "Warning", "Error", "Critical"])
+        self.comboLog.setCurrentText(s.get("LogLevel", "Info"))
+        flay.addRow("Logging level:", self.comboLog)
+        moreinfo = QLabel(
+            "(In order of severity; less serious messages will not be logged)"
+        )
+        flay.addWidget(moreinfo)
+
+        self.checkLogFile = QCheckBox("Log to file (requires restart)")
+        self.checkLogFile.setCheckState(
+            Qt.Checked if s.get("LogToFile") else Qt.Unchecked
+        )
+        flay.addWidget(self.checkLogFile)
+
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        flay.addRow(line)
+
+        self.checkFore = QCheckBox("Force foreground upload/downloads")
+        self.checkFore.setCheckState(
+            Qt.Checked if s.get("FOREGROUND") else Qt.Unchecked
+        )
+        flay.addWidget(self.checkFore)
+
+        moreinfo = QLabel(
+            "By default, Plom does these operations in background threads.\n"
+            "Checking this (e.g., for debugging or paranoia) will result in\n"
+            "delays between papers."
+        )
+        # moreinfo.setWordWrap(True)
+        flay.addWidget(moreinfo)
+
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        flay.addRow(line)
+
+        # TODO: for future expansion
+        self.cb2 = QCheckBox("Warn if no comments were made")
+        self.cb3 = QCheckBox("Warn if score inconsistent with annotations")
+        self.cb2.setCheckState(Qt.Checked)
+        self.cb3.setCheckState(Qt.Checked)
+        self.cb2.setEnabled(False)
+        self.cb3.setEnabled(False)
+        flay.addWidget(self.cb2)
+        flay.addWidget(self.cb3)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+    def getStuff(self):
+        return (
+            self.checkFore.checkState() == Qt.Checked,
+            self.comboLog.currentText(),
+            self.checkLogFile.checkState() == Qt.Checked,
+        )

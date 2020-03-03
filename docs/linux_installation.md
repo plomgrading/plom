@@ -1,7 +1,7 @@
 <!--
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald"
 __license__ = "GFDL"
  -->
 Installing on Popular GNU/Linux Distros
@@ -12,18 +12,19 @@ Fedora
 
 Tested on Fedora 31.  Some stuff from the package manager:
 ```
-  # sudo dnf install parallel ImageMagick zbar \
+  # sudo dnf install ImageMagick zbar \
                      python3-PyMuPDF python3-passlib python3-pypng \
                      python3-jsmin python3-defusedxml python3-yaml \
                      python3-urllib3 python3-more-itertools \
                      python3-seaborn python3-matplotlib-qt5 python3-aiohttp \
                      python3-peewee python3-pandas python3-requests-toolbelt \
-                     python3-pip python3-toml python3-weasyprint
+                     python3-pip python3-toml python3-weasyprint \
+                     python3-xvfbwrapper python3-tqdm
 ```
 
 Other stuff we install locally with `pip`:
 ```
-  # pip3 install --upgrade --user pyqrcode cheroot
+  # pip3 install --upgrade --user pyqrcode cheroot pyzbar
 ```
 
 More dependencies for the tensorflow-based ID reader:
@@ -40,13 +41,16 @@ Ubuntu
 Some stuff from the package manager:
 ```
   # sudo apt install \
-        parallel zbar-tools cmake make imagemagick dvipng g++ \
+        zbar-tools cmake make imagemagick dvipng g++ \
         python3-passlib python3-seaborn python3-pandas python3-pyqt5 \
         python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
         python3-pip python3-setuptools python3-wheel python3-toml \
         python3-requests-toolbelt python3-opencv texlive-latex-extra \
-        python3-peewee
+        python3-peewee python3-xvfbwrapper python3-tqdm \
+        libpango-1.0 libpangocairo-1.0
 ```
+The pango stuff is needed for weasyprint.
+
 These (and others) should work from the package manager but pip pulls them
 in anyway, not sure why.
 ```
@@ -57,7 +61,7 @@ Other stuff we get from pip:
 ```
   # pip3 install --upgrade --user pip
   # python3 -m pip install --upgrade --user setuptools
-  # python3 -m pip install --upgrade --user pymupdf weasyprint imutils aiohttp
+  # python3 -m pip install --upgrade --user pymupdf weasyprint imutils aiohttp pyzbar
   # python3 -m pip install --upgrade --user lapsolver "tensorflow<2"
 ```
 (Note `python3 -m pip` to use the newly upgraded pip).
