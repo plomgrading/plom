@@ -1519,10 +1519,11 @@ class TextItem(QGraphicsTextItem):
             # is not latex so we don't have to PNG-it
             return
 
-        if self.parent.latexAFragment(texIt):
+        fragfilename = self.parent.latexAFragment(texIt)
+        if fragfilename:
             self.setPlainText("")
             tc = self.textCursor()
-            qi = QImage("frag.png")
+            qi = QImage(fragfilename)
             tc.insertImage(qi)
             self.state = "PNG"
 
@@ -1807,8 +1808,9 @@ class GhostText(QGraphicsTextItem):
             texIt = (
                 "\\color{blue}\n" + txt[4:].strip()
             )  # make color blue for ghost rendering
-            if self.scene().latexAFragment(texIt):
+            fragfilename = self.scene().latexAFragment(texIt)
+            if fragfilename:
                 self.setPlainText("")
                 tc = self.textCursor()
-                qi = QImage("frag.png")
+                qi = QImage(fragfilename)
                 tc.insertImage(qi)
