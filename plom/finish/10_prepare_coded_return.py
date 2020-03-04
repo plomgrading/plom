@@ -45,7 +45,11 @@ def do_renaming(fromdir, todir):
 if __name__ == "__main__":
     # get commandline args if needed
     parser = argparse.ArgumentParser(
-        description="Prepare an html page for return via a secret code hashed from student number."
+        description="Prepare an html page for return via a secret code hashed from student number.",
+        epilog="The salt string is used to create a per-student access-code "
+        "using a one-way hash of their student number.  "
+        "If you have multiple tests/exams in the same course it makes sense "
+        "to re-use the same salt string for returning each test."
     )
     parser.add_argument("--saltstr", type=str, help="Per-course secret salt string (see docs)")
 
