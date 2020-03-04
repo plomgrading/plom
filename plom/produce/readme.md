@@ -34,8 +34,6 @@
 * 02 build_tests_from_spec = a script to build the pdfs of the tests from the specifications given. No hacking required.
   * Note this stores data in the ../resources directory as "examsProduced.json" - this encodes test-by-test which version was used for each page.
 
-* cleanAll.py = clean up all the user files in this directory (but not in the ../resources directory).
-
 * examsToBuild = a temp-ish directory that contains the latex files of the tests to be built (roughly speaking - just enough latex to load in the pdf pages of the source test versions and put the required QRcode stamps on them)
 
 * examsToPrint = a directory where the built tests go. There is one per student.
