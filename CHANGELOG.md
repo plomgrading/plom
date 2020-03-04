@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * In some regrade cases, delta-comments did not apply correctly.
+* Fix `ctrl-=` zoom toggle.
 
 
 ## [0.3.0] - 2020-02-10
