@@ -918,6 +918,7 @@ class MarkerClient(QWidget):
         self.exM.revertPaper(task)
         # Update the image (is now back to original untouched image)
         self.updateImage(pr)
+        self.updateProgress()
 
     def deferTest(self):
         """Mark test as "defer" - to be skipped until later."""
