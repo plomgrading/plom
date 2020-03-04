@@ -16,6 +16,7 @@ from plom.plom_exceptions import *
 
 numberOfTests = 0
 numberOfQuestions = 0
+CSVFilename = "testMarks.csv"
 
 # ----------------------
 
@@ -35,7 +36,7 @@ def writeSpreadsheet(spreadSheetDict):
     # add a warning column
     head.append("Warnings")
 
-    with open("testMarks.csv", "w") as csvfile:
+    with open(CSVFilename, "w") as csvfile:
         testWriter = csv.DictWriter(
             csvfile,
             fieldnames=head,
@@ -79,7 +80,9 @@ def writeSpreadsheet(spreadSheetDict):
 if __name__ == "__main__":
     # get commandline args if needed
     parser = argparse.ArgumentParser(
-        description="Returns list of tests that have been completed. No arguments = run as normal."
+        description='Create a spreadsheet of grades named "{}".'.format(CSVFilename),
+        epilog="If grading is not yet complete, the spreadsheet contains "
+        "partial info and any warnings so far.",
     )
     parser.add_argument("-w", "--password", type=str)
     parser.add_argument(
