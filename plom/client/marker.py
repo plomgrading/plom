@@ -142,7 +142,7 @@ class BackgroundUploader(QThread):
         log.debug("upQ enqueing item from main thread " + str(threading.get_ident()))
         self.q.put(args)
 
-    def empty(self):
+    def isEmpty(self):
         return self.q.empty()
 
     def run(self):
@@ -1168,7 +1168,7 @@ class MarkerClient(QWidget):
         if self.backgroundUploader:
             count = 42
             while self.backgroundUploader.isRunning():
-                if self.backgroundUploader.empty():
+                if self.backgroundUploader.isEmpty():
                     # don't try to quit until the queue is empty
                     self.backgroundUploader.quit()
                 time.sleep(0.1)
