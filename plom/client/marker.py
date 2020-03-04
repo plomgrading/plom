@@ -898,15 +898,14 @@ class MarkerClient(QWidget):
 
     def revertTest(self):
         """Get rid of any annotations or marks and go back to unmarked original"""
-        # TODO: shouldn't the server be informed?
-        # https://gitlab.math.ubc.ca/andrewr/MLP/issues/406
-        # TODO: In particular, reverting the paper must not jump queue!
         if len(self.ui.tableView.selectedIndexes()):
             pr = self.ui.tableView.selectedIndexes()[0].row()
         else:
             return
         task = self.prxM.getPrefix(pr)
-        # If test does not have status "marked" then nothing to do
+        # If test does not have status "marked" then nothing to do.  Could
+        # check `backgroundUploader.isEmpty()` but this simple status check
+        # should prevent reverting while upload is in progress.
         if self.exM.getStatusByTask(task) != "marked":
             return
         # Check user really wants to revert
