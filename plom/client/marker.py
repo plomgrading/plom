@@ -1274,28 +1274,28 @@ class MarkerClient(QWidget):
                 pd.setValue(c)
 
     def latexAFragment(self, txt):
+        """Run LaTeX on a fragment of text and return the file name of a png.
+
+        The files are cached for reuse if the same text is passed again.
+        """
         if txt in self.commentCache:
             # have already latex'd this comment
-            shutil.copyfile(self.commentCache[txt], "frag.png")
-            return True
-
+            return self.commentCache[txt]
+        log.debug('requesting latex for "{}"'.format(txt))
         try:
             fragment = messenger.MlatexFragment(txt)
-        except PlomLatexException as err:
-            # a latex error
-            return False
+        except PlomLatexException:
+            return None
         # a name for the fragment file
         fragFile = tempfile.NamedTemporaryFile(
-            delete=False, dir=self.workingDirectory
+            dir=self.workingDirectory, suffix=".png", delete=False
         ).name
         # save it
         with open(fragFile, "wb+") as fh:
             fh.write(fragment)
-        # and put a copy to frag.png
-        shutil.copyfile(fragFile, "frag.png")
         # add it to the cache
         self.commentCache[txt] = fragFile
-        return True
+        return fragFile
 
     def tagTest(self):
         if len(self.ui.tableView.selectedIndexes()):
