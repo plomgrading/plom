@@ -1142,6 +1142,12 @@ class Annotator(QWidget):
         self.ui.zoomCB.addItem("33%")
         self.ui.zoomCB.currentIndexChanged.connect(self.zoomCBChanged)
 
+    def isZoomFitWidth(self):
+        return self.ui.zoomCB.currentText() == "Fit width"
+
+    def isZoomFitHeight(self):
+        return self.ui.zoomCB.currentText() == "Fit height"
+
     def changeCBZoom(self, v):
         old = self.ui.zoomCB.blockSignals(True)
         self.ui.zoomCB.setCurrentIndex(v)

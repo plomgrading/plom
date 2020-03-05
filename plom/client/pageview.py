@@ -65,9 +65,9 @@ class PageView(QGraphicsView):
 
     def zoomToggle(self):
         # cycle the zoom state setting between width and height
-        if self.parent.ui.zoomCB.currentText() == "Fit Width":
+        if self.parent.isZoomFitWidth():
             self.zoomHeight(True)
-        elif self.parent.ui.zoomCB.currentText() == "Fit Height":
+        elif self.parent.isZoomFitHeight():
             self.zoomWidth(True)
         else:
             self.zoomWidth(True)
