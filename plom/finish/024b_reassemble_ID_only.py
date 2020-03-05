@@ -39,7 +39,7 @@ def reassembleTestCMD(msgr, shortName, outDir, t, sid):
 if __name__ == "__main__":
     # get commandline args if needed
     parser = argparse.ArgumentParser(
-        description="Returns list of tests that have been completed. No arguments = run as normal."
+        description="Reassemble PDF files for ID and totalled (offline-graded) papers."
     )
     parser.add_argument("-w", "--password", type=str)
     parser.add_argument(

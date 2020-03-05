@@ -16,7 +16,7 @@ from plom.messenger import FinishMessenger
 if __name__ == "__main__":
     # get commandline args if needed
     parser = argparse.ArgumentParser(
-        description="Run the manager-login clearing script. No arguments = run as normal."
+        description="Clear the manager login."
     )
     parser.add_argument("-w", "--password", type=str)
     parser.add_argument(
