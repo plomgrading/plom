@@ -2,6 +2,9 @@ import hashlib
 import os
 import shutil
 import uuid
+import logging
+
+log = logging.getLogger("servID")
 
 
 def IDprogressCount(self):
@@ -70,7 +73,7 @@ def IDdeletePredictions(self):
     shutil.move("../resources/predictionlist.csv", "../resources/predictionlist.bak")
     with open("../resources/predictionlist.csv", "w") as fh:
         fh.write("test, id\n")
-    printLog("SID", "ID prediction list deleted")
+    log.info("ID prediction list deleted")
 
     return True
 
