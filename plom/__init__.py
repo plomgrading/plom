@@ -8,4 +8,5 @@ from .version import Default_Port
 
 from .rules import isValidStudentNumber
 
-from .logit import printLog
+# TODO: deprecated
+from .logit import printLog as _printLog

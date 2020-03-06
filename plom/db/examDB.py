@@ -1,7 +1,8 @@
 from peewee import *
 from datetime import datetime, timedelta
 
-from plom import printLog
+# TODO: replace with logging
+from plom import _printLog as printLog
 
 # import logging
 # logger = logging.getLogger("peewee")
