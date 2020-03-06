@@ -92,7 +92,7 @@ class Chooser(QDialog):
                 datefmt="%m-%d %H:%M:%S",
             )
         # Default to INFO log level
-        logging.getLogger().setLevel(lastTime.get("LogLevel", "Info").upper()),
+        logging.getLogger().setLevel(lastTime.get("LogLevel", "Info").upper())
 
         s = "Plom Client {} (communicates with api {})".format(
             __version__, self.APIVersion
