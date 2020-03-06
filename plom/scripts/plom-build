@@ -135,9 +135,13 @@ def buildDatabaseAndPapers(blankOrID):
 
 
 parser = argparse.ArgumentParser()
-sub = parser.add_subparsers(help="sub-command help", dest="command")
+sub = parser.add_subparsers(
+    help="sub-command help",
+    dest="command",
+    metavar="{newspec, parse, classlist, makepdfs}",
+)
 #
-spC = sub.add_parser("create")
+spC = sub.add_parser("newspec", aliases=["new"], help="Create new spec file.")
 spC.add_argument(
     "specFile",
     nargs="?",
@@ -145,7 +149,7 @@ spC.add_argument(
     help="Create test-specification toml file with name specFile. If no argument given then defaults to 'testSpec.toml'",
 )
 #
-spP = sub.add_parser("parse")
+spP = sub.add_parser("parse", aliases=["check"], help="Parse spec file.")
 spP.add_argument(
     "specFile",
     nargs="?",
@@ -154,7 +158,7 @@ spP.add_argument(
 )
 
 #
-spL = sub.add_parser("class")
+spL = sub.add_parser("classlist", aliases=["list"], help="Read in a classlist.")
 spL.add_argument(
     "classlist",
     nargs="?",
@@ -162,7 +166,7 @@ spL.add_argument(
 )
 
 #
-spB = sub.add_parser("build")
+spB = sub.add_parser("makepdfs", aliases=["make"], help="Make the PDFs")
 spB.add_argument(
     "naming",
     nargs="?",
@@ -174,7 +178,7 @@ spB.add_argument(
 # Now parse things
 args = parser.parse_args()
 
-if args.command == "create":
+if args.command in ["newspec", "new"]:
     # check the file extension
     fname = checkTomlExtension(args.specFile)
     # copy the template spec into place
@@ -184,10 +188,10 @@ elif args.command == "parse":
     fname = checkTomlExtension(args.specFile)
     # copy the template spec into place
     parseAndVerifySpecification(fname)
-elif args.command == "class":
+elif args.command in ["classlist", "class"]:
     # process the class list and copy into place
     processClasslist(args.classlist)
-elif args.command == "build":
+elif args.command in ["makepdfs", "make"]:
     # get building.
     buildDatabaseAndPapers(args.naming)
 else:
