@@ -1,11 +1,7 @@
 from peewee import *
 from datetime import datetime, timedelta
 
-# this allows us to import from ../resources
-import sys
-
-sys.path.append("..")
-from resources.logIt import printLog
+from plom import printLog
 
 # import logging
 # logger = logging.getLogger("peewee")

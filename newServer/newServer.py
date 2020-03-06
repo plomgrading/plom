@@ -23,11 +23,11 @@ from authenticate import Authority
 
 # this allows us to import from ../resources
 sys.path.append("..")
-from resources.logIt import printLog
 from plom import __version__
 from plom import Plom_API_Version as serverAPI
 from plom import SpecParser
 from plom.db.examDB import PlomDB
+from plom import printLog   # probably temporary
 
 # ----------------------
 

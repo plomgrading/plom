@@ -2,11 +2,7 @@ import hashlib
 import os
 import uuid
 
-# this allows us to import from ../resources
-import sys
-
-sys.path.append("..")
-from resources.logIt import printLog
+from plom import printLog  # hopefully temporary
 
 
 def InfoShortName(self):

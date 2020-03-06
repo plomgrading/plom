@@ -7,3 +7,5 @@ from .version import __version__, Plom_API_Version
 from .version import Default_Port
 
 from .rules import isValidStudentNumber
+
+from .logit import printLog
