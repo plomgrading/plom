@@ -135,13 +135,9 @@ def buildDatabaseAndPapers(blankOrID):
 
 
 parser = argparse.ArgumentParser()
-sub = parser.add_subparsers(
-    help="sub-command help",
-    dest="command",
-    metavar="{newspec, parse, classlist, makepdfs}",
-)
+sub = parser.add_subparsers(help="sub-command help", dest="command",)
 #
-spC = sub.add_parser("newspec", aliases=["new"], help="Create new spec file.")
+spC = sub.add_parser("new", help="Create new spec file.")
 spC.add_argument(
     "specFile",
     nargs="?",
@@ -149,7 +145,7 @@ spC.add_argument(
     help="Create test-specification toml file with name specFile. If no argument given then defaults to 'testSpec.toml'",
 )
 #
-spP = sub.add_parser("parse", aliases=["check"], help="Parse spec file.")
+spP = sub.add_parser("parse", help="Parse spec file.")
 spP.add_argument(
     "specFile",
     nargs="?",
@@ -158,7 +154,7 @@ spP.add_argument(
 )
 
 #
-spL = sub.add_parser("classlist", aliases=["list"], help="Read in a classlist.")
+spL = sub.add_parser("class", help="Read in a classlist.")
 spL.add_argument(
     "classlist",
     nargs="?",
@@ -166,7 +162,7 @@ spL.add_argument(
 )
 
 #
-spB = sub.add_parser("makepdfs", aliases=["make"], help="Make the PDFs")
+spB = sub.add_parser("make", help="Make the PDFs")
 spB.add_argument(
     "naming",
     nargs="?",
@@ -178,20 +174,20 @@ spB.add_argument(
 # Now parse things
 args = parser.parse_args()
 
-if args.command in ["newspec", "new"]:
+if args.command == "new":
     # check the file extension
     fname = checkTomlExtension(args.specFile)
     # copy the template spec into place
     createSpecificationFile(fname)
-elif args.command in ["parse", "check"]:
+elif args.command == "parse":
     # check the file extension
     fname = checkTomlExtension(args.specFile)
     # copy the template spec into place
     parseAndVerifySpecification(fname)
-elif args.command in ["classlist", "list"]:
+elif args.command == "class":
     # process the class list and copy into place
     processClasslist(args.classlist)
-elif args.command in ["makepdfs", "make"]:
+elif args.command == "make":
     # get building.
     buildDatabaseAndPapers(args.naming)
 else:
