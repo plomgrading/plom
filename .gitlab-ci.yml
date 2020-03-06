@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019 John Hsu
-# Copyright (C) 2019 Colin B. Macdonald
+# Copyright (C) 2019-2020 Colin B. Macdonald
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -33,17 +33,18 @@ before_script:
   - apt-get update
   - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
   - apt-get --no-install-recommends --yes install
-    parallel zbar-tools cmake make imagemagick dvipng g++
+    zbar-tools cmake make imagemagick dvipng g++
     python3-passlib python3-seaborn python3-pandas python3-pyqt5
     python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev
     python3-pip python3-setuptools python3-wheel python3-toml
-    python3-requests-toolbelt texlive-latex-extra
-    iproute2 psmisc
+    python3-requests-toolbelt texlive-latex-extra python3-xvfbwrapper
+    python3-tqdm libpango-1.0 libpangocairo-1.0
+    iproute2 psmisc file
   - pip3 install --upgrade pip
   - which pip3
   - python3 -m pip -V
   - python3 -m pip install --upgrade setuptools
-  - python3 -m pip install pymupdf weasyprint imutils lapsolver peewee cheroot aiohttp
+  - python3 -m pip install pymupdf weasyprint imutils lapsolver peewee cheroot aiohttp pyzbar
 
 stages:
   - build
@@ -52,6 +53,10 @@ stages:
 job buildPapers:
   stage: test
   script:
+    - python3 ./setup.py build bdist_wheel
+    - pushd dist
+    - python3 -m pip install plom-*.whl
+    - popd
     # First build sources pdfs
     - pushd testTemplates
     - pdflatex latexTemplate.tex
@@ -60,55 +65,80 @@ job buildPapers:
     - pdflatex latexTemplatev2.tex
     - pdflatex --interaction=batchmode latexTemplatev2.tex
     - pdflatex --interaction=batchmode latexTemplatev2.tex
-    - cp latexTemplate.pdf ../build/sourceVersions/version1.pdf
-    - cp latexTemplatev2.pdf ../build/sourceVersions/version2.pdf
+    - popd
+    # download some pre-existing files
+    - mkdir tmp
+    - pushd tmp
+    - curl https://www.math.ubc.ca/~cbm/tmp/resources_0984da85.tar.gz | tar -zx
     - popd
     # Now build tests
-    - pushd build
-    - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
-    - mv resources cannedResources
-    - ./001_startHere.py
-    - cp cannedResources/verifiedSpec.toml testSpec.toml
-    - ./002_verifySpec.py
-    - ls ../resources/verifiedSpec.toml
+    - mkdir play
+    - pushd play
+    - plom-build create
+    - cp ../testTemplates/latexTemplate.pdf sourceVersions/version1.pdf
+    - cp ../testTemplates/latexTemplatev2.pdf sourceVersions/version2.pdf
+    # overwrite the testSpec with our prepared one
+    - cp ../tmp/resources/verifiedSpec.toml testSpec.toml
+    - plom-build parse
     # TODO: override the private seed
-    - sed ../resources/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
-    - diff -u ../resources/verifiedSpec.toml cannedResources/verifiedSpec.toml
-    - ./003_buildPlomDB.py
-    - ./004_buildPDFs.py
-    - ./004a_buildPDFs_no_names.py
-    # TODO: compare to downloaded canned versions?
+    - sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
+    - diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
+    - plom-build build blank
     # TODO: https://github.com/vslavik/diff-pdf, not in Ubuntu repos?
-    - A=`ls examsToPrint/ | wc -l`   # How many files?
+    - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
     - popd
 
 job serverStarts:
   stage: test
   script:
-    - pushd scanAndUpload
-    - python3 011_startHere.py
-    # supposed to fail:
-    - if (python3 012_scansToImages.py); then false; else true; fi
+    - python3 ./setup.py build bdist_wheel
+    - pushd dist
+    - python3 -m pip install plom-*.whl
     - popd
+    - mkdir play
     # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
-    - curl https://www.math.ubc.ca/~cbm/tmp/testThis.pdf > scanAndUpload/scannedExams/foo.pdf
-    - curl https://www.math.ubc.ca/~cbm/tmp/resources_a8e9b763.tar.gz | tar -zx
-    - ls resources
-    - ls scanAndUpload/scannedExams
-    - pushd scanAndUpload
-    - python3 011_startHere.py
-    - python3 012_scansToImages.py
+    - curl https://www.math.ubc.ca/~cbm/tmp/testBlank16.pdf > play/foo.pdf
+    - curl https://www.math.ubc.ca/~cbm/tmp/resources_0984da85.tar.gz | tar -zx
+    # scan and upload
+    - pushd play
+    # supposed to fail:
+    - if (plom-scan.py process); then false; else true; fi
+    - plom-scan.py process foo.pdf
     - popd
+    # Start server
     - pushd newServer
     - ip addr
     - python3 newServer.py &
-    - sleep 3
-    - sleep 3
+    - sleep 1
     - echo "Server should be in background"
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
+    - popd
+    - pushd play
+    # TODO: -s, -w should go with the subcommand (after "read")
+    - plom-scan.py -s localhost -w rennacs read
+    - plom-scan.py -s localhost -w rennacs upload
+    - plom-scan.py -s localhost -w rennacs upload -u
+    - plom-scan.py -s localhost -w rennacs upload -c
+    - plom-scan.py -s localhost -w rennacs status
+    ## not supposed to be done yet:
+    - if (python3 -m plom.finish.022_check_completed -s localhost -w hackhack); then false; else true; fi
+    - python3 -m plom.client.randoIDer -s localhost -u anne -w enna
+    - python3 -m plom.client.randoMarker -s localhost -u anne -w enna
+    - python3 -m plom.finish.021_startHere
+    - python3 -m plom.finish.022_check_completed -s localhost -w hackhack
+    - python3 -m plom.finish.023_spreadsheet -s localhost -w hackhack
+    - A=`cat testMarks.csv  | wc -l`  # How many lines?
+    - bash -c "[[ $A == 17 ]]"        # should be 16 + 1
+    - file -b testMarks.csv  | grep ASCII   # should be ascii test
+    - python3 -m plom.finish.024a_reassemble_completed -s localhost -w hackhack
+    - A=`ls reassembled/ | wc -l`    # How many files?
+    - bash -c "[[ $A == 16 ]]"
+    - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
+    - bash -c "[[ $A -lt 5 ]]"           # not more than 5 MB
+    - popd
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
@@ -116,12 +146,6 @@ job serverStarts:
     - sleep 2
     - echo "Should be no jobs and this should succeed"
     - jobs -l
-    - popd
-    - pushd finishing
-    # TODO: fix this up
-    # echo "The 07 script should fail as we did not grade and ID"
-    # if (python3 07_check_completed.py); then false; else true; fi
-    - popd
 
 job backgroundTest:
   before_script:
@@ -140,12 +164,13 @@ job backgroundTest:
     - echo "Should be no jobs and this should succeed"
     - jobs -p
 
-job someUnitTests:
-  stage: test
-  script:
-    - pushd finishing
-    - ./run_unit_tests.sh
-    - popd
-    - pushd resources
-    - ./run_unit_tests.sh
-    - popd
+# TODO: maybe she'll come back one day...
+#job someUnitTests:
+#  stage: test
+#  script:
+#    - pushd finishing
+#    - ./run_unit_tests.sh
+#    - popd
+#    - pushd resources
+#    - ./run_unit_tests.sh
+#    - popd

@@ -9,31 +9,30 @@ import subprocess
 import tempfile
 import shutil
 
-head = """
-\\documentclass[12pt]{article}
-\\usepackage[letterpaper, textwidth=5in]{geometry}
-\\usepackage{amsmath, amsfonts}
-\\usepackage{xcolor}
-\\usepackage[active, tightpage]{preview}
-\\begin{document}
-\\begin{preview}
-\\color{red}
+head = r"""
+\documentclass[12pt]{article}
+\usepackage[letterpaper, textwidth=5in]{geometry}
+\usepackage{amsmath, amsfonts}
+\usepackage{xcolor}
+\usepackage[active, tightpage]{preview}
+\begin{document}
+\begin{preview}
+\color{red}
 """
 
-foot = """
-\\end{preview}
-\\end{document}
+foot = r"""
+\end{preview}
+\end{document}
 """
 
 cdir = os.getcwd()
 td = tempfile.TemporaryDirectory()
 os.chdir(td.name)
 
-frag = ""
 with open(sys.argv[1], "r") as fh:
     frag = fh.read()
 
-with open("frag.tex".format(td.name), "w") as fh:
+with open(os.path.join(td.name, "frag.tex"), "w") as fh:
     fh.write(head)
     fh.write(frag)
     fh.write(foot)

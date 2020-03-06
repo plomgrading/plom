@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import argparse
+import os
+import shutil
+
+from plom import SpecVerifier, SpecParser
+
+# import tools for dealing with resource files
+import pkg_resources
+
+
+def checkTomlExtension(fname):
+    ext = os.path.splitext(fname)[1]
+    if ext == ".toml":
+        return fname
+    elif len(ext) == 0:
+        return fname + ".toml"
+    else:
+        print(
+            'Your specification file name should either have no extension or end in ".toml".'
+        )
+        exit(1)
+
+
+def createSpecificationFile(fname):
+    print('Creating specification file with name "{}"'.format(fname))
+    template = pkg_resources.resource_string("plom", "templateTestSpec.toml")
+    template = template.decode()
+    with open(fname, "w+") as fh:
+        fh.write(template)
+    print('Creating "sourceVersions" directory for your test source PDFs.')
+    os.makedirs("sourceVersions", exist_ok=True)
+    print(
+        "Please edit the template specification file and copy your source test PDFs into the sourceVersions directory as version1.pdf, version2.pdf etc."
+    )
+
+
+def parseAndVerifySpecification(fname):
+    os.makedirs("specAndDatabase", exist_ok=True)
+    os.makedirs("sourceVersions", exist_ok=True)
+    print('Parsing and verifying the specification "{}"'.format(fname))
+    if not os.path.isfile(fname):
+        print('Cannot find "{}" - have you run "plom-build create" yet?'.format(fname))
+        exit(1)
+
+    sv = SpecVerifier(fname)
+    sv.verifySpec()
+    sv.checkCodes()
+    sv.saveVerifiedSpec()
+    sp = SpecParser()
+    if sp.spec["numberToName"] > 0:
+        print(
+            'Your spec indicates that you wish to print named papers. Please process your class list using "plom-build class ".'
+        )
+
+
+def processClasslist(fname):
+    from plom.produce import buildClasslist
+
+    # check if a filename given
+    if fname is None:
+        print("Please provide a classlist file.")
+        buildClasslist.acceptedFormats()
+        exit(1)
+    # grab the file, process it and copy it into place.
+
+    if os.path.isfile(fname):
+        buildClasslist.getClassList(fname)
+    else:
+        print('Cannot find file "{}"'.format(fname))
+        exit(1)
+
+
+def buildDatabase(spec):
+    from plom.produce import buildPlomDB
+
+    if os.path.isfile("specAndDatabase/plom.db"):
+        print("Database already exists - aborting.")
+        exit(1)
+
+    print("Creating plom database")
+    buildPlomDB.buildExamDatabase(spec, "specAndDatabase/plom.db")
+    print("Done!")
+
+
+def buildBlankPapers(spec):
+    from plom.produce import buildBlankPDF
+
+    print("Building blank papers")
+    buildBlankPDF.buildAllPapers(spec, "specAndDatabase/plom.db")
+    print("Checking papers all produced")
+    buildBlankPDF.confirmProcessed(spec, "specAndDatabase/plom.db")
+
+
+def buildNamedPapers(spec):
+    from plom.produce import buildNamedPDF
+
+    print("Building named papers")
+    buildNamedPDF.buildAllPapers(spec, "specAndDatabase/plom.db")
+    print("Checking papers all produced")
+    buildNamedPDF.confirmProcessedAndNamed(spec, "specAndDatabase/plom.db")
+
+
+def buildDatabaseAndPapers(blankOrID):
+    print("Reading specification")
+    if not os.path.isfile("specAndDatabase/verifiedSpec.toml"):
+        print('Cannot find verified specFile - have you run "plom-build parse" yet?')
+        exit(1)
+    spec = SpecParser().spec
+
+    if blankOrID == "blank" and spec["numberToName"] > 0:
+        print(
+            'Your spec says to produce {} named-papers. You should either edit your spec file, or rerun with "plom-build build blank".'.format(
+                spec["numberToName"]
+            )
+        )
+        exit(1)
+
+    if blankOrID == "named" and spec["numberToName"] == 0:
+        print(
+            'Your spec says to produce only unnamed papers. You should either edit your spec file, or rerun with "plom-build build named".'
+        )
+        exit(1)
+
+    buildDatabase(spec)
+
+    print("Making directory for papers.")
+    os.makedirs("papersToPrint", exist_ok=True)
+    if blankOrID == "blank":
+        buildBlankPapers(spec)
+    else:
+        buildNamedPapers(spec)
+
+
+parser = argparse.ArgumentParser()
+sub = parser.add_subparsers(help="sub-command help", dest="command")
+#
+spC = sub.add_parser("create")
+spC.add_argument(
+    "specFile",
+    nargs="?",
+    default="testSpec.toml",
+    help="Create test-specification toml file with name specFile. If no argument given then defaults to 'testSpec.toml'",
+)
+#
+spP = sub.add_parser("parse")
+spP.add_argument(
+    "specFile",
+    nargs="?",
+    default="testSpec.toml",
+    help="Parse and verify test-specification toml file with name specFile. If no argument given then defaults to 'testSpec.toml'",
+)
+
+#
+spL = sub.add_parser("class")
+spL.add_argument(
+    "classlist",
+    nargs="?",
+    help="Process the given classlist file and copy the result into place.",
+)
+
+#
+spB = sub.add_parser("build")
+spB.add_argument(
+    "naming",
+    nargs="?",
+    choices=["blank", "named"],
+    default="blank",
+    help='Build papers and database from the specification either blank or pre-named. If no argument given then defaults to "blank"',
+)
+
+# Now parse things
+args = parser.parse_args()
+
+if args.command == "create":
+    # check the file extension
+    fname = checkTomlExtension(args.specFile)
+    # copy the template spec into place
+    createSpecificationFile(fname)
+elif args.command == "parse":
+    # check the file extension
+    fname = checkTomlExtension(args.specFile)
+    # copy the template spec into place
+    parseAndVerifySpecification(fname)
+elif args.command == "class":
+    # process the class list and copy into place
+    processClasslist(args.classlist)
+elif args.command == "build":
+    # get building.
+    buildDatabaseAndPapers(args.naming)
+else:
+    # no command given so print help.
+    parser.print_help()
+
+exit(0)

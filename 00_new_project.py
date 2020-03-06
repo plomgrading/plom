@@ -22,20 +22,9 @@ from PyQt5.QtWidgets import (
 )
 from resources.uiFiles.ui_launcher import Ui_Launcher
 
-directories = ["build", "finishing", "newServer", "resources", "scanAndUpload"]
+directories = ["build", "finishing", "newServer", "resources"]
 
 directories += ["build/examsToPrint", "build/sourceVersions"]
-
-directories += [
-    "scanAndUpload/archivedPDFs",
-    "scanAndUpload/collidingPages",
-    "scanAndUpload/decodedPages",
-    "scanAndUpload/discardedPages",
-    "scanAndUpload/pageImages",
-    "scanAndUpload/scannedExams",
-    "scanAndUpload/sentPages",
-    "scanAndUpload/extraPages/",
-]
 
 directories += [
     "newServer/pages",
@@ -45,7 +34,7 @@ directories += [
     "newServer/plomServer",
 ]
 
-directories += ["clients", "clients/uiFiles", "clients/icons"]
+directories += ["clients", "clients/uiFiles", "clients/icons", "clients/cursors"]
 
 files = [
     "resources/plom_exceptions.py",
@@ -71,17 +60,26 @@ files += [
 ]
 
 files += [
-    "scanAndUpload/cleanAll.py",
-    "scanAndUpload/extractQR.py",
-    "scanAndUpload/fasterQRExtract.py",
-    "scanAndUpload/011_startHere.py",
-    "scanAndUpload/012_scansToImages.py",
-    "scanAndUpload/013_readQRCodes.py",
-    "scanAndUpload/014_sendPagesToServer.py",
-    "scanAndUpload/015_sendUnknownsToServer.py",
-    "scanAndUpload/016_sendCollisionsToServer.py",
-    "scanAndUpload/019_checkScansStatus.py",
-    "scanAndUpload/server.toml",
+    "plom/__init__.py",
+    "plom/version.py",
+    "plom/scan/__init__.py",
+    "plom/scan/fasterQRExtract.py",
+    "plom/scanMessenger.py",
+    "plom/plom_exceptions.py",
+    "plom/specParser.py",
+    "plom/tpv_utils.py",
+    "plom/misc_utils.py",
+]
+
+files += [
+    "scanCleanAll.py",
+    "011_scanningStartHere.py",
+    "012_scansToImages.py",
+    "013_readQRCodes.py",
+    "014_sendPagesToServer.py",
+    "015_sendUnknownsToServer.py",
+    "016_sendCollisionsToServer.py",
+    "019_checkScansStatus.py",
 ]
 
 files += [
@@ -130,7 +128,7 @@ files += [
     "clients/discardview.py",
     "clients/selectrectangle.py",
     "clients/unknownpageview.py",
-    "clients/plom_exceptions",
+    "clients/plom_exceptions.py",
 ]
 
 files += [
@@ -167,6 +165,18 @@ files += [
     "clients/icons/manager_none.svg",
     "clients/icons/manager_test.svg",
     "clients/icons/manager_unknown.svg",
+]
+
+files += [
+    "./clients/cursors/box.png",
+    "./clients/cursors/text-comment.png",
+    "./clients/cursors/pen.png",
+    "./clients/cursors/cross.png",
+    "./clients/cursors/delete.png",
+    "./clients/cursors/line.png",
+    "./clients/cursors/text-delta.png",
+    "./clients/cursors/text.png",
+    "./clients/cursors/tick.png",
 ]
 
 files += [

@@ -23,11 +23,11 @@ from authenticate import Authority
 
 # this allows us to import from ../resources
 sys.path.append("..")
-from resources.version import __version__
-from resources.version import Plom_API_Version as serverAPI
-from resources.specParser import SpecParser
-from resources.examDB import *
 from resources.logIt import printLog
+from plom import __version__
+from plom import Plom_API_Version as serverAPI
+from plom import SpecParser
+from plom.db.examDB import PlomDB
 
 # ----------------------
 
@@ -208,8 +208,8 @@ def getServerInfo():
 
 
 getServerInfo()
-examDB = PlomDB()
-spec = SpecParser().spec
+examDB = PlomDB("../resources/plom.db")
+spec = SpecParser("../resources/verifiedSpec.toml").spec
 buildDirectories()
 peon = Server(spec, examDB)
 userIniter = UserInitHandler(peon)
