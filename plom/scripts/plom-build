@@ -183,12 +183,12 @@ if args.command in ["newspec", "new"]:
     fname = checkTomlExtension(args.specFile)
     # copy the template spec into place
     createSpecificationFile(fname)
-elif args.command == "parse":
+elif args.command in ["parse", "check"]:
     # check the file extension
     fname = checkTomlExtension(args.specFile)
     # copy the template spec into place
     parseAndVerifySpecification(fname)
-elif args.command in ["classlist", "class"]:
+elif args.command in ["classlist", "list"]:
     # process the class list and copy into place
     processClasslist(args.classlist)
 elif args.command in ["makepdfs", "make"]:
