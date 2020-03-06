@@ -7,10 +7,12 @@ __copyright__ = "Copyright (C) 2020"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import logging
 import functools
 from aiohttp import web
 
-from plom import printLog  # temp?
+log = logging.getLogger("routes")
+
 
 def validFields(d, fields):
     """Check that input dict has (and only has) expected fields."""
@@ -18,8 +20,7 @@ def validFields(d, fields):
 
 
 def logRequest(name, request):
-    # TODO log.info()
-    printLog(name, "INFO: {} {}".format(request.method, request.rel_url))
+    log.info("{} {} {}".format(name, request.method, request.rel_url))
 
 
 # TODO: try to work the @routes decorator in too
@@ -46,8 +47,7 @@ def authByToken(f):
             return web.Response(status=400)
         if not zelf.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
-        # TODO: log.debug()
-        printLog(f.__name__, 'DEBUG: authenticated "{}" via token'.format(data["user"]))
+        log.debug('{} authenticated "{}" via token'.format(f.__name__, data["user"]))
         return f(zelf)
 
     return wrapped
@@ -76,15 +76,12 @@ def authByToken_validFields(fields):
         async def wrapped(zelf, request):
             logRequest(f.__name__, request)
             data = await request.json()
-            # TODO: log.debug()
-            printLog(f.__name__, "DEBUG: validating fields {}".format(fields))
+            log.debug("{} validating fields {}".format(f.__name__, fields))
             if not validFields(data, fields):
                 return web.Response(status=400)
             if not zelf.server.validate(data["user"], data["token"]):
                 return web.Response(status=401)
-            # TODO: log.debug()
-            printLog(f.__name__, 'DEBUG: authenticated "{}" via token'.format(data["user"]))
-
+            log.debug('{} authenticated "{}" via token'.format(f.__name__, data["user"]))
             return f(zelf, data, request)
 
         return wrapped

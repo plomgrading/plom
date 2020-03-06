@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import uuid
+import logging
 
 # ----------------------
 
@@ -27,7 +28,6 @@ from plom import __version__
 from plom import Plom_API_Version as serverAPI
 from plom import SpecParser
 from plom.db.examDB import PlomDB
-from plom import printLog   # probably temporary
 
 # ----------------------
 
@@ -44,6 +44,19 @@ from plomServer.routesID import IDHandler
 from plomServer.routesMark import MarkHandler
 from plomServer.routesTotal import TotalHandler
 from plomServer.routesReport import ReportHandler
+
+
+# 7 is wdith of "warning"
+logging.basicConfig(
+    format="%(asctime)s %(levelname)7s:%(name)s\t%(message)s", datefmt="%m-%d %H:%M:%S",
+)
+log = logging.getLogger("server")
+# TODO: take from command line argument, debug to INFO
+logging.getLogger().setLevel("Debug".upper())
+# log.setLevel("Debug".upper())
+
+log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
+
 
 # ----------------------
 def buildDirectories():
@@ -62,7 +75,7 @@ def buildDirectories():
     for dir in lst:
         try:
             os.mkdir(dir)
-            printLog("Server", "Building directory {}".format(dir))
+            log.debug("Building directory {}".format(dir))
         except FileExistsError:
             pass
 
@@ -72,7 +85,7 @@ def buildDirectories():
 
 class Server(object):
     def __init__(self, spec, db):
-        printLog("Server", "Initialising server")
+        log.debug("Initialising server")
         self.testSpec = spec
         self.DB = db
         self.API = serverAPI
@@ -91,15 +104,15 @@ class Server(object):
                 # Load the users and pass them to the authority.
                 self.userList = json.load(data_file)
                 self.authority = Authority(self.userList)
-            printLog("Server", "Loading users")
+            log.debug("Loading users")
         else:
             # Cannot find users - give error and quit out.
-            printLog("Server", "Cannot find user/password file - aborting.")
+            log.error("Cannot find user/password file - aborting.")
             quit()
 
     def validate(self, user, token):
         """Check the user's token is valid"""
-        # printLog("Server", "Validating user {}.".format(user))
+        # log.debug("Validating user {}.".format(user))
         return self.authority.validateToken(user, token)
 
     from plomServer.serverUserInit import (
@@ -202,9 +215,9 @@ def getServerInfo():
     if os.path.isfile("../resources/serverDetails.json"):
         with open("../resources/serverDetails.json") as data_file:
             serverInfo = json.load(data_file)
-            printLog("Server", "Server details loaded: {}".format(serverInfo))
+            log.info("Server details loaded: {}".format(serverInfo))
     else:
-        printLog("Server", "Cannot find server details.")
+        log.warning("Cannot find server details.")
 
 
 getServerInfo()
@@ -223,7 +236,7 @@ try:
     # construct the web server
     app = web.Application()
     # add the routes
-    printLog("Server", "Setting up routes")
+    log.info("Setting up routes")
     userIniter.setUpRoutes(app.router)
     uploader.setUpRoutes(app.router)
     ider.setUpRoutes(app.router)
@@ -231,8 +244,8 @@ try:
     totaller.setUpRoutes(app.router)
     reporter.setUpRoutes(app.router)
     # run the web server
-    printLog("Server", "Start the server!")
+    log.info("Start the server!")
     web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
 except KeyboardInterrupt:
-    printLog("Server", "Closing down")
+    log.info("Closing down")  # TODO: I never see this!
     pass
