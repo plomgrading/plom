@@ -1,10 +1,11 @@
 from peewee import *
 from datetime import datetime, timedelta
+import logging
 
 # TODO: replace with logging
 from plom import _printLog as printLog
 
-# import logging
+log = logging.getLogger("DB")
 # logger = logging.getLogger("peewee")
 # logger.addHandler(logging.StreamHandler())
 # logger.setLevel(logging.DEBUG)
@@ -179,7 +180,7 @@ class PlomDB:
                     DiscardedPage,
                 ]
             )
-        printLog("DB", "Database initialised.")
+        log.info("Database initialised.")
 
     def createTest(self, t):
         try:
@@ -187,7 +188,7 @@ class PlomDB:
             # also create the sum-mark objects
             sref = SumData.create(test=tref)
         except IntegrityError as e:
-            printLog("DB", "Create test {} error - {}".format(t, e))
+            log.error("Create test {} error - {}".format(t, e))
             return False
         return True
 
@@ -2017,6 +2018,11 @@ class PlomDB:
                 sref = tref.sumdata[0]
                 if sref.username != username:
                     # that belongs to someone else - this is a serious error
+                    log.error(
+                        'User "{}" returned totalled-task {} that belongs to "{}"'.format(
+                            username, testNumber, sref.username
+                        )
+                    )
                     return [False]
                 # update status, Student-number, name, id-time.
                 sref.status = "done"
@@ -2026,11 +2032,10 @@ class PlomDB:
                 sref.save()
                 tref.totalled = True
                 tref.save()
-                printLog(
-                    "DB",
+                log.debug(
                     "User {} returning totalled-task {} with {}".format(
                         username, testNumber, totalMark
-                    ),
+                    )
                 )
                 return [True]
         except Test.DoesNotExist:
