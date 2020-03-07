@@ -74,7 +74,7 @@ job buildPapers:
     # Now build tests
     - mkdir play
     - pushd play
-    - plom-build create
+    - plom-build new
     - cp ../testTemplates/latexTemplate.pdf sourceVersions/version1.pdf
     - cp ../testTemplates/latexTemplatev2.pdf sourceVersions/version2.pdf
     # overwrite the testSpec with our prepared one
@@ -83,7 +83,7 @@ job buildPapers:
     # TODO: override the private seed
     - sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
     - diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
-    - plom-build build blank
+    - plom-build make blank
     # TODO: https://github.com/vslavik/diff-pdf, not in Ubuntu repos?
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
