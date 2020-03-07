@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Plom is now a python package.
 * Annotator has a "no answer given" button which places crossed lines on page, leaves a comment, sets mark to 0.
+* Client can log to a file (set under under "More options").
 * Server management UI.
 
 ### Changed
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Server: manager-related database locks fixed
+* Various bug fixes.
 
 
 ## [Unreleased 0.3.1]
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * In some regrade cases, delta-comments did not apply correctly.
 * Fix `ctrl-=` zoom toggle.
+* Various bug fixes.
 
 
 ## [0.3.0] - 2020-02-10
