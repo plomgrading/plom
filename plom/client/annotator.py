@@ -1133,8 +1133,8 @@ class Annotator(QWidget):
         # We are here b/c of cancel button, titlebar close, or related
         if self.scene.areThereAnnotations():
             msg = SimpleMessage(
-                "There are annotations on the page.\n\n"
-                "Do you want to discard them and close the annotator?"
+                "<p>There are annotations on the page.</p>\n"
+                "<p>Do you want to discard them and close the annotator?</p>"
             )
             if msg.exec_() == QMessageBox.No:
                 ce.ignore()
