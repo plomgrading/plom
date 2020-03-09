@@ -1007,42 +1007,62 @@ class Annotator(QWidget):
         # if marking total or up, be careful when giving 0-marks
         if self.score == 0 and self.markHandler.style != "Down":
             warn = False
-            if self.scene.hasAnyTicks():
-                # TODO: maybe shouldn't be able to "Don't show this again" in this case?
+            forceWarn = False
+            msg = "<p>You have given <b>0/{}</b>,".format(self.maxMark)
+            if self.scene.hasOnlyTicks():
                 warn = True
-                msg = "<p>You have given <b>0/{}</b>,".format(self.maxMark)
-                msg += " but <em>there are ticks/crosses on the page.</em>"
-            if self.markWarn and warn:
+                forceWarn = True
+                msg += " but there are <em>only ticks on the page!</em>"
+            elif self.scene.hasAnyTicks():
+                # forceWarn = True
+                warn = True
+                msg += " but there are some ticks on the page."
+            if warn:
                 msg += "  Please confirm, or consider using comments to clarify.</p>"
                 msg += "\n<p>Do you wish to submit?</p>"
-                msg = SimpleMessageCheckBox(msg)
-                if msg.exec_() == QMessageBox.No:
-                    return False
-                if msg.cb.checkState() == Qt.Checked:
-                    self.markWarn = False
+                if forceWarn:
+                    msg = SimpleMessage(msg)
+                    if msg.exec_() == QMessageBox.No:
+                        return False
+                elif self.markWarn:
+                    msg = SimpleMessageCheckBox(msg)
+                    if msg.exec_() == QMessageBox.No:
+                        return False
+                    if msg.cb.checkState() == Qt.Checked:
+                        self.markWarn = False
 
         # if marking down, be careful of giving max-marks
         if self.score == self.maxMark and self.markHandler.style == "Down":
             msg = "<p>You have given full {0}/{0},".format(self.maxMark)
+            forceWarn = False
             if self.scene.hasOnlyTicks():
                 warn = False
-            elif self.scene.hasAnyCrosses():
-                # TODO: maybe shouldn't be able to "Don't show this again" in this case?
+            elif self.scene.hasOnlyCrosses():
                 warn = True
-                msg += " <em>but there are crosses</em> on the page."
+                forceWarn = True
+                msg += " <em>but there are only crosses on the page!</em>"
+            elif self.scene.hasAnyCrosses():
+                warn = True
+                # forceWarn = True
+                msg += " but there are crosses on the page."
             elif self.scene.hasAnyComments():
                 warn = False
             else:
                 warn = True
                 msg += " but there are other annotations on the page which might be contradictory."
-            if self.markWarn and warn:
+            if warn:
                 msg += "  Please confirm, or consider using comments to clarify.</p>"
                 msg += "\n<p>Do you wish to submit?</p>"
-                msg = SimpleMessageCheckBox(msg)
-                if msg.exec_() == QMessageBox.No:
-                    return False
-                if msg.cb.checkState() == Qt.Checked:
-                    self.markWarn = False
+                if forceWarn:
+                    msg = SimpleMessage(msg)
+                    if msg.exec_() == QMessageBox.No:
+                        return False
+                elif self.markWarn:
+                    msg = SimpleMessageCheckBox(msg)
+                    if msg.exec_() == QMessageBox.No:
+                        return False
+                    if msg.cb.checkState() == Qt.Checked:
+                        self.markWarn = False
 
         if not self.scene.checkAllObjectsInside():
             msg = SimpleMessage(

@@ -1110,6 +1110,13 @@ class PageScene(QGraphicsScene):
                 return True
         return False
 
+    def hasOnlyCrosses(self):
+        for X in self.items():
+            if getattr(X, "saveable", None):
+                if not isinstance(X, CrossItem):
+                    return False
+        return True
+
     def hasAnyComments(self):
         for X in self.items():
             if isinstance(X, (TextItem, GroupDTItem)):
