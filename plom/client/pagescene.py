@@ -1116,6 +1116,12 @@ class PageScene(QGraphicsScene):
                 return True
         return False
 
+    def hasAnyTicks(self):
+        for X in self.items():
+            if isinstance(X, TickItem):
+                return True
+        return False
+
     def hasOnlyTicks(self):
         for X in self.items():
             if getattr(X, "saveable", None):

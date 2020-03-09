@@ -994,6 +994,7 @@ class Annotator(QWidget):
         if self.scene.countComments() == 0:
             # error message if total is not 0 or full
             if self.score > 0 and self.score < self.maxMark and self.commentWarn:
+                # TODO: if annotations other than cross, check, delta, skip this
                 msg = SimpleMessageCheckBox(
                     "You have given no comments.\n Please confirm."
                 )
@@ -1005,11 +1006,21 @@ class Annotator(QWidget):
 
         # if marking total or up, be careful when giving 0-marks
         if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
-            msg = SimpleMessageCheckBox("You have given 0 - please confirm")
-            if msg.exec_() == QMessageBox.No:
-                return False
-            if msg.cb.checkState() == Qt.Checked:
-                self.markWarn = False
+            warn = False
+            if self.scene.hasAnyTicks():
+                # TODO: maybe shouldn't be able to "Don't show this again" in this case?
+                warn = True
+                msg = "<p>You have given <b>0/{}</b>,".format(self.maxMark)
+                msg += " but <em>there are ticks/crosses on the page.</em>"
+            if warn:
+                msg += "  Please confirm, or consider using comments to clarify.</p>"
+                msg += "\n<p>Do you wish to submit?</p>"
+                msg = SimpleMessageCheckBox(msg)
+                if msg.exec_() == QMessageBox.No:
+                    return False
+                if msg.cb.checkState() == Qt.Checked:
+                    self.markWarn = False
+
         # if marking down, be careful of giving max-marks
         if (
             self.score == self.maxMark
