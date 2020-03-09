@@ -48,8 +48,10 @@ from .tools import (
     CommandText,
     CommandTick,
     CommandGDT,
+    CrossItem,
     DeltaItem,
     TextItem,
+    TickItem,
     GroupDTItem,
     GhostComment,
     GhostDelta,
@@ -1101,6 +1103,25 @@ class PageScene(QGraphicsScene):
 
         self.removeItem(self.delBoxItem)
         self.deleteFlag = 0  # put flag back.
+
+    def hasAnyCrosses(self):
+        for X in self.items():
+            if isinstance(X, CrossItem):
+                return True
+        return False
+
+    def hasAnyComments(self):
+        for X in self.items():
+            if isinstance(X, (TextItem, GroupDTItem)):
+                return True
+        return False
+
+    def hasOnlyTicks(self):
+        for X in self.items():
+            if getattr(X, "saveable", None):
+                if not isinstance(X, TickItem):
+                    return False
+        return True
 
     def checkAllObjectsInside(self):
         for X in self.items():

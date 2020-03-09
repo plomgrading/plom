@@ -1016,13 +1016,26 @@ class Annotator(QWidget):
             and self.markHandler.style == "Down"
             and self.markWarn
         ):
-            msg = SimpleMessageCheckBox(
-                "You have given {} - please confirm".format(self.maxMark)
-            )
-            if msg.exec_() == QMessageBox.No:
-                return False
-            if msg.cb.checkState() == Qt.Checked:
-                self.markWarn = False
+            msg = "<p>You have given full {0}/{0},".format(self.maxMark)
+            if self.scene.hasOnlyTicks():
+                warn = False
+            elif self.scene.hasAnyCrosses():
+                # TODO: maybe shouldn't be able to "Don't show this again" in this case?
+                warn = True
+                msg += " <em>but there are crosses</em> on the page."
+            elif self.scene.hasAnyComments():
+                warn = False
+            else:
+                warn = True
+                msg += " but there are other annotations on the page which might be contradictory."
+            if warn:
+                msg += "  Please confirm, or consider using comments to clarify.</p>"
+                msg += "\n<p>Do you wish to submit?</p>"
+                msg = SimpleMessageCheckBox(msg)
+                if msg.exec_() == QMessageBox.No:
+                    return False
+                if msg.cb.checkState() == Qt.Checked:
+                    self.markWarn = False
 
         if not self.scene.checkAllObjectsInside():
             msg = SimpleMessage(
