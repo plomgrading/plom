@@ -1,0 +1,88 @@
+\NeedsTeXFormat{LaTeX2e}[1994/06/01]
+\ProvidesPackage{mockplom}[2020/03/07 package MockPlom]
+
+\RequirePackage{graphicx}
+\RequirePackage{everypage}
+\RequirePackage{changepage}
+\RequirePackage{fmtcount}
+\RequirePackage{xcolor}
+
+%\RequirePackage[absolute,showboxes]{textpos}
+\RequirePackage[absolute]{textpos}
+
+\DeclareOption{final}{%
+  \newcommand{\mockplomqr}{}%
+  \newcommand{\mockplomlstaple}{}%
+  \newcommand{\mockplomrstaple}{}%
+  \newcommand{\mockplompaperstamp}{}%
+}
+% QR and staple block size adjusted here (positions see below)
+\DeclareOption{draft}{%
+  \renewcommand{\mockplomqr}{\fbox{\includegraphics[width=0.89in]{dummy_qr_code_red}}}%
+  \renewcommand{\mockplomlstaple}{\includegraphics[width=1.1in]{dummy_left_staple_red}}%
+  \renewcommand{\mockplomrstaple}{\includegraphics[width=1.1in]{dummy_right_staple_red}}%
+  \renewcommand{\mockplompaperstamp}{%
+    %\fcolorbox{red}{red!10}{%
+    \fbox{%
+      % strut:
+      \rule[-3pt]{0pt}{19pt}%
+      %\textbf{
+      \textsf{%
+        \color{red}
+          \LARGE \,DRAFT.%
+          \padzeroes[2]{\decimal{page}}\,%
+      }%
+      %}
+    }%
+  }%
+}
+
+\ExecuteOptions{final}
+
+\ProcessOptions\relax
+
+%\if@neverindent
+%\neverindent
+%\fi
+\AddEverypageHook{%s
+  \strictpagecheck
+  \checkoddpage
+  \ifoddpage
+    \TPReferencePosition{0,0}
+    \begin{textblock*}{1.5in}(14pt,14pt)   % size set above, 1.5 just a box
+      \mockplomlstaple
+    \end{textblock*}
+    \TPReferencePosition{1,0}
+    \begin{textblock*}{1.5in}(600pt,19pt)
+      \hfill\mockplomqr
+    \end{textblock*}
+  \else
+    \TPReferencePosition{0,0}
+    \begin{textblock*}{1.5in}(14pt,19pt)
+      \mockplomqr
+    \end{textblock*}
+    \TPReferencePosition{1,0}
+    \begin{textblock*}{1.5in}(601pt,14pt)   % 612-xy
+      \hfill\mockplomrstaple
+    \end{textblock*}
+    % \begin{picture}(0,0)
+    %   \put(-55,-10){\mockplomqr}
+    %   \put(455,-10){\mockplomrstaple}
+    % \end{picture}
+  \fi
+  \TPReferencePosition{0,1}
+  \begin{textblock*}{1.5in}(15pt,772pt)
+    \mockplomqr
+  \end{textblock*}
+  \TPReferencePosition{1,1}
+  \begin{textblock*}{1.5in}(597pt,772pt)  % 612-15
+    \hfill\mockplomqr
+  \end{textblock*}
+  \TPReferencePosition{0.5,0}
+  \begin{textblock*}{2in}(306pt,20pt)
+    \centering%
+    \mockplompaperstamp
+  \end{textblock*}
+}
+
+\endinput
