@@ -5,6 +5,7 @@
 \RequirePackage{everypage}
 \RequirePackage{changepage}
 \RequirePackage{fmtcount}
+\RequirePackage{xcolor}
 
 %\RequirePackage[absolute,showboxes]{textpos}
 \RequirePackage[absolute]{textpos}
@@ -17,16 +18,18 @@
 }
 % QR and staple block size adjusted here (positions see below)
 \DeclareOption{draft}{%
-  \renewcommand{\mockplomqr}{\fbox{\includegraphics[width=0.89in]{dummy_qr_code}}}%
-  \renewcommand{\mockplomlstaple}{\includegraphics[width=1.1in]{dummy_left_staple}}%
-  \renewcommand{\mockplomrstaple}{\includegraphics[width=1.1in]{dummy_right_staple}}%
+  \renewcommand{\mockplomqr}{\fbox{\includegraphics[width=0.89in]{dummy_qr_code_red}}}%
+  \renewcommand{\mockplomlstaple}{\includegraphics[width=1.1in]{dummy_left_staple_red}}%
+  \renewcommand{\mockplomrstaple}{\includegraphics[width=1.1in]{dummy_right_staple_red}}%
   \renewcommand{\mockplompaperstamp}{%
+    %\fcolorbox{red}{red!10}{%
     \fbox{%
       % strut:
       \rule[-3pt]{0pt}{19pt}%
       %\textbf{
       \textsf{%
-          \LARGE \,01xx.%
+        \color{red}
+          \LARGE \,DRAFT.%
           \padzeroes[2]{\decimal{page}}\,%
       }%
       %}
