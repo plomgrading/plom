@@ -1005,14 +1005,14 @@ class Annotator(QWidget):
                     self.commentWarn = False
 
         # if marking total or up, be careful when giving 0-marks
-        if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
+        if self.score == 0 and self.markHandler.style != "Down":
             warn = False
             if self.scene.hasAnyTicks():
                 # TODO: maybe shouldn't be able to "Don't show this again" in this case?
                 warn = True
                 msg = "<p>You have given <b>0/{}</b>,".format(self.maxMark)
                 msg += " but <em>there are ticks/crosses on the page.</em>"
-            if warn:
+            if self.markWarn and warn:
                 msg += "  Please confirm, or consider using comments to clarify.</p>"
                 msg += "\n<p>Do you wish to submit?</p>"
                 msg = SimpleMessageCheckBox(msg)
@@ -1022,11 +1022,7 @@ class Annotator(QWidget):
                     self.markWarn = False
 
         # if marking down, be careful of giving max-marks
-        if (
-            self.score == self.maxMark
-            and self.markHandler.style == "Down"
-            and self.markWarn
-        ):
+        if self.score == self.maxMark and self.markHandler.style == "Down":
             msg = "<p>You have given full {0}/{0},".format(self.maxMark)
             if self.scene.hasOnlyTicks():
                 warn = False
@@ -1039,7 +1035,7 @@ class Annotator(QWidget):
             else:
                 warn = True
                 msg += " but there are other annotations on the page which might be contradictory."
-            if warn:
+            if self.markWarn and warn:
                 msg += "  Please confirm, or consider using comments to clarify.</p>"
                 msg += "\n<p>Do you wish to submit?</p>"
                 msg = SimpleMessageCheckBox(msg)
