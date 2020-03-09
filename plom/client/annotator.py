@@ -994,6 +994,7 @@ class Annotator(QWidget):
         if self.scene.countComments() == 0:
             # error message if total is not 0 or full
             if self.score > 0 and self.score < self.maxMark and self.commentWarn:
+                # TODO: if annotations other than cross, check, delta, skip this
                 msg = SimpleMessageCheckBox(
                     "You have given no comments.\n Please confirm."
                 )
@@ -1004,25 +1005,64 @@ class Annotator(QWidget):
                     self.commentWarn = False
 
         # if marking total or up, be careful when giving 0-marks
-        if self.score == 0 and self.markHandler.style != "Down" and self.markWarn:
-            msg = SimpleMessageCheckBox("You have given 0 - please confirm")
-            if msg.exec_() == QMessageBox.No:
-                return False
-            if msg.cb.checkState() == Qt.Checked:
-                self.markWarn = False
+        if self.score == 0 and self.markHandler.style != "Down":
+            warn = False
+            forceWarn = False
+            msg = "<p>You have given <b>0/{}</b>,".format(self.maxMark)
+            if self.scene.hasOnlyTicks():
+                warn = True
+                forceWarn = True
+                msg += " but there are <em>only ticks on the page!</em>"
+            elif self.scene.hasAnyTicks():
+                # forceWarn = True
+                warn = True
+                msg += " but there are some ticks on the page."
+            if warn:
+                msg += "  Please confirm, or consider using comments to clarify.</p>"
+                msg += "\n<p>Do you wish to submit?</p>"
+                if forceWarn:
+                    msg = SimpleMessage(msg)
+                    if msg.exec_() == QMessageBox.No:
+                        return False
+                elif self.markWarn:
+                    msg = SimpleMessageCheckBox(msg)
+                    if msg.exec_() == QMessageBox.No:
+                        return False
+                    if msg.cb.checkState() == Qt.Checked:
+                        self.markWarn = False
+
         # if marking down, be careful of giving max-marks
-        if (
-            self.score == self.maxMark
-            and self.markHandler.style == "Down"
-            and self.markWarn
-        ):
-            msg = SimpleMessageCheckBox(
-                "You have given {} - please confirm".format(self.maxMark)
-            )
-            if msg.exec_() == QMessageBox.No:
-                return False
-            if msg.cb.checkState() == Qt.Checked:
-                self.markWarn = False
+        if self.score == self.maxMark and self.markHandler.style == "Down":
+            msg = "<p>You have given full {0}/{0},".format(self.maxMark)
+            forceWarn = False
+            if self.scene.hasOnlyTicks():
+                warn = False
+            elif self.scene.hasOnlyCrosses():
+                warn = True
+                forceWarn = True
+                msg += " <em>but there are only crosses on the page!</em>"
+            elif self.scene.hasAnyCrosses():
+                warn = True
+                # forceWarn = True
+                msg += " but there are crosses on the page."
+            elif self.scene.hasAnyComments():
+                warn = False
+            else:
+                warn = True
+                msg += " but there are other annotations on the page which might be contradictory."
+            if warn:
+                msg += "  Please confirm, or consider using comments to clarify.</p>"
+                msg += "\n<p>Do you wish to submit?</p>"
+                if forceWarn:
+                    msg = SimpleMessage(msg)
+                    if msg.exec_() == QMessageBox.No:
+                        return False
+                elif self.markWarn:
+                    msg = SimpleMessageCheckBox(msg)
+                    if msg.exec_() == QMessageBox.No:
+                        return False
+                    if msg.cb.checkState() == Qt.Checked:
+                        self.markWarn = False
 
         if not self.scene.checkAllObjectsInside():
             msg = SimpleMessage(
@@ -1093,8 +1133,8 @@ class Annotator(QWidget):
         # We are here b/c of cancel button, titlebar close, or related
         if self.scene.areThereAnnotations():
             msg = SimpleMessage(
-                "There are annotations on the page.\n\n"
-                "Do you want to discard them and close the annotator?"
+                "<p>There are annotations on the page.</p>\n"
+                "<p>Do you want to discard them and close the annotator?</p>"
             )
             if msg.exec_() == QMessageBox.No:
                 ce.ignore()
