@@ -7,3 +7,6 @@ from .version import __version__, Plom_API_Version
 from .version import Default_Port
 
 from .rules import isValidStudentNumber
+
+# TODO: deprecated
+from .logit import printLog as _printLog

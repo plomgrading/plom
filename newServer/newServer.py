@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import uuid
+import logging
 
 # ----------------------
 
@@ -44,6 +45,19 @@ from plomServer.routesMark import MarkHandler
 from plomServer.routesTotal import TotalHandler
 from plomServer.routesReport import ReportHandler
 
+
+# 7 is wdith of "warning"
+logging.basicConfig(
+    format="%(asctime)s %(levelname)7s:%(name)s\t%(message)s", datefmt="%m-%d %H:%M:%S",
+)
+log = logging.getLogger("server")
+# TODO: take from command line argument, debug to INFO
+logging.getLogger().setLevel("Debug".upper())
+# log.setLevel("Debug".upper())
+
+log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
+
+
 # ----------------------
 def buildDirectories():
     """Build the directories that this script needs"""
@@ -61,6 +75,7 @@ def buildDirectories():
     for dir in lst:
         try:
             os.mkdir(dir)
+            log.debug("Building directory {}".format(dir))
         except FileExistsError:
             pass
 
@@ -70,6 +85,7 @@ def buildDirectories():
 
 class Server(object):
     def __init__(self, spec, db):
+        log.debug("Initialising server")
         self.testSpec = spec
         self.DB = db
         self.API = serverAPI
@@ -88,13 +104,15 @@ class Server(object):
                 # Load the users and pass them to the authority.
                 self.userList = json.load(data_file)
                 self.authority = Authority(self.userList)
+            log.debug("Loading users")
         else:
             # Cannot find users - give error and quit out.
-            print("Where is user/password file?")
+            log.error("Cannot find user/password file - aborting.")
             quit()
 
     def validate(self, user, token):
         """Check the user's token is valid"""
+        # log.debug("Validating user {}.".format(user))
         return self.authority.validateToken(user, token)
 
     from plomServer.serverUserInit import (
@@ -197,9 +215,9 @@ def getServerInfo():
     if os.path.isfile("../resources/serverDetails.json"):
         with open("../resources/serverDetails.json") as data_file:
             serverInfo = json.load(data_file)
-            print("Server details loaded: ", serverInfo)
+            log.info("Server details loaded: {}".format(serverInfo))
     else:
-        print("Cannot find server details.")
+        log.warning("Cannot find server details.")
 
 
 getServerInfo()
@@ -218,6 +236,7 @@ try:
     # construct the web server
     app = web.Application()
     # add the routes
+    log.info("Setting up routes")
     userIniter.setUpRoutes(app.router)
     uploader.setUpRoutes(app.router)
     ider.setUpRoutes(app.router)
@@ -225,7 +244,8 @@ try:
     totaller.setUpRoutes(app.router)
     reporter.setUpRoutes(app.router)
     # run the web server
+    log.info("Start the server!")
     web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
 except KeyboardInterrupt:
-    print("Closing down")
+    log.info("Closing down")  # TODO: I never see this!
     pass
