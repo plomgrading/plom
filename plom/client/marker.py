@@ -755,7 +755,10 @@ class MarkerClient(QWidget):
             try:
                 v, m = messenger.MprogressCount(self.question, self.version)
             except PlomSeriousException as err:
-                self.throwSeriousError(err, rethrow=False)
+                log.exception("Serious error detected while updating progress")
+                msg = 'A serious error happened while updating progress:\n"{}"'.format(err)
+                msg += "\nThis is not good: restart, report bug, etc."
+                ErrorMessage(msg).exec_()
                 return
         if m == 0:
             v, m = (0, 1)  # avoid (0, 0) indeterminate animation
