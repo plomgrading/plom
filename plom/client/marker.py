@@ -109,8 +109,8 @@ class BackgroundDownloader(QThread):
             try:
                 imageList, tags = messenger.MclaimThisTask(task)
                 break
-            except PlomBenignException as err:
-                # task taken by another user, so continue
+            except PlomTakenException as err:
+                log.info("will keep trying as task already taken: {}".format(err))
                 continue
             except PlomSeriousException as err:
                 self.downloadFail.emit(str(err))
@@ -797,8 +797,8 @@ class MarkerClient(QWidget):
             try:
                 imageList, tags = messenger.MclaimThisTask(task)
                 break
-            except PlomBenignException as err:
-                # task already taken.
+            except PlomTakenException as err:
+                log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
         # Image names = "<task>.<imagenumber>.png"
@@ -1232,7 +1232,7 @@ class MarkerClient(QWidget):
     def downloadWholePaper(self, testNumber):
         try:
             pageNames, imagesAsBytes = messenger.MrequestWholePaper(testNumber)
-        except PlomBenignException as err:
+        except PlomTakenException as err:
             log.exception("Taken exception when downloading whole paper")
             ErrorMessage("{}".format(err)).exec_()
             return ([], [])   # TODO: what to return?
@@ -1331,7 +1331,10 @@ class MarkerClient(QWidget):
 
             # send updated tag back to server.
             try:
-                msg = messenger.MsetTag(task, txt)
+                messenger.MsetTag(task, txt)
+            except PlomTakenException as err:
+                log.exception("exception when trying to set tag")
+                ErrorMessage('Could not set tag:\n"{}"'.format(err)).exec_()
             except PlomSeriousException as err:
                 self.throwSeriousError(err)
         return

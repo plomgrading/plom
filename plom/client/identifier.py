@@ -16,6 +16,8 @@ import json
 import os
 import sys
 import tempfile
+import logging
+
 from PyQt5.QtCore import (
     Qt,
     QAbstractTableModel,
@@ -36,6 +38,8 @@ from .test_view import WholeTestView
 from plom.plom_exceptions import *
 from plom import Plom_API_Version
 from plom import isValidStudentNumber
+
+log = logging.getLogger("identr")
 
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory()
@@ -495,8 +499,8 @@ class IDClient(QWidget):
             try:
                 imageList = messenger.IDclaimThisTask(test)
                 break
-            except PlomBenignException as err:
-                # task already taken.
+            except PlomTakenException as err:
+                log.info("will keep trying as task already taken: {}".format(err))
                 continue
         # Image names = "i<testnumber>.<imagenumber>.png"
         inames = []
