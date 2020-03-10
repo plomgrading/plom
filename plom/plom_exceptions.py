@@ -35,6 +35,9 @@ class PlomAuthenticationException(BenignException):
     def __init__(self, *args, **kwargs):
         super().__init__(self, "You are not authenticated.", *args, **kwargs)
 
+class PlomTakenException(BenignException):
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
 
 class PlomLatexException(BenignException):
     def __init__(self, *args, **kwargs):

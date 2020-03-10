@@ -9,6 +9,8 @@ import json
 import os
 import sys
 import tempfile
+import logging
+
 from PyQt5.QtCore import (
     Qt,
     QAbstractTableModel,
@@ -26,6 +28,8 @@ from .useful_classes import ErrorMessage, SimpleMessage
 from .uiFiles.ui_totaler import Ui_TotalWindow
 from plom.plom_exceptions import *
 from plom import Plom_API_Version
+
+log = logging.getLogger("totalr")
 
 # set up variables to store paths for marker, id clients and total
 tempDirectory = tempfile.TemporaryDirectory()
@@ -352,8 +356,8 @@ class TotalClient(QWidget):
             try:
                 image = messenger.TclaimThisTask(test)
                 break
-            except PlomBenignException as err:
-                # task already taken.
+            except PlomTakenException as err:
+                log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
         # Image name will be t<code>.png
