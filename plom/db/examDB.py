@@ -1757,8 +1757,8 @@ class PlomDB:
                 # update tag
                 qref.tags = tag
                 qref.save()
-                printLog(
-                    "DB", "Task {} tagged {} by user {}".format(task, tag, username)
+                log.info(
+                    'Task {} tagged by user "{}": "{}"'.format(task, username, tag)
                 )
                 return True
         except Group.DoesNotExist:
