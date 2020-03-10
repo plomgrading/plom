@@ -35,6 +35,8 @@ global tempDirectory, directoryPath
 # to store login + options for next run of client.
 lastTime = {}
 
+log = logging.getLogger("client")
+
 
 def readLastTime():
     """Read the login + server options that were used on
@@ -57,7 +59,7 @@ def readLastTime():
 
 def writeLastTime():
     """Write the options to the config file."""
-    logging.info("Saving config file: plomConfig.toml")
+    log.info("Saving config file: plomConfig.toml")
     try:
         with open("plomConfig.toml", "w") as fh:
             fh.write(toml.dumps(lastTime))
@@ -82,13 +84,13 @@ class Chooser(QDialog):
         if lastTime.get("LogToFile"):
             now = datetime.datetime.now().isoformat("T", "seconds")
             logging.basicConfig(
-                format="%(asctime)s %(levelname)s:%(name)s %(message)s",
+                format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
                 datefmt="%m-%d %H:%M:%S",
                 filename="plom-{}.log".format(now),
             )
         else:
             logging.basicConfig(
-                format="%(asctime)s %(levelname)s:%(name)s %(message)s",
+                format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
                 datefmt="%m-%d %H:%M:%S",
             )
         # Default to INFO log level
@@ -97,7 +99,7 @@ class Chooser(QDialog):
         s = "Plom Client {} (communicates with api {})".format(
             __version__, self.APIVersion
         )
-        logging.info(s)
+        log.info(s)
         # runit = either marker or identifier clients.
         self.runIt = None
 
@@ -157,11 +159,11 @@ class Chooser(QDialog):
         # check password at least 4 char long
         pwd = self.ui.passwordLE.text()
         if len(pwd) < 4:
-            logging.warning("Password too short")
+            log.warning("Password too short")
             return
         server = self.ui.serverLE.text()
         if not server:
-            logging.warning("No server URI")
+            log.warning("No server URI")
             return
         mport = self.ui.mportSB.value()
         # save those settings
@@ -321,7 +323,7 @@ class Chooser(QDialog):
     def getInfo(self):
         server = self.ui.serverLE.text()
         if not server:
-            logging.warning("No server URI")
+            log.warning("No server URI")
             return
         mport = self.ui.mportSB.value()
         # save those settings
