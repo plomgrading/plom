@@ -515,7 +515,7 @@ class MarkerClient(QWidget):
         try:
             self.testInfo = messenger.getInfoGeneral()
         except PlomSeriousException as err:
-            self.throwSeriousError(err)
+            self.throwSeriousError(err, rethrow=False)
             return
 
         # Fire up the user interface
@@ -608,7 +608,7 @@ class MarkerClient(QWidget):
             self.shutDownError()
             return
         except PlomSeriousException as err:
-            self.throwSeriousError(err)
+            self.throwSeriousError(err, rethrow=False)
             return
         # Paste the max-mark into the gui.
         self.ui.scoreLabel.setText(str(self.maxScore))
@@ -657,16 +657,24 @@ class MarkerClient(QWidget):
             self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(e)
 
-    def throwSeriousError(self, err):
+    def throwSeriousError(self, err, rethrow=True):
+        """Log an exception, pop up a dialog, shutdown.
+
+        If you think you can do something reasonable instead of crashing pass
+        False to `rethrow` and this function will initiate shutdown but will
+        not re-raise the exception (this avoiding a crash).
+        """
+        # automatically prints a stacktrace into the log!
         log.exception("A serious error has been detected")
-        ErrorMessage(
-            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down Marker.'.format(
-                err
-            )
-        ).exec_()
+        msg = 'A serious error has been thrown:\n"{}"'.format(err)
+        if rethrow:
+            msg += "\nProbably we will crash now..."
+        else:
+            msg += "\nShutting down Marker."
+        ErrorMessage(msg).exec_()
         self.shutDownError()
-        # TODO: Decide on case-by-case basis what can survive.  For now, crash
-        raise (err)
+        if rethrow:
+            raise(err)
 
     def throwBenign(self, err):
         ErrorMessage("{}".format(err)).exec_()
@@ -747,7 +755,8 @@ class MarkerClient(QWidget):
             try:
                 v, m = messenger.MprogressCount(self.question, self.version)
             except PlomSeriousException as err:
-                self.throwSeriousError(err)
+                self.throwSeriousError(err, rethrow=False)
+                return
         if m == 0:
             v, m = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
