@@ -1,4 +1,5 @@
 from aiohttp import web, MultipartWriter, MultipartReader
+from plomServer.plom_routeutils import authByToken, authByToken_validFields
 from plomServer.plom_routeutils import validFields
 
 
@@ -239,12 +240,9 @@ class UploadHandler:
         else:
             return web.Response(status=404)
 
-    async def getQuestionImages(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token", "question"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
+    # @route.get("/admin/questionImages")
+    @authByToken_validFields(["user", "test", "question"])
+    def getQuestionImages(self, data, request):
         if not data["user"] == "manager":
             return web.Response(status=401)
 
@@ -258,12 +256,9 @@ class UploadHandler:
         else:
             return web.Response(status=404)  # couldnt find that test/question
 
-    async def getTestImages(self, request):
-        data = await request.json()
-        if not validFields(data, ["user", "token", "test", "images"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
+    # @routes.get("/admin/testImages")
+    @authByToken_validFields(["user", "test"])
+    def getTestImages(self, data, request):
         if not data["user"] == "manager":
             return web.Response(status=401)
 
