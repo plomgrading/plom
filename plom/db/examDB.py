@@ -1812,7 +1812,7 @@ class PlomDB:
         if qref.username != username or qref.status != "done" or qref.marked is False:
             return [False, "NAC"]  # nothing to do here
         # now update things
-        print("User {} reverting task {}".format(username, task))
+        log.info("User {} reverting task {}".format(username, task))
         with plomdb.atomic():
             # clean up test
             tref.marked = False
