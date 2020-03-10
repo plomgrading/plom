@@ -601,7 +601,12 @@ class MarkerClient(QWidget):
 
         # Get the max-mark for the question from the server.
         try:
-            self.getMaxMark()
+            self.maxScore = messenger.MgetMaxMark(self.question, self.version)
+        except PlomRangeException as err:
+            log.error(err.args[1])
+            ErrorMessage(err.args[1]).exec_()
+            self.shutDownError()
+            return
         except PlomSeriousException as err:
             self.throwSeriousError(err)
             return
@@ -653,6 +658,7 @@ class MarkerClient(QWidget):
         super(MarkerClient, self).resizeEvent(e)
 
     def throwSeriousError(self, err):
+        log.exception("A serious error has been detected")
         ErrorMessage(
             'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down Marker.'.format(
                 err
@@ -664,11 +670,6 @@ class MarkerClient(QWidget):
 
     def throwBenign(self, err):
         ErrorMessage("{}".format(err)).exec_()
-
-    def getMaxMark(self):
-        """Get max mark from server and set."""
-        # Send max-mark request (mGMX) to server
-        self.maxScore = messenger.MgetMaxMark(self.question, self.version)
 
     def getMarkedList(self):
         # Ask server for list of previously marked papers
@@ -1160,6 +1161,7 @@ class MarkerClient(QWidget):
             self.updateImage(idx[0].row())
 
     def shutDownError(self):
+        log.error("shutting down")
         self.my_shutdown_signal.emit(2, [])
         self.close()
 

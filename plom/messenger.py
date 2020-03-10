@@ -715,6 +715,13 @@ class Messenger(BaseMessenger):
     # ------------------------
     # Marker stuff
     def MgetMaxMark(self, question, ver):
+        """Get the maximum mark for this question and version.
+
+        Raises:
+            PlomRangeExeception: `question` or `ver` is out of range.
+            PlomAuthenticationException:
+            PlomSeriousException: something unexpected happened.
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.get(
@@ -730,7 +737,7 @@ class Messenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 416:
-                raise PlomSeriousException(response.text) from None
+                raise PlomRangeException(response.text) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
