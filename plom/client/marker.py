@@ -658,6 +658,7 @@ class MarkerClient(QWidget):
         super(MarkerClient, self).resizeEvent(e)
 
     def throwSeriousError(self, err):
+        log.exception("A serious error has been detected")
         ErrorMessage(
             'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down Marker.'.format(
                 err
