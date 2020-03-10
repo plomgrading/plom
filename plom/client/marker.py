@@ -676,9 +676,6 @@ class MarkerClient(QWidget):
         if rethrow:
             raise(err)
 
-    def throwBenign(self, err):
-        ErrorMessage("{}".format(err)).exec_()
-
     def getMarkedList(self):
         # Ask server for list of previously marked papers
         markedList = messenger.MrequestDoneTasks(self.question, self.version)
@@ -700,10 +697,11 @@ class MarkerClient(QWidget):
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
-        except PlomBenignException as e:
-            self.throwBenign(e)
-            self.exM.removePaper(task)
-            return
+        # TODO: there were no benign exceptions except authentication
+        # except PlomBenignException as e:
+        #     ErrorMessage("{}".format(e)).exec_()
+        #     self.exM.removePaper(task)
+        #     return
 
         paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
         log.debug("create paperdir {} for already-graded download".format(paperdir))
@@ -1235,7 +1233,9 @@ class MarkerClient(QWidget):
         try:
             pageNames, imagesAsBytes = messenger.MrequestWholePaper(testNumber)
         except PlomBenignException as err:
-            self.throwBenign(err)
+            log.exception("Taken exception when downloading whole paper")
+            ErrorMessage("{}".format(err)).exec_()
+            return ([], [])   # TODO: what to return?
 
         viewFiles = []
         for iab in imagesAsBytes:
