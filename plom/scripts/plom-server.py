@@ -134,9 +134,10 @@ def processUsers(userFile, demo, auto):
     # if we have been passed a userFile then process it and return
     if userFile is not None:
         print("Processing user file '{}'".format(userFile))
+        print("WARNING - this will overwrite any existing userList.json file.")
         from plom.server import manageUserFiles
 
-        userCode = manageUserFiles.parseUserlist(userFile)
+        manageUserFiles.parseUserlist(userFile)
         return
 
     # otherwise we have to make one for the user - check if one already there.
