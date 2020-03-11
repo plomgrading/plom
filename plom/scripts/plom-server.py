@@ -11,7 +11,22 @@ import pkg_resources
 from plom import SpecVerifier, SpecParser
 
 #################
-def processClasslist(fname):
+def processClasslist(fname, demo):
+    # check if classlist.csv is in place - if so abort.
+    if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
+        print(
+            "Classlist file already present in 'specAndDatabase' directory. Aborting."
+        )
+        exit(0)
+
+    if demo:
+        print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
+        cl = pkg_resources.resource_string("plom", "demoClasslist.csv")
+        cl = cl.decode()
+        with open(os.path.join("specAndDatabase", "classlist.csv"), "w+") as fh:
+            fh.write(cl)
+        return
+
     from plom.produce import buildClasslist
 
     # check if a filename given
@@ -111,6 +126,31 @@ def initialiseServer():
 
 #################
 
+
+def processUsers(userFile, demo, auto):
+    if demo:
+        print(
+            "Creating a demo user list at userlistRaw.csv. ** DO NOT USE ON REAL SERVER **"
+        )
+        cl = pkg_resources.resource_string("plom", "demoUserlist.csv")
+        cl = cl.decode()
+        with open(os.path.join("serverDetails", "userlistRaw.csv"), "w+") as fh:
+            fh.write(cl)
+        return
+    if auto is not None:
+        print("Creating an auto-generated user list at userListRaw.csv.")
+        return
+
+    if userFile is None:
+        print(
+            "Creating userlistRaw.csv - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 8 characters."
+        )
+        cl = pkg_resources.resource_string("plom", "templateUserlist.csv")
+        cl = cl.decode()
+        with open(os.path.join("serverDetails", "userlistRaw.csv"), "w+") as fh:
+            fh.write(cl)
+
+
 #################
 
 parser = argparse.ArgumentParser()
@@ -125,23 +165,43 @@ spL.add_argument(
     nargs="?",
     help="Process the given classlist file and copy the result into place.",
 )
+spL.add_argument(
+    "--demo",
+    action="store_true",
+    help="Use demo classlist. **DO NOT DO THIS ON REAL SERVER**",
+)
+##
 spU.add_argument(
     "userlist",
     nargs="?",
     help="Process the given userlist file OR if none given then produce a template.",
 )
+grp = spU.add_mutually_exclusive_group()
+grp.add_argument(
+    "--demo",
+    action="store_true",
+    help="Use demo auto-generated userlist and passwords. **DO NOT DO THIS ON REAL SERVER**",
+)
+grp.add_argument(
+    "--auto",
+    type=int,
+    metavar="N",
+    help="Construct an auto-generated user list of N users.",
+)
 
 
 # Now parse things
 args = parser.parse_args()
+print(args)
+
 if args.command == "init":
     initialiseServer()
 elif args.command == "class":
     # process the class list and copy into place
-    processClasslist(args.classlist)
+    processClasslist(args.classlist, args.demo)
 elif args.command == "users":
     # process the class list and copy into place
-    processUsers(args.userList)
+    processUsers(args.userlist, args.demo, args.auto)
 else:
     parser.print_help()
     print("\n>> Running the plom server <<")
