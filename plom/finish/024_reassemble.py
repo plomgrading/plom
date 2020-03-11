@@ -14,3 +14,9 @@ There are two options for reassembling PDFs depending on whether or not you used
   - the 024b script builds PDFs which have been ID'd but not marked. Use this script if you are using Plom for the online-return of papers that were marked offline.
 """
 )
+
+# TODO
+print(">>> Warning <<<")
+print(
+    "THESE MUST BE RUN IN THE SERVER DIRECTORY."
+)

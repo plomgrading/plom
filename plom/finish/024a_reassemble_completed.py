@@ -47,7 +47,8 @@ def reassembleTestCMD(msgr, shortName, outDir, t, sid):
         # TODO: what is supposed to happen here?
         return
     covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
-    rnames = ["../newServer/" + fn for fn in fnames]
+    #rnames = ["../newServer/" + fn for fn in fnames]
+    rnames = fnames
     outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
     return (outname, shortName, sid, covername, rnames)
     #reassemble(outname, shortName, sid, covername, rnames)

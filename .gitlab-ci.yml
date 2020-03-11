@@ -127,6 +127,8 @@ job serverStarts:
     - python3 -m plom.client.randoMarker -s localhost -u anne -w enna
     - python3 -m plom.finish.021_startHere
     - python3 -m plom.finish.022_check_completed -s localhost -w hackhack
+    ## currently 024 must be run in the server directory
+    - popd
     - python3 -m plom.finish.023_spreadsheet -s localhost -w hackhack
     - A=`cat testMarks.csv  | wc -l`  # How many lines?
     - bash -c "[[ $A == 17 ]]"        # should be 16 + 1
@@ -136,7 +138,6 @@ job serverStarts:
     - bash -c "[[ $A == 16 ]]"
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
     - bash -c "[[ $A -lt 5 ]]"           # not more than 5 MB
-    - popd
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
