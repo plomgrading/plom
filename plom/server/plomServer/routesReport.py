@@ -1,5 +1,6 @@
 from aiohttp import web, MultipartWriter, MultipartReader
-from plomServer.plom_routeutils import authByToken, authByToken_validFields
+
+from .plom_routeutils import authByToken, authByToken_validFields
 
 
 class ReportHandler:

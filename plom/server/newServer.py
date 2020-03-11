@@ -20,7 +20,7 @@ import logging
 
 # ----------------------
 
-from authenticate import Authority
+from .authenticate import Authority
 
 from plom import __version__
 from plom import Plom_API_Version as serverAPI
@@ -36,12 +36,12 @@ sslContext.check_hostname = False
 sslContext.load_cert_chain("resources/mlp-selfsigned.crt", "resources/mlp.key")
 
 
-from plomServer.routesUserInit import UserInitHandler
-from plomServer.routesUpload import UploadHandler
-from plomServer.routesID import IDHandler
-from plomServer.routesMark import MarkHandler
-from plomServer.routesTotal import TotalHandler
-from plomServer.routesReport import ReportHandler
+from .plomServer.routesUserInit import UserInitHandler
+from .plomServer.routesUpload import UploadHandler
+from .plomServer.routesID import IDHandler
+from .plomServer.routesMark import MarkHandler
+from .plomServer.routesTotal import TotalHandler
+from .plomServer.routesReport import ReportHandler
 
 
 # 7 is wdith of "warning"
@@ -113,14 +113,14 @@ class Server(object):
         # log.debug("Validating user {}.".format(user))
         return self.authority.validateToken(user, token)
 
-    from plomServer.serverUserInit import (
+    from .plomServer.serverUserInit import (
         InfoShortName,
         InfoGeneral,
         reloadUsers,
         giveUserToken,
         closeUser,
     )
-    from plomServer.serverUpload import (
+    from .plomServer.serverUpload import (
         addKnownPage,
         addUnknownPage,
         addCollidingPage,
@@ -143,7 +143,7 @@ class Server(object):
         collidingToTestPage,
         discardToUnknown,
     )
-    from plomServer.serverID import (
+    from .plomServer.serverID import (
         IDprogressCount,
         IDgetNextTask,
         IDgetDoneTasks,
@@ -155,7 +155,7 @@ class Server(object):
         IDdeletePredictions,
         IDreviewID,
     )
-    from plomServer.serverMark import (
+    from .plomServer.serverMark import (
         MgetAllMax,
         MprogressCount,
         MgetQuestionMax,
@@ -173,7 +173,7 @@ class Server(object):
         MreviewQuestion,
         MrevertTask,
     )
-    from plomServer.serverTotal import (
+    from .plomServer.serverTotal import (
         TgetMaxMark,
         TprogressCount,
         TgetDoneTasks,
@@ -184,7 +184,7 @@ class Server(object):
         TdidNotFinish,
     )
 
-    from plomServer.serverReport import (
+    from .plomServer.serverReport import (
         RgetUnusedTests,
         RgetScannedTests,
         RgetIncompleteTests,
