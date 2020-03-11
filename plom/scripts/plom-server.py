@@ -187,6 +187,12 @@ def processUsers(userFile, demo, auto):
 
 
 #################
+def runTheServer():
+    print("Coming soon.")
+    pass
+
+
+#################
 
 parser = argparse.ArgumentParser()
 sub = parser.add_subparsers(help="sub-command help", dest="command")
@@ -194,6 +200,7 @@ sub = parser.add_subparsers(help="sub-command help", dest="command")
 spI = sub.add_parser("init", help="Initialise server.")
 spL = sub.add_parser("class", help="Read in a classlist.")
 spU = sub.add_parser("users", help="Create required users.")
+spR = sub.add_parser("run", help="Launch server.")
 #
 spL.add_argument(
     "classlist",
@@ -237,6 +244,8 @@ elif args.command == "class":
 elif args.command == "users":
     # process the class list and copy into place
     processUsers(args.userlist, args.demo, args.auto)
+elif args.command == "run":
+    runTheServer()
 else:
     parser.print_help()
     print("\n>> Running the plom server <<")
@@ -252,6 +261,14 @@ else:
     print(
         "2. Run 'plom-server init' - this will check that everything is in place and create necessary sub-directories **and** create config files for you to edit."
     )
-    print("3. Run 'plom-server users' - create users. MORE COMING")
+    print(
+        "3. Run 'plom-server users' - This will create a template user list file for you to edit. Passwords are displayed in plain text. Running with '--demo' option creates a (standard) demo user list, while '--auto N' makes an random-generated list of N users. Edit as you see fit."
+    )
+    print(
+        "4. Run 'plom-servers users <filename>' - This parses the plain-text user list, performs some simple sanity checks and then hashes the passwords to a new file."
+    )
+    print("4a. Optionally you can now delete the file containing plain-text passwords.")
+    print("5. Now you can start the server with 'plom-server run'")
+    print("FUTURE - 'plom-server stop' will stop the server.")
 
 exit(0)
