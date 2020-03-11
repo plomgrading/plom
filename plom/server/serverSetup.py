@@ -170,8 +170,8 @@ class SetUp(QWidget):
         """Read the server info from file if it exists, else set to sensible
         default values.
         """
-        if os.path.isfile("../resources/serverDetails.json"):
-            with open("../resources/serverDetails.json") as data_file:
+        if os.path.isfile("resources/serverDetails.json"):
+            with open("resources/serverDetails.json") as data_file:
                 self.info = json.load(data_file)
         else:
             # set server address, message port
@@ -190,7 +190,7 @@ class SetUp(QWidget):
         self.info["server"] = self.ui.serverLE.text()
         self.info["mport"] = self.ui.mportSB.value()
 
-        fh = open("../resources/serverDetails.json", "w")
+        fh = open("resources/serverDetails.json", "w")
         fh.write(json.dumps(self.info, indent=4, sort_keys=True))
         fh.close()
         self.close()
@@ -266,7 +266,7 @@ class SetUp(QWidget):
                 )
 
             print("Saving to classlist.csv")
-            df.to_csv("../resources/classlist.csv", index=False)
+            df.to_csv("resources/classlist.csv", index=False)
             return
 
 

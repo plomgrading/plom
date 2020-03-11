@@ -22,8 +22,6 @@ import logging
 
 from authenticate import Authority
 
-# this allows us to import from ../resources
-sys.path.append("..")
 from plom import __version__
 from plom import Plom_API_Version as serverAPI
 from plom import SpecParser
@@ -35,7 +33,7 @@ serverInfo = {"server": "127.0.0.1", "mport": 41984}
 # ----------------------
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
-sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.key")
+sslContext.load_cert_chain("resources/mlp-selfsigned.crt", "resources/mlp.key")
 
 
 from plomServer.routesUserInit import UserInitHandler
@@ -99,8 +97,8 @@ class Server(object):
         """Load the users from json file, add them to the authority which
         handles authentication for us.
         """
-        if os.path.exists("../resources/userList.json"):
-            with open("../resources/userList.json") as data_file:
+        if os.path.exists("resources/userList.json"):
+            with open("resources/userList.json") as data_file:
                 # Load the users and pass them to the authority.
                 self.userList = json.load(data_file)
                 self.authority = Authority(self.userList)
@@ -212,8 +210,8 @@ class Server(object):
 def getServerInfo():
     """Read the server info from json."""
     global serverInfo
-    if os.path.isfile("../resources/serverDetails.json"):
-        with open("../resources/serverDetails.json") as data_file:
+    if os.path.isfile("resources/serverDetails.json"):
+        with open("resources/serverDetails.json") as data_file:
             serverInfo = json.load(data_file)
             log.info("Server details loaded: {}".format(serverInfo))
     else:
@@ -221,8 +219,8 @@ def getServerInfo():
 
 
 getServerInfo()
-examDB = PlomDB("../resources/plom.db")
-spec = SpecParser("../resources/verifiedSpec.toml").spec
+examDB = PlomDB("resources/plom.db")
+spec = SpecParser("resources/verifiedSpec.toml").spec
 buildDirectories()
 peon = Server(spec, examDB)
 userIniter = UserInitHandler(peon)
