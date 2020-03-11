@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import locale
 import os
+import shlex
 import shutil
+import subprocess
 
 # import tools for dealing with resource files
 import pkg_resources
@@ -21,7 +24,7 @@ def processClasslist(fname, demo):
 
     if demo:
         print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
-        cl = pkg_resources.resource_string("plom", "demoClasslist.csv")
+        cl = pkg_resources.resource_string("plom", "demoClassList.csv")
         cl = cl.decode()
         with open(os.path.join("specAndDatabase", "classlist.csv"), "w+") as fh:
             fh.write(cl)
@@ -103,7 +106,7 @@ def buildSSLKeys():
         exit(1)
 
 
-def createServerConfig(fname):
+def createServerConfig():
     template = pkg_resources.resource_string("plom", "serverDetails.toml")
     template = template.decode()
     with open(os.path.join("serverConfiguration", "serverDetails.toml"), "w+") as fh:
@@ -128,26 +131,57 @@ def initialiseServer():
 
 
 def processUsers(userFile, demo, auto):
+    # if we have been passed a userFile then process it and return
+    if userFile is not None:
+        print("Processing user file '{}'".format(userFile))
+        from plom.server import manageUserFiles
+
+        userCode = manageUserFiles.parseUserlist(userFile)
+        return
+
+    # otherwise we have to make one for the user - check if one already there.
+    if os.path.isfile(os.path.join("serverConfiguration", "userListRaw.csv")):
+        print(
+            "File 'userListRaw.csv' already exists in 'serverConfiguration'. Remove before continuing. Aborting."
+        )
+        exit(1)
+
     if demo:
         print(
-            "Creating a demo user list at userlistRaw.csv. ** DO NOT USE ON REAL SERVER **"
+            "Creating a demo user list at userListRaw.csv. ** DO NOT USE ON REAL SERVER **"
         )
-        cl = pkg_resources.resource_string("plom", "demoUserlist.csv")
+        print(
+            "Please edit as you see fit and then rerun 'plom-server user serverConfiguration/userListRaw.csv'"
+        )
+        cl = pkg_resources.resource_string("plom", "demoUserList.csv")
         cl = cl.decode()
-        with open(os.path.join("serverDetails", "userlistRaw.csv"), "w+") as fh:
+        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "w+") as fh:
             fh.write(cl)
         return
     if auto is not None:
         print("Creating an auto-generated user list at userListRaw.csv.")
+        print(
+            "Please edit as you see fit and then rerun 'plom-server user serverConfiguration/userListRaw.csv'"
+        )
+        from plom.server import manageUserFiles
+
+        # grab required users and regular users
+        lst = manageUserFiles.buildCannedUsers(auto)
+        print("lst = {}".format(lst))
+        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "w+") as fh:
+            fh.write("user, password\n")
+            for np in lst:
+                fh.write('"{}", "{}"\n'.format(np[0], np[1]))
+
         return
 
     if userFile is None:
         print(
-            "Creating userlistRaw.csv - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 8 characters."
+            "Creating 'serverConfiguration/userListRaw.csv' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters and usernames should be at least 4 alphanumeric characters."
         )
         cl = pkg_resources.resource_string("plom", "templateUserlist.csv")
         cl = cl.decode()
-        with open(os.path.join("serverDetails", "userlistRaw.csv"), "w+") as fh:
+        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "w+") as fh:
             fh.write(cl)
 
 

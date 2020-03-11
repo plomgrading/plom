@@ -31,9 +31,9 @@ setup(
             [
                 "plom/templateTestSpec.toml",
                 "plom/serverDetails.toml",
-                "plom/templateUserlist.csv",
-                "plom/demoClasslist.csv",
-                "plom/demoUserlist.csv",
+                "plom/templateUserList.csv",
+                "plom/demoClassList.csv",
+                "plom/demoUserList.csv",
             ],
         ),
         ("share/plom/icons", iconList),
