@@ -112,7 +112,7 @@ def buildDatabaseAndPapers(blankOrID):
 
     if blankOrID == "blank" and spec["numberToName"] > 0:
         print(
-            'Your spec says to produce {} named-papers. You should either edit your spec file, or rerun with "plom-build build blank".'.format(
+            'Your spec says to produce {} named-papers. You should either edit your spec file, or rerun with "plom-build make named".'.format(
                 spec["numberToName"]
             )
         )
@@ -120,7 +120,7 @@ def buildDatabaseAndPapers(blankOrID):
 
     if blankOrID == "named" and spec["numberToName"] == 0:
         print(
-            'Your spec says to produce only unnamed papers. You should either edit your spec file, or rerun with "plom-build build named".'
+            'Your spec says to produce only unnamed papers. You should either edit your spec file, or rerun with "plom-build make blank".'
         )
         exit(1)
 
