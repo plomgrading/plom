@@ -245,8 +245,8 @@ elif args.command == "class":
 elif args.command == "users":
     # process the class list and copy into place
     processUsers(args.userlist, args.demo, args.auto)
-elif args.command == "run":
-    runTheServer()
+elif args.command == "launch":
+    launchTheServer()
 else:
     parser.print_help()
     print("\n>> Running the plom server <<")
