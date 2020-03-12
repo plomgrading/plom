@@ -15,32 +15,33 @@ from plom.db.examDB import PlomDB
 from .mergeAndCodePages import makePDF
 
 
-def _f(x):
-    # TODO: unfortunate to copy spec here many times, but otherwise we get
-    # AttributeError: Can't pickle local object 'buildAllPapers.<locals>.f'
-    t, pv, spec = x
-    makePDF(
-        spec["name"],
-        spec["publicCode"],
-        spec["numberOfPages"],
-        spec["numberOfVersions"],
-        t,
-        pv,
-    )
+def _makePDF(x):
+    makePDF(*x)
+
 
 def buildAllPapers(spec, dbFilename):
     examDB = PlomDB(dbFilename)
-    stuff = []
+    makePDFargs = []
     for t in range(1, spec["numberToProduce"] + 1):
         pv = examDB.getPageVersions(t)
-        stuff.append((t, pv, spec))
+        makePDFargs.append(
+            (
+                spec["name"],
+                spec["publicCode"],
+                spec["numberOfPages"],
+                spec["numberOfVersions"],
+                t,
+                pv,
+            )
+        )
 
     # Same as:
-    # for x in stuff:
-    #     _f(x)
-    N = len(stuff)
+    # for x in makePDFargs:
+    #     makePDF(*x)
+    N = len(makePDFargs)
     with Pool() as p:
-        r = list(tqdm(p.imap_unordered(_f, stuff), total=N))
+        r = list(tqdm(p.imap_unordered(_makePDF, makePDFargs), total=N))
+
 
 def confirmProcessed(spec, dbFilename):
     examDB = PlomDB(dbFilename)

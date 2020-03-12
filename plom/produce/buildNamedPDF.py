@@ -9,6 +9,8 @@ __license__ = "AGPL-3.0-or-later"
 
 import csv
 import os
+from multiprocessing import Pool
+from tqdm import tqdm
 
 from plom.db.examDB import PlomDB
 from .mergeAndCodePages import makePDF
@@ -27,24 +29,39 @@ def readClassList():
     return students
 
 
+def _makePDF(x):
+    makePDF(*x)
+
+
 def buildAllPapers(spec, dbFilename):
-    # TODO: slow serial look, awaiting Pool ||ism
     students = readClassList()
     examDB = PlomDB(dbFilename)
+    makePDFargs = []
     for t in range(1, spec["numberToProduce"] + 1):
         pv = examDB.getPageVersions(t)
         # have to add name/id to pv
         if t <= spec["numberToName"]:
-            pv["id"] = students[t][0]
-            pv["name"] = students[t][1]
-        makePDF(
-            spec["name"],
-            spec["publicCode"],
-            spec["numberOfPages"],
-            spec["numberOfVersions"],
-            t,
-            pv,
+            d = {"id": students[t][0], "name": students[t][1]}
+        else:
+            d = None
+        makePDFargs.append(
+            (
+                spec["name"],
+                spec["publicCode"],
+                spec["numberOfPages"],
+                spec["numberOfVersions"],
+                t,
+                pv,
+                d,
+            )
         )
+
+    # Same as:
+    # for x in makePDFargs:
+    #     makePDF(*x)
+    N = len(makePDFargs)
+    with Pool() as p:
+        r = list(tqdm(p.imap_unordered(_makePDF, makePDFargs), total=N))
 
 
 def confirmProcessedAndNamed(spec, dbFilename):
