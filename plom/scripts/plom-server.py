@@ -26,7 +26,7 @@ def processClasslist(fname, demo):
     if demo:
         print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
         cl = pkg_resources.resource_string("plom", "demoClassList.csv")
-        cl = cl.decode()
+        cl = cl.decode("utf-8")
         with open(os.path.join("specAndDatabase", "classlist.csv"), "w+") as fh:
             fh.write(cl)
         return
