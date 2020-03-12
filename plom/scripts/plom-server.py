@@ -110,7 +110,14 @@ def buildSSLKeys():
         "serverConfiguration/mlp.key -nodes -out "
         "serverConfiguration/mlp-selfsigned.crt -days 1000 -subj"
     )
-    sslcmd += " '/C={}/ST=./L=./CN=localhost'".format(locale.getdefaultlocale()[0][-2:])
+
+    # TODO: is this the way to get two digit country code?
+    tmp = locale.getdefaultlocale()[0]
+    if tmp:
+        twodigcc = tmp[-2:]
+    else:
+        twodigcc = "US"
+    sslcmd += " '/C={}/ST=./L=./CN=localhost'".format(twodigcc)
     try:
         subprocess.check_call(shlex.split(sslcmd))
     except Exception as err:
