@@ -55,14 +55,28 @@ def checkSpecAndDatabase():
         )
         exit(1)
 
-    for fn in ["verifiedSpec.toml", "plom.db", "classlist.csv"]:
-        if os.path.isfile(os.path.join("specAndDatabase", fn)):
-            print("File '{}' is present.".format(fn))
-        else:
-            print(
-                "Cannot find '{}' inside 'specAndDatabase' directory - cannot continue."
-            )
-            exit(1)
+    if os.path.isfile(os.path.join("specAndDatabase", "verifiedSpec.toml")):
+        print("Test specification present.")
+    else:
+        print(
+            "Cannot find the test specification. Have you run 'plom-build' yet?. Aborting."
+        )
+        exit(1)
+
+    if os.path.isfile(os.path.join("specAndDatabase", "plom.db")):
+        print("Database present.")
+    else:
+        print("Cannot find the database. Have you run 'plom-build' yet? Aborting.")
+        exit(1)
+
+    if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
+        print("Classlist present.")
+    else:
+        print("Cannot find the classlist. Aborting.")
+        print(
+            "You do not have to return to 'plom-build'. To process a classlist please run 'plom-server class <filename>'"
+        )
+        exit(1)
 
 
 def buildRequiredDirectories():
