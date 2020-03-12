@@ -2,6 +2,10 @@ from peewee import *
 from datetime import datetime, timedelta
 import logging
 
+from plom.rules import censorStudentNumber as censorID
+from plom.rules import censorStudentName as censorName
+
+
 log = logging.getLogger("DB")
 # logger = logging.getLogger("peewee")
 # logger.addHandler(logging.StreamHandler())
@@ -360,7 +364,7 @@ class PlomDB:
             iref.save()
             tref.identified = True
             tref.save()
-        log.info("Test {} id'd as {} {}".format(t, sid, sname))
+        log.info("Test {} id'd as {} {}".format(t, censorID(sid), censorName(sname)))
 
     def checkTestAllUploaded(self, gref):
         tref = gref.test
@@ -1456,17 +1460,18 @@ class PlomDB:
                 tref.identified = True
                 tref.save()
                 return [True]
-                # TODO: should we censor student names and numbers in the logs?
                 log.info(
                     'User "{}" returning ID-task "{}" with "{}" "{}"'.format(
-                        username, testNumber, sid, sname
+                        username, testNumber, censorID(sid), censorName(sname)
                     )
                 )
         except IDData.DoesNotExist:
             log.error("ID take task - That test number {} not known".format(testNumber))
             return [False, False]
         except IntegrityError:
-            log.error("ID take task - Student number {} already entered".format(sid))
+            log.error(
+                "ID take task - Student number {} already entered".format(censorID(sid))
+            )
             return [False, True]
 
     def IDgetRandomImage(self):
