@@ -20,16 +20,20 @@ class IDHandler:
     # @routes.get("/ID/classlist")
     @authByToken
     def IDgetClasslist(self):
-        if os.path.isfile("resources/classlist.csv"):
-            return web.FileResponse("resources/classlist.csv", status=200)
+        if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
+            return web.FileResponse(
+                os.path.join("specAndDatabase", "classlist.csv"), status=200
+            )
         else:
             return web.Response(status=404)
 
     # @routes.get("/ID/predictions")
     @authByToken
     def IDgetPredictions(self):
-        if os.path.isfile("resources/predictionlist.csv"):
-            return web.FileResponse("resources/predictionlist.csv", status=200)
+        if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
+            return web.FileResponse(
+                os.path.join("specAndDatabase", "classlist.csv"), status=200
+            )
         else:
             return web.Response(status=404)
 
