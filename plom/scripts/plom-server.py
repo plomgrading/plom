@@ -123,7 +123,7 @@ def buildSSLKeys():
     if tmp:
         twodigcc = tmp[-2:]
     else:
-        twodigcc = "US"
+        twodigcc = "CA"
     sslcmd += " '/C={}/ST=./L=./CN=localhost'".format(twodigcc)
     try:
         subprocess.check_call(shlex.split(sslcmd))
