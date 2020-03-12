@@ -187,9 +187,10 @@ def processUsers(userFile, demo, auto):
 
 
 #################
-def runTheServer():
-    print("Coming soon.")
-    pass
+def launchTheServer():
+    from plom.server import newServer
+
+    newServer.launch()
 
 
 #################
@@ -200,7 +201,7 @@ sub = parser.add_subparsers(help="sub-command help", dest="command")
 spI = sub.add_parser("init", help="Initialise server.")
 spL = sub.add_parser("class", help="Read in a classlist.")
 spU = sub.add_parser("users", help="Create required users.")
-spR = sub.add_parser("run", help="Launch server.")
+spR = sub.add_parser("launch", help="Launch server.")
 #
 spL.add_argument(
     "classlist",
@@ -268,7 +269,7 @@ else:
         "4. Run 'plom-servers users <filename>' - This parses the plain-text user list, performs some simple sanity checks and then hashes the passwords to a new file."
     )
     print("4a. Optionally you can now delete the file containing plain-text passwords.")
-    print("5. Now you can start the server with 'plom-server run'")
+    print("5. Now you can start the server with 'plom-server launch'")
     print("FUTURE - 'plom-server stop' will stop the server.")
 
 exit(0)
