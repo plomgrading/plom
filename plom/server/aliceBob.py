@@ -10,6 +10,7 @@ __license__ = "AGPLv3"
 
 
 import secrets
+from random import sample
 
 words = """
 about above across act active activity add afraid after again age ago agree
@@ -89,17 +90,26 @@ def simplePassword():
     return secrets.choice(words) + str(secrets.randbelow(100)) + secrets.choice(words)
 
 
-def makeRandomUserList():
+def makeRandomUserList(number=None):
+    # if number given, pick random selection from names. (unless number too large)
+    if number is None or number > len(names):
+        nlist = names
+    else:
+        nlist = sample(names, number)
+
     lst = []
-    for n in names:
+    for n in sorted(nlist):
         p = simplePassword()
         lst.append([n, p])
     return lst
 
 
-def makeNumberedUserList():
+def makeNumberedUserList(number=None):
+    # if number given then
+    if number is None:
+        number = len(names)
     lst = []
-    for i in range(0, len(names)):
+    for i in range(0, number):
         n = "user{}".format(i)
         p = simplePassword()
         lst.append([n, p])

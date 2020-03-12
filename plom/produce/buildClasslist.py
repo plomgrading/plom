@@ -14,35 +14,7 @@ import sys
 import subprocess
 import pandas
 
-
-def import_canvas_csv(canvas_fromfile):
-    df = pandas.read_csv(canvas_fromfile, dtype="object")
-    print('Loading from Canvas csv file: "{0}"'.format(canvas_fromfile))
-
-    # Note: Canvas idoicy whereby "SIS User ID" is same as "Student Number"
-    cols = ["Student", "ID", "SIS User ID", "SIS Login ID", "Section", "Student Number"]
-    assert all(
-        [c in df.columns for c in cols]
-    ), "CSV file missing columns?  We need:\n  " + str(cols)
-
-    print(
-        'Carefully filtering rows w/o "Student Number" including:\n'
-        '  almost blank rows, "Points Possible" and "Test Student"s'
-    )
-    isbad = df.apply(
-        lambda x: (
-            pandas.isnull(x["Student Number"])
-            and (
-                pandas.isnull(x["Student"])
-                or x["Student"].strip().lower().startswith("points possible")
-                or x["Student"].strip().lower().startswith("test student")
-            )
-        ),
-        axis=1,
-    )
-    df = df[isbad == False]
-
-    return df
+from ..finish.return_tools import import_canvas_csv
 
 
 def checkNonCanvasCSV(fname):

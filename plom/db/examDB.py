@@ -2,9 +2,6 @@ from peewee import *
 from datetime import datetime, timedelta
 import logging
 
-# TODO: replace with logging
-from plom import _printLog as printLog
-
 log = logging.getLogger("DB")
 # logger = logging.getLogger("peewee")
 # logger.addHandler(logging.StreamHandler())
@@ -666,9 +663,8 @@ class PlomDB:
                 originalName=oname, fileName=nname, md5sum=md5, page=pref
             )
             cref.save()
-        printLog(
-            "DB",
-            "Uploaded image {} as collision of tpv={}.{}.{}".format(oname, t, p, v),
+        log.info(
+            "Uploaded image {} as collision of tpv={}.{}.{}".format(oname, t, p, v)
         )
         return [
             True,
@@ -820,11 +816,10 @@ class PlomDB:
             pref.scanned = True
             pref.save()
             uref.delete_instance()
-        printLog(
-            "DB",
+        log.info(
             "Moving unknown {} to image {} of tp {}.{}".format(
                 fname, nname, testNumber, pageNumber
-            ),
+            )
         )
         self.checkGroupAllUploaded(pref)
         return [True]
@@ -847,11 +842,10 @@ class PlomDB:
                 md5sum=uref.md5sum,
             )
             uref.delete_instance()
-        printLog(
-            "DB",
+        log.info(
             "Moving unknown {} to collision {} of tp {}.{}".format(
                 fname, nname, testNumber, pageNumber
-            ),
+            )
         )
         return [True]
 
@@ -874,11 +868,10 @@ class PlomDB:
             pref.scanned = True
             pref.save()
             cref.delete_instance()
-        printLog(
-            "DB",
+        log.info(
             "Collision {} replacing tpv {}.{}.{} as {}".format(
                 fname, testNumber, pageNumber, version, nname
-            ),
+            )
         )
         self.checkGroupAllUploaded(pref)
         return [True]
@@ -918,11 +911,10 @@ class PlomDB:
                 scanned=True,
             )
             uref.delete_instance()
-        printLog(
-            "DB",
+        log.info(
             "Saving extra {} as {} tp {}.{} of question {}".format(
                 fname, nname, testNumber, pageNumber, questionNumber
-            ),
+            )
         )
         ## Now invalidate any work on the associated group
         # now update the group and keep list of files to delete potentially
@@ -1198,11 +1190,10 @@ class PlomDB:
                     x.time.strftime("%y:%m:%d-%H:%M:%S"),
                 ]
             )
-        printLog(
-            "DB",
+        log.debug(
             "Sending filtered mark-review data. filters (Q,V,U)= {}.{}.{}".format(
                 filterQ, filterV, filterU
-            ),
+            )
         )
         return rval
 
@@ -1218,11 +1209,10 @@ class PlomDB:
         )
         if qref is None:
             return [False]
-        printLog(
-            "DB",
+        log.debug(
             "Sending annotated image of tqv {}.{}.{}".format(
                 testNumber, questionNumber, version
-            ),
+            )
         )
         return [True, qref.annotatedFile]
 
@@ -1296,9 +1286,7 @@ class PlomDB:
                 x.markingTime = 0
                 x.time = datetime.now()
                 x.save()
-                printLog(
-                    "DB", "Reset user {} question task {}".format(username, x.group.gid)
-                )
+                log.info("Reset user {} question task {}".format(username, x.group.gid))
         with plomdb.atomic():
             query = SumData.select().where(
                 SumData.username == username, SumData.status == "out"
@@ -1308,9 +1296,8 @@ class PlomDB:
                 x.username = ""
                 x.time = datetime.now()
                 x.save()
-                printLog(
-                    "DB",
-                    "Reset user {} totalling task {}".format(username, x.group.gid),
+                log.info(
+                    "Reset user {} totalling task {}".format(username, x.group.gid)
                 )
 
     # ------------------
@@ -1382,9 +1369,7 @@ class PlomDB:
                 rval = [True]
                 for p in gref.pages.order_by(Page.pageNumber):
                     rval.append(p.fileName)
-                printLog(
-                    "DB", "Giving ID task {} to user {}".format(testNumber, username)
-                )
+                log.debug("Giving ID task {} to user {}".format(testNumber, username))
                 return rval
 
         except Test.DoesNotExist:
@@ -1440,9 +1425,7 @@ class PlomDB:
                 iref.save()
                 tref.identified = False
                 tref.save()
-                printLog(
-                    "DB", "User {} did not ID task {}".format(username, testNumber)
-                )
+                log.info("User {} did not ID task {}".format(username, testNumber))
 
         except Test.DoesNotExist:
             log.info("That test number {} not known".format(testNumber))
@@ -1473,21 +1456,17 @@ class PlomDB:
                 tref.identified = True
                 tref.save()
                 return [True]
-                printLog(
-                    "DB",
-                    "User {} returning ID-task {} with {} {}".format(
+                # TODO: should we censor student names and numbers in the logs?
+                log.info(
+                    'User "{}" returning ID-task "{}" with "{}" "{}"'.format(
                         username, testNumber, sid, sname
-                    ),
+                    )
                 )
         except IDData.DoesNotExist:
-            printLog(
-                "DB", "ID take task - That test number {} not known".format(testNumber)
-            )
+            log.error("ID take task - That test number {} not known".format(testNumber))
             return [False, False]
         except IntegrityError:
-            printLog(
-                "DB", "ID take task - Student number {} already entered".format(sid)
-            )
+            log.error("ID take task - Student number {} already entered".format(sid))
             return [False, True]
 
     def IDgetRandomImage(self):
@@ -1563,8 +1542,8 @@ class PlomDB:
         markList = []
         for x in query:
             markList.append([x.group.gid, x.status, x.mark, x.markingTime, x.tags])
-        printLog(
-            "DB", "Sending completed qv {}.{} tasks to user {}".format(q, v, username)
+        log.debug(
+            'Sending completed qv {}.{} tasks to user "{}"'.format(q, v, username)
         )
         return markList
 
@@ -1612,8 +1591,8 @@ class PlomDB:
                 ]
                 for p in gref.pages.order_by(Page.pageNumber):
                     rval.append(p.fileName)
-                printLog(
-                    "DB", "Giving marking task {} to user {}".format(groupID, username)
+                log.debug(
+                    'Giving marking task {} to user "{}"'.format(groupID, username)
                 )
                 return rval
         except Group.DoesNotExist:
@@ -1677,11 +1656,10 @@ class PlomDB:
                 qref.marked = True
                 qref.save()
                 # since this has been marked - check if all questions for test have been marked
-                printLog(
-                    "DB",
+                log.info(
                     "Task {} marked {} by user {} and placed at {} with md5 = {}".format(
                         task, mark, username, aname, md5
-                    ),
+                    )
                 )
                 tref = qref.test
                 # check if there are any unmarked questions
@@ -1703,11 +1681,10 @@ class PlomDB:
                 sref.summed = True
                 sref.status = "done"
                 sref.save()
-                printLog(
-                    "DB",
+                log.info(
                     "All of test {} is marked - total updated = {}".format(
                         tref.testNumber, tot
-                    ),
+                    )
                 )
                 tref.marked = True
                 tref.totalled = True
@@ -1715,11 +1692,10 @@ class PlomDB:
                 return True
 
         except Group.DoesNotExist:
-            printLog(
-                "DB",
+            log.error(
                 "That returning marking task number {} / username {} pair not known".format(
                     task, username
-                ),
+                )
             )
             return False
 
@@ -1755,11 +1731,10 @@ class PlomDB:
             with plomdb.atomic():
                 gref = Group.get(Group.gid == task)
                 if gref.scanned == False:
-                    printLog(
-                        "DB",
+                    log.warning(
                         "MgetOriginalImages - task {} not completely scanned".format(
                             task
-                        ),
+                        )
                     )
                     return [False, "Task {} is not completely scanned".format(task)]
                 qref = gref.questiondata[0]
@@ -1782,16 +1757,13 @@ class PlomDB:
                 # update tag
                 qref.tags = tag
                 qref.save()
-                printLog(
-                    "DB", "Task {} tagged {} by user {}".format(task, tag, username)
+                log.info(
+                    'Task {} tagged by user "{}": "{}"'.format(task, username, tag)
                 )
                 return True
         except Group.DoesNotExist:
-            printLog(
-                "DB",
-                "MsetTag -  task {} / username {} pair not known".format(
-                    task, username
-                ),
+            log.error(
+                "MsetTag -  task {} / username {} pair not known".format(task, username)
             )
             return False
 
@@ -1825,9 +1797,7 @@ class PlomDB:
             qref.username = "reviewer"
             qref.time = datetime.now()
             qref.save()
-        printLog(
-            "DB", "Setting tq {}.{} for reviewer".format(testNumber, questionNumber)
-        )
+        log.info("Setting tq {}.{} for reviewer".format(testNumber, questionNumber))
         return [True]
 
     def MrevertTask(self, username, task):
@@ -1842,7 +1812,7 @@ class PlomDB:
         if qref.username != username or qref.status != "done" or qref.marked is False:
             return [False, "NAC"]  # nothing to do here
         # now update things
-        print("User {} reverting task {}".format(username, task))
+        log.info("User {} reverting task {}".format(username, task))
         with plomdb.atomic():
             # clean up test
             tref.marked = False
@@ -1934,18 +1904,16 @@ class PlomDB:
                 # return [true, page1]
                 pref = Page.get(Page.test == tref, Page.pageNumber == 1)
                 return [True, pref.fileName]
-                printLog(
-                    "DB",
-                    "Giving totalling task {} to user {}".format(testNumber, username),
+                log.info(
+                    "Giving totalling task {} to user {}".format(testNumber, username)
                 )
                 return rval
 
         except Test.DoesNotExist:
-            printLog(
-                "DB",
+            log.warning(
                 "Cannot give totalling task {} to {} - task not known".format(
                     testNumber, username
-                ),
+                )
             )
             return False
 
@@ -1971,13 +1939,9 @@ class PlomDB:
                 sref.save()
                 tref.summed = False
                 tref.save()
-                printLog(
-                    "DB", "User {} did not total task {}".format(username, testNumber)
-                )
+                log.info("User {} did not total task {}".format(username, testNumber))
         except Test.DoesNotExist:
-            printLog(
-                "DB", "TdidNotFinish - test number {} not known".format(testNumber)
-            )
+            log.error("TdidNotFinish - test number {} not known".format(testNumber))
             return False
 
     def TgetImage(self, username, t):
@@ -1989,11 +1953,10 @@ class PlomDB:
         if username not in [sref.username, "manager"]:
             return [False]
         pref = Page.get(Page.test == tref, Page.pageNumber == 1)
-        printLog(
-            "DB",
+        log.info(
             "Sending cover-page of test {} to user {} = {}".format(
                 t, username, pref.fileName
-            ),
+            )
         )
         return [True, pref.fileName]
 
@@ -2027,8 +1990,7 @@ class PlomDB:
                 )
                 return [True]
         except Test.DoesNotExist:
-            printLog(
-                "DB",
-                "TtakeTaskFromClient - test number {} not known".format(testNumber),
+            log.error(
+                "TtakeTaskFromClient - test number {} not known".format(testNumber)
             )
             return [False]

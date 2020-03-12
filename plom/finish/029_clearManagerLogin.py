@@ -46,5 +46,5 @@ if __name__ == "__main__":
     # get started
 
     msgr.clearAuthorisation("manager", pwd)
-    print("Scanner login cleared.")
+    print("Manager login cleared.")
     msgr.stop()

@@ -109,8 +109,8 @@ class BackgroundDownloader(QThread):
             try:
                 imageList, tags = messenger.MclaimThisTask(task)
                 break
-            except PlomBenignException as err:
-                # task taken by another user, so continue
+            except PlomTakenException as err:
+                log.info("will keep trying as task already taken: {}".format(err))
                 continue
             except PlomSeriousException as err:
                 self.downloadFail.emit(str(err))
@@ -515,7 +515,7 @@ class MarkerClient(QWidget):
         try:
             self.testInfo = messenger.getInfoGeneral()
         except PlomSeriousException as err:
-            self.throwSeriousError(err)
+            self.throwSeriousError(err, rethrow=False)
             return
 
         # Fire up the user interface
@@ -601,9 +601,14 @@ class MarkerClient(QWidget):
 
         # Get the max-mark for the question from the server.
         try:
-            self.getMaxMark()
+            self.maxScore = messenger.MgetMaxMark(self.question, self.version)
+        except PlomRangeException as err:
+            log.error(err.args[1])
+            ErrorMessage(err.args[1]).exec_()
+            self.shutDownError()
+            return
         except PlomSeriousException as err:
-            self.throwSeriousError(err)
+            self.throwSeriousError(err, rethrow=False)
             return
         # Paste the max-mark into the gui.
         self.ui.scoreLabel.setText(str(self.maxScore))
@@ -652,23 +657,24 @@ class MarkerClient(QWidget):
             self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(e)
 
-    def throwSeriousError(self, err):
-        ErrorMessage(
-            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down Marker.'.format(
-                err
-            )
-        ).exec_()
+    def throwSeriousError(self, err, rethrow=True):
+        """Log an exception, pop up a dialog, shutdown.
+
+        If you think you can do something reasonable instead of crashing pass
+        False to `rethrow` and this function will initiate shutdown but will
+        not re-raise the exception (this avoiding a crash).
+        """
+        # automatically prints a stacktrace into the log!
+        log.exception("A serious error has been detected")
+        msg = 'A serious error has been thrown:\n"{}"'.format(err)
+        if rethrow:
+            msg += "\nProbably we will crash now..."
+        else:
+            msg += "\nShutting down Marker."
+        ErrorMessage(msg).exec_()
         self.shutDownError()
-        # TODO: Decide on case-by-case basis what can survive.  For now, crash
-        raise (err)
-
-    def throwBenign(self, err):
-        ErrorMessage("{}".format(err)).exec_()
-
-    def getMaxMark(self):
-        """Get max mark from server and set."""
-        # Send max-mark request (mGMX) to server
-        self.maxScore = messenger.MgetMaxMark(self.question, self.version)
+        if rethrow:
+            raise(err)
 
     def getMarkedList(self):
         # Ask server for list of previously marked papers
@@ -691,10 +697,11 @@ class MarkerClient(QWidget):
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
-        except PlomBenignException as e:
-            self.throwBenign(e)
-            self.exM.removePaper(task)
-            return
+        # TODO: there were no benign exceptions except authentication
+        # except PlomBenignException as e:
+        #     ErrorMessage("{}".format(e)).exec_()
+        #     self.exM.removePaper(task)
+        #     return
 
         paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
         log.debug("create paperdir {} for already-graded download".format(paperdir))
@@ -746,7 +753,11 @@ class MarkerClient(QWidget):
             try:
                 v, m = messenger.MprogressCount(self.question, self.version)
             except PlomSeriousException as err:
-                self.throwSeriousError(err)
+                log.exception("Serious error detected while updating progress")
+                msg = 'A serious error happened while updating progress:\n"{}"'.format(err)
+                msg += "\nThis is not good: restart, report bug, etc."
+                ErrorMessage(msg).exec_()
+                return
         if m == 0:
             v, m = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.mProgressBar.setFormat("No papers to mark")
@@ -786,8 +797,8 @@ class MarkerClient(QWidget):
             try:
                 imageList, tags = messenger.MclaimThisTask(task)
                 break
-            except PlomBenignException as err:
-                # task already taken.
+            except PlomTakenException as err:
+                log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
         # Image names = "<task>.<imagenumber>.png"
@@ -1160,6 +1171,7 @@ class MarkerClient(QWidget):
             self.updateImage(idx[0].row())
 
     def shutDownError(self):
+        log.error("shutting down")
         self.my_shutdown_signal.emit(2, [])
         self.close()
 
@@ -1220,8 +1232,10 @@ class MarkerClient(QWidget):
     def downloadWholePaper(self, testNumber):
         try:
             pageNames, imagesAsBytes = messenger.MrequestWholePaper(testNumber)
-        except PlomBenignException as err:
-            self.throwBenign(err)
+        except PlomTakenException as err:
+            log.exception("Taken exception when downloading whole paper")
+            ErrorMessage("{}".format(err)).exec_()
+            return ([], [])   # TODO: what to return?
 
         viewFiles = []
         for iab in imagesAsBytes:
@@ -1317,7 +1331,10 @@ class MarkerClient(QWidget):
 
             # send updated tag back to server.
             try:
-                msg = messenger.MsetTag(task, txt)
+                messenger.MsetTag(task, txt)
+            except PlomTakenException as err:
+                log.exception("exception when trying to set tag")
+                ErrorMessage('Could not set tag:\n"{}"'.format(err)).exec_()
             except PlomSeriousException as err:
                 self.throwSeriousError(err)
         return

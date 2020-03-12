@@ -1,7 +1,8 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 import os
-from plomServer.plom_routeutils import authByToken, authByToken_validFields
-from plomServer.plom_routeutils import validFields, logRequest
+
+from .plom_routeutils import authByToken, authByToken_validFields
+from .plom_routeutils import validFields, logRequest
 
 
 class MarkHandler:

@@ -429,7 +429,7 @@ class Messenger(BaseMessenger):
                 verify=False,
             )
             if response.status_code == 204:
-                raise PlomBenignException("Task taken by another user.")
+                raise PlomTakenException("Task taken by another user.")
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
@@ -615,7 +615,7 @@ class Messenger(BaseMessenger):
                 verify=False,
             )
             if response.status_code == 204:
-                raise PlomBenignException("Task taken by another user.")
+                raise PlomTakenException("Task taken by another user.")
             response.raise_for_status()
             image = BytesIO(response.content).getvalue()  # pass back image as bytes
         except requests.HTTPError as e:
@@ -715,6 +715,13 @@ class Messenger(BaseMessenger):
     # ------------------------
     # Marker stuff
     def MgetMaxMark(self, question, ver):
+        """Get the maximum mark for this question and version.
+
+        Raises:
+            PlomRangeExeception: `question` or `ver` is out of range.
+            PlomAuthenticationException:
+            PlomSeriousException: something unexpected happened.
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.get(
@@ -730,7 +737,7 @@ class Messenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 416:
-                raise PlomSeriousException(response.text) from None
+                raise PlomRangeException(response.text) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -871,7 +878,7 @@ class Messenger(BaseMessenger):
             )
             response.raise_for_status()
             if response.status_code == 204:
-                raise PlomBenignException("Task taken by another user.")
+                raise PlomTakenException("Task taken by another user.")
 
         except requests.HTTPError as e:
             if response.status_code == 401:
@@ -1073,7 +1080,7 @@ class Messenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 409:
-                raise PlomBenignException("Task taken by another user.") from None
+                raise PlomTakenException("Task taken by another user.") from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -1108,7 +1115,7 @@ class Messenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 409:
-                raise PlomBenignException("Task taken by another user.") from None
+                raise PlomTakenException("Task taken by another user.") from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)

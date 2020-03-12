@@ -22,10 +22,20 @@ setup(
         "plom/scripts/plom-build",
         "plom/scripts/plom-client",
         "plom/scripts/plom-manager.py",
+        "plom/scripts/plom-server.py",
     ],
     include_package_data=True,
     data_files=[
-        ("share/plom", ["plom/templateTestSpec.toml"]),
+        (
+            "share/plom",
+            [
+                "plom/templateTestSpec.toml",
+                "plom/serverDetails.toml",
+                "plom/templateUserList.csv",
+                "plom/demoClassList.csv",
+                "plom/demoUserList.csv",
+            ],
+        ),
         ("share/plom/icons", iconList),
         ("share/plom/cursors", cursorList),
     ],

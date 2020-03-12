@@ -20,10 +20,8 @@ import logging
 
 # ----------------------
 
-from authenticate import Authority
+from .authenticate import Authority
 
-# this allows us to import from ../resources
-sys.path.append("..")
 from plom import __version__
 from plom import Plom_API_Version as serverAPI
 from plom import SpecParser
@@ -35,15 +33,17 @@ serverInfo = {"server": "127.0.0.1", "mport": 41984}
 # ----------------------
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
-sslContext.load_cert_chain("../resources/mlp-selfsigned.crt", "../resources/mlp.key")
+sslContext.load_cert_chain(
+    "serverConfiguration/plom-selfsigned.crt", "serverConfiguration/plom.key"
+)
 
 
-from plomServer.routesUserInit import UserInitHandler
-from plomServer.routesUpload import UploadHandler
-from plomServer.routesID import IDHandler
-from plomServer.routesMark import MarkHandler
-from plomServer.routesTotal import TotalHandler
-from plomServer.routesReport import ReportHandler
+from .plomServer.routesUserInit import UserInitHandler
+from .plomServer.routesUpload import UploadHandler
+from .plomServer.routesID import IDHandler
+from .plomServer.routesMark import MarkHandler
+from .plomServer.routesTotal import TotalHandler
+from .plomServer.routesReport import ReportHandler
 
 
 # 7 is wdith of "warning"
@@ -99,8 +99,8 @@ class Server(object):
         """Load the users from json file, add them to the authority which
         handles authentication for us.
         """
-        if os.path.exists("../resources/userList.json"):
-            with open("../resources/userList.json") as data_file:
+        if os.path.exists("serverConfiguration/userList.json"):
+            with open("serverConfiguration/userList.json") as data_file:
                 # Load the users and pass them to the authority.
                 self.userList = json.load(data_file)
                 self.authority = Authority(self.userList)
@@ -115,14 +115,14 @@ class Server(object):
         # log.debug("Validating user {}.".format(user))
         return self.authority.validateToken(user, token)
 
-    from plomServer.serverUserInit import (
+    from .plomServer.serverUserInit import (
         InfoShortName,
         InfoGeneral,
         reloadUsers,
         giveUserToken,
         closeUser,
     )
-    from plomServer.serverUpload import (
+    from .plomServer.serverUpload import (
         addKnownPage,
         addUnknownPage,
         addCollidingPage,
@@ -145,7 +145,7 @@ class Server(object):
         collidingToTestPage,
         discardToUnknown,
     )
-    from plomServer.serverID import (
+    from .plomServer.serverID import (
         IDprogressCount,
         IDgetNextTask,
         IDgetDoneTasks,
@@ -157,7 +157,7 @@ class Server(object):
         IDdeletePredictions,
         IDreviewID,
     )
-    from plomServer.serverMark import (
+    from .plomServer.serverMark import (
         MgetAllMax,
         MprogressCount,
         MgetQuestionMax,
@@ -175,7 +175,7 @@ class Server(object):
         MreviewQuestion,
         MrevertTask,
     )
-    from plomServer.serverTotal import (
+    from .plomServer.serverTotal import (
         TgetMaxMark,
         TprogressCount,
         TgetDoneTasks,
@@ -186,7 +186,7 @@ class Server(object):
         TdidNotFinish,
     )
 
-    from plomServer.serverReport import (
+    from .plomServer.serverReport import (
         RgetUnusedTests,
         RgetScannedTests,
         RgetIncompleteTests,
@@ -212,40 +212,41 @@ class Server(object):
 def getServerInfo():
     """Read the server info from json."""
     global serverInfo
-    if os.path.isfile("../resources/serverDetails.json"):
-        with open("../resources/serverDetails.json") as data_file:
+    if os.path.isfile("serverConfiguration/serverDetails.json"):
+        with open("serverConfiguration/serverDetails.json") as data_file:
             serverInfo = json.load(data_file)
             log.info("Server details loaded: {}".format(serverInfo))
     else:
         log.warning("Cannot find server details.")
 
 
-getServerInfo()
-examDB = PlomDB("../resources/plom.db")
-spec = SpecParser("../resources/verifiedSpec.toml").spec
-buildDirectories()
-peon = Server(spec, examDB)
-userIniter = UserInitHandler(peon)
-uploader = UploadHandler(peon)
-ider = IDHandler(peon)
-marker = MarkHandler(peon)
-totaller = TotalHandler(peon)
-reporter = ReportHandler(peon)
+def launch():
+    getServerInfo()
+    examDB = PlomDB("specAndDatabase/plom.db")
+    spec = SpecParser("specAndDatabase/verifiedSpec.toml").spec
+    buildDirectories()
+    peon = Server(spec, examDB)
+    userIniter = UserInitHandler(peon)
+    uploader = UploadHandler(peon)
+    ider = IDHandler(peon)
+    marker = MarkHandler(peon)
+    totaller = TotalHandler(peon)
+    reporter = ReportHandler(peon)
 
-try:
-    # construct the web server
-    app = web.Application()
-    # add the routes
-    log.info("Setting up routes")
-    userIniter.setUpRoutes(app.router)
-    uploader.setUpRoutes(app.router)
-    ider.setUpRoutes(app.router)
-    marker.setUpRoutes(app.router)
-    totaller.setUpRoutes(app.router)
-    reporter.setUpRoutes(app.router)
-    # run the web server
-    log.info("Start the server!")
-    web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
-except KeyboardInterrupt:
-    log.info("Closing down")  # TODO: I never see this!
-    pass
+    try:
+        # construct the web server
+        app = web.Application()
+        # add the routes
+        log.info("Setting up routes")
+        userIniter.setUpRoutes(app.router)
+        uploader.setUpRoutes(app.router)
+        ider.setUpRoutes(app.router)
+        marker.setUpRoutes(app.router)
+        totaller.setUpRoutes(app.router)
+        reporter.setUpRoutes(app.router)
+        # run the web server
+        log.info("Start the server!")
+        web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
+    except KeyboardInterrupt:
+        log.info("Closing down")  # TODO: I never see this!
+        pass
