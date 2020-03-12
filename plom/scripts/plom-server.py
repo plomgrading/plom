@@ -152,7 +152,7 @@ def processUsers(userFile, demo, auto):
             "Creating a demo user list at userListRaw.csv. ** DO NOT USE ON REAL SERVER **"
         )
         print(
-            "Please edit as you see fit and then rerun 'plom-server user serverConfiguration/userListRaw.csv'"
+            "Please edit as you see fit and then rerun 'plom-server users serverConfiguration/userListRaw.csv'"
         )
         cl = pkg_resources.resource_string("plom", "demoUserList.csv")
         cl = cl.decode()
