@@ -166,7 +166,7 @@ def processUsers(userFile, demo, auto):
             "Creating a demo user list at userListRaw.csv. ** DO NOT USE ON REAL SERVER **"
         )
         print(
-            "Please edit as you see fit and then rerun 'plom-server user serverConfiguration/userListRaw.csv'"
+            "Please edit as you see fit and then rerun 'plom-server users serverConfiguration/userListRaw.csv'"
         )
         cl = pkg_resources.resource_string("plom", "demoUserList.csv")
         cl = cl.decode()
@@ -259,8 +259,8 @@ elif args.command == "class":
 elif args.command == "users":
     # process the class list and copy into place
     processUsers(args.userlist, args.demo, args.auto)
-elif args.command == "run":
-    runTheServer()
+elif args.command == "launch":
+    launchTheServer()
 else:
     parser.print_help()
     print("\n>> Running the plom server <<")
