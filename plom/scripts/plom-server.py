@@ -122,8 +122,7 @@ def buildSSLKeys():
 
 def createServerConfig():
     template = pkg_resources.resource_string("plom", "serverDetails.toml")
-    template = template.decode()
-    with open(os.path.join("serverConfiguration", "serverDetails.toml"), "w+") as fh:
+    with open(os.path.join("serverConfiguration", "serverDetails.toml"), "wb") as fh:
         fh.write(template)
     print(
         "Please update the 'serverConfiguration/serverDetails.toml' file with the correct name (or IP) of your server and the port for communications."
@@ -169,8 +168,7 @@ def processUsers(userFile, demo, auto):
             "Please edit as you see fit and then rerun 'plom-server users serverConfiguration/userListRaw.csv'"
         )
         cl = pkg_resources.resource_string("plom", "demoUserList.csv")
-        cl = cl.decode()
-        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "w+") as fh:
+        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "wb") as fh:
             fh.write(cl)
         return
     if auto is not None:
@@ -195,8 +193,7 @@ def processUsers(userFile, demo, auto):
             "Creating 'serverConfiguration/userListRaw.csv' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters and usernames should be at least 4 alphanumeric characters."
         )
         cl = pkg_resources.resource_string("plom", "templateUserlist.csv")
-        cl = cl.decode()
-        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "w+") as fh:
+        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "wb") as fh:
             fh.write(cl)
 
 
