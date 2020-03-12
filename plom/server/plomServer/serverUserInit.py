@@ -36,8 +36,8 @@ def reloadUsers(self, password):
         return False
     log.info("Reloading the user list")
     # Load in the user list and check against existing user list for differences
-    if os.path.exists("../resources/userList.json"):
-        with open("../resources/userList.json") as data_file:
+    if os.path.exists("resources/userList.json"):
+        with open("resources/userList.json") as data_file:
             newUserList = json.load(data_file)
             # for each user in the new list..
             for u in newUserList:

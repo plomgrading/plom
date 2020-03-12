@@ -27,8 +27,7 @@ def checkTomlExtension(fname):
 def createSpecificationFile(fname):
     print('Creating specification file with name "{}"'.format(fname))
     template = pkg_resources.resource_string("plom", "templateTestSpec.toml")
-    template = template.decode()
-    with open(fname, "w+") as fh:
+    with open(fname, "wb") as fh:
         fh.write(template)
     print('Creating "sourceVersions" directory for your test source PDFs.')
     os.makedirs("sourceVersions", exist_ok=True)

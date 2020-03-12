@@ -1,5 +1,6 @@
 from aiohttp import web, MultipartWriter, MultipartReader
-from plomServer.plom_routeutils import validFields
+
+from .plom_routeutils import validFields
 
 
 class UploadHandler:

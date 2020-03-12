@@ -19,7 +19,7 @@ def buildSubstitute(test, page, ver):
     tpImage = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
 
     DNS = fitz.open(
-        "../resources/pageNotSubmitted.pdf"
+        "resources/pageNotSubmitted.pdf"
     )  # create a 'did not submit' pdf
     # create a box for the test number near top-centre
     # Get page width
