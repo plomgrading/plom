@@ -15,6 +15,7 @@ from plom import SpecVerifier, SpecParser
 
 #################
 def processClasslist(fname, demo):
+    os.makedirs("specAndDatabase", exist_ok=True)
     # check if classlist.csv is in place - if so abort.
     if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
         print(
