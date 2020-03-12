@@ -30,10 +30,9 @@ def reassembleTestCMD(msgr, shortName, outDir, t, sid):
     if len(fnames) == 0:
         # TODO: what is supposed to happen here?
         return
-    #rnames = ["../newServer/" + fn for fn in fnames]
     rnames = fnames
     outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
-    #reassemble(outname, shortName, sid, None, rnames)
+    # reassemble(outname, shortName, sid, None, rnames)
     return (outname, shortName, sid, None, rnames)
 
 
@@ -104,12 +103,7 @@ if __name__ == "__main__":
         reassemble(*y)
 
     with Pool() as p:
-        r = list(
-            tqdm(
-                p.imap_unordered(_f, pagelists),
-                total=len(pagelists),
-            )
-        )
+        r = list(tqdm(p.imap_unordered(_f, pagelists), total=len(pagelists),))
 
     print(">>> Warning <<<")
     print(

@@ -38,7 +38,7 @@ def buildCoverPage(msgr, shortName, outDir, t, maxMarks):
         # append quads of [q,v,m,Max]
         arg.append([qvm[0], qvm[1], qvm[2], maxMarks[str(qvm[0])]])
     return (int(t), sname, sid, arg)
-    #makeCover(int(t), sname, sid, arg)
+    # makeCover(int(t), sname, sid, arg)
 
 
 def reassembleTestCMD(msgr, shortName, outDir, t, sid):
@@ -47,11 +47,10 @@ def reassembleTestCMD(msgr, shortName, outDir, t, sid):
         # TODO: what is supposed to happen here?
         return
     covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
-    #rnames = ["../newServer/" + fn for fn in fnames]
     rnames = fnames
     outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
     return (outname, shortName, sid, covername, rnames)
-    #reassemble(outname, shortName, sid, covername, rnames)
+    # reassemble(outname, shortName, sid, covername, rnames)
 
 
 if __name__ == "__main__":
@@ -123,7 +122,9 @@ if __name__ == "__main__":
             ):
                 if identifiedTests[t][0] is not None:
                     dat1 = buildCoverPage(msgr, shortName, outDir, t, maxMarks)
-                    dat2 = reassembleTestCMD(msgr, shortName, outDir, t, identifiedTests[t][0])
+                    dat2 = reassembleTestCMD(
+                        msgr, shortName, outDir, t, identifiedTests[t][0]
+                    )
                     coverpagelist.append(dat1)
                     pagelists.append(dat2)
                 else:
@@ -146,7 +147,7 @@ if __name__ == "__main__":
             )
         )
     # Serial
-    #for z in zip(coverpagelist, pagelists):
+    # for z in zip(coverpagelist, pagelists):
     #    f(z)
 
     print(">>> Warning <<<")

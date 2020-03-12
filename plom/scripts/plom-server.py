@@ -206,9 +206,9 @@ def processUsers(userFile, demo, auto):
 
 #################
 def launchTheServer():
-    from plom.server import newServer
+    from plom.server import theServer
 
-    newServer.launch()
+    theServer.launch()
 
 
 #################
