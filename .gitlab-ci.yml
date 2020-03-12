@@ -114,8 +114,8 @@ job serverStarts:
     # TODO: combine with buildPaper job above and build plom.db ourselves
     - cp ../tmp/resources/plom.db specAndDatabase/
     - cp ../tmp/resources/verifiedSpec.toml specAndDatabase/
-    - plom-server.py init
     - plom-server.py class --demo
+    - plom-server.py init
     # TODO: use demo users instead:
     - cp ../tmp/resources/userList.json serverConfiguration/
     - plom-server.py launch &
