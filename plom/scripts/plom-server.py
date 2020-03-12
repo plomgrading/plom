@@ -107,8 +107,8 @@ def buildSSLKeys():
     # TODO = use os.path.join here.
     sslcmd = (
         "openssl req -x509 -sha256 -newkey rsa:2048 -keyout "
-        "serverConfiguration/mlp.key -nodes -out "
-        "serverConfiguration/mlp-selfsigned.crt -days 1000 -subj"
+        "serverConfiguration/plom.key -nodes -out "
+        "serverConfiguration/plom-selfsigned.crt -days 1000 -subj"
     )
 
     # TODO: is this the way to get two digit country code?
@@ -205,10 +205,57 @@ def processUsers(userFile, demo, auto):
 
 
 #################
+def checkDirectories():
+    lst = [
+        "pages",
+        "pages/discardedPages",
+        "pages/collidingPages",
+        "pages/unknownPages",
+        "pages/originalPages",
+        "markedQuestions",
+        "markedQuestions/plomFiles",
+        "markedQuestions/commentFiles",
+        "serverConfiguration",
+    ]
+    for d in lst:
+        if not os.path.isdir():
+            print(
+                "Required directories are not present. Have you run 'plom-server init'?"
+            )
+            exit(1)
+
+
+def checkServerConfigured():
+    if not os.path.isfile(os.path.join("serverConfiguration", "serverDetails.toml")):
+        print("Server configuration file not present. Have you run 'plom-server init'?")
+        exit(1)
+    if not os.path.isfile(os.path.join("serverConfiguration", "userList.json")):
+        print("Processed userlist is not present. Have you run 'plom-server users'?")
+        exit(1)
+    if not (
+        os.path.isfile(os.path.join("serverConfiguration", "plom.key"))
+        and os.path.isfile(os.path.join("serverConfiguration", "plom-selfsigned.crt"))
+    ):
+        print("SSL keys not present. Have you run 'plom-server init'?")
+        exit(1)
+
+
+def prelaunchChecks():
+    # check database, spec and classlist in place
+    checkSpecAndDatabase()
+    # check all directories built
+    checkDirectories()
+    # check serverConf and userlist present.
+    checkServerConfigured()
+    # ready to go
+    return True
+
+
 def launchTheServer():
     from plom.server import theServer
 
-    theServer.launch()
+    if prelaunchChecks():
+        theServer.launch()
 
 
 #################

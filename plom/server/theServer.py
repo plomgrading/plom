@@ -34,7 +34,7 @@ serverInfo = {"server": "127.0.0.1", "mport": 41984}
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
 sslContext.load_cert_chain(
-    "serverConfiguration/mlp-selfsigned.crt", "serverConfiguration/mlp.key"
+    "serverConfiguration/plom-selfsigned.crt", "serverConfiguration/plom.key"
 )
 
 
