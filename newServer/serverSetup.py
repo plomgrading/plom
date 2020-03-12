@@ -14,8 +14,8 @@ import pandas
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
 from ui_server_setup import Ui_ServerInfo
 
-sys.path.append("../plom/")
-from finish.return_tools import import_canvas_csv
+sys.path.append("..")
+from plom.finish.return_tools import import_canvas_csv
 
 def checkNonCanvasCSV(fname):
     """Read in a csv and check it has ID column.

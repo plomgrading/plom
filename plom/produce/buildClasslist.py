@@ -14,8 +14,7 @@ import sys
 import subprocess
 import pandas
 
-sys.path.append("..")
-from finish.return_tools import import_canvas_csv
+from ..finish.return_tools import import_canvas_csv
 
 
 def checkNonCanvasCSV(fname):
