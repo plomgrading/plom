@@ -16,10 +16,15 @@ from plom.db.examDB import PlomDB
 from .mergeAndCodePages import makePDF
 
 
+# TODO: maybe functions in this module should expect classlist as an input?
+# TODO: its a bit strange to be reading the class list here.
+#
+# TODO: even worse, the row indices are mapped to test numbers in a way that
+# TODO: may not be obvious (the `confirmedNamed` fcn).  Needs some re-org.
 def readClassList():
     students = {}
     # read in the classlist
-    with open("./specAndDatabase/classlist.csv", newline="") as csvfile:
+    with open(os.path.join("specAndDatabase", "classlist.csv"), newline="") as csvfile:
         red = csv.reader(csvfile, delimiter=",")
         next(red, None)
         k = 0
