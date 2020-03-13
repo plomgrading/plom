@@ -46,7 +46,7 @@ def decodeQRs():
     # for x in glob.glob("*.png"):
     #     QRextract(x)
 
-    os.chdir("../")
+    os.chdir("..")
 
 
 def reOrientPage(fname, qrs):
@@ -231,7 +231,7 @@ def checkQRsValid(spec, examsScannedNow):
                 fname + ".qr", os.path.join("..", "unknownPages", fname + ".qr")
             )
 
-    os.chdir("../")
+    os.chdir("..")
 
 
 def validateQRsAgainstSpec(spec, examsScannedNow):
@@ -270,7 +270,7 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
 
 
 def moveScansIntoPlace(examsScannedNow):
-    os.chdir("./pageImages")
+    os.chdir("pageImages")
     # For each test we have just scanned
     for fname in examsScannedNow:
         t = examsScannedNow[fname][0]
@@ -282,7 +282,7 @@ def moveScansIntoPlace(examsScannedNow):
         shutil.move(fname, os.path.join(dpath, dname))
         shutil.move(fname + ".qr", os.path.join(dpath, dname + ".qr"))
 
-    os.chdir("../")
+    os.chdir("..")
 
 
 def processPNGs(server=None, password=None):
