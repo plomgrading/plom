@@ -130,8 +130,8 @@ def acceptedFormats():
     )
 
 
-def getClassList(fname):
-    """Grab list of student numbers and names from a csv file.
+def processClassList(fname, outfilename):
+    """Get student names/numbers from csv, process, and save for server.
 
     Student numbers come from an `id` column.  There is some
     flexibility about student names: most straightforward is a
@@ -139,6 +139,8 @@ def getClassList(fname):
     `surname` and `name` are tried.
 
     Alternatively, a csv file exported from Canvas can be provided.
+
+    The results are written into a new csv file in a simplied format.
     """
 
     with open(fname) as csvfile:
@@ -170,5 +172,5 @@ def getClassList(fname):
             "Apologies for the eurocentricity.",
         )
 
-    print("Saving to classlist.csv")
-    df.to_csv("./specAndDatabase/classlist.csv", index=False)
+    print("Saving to {}".format(outputfile))
+    df.to_csv(outputfile, index=False)
