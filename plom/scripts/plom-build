@@ -11,6 +11,9 @@ import pkg_resources
 from plom import SpecVerifier, SpecParser
 from plom.produce import buildAllPapers, confirmProcessed, confirmNamed
 
+specdir = "specAndDatabase"
+dbfile = os.path.join(specdir, "plom.db")
+
 
 def checkTomlExtension(fname):
     ext = os.path.splitext(fname)[1]
@@ -38,7 +41,7 @@ def createSpecificationFile(fname):
 
 
 def parseAndVerifySpecification(fname):
-    os.makedirs("specAndDatabase", exist_ok=True)
+    os.makedirs(specdir, exist_ok=True)
     os.makedirs("sourceVersions", exist_ok=True)
     print('Parsing and verifying the specification "{}"'.format(fname))
     if not os.path.isfile(fname):
@@ -76,33 +79,33 @@ def processClasslist(fname):
 def buildDatabase(spec):
     from plom.produce import buildPlomDB
 
-    if os.path.isfile("specAndDatabase/plom.db"):
+    if os.path.isfile(dbfile):
         print("Database already exists - aborting.")
         exit(1)
 
     print("Creating plom database")
-    buildPlomDB.buildExamDatabase(spec, "specAndDatabase/plom.db")
+    buildPlomDB.buildExamDatabase(spec, dbfile)
     print("Done!")
 
 
 def buildBlankPapers(spec):
     print("Building blank papers")
-    buildAllPapers(spec, "specAndDatabase/plom.db")
+    buildAllPapers(spec, dbfile)
     print("Checking papers produced and updating databases")
-    confirmProcessed(spec, "specAndDatabase/plom.db")
+    confirmProcessed(spec, dbfile)
 
 
 def buildNamedPapers(spec):
     print("Building named papers")
-    buildAllPapers(spec, "specAndDatabase/plom.db", named=True)
+    buildAllPapers(spec, dbfile, named=True)
     print("Checking papers produced and updating databases")
-    confirmProcessed(spec, "specAndDatabase/plom.db")
-    confirmNamed(spec, "specAndDatabase/plom.db")
+    confirmProcessed(spec, dbfile)
+    confirmNamed(spec, dbfile)
 
 
 def buildDatabaseAndPapers(blankOrID):
     print("Reading specification")
-    if not os.path.isfile("specAndDatabase/verifiedSpec.toml"):
+    if not os.path.isfile(os.path.join(specdir, "verifiedSpec.toml")):
         print('Cannot find verified specFile - have you run "plom-build parse" yet?')
         exit(1)
     spec = SpecParser().spec
