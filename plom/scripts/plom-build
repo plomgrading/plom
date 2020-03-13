@@ -5,10 +5,11 @@ import argparse
 import os
 import shutil
 
-from plom import SpecVerifier, SpecParser
-
 # import tools for dealing with resource files
 import pkg_resources
+
+from plom import SpecVerifier, SpecParser
+from plom.produce import buildAllPapers, confirmProcessed, confirmNamed
 
 
 def checkTomlExtension(fname):
@@ -85,21 +86,18 @@ def buildDatabase(spec):
 
 
 def buildBlankPapers(spec):
-    from plom.produce import buildBlankPDF
-
     print("Building blank papers")
-    buildBlankPDF.buildAllPapers(spec, "specAndDatabase/plom.db")
-    print("Checking papers all produced")
-    buildBlankPDF.confirmProcessed(spec, "specAndDatabase/plom.db")
+    buildAllPapers(spec, "specAndDatabase/plom.db")
+    print("Checking papers produced and updating databases")
+    confirmProcessed(spec, "specAndDatabase/plom.db")
 
 
 def buildNamedPapers(spec):
-    from plom.produce import buildNamedPDF
-
     print("Building named papers")
-    buildNamedPDF.buildAllPapers(spec, "specAndDatabase/plom.db")
-    print("Checking papers all produced")
-    buildNamedPDF.confirmProcessedAndNamed(spec, "specAndDatabase/plom.db")
+    buildAllPapers(spec, "specAndDatabase/plom.db", named=True)
+    print("Checking papers produced and updating databases")
+    confirmProcessed(spec, "specAndDatabase/plom.db")
+    confirmNamed(spec, "specAndDatabase/plom.db")
 
 
 def buildDatabaseAndPapers(blankOrID):
