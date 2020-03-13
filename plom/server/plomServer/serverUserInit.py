@@ -1,9 +1,12 @@
 import hashlib
+import json
 import os
 import uuid
 import logging
 
 log = logging.getLogger("servUI")
+
+confdir = "serverConfiguration"
 
 
 def InfoShortName(self):
@@ -36,8 +39,8 @@ def reloadUsers(self, password):
         return False
     log.info("Reloading the user list")
     # Load in the user list and check against existing user list for differences
-    if os.path.exists("resources/userList.json"):
-        with open("resources/userList.json") as data_file:
+    try:
+        with open(os.path.join(confdir, "userList.json")) as data_file:
             newUserList = json.load(data_file)
             # for each user in the new list..
             for u in newUserList:
@@ -55,6 +58,9 @@ def reloadUsers(self, password):
                     self.DB.resetUsersToDo(u)
                     # remove user's authorisation token.
                     self.authority.detoken(u)
+    except FileNotFoundError:
+        # TODO?  really not even return False?
+        pass
     log.debug("Current user list = {}".format(list(self.userList.keys())))
     # return acknowledgement
     return True
