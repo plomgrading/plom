@@ -6,3 +6,6 @@
 server = "localhost"
 # the port on which networking communication will happen
 port = 41984
+# In order of severity; less serious messages will not be logged
+# Debug, Info, Warning, Error, Critical
+LogLevel = "Info"

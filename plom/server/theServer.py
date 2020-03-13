@@ -53,11 +53,8 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)7s:%(name)s\t%(message)s", datefmt="%m-%d %H:%M:%S",
 )
 log = logging.getLogger("server")
-# TODO: take from command line argument, debug to INFO
+# We will reset this later after we read the config
 logging.getLogger().setLevel("Debug".upper())
-# log.setLevel("Debug".upper())
-
-log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
 
 
 # ----------------------
@@ -217,12 +214,14 @@ def getServerInfo():
     try:
         with open("serverConfiguration/serverDetails.toml") as data_file:
             serverInfo = toml.load(data_file)
+            logging.getLogger().setLevel(serverInfo["LogLevel"].upper())
             log.debug("Server details loaded: {}".format(serverInfo))
     except FileNotFoundError:
         log.warning("Cannot find server details, using defaults")
 
 
 def launch():
+    log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
     getServerInfo()
     examDB = PlomDB("specAndDatabase/plom.db")
     spec = SpecParser("specAndDatabase/verifiedSpec.toml").spec
