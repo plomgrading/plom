@@ -225,7 +225,7 @@ def checkDirectories():
         "serverConfiguration",
     ]
     for d in lst:
-        if not os.path.isdir():
+        if not os.path.isdir(d):
             print(
                 "Required directories are not present. Have you run 'plom-server init'?"
             )
