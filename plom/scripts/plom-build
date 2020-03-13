@@ -70,7 +70,7 @@ def processClasslist(fname):
     # grab the file, process it and copy it into place.
 
     if os.path.isfile(fname):
-        buildClasslist.getClassList(fname)
+        buildClasslist.processClassList(fname, os.path.join(specdir, "classlist.csv"))
     else:
         print('Cannot find file "{}"'.format(fname))
         exit(1)
