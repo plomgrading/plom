@@ -9,6 +9,7 @@ __license__ = "AGPLv3"
 
 from aiohttp import web
 import hashlib
+import toml
 import json
 import os
 import ssl
@@ -24,12 +25,13 @@ from .authenticate import Authority
 
 from plom import __version__
 from plom import Plom_API_Version as serverAPI
+from plom import Default_Port
 from plom import SpecParser
 from plom.db.examDB import PlomDB
 
 # ----------------------
 
-serverInfo = {"server": "127.0.0.1", "mport": 41984}
+serverInfo = {"server": "127.0.0.1", "port": Default_Port}
 # ----------------------
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
@@ -210,14 +212,14 @@ class Server(object):
 
 
 def getServerInfo():
-    """Read the server info from json."""
+    """Read the server info from config file."""
     global serverInfo
-    if os.path.isfile("serverConfiguration/serverDetails.json"):
-        with open("serverConfiguration/serverDetails.json") as data_file:
-            serverInfo = json.load(data_file)
-            log.info("Server details loaded: {}".format(serverInfo))
-    else:
-        log.warning("Cannot find server details.")
+    try:
+        with open("serverConfiguration/serverDetails.toml") as data_file:
+            serverInfo = toml.load(data_file)
+            log.debug("Server details loaded: {}".format(serverInfo))
+    except FileNotFoundError:
+        log.warning("Cannot find server details, using defaults")
 
 
 def launch():
@@ -246,7 +248,7 @@ def launch():
         reporter.setUpRoutes(app.router)
         # run the web server
         log.info("Start the server!")
-        web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
+        web.run_app(app, ssl_context=sslContext, port=serverInfo["port"])
     except KeyboardInterrupt:
         log.info("Closing down")  # TODO: I never see this!
         pass
