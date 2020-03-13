@@ -143,6 +143,18 @@ def createServerConfig():
     )
 
 
+def createBlankPredictions():
+    pl = os.path.join("serverConfiguration", "predictionlist.csv")
+    if os.path.isfile(pl):
+        print("Predictionlist already present.")
+        return
+    print(
+        "Predictionlist will be updated when you run ID-prediction from manager-client."
+    )
+    with open(pl, "w") as fh:
+        fh.write("test, id\n")
+
+
 def initialiseServer():
     print("Do simple existance checks on required files.")
     checkSpecAndDatabase()
@@ -152,6 +164,8 @@ def initialiseServer():
     buildSSLKeys()
     print("Copy server networking configuration template into place.")
     createServerConfig()
+    print("Build blank predictionlist for identifying.")
+    createBlankPredictions()
 
 
 #################

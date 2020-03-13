@@ -30,9 +30,9 @@ class IDHandler:
     # @routes.get("/ID/predictions")
     @authByToken
     def IDgetPredictions(self):
-        if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
+        if os.path.isfile(os.path.join("specAndDatabase", "predictionlist.csv")):
             return web.FileResponse(
-                os.path.join("specAndDatabase", "classlist.csv"), status=200
+                os.path.join("specAndDatabase", "predictionlist.csv"), status=200
             )
         else:
             return web.Response(status=404)
