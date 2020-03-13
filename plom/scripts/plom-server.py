@@ -135,11 +135,18 @@ def buildSSLKeys():
 
 
 def createServerConfig():
+    sd = os.path.join("serverConfiguration", "serverDetails.toml")
+    if os.path.isfile(sd):
+        print("Server config already exists - will not change.")
+        return
+
     template = pkg_resources.resource_string("plom", "serverDetails.toml")
-    with open(os.path.join("serverConfiguration", "serverDetails.toml"), "wb") as fh:
+    with open(os.path.join(sd), "wb") as fh:
         fh.write(template)
     print(
-        "Please update the 'serverConfiguration/serverDetails.toml' file with the correct name (or IP) of your server and the port for communications."
+        "Please update '{}' with the correct name (or IP) of your server and the port.".format(
+            sd
+        )
     )
 
 
