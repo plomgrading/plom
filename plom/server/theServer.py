@@ -50,7 +50,7 @@ from .plomServer.routesReport import ReportHandler
 
 # 7 is wdith of "warning"
 logging.basicConfig(
-    format="%(asctime)s %(levelname)7s:%(name)s\t%(message)s", datefmt="%m-%d %H:%M:%S",
+    format="%(asctime)s %(levelname)7s:%(name)s\t%(message)s", datefmt="%b%d %H:%M:%S",
 )
 log = logging.getLogger("server")
 # We will reset this later after we read the config
