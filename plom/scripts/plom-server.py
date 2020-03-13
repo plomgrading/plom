@@ -262,7 +262,9 @@ def checkServerConfigured():
     if os.path.isfile(os.path.join("specAndDatabase", "predictionlist.csv")):
         print("Predictionlist present.")
     else:
-        print("Cannot find the predictionlist. Have you run 'plom-init' yet? Aborting.")
+        print(
+            "Cannot find the predictionlist. Have you run 'plom-server init' yet? Aborting."
+        )
         exit(1)
 
 
