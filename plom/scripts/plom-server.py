@@ -162,6 +162,39 @@ def createBlankPredictions():
         fh.write("test, id\n")
 
 
+def doLatexChecks():
+    from plom.server import latex2png, pageNotSubmitted
+
+    os.makedirs("pleaseCheck", exist_ok=True)
+
+    # check build of fragment
+    cdir = os.getcwd()
+    ct = os.path.join(cdir, "pleaseCheck", "checkThing.png")
+    pns = os.path.join(cdir, "specAndDatabase", "pageNotSubmitted.pdf")
+    fragment = "\\( \\mathbb{Z} / \\mathbb{Q} \) The cat sat on the mat and verified \LaTeX worked okay for plom."
+
+    if not latex2png.processFragment(fragment, ct):
+        print("Error latex'ing fragment. Please check your latex distribution.")
+        exit(1)
+
+    # build template pageNotSubmitted.pdf just in case needed
+    if not pageNotSubmitted.buildPNSPage(pns):
+        print(
+            "Error latex'ing 'pageNotSubmitted.pdf' template page. Please check your latex distribution."
+        )
+        exit(1)
+
+    # Try building a replacement for missing page.
+    if not pageNotSubmitted.buildSubstitute(0, 0, 0):
+        print("Error building replacement for missing page.")
+        exit(1)
+
+    print(
+        "Simple latex checks done. Please examine 'checkThis.png' and 'pns.0.0.0.png' in the directory 'pleaseCheck' - but we think they should be fine."
+    )
+    shutil.move("pns.0.0.0.png", "pleaseCheck")
+
+
 def initialiseServer():
     print("Do simple existance checks on required files.")
     checkSpecAndDatabase()
@@ -173,6 +206,8 @@ def initialiseServer():
     createServerConfig()
     print("Build blank predictionlist for identifying.")
     createBlankPredictions()
+    print("Do latex checks and build 'pageNotSubmitted.pdf' in case needed")
+    doLatexChecks()
 
 
 #################

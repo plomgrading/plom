@@ -19,7 +19,7 @@ def buildSubstitute(test, page, ver):
     tpImage = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
 
     DNS = fitz.open(
-        "resources/pageNotSubmitted.pdf"
+        "specAndDatabase/pageNotSubmitted.pdf"
     )  # create a 'did not submit' pdf
     # create a box for the test number near top-centre
     # Get page width
@@ -41,26 +41,39 @@ def buildSubstitute(test, page, ver):
     img = DNS[0].getPixmap(alpha=False, matrix=fitz.Matrix(scale, scale))
     img.writePNG("pns.{}.{}.{}.png".format(test, page, ver))
     DNS.close()
+    return True
 
 
-def main():
-    """Replace missing (not scanned) pages with placeholders.
+def buildPNSPage(outName):
+    PNStex = """
+\\documentclass[12pt,letterpaper]{article}
+\\usepackage[]{fullpage}
+\\usepackage{xcolor}
+\\usepackage[printwatermark]{xwatermark}
+\\newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
+\\pagestyle{empty}
+\\begin{document}
+\\emph{This page of the test was not submitted.}
+\\vfill
+\\emph{This page of the test was not submitted.}
+\\end{document}
+"""
+    cdir = os.getcwd()
+    outname = os.path.join(cdir, "specAndDatabase", "pageNotSubmitted.pdf")
+    td = tempfile.TemporaryDirectory()
+    os.chdir(td.name)
 
-    Call this like:
-    ./replaceMissingPage.py t p
+    with open(os.path.join(td.name, "pns.tex"), "w") as fh:
+        fh.write(PNStex)
 
-    where `t` is the test number and `p` is the page number
+    latexIt = subprocess.run(
+        ["pdflatex", "-interaction=nonstopmode", "-no-shell-escape", "pns.tex"],
+        stdout=subprocess.DEVNULL,
+    )
+    if latexIt.returncode != 0:
+        # sys.exit(latexIt.returncode)
+        return False
 
-    This is dangerous stuff: we do some sanity checks but be careful!
-    """
-    stest = sys.argv[1]
-    spage = sys.argv[2]
-    sver = sys.argv[3]
-    test = int(stest)
-    page = int(spage)
-    ver = int(sver)
-    buildSubstitute(test, page, ver)
-
-
-if __name__ == "__main__":
-    main()
+    shutil.copyfile("pns.pdf", outName)
+    os.chdir(cdir)
+    return True

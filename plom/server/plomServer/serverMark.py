@@ -7,6 +7,8 @@ import subprocess
 import tempfile
 import uuid
 
+from plom.server import latex2png
+
 
 def MgetQuestionMax(self, q, v):
     iv = int(v)
@@ -57,12 +59,8 @@ def MgetNextTask(self, q, v):
 
 def MlatexFragment(self, user, fragment):
     # TODO - only one frag file per user - is this okay?
-    tfrag = tempfile.NamedTemporaryFile()
-    with open(tfrag.name, "w+") as fh:
-        fh.write(fragment)
-
     fname = os.path.join(self.tempDirectory.name, "{}_frag.png".format(user))
-    if subprocess.run(["python3", "latex2png.py", tfrag.name, fname]).returncode == 0:
+    if latex2png.processFragment(fragment, fname):
         return [True, fname]
     else:
         return [False]
