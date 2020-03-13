@@ -45,18 +45,18 @@ def buildSubstitute(test, page, ver):
 
 
 def buildPNSPage(outName):
-    PNStex = """
-\\documentclass[12pt,letterpaper]{article}
-\\usepackage[]{fullpage}
-\\usepackage{xcolor}
-\\usepackage[printwatermark]{xwatermark}
-\\newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
-\\pagestyle{empty}
-\\begin{document}
-\\emph{This page of the test was not submitted.}
-\\vfill
-\\emph{This page of the test was not submitted.}
-\\end{document}
+    PNStex = r"""
+\documentclass[12pt,letterpaper]{article}
+\usepackage[]{fullpage}
+\usepackage{xcolor}
+\usepackage[printwatermark]{xwatermark}
+\newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
+\pagestyle{empty}
+\begin{document}
+\emph{This page of the test was not submitted.}
+\vfill
+\emph{This page of the test was not submitted.}
+\end{document}
 """
     cdir = os.getcwd()
     outname = os.path.join(cdir, "specAndDatabase", "pageNotSubmitted.pdf")

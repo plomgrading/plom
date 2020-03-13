@@ -14,14 +14,21 @@ import pkg_resources
 from plom import SpecVerifier, SpecParser
 
 #################
+
+
+class PlomServerConfigurationError(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
+
+
+#################
 def processClasslist(fname, demo):
     os.makedirs("specAndDatabase", exist_ok=True)
     # check if classlist.csv is in place - if so abort.
     if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
-        print(
+        raise PlomServerConfigurationError(
             "Classlist file already present in 'specAndDatabase' directory. Aborting."
         )
-        exit(0)
 
     if demo:
         print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
@@ -34,49 +41,46 @@ def processClasslist(fname, demo):
 
     # check if a filename given
     if fname is None:
-        print("Please provide a classlist file.")
         buildClasslist.acceptedFormats()
-        exit(1)
+        raise PlomServerConfigurationError("Please provide a classlist file.")
     # grab the file, process it and copy it into place.
 
     if os.path.isfile(fname):
         buildClasslist.getClassList(fname)
     else:
-        print('Cannot find file "{}"'.format(fname))
-        exit(1)
+        raise PlomServerConfigurationError(
+            'Cannot find classlist file "{}"'.format(fname)
+        )
 
 
 def checkSpecAndDatabase():
     if os.path.isdir("specAndDatabase"):
         print("Directory 'specAndDatabase' is present.")
     else:
-        print(
-            "Cannot find 'specAndDatabase' - you must copy this into place before running server. Cannot continue."
+        raise PlomServerConfigurationError(
+            "Cannot find 'specAndDatabase' directory - you must copy this into place before running server. Cannot continue."
         )
-        exit(1)
 
     if os.path.isfile(os.path.join("specAndDatabase", "verifiedSpec.toml")):
         print("Test specification present.")
     else:
-        print(
+        raise PlomServerConfigurationError(
             "Cannot find the test specification. Have you run 'plom-build' yet?. Aborting."
         )
-        exit(1)
 
     if os.path.isfile(os.path.join("specAndDatabase", "plom.db")):
         print("Database present.")
     else:
-        print("Cannot find the database. Have you run 'plom-build' yet? Aborting.")
-        exit(1)
+        raise PlomServerConfigurationError(
+            "Cannot find the database. Have you run 'plom-build' yet? Aborting."
+        )
 
     if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
         print("Classlist present.")
     else:
-        print("Cannot find the classlist. Aborting.")
-        print(
-            "You do not have to return to 'plom-build'. To process a classlist please run 'plom-server class <filename>'"
+        raise PlomServerConfigurationError(
+            "Cannot find the classlist. Aborting.\nYou do not have to return to 'plom-build'. To process a classlist please run 'plom-server class <filename>'"
         )
-        exit(1)
 
 
 def buildRequiredDirectories():
@@ -91,12 +95,8 @@ def buildRequiredDirectories():
         "markedQuestions/commentFiles",
         "serverConfiguration",
     ]
-    try:
-        for dir in lst:
-            os.makedirs(dir, exist_ok=True)
-    except Exception as err:
-        print("Something went wrong building directories. Cannot continue.")
-        exit(1)
+    for dir in lst:
+        os.makedirs(dir, exist_ok=True)
 
 
 def buildSSLKeys():
@@ -128,10 +128,9 @@ def buildSSLKeys():
     try:
         subprocess.check_call(shlex.split(sslcmd))
     except Exception as err:
-        print("Something went wrong building ssl keys.")
-        print(err)
-        print("Cannot continue.")
-        exit(1)
+        raise PlomServerConfigurationError(
+            "Something went wrong building ssl keys.\n{}\nCannot continue.".format(err)
+        )
 
 
 def createServerConfig():
@@ -171,26 +170,27 @@ def doLatexChecks():
     cdir = os.getcwd()
     ct = os.path.join(cdir, "pleaseCheck", "checkThing.png")
     pns = os.path.join(cdir, "specAndDatabase", "pageNotSubmitted.pdf")
-    fragment = "\\( \\mathbb{Z} / \\mathbb{Q} \) The cat sat on the mat and verified \LaTeX worked okay for plom."
+    fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX worked okay for plom."
 
     if not latex2png.processFragment(fragment, ct):
-        print("Error latex'ing fragment. Please check your latex distribution.")
-        exit(1)
+        raise PlomServerConfigurationError(
+            "Error latex'ing fragment. Please check your latex distribution."
+        )
 
     # build template pageNotSubmitted.pdf just in case needed
     if not pageNotSubmitted.buildPNSPage(pns):
-        print(
-            "Error latex'ing 'pageNotSubmitted.pdf' template page. Please check your latex distribution."
+        raise PlomServerConfigurationError(
+            "Error building 'pageNotSubmitted.pdf' template page. Please check your latex distribution."
         )
-        exit(1)
 
     # Try building a replacement for missing page.
     if not pageNotSubmitted.buildSubstitute(0, 0, 0):
-        print("Error building replacement for missing page.")
-        exit(1)
+        raise PlomServerConfigurationError(
+            "Error building replacement for missing page."
+        )
 
     print(
-        "Simple latex checks done. Please examine 'checkThis.png' and 'pns.0.0.0.png' in the directory 'pleaseCheck' - but we think they should be fine."
+        "Simple latex checks done. Please examine 'checkThis.png' and 'pns.0.0.0.png' in the directory 'pleaseCheck'. The first should be a short latex'd fragment with some mathematics and text, while the second should be a mostly blank page with 'page not submitted' stamped across it. It is safe delete both files and the directory."
     )
     shutil.move("pns.0.0.0.png", "pleaseCheck")
 
@@ -225,10 +225,9 @@ def processUsers(userFile, demo, auto):
 
     # otherwise we have to make one for the user - check if one already there.
     if os.path.isfile(os.path.join("serverConfiguration", "userListRaw.csv")):
-        print(
+        raise PlomServerConfigurationError(
             "File 'userListRaw.csv' already exists in 'serverConfiguration'. Remove before continuing. Aborting."
         )
-        exit(1)
 
     if demo:
         print(
@@ -282,32 +281,36 @@ def checkDirectories():
     ]
     for d in lst:
         if not os.path.isdir(d):
-            print(
+            raise PlomServerConfigurationError(
                 "Required directories are not present. Have you run 'plom-server init'?"
             )
-            exit(1)
 
 
 def checkServerConfigured():
     if not os.path.isfile(os.path.join("serverConfiguration", "serverDetails.toml")):
-        print("Server configuration file not present. Have you run 'plom-server init'?")
-        exit(1)
+        raise PlomServerConfigurationError(
+            "Server configuration file not present. Have you run 'plom-server init'?"
+        )
+
     if not os.path.isfile(os.path.join("serverConfiguration", "userList.json")):
-        print("Processed userlist is not present. Have you run 'plom-server users'?")
-        exit(1)
+        raise PlomServerConfigurationError(
+            "Processed userlist is not present. Have you run 'plom-server users'?"
+        )
+
     if not (
         os.path.isfile(os.path.join("serverConfiguration", "plom.key"))
         and os.path.isfile(os.path.join("serverConfiguration", "plom-selfsigned.crt"))
     ):
-        print("SSL keys not present. Have you run 'plom-server init'?")
-        exit(1)
+        raise PlomServerConfigurationError(
+            "SSL keys not present. Have you run 'plom-server init'?"
+        )
+
     if os.path.isfile(os.path.join("specAndDatabase", "predictionlist.csv")):
         print("Predictionlist present.")
     else:
-        print(
+        raise PlomServerConfigurationError(
             "Cannot find the predictionlist. Have you run 'plom-server init' yet? Aborting."
         )
-        exit(1)
 
 
 def prelaunchChecks():
