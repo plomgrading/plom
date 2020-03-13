@@ -68,12 +68,14 @@ def IDgetRandomImage(self):
 
 def IDdeletePredictions(self):
     # move old file out of way
-    if not os.path.isfile("specAndDatabase/predictionlist.csv"):
+    specdir = "specAndDatabase"
+    if not os.path.isfile(os.path.join(specdir, "predictionlist.csv")):
         return False
     shutil.move(
-        "specAndDatabase/predictionlist.csv", "specAndDatabase/predictionlist.bak"
+        os.path.join(specdir, "predictionlist.csv"),
+        os.path.join(specdir, "predictionlist.bak"),
     )
-    with open("specAndDatabase/predictionlist.csv", "w") as fh:
+    with open(os.path.join(specdir, "predictionlist.csv"), "w") as fh:
         fh.write("test, id\n")
     log.info("ID prediction list deleted")
 
