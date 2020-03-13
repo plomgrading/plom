@@ -143,6 +143,18 @@ def createServerConfig():
     )
 
 
+def createBlankPredictions():
+    pl = os.path.join("specAndDatabase", "predictionlist.csv")
+    if os.path.isfile(pl):
+        print("Predictionlist already present.")
+        return
+    print(
+        "Predictionlist will be updated when you run ID-prediction from manager-client."
+    )
+    with open(pl, "w") as fh:
+        fh.write("test, id\n")
+
+
 def initialiseServer():
     print("Do simple existance checks on required files.")
     checkSpecAndDatabase()
@@ -152,6 +164,8 @@ def initialiseServer():
     buildSSLKeys()
     print("Copy server networking configuration template into place.")
     createServerConfig()
+    print("Build blank predictionlist for identifying.")
+    createBlankPredictions()
 
 
 #################
@@ -245,6 +259,13 @@ def checkServerConfigured():
     ):
         print("SSL keys not present. Have you run 'plom-server init'?")
         exit(1)
+    if os.path.isfile(os.path.join("specAndDatabase", "predictionlist.csv")):
+        print("Predictionlist present.")
+    else:
+        print(
+            "Cannot find the predictionlist. Have you run 'plom-server init' yet? Aborting."
+        )
+        exit(1)
 
 
 def prelaunchChecks():
@@ -252,7 +273,7 @@ def prelaunchChecks():
     checkSpecAndDatabase()
     # check all directories built
     checkDirectories()
-    # check serverConf and userlist present.
+    # check serverConf and userlist present (also check predictionlist).
     checkServerConfigured()
     # ready to go
     return True
