@@ -85,7 +85,7 @@ class Chooser(QDialog):
             now = datetime.datetime.now().isoformat("T", "seconds")
             logging.basicConfig(
                 format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
-                datefmt="%m-%d %H:%M:%S",
+                datefmt="%b%d %H:%M:%S",
                 filename="plom-{}.log".format(now),
             )
         else:

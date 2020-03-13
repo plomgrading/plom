@@ -9,6 +9,7 @@ __license__ = "AGPLv3"
 
 from aiohttp import web
 import hashlib
+import toml
 import json
 import os
 import ssl
@@ -24,12 +25,13 @@ from .authenticate import Authority
 
 from plom import __version__
 from plom import Plom_API_Version as serverAPI
+from plom import Default_Port
 from plom import SpecParser
 from plom.db.examDB import PlomDB
 
 # ----------------------
 
-serverInfo = {"server": "127.0.0.1", "mport": 41984}
+serverInfo = {"server": "127.0.0.1", "port": Default_Port}
 # ----------------------
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
@@ -48,14 +50,11 @@ from .plomServer.routesReport import ReportHandler
 
 # 7 is wdith of "warning"
 logging.basicConfig(
-    format="%(asctime)s %(levelname)7s:%(name)s\t%(message)s", datefmt="%m-%d %H:%M:%S",
+    format="%(asctime)s %(levelname)7s:%(name)s\t%(message)s", datefmt="%b%d %H:%M:%S",
 )
 log = logging.getLogger("server")
-# TODO: take from command line argument, debug to INFO
+# We will reset this later after we read the config
 logging.getLogger().setLevel("Debug".upper())
-# log.setLevel("Debug".upper())
-
-log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
 
 
 # ----------------------
@@ -210,17 +209,19 @@ class Server(object):
 
 
 def getServerInfo():
-    """Read the server info from json."""
+    """Read the server info from config file."""
     global serverInfo
-    if os.path.isfile("serverConfiguration/serverDetails.json"):
-        with open("serverConfiguration/serverDetails.json") as data_file:
-            serverInfo = json.load(data_file)
-            log.info("Server details loaded: {}".format(serverInfo))
-    else:
-        log.warning("Cannot find server details.")
+    try:
+        with open("serverConfiguration/serverDetails.toml") as data_file:
+            serverInfo = toml.load(data_file)
+            logging.getLogger().setLevel(serverInfo["LogLevel"].upper())
+            log.debug("Server details loaded: {}".format(serverInfo))
+    except FileNotFoundError:
+        log.warning("Cannot find server details, using defaults")
 
 
 def launch():
+    log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
     getServerInfo()
     examDB = PlomDB("specAndDatabase/plom.db")
     spec = SpecParser("specAndDatabase/verifiedSpec.toml").spec
@@ -246,7 +247,7 @@ def launch():
         reporter.setUpRoutes(app.router)
         # run the web server
         log.info("Start the server!")
-        web.run_app(app, ssl_context=sslContext, port=serverInfo["mport"])
+        web.run_app(app, ssl_context=sslContext, port=serverInfo["port"])
     except KeyboardInterrupt:
         log.info("Closing down")  # TODO: I never see this!
         pass
