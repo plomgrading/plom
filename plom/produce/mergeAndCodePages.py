@@ -14,7 +14,7 @@ import tempfile
 from plom.tpv_utils import encodeTPV
 
 
-def makePDF(name, code, length, versions, test, pageVersions):
+def makePDF(name, code, length, versions, test, pageVersions, extra=None):
 
     # Command line parameters to imagemagick's mogrify
     # puts a frame around the image.
@@ -127,17 +127,19 @@ def makePDF(name, code, length, versions, test, pageVersions):
                 exam[p].insertImage(rNW, pixmap=qr[2], overlay=True)
                 exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
                 exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
-        if "id" in pageVersions and "name" in pageVersions:
+        if extra:
+            sid = extra["id"]
+            sname = extra["name"]
             # a file for the student-details
             YSHIFT = 0.4  # where on page is centre of box 0=top, 1=bottom
-            txt = "{}\n{}".format(pageVersions["id"], pageVersions["name"])
+            txt = "{}\n{}".format(sid, sname)
             sidW = (
                 max(
                     fitz.getTextlength(
-                        pageVersions["id"], fontsize=36, fontname="Helvetica"
+                        sid, fontsize=36, fontname="Helvetica"
                     ),
                     fitz.getTextlength(
-                        pageVersions["name"], fontsize=36, fontname="Helvetica"
+                        sname, fontsize=36, fontname="Helvetica"
                     ),
                     fitz.getTextlength(
                         "Please sign here", fontsize=48, fontname="Helvetica"
