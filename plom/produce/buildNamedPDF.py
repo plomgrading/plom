@@ -33,14 +33,14 @@ def _makePDF(x):
     makePDF(*x)
 
 
-def buildAllPapers(spec, dbFilename):
-    students = readClassList()
+def buildAllPapers(spec, dbFilename, named=False):
+    if named:
+        students = readClassList()
     examDB = PlomDB(dbFilename)
     makePDFargs = []
     for t in range(1, spec["numberToProduce"] + 1):
         pv = examDB.getPageVersions(t)
-        # have to add name/id to pv
-        if t <= spec["numberToName"]:
+        if named and t <= spec["numberToName"]:
             d = {"id": students[t][0], "name": students[t][1]}
         else:
             d = None
@@ -64,14 +64,23 @@ def buildAllPapers(spec, dbFilename):
         r = list(tqdm(p.imap_unordered(_makePDF, makePDFargs), total=N))
 
 
-def confirmProcessedAndNamed(spec, dbFilename):
-    students = readClassList()
+def confirmProcessed(spec, dbFilename):
     examDB = PlomDB(dbFilename)
     for t in range(1, spec["numberToProduce"] + 1):
         fname = "papersToPrint/exam_{}.pdf".format(str(t).zfill(4))
         if os.path.isfile(fname):
             examDB.produceTest(t)
-            if t <= spec["numberToName"]:
-                examDB.identifyTest(t, students[t][0], students[t][1])
         else:
-            print("Warning - where is exam pdf = {}".format(fname))
+            raise RuntimeError('Cannot find pdf for paper "{}"'.format(fname))
+
+
+def confirmNamed(spec, dbFilename):
+    students = readClassList()
+    examDB = PlomDB(dbFilename)
+    for t in range(1, spec["numberToProduce"] + 1):
+        if t <= spec["numberToName"]:
+            fname = "papersToPrint/exam_{}.pdf".format(str(t).zfill(4))
+            if os.path.isfile(fname):
+                examDB.identifyTest(t, students[t][0], students[t][1])
+            else:
+                raise RuntimeError('Cannot find pdf for paper "{}"'.format(fname))
