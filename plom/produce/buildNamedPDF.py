@@ -71,7 +71,7 @@ def confirmProcessed(spec, dbFilename):
         if os.path.isfile(fname):
             examDB.produceTest(t)
         else:
-            print("Warning - where is exam pdf = {}".format(fname))
+            raise RuntimeError('Cannot find pdf for paper "{}"'.format(fname))
 
 
 def confirmNamed(spec, dbFilename):
@@ -83,4 +83,4 @@ def confirmNamed(spec, dbFilename):
             if os.path.isfile(fname):
                 examDB.identifyTest(t, students[t][0], students[t][1])
             else:
-                print("Warning - where is exam pdf = {}".format(fname))
+                raise RuntimeError('Cannot find pdf for paper "{}"'.format(fname))
