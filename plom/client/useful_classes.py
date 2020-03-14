@@ -27,7 +27,7 @@ class ErrorMessage(QMessageBox):
     """A simple error message pop-up"""
 
     def __init__(self, txt):
-        super(ErrorMessage, self).__init__()
+        super().__init__()
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Ok)
 
@@ -36,7 +36,7 @@ class SimpleMessage(QMessageBox):
     """A simple message pop-up with yes/no buttons."""
 
     def __init__(self, txt):
-        super(SimpleMessage, self).__init__()
+        super().__init__()
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
@@ -51,7 +51,7 @@ class SimpleMessageCheckBox(QMessageBox):
     """
 
     def __init__(self, txt, cbtxt=None):
-        super(SimpleMessageCheckBox, self).__init__()
+        super().__init__()
         if cbtxt:
             self.cb = QCheckBox(cbtxt)
         else:
