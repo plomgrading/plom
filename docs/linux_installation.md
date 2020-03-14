@@ -20,7 +20,8 @@ Tested on Fedora 31.  Some stuff from the package manager:
                      python3-peewee python3-pandas python3-requests-toolbelt \
                      python3-pip python3-toml python3-weasyprint \
                      python3-xvfbwrapper python3-tqdm \
-                     tex-preview tex-dvipng texlive-scheme-basic
+                     tex-preview tex-dvipng texlive-scheme-basic tex-xwatermark \
+                     tex-charter
 ```
 
 Other stuff we install locally with `pip`:
