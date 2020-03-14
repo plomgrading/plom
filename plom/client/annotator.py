@@ -1002,7 +1002,8 @@ class Annotator(QWidget):
                 "(other than &#x2713; &#x2717; &plusmn;<i>n</i>).</p>\n"
                 "<p>This may make it difficult for students to learn from this "
                 "feedback.</p>\n"
-                "<p>Are you sure you wish to continue?</p>"
+                "<p>Are you sure you wish to continue?</p>",
+                "Don't ask me again this session.",
             )
             if msg.exec_() == QMessageBox.No:
                 return False
@@ -1031,7 +1032,7 @@ class Annotator(QWidget):
                     if msg.exec_() == QMessageBox.No:
                         return False
                 elif self.markWarn:
-                    msg = SimpleMessageCheckBox(msg)
+                    msg = SimpleMessageCheckBox(msg, "Don't ask me again this session.")
                     if msg.exec_() == QMessageBox.No:
                         return False
                     if msg.cb.checkState() == Qt.Checked:
@@ -1064,7 +1065,7 @@ class Annotator(QWidget):
                     if msg.exec_() == QMessageBox.No:
                         return False
                 elif self.markWarn:
-                    msg = SimpleMessageCheckBox(msg)
+                    msg = SimpleMessageCheckBox(msg, "Don't ask me again this session.")
                     if msg.exec_() == QMessageBox.No:
                         return False
                     if msg.cb.checkState() == Qt.Checked:

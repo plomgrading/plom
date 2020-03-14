@@ -53,11 +53,18 @@ class SimpleMessage(QMessageBox):
 class SimpleMessageCheckBox(QMessageBox):
     """A simple message pop-up with yes/no buttons, a checkbox and
     large font.
+
+    Args:
+        txt: plaintext or html content for the dialog
+        cbtxt: optional text for the checkbox else default
     """
 
-    def __init__(self, txt):
+    def __init__(self, txt, cbtxt=None):
         super(SimpleMessageCheckBox, self).__init__()
-        self.cb = QCheckBox("Don't show this message again")
+        if cbtxt:
+            self.cb = QCheckBox(cbtxt)
+        else:
+            self.cb = QCheckBox("Don't show this message again")
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
