@@ -193,7 +193,7 @@ def doLatexChecks():
         )
 
     print(
-        "Simple latex checks done. Please examine 'checkThis.png' and 'pns.0.0.0.png' in the directory 'pleaseCheck'. The first should be a short latex'd fragment with some mathematics and text, while the second should be a mostly blank page with 'page not submitted' stamped across it. It is safe delete both files and the directory."
+        "Simple latex checks done. If you feel the need, then please examine 'checkThis.png' and 'pns.0.0.0.png' in the directory 'pleaseCheck'. The first should be a short latex'd fragment with some mathematics and text, while the second should be a mostly blank page with 'page not submitted' stamped across it. It is safe delete both files and the directory."
     )
     shutil.move("pns.0.0.0.png", os.path.join("pleaseCheck", "pns.0.0.0.png"))
 
