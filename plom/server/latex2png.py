@@ -37,8 +37,15 @@ def processFragment(fragment, outName):
         fh.write(foot)
 
     latexIt = subprocess.run(
-        ["latex", "-interaction=nonstopmode", "-no-shell-escape", "frag.tex"],
+        [
+            "latexmk",
+            "-quiet",
+            "-interaction=nonstopmode",
+            "-no-shell-escape",
+            "frag.tex",
+        ],
         stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
     if latexIt.returncode != 0:
         # sys.exit(latexIt.returncode)
