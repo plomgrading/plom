@@ -26,9 +26,10 @@ def processClasslist(fname, demo):
     os.makedirs("specAndDatabase", exist_ok=True)
     # check if classlist.csv is in place - if so abort.
     if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
-        raise PlomServerConfigurationError(
+        print(
             "Classlist file already present in 'specAndDatabase' directory. Aborting."
         )
+        exit(1)
 
     if demo:
         print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
@@ -42,45 +43,47 @@ def processClasslist(fname, demo):
     # check if a filename given
     if fname is None:
         buildClasslist.acceptedFormats()
-        raise PlomServerConfigurationError("Please provide a classlist file.")
+        print("Please provide a classlist file.")
+        exit(1)
     # grab the file, process it and copy it into place.
 
     if os.path.isfile(fname):
         buildClasslist.getClassList(fname)
     else:
-        raise PlomServerConfigurationError(
-            'Cannot find classlist file "{}"'.format(fname)
-        )
+        print('Cannot find classlist file "{}"'.format(fname))
+        exit(1)
 
 
 def checkSpecAndDatabase():
     if os.path.isdir("specAndDatabase"):
         print("Directory 'specAndDatabase' is present.")
     else:
-        raise PlomServerConfigurationError(
+        print(
             "Cannot find 'specAndDatabase' directory - you must copy this into place before running server. Cannot continue."
         )
+        exit(1)
 
     if os.path.isfile(os.path.join("specAndDatabase", "verifiedSpec.toml")):
         print("Test specification present.")
     else:
-        raise PlomServerConfigurationError(
+        print(
             "Cannot find the test specification. Have you run 'plom-build' yet?. Aborting."
         )
+        exit(1)
 
     if os.path.isfile(os.path.join("specAndDatabase", "plom.db")):
         print("Database present.")
     else:
-        raise PlomServerConfigurationError(
-            "Cannot find the database. Have you run 'plom-build' yet? Aborting."
-        )
+        print("Cannot find the database. Have you run 'plom-build' yet? Aborting.")
+        exit(1)
 
     if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
         print("Classlist present.")
     else:
-        raise PlomServerConfigurationError(
+        print(
             "Cannot find the classlist. Aborting.\nYou do not have to return to 'plom-build'. To process a classlist please run 'plom-server class <filename>'"
         )
+        exit(1)
 
 
 def buildRequiredDirectories():
@@ -225,9 +228,10 @@ def processUsers(userFile, demo, auto):
 
     # otherwise we have to make one for the user - check if one already there.
     if os.path.isfile(os.path.join("serverConfiguration", "userListRaw.csv")):
-        raise PlomServerConfigurationError(
+        print(
             "File 'userListRaw.csv' already exists in 'serverConfiguration'. Remove before continuing. Aborting."
         )
+        exit(1)
 
     if demo:
         print(
@@ -281,36 +285,35 @@ def checkDirectories():
     ]
     for d in lst:
         if not os.path.isdir(d):
-            raise PlomServerConfigurationError(
+            print(
                 "Required directories are not present. Have you run 'plom-server init'?"
             )
+            exit(1)
 
 
 def checkServerConfigured():
     if not os.path.isfile(os.path.join("serverConfiguration", "serverDetails.toml")):
-        raise PlomServerConfigurationError(
-            "Server configuration file not present. Have you run 'plom-server init'?"
-        )
+        print("Server configuration file not present. Have you run 'plom-server init'?")
+        exit(1)
 
     if not os.path.isfile(os.path.join("serverConfiguration", "userList.json")):
-        raise PlomServerConfigurationError(
-            "Processed userlist is not present. Have you run 'plom-server users'?"
-        )
+        print("Processed userlist is not present. Have you run 'plom-server users'?")
+        exit(1)
 
     if not (
         os.path.isfile(os.path.join("serverConfiguration", "plom.key"))
         and os.path.isfile(os.path.join("serverConfiguration", "plom-selfsigned.crt"))
     ):
-        raise PlomServerConfigurationError(
-            "SSL keys not present. Have you run 'plom-server init'?"
-        )
+        print("SSL keys not present. Have you run 'plom-server init'?")
+        exit(1)
 
     if os.path.isfile(os.path.join("specAndDatabase", "predictionlist.csv")):
         print("Predictionlist present.")
     else:
-        raise PlomServerConfigurationError(
+        print(
             "Cannot find the predictionlist. Have you run 'plom-server init' yet? Aborting."
         )
+        exit(1)
 
 
 def prelaunchChecks():
