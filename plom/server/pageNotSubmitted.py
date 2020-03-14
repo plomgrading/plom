@@ -72,8 +72,8 @@ def buildPNSPage(outName):
     )
     if latexIt.returncode != 0:
         # sys.exit(latexIt.returncode)
-        print(">>> Latex problems - see below <<<")
-        print(latexIt.stdout)
+        print(">>> Latex problems - see below <<<\n")
+        print(latexIt.stdout.decode())
         print(">>> Latex problems - see above <<<")
         return False
 
