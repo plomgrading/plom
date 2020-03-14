@@ -5,6 +5,7 @@ __license__ = "AGPLv3"
 
 import requests
 import json
+import toml
 import os
 import random
 import ssl
@@ -39,10 +40,15 @@ mlpctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 # SSL stuff for communicating with server.
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 sslContext.check_hostname = False
-# Server info defaults
-serverInfo = {"server": "127.0.0.1", "mport": 41984}
 
-from aliceBob import simplePassword, makeRandomUserList, makeNumberedUserList
+from plom import Default_Port
+
+confdir = "serverConfiguration"
+
+# Server info defaults
+serverInfo = {"server": "127.0.0.1", "port": Default_Port}
+
+from .aliceBob import simplePassword, makeRandomUserList, makeNumberedUserList
 
 authSession = requests.Session()
 authSession.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
@@ -117,9 +123,10 @@ class CannedUserList(QDialog):
 def getServerInfo():
     """Get server details from json file"""
     global serverInfo
-    if os.path.isfile("resources/serverDetails.json"):
-        with open("resources/serverDetails.json") as data_file:
-            serverInfo = json.load(data_file)
+    sd = os.path.join(confdir, "serverDetails.toml")
+    if os.path.isfile(sd):
+        with open(sd) as data_file:
+            serverInfo = toml.load(data_file)
 
 
 class ErrorMessage(QMessageBox):
@@ -289,17 +296,16 @@ class userManager(QWidget):
         """Load the userlist from json"""
         # If the file is there load it, else set user list to {}
         # Json is dict of [user: hashedPassword]
-        if os.path.exists("resources/userList.json"):
-            with open("resources/userList.json") as data_file:
+        try:
+            with open(os.path.join(confdir, "userList.json")) as data_file:
                 self.users = json.load(data_file)
-        else:
+        except FileNotFoundError:
             self.users = {}
 
     def saveUsers(self):
         """Save the user list to json file"""
-        fh = open("resources/userList.json", "w")
-        fh.write(json.dumps(self.users, indent=2))
-        fh.close()
+        with open(os.path.join(confdir, "userList.json"), "w") as fh:
+            fh.write(json.dumps(self.users, indent=2))
 
     def refreshUserList(self):
         """Reload the list of users, clear table and repopulate it"""
@@ -431,7 +437,7 @@ class userManager(QWidget):
             )
             if ok:
                 # Fire off reload request
-                ret = requestUserReload(serverInfo["server"], serverInfo["mport"], pwd)
+                ret = requestUserReload(serverInfo["server"], serverInfo["port"], pwd)
                 if not ret:
                     msg = ErrorMessage("Something went wrong when contacting server.")
                     msg.exec_()
@@ -448,7 +454,7 @@ class userManager(QWidget):
             return
 
         doList = lst[: tmp.howManySB.value()]
-        with open("resources/cannedUserList.txt", "a+") as fh:
+        with open(os.path.join(confdir, "cannedUserList.txt"), "a+") as fh:
             for (n, p) in doList:
                 if n not in self.users:
                     self.users.update({n: mlpctx.hash(p)})
