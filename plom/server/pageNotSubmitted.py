@@ -76,7 +76,7 @@ def buildPNSPage(outName):
             "pns.tex",
         ],
         stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
     )
     if latexIt.returncode != 0:
         # sys.exit(latexIt.returncode)

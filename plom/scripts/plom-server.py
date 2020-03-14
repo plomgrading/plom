@@ -7,6 +7,7 @@ import os
 import shlex
 import shutil
 import subprocess
+from textwrap import fill, dedent
 
 # import tools for dealing with resource files
 import pkg_resources
@@ -171,9 +172,11 @@ def doLatexChecks():
 
     # check build of fragment
     cdir = os.getcwd()
-    ct = os.path.join(cdir, "pleaseCheck", "checkThing.png")
+    keepfiles = ("checkThing.png", "pns.0.0.0.png")
+    ct = os.path.join(cdir, "pleaseCheck", keepfiles[0])
     pns = os.path.join(cdir, "specAndDatabase", "pageNotSubmitted.pdf")
-    fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX worked okay for plom."
+
+    fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ worked okay for plom."
 
     if not latex2png.processFragment(fragment, ct):
         raise PlomServerConfigurationError(
@@ -192,10 +195,23 @@ def doLatexChecks():
             "Error building replacement for missing page."
         )
 
+    shutil.move(keepfiles[1], os.path.join("pleaseCheck", keepfiles[1]))
     print(
-        "Simple latex checks done. If you feel the need, then please examine 'checkThis.png' and 'pns.0.0.0.png' in the directory 'pleaseCheck'. The first should be a short latex'd fragment with some mathematics and text, while the second should be a mostly blank page with 'page not submitted' stamped across it. It is safe delete both files and the directory."
+        fill(
+            dedent(
+                """
+                Simple latex checks done.  If you feel the need, then please
+                examine '{}' and '{}' in the directory 'pleaseCheck'.  The
+                first should be a short latex'd fragment with some mathematics
+                and text, while the second should be a mostly blank page with
+                'page not submitted' stamped across it.  It is safe delete
+                both files and the directory.
+                """.format(
+                    *keepfiles
+                )
+            )
+        )
     )
-    shutil.move("pns.0.0.0.png", os.path.join("pleaseCheck", "pns.0.0.0.png"))
 
 
 def initialiseServer():
