@@ -68,12 +68,12 @@ def buildPNSPage(outName):
 
     latexIt = subprocess.run(
         ["pdflatex", "-interaction=nonstopmode", "-no-shell-escape", "pns.tex"],
-        stdout=justInCase,
+        stdout=subprocess.PIPE,
     )
     if latexIt.returncode != 0:
         # sys.exit(latexIt.returncode)
         print(">>> Latex problems - see below <<<")
-        print(justInCase)
+        print(latexIt.stdout)
         print(">>> Latex problems - see above <<<")
         return False
 
