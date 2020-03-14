@@ -200,11 +200,12 @@ def doLatexChecks():
         fill(
             dedent(
                 """
-                Simple latex checks done.  Please examine '{}' and '{}' in the
-                directory 'pleaseCheck'.  The first should be a short latex'd
-                fragment with some mathematics and text, while the second should
-                be a mostly blank page with 'page not submitted' stamped across
-                it.  It is safe delete both files and the directory.
+                Simple latex checks done.  If you feel the need, then please
+                examine '{}' and '{}' in the directory 'pleaseCheck'.  The
+                first should be a short latex'd fragment with some mathematics
+                and text, while the second should be a mostly blank page with
+                'page not submitted' stamped across it.  It is safe delete
+                both files and the directory.
                 """.format(
                     *keepfiles
                 )
