@@ -211,15 +211,18 @@ class ClientSettingsDialog(QDialog):
         line.setFrameShadow(QFrame.Sunken)
         flay.addRow(line)
 
-        # TODO: for future expansion
-        self.cb2 = QCheckBox("Warn if no comments were made")
-        self.cb3 = QCheckBox("Warn if score inconsistent with annotations")
-        self.cb2.setCheckState(Qt.Checked)
-        self.cb3.setCheckState(Qt.Checked)
-        self.cb2.setEnabled(False)
-        self.cb3.setEnabled(False)
-        flay.addWidget(self.cb2)
-        flay.addWidget(self.cb3)
+        self.checkWarnCom = QCheckBox(
+            "Warn on insufficient feedback (e.g., no comments)"
+        )
+        self.checkWarnMark = QCheckBox("Warn if score is inconsistent with annotations")
+        flay.addWidget(self.checkWarnCom)
+        flay.addWidget(self.checkWarnMark)
+        self.checkWarnCom.setCheckState(
+            Qt.Checked if s.get("CommentsWarnings") else Qt.Unchecked
+        )
+        self.checkWarnMark.setCheckState(
+            Qt.Checked if s.get("MarkWarnings") else Qt.Unchecked
+        )
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -236,4 +239,6 @@ class ClientSettingsDialog(QDialog):
             self.checkFore.checkState() == Qt.Checked,
             self.comboLog.currentText(),
             self.checkLogFile.checkState() == Qt.Checked,
+            self.checkWarnCom.checkState() == Qt.Checked,
+            self.checkWarnMark.checkState() == Qt.Checked,
         )

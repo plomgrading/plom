@@ -51,6 +51,8 @@ def readLastTime():
     lastTime["fontSize"] = 10
     lastTime["upDown"] = "up"
     lastTime["mouse"] = "right"
+    lastTime["CommentsWarnings"] = True
+    lastTime["MarkWarnings"] = True
     # If config file exists, use it to update the defaults
     if os.path.isfile("plomConfig.toml"):
         with open("plomConfig.toml") as data_file:
@@ -149,6 +151,8 @@ class Chooser(QDialog):
         lastTime["FOREGROUND"] = stuff[0]
         lastTime["LogLevel"] = stuff[1]
         lastTime["LogToFile"] = stuff[2]
+        lastTime["CommentsWarnings"] = stuff[3]
+        lastTime["MarkWarnings"] = stuff[4]
         logging.getLogger().setLevel(lastTime["LogLevel"].upper())
 
     def validate(self):

@@ -549,11 +549,11 @@ class MarkerClient(QWidget):
         # initially all settings are "none"
         self.annotatorSettings = defaultdict(lambda: None)
 
+        self.annotatorSettings["commentWarnings"] = lastTime.get("CommentWarnings")
+        self.annotatorSettings["markWarnings"] = lastTime.get("MarkWarnings")
         self.canViewAll = False
         if lastTime.get("POWERUSER", False):
             # if POWERUSER is set, disable warnings and allow viewing all
-            self.annotatorSettings["markWarnings"] = False
-            self.annotatorSettings["commentWarnings"] = False
             self.canViewAll = True
         self.allowBackgroundOps = True
         # unless special key was set:
