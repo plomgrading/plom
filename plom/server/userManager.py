@@ -290,6 +290,7 @@ class userManager(QWidget):
         self.initUI()
         self.updateGeometry()
         self.setMinimumSize(QSize(400, 500))
+        self.setWindowTitle("[Deprecated] Plom UserManager")
         self.move(100, 100)
 
     def loadUserList(self):
