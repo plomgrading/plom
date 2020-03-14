@@ -5,6 +5,8 @@ import shutil
 import subprocess
 import uuid
 
+from plom.server import pageNotSubmitted
+
 
 def addKnownPage(self, t, p, v, fname, image, md5o):
     # create a filename for the image
@@ -70,11 +72,8 @@ def addCollidingPage(self, t, p, v, fname, image, md5o):
 
 
 def replaceMissingPage(self, testNumber, pageNumber, version):
-    # build a "pageNotSubmitted page"
-    cmd = "python3 ./pageNotSubmitted.py {} {} {}".format(
-        testNumber, pageNumber, version
-    )
-    subprocess.check_call(shlex.split(cmd))
+    # TODO - we should probably have some sort of try/except around this.
+    pageNotSubmitted.buildSubstitute(testNumber, pageNumber, version)
     # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
     originalName = "pns.{}.{}.{}.png".format(testNumber, pageNumber, version)
     prefix = "pages/originalPages/pns.{}p{}v{}".format(

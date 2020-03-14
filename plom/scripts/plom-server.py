@@ -7,11 +7,20 @@ import os
 import shlex
 import shutil
 import subprocess
+from textwrap import fill, dedent
 
 # import tools for dealing with resource files
 import pkg_resources
 
 from plom import SpecVerifier, SpecParser
+
+#################
+
+
+class PlomServerConfigurationError(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
+
 
 #################
 def processClasslist(fname, demo):
@@ -21,7 +30,7 @@ def processClasslist(fname, demo):
         print(
             "Classlist file already present in 'specAndDatabase' directory. Aborting."
         )
-        exit(0)
+        exit(1)
 
     if demo:
         print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
@@ -34,15 +43,15 @@ def processClasslist(fname, demo):
 
     # check if a filename given
     if fname is None:
-        print("Please provide a classlist file.")
         buildClasslist.acceptedFormats()
+        print("Please provide a classlist file.")
         exit(1)
     # grab the file, process it and copy it into place.
 
     if os.path.isfile(fname):
         buildClasslist.getClassList(fname)
     else:
-        print('Cannot find file "{}"'.format(fname))
+        print('Cannot find classlist file "{}"'.format(fname))
         exit(1)
 
 
@@ -51,7 +60,7 @@ def checkSpecAndDatabase():
         print("Directory 'specAndDatabase' is present.")
     else:
         print(
-            "Cannot find 'specAndDatabase' - you must copy this into place before running server. Cannot continue."
+            "Cannot find 'specAndDatabase' directory - you must copy this into place before running server. Cannot continue."
         )
         exit(1)
 
@@ -72,9 +81,8 @@ def checkSpecAndDatabase():
     if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
         print("Classlist present.")
     else:
-        print("Cannot find the classlist. Aborting.")
         print(
-            "You do not have to return to 'plom-build'. To process a classlist please run 'plom-server class <filename>'"
+            "Cannot find the classlist. Aborting.\nYou do not have to return to 'plom-build'. To process a classlist please run 'plom-server class <filename>'"
         )
         exit(1)
 
@@ -91,12 +99,8 @@ def buildRequiredDirectories():
         "markedQuestions/commentFiles",
         "serverConfiguration",
     ]
-    try:
-        for dir in lst:
-            os.makedirs(dir, exist_ok=True)
-    except Exception as err:
-        print("Something went wrong building directories. Cannot continue.")
-        exit(1)
+    for dir in lst:
+        os.makedirs(dir, exist_ok=True)
 
 
 def buildSSLKeys():
@@ -128,10 +132,9 @@ def buildSSLKeys():
     try:
         subprocess.check_call(shlex.split(sslcmd))
     except Exception as err:
-        print("Something went wrong building ssl keys.")
-        print(err)
-        print("Cannot continue.")
-        exit(1)
+        raise PlomServerConfigurationError(
+            "Something went wrong building ssl keys.\n{}\nCannot continue.".format(err)
+        )
 
 
 def createServerConfig():
@@ -162,6 +165,55 @@ def createBlankPredictions():
         fh.write("test, id\n")
 
 
+def doLatexChecks():
+    from plom.server import latex2png, pageNotSubmitted
+
+    os.makedirs("pleaseCheck", exist_ok=True)
+
+    # check build of fragment
+    cdir = os.getcwd()
+    keepfiles = ("checkThing.png", "pns.0.0.0.png")
+    ct = os.path.join(cdir, "pleaseCheck", keepfiles[0])
+    pns = os.path.join(cdir, "specAndDatabase", "pageNotSubmitted.pdf")
+
+    fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ worked okay for plom."
+
+    if not latex2png.processFragment(fragment, ct):
+        raise PlomServerConfigurationError(
+            "Error latex'ing fragment. Please check your latex distribution."
+        )
+
+    # build template pageNotSubmitted.pdf just in case needed
+    if not pageNotSubmitted.buildPNSPage(pns):
+        raise PlomServerConfigurationError(
+            "Error building 'pageNotSubmitted.pdf' template page. Please check your latex distribution."
+        )
+
+    # Try building a replacement for missing page.
+    if not pageNotSubmitted.buildSubstitute(0, 0, 0):
+        raise PlomServerConfigurationError(
+            "Error building replacement for missing page."
+        )
+
+    shutil.move(keepfiles[1], os.path.join("pleaseCheck", keepfiles[1]))
+    print(
+        fill(
+            dedent(
+                """
+                Simple latex checks done.  If you feel the need, then please
+                examine '{}' and '{}' in the directory 'pleaseCheck'.  The
+                first should be a short latex'd fragment with some mathematics
+                and text, while the second should be a mostly blank page with
+                'page not submitted' stamped across it.  It is safe delete
+                both files and the directory.
+                """.format(
+                    *keepfiles
+                )
+            )
+        )
+    )
+
+
 def initialiseServer():
     print("Do simple existance checks on required files.")
     checkSpecAndDatabase()
@@ -173,6 +225,8 @@ def initialiseServer():
     createServerConfig()
     print("Build blank predictionlist for identifying.")
     createBlankPredictions()
+    print("Do latex checks and build 'pageNotSubmitted.pdf' in case needed")
+    doLatexChecks()
 
 
 #################
@@ -257,15 +311,18 @@ def checkServerConfigured():
     if not os.path.isfile(os.path.join("serverConfiguration", "serverDetails.toml")):
         print("Server configuration file not present. Have you run 'plom-server init'?")
         exit(1)
+
     if not os.path.isfile(os.path.join("serverConfiguration", "userList.json")):
         print("Processed userlist is not present. Have you run 'plom-server users'?")
         exit(1)
+
     if not (
         os.path.isfile(os.path.join("serverConfiguration", "plom.key"))
         and os.path.isfile(os.path.join("serverConfiguration", "plom-selfsigned.crt"))
     ):
         print("SSL keys not present. Have you run 'plom-server init'?")
         exit(1)
+
     if os.path.isfile(os.path.join("specAndDatabase", "predictionlist.csv")):
         print("Predictionlist present.")
     else:
