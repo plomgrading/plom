@@ -1277,7 +1277,7 @@ class MarkerClient(QWidget):
                 c += 1
                 pd.setValue(c)
                 # and latex the preview
-                txtp = "\\color{blue}\n" + txt  # make color blue for ghost rendering
+                txtp = "\\color{blue}" + txt  # make color blue for ghost rendering
                 self.latexAFragment(txtp)
                 c += 1
                 pd.setValue(c)
