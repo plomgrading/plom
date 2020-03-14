@@ -990,19 +990,25 @@ class Annotator(QWidget):
             msg.exec_()
             return False
 
-        # check if comments have been left.
-        if self.scene.countComments() == 0:
-            # error message if total is not 0 or full
-            if self.score > 0 and self.score < self.maxMark and self.commentWarn:
-                # TODO: if annotations other than cross, check, delta, skip this
-                msg = SimpleMessageCheckBox(
-                    "You have given no comments.\n Please confirm."
-                )
-                if msg.exec_() == QMessageBox.No:
-                    return False
-                if msg.cb.checkState() == Qt.Checked:
-                    # Note: these are only saved if we ultimately accept
-                    self.commentWarn = False
+        # warn if points where lost but insufficient annotations
+        if (
+            self.commentWarn
+            and self.score > 0
+            and self.score < self.maxMark
+            and self.scene.hasOnlyTicksCrossesDeltas()
+        ):
+            msg = SimpleMessageCheckBox(
+                "<p>You have given neither comments nor detailed annotations "
+                "(other than &#x2713; &#x2717; &plusmn;<i>n</i>).</p>\n"
+                "<p>This may make it difficult for students to learn from this "
+                "feedback.</p>\n"
+                "<p>Are you sure you wish to continue?</p>"
+            )
+            if msg.exec_() == QMessageBox.No:
+                return False
+            if msg.cb.checkState() == Qt.Checked:
+                # Note: these are only saved if we ultimately accept
+                self.commentWarn = False
 
         # if marking total or up, be careful when giving 0-marks
         if self.score == 0 and self.markHandler.style != "Down":
