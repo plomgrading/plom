@@ -24,9 +24,3 @@ def myhash(s, salt=None):
     b = 899_999_999_999
     l = 100_000_000_000
     return str(int(h, 16) % b + l)
-
-
-def test_hash():
-    assert myhash("12345678", salt="salt") == "351525727036"
-    assert myhash("12345678", salt="salty") == "782385405730"
-    assert myhash("12345679", salt="salt") == "909470548567"
