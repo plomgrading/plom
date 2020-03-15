@@ -33,7 +33,7 @@ from PyQt5.QtWidgets import QCompleter, QWidget, QMainWindow, QInputDialog, QMes
 from .examviewwindow import ExamViewWindow
 from .useful_classes import ErrorMessage, SimpleMessage, BlankIDBox
 from .uiFiles.ui_identify import Ui_IdentifyWindow
-from .test_view import WholeTestView
+from .origscanviewer import WholeTestView
 
 from plom.plom_exceptions import *
 from plom import Plom_API_Version

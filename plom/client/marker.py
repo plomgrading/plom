@@ -53,7 +53,7 @@ from .useful_classes import ErrorMessage, SimpleMessage
 from .comment_list import AddTagBox, commentLoadAll, commentIsVisible
 from .reorientationwindow import ExamReorientWindow
 from .uiFiles.ui_marker import Ui_MarkerWindow
-from .test_view import GroupView, TestGroupSelect
+from .origscansviewer import GroupView, SelectTestQuestion
 from plom import Plom_API_Version
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
@@ -1345,14 +1345,14 @@ class MarkerClient(QWidget):
 
     def viewSpecificImage(self):
         if self.canViewAll:
-            tgs = TestGroupSelect(self.testInfo, self.question)
+            tgs = SelectTestQuestion(self.testInfo, self.question)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
                 gn = tgs.gsb.value()
             else:
                 return
         else:
-            tgs = TestGroupSelect(self.testInfo)
+            tgs = SelectTestQuestion(self.testInfo)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
                 gn = self.question
