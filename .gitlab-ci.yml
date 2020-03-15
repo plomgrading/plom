@@ -51,6 +51,13 @@ stages:
   - build
   - test
 
+
+job unitTests:
+  stage: test
+  script:
+    - python3 -m pytest
+
+
 job buildPapers:
   stage: test
   script:
@@ -171,14 +178,3 @@ job backgroundTest:
     - kill -9 %1
     - echo "Should be no jobs and this should succeed"
     - jobs -p
-
-# TODO: maybe she'll come back one day...
-#job someUnitTests:
-#  stage: test
-#  script:
-#    - pushd finishing
-#    - ./run_unit_tests.sh
-#    - popd
-#    - pushd resources
-#    - ./run_unit_tests.sh
-#    - popd
