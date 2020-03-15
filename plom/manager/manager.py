@@ -39,7 +39,7 @@ from PyQt5.QtWidgets import (
 
 # TODO: client references to be avoided, refactor to common utils?
 from plom.client.useful_classes import ErrorMessage, SimpleMessage
-from plom.client.test_view import WholeTestView, GroupView
+from plom.client.origscanviewer import WholeTestView, GroupView
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
