@@ -230,6 +230,9 @@ class ClientSettingsDialog(QDialog):
         self.checkWarnMark.setCheckState(
             Qt.Checked if s.get("MarkWarnings") else Qt.Unchecked
         )
+        if not s.get("POWERUSER"):
+            self.checkWarnCom.setEnabled(False)
+            self.checkWarnMark.setEnabled(False)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
