@@ -1,7 +1,6 @@
 from io import StringIO
 from pytest import raises
 
-from .utils import myhash
 from .return_tools import canvas_csv_add_return_codes
 
 
