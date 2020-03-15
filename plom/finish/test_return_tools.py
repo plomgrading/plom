@@ -1,20 +1,8 @@
-import os, sys
-import csv
 from io import StringIO
-import pandas
+from pytest import raises
 
 from .utils import myhash
-
 from .return_tools import canvas_csv_add_return_codes
-
-# TODO: maybe pytest makes this?
-def raises(expectedException, code=None):
-    """Check some lambda expression raises a particular Exception"""
-    try:
-        code()
-    except expectedException:
-        return
-    raise Failed("DID NOT RAISE")
 
 
 def test_csv_general_test():
