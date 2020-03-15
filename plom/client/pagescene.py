@@ -1136,6 +1136,13 @@ class PageScene(QGraphicsScene):
                     return False
         return True
 
+    def hasOnlyTicksCrossesDeltas(self):
+        for x in self.items():
+            if getattr(x, "saveable", None):
+                if not isinstance(x, (TickItem, CrossItem, DeltaItem)):
+                    return False
+        return True
+
     def checkAllObjectsInside(self):
         for X in self.items():
             # check all items that are not the image or scorebox
