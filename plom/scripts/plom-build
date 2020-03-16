@@ -112,11 +112,11 @@ def buildDatabaseAndPapers(blank):
 
     if blank == "true" and spec["numberToName"] > 0:
         print(
-            "Your spec says to produce {} named-papers. You should either edit your spec file, or rerun without the '--blank' option.".format(
+            ">>> WARNING <<< "
+            "Your spec says to produce {} named-papers, but you have run with the '--blank' option. Building unnamed papers.".format(
                 spec["numberToName"]
             )
         )
-        exit(1)
 
     buildDatabase(spec)
 
@@ -166,7 +166,6 @@ spB.add_argument(
 
 # Now parse things
 args = parser.parse_args()
-print(args)
 
 if args.command == "new":
     # check the file extension
@@ -183,7 +182,7 @@ elif args.command == "class":
     processClasslist(args.classlist)
 elif args.command == "make":
     # get building.
-    buildDatabaseAndPapers(args.naming)
+    buildDatabaseAndPapers(args.blank)
 else:
     # no command given so print help.
     parser.print_help()
