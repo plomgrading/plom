@@ -55,7 +55,7 @@ def parseAndVerifySpecification(fname):
     sp = SpecParser()
     if sp.spec["numberToName"] > 0:
         print(
-            'Your spec indicates that you wish to print named papers. Please process your class list using "plom-build class ".'
+            'Your spec indicates that you wish to print named papers.\nPlease process your class list using "plom-build class ".'
         )
 
 

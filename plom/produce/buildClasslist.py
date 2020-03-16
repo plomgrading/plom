@@ -130,7 +130,7 @@ def acceptedFormats():
     )
 
 
-def processClassList(fname, outfilename):
+def processClassList(fname, outputfile):
     """Get student names/numbers from csv, process, and save for server.
 
     Student numbers come from an `id` column.  There is some
