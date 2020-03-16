@@ -19,4 +19,19 @@ def isValidUBCStudentNumber(n):
         return False
     return True
 
+def censorStudentNumber(n):
+    """Replace some parts of student number with astericks."""
+    n = str(n)
+    r = n[:2] + "****" + n[-2:]
+    assert len(n) == len(r)
+    return r
+
+def censorStudentName(s):
+    """Replace most of a student student name with astericks."""
+    if len(s) <= 3:
+        r = s[0] + "*"*7
+    else:
+        r = s[:3] + "*"*5
+    return r
+
 isValidStudentNumber = isValidUBCStudentNumber
