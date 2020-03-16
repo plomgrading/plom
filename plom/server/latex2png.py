@@ -11,6 +11,8 @@ import shutil
 
 
 def processFragment(fragment, outName):
+    """Process a fragment of latex and produce a png image."""
+
     head = r"""
     \documentclass[12pt]{article}
     \usepackage[letterpaper, textwidth=5in]{geometry}
@@ -27,48 +29,46 @@ def processFragment(fragment, outName):
     \end{document}
     """
 
-    cdir = os.getcwd()
-    td = tempfile.TemporaryDirectory()
-    os.chdir(td.name)
+    # make a temp dir to build latex in
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "frag.tex"), "w") as fh:
+            fh.write(head)
+            fh.write(fragment)
+            fh.write(foot)
 
-    with open(os.path.join(td.name, "frag.tex"), "w") as fh:
-        fh.write(head)
-        fh.write(fragment)
-        fh.write(foot)
+        latexIt = subprocess.run(
+            [
+                "latexmk",
+                "-quiet",
+                "-interaction=nonstopmode",
+                "-no-shell-escape",
+                "frag.tex",
+            ],
+            cwd=tmpdir,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        if latexIt.returncode != 0:
+            return False
 
-    latexIt = subprocess.run(
-        [
-            "latexmk",
-            "-quiet",
-            "-interaction=nonstopmode",
-            "-no-shell-escape",
-            "frag.tex",
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    if latexIt.returncode != 0:
-        # sys.exit(latexIt.returncode)
-        return False
+        convertIt = subprocess.run(
+            [
+                "dvipng",
+                "-q",
+                "-D",
+                "225",
+                "-bg",
+                "transparent",
+                "frag.dvi",
+                "-o",
+                "frag.png",
+            ],
+            cwd=tmpdir,
+            stdout=subprocess.DEVNULL,
+        )
+        if convertIt.returncode != 0:
+            # sys.exit(convertIt.returncode)
+            return False
 
-    convertIt = subprocess.run(
-        [
-            "dvipng",
-            "-q",
-            "-D",
-            "225",
-            "-bg",
-            "transparent",
-            "frag.dvi",
-            "-o",
-            "frag.png",
-        ],
-        stdout=subprocess.DEVNULL,
-    )
-    if convertIt.returncode != 0:
-        # sys.exit(convertIt.returncode)
-        return False
-
-    shutil.copyfile("frag.png", outName)
-    os.chdir(cdir)
+        shutil.copyfile(os.path.join(tmpdir, "frag.png"), outName)
     return True
