@@ -58,6 +58,20 @@ job unitTests:
     - python3 -m pytest
 
 
+job unitTestsInstalledPkg:
+  stage: test
+  script:
+    - python3 ./setup.py build bdist_wheel
+    - pushd dist
+    - python3 -m pip install plom-*.whl
+    - popd
+    # no go to some other dir and run tests on installed pkg
+    - mkdir tmp
+    - pushd tmp
+    - python3 -m pytest --pyargs plom
+    - pytest-3 --pyargs plom
+
+
 job buildPapers:
   stage: test
   script:
