@@ -577,6 +577,7 @@ class MarkerClient(QWidget):
         self.ui.tagButton.clicked.connect(self.tagTest)
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
+        self.ui.filterInvCB.stateChanged.connect(self.setFilter)
         self.ui.viewButton.clicked.connect(self.viewSpecificImage)
         # self.ui.filterLE.focusInEvent.connect(lambda: self.ui.filterButton.setFocus())
         # Give IDs to the radio-buttons which select the marking style
