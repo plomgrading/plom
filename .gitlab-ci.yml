@@ -70,7 +70,7 @@ job unitTestsInstalledPkg:
     - mkdir tmp
     - pushd tmp
     - pytest-3 -l --pyargs plom
-    - popd tmp
+    - popd
 
 
 job buildPapers:
