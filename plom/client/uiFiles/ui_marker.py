@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './ui_marker.ui'
+# Form implementation generated from reading ui file './qtCreatorFiles/ui_marker.ui'
 #
 # Created by: PyQt5 UI code generator 5.12.3
 #
@@ -267,4 +267,4 @@ class Ui_MarkerWindow(object):
         self.mProgressBar.setFormat(_translate("MarkerWindow", "%v of %m"))
         self.closeButton.setText(_translate("MarkerWindow", "&Close"))
         self.paperBox.setTitle(_translate("MarkerWindow", "Current paper"))
-from useful_classes import SimpleTableView
+from plom.client.useful_classes import SimpleTableView
