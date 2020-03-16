@@ -19,7 +19,7 @@ from .uiFiles.ui_test_view import Ui_TestView
 from .examviewwindow import ExamViewWindow
 
 
-class TestView(QWidget):
+class OriginalScansViewer(QWidget):
     def __init__(self, parent, testNumber, pageNames, pages):
         super(TestView, self).__init__()
         self.parent = parent
@@ -163,9 +163,9 @@ class WholeTestView(QDialog):
             self.pageTabs.addTab(self.tabs[k], "{}".format(k + 1))
 
 
-class TestGroupSelect(QDialog):
+class SelectTestQuestion(QDialog):
     def __init__(self, info, gn=None):
-        super(TestGroupSelect, self).__init__()
+        super(SelectTestQuestion, self).__init__()
         self.setModal(True)
         self.setWindowTitle("View another test")
         self.iL = QLabel("From which test do you wish to view the current question?")
