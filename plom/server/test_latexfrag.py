@@ -1,5 +1,6 @@
 import tempfile
 import subprocess
+import pkg_resources
 from pytest import raises
 
 from plom.server.latex2png import processFragment
@@ -20,26 +21,28 @@ def test_frag_broken_tex():
 
 
 def test_frag_image_as_expected():
-    # TODO: target image in resource_pkg or encode64 string?
-    g = "plom/server/target_Q_latex_plom.png"
-    frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
-    assert processFragment(frag, f)
-    r = subprocess.run(
-        ["compare", "-metric", "rmse", f, g, "diffimage"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
-    # output is "float (float)"
-    s = r.stdout.decode().split(" ")[1].strip("()")
-    assert float(s) < 0.2
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
+        with open(target.name, "wb") as fh:
+            fh.write(pkg_resources.resource_string("plom.server", "target_Q_latex_plom.png"))
 
-    frag = r"$f = \frac{x}{y}$ and lots and lots more, very different."
-    assert processFragment(frag, f)
-    r = subprocess.run(
-        ["compare", "-metric", "rmse", f, g, "diffimage"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
-    # output is "float (float)"
-    s = r.stdout.decode().split(" ")[1].strip("()")
-    assert float(s) > 0.25
+        frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
+        assert processFragment(frag, f)
+        r = subprocess.run(
+            ["compare", "-metric", "rmse", f, target.name, "diffimage"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        # output is "float (float)"
+        s = r.stdout.decode().split(" ")[1].strip("()")
+        assert float(s) < 0.2
+
+        frag = r"$f = \frac{x}{y}$ and lots and lots more, very different."
+        assert processFragment(frag, f)
+        r = subprocess.run(
+            ["compare", "-metric", "rmse", f, target.name, "diffimage"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        # output is "float (float)"
+        s = r.stdout.decode().split(" ")[1].strip("()")
+        assert float(s) > 0.25

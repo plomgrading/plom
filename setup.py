@@ -34,6 +34,7 @@ setup(
                 "plom/templateUserList.csv",
                 "plom/demoClassList.csv",
                 "plom/demoUserList.csv",
+                "plom/server/target_Q_latex_plom.png",
             ],
         ),
         ("share/plom/icons", iconList),
