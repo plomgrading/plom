@@ -53,7 +53,7 @@ from .useful_classes import ErrorMessage, SimpleMessage
 from .comment_list import AddTagBox, commentLoadAll, commentIsVisible
 from .reorientationwindow import ExamReorientWindow
 from .uiFiles.ui_marker import Ui_MarkerWindow
-from .origscansviewer import GroupView, SelectTestQuestion
+from .origscanviewer import GroupView, SelectTestQuestion
 from plom import Plom_API_Version
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.

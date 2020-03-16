@@ -59,7 +59,7 @@ from .useful_classes import (
     NoAnswerBox,
 )
 from .comment_list import CommentWidget
-from .origscanviewer import OriginalScanViewer
+from .origscanviewer import OriginalScansViewer
 from .uiFiles.ui_annotator_lhm import Ui_annotator_lhm
 from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm
 
