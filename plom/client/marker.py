@@ -426,6 +426,7 @@ class ProxyModel(QSortFilterProxyModel):
         QSortFilterProxyModel.__init__(self, parent)
         self.setFilterKeyColumn(4)
         self.filterString = ""
+        self.invert = False
 
     def lessThan(self, left, right):
         # Check to see if data is integer, and compare that
@@ -440,18 +441,25 @@ class ProxyModel(QSortFilterProxyModel):
     def setFilterString(self, flt):
         self.filterString = flt
 
-    def filterTags(self):
+    def filterTags(self, invert=False):
+        self.invert = invert
         self.setFilterFixedString(self.filterString)
 
     def filterAcceptsRow(self, pos, index):
-        if len(self.filterString) == 0:
-            return True
-        if (
+        if (len(self.filterString) == 0) or (
             self.filterString.casefold()
             in self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
         ):
-            return True
-        return False
+            # we'd return true here, unless INVERT, then false
+            if self.invert:
+                return False
+            else:
+                return True
+        else:  # we'd return false here, unless invert, then true
+            if self.invert:
+                return True
+            else:
+                return False
 
     def getPrefix(self, r):
         # Return the prefix of the image
@@ -569,6 +577,7 @@ class MarkerClient(QWidget):
         self.ui.tagButton.clicked.connect(self.tagTest)
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
+        self.ui.filterInvCB.stateChanged.connect(self.setFilter)
         self.ui.viewButton.clicked.connect(self.viewSpecificImage)
         # self.ui.filterLE.focusInEvent.connect(lambda: self.ui.filterButton.setFocus())
         # Give IDs to the radio-buttons which select the marking style
@@ -674,7 +683,7 @@ class MarkerClient(QWidget):
         ErrorMessage(msg).exec_()
         self.shutDownError()
         if rethrow:
-            raise(err)
+            raise (err)
 
     def getMarkedList(self):
         # Ask server for list of previously marked papers
@@ -754,7 +763,9 @@ class MarkerClient(QWidget):
                 v, m = messenger.MprogressCount(self.question, self.version)
             except PlomSeriousException as err:
                 log.exception("Serious error detected while updating progress")
-                msg = 'A serious error happened while updating progress:\n"{}"'.format(err)
+                msg = 'A serious error happened while updating progress:\n"{}"'.format(
+                    err
+                )
                 msg += "\nThis is not good: restart, report bug, etc."
                 ErrorMessage(msg).exec_()
                 return
@@ -1114,7 +1125,9 @@ class MarkerClient(QWidget):
 
         if not (0 <= gr and gr <= self.maxScore):
             msg = ErrorMessage(
-                "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(gr)
+                "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(
+                    gr
+                )
             )
             msg.exec_()
             # TODO: what do do here?  revert?
@@ -1235,7 +1248,7 @@ class MarkerClient(QWidget):
         except PlomTakenException as err:
             log.exception("Taken exception when downloading whole paper")
             ErrorMessage("{}".format(err)).exec_()
-            return ([], [])   # TODO: what to return?
+            return ([], [])  # TODO: what to return?
 
         viewFiles = []
         for iab in imagesAsBytes:
@@ -1341,7 +1354,11 @@ class MarkerClient(QWidget):
 
     def setFilter(self):
         self.prxM.setFilterString(self.ui.filterLE.text().strip())
-        self.prxM.filterTags()
+        # check to see if invert-filter is checked
+        if self.ui.filterInvCB.checkState() == Qt.Checked:
+            self.prxM.filterTags(invert=True)
+        else:
+            self.prxM.filterTags()
 
     def viewSpecificImage(self):
         if self.canViewAll:
