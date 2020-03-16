@@ -28,21 +28,21 @@ def test_frag_image_as_expected():
         frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
         assert processFragment(frag, f)
         r = subprocess.run(
-            ["compare", "-metric", "rmse", f, target.name, "diffimage"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            ["compare", "-metric", "rmse", f, target.name, "-"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
         )
         # output is "float (float)"
-        s = r.stdout.decode().split(" ")[1].strip("()")
+        s = r.stderr.decode().split(" ")[1].strip("()")
         assert float(s) < 0.2
 
         frag = r"$f = \frac{x}{y}$ and lots and lots more, very different."
         assert processFragment(frag, f)
         r = subprocess.run(
-            ["compare", "-metric", "rmse", f, target.name, "diffimage"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            ["compare", "-metric", "rmse", f, target.name, "-"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
         )
         # output is "float (float)"
-        s = r.stdout.decode().split(" ")[1].strip("()")
+        s = r.stderr.decode().split(" ")[1].strip("()")
         assert float(s) > 0.25
