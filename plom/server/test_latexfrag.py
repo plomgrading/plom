@@ -34,7 +34,7 @@ def test_frag_image_as_expected():
         )
         # Note "AE" not "rmse" with transparency www.imagemagick.org/Usage/compare/
         s = r.stderr.decode()
-        assert float(s) < 100
+        assert float(s) < 3000
 
         frag = r"$f = \frac{x}{y}$ and lots and lots more, very different."
         assert processFragment(frag, f)
@@ -43,6 +43,5 @@ def test_frag_image_as_expected():
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
         )
-        # output is "float (float)"
         s = r.stderr.decode()
-        assert float(s) > 1000
+        assert float(s) >= 3000
