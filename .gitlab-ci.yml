@@ -55,6 +55,7 @@ stages:
 job unitTests:
   stage: test
   script:
+    # or pytest-3 -l
     - python3 -m pytest -l
 
 
@@ -68,8 +69,8 @@ job unitTestsInstalledPkg:
     # no go to some other dir and run tests on installed pkg
     - mkdir tmp
     - pushd tmp
-    - python3 -m pytest -l --pyargs plom  # TOO pick one
     - pytest-3 -l --pyargs plom
+    - popd tmp
 
 
 job buildPapers:
