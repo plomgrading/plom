@@ -27,32 +27,23 @@ class ErrorMessage(QMessageBox):
     """A simple error message pop-up"""
 
     def __init__(self, txt):
-        super(ErrorMessage, self).__init__()
-        fnt = self.font()
-        fnt.setPointSize((fnt.pointSize() * 3) // 2)
-        self.setFont(fnt)
+        super().__init__()
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Ok)
 
 
 class SimpleMessage(QMessageBox):
-    """A simple message pop-up with yes/no buttons and
-    large font.
-    """
+    """A simple message pop-up with yes/no buttons."""
 
     def __init__(self, txt):
-        super(SimpleMessage, self).__init__()
+        super().__init__()
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
-        fnt = self.font()
-        fnt.setPointSize((fnt.pointSize() * 3) // 2)
-        self.setFont(fnt)
 
 
 class SimpleMessageCheckBox(QMessageBox):
-    """A simple message pop-up with yes/no buttons, a checkbox and
-    large font.
+    """A simple message pop-up with yes/no buttons and a checkbox.
 
     Args:
         txt: plaintext or html content for the dialog
@@ -60,7 +51,7 @@ class SimpleMessageCheckBox(QMessageBox):
     """
 
     def __init__(self, txt, cbtxt=None):
-        super(SimpleMessageCheckBox, self).__init__()
+        super().__init__()
         if cbtxt:
             self.cb = QCheckBox(cbtxt)
         else:
@@ -69,10 +60,6 @@ class SimpleMessageCheckBox(QMessageBox):
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
         self.setCheckBox(self.cb)
-
-        fnt = self.font()
-        fnt.setPointSize((fnt.pointSize() * 3) // 2)
-        self.setFont(fnt)
 
 
 class SimpleTableView(QTableView):
