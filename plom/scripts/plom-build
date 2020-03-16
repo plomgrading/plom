@@ -103,24 +103,18 @@ def buildNamedPapers(spec):
     confirmNamed(spec, dbfile)
 
 
-def buildDatabaseAndPapers(blankOrID):
+def buildDatabaseAndPapers(blank):
     print("Reading specification")
     if not os.path.isfile(os.path.join(specdir, "verifiedSpec.toml")):
         print('Cannot find verified specFile - have you run "plom-build parse" yet?')
         exit(1)
     spec = SpecParser().spec
 
-    if blankOrID == "blank" and spec["numberToName"] > 0:
+    if blank == "true" and spec["numberToName"] > 0:
         print(
-            'Your spec says to produce {} named-papers. You should either edit your spec file, or rerun with "plom-build make named".'.format(
+            "Your spec says to produce {} named-papers. You should either edit your spec file, or rerun without the '--blank' option.".format(
                 spec["numberToName"]
             )
-        )
-        exit(1)
-
-    if blankOrID == "named" and spec["numberToName"] == 0:
-        print(
-            'Your spec says to produce only unnamed papers. You should either edit your spec file, or rerun with "plom-build make blank".'
         )
         exit(1)
 
@@ -128,7 +122,7 @@ def buildDatabaseAndPapers(blankOrID):
 
     print("Making directory for papers.")
     os.makedirs("papersToPrint", exist_ok=True)
-    if blankOrID == "blank":
+    if blank:
         buildBlankPapers(spec)
     else:
         buildNamedPapers(spec)
@@ -164,15 +158,15 @@ spL.add_argument(
 #
 spB = sub.add_parser("make", help="Make the PDFs")
 spB.add_argument(
-    "naming",
-    nargs="?",
-    choices=["blank", "named"],
-    default="blank",
-    help='Build papers and database from the specification either blank or pre-named. If no argument given then defaults to "blank"',
+    "-b",
+    "--blank",
+    action="store_true",
+    help="Build papers and database from the specification. Number of papers pre-named and blank is determined by the spec, unless the --blank option is given. In that case all papers are built without any pre-naming.",
 )
 
 # Now parse things
 args = parser.parse_args()
+print(args)
 
 if args.command == "new":
     # check the file extension
