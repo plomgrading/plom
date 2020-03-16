@@ -28,21 +28,21 @@ def test_frag_image_as_expected():
         frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
         assert processFragment(frag, f)
         r = subprocess.run(
-            ["compare", "-metric", "rmse", f, target.name, "-"],
+            ["compare", "-metric", "AE", f, target.name, "null"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
         )
-        # output is "float (float)"
-        s = r.stderr.decode().split(" ")[1].strip("()")
-        assert float(s) < 0.2
+        # Note "AE" not "rmse" with transparency www.imagemagick.org/Usage/compare/
+        s = r.stderr.decode()
+        assert float(s) < 100
 
         frag = r"$f = \frac{x}{y}$ and lots and lots more, very different."
         assert processFragment(frag, f)
         r = subprocess.run(
-            ["compare", "-metric", "rmse", f, target.name, "-"],
+            ["compare", "-metric", "AE", f, target.name, "null"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
         )
         # output is "float (float)"
-        s = r.stderr.decode().split(" ")[1].strip("()")
-        assert float(s) > 0.25
+        s = r.stderr.decode()
+        assert float(s) > 1000
