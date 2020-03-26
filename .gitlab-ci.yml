@@ -139,8 +139,7 @@ job serverStarts:
     - cp ../tmp/resources/verifiedSpec.toml specAndDatabase/
     - plom-server.py class --demo
     - plom-server.py init
-    # TODO: use demo users instead:
-    - cp ../tmp/resources/userList.json serverConfiguration/
+    - plom-server.py users --demo
     - plom-server.py launch &
     - sleep 1
     - echo "Server should be in background"
@@ -154,17 +153,17 @@ job serverStarts:
     - plom-scan.py -s localhost -w 4567 upload -c
     - plom-scan.py -s localhost -w 4567 status
     ## not supposed to be done yet:
-    - if (python3 -m plom.finish.022_check_completed -s localhost -w hackhack); then false; else true; fi
+    - if (python3 -m plom.finish.022_check_completed -s localhost -w 1234); then false; else true; fi
     - python3 -m plom.client.randoIDer -s localhost -u anne -w enna
     - python3 -m plom.client.randoMarker -s localhost -u anne -w enna
     - python3 -m plom.finish.021_startHere
-    - python3 -m plom.finish.022_check_completed -s localhost -w hackhack
+    - python3 -m plom.finish.022_check_completed -s localhost -w 1234
     ## currently 024 must be run in the server directory
-    - python3 -m plom.finish.023_spreadsheet -s localhost -w hackhack
+    - python3 -m plom.finish.023_spreadsheet -s localhost -w 1234
     - A=`cat testMarks.csv  | wc -l`  # How many lines?
     - bash -c "[[ $A == 17 ]]"        # should be 16 + 1
     - file -b testMarks.csv  | grep ASCII   # should be ascii test
-    - python3 -m plom.finish.024a_reassemble_completed -s localhost -w hackhack
+    - python3 -m plom.finish.024a_reassemble_completed -s localhost -w 1234
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 16 ]]"
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
