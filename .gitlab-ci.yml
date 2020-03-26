@@ -156,8 +156,8 @@ job serverStarts:
     - plom-scan.py -s localhost -w 4567 status
     ## not supposed to be done yet:
     - if (python3 -m plom.finish.022_check_completed -s localhost -w 1234); then false; else true; fi
-    - python3 -m plom.client.randoIDer -s localhost -u anne -w enna
-    - python3 -m plom.client.randoMarker -s localhost -u anne -w enna
+    - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123
+    - python3 -m plom.client.randoMarker -s localhost -u user0 -w 0123
     - python3 -m plom.finish.021_startHere
     - python3 -m plom.finish.022_check_completed -s localhost -w 1234
     ## currently 024 must be run in the server directory
