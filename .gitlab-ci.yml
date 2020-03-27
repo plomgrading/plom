@@ -139,8 +139,9 @@ job serverStarts:
     - cp ../tmp/resources/verifiedSpec.toml specAndDatabase/
     - plom-server.py class --demo
     - plom-server.py init
-    # TODO: use demo users instead:
-    - cp ../tmp/resources/userList.json serverConfiguration/
+    - plom-server.py users --demo
+    # TODO: why we have to do this?
+    - plom-server.py users serverConfiguration/userListRaw.csv
     - plom-server.py launch &
     - sleep 1
     - echo "Server should be in background"
@@ -148,23 +149,23 @@ job serverStarts:
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
     # TODO: -s, -w should go with the subcommand (after "read")
-    - plom-scan.py -s localhost -w rennacs read
-    - plom-scan.py -s localhost -w rennacs upload
-    - plom-scan.py -s localhost -w rennacs upload -u
-    - plom-scan.py -s localhost -w rennacs upload -c
-    - plom-scan.py -s localhost -w rennacs status
+    - plom-scan.py -s localhost -w 4567 read
+    - plom-scan.py -s localhost -w 4567 upload
+    - plom-scan.py -s localhost -w 4567 upload -u
+    - plom-scan.py -s localhost -w 4567 upload -c
+    - plom-scan.py -s localhost -w 4567 status
     ## not supposed to be done yet:
-    - if (python3 -m plom.finish.022_check_completed -s localhost -w hackhack); then false; else true; fi
-    - python3 -m plom.client.randoIDer -s localhost -u anne -w enna
-    - python3 -m plom.client.randoMarker -s localhost -u anne -w enna
+    - if (python3 -m plom.finish.022_check_completed -s localhost -w 1234); then false; else true; fi
+    - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123
+    - python3 -m plom.client.randoMarker -s localhost -u user0 -w 0123
     - python3 -m plom.finish.021_startHere
-    - python3 -m plom.finish.022_check_completed -s localhost -w hackhack
+    - python3 -m plom.finish.022_check_completed -s localhost -w 1234
     ## currently 024 must be run in the server directory
-    - python3 -m plom.finish.023_spreadsheet -s localhost -w hackhack
+    - python3 -m plom.finish.023_spreadsheet -s localhost -w 1234
     - A=`cat testMarks.csv  | wc -l`  # How many lines?
     - bash -c "[[ $A == 17 ]]"        # should be 16 + 1
     - file -b testMarks.csv  | grep ASCII   # should be ascii test
-    - python3 -m plom.finish.024a_reassemble_completed -s localhost -w hackhack
+    - python3 -m plom.finish.024a_reassemble_completed -s localhost -w 1234
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 16 ]]"
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
