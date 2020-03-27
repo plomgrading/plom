@@ -97,6 +97,9 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Your macros should go here
+%% for example
+\newcommand{\dee}[1]{{\mathrm{d}#1}}
+\newcommand{\diff}[2]{\dfrac{\dee{#1}}{\dee{#2}}}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -121,6 +124,39 @@
 \vfill
 \newpage
 
+\subsection*{Additional instructions}
+\begin{itemize}
+  \item Please use the spaces indicated.
+  \item If you require extra paper then put up your hand and ask your instructor.
+  \begin{itemize}
+    \item You must put your name and student number on any extra pages used.
+    \item Further, you must indicate the test-number and question-number.
+    \item Please do this \textbf{on both sides} of any extra pages.
+  \end{itemize}
+  \item Please do not dismember your test. You must submit all pages.
+  \item Smoking is strictly prohibited during the test.
+\end{itemize}
+
+\vfill
+\subsection*{Formula sheet}
+You may find the following formulas useful in the questions that follow.
+\begin{align*}
+  a^2 + b^2 &= c^2 \\
+  e^{i\pi}+1 &= 0 \\
+  \sum_{i=1}^n i &= \frac{n(n+1)}{2} \\
+  \diff{}{x}(f+g) &= \diff{f}{x}+\diff{g}{x} \\
+  \int (f+g)\dee{x} &= \int f \dee{x} + \int g \dee{x} \\
+  \cos(a+b) &= \cos a \cos b - \sin a \sin b \\
+  \sin(a+b) &= \sin a \cos b + \cos a \sin b \\
+  A \cup (B \cap C) &= (A\cup B) \cap (A \cup C) \\
+  A \cap (B \cup C) &= (A\cap B) \cup (A \cap C) \\
+  \overline{A \cap B} &= \overline{A} \cup \overline{B} \\
+  \overline{A \cup B} &= \overline{A} \cap \overline{B}
+\end{align*}
+\vfill
+
+\newpage
+
 \begin{questions}
 \question[5] Please place your answers in the boxes provided
 \begin{parts}
@@ -132,14 +168,42 @@
   \blank
   % Use \blank to space out the question parts nicely.
 
-  \part Another little thing here.
+  \part Another little thing here, \textbf{but this is ver2}
   \answerbox{\(\sin(x)\)}
   \begin{solution}
     Putting in your solutions ahead of time really helps calibrate your test.
   \end{solution}
   \blank
 
-  \part A third thing
+  \part A third thing, \textbf{but this is ver2}
+  \answerbox{\(\int \sin(x) dx\)}
+  \begin{solution}
+    Yet another solution goes here.
+  \end{solution}
+  \blank
+\end{parts}
+\newpage
+
+%% Next question
+
+\question[5] Please place your answers in the boxes provided
+\begin{parts}
+  \part Answer something not quite so simple, \textbf{but this is ver2}
+  \answerbox{ABC}
+  \begin{solution}
+    Some working will go here.
+  \end{solution}
+  \blank
+  % Use \blank to space out the question parts nicely.
+
+  \part Another less simple thing here, \textbf{but this is ver2}
+  \answerbox{\(\sin(x)\)}
+  \begin{solution}
+    Putting in your solutions ahead of time really helps calibrate your test.
+  \end{solution}
+  \blank
+
+  \part A third thing unsimple thing here, \textbf{but this is ver2}
   \answerbox{\(\int \sin(x) dx\)}
   \begin{solution}
     Yet another solution goes here.
