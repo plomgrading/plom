@@ -102,6 +102,7 @@ job demoWorkFlow:
     - plom-build make
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
+    - python -m plom.produce.faketools
     - popd
 
 job serverStarts:
