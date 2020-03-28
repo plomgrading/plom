@@ -3,7 +3,7 @@
 
 # >>> Edit the data below <<
 
-# the human-readible names of the test - one long, one short.
+# the human-readable names of the test - one long, one short.
 name = "m101mt1"
 longName = "Midterm for Mathematics 101"
 # how many source versions
