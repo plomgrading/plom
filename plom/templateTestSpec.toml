@@ -10,7 +10,7 @@ longName = "Midterm Demo using Plom"
 
 # Information about the test
 # A test may have one or more versions
-numberOfVersions = 3
+numberOfVersions = 2
 # how many pages
 numberOfPages = 6
 # total number of papers to produce
