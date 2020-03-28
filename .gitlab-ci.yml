@@ -106,7 +106,7 @@ job buildPapers:
     # TODO: override the private seed
     - sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
     - diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
-    - plom-build make --blank
+    - plom-build make
     # TODO: https://github.com/vslavik/diff-pdf, not in Ubuntu repos?
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
