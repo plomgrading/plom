@@ -105,7 +105,7 @@ job demoWorkFlow:
     - bash -c "[[ $A == 20 ]]"       # should be 20
     # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/695
     - plom-server.py class --demo
-    - .python -m plom.produce.faketools
+    - python3 -m plom.produce.faketools
     # Scan and upload
     # supposed to fail:
     - if (plom-scan.py process); then false; else true; fi
