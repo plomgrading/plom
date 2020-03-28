@@ -99,10 +99,13 @@ job demoWorkFlow:
     # TODO: override the private seed
     # sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
     # diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
-    - plom-build make
+    # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/699
+    - plom-build make --blank
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python -m plom.produce.faketools
+    # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/695
+    - plom-server.py class --demo
+    - .python -m plom.produce.faketools
     - popd
 
 job serverStarts:
