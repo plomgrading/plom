@@ -263,7 +263,7 @@ def processUsers(userFile, demo, auto):
     if auto is not None:
         print("Creating an auto-generated user list at userListRaw.csv.")
         print(
-            "Please edit as you see fit and then rerun 'plom-server user serverConfiguration/userListRaw.csv'"
+            "Please edit as you see fit and then rerun 'plom-server users serverConfiguration/userListRaw.csv'"
         )
         from plom.server import manageUserFiles
 
