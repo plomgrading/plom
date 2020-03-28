@@ -463,7 +463,7 @@ class Annotator(QWidget):
             )
         # if we haven't built a testview, built it now
         if self.testView is None:
-            self.testView = TestView(self, testNumber, pageNames, self.testViewFiles)
+            self.testView = OriginalScansViewer(self, testNumber, pageNames, self.testViewFiles)
         else:
             # must have closed it, so re-show it.
             self.testView.show()

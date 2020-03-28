@@ -21,7 +21,7 @@ from .examviewwindow import ExamViewWindow
 
 class OriginalScansViewer(QWidget):
     def __init__(self, parent, testNumber, pageNames, pages):
-        super(TestView, self).__init__()
+        super().__init__()
         self.parent = parent
         self.testNumber = testNumber
         self.numberOfPages = len(pages)
