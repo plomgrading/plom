@@ -39,7 +39,7 @@ def _makePDF(x):
 
 
 def buildAllPapers(spec, dbFilename, named=False):
-    if named:
+    if named and spec["numberToName"] > 0:
         students = readClassList()
     examDB = PlomDB(dbFilename)
     makePDFargs = []
