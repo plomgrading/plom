@@ -80,13 +80,13 @@ def uploadImages(server, password, unknowns=False, collisions=False):
 
 
 parser = argparse.ArgumentParser()
-sub = parser.add_subparsers(help="sub-command help", dest="command")
+sub = parser.add_subparsers(dest="command", description="Tools for dealing with scans.")
 #
 spP = sub.add_parser("process", help="Process scanned PDFs to images.")
 spR = sub.add_parser("read", help="Read QR-codes from images and collate.")
 spU = sub.add_parser("upload", help="Upload page images to scanner")
 spS = sub.add_parser("status", help="Get scanning status report from server")
-spC = sub.add_parser("clear", help="Clear 'scanner' login.")
+spC = sub.add_parser("clear", help="Clear 'scanner' login", description="Clear 'scanner' login after a crash or other expected event.")
 #
 spP.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
 spU.add_argument(
