@@ -228,7 +228,7 @@ class SpecVerifier:
             )
             if self.spec["numberToProduce"] < 1.05 * self.spec["numberToName"]:
                 print(
-                    "WARNING = you are not producing less than 5\% un-named papers. We recommend that you produce more un-named papers"
+                    "WARNING = you are not producing less than 5% un-named papers. We recommend that you produce more un-named papers"
                 )
             else:
                 print("\t\tProducing sufficient spare papers - check")
