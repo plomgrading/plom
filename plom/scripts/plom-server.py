@@ -351,8 +351,8 @@ def launchTheServer():
 
 #################
 
-parser = argparse.ArgumentParser()
-sub = parser.add_subparsers(help="sub-command help", dest="command")
+parser = argparse.ArgumentParser(epilog="Use '%(prog)s <subcommand> -h' for detailed help.")
+sub = parser.add_subparsers(dest="command", description="Perform various server-related tasks.")
 #
 spI = sub.add_parser("init", help="Initialise server.")
 from plom.produce import buildClasslist
@@ -366,11 +366,12 @@ spL = sub.add_parser(
 spU = sub.add_parser("users", help="Create required users.")
 spR = sub.add_parser("launch", help="Launch server.")
 #
-spL.add_argument("classlist", nargs="?", help="filename in csv format")
-spL.add_argument(
+group = spL.add_mutually_exclusive_group(required=True)
+group.add_argument("classlist", nargs="?", help="filename in csv format")
+group.add_argument(
     "--demo",
     action="store_true",
-    help="Use demo classlist. **DO NOT DO THIS ON REAL SERVER**",
+    help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
 )
 ##
 spU.add_argument(
