@@ -24,6 +24,11 @@ setup(
         "plom/scripts/plom-manager.py",
         "plom/scripts/plom-server.py",
     ],
+    entry_points={
+        "console_scripts": [
+            "plom-fake-scribbles=plom.produce.faketools:main",
+        ],
+    },
     include_package_data=True,
     data_files=[
         (

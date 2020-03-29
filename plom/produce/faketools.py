@@ -148,8 +148,13 @@ def fillInExams(paperdir, classlist, outfile, which=None):
     bigdoc.save(outfile)
 
 
-if __name__ == "__main__":
+
+def main():
     specdir = Path(_specdir)
     classlist = specdir / "classlist.csv"
     outfile = "fake_scribbled_exams.pdf"
     fillInExams(_paperdir, classlist, outfile)
+
+
+if __name__ == "__main__":
+    main()
