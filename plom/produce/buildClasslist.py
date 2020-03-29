@@ -18,9 +18,7 @@ import pkg_resources
 import pandas
 
 from ..finish.return_tools import import_canvas_csv
-
-
-specdir = "specAndDatabase"
+from plom import specdir
 
 
 def checkNonCanvasCSV(fname):

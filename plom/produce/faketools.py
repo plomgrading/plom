@@ -18,6 +18,7 @@ import fitz
 import pandas
 
 from . import paperdir as _paperdir
+from plom import specdir as _specdir
 
 
 possibleAns = [
@@ -148,7 +149,7 @@ def fillInExams(paperdir, classlist, outfile, which=None):
 
 
 if __name__ == "__main__":
-    specdir = Path("specAndDatabase")
+    specdir = Path(_specdir)
     classlist = specdir / "classlist.csv"
     outfile = "fake_scribbled_exams.pdf"
     fillInExams(_paperdir, classlist, outfile)
