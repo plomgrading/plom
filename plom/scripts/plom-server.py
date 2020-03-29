@@ -255,13 +255,14 @@ def processUsers(userFile, demo, auto):
         print(
             "Creating a demo user list at userListRaw.csv. ** DO NOT USE ON REAL SERVER **"
         )
-        print(
-            "Please edit as you see fit and then rerun 'plom-server users serverConfiguration/userListRaw.csv'"
-        )
+        from plom.server import manageUserFiles
+        rawfile = Path("serverConfiguration") / "userListRaw.csv"
         cl = pkg_resources.resource_string("plom", "demoUserList.csv")
-        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "wb") as fh:
+        with open(rawfile, "wb") as fh:
             fh.write(cl)
+        manageUserFiles.parseUserlist(rawfile)
         return
+
     if auto is not None:
         print("Creating an auto-generated user list at userListRaw.csv.")
         print(
