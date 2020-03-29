@@ -234,7 +234,7 @@ def initialiseServer():
 
 def processUsers(userFile, demo, auto):
     # if we have been passed a userFile then process it and return
-    if userFile is not None:
+    if userFile:
         print("Processing user file '{}'".format(userFile))
         print("WARNING - this will overwrite any existing userList.json file.")
         from plom.server import manageUserFiles
@@ -277,7 +277,7 @@ def processUsers(userFile, demo, auto):
 
         return
 
-    if userFile is None:
+    if not userFile:
         print(
             "Creating 'serverConfiguration/userListRaw.csv' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters and usernames should be at least 4 alphanumeric characters."
         )
