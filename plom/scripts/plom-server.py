@@ -13,6 +13,7 @@ from textwrap import fill, dedent
 import pkg_resources
 
 from plom import SpecVerifier, SpecParser
+from plom.produce import processClasslist
 
 #################
 
@@ -20,38 +21,6 @@ from plom import SpecVerifier, SpecParser
 class PlomServerConfigurationError(Exception):
     def __init__(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
-
-
-#################
-def processClasslist(fname, demo):
-    os.makedirs("specAndDatabase", exist_ok=True)
-    # check if classlist.csv is in place - if so abort.
-    if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
-        print(
-            "Classlist file already present in 'specAndDatabase' directory. Aborting."
-        )
-        exit(1)
-
-    if demo:
-        print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
-        cl = pkg_resources.resource_string("plom", "demoClassList.csv")
-        with open(os.path.join("specAndDatabase", "classlist.csv"), "wb") as fh:
-            fh.write(cl)
-        return
-
-    from plom.produce import buildClasslist
-
-    # check if a filename given
-    if fname is None:
-        print("Please provide a classlist file: see help")
-        exit(1)
-    # grab the file, process it and copy it into place.
-
-    if os.path.isfile(fname):
-        buildClasslist.getClassList(fname)
-    else:
-        print('Cannot find classlist file "{}"'.format(fname))
-        exit(1)
 
 
 def checkSpecAndDatabase():

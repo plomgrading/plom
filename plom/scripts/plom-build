@@ -11,6 +11,7 @@ import pkg_resources
 from plom import SpecVerifier, SpecParser
 from plom.produce import buildAllPapers, confirmProcessed, confirmNamed
 from plom.produce import paperdir
+from plom.produce import processClasslist
 
 specdir = "specAndDatabase"
 dbfile = os.path.join(specdir, "plom.db")
@@ -60,27 +61,6 @@ def parseAndVerifySpecification(fname):
         )
 
 
-def processClasslist(fname, demo):
-    from plom.produce import buildClasslist
-
-    if demo:
-        print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
-        cl = pkg_resources.resource_string("plom", "demoClassList.csv")
-        with open(os.path.join("specAndDatabase", "classlist.csv"), "wb") as fh:
-            fh.write(cl)
-        return
-
-    # check if a filename given
-    if fname is None:
-        print("Please provide a classlist file: see help")
-        exit(1)
-    # grab the file, process it and copy it into place.
-
-    if os.path.isfile(fname):
-        buildClasslist.processClassList(fname, os.path.join(specdir, "classlist.csv"))
-    else:
-        print('Cannot find file "{}"'.format(fname))
-        exit(1)
 
 
 def buildDatabase(spec):
