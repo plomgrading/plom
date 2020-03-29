@@ -401,20 +401,20 @@ grp.add_argument(
 )
 
 
-# Now parse things
-args = parser.parse_args()
+if __name__ == "__main__":
+    args = parser.parse_args()
 
-if args.command == "init":
-    initialiseServer()
-elif args.command == "class":
-    # process the class list and copy into place
-    processClasslist(args.classlist, args.demo)
-elif args.command == "users":
-    # process the class list and copy into place
-    processUsers(args.userlist, args.demo, args.auto)
-elif args.command == "launch":
-    launchTheServer()
-else:
-    parser.print_help()
+    if args.command == "init":
+        initialiseServer()
+    elif args.command == "class":
+        # process the class list and copy into place
+        processClasslist(args.classlist, args.demo)
+    elif args.command == "users":
+        # process the class list and copy into place
+        processUsers(args.userlist, args.demo, args.auto)
+    elif args.command == "launch":
+        launchTheServer()
+    else:
+        parser.print_help()
 
-exit(0)
+    exit(0)
