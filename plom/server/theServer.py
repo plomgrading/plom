@@ -15,6 +15,7 @@ import sys
 import tempfile
 import uuid
 import logging
+from pathlib import Path
 
 from aiohttp import web
 
