@@ -46,7 +46,7 @@ Some stuff from the package manager:
         zbar-tools cmake make imagemagick dvipng g++ \
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
         python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
-        python3-pip python3-setuptools python3-wheel python3-toml \
+        python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt python3-opencv texlive-latex-extra \
         latexmk texlive-fonts-recommended python3-peewee python3-xvfbwrapper \
         python3-tqdm libpango-1.0 libpangocairo-1.0
@@ -63,7 +63,8 @@ Other stuff we get from pip:
 ```
   # pip3 install --upgrade --user pip
   # python3 -m pip install --upgrade --user setuptools
-  # python3 -m pip install --upgrade --user pymupdf weasyprint imutils aiohttp pyzbar
+  # python3 -m pip install --upgrade --user pymupdf weasyprint imutils toml \
+        aiohttp pyzbar
   # python3 -m pip install --upgrade --user lapsolver "tensorflow<2"
 ```
 (Note `python3 -m pip` to use the newly upgraded pip).
