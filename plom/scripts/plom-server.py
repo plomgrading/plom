@@ -7,6 +7,7 @@ import os
 import shlex
 import shutil
 import subprocess
+from pathlib import Path
 from textwrap import fill, dedent
 
 # import tools for dealing with resource files
@@ -235,8 +236,9 @@ def initialiseServer():
 def processUsers(userFile, demo, auto):
     # if we have been passed a userFile then process it and return
     if userFile:
-        print("Processing user file '{}'".format(userFile))
-        print("WARNING - this will overwrite any existing userList.json file.")
+        print("Processing user file '{}' to 'userList.json'".format(userFile))
+        if os.path.isfile(Path("serverConfiguration") / "userList.json"):
+            print("WARNING - this will overwrite the existing userList.json file.")
         from plom.server import manageUserFiles
 
         manageUserFiles.parseUserlist(userFile)
