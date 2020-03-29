@@ -137,26 +137,26 @@ def buildDatabaseAndPapers(blank):
 
 
 parser = argparse.ArgumentParser()
-sub = parser.add_subparsers(help="sub-command help", dest="command",)
+sub = parser.add_subparsers(dest="command", description="Perform tasks related to building tests.")
 #
-spC = sub.add_parser("new", help="Create new spec file.")
+spC = sub.add_parser(
+    "new", help="Create new spec file", description="Create new spec file."
+)
 spC.add_argument(
-    "specFile",
-    nargs="?",
-    default="testSpec.toml",
-    help="Create test-specification toml file with name specFile. If no argument given then defaults to 'testSpec.toml'",
+    "specFile", nargs="?", default="testSpec.toml", help="defaults to '%(default)s'.",
 )
 #
-spP = sub.add_parser("parse", help="Parse spec file.")
+spP = sub.add_parser(
+    "parse",
+    help="Parse spec file",
+    description="Parse and verify the test-specification toml file.",
+)
 spP.add_argument(
-    "specFile",
-    nargs="?",
-    default="testSpec.toml",
-    help="Parse and verify test-specification toml file with name specFile. If no argument given then defaults to 'testSpec.toml'",
+    "specFile", nargs="?", default="testSpec.toml", help="defaults to '%(default)s'.",
 )
 
 #
-spL = sub.add_parser("class", help="Read in a classlist.")
+spL = sub.add_parser("class", help="Read in a classlist")
 spL.add_argument(
     "classlist",
     nargs="?",
@@ -167,7 +167,7 @@ spL.add_argument(
 spB = sub.add_parser(
     "make",
     help="Make the PDFs",
-    epilog="""
+    description="""
         Build papers and database from the test specification.  Based on the
         spec, some of the papers may have names printed on them from the
         classlist ("pre-named") and the remainder will be blank.""",
