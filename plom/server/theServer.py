@@ -5,9 +5,6 @@ __license__ = "AGPLv3"
 
 # TODO - directory structure!
 
-# ----------------------
-
-from aiohttp import web
 import hashlib
 import toml
 import json
@@ -19,9 +16,7 @@ import tempfile
 import uuid
 import logging
 
-# ----------------------
-
-from .authenticate import Authority
+from aiohttp import web
 
 from plom import __version__
 from plom import Plom_API_Version as serverAPI
@@ -30,7 +25,8 @@ from plom import SpecParser
 from plom import specdir
 from plom.db.examDB import PlomDB
 
-# ----------------------
+from .authenticate import Authority
+
 
 serverInfo = {"server": "127.0.0.1", "port": Default_Port}
 # ----------------------
