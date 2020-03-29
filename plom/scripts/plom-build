@@ -60,8 +60,15 @@ def parseAndVerifySpecification(fname):
         )
 
 
-def processClasslist(fname):
+def processClasslist(fname, demo):
     from plom.produce import buildClasslist
+
+    if demo:
+        print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
+        cl = pkg_resources.resource_string("plom", "demoClassList.csv")
+        with open(os.path.join("specAndDatabase", "classlist.csv"), "wb") as fh:
+            fh.write(cl)
+        return
 
     # check if a filename given
     if fname is None:
@@ -155,11 +162,20 @@ spP.add_argument(
 )
 
 #
-spL = sub.add_parser("class", help="Read in a classlist")
-spL.add_argument(
-    "classlist",
-    nargs="?",
-    help="Process the given classlist file and copy the result into place.",
+from plom.produce import buildClasslist
+spL = sub.add_parser(
+    "class",
+    help="Read in a classlist",
+    description="Process the given classlist file and copy the result into place.",
+    epilog=buildClasslist.acceptedFormats(),
+    formatter_class=argparse.RawDescriptionHelpFormatter
+)
+group = spL.add_mutually_exclusive_group(required=True)
+group.add_argument("classlist", nargs="?", help="filename in csv format")
+group.add_argument(
+    "--demo",
+    action="store_true",
+    help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
 )
 
 #
@@ -193,7 +209,7 @@ elif args.command == "parse":
     parseAndVerifySpecification(fname)
 elif args.command == "class":
     # process the class list and copy into place
-    processClasslist(args.classlist)
+    processClasslist(args.classlist, args.demo)
 elif args.command == "make":
     # get building.
     buildDatabaseAndPapers(args.blank)
