@@ -272,7 +272,6 @@ def processUsers(userFile, demo, auto):
 
         # grab required users and regular users
         lst = manageUserFiles.buildCannedUsers(auto)
-        print("lst = {}".format(lst))
         with open(os.path.join("serverConfiguration", "userListRaw.csv"), "w+") as fh:
             fh.write("user, password\n")
             for np in lst:
