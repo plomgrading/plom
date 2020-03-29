@@ -101,20 +101,9 @@ spU.add_argument(
     action="store_true",
     help="Upload 'collisions'. Collisions are pages which appear to be already on the server. You should not need this option except under exceptional circumstances.",
 )
-# server + password stuff
-parser.add_argument(
-    "-w",
-    "--password",
-    type=str,
-    help='Password of "scanner". Not needed for "process" subcommand',
-)
-parser.add_argument(
-    "-s",
-    "--server",
-    metavar="SERVER[:PORT]",
-    action="store",
-    help='Which server to contact. Not needed for "process" subcommand',
-)
+for x in (spR, spU, spS, spC):
+    x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 # Now parse things
 args = parser.parse_args()
 
