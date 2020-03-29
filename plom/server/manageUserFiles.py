@@ -6,11 +6,8 @@ __license__ = "AGPLv3"
 import csv
 import json
 
-from plom.server.aliceBob import (
-    simplePassword,
-    makeRandomUserList,
-    makeNumberedUserList,
-)
+from .aliceBob import simplePassword, makeRandomUserList, makeNumberedUserList
+
 
 # TODO - instead of running a cryptocontext here - move stuff into authenticate.py?
 # Stuff for hashing and verifying passwords
