@@ -30,26 +30,26 @@ server_instructions = """Overview of running the Plom server:
        1a. If you did not prepare the classlist earlier, then run
            'plom-server class <filename>'.
 
-  2. Run 'plom-server init' - this will check that everything is in place
+  2. Run '%(prog)s' - this will check that everything is in place
      and create necessary sub-directories *and* create config files for
      you to edit.
 
-  3. Run 'plom-server users' - This will create a template user list file
-     for you to edit.  Passwords are displayed in plain text. Running
-     with '--demo' option creates a (standard) demo user list, while
-     '--auto N' makes an random-generated list of N users.  Edit as you
-     see fit.
+  3. Run '%(prog)s users' - This will create a template user list
+     file for you to edit.  Passwords are displayed in plain text.
+     Running with '--demo' option creates a (standard) demo user list,
+     while '--auto N' makes an random-generated list of N users.  Edit
+     as you see fit.
 
-  4. Run 'plom-servers users <filename>' - This parses the plain-text
+  4. Run '%(prog)s users <filename>' - This parses the plain-text
      user list, performs some simple sanity checks and then hashes the
      passwords to a new file.
 
        4a. Optionally you can now delete the file containing
            plain-text passwords.
 
-  5. Now you can start the server with 'plom-server launch'.
+  5. Now you can start the server with '%(prog)s launch'.
 
-FUTURE - 'plom-server stop' will stop the server.
+FUTURE - '%(prog)s stop' will stop the server.
 """
 
 
