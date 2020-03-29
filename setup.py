@@ -19,13 +19,13 @@ setup(
     scripts=[
         "plom/scripts/plom-init.py",
         "plom/scripts/plom-scan.py",
-        "plom/scripts/plom-build",
         "plom/scripts/plom-client",
         "plom/scripts/plom-manager.py",
-        "plom/scripts/plom-server.py",
     ],
     entry_points={
         "console_scripts": [
+            "plom-build=plom.scripts.build:main",
+            "plom-server=plom.scripts.server:main",
             "plom-fake-scribbles=plom.produce.faketools:main",
         ],
     },
