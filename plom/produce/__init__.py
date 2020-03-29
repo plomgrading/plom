@@ -7,4 +7,5 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+paperdir = "papersToPrint"
 from .buildNamedPDF import buildAllPapers, confirmProcessed, confirmNamed

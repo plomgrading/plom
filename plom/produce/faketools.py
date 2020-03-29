@@ -13,8 +13,12 @@ import subprocess
 import random
 from pathlib import Path
 from glob import glob
+
 import fitz
 import pandas
+
+from . import paperdir as _paperdir
+
 
 possibleAns = [
     "I am so sorry, I really did study this... :(",
@@ -145,7 +149,6 @@ def fillInExams(paperdir, classlist, outfile, which=None):
 
 if __name__ == "__main__":
     specdir = Path("specAndDatabase")
-    paperdir = Path("papersToPrint")
     classlist = specdir / "classlist.csv"
     outfile = "fake_scribbled_exams.pdf"
-    fillInExams(paperdir, classlist, outfile)
+    fillInExams(_paperdir, classlist, outfile)

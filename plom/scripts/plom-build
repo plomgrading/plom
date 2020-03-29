@@ -10,6 +10,7 @@ import pkg_resources
 
 from plom import SpecVerifier, SpecParser
 from plom.produce import buildAllPapers, confirmProcessed, confirmNamed
+from plom.produce import paperdir
 
 specdir = "specAndDatabase"
 dbfile = os.path.join(specdir, "plom.db")
@@ -96,7 +97,14 @@ def buildBlankPapers(spec):
 
 
 def buildNamedPapers(spec):
-    print("Building named papers")
+    if spec["numberToName"] > 0:
+        print(
+            "Building {} pre-named papers and {} blank papers...".format(
+                spec["numberToName"], spec["numberToProduce"] - spec["numberToName"]
+            )
+        )
+    else:
+        print("Building {} blank papers...".format(spec["numberToProduce"]))
     buildAllPapers(spec, dbfile, named=True)
     print("Checking papers produced and updating databases")
     confirmProcessed(spec, dbfile)
@@ -120,8 +128,8 @@ def buildDatabaseAndPapers(blank):
 
     buildDatabase(spec)
 
-    print("Making directory for papers.")
-    os.makedirs("papersToPrint", exist_ok=True)
+    print('Making "{}" directory for papers'.format(paperdir))
+    os.makedirs(paperdir, exist_ok=True)
     if blank:
         buildBlankPapers(spec)
     else:
