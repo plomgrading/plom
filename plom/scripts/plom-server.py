@@ -43,8 +43,7 @@ def processClasslist(fname, demo):
 
     # check if a filename given
     if fname is None:
-        buildClasslist.acceptedFormats()
-        print("Please provide a classlist file.")
+        print("Please provide a classlist file: see help")
         exit(1)
     # grab the file, process it and copy it into place.
 
@@ -356,15 +355,18 @@ parser = argparse.ArgumentParser()
 sub = parser.add_subparsers(help="sub-command help", dest="command")
 #
 spI = sub.add_parser("init", help="Initialise server.")
-spL = sub.add_parser("class", help="Read in a classlist.")
+from plom.produce import buildClasslist
+spL = sub.add_parser(
+    "class",
+    help="Read in a classlist.",
+    description="Process the given classlist file and copy the result into place.",
+    epilog=buildClasslist.acceptedFormats(),
+    formatter_class=argparse.RawDescriptionHelpFormatter
+)
 spU = sub.add_parser("users", help="Create required users.")
 spR = sub.add_parser("launch", help="Launch server.")
 #
-spL.add_argument(
-    "classlist",
-    nargs="?",
-    help="Process the given classlist file and copy the result into place.",
-)
+spL.add_argument("classlist", nargs="?", help="filename in csv format")
 spL.add_argument(
     "--demo",
     action="store_true",

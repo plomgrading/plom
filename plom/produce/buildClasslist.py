@@ -118,16 +118,17 @@ def checkLatinNames(df):
 
 
 def acceptedFormats():
-    print(
-        "Class list format",
-        "Class list must be a CSV with column headers"
-        '\n(*) "id" - student ID number'
-        '\n(*) student name in a single field = "studentName"  *or*'
-        "\n(*) student name split in two fields:"
-        '\n--->["surname" or "familyName" or "lastName"] *and*'
-        '\n--->["name" or "firstName" or "givenName" or "nickName" or "preferredName"].'
-        "\n\nAlternatively, give csv exported from Canvas.",
-    )
+    return """The classlist can be a .csv file with column headers:
+  • "id" - student ID number
+  • "studentName" - student name in a single field
+
+Or the student name can be split into two fields:
+  • id
+  • surname, familyName, or lastName
+  • name, firstName, givenName, nickName, or preferredName
+
+Alternatively, give a .csv exported from Canvas (experimental!)
+"""
 
 
 def processClassList(fname, outputfile):

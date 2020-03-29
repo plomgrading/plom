@@ -65,8 +65,7 @@ def processClasslist(fname):
 
     # check if a filename given
     if fname is None:
-        print("Please provide a classlist file.")
-        buildClasslist.acceptedFormats()
+        print("Please provide a classlist file: see help")
         exit(1)
     # grab the file, process it and copy it into place.
 
