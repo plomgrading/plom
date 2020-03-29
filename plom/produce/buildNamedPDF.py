@@ -80,7 +80,8 @@ def confirmProcessed(spec, dbFilename):
 
 
 def confirmNamed(spec, dbFilename):
-    students = readClassList()
+    if spec["numberToName"] > 0:
+        students = readClassList()
     examDB = PlomDB(dbFilename)
     for t in range(1, spec["numberToProduce"] + 1):
         if t <= spec["numberToName"]:
