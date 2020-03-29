@@ -392,7 +392,6 @@ grp.add_argument(
 
 # Now parse things
 args = parser.parse_args()
-print(args)
 
 if args.command == "init":
     initialiseServer()
