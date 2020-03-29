@@ -27,6 +27,7 @@ from plom import __version__
 from plom import Plom_API_Version as serverAPI
 from plom import Default_Port
 from plom import SpecParser
+from plom import specdir
 from plom.db.examDB import PlomDB
 
 # ----------------------
@@ -223,8 +224,8 @@ def getServerInfo():
 def launch():
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
     getServerInfo()
-    examDB = PlomDB("specAndDatabase/plom.db")
-    spec = SpecParser("specAndDatabase/verifiedSpec.toml").spec
+    examDB = PlomDB(Path(specdir) / "plom.db")
+    spec = SpecParser(Path(specdir) / "verifiedSpec.toml").spec
     buildDirectories()
     peon = Server(spec, examDB)
     userIniter = UserInitHandler(peon)

@@ -1,6 +1,9 @@
-from aiohttp import web, MultipartWriter, MultipartReader
 import os
+from pathlib import Path
 
+from aiohttp import web, MultipartWriter, MultipartReader
+
+from plom import specdir
 from .plom_routeutils import authByToken, authByToken_validFields
 
 # I couldn't make this work with the auth deco
@@ -20,20 +23,16 @@ class IDHandler:
     # @routes.get("/ID/classlist")
     @authByToken
     def IDgetClasslist(self):
-        if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
-            return web.FileResponse(
-                os.path.join("specAndDatabase", "classlist.csv"), status=200
-            )
+        if os.path.isfile(Path(specdir) / "classlist.csv"):
+            return web.FileResponse(Path(specdir) / "classlist.csv", status=200)
         else:
             return web.Response(status=404)
 
     # @routes.get("/ID/predictions")
     @authByToken
     def IDgetPredictions(self):
-        if os.path.isfile(os.path.join("specAndDatabase", "predictionlist.csv")):
-            return web.FileResponse(
-                os.path.join("specAndDatabase", "predictionlist.csv"), status=200
-            )
+        if os.path.isfile(Path(specdir) / "predictionlist.csv"):
+            return web.FileResponse(Path(specdir) / "predictionlist.csv", status=200)
         else:
             return web.Response(status=404)
 

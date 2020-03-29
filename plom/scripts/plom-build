@@ -9,11 +9,11 @@ import shutil
 import pkg_resources
 
 from plom import SpecVerifier, SpecParser
+from plom import specdir
 from plom.produce import buildAllPapers, confirmProcessed, confirmNamed
 from plom.produce import paperdir
 from plom.produce import processClasslist
 
-specdir = "specAndDatabase"
 dbfile = os.path.join(specdir, "plom.db")
 
 

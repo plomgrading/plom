@@ -12,15 +12,17 @@ import shlex
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
+
+from plom import specdir
 
 
 # If all is good then build a substitute page and save it in the correct place
 def buildSubstitute(test, page, ver):
     tpImage = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
 
-    DNS = fitz.open(
-        "specAndDatabase/pageNotSubmitted.pdf"
-    )  # create a 'did not submit' pdf
+    DNS = fitz.open(Path(specdir) / "pageNotSubmitted.pdf")
+
     # create a box for the test number near top-centre
     # Get page width
     pW = DNS[0].bound().width
@@ -59,7 +61,7 @@ def buildPNSPage(outName):
 \end{document}
 """
     cdir = os.getcwd()
-    outname = os.path.join(cdir, "specAndDatabase", "pageNotSubmitted.pdf")
+    outname = os.path.join(cdir, specdir, "pageNotSubmitted.pdf")
     td = tempfile.TemporaryDirectory()
     os.chdir(td.name)
 
