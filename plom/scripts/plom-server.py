@@ -324,12 +324,10 @@ parser = argparse.ArgumentParser(epilog="Use '%(prog)s <subcommand> -h' for deta
 sub = parser.add_subparsers(dest="command", description="Perform various server-related tasks.")
 #
 spI = sub.add_parser("init", help="Initialise server.")
-from plom.produce import buildClasslist
 spL = sub.add_parser(
     "class",
     help="Read in a classlist.",
-    description="Process the given classlist file and copy the result into place.",
-    epilog=buildClasslist.acceptedFormats(),
+    epilog=processClasslist.__doc__,
     formatter_class=argparse.RawDescriptionHelpFormatter
 )
 spU = sub.add_parser("users", help="Create required users.")

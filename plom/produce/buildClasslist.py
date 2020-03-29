@@ -123,31 +123,24 @@ def checkLatinNames(df):
         return True
 
 
-def acceptedFormats():
-    return """The classlist can be a .csv file with column headers:
-  • "id" - student ID number
-  • "studentName" - student name in a single field
-
-Or the student name can be split into two fields:
-  • id
-  • surname, familyName, or lastName
-  • name, firstName, givenName, nickName, or preferredName
-
-Alternatively, give a .csv exported from Canvas (experimental!)
-"""
-
-
 def processClasslist(fname, demo=False):
     """Get student names/numbers from csv, process, and save for server.
 
     Student numbers come from an `id` column.  There is some
     flexibility about student names: most straightforward is a
-    column named `studentNames`.  Otherwise, various columns such as
-    `surname` and `name` are tried.
+    second column named `studentNames`.  The results are copied
+    into a new csv file in a simplied format.
 
-    Alternatively, a csv file exported from Canvas can be provided.
+    The classlist can be a .csv file with column headers:
+      • `id` - student ID number
+      • `studentName` - student name in a single field
 
-    The results are written into a new csv file in a simplied format.
+    Or the student name can be split into two fields:
+      • id
+      • surname, familyName, or lastName
+      • name, firstName, givenName, nickName, or preferredName
+
+    Alternatively, give a .csv exported from Canvas (experimental!)
     """
     os.makedirs(specdir, exist_ok=True)
     if os.path.isfile(Path(specdir) / "classlist.csv"):

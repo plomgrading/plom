@@ -142,12 +142,10 @@ spP.add_argument(
 )
 
 #
-from plom.produce import buildClasslist
 spL = sub.add_parser(
     "class",
     help="Read in a classlist",
-    description="Process the given classlist file and copy the result into place.",
-    epilog=buildClasslist.acceptedFormats(),
+    epilog=processClasslist.__doc__,
     formatter_class=argparse.RawDescriptionHelpFormatter
 )
 group = spL.add_mutually_exclusive_group(required=True)
