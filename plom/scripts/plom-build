@@ -164,12 +164,19 @@ spL.add_argument(
 )
 
 #
-spB = sub.add_parser("make", help="Make the PDFs")
+spB = sub.add_parser(
+    "make",
+    help="Make the PDFs",
+    epilog="""
+        Build papers and database from the test specification.  Based on the
+        spec, some of the papers may have names printed on them from the
+        classlist ("pre-named") and the remainder will be blank.""",
+)
 spB.add_argument(
     "-b",
     "--blank",
     action="store_true",
-    help="Build papers and database from the specification. Number of papers pre-named and blank is determined by the spec, unless the --blank option is given. In that case all papers are built without any pre-naming.",
+    help="Force building only blank papers, ignoring spec",
 )
 
 # Now parse things
