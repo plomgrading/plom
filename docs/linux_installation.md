@@ -13,7 +13,7 @@ Fedora
 Tested on Fedora 31.  Some stuff from the package manager:
 ```
   # sudo dnf install ImageMagick zbar \
-                     python3-PyMuPDF python3-passlib python3-pypng \
+                     python3-passlib python3-pypng \
                      python3-jsmin python3-defusedxml python3-yaml \
                      python3-urllib3 python3-more-itertools \
                      python3-seaborn python3-matplotlib-qt5 python3-aiohttp \
@@ -26,7 +26,7 @@ Tested on Fedora 31.  Some stuff from the package manager:
 
 Other stuff we install locally with `pip`:
 ```
-  # pip3 install --upgrade --user pyqrcode cheroot pyzbar
+  # pip3 install --upgrade --user pyqrcode cheroot pyzbar pymupdf
 ```
 
 More dependencies for the tensorflow-based ID reader:

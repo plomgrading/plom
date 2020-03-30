@@ -263,7 +263,7 @@ def processUsers(userFile, demo, auto):
     if auto is not None:
         print("Creating an auto-generated user list at userListRaw.csv.")
         print(
-            "Please edit as you see fit and then rerun 'plom-server user serverConfiguration/userListRaw.csv'"
+            "Please edit as you see fit and then rerun 'plom-server users serverConfiguration/userListRaw.csv'"
         )
         from plom.server import manageUserFiles
 
@@ -281,7 +281,7 @@ def processUsers(userFile, demo, auto):
         print(
             "Creating 'serverConfiguration/userListRaw.csv' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters and usernames should be at least 4 alphanumeric characters."
         )
-        cl = pkg_resources.resource_string("plom", "templateUserlist.csv")
+        cl = pkg_resources.resource_string("plom", "templateUserList.csv")
         with open(os.path.join("serverConfiguration", "userListRaw.csv"), "wb") as fh:
             fh.write(cl)
 

@@ -9,11 +9,13 @@ __license__ = "AGPL-3.0-or-later"
 
 import csv
 import os
+from pathlib import Path
 from multiprocessing import Pool
 from tqdm import tqdm
 
 from plom.db.examDB import PlomDB
 from .mergeAndCodePages import makePDF
+from . import paperdir
 
 
 # TODO: maybe functions in this module should expect classlist as an input?
@@ -39,7 +41,7 @@ def _makePDF(x):
 
 
 def buildAllPapers(spec, dbFilename, named=False):
-    if named:
+    if named and spec["numberToName"] > 0:
         students = readClassList()
     examDB = PlomDB(dbFilename)
     makePDFargs = []
@@ -72,7 +74,7 @@ def buildAllPapers(spec, dbFilename, named=False):
 def confirmProcessed(spec, dbFilename):
     examDB = PlomDB(dbFilename)
     for t in range(1, spec["numberToProduce"] + 1):
-        fname = "papersToPrint/exam_{}.pdf".format(str(t).zfill(4))
+        fname = Path(paperdir) / "exam_{}.pdf".format(str(t).zfill(4))
         if os.path.isfile(fname):
             examDB.produceTest(t)
         else:
@@ -80,11 +82,12 @@ def confirmProcessed(spec, dbFilename):
 
 
 def confirmNamed(spec, dbFilename):
-    students = readClassList()
+    if spec["numberToName"] > 0:
+        students = readClassList()
     examDB = PlomDB(dbFilename)
     for t in range(1, spec["numberToProduce"] + 1):
         if t <= spec["numberToName"]:
-            fname = "papersToPrint/exam_{}.pdf".format(str(t).zfill(4))
+            fname = Path(paperdir) / "exam_{}.pdf".format(str(t).zfill(4))
             if os.path.isfile(fname):
                 examDB.identifyTest(t, students[t][0], students[t][1])
             else:

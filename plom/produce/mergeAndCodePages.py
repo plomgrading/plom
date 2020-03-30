@@ -10,8 +10,10 @@ import os
 import fitz
 import pyqrcode
 import tempfile
+from pathlib import Path
 
 from plom.tpv_utils import encodeTPV
+from . import paperdir
 
 
 def makePDF(name, code, length, versions, test, pageVersions, extra=None):
@@ -205,7 +207,7 @@ def makePDF(name, code, length, versions, test, pageVersions, extra=None):
     # and try to clean up as much as possible.
     # `linear=True` causes https://gitlab.math.ubc.ca/andrewr/MLP/issues/284
     exam.save(
-        "papersToPrint/exam_{}.pdf".format(str(test).zfill(4)),
+        Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4)),
         garbage=4,
         deflate=True,
         clean=True,

@@ -73,7 +73,7 @@ job unitTestsInstalledPkg:
     - popd
 
 
-job buildPapers:
+job demoWorkFlow:
   stage: test
   script:
     - python3 ./setup.py build bdist_wheel
@@ -89,55 +89,28 @@ job buildPapers:
     - pdflatex --interaction=batchmode latexTemplatev2.tex
     - pdflatex --interaction=batchmode latexTemplatev2.tex
     - popd
-    # download some pre-existing files
-    - mkdir tmp
-    - pushd tmp
-    - curl https://www.math.ubc.ca/~cbm/tmp/resources_0984da85.tar.gz | tar -zx
-    - popd
     # Now build tests
-    - mkdir play
-    - pushd play
+    - mkdir demo
+    - pushd demo
     - plom-build new
     - cp ../testTemplates/latexTemplate.pdf sourceVersions/version1.pdf
     - cp ../testTemplates/latexTemplatev2.pdf sourceVersions/version2.pdf
-    # overwrite the testSpec with our prepared one
-    - cp ../tmp/resources/verifiedSpec.toml testSpec.toml
     - plom-build parse
     # TODO: override the private seed
-    - sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
-    - diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
-    - plom-build make --blank
-    # TODO: https://github.com/vslavik/diff-pdf, not in Ubuntu repos?
+    # sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
+    # diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
+    - plom-build make
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - popd
-
-job serverStarts:
-  stage: test
-  script:
-    - python3 ./setup.py build bdist_wheel
-    - pushd dist
-    - python3 -m pip install plom-*.whl
-    - popd
-    - mkdir play
-    # This not ideal, should clone https://gitlab.math.ubc.ca/cbm/plommintestdata.git
-    - curl https://www.math.ubc.ca/~cbm/tmp/testBlank16.pdf > play/foo.pdf
-    - mkdir tmp
-    - pushd tmp
-    - curl https://www.math.ubc.ca/~cbm/tmp/resources_0984da85.tar.gz | tar -zx
-    - popd
-    # scan and upload
-    - pushd play
+    # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/695
+    - plom-server.py class --demo
+    - python3 -m plom.produce.faketools
+    # Scan and upload
     # supposed to fail:
     - if (plom-scan.py process); then false; else true; fi
-    - plom-scan.py process foo.pdf
+    - plom-scan.py process fake_scribbled_exams.pdf
     # Start server
     - ip addr
-    - mkdir specAndDatabase
-    # TODO: combine with buildPaper job above and build plom.db ourselves
-    - cp ../tmp/resources/plom.db specAndDatabase/
-    - cp ../tmp/resources/verifiedSpec.toml specAndDatabase/
-    - plom-server.py class --demo
     - plom-server.py init
     - plom-server.py users --demo
     # TODO: why we have to do this?
@@ -163,13 +136,13 @@ job serverStarts:
     ## currently 024 must be run in the server directory
     - python3 -m plom.finish.023_spreadsheet -s localhost -w 1234
     - A=`cat testMarks.csv  | wc -l`  # How many lines?
-    - bash -c "[[ $A == 17 ]]"        # should be 16 + 1
+    - bash -c "[[ $A == 21 ]]"        # should be 20 + 1
     - file -b testMarks.csv  | grep ASCII   # should be ascii test
     - python3 -m plom.finish.024a_reassemble_completed -s localhost -w 1234
     - A=`ls reassembled/ | wc -l`    # How many files?
-    - bash -c "[[ $A == 16 ]]"
+    - bash -c "[[ $A == 20 ]]"
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
-    - bash -c "[[ $A -lt 5 ]]"           # not more than 5 MB
+    - bash -c "[[ $A -lt 10 ]]"          # not more than 10 MB
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
@@ -177,6 +150,7 @@ job serverStarts:
     - sleep 2
     - echo "Should be no jobs and this should succeed"
     - jobs -l
+    - popd
 
 job backgroundTest:
   before_script:
