@@ -4,6 +4,8 @@ import shutil
 import uuid
 import logging
 
+from plom import specdir
+
 log = logging.getLogger("servID")
 
 
@@ -68,14 +70,12 @@ def IDgetRandomImage(self):
 
 def IDdeletePredictions(self):
     # move old file out of way
-    specdir = "specAndDatabase"
-    if not os.path.isfile(os.path.join(specdir, "predictionlist.csv")):
+    if not os.path.isfile(Path(specdir) / "predictionlist.csv"):
         return False
     shutil.move(
-        os.path.join(specdir, "predictionlist.csv"),
-        os.path.join(specdir, "predictionlist.bak"),
+        Path(specdir) / "predictionlist.csv", Path(specdir) / "predictionlist.bak"
     )
-    with open(os.path.join(specdir, "predictionlist.csv"), "w") as fh:
+    with open(Path(specdir) / "predictionlist.csv", "w") as fh:
         fh.write("test, id\n")
     log.info("ID prediction list deleted")
 

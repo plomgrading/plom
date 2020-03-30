@@ -165,7 +165,8 @@ class DiscardedPage(Model):
 
 class PlomDB:
     def __init__(self, dbFilename="plom.db"):
-        plomdb.init(dbFilename)
+        # can't handle pathlib?
+        plomdb.init(str(dbFilename))
 
         with plomdb:
             plomdb.create_tables(

@@ -13,6 +13,7 @@ from pathlib import Path
 from multiprocessing import Pool
 from tqdm import tqdm
 
+from plom import specdir
 from plom.db.examDB import PlomDB
 from .mergeAndCodePages import makePDF
 from . import paperdir
@@ -26,7 +27,7 @@ from . import paperdir
 def readClassList():
     students = {}
     # read in the classlist
-    with open(os.path.join("specAndDatabase", "classlist.csv"), newline="") as csvfile:
+    with open(Path(specdir) / "classlist.csv", newline="") as csvfile:
         red = csv.reader(csvfile, delimiter=",")
         next(red, None)
         k = 0
