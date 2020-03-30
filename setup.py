@@ -16,14 +16,17 @@ setup(
     author="Andrew Rechnitzer",
     license="AGPL3",
     packages=find_packages(),
-    scripts=[
-        "plom/scripts/plom-init.py",
-        "plom/scripts/plom-scan.py",
-        "plom/scripts/plom-build",
-        "plom/scripts/plom-client",
-        "plom/scripts/plom-manager.py",
-        "plom/scripts/plom-server.py",
-    ],
+    entry_points={
+        "console_scripts": [
+            "plom-client=plom.scripts.client:main",
+            "plom-init=plom.scripts.plominit:main",
+            "plom-build=plom.scripts.build:main",
+            "plom-server=plom.scripts.server:main",
+            "plom-scan=plom.scripts.scan:main",
+            "plom-manager=plom.scripts.manager:main",
+            "plom-fake-scribbles=plom.produce.faketools:main",
+        ],
+    },
     include_package_data=True,
     data_files=[
         (

@@ -408,7 +408,7 @@ grp.add_argument(
 )
 
 
-if __name__ == "__main__":
+def main():
     args = parser.parse_args()
 
     if args.command == "init":
@@ -425,3 +425,7 @@ if __name__ == "__main__":
         parser.print_help()
 
     exit(0)
+
+
+if __name__ == "__main__":
+    main()

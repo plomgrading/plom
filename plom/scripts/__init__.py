@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Plom server management tools."""
+"""Plom scripts."""
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
 __credits__ = "The Plom Project Developers"

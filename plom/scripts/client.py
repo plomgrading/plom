@@ -51,30 +51,28 @@ def sigint_handler(*args):
         QApplication.exit(42)
 
 
-app = QApplication(sys.argv)
-app.setStyle(QStyleFactory.create("Fusion"))
+def main():
+    app = QApplication(sys.argv)
+    app.setStyle(QStyleFactory.create("Fusion"))
 
-signal.signal(signal.SIGINT, sigint_handler)
+    signal.signal(signal.SIGINT, sigint_handler)
 
-# create a small timer here, so that we can
-# kill the app with ctrl-c.
-timer = QTimer()
-timer.timeout.connect(lambda: None)
-timer.start(1000)
-# got this solution from
-# https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
+    # create a small timer here, so that we can
+    # kill the app with ctrl-c.
+    timer = QTimer()
+    timer.timeout.connect(lambda: None)
+    timer.start(1000)
+    # got this solution from
+    # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
 
-window = Chooser(app)
-window.show()
+    window = Chooser(app)
+    window.show()
 
-# Command line arguments (currently undocumented/unsupported)
-# either nothing, or the following
-if len(sys.argv) > 1:
     parser = argparse.ArgumentParser(
         description="Run the Plom client. No arguments = run as normal."
     )
-    parser.add_argument("user", type=str)
-    parser.add_argument("password", type=str)
+    parser.add_argument("user", type=str, nargs="?")
+    parser.add_argument("password", type=str, nargs="?")
     parser.add_argument(
         "-s",
         "--server",
@@ -119,4 +117,8 @@ if len(sys.argv) > 1:
                 sys.exit(43)
 
         window.ui.markButton.animateClick()
-sys.exit(app.exec_())
+    sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()

@@ -172,27 +172,32 @@ spB.add_argument(
     help="Force building only blank papers, ignoring spec",
 )
 
-# Now parse things
-args = parser.parse_args()
 
-if args.command == "new":
-    # check the file extension
-    fname = checkTomlExtension(args.specFile)
-    # copy the template spec into place
-    createSpecificationFile(fname)
-elif args.command == "parse":
-    # check the file extension
-    fname = checkTomlExtension(args.specFile)
-    # copy the template spec into place
-    parseAndVerifySpecification(fname)
-elif args.command == "class":
-    # process the class list and copy into place
-    processClasslist(args.classlist, args.demo)
-elif args.command == "make":
-    # get building.
-    buildDatabaseAndPapers(args.blank)
-else:
-    # no command given so print help.
-    parser.print_help()
+def main():
+    args = parser.parse_args()
 
-exit(0)
+    if args.command == "new":
+        # check the file extension
+        fname = checkTomlExtension(args.specFile)
+        # copy the template spec into place
+        createSpecificationFile(fname)
+    elif args.command == "parse":
+        # check the file extension
+        fname = checkTomlExtension(args.specFile)
+        # copy the template spec into place
+        parseAndVerifySpecification(fname)
+    elif args.command == "class":
+        # process the class list and copy into place
+        processClasslist(args.classlist, args.demo)
+    elif args.command == "make":
+        # get building.
+        buildDatabaseAndPapers(args.blank)
+    else:
+        # no command given so print help.
+        parser.print_help()
+
+    exit(0)
+
+
+if __name__ == "__main__":
+    main()
