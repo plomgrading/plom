@@ -113,8 +113,6 @@ job demoWorkFlow:
     - ip addr
     - plom-server.py init
     - plom-server.py users --demo
-    # TODO: why we have to do this?
-    - plom-server.py users serverConfiguration/userListRaw.csv
     - plom-server.py launch &
     - sleep 1
     - echo "Server should be in background"
