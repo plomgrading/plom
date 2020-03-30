@@ -18,7 +18,6 @@ setup(
     packages=find_packages(),
     scripts=[
         "plom/scripts/plom-init.py",
-        "plom/scripts/plom-manager.py",
     ],
     entry_points={
         "console_scripts": [
@@ -26,6 +25,7 @@ setup(
             "plom-build=plom.scripts.build:main",
             "plom-server=plom.scripts.server:main",
             "plom-scan=plom.scripts.scan:main",
+            "plom-manager=plom.scripts.manager:main",
             "plom-fake-scribbles=plom.produce.faketools:main",
         ],
     },

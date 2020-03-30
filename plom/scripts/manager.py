@@ -58,39 +58,44 @@ def sigint_handler(*args):
         QApplication.quit()
 
 
-app = QApplication(sys.argv)
-app.setStyle(QStyleFactory.create("Fusion"))
+def main():
+    app = QApplication(sys.argv)
+    app.setStyle(QStyleFactory.create("Fusion"))
 
-signal.signal(signal.SIGINT, sigint_handler)
+    signal.signal(signal.SIGINT, sigint_handler)
 
-# create a small timer here, so that we can
-# kill the app with ctrl-c.
-timer = QTimer()
-timer.timeout.connect(lambda: None)
-timer.start(1000)
-# got this solution from
-# https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
+    # create a small timer here, so that we can
+    # kill the app with ctrl-c.
+    timer = QTimer()
+    timer.timeout.connect(lambda: None)
+    timer.start(1000)
+    # got this solution from
+    # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
 
-window = Manager(app)
-window.show()
+    window = Manager(app)
+    window.show()
 
-# Command line arguments (currently undocumented/unsupported)
-# either nothing, or the following
-if len(sys.argv) > 1:
-    parser = argparse.ArgumentParser(description="Plom management tasks.")
-    parser.add_argument("user", type=str, help='Probably has to be "manager"')
-    parser.add_argument("password", type=str)
-    parser.add_argument(
-        "-s",
-        "--server",
-        metavar="SERVER[:PORT]",
-        action="store",
-        help="Which server to contact, port defaults to {}.".format(Default_Port),
-    )
-    args = parser.parse_args()
-    window.ui.userLE.setText(args.user)
-    window.ui.passwordLE.setText(args.password)
-    if args.server:
-        window.setServer(args.server)
+    # Command line arguments (currently undocumented/unsupported)
+    # either nothing, or the following
+    if len(sys.argv) > 1:
+        parser = argparse.ArgumentParser(description="Plom management tasks.")
+        parser.add_argument("user", type=str, help='Probably has to be "manager"')
+        parser.add_argument("password", type=str)
+        parser.add_argument(
+            "-s",
+            "--server",
+            metavar="SERVER[:PORT]",
+            action="store",
+            help="Which server to contact, port defaults to {}.".format(Default_Port),
+        )
+        args = parser.parse_args()
+        window.ui.userLE.setText(args.user)
+        window.ui.passwordLE.setText(args.password)
+        if args.server:
+            window.setServer(args.server)
 
-sys.exit(app.exec_())
+    sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()
