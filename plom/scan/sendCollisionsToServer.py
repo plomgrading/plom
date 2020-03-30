@@ -64,10 +64,15 @@ def sendCollidingFiles(scanMessenger, fileList):
         doFiling(rmsg, shortName, fname)
 
 
-def warnUser(fileList):
+def warnAndAskUser(fileList):
+    """Confirm collisions by asking user.
+
+    Returns False if we should stop (user says no).  Returns True if
+    there were no colliding pages or if user says yes.
+    """
     if len(fileList) == 0:
         print("No colliding pages. Nothing to do.")
-        return False
+        return True
 
     print(">>>>>>>>>> WARNING <<<<<<<<<<")
     print("In most use cases you should have no colliding pages.")
@@ -112,11 +117,13 @@ def uploadCollisions(server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(0)
+        exit(10)
 
     fileList = glob("collidingPages/*.png")
-    if warnUser(fileList) == False:
-        exit(0)
+    if warnAndAskUser(fileList) == False:
+        scanMessenger.closeUser()
+        scanMessenger.stop()
+        exit(2)
 
     sendCollidingFiles(scanMessenger, fileList)
     scanMessenger.closeUser()

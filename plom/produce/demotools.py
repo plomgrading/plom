@@ -63,4 +63,6 @@ def buildDemoSourceFiles():
 
 
 if __name__ == "__main__":
-    buildDemoSourceFiles()
+    print("LaTeXing example exam files")
+    if not buildDemoSourceFiles():
+        exit(1)
