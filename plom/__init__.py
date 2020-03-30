@@ -9,6 +9,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+specdir = "specAndDatabase"
 from .specParser import SpecVerifier, SpecParser
 from .version import __version__, Plom_API_Version
 from .version import Default_Port

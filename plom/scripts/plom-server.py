@@ -15,6 +15,7 @@ import pkg_resources
 
 from plom import SpecVerifier, SpecParser
 from plom.produce import processClasslist
+from plom import specdir
 
 #################
 
@@ -24,9 +25,9 @@ server_instructions = """Overview of running the Plom server:
   0. Decide on a working directory for the server and cd into it - this
      need not be the same directory where you started the project.
 
-  1. Copy the `specAndDatabase` directory (not just its contents) to your
-     server directory.  The `specAndDatabase` directory should be in the
-     directory where you started the project and built PDFs.
+  1. Copy the `{specdir}` directory (not just its contents) to your
+     server directory.   It should be located where you started the
+     project and built the PDFs.
 
        1a. If you did not prepare the classlist earlier, then run
            'plom-server class <filename>'.
@@ -51,7 +52,9 @@ server_instructions = """Overview of running the Plom server:
   5. Now you can start the server with '%(prog)s launch'.
 
 FUTURE - '%(prog)s stop' will stop the server.
-"""
+""".format(
+    specdir=specdir
+)
 
 
 class PlomServerConfigurationError(Exception):
@@ -60,15 +63,17 @@ class PlomServerConfigurationError(Exception):
 
 
 def checkSpecAndDatabase():
-    if os.path.isdir("specAndDatabase"):
-        print("Directory 'specAndDatabase' is present.")
+    if os.path.isdir(specdir):
+        print("Directory '{}' is present.".format(specdir))
     else:
         print(
-            "Cannot find 'specAndDatabase' directory - you must copy this into place before running server. Cannot continue."
+            "Cannot find '{}' directory - you must copy this into place before running server. Cannot continue.".format(
+                specdir
+            )
         )
         exit(1)
 
-    if os.path.isfile(os.path.join("specAndDatabase", "verifiedSpec.toml")):
+    if os.path.isfile(Path(specdir) / "verifiedSpec.toml"):
         print("Test specification present.")
     else:
         print(
@@ -76,13 +81,13 @@ def checkSpecAndDatabase():
         )
         exit(1)
 
-    if os.path.isfile(os.path.join("specAndDatabase", "plom.db")):
+    if os.path.isfile(Path(specdir) / "plom.db"):
         print("Database present.")
     else:
         print("Cannot find the database. Have you run 'plom-build' yet? Aborting.")
         exit(1)
 
-    if os.path.isfile(os.path.join("specAndDatabase", "classlist.csv")):
+    if os.path.isfile(Path(specdir) / "classlist.csv"):
         print("Classlist present.")
     else:
         print(
@@ -158,7 +163,7 @@ def createServerConfig():
 
 
 def createBlankPredictions():
-    pl = os.path.join("specAndDatabase", "predictionlist.csv")
+    pl = Path(specdir) / "predictionlist.csv"
     if os.path.isfile(pl):
         print("Predictionlist already present.")
         return
@@ -178,7 +183,7 @@ def doLatexChecks():
     cdir = os.getcwd()
     keepfiles = ("checkThing.png", "pns.0.0.0.png")
     ct = os.path.join(cdir, "pleaseCheck", keepfiles[0])
-    pns = os.path.join(cdir, "specAndDatabase", "pageNotSubmitted.pdf")
+    pns = os.path.join(cdir, specdir, "pageNotSubmitted.pdf")
 
     fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ worked okay for plom."
 
@@ -328,7 +333,7 @@ def checkServerConfigured():
         print("SSL keys not present. Have you run 'plom-server init'?")
         exit(1)
 
-    if os.path.isfile(os.path.join("specAndDatabase", "predictionlist.csv")):
+    if os.path.isfile(Path(specdir) / "predictionlist.csv"):
         print("Predictionlist present.")
     else:
         print(

@@ -5,9 +5,6 @@ __license__ = "AGPLv3"
 
 # TODO - directory structure!
 
-# ----------------------
-
-from aiohttp import web
 import hashlib
 import toml
 import json
@@ -18,18 +15,19 @@ import sys
 import tempfile
 import uuid
 import logging
+from pathlib import Path
 
-# ----------------------
-
-from .authenticate import Authority
+from aiohttp import web
 
 from plom import __version__
 from plom import Plom_API_Version as serverAPI
 from plom import Default_Port
 from plom import SpecParser
+from plom import specdir
 from plom.db.examDB import PlomDB
 
-# ----------------------
+from .authenticate import Authority
+
 
 serverInfo = {"server": "127.0.0.1", "port": Default_Port}
 # ----------------------
@@ -223,8 +221,8 @@ def getServerInfo():
 def launch():
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
     getServerInfo()
-    examDB = PlomDB("specAndDatabase/plom.db")
-    spec = SpecParser("specAndDatabase/verifiedSpec.toml").spec
+    examDB = PlomDB(Path(specdir) / "plom.db")
+    spec = SpecParser(Path(specdir) / "verifiedSpec.toml").spec
     buildDirectories()
     peon = Server(spec, examDB)
     userIniter = UserInitHandler(peon)
