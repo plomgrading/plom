@@ -9,3 +9,4 @@ __license__ = "AGPL-3.0-or-later"
 
 paperdir = "papersToPrint"
 from .buildNamedPDF import buildAllPapers, confirmProcessed, confirmNamed
+from .buildClasslist import processClasslist

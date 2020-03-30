@@ -12,9 +12,15 @@ import json
 import os
 import sys
 import subprocess
+from pathlib import Path
+
+import pkg_resources
 import pandas
 
 from ..finish.return_tools import import_canvas_csv
+
+
+specdir = "specAndDatabase"
 
 
 def checkNonCanvasCSV(fname):
@@ -117,32 +123,52 @@ def checkLatinNames(df):
         return True
 
 
-def acceptedFormats():
-    print(
-        "Class list format",
-        "Class list must be a CSV with column headers"
-        '\n(*) "id" - student ID number'
-        '\n(*) student name in a single field = "studentName"  *or*'
-        "\n(*) student name split in two fields:"
-        '\n--->["surname" or "familyName" or "lastName"] *and*'
-        '\n--->["name" or "firstName" or "givenName" or "nickName" or "preferredName"].'
-        "\n\nAlternatively, give csv exported from Canvas.",
-    )
-
-
-def processClassList(fname, outputfile):
+def processClasslist(fname, demo=False):
     """Get student names/numbers from csv, process, and save for server.
 
     Student numbers come from an `id` column.  There is some
     flexibility about student names: most straightforward is a
-    column named `studentNames`.  Otherwise, various columns such as
-    `surname` and `name` are tried.
+    second column named `studentNames`.  The results are copied
+    into a new csv file in a simplied format.
 
-    Alternatively, a csv file exported from Canvas can be provided.
+    The classlist can be a .csv file with column headers:
+      • `id` - student ID number
+      • `studentName` - student name in a single field
 
-    The results are written into a new csv file in a simplied format.
+    Or the student name can be split into two fields:
+      • id
+      • surname, familyName, or lastName
+      • name, firstName, givenName, nickName, or preferredName
+
+    Alternatively, give a .csv exported from Canvas (experimental!)
     """
+    os.makedirs(specdir, exist_ok=True)
+    if os.path.isfile(Path(specdir) / "classlist.csv"):
+        print(
+            "Classlist file already present in '{}' directory. Aborting.".format(specdir)
+        )
+        exit(1)
 
+    if demo:
+        print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
+        cl = pkg_resources.resource_string("plom", "demoClassList.csv")
+        with open(Path(specdir) / "classlist.csv", "wb") as fh:
+            fh.write(cl)
+        return
+
+    if not fname:
+        print("Please provide a classlist file: see help")
+        exit(1)
+
+    # grab the file, process it and copy it into place.
+    if os.path.isfile(fname):
+        processClasslist_backend(fname, Path(specdir) / "classlist.csv")
+    else:
+        print('Cannot find file "{}"'.format(fname))
+        exit(1)
+
+
+def processClasslist_backend(fname, outputfile):
     with open(fname) as csvfile:
         reader = csv.DictReader(csvfile, skipinitialspace=True)
         fields = reader.fieldnames

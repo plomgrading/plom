@@ -80,13 +80,13 @@ def uploadImages(server, password, unknowns=False, collisions=False):
 
 
 parser = argparse.ArgumentParser()
-sub = parser.add_subparsers(help="sub-command help", dest="command")
+sub = parser.add_subparsers(dest="command", description="Tools for dealing with scans.")
 #
 spP = sub.add_parser("process", help="Process scanned PDFs to images.")
 spR = sub.add_parser("read", help="Read QR-codes from images and collate.")
 spU = sub.add_parser("upload", help="Upload page images to scanner")
 spS = sub.add_parser("status", help="Get scanning status report from server")
-spC = sub.add_parser("clear", help="Clear 'scanner' login.")
+spC = sub.add_parser("clear", help="Clear 'scanner' login", description="Clear 'scanner' login after a crash or other expected event.")
 #
 spP.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
 spU.add_argument(
@@ -101,20 +101,9 @@ spU.add_argument(
     action="store_true",
     help="Upload 'collisions'. Collisions are pages which appear to be already on the server. You should not need this option except under exceptional circumstances.",
 )
-# server + password stuff
-parser.add_argument(
-    "-w",
-    "--password",
-    type=str,
-    help='Password of "scanner". Not needed for "process" subcommand',
-)
-parser.add_argument(
-    "-s",
-    "--server",
-    metavar="SERVER[:PORT]",
-    action="store",
-    help='Which server to contact. Not needed for "process" subcommand',
-)
+for x in (spR, spU, spS, spC):
+    x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 # Now parse things
 args = parser.parse_args()
 
