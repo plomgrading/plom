@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Template released under AGPLv3 by Andrew Rechnitzer (c) 2019
+%% Template released under AGPLv3 by Andrew Rechnitzer (c) 2019-2020
 %% This template uses latex exam class.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -46,6 +46,10 @@
 %% Try running this with and without the line above
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% A simple warning for your Do-Not-Mark pages
+\newcommand{\dnm}{\flushleft \emph{Please do not write on this page --- it will not be marked.}}
+
 % Here are some handy commands for adding spacing / blank pages / answerboxes
 % when printing with or without solns.
 
@@ -55,12 +59,16 @@
   \ifthenelse{\boolean{space}}{\vfill}{}
 }
 
-% Use this to put a blankpage when printing
-% without answers/solutions. No page when printing with answers/solns
-\newcommand{\blankpage}{
+% Use this to put a blankpage when printing without answers/solutions.
+% No page when printing with answers/solns
+% This takes an optional argument of a question-number: \blankpage[X]
+% and prints a message telling the student that this blank space is for
+% question X. If no arg given then it prints the same message but for
+% the current question. 
+\newcommand{\blankpage}[1][\thequestion]{
 \ifthenelse{\boolean{space}}{
 \pagebreak
-\emph{This page has been left blank for your workings and solutions.}
+\flushleft \emph{This blank page is for your solution to \textbf{Question~{#1}} if you need more space.}
 \pagebreak
 }{} }
 
@@ -81,13 +89,17 @@
 \end{flushright}
 }
 
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Load packages and things here
 \usepackage{amsmath,amsthm,amsfonts,amssymb}
 \usepackage{enumerate}
 \usepackage{graphicx}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Add "draft" to show mock-up QR codes
+%\usepackage{mockplom}
+%\usepackage[draft]{mockplom}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Make the header blank, but put page info in the footer.
@@ -100,7 +112,6 @@
 %% for example
 \newcommand{\dee}[1]{{\mathrm{d}#1}}
 \newcommand{\diff}[2]{\dfrac{\dee{#1}}{\dee{#2}}}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Time to start the actual test
@@ -123,14 +134,14 @@
 
 \vfill
 \newpage
-
+\dnm
 \subsection*{Additional instructions}
 \begin{itemize}
   \item Please use the spaces indicated.
   \item If you require extra paper then put up your hand and ask your instructor.
   \begin{itemize}
-    \item You must put your name and student number on any extra pages used.
-    \item Further, you must indicate the test-number and question-number.
+    \item You must put your name and student number on any extra pages.
+    \item You must indicate the test-number and question-number.
     \item Please do this \textbf{on both sides} of any extra pages.
   \end{itemize}
   \item Please do not dismember your test. You must submit all pages.
