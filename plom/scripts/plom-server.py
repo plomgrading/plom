@@ -7,6 +7,7 @@ import os
 import shlex
 import shutil
 import subprocess
+from pathlib import Path
 from textwrap import fill, dedent
 
 # import tools for dealing with resource files
@@ -234,9 +235,10 @@ def initialiseServer():
 
 def processUsers(userFile, demo, auto):
     # if we have been passed a userFile then process it and return
-    if userFile is not None:
-        print("Processing user file '{}'".format(userFile))
-        print("WARNING - this will overwrite any existing userList.json file.")
+    if userFile:
+        print("Processing user file '{}' to 'userList.json'".format(userFile))
+        if os.path.isfile(Path("serverConfiguration") / "userList.json"):
+            print("WARNING - this will overwrite the existing userList.json file.")
         from plom.server import manageUserFiles
 
         manageUserFiles.parseUserlist(userFile)
@@ -253,13 +255,14 @@ def processUsers(userFile, demo, auto):
         print(
             "Creating a demo user list at userListRaw.csv. ** DO NOT USE ON REAL SERVER **"
         )
-        print(
-            "Please edit as you see fit and then rerun 'plom-server users serverConfiguration/userListRaw.csv'"
-        )
+        from plom.server import manageUserFiles
+        rawfile = Path("serverConfiguration") / "userListRaw.csv"
         cl = pkg_resources.resource_string("plom", "demoUserList.csv")
-        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "wb") as fh:
+        with open(rawfile, "wb") as fh:
             fh.write(cl)
+        manageUserFiles.parseUserlist(rawfile)
         return
+
     if auto is not None:
         print("Creating an auto-generated user list at userListRaw.csv.")
         print(
@@ -269,7 +272,6 @@ def processUsers(userFile, demo, auto):
 
         # grab required users and regular users
         lst = manageUserFiles.buildCannedUsers(auto)
-        print("lst = {}".format(lst))
         with open(os.path.join("serverConfiguration", "userListRaw.csv"), "w+") as fh:
             fh.write("user, password\n")
             for np in lst:
@@ -277,7 +279,7 @@ def processUsers(userFile, demo, auto):
 
         return
 
-    if userFile is None:
+    if not userFile:
         print(
             "Creating 'serverConfiguration/userListRaw.csv' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters and usernames should be at least 4 alphanumeric characters."
         )
@@ -392,7 +394,6 @@ grp.add_argument(
 
 # Now parse things
 args = parser.parse_args()
-print(args)
 
 if args.command == "init":
     initialiseServer()
