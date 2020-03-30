@@ -18,6 +18,41 @@ from plom.produce import processClasslist
 #################
 
 
+server_instructions = """Overview of running the Plom server:
+
+  0. Decide on a working directory for the server and cd into it - this
+     need not be the same directory where you started the project.
+
+  1. Copy the `specAndDatabase` directory (not just its contents) to your
+     server directory.  The `specAndDatabase` directory should be in the
+     directory where you started the project and built PDFs.
+
+       1a. If you did not prepare the classlist earlier, then run
+           'plom-server class <filename>'.
+
+  2. Run '%(prog)s' - this will check that everything is in place
+     and create necessary sub-directories *and* create config files for
+     you to edit.
+
+  3. Run '%(prog)s users' - This will create a template user list
+     file for you to edit.  Passwords are displayed in plain text.
+     Running with '--demo' option creates a (standard) demo user list,
+     while '--auto N' makes an random-generated list of N users.  Edit
+     as you see fit.
+
+  4. Run '%(prog)s users <filename>' - This parses the plain-text
+     user list, performs some simple sanity checks and then hashes the
+     passwords to a new file.
+
+       4a. Optionally you can now delete the file containing
+           plain-text passwords.
+
+  5. Now you can start the server with '%(prog)s launch'.
+
+FUTURE - '%(prog)s stop' will stop the server.
+"""
+
+
 class PlomServerConfigurationError(Exception):
     def __init__(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
@@ -320,15 +355,21 @@ def launchTheServer():
 
 #################
 
-parser = argparse.ArgumentParser(epilog="Use '%(prog)s <subcommand> -h' for detailed help.")
-sub = parser.add_subparsers(dest="command", description="Perform various server-related tasks.")
+parser = argparse.ArgumentParser(
+    epilog="Use '%(prog)s <subcommand> -h' for detailed help.\n\n"
+    + server_instructions,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
+sub = parser.add_subparsers(
+    dest="command", description="Perform various server-related tasks."
+)
 #
 spI = sub.add_parser("init", help="Initialise server.")
 spL = sub.add_parser(
     "class",
     help="Read in a classlist.",
     epilog=processClasslist.__doc__,
-    formatter_class=argparse.RawDescriptionHelpFormatter
+    formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 spU = sub.add_parser("users", help="Create required users.")
 spR = sub.add_parser("launch", help="Launch server.")
@@ -360,42 +401,20 @@ grp.add_argument(
 )
 
 
-# Now parse things
-args = parser.parse_args()
+if __name__ == "__main__":
+    args = parser.parse_args()
 
-if args.command == "init":
-    initialiseServer()
-elif args.command == "class":
-    # process the class list and copy into place
-    processClasslist(args.classlist, args.demo)
-elif args.command == "users":
-    # process the class list and copy into place
-    processUsers(args.userlist, args.demo, args.auto)
-elif args.command == "launch":
-    launchTheServer()
-else:
-    parser.print_help()
-    print("\n>> Running the plom server <<")
-    print(
-        "0. Decide on a working directory for the server and cd into it - this need not be the same directory where you started the project."
-    )
-    print(
-        "1. Copy the `specAndDatabase` directory (not just its contents) to your server directory. The `specAndDatabase` directory should be in the directory where you started the project and built PDFs."
-    )
-    print(
-        "1a. If you did not prepare the classlist earlier, then run 'plom-server class <filename>'."
-    )
-    print(
-        "2. Run 'plom-server init' - this will check that everything is in place and create necessary sub-directories **and** create config files for you to edit."
-    )
-    print(
-        "3. Run 'plom-server users' - This will create a template user list file for you to edit. Passwords are displayed in plain text. Running with '--demo' option creates a (standard) demo user list, while '--auto N' makes an random-generated list of N users. Edit as you see fit."
-    )
-    print(
-        "4. Run 'plom-servers users <filename>' - This parses the plain-text user list, performs some simple sanity checks and then hashes the passwords to a new file."
-    )
-    print("4a. Optionally you can now delete the file containing plain-text passwords.")
-    print("5. Now you can start the server with 'plom-server launch'")
-    print("FUTURE - 'plom-server stop' will stop the server.")
+    if args.command == "init":
+        initialiseServer()
+    elif args.command == "class":
+        # process the class list and copy into place
+        processClasslist(args.classlist, args.demo)
+    elif args.command == "users":
+        # process the class list and copy into place
+        processUsers(args.userlist, args.demo, args.auto)
+    elif args.command == "launch":
+        launchTheServer()
+    else:
+        parser.print_help()
 
-exit(0)
+    exit(0)
