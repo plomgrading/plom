@@ -64,10 +64,15 @@ def sendCollidingFiles(scanMessenger, fileList):
         doFiling(rmsg, shortName, fname)
 
 
-def warnUser(fileList):
+def warnAndAskUser(fileList):
+    """Confirm collisions by asking user.
+
+    Returns False if we should stop (user says no).  Returns True if
+    there were no colliding pages or if user says yes.
+    """
     if len(fileList) == 0:
         print("No colliding pages. Nothing to do.")
-        return False
+        return True
 
     print(">>>>>>>>>> WARNING <<<<<<<<<<")
     print("In most use cases you should have no colliding pages.")
@@ -115,7 +120,7 @@ def uploadCollisions(server=None, password=None):
         exit(10)
 
     fileList = glob("collidingPages/*.png")
-    if warnUser(fileList) == False:
+    if warnAndAskUser(fileList) == False:
         scanMessenger.closeUser()
         scanMessenger.stop()
         exit(2)
