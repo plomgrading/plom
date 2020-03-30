@@ -110,12 +110,11 @@ job demoWorkFlow:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    # TODO: -s, -w should go with the subcommand (after "read")
-    - plom-scan.py -s localhost -w 4567 read
-    - plom-scan.py -s localhost -w 4567 upload
-    - plom-scan.py -s localhost -w 4567 upload -u
-    - plom-scan.py -s localhost -w 4567 upload -c
-    - plom-scan.py -s localhost -w 4567 status
+    - plom-scan.py read -s localhost -w 4567
+    - plom-scan.py upload -s localhost -w 4567
+    - plom-scan.py upload -u -s localhost -w 4567
+    - plom-scan.py upload -c -s localhost -w 4567
+    - plom-scan.py status -s localhost -w 4567
     ## not supposed to be done yet:
     - if (python3 -m plom.finish.022_check_completed -s localhost -w 1234); then false; else true; fi
     - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123

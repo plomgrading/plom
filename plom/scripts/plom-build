@@ -11,6 +11,7 @@ import pkg_resources
 from plom import SpecVerifier, SpecParser
 from plom.produce import buildAllPapers, confirmProcessed, confirmNamed
 from plom.produce import paperdir
+from plom.produce import processClasslist
 
 specdir = "specAndDatabase"
 dbfile = os.path.join(specdir, "plom.db")
@@ -60,21 +61,6 @@ def parseAndVerifySpecification(fname):
         )
 
 
-def processClasslist(fname):
-    from plom.produce import buildClasslist
-
-    # check if a filename given
-    if fname is None:
-        print("Please provide a classlist file.")
-        buildClasslist.acceptedFormats()
-        exit(1)
-    # grab the file, process it and copy it into place.
-
-    if os.path.isfile(fname):
-        buildClasslist.processClassList(fname, os.path.join(specdir, "classlist.csv"))
-    else:
-        print('Cannot find file "{}"'.format(fname))
-        exit(1)
 
 
 def buildDatabase(spec):
@@ -137,37 +123,44 @@ def buildDatabaseAndPapers(blank):
 
 
 parser = argparse.ArgumentParser()
-sub = parser.add_subparsers(help="sub-command help", dest="command",)
+sub = parser.add_subparsers(dest="command", description="Perform tasks related to building tests.")
 #
-spC = sub.add_parser("new", help="Create new spec file.")
+spC = sub.add_parser(
+    "new", help="Create new spec file", description="Create new spec file."
+)
 spC.add_argument(
-    "specFile",
-    nargs="?",
-    default="testSpec.toml",
-    help="Create test-specification toml file with name specFile. If no argument given then defaults to 'testSpec.toml'",
+    "specFile", nargs="?", default="testSpec.toml", help="defaults to '%(default)s'.",
 )
 #
-spP = sub.add_parser("parse", help="Parse spec file.")
+spP = sub.add_parser(
+    "parse",
+    help="Parse spec file",
+    description="Parse and verify the test-specification toml file.",
+)
 spP.add_argument(
-    "specFile",
-    nargs="?",
-    default="testSpec.toml",
-    help="Parse and verify test-specification toml file with name specFile. If no argument given then defaults to 'testSpec.toml'",
+    "specFile", nargs="?", default="testSpec.toml", help="defaults to '%(default)s'.",
 )
 
 #
-spL = sub.add_parser("class", help="Read in a classlist.")
-spL.add_argument(
-    "classlist",
-    nargs="?",
-    help="Process the given classlist file and copy the result into place.",
+spL = sub.add_parser(
+    "class",
+    help="Read in a classlist",
+    epilog=processClasslist.__doc__,
+    formatter_class=argparse.RawDescriptionHelpFormatter
+)
+group = spL.add_mutually_exclusive_group(required=True)
+group.add_argument("classlist", nargs="?", help="filename in csv format")
+group.add_argument(
+    "--demo",
+    action="store_true",
+    help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
 )
 
 #
 spB = sub.add_parser(
     "make",
     help="Make the PDFs",
-    epilog="""
+    description="""
         Build papers and database from the test specification.  Based on the
         spec, some of the papers may have names printed on them from the
         classlist ("pre-named") and the remainder will be blank.""",
@@ -194,7 +187,7 @@ elif args.command == "parse":
     parseAndVerifySpecification(fname)
 elif args.command == "class":
     # process the class list and copy into place
-    processClasslist(args.classlist)
+    processClasslist(args.classlist, args.demo)
 elif args.command == "make":
     # get building.
     buildDatabaseAndPapers(args.blank)
