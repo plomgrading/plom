@@ -16,12 +16,10 @@ setup(
     author="Andrew Rechnitzer",
     license="AGPL3",
     packages=find_packages(),
-    scripts=[
-        "plom/scripts/plom-init.py",
-    ],
     entry_points={
         "console_scripts": [
             "plom-client=plom.scripts.client:main",
+            "plom-init=plom.scripts.plominit:main",
             "plom-build=plom.scripts.build:main",
             "plom-server=plom.scripts.server:main",
             "plom-scan=plom.scripts.scan:main",
