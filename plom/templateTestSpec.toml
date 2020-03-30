@@ -32,7 +32,9 @@ pages = [2]  # can be an empty list.
 # [question.n] with n a positive integer [1, 2, 3, ... etc] - contiguous please.
 # pages = [4, 5, 6] - contiguous ordered list of positive integers.
 # mark = positive integer, the marks for this question.
-# select = "shuffle" or "fixed".  TODO: needs brief explanation of "fixed".
+# select = "shuffle" or "fixed".
+# --> "fixed" = that question will always be drawn from source-version 1.
+# --> "shuffle" = that question will be drawn randomly from one of the source versions.
 
 [question.1]
 pages = [3]
