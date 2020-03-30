@@ -63,4 +63,5 @@ def buildDemoSourceFiles():
 
 
 if __name__ == "__main__":
-    buildDemoSourceFiles()
+    if not buildDemoSourceFiles():
+        exit(1)
