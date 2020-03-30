@@ -324,12 +324,12 @@ class SpecVerifier:
                 )
             )
             exit(1)
-        # check select is "fixed" or "shuffle"
-        if self.spec["question"][g]["select"] in ["fixed", "shuffle"]:
-            print('\t\tselect is "fixed" or "shuffle" - check')
+        # check select is "fix" or "shuffle"
+        if self.spec["question"][g]["select"] in ["fix", "shuffle"]:
+            print('\t\tselect is "fix" or "shuffle" - check')
         else:
             print(
-                'Question error - select {} is not "fixed" or "shuffle"'.format(
+                'Question error - select {} is not "fix" or "shuffle"'.format(
                     self.spec["question"][g]["select"]
                 )
             )
