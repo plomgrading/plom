@@ -112,7 +112,7 @@ def uploadCollisions(server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(0)
+        exit(10)
 
     fileList = glob("collidingPages/*.png")
     if warnUser(fileList) == False:

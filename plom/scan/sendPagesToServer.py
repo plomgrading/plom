@@ -113,7 +113,7 @@ def uploadPages(server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(0)
+        exit(10)
 
     # Look for pages in decodedPages
     fileList = glob("decodedPages/t*.png")
