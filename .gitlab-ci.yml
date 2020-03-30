@@ -46,7 +46,7 @@ before_script:
   - python3 -m pip -V
   - python3 -m pip install --upgrade setuptools
   - python3 -m pip install pymupdf weasyprint imutils lapsolver
-    peewee toml cheroot aiohttp pyzbar toml
+    peewee toml cheroot aiohttp pyzbar
 
 stages:
   - build
@@ -81,22 +81,13 @@ job demoWorkFlow:
     - pushd dist
     - python3 -m pip install plom-*.whl
     - popd
-    # First build sources pdfs
-    - pushd testTemplates
-    - pdflatex latexTemplate.tex
-    - pdflatex --interaction=batchmode latexTemplate.tex
-    - pdflatex --interaction=batchmode latexTemplate.tex
-    - pdflatex latexTemplatev2.tex
-    - pdflatex --interaction=batchmode latexTemplatev2.tex
-    - pdflatex --interaction=batchmode latexTemplatev2.tex
-    - popd
-    # Now build tests
+    # Build tests
     - mkdir demo
     - pushd demo
     - plom-build new
-    - cp ../testTemplates/latexTemplate.pdf sourceVersions/version1.pdf
-    - cp ../testTemplates/latexTemplatev2.pdf sourceVersions/version2.pdf
     - plom-build parse
+    # Maybe `plom-build new --demo` should do this?
+    - python3 -m plom.produce.demotools
     # TODO: override the private seed
     # sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
     # diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml

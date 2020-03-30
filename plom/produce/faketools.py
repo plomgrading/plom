@@ -148,7 +148,6 @@ def fillInExams(paperdir, classlist, outfile, which=None):
     bigdoc.save(outfile)
 
 
-
 def main():
     specdir = Path(_specdir)
     classlist = specdir / "classlist.csv"
