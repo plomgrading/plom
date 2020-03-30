@@ -104,7 +104,7 @@ job demoWorkFlow:
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
     # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/695
-    - plom-server.py class --demo
+    - plom-server class --demo
     - python3 -m plom.produce.faketools
     # Scan and upload
     # supposed to fail:
@@ -112,9 +112,9 @@ job demoWorkFlow:
     - plom-scan.py process fake_scribbled_exams.pdf
     # Start server
     - ip addr
-    - plom-server.py init
-    - plom-server.py users --demo
-    - plom-server.py launch &
+    - plom-server init
+    - plom-server users --demo
+    - plom-server launch &
     - sleep 1
     - echo "Server should be in background"
     - jobs -l
