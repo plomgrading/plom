@@ -61,26 +61,21 @@ def buildLaTeXExam(src, out):
     TODO: this is more generally useful but how to handle the idBox2?
     """
 
-    td = tempfile.TemporaryDirectory()
+    with tempfile.TemporaryDirectory() as tmpdir:
 
-    tmp = pkg_resources.resource_string("plom", "testTemplates/idBox2.pdf")
-    with open(Path(td.name) / "idBox2.pdf", "wb") as fh:
-        fh.write(tmp)
+        tmp = pkg_resources.resource_string("plom", "testTemplates/idBox2.pdf")
+        with open(Path(tmpdir) / "idBox2.pdf", "wb") as fh:
+            fh.write(tmp)
 
-    # TODO: this is not very duck-type of us!
-    if isinstance(src, bytes):
-        mode = "wb"
-    else:
-        mode = "w"
+        # TODO: this is not very duck-type of us!
+        if isinstance(src, bytes):
+            mode = "wb"
+        else:
+            mode = "w"
 
-    with open(Path(td.name) / "stuff.tex", mode) as fh:
-        fh.write(src)
+        with open(Path(tmpdir) / "stuff.tex", mode) as fh:
+            fh.write(src)
 
-    # TODO: get context thingy
-    cdir = os.getcwd()
-    os.chdir(td.name)
-
-    if True:
         latexIt = subprocess.run(
             [
                 "latexmk",
@@ -89,13 +84,13 @@ def buildLaTeXExam(src, out):
                 "-no-shell-escape",
                 "stuff.tex",
             ],
+            cwd=tmpdir,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-    os.chdir(cdir)
 
-    if latexIt.returncode == 0:
-        out.write((Path(td.name) / "stuff.pdf").read_bytes())
+        if latexIt.returncode == 0:
+            out.write((Path(tmpdir) / "stuff.pdf").read_bytes())
 
     return latexIt.returncode, latexIt.stdout.decode()
 
