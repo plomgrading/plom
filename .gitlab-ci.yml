@@ -46,7 +46,7 @@ before_script:
   - python3 -m pip -V
   - python3 -m pip install --upgrade setuptools
   - python3 -m pip install pymupdf weasyprint imutils lapsolver
-    peewee toml cheroot aiohttp pyzbar
+    peewee toml aiohttp pyzbar
 
 stages:
   - build
