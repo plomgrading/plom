@@ -21,23 +21,24 @@ def buildDemoSourceFiles():
     os.makedirs("sourceVersions", exist_ok=True)
     print("LaTeXing example exam file: latexTemplate.tex")
     content = pkg_resources.resource_string("plom", "testTemplates/latexTemplate.tex")
-    if not buildLaTeXExam(content, Path("sourceVersions") / "version1.pdf"):
+    if not buildLaTeXExam2(content, Path("sourceVersions") / "version1.pdf"):
         return False
 
     print("LaTeXing example exam file: latexTemplatev2.tex")
     content = pkg_resources.resource_string("plom", "testTemplates/latexTemplatev2.tex")
-    if not buildLaTeXExam(content, Path("sourceVersions") / "version2.pdf"):
+    if not buildLaTeXExam2(content, Path("sourceVersions") / "version2.pdf"):
         return False
     return True
 
 
-def buildLaTeXExam(src, name):
+def buildLaTeXExam2(src, filename):
     """Compile a string or bytes of latex.
 
-    Generally silent and returns True if everything worked.  If it
-    returns False, it should print errors messages to stdout.
+    Silent and return True if everything worked, print to stdout and
+    return False if latex failed.
     """
-    r, out = buildLaTeXExam_raw(src, name)
+    with open(filename, "wb") as f:
+        r, out = buildLaTeXExam(src, f)
     if r:
         print(">>> Latex problems - see below <<<\n")
         print(out)
@@ -46,21 +47,33 @@ def buildLaTeXExam(src, name):
     return True
 
 
-def buildLaTeXExam_raw(src, name):
+def buildLaTeXExam(src, out):
     """Compile a string or bytes of latex.
+
+    Args:
+        src (str, bytes):
+        out (file-like):
 
     Returns:
         exit value from the subprocess call (zero good, non-zero BAD)
         stdout/stderr from the subprocess call
+
+    TODO: this is more generally useful but how to handle the idBox2?
     """
 
     td = tempfile.TemporaryDirectory()
 
     tmp = pkg_resources.resource_string("plom", "testTemplates/idBox2.pdf")
-    with open(Path(td.name) / "idBox2.pdf.tex", "wb") as fh:
+    with open(Path(td.name) / "idBox2.pdf", "wb") as fh:
         fh.write(tmp)
 
-    with open(Path(td.name) / "stuff.tex", "wb") as fh:
+    # TODO: this is not very duck-type of us!
+    if isinstance(src, bytes):
+        mode = "wb"
+    else:
+        mode = "w"
+
+    with open(Path(td.name) / "stuff.tex", mode) as fh:
         fh.write(src)
 
     # TODO: get context thingy
@@ -82,7 +95,7 @@ def buildLaTeXExam_raw(src, name):
     os.chdir(cdir)
 
     if latexIt.returncode == 0:
-        shutil.copyfile(Path(td.name) / "stuff.pdf", name)
+        out.write((Path(td.name) / "stuff.pdf").read_bytes())
 
     return latexIt.returncode, latexIt.stdout.decode()
 
