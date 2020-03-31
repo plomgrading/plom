@@ -8,13 +8,11 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import os
-import sys
-import subprocess
-import shutil
-import tempfile
 from pathlib import Path
 
 import pkg_resources
+
+from plom.textools import buildLaTeX
 
 
 def buildDemoSourceFiles():
@@ -38,61 +36,13 @@ def buildLaTeXExam2(src, filename):
     return False if latex failed.
     """
     with open(filename, "wb") as f:
-        r, out = buildLaTeXExam(src, f)
+        r, out = buildLaTeX(src, f)
     if r:
         print(">>> Latex problems - see below <<<\n")
         print(out)
         print(">>> Latex problems - see above <<<")
         return False
     return True
-
-
-def buildLaTeXExam(src, out):
-    """Compile a string or bytes of latex.
-
-    Args:
-        src (str, bytes):
-        out (file-like):
-
-    Returns:
-        exit value from the subprocess call (zero good, non-zero BAD)
-        stdout/stderr from the subprocess call
-
-    TODO: this is more generally useful but how to handle the idBox2?
-    """
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-
-        tmp = pkg_resources.resource_string("plom", "testTemplates/idBox2.pdf")
-        with open(Path(tmpdir) / "idBox2.pdf", "wb") as fh:
-            fh.write(tmp)
-
-        # TODO: this is not very duck-type of us!
-        if isinstance(src, bytes):
-            mode = "wb"
-        else:
-            mode = "w"
-
-        with open(Path(tmpdir) / "stuff.tex", mode) as fh:
-            fh.write(src)
-
-        latexIt = subprocess.run(
-            [
-                "latexmk",
-                "-pdf",
-                "-interaction=nonstopmode",
-                "-no-shell-escape",
-                "stuff.tex",
-            ],
-            cwd=tmpdir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-
-        if latexIt.returncode == 0:
-            out.write((Path(tmpdir) / "stuff.pdf").read_bytes())
-
-    return latexIt.returncode, latexIt.stdout.decode()
 
 
 if __name__ == "__main__":

@@ -15,6 +15,7 @@ import tempfile
 from pathlib import Path
 
 from plom import specdir
+from plom.textools import buildLaTeX
 
 
 # If all is good then build a substitute page and save it in the correct place
@@ -60,33 +61,11 @@ def buildPNSPage(outName):
 \emph{This page of the test was not submitted.}
 \end{document}
 """
-    cdir = os.getcwd()
-    outname = os.path.join(cdir, specdir, "pageNotSubmitted.pdf")
-    td = tempfile.TemporaryDirectory()
-    os.chdir(td.name)
-
-    with open(os.path.join(td.name, "pns.tex"), "w") as fh:
-        fh.write(PNStex)
-
-    latexIt = subprocess.run(
-        [
-            "latexmk",
-            "-pdf",
-            "-quiet",
-            "-interaction=nonstopmode",
-            "-no-shell-escape",
-            "pns.tex",
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
-    if latexIt.returncode != 0:
-        # sys.exit(latexIt.returncode)
+    with open(outName, "wb") as f:
+        returncode, out = buildLaTeX(PNStex, f)
+    if returncode != 0:
         print(">>> Latex problems - see below <<<\n")
-        print(latexIt.stdout.decode())
+        print(out)
         print(">>> Latex problems - see above <<<")
         return False
-
-    shutil.copyfile("pns.pdf", outName)
-    os.chdir(cdir)
     return True

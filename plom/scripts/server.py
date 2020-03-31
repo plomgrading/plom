@@ -175,7 +175,8 @@ def createBlankPredictions():
 
 
 def doLatexChecks():
-    from plom.server import latex2png, pageNotSubmitted
+    from plom.textools import texFragmentToPNG
+    from plom.server import pageNotSubmitted
 
     os.makedirs("pleaseCheck", exist_ok=True)
 
@@ -187,7 +188,7 @@ def doLatexChecks():
 
     fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ worked okay for plom."
 
-    if not latex2png.processFragment(fragment, ct):
+    if not texFragmentToPNG(fragment, ct):
         raise PlomServerConfigurationError(
             "Error latex'ing fragment. Please check your latex distribution."
         )
