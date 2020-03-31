@@ -18,31 +18,47 @@ import pkg_resources
 
 
 def buildDemoSourceFiles():
+    os.makedirs("sourceVersions", exist_ok=True)
+    print("LaTeXing example exam file: latexTemplate.tex")
+    content = pkg_resources.resource_string("plom", "testTemplates/latexTemplate.tex")
+    if not buildLaTeXExam(content, Path("sourceVersions") / "version1.pdf"):
+        return False
+
+    print("LaTeXing example exam file: latexTemplatev2.tex")
+    content = pkg_resources.resource_string("plom", "testTemplates/latexTemplatev2.tex")
+    if not buildLaTeXExam(content, Path("sourceVersions") / "version2.pdf"):
+        return False
+    return True
+
+
+def buildLaTeXExam(src, name):
+    """Take a string or bytes and compile it.
+
+    Generally silent and returns True if everything worked.  If it
+    returns False, it should print errors messages to stdout.
+    """
+
     td = tempfile.TemporaryDirectory()
 
     tmp = pkg_resources.resource_string("plom", "testTemplates/idBox2.pdf")
     with open(Path(td.name) / "idBox2.pdf.tex", "wb") as fh:
         fh.write(tmp)
 
-    template = pkg_resources.resource_string("plom", "testTemplates/latexTemplate.tex")
-    with open(Path(td.name) / "version1.tex", "wb") as fh:
-        fh.write(template)
-    template = pkg_resources.resource_string("plom", "testTemplates/latexTemplatev2.tex")
-    with open(Path(td.name) / "version2.tex", "wb") as fh:
-        fh.write(template)
+    with open(Path(td.name) / "stuff.tex", "wb") as fh:
+        fh.write(src)
 
+    # TODO: get context thingy
     cdir = os.getcwd()
     os.chdir(td.name)
 
-    for x in ("version1", "version2"):
+    if True:
         latexIt = subprocess.run(
             [
                 "latexmk",
                 "-pdf",
-                "-quiet",
                 "-interaction=nonstopmode",
                 "-no-shell-escape",
-                x,
+                "stuff.tex",
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -57,12 +73,10 @@ def buildDemoSourceFiles():
     os.chdir(cdir)
 
     os.makedirs("sourceVersions", exist_ok=True)
-    for x in ("version1.pdf", "version2.pdf"):
-        shutil.copyfile(Path(td.name) / x, Path("sourceVersions") / x)
+    shutil.copyfile(Path(td.name) / "stuff.pdf", name)
     return True
 
 
 if __name__ == "__main__":
-    print("LaTeXing example exam files")
     if not buildDemoSourceFiles():
         exit(1)
