@@ -64,7 +64,7 @@
 % This takes an optional argument of a question-number: \blankpage[X]
 % and prints a message telling the student that this blank space is for
 % question X. If no arg given then it prints the same message but for
-% the current question. 
+% the current question.
 \newcommand{\blankpage}[1][\thequestion]{
 \ifthenelse{\boolean{space}}{
 \pagebreak
@@ -169,7 +169,7 @@ You may find the following formulas useful in the questions that follow.
 \newpage
 
 \begin{questions}
-\question[5] Please place your answers in the boxes provided
+\question[5] Please place your answers in the boxes provided.
 \begin{parts}
   \part Answer something simple, \textbf{but this is ver2}
   \answerbox{ABC}
@@ -197,7 +197,10 @@ You may find the following formulas useful in the questions that follow.
 
 %% Next question
 
-\question[5] Please place your answers in the boxes provided
+\question[5]
+Please place your answers in the boxes provided.
+[Note if mark this question as ``fix'' in the spec it will always be chosen
+from version 1; version 2 will never be used.]
 \begin{parts}
   \part Answer something not quite so simple, \textbf{but this is ver2}
   \answerbox{ABC}

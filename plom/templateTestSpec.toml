@@ -44,7 +44,7 @@ select = "shuffle"
 [question.2]
 pages = [4]
 mark = 10
-select = "shuffle"
+select = "fix"
 
 [question.3]
 pages = [5, 6]
