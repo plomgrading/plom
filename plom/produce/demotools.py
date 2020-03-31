@@ -32,10 +32,26 @@ def buildDemoSourceFiles():
 
 
 def buildLaTeXExam(src, name):
-    """Take a string or bytes and compile it.
+    """Compile a string or bytes of latex.
 
     Generally silent and returns True if everything worked.  If it
     returns False, it should print errors messages to stdout.
+    """
+    r, out = buildLaTeXExam_raw(src, name)
+    if r:
+        print(">>> Latex problems - see below <<<\n")
+        print(out)
+        print(">>> Latex problems - see above <<<")
+        return False
+    return True
+
+
+def buildLaTeXExam_raw(src, name):
+    """Compile a string or bytes of latex.
+
+    Returns:
+        exit value from the subprocess call (zero good, non-zero BAD)
+        stdout/stderr from the subprocess call
     """
 
     td = tempfile.TemporaryDirectory()
@@ -63,18 +79,12 @@ def buildLaTeXExam(src, name):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        if latexIt.returncode != 0:
-            # sys.exit(latexIt.returncode)
-            print(">>> Latex problems - see below <<<\n")
-            print(latexIt.stdout.decode())
-            print(">>> Latex problems - see above <<<")
-            os.chdir(cdir)
-            return False
     os.chdir(cdir)
 
-    os.makedirs("sourceVersions", exist_ok=True)
-    shutil.copyfile(Path(td.name) / "stuff.pdf", name)
-    return True
+    if latexIt.returncode == 0:
+        shutil.copyfile(Path(td.name) / "stuff.pdf", name)
+
+    return latexIt.returncode, latexIt.stdout.decode()
 
 
 if __name__ == "__main__":
