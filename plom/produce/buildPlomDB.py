@@ -42,7 +42,7 @@ def buildExamDatabase(spec, dbFname):
 
         for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
             gs = str(g + 1)  # now 1,2,3,...
-            if spec["question"][gs]["select"] == "fixed":  # all are version 1
+            if spec["question"][gs]["select"] == "fix":  # all are version 1
                 v = 1
             elif (
                 spec["question"][gs]["select"] == "shuffle"
