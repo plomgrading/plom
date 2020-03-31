@@ -26,7 +26,7 @@ Tested on Fedora 31.  Some stuff from the package manager:
 
 Other stuff we install locally with `pip`:
 ```
-  # pip3 install --upgrade --user pyqrcode cheroot pyzbar pymupdf
+  # pip3 install --upgrade --user pyqrcode pyzbar pymupdf
 ```
 
 More dependencies for the tensorflow-based ID reader:
