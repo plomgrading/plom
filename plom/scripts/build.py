@@ -61,8 +61,6 @@ def parseAndVerifySpecification(fname):
         )
 
 
-
-
 def buildDatabase(spec):
     from plom.produce import buildPlomDB
 
@@ -72,7 +70,7 @@ def buildDatabase(spec):
 
     print("Creating plom database")
     buildPlomDB.buildExamDatabase(spec, dbfile)
-    print("Done!")
+    print("Database created successfully")
 
 
 def buildBlankPapers(spec):
