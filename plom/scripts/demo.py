@@ -21,8 +21,25 @@ import time
 
 from plom import version
 
+
 def main():
     print("Plom version {}".format(version.__version__))
+
+    # TODO: MAYBE DISABLE THIS SCARY STUFF?
+    # TODO: user runs in new empty dir or get's all pieces...
+    # TODO: or better yet, check that these subdirs DNE
+    for f in (
+        "specAndDatabase/plom.db",
+        "specAndDatabase/classlist.csv",
+        "serverConfiguration/userListRaw.csv",
+        "serverConfiguration/userList.json",
+        "archivedPDFs/fake_scribbled_exams.pdf",
+    ):
+        print("Erasing {}".format(f))
+        try:
+            os.remove(f)
+        except OSError:
+            pass
 
     subprocess.check_call(split("plom-build new --demo"))
     subprocess.check_call(split("plom-build make"))
