@@ -83,12 +83,19 @@ def buildBlankPapers(spec):
 def buildNamedPapers(spec):
     if spec["numberToName"] > 0:
         print(
-            "Building {} pre-named papers and {} blank papers...".format(
-                spec["numberToName"], spec["numberToProduce"] - spec["numberToName"]
+            'Building {} pre-named papers and {} blank papers in "{}"...'.format(
+                spec["numberToName"],
+                spec["numberToProduce"] - spec["numberToName"],
+                paperdir,
             )
         )
     else:
-        print("Building {} blank papers...".format(spec["numberToProduce"]))
+        print(
+            'Building {} blank papers in "{}"...'.format(
+                spec["numberToProduce"], paperdir
+            )
+        )
+
     buildAllPapers(spec, dbfile, named=True)
     print("Checking papers produced and updating databases")
     confirmProcessed(spec, dbfile)
@@ -112,7 +119,6 @@ def buildDatabaseAndPapers(blank):
 
     buildDatabase(spec)
 
-    print('Making "{}" directory for papers'.format(paperdir))
     os.makedirs(paperdir, exist_ok=True)
     if blank:
         buildBlankPapers(spec)
