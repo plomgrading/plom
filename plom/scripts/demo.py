@@ -18,11 +18,18 @@ import os
 import subprocess
 from shlex import split
 import time
+import argparse
 
 from plom import version
 
 
+parser = argparse.ArgumentParser(
+    description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
+)
+
+
 def main():
+    args = parser.parse_args()
     print("Plom version {}".format(version.__version__))
 
     for f in (
