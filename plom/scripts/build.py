@@ -31,15 +31,14 @@ def checkTomlExtension(fname):
 
 
 def createSpecificationFile(fname):
-    print('Creating specification file with name "{}"'.format(fname))
+    print('Creating specification file from template: "{}"'.format(fname))
+    print('  * Please edit the template spec "{}"'.format(fname))
     template = pkg_resources.resource_string("plom", "templateTestSpec.toml")
     with open(fname, "wb") as fh:
         fh.write(template)
     print('Creating "sourceVersions" directory for your test source PDFs.')
     os.makedirs("sourceVersions", exist_ok=True)
-    print(
-        "Please edit the template specification file and copy your source test PDFs into the sourceVersions directory as version1.pdf, version2.pdf etc."
-    )
+    print("  * Please copy your test in as version1.pdf, version2.pdf, etc.")
 
 
 def parseAndVerifySpecification(fname):
