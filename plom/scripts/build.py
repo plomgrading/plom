@@ -13,6 +13,8 @@ from plom import specdir
 from plom.produce import buildAllPapers, confirmProcessed, confirmNamed
 from plom.produce import paperdir
 from plom.produce import processClasslist
+from plom.produce.demotools import buildDemoSourceFiles
+
 
 dbfile = os.path.join(specdir, "plom.db")
 
@@ -133,8 +135,14 @@ sub = parser.add_subparsers(
 spC = sub.add_parser(
     "new", help="Create new spec file", description="Create new spec file."
 )
-spC.add_argument(
+group = spC.add_mutually_exclusive_group(required=False)
+group.add_argument(
     "specFile", nargs="?", default="testSpec.toml", help="defaults to '%(default)s'.",
+)
+group.add_argument(
+    "--demo",
+    action="store_true",
+    help="Use an auto-generated demo test. **Obviously not for real use**",
 )
 #
 spP = sub.add_parser(
@@ -182,10 +190,18 @@ def main():
     args = parser.parse_args()
 
     if args.command == "new":
-        # check the file extension
-        fname = checkTomlExtension(args.specFile)
+        if args.demo:
+            fname = "demoSpec.toml"
+        else:
+            fname = checkTomlExtension(args.specFile)
         # copy the template spec into place
         createSpecificationFile(fname)
+        if args.demo:
+            print("DEMO MODE: building source files")
+            if not buildDemoSourceFiles():
+                exit(1)
+            print('DEMO MODE: continuing as if "parse" command was run...')
+            parseAndVerifySpecification(fname)
     elif args.command == "parse":
         # check the file extension
         fname = checkTomlExtension(args.specFile)
