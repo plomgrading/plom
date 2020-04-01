@@ -81,7 +81,11 @@ def fillInExams(paperdir, classlist, outfile, which=None):
 
     for i, fname in enumerate(papers):
         r = df.iloc[i]
-        print((fname, r.id, r.studentName))
+        print(
+            "  {}: {}, {}, scribbled".format(
+                os.path.basename(fname), r.id, r.studentName
+            )
+        )
 
         name = r.studentName
         sn = str(r.id)
@@ -149,10 +153,12 @@ def fillInExams(paperdir, classlist, outfile, which=None):
 
 
 def main():
+    print("Annotating papers with fake student data and scribbling on pages...")
     specdir = Path(_specdir)
     classlist = specdir / "classlist.csv"
     outfile = "fake_scribbled_exams.pdf"
     fillInExams(_paperdir, classlist, outfile)
+    print('Assembled in "{}"'.format(outfile))
 
 
 if __name__ == "__main__":
