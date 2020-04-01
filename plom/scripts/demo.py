@@ -48,8 +48,9 @@ def main():
     subprocess.check_call(split("plom-server init"))
     subprocess.check_call(split("plom-server users --demo"))
 
-    # TODO: have to put this in the background before we can upload
-    subprocess.Popen(split("plom-server launch"))
+    # Start server into background
+    serverproc = subprocess.Popen(split("plom-server launch"))
+
     subprocess.check_call(split("plom-scan process fake_scribbled_exams.pdf"))
     subprocess.check_call(split("plom-scan read -w 4567"))
     subprocess.check_call(split("plom-scan upload -w 4567"))
@@ -60,7 +61,8 @@ def main():
     # TODO: output account info
 
     print("Starting an endless loop: Ctrl-C to quit demo script")
-    # TODO: keep this running and kill the server on ctrl-C
+    # TODO: improve this, catch the ctrl-c and do something
+    print("  (you may need to kill the server)")
     while True:
         time.sleep(0.5)
 
