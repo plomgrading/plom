@@ -17,7 +17,7 @@ __license__ = "AGPL-3.0-or-later"
 import os
 import subprocess
 from shlex import split
-from textwrap import dedent
+import time
 
 from plom import version
 
@@ -37,10 +37,13 @@ def main():
     subprocess.check_call(split("plom-scan read -w 4567"))
     subprocess.check_call(split("plom-scan upload -w 4567"))
 
-    print('\nNow run "plom-client"')
+    print('\n*** Now run "plom-client" ***\n')
     # TODO: output account info
 
+    print("Starting an endless loop: Ctrl-C to quit demo script")
     # TODO: keep this running and kill the server on ctrl-C
+    while True:
+        time.sleep(0.5)
 
 
 if __name__ == "__main__":
