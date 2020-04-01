@@ -8,61 +8,43 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import os
-import sys
-import subprocess
-import shutil
-import tempfile
 from pathlib import Path
 
 import pkg_resources
 
+from plom.textools import buildLaTeX
+
 
 def buildDemoSourceFiles():
-    td = tempfile.TemporaryDirectory()
-
-    tmp = pkg_resources.resource_string("plom", "testTemplates/idBox2.pdf")
-    with open(Path(td.name) / "idBox2.pdf.tex", "wb") as fh:
-        fh.write(tmp)
-
-    template = pkg_resources.resource_string("plom", "testTemplates/latexTemplate.tex")
-    with open(Path(td.name) / "version1.tex", "wb") as fh:
-        fh.write(template)
-    template = pkg_resources.resource_string("plom", "testTemplates/latexTemplatev2.tex")
-    with open(Path(td.name) / "version2.tex", "wb") as fh:
-        fh.write(template)
-
-    cdir = os.getcwd()
-    os.chdir(td.name)
-
-    for x in ("version1", "version2"):
-        latexIt = subprocess.run(
-            [
-                "latexmk",
-                "-pdf",
-                "-quiet",
-                "-interaction=nonstopmode",
-                "-no-shell-escape",
-                x,
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        if latexIt.returncode != 0:
-            # sys.exit(latexIt.returncode)
-            print(">>> Latex problems - see below <<<\n")
-            print(latexIt.stdout.decode())
-            print(">>> Latex problems - see above <<<")
-            os.chdir(cdir)
-            return False
-    os.chdir(cdir)
-
     os.makedirs("sourceVersions", exist_ok=True)
-    for x in ("version1.pdf", "version2.pdf"):
-        shutil.copyfile(Path(td.name) / x, Path("sourceVersions") / x)
+    print("LaTeXing example exam file: latexTemplate.tex")
+    content = pkg_resources.resource_string("plom", "testTemplates/latexTemplate.tex")
+    if not buildLaTeXExam2(content, Path("sourceVersions") / "version1.pdf"):
+        return False
+
+    print("LaTeXing example exam file: latexTemplatev2.tex")
+    content = pkg_resources.resource_string("plom", "testTemplates/latexTemplatev2.tex")
+    if not buildLaTeXExam2(content, Path("sourceVersions") / "version2.pdf"):
+        return False
+    return True
+
+
+def buildLaTeXExam2(src, filename):
+    """Compile a string or bytes of latex.
+
+    Silent and return True if everything worked, print to stdout and
+    return False if latex failed.
+    """
+    with open(filename, "wb") as f:
+        r, out = buildLaTeX(src, f)
+    if r:
+        print(">>> Latex problems - see below <<<\n")
+        print(out)
+        print(">>> Latex problems - see above <<<")
+        return False
     return True
 
 
 if __name__ == "__main__":
-    print("LaTeXing example exam files")
     if not buildDemoSourceFiles():
         exit(1)

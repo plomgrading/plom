@@ -5,7 +5,7 @@ from PIL import Image
 from io import BytesIO
 from pytest import raises
 
-from plom.server.latex2png import processFragment
+from .textools import texFragmentToPNG as processFragment
 
 # TODO: this too: pageNotSubmitted
 
