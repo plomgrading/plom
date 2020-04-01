@@ -55,7 +55,7 @@ def fillInExams(paperdir, classlist, outfile, which=None):
 
     Args:
         paperdir: directory containing the blank exams.
-            Can be a string or anything convertable to pathlib `Path` object.
+            Can be a string or anything convertible to pathlib `Path` object.
         classlist: path and filename of the classlist (as csv file).
         outfile: write results into this concatenated PDF file.
         which (optional): by default, scribble on all exams or specify
