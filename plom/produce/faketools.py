@@ -50,7 +50,7 @@ possibleAns = [
 ]
 
 
-def fillInExams(paperdir, classlist, outfile, which=None):
+def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
     """Simulate writing an exam by scribbling names, numbers, and answers.
 
     Args:
@@ -66,6 +66,7 @@ def fillInExams(paperdir, classlist, outfile, which=None):
     classlist = Path(classlist)
     outfile = Path(outfile)
 
+    print("Annotating papers with fake student data and scribbling on pages...")
     if not which:
         papers = glob(str(paperdir / "exam_*.pdf"))
     else:
@@ -150,15 +151,14 @@ def fillInExams(paperdir, classlist, outfile, which=None):
     # need to use `str(outfile)` for pumypdf < 1.16.14
     # https://github.com/pymupdf/PyMuPDF/issues/466
     bigdoc.save(outfile)
+    print('Assembled in "{}"'.format(outfile))
 
 
 def main():
-    print("Annotating papers with fake student data and scribbling on pages...")
     specdir = Path(_specdir)
     classlist = specdir / "classlist.csv"
     outfile = "fake_scribbled_exams.pdf"
-    fillInExams(_paperdir, classlist, outfile)
-    print('Assembled in "{}"'.format(outfile))
+    fillInFakeDataOnExams(_paperdir, classlist, outfile)
 
 
 if __name__ == "__main__":

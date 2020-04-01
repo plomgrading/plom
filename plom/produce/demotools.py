@@ -17,12 +17,12 @@ from plom.textools import buildLaTeX
 
 def buildDemoSourceFiles():
     os.makedirs("sourceVersions", exist_ok=True)
-    print("LaTeXing example exam file: latexTemplate.tex")
+    print("LaTeXing example exam file: latexTemplate.tex -> version1.pdf")
     content = pkg_resources.resource_string("plom", "testTemplates/latexTemplate.tex")
     if not buildLaTeXExam2(content, Path("sourceVersions") / "version1.pdf"):
         return False
 
-    print("LaTeXing example exam file: latexTemplatev2.tex")
+    print("LaTeXing example exam file: latexTemplatev2.tex -> version2.pdf")
     content = pkg_resources.resource_string("plom", "testTemplates/latexTemplatev2.tex")
     if not buildLaTeXExam2(content, Path("sourceVersions") / "version2.pdf"):
         return False
@@ -45,6 +45,10 @@ def buildLaTeXExam2(src, filename):
     return True
 
 
-if __name__ == "__main__":
+def main():
     if not buildDemoSourceFiles():
         exit(1)
+
+
+if __name__ == "__main__":
+    main()
