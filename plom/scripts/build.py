@@ -127,7 +127,9 @@ def buildDatabaseAndPapers(blank):
 
 
 parser = argparse.ArgumentParser()
-sub = parser.add_subparsers(dest="command", description="Perform tasks related to building tests.")
+sub = parser.add_subparsers(
+    dest="command", description="Perform tasks related to building tests."
+)
 #
 spC = sub.add_parser(
     "new", help="Create new spec file", description="Create new spec file."
@@ -150,7 +152,7 @@ spL = sub.add_parser(
     "class",
     help="Read in a classlist",
     epilog=processClasslist.__doc__,
-    formatter_class=argparse.RawDescriptionHelpFormatter
+    formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 group = spL.add_mutually_exclusive_group(required=True)
 group.add_argument("classlist", nargs="?", help="filename in csv format")
