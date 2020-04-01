@@ -54,6 +54,8 @@ def main():
     subprocess.check_call(split("plom-scan read -w 4567"))
     subprocess.check_call(split("plom-scan upload -w 4567"))
 
+    time.sleep(0.5)
+
     print('\n*** Now run "plom-client" ***\n')
     # TODO: output account info
 
