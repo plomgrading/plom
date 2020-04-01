@@ -108,7 +108,7 @@ def processScans(fname):
     # go into png directory
     os.chdir("scanPNGs")
 
-    # Gamma shift the images
+    print("Gamma shift the images")
     # list and len bit crude here: more pythonic to leave as iterator?
     stuff = list(glob.glob("*.png"))
     N = len(stuff)

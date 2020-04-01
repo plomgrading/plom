@@ -13,6 +13,8 @@ from plom import specdir
 from plom.produce import buildAllPapers, confirmProcessed, confirmNamed
 from plom.produce import paperdir
 from plom.produce import processClasslist
+from plom.produce.demotools import buildDemoSourceFiles
+
 
 dbfile = os.path.join(specdir, "plom.db")
 
@@ -31,15 +33,14 @@ def checkTomlExtension(fname):
 
 
 def createSpecificationFile(fname):
-    print('Creating specification file with name "{}"'.format(fname))
+    print('Creating specification file from template: "{}"'.format(fname))
+    print('  * Please edit the template spec "{}"'.format(fname))
     template = pkg_resources.resource_string("plom", "templateTestSpec.toml")
     with open(fname, "wb") as fh:
         fh.write(template)
     print('Creating "sourceVersions" directory for your test source PDFs.')
     os.makedirs("sourceVersions", exist_ok=True)
-    print(
-        "Please edit the template specification file and copy your source test PDFs into the sourceVersions directory as version1.pdf, version2.pdf etc."
-    )
+    print("  * Please copy your test in as version1.pdf, version2.pdf, etc.")
 
 
 def parseAndVerifySpecification(fname):
@@ -61,8 +62,6 @@ def parseAndVerifySpecification(fname):
         )
 
 
-
-
 def buildDatabase(spec):
     from plom.produce import buildPlomDB
 
@@ -72,7 +71,7 @@ def buildDatabase(spec):
 
     print("Creating plom database")
     buildPlomDB.buildExamDatabase(spec, dbfile)
-    print("Done!")
+    print("Database created successfully")
 
 
 def buildBlankPapers(spec):
@@ -85,12 +84,19 @@ def buildBlankPapers(spec):
 def buildNamedPapers(spec):
     if spec["numberToName"] > 0:
         print(
-            "Building {} pre-named papers and {} blank papers...".format(
-                spec["numberToName"], spec["numberToProduce"] - spec["numberToName"]
+            'Building {} pre-named papers and {} blank papers in "{}"...'.format(
+                spec["numberToName"],
+                spec["numberToProduce"] - spec["numberToName"],
+                paperdir,
             )
         )
     else:
-        print("Building {} blank papers...".format(spec["numberToProduce"]))
+        print(
+            'Building {} blank papers in "{}"...'.format(
+                spec["numberToProduce"], paperdir
+            )
+        )
+
     buildAllPapers(spec, dbfile, named=True)
     print("Checking papers produced and updating databases")
     confirmProcessed(spec, dbfile)
@@ -114,7 +120,6 @@ def buildDatabaseAndPapers(blank):
 
     buildDatabase(spec)
 
-    print('Making "{}" directory for papers'.format(paperdir))
     os.makedirs(paperdir, exist_ok=True)
     if blank:
         buildBlankPapers(spec)
@@ -123,13 +128,21 @@ def buildDatabaseAndPapers(blank):
 
 
 parser = argparse.ArgumentParser()
-sub = parser.add_subparsers(dest="command", description="Perform tasks related to building tests.")
+sub = parser.add_subparsers(
+    dest="command", description="Perform tasks related to building tests."
+)
 #
 spC = sub.add_parser(
     "new", help="Create new spec file", description="Create new spec file."
 )
-spC.add_argument(
+group = spC.add_mutually_exclusive_group(required=False)
+group.add_argument(
     "specFile", nargs="?", default="testSpec.toml", help="defaults to '%(default)s'.",
+)
+group.add_argument(
+    "--demo",
+    action="store_true",
+    help="Use an auto-generated demo test. **Obviously not for real use**",
 )
 #
 spP = sub.add_parser(
@@ -146,7 +159,7 @@ spL = sub.add_parser(
     "class",
     help="Read in a classlist",
     epilog=processClasslist.__doc__,
-    formatter_class=argparse.RawDescriptionHelpFormatter
+    formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 group = spL.add_mutually_exclusive_group(required=True)
 group.add_argument("classlist", nargs="?", help="filename in csv format")
@@ -177,10 +190,18 @@ def main():
     args = parser.parse_args()
 
     if args.command == "new":
-        # check the file extension
-        fname = checkTomlExtension(args.specFile)
+        if args.demo:
+            fname = "demoSpec.toml"
+        else:
+            fname = checkTomlExtension(args.specFile)
         # copy the template spec into place
         createSpecificationFile(fname)
+        if args.demo:
+            print("DEMO MODE: building source files")
+            if not buildDemoSourceFiles():
+                exit(1)
+            print('DEMO MODE: continuing as if "parse" command was run...')
+            parseAndVerifySpecification(fname)
     elif args.command == "parse":
         # check the file extension
         fname = checkTomlExtension(args.specFile)

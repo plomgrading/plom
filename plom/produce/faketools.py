@@ -50,12 +50,12 @@ possibleAns = [
 ]
 
 
-def fillInExams(paperdir, classlist, outfile, which=None):
+def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
     """Simulate writing an exam by scribbling names, numbers, and answers.
 
     Args:
         paperdir: directory containing the blank exams.
-            Can be a string or anything convertable to pathlib `Path` object.
+            Can be a string or anything convertible to pathlib `Path` object.
         classlist: path and filename of the classlist (as csv file).
         outfile: write results into this concatenated PDF file.
         which (optional): by default, scribble on all exams or specify
@@ -66,6 +66,7 @@ def fillInExams(paperdir, classlist, outfile, which=None):
     classlist = Path(classlist)
     outfile = Path(outfile)
 
+    print("Annotating papers with fake student data and scribbling on pages...")
     if not which:
         papers = glob(str(paperdir / "exam_*.pdf"))
     else:
@@ -81,7 +82,11 @@ def fillInExams(paperdir, classlist, outfile, which=None):
 
     for i, fname in enumerate(papers):
         r = df.iloc[i]
-        print((fname, r.id, r.studentName))
+        print(
+            "  {}: {}, {}, scribbled".format(
+                os.path.basename(fname), r.id, r.studentName
+            )
+        )
 
         name = r.studentName
         sn = str(r.id)
@@ -146,13 +151,14 @@ def fillInExams(paperdir, classlist, outfile, which=None):
     # need to use `str(outfile)` for pumypdf < 1.16.14
     # https://github.com/pymupdf/PyMuPDF/issues/466
     bigdoc.save(outfile)
+    print('Assembled in "{}"'.format(outfile))
 
 
 def main():
     specdir = Path(_specdir)
     classlist = specdir / "classlist.csv"
     outfile = "fake_scribbled_exams.pdf"
-    fillInExams(_paperdir, classlist, outfile)
+    fillInFakeDataOnExams(_paperdir, classlist, outfile)
 
 
 if __name__ == "__main__":
