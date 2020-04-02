@@ -374,13 +374,13 @@ class PlomDB:
             if g.scanned == False:
                 # TODO - deal with empty DO NOT MARK groups correctly
                 sflag = False
-                log.warning("Check uploaded - Group {} not scanned".format(g.gid))
+                log.debug("Check: Test {} not yet fully scanned: (at least) {} not present".format(tref.testNumber, g.gid))
                 break
         with plomdb.atomic():
             if sflag:
                 tref.scanned = True
                 log.info(
-                    "Check uploaded - Test {} is all scanned".format(tref.testNumber)
+                    "Check uploaded - Test {} is now fully scanned".format(tref.testNumber)
                 )
                 # set the status of the sumdata
                 sdref = tref.sumdata[0]
@@ -391,28 +391,30 @@ class PlomDB:
             tref.save()
 
     def setGroupReady(self, gref):
-        log.info("All of group {} is scanned".format(gref.gid))
+        log.debug("All of group {} is scanned".format(gref.gid))
         if gref.groupType == "i":
             iref = gref.iddata[0]
             # check if group already identified - can happen if printed tests with names
             if iref.status == "done":
-                log.debug("Group {} is already identified.".format(gref.gid))
+                log.info("Group {} is already identified.".format(gref.gid))
             else:
                 iref.status = "todo"
-                log.debug("Group {} is ready to be identified.".format(gref.gid))
+                log.info("Group {} is ready to be identified.".format(gref.gid))
             iref.save()
         elif gref.groupType == "d":
             # we don't do anything with these groups
-            log.debug(
+            log.info(
                 "Group {} is DoNotMark - all scanned, nothing to be done.".format(
                     gref.gid
                 )
             )
         elif gref.groupType == "m":
-            log.debug("Group {} is ready to be marked.".format(gref.gid))
+            log.info("Group {} is ready to be marked.".format(gref.gid))
             qref = gref.questiondata[0]
             qref.status = "todo"
             qref.save()
+        else:
+            raise ValueError("Tertium non datur: should never happen")
 
     def checkGroupAllUploaded(self, pref):
         gref = pref.group
