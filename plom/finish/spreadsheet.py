@@ -20,11 +20,6 @@ CSVFilename = "testMarks.csv"
 
 
 def writeSpreadsheet(spreadSheetDict):
-    print(">>> Warning <<<")
-    print(
-        "This script currently outputs all scanned papers whether or not they have been marked completely."
-    )
-
     head = ["StudentID", "StudentName", "TestNumber"]
     for q in range(1, numberOfQuestions + 1):
         head.append("Question {} Mark".format(q))
@@ -112,7 +107,13 @@ def main(server=None, password=None):
     msgr.closeUser()
     msgr.stop()
 
+    # TODO: do we need this warning?
+    print(">>> Warning <<<")
+    print(
+        "This script currently outputs all scanned papers whether or not they have been marked completely."
+    )
     writeSpreadsheet(spreadSheetDict)
+    print('Marks written to "{}"'.format(CSVFilename))
 
 
 if __name__ == "__main__":
