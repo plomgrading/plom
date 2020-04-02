@@ -22,7 +22,13 @@ from plom.plom_exceptions import *
 numberOfTests = 0
 numberOfQuestions = 0
 
-# ----------------------
+
+# parallel function used below, must be defined in root of module
+def parfcn(z):
+    x, y = z
+    if x and y:
+        makeCover(*x)
+        reassemble(*y)
 
 
 def buildCoverPage(msgr, shortName, outDir, t, maxMarks):
@@ -111,21 +117,15 @@ def main(server=None, pwd=None):
     msgr.closeUser()
     msgr.stop()
 
-    def f(z):
-        x, y = z
-        if x and y:
-            makeCover(*x)
-            reassemble(*y)
-
     N = len(coverpagelist)
     print("Reassembling {} papers...".format(N))
     with Pool() as p:
         r = list(
-            tqdm(p.imap_unordered(f, list(zip(coverpagelist, pagelists))), total=N)
+            tqdm(p.imap_unordered(parfcn, list(zip(coverpagelist, pagelists))), total=N)
         )
     # Serial
     # for z in zip(coverpagelist, pagelists):
-    #    f(z)
+    #    parfcn(z)
 
     print(">>> Warning <<<")
     print(

@@ -20,7 +20,10 @@ from plom.plom_exceptions import *
 numberOfTests = 0
 numberOfQuestions = 0
 
-# ----------------------
+
+# Parallel function used below, must be defined in root of module
+def parfcn(y):
+    reassemble(*y)
 
 
 def reassembleTestCMD(msgr, shortName, outDir, t, sid):
@@ -77,13 +80,10 @@ def main(server=None, pwd=None):
     msgr.closeUser()
     msgr.stop()
 
-    def _f(y):
-        reassemble(*y)
-
     N = len(pagelists)
     print("Reassembling {} papers...".format(N))
     with Pool() as p:
-        r = list(tqdm(p.imap_unordered(_f, pagelists), total=N))
+        r = list(tqdm(p.imap_unordered(parfcn, pagelists), total=N))
 
     print(">>> Warning <<<")
     print(
