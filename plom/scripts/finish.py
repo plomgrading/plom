@@ -5,9 +5,9 @@
 
 ## Overview of the "finishing" process
 
-  1. Use the `check_completed` command to check on progress.
+  1. Use the `status` command to check on progress.
 
-  2. Use the `spreadsheet` command to produce a CSV file summarizing
+  2. Use the `csv` command to produce a CSV file summarizing
      completed papers and marks (so far, if marking is ongoing).
 
   3. Run the `reassemble` command build PDFs of marked papers.
@@ -47,12 +47,12 @@ parser = argparse.ArgumentParser(
 sub = parser.add_subparsers(dest="command")
 
 spCheck = sub.add_parser(
-    "check_completed",
+    "status",
     help="how's progress?",
     description="List progress and which tests that have been completed.",
 )
 spCSV = sub.add_parser(
-    "spreadsheet",
+    "csv",
     help="CSV file with marks/progress info",
     description='Create a spreadsheet of grades named "{}".'.format(CSVFilename),
     epilog="""
@@ -93,9 +93,9 @@ for x in (spCheck, spCSV, spAssemble, spClear):
 def main():
     args = parser.parse_args()
 
-    if args.command == "check_completed":
+    if args.command == "status":
         plom.finish.check_completed.main(args.server, args.password)
-    elif args.command == "spreadsheet":
+    elif args.command == "csv":
         plom.finish.spreadsheet.main(args.server, args.password)
     elif args.command == "reassemble":
         if args.totalled_only:
