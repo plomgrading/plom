@@ -3,9 +3,8 @@
 
 """Plom script for post-grading tasks.
 
-NOTE: For now, most of these tasks must be run on the server, and
-in the server's directory (where you ran `plom-server launch`).
-This will change.
+NOTE: Some of these tasks must be run on the server, and in the server's
+directory (where you ran `plom-server launch`).  This will change.
 """
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
