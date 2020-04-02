@@ -13,11 +13,8 @@ from plom.misc_utils import format_int_list_with_runs
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import *
 
-numberOfTests = 0
-numberOfQuestions = 0
 
-
-def proc_everything(comps):
+def proc_everything(comps, numberOfQuestions):
     idList = []
     tList = []
     mList = [0 for j in range(numberOfQuestions + 1)]
@@ -39,8 +36,8 @@ def proc_everything(comps):
     return idList, tList, mList, sList, cList, numScanned
 
 
-def print_everything(comps, numPapersProduced):
-    idList, tList, mList, sList, cList, numScanned = proc_everything(comps)
+def print_everything(comps, numPapersProduced, numQ):
+    idList, tList, mList, sList, cList, numScanned = proc_everything(comps, numQ)
     print("*********************")
     print("** Completion data **")
     print("Produced papers: {}".format(numPapersProduced))
@@ -48,7 +45,7 @@ def print_everything(comps, numPapersProduced):
     print("Completed papers: {}".format(format_int_list_with_runs(cList)))
     print("Identified papers: {}".format(format_int_list_with_runs(idList)))
     print("Totalled papers: {}".format(format_int_list_with_runs(tList)))
-    for n in range(numberOfQuestions + 1):
+    for n in range(numQ + 1):
         print(
             "Number of papers with {} questions marked = {}. Tests numbers = {}".format(
                 n, mList[n], format_int_list_with_runs(sList[n])
@@ -92,9 +89,9 @@ def main(server=None, password=None):
     msgr.closeUser()
     msgr.stop()
 
-    print_everything(completions, numberOfTests)
+    print_everything(completions, numberOfTests, numberOfQuestions)
 
-    idList, tList, mList, sList, cList, numScanned = proc_everything(completions)
+    idList, tList, mList, sList, cList, numScanned = proc_everything(completions, numberOfQuestions)
     numberComplete = len(cList)
     print("{} of {} complete".format(numberComplete, numScanned))
     if numberComplete == numScanned:
