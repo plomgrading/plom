@@ -1,8 +1,6 @@
 from setuptools import setup, find_packages
 from glob import glob
 
-python_requires = ">=3.6"
-
 iconList = []
 for fn in glob("plom/client/icons/*.svg"):
     iconList.append(fn)
@@ -17,6 +15,7 @@ setup(
     url="https://plom.gitlab.io/plom/",
     author="Andrew Rechnitzer",
     license="AGPL3",
+    python_requires=">=3.6",
     packages=find_packages(),
     entry_points={
         "console_scripts": [
