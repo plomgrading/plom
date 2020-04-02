@@ -3,17 +3,22 @@
 
 """Plom script for post-grading tasks.
 
-Here is an overview of the "finishing" process:
+## Overview of the "finishing" process
 
   1. Use the `check_completed` command to check on progress.
 
-  2. At any time, use the `spreadsheet` command to produce a CSV file
-     summarizing completed papers and marks.
+  2. Use the `spreadsheet` command to produce a CSV file summarizing
+     completed papers and marks (so far, if marking is ongoing).
 
   3. Run the `reassemble` command build PDFs of marked papers.
 
-These reassembled PDF files can be returned to students in various ways.
-TODO: more info.
+
+## Digital return
+
+The reassembled PDF files can be returned to students in various ways.
+Plom currently includes tools to upload to a webpage (with a secret code
+distributed to students via Canvas).  See contents of the `plom.finish`
+module for now---we anticipate these tools to mature in future releases.
 """
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
