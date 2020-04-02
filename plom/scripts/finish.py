@@ -16,9 +16,8 @@
 ## Digital return
 
 The reassembled PDF files can be returned to students in various ways.
-Plom currently includes tools to upload to a webpage (with a secret code
-distributed to students via Canvas).  See contents of the `plom.finish`
-module for now---we anticipate these tools to mature in future releases.
+The `webpage` command builds a webpage with individualized secret codes
+to be distributed to each student e.g., via Canvas or another LMS.
 """
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
@@ -29,6 +28,7 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import os
 import shutil
+from textwrap import dedent
 
 # TODO: be more decisive about how this should be
 from plom.finish.clearLogin import clearLogin
@@ -37,6 +37,7 @@ import plom.finish.spreadsheet
 from plom.finish.spreadsheet import CSVFilename
 import plom.finish.reassemble_completed
 import plom.finish.reassemble_ID_only
+import plom.finish.coded_return
 
 
 parser = argparse.ArgumentParser(
@@ -48,7 +49,7 @@ sub = parser.add_subparsers(dest="command")
 
 spCheck = sub.add_parser(
     "status",
-    help="how's progress?",
+    help="How's progress?",
     description="List progress and which tests that have been completed.",
 )
 spCSV = sub.add_parser(
@@ -79,7 +80,25 @@ spAssemble.add_argument(
     action="store_true",
     help="Reassemble PDF files for ID and totalled (but offline-graded) papers.",
 )
+spCodedReturn = sub.add_parser(
+    "webpage",
+    help="Create HTML page for digital return",
+    description="Prepare HTML page for return using out-of-band per-student secret codes.",
+    epilog=dedent("""
+        The salt string is used to create a per-student access-code using a
+        one-way hash of their student number.  If you have multiple tests/exams
+        in the same course it makes sense to re-use the same salt string for
+        returning each test.
 
+        See the numbers scripts in `plom.finish` for various "beta" tools to
+        assist with digital return---we anticipate these tools maturing in
+        future releases.
+
+        This command must have access to the results of `reassemble`.
+    """),
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
+spCodedReturn.add_argument("--saltstr", type=str, help="Per-course secret salt string")
 spClear = sub.add_parser(
     "clear",
     help='Clear "manager" login',
@@ -102,6 +121,8 @@ def main():
             plom.finish.reassemble_ID_only.main(args.server, args.password)
         else:
             plom.finish.reassemble_completed.main(args.server, args.password)
+    elif args.command == "webpage":
+        plom.finish.coded_return.main(args.saltstr)
     elif args.command == "clear":
         clearLogin(args.server, args.password)
     else:
