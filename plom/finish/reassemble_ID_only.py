@@ -16,6 +16,7 @@ from tqdm import tqdm
 from .testReassembler import reassemble
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import *
+from plom.finish.locationSpecCheck import locationAndSpecCheck
 
 numberOfTests = 0
 numberOfQuestions = 0
@@ -61,9 +62,13 @@ def main(server=None, pwd=None):
         exit(1)
 
     shortName = msgr.getInfoShortName()
-    # spec = msgr.getInfoGeneral()
-    # numberOfTests = spec["numberOfTests"]
-    # numberOfQuestions = spec["numberOfQuestions"]
+    spec = msgr.getInfoGeneral()
+
+    if not locationAndSpecCheck(spec):
+        print("Problems confirming location and specification. Exiting.")
+        msgr.closeUser()
+        msgr.stop()
+        exit(1)
 
     outDir = "reassembled_ID_but_not_marked"
     os.makedirs(outDir, exist_ok=True)
