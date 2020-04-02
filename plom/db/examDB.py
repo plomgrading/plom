@@ -374,13 +374,19 @@ class PlomDB:
             if g.scanned == False:
                 # TODO - deal with empty DO NOT MARK groups correctly
                 sflag = False
-                log.debug("Check: Test {} not yet fully scanned: (at least) {} not present".format(tref.testNumber, g.gid))
+                log.debug(
+                    "Check: Test {} not yet fully scanned: (at least) {} not present".format(
+                        tref.testNumber, g.gid
+                    )
+                )
                 break
         with plomdb.atomic():
             if sflag:
                 tref.scanned = True
                 log.info(
-                    "Check uploaded - Test {} is now fully scanned".format(tref.testNumber)
+                    "Check uploaded - Test {} is now fully scanned".format(
+                        tref.testNumber
+                    )
                 )
                 # set the status of the sumdata
                 sdref = tref.sumdata[0]
@@ -1550,9 +1556,7 @@ class PlomDB:
         markList = []
         for x in query:
             markList.append([x.group.gid, x.status, x.mark, x.markingTime, x.tags])
-        log.debug(
-            'Sending completed Q{}v{} tasks to user "{}"'.format(q, v, username)
-        )
+        log.debug('Sending completed Q{}v{} tasks to user "{}"'.format(q, v, username))
         return markList
 
     def MgetNextTask(self, q, v):
