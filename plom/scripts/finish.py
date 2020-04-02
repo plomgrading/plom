@@ -48,7 +48,7 @@ sub = parser.add_subparsers(dest="command")
 
 spCheck = sub.add_parser(
     "status",
-    help="how's progress?",
+    help="How's progress?",
     description="List progress and which tests that have been completed.",
 )
 spCSV = sub.add_parser(
