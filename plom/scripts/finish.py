@@ -68,7 +68,7 @@ spAssemble.add_argument(
 
 spClear = sub.add_parser(
     "clear",
-    help='Clear "manager" manager',
+    help='Clear "manager" login',
     description='Clear "manager" login after a crash or other expected event.',
 )
 for x in (spCheck, spCSV, spClear):
