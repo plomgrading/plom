@@ -38,6 +38,7 @@ def main():
         "archivedPDFs",
         "pageImages",
         "scanPNGs",
+        "pages",
     ):
         if os.path.exists(f):
             raise RuntimeError('Directory "{}" must not exist for this demo.'.format(f))

@@ -46,7 +46,7 @@ def main(server=None, pwd=None):
     msgr.start()
 
     if not pwd:
-        pwd = getpass.getpass("Please enter the 'manager' password:")
+        pwd = getpass.getpass("Please enter the 'manager' password: ")
 
     try:
         msgr.requestAndSaveToken("manager", pwd)
