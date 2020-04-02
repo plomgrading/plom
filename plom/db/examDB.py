@@ -1001,7 +1001,7 @@ class PlomDB:
                 if datetime.now() - x.time < oneHour:
                     NRecent += 1
 
-        log.debug("Sending progress summary for qv = {}.{}".format(q, v))
+        log.debug("Sending progress summary for Q{}v{}".format(q, v))
         if NMarked == 0:
             return {
                 "NScanned": NScanned,
@@ -1038,7 +1038,7 @@ class PlomDB:
             if x.mark not in rhist[x.username]:
                 rhist[x.username][x.mark] = 0
             rhist[x.username][x.mark] += 1
-        log.debug("Sending mark histogram for qv = {}.{}".format(q, v))
+        log.debug("Sending mark histogram for Q{}v{}".format(q, v))
         return rhist
 
     def RgetQuestionUserProgress(self, q, v):
@@ -1062,7 +1062,7 @@ class PlomDB:
         rval = [nScan]
         for x in rdat:
             rval.append([x, rdat[x]])
-        log.debug("Sending question/user progress for qv = {}.{}".format(q, v))
+        log.debug("Sending question/user progress for Q{}v{}".format(q, v))
         return rval
 
     def RgetCompletions(self):
@@ -1196,7 +1196,7 @@ class PlomDB:
                 ]
             )
         log.debug(
-            "Sending filtered mark-review data. filters (Q,V,U)= {}.{}.{}".format(
+            "Sending filtered mark-review data. filters (Q,V,U)={}.{}.{}".format(
                 filterQ, filterV, filterU
             )
         )
@@ -1549,7 +1549,7 @@ class PlomDB:
         for x in query:
             markList.append([x.group.gid, x.status, x.mark, x.markingTime, x.tags])
         log.debug(
-            'Sending completed qv {}.{} tasks to user "{}"'.format(q, v, username)
+            'Sending completed Q{}v{} tasks to user "{}"'.format(q, v, username)
         )
         return markList
 
@@ -1569,10 +1569,10 @@ class PlomDB:
                     .get()
                 )
             except QuestionData.DoesNotExist as e:
-                log.info("Nothing left on qv {}.{} to-do pile".format(q, v))
+                log.info("Nothing left on Q{}v{} to-do pile".format(q, v))
                 return None
 
-            log.debug("Next qv={}{} task = {}".format(q, v, x.group.gid))
+            log.debug("Next Q{}v{} task = {}".format(q, v, x.group.gid))
             return x.group.gid
 
     def MgiveTaskToClient(self, username, groupID):
