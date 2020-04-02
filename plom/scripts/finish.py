@@ -39,7 +39,11 @@ import plom.finish.reassemble_completed
 import plom.finish.reassemble_ID_only
 
 
-parser = argparse.ArgumentParser(description=__doc__)
+parser = argparse.ArgumentParser(
+    description=__doc__.split("\n")[0],
+    epilog="\n".join(__doc__.split("\n")[1:]),
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
 sub = parser.add_subparsers(dest="command")
 
 spCheck = sub.add_parser(
