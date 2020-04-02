@@ -12,14 +12,12 @@ import getpass
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import *
 
-numberOfTests = 0
-numberOfQuestions = 0
 CSVFilename = "testMarks.csv"
 
 # ----------------------
 
 
-def writeSpreadsheet(spreadSheetDict):
+def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
     head = ["StudentID", "StudentName", "TestNumber"]
     for q in range(1, numberOfQuestions + 1):
         head.append("Question {} Mark".format(q))
@@ -40,6 +38,7 @@ def writeSpreadsheet(spreadSheetDict):
         testWriter.writeheader()
         for t in spreadSheetDict:
             thisTest = spreadSheetDict[t]
+
             if thisTest["marked"] is False:
                 pass  # for testing only
                 # continue
@@ -100,7 +99,6 @@ def main(server=None, password=None):
         exit(0)
 
     spec = msgr.getInfoGeneral()
-    numberOfTests = spec["numberOfTests"]
     numberOfQuestions = spec["numberOfQuestions"]
     spreadSheetDict = msgr.RgetSpreadsheet()
 
@@ -112,7 +110,7 @@ def main(server=None, password=None):
     print(
         "This script currently outputs all scanned papers whether or not they have been marked completely."
     )
-    writeSpreadsheet(spreadSheetDict)
+    writeSpreadsheet(numberOfQuestions, spreadSheetDict)
     print('Marks written to "{}"'.format(CSVFilename))
 
 
