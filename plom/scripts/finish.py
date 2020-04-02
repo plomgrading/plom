@@ -76,7 +76,7 @@ spClear = sub.add_parser(
     help='Clear "manager" login',
     description='Clear "manager" login after a crash or other expected event.',
 )
-for x in (spCheck, spCSV, spClear):
+for x in (spCheck, spCSV, spAssemble, spClear):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
