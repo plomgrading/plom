@@ -1,5 +1,5 @@
-from aiohttp import web, MultipartWriter, MultipartReader
 import os
+from aiohttp import web, MultipartWriter, MultipartReader
 
 from .routeutils import authByToken, authByToken_validFields
 
