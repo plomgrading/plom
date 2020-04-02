@@ -20,8 +20,8 @@ import shutil
 from plom.finish.clearLogin import clearLogin
 
 
-parser = argparse.ArgumentParser()
-sub = parser.add_subparsers(dest="command", description=__doc__)
+parser = argparse.ArgumentParser(description=__doc__)
+sub = parser.add_subparsers(dest="command")
 
 spA = sub.add_parser("stuff", help="do stuff")
 spB = sub.add_parser("todo", help="help with stuff")
