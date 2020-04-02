@@ -37,17 +37,22 @@ import plom.finish.reassemble_ID_only
 parser = argparse.ArgumentParser(description=__doc__)
 sub = parser.add_subparsers(dest="command")
 
-spCheck = sub.add_parser("check_completed",
+spCheck = sub.add_parser(
+    "check_completed",
     help="how's progress?",
-    description="List progress and which tests that have been completed."
+    description="List progress and which tests that have been completed.",
 )
-spCSV = sub.add_parser("spreadsheet",
+spCSV = sub.add_parser(
+    "spreadsheet",
     help="CSV file with marks/progress info",
     description='Create a spreadsheet of grades named "{}".'.format(CSVFilename),
-    epilog="If grading is not yet complete, the spreadsheet contains "
-        "partial info and any warnings so far.",
+    epilog="""
+        If grading is not yet complete, the spreadsheet contains partial info
+        and any warnings so far.
+    """,
 )
-spAssemble = sub.add_parser("reassemble",
+spAssemble = sub.add_parser(
+    "reassemble",
     help="Create PDFs to return to students",
     description="""
         After papers have been ID'd and marked, this command builds PDFs
