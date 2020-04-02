@@ -51,6 +51,7 @@ def main():
 
     # Start server into background
     serverproc = subprocess.Popen(split("plom-server launch"))
+    time.sleep(1.0)
 
     subprocess.check_call(split("plom-scan process fake_scribbled_exams.pdf"))
     subprocess.check_call(split("plom-scan read -w 4567"))
