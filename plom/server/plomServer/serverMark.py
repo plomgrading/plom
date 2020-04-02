@@ -6,8 +6,12 @@ import os
 import subprocess
 import tempfile
 import uuid
+import logging
 
 from plom.textools import texFragmentToPNG
+
+
+log = logging.getLogger("server")
 
 
 def MgetQuestionMax(self, q, v):
@@ -106,7 +110,7 @@ def MreturnMarkedTask(
 
     # Should check the aname is valid png - just check header presently
     if imghdr.what(aname) != "png":
-        print("EEK = {}".format(imghdr.what(aname)))
+        log.error("EEK = {}".format(imghdr.what(aname)))
         return [False, "Misformed image file. Try again."]
     # Also check the md5sum matches
     md5n = hashlib.md5(open(aname, "rb").read()).hexdigest()

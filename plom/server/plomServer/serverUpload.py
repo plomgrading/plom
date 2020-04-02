@@ -4,8 +4,12 @@ import shlex
 import shutil
 import subprocess
 import uuid
+import logging
 
 from plom.server import pageNotSubmitted
+
+
+log = logging.getLogger("server")
 
 
 def addKnownPage(self, t, p, v, fname, image, md5o):
@@ -22,10 +26,9 @@ def addKnownPage(self, t, p, v, fname, image, md5o):
             fh.write(image)
         md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
         assert md5n == md5o
-        print("Storing {} as {} = {}".format(prefix, newName, val))
+        log.debug("Storing {} as {} = {}".format(prefix, newName, val))
     else:
-        print("Did not store page")
-        print("From database = {}".format(val[1]))
+        log.debug("Did not store page.  From database = {}".format(val[1]))
     return val
 
 
@@ -43,10 +46,9 @@ def addUnknownPage(self, fname, image, md5o):
             fh.write(image)
         md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
         assert md5n == md5o
-        print("Storing {} = {}".format(newName, val))
+        log.debug("Storing {} = {}".format(newName, val))
     else:
-        print("Did not store page")
-        print("From database = {}".format(val[1]))
+        log.debug("Did not store page.  From database = {}".format(val[1]))
     return val
 
 
@@ -64,10 +66,9 @@ def addCollidingPage(self, t, p, v, fname, image, md5o):
             fh.write(image)
         md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
         assert md5n == md5o
-        print("Storing {} as {} = {}".format(prefix, newName, val))
+        log.debug("Storing {} as {} = {}".format(prefix, newName, val))
     else:
-        print("Did not store page")
-        print("From database = {}".format(val[1]))
+        log.debug("Did not store page.  From database = {}".format(val[1]))
     return val
 
 
@@ -175,13 +176,13 @@ def unknownToTestPage(self, fname, test, page, rotation):
         if len(val) == 3:
             # existing page in place - create a colliding page
             newFilename = "pages/collidingPages/" + os.path.split(fname)[1]
-            print("Collide = {}".format(newFilename))
+            log.debug("Collide = {}".format(newFilename))
             if self.DB.moveUnknownToCollision(fname, newFilename, test, page)[0]:
                 shutil.move(fname, newFilename)
                 return [True, "collision"]
         else:
             newFilename = "pages/originalPages/" + os.path.split(fname)[1]
-            print("Original = {}".format(newFilename))
+            log.debug("Original = {}".format(newFilename))
             if self.DB.moveUnknownToPage(fname, newFilename, test, page)[0]:
                 shutil.move(fname, newFilename)
                 return [True, "testPage"]
