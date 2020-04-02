@@ -1,9 +1,11 @@
-from aiohttp import web, MultipartWriter, MultipartReader
-import json
 import os
+import json
+
+from aiohttp import web, MultipartWriter, MultipartReader
 
 from .plom_routeutils import authByToken, authByToken_validFields, noAuthOnlyLog
 from .plom_routeutils import validFields, logRequest
+from .plom_routeutils import log
 
 
 class UserInitHandler:
@@ -28,7 +30,7 @@ class UserInitHandler:
             return web.Response(status=400)  # malformed request.
         if not self.server.authority.checkPassword(data["user"], data["password"]):
             return web.Response(status=401)
-        print("User {} force-logout self".format(data["user"]))
+        log.info('User "{}" force-logout self'.format(data["user"]))
         self.server.closeUser(data["user"])
         return web.Response(status=200)
 
@@ -51,7 +53,7 @@ class UserInitHandler:
             return web.Response(status=400)  # malformed request.
         theuser = request.match_info["user"]
         self.server.closeUser(theuser)
-        print("Manager force-logout user {}".format(theuser))
+        log.info('Manager force-logout user "{}"'.format(theuser))
         return web.Response(status=200)
 
     # @routes.put("/users/{user}")

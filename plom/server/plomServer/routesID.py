@@ -5,6 +5,7 @@ from aiohttp import web, MultipartWriter, MultipartReader
 
 from plom import specdir
 from .plom_routeutils import authByToken, authByToken_validFields
+from .plom_routeutils import log
 
 # I couldn't make this work with the auth deco
 # routes = web.RouteTableDef()
@@ -114,7 +115,7 @@ class IDHandler:
             return web.Response(status=401)  # only manager
 
         rmsg = self.server.IDgetRandomImage()
-        print("Appending file {}".format(rmsg))
+        log.debug("Appending file {}".format(rmsg))
         with MultipartWriter("images") as mpwriter:
             for fn in rmsg[1:]:
                 if os.path.isfile(fn):
