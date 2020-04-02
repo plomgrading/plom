@@ -161,7 +161,7 @@ job fullWorkFlow:
     - A=`cat testMarks.csv  | wc -l`  # How many lines?
     - bash -c "[[ $A == 21 ]]"        # should be 20 + 1
     - file -b testMarks.csv  | grep ASCII   # should be ascii test
-    - python3 -m plom.finish.024a_reassemble_completed -s localhost -w 1234
+    - plom-finish reassemble -w 1234
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 20 ]]"
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627

@@ -30,6 +30,8 @@ from plom.finish.clearLogin import clearLogin
 import plom.finish.check_completed
 import plom.finish.spreadsheet
 from plom.finish.spreadsheet import CSVFilename
+import plom.finish.reassemble_completed
+import plom.finish.reassemble_ID_only
 
 
 parser = argparse.ArgumentParser(description=__doc__)
@@ -46,12 +48,24 @@ spCSV = sub.add_parser("spreadsheet",
         "partial info and any warnings so far.",
 )
 spAssemble = sub.add_parser("reassemble",
-    help="TODO",
-    description="TODO.",
-    epilog="WARNING: This command must be run on the server, and in the "
-           "server's directory (where you ran `plom-server launch`).  "
-           "This may change in the future."
+    help="Create PDFs to return to students",
+    description="""
+        After papers have been ID'd and marked, this command builds PDFs
+        to return to students.  A special case deals with the online-return
+        of papers that were marked offline (before scanning).
+    """,
+    epilog="""
+        WARNING: This command must be run on the server, and in the
+        server's directory (where you ran `plom-server launch`).
+        This may change in the future.
+    """,
 )
+spAssemble.add_argument(
+    "--totalled_only",
+    action="store_true",
+    help="Reassemble PDF files for ID and totalled (but offline-graded) papers.",
+)
+
 spClear = sub.add_parser(
     "clear",
     help='Clear "manager" manager',
@@ -70,7 +84,10 @@ def main():
     elif args.command == "spreadsheet":
         plom.finish.spreadsheet.main(args.server, args.password)
     elif args.command == "reassemble":
-        raise ValueError("TODO and --optarg")
+        if args.totalled_only:
+            plom.finish.reassemble_ID_only.main(args.server, args.password)
+        else:
+            plom.finish.reassemble_completed.main(args.server, args.password)
     elif args.command == "clear":
         clearLogin(args.server, args.password)
     else:
