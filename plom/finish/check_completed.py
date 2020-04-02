@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 __author__ = "Andrew Rechnitzer"
@@ -60,35 +59,21 @@ def print_everything(comps, numPapersProduced):
         )
 
 
-if __name__ == "__main__":
-    # get commandline args if needed
-    parser = argparse.ArgumentParser(
-        description="Returns list of tests that have been completed. No arguments = run as normal."
-    )
-    parser.add_argument("-w", "--password", type=str)
-    parser.add_argument(
-        "-s",
-        "--server",
-        metavar="SERVER[:PORT]",
-        action="store",
-        help="Which server to contact.",
-    )
-    args = parser.parse_args()
-    if args.server and ":" in args.server:
-        s, p = args.server.split(":")
+def main(server=None, password=None):
+    if server and ":" in server:
+        s, p = server.split(":")
         msgr = FinishMessenger(s, port=p)
     else:
-        msgr = FinishMessenger(args.server)
+        msgr = FinishMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if args.password is None:
+    if not password:
         try:
             pwd = getpass.getpass("Please enter the 'manager' password:")
         except Exception as error:
             print("ERROR", error)
     else:
-        pwd = args.password
+        pwd = password
 
     # get started
     try:
@@ -99,7 +84,7 @@ if __name__ == "__main__":
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another finishing-script or manager-client running,\n"
             "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run the 029_clearManagerLogin.py script."
+            "In order to force-logout the existing authorisation run `plom-finish clear`."
         )
         exit(-1)
 
@@ -122,3 +107,7 @@ if __name__ == "__main__":
     else:
         print("Something terrible has happened")
         exit(-42)
+
+
+if __name__ == "__main__":
+    main()

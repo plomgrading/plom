@@ -17,20 +17,24 @@ import argparse
 import os
 import shutil
 
+# TODO: be more decisive about how this should be
 from plom.finish.clearLogin import clearLogin
+import plom.finish.check_completed
 
 
 parser = argparse.ArgumentParser(description=__doc__)
 sub = parser.add_subparsers(dest="command")
 
-spA = sub.add_parser("stuff", help="do stuff")
-spB = sub.add_parser("todo", help="help with stuff")
-spC = sub.add_parser(
+spCheck = sub.add_parser("check_completed",
+    help="how's progress?",
+    description="List progress and which tests that have been completed."
+)
+spClear = sub.add_parser(
     "clear",
     help='Clear "manager" manager',
     description='Clear "manager" login after a crash or other expected event.',
 )
-for x in (spB, spC):
+for x in (spCheck, spClear):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
@@ -38,10 +42,8 @@ for x in (spB, spC):
 def main():
     args = parser.parse_args()
 
-    if args.command == "stuff":
-        print("Stuff")
-    elif args.command == "todo":
-        print("todo")
+    if args.command == "check_completed":
+        plom.finish.check_completed.main(args.server, args.password)
     elif args.command == "clear":
         clearLogin(args.server, args.password)
     else:

@@ -153,11 +153,11 @@ job fullWorkFlow:
     - plom-scan upload -c -s localhost -w 4567
     - plom-scan status -s localhost -w 4567
     ## not supposed to be done yet:
-    - if (python3 -m plom.finish.022_check_completed -s localhost -w 1234); then false; else true; fi
+    - if (plom-finish check_completed -w 1234); then false; else true; fi
     - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123
     - python3 -m plom.client.randoMarker -s localhost -u user0 -w 0123
     - python3 -m plom.finish.021_startHere
-    - python3 -m plom.finish.022_check_completed -s localhost -w 1234
+    - plom-finish check_completed -w 1234
     ## currently 024 must be run in the server directory
     - python3 -m plom.finish.023_spreadsheet -s localhost -w 1234
     - A=`cat testMarks.csv  | wc -l`  # How many lines?
