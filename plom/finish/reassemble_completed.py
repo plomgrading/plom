@@ -117,12 +117,11 @@ def main(server=None, pwd=None):
             makeCover(*x)
             reassemble(*y)
 
+    N = len(coverpagelist)
+    print("Reassembling {} papers...".format(N))
     with Pool() as p:
         r = list(
-            tqdm(
-                p.imap_unordered(f, list(zip(coverpagelist, pagelists))),
-                total=len(coverpagelist),
-            )
+            tqdm(p.imap_unordered(f, list(zip(coverpagelist, pagelists))), total=N)
         )
     # Serial
     # for z in zip(coverpagelist, pagelists):
