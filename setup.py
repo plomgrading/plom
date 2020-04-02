@@ -1,6 +1,8 @@
 from setuptools import setup, find_packages
 from glob import glob
 
+python_requires = ">=3.6"
+
 iconList = []
 for fn in glob("plom/client/icons/*.svg"):
     iconList.append(fn)
