@@ -216,6 +216,10 @@ def getServerInfo():
             log.debug("Server details loaded: {}".format(serverInfo))
     except FileNotFoundError:
         log.warning("Cannot find server details, using defaults")
+    # Special treatment for chatty modules
+    # TODO: nicer way to do this?
+    if serverInfo["LogLevel"].upper() == "INFO":
+        logging.getLogger("aiohttp.access").setLevel("WARNING")
 
 
 def launch():
