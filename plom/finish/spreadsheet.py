@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 __author__ = "Andrew Rechnitzer"
@@ -7,7 +6,6 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import argparse
 import csv
 import getpass
 
@@ -77,39 +75,23 @@ def writeSpreadsheet(spreadSheetDict):
             testWriter.writerow(row)
 
 
-if __name__ == "__main__":
-    # get commandline args if needed
-    parser = argparse.ArgumentParser(
-        description='Create a spreadsheet of grades named "{}".'.format(CSVFilename),
-        epilog="If grading is not yet complete, the spreadsheet contains "
-        "partial info and any warnings so far.",
-    )
-    parser.add_argument("-w", "--password", type=str)
-    parser.add_argument(
-        "-s",
-        "--server",
-        metavar="SERVER[:PORT]",
-        action="store",
-        help="Which server to contact.",
-    )
-    args = parser.parse_args()
-    if args.server and ":" in args.server:
-        s, p = args.server.split(":")
+def main(server=None, password=None):
+    if server and ":" in server:
+        s, p = server.split(":")
         msgr = FinishMessenger(s, port=p)
     else:
-        msgr = FinishMessenger(args.server)
+        msgr = FinishMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if args.password is None:
+    if not password:
         try:
             pwd = getpass.getpass("Please enter the 'manager' password:")
         except Exception as error:
             print("ERROR", error)
+            exit(1)
     else:
-        pwd = args.password
+        pwd = password
 
-    # get started
     try:
         msgr.requestAndSaveToken("manager", pwd)
     except PlomExistingLoginException:
@@ -118,7 +100,7 @@ if __name__ == "__main__":
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another finishing-script or manager-client running,\n"
             "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run the 029_clearManagerLogin.py script."
+            "In order to force-logout the existing authorisation run `plom-finish clear`."
         )
         exit(0)
 
@@ -131,3 +113,7 @@ if __name__ == "__main__":
     msgr.stop()
 
     writeSpreadsheet(spreadSheetDict)
+
+
+if __name__ == "__main__":
+    main()
