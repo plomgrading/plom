@@ -1,7 +1,7 @@
-from aiohttp import web, MultipartWriter, MultipartReader
 import os
+from aiohttp import web, MultipartWriter, MultipartReader
 
-from .plom_routeutils import authByToken, authByToken_validFields
+from .routeutils import authByToken, authByToken_validFields
 
 
 class TotalHandler:

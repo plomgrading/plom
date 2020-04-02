@@ -374,13 +374,19 @@ class PlomDB:
             if g.scanned == False:
                 # TODO - deal with empty DO NOT MARK groups correctly
                 sflag = False
-                log.warning("Check uploaded - Group {} not scanned".format(g.gid))
+                log.debug(
+                    "Check: Test {} not yet fully scanned: (at least) {} not present".format(
+                        tref.testNumber, g.gid
+                    )
+                )
                 break
         with plomdb.atomic():
             if sflag:
                 tref.scanned = True
                 log.info(
-                    "Check uploaded - Test {} is all scanned".format(tref.testNumber)
+                    "Check uploaded - Test {} is now fully scanned".format(
+                        tref.testNumber
+                    )
                 )
                 # set the status of the sumdata
                 sdref = tref.sumdata[0]
@@ -391,28 +397,30 @@ class PlomDB:
             tref.save()
 
     def setGroupReady(self, gref):
-        log.info("All of group {} is scanned".format(gref.gid))
+        log.debug("All of group {} is scanned".format(gref.gid))
         if gref.groupType == "i":
             iref = gref.iddata[0]
             # check if group already identified - can happen if printed tests with names
             if iref.status == "done":
-                log.debug("Group {} is already identified.".format(gref.gid))
+                log.info("Group {} is already identified.".format(gref.gid))
             else:
                 iref.status = "todo"
-                log.debug("Group {} is ready to be identified.".format(gref.gid))
+                log.info("Group {} is ready to be identified.".format(gref.gid))
             iref.save()
         elif gref.groupType == "d":
             # we don't do anything with these groups
-            log.debug(
+            log.info(
                 "Group {} is DoNotMark - all scanned, nothing to be done.".format(
                     gref.gid
                 )
             )
         elif gref.groupType == "m":
-            log.debug("Group {} is ready to be marked.".format(gref.gid))
+            log.info("Group {} is ready to be marked.".format(gref.gid))
             qref = gref.questiondata[0]
             qref.status = "todo"
             qref.save()
+        else:
+            raise ValueError("Tertium non datur: should never happen")
 
     def checkGroupAllUploaded(self, pref):
         gref = pref.group
@@ -1001,7 +1009,7 @@ class PlomDB:
                 if datetime.now() - x.time < oneHour:
                     NRecent += 1
 
-        log.debug("Sending progress summary for qv = {}.{}".format(q, v))
+        log.debug("Sending progress summary for Q{}v{}".format(q, v))
         if NMarked == 0:
             return {
                 "NScanned": NScanned,
@@ -1038,7 +1046,7 @@ class PlomDB:
             if x.mark not in rhist[x.username]:
                 rhist[x.username][x.mark] = 0
             rhist[x.username][x.mark] += 1
-        log.debug("Sending mark histogram for qv = {}.{}".format(q, v))
+        log.debug("Sending mark histogram for Q{}v{}".format(q, v))
         return rhist
 
     def RgetQuestionUserProgress(self, q, v):
@@ -1062,7 +1070,7 @@ class PlomDB:
         rval = [nScan]
         for x in rdat:
             rval.append([x, rdat[x]])
-        log.debug("Sending question/user progress for qv = {}.{}".format(q, v))
+        log.debug("Sending question/user progress for Q{}v{}".format(q, v))
         return rval
 
     def RgetCompletions(self):
@@ -1196,7 +1204,7 @@ class PlomDB:
                 ]
             )
         log.debug(
-            "Sending filtered mark-review data. filters (Q,V,U)= {}.{}.{}".format(
+            "Sending filtered mark-review data. filters (Q,V,U)={}.{}.{}".format(
                 filterQ, filterV, filterU
             )
         )
@@ -1548,9 +1556,7 @@ class PlomDB:
         markList = []
         for x in query:
             markList.append([x.group.gid, x.status, x.mark, x.markingTime, x.tags])
-        log.debug(
-            'Sending completed qv {}.{} tasks to user "{}"'.format(q, v, username)
-        )
+        log.debug('Sending completed Q{}v{} tasks to user "{}"'.format(q, v, username))
         return markList
 
     def MgetNextTask(self, q, v):
@@ -1569,10 +1575,10 @@ class PlomDB:
                     .get()
                 )
             except QuestionData.DoesNotExist as e:
-                log.info("Nothing left on qv {}.{} to-do pile".format(q, v))
+                log.info("Nothing left on Q{}v{} to-do pile".format(q, v))
                 return None
 
-            log.debug("Next qv={}{} task = {}".format(q, v, x.group.gid))
+            log.debug("Next Q{}v{} task = {}".format(q, v, x.group.gid))
             return x.group.gid
 
     def MgiveTaskToClient(self, username, groupID):

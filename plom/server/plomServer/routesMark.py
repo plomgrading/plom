@@ -1,8 +1,9 @@
-from aiohttp import web, MultipartWriter, MultipartReader
 import os
+from aiohttp import web, MultipartWriter, MultipartReader
 
-from .plom_routeutils import authByToken, authByToken_validFields
-from .plom_routeutils import validFields, logRequest
+from .routeutils import authByToken, authByToken_validFields
+from .routeutils import validFields, logRequest
+from .routeutils import log
 
 
 class MarkHandler:
@@ -147,7 +148,7 @@ class MarkHandler:
         if rmsg[0]:
             return web.json_response([rmsg[1], rmsg[2]], status=200)
         else:
-            print("Returning with error 400 = {}".format(rmsg))
+            log.warning("Returning with error 400 = {}".format(rmsg))
             return web.Response(status=400)  # some sort of error with image file
 
     # @routes.get("/MK/images/{task}")
