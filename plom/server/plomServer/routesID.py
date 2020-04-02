@@ -4,8 +4,8 @@ from pathlib import Path
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from plom import specdir
-from .plom_routeutils import authByToken, authByToken_validFields
-from .plom_routeutils import log
+from .routeutils import authByToken, authByToken_validFields
+from .routeutils import log
 
 # I couldn't make this work with the auth deco
 # routes = web.RouteTableDef()

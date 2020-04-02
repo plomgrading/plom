@@ -3,9 +3,9 @@ import json
 
 from aiohttp import web, MultipartWriter, MultipartReader
 
-from .plom_routeutils import authByToken, authByToken_validFields, noAuthOnlyLog
-from .plom_routeutils import validFields, logRequest
-from .plom_routeutils import log
+from .routeutils import authByToken, authByToken_validFields, noAuthOnlyLog
+from .routeutils import validFields, logRequest
+from .routeutils import log
 
 
 class UserInitHandler:
