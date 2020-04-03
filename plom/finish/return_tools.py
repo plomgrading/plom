@@ -127,6 +127,11 @@ def csv_add_return_codes(csvin, csvout, idcol):
 
     assert idcol in df.columns, 'CSV file missing "{}" column'.format(idcol)
 
+    cols = ["StudentID", "StudentName"]
+    print("extracting the following columns: " + str(cols))
+    assert all([c in df.columns for c in cols]), "CSV file missing columns?  We need:\n  " + str(cols)
+    df = df[cols]
+
     df.insert(2, "Return Code", "")
     sns = {}
     for i, row in df.iterrows():
