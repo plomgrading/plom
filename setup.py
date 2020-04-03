@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 from glob import glob
 
 with open("README.md", "r") as fh:
-    long_description = fh.read()
+    longdescription = fh.read()
 
 iconList = []
 for fn in glob("plom/client/icons/*.svg"):
