@@ -10,7 +10,7 @@ __license__ = "GFDL"
 
   
 
-# Plom --- PaperLessOpenMarking
+# Plom is PaperLess Open Marking
 
   
 

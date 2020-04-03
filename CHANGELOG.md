@@ -141,7 +141,7 @@ in most cases.
 
 ## 0.1.0 - 2019-06-26
 
-This is the first release of Plom, PaperLessOpenMarking.
+This is the first release of Plom, PaperLess Open Marking.
 
 [Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...master
 [Unreleased 0.3.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...0.3

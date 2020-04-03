@@ -11,7 +11,7 @@ for fn in glob("plom/client/cursors/*.png"):
 setup(
     name="plom",
     version="0.3.90",
-    description="Paperless online marking",
+    description="Plom is PaperLess Open Marking",
     url="https://plom.gitlab.io/plom/",
     author="Andrew Rechnitzer",
     license="AGPL3",
