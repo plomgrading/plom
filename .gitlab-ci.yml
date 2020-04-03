@@ -153,21 +153,22 @@ job fullWorkFlow:
     - plom-scan upload -c -s localhost -w 4567
     - plom-scan status -s localhost -w 4567
     ## not supposed to be done yet:
-    - if (python3 -m plom.finish.022_check_completed -s localhost -w 1234); then false; else true; fi
+    - if (plom-finish status -w 1234); then false; else true; fi
     - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123
     - python3 -m plom.client.randoMarker -s localhost -u user0 -w 0123
-    - python3 -m plom.finish.021_startHere
-    - python3 -m plom.finish.022_check_completed -s localhost -w 1234
-    ## currently 024 must be run in the server directory
-    - python3 -m plom.finish.023_spreadsheet -s localhost -w 1234
+    - plom-finish status -w 1234
+    - plom-finish csv -w 1234
     - A=`cat testMarks.csv  | wc -l`  # How many lines?
     - bash -c "[[ $A == 21 ]]"        # should be 20 + 1
     - file -b testMarks.csv  | grep ASCII   # should be ascii test
-    - python3 -m plom.finish.024a_reassemble_completed -s localhost -w 1234
+    - plom-finish reassemble -w 1234
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 20 ]]"
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
     - bash -c "[[ $A -lt 10 ]]"          # not more than 10 MB
+    - plom-finish webpage --saltstr salty
+    - A=`ls codedReturn/ | wc -l`    # How many files?
+    - bash -c "[[ $A == 21 ]]"       # 20 pdf + 1 html
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l

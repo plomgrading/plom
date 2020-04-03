@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 __author__ = "Andrew Rechnitzer"
@@ -7,7 +6,6 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import argparse
 import getpass
 import sys
 
@@ -15,13 +13,8 @@ from plom.misc_utils import format_int_list_with_runs
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import *
 
-numberOfTests = 0
-numberOfQuestions = 0
 
-# ----------------------
-
-
-def proc_everything(comps):
+def proc_everything(comps, numberOfQuestions):
     idList = []
     tList = []
     mList = [0 for j in range(numberOfQuestions + 1)]
@@ -43,8 +36,8 @@ def proc_everything(comps):
     return idList, tList, mList, sList, cList, numScanned
 
 
-def print_everything(comps, numPapersProduced):
-    idList, tList, mList, sList, cList, numScanned = proc_everything(comps)
+def print_everything(comps, numPapersProduced, numQ):
+    idList, tList, mList, sList, cList, numScanned = proc_everything(comps, numQ)
     print("*********************")
     print("** Completion data **")
     print("Produced papers: {}".format(numPapersProduced))
@@ -52,7 +45,7 @@ def print_everything(comps, numPapersProduced):
     print("Completed papers: {}".format(format_int_list_with_runs(cList)))
     print("Identified papers: {}".format(format_int_list_with_runs(idList)))
     print("Totalled papers: {}".format(format_int_list_with_runs(tList)))
-    for n in range(numberOfQuestions + 1):
+    for n in range(numQ + 1):
         print(
             "Number of papers with {} questions marked = {}. Tests numbers = {}".format(
                 n, mList[n], format_int_list_with_runs(sList[n])
@@ -60,35 +53,21 @@ def print_everything(comps, numPapersProduced):
         )
 
 
-if __name__ == "__main__":
-    # get commandline args if needed
-    parser = argparse.ArgumentParser(
-        description="Returns list of tests that have been completed. No arguments = run as normal."
-    )
-    parser.add_argument("-w", "--password", type=str)
-    parser.add_argument(
-        "-s",
-        "--server",
-        metavar="SERVER[:PORT]",
-        action="store",
-        help="Which server to contact.",
-    )
-    args = parser.parse_args()
-    if args.server and ":" in args.server:
-        s, p = args.server.split(":")
+def main(server=None, password=None):
+    if server and ":" in server:
+        s, p = server.split(":")
         msgr = FinishMessenger(s, port=p)
     else:
-        msgr = FinishMessenger(args.server)
+        msgr = FinishMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if args.password is None:
+    if not password:
         try:
             pwd = getpass.getpass("Please enter the 'manager' password:")
         except Exception as error:
             print("ERROR", error)
     else:
-        pwd = args.password
+        pwd = password
 
     # get started
     try:
@@ -99,7 +78,7 @@ if __name__ == "__main__":
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another finishing-script or manager-client running,\n"
             "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run the 029_clearManagerLogin.py script."
+            "In order to force-logout the existing authorisation run `plom-finish clear`."
         )
         exit(-1)
 
@@ -110,9 +89,9 @@ if __name__ == "__main__":
     msgr.closeUser()
     msgr.stop()
 
-    print_everything(completions, numberOfTests)
+    print_everything(completions, numberOfTests, numberOfQuestions)
 
-    idList, tList, mList, sList, cList, numScanned = proc_everything(completions)
+    idList, tList, mList, sList, cList, numScanned = proc_everything(completions, numberOfQuestions)
     numberComplete = len(cList)
     print("{} of {} complete".format(numberComplete, numScanned))
     if numberComplete == numScanned:
@@ -122,3 +101,7 @@ if __name__ == "__main__":
     else:
         print("Something terrible has happened")
         exit(-42)
+
+
+if __name__ == "__main__":
+    main()

@@ -8,27 +8,27 @@ __license__ = "AGPL-3.0-or-later"
 
 import getpass
 
-from plom.messenger import ScanMessenger
+from plom.messenger import FinishMessenger
 
 
 def clearLogin(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
-        scanMessenger = ScanMessenger(s, port=p)
+        msgr = FinishMessenger(s, port=p)
     else:
-        scanMessenger = ScanMessenger(server)
-    scanMessenger.start()
+        msgr = FinishMessenger(server)
+    msgr.start()
 
     # get the password if not specified
     if password is None:
         try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
+            pwd = getpass.getpass("Please enter the 'manager' password: ")
         except Exception as error:
             print("ERROR", error)
             exit(1)
     else:
         pwd = password
 
-    scanMessenger.clearAuthorisation("scanner", pwd)
-    print("Scanner login cleared.")
-    scanMessenger.stop()
+    msgr.clearAuthorisation("manager", pwd)
+    print("Manager login cleared.")
+    msgr.stop()
