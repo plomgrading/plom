@@ -17,7 +17,7 @@ from plom import SpecParser
 from .utils import myhash
 
 
-def do_renaming(fromdir, todir):
+def do_renaming(fromdir, todir, saltstr):
     print("Searching for foo_<studentnumber>.pdf files in {0}...".format(fromdir))
     numfiles = 0
     for file in os.scandir(fromdir):
@@ -78,7 +78,7 @@ def main(saltstr=None):
         )
         sys.exit(4)
 
-    numfiles = do_renaming(fromdir, "codedReturn")
+    numfiles = do_renaming(fromdir, "codedReturn", saltstr)
     if numfiles > 0:
         print("renamed and copied {0} files".format(numfiles))
     else:
