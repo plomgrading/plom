@@ -50,8 +50,6 @@ def main(saltstr=None):
     if not saltstr:
         raise ValueError("You must set the Salt String")
 
-    print('Salt is "{0}"'.format(saltstr))
-
     spec = SpecParser().spec
     shortname = spec["name"]
     longname = spec["longName"]
