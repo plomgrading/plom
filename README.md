@@ -1,10 +1,11 @@
-# PaperLess Open Marking - [Plom](https://plom.gitlab.io/)
+# PaperLess Open Marking - [Plom](https://plom.gitlab.io)
 
   * A system for giving tests on paper, but marking and returning
     them online.
   * Designed for giving consistent, meaningful feedback to students.
   * [Free/Open Source Software](https://www.gnu.org/licenses/agpl-3.0.en.html)
-    written in Python.
+    written in Python using [Qt](https://pypi.org/project/PyQt5) and other
+    components.
 
 <img src="https://plom.gitlab.io/images/plomclient.png" width="800px" alt="The plom annotation client in action">
 
@@ -16,7 +17,8 @@
   * Easy multi-versioned tests -- designed to handle crowded classrooms
     and multi-section courses over multiple days.
   * Simplify logistics and minimizes paper-handling.
-  * Free -- Plom is both [Libre](https://en.wikipedia.org/wiki/Gratis_versus_libre#Libre) and [Gratis](https://en.wikipedia.org/wiki/Gratis_versus_libre#Gratis).
+  * Free -- Plom is both [Libre](https://en.wikipedia.org/wiki/Gratis_versus_libre#Libre)
+    and [Gratis](https://en.wikipedia.org/wiki/Gratis_versus_libre#Gratis).
     No software to buy, and no subscriptions to pay.
 
 
