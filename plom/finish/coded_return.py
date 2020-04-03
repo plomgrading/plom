@@ -103,7 +103,7 @@ def main(saltstr=None):
     print('  * Copy "codedReturn/" to your webserver')
     print('  * Privately communicate info from "return_codes.csv"')
     print("      - E.g., try `11_write_to_canvas_spreadsheet`")
-    print("        (warning: beta!) and update to Canvas.")
+    print("        (warning: beta!) and upload to Canvas.")
     print("  * Read docs about the security implications of all this.")
 
 
