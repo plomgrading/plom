@@ -12,30 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Plom is now a python package.
 * Annotator has a "no answer given" button which places crossed lines on page, leaves a comment, sets mark to 0.
 * Client can log to a file (set under under "More options").
+* Client has expert option to disable background upload/download.
+* Client can generate a log file for debugging
 * Server management UI.
+* Command-line scripts for creating tests, managing server, scanning, and finishing.
 
 ### Changed
 * Server: improved database
 * Server: new upload procedure/tools
 * Reassembly tasks are now faster.
-* Client can generate a log file for debugging
-
-### Fixed
-* Server: manager-related database locks fixed
-* Various bug fixes.
-
-
-## [Unreleased 0.3.1]
-
-### Added
-* Added expert option to disable background upload/download.
-
-### Changed
 * Client: if there are annotations, confirm before closing/cancelling
 
 ### Fixed
+* Server: manager-related database locks fixed
 * In some regrade cases, delta-comments did not apply correctly.
-* Fix `ctrl-=` zoom toggle.
+* Client: fix `ctrl-=` zoom toggle.
 * Various bug fixes.
 
 
