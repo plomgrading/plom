@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Misc tools related to digital return"""
+"""Misc tools related to digital return.
+
+Most of the Canvas-related functions are overly UBC-specific or fragile.
+"""
 
 __author__ = "Colin B. Macdonald, Matthew Coles"
 __copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald, Matthew Coles"
@@ -159,7 +162,7 @@ def canvas_csv_add_return_codes(csvin, csvout, saltstr):
         if not sn_ == 'nan':
             assert sn == sn_, "Canvas has misleading student numbers: " + str((sn,sn_)) + ", for row = " + str(row)
 
-
+        # TODO: UBC-specific student numbers
         assert len(name) > 0, "Student name is empty"
         assert len(sn) == 8, "Student number is not 8 characters: row = " + str(row)
 
