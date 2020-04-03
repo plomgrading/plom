@@ -84,21 +84,20 @@ spCodedReturn = sub.add_parser(
     "webpage",
     help="Create HTML page for digital return",
     description="Prepare HTML page for return using out-of-band per-student secret codes.",
-    epilog=dedent("""
-        The salt string is used to create a per-student access-code using a
-        one-way hash of their student number.  If you have multiple tests/exams
-        in the same course it makes sense to re-use the same salt string for
-        returning each test.
+    epilog=dedent(
+        """
+        The webpage will be in `codedReturn` and the secret codes in
+        `return_codes.csv`.
 
         See the numbers scripts in `plom.finish` for various "beta" tools to
         assist with digital return---we anticipate these tools maturing in
         future releases.
 
         This command must have access to the results of `reassemble`.
-    """),
+    """
+    ),
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
-spCodedReturn.add_argument("--saltstr", type=str, help="Per-course secret salt string")
 spClear = sub.add_parser(
     "clear",
     help='Clear "manager" login',
@@ -122,7 +121,7 @@ def main():
         else:
             plom.finish.reassemble_completed.main(args.server, args.password)
     elif args.command == "webpage":
-        plom.finish.coded_return.main(args.saltstr)
+        plom.finish.coded_return.main()
     elif args.command == "clear":
         clearLogin(args.server, args.password)
     else:

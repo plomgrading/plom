@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-"""Misc tools related to digital return"""
+"""Misc tools related to digital return.
+
+Most of the Canvas-related functions are overly UBC-specific or fragile.
+"""
 
 __author__ = "Colin B. Macdonald, Matthew Coles"
 __copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald, Matthew Coles"
@@ -10,9 +13,10 @@ __license__ = "AGPL-3.0-or-later"
 import os, sys
 import csv
 from io import StringIO
+
 import pandas
 
-from .utils import myhash
+from .utils import myhash, mysecret
 
 
 def import_canvas_csv(canvas_fromfile):
@@ -106,6 +110,79 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     return df
 
 
+def csv_add_return_codes(csvin, csvout, idcol):
+    """Add random return_code column to a spreadsheet.
+
+    Args:
+        csvin: input file
+        csvout: output file
+        idcol (str): column name for ID number
+
+    Returns:
+        dict of the mapping from student number to secret code.
+    """
+    from plom import isValidStudentNumber
+
+    df = pandas.read_csv(csvin, dtype="object", sep="\t")
+
+    assert idcol in df.columns, 'CSV file missing "{}" column'.format(idcol)
+
+    cols = ["StudentID", "StudentName"]
+    print("extracting the following columns: " + str(cols))
+    assert all([c in df.columns for c in cols]), "CSV file missing columns?  We need:\n  " + str(cols)
+    df = df[cols]
+
+    df.insert(2, "Return Code", "")
+    sns = {}
+    for i, row in df.iterrows():
+        sn = str(row[idcol])
+        # blanks, not ID'd yet for example
+        if not sn == 'nan':
+            assert isValidStudentNumber(sn), "Invalid student ID"
+            code = mysecret()
+            df.loc[i, "Return Code"] = code
+            sns[sn] = code
+
+    df = df.dropna()  # no empty rows
+    df.to_csv(csvout, index=False)
+    return sns
+
+
+def csv_add_salted_return_codes(csvin, csvout, saltstr, idcol):
+    """Add return_code column to a spreadsheet by hashing ID number.
+
+    You should think for yourself about the security implications
+    of using this code.
+
+    Args:
+        csvin: input file
+        csvout: output file
+        saltstr (str): very salty
+        idcol (str): column name for ID number
+
+    Returns:
+        dict of the mapping from student number to secret code.
+    """
+    from plom import isValidStudentNumber
+
+    df = pandas.read_csv(csvin, dtype="object", sep="\t")
+
+    assert idcol in df.columns, 'CSV file missing "{}" column'.format(idcol)
+
+    df.insert(2, "Return Code", "")
+    sns = {}
+    for i, row in df.iterrows():
+        sn = str(row[idcol])
+        # blanks, not ID'd yet for example
+        if not sn == 'nan':
+            assert isValidStudentNumber(sn), "Invalid student ID"
+            code = myhash(sn, saltstr)
+            df.loc[i, "Return Code"] = code
+            sns[sn] = code
+    df.to_csv(csvout, index=False)
+    return sns
+
+
 def canvas_csv_add_return_codes(csvin, csvout, saltstr):
     print('*** Generating Return Codes Spreadsheet ***')
     df = import_canvas_csv(csvin)
@@ -127,7 +204,7 @@ def canvas_csv_add_return_codes(csvin, csvout, saltstr):
         if not sn_ == 'nan':
             assert sn == sn_, "Canvas has misleading student numbers: " + str((sn,sn_)) + ", for row = " + str(row)
 
-
+        # TODO: UBC-specific student numbers
         assert len(name) > 0, "Student name is empty"
         assert len(sn) == 8, "Student number is not 8 characters: row = " + str(row)
 

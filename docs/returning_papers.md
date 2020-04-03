@@ -11,21 +11,14 @@ __license__ = "GFDL"
 Canvas does not allow us to upload pdf files or even strings.  Instead we:
 
   * upload pdf files to another webserver
-  * provide users with a secret code (hashed from their student number)
+  * provide students with a random secret code
   * students visit a URL, enter their student number and the secret code.
 
+Start by calling `plom-finish webpage`.
 
-## Renaming PDF files
-
-  * Set the `SALTSTR` in `utils.py`.  TODO: move?
-  * call `10_prepare_coded_return.py`
   * upload the resulting `codedReturn` directory to a webserver.
   * students will visit that directory, see `index.html` which prompts
     them for the student number and their "return code".
-
-Note: `SALTSTR` should be set once per course so that multiple midterms
-can be returned with the same code.
-
 
 ## Uploading grades
 
@@ -71,17 +64,14 @@ We have a secret code for each student.  We want to upload these numbers to Canv
 
 ## Generating the files
 
+   * TODO: Currently under revision.
+
    * Run `11_write_to_canvas_spreadsheet.py` to create two csv files:
 
        1. `canvas_return_codes_to_import.csv`.
        2. `canvas_grades_to_import.csv`.
 
    * Upload/Import one or both of these files back to Canvas.
-
-   * If you kept the same salt, you may be able to upload just the
-     grades.
-
-   * Note: This script requires python 3.6 (on Ubuntu 16.04 call python3.6 explicity)
 
 
 ## Sharing with students
@@ -115,6 +105,10 @@ We have a secret code for each student.  We want to upload these numbers to Canv
 
 
 ## FAQs
+
+"Can I reuse the return code for multiple tests?"
+: Probably.  Official support to follow.
+
 
 "Canvas put commas in my return codes."
 : So it does, this is no problem.  Students do *not* need to remove them.
