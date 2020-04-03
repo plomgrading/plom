@@ -2,7 +2,7 @@
 
 __author__ = "Andrew Rechnitzer"
 
-__copyright__ = "Copyright (C) 2018-9 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-20 Andrew Rechnitzer"
 
 __license__ = "GFDL"
 
