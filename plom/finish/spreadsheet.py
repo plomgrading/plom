@@ -58,6 +58,8 @@ def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
                 row["Total"] = ""
 
             warnString = ""
+            if not thisTest["identified"]:
+                warnString += ["Unidentified"]
             if "Blank" in thisTest["sname"]:
                 warnString += "[Blank ID]"
             if "No ID" in thisTest["sname"]:
