@@ -40,15 +40,7 @@ def do_renaming(fromdir, todir, sns):
     return numfiles
 
 
-def main(saltstr=None):
-    # TODO: more docs
-    # If you know the salt string and you know someone's student
-    # number, you can determine their code.  You should set this
-    # per course (not per test).
-
-    if not saltstr:
-        raise ValueError("You must set the Salt String")
-
+def main():
     spec = SpecParser().spec
     shortname = spec["name"]
     longname = spec["longName"]
@@ -77,9 +69,7 @@ def main(saltstr=None):
     os.makedirs("codedReturn")
 
     print("Generating return codes spreadsheet...")
-    sns = csv_add_return_codes(
-        "testMarks.csv", "return_codes.csv", saltstr, "StudentID"
-    )
+    sns = csv_add_return_codes("testMarks.csv", "return_codes.csv", "StudentID")
     print('The return codes are in "return_codes.csv"')
 
     numfiles = do_renaming(fromdir, "codedReturn", sns)

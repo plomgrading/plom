@@ -7,6 +7,7 @@ __copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import secrets
 import hashlib
 
 
@@ -24,3 +25,10 @@ def myhash(s, salt=None):
     b = 899_999_999_999
     l = 100_000_000_000
     return str(int(h, 16) % b + l)
+
+
+def mysecret():
+    """Proper random 12-digit code."""
+    b = 900_000_000_000
+    l = 100_000_000_000
+    return secrets.randbelow(b) + l

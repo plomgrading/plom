@@ -13,9 +13,10 @@ __license__ = "AGPL-3.0-or-later"
 import os, sys
 import csv
 from io import StringIO
+
 import pandas
 
-from .utils import myhash
+from .utils import myhash, mysecret
 
 
 def import_canvas_csv(canvas_fromfile):
@@ -109,8 +110,42 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     return df
 
 
-def csv_add_return_codes(csvin, csvout, saltstr, idcol):
+def csv_add_return_codes(csvin, csvout, idcol):
+    """Add random return_code column to a spreadsheet.
+
+    Args:
+        csvin: input file
+        csvout: output file
+        idcol (str): column name for ID number
+
+    Returns:
+        dict of the mapping from student number to secret code.
+    """
+    from plom import isValidStudentNumber
+
+    df = pandas.read_csv(csvin, dtype="object", sep="\t")
+
+    assert idcol in df.columns, 'CSV file missing "{}" column'.format(idcol)
+
+    df.insert(2, "Return Code", "")
+    sns = {}
+    for i, row in df.iterrows():
+        sn = str(row[idcol])
+        # blanks, not ID'd yet for example
+        if not sn == 'nan':
+            assert isValidStudentNumber(sn), "Invalid student ID"
+            code = mysecret()
+            df.loc[i, "Return Code"] = code
+            sns[sn] = code
+    df.to_csv(csvout, index=False)
+    return sns
+
+
+def csv_add_salted_return_codes(csvin, csvout, saltstr, idcol):
     """Add return_code column to a spreadsheet by hashing ID number.
+
+    You should think for yourself about the security implications
+    of using this code.
 
     Args:
         csvin: input file
