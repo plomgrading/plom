@@ -14,6 +14,7 @@ import os, sys, shutil
 import argparse
 
 from plom import SpecParser
+from plom.rules import isValidStudentNumber
 from .utils import myhash
 from .return_tools import csv_add_return_codes
 
@@ -25,10 +26,8 @@ def do_renaming(fromdir, todir, saltstr):
     for file in os.scandir(fromdir):
         if file.name.endswith(".pdf"):
             oldname = file.name.partition(".")[0]
-            # TODO: UBC-specific student numbers
-            sn = oldname[-8:]
-            assert len(sn) == 8
-            assert sn.isdigit()
+            sn = oldname.split("_")[-1]
+            assert isValidStudentNumber(sn)
             code = myhash(sn, saltstr)
             newname = "{0}_{1}.pdf".format(oldname, code)
             newname = os.path.join(todir, newname)
