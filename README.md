@@ -1,5 +1,5 @@
 
-# PaperLess Open Marking -- [Plom](https://plom.gitlab.io/)
+# PaperLess Open Marking - [Plom](https://plom.gitlab.io/)
 
 * a system for giving tests on paper, but marking and returning them online
 * designed for giving multi-version tests suitable for crowded classrooms and multiple sittings
@@ -16,3 +16,6 @@
 * Easy multi-versioned tests -- Designed to handle crowded classrooms and multi-section courses, when sittings might occur over multiple days.
 
 * Free -- Plom is both [Libre](https://en.wikipedia.org/wiki/Gratis_versus_libre#Libre) and [Gratis](https://en.wikipedia.org/wiki/Gratis_versus_libre#Gratis). There is no software to buy, and no subscriptions to pay.
+
+## Want to know more?
+Take a look at the [Plom homepage](https://plom.gitlab.io/).
