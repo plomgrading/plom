@@ -142,6 +142,8 @@ def csv_add_return_codes(csvin, csvout, idcol):
             code = mysecret()
             df.loc[i, "Return Code"] = code
             sns[sn] = code
+
+    df = df.dropna()  # no empty rows
     df.to_csv(csvout, index=False)
     return sns
 
