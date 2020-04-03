@@ -13,7 +13,7 @@ for fn in glob("plom/client/cursors/*.png"):
 
 setup(
     name="plom",
-    version="0.3.90",
+    version="0.4.0",
     description="Plom is PaperLess Open Marking",
     longdescription=longdescription,
     long_description_content_type="text/markdown",
