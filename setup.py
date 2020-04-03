@@ -14,7 +14,7 @@ setup(
     description="Plom is PaperLess Open Marking",
     url="https://plom.gitlab.io/plom/",
     author="Andrew Rechnitzer",
-    license="AGPL3",
+    license="AGPLv3+",
     python_requires=">=3.6",
     packages=find_packages(),
     entry_points={
