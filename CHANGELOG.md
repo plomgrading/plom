@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Client can generate a log file for debugging
 * Server management UI.
 * Command-line scripts for creating tests, managing server, scanning, and finishing.
+* Simple toy test+server for demostrating Plom
+* Test-specification now has "do-not-mark" pages for formula-sheets and instruction pages.
 
 ### Changed
 * Server: improved database
