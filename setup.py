@@ -17,6 +17,13 @@ setup(
     license="AGPLv3+",
     python_requires=">=3.6",
     packages=find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+        "Development Status :: 3 - Alpha",
+        "Operating System :: OS Independent",
+        "Topic :: Education :: Testing",
+    ],
     entry_points={
         "console_scripts": [
             "plom-client=plom.scripts.client:main",
