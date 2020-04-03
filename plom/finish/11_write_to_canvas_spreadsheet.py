@@ -57,7 +57,9 @@ if __name__ == '__main__':
         canvas_test_name = args.findcol
 
     print("""
-    *** Warning: this script is "alpha" software ***
+    *** Warning: this script is "pre-alpha" software ***
+
+    You basically shouldn't be running it at all.
 
     This script looks for "{0}", which you should
     have exported from Canvas.  It outputs two new .csv files for
