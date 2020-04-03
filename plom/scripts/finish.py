@@ -98,7 +98,9 @@ spCodedReturn = sub.add_parser(
     """),
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
-spCodedReturn.add_argument("--saltstr", type=str, help="Per-course secret salt string")
+spCodedReturn.add_argument(
+    "--saltstr", type=str, help="Per-course secret salt string", required=True
+)
 spClear = sub.add_parser(
     "clear",
     help='Clear "manager" login',
