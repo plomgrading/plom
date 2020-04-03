@@ -62,7 +62,7 @@ def main():
 
     print('\n*** Now run "plom-client" ***\n')
     # TODO: output account info directly, perhaps just "user*"?
-    print('  (See "serverConfiguration/userListRaw.csv" for acount info)')
+    print('  (See "serverConfiguration/userListRaw.csv" for acount info)\n')
 
     print("Starting an endless loop: Ctrl-C to quit demo script")
     # TODO: improve this, catch the ctrl-c and do something
