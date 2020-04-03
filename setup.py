@@ -1,6 +1,9 @@
 from setuptools import setup, find_packages
 from glob import glob
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 iconList = []
 for fn in glob("plom/client/icons/*.svg"):
     iconList.append(fn)
@@ -11,12 +14,21 @@ for fn in glob("plom/client/cursors/*.png"):
 setup(
     name="plom",
     version="0.3.90",
-    description="Paperless online marking",
+    description="Plom is PaperLess Open Marking",
+    longdescription=longdescription,
+    long_description_content_type="text/markdown",
     url="https://plom.gitlab.io/plom/",
     author="Andrew Rechnitzer",
-    license="AGPL3",
+    license="AGPLv3+",
     python_requires=">=3.6",
     packages=find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+        "Development Status :: 3 - Alpha",
+        "Operating System :: OS Independent",
+        "Topic :: Education :: Testing",
+    ],
     entry_points={
         "console_scripts": [
             "plom-client=plom.scripts.client:main",
