@@ -6,36 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.4.0] - 2020-04-04
 
 ### Added
 * Plom is now a python package.
 * Annotator has a "no answer given" button which places crossed lines on page, leaves a comment, sets mark to 0.
 * Client can log to a file (set under under "More options").
+* Client has expert option to disable background upload/download.
+* Client can generate a log file for debugging.
 * Server management UI.
+* Command-line scripts for creating tests, managing server, scanning, and finishing.
+* Simple toy test+server for demostrating Plom.
+* Test-specification now has "do-not-mark" pages for formula-sheets and instruction pages.
 
 ### Changed
-* Server: improved database
-* Server: new upload procedure/tools
+* Server: improved database.
+* Server: new upload procedure/tools.
 * Reassembly tasks are now faster.
-* Client can generate a log file for debugging
+* Client: if there are annotations, confirm before closing/cancelling.
 
 ### Fixed
-* Server: manager-related database locks fixed
-* Various bug fixes.
-
-
-## [Unreleased 0.3.1]
-
-### Added
-* Added expert option to disable background upload/download.
-
-### Changed
-* Client: if there are annotations, confirm before closing/cancelling
-
-### Fixed
+* Server: manager-related database locks fixed.
 * In some regrade cases, delta-comments did not apply correctly.
-* Fix `ctrl-=` zoom toggle.
+* Client: fix `ctrl-=` zoom toggle.
 * Various bug fixes.
 
 
@@ -56,7 +49,7 @@ in most cases.
 * Client: you must make at least one annotation on the page.
 
 ### Fixed
-* many fixes, especially related to client crashes due to networking.
+* Many fixes, especially related to client crashes due to networking.
 
 
 ## [0.2.2] - 2019-11-29
@@ -77,17 +70,17 @@ in most cases.
 ### Added
 * preliminary support for a canned user list.
 * autogenerate password suggestions for new users.
-* 05 script now warns about potential extra pages
+* 05 script now warns about potential extra pages.
 * Annotator - spacebar pans through paper (down and right), shift-space pans back (up and left). Ctrl+space, Ctrl-shift-space does similarly but more slowly.
 * Annotator - zoom-mode click-drag creates a (temp) rectangle to zoom into.
 
 ### Changed
 * make 04 script less verbose.
 * Increase timeout on server ping test.
-* Annotator has more keybindings for grades of 0-10 (see "key help")
-* resizing annotator persists between papers
-* zooming annotator persists between papers
-* docs: changes for uploading to the new Canvas gradebook
+* Annotator has more keybindings for grades of 0-10 (see "key help").
+* resizing annotator persists between papers.
+* zooming annotator persists between papers.
+* docs: changes for uploading to the new Canvas gradebook.
 * Annotator - can no longer click in region around score-box. This prevents accidentally pasting objects behind the scorebox.
 
 ### Fixed
@@ -106,7 +99,7 @@ in most cases.
 
 #### Client
 * delete tool: right-mouse button drag sweeps out a rectangle and deletes its contents.
-* improve zoom ("ctrl-=" cycles through zoom modes)
+* improve zoom ("ctrl-=" cycles through zoom modes).
 * shift-click and control-click should now emulate right-click and middle-click.
 * middle-button in line/pen tools creates line/path with arrow-heads at both ends.
 * annotations are now saved in ".plom" files, supports continuing previously marked papers.
@@ -127,12 +120,12 @@ in most cases.
 * comment-add and edit is now via a pop-up window.
 * user can now make 0-point comments (for which the zero is pasted).
 * user can also make no-point comments which are pasted as just text.
-* general GUI improvements
+* general GUI improvements.
 
 #### Server
 * Server not backward compatible with v0.1.0 clients.
 * More general support for student names.
-* Returned PDF files have better sizes for printing hardcopies
+* Returned PDF files have better sizes for printing hardcopies.
 
 ### Fixed
 
@@ -143,8 +136,7 @@ in most cases.
 
 This is the first release of Plom, PaperLess Open Marking.
 
-[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...master
-[Unreleased 0.3.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...0.3
+[0.4.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...v0.4.0
 [0.3.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.2...v0.3.0
 [0.2.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...v0.2.2
 [0.2.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.0...v0.2.1
