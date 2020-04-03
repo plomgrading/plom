@@ -19,8 +19,7 @@ from .utils import myhash
 from .return_tools import csv_add_return_codes
 
 
-def do_renaming(fromdir, todir, saltstr):
-    # TODO: rather than scraping reassembled/ maybe we should work from the DB
+def do_renaming(fromdir, todir, saltstr, sns):
     print("Searching for foo_<studentnumber>.pdf files in {0}...".format(fromdir))
     numfiles = 0
     for file in os.scandir(fromdir):
@@ -28,7 +27,9 @@ def do_renaming(fromdir, todir, saltstr):
             oldname = file.name.partition(".")[0]
             sn = oldname.split("_")[-1]
             assert isValidStudentNumber(sn)
-            code = myhash(sn, saltstr)
+            code = sns[sn]
+            code2 = myhash(sn, saltstr)
+            assert rcode == code2, "code sanity check failed"
             newname = "{0}_{1}.pdf".format(oldname, code)
             newname = os.path.join(todir, newname)
             print(
@@ -83,7 +84,7 @@ def main(saltstr=None):
     )
     print('The return codes are in "return_codes.csv"')
 
-    numfiles = do_renaming(fromdir, "codedReturn", saltstr)
+    numfiles = do_renaming(fromdir, "codedReturn", saltstr, sns)
     if numfiles > 0:
         print("Copied (and renamed) {0} files".format(numfiles))
     else:
