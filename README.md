@@ -1,8 +1,7 @@
 
-# Plom is PaperLess Open Marking
+# [PaperLess Open Marking](https://plom.gitlab.io/)
 
-## Plom is
-
+Plom is
 * a system for giving tests on paper, but marking and returning them online
 * designed for giving multi-version tests suitable for crowded classrooms and multiple sittings
 * written in python3 using [PyQt5](https://pypi.org/project/PyQt5/) and other [FOSS](https://en.wikipedia.org/wiki/Free_and_open-source_software) components
