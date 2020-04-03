@@ -86,6 +86,9 @@ spCodedReturn = sub.add_parser(
     description="Prepare HTML page for return using out-of-band per-student secret codes.",
     epilog=dedent(
         """
+        The webpage will be in `codedReturn` and the secret codes in
+        `return_codes.csv`.
+
         The salt string is used to create a per-student access-code using a
         one-way hash of their student number.  If you have multiple tests/exams
         in the same course it makes sense to re-use the same salt string for

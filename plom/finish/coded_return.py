@@ -15,14 +15,17 @@ import argparse
 
 from plom import SpecParser
 from .utils import myhash
+from .return_tools import csv_add_return_codes
 
 
 def do_renaming(fromdir, todir, saltstr):
+    # TODO: rather than scraping reassembled/ maybe we should work from the DB
     print("Searching for foo_<studentnumber>.pdf files in {0}...".format(fromdir))
     numfiles = 0
     for file in os.scandir(fromdir):
         if file.name.endswith(".pdf"):
             oldname = file.name.partition(".")[0]
+            # TODO: UBC-specific student numbers
             sn = oldname[-8:]
             assert len(sn) == 8
             assert sn.isdigit()
@@ -46,7 +49,6 @@ def main(saltstr=None):
     # per course (not per test).
 
     if not saltstr:
-        print("TODO: how can we show help here instead?")
         raise ValueError("You must set the Salt String")
 
     print('Salt is "{0}"'.format(saltstr))
@@ -68,19 +70,25 @@ def main(saltstr=None):
         print("I cannot find any of the dirs: " + ", ".join(reassembles))
         print("  Have you called the `reassemble` command yet?")
         sys.exit(3)
-    print('Going to take pdf files from "{0}".'.format(fromdir))
+    print('We will take pdf files from "{0}".'.format(fromdir))
 
-    try:
-        os.mkdir("codedReturn")
-    except FileExistsError:
+    if os.path.exists("codedReturn") or os.path.exists("return_codes.csv"):
         print(
-            'Directory "codedReturn" already exists: if you want to re-run this script, try deleting it first.'
+            'Directory "codedReturn" and/or "return_codes.csv" already exist:\n'
+            "  if you want to re-run this script, delete them first."
         )
         sys.exit(4)
+    os.makedirs("codedReturn")
+
+    print("Generating return codes spreadsheet...")
+    sns = csv_add_return_codes(
+        "testMarks.csv", "return_codes.csv", saltstr, "StudentID"
+    )
+    print('The return codes are in "return_codes.csv"')
 
     numfiles = do_renaming(fromdir, "codedReturn", saltstr)
     if numfiles > 0:
-        print("renamed and copied {0} files".format(numfiles))
+        print("Copied (and renamed) {0} files".format(numfiles))
     else:
         print('no pdf files in "{0}"?  Stopping!'.format(fromdir))
         sys.exit(5)
@@ -96,9 +104,10 @@ def main(saltstr=None):
 
     print("All done!  Next tasks:")
     print('  * Copy "codedReturn/" to your webserver')
-    print("  * Try `11_write_to_canvas_spreadsheet` (warning: beta!)")
-    print("    and upload the result directly to Canvas.")
-    print("  * TODO: add another generic option here about csv")
+    print('  * Privately communicate info from "return_codes.csv"')
+    print("      - E.g., try `11_write_to_canvas_spreadsheet`")
+    print("        (warning: beta!) and update to Canvas.")
+    print("  * Read docs about the security implications of all this.")
 
 
 if __name__ == "__main__":

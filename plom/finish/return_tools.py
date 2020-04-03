@@ -106,6 +106,38 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
     return df
 
 
+def csv_add_return_codes(csvin, csvout, saltstr, idcol):
+    """Add return_code column to a spreadsheet by hashing ID number.
+
+    Args:
+        csvin: input file
+        csvout: output file
+        saltstr (str): very salty
+        idcol (str): column name for ID number
+
+    Returns:
+        dict of the mapping from student number to secret code.
+    """
+    from plom import isValidStudentNumber
+
+    df = pandas.read_csv(csvin, dtype="object", sep="\t")
+
+    assert idcol in df.columns, 'CSV file missing "{}" column'.format(idcol)
+
+    df.insert(2, "Return Code", "")
+    sns = {}
+    for i, row in df.iterrows():
+        sn = str(row[idcol])
+        # blanks, not ID'd yet for example
+        if not sn == 'nan':
+            assert isValidStudentNumber(sn), "Invalid student ID"
+            code = myhash(sn, saltstr)
+            df.loc[i, "Return Code"] = code
+            sns[sn] = code
+    df.to_csv(csvout, index=False)
+    return sns
+
+
 def canvas_csv_add_return_codes(csvin, csvout, saltstr):
     print('*** Generating Return Codes Spreadsheet ***')
     df = import_canvas_csv(csvin)
