@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
 
 ## [0.4.0] - 2020-04-04
 
@@ -136,6 +144,7 @@ in most cases.
 
 This is the first release of Plom, PaperLess Open Marking.
 
+[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.0...master
 [0.4.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...v0.4.0
 [0.3.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.2...v0.3.0
 [0.2.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...v0.2.2
