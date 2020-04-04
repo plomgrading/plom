@@ -1,4 +1,4 @@
-# PaperLess Open Marking - [Plom](https://plom.gitlab.io)
+# PaperLess Open Marking - [Plom](https://plom.ca)
 
   * A system for giving tests on paper, but marking and returning
     them online.
@@ -7,7 +7,7 @@
     written in Python using [Qt](https://pypi.org/project/PyQt5) and other
     components.
 
-<img src="https://plom.gitlab.io/images/plomclient.png" width="800px" alt="The plom annotation client in action">
+<img src="https://plom.ca/images/plomclient.png" width="800px" alt="The plom annotation client in action">
 
 
 ## Plom's benefits
@@ -24,4 +24,4 @@
 
 ## Want to know more?
 
-Take a look at the [Plom homepage](https://plom.gitlab.io/).
+Take a look at the [plom.ca](https://plom.ca).
