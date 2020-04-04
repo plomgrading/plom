@@ -44,7 +44,7 @@ possibleAns = [
     "But there will always be science, engineering, and technology.  "
     "And there will always, always be mathematics.  -- Katherine Johnson",
     "Is 5 = 1?  Let's see... multiply both sides by 0.  "
-    "Now 0 = 0 so therefore 5 = 1."
+    "Now 0 = 0 so therefore 5 = 1.",
     "I mean, you could claim that anything's real if the only basis for "
     "believing in it is that nobody's proved it doesn't exist!  -- Hermione Granger",
 ]
