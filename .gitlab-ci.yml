@@ -166,7 +166,7 @@ job fullWorkFlow:
     - bash -c "[[ $A == 20 ]]"
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
     - bash -c "[[ $A -lt 10 ]]"          # not more than 10 MB
-    - plom-finish webpage --saltstr salty
+    - plom-finish webpage
     - A=`ls codedReturn/ | wc -l`    # How many files?
     - bash -c "[[ $A == 21 ]]"       # 20 pdf + 1 html
     - echo "Now take down the server"
