@@ -17,7 +17,7 @@ setup(
     description="Plom is PaperLess Open Marking",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://plom.gitlab.io/plom/",
+    url="https://plom.ca",
     author="Andrew Rechnitzer",
     license="AGPLv3+",
     python_requires=">=3.6",
