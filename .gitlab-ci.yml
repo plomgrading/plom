@@ -41,6 +41,7 @@ before_script:
     python3-requests-toolbelt python3-xvfbwrapper python3-tqdm
     libpango-1.0 libpangocairo-1.0
     iproute2 psmisc file
+    appstream-util
   - pip3 install --upgrade pip
   - which pip3
   - python3 -m pip -V
@@ -194,3 +195,8 @@ job backgroundTest:
     - kill -9 %1
     - echo "Should be no jobs and this should succeed"
     - jobs -p
+
+job appstreamValid:
+  stage: test
+  script:
+    - appstream-util validate-relax ca.plom.PlomClient.appdata.xml
