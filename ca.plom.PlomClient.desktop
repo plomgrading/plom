@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Plom Client
+Exec=plom-client
+Icon=ca.plom.PlomClient
+Type=Application
+Terminal=false
+Categories=Education;
