@@ -11,6 +11,26 @@ cursorList = []
 for fn in glob("plom/client/cursors/*.png"):
     cursorList.append(fn)
 
+client_install_requires = [
+    "toml>=0.10.0",
+    "requests-toolbelt",
+    "PyQt5"
+]
+
+server_install_requires = [
+    "toml>=0.10.0",
+    "tqdm",
+    "pandas",
+    "passlib",
+    "pymupdf>=1.16.14",
+    "weasyprint",
+    "aiohttp",
+    "pyzbar",
+    "python3-xvfbwrapper",
+    "PyQt5"  # sort of?  maybe not forever
+]
+
+
 setup(
     name="plom",
     version="0.4.0+",
@@ -61,4 +81,5 @@ setup(
         ("share/plom/icons", iconList),
         ("share/plom/cursors", cursorList),
     ],
+    install_requires=list(set(client_install_requires + server_instal_requires)),
 )
