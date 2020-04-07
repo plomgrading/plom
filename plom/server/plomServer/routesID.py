@@ -132,6 +132,17 @@ class IDHandler:
 
         return web.json_response(self.server.IDdeletePredictions(), status=200)
 
+    @authByToken_validFields(["user", "rectangle", "fileNumber"])
+    def IDrunPredictions(self, data, request):
+        # TODO: maybe we want some special message here?
+        if data["user"] != "manager":
+            return web.Response(status=401)
+
+        return web.json_response(
+            self.server.IDrunPredictions(data["rectangle"], data["fileNumber"]),
+            status=200,
+        )
+
     # @routes.patch("/ID/review")
     @authByToken_validFields(["testNumber"])
     def IDreviewID(self, data, request):
@@ -154,4 +165,5 @@ class IDHandler:
         router.add_delete("/ID/tasks/{task}", self.IDdidNotFinishTask)
         router.add_get("/ID/randomImage", self.IDgetRandomImage)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
+        router.add_post("/ID/predictedID", self.IDrunPredictions)
         router.add_patch("/ID/review", self.IDreviewID)

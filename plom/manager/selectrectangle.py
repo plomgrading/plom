@@ -80,10 +80,6 @@ class SelectRectangleWindow(QDialog):
         grid.addWidget(self.maxNormB, 1, 20)
         self.setLayout(grid)
         self.show()
-        #  Store the current exam view as a qtransform
-        self.viewTrans = self.views[1].transform()
-        self.dx = self.views[1].horizontalScrollBar().value()
-        self.dy = self.views[1].verticalScrollBar().value()
 
         self.zoomB.animateClick()
 

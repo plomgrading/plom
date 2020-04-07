@@ -84,3 +84,9 @@ def IDdeletePredictions(self):
 
 def IDreviewID(self, testNumber):
     return self.DB.IDreviewID(testNumber)
+
+
+def IDrunPredictions(self, rectangle, fileNumber):
+    print(
+        "Run predictions on rectangle {} in IDfilepage {}".format(rectangle, fileNumber)
+    )

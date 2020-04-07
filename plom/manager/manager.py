@@ -647,6 +647,22 @@ class Manager(QWidget):
                 self.IDrectangle, self.IDwhichFile
             )
         )
+        # IDrectangle is a 4-tuple left,top,width,height
+        print(
+            self.IDrectangle,
+            type(self.IDrectangle),
+            self.IDwhichFile,
+            type(self.IDwhichFile),
+        )
+        managerMessenger.IDrunPredictions(
+            [
+                self.IDrectangle.left(),
+                self.IDrectangle.top(),
+                self.IDrectangle.width(),
+                self.IDrectangle.height(),
+            ],
+            self.IDwhichFile,
+        )
         self.todo()
 
     def getPredictions(self):
