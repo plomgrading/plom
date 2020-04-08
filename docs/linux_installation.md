@@ -69,14 +69,6 @@ Other stuff we get from pip:
 ```
 (Note `python3 -m pip` to use the newly upgraded pip).
 
-Ubuntu 16.04 also needs:
-```
-  # python3 -m pip install --user opencv-python peewee pyqrcode pypng
-
-```
-
-Ubuntu 16.04: running python3 maps to python3.5 by default - for script 11 run python3.6 explicitly
-
 It also may be useful to install `x2goserver`.
 
 Finally: it has been noted that ImageMagick doesn't allow hacking
