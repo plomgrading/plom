@@ -1,11 +1,12 @@
 __author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
 # https://www.digitalocean.com/community/tutorials/how-to-build-a-neural-network-to-recognize-handwritten-digits-with-tensorflow
 # and https://www.tensorflow.org/api_docs/python/tf/keras/datasets/mnist/load_data
 # https://www.tensorflow.org/tutorials/estimators/cnn
+# and then hacked to work with tensorflow 2.
 
 # tensorflow bits and pieces
 import tensorflow as tf
@@ -16,6 +17,15 @@ import multiprocessing
 
 ncpu = multiprocessing.cpu_count()
 
+# grab the mnist data to train against.
+
+print("Getting mnist handwritten digit data set.")
+mnist = tf.keras.datasets.mnist
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+
+# build the model
+print("Build and compile digit-recognition model")
 model = keras.Sequential(
     [
         keras.layers.Flatten(input_shape=(28, 28)),
@@ -35,27 +45,20 @@ model = keras.Sequential(
     ]
 )
 
-saver = tf.train.Saver()
+# Compile it
+model.compile(
+    optimizer="adam",
+    loss="sparse_categorical_crossentropy",
+    metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
+)
 
-with tf.Session(
-    config=tf.ConfigProto(
-        device_count={"CPU": ncpu},
-        inter_op_parallelism_threads=ncpu,
-        intra_op_parallelism_threads=ncpu,
-    )
-) as sess:
-    mnist = tf.keras.datasets.mnist
-    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+print("Start training model")
+# Train it
+model.fit(X_train, y_train, epochs=8)
 
-    model.compile(
-        optimizer=tf.train.AdamOptimizer(0.00001),
-        loss="sparse_categorical_crossentropy",
-        metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
-    )
 
-    model.fit(X_train, y_train, epochs=8)
+test_loss, test_acc = model.evaluate(X_test, y_test)
+print("Accuracy of model on mnist test-set:", test_acc)
 
-    test_loss, test_acc = model.evaluate(X_test, y_test)
-
-    print("Test accuracy:", test_acc)
-    saver.save(sess, "digitModel")
+print("Save the model")
+model.save("plomBuzzword")
