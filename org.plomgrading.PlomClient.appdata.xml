@@ -8,7 +8,7 @@
   without any warranty.
 -->
 <component type="desktop-application">
-  <id>ca.plom.PlomClient.desktop</id>
+  <id>org.plomgrading.PlomClient.desktop</id>
   <metadata_license>FSFAP</metadata_license>
   <project_license>AGPL-3.0+</project_license>
   <name>Plom Client</name>
@@ -29,7 +29,7 @@
       or JPEG format. PNG is the preferred format.
     -->
     <screenshot type="default">
-      <image>https://plom.ca/images/plomclient.png</image>
+      <image>https://plomgrading.org/images/plomclient.png</image>
     </screenshot>
   </screenshots>
 
