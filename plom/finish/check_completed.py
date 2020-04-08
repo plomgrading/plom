@@ -53,6 +53,15 @@ def print_everything(comps, numPapersProduced, numQ):
         )
 
 
+def print_still_out(outToDo):
+    if len(outToDo) == 0:
+        return
+    print("*********************")
+    print("** Tasks still out **")
+    for x in outToDo:
+        print("[{}, {}, {}]".format(x[0], x[1], x[2]))
+
+
 def main(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
@@ -86,14 +95,21 @@ def main(server=None, password=None):
     numberOfTests = spec["numberOfTests"]
     numberOfQuestions = spec["numberOfQuestions"]
     completions = msgr.RgetCompletions()
+    outToDo = msgr.RgetOutToDo()
+
     msgr.closeUser()
     msgr.stop()
 
     print_everything(completions, numberOfTests, numberOfQuestions)
 
-    idList, tList, mList, sList, cList, numScanned = proc_everything(completions, numberOfQuestions)
+    idList, tList, mList, sList, cList, numScanned = proc_everything(
+        completions, numberOfQuestions
+    )
     numberComplete = len(cList)
     print("{} of {} complete".format(numberComplete, numScanned))
+
+    print_still_out(outToDo)
+
     if numberComplete == numScanned:
         exit(0)
     elif numberComplete < numScanned:
