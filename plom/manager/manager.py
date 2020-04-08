@@ -7,6 +7,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+from collections import defaultdict
 import toml
 import argparse
 import os
@@ -283,6 +284,7 @@ class Manager(QWidget):
         self.ui.refreshTOTB.clicked.connect(self.refreshTOTRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.refreshQPUB.clicked.connect(self.refreshQPU)
+        self.ui.refreshPUQB.clicked.connect(self.refreshPUQ)
 
         self.ui.removePageB.clicked.connect(self.removePage)
         self.ui.subsPageB.clicked.connect(self.subsPage)
@@ -391,6 +393,7 @@ class Manager(QWidget):
         self.initRevTOTTab()
         self.initUserListTab()
         self.initQPUTab()
+        self.initPUQTab()
 
     # -------------------
     def getTPQV(self):
@@ -1282,29 +1285,73 @@ class Manager(QWidget):
 
     def initQPUTab(self):
         self.ui.QPUserTW.setColumnCount(5)
-        self.ui.QPUserTW.setHorizontalHeaderLabels(
+        self.ui.QPUserTW.setHeaderLabels(
             ["Question", "Version", "User", "Number Marked", "Percentage of Q/V marked"]
         )
-        self.ui.QPUserTW.setSortingEnabled(True)
+        # self.ui.QPUserTW.setSortingEnabled(True)
         self.ui.QPUserTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.QPUserTW.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.QPUserTW.resizeColumnsToContents()
+
+    def initPUQTab(self):
+        self.ui.PUQTW.setColumnCount(5)
+        self.ui.PUQTW.setHeaderLabels(
+            ["User", "Question", "Version", "Number Marked", "Percentage of Q/V marked"]
+        )
+        # self.ui.PUQTW.setSortingEnabled(True)
+        self.ui.PUQTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.PUQTW.setSelectionBehavior(QAbstractItemView.SelectRows)
 
     def refreshQPU(self):
-        self.ui.userListTW.clearContents()
-        self.ui.userListTW.setRowCount(0)
+        # delete the children of each toplevel items
+        root = self.ui.QPUserTW.invisibleRootItem()
+        for l0 in range(self.ui.QPUserTW.topLevelItemCount()):
+            l0i = self.ui.QPUserTW.topLevelItem(0)
+            for l1 in range(self.ui.QPUserTW.topLevelItem(0).childCount()):
+                l0i.removeChild(l0i.child(0))
+            root.removeChild(l0i)
+
         r = 0
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
                 qpu = managerMessenger.getQuestionUserProgress(q, v)
+                l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
                 for (u, n) in qpu[1:]:
-                    self.ui.QPUserTW.insertRow(r)
-                    self.ui.QPUserTW.setItem(r, 0, QTableWidgetItem(str(q).rjust(4)))
-                    self.ui.QPUserTW.setItem(r, 1, QTableWidgetItem(str(v).rjust(2)))
-                    self.ui.QPUserTW.setItem(r, 2, QTableWidgetItem("{}".format(u)))
-                    self.ui.QPUserTW.setItem(r, 3, QTableWidgetItem(str(n).rjust(4)))
                     pb = QProgressBar()
                     pb.setMaximum(qpu[0])
                     pb.setValue(n)
-                    self.ui.QPUserTW.setCellWidget(r, 4, pb)
-                    r += 1
+                    l1 = QTreeWidgetItem(["", "", str(u), str(n).rjust(4)])
+                    l0.addChild(l1)
+                    self.ui.QPUserTW.setItemWidget(l1, 4, pb)
+                self.ui.QPUserTW.addTopLevelItem(l0)
+
+    def refreshPUQ(self):
+        # delete the children of each toplevel items
+        root = self.ui.PUQTW.invisibleRootItem()
+        for l0 in range(self.ui.PUQTW.topLevelItemCount()):
+            l0i = self.ui.PUQTW.topLevelItem(0)
+            for l1 in range(self.ui.PUQTW.topLevelItem(0).childCount()):
+                l0i.removeChild(l0i.child(0))
+            root.removeChild(l0i)
+
+        # get list of everything done by users
+        uprog = defaultdict(list)
+        for q in range(1, self.numberOfQuestions + 1):
+            for v in range(1, self.numberOfVersions + 1):
+                qpu = managerMessenger.getQuestionUserProgress(q, v)
+                for (u, n) in qpu[1:]:
+                    uprog[u].append(
+                        [q, v, n, qpu[0]]
+                    )  # question, version, no marked, no total
+
+        for u in uprog:
+            l0 = QTreeWidgetItem([str(u)])
+            for qvn in uprog[u]:  # will be in q,v,n,ntot in qv order
+                pb = QProgressBar()
+                pb.setMaximum(qvn[3])
+                pb.setValue(qvn[2])
+                l1 = QTreeWidgetItem(
+                    ["", str(qvn[0]).rjust(4), str(qvn[1]).rjust(2), str(n).rjust(4)]
+                )
+                l0.addChild(l1)
+                self.ui.PUQTW.setItemWidget(l1, 4, pb)
+            self.ui.PUQTW.addTopLevelItem(l0)
