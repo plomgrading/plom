@@ -10,6 +10,6 @@ RUN apt-get --no-install-recommends --yes install  \
     mupdf libmupdf-dev \
     python3-xvfbwrapper python3-tqdm libpango-1.0 libpangocairo-1.0
 RUN pip3 install --upgrade pip
-RUN pip3 install --upgrade \
-    pymupdf weasyprint imutils lapsolver peewee \
+RUN pip3 install --upgrade pymupdf weasyprint peewee \
     requests requests-toolbelt aiohttp pyzbar pyinstaller
+RUN pip3 install --upgrade imutils lapsolver tensorflow
