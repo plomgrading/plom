@@ -87,7 +87,6 @@ def IDreviewID(self, testNumber):
 
 
 def IDrunPredictions(self, rectangle, fileNumber):
-    print(
-        "Run predictions on rectangle {} in IDfilepage {}".format(rectangle, fileNumber)
-    )
-    print(self.DB.IDgetImageList(fileNumber))
+    from plom.server.IDReader.idReader import runIDReader
+
+    runIDReader(self.DB.IDgetImageList(fileNumber), rectangle)

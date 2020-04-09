@@ -22,7 +22,22 @@ import json
 import os
 import sys
 
-from predictStudentID import computeProbabilities
+from .predictStudentID import computeProbabilities
+
+
+def isModelAbsent():
+    basePath = Path("plomBuzzword")
+    files = [
+        "saved_model.pb",
+        "variables/variables.index",
+        "variables/variables.data-00000-of-00001",
+    ]
+    for fn in files:
+        if os.path.isfile(basePath / fn):
+            continue
+        else:
+            return True
+    return False
 
 
 def downloadModel():
@@ -62,7 +77,7 @@ def downloadOrTrainModel():
         print(
             "This will take some time -- on the order of 10-20 minutes depending on your computer."
         )
-        from trainModelTensorFlow import trainAndSaveModel
+        from .IDReader.trainModelTensorFlow import trainAndSaveModel
 
         trainAndSaveModel()
 
@@ -80,15 +95,24 @@ def logLike(sid, probs):
     return logP
 
 
-def runIDReader(fileDict, top, bottom):
+def runIDReader(fileDict, rectangle):
+    # convert rectangle to "top" and "bottom"
+    # IDrectangle is a 4-tuple left,top,width,height - floats, but we'll need ints.
+
+    top = int(rectangle[1])
+    bottom = int(rectangle[1] + rectangle[3])
+
     # keeps a list of testNumbers... the ith test in list has testNumber k (i != k?)
     # will need this for cost-matrix
-    testList = list[fileDict.keys()]
+    testList = list(fileDict.keys())
 
-    # pass in the list of files to check, top /bottom of image-region to check.
-    downloadOrTrainModel()
+    # check to see if model already there and if not get it or train it.
+    if isModelAbsent():
+        downloadOrTrainModel()
     # probabilities that digit k of ID is "n" for each file.
     # this is potentially time-consuming - could be parallelised
+    # pass in the list of files to check, top /bottom of image-region to check.
+    print("Computing probabilities")
     probabilities = computeProbabilities(fileDict, top, bottom)
     # put studentNumbers in list
     studentNumbers = []
@@ -100,6 +124,8 @@ def runIDReader(fileDict, top, bottom):
         for row in red:
             studentNumbers.append(row[0])
     # now build "costs" -- annoyance is that test-number might not be row number in cost matrix.
+    print("Computing cost matrix")
+    costs = []
     for test in testList:
         lst = []
         for sid in studentNumbers:
@@ -109,6 +135,7 @@ def runIDReader(fileDict, top, bottom):
     # as  coded up in lapsolver
     # to find least cost assignment of tests to studentIDs
     # this is potentially time-consuming, cannot be parallelised.
+    print("Going hungarian")
     rowIDs, columnIDs = solve_dense(costs)
 
     # now save the result
@@ -120,3 +147,4 @@ def runIDReader(fileDict, top, bottom):
             # print("{}, {}".format(testNumber, studentNumbers[c]))
             fh.write("{}, {}\n".format(testNumber, studentNumbers[c]))
         fh.close()
+    print("Results saved in predictionlist.csv")

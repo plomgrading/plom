@@ -36,7 +36,7 @@ class KerasDropoutPrediction(object):
         return result
 
 
-def getDigits(kdp, fileName):
+def getDigits(kdp, fileName, top, bottom):
     # define this in order to sort by area of bounding rect
     def boundingRectArea(tau):
         x, y, w, h = cv2.boundingRect(tau)
@@ -92,7 +92,7 @@ def getDigits(kdp, fileName):
         )
         contourList = imutils.grab_contours(contours)
         # sort by bounding box area
-        sortedContours = sorted(contours, key=boundingRectArea, reverse=True)
+        sortedContours = sorted(contourList, key=boundingRectArea, reverse=True)
         # make sure we can find at least one contour
         if len(sortedContours) == 0:
             # can't make a prediction so return
@@ -157,7 +157,7 @@ def computeProbabilities(fileDict, top, bottom):
     probabilities = {}
 
     for testNumber in fileDict:
-        lst = getDigits(kdp, fileDict[testNumber])
+        lst = getDigits(kdp, fileDict[testNumber], top, bottom)
         if lst is None:  # couldn't recognize digits
             continue
         probabilities[testNumber] = lst
