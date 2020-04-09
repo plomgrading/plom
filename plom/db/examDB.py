@@ -1416,6 +1416,23 @@ class PlomDB:
         log.debug("Sending IDpages of test {} to user {}".format(t, username))
         return rval
 
+    def IDgetImageList(self, imageNumber):
+        rval = {}
+        query = IDData.select()
+        for iref in query:
+            # for each iref, check that it is scanned and then grab page.
+            gref = iref.group
+            if not gref.scanned:
+                continue
+            # make a list of all the pages in the IDgroup
+            pages = []
+            for p in gref.pages.order_by(Page.pageNumber):
+                pages.append(p.fileName)
+            # grab the relevant page if there.
+            if len(pages) > imageNumber:
+                rval[iref.test.testNumber] = pages[imageNumber]
+        return rval
+
     def IDdidNotFinish(self, username, testNumber):
         """When user logs off, any images they have still out should be put
         back on todo pile

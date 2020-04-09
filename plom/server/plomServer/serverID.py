@@ -90,3 +90,4 @@ def IDrunPredictions(self, rectangle, fileNumber):
     print(
         "Run predictions on rectangle {} in IDfilepage {}".format(rectangle, fileNumber)
     )
+    print(self.DB.IDgetImageList(fileNumber))

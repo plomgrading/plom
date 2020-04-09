@@ -4,44 +4,24 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
 ## https://www.pyimagesearch.com/2017/02/13/recognizing-digits-with-opencv-and-python/
-import csv
 import cv2
-import glob
 import imutils
 from imutils.perspective import four_point_transform
 from imutils import contours
-from lapsolver import solve_dense
 import numpy as np
 import json
 import os
 import sys
 
-# Get vertical range of image to examine from argv
-# left = int(sys.argv[1])
-top = int(sys.argv[1])
-# width = int(sys.argv[3])
-height = int(sys.argv[2])
-bottom = top + height
-print("Will examine vertical range of images [{}:{}]".format(top, bottom))
-
-# Dictionary of scans and their digit-log-likes
-scans = {}
-# List of student numbers in classlist
-studentNumbers = []
 
 import tensorflow as tf
 from tensorflow import keras
-import tensorflow.python.keras.backend as K
 
 # hack suggested here https://github.com/tensorflow/tensorflow/issues/34201
 # import tensorflow.keras.backend as K
-
-model = tf.keras.models.load_model("plomBuzzword")
-
+import tensorflow.python.keras.backend as K
 
 # from https://fairyonice.github.io/Measure-the-uncertainty-in-deep-learning-models-using-dropout.html
-
-
 class KerasDropoutPrediction(object):
     def __init__(self, model):
         self.f = K.function(
@@ -56,22 +36,14 @@ class KerasDropoutPrediction(object):
         return result
 
 
-model.compile(
-    optimizer="adam",
-    loss="sparse_categorical_crossentropy",
-    metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
-)
-kdp = KerasDropoutPrediction(model)
-
-
-def getDigits(fn):
+def getDigits(kdp, fileName):
     # define this in order to sort by area of bounding rect
     def boundingRectArea(tau):
         x, y, w, h = cv2.boundingRect(tau)
         return w * h
 
     # read in the whole
-    wholeImage = cv2.imread(fn)
+    wholeImage = cv2.imread(fileName)
     # extract only the required portion of the image.
     image = wholeImage[:][top:bottom]
     # proces the image so as to find the countours
@@ -171,61 +143,23 @@ def getDigits(fn):
     return lst
 
 
-def logLike(sid, probs):
-    # pass in the student ID-digits and the probs
-    # probs = scans[fn]
-    # probs[k][n] = approx prob that digit k of ID is n.
-    logP = 0
-    # logP will be the approx -log(prob) - so more probable means smaller logP.
-    # make it negative since we'll minimise "cost" when we do the linear assignment problem stuff below.
-    for k in range(0, 8):
-        d = int(sid[k])
-        logP -= np.log(max(probs[k][d], 1e-30))  # avoids taking log of 0.
-    return logP
+def computeProbabilities(fileDict, top, bottom):
+    # fire up the model
+    model = tf.keras.models.load_model("plomBuzzword")
+    model.compile(
+        optimizer="adam",
+        loss="sparse_categorical_crossentropy",
+        metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
+    )
+    kdp = KerasDropoutPrediction(model)
 
+    # Dictionary of test numbers their digit-probabilities
+    probabilities = {}
 
-# todo update file paths
-# read in the list of student numbers
-with open("../specAndDatabase/classlist.csv", newline="") as csvfile:
-    red = csv.reader(csvfile, delimiter=",")
-    next(red, None)
-    for row in red:
-        studentNumbers.append(row[0])
-
-    # read each scan and process it into log-likes
-    fnumber = 0
-    # for fn in sorted(glob.glob("../scanAndGroup/readyForMarking/idgroup/*idg.png")):
-    for fn in sorted(glob.glob("./pages/*.png")):
-        lst = getDigits(fn)
-        dig = [np.argmax(v) for v in lst]
-        print("Processing {} = {}".format(fn, dig))
-        if lst is None:
-            # couldn't recognize digits
+    for testNumber in fileDict:
+        lst = getDigits(kdp, fileDict[testNumber])
+        if lst is None:  # couldn't recognize digits
             continue
-        fnumber += 1
-        scans[fn] = lst
+        probabilities[testNumber] = lst
 
-
-# build the munkres cost matrix
-costs = []
-fnames = list(scans.keys())
-tlist = {}
-
-for fn in fnames:
-    lst = []
-    for x in studentNumbers:
-        lst.append(logLike(x, scans[fn]))
-    costs.append(lst)
-
-# Computing minimum cost matrix
-rids, cids = solve_dense(costs)
-with open("./predictionlist.csv", "w") as fh:
-    fh.write("test, id\n")
-    for r, c in zip(rids, cids):
-        # each filename is <blah>/tXXXXidg.png
-        basef = os.path.basename(fnames[r])
-        # so extract digits 1234
-        testNumber = basef[1:5]
-        print("{}, {}".format(testNumber, studentNumbers[c]))
-        fh.write("{}, {}\n".format(testNumber, studentNumbers[c]))
-    fh.close()
+    return probabilities
