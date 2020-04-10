@@ -33,7 +33,7 @@ More dependencies for the tensorflow-based ID reader:
 ```
   # sudo dnf install python3-termcolor python3-wheel python3-grpcio \
                      python3-markdown python3-h5py
-  # pip3 install --user lapsolver "tensorflow<2"
+  # pip3 install --user imutils lapsolver tensorflow
 ```
 
 
@@ -65,7 +65,7 @@ Other stuff we get from pip:
   # python3 -m pip install --upgrade --user setuptools
   # python3 -m pip install --upgrade --user pymupdf weasyprint imutils toml \
         aiohttp pyzbar
-  # python3 -m pip install --upgrade --user lapsolver "tensorflow<2"
+  # python3 -m pip install --upgrade --user imutils lapsolver tensorflow
 ```
 (Note `python3 -m pip` to use the newly upgraded pip).
 

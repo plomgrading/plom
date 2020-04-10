@@ -40,6 +40,7 @@ class SelectRectangleWindow(QDialog):
         self.tool = "zoom"
 
     def initUI(self, fnames):
+        self.setWindowTitle("Select ID Rectangle")
         self.vTW = QTabWidget()
         self.views = {}
         v = 0
@@ -71,8 +72,8 @@ class SelectRectangleWindow(QDialog):
         # Layout simply
         grid = QGridLayout()
         grid.addWidget(self.vTW, 1, 1, 10, 6)
-        grid.addWidget(self.zoomB, 5, 20)
-        grid.addWidget(self.rectB, 6, 20)
+        grid.addWidget(self.zoomB, 6, 20)
+        grid.addWidget(self.rectB, 5, 20)
         grid.addWidget(self.delRectB, 7, 20)
         grid.addWidget(self.resetB, 20, 1)
         grid.addWidget(self.cancelB, 20, 20)
@@ -80,12 +81,8 @@ class SelectRectangleWindow(QDialog):
         grid.addWidget(self.maxNormB, 1, 20)
         self.setLayout(grid)
         self.show()
-        #  Store the current exam view as a qtransform
-        self.viewTrans = self.views[1].transform()
-        self.dx = self.views[1].horizontalScrollBar().value()
-        self.dy = self.views[1].verticalScrollBar().value()
 
-        self.zoomB.animateClick()
+        self.rectB.animateClick()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
