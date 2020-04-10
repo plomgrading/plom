@@ -276,6 +276,7 @@ class Manager(QWidget):
         self.ui.refreshIDButon.clicked.connect(self.refreshIDTab)
         self.ui.refreshIButton.clicked.connect(self.refreshIList)
         self.ui.refreshPButton.clicked.connect(self.refreshMTab)
+        self.ui.refreshTOB.clicked.connect(self.refreshOutTab)
         self.ui.refreshSButton.clicked.connect(self.refreshSList)
         self.ui.refreshUButton.clicked.connect(self.refreshUList)
         self.ui.refreshCButton.clicked.connect(self.refreshCList)
@@ -385,6 +386,7 @@ class Manager(QWidget):
         self.initScanTab()
         self.initIDTab()
         self.initMarkTab()
+        self.initOutTab()
         self.initUnknownTab()
         self.initCollideTab()
         self.initDiscardTab()
@@ -731,6 +733,27 @@ class Manager(QWidget):
         mhist = managerMessenger.getMarkHistogram(question, version)
         QVHistogram(question, version, mhist).exec_()
         # print(mhist)
+
+    def initOutTab(self):
+        self.ui.tasksOutTW.setColumnCount(3)
+        self.ui.tasksOutTW.setHorizontalHeaderLabels(["Task", "User", "Time"])
+
+    def refreshOutTab(self):
+        tasksOut = managerMessenger.RgetOutToDo()
+        self.ui.tasksOutTW.clearContents()
+        self.ui.tasksOutTW.setRowCount(0)
+
+        if len(tasksOut) == 0:
+            ErrorMessage("No tasks out currently.").exec_()
+            return
+
+        r = 0
+        for x in tasksOut:
+            self.ui.tasksOutTW.insertRow(r)
+            self.ui.tasksOutTW.setItem(r, 0, QTableWidgetItem(str(x[0])))
+            self.ui.tasksOutTW.setItem(r, 1, QTableWidgetItem(str(x[1])))
+            self.ui.tasksOutTW.setItem(r, 2, QTableWidgetItem(str(x[2])))
+            r += 1
 
     def todo(self, msg=""):
         ErrorMessage("This is on our to-do list" + msg).exec_()

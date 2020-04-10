@@ -1085,6 +1085,41 @@ class PlomDB:
         log.debug("Sending list of completed tests")
         return rval
 
+    def RgetOutToDo(self):
+        # return list of tasks that are status = todo
+        # note - have to format the time as string since not jsonable.
+        # x.time.strftime("%y:%m:%d-%H:%M:%S"),
+
+        rval = []
+        for iref in IDData.select().where(IDData.status == "out"):
+            rval.append(
+                [
+                    "id-t{}".format(iref.test.testNumber),
+                    iref.username,
+                    iref.time.strftime("%y:%m:%d-%H:%M:%S"),
+                ]
+            )
+        for mref in QuestionData.select().where(QuestionData.status == "out"):
+            rval.append(
+                [
+                    "mrk-t{}-q{}-v{}".format(
+                        mref.test.testNumber, mref.questionNumber, mref.version
+                    ),
+                    mref.username,
+                    mref.time.strftime("%y:%m:%d-%H:%M:%S"),
+                ]
+            )
+        for sref in SumData.select().where(SumData.status == "out"):
+            rval.append(
+                [
+                    "tot-t{}".format(sref.test.testNumber),
+                    sref.username,
+                    sref.time.strftime("%y:%m:%d-%H:%M:%S"),
+                ]
+            )
+        log.debug("Sending list of tasks that are still out")
+        return rval
+
     def RgetStatus(self, testNumber):
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:

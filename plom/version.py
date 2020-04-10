@@ -5,5 +5,5 @@ __license__ = "AGPLv3"
 
 
 __version__ = "0.4.0+"
-Plom_API_Version = "10"  # updated for restified API for get-next-task.
+Plom_API_Version = "11"  # updated for restified API for RgetOutToDo
 Default_Port = 41984

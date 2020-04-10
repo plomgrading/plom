@@ -20,11 +20,7 @@ We discuss here everything that happens after the assessment is collected from s
 
 ## Processing scans 2
 * Check dimensions of each page to make sure it is in portrait - rotate if not.
-* Split page vertically into 5 equal pieces and run topmost and bottommost through zbarimg for qr-code decoding. Note that zbarim does not report the location of codes so splitting the page into pieces allows us to check if codes are at top or bottom of page.
-* **Present behaviour** top-piece should have one qr-code giving the TGV-code of the page. The bottom-piece should have two qr-codes giving the TGV-code and the exam-name. If reversed then rotate page 180 degrees.
-* **Future behaviour** top-piece should have one qr-code giving both TGV-code and name of exam. Bottom piece should contain no codes. Rotate page accordingly.
-* If valid TGV and exam-name the rename image "tXXXXpYYvZ.png" where XXXX,YY,Z taken from the TGV and file in appropriate directory. The TGV should be recorded in an "exams-scanned" data-structure.
-* If invalid then move page-image to a "problematicImage" subdirectory
+* Do stuff with QR codes.
 
 ## Problematic images
 * There can be several reasons that a page-image is problematic:
