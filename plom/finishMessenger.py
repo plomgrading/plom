@@ -58,6 +58,27 @@ class FinishMessenger(BaseMessenger):
 
         return response.json()
 
+    def RgetOutToDo(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/REP/outToDo".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
     def RgetSpreadsheet(self):
         self.SRmutex.acquire()
         try:
@@ -149,9 +170,7 @@ class FinishMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/REP/annotatedFiles/{}".format(
-                    self.server, testNumber
-                ),
+                "https://{}/REP/annotatedFiles/{}".format(self.server, testNumber),
                 verify=False,
                 json={"user": self.user, "token": self.token},
             )
@@ -172,9 +191,7 @@ class FinishMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/REP/originalFiles/{}".format(
-                    self.server, testNumber
-                ),
+                "https://{}/REP/originalFiles/{}".format(self.server, testNumber),
                 verify=False,
                 json={"user": self.user, "token": self.token},
             )
