@@ -8,10 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Python package has improved dependency information.
 
 ### Changed
+* Manager UI tool has better reporting of what users are doing.
+* Manager and command line tools report papers that are marked "out"; this may be useful in case of client crashes, to identify (and reset) papers marking out for grading/IDing.
 
 ### Fixed
+* Fixed toml depdency in Dockerfile.
 
 
 ## [0.4.0] - 2020-04-04
