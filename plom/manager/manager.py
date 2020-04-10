@@ -1033,9 +1033,10 @@ class Manager(QWidget):
         self.ui.tasksOutTW.setRowCount(0)
 
         if len(tasksOut) == 0:
-            ErrorMessage("No tasks out currently.").exec_()
+            self.ui.tasksOutTW.setEnabled(False)
             return
 
+        self.ui.tasksOutTW.setEnabled(True)
         r = 0
         for x in tasksOut:
             self.ui.tasksOutTW.insertRow(r)
