@@ -37,8 +37,8 @@
     <binary>plom-client</binary>
   </provides>
 
-  <url type="homepage">https://plom.ca</url>
-  <update_contact>plomdevs@plom.ca</update_contact>
+  <url type="homepage">https://plomgrading.org</url>
+  <update_contact>devs@plomgrading.org</update_contact>
   <developer_name>Andrew Rechnitzer, Colin B. Macdonald and others</developer_name>
   <content_rating type="oars-1.0"/>
   <releases>
