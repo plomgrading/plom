@@ -29,7 +29,7 @@ server_install_requires = [
     "pyqrcode",
     "pyzbar",
     "peewee",
-    "imutils", "lapsolver", "tensorflow>=2",  # ID reading
+    "imutils", "opencv-python", "tensorflow>=2", "lapsolver",   # ID reading
     "PyQt5", "requests",  # b/c of deprecated userManager
 ]
 
