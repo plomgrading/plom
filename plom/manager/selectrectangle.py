@@ -40,6 +40,7 @@ class SelectRectangleWindow(QDialog):
         self.tool = "zoom"
 
     def initUI(self, fnames):
+        self.setWindowTitle("Select ID Rectangle")
         self.vTW = QTabWidget()
         self.views = {}
         v = 0
