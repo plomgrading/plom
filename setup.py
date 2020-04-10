@@ -13,6 +13,7 @@ for fn in glob("plom/client/cursors/*.png"):
 
 client_install_requires = [
     "toml>=0.10.0",
+    "requests",
     "requests-toolbelt",
     "PyQt5"
 ]
