@@ -957,13 +957,35 @@ class Manager(QWidget):
                     fh.write(imageList[i])
             IDViewWindow(self, inames, sid).exec_()
 
-    def runPredictor(self):
-        print(
-            "Run predictor with rectangle = {} of {}th file".format(
-                self.IDrectangle, self.IDwhichFile
-            )
+    def runPredictor(self, ignoreStamp=False):
+        rmsg = managerMessenger.IDrunPredictions(
+            [
+                self.IDrectangle.left(),
+                self.IDrectangle.top(),
+                self.IDrectangle.width(),
+                self.IDrectangle.height(),
+            ],
+            self.IDwhichFile,
+            ignoreStamp,
         )
-        self.todo()
+        # returns [True, True] = off and running,
+        # [True, False] = currently running.
+        # [False, time] = found a timestamp
+        if rmsg[0]:
+            if rmsg[1]:
+                txt = "IDReader launched. It may take some time to run. Please be patient."
+            else:
+                txt = "IDReader currently running. Please be patient."
+            ErrorMessage(txt).exec_()
+            return
+        else:  # not running because we found a timestamp = rmsg[1]
+            sm = SimpleMessage(
+                "IDReader was last run at {}. Do you want to rerun it?".format(rmsg[1])
+            )
+            if sm.exec_() == QMessageBox.No:
+                return
+            else:
+                self.runPredictor(ignoreStamp=True)
 
     def getPredictions(self):
         csvfile = managerMessenger.IDrequestPredictions()
