@@ -11,6 +11,38 @@ cursorList = []
 for fn in glob("plom/client/cursors/*.png"):
     cursorList.append(fn)
 
+client_install_requires = [
+    "toml>=0.10.0",
+    "requests",
+    "requests-toolbelt",
+    "PyQt5"
+]
+
+server_install_requires = [
+    "toml>=0.10.0",
+    "tqdm",
+    "pandas",
+    "passlib",
+    "pymupdf>=1.16.14",
+    "weasyprint",
+    "aiohttp",
+    "pyqrcode",
+    "pyzbar",
+    "peewee",
+    "imutils", "lapsolver", "tensorflow>=2",  # ID reading
+    "PyQt5", "requests",  # b/c of deprecated userManager
+]
+
+# optional dep for randoMarker: xvfbwrapper
+
+# Non-Python deps
+#   - imagemagick
+#   - latex installation including (Debian/Ubuntu pkg names):
+#       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
+#   - latex installation including (Fedora pkg names):
+#       tex-preview tex-dvipng texlive-scheme-basic tex-xwatermark tex-charter
+
+
 setup(
     name="plom",
     version="0.4.0+",
@@ -61,4 +93,5 @@ setup(
         ("share/plom/icons", iconList),
         ("share/plom/cursors", cursorList),
     ],
+    install_requires=list(set(client_install_requires + server_instal_requires)),
 )
