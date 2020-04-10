@@ -19,6 +19,7 @@ import subprocess
 from shlex import split
 import time
 import argparse
+from warnings import warn
 
 from plom import version
 
@@ -32,6 +33,9 @@ def main():
     args = parser.parse_args()
     print("Plom version {}".format(version.__version__))
 
+    if len(os.listdir(os.getcwd())) != 0:
+        print('We recommend calling "{}" in an empty folder!'.format(parser.prog))
+        warn("Current directory not empty")
     for f in (
         "specAndDatabase",
         "serverConfiguration",
