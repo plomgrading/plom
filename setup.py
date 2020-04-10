@@ -11,12 +11,7 @@ cursorList = []
 for fn in glob("plom/client/cursors/*.png"):
     cursorList.append(fn)
 
-client_install_requires = [
-    "toml>=0.10.0",
-    "requests",
-    "requests-toolbelt",
-    "PyQt5"
-]
+client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQt5"]
 
 server_install_requires = [
     "toml>=0.10.0",
@@ -29,8 +24,12 @@ server_install_requires = [
     "pyqrcode",
     "pyzbar",
     "peewee",
-    "imutils", "opencv-python", "tensorflow>=2", "lapsolver",   # ID reading
-    "PyQt5", "requests",  # b/c of deprecated userManager
+    "imutils",
+    "opencv-python",
+    "tensorflow>=2",
+    "lapsolver",  # ID reading
+    "PyQt5",
+    "requests",  # b/c of deprecated userManager
 ]
 
 # optional dep for randoMarker: xvfbwrapper
@@ -93,5 +92,5 @@ setup(
         ("share/plom/icons", iconList),
         ("share/plom/cursors", cursorList),
     ],
-    install_requires=list(set(client_install_requires + server_instal_requires)),
+    install_requires=list(set(client_install_requires + server_install_requires)),
 )
