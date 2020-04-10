@@ -71,8 +71,8 @@ class SelectRectangleWindow(QDialog):
         # Layout simply
         grid = QGridLayout()
         grid.addWidget(self.vTW, 1, 1, 10, 6)
-        grid.addWidget(self.zoomB, 5, 20)
-        grid.addWidget(self.rectB, 6, 20)
+        grid.addWidget(self.zoomB, 6, 20)
+        grid.addWidget(self.rectB, 5, 20)
         grid.addWidget(self.delRectB, 7, 20)
         grid.addWidget(self.resetB, 20, 1)
         grid.addWidget(self.cancelB, 20, 20)
@@ -81,7 +81,7 @@ class SelectRectangleWindow(QDialog):
         self.setLayout(grid)
         self.show()
 
-        self.zoomB.animateClick()
+        self.rectB.animateClick()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
