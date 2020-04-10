@@ -89,13 +89,9 @@ def main():
 
     print('\n*** Now run "plom-client" ***\n')
     # TODO: output account info directly, perhaps just "user*"?
-    print('  (See "serverConfiguration/userListRaw.csv" for acount info)\n')
-
-    print("Starting an endless loop: Ctrl-C to quit demo script")
-    # TODO: improve this, catch the ctrl-c, do sth like `serverproc.wait()`
-    print("  (CAUTION: you may need to kill the server)")
-    while True:
-        time.sleep(0.5)
+    print('  * See "serverConfiguration/userListRaw.csv" for account info\n')
+    print("  * Press Ctrl-C to stop this demo")
+    serverproc.wait()
 
 
 if __name__ == "__main__":
