@@ -93,5 +93,5 @@ setup(
         ("share/plom/icons", iconList),
         ("share/plom/cursors", cursorList),
     ],
-    install_requires=list(set(client_install_requires + server_instal_requires)),
+    install_requires=list(set(client_install_requires + server_install_requires)),
 )
