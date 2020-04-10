@@ -132,16 +132,22 @@ class IDHandler:
 
         return web.json_response(self.server.IDdeletePredictions(), status=200)
 
-    @authByToken_validFields(["user", "rectangle", "fileNumber"])
+    @authByToken_validFields(["user", "rectangle", "fileNumber", "ignoreStamp"])
     def IDrunPredictions(self, data, request):
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
             return web.Response(status=401)
 
-        return web.json_response(
-            self.server.IDrunPredictions(data["rectangle"], data["fileNumber"]),
-            status=200,
+        rmsg = self.server.IDrunPredictions(
+            data["rectangle"], data["fileNumber"], data["ignoreStamp"]
         )
+        if rmsg[0]:  # set running or is running
+            if rmsg[1]:
+                return web.Response(status=200)
+            else:
+                return web.Response(status=202)  # is already running
+        else:  # isn't running because we found a time-stamp
+            return web.Response(text=rmsg[1], status=205)
 
     # @routes.patch("/ID/review")
     @authByToken_validFields(["testNumber"])

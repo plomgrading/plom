@@ -1,8 +1,8 @@
 import hashlib
+import logging
 import os
 import shutil
 import uuid
-import logging
 
 from plom import specdir
 
@@ -86,7 +86,41 @@ def IDreviewID(self, testNumber):
     return self.DB.IDreviewID(testNumber)
 
 
-def IDrunPredictions(self, rectangle, fileNumber):
-    from plom.server.IDReader.idReader import runIDReader
+def IDrunPredictions(self, rectangle, fileNumber, ignoreStamp):
+    # from plom.server.IDReader.idReader import runIDReader
 
-    runIDReader(self.DB.IDgetImageList(fileNumber), rectangle)
+    lockFile = os.path.join(specdir, "IDReader.lock")
+    timestamp = os.path.join(specdir, "IDReader.timestamp")
+    if os.path.isfile(lockFile):
+        log.info("ID reader is already running.")
+        return [True, False]
+
+    from datetime import datetime
+    import json
+    import subprocess
+
+    # check the timestamp - unless manager tells you to ignore it.
+    if os.path.isfile(timestamp):
+        if ignoreStamp is False:
+            with open(timestamp, "r") as fh:
+                txt = json.load(fh)
+                return [False, txt]
+        else:
+            os.unlink(timestamp)
+
+    # get list of [testNumber, image]
+    log.info("ID get images for ID reader")
+    testImageDict = self.DB.IDgetImageList(fileNumber)
+    # dump this as json / lockfile for subprocess to use in background.
+    with open(lockFile, "w") as fh:
+        json.dump([testImageDict, rectangle], fh)
+    # make a timestamp
+    runAt = datetime.now().strftime("%y:%m:%d-%H:%M:%S")
+    with open(timestamp, "w") as fh:
+        json.dump(runAt, fh)
+
+    # run the reader
+
+    log.info("ID launch ID reader in background")
+    subprocess.Popen(["python3", "-m", "plom.server.IDReader.runTheReader", lockFile])
+    return [True, True]

@@ -888,7 +888,7 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def IDrunPredictions(self, rectangle, fileNumber):
+    def IDrunPredictions(self, rectangle, fileNumber, ignoreTimeStamp):
         self.SRmutex.acquire()
         try:
             response = self.session.post(
@@ -899,10 +899,15 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "rectangle": rectangle,
                     "fileNumber": fileNumber,
+                    "ignoreStamp": ignoreTimeStamp,
                 },
             )
             response.raise_for_status()
-            rval = response.json()
+            if response.status_code == 202:
+                return [True, False]
+            if response.status_code == 205:
+                return [False, response.text]
+
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -913,7 +918,7 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        return rval
+        return [True, True]
 
     def getIdentified(self):
         self.SRmutex.acquire()
