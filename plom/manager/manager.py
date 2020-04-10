@@ -7,6 +7,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+from collections import defaultdict
 import toml
 import argparse
 import os
@@ -275,6 +276,7 @@ class Manager(QWidget):
         self.ui.refreshIDButon.clicked.connect(self.refreshIDTab)
         self.ui.refreshIButton.clicked.connect(self.refreshIList)
         self.ui.refreshPButton.clicked.connect(self.refreshMTab)
+        self.ui.refreshTOB.clicked.connect(self.refreshOutTab)
         self.ui.refreshSButton.clicked.connect(self.refreshSList)
         self.ui.refreshUButton.clicked.connect(self.refreshUList)
         self.ui.refreshCButton.clicked.connect(self.refreshCList)
@@ -283,6 +285,7 @@ class Manager(QWidget):
         self.ui.refreshTOTB.clicked.connect(self.refreshTOTRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.refreshQPUB.clicked.connect(self.refreshQPU)
+        self.ui.refreshPUQB.clicked.connect(self.refreshPUQ)
 
         self.ui.removePageB.clicked.connect(self.removePage)
         self.ui.subsPageB.clicked.connect(self.subsPage)
@@ -383,6 +386,7 @@ class Manager(QWidget):
         self.initScanTab()
         self.initIDTab()
         self.initMarkTab()
+        self.initOutTab()
         self.initUnknownTab()
         self.initCollideTab()
         self.initDiscardTab()
@@ -391,6 +395,7 @@ class Manager(QWidget):
         self.initRevTOTTab()
         self.initUserListTab()
         self.initQPUTab()
+        self.initPUQTab()
 
     # -------------------
     def getTPQV(self):
@@ -641,13 +646,35 @@ class Manager(QWidget):
                     fh.write(imageList[i])
             IDViewWindow(self, inames, sid).exec_()
 
-    def runPredictor(self):
-        print(
-            "Run predictor with rectangle = {} of {}th file".format(
-                self.IDrectangle, self.IDwhichFile
-            )
+    def runPredictor(self, ignoreStamp=False):
+        rmsg = managerMessenger.IDrunPredictions(
+            [
+                self.IDrectangle.left(),
+                self.IDrectangle.top(),
+                self.IDrectangle.width(),
+                self.IDrectangle.height(),
+            ],
+            self.IDwhichFile,
+            ignoreStamp,
         )
-        self.todo()
+        # returns [True, True] = off and running,
+        # [True, False] = currently running.
+        # [False, time] = found a timestamp
+        if rmsg[0]:
+            if rmsg[1]:
+                txt = "IDReader launched. It may take some time to run. Please be patient."
+            else:
+                txt = "IDReader currently running. Please be patient."
+            ErrorMessage(txt).exec_()
+            return
+        else:  # not running because we found a timestamp = rmsg[1]
+            sm = SimpleMessage(
+                "IDReader was last run at {}. Do you want to rerun it?".format(rmsg[1])
+            )
+            if sm.exec_() == QMessageBox.No:
+                return
+            else:
+                self.runPredictor(ignoreStamp=True)
 
     def getPredictions(self):
         csvfile = managerMessenger.IDrequestPredictions()
@@ -706,6 +733,27 @@ class Manager(QWidget):
         mhist = managerMessenger.getMarkHistogram(question, version)
         QVHistogram(question, version, mhist).exec_()
         # print(mhist)
+
+    def initOutTab(self):
+        self.ui.tasksOutTW.setColumnCount(3)
+        self.ui.tasksOutTW.setHorizontalHeaderLabels(["Task", "User", "Time"])
+
+    def refreshOutTab(self):
+        tasksOut = managerMessenger.RgetOutToDo()
+        self.ui.tasksOutTW.clearContents()
+        self.ui.tasksOutTW.setRowCount(0)
+
+        if len(tasksOut) == 0:
+            ErrorMessage("No tasks out currently.").exec_()
+            return
+
+        r = 0
+        for x in tasksOut:
+            self.ui.tasksOutTW.insertRow(r)
+            self.ui.tasksOutTW.setItem(r, 0, QTableWidgetItem(str(x[0])))
+            self.ui.tasksOutTW.setItem(r, 1, QTableWidgetItem(str(x[1])))
+            self.ui.tasksOutTW.setItem(r, 2, QTableWidgetItem(str(x[2])))
+            r += 1
 
     def todo(self, msg=""):
         ErrorMessage("This is on our to-do list" + msg).exec_()
@@ -1266,29 +1314,73 @@ class Manager(QWidget):
 
     def initQPUTab(self):
         self.ui.QPUserTW.setColumnCount(5)
-        self.ui.QPUserTW.setHorizontalHeaderLabels(
+        self.ui.QPUserTW.setHeaderLabels(
             ["Question", "Version", "User", "Number Marked", "Percentage of Q/V marked"]
         )
-        self.ui.QPUserTW.setSortingEnabled(True)
+        # self.ui.QPUserTW.setSortingEnabled(True)
         self.ui.QPUserTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.QPUserTW.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.QPUserTW.resizeColumnsToContents()
+
+    def initPUQTab(self):
+        self.ui.PUQTW.setColumnCount(5)
+        self.ui.PUQTW.setHeaderLabels(
+            ["User", "Question", "Version", "Number Marked", "Percentage of Q/V marked"]
+        )
+        # self.ui.PUQTW.setSortingEnabled(True)
+        self.ui.PUQTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.PUQTW.setSelectionBehavior(QAbstractItemView.SelectRows)
 
     def refreshQPU(self):
-        self.ui.userListTW.clearContents()
-        self.ui.userListTW.setRowCount(0)
+        # delete the children of each toplevel items
+        root = self.ui.QPUserTW.invisibleRootItem()
+        for l0 in range(self.ui.QPUserTW.topLevelItemCount()):
+            l0i = self.ui.QPUserTW.topLevelItem(0)
+            for l1 in range(self.ui.QPUserTW.topLevelItem(0).childCount()):
+                l0i.removeChild(l0i.child(0))
+            root.removeChild(l0i)
+
         r = 0
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
                 qpu = managerMessenger.getQuestionUserProgress(q, v)
+                l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
                 for (u, n) in qpu[1:]:
-                    self.ui.QPUserTW.insertRow(r)
-                    self.ui.QPUserTW.setItem(r, 0, QTableWidgetItem(str(q).rjust(4)))
-                    self.ui.QPUserTW.setItem(r, 1, QTableWidgetItem(str(v).rjust(2)))
-                    self.ui.QPUserTW.setItem(r, 2, QTableWidgetItem("{}".format(u)))
-                    self.ui.QPUserTW.setItem(r, 3, QTableWidgetItem(str(n).rjust(4)))
                     pb = QProgressBar()
                     pb.setMaximum(qpu[0])
                     pb.setValue(n)
-                    self.ui.QPUserTW.setCellWidget(r, 4, pb)
-                    r += 1
+                    l1 = QTreeWidgetItem(["", "", str(u), str(n).rjust(4)])
+                    l0.addChild(l1)
+                    self.ui.QPUserTW.setItemWidget(l1, 4, pb)
+                self.ui.QPUserTW.addTopLevelItem(l0)
+
+    def refreshPUQ(self):
+        # delete the children of each toplevel items
+        root = self.ui.PUQTW.invisibleRootItem()
+        for l0 in range(self.ui.PUQTW.topLevelItemCount()):
+            l0i = self.ui.PUQTW.topLevelItem(0)
+            for l1 in range(self.ui.PUQTW.topLevelItem(0).childCount()):
+                l0i.removeChild(l0i.child(0))
+            root.removeChild(l0i)
+
+        # get list of everything done by users
+        uprog = defaultdict(list)
+        for q in range(1, self.numberOfQuestions + 1):
+            for v in range(1, self.numberOfVersions + 1):
+                qpu = managerMessenger.getQuestionUserProgress(q, v)
+                for (u, n) in qpu[1:]:
+                    uprog[u].append(
+                        [q, v, n, qpu[0]]
+                    )  # question, version, no marked, no total
+
+        for u in uprog:
+            l0 = QTreeWidgetItem([str(u)])
+            for qvn in uprog[u]:  # will be in q,v,n,ntot in qv order
+                pb = QProgressBar()
+                pb.setMaximum(qvn[3])
+                pb.setValue(qvn[2])
+                l1 = QTreeWidgetItem(
+                    ["", str(qvn[0]).rjust(4), str(qvn[1]).rjust(2), str(n).rjust(4)]
+                )
+                l0.addChild(l1)
+                self.ui.PUQTW.setItemWidget(l1, 4, pb)
+            self.ui.PUQTW.addTopLevelItem(l0)

@@ -67,6 +67,13 @@ class ReportHandler:
             return web.Response(status=401)
         return web.json_response(self.server.RgetCompletions(), status=200)
 
+    # @routes.get("/REP/outToDo")
+    @authByToken_validFields(["user"])
+    def RgetOutToDo(self, d, request):
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+        return web.json_response(self.server.RgetOutToDo(), status=200)
+
     # @routes.get("/REP/status/{test}")
     @authByToken_validFields(["user"])
     def RgetStatus(self, d, request):
@@ -180,6 +187,7 @@ class ReportHandler:
         router.add_get("/REP/markHistogram", self.RgetMarkHistogram)
         router.add_get("/REP/identified", self.RgetIdentified)
         router.add_get("/REP/completions", self.RgetCompletions)
+        router.add_get("/REP/outToDo", self.RgetOutToDo)
         router.add_get("/REP/status/{test}", self.RgetStatus)
         router.add_get("/REP/spreadSheet", self.RgetSpreadsheet)
         router.add_get("/REP/originalFiles/{test}", self.RgetOriginalFiles)

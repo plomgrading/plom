@@ -152,6 +152,7 @@ class Server(object):
         IDdidNotFinish,
         IDreturnIDdTask,
         IDdeletePredictions,
+        IDrunPredictions,
         IDreviewID,
     )
     from .plomServer.serverMark import (
@@ -192,6 +193,7 @@ class Server(object):
         RgetMarkHistogram,
         RgetIdentified,
         RgetCompletions,
+        RgetOutToDo,
         RgetStatus,
         RgetSpreadsheet,
         RgetCoverPageInfo,

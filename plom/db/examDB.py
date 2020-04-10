@@ -1085,6 +1085,41 @@ class PlomDB:
         log.debug("Sending list of completed tests")
         return rval
 
+    def RgetOutToDo(self):
+        # return list of tasks that are status = todo
+        # note - have to format the time as string since not jsonable.
+        # x.time.strftime("%y:%m:%d-%H:%M:%S"),
+
+        rval = []
+        for iref in IDData.select().where(IDData.status == "out"):
+            rval.append(
+                [
+                    "id-t{}".format(iref.test.testNumber),
+                    iref.username,
+                    iref.time.strftime("%y:%m:%d-%H:%M:%S"),
+                ]
+            )
+        for mref in QuestionData.select().where(QuestionData.status == "out"):
+            rval.append(
+                [
+                    "mrk-t{}-q{}-v{}".format(
+                        mref.test.testNumber, mref.questionNumber, mref.version
+                    ),
+                    mref.username,
+                    mref.time.strftime("%y:%m:%d-%H:%M:%S"),
+                ]
+            )
+        for sref in SumData.select().where(SumData.status == "out"):
+            rval.append(
+                [
+                    "tot-t{}".format(sref.test.testNumber),
+                    sref.username,
+                    sref.time.strftime("%y:%m:%d-%H:%M:%S"),
+                ]
+            )
+        log.debug("Sending list of tasks that are still out")
+        return rval
+
     def RgetStatus(self, testNumber):
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:
@@ -1414,6 +1449,23 @@ class PlomDB:
         for p in gref.pages.order_by(Page.pageNumber):
             rval.append(p.fileName)
         log.debug("Sending IDpages of test {} to user {}".format(t, username))
+        return rval
+
+    def IDgetImageList(self, imageNumber):
+        rval = {}
+        query = IDData.select()
+        for iref in query:
+            # for each iref, check that it is scanned and then grab page.
+            gref = iref.group
+            if not gref.scanned:
+                continue
+            # make a list of all the pages in the IDgroup
+            pages = []
+            for p in gref.pages.order_by(Page.pageNumber):
+                pages.append(p.fileName)
+            # grab the relevant page if there.
+            if len(pages) > imageNumber:
+                rval[iref.test.testNumber] = pages[imageNumber]
         return rval
 
     def IDdidNotFinish(self, username, testNumber):

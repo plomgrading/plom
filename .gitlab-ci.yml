@@ -46,8 +46,9 @@ before_script:
   - which pip3
   - python3 -m pip -V
   - python3 -m pip install --upgrade setuptools
-  - python3 -m pip install pymupdf weasyprint imutils lapsolver
-    peewee toml aiohttp pyzbar
+  - python3 -m pip install pymupdf weasyprint peewee toml aiohttp pyzbar
+  # deps for id-reader
+  # python3 -m pip install imutils lapsolver tensorflow
 
 stages:
   - build
