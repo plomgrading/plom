@@ -49,7 +49,7 @@ setup(
     description="Plom is PaperLess Open Marking",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://plom.ca",
+    url="https://plomgrading.org",
     author="Andrew Rechnitzer",
     license="AGPLv3+",
     python_requires=">=3.6",

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Manager UI tool has better reporting of what users are doing.
 * Manager and command line tools report papers that are marked "out"; this may be useful in case of client crashes, to identify (and reset) papers marking out for grading/IDing.
+* Update for new plomgrading.org domain name.
 
 ### Fixed
 * Fixed toml depdency in Dockerfile.
