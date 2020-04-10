@@ -26,10 +26,20 @@ server_install_requires = [
     "pymupdf>=1.16.14",
     "weasyprint",
     "aiohttp",
+    "pyqrcode",
     "pyzbar",
-    "python3-xvfbwrapper",
-    "PyQt5"  # sort of?  maybe not forever
+    "peewee",
+    "imutils", "lapsolver", "tensorflow>=2",  # ID reading
+    "PyQt5", "requests",  # b/c of deprecated userManager
 ]
+
+# optional dep for randoMarker: xvfbwrapper
+
+# Non-Python deps
+#   - imagemagick
+#   - latex installation including (Debian/Ubuntu pkg names):
+#       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
+#   - latex installation including (Fedora pkg names):
 
 
 setup(
