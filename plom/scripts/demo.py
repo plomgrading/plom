@@ -57,22 +57,45 @@ def main():
     # Start server into background
     serverproc = subprocess.Popen(split("plom-server launch"))
     time.sleep(1.0)
+    try:
+        serverproc.wait(1.0)
+    except subprocess.TimeoutExpired:
+        pass
+    else:
+        r = serverproc.returncode
+        print("Server has prematurely stopped with return code {}".format(r))
+        # TODO: server could send specific return code for "address already in use"?
+        msg = "Server didn't start.  Is one already running?  See errors above."
+        #raise RuntimeError(msg) from None
+        print(msg)
+        exit(r)
+
+    assert serverproc.returncode is None, "has the server died?"
+
+    print("Server seems to be running, so we move on to uploading")
 
     subprocess.check_call(split("plom-scan process fake_scribbled_exams.pdf"))
     subprocess.check_call(split("plom-scan read -w 4567"))
     subprocess.check_call(split("plom-scan upload -w 4567"))
 
     time.sleep(0.5)
+    try:
+        serverproc.wait(0.5)
+    except subprocess.TimeoutExpired:
+        pass
+    else:
+        r = serverproc.returncode
+        print("Server has prematurely stopped with return code {}".format(r))
+        msg = "Server may have unexpectedly died during uploading.  See errors above."
+        print(msg)
+        exit(r)
+
 
     print('\n*** Now run "plom-client" ***\n')
     # TODO: output account info directly, perhaps just "user*"?
-    print('  (See "serverConfiguration/userListRaw.csv" for acount info)\n')
-
-    print("Starting an endless loop: Ctrl-C to quit demo script")
-    # TODO: improve this, catch the ctrl-c and do something
-    print("  (you may need to kill the server)")
-    while True:
-        time.sleep(0.5)
+    print('  * See "serverConfiguration/userListRaw.csv" for account info\n')
+    print("  * Press Ctrl-C to stop this demo")
+    serverproc.wait()
 
 
 if __name__ == "__main__":
