@@ -152,6 +152,7 @@ class Server(object):
         IDdidNotFinish,
         IDreturnIDdTask,
         IDdeletePredictions,
+        IDrunPredictions,
         IDreviewID,
     )
     from .plomServer.serverMark import (

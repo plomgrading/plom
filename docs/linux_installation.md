@@ -12,7 +12,7 @@ Fedora
 
 Tested on Fedora 31.  Some stuff from the package manager:
 ```
-  # sudo dnf install ImageMagick zbar \
+  # sudo dnf install ImageMagick \
                      python3-passlib python3-pypng \
                      python3-jsmin python3-defusedxml python3-yaml \
                      python3-urllib3 python3-more-itertools \
@@ -33,7 +33,7 @@ More dependencies for the tensorflow-based ID reader:
 ```
   # sudo dnf install python3-termcolor python3-wheel python3-grpcio \
                      python3-markdown python3-h5py
-  # pip3 install --user lapsolver "tensorflow<2"
+  # pip3 install --user imutils lapsolver tensorflow
 ```
 
 
@@ -43,7 +43,7 @@ Ubuntu
 Some stuff from the package manager:
 ```
   # sudo apt install \
-        zbar-tools cmake make imagemagick dvipng g++ \
+        cmake make imagemagick dvipng g++ \
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
         python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
         python3-pip python3-setuptools python3-wheel \
@@ -65,7 +65,7 @@ Other stuff we get from pip:
   # python3 -m pip install --upgrade --user setuptools
   # python3 -m pip install --upgrade --user pymupdf weasyprint imutils toml \
         aiohttp pyzbar
-  # python3 -m pip install --upgrade --user lapsolver "tensorflow<2"
+  # python3 -m pip install --upgrade --user imutils lapsolver tensorflow
 ```
 (Note `python3 -m pip` to use the newly upgraded pip).
 
