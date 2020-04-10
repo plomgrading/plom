@@ -40,6 +40,7 @@ server_install_requires = [
 #   - latex installation including (Debian/Ubuntu pkg names):
 #       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
 #   - latex installation including (Fedora pkg names):
+#       tex-preview tex-dvipng texlive-scheme-basic tex-xwatermark tex-charter
 
 
 setup(
