@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import uuid
+from pathlib import Path
 
 from plom import specdir
 
