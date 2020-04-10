@@ -849,11 +849,13 @@ class Manager(QWidget):
         self.initOverallTab()
         self.initMarkTab()
         self.initIDTab()
+        self.initOutTab()
 
     def refreshProgressTab(self):
         self.refreshOverallTab()
         self.refreshMarkTab()
         self.refreshIDTab()
+        self.refreshOutTab()
 
     def initOverallTab(self):
         self.ui.overallTW.setHorizontalHeaderLabels(
@@ -1020,6 +1022,27 @@ class Manager(QWidget):
         mhist = managerMessenger.getMarkHistogram(question, version)
         QVHistogram(question, version, mhist).exec_()
         # print(mhist)
+
+    def initOutTab(self):
+        self.ui.tasksOutTW.setColumnCount(3)
+        self.ui.tasksOutTW.setHorizontalHeaderLabels(["Task", "User", "Time"])
+
+    def refreshOutTab(self):
+        tasksOut = managerMessenger.RgetOutToDo()
+        self.ui.tasksOutTW.clearContents()
+        self.ui.tasksOutTW.setRowCount(0)
+
+        if len(tasksOut) == 0:
+            ErrorMessage("No tasks out currently.").exec_()
+            return
+
+        r = 0
+        for x in tasksOut:
+            self.ui.tasksOutTW.insertRow(r)
+            self.ui.tasksOutTW.setItem(r, 0, QTableWidgetItem(str(x[0])))
+            self.ui.tasksOutTW.setItem(r, 1, QTableWidgetItem(str(x[1])))
+            self.ui.tasksOutTW.setItem(r, 2, QTableWidgetItem(str(x[2])))
+            r += 1
 
     def todo(self, msg=""):
         ErrorMessage("This is on our to-do list" + msg).exec_()

@@ -192,6 +192,7 @@ class Server(object):
         RgetMarkHistogram,
         RgetIdentified,
         RgetCompletions,
+        RgetOutToDo,
         RgetStatus,
         RgetSpreadsheet,
         RgetCoverPageInfo,

@@ -35,6 +35,10 @@ def RgetCompletions(self):
     return self.DB.RgetCompletions()
 
 
+def RgetOutToDo(self):
+    return self.DB.RgetOutToDo()
+
+
 def RgetStatus(self, testNumber):
     return self.DB.RgetStatus(testNumber)
 
