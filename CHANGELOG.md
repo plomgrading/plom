@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Python package has improved dependency information.
+* `plom-demo` checks if server is running and warns if directory isn't empty.
 
 ### Changed
 * Manager UI tool has better reporting of what users are doing.
