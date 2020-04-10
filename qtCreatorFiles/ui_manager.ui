@@ -1164,7 +1164,7 @@
              <item>
               <widget class="QPushButton" name="refreshUserB">
                <property name="text">
-                <string>Refresh</string>
+                <string>Refresh user login information</string>
                </property>
               </widget>
              </item>
@@ -1187,75 +1187,65 @@
          </widget>
          <widget class="QWidget" name="tab">
           <attribute name="title">
-           <string>Progress by Question &amp;User</string>
+           <string>Progress by User</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_24">
            <item>
-            <widget class="QTreeWidget" name="QPUserTW">
-             <property name="editTriggers">
-              <set>QAbstractItemView::NoEditTriggers</set>
+            <widget class="QTabWidget" name="tabWidget_3">
+             <property name="currentIndex">
+              <number>0</number>
              </property>
-             <property name="alternatingRowColors">
-              <bool>true</bool>
-             </property>
-             <column>
-              <property name="text">
-               <string notr="true">1</string>
-              </property>
-             </column>
+             <widget class="QWidget" name="tab_5">
+              <attribute name="title">
+               <string>User by Question</string>
+              </attribute>
+              <layout class="QVBoxLayout" name="verticalLayout_25">
+               <item>
+                <widget class="QTreeWidget" name="QPUserTW">
+                 <property name="editTriggers">
+                  <set>QAbstractItemView::NoEditTriggers</set>
+                 </property>
+                 <property name="alternatingRowColors">
+                  <bool>true</bool>
+                 </property>
+                 <column>
+                  <property name="text">
+                   <string notr="true">1</string>
+                  </property>
+                 </column>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="tab_6">
+              <attribute name="title">
+               <string>Question by User</string>
+              </attribute>
+              <layout class="QVBoxLayout" name="verticalLayout_28">
+               <item>
+                <widget class="QTreeWidget" name="PUQTW">
+                 <column>
+                  <property name="text">
+                   <string notr="true">1</string>
+                  </property>
+                 </column>
+                </widget>
+               </item>
+              </layout>
+             </widget>
             </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_21">
              <item>
-              <widget class="QPushButton" name="refreshQPUB">
+              <widget class="QPushButton" name="refreshProgressQUB">
                <property name="text">
-                <string>Refresh</string>
+                <string>Refresh User/Question progress</string>
                </property>
               </widget>
              </item>
              <item>
               <spacer name="horizontalSpacer_15">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QWidget" name="tab_4">
-          <attribute name="title">
-           <string>Progress by User Question</string>
-          </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_25">
-           <item>
-            <widget class="QTreeWidget" name="PUQTW">
-             <column>
-              <property name="text">
-               <string notr="true">1</string>
-              </property>
-             </column>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_22">
-             <item>
-              <widget class="QPushButton" name="refreshPUQB">
-               <property name="text">
-                <string>Refresh</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_16">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>

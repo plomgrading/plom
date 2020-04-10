@@ -273,14 +273,13 @@ class Manager(QWidget):
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontButton.clicked.connect(self.setFont)
         self.ui.scanRefreshB.clicked.connect(self.refreshScanTab)
-        self.ui.progressRefreshB.clicked.connect(self.refreshProgresTab)
+        self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
         self.ui.refreshIDPredictionsB.clicked.connect(self.getPredictions)
 
         self.ui.refreshIDRevB.clicked.connect(self.refreshIDRev)
         self.ui.refreshTOTB.clicked.connect(self.refreshTOTRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
-        self.ui.refreshQPUB.clicked.connect(self.refreshQPU)
-        self.ui.refreshPUQB.clicked.connect(self.refreshPUQ)
+        self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
 
         self.ui.removePageB.clicked.connect(self.removePage)
         self.ui.subsPageB.clicked.connect(self.subsPage)
@@ -378,13 +377,7 @@ class Manager(QWidget):
         self.getTPQV()
         self.initScanTab()
         self.initProgressTab()
-
-        # self.initRevTab()
-        # self.initRevIDTab()
-        # self.initRevTOTTab()
-        # self.initUserListTab()
-        # self.initQPUTab()
-        # self.initPUQTab()
+        self.initUserTab()
 
     # -------------------
     def getTPQV(self):
@@ -857,7 +850,7 @@ class Manager(QWidget):
         self.initMarkTab()
         self.initIDTab()
 
-    def refreshProgresTab(self):
+    def refreshProgressTab(self):
         self.refreshOverallTab()
         self.refreshMarkTab()
         self.refreshIDTab()
@@ -1237,6 +1230,13 @@ class Manager(QWidget):
                     self.ui.reviewTOTTW.item(r, 1).setText("reviewer")
                     managerMessenger.TreviewTOT(test)
 
+    ##################
+    # User tab stuff
+
+    def initUserTab(self):
+        self.initUserListTab()
+        self.initProgressQUTabs()
+
     def initUserListTab(self):
         self.ui.userListTW.setColumnCount(5)
         self.ui.userListTW.setHorizontalHeaderLabels(
@@ -1251,7 +1251,23 @@ class Manager(QWidget):
         self.ui.userListTW.setSortingEnabled(True)
         self.ui.userListTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.userListTW.setSelectionBehavior(QAbstractItemView.SelectRows)
-        # self.ui.userListTW.activated.connect()
+
+    def initProgressQUTabs(self):
+        self.ui.QPUserTW.setColumnCount(5)
+        self.ui.QPUserTW.setHeaderLabels(
+            ["Question", "Version", "User", "Number Marked", "Percentage of Q/V marked"]
+        )
+        # self.ui.QPUserTW.setSortingEnabled(True)
+        self.ui.QPUserTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.QPUserTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # and the other tab
+        self.ui.PUQTW.setColumnCount(5)
+        self.ui.PUQTW.setHeaderLabels(
+            ["User", "Question", "Version", "Number Marked", "Percentage of Q/V marked"]
+        )
+        # self.ui.PUQTW.setSortingEnabled(True)
+        self.ui.PUQTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.PUQTW.setSelectionBehavior(QAbstractItemView.SelectRows)
 
     def forceLogout(self):
         ri = self.ui.userListTW.selectedIndexes()
@@ -1288,39 +1304,35 @@ class Manager(QWidget):
 
             r += 1
 
-    def initQPUTab(self):
-        self.ui.QPUserTW.setColumnCount(5)
-        self.ui.QPUserTW.setHeaderLabels(
-            ["Question", "Version", "User", "Number Marked", "Percentage of Q/V marked"]
-        )
-        # self.ui.QPUserTW.setSortingEnabled(True)
-        self.ui.QPUserTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.QPUserTW.setSelectionBehavior(QAbstractItemView.SelectRows)
-
-    def initPUQTab(self):
-        self.ui.PUQTW.setColumnCount(5)
-        self.ui.PUQTW.setHeaderLabels(
-            ["User", "Question", "Version", "Number Marked", "Percentage of Q/V marked"]
-        )
-        # self.ui.PUQTW.setSortingEnabled(True)
-        self.ui.PUQTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.PUQTW.setSelectionBehavior(QAbstractItemView.SelectRows)
-
-    def refreshQPU(self):
+    def refreshProgressQU(self):
         # delete the children of each toplevel items
+        # for TW 1
         root = self.ui.QPUserTW.invisibleRootItem()
         for l0 in range(self.ui.QPUserTW.topLevelItemCount()):
             l0i = self.ui.QPUserTW.topLevelItem(0)
             for l1 in range(self.ui.QPUserTW.topLevelItem(0).childCount()):
                 l0i.removeChild(l0i.child(0))
             root.removeChild(l0i)
-
+        # for TW 2
+        root = self.ui.PUQTW.invisibleRootItem()
+        for l0 in range(self.ui.PUQTW.topLevelItemCount()):
+            l0i = self.ui.PUQTW.topLevelItem(0)
+            for l1 in range(self.ui.PUQTW.topLevelItem(0).childCount()):
+                l0i.removeChild(l0i.child(0))
+            root.removeChild(l0i)
+        # for TW1 and TW2
+        # get list of everything done by users, store by user for TW2
+        # use directly for TW1
+        uprog = defaultdict(list)
         r = 0
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
                 qpu = managerMessenger.getQuestionUserProgress(q, v)
                 l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
                 for (u, n) in qpu[1:]:
+                    uprog[u].append(
+                        [q, v, n, qpu[0]]
+                    )  # question, version, no marked, no total
                     pb = QProgressBar()
                     pb.setMaximum(qpu[0])
                     pb.setValue(n)
@@ -1328,26 +1340,7 @@ class Manager(QWidget):
                     l0.addChild(l1)
                     self.ui.QPUserTW.setItemWidget(l1, 4, pb)
                 self.ui.QPUserTW.addTopLevelItem(l0)
-
-    def refreshPUQ(self):
-        # delete the children of each toplevel items
-        root = self.ui.PUQTW.invisibleRootItem()
-        for l0 in range(self.ui.PUQTW.topLevelItemCount()):
-            l0i = self.ui.PUQTW.topLevelItem(0)
-            for l1 in range(self.ui.PUQTW.topLevelItem(0).childCount()):
-                l0i.removeChild(l0i.child(0))
-            root.removeChild(l0i)
-
-        # get list of everything done by users
-        uprog = defaultdict(list)
-        for q in range(1, self.numberOfQuestions + 1):
-            for v in range(1, self.numberOfVersions + 1):
-                qpu = managerMessenger.getQuestionUserProgress(q, v)
-                for (u, n) in qpu[1:]:
-                    uprog[u].append(
-                        [q, v, n, qpu[0]]
-                    )  # question, version, no marked, no total
-
+        # for TW2
         for u in uprog:
             l0 = QTreeWidgetItem([str(u)])
             for qvn in uprog[u]:  # will be in q,v,n,ntot in qv order
