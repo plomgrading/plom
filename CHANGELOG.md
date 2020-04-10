@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Re-enabled the automatic IDing of papers using machine learning.
 * Python package has improved dependency information.
 * `plom-demo` checks if server is running and warns if directory isn't empty.
 
