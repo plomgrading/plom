@@ -720,6 +720,11 @@ class Manager(QWidget):
         tasksOut = managerMessenger.RgetOutToDo()
         self.ui.tasksOutTW.clearContents()
         self.ui.tasksOutTW.setRowCount(0)
+
+        if len(tasksOut) == 0:
+            ErrorMessage("No tasks out currently.").exec_()
+            return
+
         r = 0
         for x in tasksOut:
             self.ui.tasksOutTW.insertRow(r)

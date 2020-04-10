@@ -55,6 +55,8 @@ def print_everything(comps, numPapersProduced, numQ):
 
 def print_still_out(outToDo):
     if len(outToDo) == 0:
+        print("*******************************")
+        print('** No tasks currently "out" ***')
         return
     print("*********************")
     print("** Tasks still out **")
