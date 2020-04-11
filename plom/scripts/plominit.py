@@ -13,7 +13,7 @@ from textwrap import dedent
 
 
 def main():
-    print("Plom version {}".format(__version__)
+    print("Plom version {}".format(__version__))
 
     print(
         dedent(
