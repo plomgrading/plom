@@ -93,7 +93,8 @@ job demoServer:
     - plom-server init
     - plom-server users --demo
     - plom-server launch &
-    - sleep 1
+    - sleep 2
+    - sleep 2
     - echo "Server should be in background"
     - jobs -l
     - echo "We should be able to connect to it"
@@ -142,7 +143,8 @@ job fullWorkFlow:
     - plom-server init
     - plom-server users --demo
     - plom-server launch &
-    - sleep 1
+    - sleep 2
+    - sleep 2
     - echo "Server should be in background"
     - jobs -l
     - echo "We should be able to connect to it"
