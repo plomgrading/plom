@@ -1,8 +1,16 @@
+import os
 from setuptools import setup, find_packages
 from glob import glob
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
+# This directory
+dir_setup = os.path.dirname(os.path.realpath(__file__))
+
+with open(os.path.join(dir_setup, 'plom', 'version.py')) as f:
+    # Defines __version__
+    exec(f.read())
 
 iconList = []
 for fn in glob("plom/client/icons/*.svg"):
@@ -44,7 +52,7 @@ server_install_requires = [
 
 setup(
     name="plom",
-    version="0.4.1.dev",
+    version=__version__,
     description="Plom is PaperLess Open Marking",
     long_description=long_description,
     long_description_content_type="text/markdown",

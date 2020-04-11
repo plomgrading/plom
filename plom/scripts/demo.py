@@ -21,7 +21,7 @@ import time
 import argparse
 from warnings import warn
 
-from plom import version
+from plom import __version__
 
 
 parser = argparse.ArgumentParser(
@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(
 
 def main():
     args = parser.parse_args()
-    print("Plom version {}".format(version.__version__))
+    print("Plom version {}".format(__version__)
 
     if len(os.listdir(os.getcwd())) != 0:
         print('We recommend calling "{}" in an empty folder!'.format(parser.prog))

@@ -8,12 +8,12 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from plom import version
+from plom import __version__
 from textwrap import dedent
 
 
 def main():
-    print("Plom version {}".format(version.__version__))
+    print("Plom version {}".format(__version__)
 
     print(
         dedent(
