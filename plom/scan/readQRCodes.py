@@ -134,9 +134,8 @@ def checkQRsValid(spec, examsScannedNow):
         warnFlag = False
 
         # Flag papers that have too many QR codes in some corner
-        # TODO: untested?
         if any(len(x) > 1 for x in qrs.values()):
-            msg = "Too many QR codes in {} corner".format(x)
+            msg = "Too many QR codes in some corner (debug: qrs is {})".format(str(qrs))
             problemFlag = True
 
         # Unpack the lists of QRs, building a new dict with only the
