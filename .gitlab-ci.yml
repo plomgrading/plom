@@ -62,6 +62,7 @@ stages:
 job unitTestsInstalledPkg:
   stage: test
   script:
+    - python3 -m pip install packaging
     - python3 ./setup.py build bdist_wheel
     - pushd dist
     - python3 -m pip install plom-*.whl

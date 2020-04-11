@@ -4,6 +4,6 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
 
-__version__ = "0.4.0+"
+__version__ = "0.4.1.dev"
 Plom_API_Version = "11"  # updated for restified API for RgetOutToDo
 Default_Port = 41984

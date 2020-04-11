@@ -44,7 +44,7 @@ server_install_requires = [
 
 setup(
     name="plom",
-    version="0.4.0+",
+    version="0.4.1.dev",
     description="Plom is PaperLess Open Marking",
     long_description=long_description,
     long_description_content_type="text/markdown",
