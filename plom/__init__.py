@@ -11,7 +11,9 @@ __license__ = "AGPL-3.0-or-later"
 
 specdir = "specAndDatabase"
 from .specParser import SpecVerifier, SpecParser
-from .version import __version__, Plom_API_Version
-from .version import Default_Port
+from .version import __version__
+
+Plom_API_Version = "11"  # updated for restified API for RgetOutToDo
+Default_Port = 41984
 
 from .rules import isValidStudentNumber
