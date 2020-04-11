@@ -291,8 +291,6 @@ if __name__ == "__main__":
 
     spec = messenger.getInfoGeneral()
 
-    print(spec)
-
     # Headless QT: https://stackoverflow.com/a/35355906
     L = sys.argv
     L.extend(['-platform', 'minimal'])
