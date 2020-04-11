@@ -200,4 +200,4 @@ job backgroundTest:
 job appstreamValid:
   stage: test
   script:
-    - appstream-util validate org.plomgrading.PlomClient.appdata.xml
+    - appstream-util validate-relax org.plomgrading.PlomClient.appdata.xml
