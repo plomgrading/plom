@@ -291,22 +291,11 @@ if __name__ == "__main__":
 
     spec = messenger.getInfoGeneral()
 
-    print(spec)
+    # Headless QT: https://stackoverflow.com/a/35355906
+    L = sys.argv
+    L.extend(['-platform', 'minimal'])
+    app = QApplication(L)
 
-    vdisplay = None
-    try:
-        from xvfbwrapper import Xvfb
-    except ImportError:
-        print(
-            "Warning: Virtual frame buffer not found (try `apt install python3-xvfbwrapper`)"
-        )
-        print("Will proceed without using local display if available.")
-    else:
-        vdisplay = Xvfb()
-        #vdisplay = Xvfb(width=1280, height=740, colordepth=16)
-        vdisplay.start()
-
-    app = QApplication(sys.argv)
     for q in range(1, spec["numberOfQuestions"] + 1):
         for v in range(1, spec["numberOfVersions"] + 1):
             print("Annotating question {} version {}".format(q, v))
@@ -315,9 +304,6 @@ if __name__ == "__main__":
             except Exception as e:
                 print("Error marking q.v {}.{}: {}".format(q, v, e))
                 exit(1)
-
-    if vdisplay:
-        vdisplay.stop()
 
     messenger.closeUser()
     messenger.stop()

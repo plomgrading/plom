@@ -40,8 +40,6 @@ server_install_requires = [
     "requests",  # b/c of deprecated userManager
 ]
 
-# optional dep for randoMarker: xvfbwrapper
-
 # Non-Python deps
 #   - imagemagick
 #   - latex installation including (Debian/Ubuntu pkg names):
