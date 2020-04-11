@@ -272,20 +272,14 @@ class Manager(QWidget):
         self.ui.loginButton.clicked.connect(self.login)
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontButton.clicked.connect(self.setFont)
-        self.ui.refreshOButton.clicked.connect(self.refreshOTab)
-        self.ui.refreshIDButon.clicked.connect(self.refreshIDTab)
-        self.ui.refreshIButton.clicked.connect(self.refreshIList)
-        self.ui.refreshPButton.clicked.connect(self.refreshMTab)
-        self.ui.refreshTOB.clicked.connect(self.refreshOutTab)
-        self.ui.refreshSButton.clicked.connect(self.refreshSList)
-        self.ui.refreshUButton.clicked.connect(self.refreshUList)
-        self.ui.refreshCButton.clicked.connect(self.refreshCList)
-        self.ui.refreshDButton.clicked.connect(self.refreshDList)
+        self.ui.scanRefreshB.clicked.connect(self.refreshScanTab)
+        self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
+        self.ui.refreshIDPredictionsB.clicked.connect(self.getPredictions)
+
         self.ui.refreshIDRevB.clicked.connect(self.refreshIDRev)
         self.ui.refreshTOTB.clicked.connect(self.refreshTOTRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
-        self.ui.refreshQPUB.clicked.connect(self.refreshQPU)
-        self.ui.refreshPUQB.clicked.connect(self.refreshPUQ)
+        self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
 
         self.ui.removePageB.clicked.connect(self.removePage)
         self.ui.subsPageB.clicked.connect(self.subsPage)
@@ -295,7 +289,6 @@ class Manager(QWidget):
         self.ui.selectRectButton.clicked.connect(self.selectRectangle)
         self.ui.predictButton.clicked.connect(self.runPredictor)
         self.ui.delPredButton.clicked.connect(self.deletePredictions)
-        self.ui.predListRefreshB.clicked.connect(self.getPredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
 
     def closeWindow(self):
@@ -382,20 +375,9 @@ class Manager(QWidget):
         self.ui.loginButton.setEnabled(False)
 
         self.getTPQV()
-        self.initOTab()
         self.initScanTab()
-        self.initIDTab()
-        self.initMarkTab()
-        self.initOutTab()
-        self.initUnknownTab()
-        self.initCollideTab()
-        self.initDiscardTab()
-        self.initRevTab()
-        self.initRevIDTab()
-        self.initRevTOTTab()
-        self.initUserListTab()
-        self.initQPUTab()
-        self.initPUQTab()
+        self.initProgressTab()
+        self.initUserTab()
 
     # -------------------
     def getTPQV(self):
@@ -405,54 +387,22 @@ class Manager(QWidget):
         self.numberOfQuestions = info["numberOfQuestions"]
         self.numberOfVersions = info["numberOfVersions"]
 
-    def initOTab(self):
-        self.ui.overallTW.setHorizontalHeaderLabels(
-            ["Test number", "Identified", "Totalled", "Questions Marked"]
-        )
-        self.ui.overallTW.activated.connect(self.viewTestStatus)
-        self.ui.overallTW.setSortingEnabled(True)
-        self.refreshOTab()
-
-    def viewTestStatus(self):
-        pvi = self.ui.overallTW.selectedItems()
-        if len(pvi) == 0:
-            return
-        r = pvi[0].row()
-        testNumber = int(self.ui.overallTW.item(r, 0).text())
-        stats = managerMessenger.RgetStatus(testNumber)
-        TestStatus(self.numberOfQuestions, stats).exec_()
-
-    def refreshOTab(self):
-        self.ui.overallTW.clearContents()
-        self.ui.overallTW.setRowCount(0)
-
-        opDict = managerMessenger.RgetCompletions()
-        tk = list(opDict.keys())
-        tk.sort(key=int)  # sort in numeric order
-        r = 0
-        for t in tk:
-            self.ui.overallTW.insertRow(r)
-            self.ui.overallTW.setItem(r, 0, QTableWidgetItem(str(t).rjust(4)))
-            it = QTableWidgetItem("{}".format(opDict[t][0]))
-            if opDict[t][0]:
-                it.setBackground(QBrush(Qt.green))
-                it.setToolTip("Has been identified")
-            self.ui.overallTW.setItem(r, 1, it)
-
-            it = QTableWidgetItem("{}".format(opDict[t][1]))
-            if opDict[t][1]:
-                it.setBackground(QBrush(Qt.green))
-                it.setToolTip("Has been totalled")
-            self.ui.overallTW.setItem(r, 2, it)
-
-            it = QTableWidgetItem(str(opDict[t][2]).rjust(2))
-            if opDict[t][2] == self.numberOfQuestions:
-                it.setBackground(QBrush(Qt.green))
-                it.setToolTip("Has been marked")
-            self.ui.overallTW.setItem(r, 3, it)
-            r += 1
-
+    ################
+    # scan tab stuff
     def initScanTab(self):
+        self.initScanStatusTab()
+        self.initUnknownTab()
+        self.initCollideTab()
+        self.initDiscardTab()
+
+    def refreshScanTab(self):
+        self.refreshIList()
+        self.refreshSList()
+        self.refreshUList()
+        self.refreshCList()
+        self.refreshDList()
+
+    def initScanStatusTab(self):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
         self.ui.scanTW.activated.connect(self.viewSPage)
         self.ui.incompTW.setHeaderLabels(["Test number", "Page", "Version", "Status"])
@@ -592,171 +542,6 @@ class Manager(QWidget):
             rval = managerMessenger.replaceMissingPage(code, pt, pp, pv)
             ErrorMessage("{}".format(rval)).exec_()
             self.refreshIList()
-
-    def initIDTab(self):
-        self.refreshIDTab()
-        self.ui.idPB.setFormat("%v / %m")
-        self.ui.totPB.setFormat("%v / %m")
-        self.ui.predictionTW.setColumnCount(3)
-        self.ui.predictionTW.setHorizontalHeaderLabels(["Test", "Student ID", "Name"])
-        self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.predictionTW.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.predictionTW.setAlternatingRowColors(True)
-        self.ui.predictionTW.activated.connect(self.viewIDPage)
-
-    def refreshIDTab(self):
-        ti = managerMessenger.IDprogressCount()
-        tt = managerMessenger.TprogressCount()
-        self.ui.papersLE.setText(str(ti[1]))
-        self.ui.idPB.setValue(ti[0])
-        self.ui.idPB.setMaximum(ti[1])
-        self.ui.totPB.setMaximum(tt[1])
-        self.ui.totPB.setValue(tt[0])
-        self.getPredictions()
-
-    def selectRectangle(self):
-        imageList = managerMessenger.IDgetRandomImage()
-        # Image names = "i<testnumber>.<imagenumber>.png"
-        inames = []
-        with tempfile.TemporaryDirectory() as td:
-            for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.png".format(i))
-                inames.append(tmp)
-                with open(tmp, "wb+") as fh:
-                    fh.write(imageList[i])
-            srw = SelectRectangleWindow(self, inames)
-            if srw.exec_() == QDialog.Accepted:
-                self.IDrectangle = srw.rectangle
-                self.IDwhichFile = srw.whichFile
-                self.ui.predictButton.setEnabled(True)
-
-    def viewIDPage(self):
-        idi = self.ui.predictionTW.selectedIndexes()
-        if len(idi) == 0:
-            return
-        test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
-        sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
-        imageList = managerMessenger.IDrequestImage(test)
-        inames = []
-        with tempfile.TemporaryDirectory() as td:
-            for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.png".format(i))
-                inames.append(tmp)
-                with open(tmp, "wb+") as fh:
-                    fh.write(imageList[i])
-            IDViewWindow(self, inames, sid).exec_()
-
-    def runPredictor(self, ignoreStamp=False):
-        rmsg = managerMessenger.IDrunPredictions(
-            [
-                self.IDrectangle.left(),
-                self.IDrectangle.top(),
-                self.IDrectangle.width(),
-                self.IDrectangle.height(),
-            ],
-            self.IDwhichFile,
-            ignoreStamp,
-        )
-        # returns [True, True] = off and running,
-        # [True, False] = currently running.
-        # [False, time] = found a timestamp
-        if rmsg[0]:
-            if rmsg[1]:
-                txt = "IDReader launched. It may take some time to run. Please be patient."
-            else:
-                txt = "IDReader currently running. Please be patient."
-            ErrorMessage(txt).exec_()
-            return
-        else:  # not running because we found a timestamp = rmsg[1]
-            sm = SimpleMessage(
-                "IDReader was last run at {}. Do you want to rerun it?".format(rmsg[1])
-            )
-            if sm.exec_() == QMessageBox.No:
-                return
-            else:
-                self.runPredictor(ignoreStamp=True)
-
-    def getPredictions(self):
-        csvfile = managerMessenger.IDrequestPredictions()
-        pdict = {}
-        reader = csv.DictReader(csvfile, skipinitialspace=True)
-        for row in reader:
-            pdict[int(row["test"])] = str(row["id"])
-        iDict = managerMessenger.getIdentified()
-        for t in iDict.keys():
-            pdict[int(t)] = str(iDict[t][0])
-
-        self.ui.predictionTW.clearContents()
-        self.ui.predictionTW.setRowCount(0)
-        r = 0
-        for t in pdict.keys():
-            self.ui.predictionTW.insertRow(r)
-            self.ui.predictionTW.setItem(r, 0, QTableWidgetItem("{}".format(t)))
-            it = QTableWidgetItem("{}".format(pdict[t]))
-            it2 = QTableWidgetItem("")
-            if str(t) in iDict:
-                it.setBackground(QBrush(Qt.cyan))
-                it.setToolTip("Has been identified")
-                it2.setText(iDict[str(t)][1])
-                it2.setBackground(QBrush(Qt.cyan))
-                it2.setToolTip("Has been identified")
-            self.ui.predictionTW.setItem(r, 1, it)
-            self.ui.predictionTW.setItem(r, 2, it2)
-            r += 1
-
-    def deletePredictions(self):
-        msg = SimpleMessage(
-            "Are you sure you want the server to delete predicted IDs? (note that this does not delete user-inputted IDs)"
-        )
-        if msg.exec_() == QMessageBox.No:
-            return
-        managerMessenger.IDdeletePredictions()
-        self.getPredictions()
-
-    def initMarkTab(self):
-        grid = QGridLayout()
-        self.pd = {}
-        for q in range(1, self.numberOfQuestions + 1):
-            for v in range(1, self.numberOfVersions + 1):
-                stats = managerMessenger.getProgress(q, v)
-                self.pd[(q, v)] = ProgressBox(self, q, v, stats)
-                grid.addWidget(self.pd[(q, v)], q, v)
-        self.ui.markBucket.setLayout(grid)
-
-    def refreshMTab(self):
-        for q in range(1, self.numberOfQuestions + 1):
-            for v in range(1, self.numberOfVersions + 1):
-                stats = managerMessenger.getProgress(q, v)
-                self.pd[(q, v)].refresh(stats)
-
-    def viewMarkHistogram(self, question, version):
-        mhist = managerMessenger.getMarkHistogram(question, version)
-        QVHistogram(question, version, mhist).exec_()
-        # print(mhist)
-
-    def initOutTab(self):
-        self.ui.tasksOutTW.setColumnCount(3)
-        self.ui.tasksOutTW.setHorizontalHeaderLabels(["Task", "User", "Time"])
-
-    def refreshOutTab(self):
-        tasksOut = managerMessenger.RgetOutToDo()
-        self.ui.tasksOutTW.clearContents()
-        self.ui.tasksOutTW.setRowCount(0)
-
-        if len(tasksOut) == 0:
-            ErrorMessage("No tasks out currently.").exec_()
-            return
-
-        r = 0
-        for x in tasksOut:
-            self.ui.tasksOutTW.insertRow(r)
-            self.ui.tasksOutTW.setItem(r, 0, QTableWidgetItem(str(x[0])))
-            self.ui.tasksOutTW.setItem(r, 1, QTableWidgetItem(str(x[1])))
-            self.ui.tasksOutTW.setItem(r, 2, QTableWidgetItem(str(x[2])))
-            r += 1
-
-    def todo(self, msg=""):
-        ErrorMessage("This is on our to-do list" + msg).exec_()
 
     def initUnknownTab(self):
         self.unknownModel = QStandardItemModel(0, 6)
@@ -1058,6 +843,236 @@ class Manager(QWidget):
                 )
         self.refreshDList()
 
+    ####################
+    # Progress tab stuff
+    def initProgressTab(self):
+        self.initOverallTab()
+        self.initMarkTab()
+        self.initIDTab()
+        self.initOutTab()
+
+    def refreshProgressTab(self):
+        self.refreshOverallTab()
+        self.refreshMarkTab()
+        self.refreshIDTab()
+        self.refreshOutTab()
+
+    def initOverallTab(self):
+        self.ui.overallTW.setHorizontalHeaderLabels(
+            ["Test number", "Identified", "Totalled", "Questions Marked"]
+        )
+        self.ui.overallTW.activated.connect(self.viewTestStatus)
+        self.ui.overallTW.setSortingEnabled(True)
+        self.refreshOverallTab()
+
+    def viewTestStatus(self):
+        pvi = self.ui.overallTW.selectedItems()
+        if len(pvi) == 0:
+            return
+        r = pvi[0].row()
+        testNumber = int(self.ui.overallTW.item(r, 0).text())
+        stats = managerMessenger.RgetStatus(testNumber)
+        TestStatus(self.numberOfQuestions, stats).exec_()
+
+    def refreshOverallTab(self):
+        self.ui.overallTW.clearContents()
+        self.ui.overallTW.setRowCount(0)
+
+        opDict = managerMessenger.RgetCompletions()
+        tk = list(opDict.keys())
+        tk.sort(key=int)  # sort in numeric order
+        r = 0
+        for t in tk:
+            self.ui.overallTW.insertRow(r)
+            self.ui.overallTW.setItem(r, 0, QTableWidgetItem(str(t).rjust(4)))
+            it = QTableWidgetItem("{}".format(opDict[t][0]))
+            if opDict[t][0]:
+                it.setBackground(QBrush(Qt.green))
+                it.setToolTip("Has been identified")
+            self.ui.overallTW.setItem(r, 1, it)
+
+            it = QTableWidgetItem("{}".format(opDict[t][1]))
+            if opDict[t][1]:
+                it.setBackground(QBrush(Qt.green))
+                it.setToolTip("Has been totalled")
+            self.ui.overallTW.setItem(r, 2, it)
+
+            it = QTableWidgetItem(str(opDict[t][2]).rjust(2))
+            if opDict[t][2] == self.numberOfQuestions:
+                it.setBackground(QBrush(Qt.green))
+                it.setToolTip("Has been marked")
+            self.ui.overallTW.setItem(r, 3, it)
+            r += 1
+
+    def initIDTab(self):
+        self.refreshIDTab()
+        self.ui.idPB.setFormat("%v / %m")
+        self.ui.totPB.setFormat("%v / %m")
+        self.ui.predictionTW.setColumnCount(3)
+        self.ui.predictionTW.setHorizontalHeaderLabels(["Test", "Student ID", "Name"])
+        self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.predictionTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.predictionTW.setAlternatingRowColors(True)
+        self.ui.predictionTW.activated.connect(self.viewIDPage)
+
+    def refreshIDTab(self):
+        ti = managerMessenger.IDprogressCount()
+        tt = managerMessenger.TprogressCount()
+        self.ui.papersLE.setText(str(ti[1]))
+        self.ui.idPB.setValue(ti[0])
+        self.ui.idPB.setMaximum(ti[1])
+        self.ui.totPB.setMaximum(tt[1])
+        self.ui.totPB.setValue(tt[0])
+        self.getPredictions()
+
+    def selectRectangle(self):
+        imageList = managerMessenger.IDgetRandomImage()
+        # Image names = "i<testnumber>.<imagenumber>.png"
+        inames = []
+        with tempfile.TemporaryDirectory() as td:
+            for i in range(len(imageList)):
+                tmp = os.path.join(td, "id.{}.png".format(i))
+                inames.append(tmp)
+                with open(tmp, "wb+") as fh:
+                    fh.write(imageList[i])
+            srw = SelectRectangleWindow(self, inames)
+            if srw.exec_() == QDialog.Accepted:
+                self.IDrectangle = srw.rectangle
+                self.IDwhichFile = srw.whichFile
+                self.ui.predictButton.setEnabled(True)
+
+    def viewIDPage(self):
+        idi = self.ui.predictionTW.selectedIndexes()
+        if len(idi) == 0:
+            return
+        test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
+        sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
+        imageList = managerMessenger.IDrequestImage(test)
+        inames = []
+        with tempfile.TemporaryDirectory() as td:
+            for i in range(len(imageList)):
+                tmp = os.path.join(td, "id.{}.png".format(i))
+                inames.append(tmp)
+                with open(tmp, "wb+") as fh:
+                    fh.write(imageList[i])
+            IDViewWindow(self, inames, sid).exec_()
+
+    def runPredictor(self, ignoreStamp=False):
+        rmsg = managerMessenger.IDrunPredictions(
+            [
+                self.IDrectangle.left(),
+                self.IDrectangle.top(),
+                self.IDrectangle.width(),
+                self.IDrectangle.height(),
+            ],
+            self.IDwhichFile,
+            ignoreStamp,
+        )
+        # returns [True, True] = off and running,
+        # [True, False] = currently running.
+        # [False, time] = found a timestamp
+        if rmsg[0]:
+            if rmsg[1]:
+                txt = "IDReader launched. It may take some time to run. Please be patient."
+            else:
+                txt = "IDReader currently running. Please be patient."
+            ErrorMessage(txt).exec_()
+            return
+        else:  # not running because we found a timestamp = rmsg[1]
+            sm = SimpleMessage(
+                "IDReader was last run at {}. Do you want to rerun it?".format(rmsg[1])
+            )
+            if sm.exec_() == QMessageBox.No:
+                return
+            else:
+                self.runPredictor(ignoreStamp=True)
+
+    def getPredictions(self):
+        csvfile = managerMessenger.IDrequestPredictions()
+        pdict = {}
+        reader = csv.DictReader(csvfile, skipinitialspace=True)
+        for row in reader:
+            pdict[int(row["test"])] = str(row["id"])
+        iDict = managerMessenger.getIdentified()
+        for t in iDict.keys():
+            pdict[int(t)] = str(iDict[t][0])
+
+        self.ui.predictionTW.clearContents()
+        self.ui.predictionTW.setRowCount(0)
+        r = 0
+        for t in pdict.keys():
+            self.ui.predictionTW.insertRow(r)
+            self.ui.predictionTW.setItem(r, 0, QTableWidgetItem("{}".format(t)))
+            it = QTableWidgetItem("{}".format(pdict[t]))
+            it2 = QTableWidgetItem("")
+            if str(t) in iDict:
+                it.setBackground(QBrush(Qt.cyan))
+                it.setToolTip("Has been identified")
+                it2.setText(iDict[str(t)][1])
+                it2.setBackground(QBrush(Qt.cyan))
+                it2.setToolTip("Has been identified")
+            self.ui.predictionTW.setItem(r, 1, it)
+            self.ui.predictionTW.setItem(r, 2, it2)
+            r += 1
+
+    def deletePredictions(self):
+        msg = SimpleMessage(
+            "Are you sure you want the server to delete predicted IDs? (note that this does not delete user-inputted IDs)"
+        )
+        if msg.exec_() == QMessageBox.No:
+            return
+        managerMessenger.IDdeletePredictions()
+        self.getPredictions()
+
+    def initMarkTab(self):
+        grid = QGridLayout()
+        self.pd = {}
+        for q in range(1, self.numberOfQuestions + 1):
+            for v in range(1, self.numberOfVersions + 1):
+                stats = managerMessenger.getProgress(q, v)
+                self.pd[(q, v)] = ProgressBox(self, q, v, stats)
+                grid.addWidget(self.pd[(q, v)], q, v)
+        self.ui.markBucket.setLayout(grid)
+
+    def refreshMarkTab(self):
+        for q in range(1, self.numberOfQuestions + 1):
+            for v in range(1, self.numberOfVersions + 1):
+                stats = managerMessenger.getProgress(q, v)
+                self.pd[(q, v)].refresh(stats)
+
+    def viewMarkHistogram(self, question, version):
+        mhist = managerMessenger.getMarkHistogram(question, version)
+        QVHistogram(question, version, mhist).exec_()
+        # print(mhist)
+
+    def initOutTab(self):
+        self.ui.tasksOutTW.setColumnCount(3)
+        self.ui.tasksOutTW.setHorizontalHeaderLabels(["Task", "User", "Time"])
+
+    def refreshOutTab(self):
+        tasksOut = managerMessenger.RgetOutToDo()
+        self.ui.tasksOutTW.clearContents()
+        self.ui.tasksOutTW.setRowCount(0)
+
+        if len(tasksOut) == 0:
+            self.ui.tasksOutTW.setEnabled(False)
+            return
+
+        self.ui.tasksOutTW.setEnabled(True)
+        r = 0
+        for x in tasksOut:
+            self.ui.tasksOutTW.insertRow(r)
+            self.ui.tasksOutTW.setItem(r, 0, QTableWidgetItem(str(x[0])))
+            self.ui.tasksOutTW.setItem(r, 1, QTableWidgetItem(str(x[1])))
+            self.ui.tasksOutTW.setItem(r, 2, QTableWidgetItem(str(x[2])))
+            r += 1
+
+    def todo(self, msg=""):
+        ErrorMessage("This is on our to-do list" + msg).exec_()
+
+    ##################
+    # review tab stuff
+
     def initRevTab(self):
         self.ui.reviewTW.setColumnCount(7)
         self.ui.reviewTW.setHorizontalHeaderLabels(
@@ -1261,6 +1276,13 @@ class Manager(QWidget):
                     self.ui.reviewTOTTW.item(r, 1).setText("reviewer")
                     managerMessenger.TreviewTOT(test)
 
+    ##################
+    # User tab stuff
+
+    def initUserTab(self):
+        self.initUserListTab()
+        self.initProgressQUTabs()
+
     def initUserListTab(self):
         self.ui.userListTW.setColumnCount(5)
         self.ui.userListTW.setHorizontalHeaderLabels(
@@ -1275,7 +1297,23 @@ class Manager(QWidget):
         self.ui.userListTW.setSortingEnabled(True)
         self.ui.userListTW.setSelectionMode(QAbstractItemView.SingleSelection)
         self.ui.userListTW.setSelectionBehavior(QAbstractItemView.SelectRows)
-        # self.ui.userListTW.activated.connect()
+
+    def initProgressQUTabs(self):
+        self.ui.QPUserTW.setColumnCount(5)
+        self.ui.QPUserTW.setHeaderLabels(
+            ["Question", "Version", "User", "Number Marked", "Percentage of Q/V marked"]
+        )
+        # self.ui.QPUserTW.setSortingEnabled(True)
+        self.ui.QPUserTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.QPUserTW.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # and the other tab
+        self.ui.PUQTW.setColumnCount(5)
+        self.ui.PUQTW.setHeaderLabels(
+            ["User", "Question", "Version", "Number Marked", "Percentage of Q/V marked"]
+        )
+        # self.ui.PUQTW.setSortingEnabled(True)
+        self.ui.PUQTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.PUQTW.setSelectionBehavior(QAbstractItemView.SelectRows)
 
     def forceLogout(self):
         ri = self.ui.userListTW.selectedIndexes()
@@ -1312,39 +1350,35 @@ class Manager(QWidget):
 
             r += 1
 
-    def initQPUTab(self):
-        self.ui.QPUserTW.setColumnCount(5)
-        self.ui.QPUserTW.setHeaderLabels(
-            ["Question", "Version", "User", "Number Marked", "Percentage of Q/V marked"]
-        )
-        # self.ui.QPUserTW.setSortingEnabled(True)
-        self.ui.QPUserTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.QPUserTW.setSelectionBehavior(QAbstractItemView.SelectRows)
-
-    def initPUQTab(self):
-        self.ui.PUQTW.setColumnCount(5)
-        self.ui.PUQTW.setHeaderLabels(
-            ["User", "Question", "Version", "Number Marked", "Percentage of Q/V marked"]
-        )
-        # self.ui.PUQTW.setSortingEnabled(True)
-        self.ui.PUQTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.PUQTW.setSelectionBehavior(QAbstractItemView.SelectRows)
-
-    def refreshQPU(self):
+    def refreshProgressQU(self):
         # delete the children of each toplevel items
+        # for TW 1
         root = self.ui.QPUserTW.invisibleRootItem()
         for l0 in range(self.ui.QPUserTW.topLevelItemCount()):
             l0i = self.ui.QPUserTW.topLevelItem(0)
             for l1 in range(self.ui.QPUserTW.topLevelItem(0).childCount()):
                 l0i.removeChild(l0i.child(0))
             root.removeChild(l0i)
-
+        # for TW 2
+        root = self.ui.PUQTW.invisibleRootItem()
+        for l0 in range(self.ui.PUQTW.topLevelItemCount()):
+            l0i = self.ui.PUQTW.topLevelItem(0)
+            for l1 in range(self.ui.PUQTW.topLevelItem(0).childCount()):
+                l0i.removeChild(l0i.child(0))
+            root.removeChild(l0i)
+        # for TW1 and TW2
+        # get list of everything done by users, store by user for TW2
+        # use directly for TW1
+        uprog = defaultdict(list)
         r = 0
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
                 qpu = managerMessenger.getQuestionUserProgress(q, v)
                 l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
                 for (u, n) in qpu[1:]:
+                    uprog[u].append(
+                        [q, v, n, qpu[0]]
+                    )  # question, version, no marked, no total
                     pb = QProgressBar()
                     pb.setMaximum(qpu[0])
                     pb.setValue(n)
@@ -1352,26 +1386,7 @@ class Manager(QWidget):
                     l0.addChild(l1)
                     self.ui.QPUserTW.setItemWidget(l1, 4, pb)
                 self.ui.QPUserTW.addTopLevelItem(l0)
-
-    def refreshPUQ(self):
-        # delete the children of each toplevel items
-        root = self.ui.PUQTW.invisibleRootItem()
-        for l0 in range(self.ui.PUQTW.topLevelItemCount()):
-            l0i = self.ui.PUQTW.topLevelItem(0)
-            for l1 in range(self.ui.PUQTW.topLevelItem(0).childCount()):
-                l0i.removeChild(l0i.child(0))
-            root.removeChild(l0i)
-
-        # get list of everything done by users
-        uprog = defaultdict(list)
-        for q in range(1, self.numberOfQuestions + 1):
-            for v in range(1, self.numberOfVersions + 1):
-                qpu = managerMessenger.getQuestionUserProgress(q, v)
-                for (u, n) in qpu[1:]:
-                    uprog[u].append(
-                        [q, v, n, qpu[0]]
-                    )  # question, version, no marked, no total
-
+        # for TW2
         for u in uprog:
             l0 = QTreeWidgetItem([str(u)])
             for qvn in uprog[u]:  # will be in q,v,n,ntot in qv order

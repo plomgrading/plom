@@ -236,7 +236,7 @@
       <attribute name="title">
        <string>&amp;Scanning</string>
       </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_13">
+      <layout class="QVBoxLayout" name="verticalLayout_26">
        <item>
         <widget class="QTabWidget" name="scanTabW">
          <property name="enabled">
@@ -287,13 +287,6 @@
               </item>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_2">
-                <item>
-                 <widget class="QPushButton" name="refreshSButton">
-                  <property name="text">
-                   <string>Refresh</string>
-                  </property>
-                 </widget>
-                </item>
                 <item>
                  <spacer name="horizontalSpacer_2">
                   <property name="orientation">
@@ -356,13 +349,6 @@
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_3">
                 <item>
-                 <widget class="QPushButton" name="refreshIButton">
-                  <property name="text">
-                   <string>Refresh</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
                  <spacer name="horizontalSpacer_3">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -407,13 +393,6 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_6">
              <item>
-              <widget class="QPushButton" name="refreshUButton">
-               <property name="text">
-                <string>Refresh</string>
-               </property>
-              </widget>
-             </item>
-             <item>
               <spacer name="horizontalSpacer_6">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
@@ -454,13 +433,6 @@
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_7">
-             <item>
-              <widget class="QPushButton" name="refreshCButton">
-               <property name="text">
-                <string>&amp;Refresh</string>
-               </property>
-              </widget>
-             </item>
              <item>
               <spacer name="horizontalSpacer_7">
                <property name="orientation">
@@ -503,13 +475,6 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_8">
              <item>
-              <widget class="QPushButton" name="refreshDButton">
-               <property name="text">
-                <string>Refresh</string>
-               </property>
-              </widget>
-             </item>
-             <item>
               <spacer name="horizontalSpacer_8">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
@@ -535,6 +500,30 @@
          </widget>
         </widget>
        </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_13">
+         <item>
+          <widget class="QPushButton" name="scanRefreshB">
+           <property name="text">
+            <string>Refresh scanning tab</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_17">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="progressAllTab">
@@ -544,7 +533,7 @@
       <attribute name="title">
        <string>&amp;Progress</string>
       </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_14">
+      <layout class="QVBoxLayout" name="verticalLayout_27">
        <item>
         <widget class="QTabWidget" name="progressTabW">
          <property name="enabled">
@@ -590,30 +579,6 @@
              <column/>
             </widget>
            </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_11">
-             <item>
-              <widget class="QPushButton" name="refreshOButton">
-               <property name="text">
-                <string>Refresh</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_9">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
           </layout>
          </widget>
          <widget class="QWidget" name="progressTab">
@@ -634,36 +599,12 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>96</width>
-                <height>26</height>
+                <width>64</width>
+                <height>16</height>
                </rect>
               </property>
              </widget>
             </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_4">
-             <item>
-              <widget class="QPushButton" name="refreshPButton">
-               <property name="text">
-                <string>Refresh</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_4">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
            </item>
           </layout>
          </widget>
@@ -728,13 +669,6 @@
                    </widget>
                   </item>
                  </layout>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="refreshIDButon">
-                  <property name="text">
-                   <string>Refresh</string>
-                  </property>
-                 </widget>
                 </item>
                 <item>
                  <spacer name="verticalSpacer">
@@ -835,9 +769,9 @@
                   </widget>
                  </item>
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_10">
+                  <layout class="QHBoxLayout" name="horizontalLayout_4">
                    <item>
-                    <spacer name="horizontalSpacer_10">
+                    <spacer name="horizontalSpacer_9">
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>
                      </property>
@@ -850,9 +784,9 @@
                     </spacer>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="predListRefreshB">
+                    <widget class="QPushButton" name="refreshIDPredictionsB">
                      <property name="text">
-                      <string>Refresh List</string>
+                      <string>Refresh Prediction List</string>
                      </property>
                     </widget>
                    </item>
@@ -868,7 +802,7 @@
          </widget>
          <widget class="QWidget" name="tab_5">
           <attribute name="title">
-           <string>&amp;Tasks Out </string>
+           <string>&amp;Tasks Currently Out </string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_26">
            <item>
@@ -899,33 +833,33 @@
              <column/>
             </widget>
            </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_23">
-             <item>
-              <widget class="QPushButton" name="refreshTOB">
-               <property name="text">
-                <string>Refresh</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_17">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
           </layout>
          </widget>
         </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_14">
+         <item>
+          <widget class="QPushButton" name="progressRefreshB">
+           <property name="text">
+            <string>Refresh progress tab</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
@@ -1265,7 +1199,7 @@
              <item>
               <widget class="QPushButton" name="refreshUserB">
                <property name="text">
-                <string>Refresh</string>
+                <string>Refresh user login information</string>
                </property>
               </widget>
              </item>
@@ -1288,75 +1222,65 @@
          </widget>
          <widget class="QWidget" name="tab">
           <attribute name="title">
-           <string>Progress by Question &amp;User</string>
+           <string>Progress by User</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_24">
            <item>
-            <widget class="QTreeWidget" name="QPUserTW">
-             <property name="editTriggers">
-              <set>QAbstractItemView::NoEditTriggers</set>
+            <widget class="QTabWidget" name="tabWidget_3">
+             <property name="currentIndex">
+              <number>0</number>
              </property>
-             <property name="alternatingRowColors">
-              <bool>true</bool>
-             </property>
-             <column>
-              <property name="text">
-               <string notr="true">1</string>
-              </property>
-             </column>
+             <widget class="QWidget" name="tab_5">
+              <attribute name="title">
+               <string>User by Question</string>
+              </attribute>
+              <layout class="QVBoxLayout" name="verticalLayout_25">
+               <item>
+                <widget class="QTreeWidget" name="QPUserTW">
+                 <property name="editTriggers">
+                  <set>QAbstractItemView::NoEditTriggers</set>
+                 </property>
+                 <property name="alternatingRowColors">
+                  <bool>true</bool>
+                 </property>
+                 <column>
+                  <property name="text">
+                   <string notr="true">1</string>
+                  </property>
+                 </column>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="tab_6">
+              <attribute name="title">
+               <string>Question by User</string>
+              </attribute>
+              <layout class="QVBoxLayout" name="verticalLayout_28">
+               <item>
+                <widget class="QTreeWidget" name="PUQTW">
+                 <column>
+                  <property name="text">
+                   <string notr="true">1</string>
+                  </property>
+                 </column>
+                </widget>
+               </item>
+              </layout>
+             </widget>
             </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_21">
              <item>
-              <widget class="QPushButton" name="refreshQPUB">
+              <widget class="QPushButton" name="refreshProgressQUB">
                <property name="text">
-                <string>Refresh</string>
+                <string>Refresh User/Question progress</string>
                </property>
               </widget>
              </item>
              <item>
               <spacer name="horizontalSpacer_15">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QWidget" name="tab_4">
-          <attribute name="title">
-           <string>Progress by User Question</string>
-          </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_25">
-           <item>
-            <widget class="QTreeWidget" name="PUQTW">
-             <column>
-              <property name="text">
-               <string notr="true">1</string>
-              </property>
-             </column>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_22">
-             <item>
-              <widget class="QPushButton" name="refreshPUQB">
-               <property name="text">
-                <string>Refresh</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_16">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
@@ -1431,30 +1355,21 @@
   <tabstop>tabWidget</tabstop>
   <tabstop>userLE</tabstop>
   <tabstop>scanTW</tabstop>
-  <tabstop>refreshSButton</tabstop>
   <tabstop>removePageB</tabstop>
   <tabstop>incompTW</tabstop>
-  <tabstop>refreshIButton</tabstop>
   <tabstop>subsPageB</tabstop>
   <tabstop>overallTW</tabstop>
-  <tabstop>refreshOButton</tabstop>
   <tabstop>papersLE</tabstop>
-  <tabstop>refreshIDButon</tabstop>
   <tabstop>selectRectButton</tabstop>
   <tabstop>predictButton</tabstop>
   <tabstop>delPredButton</tabstop>
   <tabstop>predictionTW</tabstop>
-  <tabstop>predListRefreshB</tabstop>
   <tabstop>scrollArea</tabstop>
-  <tabstop>refreshPButton</tabstop>
   <tabstop>unknownTV</tabstop>
-  <tabstop>refreshUButton</tabstop>
   <tabstop>actionUButton</tabstop>
   <tabstop>collideTV</tabstop>
-  <tabstop>refreshCButton</tabstop>
   <tabstop>actionCButton</tabstop>
   <tabstop>discardTV</tabstop>
-  <tabstop>refreshDButton</tabstop>
   <tabstop>actionDButton</tabstop>
   <tabstop>closeButton</tabstop>
  </tabstops>
