@@ -13,9 +13,6 @@
 # ---------
 #   * use our Dockerfile instead of apt-get
 #       - I think this is "dind"
-#   * prepare an sql dump and some pngs so
-#     we can fake the grading.
-#   * test scripts 08 through 12
 
 image: ubuntu:18.04
 
