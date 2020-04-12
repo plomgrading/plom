@@ -110,17 +110,17 @@ class UnderlyingImage(QGraphicsItemGroup):
         self.images = {}
         x = 0
         for (n, img) in enumerate(self.imageNames):
-            #pix = QPixmap(img).scaled(1, 2000, Qt.KeepAspectRatioByExpanding)
             pix = QPixmap(img)
             self.images[n] = QGraphicsPixmapItem(pix)
             self.images[n].setTransformationMode(Qt.SmoothTransformation)
             self.images[n].setPos(x, 0)
-            self.images[n].setRotation(5.0*(n+1))  # just testing
             print(pix.height())
             sf = 2000.0 / float(pix.height())
             print(sf)
             self.images[n].setScale(sf)
-            x += self.images[n].boundingRect().width()
+            # TODO: why not?
+            #x += self.images[n].boundingRect().width()
+            x += sf * pix.width()
             self.addToGroup(self.images[n])
 
 
