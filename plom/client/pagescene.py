@@ -109,14 +109,12 @@ class UnderlyingImage(QGraphicsItemGroup):
         self.imageNames = imageNames
         self.images = {}
         x = 0
-        n = 0
-        for img in self.imageNames:
+        for (n, img) in enumerate(self.imageNames):
             self.images[n] = QGraphicsPixmapItem(QPixmap(img))
             self.images[n].setTransformationMode(Qt.SmoothTransformation)
             self.images[n].setPos(x, 0)
             x += self.images[n].boundingRect().width()
             self.addToGroup(self.images[n])
-            n += 1
 
 
 # Dictionaries to translate tool-modes into functions
