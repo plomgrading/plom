@@ -288,7 +288,7 @@ class PageScene(QGraphicsScene):
         # Make sure the ghostComment is hidden
         self.ghostItem.hide()
         # Get the width and height of the image
-        br = self.underImage.boundingRect()
+        br = self.sceneRect()
         w = br.width()
         h = br.height()
         # Create an output pixmap and painter (to export it)
@@ -1265,7 +1265,7 @@ class PageScene(QGraphicsScene):
         self.updateGhost(delta, text)
 
     def noAnswer(self, delta):
-        br = self.underImage.boundingRect()
+        br = self.sceneRect()
         # put lines through the page
         w = br.right()
         h = br.bottom()
