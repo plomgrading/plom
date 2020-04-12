@@ -114,6 +114,7 @@ class UnderlyingImage(QGraphicsItemGroup):
             self.images[n] = QGraphicsPixmapItem(scaled_img)
             self.images[n].setTransformationMode(Qt.SmoothTransformation)
             self.images[n].setPos(x, 0)
+            self.images[n].setRotation(5.0*(n+1))  # just testing
             x += self.images[n].boundingRect().width()
             self.addToGroup(self.images[n])
 
