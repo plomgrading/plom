@@ -110,7 +110,8 @@ class UnderlyingImage(QGraphicsItemGroup):
         self.images = {}
         x = 0
         for (n, img) in enumerate(self.imageNames):
-            self.images[n] = QGraphicsPixmapItem(QPixmap(img))
+            scaled_img = QPixmap(img).scaled(1, 2000, Qt.KeepAspectRatioByExpanding)
+            self.images[n] = QGraphicsPixmapItem(scaled_img)
             self.images[n].setTransformationMode(Qt.SmoothTransformation)
             self.images[n].setPos(x, 0)
             x += self.images[n].boundingRect().width()
