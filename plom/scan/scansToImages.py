@@ -13,6 +13,7 @@ from multiprocessing import Pool
 import toml
 from tqdm import tqdm
 import fitz
+from PIL import Image
 
 
 # TODO: make some common util file to store all these names?
@@ -46,8 +47,8 @@ def isInArchive(fname):
     return [False]
 
 
-def processFileToPng_w_fitz(fname):
-    """Convert each page of pdf into png using fitz"""
+def processFileToBitmap_w_fitz(fname):
+    """Convert each page of pdf into bitmap using fitz"""
 
     scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
@@ -73,6 +74,9 @@ def processFileToPng_w_fitz(fname):
         outname = os.path.join("scanPNGs", outname)
         print(outname)  # TODO: replace with tqdm
         pix.writeImage(outname)
+        # TODO: experiment with jpg: generate both and see which is smaller?
+        #img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        #img.save(outname.replace('.png', '.jpg'), "JPEG", quality=94, optimize=True)
 
 
 def processFileToPng_w_ghostscript(fname):
@@ -100,7 +104,8 @@ def processFileToPng_w_ghostscript(fname):
         print("Error running gs: {}".format(suberror.stdout.decode("utf-8")))
 
 
-processFileToPng = processFileToPng_w_fitz
+#processFileToPng = processFileToPng_w_ghostscript
+processFileToPng = processFileToBitmap_w_fitz
 
 
 def gamma_adjust(fn):
