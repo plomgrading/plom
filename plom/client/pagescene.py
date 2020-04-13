@@ -120,7 +120,10 @@ class UnderlyingImage(QGraphicsItemGroup):
             self.images[n].setScale(sf)
             # TODO: why not?
             #x += self.images[n].boundingRect().width()
-            x += sf * pix.width()
+            # help prevent hairline: subtract one pixel before converting
+            x += sf * (pix.width() - 1.0)
+            # TODO: don't floor here if units of scene are large!
+            x = int(x)
             self.addToGroup(self.images[n])
 
 
