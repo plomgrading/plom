@@ -1684,7 +1684,7 @@ class PlomDB:
             log.info("That question {} not known".format(groupID))
             return False
 
-    def MdidNotFinish(self, username, groupID):
+    def MdidNotFinish(self, uname, groupID):
         """When user logs off, any images they have still out should be put
         back on todo pile
         """
@@ -1749,7 +1749,7 @@ class PlomDB:
                 # since this has been marked - check if all questions for test have been marked
                 log.info(
                     "Task {} marked {} by user {} and placed at {} with md5 = {}".format(
-                        task, mark, username, aname, md5
+                        task, mark, uname, aname, md5
                     )
                 )
                 tref = qref.test
@@ -2074,7 +2074,7 @@ class PlomDB:
                     # that belongs to someone else - this is a serious error
                     log.error(
                         'User "{}" returned totalled-task {} that belongs to "{}"'.format(
-                            username, testNumber, sref.user.name
+                            uname, testNumber, sref.user.name
                         )
                     )
                     return [False]
