@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (C) 2020 Colin B. Macdonald
+
+  Copying and distribution of this file, with or without modification,
+  are permitted in any medium without royalty provided the copyright
+  notice and this notice are preserved.  This file is offered as-is,
+  without any warranty.
+-->
+<component type="desktop-application">
+  <id>org.plomgrading.PlomClient.desktop</id>
+  <metadata_license>FSFAP</metadata_license>
+  <project_license>AGPL-3.0+</project_license>
+  <name>Plom Client</name>
+  <summary>Grading/marking client for the Plom online grading system</summary>
+  <description>
+    <p>
+      Plom is a system for giving tests on paper, but marking and
+      returning them online.  This is the graphical interface used
+      for grading marking tests.
+    </p>
+  </description>
+
+  <screenshots>
+    <!--
+      From: https://www.freedesktop.org/software/appstream/docs/
+      All screenshots should have a 16:9 aspect ratio, and should have
+      a width that is no smaller than 620px. Screenshots should be in PNG
+      or JPEG format. PNG is the preferred format.
+    -->
+    <screenshot type="default">
+      <image>https://plomgrading.org/images/plomclient.png</image>
+    </screenshot>
+  </screenshots>
+
+  <provides>
+    <binary>plom-client</binary>
+  </provides>
+
+  <url type="homepage">https://plomgrading.org</url>
+  <update_contact>devs@plomgrading.org</update_contact>
+  <developer_name>Andrew Rechnitzer, Colin B. Macdonald and others</developer_name>
+  <content_rating type="oars-1.0"/>
+  <releases>
+    <release date="2020-04-04" version="0.4.0"/>
+  </releases>
+</component>
