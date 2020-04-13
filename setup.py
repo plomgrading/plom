@@ -40,8 +40,9 @@ server_install_requires = [
     "requests",  # b/c of deprecated userManager
 ]
 
-# Non-Python deps
+# Non-Python deps for server
 #   - imagemagick
+#   - ghostscript
 #   - latex installation including (Debian/Ubuntu pkg names):
 #       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
 #   - latex installation including (Fedora pkg names):
