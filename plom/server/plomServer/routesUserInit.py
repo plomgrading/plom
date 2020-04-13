@@ -28,7 +28,7 @@ class UserInitHandler:
         data = await request.json()
         if not validFields(data, ["user", "password"]):
             return web.Response(status=400)  # malformed request.
-        if not self.server.authority.checkPassword(data["user"], data["password"]):
+        if not self.server.checkPassword(data["user"], data["password"]):
             return web.Response(status=401)
         log.info('User "{}" force-logout self'.format(data["user"]))
         self.server.closeUser(data["user"])

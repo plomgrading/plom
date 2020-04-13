@@ -26,8 +26,6 @@ from plom import SpecParser
 from plom import specdir
 from plom.db.examDB import PlomDB
 
-from .authenticate import Authority
-
 
 serverInfo = {"server": "127.0.0.1", "port": Default_Port}
 # ----------------------
@@ -98,21 +96,26 @@ class Server(object):
         """
         if os.path.exists("serverConfiguration/userList.json"):
             with open("serverConfiguration/userList.json") as data_file:
-                # Load the users and pass them to the authority.
-                self.userList = json.load(data_file)
-                self.authority = Authority(self.userList)
+                # load list of users + pwd hashes
+                userList = json.load(data_file)
+                # for each name check if in DB by asking for the hash of its pwd
+                for uname in userList.keys():
+                    passwordHash = self.DB.getUserPasswordHash(uname, passwordHash)
+                    if passwordHash is None:  # not in list
+                        self.DB.createUser(uname, userList[uname])
+                    else:
+                        if passwordHash != userList[uname]:
+                            log.warning("User {} password has changed.".format(uname))
+                        self.DB.setUserPasswordHash(userList[uname])
             log.debug("Loading users")
         else:
             # Cannot find users - give error and quit out.
             log.error("Cannot find user/password file - aborting.")
             quit()
 
-    def validate(self, user, token):
-        """Check the user's token is valid"""
-        # log.debug("Validating user {}.".format(user))
-        return self.authority.validateToken(user, token)
-
     from .plomServer.serverUserInit import (
+        validate,
+        checkPassword,
         InfoShortName,
         InfoGeneral,
         reloadUsers,

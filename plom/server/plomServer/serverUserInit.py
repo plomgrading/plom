@@ -8,6 +8,14 @@ log = logging.getLogger("servUI")
 
 confdir = "serverConfiguration"
 
+from plom.server.authenticate import Authority
+
+
+def validate(self, user, token):
+    """Check the user's token is valid"""
+    # log.debug("Validating user {}.".format(user))
+    return self.DB.validateToken(user, token)
+
 
 def InfoShortName(self):
     if self.testSpec is None:
@@ -66,6 +74,16 @@ def reloadUsers(self, password):
     return True
 
 
+def checkPassword(self, user, password):
+    # Check the pwd and enabled. Get the hash from DB
+    passwordHash = self.DB.getUserPasswordHash(user)
+    if self.authority.checkPassword(user, password, passwordHash):
+        # first check if user is enabled, then check pwd.
+        if self.DB.isUserEnabled(user):
+            return True
+    return False
+
+
 def giveUserToken(self, user, password, clientAPI):
     """When a user requests authorisation
     They have sent their name and password
@@ -83,19 +101,20 @@ def giveUserToken(self, user, password, clientAPI):
                 clientAPI, self.API, self.Version
             ),
         ]
-    # check password
-    if self.authority.checkPassword(user, password):
+
+    if self.checkPassword(user, password):
         # Now check if user already logged in - ie has token already.
-        if self.authority.userHasToken(user):
+        if self.DB.userHasToken(user):
             log.debug('User "{}" already has token'.format(user))
             return [False, "UHT", "User already has token."]
         # give user a token.
-        self.authority.allocateToken(user)
+        token = self.authority.createToken()
+        self.DB.setUserToken(uname, token)
         # On token request also make sure anything "out" with that user is reset as todo.
         # We keep this here in case of client crash - todo's get reset on login and logout.
         self.DB.resetUsersToDo(user)
         log.info('Authorising user "{}"'.format(user))
-        return [True, self.authority.getToken(user)]
+        return [True, token]
     else:
         return [False, "The name / password pair is not authorised".format(user)]
 
@@ -104,6 +123,6 @@ def closeUser(self, user):
     """Client is closing down their app, so remove the authorisation token
     """
     log.info("Revoking auth token from user {}".format(user))
-    self.authority.detoken(user)
+    self.DB.clearUserToken(user)
     # make sure all their out tasks are returned to "todo"
     self.DB.resetUsersToDo(user)
