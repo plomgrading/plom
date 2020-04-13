@@ -27,6 +27,7 @@ server_install_requires = [
     "pandas",
     "passlib",
     "pymupdf>=1.16.14",
+    "Pillow",
     "weasyprint",
     "aiohttp",
     "pyqrcode",
