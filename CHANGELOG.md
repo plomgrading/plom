@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Update for new plomgrading.org domain name.
 
 ### Fixed
-* Fixed toml depdency in Dockerfile.
+* Fixed toml dependency in Dockerfile.
 
 
 ## [0.4.0] - 2020-04-04
@@ -26,12 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Plom is now a python package.
 * Annotator has a "no answer given" button which places crossed lines on page, leaves a comment, sets mark to 0.
-* Client can log to a file (set under under "More options").
+* Client can log to a file (set under "More options").
 * Client has expert option to disable background upload/download.
 * Client can generate a log file for debugging.
 * Server management UI.
 * Command-line scripts for creating tests, managing server, scanning, and finishing.
-* Simple toy test+server for demostrating Plom.
+* Simple toy test+server for demonstrating Plom.
 * Test-specification now has "do-not-mark" pages for formula-sheets and instruction pages.
 
 ### Changed
@@ -54,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Marker has a "view" button to look at any test number.
 
 ### Changed
-* The manual-identifier now has a "discard" option for unneeded pageimages, such as blank extra pages.
+* The manual-identifier now has a "discard" option for unneeded page images, such as blank extra pages.
 * More robust networking by moving to https (rather than raw sockets). This is handled by the "requests" library on the client side and the "aiohttp" library on the server side.
 * Client: config and saved comments now more human-readable in toml files.
 * Client: can download test/server info before logging in.
