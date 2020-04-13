@@ -88,16 +88,21 @@ class ExamView(QGraphicsView):
             self.images[n].setVisible(False)
         if fnames is not None:
             x = 0
-            n = 0
-            for fn in fnames:
-                self.images[n] = QGraphicsPixmapItem(QPixmap(fn))
+            for (n, fn) in enumerate(fnames):
+                pix = QPixmap(fn)
+                self.images[n] = QGraphicsPixmapItem(pix)
                 self.images[n].setTransformationMode(Qt.SmoothTransformation)
                 self.images[n].setPos(x, 0)
                 self.images[n].setVisible(True)
+                sf = 2000.0 / float(pix.height())
+                self.images[n].setScale(sf)
                 self.scene.addItem(self.images[n])
-                x += self.images[n].boundingRect().width() + 10
+                #x += self.images[n].boundingRect().width() + 10
+                # TODO: why did this have + 10 but the scene did not?
+                x += sf * (pix.width() - 1.0)
+                # TODO: don't floor here if units of scene are large!
+                x = int(x)
                 self.imageGItem.addToGroup(self.images[n])
-                n += 1
 
         # Set sensible sizes and put into the view, and fit view to the image.
         br = self.imageGItem.boundingRect()
