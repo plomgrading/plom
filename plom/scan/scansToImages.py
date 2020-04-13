@@ -59,6 +59,7 @@ def processFileToBitmap_w_fitz(fname):
     doc = fitz.open(fname)
 
     for p in doc:
+        print("__ {} {}".format(p.number+1, "_"*60))
         # Want to be careful we don't lose student annotations
         # TODO: its not so bad, see annots=True in getPixmap...
         assert not p.getLinks()
@@ -66,6 +67,17 @@ def processFileToBitmap_w_fitz(fname):
         assert not list(p.widgets())
 
         # TODO: Look into getImageList
+        imlist = p.getImageList()
+        if len(imlist) == 1:
+            print("Looks like we've caught ourselves a single scan!")
+            print(imlist[0])
+            d = doc.extractImage(imlist[0][0])
+            print("; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
+            assert d["smask"] == 0, "TODO: probably should render if we see these"
+            outname = "{}-{}-raw.{}".format(safeScan, p.number + 1, d["ext"])
+            outname = os.path.join("scanPNGs", outname)
+            with open(outname, "wb") as f:
+                f.write(d["image"])
 
         z = 2.78  # approx match ghostscript's -r200
         # TODO: random sizes for testing
@@ -73,7 +85,6 @@ def processFileToBitmap_w_fitz(fname):
         pix = p.getPixmap(fitz.Matrix(z, z))
         outname = "{}-{}.png".format(safeScan, p.number + 1)
         outname = os.path.join("scanPNGs", outname)
-        print(outname)  # TODO: replace with tqdm
         pix.writeImage(outname)
         # TODO: experiment with jpg: generate both and see which is smaller?
         #img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
@@ -160,3 +171,10 @@ def processScans(fname):
     for pngfile in glob.glob("*.png"):
         shutil.move(pngfile, os.path.join("..", "pageImages"))
     os.chdir("..")
+
+
+# TODO: to ease with debugging/experimenting
+if __name__ == "__main__":
+    #processFileToPng_w_ghostscript("testThis.pdf")
+    #processFileToBitmap_w_fitz("testThis.pdf")
+    processFileToBitmap_w_fitz("M100_102_AD.pdf")
