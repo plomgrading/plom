@@ -1285,12 +1285,14 @@ class Manager(QWidget):
         self.initProgressQUTabs()
 
     def initUserListTab(self):
-        self.ui.userListTW.setColumnCount(6)
+        self.ui.userListTW.setColumnCount(8)
         self.ui.userListTW.setHorizontalHeaderLabels(
             [
                 "Username",
                 "Enabled",
                 "Logged in",
+                "Last activity",
+                "Last action",
                 "Papers IDd",
                 "Papers Totalled",
                 "Questions Marked",
@@ -1363,7 +1365,7 @@ class Manager(QWidget):
             self.ui.userListTW.insertRow(r)
             # rjust(4) entries so that they can sort like integers... without actually being integers
             self.ui.userListTW.setItem(r, 0, QTableWidgetItem("{}".format(u)))
-            for k in range(5):
+            for k in range(7):
                 self.ui.userListTW.setItem(
                     r, k + 1, QTableWidgetItem("{}".format(dat[k]))
                 )
