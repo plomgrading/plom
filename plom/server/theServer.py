@@ -94,8 +94,7 @@ class Server(object):
         self.loadUsers()
 
     def loadUsers(self):
-        """Load the users from json file, add them to the authority which
-        handles authentication for us.
+        """Load the users from json file, add them to the database. Do some simple sanity checks of pwd hashes to see if they have changed.
         """
         if os.path.exists("serverConfiguration/userList.json"):
             with open("serverConfiguration/userList.json") as data_file:
