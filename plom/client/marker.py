@@ -116,10 +116,10 @@ class BackgroundDownloader(QThread):
                 self.downloadFail.emit(str(err))
                 self.quit()
 
-        # Image names = "<task>.<imagenumber>.png"
+        # Image names = "<task>.<imagenumber>.<extension>"
         inames = []
         for i in range(len(imageList)):
-            tmp = os.path.join(self.workingDirectory, "{}.{}.png".format(task, i))
+            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
@@ -715,10 +715,10 @@ class MarkerClient(QWidget):
         paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
         log.debug("create paperdir {} for already-graded download".format(paperdir))
 
-        # Image names = "<task>.<imagenumber>.png"
+        # Image names = "<task>.<imagenumber>.<extension>"
         inames = []
         for i in range(len(imageList)):
-            tmp = os.path.join(self.workingDirectory, "{}.{}.png".format(task, i))
+            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
@@ -812,10 +812,10 @@ class MarkerClient(QWidget):
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
-        # Image names = "<task>.<imagenumber>.png"
+        # Image names = "<task>.<imagenumber>.<extension>"
         inames = []
         for i in range(len(imageList)):
-            tmp = os.path.join(self.workingDirectory, "{}.{}.png".format(task, i))
+            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
@@ -1253,7 +1253,7 @@ class MarkerClient(QWidget):
         viewFiles = []
         for iab in imagesAsBytes:
             tfn = tempfile.NamedTemporaryFile(
-                dir=self.workingDirectory, suffix=".png", delete=False
+                dir=self.workingDirectory, suffix=".image", delete=False
             ).name
             viewFiles.append(tfn)
             with open(tfn, "wb") as fh:
@@ -1385,7 +1385,7 @@ class MarkerClient(QWidget):
         ifilenames = []
         for img in imageList:
             ifile = tempfile.NamedTemporaryFile(
-                dir=self.workingDirectory, suffix=".png", delete=False
+                dir=self.workingDirectory, suffix=".image", delete=False
             )
             ifile.write(img)
             ifilenames.append(ifile.name)

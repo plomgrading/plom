@@ -37,7 +37,7 @@ def decodeQRs():
     """
     os.chdir("pageImages")
     # list and len bit crude here: more pythonic to leave as iterator?
-    stuff = list(glob.glob("*.png"))
+    stuff = list(glob.glob("*"))
     N = len(stuff)
     # TODO: processes=8?  Seems its chosen automatically (?)
     with Pool() as p:

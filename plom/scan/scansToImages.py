@@ -71,8 +71,8 @@ def processFileToBitmaps(fname):
     NOT IMPLEMENTED YET: You can force one of these...
     """
     # Image types we expect the client to be able to handle
-    #PlomImageWhitelist = ("png", "jpg", "jpeg")
-    PlomImageWhitelist = ("png",)
+    # TODO: think about JBIG, etc: other stuff that commonly lives in PDF
+    PlomImageWhitelist = ("png", "jpg", "jpeg")
 
     scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
@@ -132,11 +132,13 @@ def processFileToBitmaps(fname):
         #z = random.uniform(1, 5)
         print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
         pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
-        outname = os.path.join("scanPNGs", basename + ".png")
-        pix.writeImage(outname)
-        # TODO: experiment with jpg: generate both and see which is smaller?
-        #img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        #img.save(outname.replace('.png', '.jpg'), "JPEG", quality=94, optimize=True)
+        if random.uniform(0, 1) < 0.5:
+            outname = os.path.join("scanPNGs", basename + ".png")
+            pix.writeImage(outname)
+        else:
+            outname = os.path.join("scanPNGs", basename + ".jpg")
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            img.save(outname, "JPEG", quality=94, optimize=True)
 
 
 def extractImageFromFitzPage(page, doc):
@@ -242,7 +244,7 @@ def processScans(fname):
     # go into png directory
     os.chdir("scanPNGs")
 
-    print("Gamma shift the images")
+    print("Gamma shift the PNG images")
     # list and len bit crude here: more pythonic to leave as iterator?
     stuff = list(glob.glob("*.png"))
     N = len(stuff)
@@ -253,7 +255,7 @@ def processScans(fname):
     #     gamma_adjust(x)
 
     # move all the pngs into pageimages directory
-    for pngfile in glob.glob("*.png"):
+    for pngfile in glob.glob("*"):
         shutil.move(pngfile, os.path.join("..", "pageImages"))
     os.chdir("..")
 

@@ -116,7 +116,9 @@ def uploadPages(server=None, password=None):
         exit(10)
 
     # Look for pages in decodedPages
+    # TODO: hardcoded for png and jpeg: careful not to get the *.qr
     fileList = glob("decodedPages/t*.png")
+    fileList.extend(glob("decodedPages/t*.jpg"))
     sendKnownFiles(msgr, fileList)
     msgr.closeUser()
     msgr.stop()
