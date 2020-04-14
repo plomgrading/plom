@@ -78,7 +78,7 @@ def checkPassword(self, user, password):
     return self.authority.checkPassword(password, passwordHash)
 
 
-def checkUserEnabled(user):
+def checkUserEnabled(self, user):
     return self.DB.isUserEnabled(user)
 
 
@@ -105,7 +105,7 @@ def giveUserToken(self, user, password, clientAPI):
         if self.checkUserEnabled(user):
             pass
         else:
-            [False, "The name / password pair has been disabled"]
+            return [False, "The name / password pair has been disabled"]
 
         # Now check if user already logged in - ie has token already.
         if self.DB.userHasToken(user):

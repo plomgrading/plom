@@ -119,6 +119,7 @@ class Server(object):
     from .plomServer.serverUserInit import (
         validate,
         checkPassword,
+        checkUserEnabled,
         InfoShortName,
         InfoGeneral,
         reloadUsers,
