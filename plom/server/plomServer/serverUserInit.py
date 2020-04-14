@@ -75,11 +75,11 @@ def reloadUsers(self, password):
 def checkPassword(self, user, password):
     # Check the pwd and enabled. Get the hash from DB
     passwordHash = self.DB.getUserPasswordHash(user)
-    if self.authority.checkPassword(password, passwordHash):
-        # first check if user is enabled, then check pwd.
-        if self.DB.isUserEnabled(user):
-            return True
-    return False
+    return self.authority.checkPassword(password, passwordHash)
+
+
+def checkUserEnabled(user):
+    return self.DB.isUserEnabled(user)
 
 
 def giveUserToken(self, user, password, clientAPI):
@@ -101,6 +101,12 @@ def giveUserToken(self, user, password, clientAPI):
         ]
 
     if self.checkPassword(user, password):
+        # Now check if user is enabled
+        if self.checkUserEnabled(user):
+            pass
+        else:
+            [False, "The name / password pair has been disabled"]
+
         # Now check if user already logged in - ie has token already.
         if self.DB.userHasToken(user):
             log.debug('User "{}" already has token'.format(user))
@@ -114,14 +120,14 @@ def giveUserToken(self, user, password, clientAPI):
         log.info('Authorising user "{}"'.format(user))
         return [True, token]
     else:
-        return [False, "The name / password pair is not authorised".format(user)]
+        return [False, "The name / password pair is not authorised"]
 
 
-def toggleEnableDisableUser(self, user):
-    if self.DB.isUserEnabled(user):
-        self.DB.disableUser(user)
-    else:
+def setUserEnable(self, user, enableFlag):
+    if enableFlag:
         self.DB.enableUser(user)
+    else:
+        self.DB.disableUser(user)
     return [True]
 
 

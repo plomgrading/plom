@@ -218,15 +218,17 @@ class PlomDB:
         return True
 
     def disableUser(self, uname):
+        # when user is disabled we should set the enabled flag to false, remove their auth-token and then remove all their todo-stuff.
         uref = User.get_or_none(name=uname)
         if uref is None:
             return False
-        # force-logout the user
-        self.resetUsersToDo(uname)
-        # then set flag
+        # set enabled flag to false and remove their token
         with plomdb.atomic():
             uref.enabled = False
+            uref.token = None
             uref.save()
+        # put all of user's tasks back on the todo pile.
+        self.resetUsersToDo(uname)
         return True
 
     def setUserToken(self, uname, token):

@@ -1347,7 +1347,10 @@ class Manager(QWidget):
             ).exec_()
             == QMessageBox.Yes
         ):
-            managerMessenger.toggleEnableDisableUser(user)
+            if self.ui.userListTW.item(r, 1).text() == "True":
+                managerMessenger.setUserEnable(user, False)
+            else:
+                managerMessenger.setUserEnable(user, True)
             self.refreshUserList()
 
     def refreshUserList(self):

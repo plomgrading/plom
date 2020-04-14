@@ -123,7 +123,7 @@ class Server(object):
         InfoGeneral,
         reloadUsers,
         giveUserToken,
-        toggleEnableDisableUser,
+        setUserEnable,
         closeUser,
     )
     from .plomServer.serverUpload import (

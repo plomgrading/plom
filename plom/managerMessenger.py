@@ -1144,12 +1144,12 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def toggleEnableDisableUser(self, someuser):
+    def setUserEnable(self, someuser, enableFlag):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
                 "https://{}/enableDisable/{}".format(self.server, someuser),
-                json={"user": self.user, "token": self.token},
+                json={"user": self.user, "token": self.token, "enableFlag": enableFlag},
                 verify=False,
             )
             response.raise_for_status()
