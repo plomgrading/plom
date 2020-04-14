@@ -59,7 +59,10 @@ def processFileToBitmap_w_fitz(fname):
     doc = fitz.open(fname)
 
     for p in doc:
-        print("__ {} {}".format(p.number+1, "_"*60))
+        basename = "{}-{}".format(safeScan, p.number + 1)
+        outname = "{}.png".format(basename)
+        outname = os.path.join("scanPNGs", outname)
+
         # Want to be careful we don't lose student annotations
         # TODO: its not so bad, see annots=True in getPixmap...
         assert not p.getLinks()
@@ -69,22 +72,24 @@ def processFileToBitmap_w_fitz(fname):
         # TODO: Look into getImageList
         imlist = p.getImageList()
         if len(imlist) == 1:
-            print("Looks like we've caught ourselves a single scan!")
-            print(imlist[0])
+            print("{}: Looks like we've caught ourselves a single-image page!".format(basename))
+            print("  " + str(imlist[0]))
             d = doc.extractImage(imlist[0][0])
-            print("; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
+            print("  " + "; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
             assert d["smask"] == 0, "TODO: probably should render if we see these"
-            outname = "{}-{}-raw.{}".format(safeScan, p.number + 1, d["ext"])
-            outname = os.path.join("scanPNGs", outname)
-            with open(outname, "wb") as f:
+            rawname = "{}-raw.{}".format(basename, d["ext"])
+
+            with open(rawname, "wb") as f:
                 f.write(d["image"])
+            print("  Cowardly transcoding to png...")
+            subprocess.check_call(["convert", rawname, outname])
+            continue
 
         z = 2.78  # approx match ghostscript's -r200
         # TODO: random sizes for testing
-        # z = random.uniform(1, 5)
+        z = random.uniform(1, 5)
+        print("{}: We're gonna Fitz this one with z={}".format(p.number + 1, z))
         pix = p.getPixmap(fitz.Matrix(z, z))
-        outname = "{}-{}.png".format(safeScan, p.number + 1)
-        outname = os.path.join("scanPNGs", outname)
         pix.writeImage(outname)
         # TODO: experiment with jpg: generate both and see which is smaller?
         #img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
@@ -176,5 +181,5 @@ def processScans(fname):
 # TODO: to ease with debugging/experimenting
 if __name__ == "__main__":
     #processFileToPng_w_ghostscript("testThis.pdf")
-    #processFileToBitmap_w_fitz("testThis.pdf")
-    processFileToBitmap_w_fitz("M100_102_AD.pdf")
+    processFileToBitmap_w_fitz("realscan.pdf")
+    processFileToBitmap_w_fitz("testThis.pdf")
