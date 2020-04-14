@@ -10,6 +10,8 @@ import os
 import shutil
 import subprocess
 from multiprocessing import Pool
+import random
+
 import toml
 from tqdm import tqdm
 import fitz
