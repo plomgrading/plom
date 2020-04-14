@@ -27,6 +27,7 @@ from plom import __version__
 from plom import Plom_API_Version
 from plom import Default_Port
 from plom.messenger import Messenger
+
 # TODO: for now, a global (to this module), later maybe in the QApp?
 messenger = None
 
@@ -191,7 +192,8 @@ class Chooser(QDialog):
             ).exec_()
             return
         except PlomAuthenticationException as e:
-            ErrorMessage("Could not authenticate: {}".format(e)).exec_()
+            # not PlomAuthenticationException(blah) has args [PlomAuthenticationException, "you are not authenticated, blah] - we only want the blah.
+            ErrorMessage("Could not authenticate: {}".format(e.args[-1])).exec_()
             return
         except PlomExistingLoginException as e:
             if (

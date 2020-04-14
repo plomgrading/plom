@@ -90,7 +90,7 @@ class UserInitHandler:
         elif rmsg[1].startswith("UHT"):
             return web.json_response(rmsg[1], status=409)  # user has token already.
         else:
-            return web.Response(status=401)  # you are not authorised
+            return web.json_response(rmsg[1], status=401)  # you are not authorised
 
     # @routes.put("/admin/reloadUsers")
     async def adminReloadUsers(self, request):

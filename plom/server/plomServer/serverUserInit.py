@@ -105,7 +105,10 @@ def giveUserToken(self, user, password, clientAPI):
         if self.checkUserEnabled(user):
             pass
         else:
-            return [False, "The name / password pair has been disabled"]
+            return [
+                False,
+                "The name / password pair has been disabled. Contact your instructor.",
+            ]
 
         # Now check if user already logged in - ie has token already.
         if self.DB.userHasToken(user):
