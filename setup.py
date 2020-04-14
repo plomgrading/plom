@@ -43,7 +43,7 @@ server_install_requires = [
 
 # Non-Python deps for server
 #   - imagemagick
-#   - ghostscript
+#   - ghostscript (optional)
 #   - latex installation including (Debian/Ubuntu pkg names):
 #       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
 #   - latex installation including (Fedora pkg names):
