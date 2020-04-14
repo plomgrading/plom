@@ -24,14 +24,14 @@ class Authority:
 
     def buildMasterToken(self, token):
         if token is None:
-            masterToken = self.createToken()
+            masterToken = uuid.uuid4().hex
             print("No masterToken given, creating one")
         else:
             try:
                 masterToken = uuid.UUID(token).hex
                 print("Supplied masterToken is valid. Using that.")
             except ValueError:
-                masterToken = self.createToken()
+                masterToken = uuid.uuid4().hex
                 print(
                     "Supplied masterToken is not a valid UUID. Creating new masterToken."
                 )
