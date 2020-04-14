@@ -109,14 +109,20 @@ class UnderlyingImage(QGraphicsItemGroup):
         self.imageNames = imageNames
         self.images = {}
         x = 0
-        n = 0
-        for img in self.imageNames:
-            self.images[n] = QGraphicsPixmapItem(QPixmap(img))
+        for (n, img) in enumerate(self.imageNames):
+            pix = QPixmap(img)
+            self.images[n] = QGraphicsPixmapItem(pix)
             self.images[n].setTransformationMode(Qt.SmoothTransformation)
             self.images[n].setPos(x, 0)
-            x += self.images[n].boundingRect().width()
+            sf = 2000.0 / float(pix.height())
+            self.images[n].setScale(sf)
+            # TODO: why not?
+            #x += self.images[n].boundingRect().width()
+            # help prevent hairline: subtract one pixel before converting
+            x += sf * (pix.width() - 1.0)
+            # TODO: don't floor here if units of scene are large!
+            x = int(x)
             self.addToGroup(self.images[n])
-            n += 1
 
 
 # Dictionaries to translate tool-modes into functions
@@ -289,7 +295,7 @@ class PageScene(QGraphicsScene):
         # Make sure the ghostComment is hidden
         self.ghostItem.hide()
         # Get the width and height of the image
-        br = self.underImage.boundingRect()
+        br = self.sceneRect()
         w = br.width()
         h = br.height()
         # Create an output pixmap and painter (to export it)
@@ -1266,7 +1272,7 @@ class PageScene(QGraphicsScene):
         self.updateGhost(delta, text)
 
     def noAnswer(self, delta):
-        br = self.underImage.boundingRect()
+        br = self.sceneRect()
         # put lines through the page
         w = br.right()
         h = br.bottom()

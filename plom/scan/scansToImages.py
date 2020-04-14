@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
@@ -11,9 +9,14 @@ import hashlib
 import os
 import shutil
 import subprocess
-import toml
 from multiprocessing import Pool
+import random
+
+import toml
 from tqdm import tqdm
+import fitz
+from PIL import Image
+
 
 # TODO: make some common util file to store all these names?
 archivedir = "archivedPDFs"
@@ -46,7 +49,38 @@ def isInArchive(fname):
     return [False]
 
 
-def processFileToPng(fname):
+def processFileToBitmap_w_fitz(fname):
+    """Convert each page of pdf into bitmap using fitz"""
+
+    scan, fext = os.path.splitext(fname)
+    # issue #126 - replace spaces in names with underscores for output names.
+    safeScan = scan.replace(" ", "_")
+
+    doc = fitz.open(fname)
+
+    for p in doc:
+        # Want to be careful we don't lose student annotations
+        # TODO: its not so bad, see annots=True in getPixmap...
+        assert not p.getLinks()
+        assert not list(p.annots())
+        assert not list(p.widgets())
+
+        # TODO: Look into getImageList
+
+        z = 2.78  # approx match ghostscript's -r200
+        # TODO: random sizes for testing
+        # z = random.uniform(1, 5)
+        pix = p.getPixmap(fitz.Matrix(z, z))
+        outname = "{}-{}.png".format(safeScan, p.number + 1)
+        outname = os.path.join("scanPNGs", outname)
+        print(outname)  # TODO: replace with tqdm
+        pix.writeImage(outname)
+        # TODO: experiment with jpg: generate both and see which is smaller?
+        #img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        #img.save(outname.replace('.png', '.jpg'), "JPEG", quality=94, optimize=True)
+
+
+def processFileToPng_w_ghostscript(fname):
     """Convert each page of pdf into png using ghostscript"""
     scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
@@ -69,6 +103,10 @@ def processFileToPng(fname):
         )
     except subprocess.CalledProcessError as suberror:
         print("Error running gs: {}".format(suberror.stdout.decode("utf-8")))
+
+
+#processFileToPng = processFileToPng_w_ghostscript
+processFileToPng = processFileToBitmap_w_fitz
 
 
 def gamma_adjust(fn):
