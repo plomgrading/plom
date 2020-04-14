@@ -66,9 +66,8 @@ def processFileToBitmap_w_fitz(fname):
         # TODO: Look into getImageList
 
         z = 2.78  # approx match ghostscript's -r200
-        # TODO: playing with random sizes for testing
-        import random
-        z = random.uniform(1, 5)
+        # TODO: random sizes for testing
+        # z = random.uniform(1, 5)
         pix = p.getPixmap(fitz.Matrix(z, z))
         outname = "{}-{}.png".format(safeScan, p.number + 1)
         outname = os.path.join("scanPNGs", outname)
