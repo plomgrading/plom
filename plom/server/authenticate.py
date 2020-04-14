@@ -16,7 +16,7 @@ class Authority:
         """Set up cryptocontext, userlist and tokenlist"""
         self.ctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
-    def checkPassword(self, user, password, passwordHash):
+    def checkPassword(self, password, passwordHash):
         """Check the password against the hashed one."""
         return self.ctx.verify(password, passwordHash)
 

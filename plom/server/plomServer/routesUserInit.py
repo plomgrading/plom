@@ -56,6 +56,19 @@ class UserInitHandler:
         log.info('Manager force-logout user "{}"'.format(theuser))
         return web.Response(status=200)
 
+    # @routes.put("/enableDisable/{user}")
+    async def toggleEnableDisableUser(self, request):
+        logRequest("toggleEnableDisableUser", request)
+        data = await request.json()
+        if not data["user"] == "manager":
+            return web.Response(status=400)  # malformed request.
+        theuser = request.match_info["user"]
+        if theuser == "manager":  # cannot switch manager off.
+            return web.Response(status=400)  # malformed request.
+        log.info('Toggle enable/disable for User "{}"'.format(theuser))
+        self.server.toggleEnableDisableUser(theuser)
+        return web.Response(status=200)
+
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
         logRequest("giveUserToken", request)
@@ -121,3 +134,4 @@ class UserInitHandler:
         router.add_get("/info/general", self.InfoGeneral)
         router.add_delete("/authorisation", self.clearAuthorisation)
         router.add_delete("/authorisation/{user}", self.clearAuthorisationUser)
+        router.add_put("/enableDisable/{user}", self.toggleEnableDisableUser)

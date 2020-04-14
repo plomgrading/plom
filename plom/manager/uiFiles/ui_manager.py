@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file './qtCreatorFiles/ui_manager.ui'
 #
-# Created by: PyQt5 UI code generator 5.12.3
+# Created by: PyQt5 UI code generator 5.14.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -531,14 +531,19 @@ class Ui_Manager(object):
         self.forceLogoutB = QtWidgets.QPushButton(self.groupBox_5)
         self.forceLogoutB.setObjectName("forceLogoutB")
         self.verticalLayout_22.addWidget(self.forceLogoutB)
-        spacerItem15 = QtWidgets.QSpacerItem(20, 113, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem15 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_22.addItem(spacerItem15)
+        self.enabDisabB = QtWidgets.QPushButton(self.groupBox_5)
+        self.enabDisabB.setObjectName("enabDisabB")
+        self.verticalLayout_22.addWidget(self.enabDisabB)
+        spacerItem16 = QtWidgets.QSpacerItem(20, 113, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_22.addItem(spacerItem16)
         self.label_10 = QtWidgets.QLabel(self.groupBox_5)
         self.label_10.setAlignment(QtCore.Qt.AlignCenter)
         self.label_10.setObjectName("label_10")
         self.verticalLayout_22.addWidget(self.label_10)
-        spacerItem16 = QtWidgets.QSpacerItem(20, 114, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_22.addItem(spacerItem16)
+        spacerItem17 = QtWidgets.QSpacerItem(20, 114, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_22.addItem(spacerItem17)
         self.horizontalLayout_20.addWidget(self.groupBox_5)
         self.verticalLayout_23.addLayout(self.horizontalLayout_20)
         self.horizontalLayout_18 = QtWidgets.QHBoxLayout()
@@ -546,8 +551,8 @@ class Ui_Manager(object):
         self.refreshUserB = QtWidgets.QPushButton(self.tab_2)
         self.refreshUserB.setObjectName("refreshUserB")
         self.horizontalLayout_18.addWidget(self.refreshUserB)
-        spacerItem17 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_18.addItem(spacerItem17)
+        spacerItem18 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_18.addItem(spacerItem18)
         self.verticalLayout_23.addLayout(self.horizontalLayout_18)
         self.tabWidget_2.addTab(self.tab_2, "")
         self.tab = QtWidgets.QWidget()
@@ -582,8 +587,8 @@ class Ui_Manager(object):
         self.refreshProgressQUB = QtWidgets.QPushButton(self.tab)
         self.refreshProgressQUB.setObjectName("refreshProgressQUB")
         self.horizontalLayout_21.addWidget(self.refreshProgressQUB)
-        spacerItem18 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_21.addItem(spacerItem18)
+        spacerItem19 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_21.addItem(spacerItem19)
         self.verticalLayout_24.addLayout(self.horizontalLayout_21)
         self.tabWidget_2.addTab(self.tab, "")
         self.tab_3 = QtWidgets.QWidget()
@@ -600,8 +605,8 @@ class Ui_Manager(object):
         self.verticalLayout_7.addWidget(self.tabWidget)
         self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_5.setObjectName("horizontalLayout_5")
-        spacerItem19 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_5.addItem(spacerItem19)
+        spacerItem20 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_5.addItem(spacerItem20)
         self.closeButton = QtWidgets.QPushButton(Manager)
         self.closeButton.setObjectName("closeButton")
         self.horizontalLayout_5.addWidget(self.closeButton)
@@ -700,6 +705,7 @@ class Ui_Manager(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.reviewAllTab), _translate("Manager", "&Review"))
         self.groupBox_5.setTitle(_translate("Manager", "User management tools"))
         self.forceLogoutB.setText(_translate("Manager", "Force logout"))
+        self.enabDisabB.setText(_translate("Manager", "Toggle enable/disable"))
         self.label_10.setText(_translate("Manager", "More in the future"))
         self.refreshUserB.setText(_translate("Manager", "Refresh user login information"))
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_2), _translate("Manager", "User &List"))

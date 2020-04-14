@@ -290,6 +290,7 @@ class Manager(QWidget):
         self.ui.predictButton.clicked.connect(self.runPredictor)
         self.ui.delPredButton.clicked.connect(self.deletePredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
+        self.ui.enabDisabB.clicked.connect(self.toggleEnableDisable)
 
     def closeWindow(self):
         global managerMessenger
@@ -1284,10 +1285,11 @@ class Manager(QWidget):
         self.initProgressQUTabs()
 
     def initUserListTab(self):
-        self.ui.userListTW.setColumnCount(5)
+        self.ui.userListTW.setColumnCount(6)
         self.ui.userListTW.setHorizontalHeaderLabels(
             [
                 "Username",
+                "Enabled",
                 "Logged in",
                 "Papers IDd",
                 "Papers Totalled",
@@ -1328,6 +1330,25 @@ class Manager(QWidget):
             == QMessageBox.Yes
         ):
             managerMessenger.clearAuthorisationUser(user)
+            self.refreshUserList()
+
+    def toggleEnableDisable(self):
+        ri = self.ui.userListTW.selectedIndexes()
+        if len(ri) == 0:
+            return
+        r = ri[0].row()
+        user = self.ui.userListTW.item(r, 0).text()
+        if user == "manager":
+            ErrorMessage("You cannot disable the manager.").exec_()
+            return
+        if (
+            SimpleMessage(
+                'Are you sure you want to toggle enable/disable user "{}"?'.format(user)
+            ).exec_()
+            == QMessageBox.Yes
+        ):
+            managerMessenger.toggleEnableDisableUser(user)
+            self.refreshUserList()
 
     def refreshUserList(self):
         uDict = managerMessenger.getUserDetails()
@@ -1339,12 +1360,17 @@ class Manager(QWidget):
             self.ui.userListTW.insertRow(r)
             # rjust(4) entries so that they can sort like integers... without actually being integers
             self.ui.userListTW.setItem(r, 0, QTableWidgetItem("{}".format(u)))
-            for k in range(4):
+            for k in range(5):
                 self.ui.userListTW.setItem(
                     r, k + 1, QTableWidgetItem("{}".format(dat[k]))
                 )
             if dat[0]:
                 self.ui.userListTW.item(r, 1).setBackground(QBrush(Qt.green))
+            else:
+                self.ui.userListTW.item(r, 1).setBackground(QBrush(Qt.red))
+            if dat[1]:
+                self.ui.userListTW.item(r, 2).setBackground(QBrush(Qt.green))
+
             if u in ["manager", "scanner", "reviewer"]:
                 self.ui.userListTW.item(r, 0).setBackground(QBrush(Qt.green))
 

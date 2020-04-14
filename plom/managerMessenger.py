@@ -1144,6 +1144,25 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def toggleEnableDisableUser(self, someuser):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/enableDisable/{}".format(self.server, someuser),
+                json={"user": self.user, "token": self.token},
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
     def MreviewQuestion(self, testNumber, questionNumber, version):
         self.SRmutex.acquire()
         try:

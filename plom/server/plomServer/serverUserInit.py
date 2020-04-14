@@ -8,8 +8,6 @@ log = logging.getLogger("servUI")
 
 confdir = "serverConfiguration"
 
-from plom.server.authenticate import Authority
-
 
 def validate(self, user, token):
     """Check the user's token is valid"""
@@ -77,7 +75,7 @@ def reloadUsers(self, password):
 def checkPassword(self, user, password):
     # Check the pwd and enabled. Get the hash from DB
     passwordHash = self.DB.getUserPasswordHash(user)
-    if self.authority.checkPassword(user, password, passwordHash):
+    if self.authority.checkPassword(password, passwordHash):
         # first check if user is enabled, then check pwd.
         if self.DB.isUserEnabled(user):
             return True
@@ -109,7 +107,7 @@ def giveUserToken(self, user, password, clientAPI):
             return [False, "UHT", "User already has token."]
         # give user a token.
         token = self.authority.createToken()
-        self.DB.setUserToken(uname, token)
+        self.DB.setUserToken(user, token)
         # On token request also make sure anything "out" with that user is reset as todo.
         # We keep this here in case of client crash - todo's get reset on login and logout.
         self.DB.resetUsersToDo(user)
@@ -117,6 +115,14 @@ def giveUserToken(self, user, password, clientAPI):
         return [True, token]
     else:
         return [False, "The name / password pair is not authorised".format(user)]
+
+
+def toggleEnableDisableUser(self, user):
+    if self.DB.isUserEnabled(user):
+        self.DB.disableUser(user)
+    else:
+        self.DB.enableUser(user)
+    return [True]
 
 
 def closeUser(self, user):

@@ -26,6 +26,8 @@ from plom import SpecParser
 from plom import specdir
 from plom.db.examDB import PlomDB
 
+from .authenticate import Authority
+
 
 serverInfo = {"server": "127.0.0.1", "port": Default_Port}
 # ----------------------
@@ -82,6 +84,7 @@ class Server(object):
     def __init__(self, spec, db):
         log.debug("Initialising server")
         self.testSpec = spec
+        self.authority = Authority()
         self.DB = db
         self.API = serverAPI
         self.Version = __version__
@@ -100,13 +103,13 @@ class Server(object):
                 userList = json.load(data_file)
                 # for each name check if in DB by asking for the hash of its pwd
                 for uname in userList.keys():
-                    passwordHash = self.DB.getUserPasswordHash(uname, passwordHash)
+                    passwordHash = self.DB.getUserPasswordHash(uname)
                     if passwordHash is None:  # not in list
                         self.DB.createUser(uname, userList[uname])
                     else:
                         if passwordHash != userList[uname]:
                             log.warning("User {} password has changed.".format(uname))
-                        self.DB.setUserPasswordHash(userList[uname])
+                        self.DB.setUserPasswordHash(userList[uname], passwordHash)
             log.debug("Loading users")
         else:
             # Cannot find users - give error and quit out.
@@ -120,6 +123,7 @@ class Server(object):
         InfoGeneral,
         reloadUsers,
         giveUserToken,
+        toggleEnableDisableUser,
         closeUser,
     )
     from .plomServer.serverUpload import (

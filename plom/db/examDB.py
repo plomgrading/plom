@@ -70,7 +70,7 @@ class IDData(BaseModel):
     status = CharField(default="")
     studentID = CharField(unique=True, null=True)
     studentName = CharField(null=True)
-    user = ForeignKeyField(User, backref="iddata")
+    user = ForeignKeyField(User, backref="iddata", null=True)
     time = DateTimeField(null=True)
     # flags
     identified = BooleanField(default=False)
@@ -83,6 +83,7 @@ class QuestionData(BaseModel):
     status = CharField(default="")
     questionNumber = IntegerField(null=False)
     version = IntegerField(null=False)
+    user = ForeignKeyField(User, backref="questiondata", null=True)
     annotatedFile = CharField(null=True)
     md5sum = CharField(null=True)
     plomFile = CharField(null=True)
@@ -100,6 +101,7 @@ class QuestionData(BaseModel):
 class SumData(BaseModel):
     test = ForeignKeyField(Test, backref="sumdata")
     status = CharField(default="")
+    user = ForeignKeyField(User, backref="sumdata", null=True)
     sumMark = IntegerField(null=True)
     group = ForeignKeyField(Group, backref="sumdata", null=True)
     time = DateTimeField(null=True)
@@ -215,9 +217,12 @@ class PlomDB:
             uref.save()
         return True
 
-    def diableUser(self, uname):
+    def disableUser(self, uname):
+        uref = User.get_or_none(name=uname)
+        if uref is None:
+            return False
         # force-logout the user
-        self.resetUsersToDo(self, uname)
+        self.resetUsersToDo(uname)
         # then set flag
         with plomdb.atomic():
             uref.enabled = False
@@ -235,7 +240,7 @@ class PlomDB:
         return True
 
     def clearUserToken(self, uname):
-        return self.setUserToken(self, uname, None)
+        return self.setUserToken(uname, None)
 
     def getUserToken(self, uname):
         uref = User.get_or_none(name=uname)
@@ -258,6 +263,23 @@ class PlomDB:
             return True
         else:
             return False
+
+    def getUserList(self):
+        rval = []
+        for uref in User.select():
+            rval.append(uref.name)
+        return rval
+
+    def getUserDetails(self):
+        rval = {}
+        for uref in User.select():
+            val = [False, False]
+            if uref.enabled:
+                val[0] = True
+            if uref.token is not None:
+                val[1] = True
+            rval[uref.name] = val + self.RgetUserFullProgress(uref.name)
+        return rval
 
     ########## Test stuff ##############
     def createTest(self, t):
@@ -1372,11 +1394,10 @@ class PlomDB:
         log.debug("Sending totalling review data")
         return rval
 
-    def RgetUserDetails(self, uname):
+    def RgetUserFullProgress(self, uname):
         uref = User.get_or_none(name=uname)
         if uref is None:
             return []
-
         # return [#IDd, #tot, #marked]
         log.debug("Sending user {} progress data".format(uname))
         return [
@@ -1530,7 +1551,7 @@ class PlomDB:
         iref = tref.iddata[0]
         # quick sanity check to make sure task given to user, (or if manager making request)
         if iref.user == uref or uname == "manager":
-            continue
+            pass
         else:
             return [False]
         gref = iref.group
@@ -1576,7 +1597,7 @@ class PlomDB:
             iref = tref.iddata[0]
             # sanity check that user has task
             if iref.user == uref and iref.status == "out":
-                continue
+                pass
             else:  # someone else has it, or it is not out.
                 return
             # update status, Student-number, name, id-time.
@@ -1742,7 +1763,7 @@ class PlomDB:
                     return [False]
                 qref = gref.questiondata[0]
                 if qref.user is None or qref.user == uref:
-                    continue
+                    pass
                 else:  # has been claimed by someone else.
                     return [False]
                 # update status, Student-number, name, id-time.
@@ -1774,12 +1795,12 @@ class PlomDB:
                 gref = Group.get_or_none(Group.gid == groupID)
                 if gref.scanned == False:
                     return
+                qref = gref.questiondata[0]
                 # sanity check that user has task
-                if iref.user == uref and iref.status == "out":
-                    continue
+                if qref.user == uref and qref.status == "out":
+                    pass
                 else:  # has been claimed by someone else.
                     return
-                qref = gref.questiondata[0]
 
                 # update status, Student-number, name, id-time.
                 qref.status = "todo"
@@ -2068,7 +2089,7 @@ class PlomDB:
                     return [False]
                 sref = tref.sumdata[0]
                 if sref.user is None or sref.user == uref:
-                    continue
+                    pass
                 else:  # has been claimed by someone else.
                     return [False]
                 # update status, Student-number, name, id-time.
@@ -2105,7 +2126,7 @@ class PlomDB:
                     return
                 sref = tref.sumdata[0]
                 if sref.user == uref and sref.status == "out":
-                    continue
+                    pass
                 else:  # has been claimed by someone else.
                     return
                 # update status, Student-number, name, id-time.
@@ -2129,7 +2150,7 @@ class PlomDB:
         sref = tref.sumdata[0]
         # check if task given to user or user=manager
         if sref.user == uref or uname == "manager":
-            continue
+            pass
         else:
             return [False]
         pref = Page.get(Page.test == tref, Page.pageNumber == 1)
