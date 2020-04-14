@@ -272,6 +272,7 @@ def processUsers(userFile, demo, auto):
             "Creating a demo user list at userListRaw.csv. ** DO NOT USE ON REAL SERVER **"
         )
         from plom.server import manageUserFiles
+
         rawfile = Path("serverConfiguration") / "userListRaw.csv"
         cl = pkg_resources.resource_string("plom", "demoUserList.csv")
         with open(rawfile, "wb") as fh:
@@ -361,11 +362,11 @@ def prelaunchChecks():
     return True
 
 
-def launchTheServer():
+def launchTheServer(masterToken):
     from plom.server import theServer
 
     if prelaunchChecks():
-        theServer.launch()
+        theServer.launch(masterToken)
 
 
 #################
@@ -388,6 +389,9 @@ spL = sub.add_parser(
 )
 spU = sub.add_parser("users", help="Create required users.")
 spR = sub.add_parser("launch", help="Launch server.")
+spR.add_argument(
+    "masterToken", nargs="?", help="Master token to encrypt tokens in database."
+)
 #
 group = spL.add_mutually_exclusive_group(required=True)
 group.add_argument("classlist", nargs="?", help="filename in csv format")
@@ -428,7 +432,7 @@ def main():
         # process the class list and copy into place
         processUsers(args.userlist, args.demo, args.auto)
     elif args.command == "launch":
-        launchTheServer()
+        launchTheServer(args.masterToken)
     else:
         parser.print_help()
 

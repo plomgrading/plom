@@ -12,7 +12,8 @@ confdir = "serverConfiguration"
 def validate(self, user, token):
     """Check the user's token is valid"""
     # log.debug("Validating user {}.".format(user))
-    return self.DB.validateToken(user, token)
+    dbToken = self.DB.getUserToken(user)
+    return self.authority.validateToken(token, dbToken)
 
 
 def InfoShortName(self):
@@ -114,14 +115,14 @@ def giveUserToken(self, user, password, clientAPI):
         if self.DB.userHasToken(user):
             log.debug('User "{}" already has token'.format(user))
             return [False, "UHT", "User already has token."]
-        # give user a token.
-        token = self.authority.createToken()
-        self.DB.setUserToken(user, token)
+        # give user a token, and store the xor'd version.
+        [clientToken, storageToken] = self.authority.createToken()
+        self.DB.setUserToken(user, storageToken)
         # On token request also make sure anything "out" with that user is reset as todo.
         # We keep this here in case of client crash - todo's get reset on login and logout.
         self.DB.resetUsersToDo(user)
         log.info('Authorising user "{}"'.format(user))
-        return [True, token]
+        return [True, clientToken]
     else:
         return [False, "The name / password pair is not authorised"]
 

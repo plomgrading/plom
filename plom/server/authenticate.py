@@ -8,18 +8,57 @@ from passlib.context import CryptContext
 
 
 class Authority:
-    """A class to do all our authentication
-    - user list, passwords and tokens.
+    """
+    A class to do all our authentication - passwords and tokens.
     """
 
-    def __init__(self):
+    def __init__(self, masterToken):
         """Set up cryptocontext, userlist and tokenlist"""
         self.ctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
+        # set master token, being careful of what user supplies
+        # is hex string of uuid4
+        self.masterToken = self.buildMasterToken(masterToken)
+        # convert it to int - is base 16
+        self.mti = int(self.masterToken, 16)
+        # we need this for xor-ing.
+
+    def buildMasterToken(self, token):
+        if token is None:
+            masterToken = self.createToken()
+            print("No masterToken given, creating one")
+        else:
+            try:
+                masterToken = uuid.UUID(token).hex
+                print("Supplied masterToken is valid. Using that.")
+            except ValueError:
+                masterToken = self.createToken()
+                print(
+                    "Supplied masterToken is not a valid UUID. Creating new masterToken."
+                )
+        return masterToken
+
+    def getMasterToken(self):
+        return self.masterToken
 
     def checkPassword(self, password, passwordHash):
         """Check the password against the hashed one."""
         return self.ctx.verify(password, passwordHash)
 
     def createToken(self):
-        """Create a token for a validated user"""
-        return uuid.uuid4().hex
+        """Create a token for a validated user, return that token as hex and int-xor'd version for storage."""
+        clientToken = uuid.uuid4().hex
+        storageToken = hex(int(clientToken, 16) ^ self.mti)
+        return [clientToken, storageToken]
+
+    def validateToken(self, clientToken, storageToken):
+        if hex(int(clientToken, 16) ^ self.mti) == storageToken:
+            return True
+        else:
+            return False
+
+    def checkStringIsUUID(self, tau):
+        try:
+            token = uuid.UUID(tau)
+        except ValueError:
+            return False
+        return True

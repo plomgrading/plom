@@ -81,13 +81,18 @@ def buildDirectories():
 
 
 class Server(object):
-    def __init__(self, spec, db):
+    def __init__(self, spec, db, masterToken):
         log.debug("Initialising server")
         self.testSpec = spec
-        self.authority = Authority()
+        self.authority = Authority(masterToken)
         self.DB = db
         self.API = serverAPI
         self.Version = __version__
+        print(
+            "Server launching with masterToken = '{}' {}".format(
+                self.authority.getMasterToken(), type(self.authority.getMasterToken())
+            )
+        )
         self.tempDirectory = tempfile.TemporaryDirectory()
         # Give directory correct permissions.
         subprocess.check_call(["chmod", "o-r", self.tempDirectory.name])
@@ -231,13 +236,13 @@ def getServerInfo():
         logging.getLogger("aiohttp.access").setLevel("WARNING")
 
 
-def launch():
+def launch(masterToken=None):
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
     getServerInfo()
     examDB = PlomDB(Path(specdir) / "plom.db")
     spec = SpecParser(Path(specdir) / "verifiedSpec.toml").spec
     buildDirectories()
-    peon = Server(spec, examDB)
+    peon = Server(spec, examDB, masterToken)
     userIniter = UserInitHandler(peon)
     uploader = UploadHandler(peon)
     ider = IDHandler(peon)
