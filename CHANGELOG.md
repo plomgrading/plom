@@ -8,17 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Manager-client can now enable/disable users.
+
+### Changed
+* User credentials now handled by database rather than separate authentication object.
+
+### Fixed
+
+## [0.4.1] - 2020-04-13
+
+### Added
 * Re-enabled the automatic IDing of papers using machine learning.
 * Python package has improved dependency information.
 * `plom-demo` checks if server is running and warns if directory isn't empty.
+* Appdata metadata added for Plom Client.
 
 ### Changed
 * Manager UI tool has better reporting of what users are doing.
 * Manager and command line tools report papers that are marked "out"; this may be useful in case of client crashes, to identify (and reset) papers marking out for grading/IDing.
 * Update for new plomgrading.org domain name.
+* Remove testing tool dependencies on xvfb.
 
 ### Fixed
 * Fixed toml dependency in Dockerfile.
+* Various misc fixes.
 
 
 ## [0.4.0] - 2020-04-04
@@ -151,7 +164,8 @@ in most cases.
 
 This is the first release of Plom, PaperLess Open Marking.
 
-[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.0...master
+[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.1...master
+[0.4.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.0...v0.4.1
 [0.4.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...v0.4.0
 [0.3.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.2...v0.3.0
 [0.2.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...v0.2.2

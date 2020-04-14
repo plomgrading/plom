@@ -20,7 +20,7 @@ def main():
             """
     To get started, go here:
 
-        https://plom.gitlab.io/
+        https://plomgrading.org
     """
         )
     )
