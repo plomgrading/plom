@@ -114,9 +114,7 @@ class UnderlyingImage(QGraphicsItemGroup):
             self.images[n] = QGraphicsPixmapItem(pix)
             self.images[n].setTransformationMode(Qt.SmoothTransformation)
             self.images[n].setPos(x, 0)
-            print(pix.height())
             sf = 2000.0 / float(pix.height())
-            print(sf)
             self.images[n].setScale(sf)
             # TODO: why not?
             #x += self.images[n].boundingRect().width()
