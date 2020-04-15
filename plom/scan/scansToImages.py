@@ -66,6 +66,8 @@ def processFileToBitmaps(fname):
 
     If the above fail, we fall back on calling Ghostscript as a
     subprocess (the `gs` binary).  NOT IMPLEMENTED YET.
+
+    NOT IMPLEMENTED YET: You can force one of these...
     """
 
     scan, fext = os.path.splitext(fname)
@@ -100,38 +102,18 @@ def processFileToBitmaps(fname):
             ok_extract = False
 
         if ok_extract:
-            imlist = p.getImageList()
-            if len(imlist) == 1:
-                msgs.append("Extracted from single-image page")
-                d = doc.extractImage(imlist[0][0])
-                # TODO: log.debug this:
-                #print("  " + "; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
-                width = d.get("width")
-                height = d.get("height")
-                msgs[-1] += " w={} h={}".format(width, height)
-                if width and height:
-                    if width < 600 or height < 800:
-                        # TODO: log.warn?  Rendering unlikely to help
-                        # unless its a small image centered on a big page
-                        ok_extract = False
-                        msgs.append("Below minimum size")
-                else:
-                    ok_extract = False
-                    msgs.append("No size information")
-
-                if d["smask"] != 0:
-                    ex_extract = False
-                    msgs.append("Extracted, but had some kind of mask")
-
-                if ok_extract:
-                    msgs.append("Cowardly transcoding to png")
-                    print("{}: {}".format(basename, "; ".join(msgs)))
-                    rawname = "{}-raw.{}".format(basename, d["ext"])
-                    with open(rawname, "wb") as f:
-                        f.write(d["image"])
-                    subprocess.check_call(["convert", rawname, outname])
-                    os.unlink(rawname)
-                    continue
+            r, d = extractImageFromFitzPage(p, doc)
+            if not r:
+                msgs.append(d)
+            else:
+                print('{}: Extracted "{}" from single-image page w={} h={}'.format(basename, d["ext"], d["width"], d["height"]))
+                rawname = "{}-raw.{}".format(basename, d["ext"])
+                with open(rawname, "wb") as f:
+                    f.write(d["image"])
+                print("  Cowardly transcoding to png (TODO)")
+                subprocess.check_call(["convert", rawname, outname])
+                os.unlink(rawname)
+                continue
 
         z = 2.78  # approx match ghostscript's -r200
         # TODO: random sizes for testing
@@ -142,6 +124,43 @@ def processFileToBitmaps(fname):
         # TODO: experiment with jpg: generate both and see which is smaller?
         #img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
         #img.save(outname.replace('.png', '.jpg'), "JPEG", quality=94, optimize=True)
+
+
+def extractImageFromFitzPage(page, doc):
+    """Extract a single image from a fitz page or return False.
+
+    Args:
+        page: a page of a fitz document.
+        doc: fitz doc containing `page`.
+
+    Returns:
+        True/False: whether this page contains nothing but a single image
+        msg or dict: if False, a msg about what happened, if True a dict
+            The dict has at least the fields `width`, `height`, `image`
+            and `ext`.  `d["image"]` is the raw binary data.
+    """
+
+    imlist = page.getImageList()
+    if len(imlist) != 1:
+        return False, "More than one image"
+
+    d = doc.extractImage(imlist[0][0])
+    # TODO: log.debug this:
+    #print("  " + "; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
+    width = d.get("width")
+    height = d.get("height")
+    if not (width and height):
+        return False, "Extracted, but no size information"
+
+    if width < 600 or height < 800:
+        # TODO: log.warn?  Rendering unlikely to help
+        # unless its a small image centered on a big page
+        return False, "Extracted, but below minimum size"
+
+    if d["smask"] != 0:
+        return False, "Extracted, but had some kind of mask"
+
+    return True, d
 
 
 def processFileToPng_w_ghostscript(fname):
@@ -170,7 +189,7 @@ def processFileToPng_w_ghostscript(fname):
 
 
 #processFileToPng = processFileToPng_w_ghostscript
-processFileToPng = processFileToBitmap_w_fitz
+processFileToPng = processFileToBitmaps
 
 
 def gamma_adjust(fn):
@@ -229,5 +248,5 @@ def processScans(fname):
 # TODO: to ease with debugging/experimenting
 if __name__ == "__main__":
     #processFileToPng_w_ghostscript("testThis.pdf")
-    processFileToBitmap_w_fitz("realscan.pdf")
-    processFileToBitmap_w_fitz("testThis.pdf")
+    processFileToBitmaps("testThis.pdf")
+    processFileToBitmaps("realscan.pdf")
