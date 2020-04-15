@@ -12,6 +12,7 @@ import subprocess
 from multiprocessing import Pool
 import math
 import random
+import tempfile
 
 import toml
 from tqdm import tqdm
@@ -69,6 +70,9 @@ def processFileToBitmaps(fname):
 
     NOT IMPLEMENTED YET: You can force one of these...
     """
+    # Image types we expect the client to be able to handle
+    PlomImageWhitelist = ("png", "jpg", "jpeg")
+    #PlomImageWhitelist = ("png",)
 
     scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
@@ -80,8 +84,6 @@ def processFileToBitmaps(fname):
 
     for p in doc:
         basename = "{}-{:0{width}}".format(safeScan, p.number + 1, width=zpad)
-        outname = "{}.png".format(basename)
-        outname = os.path.join("scanPNGs", outname)
 
         ok_extract = True
         msgs = []
@@ -107,12 +109,17 @@ def processFileToBitmaps(fname):
                 msgs.append(d)
             else:
                 print('{}: Extracted "{}" from single-image page w={} h={}'.format(basename, d["ext"], d["width"], d["height"]))
-                rawname = "{}-raw.{}".format(basename, d["ext"])
-                with open(rawname, "wb") as f:
-                    f.write(d["image"])
-                print("  Cowardly transcoding to png (TODO)")
-                subprocess.check_call(["convert", rawname, outname])
-                os.unlink(rawname)
+                if d["ext"] in PlomImageWhitelist:
+                    outname = os.path.join("scanPNGs", basename + "." + d["ext"])
+                    with open(outname, "wb") as f:
+                        f.write(d["image"])
+                else:
+                    outname = os.path.join("scanPNGs", basename + ".png")
+                    with tempfile.NamedTemporaryFile() as g:
+                        with open(g.name, "wb") as f:
+                            f.write(d["image"])
+                        print("  Cowardly transcoding to png (TODO)")
+                        subprocess.check_call(["convert", g.name, outname])
                 continue
 
         z = 2.78  # approx match ghostscript's -r200
@@ -120,6 +127,7 @@ def processFileToBitmaps(fname):
         z = random.uniform(1, 5)
         print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
         pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
+        outname = os.path.join("scanPNGs", basename + ".png")
         pix.writeImage(outname)
         # TODO: experiment with jpg: generate both and see which is smaller?
         #img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
