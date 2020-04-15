@@ -125,7 +125,7 @@ def processFileToBitmaps(fname):
 
         z = 2.78  # approx match ghostscript's -r200
         # TODO: random sizes for testing
-        z = random.uniform(1, 5)
+        #z = random.uniform(1, 5)
         print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
         pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
         outname = os.path.join("scanPNGs", basename + ".png")
