@@ -69,8 +69,7 @@ def processFileToBitmap_w_fitz(fname):
         ok_extract = True
         msgs = []
 
-        # Want to be careful we don't lose student annotations
-        # TODO: its not so bad, see annots=True in getPixmap...
+        # Any of these might indicate something more complicated than a scan
         if p.getLinks():
             msgs.append("Has links")
             ok_extract = False
@@ -123,7 +122,7 @@ def processFileToBitmap_w_fitz(fname):
         # TODO: random sizes for testing
         z = random.uniform(1, 5)
         print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
-        pix = p.getPixmap(fitz.Matrix(z, z))
+        pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
         pix.writeImage(outname)
         # TODO: experiment with jpg: generate both and see which is smaller?
         #img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
