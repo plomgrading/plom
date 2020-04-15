@@ -71,8 +71,8 @@ def processFileToBitmaps(fname):
     NOT IMPLEMENTED YET: You can force one of these...
     """
     # Image types we expect the client to be able to handle
-    PlomImageWhitelist = ("png", "jpg", "jpeg")
-    #PlomImageWhitelist = ("png",)
+    #PlomImageWhitelist = ("png", "jpg", "jpeg")
+    PlomImageWhitelist = ("png",)
 
     scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
