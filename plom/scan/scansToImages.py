@@ -63,32 +63,59 @@ def processFileToBitmap_w_fitz(fname):
         outname = "{}.png".format(basename)
         outname = os.path.join("scanPNGs", outname)
 
+        ok_extract = True
+        msgs = []
+
         # Want to be careful we don't lose student annotations
         # TODO: its not so bad, see annots=True in getPixmap...
-        assert not p.getLinks()
-        assert not list(p.annots())
-        assert not list(p.widgets())
+        if p.getLinks():
+            msgs.append("Has links")
+            ok_extract = False
+        if list(p.annots()):
+            msgs.append("Has annotations")
+            ok_extract = False
+        if list(p.widgets()):
+            msgs.append("Has fillable forms")
+            ok_extract = False
 
-        # TODO: Look into getImageList
-        imlist = p.getImageList()
-        if len(imlist) == 1:
-            print("{}: Looks like we've caught ourselves a single-image page!".format(basename))
-            print("  " + str(imlist[0]))
-            d = doc.extractImage(imlist[0][0])
-            print("  " + "; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
-            assert d["smask"] == 0, "TODO: probably should render if we see these"
-            rawname = "{}-raw.{}".format(basename, d["ext"])
+        if ok_extract:
+            imlist = p.getImageList()
+            if len(imlist) == 1:
+                msgs.append("Extracted from single-image page")
+                d = doc.extractImage(imlist[0][0])
+                # TODO: log.debug this:
+                #print("  " + "; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
+                width = d.get("width")
+                height = d.get("height")
+                msgs[-1] += " w={} h={}".format(width, height)
+                if width and height:
+                    if width < 600 or height < 800:
+                        # TODO: log.warn?  Rendering unlikely to help
+                        # unless its a small image centered on a big page
+                        ok_extract = False
+                        msgs.append("Below minimum size")
+                else:
+                    ok_extract = False
+                    msgs.append("No size information")
 
-            with open(rawname, "wb") as f:
-                f.write(d["image"])
-            print("  Cowardly transcoding to png...")
-            subprocess.check_call(["convert", rawname, outname])
-            continue
+                if d["smask"] != 0:
+                    ex_extract = False
+                    msgs.append("Extracted, but had some kind of mask")
+
+                if ok_extract:
+                    msgs.append("Cowardly transcoding to png")
+                    print("{}: {}".format(basename, "; ".join(msgs)))
+                    rawname = "{}-raw.{}".format(basename, d["ext"])
+                    with open(rawname, "wb") as f:
+                        f.write(d["image"])
+                    subprocess.check_call(["convert", rawname, outname])
+                    os.unlink(rawname)
+                    continue
 
         z = 2.78  # approx match ghostscript's -r200
         # TODO: random sizes for testing
         z = random.uniform(1, 5)
-        print("{}: We're gonna Fitz this one with z={}".format(p.number + 1, z))
+        print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
         pix = p.getPixmap(fitz.Matrix(z, z))
         pix.writeImage(outname)
         # TODO: experiment with jpg: generate both and see which is smaller?
