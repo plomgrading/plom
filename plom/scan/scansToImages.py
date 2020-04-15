@@ -109,7 +109,11 @@ def processFileToBitmaps(fname):
             if not r:
                 msgs.append(d)
             else:
-                print('{}: Extracted "{}" from single-image page w={} h={}'.format(basename, d["ext"], d["width"], d["height"]))
+                print(
+                    '{}: Extracted "{}" from single-image page w={} h={}'.format(
+                        basename, d["ext"], d["width"], d["height"]
+                    )
+                )
                 if d["ext"] in PlomImageWhitelist:
                     outname = os.path.join("scanPNGs", basename + "." + d["ext"])
                     with open(outname, "wb") as f:
