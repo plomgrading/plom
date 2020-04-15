@@ -80,7 +80,8 @@ def processFileToBitmaps(fname):
 
     doc = fitz.open(fname)
 
-    zpad = math.ceil(math.log10(len(doc)+1))
+    # 0:9 -> 10 pages -> 2 digits
+    zpad = math.floor(math.log10(len(doc))) + 1
 
     for p in doc:
         basename = "{}-{:0{width}}".format(safeScan, p.number + 1, width=zpad)
