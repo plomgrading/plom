@@ -138,7 +138,8 @@ def processFileToBitmaps(fname):
         else:
             outname = os.path.join("scanPNGs", basename + ".jpg")
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            img.save(outname, "JPEG", quality=94, optimize=True)
+            # TODO: temporarily lowered the quality to very poor: change back to 94 later.
+            img.save(outname, "JPEG", quality=4, optimize=True)
 
 
 def extractImageFromFitzPage(page, doc):
