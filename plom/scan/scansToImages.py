@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 from multiprocessing import Pool
+import math
 import random
 
 import toml
@@ -58,8 +59,10 @@ def processFileToBitmap_w_fitz(fname):
 
     doc = fitz.open(fname)
 
+    zpad = math.ceil(math.log10(len(doc)+1))
+
     for p in doc:
-        basename = "{}-{}".format(safeScan, p.number + 1)
+        basename = "{}-{:0{width}}".format(safeScan, p.number + 1, width=zpad)
         outname = "{}.png".format(basename)
         outname = os.path.join("scanPNGs", outname)
 
@@ -76,6 +79,10 @@ def processFileToBitmap_w_fitz(fname):
             ok_extract = False
         if list(p.widgets()):
             msgs.append("Has fillable forms")
+            ok_extract = False
+        # TODO: which is more expensive, this or getImageList?
+        if p.getText("text"):
+            msgs.append("Has text")
             ok_extract = False
 
         if ok_extract:
