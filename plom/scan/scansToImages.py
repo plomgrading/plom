@@ -50,8 +50,23 @@ def isInArchive(fname):
     return [False]
 
 
-def processFileToBitmap_w_fitz(fname):
-    """Convert each page of pdf into bitmap using fitz"""
+def processFileToBitmaps(fname):
+    """Extract/convert each page of pdf into bitmap.
+
+    We have various ways to do this, in rough order of preference:
+      1. Extract a scanned bitmap "as-is"
+      2. Render the page with PyMuPDF
+      3. Render the page with Ghostscript
+
+    For extracting the scanned data as is, we must be careful not to
+    just grab any image off the page (for example, it must be the only
+    image on the page, and it must not have any annotations on top of
+    it).  There are various other conditions; if any of them fail, we
+    fall back on rendering with PyMuPDF.
+
+    If the above fail, we fall back on calling Ghostscript as a
+    subprocess (the `gs` binary).  NOT IMPLEMENTED YET.
+    """
 
     scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
