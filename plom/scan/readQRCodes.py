@@ -287,7 +287,7 @@ def moveScansIntoPlace(examsScannedNow):
     os.chdir("..")
 
 
-def processPNGs(server=None, password=None):
+def processBitmaps(server=None, password=None):
     examsScannedNow = defaultdict(list)
 
     if server and ":" in server:

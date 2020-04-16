@@ -59,7 +59,7 @@ def readImages(server, password):
     # make decodedPages and unknownPages directories
     os.makedirs("decodedPages", exist_ok=True)
     os.makedirs("unknownPages", exist_ok=True)
-    readQRCodes.processPNGs(server, password)
+    readQRCodes.processBitmaps(server, password)
 
 
 def uploadImages(server, password, unknowns=False, collisions=False):

@@ -202,8 +202,8 @@ def processFileToPng_w_ghostscript(fname):
         print("Error running gs: {}".format(suberror.stdout.decode("utf-8")))
 
 
-#processFileToPng = processFileToPng_w_ghostscript
-processFileToPng = processFileToBitmaps
+# TODO: for debugging, can replace with the older ghostscript
+#processFileToBitmaps = processFileToPng_w_ghostscript
 
 
 def gamma_adjust(fn):
@@ -237,7 +237,7 @@ def processScans(fname):
         return
 
     # process the file into png page images
-    processFileToPng(fname)
+    processFileToBitmaps(fname)
     # archive the scan PDF
     archivePDF(fname)
     # go into png directory
