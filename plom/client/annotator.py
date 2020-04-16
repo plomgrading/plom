@@ -981,29 +981,29 @@ class Annotator(QWidget):
             else:
                 self.loadModeFromBefore(self.parent.annotatorSettings["tool"])
 
-        # # if zoom-state is none, set it to index 1 (fit page) - but delay.
-        # if self.parent.annotatorSettings["zoomState"] is None:
-        #     QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
-        # elif self.parent.annotatorSettings["zoomState"] == 0:
-        #     # is set to "user", so set the view-rectangle
-        #     if self.parent.annotatorSettings["viewRectangle"] is not None:
-        #         QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
-        #         QTimer.singleShot(
-        #             200,
-        #             lambda: self.view.initialZoom(
-        #                 self.parent.annotatorSettings["viewRectangle"]
-        #             ),
-        #         )
-        #     else:
-        #         # no view-rectangle, so set to "fit-page"
-        #         QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
-        # else:
-        #     QTimer.singleShot(
-        #         200,
-        #         lambda: self.ui.zoomCB.setCurrentIndex(
-        #             self.parent.annotatorSettings["zoomState"]
-        #         ),
-        #     )
+        # if zoom-state is none, set it to index 1 (fit page) - but delay.
+        if self.parent.annotatorSettings["zoomState"] is None:
+            QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+        elif self.parent.annotatorSettings["zoomState"] == 0:
+            # is set to "user", so set the view-rectangle
+            if self.parent.annotatorSettings["viewRectangle"] is not None:
+                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
+                QTimer.singleShot(
+                    200,
+                    lambda: self.view.initialZoom(
+                        self.parent.annotatorSettings["viewRectangle"]
+                    ),
+                )
+            else:
+                # no view-rectangle, so set to "fit-page"
+                QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(1))
+        else:
+            QTimer.singleShot(
+                200,
+                lambda: self.ui.zoomCB.setCurrentIndex(
+                    self.parent.annotatorSettings["zoomState"]
+                ),
+            )
         # wide vs compact
         if self.parent.annotatorSettings["compact"] is True:
             log.debug("compacting UI (b/c of last use setting")
