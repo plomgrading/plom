@@ -16,8 +16,7 @@ import shutil
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
-
-# ----------------------
+from plom import PlomImageExtWhitelist
 
 
 def doFiling(rmsg, shortName, fname):
@@ -119,7 +118,10 @@ def uploadCollisions(server=None, password=None):
         )
         exit(10)
 
-    fileList = glob("collidingPages/*.png")
+    # TODO whitelist png
+    fileList = []
+    for ext in PlomImageExtWhitelist:
+        fileList.extend(glob("collidingPages/*.{}".format(ext))
     if warnAndAskUser(fileList) == False:
         scanMessenger.closeUser()
         scanMessenger.stop()
