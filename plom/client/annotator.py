@@ -96,16 +96,12 @@ class Annotator(QWidget):
 
     def __init__(
         self,
-        tgv,
         testname,
-        paperdir,
-        fnames,
-        saveName,
         maxMark,
         markStyle,
         mouseHand,
         parent=None,
-        plomDict=None,
+        stuff=None,
     ):
         super(Annotator, self).__init__()
         # remember parent
@@ -114,11 +110,7 @@ class Annotator(QWidget):
         # don't change throughout life of the annotator
         self.maxMark = maxMark
 
-        # get markstyle from plomDict
-        if plomDict is None:
-            self.markStyle = markStyle
-        else:
-            self.markStyle = plomDict["markStyle"]
+        self.markStyle = markStyle
 
         # Show warnings or not
         self.markWarn = True
@@ -196,7 +188,8 @@ class Annotator(QWidget):
 
         self.timer = QElapsedTimer()
 
-        self.loadNewTGV(tgv, testname, paperdir, fnames, saveName, maxMark, markStyle, plomDict)
+        self.loadNewTGV(*stuff)
+
 
         # TODO: use QAction, share with other UI, shortcut keys written once
         m = QMenu()
@@ -245,7 +238,8 @@ class Annotator(QWidget):
         self.saveName = None
         # TODO: maxMark, markStyle
 
-    def loadNewTGV(self, tgv, testname, paperdir, fnames, saveName, maxMark, markStyle, plomDict=None):
+
+    def loadNewTGV(self, tgv, testname, paperdir, fnames, saveName, maxMark, plomDict):
         self.tgv = tgv
         self.testname = testname
         self.setWindowTitle("Annotator: {} of test {}".format(tgv, testname))
@@ -257,12 +251,10 @@ class Annotator(QWidget):
         assert self.maxMark == maxMark, "TODO: changing maxMark in running Annotator not supported"
 
         # get markstyle from plomDict
-        if plomDict is None:
-            self.markStyle = markStyle
-        else:
-            self.markStyle = plomDict["markStyle"]
-        # TODO: not clear you're allowed to chnage this
-        #assert self.markStyle == markStyle, "TODO: changing markStyle in running Annotator not supprted"
+        if plomDict:
+            # TODO: not clear you're allowed to chnage this
+            assert self.markStyle == plomDict["markStyle"], "TODO: changing markStyle in running Annotator not supprted"
+            #self.markStyle = plomDict["markStyle"]
 
         # Set current mark to 0.
         self.score = 0
@@ -630,11 +622,11 @@ class Annotator(QWidget):
         if self.currentButton is not None:
             self.currentButton.setStyleSheet("")
         # A bit of a hack to take care of comment-mode and delta-mode
-        if self.scene.mode == "comment" and newMode != "comment":
+        if self.scene and self.scene.mode == "comment" and newMode != "comment":
             # clear the comment button styling
             self.ui.commentButton.setStyleSheet("")
             self.commentW.CL.setStyleSheet("")
-        if self.scene.mode == "delta" and newMode != "delta":
+        if self.scene and self.scene.mode == "delta" and newMode != "delta":
             self.ui.deltaButton.setStyleSheet("")
         # We change currentbutton to which ever widget sent us
         # to this function. We have to be a little careful since
@@ -664,10 +656,11 @@ class Annotator(QWidget):
             # this should also not happen - except by strange async race issues. So we don't change anything.
             pass
         # pass the new mode to the graphicsview, and set the cursor in view
-        self.scene.setMode(newMode)
-        self.view.setCursor(newCursor)
-        # set the modelabel
-        self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
+        if self.scene:
+            self.scene.setMode(newMode)
+            self.view.setCursor(newCursor)
+            # set the modelabel
+            self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
         # refresh everything.
         self.repaint()
 
