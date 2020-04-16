@@ -18,9 +18,11 @@ import sys
 import tempfile
 import threading
 import time
-import toml
 import queue
 import logging
+import random
+
+import toml
 
 from PyQt5.QtCore import (
     Qt,
@@ -1050,7 +1052,7 @@ class MarkerClient(QWidget):
             paperdir,
             fnames,
             aname,
-            self.maxScore,
+            self.maxScore + random.randrange(0, 5),  # TODO: TEMPORARY TESTING
             markStyle,
             pdict
         )
