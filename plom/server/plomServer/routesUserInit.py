@@ -60,7 +60,7 @@ class UserInitHandler:
     @authByToken_validFields(["password"])
     def createModifyUser(self, data, request):
         # update password of existing user, or create new user.
-        theuser = request.match_info("user")
+        theuser = request.match_info["user"]
         rval = self.server.createModifyUser(theuser, data["password"])
         if rval[0]:  # successfull
             if rval[1]:  # created new user
@@ -71,7 +71,7 @@ class UserInitHandler:
                 return web.Response(status=202)
         else:  # failed.
             log.info('Manager failed to create/modify user "{}"'.format(theuser))
-            return web.Response(text=rmsg[1], status=406)
+            return web.Response(text=rval[1], status=406)
 
     # @routes.put("/enableDisable/{user}")
     async def setUserEnable(self, request):
@@ -153,4 +153,5 @@ class UserInitHandler:
         router.add_get("/info/general", self.InfoGeneral)
         router.add_delete("/authorisation", self.clearAuthorisation)
         router.add_delete("/authorisation/{user}", self.clearAuthorisationUser)
+        router.add_post("/authorisation/{user}", self.createModifyUser)
         router.add_put("/enableDisable/{user}", self.setUserEnable)

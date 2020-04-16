@@ -179,7 +179,12 @@ class PlomDB:
     ########### User stuff #############
     def createUser(self, uname, passwordHash):
         try:
-            uref = User.create(name=uname, password=passwordHash)
+            uref = User.create(
+                name=uname,
+                password=passwordHash,
+                lastActivity=datetime.now(),
+                lastAction="Created",
+            )
         except IntegrityError as e:
             log.error("Create User {} error - {}".format(uname, e))
             return False
@@ -199,6 +204,8 @@ class PlomDB:
             return False
         with plomdb.atomic():
             uref.password = passwordHash
+            uref.lastActivity = datetime.now()
+            uref.lastAction = "Password set"
             uref.save()
         return True
 

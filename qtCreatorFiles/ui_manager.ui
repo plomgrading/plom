@@ -1181,18 +1181,35 @@
                   <property name="sizeHint" stdset="0">
                    <size>
                     <width>20</width>
-                    <height>113</height>
+                    <height>40</height>
                    </size>
                   </property>
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QLabel" name="label_10">
+                 <widget class="QPushButton" name="changePassB">
                   <property name="text">
-                   <string>More in the future</string>
+                   <string>Change user password</string>
                   </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="verticalSpacer_7">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="newUserB">
+                  <property name="text">
+                   <string>New user</string>
                   </property>
                  </widget>
                 </item>
@@ -1204,7 +1221,7 @@
                   <property name="sizeHint" stdset="0">
                    <size>
                     <width>20</width>
-                    <height>114</height>
+                    <height>40</height>
                    </size>
                   </property>
                  </spacer>

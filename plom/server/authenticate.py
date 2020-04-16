@@ -65,7 +65,7 @@ class Authority:
 
     def basicUserPasswordCheck(self, user, password):
         # username must be length 4 and alphanumeric
-        if not (len(user) >= 4 and u.isalnum()):
+        if not (len(user) >= 4 and user.isalnum()):
             return False
         # password must be length 4 and not contain username.
         if (len(password) < 4) or (user in password):
@@ -73,4 +73,4 @@ class Authority:
         return True
 
     def createPasswordHash(self, password):
-        return self.plomctx.hash(password)
+        return self.ctx.hash(password)

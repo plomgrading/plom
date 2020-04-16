@@ -28,6 +28,7 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QMessageBox,
     QProgressBar,
     QPushButton,
@@ -50,8 +51,87 @@ from .reviewview import ReviewViewWindow
 from .selectrectangle import SelectRectangleWindow, IDViewWindow
 from plom.plom_exceptions import *
 from plom.messenger import ManagerMessenger
+from plom.server.aliceBob import simplePassword
 
 from plom import __version__, Plom_API_Version, Default_Port
+
+
+class UserDialog(QDialog):
+    """Simple dialog to enter username and password"""
+
+    def __init__(self, name=""):
+        super(UserDialog, self).__init__()
+        self.name = name
+        self.initUI()
+        if len(name) > 0:
+            self.userLE.setEnabled(False)
+
+    def initUI(self):
+        self.setWindowTitle("Please enter user")
+        self.userL = QLabel("Username:")
+        self.pwL = QLabel("Password:")
+        self.pwL2 = QLabel("and again:")
+        self.userLE = QLineEdit(self.name)
+        initialpw = simplePassword()
+        self.pwLE = QLineEdit(initialpw)
+        # self.pwLE.setEchoMode(QLineEdit.Password)
+        self.pwLE2 = QLineEdit(initialpw)
+        self.pwLE2.setEchoMode(QLineEdit.Password)
+        self.okB = QPushButton("Accept")
+        self.okB.clicked.connect(self.validate)
+        self.cnB = QPushButton("Cancel")
+        self.cnB.clicked.connect(self.reject)
+
+        self.pwCB = QCheckBox("(hide/show)")
+        self.pwCB.setCheckState(Qt.Unchecked)
+        self.pwCB.stateChanged.connect(self.togglePWShow)
+        self.pwNewB = QPushButton("New rand pwd")
+        self.pwNewB.clicked.connect(self.newRandomPassword)
+
+        grid = QGridLayout()
+        grid.addWidget(self.userL, 1, 1)
+        grid.addWidget(self.userLE, 1, 2)
+        grid.addWidget(self.pwL, 2, 1)
+        grid.addWidget(self.pwLE, 2, 2)
+        grid.addWidget(self.pwCB, 2, 3)
+        grid.addWidget(self.pwNewB, 3, 3)
+        grid.addWidget(self.pwL2, 3, 1)
+        grid.addWidget(self.pwLE2, 3, 2)
+        grid.addWidget(self.okB, 4, 3)
+        grid.addWidget(self.cnB, 4, 1)
+
+        self.setLayout(grid)
+        self.show()
+
+    def togglePWShow(self):
+        if self.pwCB.checkState() == Qt.Checked:
+            self.pwLE.setEchoMode(QLineEdit.Password)
+        else:
+            self.pwLE.setEchoMode(QLineEdit.Normal)
+
+    def newRandomPassword(self):
+        newpw = simplePassword()
+        self.pwLE.setText(newpw)
+        self.pwLE2.setText(newpw)
+
+    def validate(self):
+        """Check that password is at least 4 char long
+        and that the two passwords match.
+        If all good then accept
+        else clear the two password lineedits.
+        """
+        # username must be length 4 and alphanumeric
+        if not (len(self.userLE.text()) >= 4 and self.userLE.text().isalnum()):
+            return
+        # password must be length 4 and not contain username.
+        if (len(self.pwLE.text()) < 4) or (self.userLE.text() in self.pwLE.text()):
+            return
+        # passwords must agree
+        if self.pwLE.text() != self.pwLE2.text():
+            return
+        self.name = self.userLE.text()
+        self.password = self.pwLE.text()
+        self.accept()
 
 
 class QVHistogram(QDialog):
@@ -291,6 +371,8 @@ class Manager(QWidget):
         self.ui.delPredButton.clicked.connect(self.deletePredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
         self.ui.enabDisabB.clicked.connect(self.toggleEnableDisable)
+        self.ui.changePassB.clicked.connect(self.changeUserPassword)
+        self.ui.newUserB.clicked.connect(self.createUser)
 
     def closeWindow(self):
         global managerMessenger
@@ -1354,6 +1436,26 @@ class Manager(QWidget):
             else:
                 managerMessenger.setUserEnable(user, True)
             self.refreshUserList()
+
+    def changeUserPassword(self):
+        ri = self.ui.userListTW.selectedIndexes()
+        if len(ri) == 0:
+            return
+        r = ri[0].row()
+        user = self.ui.userListTW.item(r, 0).text()
+        cpwd = UserDialog(user)
+        if cpwd.exec_() == QDialog.Accepted:
+            rval = managerMessenger.createModifyUser(user, cpwd.password)
+            ErrorMessage(rval[1]).exec_()
+        return
+
+    def createUser(self):
+        cpwd = UserDialog()
+        if cpwd.exec_() == QDialog.Accepted:
+            rval = managerMessenger.createModifyUser(cpwd.name, cpwd.password)
+            ErrorMessage(rval[1]).exec_()
+            self.refreshUserList()
+        return
 
     def refreshUserList(self):
         uDict = managerMessenger.getUserDetails()
