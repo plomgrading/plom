@@ -38,7 +38,7 @@ def decodeQRs():
     """
     os.chdir("pageImages")
     stuff = []
-    for ext in PlomImageExtWhiteList:
+    for ext in PlomImageExtWhitelist:
         stuff.extend(glob("*.{}".format(ext)))
     N = len(stuff)
     # TODO: processes=8?  Seems its chosen automatically (?)
