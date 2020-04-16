@@ -257,7 +257,7 @@ def processScans(fname):
     # move all the images into pageimages directory
     fileList = []
     for ext in PlomImageExtWhitelist:
-        fileList.extend(glob("*.{}".format(ext)))
+        fileList.extend(glob.glob("*.{}".format(ext)))
     for file in fileList:
         shutil.move(file, os.path.join("..", "pageImages"))
     os.chdir("..")
