@@ -1163,6 +1163,31 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def createModifyUser(self, someuser, password):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.post(
+                "https://{}/authorisation/{}".format(self.server, someuser),
+                json={"user": self.user, "token": self.token, "password": password},
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 406:
+                return [False, response.text]
+            elif response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+        if response.status_code == 201:
+            return [True, "User created."]
+        elif response.status_code == 202:
+            return [True, "User password updated"]
+
     def MreviewQuestion(self, testNumber, questionNumber, version):
         self.SRmutex.acquire()
         try:

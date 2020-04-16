@@ -56,6 +56,23 @@ class UserInitHandler:
         log.info('Manager force-logout user "{}"'.format(theuser))
         return web.Response(status=200)
 
+    # @routes.post("/authorisation/{user}")
+    @authByToken_validFields(["password"])
+    def createModifyUser(self, data, request):
+        # update password of existing user, or create new user.
+        theuser = request.match_info("user")
+        rval = self.server.createModifyUser(theuser, data["password"])
+        if rval[0]:  # successfull
+            if rval[1]:  # created new user
+                log.info('Manager created new user "{}"'.format(theuser))
+                return web.Response(status=201)
+            else:  # updated password of existing user
+                log.info('Manager updated password of user "{}"'.format(theuser))
+                return web.Response(status=202)
+        else:  # failed.
+            log.info('Manager failed to create/modify user "{}"'.format(theuser))
+            return web.Response(text=rmsg[1], status=406)
+
     # @routes.put("/enableDisable/{user}")
     async def setUserEnable(self, request):
         logRequest("setUserEnable", request)

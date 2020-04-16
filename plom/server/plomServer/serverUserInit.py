@@ -135,6 +135,24 @@ def setUserEnable(self, user, enableFlag):
     return [True]
 
 
+def createModifyUser(self, username, password):
+    # basic sanity check of username / password
+    if self.authority.basicUserPasswordCheck(username, password):
+        return [False, "Username/Password fails basic checks."]
+    # hash the password
+    passwordHash = self.authority.createPasswordHash(password)
+    if self.DB.doesUserExist(username):  # user exists, so update password
+        if self.DB.setUserPasswordHash(username, passwordHash):
+            return [True, True]
+        else:
+            return [False, "Password update error."]
+    else:  # user does not exist, so create them
+        if self.DB.createUser(username, passwordHash):
+            return [True, False]
+        else:
+            return [False, "User creation error."]
+
+
 def closeUser(self, user):
     """Client is closing down their app, so remove the authorisation token
     """

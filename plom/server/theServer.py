@@ -28,7 +28,6 @@ from plom.db.examDB import PlomDB
 
 from .authenticate import Authority
 
-
 serverInfo = {"server": "127.0.0.1", "port": Default_Port}
 # ----------------------
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
@@ -124,6 +123,7 @@ class Server(object):
         validate,
         checkPassword,
         checkUserEnabled,
+        createModifyUser,
         InfoShortName,
         InfoGeneral,
         reloadUsers,
