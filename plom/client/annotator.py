@@ -557,14 +557,15 @@ class Annotator(QWidget):
         self.view.connectScene(self.scene)
         # scene knows which views are connected via self.views()
         log.debug("Scene has this list of views: {}".format(self.scene.views()))
+        # TODO: delete all this?!
         # put the view into the gui.
         # set the initial view to contain the entire scene which at
         # this stage is just the image.
-        self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
+        #self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
         # Centre at top-left of image.
-        self.view.centerOn(0, 0)
+        #self.view.centerOn(0, 0)
         # click the move button
-        self.ui.moveButton.animateClick()
+        #self.ui.moveButton.animateClick()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
