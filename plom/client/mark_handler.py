@@ -59,7 +59,7 @@ class MarkHandler(QWidget):
     def setMarkingUp(self):
         self.setMark(0)
         grid = QGridLayout()
-        self.pdmb = QPushButton()
+        self.pdmb = QPushButton()  # TODO: why?
 
         if self.numButtons > 5:
             ncolumn = 3
