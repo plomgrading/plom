@@ -927,7 +927,7 @@ class MarkerClient(QWidget):
             return
         self.exM.deferPaper(task)
 
-    def startTheAnnotator(self, stuff):
+    def startTheAnnotator(self, data):
         """This fires up the annotation window for user annotation + marking."""
         # Set mousehand left/right - will pass to annotator
         mouseHand = self.ui.mouseHandGroup.checkedId()
@@ -935,7 +935,7 @@ class MarkerClient(QWidget):
         annotator = Annotator(
             mouseHand,
             parent=self,
-            stuff=stuff
+            initialData=data
         )
         # run the annotator
         annotator.ann_upload.connect(self.callbackAnnWantsUsToUpload)
@@ -957,7 +957,7 @@ class MarkerClient(QWidget):
             return
         task = self.prxM.getPrefix(row)
 
-        stuff = self.getDataForAnnotator(task)
+        inidata = self.getDataForAnnotator(task)
 
         if self.allowBackgroundOps:
             # while annotator is firing up request next paper in background
@@ -965,7 +965,7 @@ class MarkerClient(QWidget):
             if self.exM.countReadyToMark() == 0:
                 self.requestNextInBackgroundStart()
 
-        self.startTheAnnotator(stuff)
+        self.startTheAnnotator(inidata)
         # we started the annotator, we'll get a signal back when its done
 
 
@@ -1136,10 +1136,10 @@ class MarkerClient(QWidget):
             return False
         tgv = self.prxM.getPrefix(row)
 
-        stuff = self.getDataForAnnotator(tgv)
-        print("gimmeMore: {}".format(stuff))
-        assert tgv[1:] == stuff[0]
-        pdict = stuff[-1]
+        data = self.getDataForAnnotator(tgv)
+        print("gimmeMore: {}".format(data))
+        assert tgv[1:] == data[0]
+        pdict = data[-1]
         assert pdict is None, "Annotator should not pull a regrade"
 
         if self.allowBackgroundOps:
@@ -1148,7 +1148,7 @@ class MarkerClient(QWidget):
             if self.exM.countReadyToMark() == 0:
                 self.requestNextInBackgroundStart()
 
-        return stuff
+        return data
 
 
     def backgroundUploadFinished(self, code, numdone, numtotal):

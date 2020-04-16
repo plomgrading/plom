@@ -98,7 +98,7 @@ class Annotator(QWidget):
         self,
         mouseHand,
         parent=None,
-        stuff=None,
+        initialData=None,
     ):
         super(Annotator, self).__init__()
         # remember parent
@@ -170,7 +170,8 @@ class Annotator(QWidget):
 
         self.timer = QElapsedTimer()
 
-        self.loadNewTGV(*stuff)
+        if initialData:
+            self.loadNewTGV(*initialData)
 
 
         # TODO: use QAction, share with other UI, shortcut keys written once
