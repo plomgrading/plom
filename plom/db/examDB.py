@@ -29,7 +29,7 @@ class User(BaseModel):
     token = CharField(null=True)  # authentication token
     lastActivity = DateTimeField(null=True)
     lastAction = CharField(null=True)
-    # note that we must have "manger", "scanner", "reviewer" and "HAL" - HAL should never actually log it, but we need a name for who does the automagical stuff
+    # note that we must have "manger", "scanner", "reviewer" and "HAL" - HAL should never actually log in, but we need a name for who does the automagical stuff
 
 
 # the test contains groups
@@ -40,6 +40,12 @@ class User(BaseModel):
 # identified = ID-ing is done
 # marked = marking is done
 # finished = we've rebuilt the PDF at the end with coverpages etc etc
+
+# A bucket for page images
+class Image(BaseModel):
+    originalName = CharField(null=True)  # can be empty.
+    fileName = CharField(null=True)
+    md5sum = CharField(null=True)  # to check for duplications
 
 
 class Test(BaseModel):
@@ -55,7 +61,7 @@ class Test(BaseModel):
 
 
 # group knows its test
-# group status will evolve something like... [todo, outwithclient, done]
+# group status will evolve something like... [ready, out, done]
 class Group(BaseModel):
     test = ForeignKeyField(Test, backref="groups")
     gid = CharField(unique=True)  # must be unique
@@ -63,6 +69,33 @@ class Group(BaseModel):
     # flags
     scanned = BooleanField(default=False)
 
+
+# Page = submitted page - could be unstructured.
+# Page knows its test and some ordinal
+# it doesn't know its version, since multiple questions could be on same page
+class Page(BaseModel):
+    test = ForeignKeyField(Test, backref="pages")
+    pageNumber = IntegerField(null=False)
+    pid = CharField(unique=True)  # to ensure uniqueness
+    image = ForeignKeyField(Image, backref="pages")
+
+
+# The SPG is essentially an instance of a page in a group. So if a page appears in several groups - they will be be separate SPGs. While if a group contains several pages they are separate SPGs.
+class SPG(BaseModel):
+    group = ForeignKeyField(Group, backref="spg")
+    page = ForeignKeyField(Page, backref="spg")
+
+
+# Assigned page is the actual produced page that is given to students. always structured.
+class AssignedPage(BaseModel):
+    test = ForeignKeyField(Test, backref="apages")
+    group = ForeignKeyField(Group, backref="apages")
+    pageNumber = IntegerField(null=False)  # corresponds to page on given test/homework.
+    pid = CharField(unique=True)  # to ensure uniqueness
+    version = IntegerField(default=1)
+
+
+##### Data sets for groups
 
 # Data for id-group
 class IDData(BaseModel):
@@ -77,6 +110,17 @@ class IDData(BaseModel):
     identified = BooleanField(default=False)
 
 
+# Data for totalling the marks
+class SumData(BaseModel):
+    test = ForeignKeyField(Test, backref="sumdata")
+    user = ForeignKeyField(User, backref="sumdata", null=True)
+    status = CharField(default="")
+    sumMark = IntegerField(null=True)
+    time = DateTimeField(null=True)
+    # flags
+    summed = BooleanField(default=False)
+
+
 # Data for question-groups
 class QuestionData(BaseModel):
     test = ForeignKeyField(Test, backref="questiondata")
@@ -84,70 +128,47 @@ class QuestionData(BaseModel):
     status = CharField(default="")
     questionNumber = IntegerField(null=False)
     version = IntegerField(null=False)
-    user = ForeignKeyField(User, backref="questiondata", null=True)
-    annotatedFile = CharField(null=True)
-    md5sum = CharField(null=True)
-    plomFile = CharField(null=True)
-    commentFile = CharField(null=True)
-    mark = IntegerField(null=True)
-    markingTime = IntegerField(null=True)
-    tags = CharField(default="")
-    group = ForeignKeyField(Group, backref="questiondata", null=True)
-    time = DateTimeField(null=True)
     # flags
     marked = BooleanField(default=False)
 
 
-# Data for totalling the marks
-class SumData(BaseModel):
-    test = ForeignKeyField(Test, backref="sumdata")
-    status = CharField(default="")
-    user = ForeignKeyField(User, backref="sumdata", null=True)
-    sumMark = IntegerField(null=True)
-    group = ForeignKeyField(Group, backref="sumdata", null=True)
+# This keeps the annotations that come back from a marker.
+# A single question can have multiple annotations.
+class Annotation(BaseModel):
+    qd = ForeignKeyField(QuestionData, backref="annotations")
+    user = ForeignKeyField(User, backref="annotations")
+    image = ForeignKeyField(Image, backref="annotations")
+    edition = IntegerField(null=True)
+    # we need to order the annotations - want the latest.
+    plomFile = CharField(null=True)
+    commentFile = CharField(null=True)
+    mark = IntegerField(null=True)
+    markingTime = IntegerField(null=True)
     time = DateTimeField(null=True)
-    # flags
-    summed = BooleanField(default=False)
+    tags = CharField(default="")
 
 
-# Page knows its group and its test
-class Page(BaseModel):
-    test = ForeignKeyField(Test, backref="pages")
-    group = ForeignKeyField(Group, backref="pages")  # note - not the GID
-    pageNumber = IntegerField(null=False)
-    pid = CharField(unique=True)  # to ensure uniqueness
-    version = IntegerField(default=1)
-    originalName = CharField(null=True)
-    fileName = CharField(null=True)
-    md5sum = CharField(null=True)  # to check for duplications
-    # flags
-    scanned = BooleanField(default=False)
+###############
+# For page image uploads
 
 
 # Colliding pages should be attached to the page their are duplicating
 # When collision status resolved we can move them about.
 class CollidingPage(BaseModel):
     page = ForeignKeyField(Page, backref="collisions")
-    originalName = CharField(null=True)
-    fileName = CharField(null=True)
-    md5sum = CharField()
+    image = ForeignKeyField(Image, backref="collisions")
 
 
 # Unknown pages are basically just the file
 class UnknownPage(BaseModel):
-    originalName = CharField(null=True)
-    fileName = CharField(null=True)
-    md5sum = CharField()
+    image = ForeignKeyField(Image, backref="unknowns")
 
 
 # Discarded pages are basically just the file and a reason
 # reason could be "garbage", "duplicate of tpv-code", ...?
 class DiscardedPage(BaseModel):
-    originalName = CharField(null=True)
-    fileName = CharField(null=True)
-    md5sum = CharField()
+    image = ForeignKeyField(Image, backref="discards")
     reason = CharField(null=True)
-    tpv = CharField(null=True)  # if the discard is a duplicate of a given tpv
 
 
 # TODO: end of database scheme stuff
@@ -165,10 +186,13 @@ class PlomDB:
                     User,
                     Test,
                     Group,
-                    IDData,
-                    QuestionData,
-                    SumData,
                     Page,
+                    SPG,
+                    AssignedPage,
+                    IDData,
+                    SumData,
+                    QuestionData,
+                    Annotation,
                     UnknownPage,
                     CollidingPage,
                     DiscardedPage,
