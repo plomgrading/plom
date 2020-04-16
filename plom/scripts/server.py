@@ -390,7 +390,9 @@ spL = sub.add_parser(
 spU = sub.add_parser("users", help="Create required users.")
 spR = sub.add_parser("launch", help="Launch server.")
 spR.add_argument(
-    "masterToken", nargs="?", help="Master token to encrypt tokens in database."
+    "masterToken",
+    nargs="?",
+    help="The master token is a 32 hex-digit string used to encrypt tokens in database. If you do not supply one then the server will create one. You should record the token somewhere (and reuse it at next server-start) if you want to be able to hot-restart the server (ie - restart the server without requiring users to log-off and log-in again).",
 )
 #
 group = spL.add_mutually_exclusive_group(required=True)
