@@ -96,9 +96,6 @@ class Annotator(QWidget):
 
     def __init__(
         self,
-        testname,
-        maxMark,
-        markStyle,
         mouseHand,
         parent=None,
         stuff=None,
@@ -106,11 +103,9 @@ class Annotator(QWidget):
         super(Annotator, self).__init__()
         # remember parent
         self.parent = parent
-        # maxMark, mark style (total/up/down) and mouse-hand (left/right) currently
-        # don't change throughout life of the annotator
-        self.maxMark = maxMark
+        # mouse-hand (left/right) doesn't change throughout life of the annotator
 
-        self.markStyle = markStyle
+        self.tgv = None
 
         # Show warnings or not
         self.markWarn = True
@@ -147,18 +142,12 @@ class Annotator(QWidget):
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
 
         # Create the comment list widget and put into gui.
-        self.commentW = CommentWidget(self, maxMark)  # TODO: maxmark to None ok
+        self.commentW = CommentWidget(self, None)
         self.ui.commentGrid.addWidget(self.commentW, 1, 1)
         # pass the marking style to the mark entry widget.
         # also when we set this up we have to connect various
         # mark set, delta-set, mark change functions
         self.scene = None  # TODO?
-        self.setMarkHandler(self.markStyle)
-        self.setDeltaButtonMenu()
-        # set alt-enter / alt-return as shortcut to finish annotating
-        # also set ctrl-n and ctrl-b as same shortcut.
-        # set ctrl-+ as zoom toggle shortcut
-        # set ctrl-z / ctrl-y as undo/redo shortcuts
         self.setMiscShortCuts()
         # set the zoom combobox
         self.setZoomComboBox()
@@ -169,10 +158,6 @@ class Annotator(QWidget):
 
         # Connect all the buttons to relevant functions
         self.setButtons()
-        # pass this to the comment table too - it needs to know if we are
-        # marking up/down/total to correctly shade deltas.
-        self.commentW.setStyle(self.markStyle)
-        self.commentW.changeMark(self.score)
         # Make sure window has min/max buttons.
         self.setWindowFlags(
             self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint
@@ -182,9 +167,6 @@ class Annotator(QWidget):
 
         # Keyboard shortcuts.
         self.keycodes = self.getKeyCodes()
-
-        # set up current-mark / current-mode label  # TODO: delete?
-        self.setCurrentMarkMode()
 
         self.timer = QElapsedTimer()
 
@@ -236,10 +218,13 @@ class Annotator(QWidget):
         self.paperdir = None
         self.imageFiles = None
         self.saveName = None
-        # TODO: maxMark, markStyle
 
 
-    def loadNewTGV(self, tgv, testname, paperdir, fnames, saveName, maxMark, plomDict):
+    def loadNewTGV(self, tgv, testname, paperdir, fnames, saveName, maxMark, markStyle, plomDict):
+        """Load data for marking.
+
+        TODO: maintain current tool not working yet.
+        """
         self.tgv = tgv
         self.testname = testname
         self.setWindowTitle("Annotator: {} of test {}".format(tgv, testname))
@@ -248,13 +233,15 @@ class Annotator(QWidget):
         self.imageFiles = fnames
         self.saveName = saveName
 
-        assert self.maxMark == maxMark, "TODO: changing maxMark in running Annotator not supported"
+        if getattr(self, "maxMark", None) != maxMark:
+            log.warn("Is changing maxMark supported?  we just did it...")
+        self.maxMark = maxMark
 
         # get markstyle from plomDict
-        if plomDict:
-            # TODO: not clear you're allowed to chnage this
-            assert self.markStyle == plomDict["markStyle"], "TODO: changing markStyle in running Annotator not supprted"
-            #self.markStyle = plomDict["markStyle"]
+        if plomDict is None:
+            self.markStyle = markStyle
+        else:
+            self.markStyle = plomDict["markStyle"]
 
         # Set current mark to 0.
         self.score = 0
@@ -267,12 +254,13 @@ class Annotator(QWidget):
         # TODO: see above, don't click a different button: want to keep same tool
 
         # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
+        self.commentW.setStyle(self.markStyle)
         self.commentW.maxMark = maxMark  # TODO: add helper?  combine with changeMark?
         self.commentW.changeMark(self.score)
         self.commentW.setQuestionNumberFromTGV(tgv)
         self.commentW.setTestname(testname)
 
-        self.setMarkHandler(self.markStyle)
+        self.setMarkHandler(maxMark, markStyle)
         self.setDeltaButtonMenu()
 
         # Very last thing = unpickle scene from plomDict
@@ -902,7 +890,7 @@ class Annotator(QWidget):
         # Grab the delta from the arguments
         self.scene.changeTheComment(dlt_txt[0], dlt_txt[1], annotatorUpdate=True)
 
-    def setMarkHandler(self, markStyle):
+    def setMarkHandler(self, maxMark, markStyle):
         """Set up the mark handling widget inside the annotator gui.
         Can be one of 3 styles - mark up, down or total.
         Also connect the handler's signals - when the mark is set,
@@ -912,7 +900,7 @@ class Annotator(QWidget):
         image.
         """
         # Build the mark handler and put into the gui.
-        self.markHandler = MarkHandler(self, self.maxMark)
+        self.markHandler = MarkHandler(self, maxMark)
         self.markHandler.setStyle(markStyle)
         self.ui.markGrid.addWidget(self.markHandler, 1, 1)
 

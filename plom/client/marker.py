@@ -925,15 +925,12 @@ class MarkerClient(QWidget):
             return
         self.exM.deferPaper(task)
 
-    def startTheAnnotator(self, stuff, markStyle):
+    def startTheAnnotator(self, stuff):
         """This fires up the annotation window for user annotation + marking."""
         # Set mousehand left/right - will pass to annotator
         mouseHand = self.ui.mouseHandGroup.checkedId()
 
         annotator = Annotator(
-            self.testInfo["testName"],
-            self.maxScore,
-            markStyle,
             mouseHand,
             parent=self,
             stuff=stuff
@@ -957,19 +954,8 @@ class MarkerClient(QWidget):
         else:
             return
         task = self.prxM.getPrefix(row)
-        # split fcn: maybe we want to start the annotator not based on current selection
-        stuff = self.getDataForAnnotator(task)
 
-        # TODO: yuck, but must do this somewhere, unless Ann can change
-        # markStyle on the fly, which is actually probably the right thing.
-        assert len(stuff) == 5
-        plomDict = stuff[4]
-        if plomDict:
-            markStyle = plomDict["markStyle"]
-        else:
-            markStyle = self.ui.markStyleGroup.checkedId()
-        # more yuck
-        morestuff = (stuff[0][1:], self.testInfo["testName"], stuff[1], stuff[2], stuff[3], self.maxScore, stuff[4])
+        stuff = self.getDataForAnnotator(task)
 
         if self.allowBackgroundOps:
             # while annotator is firing up request next paper in background
@@ -977,7 +963,7 @@ class MarkerClient(QWidget):
             if self.exM.countReadyToMark() == 0:
                 self.requestNextInBackgroundStart()
 
-        self.startTheAnnotator(morestuff, markStyle=markStyle)  # TODO?
+        self.startTheAnnotator(stuff)
         # we started the annotator, we'll get a signal back when its done
 
 
@@ -1055,7 +1041,19 @@ class MarkerClient(QWidget):
         else:
             pdict = None
 
-        return task, paperdir, fnames, aname, pdict
+        testname = self.testInfo["testName"]
+        markStyle = self.ui.markStyleGroup.checkedId()
+        tgv = task[1:]
+        return (
+            tgv,
+            testname,
+            paperdir,
+            fnames,
+            aname,
+            self.maxScore,
+            markStyle,
+            pdict
+        )
 
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
@@ -1136,10 +1134,10 @@ class MarkerClient(QWidget):
             return False
         tgv = self.prxM.getPrefix(row)
 
-        tgv2, paperdir, fnames, saveName, pdict = self.getDataForAnnotator(tgv)
-        print("gimmeMore: {}".format((tgv2, paperdir, fnames, saveName, pdict)))
-        assert tgv == tgv2
-
+        stuff = self.getDataForAnnotator(tgv)
+        print("gimmeMore: {}".format(stuff))
+        assert tgv[1:] == stuff[0]
+        pdict = stuff[-1]
         assert pdict is None, "Annotator should not pull a regrade"
 
         if self.allowBackgroundOps:
@@ -1148,17 +1146,7 @@ class MarkerClient(QWidget):
             if self.exM.countReadyToMark() == 0:
                 self.requestNextInBackgroundStart()
 
-        tgv = tgv[1:]
-
-        return (
-            tgv,
-            self.testInfo["testName"],
-            paperdir,
-            fnames,
-            saveName,
-            self.maxScore,
-            pdict,
-        )
+        return stuff
 
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
