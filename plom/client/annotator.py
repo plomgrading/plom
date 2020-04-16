@@ -716,12 +716,7 @@ class Annotator(QWidget):
 
     @pyqtSlot()
     def saveAndGetNext(self):
-        """Save the current annotations, and move on to the next paper.
-
-        This saves the comment-list, closes the annotator. The marker
-        window then asks the server for the next unmarked image and
-        fires up a new annotator on that.
-        """
+        """Save the current annotations, and move on to the next paper."""
         if self.scene:
             if not self.saveAnnotations():
                 return
