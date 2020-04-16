@@ -118,7 +118,7 @@ def uploadPages(server=None, password=None):
 
     # Look for pages in decodedPages
     fileList = []
-    for ext in PlomImageExtWhiteList:
+    for ext in PlomImageExtWhitelist:
         fileList.extend(glob("decodedPages/t*.{}".format(ext)))
     sendKnownFiles(msgr, fileList)
     msgr.closeUser()
