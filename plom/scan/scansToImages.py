@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
@@ -11,9 +9,16 @@ import hashlib
 import os
 import shutil
 import subprocess
-import toml
 from multiprocessing import Pool
+import math
+import random
+import tempfile
+
+import toml
 from tqdm import tqdm
+import fitz
+from PIL import Image
+
 
 # TODO: make some common util file to store all these names?
 archivedir = "archivedPDFs"
@@ -46,7 +51,132 @@ def isInArchive(fname):
     return [False]
 
 
-def processFileToPng(fname):
+def processFileToBitmaps(fname):
+    """Extract/convert each page of pdf into bitmap.
+
+    We have various ways to do this, in rough order of preference:
+      1. Extract a scanned bitmap "as-is"
+      2. Render the page with PyMuPDF
+      3. Render the page with Ghostscript
+
+    For extracting the scanned data as is, we must be careful not to
+    just grab any image off the page (for example, it must be the only
+    image on the page, and it must not have any annotations on top of
+    it).  There are various other conditions; if any of them fail, we
+    fall back on rendering with PyMuPDF.
+
+    If the above fail, we fall back on calling Ghostscript as a
+    subprocess (the `gs` binary).  NOT IMPLEMENTED YET.
+
+    NOT IMPLEMENTED YET: You can force one of these...
+    """
+    # Image types we expect the client to be able to handle
+    #PlomImageWhitelist = ("png", "jpg", "jpeg")
+    PlomImageWhitelist = ("png",)
+
+    scan, fext = os.path.splitext(fname)
+    # issue #126 - replace spaces in names with underscores for output names.
+    safeScan = scan.replace(" ", "_")
+
+    doc = fitz.open(fname)
+
+    # 0:9 -> 10 pages -> 2 digits
+    zpad = math.floor(math.log10(len(doc))) + 1
+
+    for p in doc:
+        basename = "{}-{:0{width}}".format(safeScan, p.number + 1, width=zpad)
+
+        ok_extract = True
+        msgs = []
+
+        # Any of these might indicate something more complicated than a scan
+        if p.getLinks():
+            msgs.append("Has links")
+            ok_extract = False
+        if list(p.annots()):
+            msgs.append("Has annotations")
+            ok_extract = False
+        if list(p.widgets()):
+            msgs.append("Has fillable forms")
+            ok_extract = False
+        # TODO: which is more expensive, this or getImageList?
+        if p.getText("text"):
+            msgs.append("Has text")
+            ok_extract = False
+
+        if ok_extract:
+            r, d = extractImageFromFitzPage(p, doc)
+            if not r:
+                msgs.append(d)
+            else:
+                print(
+                    '{}: Extracted "{}" from single-image page w={} h={}'.format(
+                        basename, d["ext"], d["width"], d["height"]
+                    )
+                )
+                if d["ext"] in PlomImageWhitelist:
+                    outname = os.path.join("scanPNGs", basename + "." + d["ext"])
+                    with open(outname, "wb") as f:
+                        f.write(d["image"])
+                else:
+                    outname = os.path.join("scanPNGs", basename + ".png")
+                    with tempfile.NamedTemporaryFile() as g:
+                        with open(g.name, "wb") as f:
+                            f.write(d["image"])
+                        print("  Cowardly transcoding to png (TODO)")
+                        subprocess.check_call(["convert", g.name, outname])
+                continue
+
+        z = 2.78  # approx match ghostscript's -r200
+        # TODO: random sizes for testing
+        #z = random.uniform(1, 5)
+        print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
+        pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
+        outname = os.path.join("scanPNGs", basename + ".png")
+        pix.writeImage(outname)
+        # TODO: experiment with jpg: generate both and see which is smaller?
+        #img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        #img.save(outname.replace('.png', '.jpg'), "JPEG", quality=94, optimize=True)
+
+
+def extractImageFromFitzPage(page, doc):
+    """Extract a single image from a fitz page or return False.
+
+    Args:
+        page: a page of a fitz document.
+        doc: fitz doc containing `page`.
+
+    Returns:
+        True/False: whether this page contains nothing but a single image
+        msg or dict: if False, a msg about what happened, if True a dict
+            The dict has at least the fields `width`, `height`, `image`
+            and `ext`.  `d["image"]` is the raw binary data.
+    """
+
+    imlist = page.getImageList()
+    if len(imlist) != 1:
+        return False, "More than one image"
+
+    d = doc.extractImage(imlist[0][0])
+    # TODO: log.debug this:
+    #print("  " + "; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
+    width = d.get("width")
+    height = d.get("height")
+    if not (width and height):
+        return False, "Extracted, but no size information"
+
+    if width < 600 or height < 800:
+        # TODO: log.warn?  Rendering unlikely to help
+        # unless its a small image centered on a big page
+        return False, "Extracted, but below minimum size"
+
+    if d["smask"] != 0:
+        return False, "Extracted, but had some kind of mask"
+
+    return True, d
+
+
+def processFileToPng_w_ghostscript(fname):
     """Convert each page of pdf into png using ghostscript"""
     scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
@@ -69,6 +199,10 @@ def processFileToPng(fname):
         )
     except subprocess.CalledProcessError as suberror:
         print("Error running gs: {}".format(suberror.stdout.decode("utf-8")))
+
+
+#processFileToPng = processFileToPng_w_ghostscript
+processFileToPng = processFileToBitmaps
 
 
 def gamma_adjust(fn):
@@ -122,3 +256,10 @@ def processScans(fname):
     for pngfile in glob.glob("*.png"):
         shutil.move(pngfile, os.path.join("..", "pageImages"))
     os.chdir("..")
+
+
+# TODO: to ease with debugging/experimenting
+if __name__ == "__main__":
+    #processFileToPng_w_ghostscript("testThis.pdf")
+    processFileToBitmaps("testThis.pdf")
+    processFileToBitmaps("realscan.pdf")

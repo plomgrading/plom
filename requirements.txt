@@ -8,6 +8,7 @@ numpy==1.18.1
 pandas==1.0.1
 passlib==1.7.2
 peewee==3.13.1
+Pillow
 pyparsing==2.4.6
 PyQRCode==1.2.1
 PyQt5==5.14.1
