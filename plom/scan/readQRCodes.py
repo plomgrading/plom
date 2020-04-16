@@ -101,6 +101,7 @@ def reOrientPage(fname, qrs):
         # is upright, no rotation needed
         return True
     if flipFlag and not upFlag:
+        # TODO: this will be lossy for jpg, see Issue #771.
         # is flipped, so rotate 180
         # print(" .  {}: reorienting: 180 degree rotation".format(fname))
         subprocess.run(
