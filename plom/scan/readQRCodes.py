@@ -27,6 +27,7 @@ from plom.tpv_utils import (
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 from plom.scan import QRextract
+from plom import PlomImageExtWhitelist
 
 
 def decodeQRs():
@@ -36,8 +37,9 @@ def decodeQRs():
     then decode them.  The results are stored in blah.png.qr files.
     """
     os.chdir("pageImages")
-    # list and len bit crude here: more pythonic to leave as iterator?
-    stuff = list(glob.glob("*"))
+    stuff = []
+    for ext in PlomImageExtWhiteList:
+        stuff.extend(glob("*.{}".format(ext)))
     N = len(stuff)
     # TODO: processes=8?  Seems its chosen automatically (?)
     with Pool() as p:

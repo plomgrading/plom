@@ -18,6 +18,7 @@ import toml
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
+from plom import PlomImageExtWhitelist
 
 
 def extractTPV(name):
@@ -116,9 +117,9 @@ def uploadPages(server=None, password=None):
         exit(10)
 
     # Look for pages in decodedPages
-    # TODO: hardcoded for png and jpeg: careful not to get the *.qr
-    fileList = glob("decodedPages/t*.png")
-    fileList.extend(glob("decodedPages/t*.jpg"))
+    fileList = []
+    for ext in PlomImageExtWhiteList:
+        fileList.extend(glob("decodedPages/t*.{}".format(ext)))
     sendKnownFiles(msgr, fileList)
     msgr.closeUser()
     msgr.stop()

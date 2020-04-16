@@ -19,6 +19,7 @@ from tqdm import tqdm
 import fitz
 from PIL import Image
 
+from plom import PlomImageExtWhitelist
 
 # TODO: make some common util file to store all these names?
 archivedir = "archivedPDFs"
@@ -70,9 +71,6 @@ def processFileToBitmaps(fname):
 
     NOT IMPLEMENTED YET: You can force one of these...
     """
-    # Image types we expect the client to be able to handle
-    # TODO: think about JBIG, etc: other stuff that commonly lives in PDF
-    PlomImageWhitelist = ("png", "jpg", "jpeg")
 
     scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
@@ -114,7 +112,7 @@ def processFileToBitmaps(fname):
                         basename, d["ext"], d["width"], d["height"]
                     )
                 )
-                if d["ext"] in PlomImageWhitelist:
+                if d["ext"] in PlomImageExtWhitelist:
                     outname = os.path.join("scanPNGs", basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
@@ -245,6 +243,7 @@ def processScans(fname):
     # go into png directory
     os.chdir("scanPNGs")
 
+    # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
     print("Gamma shift the PNG images")
     # list and len bit crude here: more pythonic to leave as iterator?
     stuff = list(glob.glob("*.png"))
@@ -255,9 +254,12 @@ def processScans(fname):
     # for x in glob.glob("*.png"):
     #     gamma_adjust(x)
 
-    # move all the pngs into pageimages directory
-    for pngfile in glob.glob("*"):
-        shutil.move(pngfile, os.path.join("..", "pageImages"))
+    # move all the images into pageimages directory
+    fileList = []
+    for ext in PlomImageExtWhitelist:
+        fileList.extend(glob("*.{}".format(ext)))
+    for file in fileList:
+        shutil.move(file, os.path.join("..", "pageImages"))
     os.chdir("..")
 
 

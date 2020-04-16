@@ -16,4 +16,8 @@ from .version import __version__
 Plom_API_Version = "11"  # updated for restified API for RgetOutToDo
 Default_Port = 41984
 
+# Image types we expect the client to be able to handle
+# TODO: think about JBIG, etc: other stuff that commonly lives in PDF
+PlomImageExtWhitelist = ("png", "jpg", "jpeg")
+
 from .rules import isValidStudentNumber
