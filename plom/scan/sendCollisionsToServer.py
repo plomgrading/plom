@@ -118,7 +118,6 @@ def uploadCollisions(server=None, password=None):
         )
         exit(10)
 
-    # TODO whitelist png
     fileList = []
     for ext in PlomImageExtWhitelist:
         fileList.extend(glob("collidingPages/*.{}".format(ext))
