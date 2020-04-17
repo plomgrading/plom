@@ -185,7 +185,7 @@ def checkQRsValid(spec, examsScannedNow):
                 problemFlag = True
 
         if not problemFlag:
-            orientationKnown = reOrientPage(fname[:-3], qrs)
+            orientationKnown = reOrientPage(fname, qrs)
             # TODO: future improvement: could keep going, its possible
             # we can go on to find the (t,p,v) in some cases.
             if not orientationKnown:
