@@ -28,6 +28,7 @@ server_install_requires = [
     "passlib",
     "pymupdf>=1.16.14",
     "Pillow",
+    "jpegtran-cffi",
     "weasyprint",
     "aiohttp",
     "pyqrcode",

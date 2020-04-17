@@ -18,6 +18,7 @@ import toml
 from tqdm import tqdm
 import fitz
 from PIL import Image
+import jpegtran
 
 from plom import PlomImageExtWhitelist
 
@@ -216,6 +217,19 @@ def gamma_adjust(fn):
     )
 
 
+def normalizeJPEGOrientation(f):
+    """Transform image according to its Exif metadata.
+
+    TODO: size must be multiple of 8/16
+    https://github.com/jbaiter/jpegtran-cffi/issues/23
+    """
+    im = jpegtran.JPEGImage(f)
+    if im.exif_orientation:
+        im2 = im.exif_autotransform()
+        print('  normalizing "{}" {}x{} to "{}" {}x{}'.format(im.exif_orientation, im.width, im.height, im2.exif_orientation, im2.width, im2.height))
+        im2.save(f)
+
+
 def processScans(fname):
     """Process file into bitmap pageimages and archive the pdf.
 
@@ -241,6 +255,13 @@ def processScans(fname):
     processFileToBitmaps(fname)
     archivePDF(fname)
     os.chdir("scanPNGs")
+
+    print("Normalizing jpeg orientation from Exif metadata")
+    stuff = list(glob.glob("*.jpg"))
+    stuff.extend(glob.glob("*.jpeg"))
+    N = len(stuff)
+    with Pool() as p:
+        r = list(tqdm(p.imap_unordered(normalizeJPEGOrientation, stuff), total=N))
 
     # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
     print("Gamma shift the PNG images")
