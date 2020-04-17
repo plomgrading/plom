@@ -79,7 +79,7 @@ def uploadUnknowns(server=None, password=None):
     # Look for pages in unknowns
     fileList = []
     for ext in PlomImageExtWhitelist:
-        fileList.extend(glob("unknownPages/*.{}".format(ext))
+        fileList.extend(glob("unknownPages/*.{}".format(ext)))
     sendUnknownFiles(scanMessenger, fileList)
     scanMessenger.closeUser()
     scanMessenger.stop()

@@ -120,7 +120,7 @@ def uploadCollisions(server=None, password=None):
 
     fileList = []
     for ext in PlomImageExtWhitelist:
-        fileList.extend(glob("collidingPages/*.{}".format(ext))
+        fileList.extend(glob("collidingPages/*.{}".format(ext)))
     if warnAndAskUser(fileList) == False:
         scanMessenger.closeUser()
         scanMessenger.stop()
