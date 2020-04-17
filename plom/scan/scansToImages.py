@@ -238,11 +238,8 @@ def processScans(fname):
         )
         return
 
-    # process the file into png page images
     processFileToBitmaps(fname)
-    # archive the scan PDF
     archivePDF(fname)
-    # go into png directory
     os.chdir("scanPNGs")
 
     # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
