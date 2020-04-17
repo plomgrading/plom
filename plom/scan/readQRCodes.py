@@ -13,8 +13,9 @@ import json
 import os
 import shutil
 import subprocess
-import toml
 from multiprocessing import Pool
+
+import toml
 from tqdm import tqdm
 
 from plom.tpv_utils import (
@@ -27,6 +28,7 @@ from plom.tpv_utils import (
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 from plom.scan import QRextract
+from plom.scan import rotateBitmap
 from plom import PlomImageExtWhitelist
 
 
@@ -101,15 +103,7 @@ def reOrientPage(fname, qrs):
         # is upright, no rotation needed
         return True
     if flipFlag and not upFlag:
-        # TODO: this will be lossy for jpg, see Issue #771.
-        # is flipped, so rotate 180
-        # print(" .  {}: reorienting: 180 degree rotation".format(fname))
-        subprocess.run(
-            ["mogrify", "-quiet", "-rotate", "180", fname],
-            stderr=subprocess.STDOUT,
-            shell=False,
-            check=True,
-        )
+        rotateBitmap(fname, 180)
         return True
     else:
         # either not enough info or conflicting info
