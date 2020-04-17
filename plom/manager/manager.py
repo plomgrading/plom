@@ -657,7 +657,7 @@ class Manager(QWidget):
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vt)):
-                iname = td + "img.{}.png".format(i)
+                iname = td + "img.{}.image".format(i)
                 with open(iname, "wb") as fh:
                     fh.write(vt[i])
                 inames.append(iname)
@@ -671,7 +671,7 @@ class Manager(QWidget):
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vq)):
-                iname = td + "img.{}.png".format(i)
+                iname = td + "img.{}.image".format(i)
                 with open(iname, "wb") as fh:
                     fh.write(vq[i])
                 inames.append(iname)
@@ -927,11 +927,11 @@ class Manager(QWidget):
 
     def selectRectangle(self):
         imageList = managerMessenger.IDgetRandomImage()
-        # Image names = "i<testnumber>.<imagenumber>.png"
+        # Image names = "i<testnumber>.<imagenumber>.<ext>"
         inames = []
         with tempfile.TemporaryDirectory() as td:
             for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.png".format(i))
+                tmp = os.path.join(td, "id.{}.image".format(i))
                 inames.append(tmp)
                 with open(tmp, "wb+") as fh:
                     fh.write(imageList[i])
@@ -951,7 +951,7 @@ class Manager(QWidget):
         inames = []
         with tempfile.TemporaryDirectory() as td:
             for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.png".format(i))
+                tmp = os.path.join(td, "id.{}.image".format(i))
                 inames.append(tmp)
                 with open(tmp, "wb+") as fh:
                     fh.write(imageList[i])
@@ -1199,7 +1199,7 @@ class Manager(QWidget):
         inames = []
         with tempfile.TemporaryDirectory() as td:
             for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.png".format(i))
+                tmp = os.path.join(td, "id.{}.image".format(i))
                 inames.append(tmp)
                 with open(tmp, "wb+") as fh:
                     fh.write(imageList[i])
