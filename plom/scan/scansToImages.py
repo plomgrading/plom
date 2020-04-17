@@ -217,13 +217,15 @@ def gamma_adjust(fn):
 
 
 def processScans(fname):
-    """ Process given fname into png pageimages in the png subdir
-    Then move the processed pdf into alreadyProcessed
-    so as to avoid duplications.
-    Do a small amount of post-processing of the pngs
-    A simple gamma shift to leave white-white but make everything
-    else darker. Improves images when students write in
-    very light pencil.
+    """Process file into bitmap pageimages and archive the pdf.
+
+    Process each page of a pdf file into bitmaps.  Then move the processed
+    pdf into "alreadyProcessed" so as to avoid duplications.
+
+    Do a small amount of post-processing when possible to do losslessly
+    (e.g., png).  A simple gamma shift to leave white-white but make
+    everything else darker.  Improves images when students write in very
+    light pencil.
     """
 
     # check if fname is in archive (by checking md5sum)
@@ -251,7 +253,7 @@ def processScans(fname):
     with Pool() as p:
         r = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
     # Pool does this loop, but in parallel
-    # for x in glob.glob("*.png"):
+    # for x in glob.glob("..."):
     #     gamma_adjust(x)
 
     # move all the images into pageimages directory
