@@ -128,7 +128,7 @@ def processFileToBitmaps(fname):
 
         z = 2.78  # approx match ghostscript's -r200
         # TODO: random sizes for testing
-        #z = random.uniform(1, 5)
+        z = random.uniform(1, 5)
         print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
         pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
         if random.uniform(0, 1) < 0.5:
@@ -138,7 +138,13 @@ def processFileToBitmaps(fname):
             outname = os.path.join("scanPNGs", basename + ".jpg")
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             # TODO: temporarily lowered the quality to very poor: change back to 94 later.
-            img.save(outname, "JPEG", quality=4, optimize=True)
+            img.save(outname, "JPEG", quality=40, optimize=True)
+            # TODO: randomly reorient half of them for debugging/testing
+            # TODO: uses "exiftool" from libimage-exiftool-perl in Ubuntu
+            r = random.choice([None, None, None, 3, 6, 8])
+            if r:
+                print("re-orienting randomly {}".format(r))
+                subprocess.check_call(["exiftool", "-overwrite_original", "-Orientation#={}".format(r), outname])
 
 
 def extractImageFromFitzPage(page, doc):
