@@ -15,6 +15,8 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from plom import ScenePixelHeight
+
 
 class ExamViewWindow(QWidget):
     """Simple view window for pageimages"""
@@ -94,7 +96,7 @@ class ExamView(QGraphicsView):
                 self.images[n].setTransformationMode(Qt.SmoothTransformation)
                 self.images[n].setPos(x, 0)
                 self.images[n].setVisible(True)
-                sf = 2000.0 / float(pix.height())
+                sf = float(ScenePixelHeight) / float(pix.height())
                 self.images[n].setScale(sf)
                 self.scene.addItem(self.images[n])
                 #x += self.images[n].boundingRect().width() + 10

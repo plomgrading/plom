@@ -20,4 +20,6 @@ Default_Port = 41984
 # TODO: think about JBIG, etc: other stuff that commonly lives in PDF
 PlomImageExtWhitelist = ("png", "jpg", "jpeg")
 
+ScenePixelHeight = 2000
+
 from .rules import isValidStudentNumber
