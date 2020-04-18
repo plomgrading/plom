@@ -175,6 +175,15 @@ class PlomDB:
                 ]
             )
         log.info("Database initialised.")
+        # check if HAL has been created
+        if User.get_or_none(name="HAL") is None:
+            User.create(
+                name="HAL",
+                password=None,
+                lastActivity=datetime.now(),
+                lastAction="Created",
+            )
+            log.info("User 'HAL' created to do all our automated tasks.")
 
     ########### User stuff #############
     def createUser(self, uname, passwordHash):

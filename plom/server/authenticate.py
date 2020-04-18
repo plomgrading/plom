@@ -42,6 +42,8 @@ class Authority:
 
     def checkPassword(self, password, passwordHash):
         """Check the password against the hashed one."""
+        if passwordHash is None:  # if there is no hash, then always fail.
+            return False
         return self.ctx.verify(password, passwordHash)
 
     def createToken(self):
