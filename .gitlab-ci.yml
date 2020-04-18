@@ -36,7 +36,7 @@ before_script:
     python3-pip python3-setuptools python3-wheel python3-opencv
     texlive-latex-extra dvipng latexmk texlive-fonts-recommended
     python3-requests-toolbelt python3-tqdm
-    libpango-1.0 libpangocairo-1.0 libjpeg-turbo8-dev
+    libpango-1.0 libpangocairo-1.0 libjpeg-turbo8-dev python3-cffi
     iproute2 psmisc file
     appstream-util
   # temp, testing
