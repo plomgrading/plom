@@ -256,10 +256,3 @@ def processScans(fname):
     for pngfile in glob.glob("*.png"):
         shutil.move(pngfile, os.path.join("..", "pageImages"))
     os.chdir("..")
-
-
-# TODO: to ease with debugging/experimenting
-if __name__ == "__main__":
-    #processFileToPng_w_ghostscript("testThis.pdf")
-    processFileToBitmaps("testThis.pdf")
-    processFileToBitmaps("realscan.pdf")
