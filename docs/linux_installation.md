@@ -45,7 +45,7 @@ Some stuff from the package manager:
   # sudo apt install \
         cmake make imagemagick dvipng g++ \
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
-        python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev \
+        python3-pyqrcode python3-png python3-dev \
         python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt python3-opencv texlive-latex-extra \
         latexmk texlive-fonts-recommended python3-peewee python3-pil \
