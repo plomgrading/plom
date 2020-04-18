@@ -10,8 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Greater fidelity to the original scan because JPEG files are (carefully) extracted and used directly.
+* JPEG transformations are done without lossy re-encoding, when possible.
 
 ### Fixed
+* Various bug fixes.
 
 
 ## [0.4.1] - 2020-04-13
