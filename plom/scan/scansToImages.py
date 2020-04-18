@@ -126,18 +126,22 @@ def processFileToBitmaps(fname):
                 continue
 
         z = 2.78  # approx match ghostscript's -r200
-        # TODO: random sizes for testing
-        #z = random.uniform(1, 5)
+        ## For testing, choose widely varying random sizes
+        # z = random.uniform(1, 5)
         print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
         pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
-        if random.uniform(0, 1) < 0.5:
-            outname = os.path.join("scanPNGs", basename + ".png")
-            pix.writeImage(outname)
-        else:
-            outname = os.path.join("scanPNGs", basename + ".jpg")
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            # TODO: temporarily lowered the quality to very poor: change back to 94 later.
-            img.save(outname, "JPEG", quality=4, optimize=True)
+
+        ## For testing, randomly make jpegs, sometimes of truly horrid quality
+        # if random.uniform(0, 1) < 0.4:
+        #     outname = os.path.join("scanPNGs", basename + ".jpg")
+        #     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        #     quality = random.choice([4, 94, 94, 94, 94])
+        #     img.save(outname, "JPEG", quality=quality, optimize=True)
+        #     return
+
+        # TODO: experiment with jpg: generate both and see which is smaller?
+        outname = os.path.join("scanPNGs", basename + ".png")
+        pix.writeImage(outname)
 
 
 def extractImageFromFitzPage(page, doc):
