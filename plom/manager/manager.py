@@ -59,12 +59,13 @@ from plom import __version__, Plom_API_Version, Default_Port
 class UserDialog(QDialog):
     """Simple dialog to enter username and password"""
 
-    def __init__(self, name=""):
+    def __init__(self, name=None, extant=[]):
         super(UserDialog, self).__init__()
         self.name = name
         self.initUI()
-        if len(name) > 0:
+        if name is not None:
             self.userLE.setEnabled(False)
+        self.extant = extant
 
     def initUI(self):
         self.setWindowTitle("Please enter user")
@@ -120,6 +121,15 @@ class UserDialog(QDialog):
         If all good then accept
         else clear the two password lineedits.
         """
+        # username not already in list
+        # be careful, because pwd-change users same interface
+        # make sure that we only do this check if the LE is enabled.
+        if self.userLE.isEnabled() and self.userLE.text() in self.extant:
+            ErrorMessage(
+                "Username = '{}' already in user list".format(self.userLE.text())
+            ).exec_()
+            return
+
         # username must be length 4 and alphanumeric
         if not (len(self.userLE.text()) >= 4 and self.userLE.text().isalnum()):
             return
@@ -1443,14 +1453,19 @@ class Manager(QWidget):
             return
         r = ri[0].row()
         user = self.ui.userListTW.item(r, 0).text()
-        cpwd = UserDialog(user)
+        cpwd = UserDialog(name=user)
         if cpwd.exec_() == QDialog.Accepted:
             rval = managerMessenger.createModifyUser(user, cpwd.password)
             ErrorMessage(rval[1]).exec_()
         return
 
     def createUser(self):
-        cpwd = UserDialog()
+        # need to pass list of existing users
+        uList = [
+            self.ui.userListTW.item(r, 0).text()
+            for r in range(self.ui.userListTW.rowCount())
+        ]
+        cpwd = UserDialog(name=None, extant=uList)
         if cpwd.exec_() == QDialog.Accepted:
             rval = managerMessenger.createModifyUser(cpwd.name, cpwd.password)
             ErrorMessage(rval[1]).exec_()
