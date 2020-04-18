@@ -13,6 +13,7 @@ from multiprocessing import Pool
 import math
 import random
 import tempfile
+import warnings
 
 import toml
 from tqdm import tqdm
@@ -20,6 +21,7 @@ import fitz
 from PIL import Image
 
 from plom import PlomImageExtWhitelist
+
 
 # TODO: make some common util file to store all these names?
 archivedir = "archivedPDFs"
@@ -125,12 +127,18 @@ def processFileToBitmaps(fname):
                         subprocess.check_call(["convert", g.name, outname])
                 continue
 
-        z = 2.78  # approx match ghostscript's -r200
+        # looks they use ceil not round so decrease a little bit
+        z = (float(2000) - 0.01) / p.MediaBoxSize[1]
         ## For testing, choose widely varying random sizes
         # z = random.uniform(1, 5)
         print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
         pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
-
+        if pix.height != 2000:
+            warnings.warn(
+                "rounding error: height of {} instead of {}".format(
+                    pix.height, 2000
+                )
+            )
         ## For testing, randomly make jpegs, sometimes of truly horrid quality
         # if random.uniform(0, 1) < 0.4:
         #     outname = os.path.join("scanPNGs", basename + ".jpg")
