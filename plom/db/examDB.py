@@ -171,6 +171,22 @@ class DiscardedPage(BaseModel):
     reason = CharField(null=True)
 
 
+###############
+# For unstructured uploads
+# definitely do not use for standard upload-my-test-scan
+
+
+class UploadBatch(BaseModel):
+    uploadNumber = IntegerField(unique=True)
+    testNumber = ForeignKeyField(unique=True, null=True)  # set this when we know it.
+
+
+class UploadedPage(BaseModel):
+    uploadNumber = ForeignKeyField(UploadBatch, backref="uploadedpages")
+    position = IntegerField()
+    image = ForeignKeyField(Image, backref="uploadedpages")
+
+
 # TODO: end of database scheme stuff
 ######################################################################
 
