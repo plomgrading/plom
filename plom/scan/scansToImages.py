@@ -19,6 +19,7 @@ from tqdm import tqdm
 import fitz
 from PIL import Image
 
+from plom import PlomImageExtWhitelist
 
 # TODO: make some common util file to store all these names?
 archivedir = "archivedPDFs"
@@ -70,9 +71,6 @@ def processFileToBitmaps(fname):
 
     NOT IMPLEMENTED YET: You can force one of these...
     """
-    # Image types we expect the client to be able to handle
-    #PlomImageWhitelist = ("png", "jpg", "jpeg")
-    PlomImageWhitelist = ("png",)
 
     scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
@@ -114,7 +112,7 @@ def processFileToBitmaps(fname):
                         basename, d["ext"], d["width"], d["height"]
                     )
                 )
-                if d["ext"] in PlomImageWhitelist:
+                if d["ext"] in PlomImageExtWhitelist:
                     outname = os.path.join("scanPNGs", basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
@@ -128,15 +126,22 @@ def processFileToBitmaps(fname):
                 continue
 
         z = 2.78  # approx match ghostscript's -r200
-        # TODO: random sizes for testing
-        #z = random.uniform(1, 5)
+        ## For testing, choose widely varying random sizes
+        # z = random.uniform(1, 5)
         print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
         pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
+
+        ## For testing, randomly make jpegs, sometimes of truly horrid quality
+        # if random.uniform(0, 1) < 0.4:
+        #     outname = os.path.join("scanPNGs", basename + ".jpg")
+        #     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        #     quality = random.choice([4, 94, 94, 94, 94])
+        #     img.save(outname, "JPEG", quality=quality, optimize=True)
+        #     return
+
+        # TODO: experiment with jpg: generate both and see which is smaller?
         outname = os.path.join("scanPNGs", basename + ".png")
         pix.writeImage(outname)
-        # TODO: experiment with jpg: generate both and see which is smaller?
-        #img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        #img.save(outname.replace('.png', '.jpg'), "JPEG", quality=94, optimize=True)
 
 
 def extractImageFromFitzPage(page, doc):
@@ -201,8 +206,8 @@ def processFileToPng_w_ghostscript(fname):
         print("Error running gs: {}".format(suberror.stdout.decode("utf-8")))
 
 
-#processFileToPng = processFileToPng_w_ghostscript
-processFileToPng = processFileToBitmaps
+# TODO: for debugging, can replace with the older ghostscript
+#processFileToBitmaps = processFileToPng_w_ghostscript
 
 
 def gamma_adjust(fn):
@@ -216,13 +221,15 @@ def gamma_adjust(fn):
 
 
 def processScans(fname):
-    """ Process given fname into png pageimages in the png subdir
-    Then move the processed pdf into alreadyProcessed
-    so as to avoid duplications.
-    Do a small amount of post-processing of the pngs
-    A simple gamma shift to leave white-white but make everything
-    else darker. Improves images when students write in
-    very light pencil.
+    """Process file into bitmap pageimages and archive the pdf.
+
+    Process each page of a pdf file into bitmaps.  Then move the processed
+    pdf into "alreadyProcessed" so as to avoid duplications.
+
+    Do a small amount of post-processing when possible to do losslessly
+    (e.g., png).  A simple gamma shift to leave white-white but make
+    everything else darker.  Improves images when students write in very
+    light pencil.
     """
 
     # check if fname is in archive (by checking md5sum)
@@ -235,26 +242,27 @@ def processScans(fname):
         )
         return
 
-    # process the file into png page images
-    processFileToPng(fname)
-    # archive the scan PDF
+    processFileToBitmaps(fname)
     archivePDF(fname)
-    # go into png directory
     os.chdir("scanPNGs")
 
-    print("Gamma shift the images")
+    # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
+    print("Gamma shift the PNG images")
     # list and len bit crude here: more pythonic to leave as iterator?
     stuff = list(glob.glob("*.png"))
     N = len(stuff)
     with Pool() as p:
         r = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
     # Pool does this loop, but in parallel
-    # for x in glob.glob("*.png"):
+    # for x in glob.glob("..."):
     #     gamma_adjust(x)
 
-    # move all the pngs into pageimages directory
-    for pngfile in glob.glob("*.png"):
-        shutil.move(pngfile, os.path.join("..", "pageImages"))
+    # move all the images into pageimages directory
+    fileList = []
+    for ext in PlomImageExtWhitelist:
+        fileList.extend(glob.glob("*.{}".format(ext)))
+    for file in fileList:
+        shutil.move(file, os.path.join("..", "pageImages"))
     os.chdir("..")
 
 

@@ -9,12 +9,14 @@ __license__ = "AGPL-3.0-or-later"
 
 import json
 import os
-import requests
-from requests_toolbelt import MultipartEncoder
 import ssl
 import threading
-import toml
 import urllib3
+import mimetypes
+
+import toml
+import requests
+from requests_toolbelt import MultipartEncoder
 
 from plom.plom_exceptions import *
 from plom.messenger import BaseMessenger
@@ -49,10 +51,11 @@ class ScanMessenger(BaseMessenger):
                 "version": version,
                 "md5sum": md5sum,
             }
+            mime_type = mimetypes.guess_type(sname)[0]
             dat = MultipartEncoder(
                 fields={
                     "param": json.dumps(param),
-                    "originalImage": (sname, open(fname, "rb"), "image/png"),  # image
+                    "originalImage": (sname, open(fname, "rb"), mime_type),  # image
                 }
             )
             response = self.session.put(
@@ -84,10 +87,11 @@ class ScanMessenger(BaseMessenger):
                 "fileName": sname,
                 "md5sum": md5sum,
             }
+            mime_type = mimetypes.guess_type(sname)[0]
             dat = MultipartEncoder(
                 fields={
                     "param": json.dumps(param),
-                    "originalImage": (sname, open(fname, "rb"), "image/png"),  # image
+                    "originalImage": (sname, open(fname, "rb"), mime_type),  # image
                 }
             )
             response = self.session.put(
@@ -121,10 +125,11 @@ class ScanMessenger(BaseMessenger):
                 "version": version,
                 "md5sum": md5sum,
             }
+            mime_type = mimetypes.guess_type(sname)[0]
             dat = MultipartEncoder(
                 fields={
                     "param": json.dumps(param),
-                    "originalImage": (sname, open(fname, "rb"), "image/png"),  # image
+                    "originalImage": (sname, open(fname, "rb"), mime_type),  # image
                 }
             )
             response = self.session.put(
