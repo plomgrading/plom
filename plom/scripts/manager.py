@@ -82,24 +82,20 @@ def main():
     window = Manager(app)
     window.show()
 
-    # Command line arguments (currently undocumented/unsupported)
-    # either nothing, or the following
-    if len(sys.argv) > 1:
-        parser = argparse.ArgumentParser(description="Plom management tasks.")
-        parser.add_argument("user", type=str, help='Probably has to be "manager"')
-        parser.add_argument("password", type=str)
-        parser.add_argument(
-            "-s",
-            "--server",
-            metavar="SERVER[:PORT]",
-            action="store",
-            help="Which server to contact, port defaults to {}.".format(Default_Port),
-        )
-        args = parser.parse_args()
-        window.ui.userLE.setText(args.user)
-        window.ui.passwordLE.setText(args.password)
-        if args.server:
-            window.setServer(args.server)
+    parser = argparse.ArgumentParser(description="Plom management tasks.")
+    parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
+    parser.add_argument(
+        "-s",
+        "--server",
+        metavar="SERVER[:PORT]",
+        action="store",
+        help="Which server to contact, port defaults to {}.".format(Default_Port),
+    )
+    args = parser.parse_args()
+    window.ui.userLE.setText("manager")
+    window.ui.passwordLE.setText(args.password)
+    if args.server:
+        window.setServer(args.server)
 
     sys.exit(app.exec_())
 
