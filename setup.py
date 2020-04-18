@@ -28,6 +28,7 @@ server_install_requires = [
     "passlib",
     "pymupdf>=1.16.14",
     "Pillow",
+    "cffi",  # not ours, why doesn't jpegtran-cffi pull this?
     "jpegtran-cffi",
     "weasyprint",
     "aiohttp",
