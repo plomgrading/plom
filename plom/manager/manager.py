@@ -65,7 +65,9 @@ class UserDialog(QDialog):
         self.initUI()
         if name is not None:
             self.userLE.setEnabled(False)
-        self.extant = extant
+        self.extant = [
+            x.lower() for x in extant
+        ]  # put everything in lowercase to simplify checking.
 
     def initUI(self):
         self.setWindowTitle("Please enter user")
@@ -124,7 +126,8 @@ class UserDialog(QDialog):
         # username not already in list
         # be careful, because pwd-change users same interface
         # make sure that we only do this check if the LE is enabled.
-        if self.userLE.isEnabled() and self.userLE.text() in self.extant:
+        # put username into lowercase to check against extant which is in lowercase.
+        if self.userLE.isEnabled() and self.userLE.text().lower() in self.extant:
             ErrorMessage(
                 "Username = '{}' already in user list".format(self.userLE.text())
             ).exec_()
