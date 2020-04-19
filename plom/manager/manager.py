@@ -474,6 +474,7 @@ class Manager(QWidget):
         self.initScanTab()
         self.initProgressTab()
         self.initUserTab()
+        self.initReviewTab()
 
     # -------------------
     def getTPQV(self):
@@ -1169,7 +1170,12 @@ class Manager(QWidget):
     ##################
     # review tab stuff
 
-    def initRevTab(self):
+    def initReviewTab(self):
+        self.initRevMTab()
+        self.initRevIDTab()
+        self.initRevTOTTab()
+
+    def initRevMTab(self):
         self.ui.reviewTW.setColumnCount(7)
         self.ui.reviewTW.setHorizontalHeaderLabels(
             ["Test", "Question", "Version", "Mark", "Username", "Marking Time", "When"]
