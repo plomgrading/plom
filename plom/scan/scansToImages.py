@@ -213,7 +213,7 @@ def processFileToPng_w_ghostscript(fname):
 def gamma_adjust(fn):
     """Apply a simple gamma shift to an image"""
     subprocess.run(
-        ["mogrify", "-quiet", "-gamma", "0.5", "-quality", "100", fn],
+        ["mogrify", "-quiet", "-gamma", "0.5", fn],
         stderr=subprocess.STDOUT,
         shell=False,
         check=True,
