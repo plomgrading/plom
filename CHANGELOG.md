@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* User-management can be performed by the manager client.
 
 ### Changed
 * Greater fidelity to the original scan because JPEG files are (carefully) extracted and used directly.
