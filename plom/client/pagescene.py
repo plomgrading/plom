@@ -31,6 +31,8 @@ from PyQt5.QtWidgets import (
     QGraphicsTextItem,
 )
 
+from plom import ScenePixelHeight
+
 # Import all the tool commands for undo/redo stack.
 from .tools import (
     CommandArrow,
@@ -114,7 +116,7 @@ class UnderlyingImage(QGraphicsItemGroup):
             self.images[n] = QGraphicsPixmapItem(pix)
             self.images[n].setTransformationMode(Qt.SmoothTransformation)
             self.images[n].setPos(x, 0)
-            sf = 2000.0 / float(pix.height())
+            sf = float(ScenePixelHeight) / float(pix.height())
             self.images[n].setScale(sf)
             # TODO: why not?
             #x += self.images[n].boundingRect().width()

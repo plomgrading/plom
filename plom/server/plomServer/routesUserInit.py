@@ -28,7 +28,7 @@ class UserInitHandler:
         data = await request.json()
         if not validFields(data, ["user", "password"]):
             return web.Response(status=400)  # malformed request.
-        if not self.server.authority.checkPassword(data["user"], data["password"]):
+        if not self.server.checkPassword(data["user"], data["password"]):
             return web.Response(status=401)
         log.info('User "{}" force-logout self'.format(data["user"]))
         self.server.closeUser(data["user"])
@@ -56,6 +56,41 @@ class UserInitHandler:
         log.info('Manager force-logout user "{}"'.format(theuser))
         return web.Response(status=200)
 
+    # @routes.post("/authorisation/{user}")
+    @authByToken_validFields(["password"])
+    def createModifyUser(self, data, request):
+        # update password of existing user, or create new user.
+        theuser = request.match_info["user"]
+        rval = self.server.createModifyUser(theuser, data["password"])
+        if rval[0]:  # successfull
+            if rval[1]:  # created new user
+                log.info('Manager created new user "{}"'.format(theuser))
+                return web.Response(status=201)
+            else:  # updated password of existing user
+                log.info('Manager updated password of user "{}"'.format(theuser))
+                return web.Response(status=202)
+        else:  # failed.
+            log.info('Manager failed to create/modify user "{}"'.format(theuser))
+            return web.Response(text=rval[1], status=406)
+
+    # @routes.put("/enableDisable/{user}")
+    async def setUserEnable(self, request):
+        logRequest("setUserEnable", request)
+        data = await request.json()
+        if not data["user"] == "manager":
+            return web.Response(status=400)  # malformed request.
+        theuser = request.match_info["user"]
+        if theuser in [
+            "manager",
+            "HAL",
+        ]:  # cannot switch manager off... Just what do you think you're doing, Dave?
+            return web.Response(status=400)  # malformed request.
+        log.info(
+            'Set enable/disable for User "{}" = {}'.format(theuser, data["enableFlag"])
+        )
+        self.server.setUserEnable(theuser, data["enableFlag"])
+        return web.Response(status=200)
+
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
         logRequest("giveUserToken", request)
@@ -75,7 +110,7 @@ class UserInitHandler:
         elif rmsg[1].startswith("UHT"):
             return web.json_response(rmsg[1], status=409)  # user has token already.
         else:
-            return web.Response(status=401)  # you are not authorised
+            return web.json_response(rmsg[1], status=401)  # you are not authorised
 
     # @routes.put("/admin/reloadUsers")
     async def adminReloadUsers(self, request):
@@ -121,3 +156,5 @@ class UserInitHandler:
         router.add_get("/info/general", self.InfoGeneral)
         router.add_delete("/authorisation", self.clearAuthorisation)
         router.add_delete("/authorisation/{user}", self.clearAuthorisationUser)
+        router.add_post("/authorisation/{user}", self.createModifyUser)
+        router.add_put("/enableDisable/{user}", self.setUserEnable)

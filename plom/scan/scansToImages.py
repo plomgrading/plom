@@ -13,6 +13,7 @@ from multiprocessing import Pool
 import math
 import random
 import tempfile
+import warnings
 
 import toml
 from tqdm import tqdm
@@ -21,6 +22,8 @@ from PIL import Image
 import jpegtran
 
 from plom import PlomImageExtWhitelist
+from plom import ScenePixelHeight
+
 
 # TODO: make some common util file to store all these names?
 archivedir = "archivedPDFs"
@@ -126,25 +129,35 @@ def processFileToBitmaps(fname):
                         subprocess.check_call(["convert", g.name, outname])
                 continue
 
-        z = 2.78  # approx match ghostscript's -r200
-        # TODO: random sizes for testing
-        z = random.uniform(1, 5)
+        # looks they use ceil not round so decrease a little bit
+        z = (float(ScenePixelHeight) - 0.01) / p.MediaBoxSize[1]
+        ## For testing, choose widely varying random sizes
+        # z = random.uniform(1, 5)
         print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
         pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
-        if random.uniform(0, 1) < 0.5:
-            outname = os.path.join("scanPNGs", basename + ".png")
-            pix.writeImage(outname)
-        else:
+        if pix.height != ScenePixelHeight:
+            warnings.warn(
+                "rounding error: height of {} instead of {}".format(
+                    pix.height, ScenePixelHeight
+                )
+            )
+
+        ## For testing, randomly make jpegs, sometimes of truly horrid quality
+        if random.uniform(0, 1) < 0.4:
             outname = os.path.join("scanPNGs", basename + ".jpg")
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            # TODO: temporarily lowered the quality to very poor: change back to 94 later.
-            img.save(outname, "JPEG", quality=40, optimize=True)
-            # TODO: randomly reorient half of them for debugging/testing
-            # TODO: uses "exiftool" from libimage-exiftool-perl in Ubuntu
+            quality = random.choice([4, 94, 94, 94, 94])
+            img.save(outname, "JPEG", quality=quality, optimize=True)
+            # TODO: random reorient half for debugging/testing, uses "exiftool" (Ubuntu: libimage-exiftool-perl)
             r = random.choice([None, None, None, 3, 6, 8])
             if r:
                 print("re-orienting randomly {}".format(r))
                 subprocess.check_call(["exiftool", "-overwrite_original", "-Orientation#={}".format(r), outname])
+            return
+
+        # TODO: experiment with jpg: generate both and see which is smaller?
+        outname = os.path.join("scanPNGs", basename + ".png")
+        pix.writeImage(outname)
 
 
 def extractImageFromFitzPage(page, doc):
@@ -216,7 +229,7 @@ def processFileToPng_w_ghostscript(fname):
 def gamma_adjust(fn):
     """Apply a simple gamma shift to an image"""
     subprocess.run(
-        ["mogrify", "-quiet", "-gamma", "0.5", "-quality", "100", fn],
+        ["mogrify", "-quiet", "-gamma", "0.5", fn],
         stderr=subprocess.STDOUT,
         shell=False,
         check=True,
