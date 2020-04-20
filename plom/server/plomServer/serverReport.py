@@ -27,6 +27,10 @@ def RgetMarkHistogram(self, qu, v):
     return self.DB.RgetMarkHistogram(qu, v)
 
 
+def RgetMarked(self, qu, v):
+    return self.DB.RgetMarked(qu, v)
+
+
 def RgetIdentified(self):
     return self.DB.RgetIdentified()
 

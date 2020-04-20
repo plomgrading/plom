@@ -1289,3 +1289,24 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return response.json()
+
+    def RgetMarked(self, q, v):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/REP/marked".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token, "q": q, "v": v},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()

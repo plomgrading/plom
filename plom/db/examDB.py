@@ -1186,6 +1186,22 @@ class PlomDB:
         log.debug("Sending mark histogram for Q{}v{}".format(q, v))
         return rhist
 
+    def RgetMarked(self, q, v):
+        rval = []
+        for x in (
+            QuestionData.select()
+            .join(Group)
+            .where(
+                QuestionData.questionNumber == q,
+                QuestionData.version == v,
+                QuestionData.marked == True,
+                Group.scanned == True,
+            )
+        ):
+            rval.append(x.group.gid)
+        log.debug("Sending list of marked tasks for Q{}V{}".format(q, v))
+        return rval
+
     def RgetQuestionUserProgress(self, q, v):
         # return [ nScanned, [user, nmarked], [user, nmarked], etc]
         rdat = {}
