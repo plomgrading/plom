@@ -139,6 +139,8 @@ def createModifyUser(self, username, password):
     # basic sanity check of username / password
     if not self.authority.basicUserPasswordCheck(username, password):
         return [False, "Username/Password fails basic checks."]
+    if username == "HAL":  # Don't mess with HAL
+        return [False, "I'm sorry, Dave. I'm afraid I can't do that."]
     # hash the password
     passwordHash = self.authority.createPasswordHash(password)
     if self.DB.doesUserExist(username):  # user exists, so update password

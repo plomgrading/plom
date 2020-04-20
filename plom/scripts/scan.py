@@ -39,7 +39,7 @@ def processScans(PDFs):
 
     # make PDF archive directory
     os.makedirs("archivedPDFs", exist_ok=True)
-    # make a directory into which our (temp) PDF->PNG will go
+    # make a directory into which our (temp) PDF->bitmap will go
     os.makedirs("scanPNGs", exist_ok=True)
     # finally a directory into which pageImages go
     os.makedirs("pageImages", exist_ok=True)
@@ -59,7 +59,7 @@ def readImages(server, password):
     # make decodedPages and unknownPages directories
     os.makedirs("decodedPages", exist_ok=True)
     os.makedirs("unknownPages", exist_ok=True)
-    readQRCodes.processPNGs(server, password)
+    readQRCodes.processBitmaps(server, password)
 
 
 def uploadImages(server, password, unknowns=False, collisions=False):
@@ -133,7 +133,7 @@ def main():
             "0. Decide on a working directory for your scans, copy your PDFs into that directory and then cd into it."
         )
         print(
-            "1. Run 'plom-scan process <filename>' - this processes your PDF <filename> into PNGs of each page."
+            "1. Run 'plom-scan process <filename>' - this processes your PDF <filename> into bitmaps of each page."
         )
         print(
             """2. NOT IMPLEMENTED YET, BUT COMING SOON - Optionally create a \"server.toml\" text file containing a single line with the server name and port such as:

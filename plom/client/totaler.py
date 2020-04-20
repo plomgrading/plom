@@ -294,7 +294,7 @@ class TotalClient(QWidget):
             self.throwSeriousError(e)
             return
         # save the image to appropriate filename
-        fname = os.path.join(self.workingDirectory, "t{}.png".format(task))
+        fname = os.path.join(self.workingDirectory, "t{}.image".format(task))
         with open(fname, "wb+") as fh:
             fh.write(image)
 
@@ -360,8 +360,8 @@ class TotalClient(QWidget):
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
-        # Image name will be t<code>.png
-        iname = os.path.join(self.workingDirectory, "t{}.png".format(test))
+        # Image name will be t<code>.<ext>
+        iname = os.path.join(self.workingDirectory, "t{}.image".format(test))
         # save it
         with open(iname, "wb+") as fh:
             fh.write(image)

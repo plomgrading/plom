@@ -410,10 +410,10 @@ class IDClient(QWidget):
             # self.exM.removePaper(r)
             return
 
-        # Image names = "i<testnumber>.<imagenumber>.png"
+        # Image names = "i<testnumber>.<imagenumber>.<ext>"
         inames = []
         for i in range(len(imageList)):
-            tmp = os.path.join(self.workingDirectory, "i{}.{}.png".format(test, i))
+            tmp = os.path.join(self.workingDirectory, "i{}.{}.image".format(test, i))
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
@@ -502,10 +502,10 @@ class IDClient(QWidget):
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
-        # Image names = "i<testnumber>.<imagenumber>.png"
+        # Image names = "i<testnumber>.<imagenumber>.<ext>"
         inames = []
         for i in range(len(imageList)):
-            tmp = os.path.join(self.workingDirectory, "i{}.{}.png".format(test, i))
+            tmp = os.path.join(self.workingDirectory, "i{}.{}.image".format(test, i))
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])

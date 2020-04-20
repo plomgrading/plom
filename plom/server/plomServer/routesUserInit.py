@@ -80,7 +80,10 @@ class UserInitHandler:
         if not data["user"] == "manager":
             return web.Response(status=400)  # malformed request.
         theuser = request.match_info["user"]
-        if theuser == "manager":  # cannot switch manager off.
+        if theuser in [
+            "manager",
+            "HAL",
+        ]:  # cannot switch manager off... Just what do you think you're doing, Dave?
             return web.Response(status=400)  # malformed request.
         log.info(
             'Set enable/disable for User "{}" = {}'.format(theuser, data["enableFlag"])

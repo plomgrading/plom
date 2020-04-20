@@ -15,6 +15,7 @@ import shutil
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
+from plom import PlomImageExtWhitelist
 
 
 def doFiling(rmsg, shortName, fname):
@@ -76,7 +77,9 @@ def uploadUnknowns(server=None, password=None):
         exit(10)
 
     # Look for pages in unknowns
-    fileList = glob("unknownPages/*.png")
+    fileList = []
+    for ext in PlomImageExtWhitelist:
+        fileList.extend(glob("unknownPages/*.{}".format(ext)))
     sendUnknownFiles(scanMessenger, fileList)
     scanMessenger.closeUser()
     scanMessenger.stop()

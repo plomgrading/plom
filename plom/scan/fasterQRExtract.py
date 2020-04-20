@@ -70,6 +70,6 @@ def QRextract(imgName):
 
 
 if __name__ == "__main__":
-    # Take the png file name as argument.
+    # Take the bitmap file name as argument.
     imgName = sys.argv[1]
     QRextract(imgName)
