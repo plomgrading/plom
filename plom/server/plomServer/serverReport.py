@@ -76,15 +76,8 @@ def RgetAnnotatedImage(self, testNumber, questionNumber, version):
 
 
 def RgetUserList(self):
-    return sorted([x for x in self.userList.keys()])
+    return sorted(self.DB.getUserList())
 
 
 def RgetUserDetails(self):
-    rval = {}
-    for x in self.userList.keys():
-        if self.authority.userHasToken(x):
-            rval[x] = [True]
-        else:
-            rval[x] = [False]
-        rval[x] += self.DB.RgetUserDetails(x)
-    return rval
+    return self.DB.getUserDetails()

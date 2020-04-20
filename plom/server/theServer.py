@@ -28,7 +28,6 @@ from plom.db.examDB import PlomDB
 
 from .authenticate import Authority
 
-
 serverInfo = {"server": "127.0.0.1", "port": Default_Port}
 # ----------------------
 sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
@@ -81,42 +80,55 @@ def buildDirectories():
 
 
 class Server(object):
-    def __init__(self, spec, db):
+    def __init__(self, spec, db, masterToken):
         log.debug("Initialising server")
         self.testSpec = spec
+        self.authority = Authority(masterToken)
         self.DB = db
         self.API = serverAPI
         self.Version = __version__
+        print(
+            "Server launching with masterToken = '{}' {}".format(
+                self.authority.getMasterToken(), type(self.authority.getMasterToken())
+            )
+        )
         self.tempDirectory = tempfile.TemporaryDirectory()
         # Give directory correct permissions.
         subprocess.check_call(["chmod", "o-r", self.tempDirectory.name])
         self.loadUsers()
 
     def loadUsers(self):
-        """Load the users from json file, add them to the authority which
-        handles authentication for us.
+        """Load the users from json file, add them to the database. Do some simple sanity checks of pwd hashes to see if they have changed.
         """
         if os.path.exists("serverConfiguration/userList.json"):
             with open("serverConfiguration/userList.json") as data_file:
-                # Load the users and pass them to the authority.
-                self.userList = json.load(data_file)
-                self.authority = Authority(self.userList)
+                # load list of users + pwd hashes
+                userList = json.load(data_file)
+                # for each name check if in DB by asking for the hash of its pwd
+                for uname in userList.keys():
+                    passwordHash = self.DB.getUserPasswordHash(uname)
+                    if passwordHash is None:  # not in list
+                        self.DB.createUser(uname, userList[uname])
+                    else:
+                        if passwordHash != userList[uname]:
+                            log.warning("User {} password has changed.".format(uname))
+                        self.DB.setUserPasswordHash(userList[uname], passwordHash)
             log.debug("Loading users")
         else:
             # Cannot find users - give error and quit out.
             log.error("Cannot find user/password file - aborting.")
             quit()
 
-    def validate(self, user, token):
-        """Check the user's token is valid"""
-        # log.debug("Validating user {}.".format(user))
-        return self.authority.validateToken(user, token)
-
     from .plomServer.serverUserInit import (
+        validate,
+        checkPassword,
+        checkUserEnabled,
+        createModifyUser,
         InfoShortName,
         InfoGeneral,
         reloadUsers,
         giveUserToken,
+        setUserEnable,
         closeUser,
     )
     from .plomServer.serverUpload import (
@@ -224,13 +236,13 @@ def getServerInfo():
         logging.getLogger("aiohttp.access").setLevel("WARNING")
 
 
-def launch():
+def launch(masterToken=None):
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
     getServerInfo()
     examDB = PlomDB(Path(specdir) / "plom.db")
     spec = SpecParser(Path(specdir) / "verifiedSpec.toml").spec
     buildDirectories()
-    peon = Server(spec, examDB)
+    peon = Server(spec, examDB, masterToken)
     userIniter = UserInitHandler(peon)
     uploader = UploadHandler(peon)
     ider = IDHandler(peon)

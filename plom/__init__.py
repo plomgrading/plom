@@ -13,7 +13,7 @@ specdir = "specAndDatabase"
 from .specParser import SpecVerifier, SpecParser
 from .version import __version__
 
-Plom_API_Version = "11"  # updated for restified API for RgetOutToDo
+Plom_API_Version = "12"  # updated for bringing user-functions into API
 Default_Port = 41984
 
 # Image types we expect the client to be able to handle
