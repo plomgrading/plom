@@ -181,12 +181,12 @@ class SceneParent(QWidget):
 def annotatePaper(task, imageList, aname, tags):
     print("Do stuff to task ", task)
     print("Tags are ", tags)
-    # Image names = "<task>.<imagenumber>.png"
+    # Image names = "<task>.<imagenumber>.<ext>"
     try:
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(imageList)):
-                tmp = os.path.join(td, "{}.{}.png".format(task, i))
+                tmp = os.path.join(td, "{}.{}.image".format(task, i))
                 inames.append(tmp)
                 with open(tmp, "wb+") as fh:
                     fh.write(imageList[i])

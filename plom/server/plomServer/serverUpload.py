@@ -13,11 +13,13 @@ log = logging.getLogger("server")
 
 
 def addKnownPage(self, t, p, v, fname, image, md5o):
+    # take extension from the client filename
+    base, ext = os.path.splitext(fname)
     # create a filename for the image
     prefix = "t{}p{}v{}".format(str(t).zfill(4), str(p).zfill(2), v)
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = "pages/originalPages/" + prefix + unique + ".png"
+        newName = "pages/originalPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
     val = self.DB.uploadKnownPage(t, p, v, fname, newName, md5o)
@@ -33,11 +35,13 @@ def addKnownPage(self, t, p, v, fname, image, md5o):
 
 
 def addUnknownPage(self, fname, image, md5o):
+    # take extension from the client filename
+    base, ext = os.path.splitext(fname)
     # create a filename for the image
     prefix = "unk."
     while True:
         unique = str(uuid.uuid4())[:8]
-        newName = "pages/unknownPages/" + prefix + unique + ".png"
+        newName = "pages/unknownPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
     val = self.DB.uploadUnknownPage(fname, newName, md5o)
@@ -53,11 +57,13 @@ def addUnknownPage(self, fname, image, md5o):
 
 
 def addCollidingPage(self, t, p, v, fname, image, md5o):
+    # take extension from the client filename
+    base, ext = os.path.splitext(fname)
     # create a filename for the image
     prefix = "col.t{}p{}v{}".format(str(t).zfill(4), str(p).zfill(2), v)
     while True:
         unique = "." + str(uuid.uuid4())[:8]
-        newName = "pages/collidingPages/" + prefix + unique + ".png"
+        newName = "pages/collidingPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
     val = self.DB.uploadCollidingPage(t, p, v, fname, newName, md5o)

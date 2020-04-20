@@ -14,7 +14,23 @@ log = logging.getLogger("DB")
 plomdb = SqliteDatabase(None)
 
 ######################################################################
-# TODO: could this data base scheme stuff live in another file?
+
+
+class BaseModel(Model):
+    class Meta:
+        database = plomdb
+
+
+# a bucket for users
+class User(BaseModel):
+    name = CharField(unique=True)
+    enabled = BooleanField(default=True)
+    password = CharField(null=True)  # hash of password for comparison
+    token = CharField(null=True)  # authentication token
+    lastActivity = DateTimeField(null=True)
+    lastAction = CharField(null=True)
+    # note that we must have "manger", "scanner", "reviewer" and "HAL" - HAL should never actually log it, but we need a name for who does the automagical stuff
+
 
 # the test contains groups
 # test bools something like
@@ -26,7 +42,7 @@ plomdb = SqliteDatabase(None)
 # finished = we've rebuilt the PDF at the end with coverpages etc etc
 
 
-class Test(Model):
+class Test(BaseModel):
     testNumber = IntegerField(primary_key=True, unique=True)
     # some state bools
     produced = BooleanField(default=False)
@@ -37,46 +53,38 @@ class Test(Model):
     finished = BooleanField(default=False)
     totalled = BooleanField(default=False)
 
-    class Meta:
-        database = plomdb
-
 
 # group knows its test
 # group status will evolve something like... [todo, outwithclient, done]
-class Group(Model):
+class Group(BaseModel):
     test = ForeignKeyField(Test, backref="groups")
     gid = CharField(unique=True)  # must be unique
     groupType = CharField()  # to distinguish between ID, DNM, and Mark groups
     # flags
     scanned = BooleanField(default=False)
 
-    class Meta:
-        database = plomdb
-
 
 # Data for id-group
-class IDData(Model):
+class IDData(BaseModel):
     test = ForeignKeyField(Test, backref="iddata")
-    group = ForeignKeyField(Group, backref="iddata")
+    group = ForeignKeyField(Group, backref="iddata", null=True)
     status = CharField(default="")
     studentID = CharField(unique=True, null=True)
     studentName = CharField(null=True)
-    username = CharField(default="")
+    user = ForeignKeyField(User, backref="iddata", null=True)
     time = DateTimeField(null=True)
     # flags
     identified = BooleanField(default=False)
 
-    class Meta:
-        database = plomdb
-
 
 # Data for question-groups
-class QuestionData(Model):
+class QuestionData(BaseModel):
     test = ForeignKeyField(Test, backref="questiondata")
     group = ForeignKeyField(Group, backref="questiondata")
     status = CharField(default="")
     questionNumber = IntegerField(null=False)
     version = IntegerField(null=False)
+    user = ForeignKeyField(User, backref="questiondata", null=True)
     annotatedFile = CharField(null=True)
     md5sum = CharField(null=True)
     plomFile = CharField(null=True)
@@ -84,31 +92,26 @@ class QuestionData(Model):
     mark = IntegerField(null=True)
     markingTime = IntegerField(null=True)
     tags = CharField(default="")
-    username = CharField(default="")
+    group = ForeignKeyField(Group, backref="questiondata", null=True)
     time = DateTimeField(null=True)
     # flags
     marked = BooleanField(default=False)
 
-    class Meta:
-        database = plomdb
-
 
 # Data for totalling the marks
-class SumData(Model):
+class SumData(BaseModel):
     test = ForeignKeyField(Test, backref="sumdata")
     status = CharField(default="")
+    user = ForeignKeyField(User, backref="sumdata", null=True)
     sumMark = IntegerField(null=True)
-    username = CharField(default="")
+    group = ForeignKeyField(Group, backref="sumdata", null=True)
     time = DateTimeField(null=True)
     # flags
     summed = BooleanField(default=False)
 
-    class Meta:
-        database = plomdb
-
 
 # Page knows its group and its test
-class Page(Model):
+class Page(BaseModel):
     test = ForeignKeyField(Test, backref="pages")
     group = ForeignKeyField(Group, backref="pages")  # note - not the GID
     pageNumber = IntegerField(null=False)
@@ -120,43 +123,31 @@ class Page(Model):
     # flags
     scanned = BooleanField(default=False)
 
-    class Meta:
-        database = plomdb
-
 
 # Colliding pages should be attached to the page their are duplicating
 # When collision status resolved we can move them about.
-class CollidingPage(Model):
+class CollidingPage(BaseModel):
     page = ForeignKeyField(Page, backref="collisions")
     originalName = CharField(null=True)
     fileName = CharField(null=True)
     md5sum = CharField()
 
-    class Meta:
-        database = plomdb
-
 
 # Unknown pages are basically just the file
-class UnknownPage(Model):
+class UnknownPage(BaseModel):
     originalName = CharField(null=True)
     fileName = CharField(null=True)
     md5sum = CharField()
 
-    class Meta:
-        database = plomdb
-
 
 # Discarded pages are basically just the file and a reason
 # reason could be "garbage", "duplicate of tpv-code", ...?
-class DiscardedPage(Model):
+class DiscardedPage(BaseModel):
     originalName = CharField(null=True)
     fileName = CharField(null=True)
     md5sum = CharField()
     reason = CharField(null=True)
     tpv = CharField(null=True)  # if the discard is a duplicate of a given tpv
-
-    class Meta:
-        database = plomdb
 
 
 # TODO: end of database scheme stuff
@@ -171,6 +162,7 @@ class PlomDB:
         with plomdb:
             plomdb.create_tables(
                 [
+                    User,
                     Test,
                     Group,
                     IDData,
@@ -183,7 +175,151 @@ class PlomDB:
                 ]
             )
         log.info("Database initialised.")
+        # check if HAL has been created
+        if User.get_or_none(name="HAL") is None:
+            User.create(
+                name="HAL",
+                password=None,
+                lastActivity=datetime.now(),
+                lastAction="Created",
+            )
+            log.info("User 'HAL' created to do all our automated tasks.")
 
+    ########### User stuff #############
+    def createUser(self, uname, passwordHash):
+        try:
+            uref = User.create(
+                name=uname,
+                password=passwordHash,
+                lastActivity=datetime.now(),
+                lastAction="Created",
+            )
+        except IntegrityError as e:
+            log.error("Create User {} error - {}".format(uname, e))
+            return False
+        return True
+
+    def doesUserExist(self, uname):
+        uref = User.get_or_none(name=uname)
+        if uref is None:
+            return False
+        else:
+            return True
+
+    def setUserPasswordHash(self, uname, passwordHash):
+        # Don't mess with HAL
+        if uname == "HAL":
+            return False
+        # token generated by server not DB
+        uref = User.get_or_none(name=uname)
+        if uref is None:
+            return False
+        with plomdb.atomic():
+            uref.password = passwordHash
+            uref.lastActivity = datetime.now()
+            uref.lastAction = "Password set"
+            uref.save()
+        return True
+
+    def getUserPasswordHash(self, uname):
+        uref = User.get_or_none(name=uname)
+        if uref is None:
+            return None
+        else:
+            return uref.password
+
+    def isUserEnabled(self, uname):
+        uref = User.get_or_none(name=uname)
+        if uref is None:
+            return False
+        else:
+            return uref.enabled
+
+    def enableUser(self, uname):
+        uref = User.get_or_none(name=uname)
+        if uref is None:
+            return False
+        with plomdb.atomic():
+            uref.enabled = True
+            uref.save()
+        return True
+
+    def disableUser(self, uname):
+        # when user is disabled we should set the enabled flag to false, remove their auth-token and then remove all their todo-stuff.
+        uref = User.get_or_none(name=uname)
+        if uref is None:
+            return False
+        # set enabled flag to false and remove their token
+        with plomdb.atomic():
+            uref.enabled = False
+            uref.token = None
+            uref.save()
+        # put all of user's tasks back on the todo pile.
+        self.resetUsersToDo(uname)
+        return True
+
+    def setUserToken(self, uname, token, msg="Log on"):
+        # token generated by server not DB
+        uref = User.get_or_none(name=uname)
+        if uref is None:
+            return False
+        with plomdb.atomic():
+            uref.token = token
+            uref.lastActivity = datetime.now()
+            uref.lastAction = msg
+            uref.save()
+        return True
+
+    def clearUserToken(self, uname):
+        return self.setUserToken(uname, None, "Log off")
+
+    def getUserToken(self, uname):
+        uref = User.get_or_none(name=uname)
+        if uref is None:
+            return None
+        else:
+            return uref.token
+
+    def userHasToken(self, uname):
+        if self.getUserToken(uname) is not None:
+            return True
+        else:
+            return False
+
+    def validateToken(self, uname, token):
+        uref = User.get_or_none(name=uname)
+        if uref is None:
+            return False
+        if uref.token == token:
+            return True
+        else:
+            return False
+
+    def getUserList(self):
+        rval = []
+        for uref in User.select():
+            rval.append(uref.name)
+        return rval
+
+    def getUserDetails(self):
+        rval = {}
+        for uref in User.select():
+            val = [False, False]
+            if uref.enabled:
+                val[0] = True
+            if uref.token is not None:
+                val[1] = True
+            if uref.lastActivity is None:
+                val += ["", ""]
+            else:
+                val += [
+                    uref.lastActivity.strftime("%y:%m:%d-%H:%M:%S"),
+                    uref.lastAction,
+                ]
+            rval[uref.name] = val + self.RgetUserFullProgress(uref.name)
+        return rval
+
+    ########## Test stuff ##############
     def createTest(self, t):
         try:
             tref = Test.create(testNumber=t)  # must be unique
@@ -355,12 +491,13 @@ class PlomDB:
         iref = IDData.get_or_none(test=tref)
         if iref is None:
             return
+        autref = User.get(name="HAL")
         with plomdb.atomic():
             iref.status = "done"
             iref.studentID = sid
             iref.studentName = sname
             iref.identified = True
-            iref.username = "automatic"
+            iref.user = autref
             iref.time = datetime.now()
             iref.save()
             tref.identified = True
@@ -532,7 +669,7 @@ class PlomDB:
             gref.scanned = False
             gref.save()
             iref.status = ""
-            iref.username = ""
+            iref.user = None
             iref.time = datetime.now()
             iref.studentID = None
             iref.studentName = None
@@ -561,7 +698,7 @@ class PlomDB:
             # update the sumdata
             sref.status = ""
             sref.sumMark = None
-            sref.username = ""
+            sref.user = None
             sref.time = datetime.now()
             sref.summed = False
             sref.save()
@@ -580,7 +717,7 @@ class PlomDB:
             qref.mark = None
             qref.markingTime = None
             qref.tags = ""
-            qref.username = ""
+            qref.user = None
             qref.time = datetime.now()
             qref.save
         log.info("Invalidated question {}".format(gref.gid))
@@ -1040,12 +1177,12 @@ class PlomDB:
                 Group.scanned == True,
             )
         ):
-            # make sure username and mark both in histogram
-            if x.username not in rhist:
-                rhist[x.username] = {}
-            if x.mark not in rhist[x.username]:
-                rhist[x.username][x.mark] = 0
-            rhist[x.username][x.mark] += 1
+            # make sure user.name and mark both in histogram
+            if x.user.name not in rhist:
+                rhist[x.user.name] = {}
+            if x.mark not in rhist[x.user.name]:
+                rhist[x.user.name][x.mark] = 0
+            rhist[x.user.name][x.mark] += 1
         log.debug("Sending mark histogram for Q{}v{}".format(q, v))
         return rhist
 
@@ -1064,9 +1201,9 @@ class PlomDB:
         ):
             nScan += 1
             if x.marked == True:
-                if x.username not in rdat:
-                    rdat[x.username] = 0
-                rdat[x.username] += 1
+                if x.user.name not in rdat:
+                    rdat[x.user.name] = 0
+                rdat[x.user.name] += 1
         rval = [nScan]
         for x in rdat:
             rval.append([x, rdat[x]])
@@ -1095,7 +1232,7 @@ class PlomDB:
             rval.append(
                 [
                     "id-t{}".format(iref.test.testNumber),
-                    iref.username,
+                    iref.user.name,
                     iref.time.strftime("%y:%m:%d-%H:%M:%S"),
                 ]
             )
@@ -1105,7 +1242,7 @@ class PlomDB:
                     "mrk-t{}-q{}-v{}".format(
                         mref.test.testNumber, mref.questionNumber, mref.version
                     ),
-                    mref.username,
+                    mref.user.name,
                     mref.time.strftime("%y:%m:%d-%H:%M:%S"),
                 ]
             )
@@ -1113,7 +1250,7 @@ class PlomDB:
             rval.append(
                 [
                     "tot-t{}".format(sref.test.testNumber),
-                    sref.username,
+                    sref.user.name,
                     sref.time.strftime("%y:%m:%d-%H:%M:%S"),
                 ]
             )
@@ -1134,17 +1271,17 @@ class PlomDB:
             iref = tref.iddata[0]
             rval["sid"] = iref.studentID
             rval["sname"] = iref.studentName
-            rval["iwho"] = iref.username
+            rval["iwho"] = iref.user.name
         if tref.totalled:
             sref = tref.sumdata[0]
             rval["total"] = sref.sumMark
-            rval["twho"] = sref.username
+            rval["twho"] = sref.user.name
         for qref in tref.questiondata:
             rval[qref.questionNumber] = {
                 "marked": qref.marked,
                 "mark": qref.mark,
                 "version": qref.version,
-                "who": qref.username,
+                "who": qref.user.name,
             }
 
         log.debug("Sending status of test {}".format(testNumber))
@@ -1223,7 +1360,7 @@ class PlomDB:
         if filterV != "*":
             query = query.where(QuestionData.version == filterV)
         if filterU != "*":
-            query = query.where(QuestionData.username == filterU)
+            query = query.where(QuestionData.user.name == filterU)
         rval = []
         for x in query:
             rval.append(
@@ -1232,7 +1369,7 @@ class PlomDB:
                     x.questionNumber,
                     x.version,
                     x.mark,
-                    x.username,
+                    x.user.name,
                     x.markingTime,
                     # CANNOT JSON DATETIMEFIELD.
                     x.time.strftime("%y:%m:%d-%H:%M:%S"),
@@ -1271,7 +1408,7 @@ class PlomDB:
             rval.append(
                 [
                     x.test.testNumber,
-                    x.username,
+                    x.user.name,
                     x.time.strftime("%y:%m:%d-%H:%M:%S"),
                     x.studentID,
                     x.studentName,
@@ -1287,7 +1424,7 @@ class PlomDB:
             rval.append(
                 [
                     x.test.testNumber,
-                    x.username,
+                    x.user.name,
                     x.time.strftime("%y:%m:%d-%H:%M:%S"),
                     x.sumMark,
                 ]
@@ -1295,58 +1432,60 @@ class PlomDB:
         log.debug("Sending totalling review data")
         return rval
 
-    def RgetUserDetails(self, username):
+    def RgetUserFullProgress(self, uname):
+        uref = User.get_or_none(name=uname)
+        if uref is None:
+            return []
         # return [#IDd, #tot, #marked]
-        log.debug("Sending user {} progress data".format(username))
+        log.debug("Sending user {} progress data".format(uname))
         return [
             IDData.select()
-            .where(IDData.username == username, IDData.identified == True)
+            .where(IDData.user == uref, IDData.identified == True)
             .count(),
             SumData.select()
-            .where(SumData.username == username, SumData.summed == True)
+            .where(SumData.user == uref, SumData.summed == True)
             .count(),
             QuestionData.select()
-            .where(QuestionData.username == username, QuestionData.marked == True)
+            .where(QuestionData.user == uref, QuestionData.marked == True)
             .count(),
         ]
 
     # ------------------
     # For user login - we reset all their stuff that is out
 
-    def resetUsersToDo(self, username):
+    def resetUsersToDo(self, uname):
+        uref = User.get_or_none(name=uname)
+        if uref is None:
+            return
         with plomdb.atomic():
-            query = IDData.select().where(
-                IDData.username == username, IDData.status == "out"
-            )
+            query = IDData.select().where(IDData.user == uref, IDData.status == "out")
             for x in query:
                 x.status = "todo"
-                x.username = ""
+                x.user = None
                 x.time = datetime.now()
                 x.save()
-                log.info("Reset user {} ID task {}".format(username, x.group.gid))
+                log.info("Reset user {} ID task {}".format(uname, x.group.gid))
         with plomdb.atomic():
             query = QuestionData.select().where(
-                QuestionData.username == username, QuestionData.status == "out",
+                QuestionData.user == uref, QuestionData.status == "out",
             )
             for x in query:
                 x.status = "todo"
-                x.username = ""
+                x.user = None
                 x.markingTime = 0
                 x.time = datetime.now()
                 x.save()
-                log.info("Reset user {} question task {}".format(username, x.group.gid))
+                log.info("Reset user {} question task {}".format(uname, x.group.gid))
         with plomdb.atomic():
             query = SumData.select().where(
-                SumData.username == username, SumData.status == "out"
+                SumData.user == uref, SumData.status == "out"
             )
             for x in query:
                 x.status = "todo"
-                x.username = ""
+                x.user = None
                 x.time = datetime.now()
                 x.save()
-                log.info(
-                    "Reset user {} totalling task {}".format(username, x.group.gid)
-                )
+                log.info("Reset user {} totalling task {}".format(uname, x.group.gid))
 
     # ------------------
     # Identifier stuff
@@ -1394,7 +1533,10 @@ class PlomDB:
             log.debug("Next ID task = {}".format(x.test.testNumber))
             return x.test.testNumber
 
-    def IDgiveTaskToClient(self, username, testNumber):
+    def IDgiveTaskToClient(self, uname, testNumber):
+        uref = User.get(name=uname)
+        # since user authenticated, this will always return legit ref.
+
         try:
             with plomdb.atomic():
                 tref = Test.get_or_none(Test.testNumber == testNumber)
@@ -1404,51 +1546,61 @@ class PlomDB:
                 # verify the id-group has been scanned - it should always be scanned.if we get here.
                 if iref.group.scanned == False:
                     return [False]
-                if iref.username != "" and iref.username != username:
+                if iref.user is not None and iref.user != uref:
                     # has been claimed by someone else.
                     return [False]
                 # update status, Student-number, name, id-time.
                 iref.status = "out"
-                iref.username = username
+                iref.user = uref
                 iref.time = datetime.now()
                 iref.save()
+                # update user activity
+                uref.lastAction = "Took ID task {}".format(testNumber)
+                uref.lastActivity = datetime.now()
+                uref.save()
                 # return [true, page1, page2, etc]
                 gref = iref.group
                 rval = [True]
                 for p in gref.pages.order_by(Page.pageNumber):
                     rval.append(p.fileName)
-                log.debug("Giving ID task {} to user {}".format(testNumber, username))
+                log.debug("Giving ID task {} to user {}".format(testNumber, uname))
                 return rval
 
         except Test.DoesNotExist:
             log.info("ID task - That test number {} not known".format(testNumber))
             return False
 
-    def IDgetDoneTasks(self, username):
+    def IDgetDoneTasks(self, uname):
         """When a id-client logs on they request a list of papers they have already IDd.
         Send back the list."""
-        query = IDData.select().where(
-            IDData.username == username, IDData.status == "done"
-        )
+        uref = User.get(name=uname)
+        # since user authenticated, this will always return legit ref.
+
+        query = IDData.select().where(IDData.user == uref, IDData.status == "done")
         idList = []
         for x in query:
             idList.append([x.test.testNumber, x.status, x.studentID, x.studentName])
-        log.debug("Sending completed ID tasks to user {}".format(username))
+        log.debug("Sending completed ID tasks to user {}".format(uname))
         return idList
 
-    def IDgetImage(self, username, t):
+    def IDgetImage(self, uname, t):
+        uref = User.get(name=uname)
+        # since user authenticated, this will always return legit ref.
+
         tref = Test.get_or_none(Test.testNumber == t)
         if tref.scanned == False:
             return [False]
         iref = tref.iddata[0]
-        # check if task given to user
-        if username not in [iref.username, "manager"]:
+        # quick sanity check to make sure task given to user, (or if manager making request)
+        if iref.user == uref or uname == "manager":
+            pass
+        else:
             return [False]
         gref = iref.group
         rval = [True]
         for p in gref.pages.order_by(Page.pageNumber):
             rval.append(p.fileName)
-        log.debug("Sending IDpages of test {} to user {}".format(t, username))
+        log.debug("Sending IDpages of test {} to user {}".format(t, uname))
         return rval
 
     def IDgetImageList(self, imageNumber):
@@ -1468,36 +1620,43 @@ class PlomDB:
                 rval[iref.test.testNumber] = pages[imageNumber]
         return rval
 
-    def IDdidNotFinish(self, username, testNumber):
+    def IDdidNotFinish(self, uname, testNumber):
         """When user logs off, any images they have still out should be put
         back on todo pile
         """
+        uref = User.get(name=uname)
+        # since user authenticated, this will always return legit ref.
+
         # Log user returning given tgv.
-        try:
-            with plomdb.atomic():
-                tref = Test.get_or_none(Test.testNumber == testNumber)
-                if tref.scanned == False:
-                    return
-                iref = tref.iddata[0]
-                if iref.username != username or iref.status != "out":
-                    # has been claimed by someone else.
-                    return
-                # update status, Student-number, name, id-time.
-                iref.status = "todo"
-                iref.username = ""
-                iref.time = datetime.now()
-                iref.identified = False
-                iref.save()
-                tref.identified = False
-                tref.save()
-                log.info("User {} did not ID task {}".format(username, testNumber))
+        with plomdb.atomic():
+            tref = Test.get_or_none(Test.testNumber == testNumber)
+            if tref is None:
+                log.info("That test number {} not known".format(testNumber))
+                return False
 
-        except Test.DoesNotExist:
-            log.info("That test number {} not known".format(testNumber))
-            return False
+            if tref.scanned == False:
+                return
+            iref = tref.iddata[0]
+            # sanity check that user has task
+            if iref.user == uref and iref.status == "out":
+                pass
+            else:  # someone else has it, or it is not out.
+                return
+            # update status, Student-number, name, id-time.
+            iref.status = "todo"
+            iref.user = None
+            iref.time = datetime.now()
+            iref.identified = False
+            iref.save()
+            tref.identified = False
+            tref.save()
+            log.info("User {} did not ID task {}".format(uname, testNumber))
 
-    def IDtakeTaskFromClient(self, testNumber, username, sid, sname):
+    def IDtakeTaskFromClient(self, testNumber, uname, sid, sname):
         """Get ID'dimage back from client - update record in database."""
+        uref = User.get(name=uname)
+        # since user authenticated, this will always return legit ref.
+
         try:
             with plomdb.atomic():
                 tref = Test.get_or_none(Test.testNumber == testNumber)
@@ -1508,7 +1667,7 @@ class PlomDB:
                 if iref.group.scanned == False:
                     return [False, False]
 
-                if iref.username != username:
+                if iref.user != uref:
                     # that belongs to someone else - this is a serious error
                     return [False, False]
                 # update status, Student-number, name, id-time.
@@ -1520,10 +1679,14 @@ class PlomDB:
                 iref.save()
                 tref.identified = True
                 tref.save()
+                # update user activity
+                uref.lastAction = "Returned ID task {}".format(testNumber)
+                uref.lastActivity = datetime.now()
+                uref.save()
                 return [True]
                 log.info(
                     'User "{}" returning ID-task "{}" with "{}" "{}"'.format(
-                        username, testNumber, censorID(sid), censorName(sname)
+                        uname, testNumber, censorID(sid), censorName(sname)
                     )
                 )
         except IDData.DoesNotExist:
@@ -1547,6 +1710,8 @@ class PlomDB:
 
     def IDreviewID(self, testNumber):
         # shift ownership to "reviewer"
+        revref = User.get(name="reviewer")  # should always be there
+
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:
             return [False]
@@ -1554,7 +1719,7 @@ class PlomDB:
         if iref is None:
             return [False]
         with plomdb.atomic():
-            iref.username = "reviewer"
+            iref.user = revref
             iref.time = datetime.now()
             iref.save()
         log.info("ID task {} set for review".format(testNumber))
@@ -1596,11 +1761,13 @@ class PlomDB:
         except QuestionData.DoesNotExist:
             return 0
 
-    def MgetDoneTasks(self, username, q, v):
+    def MgetDoneTasks(self, uname, q, v):
         """When a id-client logs on they request a list of papers they have already Marked.
         Send back the list."""
+        uref = User.get(name=uname)  # authenticated, so not-None
+
         query = QuestionData.select().where(
-            QuestionData.username == username,
+            QuestionData.user == uref,
             QuestionData.questionNumber == q,
             QuestionData.version == v,
             QuestionData.status == "done",
@@ -1608,7 +1775,7 @@ class PlomDB:
         markList = []
         for x in query:
             markList.append([x.group.gid, x.status, x.mark, x.markingTime, x.tags])
-        log.debug('Sending completed Q{}v{} tasks to user "{}"'.format(q, v, username))
+        log.debug('Sending completed Q{}v{} tasks to user "{}"'.format(q, v, uname))
         return markList
 
     def MgetNextTask(self, q, v):
@@ -1633,21 +1800,27 @@ class PlomDB:
             log.debug("Next Q{}v{} task = {}".format(q, v, x.group.gid))
             return x.group.gid
 
-    def MgiveTaskToClient(self, username, groupID):
+    def MgiveTaskToClient(self, uname, groupID):
+        uref = User.get(name=uname)  # authenticated, so not-None
         try:
             with plomdb.atomic():
                 gref = Group.get_or_none(Group.gid == groupID)
                 if gref.scanned == False:
                     return [False]
                 qref = gref.questiondata[0]
-                if qref.username != "" and qref.username != username:
-                    # has been claimed by someone else.
+                if qref.user is None or qref.user == uref:
+                    pass
+                else:  # has been claimed by someone else.
                     return [False]
                 # update status, Student-number, name, id-time.
                 qref.status = "out"
-                qref.username = username
+                qref.user = uref
                 qref.time = datetime.now()
                 qref.save()
+                # update user activity
+                uref.lastAction = "Took M task {}".format(groupID)
+                uref.lastActivity = datetime.now()
+                uref.save()
                 # return [true, tags, page1, page2, etc]
                 rval = [
                     True,
@@ -1655,30 +1828,33 @@ class PlomDB:
                 ]
                 for p in gref.pages.order_by(Page.pageNumber):
                     rval.append(p.fileName)
-                log.debug(
-                    'Giving marking task {} to user "{}"'.format(groupID, username)
-                )
+                log.debug('Giving marking task {} to user "{}"'.format(groupID, uname))
                 return rval
         except Group.DoesNotExist:
             log.info("That question {} not known".format(groupID))
             return False
 
-    def MdidNotFinish(self, username, groupID):
+    def MdidNotFinish(self, uname, groupID):
         """When user logs off, any images they have still out should be put
         back on todo pile
         """
+        uref = User.get(name=uname)  # authenticated, so not-None
+
         try:
             with plomdb.atomic():
                 gref = Group.get_or_none(Group.gid == groupID)
                 if gref.scanned == False:
                     return
                 qref = gref.questiondata[0]
-                if qref.username != username or qref.status != "out":
-                    # has been claimed by someone else.
+                # sanity check that user has task
+                if qref.user == uref and qref.status == "out":
+                    pass
+                else:  # has been claimed by someone else.
                     return
+
                 # update status, Student-number, name, id-time.
                 qref.status = "todo"
-                qref.username = ""
+                qref.user = None
                 qref.time = datetime.now()
                 qref.markingTime = 0
                 qref.marked = False
@@ -1686,25 +1862,26 @@ class PlomDB:
                 qref.test.marked = False
                 qref.test.save()
                 # Log user returning given tgv.
-                log.info("User {} did not mark task {}".format(username, groupID))
+                log.info("User {} did not mark task {}".format(uname, groupID))
 
         except Group.DoesNotExist:
             log.info("That task {} not known".format(groupID))
             return False
 
     def MtakeTaskFromClient(
-        self, task, username, mark, aname, pname, cname, mtime, tags, md5
+        self, task, uname, mark, aname, pname, cname, mtime, tags, md5
     ):
         """Get marked image back from client and update the record
         in the database.
         """
+        uref = User.get(name=uname)  # authenticated, so not-None
         try:
             with plomdb.atomic():
                 gref = Group.get_or_none(Group.gid == task)
                 qref = gref.questiondata[0]
-                if qref.username != username:
-                    # has been claimed by someone else.
-                    return False
+
+                if qref.user != uref:
+                    return False  # has been claimed by someone else.
 
                 # update status, mark, annotate-file-name, time, and
                 # time spent marking the image
@@ -1719,10 +1896,14 @@ class PlomDB:
                 qref.tags = tags
                 qref.marked = True
                 qref.save()
+                # update user activity
+                uref.lastAction = "Returned M task {}".format(task)
+                uref.lastActivity = datetime.now()
+                uref.save()
                 # since this has been marked - check if all questions for test have been marked
                 log.info(
                     "Task {} marked {} by user {} and placed at {} with md5 = {}".format(
-                        task, mark, username, aname, md5
+                        task, mark, uname, aname, md5
                     )
                 )
                 tref = qref.test
@@ -1739,7 +1920,8 @@ class PlomDB:
                 for qd in QuestionData.select().where(QuestionData.test == tref):
                     tot += qd.mark
                 sref = tref.sumdata[0]
-                sref.username = "automatic"
+                autref = User.get(name="HAL")
+                sref.user = autref  # auto-totalled by HAL.
                 sref.time = datetime.now()
                 sref.sumMark = tot
                 sref.summed = True
@@ -1757,24 +1939,25 @@ class PlomDB:
 
         except Group.DoesNotExist:
             log.error(
-                "That returning marking task number {} / username {} pair not known".format(
-                    task, username
+                "That returning marking task number {} / user {} pair not known".format(
+                    task, uname
                 )
             )
             return False
 
-    def MgetImages(self, username, task):
+    def MgetImages(self, uname, task):
+        uref = User.get(name=uname)  # authenticated, so not-None
         try:
             with plomdb.atomic():
                 gref = Group.get_or_none(Group.gid == task)
                 if gref.scanned == False:
                     return [False, "Task {} is not completely scanned".format(task)]
                 qref = gref.questiondata[0]
-                if qref.username != username:
+                if qref.user != uref:
                     # belongs to another user
                     return [
                         False,
-                        "Task {} does not belong to user {}".format(task, username),
+                        "Task {} does not belong to user {}".format(task, uname),
                     ]
                 # return [true, n, page1,..,page.n]
                 # or
@@ -1811,24 +1994,22 @@ class PlomDB:
             log.info("MgetOriginalImages - task {} not known".format(task))
             return [False, "Task {} not known".format(task)]
 
-    def MsetTag(self, username, task, tag):
+    def MsetTag(self, uname, task, tag):
+        uref = User.get(name=uname)  # authenticated, so not-None
+
         try:
             with plomdb.atomic():
                 gref = Group.get(Group.gid == task)
                 qref = gref.questiondata[0]
-                if qref.username != username:
+                if qref.user != uref:
                     return False  # not your task
                 # update tag
                 qref.tags = tag
                 qref.save()
-                log.info(
-                    'Task {} tagged by user "{}": "{}"'.format(task, username, tag)
-                )
+                log.info('Task {} tagged by user "{}": "{}"'.format(task, uname, tag))
                 return True
         except Group.DoesNotExist:
-            log.error(
-                "MsetTag -  task {} / username {} pair not known".format(task, username)
-            )
+            log.error("MsetTag -  task {} / user {} pair not known".format(task, uname))
             return False
 
     def MgetWholePaper(self, testNumber):
@@ -1846,6 +2027,8 @@ class PlomDB:
 
     def MreviewQuestion(self, testNumber, questionNumber, version):
         # shift ownership to "reviewer"
+        revref = User.get(name="reviewer")  # should always be there
+
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:
             return [False]
@@ -1858,13 +2041,15 @@ class PlomDB:
         if qref is None:
             return [False]
         with plomdb.atomic():
-            qref.username = "reviewer"
+            qref.user = revref
             qref.time = datetime.now()
             qref.save()
         log.info("Setting tq {}.{} for reviewer".format(testNumber, questionNumber))
         return [True]
 
-    def MrevertTask(self, username, task):
+    def MrevertTask(self, uname, task):
+        uref = User.get(name=uname)  # authenticated, so not-None
+
         gref = Group.get_or_none(Group.gid == task)
         if gref is None:
             return [False, "NST"]  # no such task
@@ -1873,10 +2058,10 @@ class PlomDB:
         tref = gref.test
         sref = tref.sumdata[0]
         # check user owns question and is "marked"
-        if qref.username != username or qref.status != "done" or qref.marked is False:
+        if qref.user != uref or qref.status != "done" or qref.marked is False:
             return [False, "NAC"]  # nothing to do here
         # now update things
-        log.info("User {} reverting task {}".format(username, task))
+        log.info("User {} reverting task {}".format(uname, task))
         with plomdb.atomic():
             # clean up test
             tref.marked = False
@@ -1887,7 +2072,7 @@ class PlomDB:
             # TODO = sort out the possible idiocy caused by simultaneous marking+totalling by client.
             sref.status = "todo"
             sref.sumMark = None
-            sref.username = ""
+            sref.user = None
             sref.time = datetime.now()
             sref.summed = False
             sref.save()
@@ -1904,6 +2089,10 @@ class PlomDB:
             qref.tags = ""
             qref.time = datetime.now()
             qref.save()
+            # update user activity
+            uref.lastAction = "Reverted M task {}".format(task)
+            uref.lastActivity = datetime.now()
+            uref.save()
         log.info("Reverting tq {}.{}".format(testNumber, questionNumber))
         return rval
 
@@ -1938,53 +2127,59 @@ class PlomDB:
             log.debug("Next Totalling task = {}".format(x.test.testNumber))
             return x.test.testNumber
 
-    def TgetDoneTasks(self, username):
+    def TgetDoneTasks(self, uname):
         """When a id-client logs on they request a list of papers they have already IDd.
         Send back the list."""
-        query = SumData.select().where(
-            SumData.username == username, SumData.status == "done"
-        )
+        uref = User.get(name=uname)  # authenticated, so not-None
+        query = SumData.select().where(SumData.user == uref, SumData.status == "done")
         tList = []
         for x in query:
             tList.append([x.test.testNumber, x.status, x.sumMark])
-        log.debug("Sending completed totalling tasks to {}".format(username))
+        log.debug("Sending completed totalling tasks to {}".format(uname))
         return tList
 
-    def TgiveTaskToClient(self, username, testNumber):
+    def TgiveTaskToClient(self, uname, testNumber):
+        uref = User.get(name=uname)  # authenticated, so not-None
         try:
             with plomdb.atomic():
                 tref = Test.get_or_none(Test.testNumber == testNumber)
                 if tref.scanned == False:
                     return [False]
                 sref = tref.sumdata[0]
-                if sref.username != "" and sref.username != username:
-                    # has been claimed by someone else.
+                if sref.user is None or sref.user == uref:
+                    pass
+                else:  # has been claimed by someone else.
                     return [False]
                 # update status, Student-number, name, id-time.
                 sref.status = "out"
-                sref.username = username
+                sref.user = uref
                 sref.time = datetime.now()
                 sref.save()
+                # update user activity
+                uref.lastAction = "Took T task {}".format(testNumber)
+                uref.lastActivity = datetime.now()
+                uref.save()
                 # return [true, page1]
                 pref = Page.get(Page.test == tref, Page.pageNumber == 1)
                 return [True, pref.fileName]
                 log.info(
-                    "Giving totalling task {} to user {}".format(testNumber, username)
+                    "Giving totalling task {} to user {}".format(testNumber, uname)
                 )
                 return rval
 
         except Test.DoesNotExist:
             log.warning(
                 "Cannot give totalling task {} to {} - task not known".format(
-                    testNumber, username
+                    testNumber, uname
                 )
             )
             return False
 
-    def TdidNotFinish(self, username, testNumber):
+    def TdidNotFinish(self, uname, testNumber):
         """When user logs off, any images they have still out should be put
         back on todo pile
         """
+        uref = User.get(name=uname)  # authenticated, so not-None
         # Log user returning given tgv.
         try:
             with plomdb.atomic():
@@ -1992,50 +2187,56 @@ class PlomDB:
                 if tref.scanned == False:
                     return
                 sref = tref.sumdata[0]
-                if sref.username != username or sref.status != "out":
-                    # has been claimed by someone else.
+                if sref.user == uref and sref.status == "out":
+                    pass
+                else:  # has been claimed by someone else.
                     return
                 # update status, Student-number, name, id-time.
                 sref.status = "todo"
-                sref.username = ""
+                sref.user = None
                 sref.time = datetime.now()
                 sref.summed = False
                 sref.save()
                 tref.summed = False
                 tref.save()
-                log.info("User {} did not total task {}".format(username, testNumber))
+                log.info("User {} did not total task {}".format(uname, testNumber))
         except Test.DoesNotExist:
             log.error("TdidNotFinish - test number {} not known".format(testNumber))
             return False
 
-    def TgetImage(self, username, t):
+    def TgetImage(self, uname, t):
+        uref = User.get(name=uname)  # authenticated, so not-None
         tref = Test.get_or_none(Test.testNumber == t)
         if tref.scanned == False:
             return [False]
         sref = tref.sumdata[0]
         # check if task given to user or user=manager
-        if username not in [sref.username, "manager"]:
+        if sref.user == uref or uname == "manager":
+            pass
+        else:
             return [False]
         pref = Page.get(Page.test == tref, Page.pageNumber == 1)
         log.info(
             "Sending cover-page of test {} to user {} = {}".format(
-                t, username, pref.fileName
+                t, uname, pref.fileName
             )
         )
         return [True, pref.fileName]
 
-    def TtakeTaskFromClient(self, testNumber, username, totalMark):
+    def TtakeTaskFromClient(self, testNumber, uname, totalMark):
+        uref = User.get(name=uname)  # authenticated, so not-None
+
         try:
             with plomdb.atomic():
                 tref = Test.get_or_none(Test.testNumber == testNumber)
                 if tref.scanned == False:
                     return [False]
                 sref = tref.sumdata[0]
-                if sref.username != username:
+                if sref.user != uref:
                     # that belongs to someone else - this is a serious error
                     log.error(
                         'User "{}" returned totalled-task {} that belongs to "{}"'.format(
-                            username, testNumber, sref.username
+                            uname, testNumber, sref.user.name
                         )
                     )
                     return [False]
@@ -2047,9 +2248,13 @@ class PlomDB:
                 sref.save()
                 tref.totalled = True
                 tref.save()
+                # update user activity
+                uref.lastAction = "Returned T task {}".format(testNumber)
+                uref.lastActivity = datetime.now()
+                uref.save()
                 log.debug(
                     "User {} returning totalled-task {} with {}".format(
-                        username, testNumber, totalMark
+                        uname, testNumber, totalMark
                     )
                 )
                 return [True]

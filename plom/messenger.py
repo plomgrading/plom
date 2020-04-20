@@ -119,7 +119,7 @@ class BaseMessenger(object):
             self.user = user
         except requests.HTTPError as e:
             if response.status_code == 401:
-                raise PlomAuthenticationException() from None
+                raise PlomAuthenticationException(response.json()) from None
             elif response.status_code == 400:  # API error
                 raise PlomAPIException(response.json()) from None
             elif response.status_code == 409:

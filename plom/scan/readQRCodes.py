@@ -27,23 +27,25 @@ from plom.tpv_utils import (
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 from plom.scan import QRextract
+from plom import PlomImageExtWhitelist
 
 
 def decodeQRs():
-    """Find all png files in pageImages dir and decode their QR codes.
+    """Find all bitmaps in pageImages dir and decode their QR codes.
 
     If their QRcodes have not been successfully decoded previously
-    then decode them.  The results are stored in blah.png.qr files.
+    then decode them.  The results are stored in blah.<ext>.qr files.
     """
     os.chdir("pageImages")
-    # list and len bit crude here: more pythonic to leave as iterator?
-    stuff = list(glob.glob("*.png"))
+    stuff = []
+    for ext in PlomImageExtWhitelist:
+        stuff.extend(glob.glob("*.{}".format(ext)))
     N = len(stuff)
     # TODO: processes=8?  Seems its chosen automatically (?)
     with Pool() as p:
         r = list(tqdm(p.imap_unordered(QRextract, stuff), total=N))
     # This does the same as the following serial loop but in parallel
-    # for x in glob.glob("*.png"):
+    # for x in glob.glob(...):
     #     QRextract(x)
 
     os.chdir("..")
@@ -68,7 +70,7 @@ def reOrientPage(fname, qrs):
     scenario, we can orient even if we know only one corner.
 
     Args:
-       fname (str): the png filename of this page.  Either its the FQN
+       fname (str): the bitmap filename of this page.  Either its the FQN
                     or we are currently in the right directory.
        qrs (dict): the QR codes of the four corners.  Some or all may
                    be missing.
@@ -99,6 +101,7 @@ def reOrientPage(fname, qrs):
         # is upright, no rotation needed
         return True
     if flipFlag and not upFlag:
+        # TODO: this will be lossy for jpg, see Issue #771.
         # is flipped, so rotate 180
         # print(" .  {}: reorienting: 180 degree rotation".format(fname))
         subprocess.run(
@@ -116,7 +119,7 @@ def reOrientPage(fname, qrs):
 def checkQRsValid(spec, examsScannedNow):
     """Check that the QRcodes in each pageimage are valid.
 
-    When each png is scanned a png.qr is produced.  Load the dict of
+    When each bitmap is scanned a .qr is produced.  Load the dict of
     QR codes from that file and do some sanity checks.
 
     Rotate any images that we can.
@@ -126,7 +129,7 @@ def checkQRsValid(spec, examsScannedNow):
     # go into page image directory and look at each .qr file.
     os.chdir("pageImages/")
     for fnqr in glob.glob("*.qr"):
-        fname = fnqr[:-3]  # blah.png.qr -> blah.png
+        fname = fnqr[:-3]  # blah.<ext>.qr -> blah.<ext>
         with open(fnqr, "r") as qrfile:
             qrs = json.load(qrfile)
 
@@ -224,7 +227,7 @@ def checkQRsValid(spec, examsScannedNow):
             # Difficulty scanning this pageimage so move it
             # to unknownPages
             print("[F] {0}: {1} - moving to unknownPages".format(fname, msg))
-            # move blah.png and blah.png.qr
+            # move blah.<ext> and blah.<ext>.qr
             shutil.move(fname, os.path.join("..", "unknownPages", fname))
             shutil.move(
                 fname + ".qr", os.path.join("..", "unknownPages", fname + ".qr")
@@ -261,7 +264,7 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
                 )
             )
             print(">> Moving problem files to unknownPages")
-            # move the blah.png and blah.png.qr
+            # move the blah.<ext> and blah.<ext>.qr
             # this means that they won't be added to the
             # list of correctly scanned page images
             shutil.move(fn, os.path.join("..", "unknownPages"))
@@ -284,7 +287,7 @@ def moveScansIntoPlace(examsScannedNow):
     os.chdir("..")
 
 
-def processPNGs(server=None, password=None):
+def processBitmaps(server=None, password=None):
     examsScannedNow = defaultdict(list)
 
     if server and ":" in server:

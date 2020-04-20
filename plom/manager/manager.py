@@ -28,6 +28,7 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QMessageBox,
     QProgressBar,
     QPushButton,
@@ -50,8 +51,100 @@ from .reviewview import ReviewViewWindow
 from .selectrectangle import SelectRectangleWindow, IDViewWindow
 from plom.plom_exceptions import *
 from plom.messenger import ManagerMessenger
+from plom.server.aliceBob import simplePassword
 
 from plom import __version__, Plom_API_Version, Default_Port
+
+
+class UserDialog(QDialog):
+    """Simple dialog to enter username and password"""
+
+    def __init__(self, name=None, extant=[]):
+        super(UserDialog, self).__init__()
+        self.name = name
+        self.initUI()
+        if name is not None:
+            self.userLE.setEnabled(False)
+        self.extant = [
+            x.lower() for x in extant
+        ]  # put everything in lowercase to simplify checking.
+
+    def initUI(self):
+        self.setWindowTitle("Please enter user")
+        self.userL = QLabel("Username:")
+        self.pwL = QLabel("Password:")
+        self.pwL2 = QLabel("and again:")
+        self.userLE = QLineEdit(self.name)
+        initialpw = simplePassword()
+        self.pwLE = QLineEdit(initialpw)
+        # self.pwLE.setEchoMode(QLineEdit.Password)
+        self.pwLE2 = QLineEdit(initialpw)
+        self.pwLE2.setEchoMode(QLineEdit.Password)
+        self.okB = QPushButton("Accept")
+        self.okB.clicked.connect(self.validate)
+        self.cnB = QPushButton("Cancel")
+        self.cnB.clicked.connect(self.reject)
+
+        self.pwCB = QCheckBox("(hide/show)")
+        self.pwCB.setCheckState(Qt.Unchecked)
+        self.pwCB.stateChanged.connect(self.togglePWShow)
+        self.pwNewB = QPushButton("New rand pwd")
+        self.pwNewB.clicked.connect(self.newRandomPassword)
+
+        grid = QGridLayout()
+        grid.addWidget(self.userL, 1, 1)
+        grid.addWidget(self.userLE, 1, 2)
+        grid.addWidget(self.pwL, 2, 1)
+        grid.addWidget(self.pwLE, 2, 2)
+        grid.addWidget(self.pwCB, 2, 3)
+        grid.addWidget(self.pwNewB, 3, 3)
+        grid.addWidget(self.pwL2, 3, 1)
+        grid.addWidget(self.pwLE2, 3, 2)
+        grid.addWidget(self.okB, 4, 3)
+        grid.addWidget(self.cnB, 4, 1)
+
+        self.setLayout(grid)
+        self.show()
+
+    def togglePWShow(self):
+        if self.pwCB.checkState() == Qt.Checked:
+            self.pwLE.setEchoMode(QLineEdit.Password)
+        else:
+            self.pwLE.setEchoMode(QLineEdit.Normal)
+
+    def newRandomPassword(self):
+        newpw = simplePassword()
+        self.pwLE.setText(newpw)
+        self.pwLE2.setText(newpw)
+
+    def validate(self):
+        """Check that password is at least 4 char long
+        and that the two passwords match.
+        If all good then accept
+        else clear the two password lineedits.
+        """
+        # username not already in list
+        # be careful, because pwd-change users same interface
+        # make sure that we only do this check if the LE is enabled.
+        # put username into lowercase to check against extant which is in lowercase.
+        if self.userLE.isEnabled() and self.userLE.text().lower() in self.extant:
+            ErrorMessage(
+                "Username = '{}' already in user list".format(self.userLE.text())
+            ).exec_()
+            return
+
+        # username must be length 4 and alphanumeric
+        if not (len(self.userLE.text()) >= 4 and self.userLE.text().isalnum()):
+            return
+        # password must be length 4 and not contain username.
+        if (len(self.pwLE.text()) < 4) or (self.userLE.text() in self.pwLE.text()):
+            return
+        # passwords must agree
+        if self.pwLE.text() != self.pwLE2.text():
+            return
+        self.name = self.userLE.text()
+        self.password = self.pwLE.text()
+        self.accept()
 
 
 class QVHistogram(QDialog):
@@ -290,6 +383,9 @@ class Manager(QWidget):
         self.ui.predictButton.clicked.connect(self.runPredictor)
         self.ui.delPredButton.clicked.connect(self.deletePredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
+        self.ui.enabDisabB.clicked.connect(self.toggleEnableDisable)
+        self.ui.changePassB.clicked.connect(self.changeUserPassword)
+        self.ui.newUserB.clicked.connect(self.createUser)
 
     def closeWindow(self):
         global managerMessenger
@@ -378,6 +474,7 @@ class Manager(QWidget):
         self.initScanTab()
         self.initProgressTab()
         self.initUserTab()
+        self.initReviewTab()
 
     # -------------------
     def getTPQV(self):
@@ -657,7 +754,7 @@ class Manager(QWidget):
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vt)):
-                iname = td + "img.{}.png".format(i)
+                iname = td + "img.{}.image".format(i)
                 with open(iname, "wb") as fh:
                     fh.write(vt[i])
                 inames.append(iname)
@@ -671,7 +768,7 @@ class Manager(QWidget):
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vq)):
-                iname = td + "img.{}.png".format(i)
+                iname = td + "img.{}.image".format(i)
                 with open(iname, "wb") as fh:
                     fh.write(vq[i])
                 inames.append(iname)
@@ -927,11 +1024,11 @@ class Manager(QWidget):
 
     def selectRectangle(self):
         imageList = managerMessenger.IDgetRandomImage()
-        # Image names = "i<testnumber>.<imagenumber>.png"
+        # Image names = "i<testnumber>.<imagenumber>.<ext>"
         inames = []
         with tempfile.TemporaryDirectory() as td:
             for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.png".format(i))
+                tmp = os.path.join(td, "id.{}.image".format(i))
                 inames.append(tmp)
                 with open(tmp, "wb+") as fh:
                     fh.write(imageList[i])
@@ -951,7 +1048,7 @@ class Manager(QWidget):
         inames = []
         with tempfile.TemporaryDirectory() as td:
             for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.png".format(i))
+                tmp = os.path.join(td, "id.{}.image".format(i))
                 inames.append(tmp)
                 with open(tmp, "wb+") as fh:
                     fh.write(imageList[i])
@@ -1073,7 +1170,12 @@ class Manager(QWidget):
     ##################
     # review tab stuff
 
-    def initRevTab(self):
+    def initReviewTab(self):
+        self.initRevMTab()
+        self.initRevIDTab()
+        self.initRevTOTTab()
+
+    def initRevMTab(self):
         self.ui.reviewTW.setColumnCount(7)
         self.ui.reviewTW.setHorizontalHeaderLabels(
             ["Test", "Question", "Version", "Mark", "Username", "Marking Time", "When"]
@@ -1199,7 +1301,7 @@ class Manager(QWidget):
         inames = []
         with tempfile.TemporaryDirectory() as td:
             for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.png".format(i))
+                tmp = os.path.join(td, "id.{}.image".format(i))
                 inames.append(tmp)
                 with open(tmp, "wb+") as fh:
                     fh.write(imageList[i])
@@ -1284,11 +1386,14 @@ class Manager(QWidget):
         self.initProgressQUTabs()
 
     def initUserListTab(self):
-        self.ui.userListTW.setColumnCount(5)
+        self.ui.userListTW.setColumnCount(8)
         self.ui.userListTW.setHorizontalHeaderLabels(
             [
                 "Username",
+                "Enabled",
                 "Logged in",
+                "Last activity",
+                "Last action",
                 "Papers IDd",
                 "Papers Totalled",
                 "Questions Marked",
@@ -1328,6 +1433,53 @@ class Manager(QWidget):
             == QMessageBox.Yes
         ):
             managerMessenger.clearAuthorisationUser(user)
+            self.refreshUserList()
+
+    def toggleEnableDisable(self):
+        ri = self.ui.userListTW.selectedIndexes()
+        if len(ri) == 0:
+            return
+        r = ri[0].row()
+        user = self.ui.userListTW.item(r, 0).text()
+        if user == "manager":
+            ErrorMessage("You cannot disable the manager.").exec_()
+            return
+        if (
+            SimpleMessage(
+                'Are you sure you want to toggle enable/disable user "{}"?'.format(user)
+            ).exec_()
+            == QMessageBox.Yes
+        ):
+            if self.ui.userListTW.item(r, 1).text() == "True":
+                managerMessenger.setUserEnable(user, False)
+            else:
+                managerMessenger.setUserEnable(user, True)
+            self.refreshUserList()
+
+    def changeUserPassword(self):
+        ri = self.ui.userListTW.selectedIndexes()
+        if len(ri) == 0:
+            return
+        r = ri[0].row()
+        user = self.ui.userListTW.item(r, 0).text()
+        cpwd = UserDialog(name=user)
+        if cpwd.exec_() == QDialog.Accepted:
+            rval = managerMessenger.createModifyUser(user, cpwd.password)
+            ErrorMessage(rval[1]).exec_()
+        return
+
+    def createUser(self):
+        # need to pass list of existing users
+        uList = [
+            self.ui.userListTW.item(r, 0).text()
+            for r in range(self.ui.userListTW.rowCount())
+        ]
+        cpwd = UserDialog(name=None, extant=uList)
+        if cpwd.exec_() == QDialog.Accepted:
+            rval = managerMessenger.createModifyUser(cpwd.name, cpwd.password)
+            ErrorMessage(rval[1]).exec_()
+            self.refreshUserList()
+        return
 
     def refreshUserList(self):
         uDict = managerMessenger.getUserDetails()
@@ -1339,12 +1491,17 @@ class Manager(QWidget):
             self.ui.userListTW.insertRow(r)
             # rjust(4) entries so that they can sort like integers... without actually being integers
             self.ui.userListTW.setItem(r, 0, QTableWidgetItem("{}".format(u)))
-            for k in range(4):
+            for k in range(7):
                 self.ui.userListTW.setItem(
                     r, k + 1, QTableWidgetItem("{}".format(dat[k]))
                 )
             if dat[0]:
                 self.ui.userListTW.item(r, 1).setBackground(QBrush(Qt.green))
+            else:
+                self.ui.userListTW.item(r, 1).setBackground(QBrush(Qt.red))
+            if dat[1]:
+                self.ui.userListTW.item(r, 2).setBackground(QBrush(Qt.green))
+
             if u in ["manager", "scanner", "reviewer"]:
                 self.ui.userListTW.item(r, 0).setBackground(QBrush(Qt.green))
 

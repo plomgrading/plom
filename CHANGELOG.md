@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Greater fidelity to the original scan because JPEG files are (carefully) extracted and used directly.
 * JPEG transformations are done without lossy re-encoding, when possible.
-* PNG files should be a little smaller with fewer interpolation artifacts in the reassembled files.
+* PNG files should be a little smaller with fewer interpolation artifacts in the reass
+* User credentials now handled by database rather than separate authentication object.
 
 ### Fixed
 * Various bug fixes.
