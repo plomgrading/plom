@@ -1188,6 +1188,28 @@ class ManagerMessenger(BaseMessenger):
         elif response.status_code == 202:
             return [True, "User password updated"]
 
+    def MrevertTask(self, code):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.patch(
+                "https://{}/MK/revert/{}".format(self.server, code),
+                json={"user": self.user, "token": self.token},
+                verify=False,
+            )
+            response.raise_for_status()
+            if response.status_code == 204:
+                raise PlomBenignException("No action to be taken.")
+
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
     def MreviewQuestion(self, testNumber, questionNumber, version):
         self.SRmutex.acquire()
         try:

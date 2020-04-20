@@ -1277,12 +1277,20 @@ class PlomDB:
             rval["total"] = sref.sumMark
             rval["twho"] = sref.user.name
         for qref in tref.questiondata:
-            rval[qref.questionNumber] = {
-                "marked": qref.marked,
-                "mark": qref.mark,
-                "version": qref.version,
-                "who": qref.user.name,
-            }
+            if qref.marked:
+                rval[qref.questionNumber] = {
+                    "marked": qref.marked,
+                    "mark": qref.mark,
+                    "version": qref.version,
+                    "who": qref.user.name,
+                }
+            else:
+                rval[qref.questionNumber] = {
+                    "marked": qref.marked,
+                    "mark": qref.mark,
+                    "version": qref.version,
+                    "who": None,
+                }
 
         log.debug("Sending status of test {}".format(testNumber))
         return [True, rval]
@@ -2047,9 +2055,7 @@ class PlomDB:
         log.info("Setting tq {}.{} for reviewer".format(testNumber, questionNumber))
         return [True]
 
-    def MrevertTask(self, uname, task):
-        uref = User.get(name=uname)  # authenticated, so not-None
-
+    def MrevertTask(self, task):
         gref = Group.get_or_none(Group.gid == task)
         if gref is None:
             return [False, "NST"]  # no such task
@@ -2057,11 +2063,11 @@ class PlomDB:
         qref = gref.questiondata[0]
         tref = gref.test
         sref = tref.sumdata[0]
-        # check user owns question and is "marked"
-        if qref.user != uref or qref.status != "done" or qref.marked is False:
+        # check task is "done"
+        if qref.status != "done" or qref.marked is False:
             return [False, "NAC"]  # nothing to do here
         # now update things
-        log.info("User {} reverting task {}".format(uname, task))
+        log.info("Manager reverting task {}".format(task))
         with plomdb.atomic():
             # clean up test
             tref.marked = False
@@ -2076,10 +2082,11 @@ class PlomDB:
             sref.time = datetime.now()
             sref.summed = False
             sref.save()
-            # clean off the question data - but keep user and state = "out"
+            # clean off the question data - remove user and set status back to todo
             rval = [True, qref.annotatedFile, qref.plomFile, qref.commentFile]
             qref.marked = False
-            qref.status = "out"
+            qref.status = "todo"
+            qref.user = None
             qref.annotatedFile = None
             qref.md5sum = None
             qref.plomFile = None
@@ -2089,11 +2096,6 @@ class PlomDB:
             qref.tags = ""
             qref.time = datetime.now()
             qref.save()
-            # update user activity
-            uref.lastAction = "Reverted M task {}".format(task)
-            uref.lastActivity = datetime.now()
-            uref.save()
-        log.info("Reverting tq {}.{}".format(testNumber, questionNumber))
         return rval
 
     # ----- totaller stuff
