@@ -8,7 +8,8 @@
   without any warranty.
 -->
 <component type="desktop-application">
-  <id>org.plomgrading.PlomClient.desktop</id>
+  <id>org.plomgrading.PlomClient</id>
+  <launchable type="desktop-id">org.plomgrading.PlomClient.desktop</launchable>
   <metadata_license>FSFAP</metadata_license>
   <project_license>AGPL-3.0+</project_license>
   <name>Plom Client</name>
