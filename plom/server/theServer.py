@@ -203,6 +203,7 @@ class Server(object):
         RgetProgress,
         RgetQuestionUserProgress,
         RgetMarkHistogram,
+        RgetMarked,
         RgetIdentified,
         RgetCompletions,
         RgetOutToDo,

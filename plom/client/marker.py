@@ -391,29 +391,17 @@ class ExamModel(QStandardItemModel):
         self._setPaperDir(r, tdir)
 
     def deferPaper(self, task):
-        # When user defers paper, it must be unmarked or reverted already.
-        # TODO: what is point of this comment?
         self.setStatusByTask(task, "deferred")
-
-    def revertPaper(self, task):
-        # When user reverts to original image, set status to "reverted"
-        # mark back to -1, and marking time to zero.
-        r = self._findTask(task)
-        self._setStatus(r, "reverted")
-        self.setData(self.index(r, 2), -1)
-        self.setData(self.index(r, 3), 0)
-        # Do not erase any files: could still be uploading
-        self._clearPaperDir(r)
 
     def removePaper(self, task):
         r = self._findTask(task)
         self.removeRow(r)
 
     def countReadyToMark(self):
-        """Count how many are untouched or reverted."""
+        """Count how many are untouched."""
         count = 0
         for r in range(self.rowCount()):
-            if self._getStatus(r) in ("untouched", "reverted"):
+            if self._getStatus(r) == "untouched":
                 count += 1
         return count
 
@@ -572,7 +560,6 @@ class MarkerClient(QWidget):
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
-        self.ui.revertButton.clicked.connect(self.revertTest)
         self.ui.deferButton.clicked.connect(self.deferTest)
         self.ui.tagButton.clicked.connect(self.tagTest)
         self.ui.filterButton.clicked.connect(self.setFilter)
@@ -918,30 +905,6 @@ class MarkerClient(QWidget):
         self.ui.tableView.selectRow(pr)
         return True
 
-    def revertTest(self):
-        """Get rid of any annotations or marks and go back to unmarked original"""
-        if len(self.ui.tableView.selectedIndexes()):
-            pr = self.ui.tableView.selectedIndexes()[0].row()
-        else:
-            return
-        task = self.prxM.getPrefix(pr)
-        # If test does not have status "marked" then nothing to do.  Could
-        # check `backgroundUploader.isEmpty()` but this simple status check
-        # should prevent reverting while upload is in progress.
-        if self.exM.getStatusByTask(task) != "marked":
-            return
-        # Check user really wants to revert
-        msg = SimpleMessage("Do you want to revert to original scan?")
-        if msg.exec_() == QMessageBox.No:
-            return
-        # send revert message to server
-        messenger.MrevertTask(task)
-        # Revert the test in the table (set status, mark etc)
-        self.exM.revertPaper(task)
-        # Update the image (is now back to original untouched image)
-        self.updateImage(pr)
-        self.updateProgress()
-
     def deferTest(self):
         """Mark test as "defer" - to be skipped until later."""
         if len(self.ui.tableView.selectedIndexes()):
@@ -952,7 +915,9 @@ class MarkerClient(QWidget):
         if self.exM.getStatusByTask(task) == "deferred":
             return
         if self.exM.getStatusByTask(task) in ("marked", "uploading...", "???"):
-            msg = ErrorMessage("Paper is already marked - revert it before deferring.")
+            msg = ErrorMessage(
+                "Cannot defer a marked test. We will change this in a future version."
+            )
             msg.exec_()
             return
         self.exM.deferPaper(task)
