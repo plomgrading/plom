@@ -117,6 +117,18 @@ def processFileToBitmaps(fname):
                     )
                 )
                 if d["ext"].lower() in PlomImageExtWhitelist:
+                    converttopng = False
+                    # Bail on jpeg if dimensions are not multiples of 16.
+                    # (could relax: iMCU can also be 8x8, 16x8, 8x16: see PIL .layer)
+                    if d["ext"].lower() in ("jpeg", "jpg") and not (d["width"] % 16 == 0 and d["height"] % 16 == 0):
+                        converttopng = True
+                        print("  JPEG dim not mult. of 16; transcoding to PNG to avoid lossy transforms")
+                        # TODO: we know its jpeg, could use PIL instead of `convert` below
+                else:
+                    converttopng = True
+                    print("  {} format not whitelisted; transcoding to PNG".format(d["ext"]))
+
+                if not converttopng:
                     outname = os.path.join("scanPNGs", basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
@@ -125,7 +137,6 @@ def processFileToBitmaps(fname):
                     with tempfile.NamedTemporaryFile() as g:
                         with open(g.name, "wb") as f:
                             f.write(d["image"])
-                        print("  Cowardly transcoding to png (TODO)")
                         subprocess.check_call(["convert", g.name, outname])
                 continue
 
