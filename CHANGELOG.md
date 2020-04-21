@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * JPEG transformations are done without lossy re-encoding, when possible.
 * PNG files should be a little smaller with fewer interpolation artifacts in the reass
 * User credentials now handled by database rather than separate authentication object.
+* Client can no longer revert; this feature may return later if needed.
 
 ### Fixed
 * Various bug fixes.
