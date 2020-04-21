@@ -348,7 +348,7 @@ class PlomDB:
             return False
         return True
 
-    def addTestPages(self, tref, gref, t, pages, v):
+    def addTPages(self, tref, gref, t, pages, v):
         """
         For initial construction of test-pages for a test. We use these so we know what structured pages we should have.
         """
@@ -357,12 +357,7 @@ class PlomDB:
             for p in pages:
                 try:
                     TPage.create(
-                        test=tref,
-                        group=gref,
-                        pageNumber=p,
-                        version=v,
-                        pid="t{}p{}".format(t, p),
-                        scanned=False,
+                        test=tref, group=gref, pageNumber=p, version=v, scanned=False,
                     )
                 except IntegrityError as e:
                     log.error("Adding page {} for test {} error - {}".format(p, t, e))
@@ -400,7 +395,7 @@ class PlomDB:
                 )
             )
             return False
-        return self.addTestPages(tref, gref, t, pages, 1)  # always version 1.
+        return self.addTPages(tref, gref, t, pages, 1)  # always version 1.
 
     def createDNMGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
@@ -436,7 +431,7 @@ class PlomDB:
                 )
             )
             return False
-        return self.addTestPages(tref, gref, t, pages, 1)
+        return self.addTPages(tref, gref, t, pages, 1)
 
     def createQGroup(self, t, g, v, pages):
         tref = Test.get_or_none(testNumber=t)
@@ -470,7 +465,7 @@ class PlomDB:
                 )
             )
             return False
-        return self.addTestPages(tref, gref, t, pages, v)
+        return self.addTPages(tref, gref, t, pages, v)
 
     # def printGroups(self, t):
     #     tref = Test.get_or_none(testNumber=t)
@@ -479,7 +474,7 @@ class PlomDB:
     #     for x in tref.groups:
     #         print(x.gid, x.groupType)
     #         if x.groupType == "i":
-    #             idata = x.iddata[0]
+    #             idata = x.IDGroup[0]
     #             print("\t", idata.studentID, idata.studentName)
     #         elif x.groupType == "m":
     #             qdata = x.questiondata[0]
@@ -507,7 +502,6 @@ class PlomDB:
             return {}
         else:
             pvDict = {p.pageNumber: p.version for p in tref.tpages}
-            print("PVDICT = ", pvDict)
             return pvDict
 
     def produceTest(self, t):
@@ -528,7 +522,7 @@ class PlomDB:
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return
-        iref = IDData.get_or_none(test=tref)
+        iref = IDGroup.get_or_none(test=tref)
         if iref is None:
             return
         autref = User.get(name="HAL")
@@ -576,7 +570,7 @@ class PlomDB:
     def setGroupReady(self, gref):
         log.debug("All of group {} is scanned".format(gref.gid))
         if gref.groupType == "i":
-            iref = gref.iddata[0]
+            iref = gref.IDGroup[0]
             # check if group already identified - can happen if printed tests with names
             if iref.status == "done":
                 log.info("Group {} is already identified.".format(gref.gid))
@@ -646,7 +640,7 @@ class PlomDB:
                 "Replacing missing page tpv = {}.{}.{} with {}".format(t, p, v, oname),
             )
             self.checkGroupAllUploaded(pref)
-            return [True, "success", "Page saved as {}".format(pref.pid)]
+            return [True, "success", "Page tpv = {}.{}.{} saved".format(t, p, v)]
 
     def fileOfScannedPage(self, t, p, v):
         tref = Test.get_or_none(testNumber=t)
@@ -700,7 +694,7 @@ class PlomDB:
         return []
 
     def invalidateIDGroup(self, tref, gref):
-        iref = gref.iddata[0]
+        iref = gref.IDGroup[0]
         with plomdb.atomic():
             tref.scanned = False
             tref.identified = False
@@ -714,7 +708,7 @@ class PlomDB:
             iref.studentID = None
             iref.studentName = None
             iref.save()
-        log.info("Invalidated iddata {}".format(gref.gid))
+        log.info("Invalidated IDGroup {}".format(gref.gid))
         return []
 
     def invalidateQGroup(self, tref, gref, delPage=True):
@@ -771,12 +765,12 @@ class PlomDB:
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return [False, "testError", "Cannot find test {}".format(t)]
-        pref = TestPage.get_or_none(test=tref, pageNumber=p, version=v)
+        pref = TPage.get_or_none(test=tref, pageNumber=p, version=v)
         if pref is None:
             return [
                 False,
                 "pageError",
-                "Cannot find testpage,version {} for test {}".format([p, v], t),
+                "Cannot find TPage,version {} for test {}".format([p, v], t),
             ]
         if pref.scanned:
             # have already loaded an image for this page - so this is actually a duplicate
@@ -802,7 +796,7 @@ class PlomDB:
                 tref.save()
             log.info("Uploaded image {} to tpv = {}.{}.{}".format(oname, t, p, v))
             # self.checkGroupAllUploaded(pref)
-            return [True, "success", "Page saved as {}".format(pref.pid)]
+            return [True, "success", "Page saved as tpv = {}.{}.{}".format(t, p, v)]
 
     def uploadUnknownPage(self, oname, nname, md5):
         # return value is either [True, <success message>] or
@@ -858,7 +852,7 @@ class PlomDB:
         return [
             True,
             "success",
-            "Colliding page saved, attached to {}".format(pref.pid),
+            "Colliding page saved, attached to {}.{}.{}".format(t, p, v),
         ]
 
     def getUnknownPageNames(self):
@@ -1093,7 +1087,6 @@ class PlomDB:
                 gid=qref.group.gid,
                 pageNumber=nextPageNumber,
                 version=version,
-                pid="t{}p{}".format(testNumber, nextPageNumber),
                 originalName=uref.originalName,
                 fileName=nname,  # since the file is moved
                 md5sum=uref.md5sum,
@@ -1155,7 +1148,7 @@ class PlomDB:
 
     def RgetIdentified(self):
         rval = {}
-        for iref in IDData.select().where(IDData.identified == True):
+        for iref in IDGroup.select().where(IDGroup.identified == True):
             rval[iref.test.testNumber] = (iref.studentID, iref.studentName)
         log.debug("Sending list of identified tests")
         return rval
@@ -1267,7 +1260,7 @@ class PlomDB:
         # x.time.strftime("%y:%m:%d-%H:%M:%S"),
 
         rval = []
-        for iref in IDData.select().where(IDData.status == "out"):
+        for iref in IDGroup.select().where(IDGroup.status == "out"):
             rval.append(
                 [
                     "id-t{}".format(iref.test.testNumber),
@@ -1307,7 +1300,7 @@ class PlomDB:
             "totalled": tref.totalled,
         }
         if tref.identified:
-            iref = tref.iddata[0]
+            iref = tref.IDGroup[0]
             rval["sid"] = iref.studentID
             rval["sname"] = iref.studentName
             rval["iwho"] = iref.user.name
@@ -1337,7 +1330,7 @@ class PlomDB:
                 "sid": "",
                 "sname": "",
             }
-            iref = tref.iddata[0]
+            iref = tref.IDGroup[0]
             if tref.identified:
                 thisTest["sid"] = iref.studentID
                 thisTest["sname"] = iref.studentName
@@ -1365,7 +1358,7 @@ class PlomDB:
         if tref is None:
             return []
         # [ID, Name]
-        iref = tref.iddata[0]
+        iref = tref.IDGroup[0]
         rval = [[iref.studentID, iref.studentName]]
         # then [q, v, mark]
         for g in tref.questiondata.order_by(QuestionData.questionNumber):
@@ -1442,7 +1435,7 @@ class PlomDB:
 
     def RgetIDReview(self):
         rval = []
-        query = IDData.select().where(IDData.identified == True)
+        query = IDGroup.select().where(IDGroup.identified == True)
         for x in query:
             rval.append(
                 [
@@ -1478,8 +1471,8 @@ class PlomDB:
         # return [#IDd, #tot, #marked]
         log.debug("Sending user {} progress data".format(uname))
         return [
-            IDData.select()
-            .where(IDData.user == uref, IDData.identified == True)
+            IDGroup.select()
+            .where(IDGroup.user == uref, IDGroup.identified == True)
             .count(),
             SumData.select()
             .where(SumData.user == uref, SumData.summed == True)
@@ -1497,7 +1490,9 @@ class PlomDB:
         if uref is None:
             return
         with plomdb.atomic():
-            query = IDData.select().where(IDData.user == uref, IDData.status == "out")
+            query = IDGroup.select().where(
+                IDGroup.user == uref, IDGroup.status == "out"
+            )
             for x in query:
                 x.status = "todo"
                 x.user = None
@@ -1533,8 +1528,8 @@ class PlomDB:
     # ------------------
     # Identifier stuff
     # The ID-able tasks have grouptype ="i", group.scanned=True,
-    # The todo id-tasks are iddata.status="todo"
-    # the done id-tasks have iddata.status="done"
+    # The todo id-tasks are IDGroup.status="todo"
+    # the done id-tasks have IDGroup.status="done"
 
     def IDcountAll(self):
         """Count all the records"""
@@ -1551,12 +1546,12 @@ class PlomDB:
         """Count all the ID'd records"""
         try:
             return (
-                IDData.select()
+                IDGroup.select()
                 .join(Group)
-                .where(Group.scanned == True, IDData.identified == True,)
+                .where(Group.scanned == True, IDGroup.identified == True,)
                 .count()
             )
-        except IDData.DoesNotExist:
+        except IDGroup.DoesNotExist:
             return 0
 
     def IDgetNextTask(self):
@@ -1564,12 +1559,12 @@ class PlomDB:
         with plomdb.atomic():
             try:
                 x = (
-                    IDData.select()
+                    IDGroup.select()
                     .join(Group)
-                    .where(IDData.status == "todo", Group.scanned == True,)
+                    .where(IDGroup.status == "todo", Group.scanned == True,)
                     .get()
                 )
-            except IDData.DoesNotExist:
+            except IDGroup.DoesNotExist:
                 log.info("Nothing left on ID to-do pile")
                 return None
 
@@ -1585,7 +1580,7 @@ class PlomDB:
                 tref = Test.get_or_none(Test.testNumber == testNumber)
                 if tref is None:
                     return [False]
-                iref = tref.iddata[0]
+                iref = tref.IDGroup[0]
                 # verify the id-group has been scanned - it should always be scanned.if we get here.
                 if iref.group.scanned == False:
                     return [False]
@@ -1619,7 +1614,7 @@ class PlomDB:
         uref = User.get(name=uname)
         # since user authenticated, this will always return legit ref.
 
-        query = IDData.select().where(IDData.user == uref, IDData.status == "done")
+        query = IDGroup.select().where(IDGroup.user == uref, IDGroup.status == "done")
         idList = []
         for x in query:
             idList.append([x.test.testNumber, x.status, x.studentID, x.studentName])
@@ -1633,7 +1628,7 @@ class PlomDB:
         tref = Test.get_or_none(Test.testNumber == t)
         if tref.scanned == False:
             return [False]
-        iref = tref.iddata[0]
+        iref = tref.IDGroup[0]
         # quick sanity check to make sure task given to user, (or if manager making request)
         if iref.user == uref or uname == "manager":
             pass
@@ -1648,7 +1643,7 @@ class PlomDB:
 
     def IDgetImageList(self, imageNumber):
         rval = {}
-        query = IDData.select()
+        query = IDGroup.select()
         for iref in query:
             # for each iref, check that it is scanned and then grab page.
             gref = iref.group
@@ -1679,7 +1674,7 @@ class PlomDB:
 
             if tref.scanned == False:
                 return
-            iref = tref.iddata[0]
+            iref = tref.IDGroup[0]
             # sanity check that user has task
             if iref.user == uref and iref.status == "out":
                 pass
@@ -1705,7 +1700,7 @@ class PlomDB:
                 tref = Test.get_or_none(Test.testNumber == testNumber)
                 if tref is None:
                     return [False, False]
-                iref = tref.iddata[0]
+                iref = tref.IDGroup[0]
                 # verify the id-group has been scanned - it should always be scanned.if we get here.
                 if iref.group.scanned == False:
                     return [False, False]
@@ -1732,7 +1727,7 @@ class PlomDB:
                         uname, testNumber, censorID(sid), censorName(sname)
                     )
                 )
-        except IDData.DoesNotExist:
+        except IDGroup.DoesNotExist:
             log.error("ID take task - That test number {} not known".format(testNumber))
             return [False, False]
         except IntegrityError:
@@ -1758,7 +1753,7 @@ class PlomDB:
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:
             return [False]
-        iref = IDData.get_or_none(IDData.test == tref, IDData.identified == True,)
+        iref = IDGroup.get_or_none(IDGroup.test == tref, IDGroup.identified == True,)
         if iref is None:
             return [False]
         with plomdb.atomic():
