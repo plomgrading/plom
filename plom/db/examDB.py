@@ -7,10 +7,6 @@ from plom.rules import censorStudentName as censorName
 
 
 log = logging.getLogger("DB")
-# logger = logging.getLogger("peewee")
-# logger.addHandler(logging.StreamHandler())
-# logger.setLevel(logging.DEBUG)
-
 plomdb = SqliteDatabase(None)
 
 ######################################################################
@@ -21,7 +17,6 @@ class BaseModel(Model):
         database = plomdb
 
 
-# a bucket for users
 class User(BaseModel):
     name = CharField(unique=True)
     enabled = BooleanField(default=True)
@@ -29,10 +24,8 @@ class User(BaseModel):
     token = CharField(null=True)  # authentication token
     lastActivity = DateTimeField(null=True)
     lastAction = CharField(null=True)
-    # note that we must have "manger", "scanner", "reviewer" and "HAL" - HAL should never actually log in, but we need a name for who does the automagical stuff
 
 
-# A bucket for page images
 class Image(BaseModel):
     originalName = CharField(null=True)  # can be empty.
     fileName = CharField(null=True)
@@ -47,69 +40,100 @@ class Test(BaseModel):
     scanned = BooleanField(default=False)
     identified = BooleanField(default=False)
     marked = BooleanField(default=False)
-    finished = BooleanField(default=False)
     totalled = BooleanField(default=False)
 
 
 # Data for totalling the marks
 class SumData(BaseModel):
     test = ForeignKeyField(Test, backref="sumdata")
-    user = ForeignKeyField(User, backref="sumdata", null=True)
-    status = CharField(default="")
     sumMark = IntegerField(null=True)
+    status = CharField(default="")
+    user = ForeignKeyField(User, backref="sumdata", null=True)
     time = DateTimeField(null=True)
-    # flags
-    summed = BooleanField(default=False)
 
 
-# group knows its test
-# group status will evolve something like... [ready, out, done]
 class Group(BaseModel):
     test = ForeignKeyField(Test, backref="groups")
     gid = CharField(unique=True)  # must be unique
     groupType = CharField()  # to distinguish between ID, DNM, and Mark groups
-    # flags
-    scanned = BooleanField(default=False)
-    # queue position - to put tasks in some order
-    queuePosition = IntegerField(unique=True)
+    queuePosition = IntegerField(unique=True, null=False)
+    scanned = BooleanField(default=False)  # should get all its tpages
 
 
-# data for the different groups
-# Data for id-group
-class IDData(BaseModel):
-    test = ForeignKeyField(Test, backref="iddata")
-    group = ForeignKeyField(Group, backref="iddata", null=True)
-    status = CharField(default="")
+class IDGroup(BaseModel):
+    test = ForeignKeyField(Test, backref="idgroup")
+    group = ForeignKeyField(Group, backref="idgroup")
     studentID = CharField(unique=True, null=True)
     studentName = CharField(null=True)
-    user = ForeignKeyField(User, backref="iddata", null=True)
+    user = ForeignKeyField(User, backref="idgroup", null=True)
+    status = CharField(default="")
     time = DateTimeField(null=True)
-    # flags
-    identified = BooleanField(default=False)
 
 
-# Data for dnm-group - basically just a placeholder for its pages
-class DNMData(BaseModel):
-    test = ForeignKeyField(Test, backref="dnmdata")
-    group = ForeignKeyField(Group, backref="dnmdata", null=True)
+class DNMGroup(BaseModel):
+    test = ForeignKeyField(Test, backref="dnmgroup")
+    group = ForeignKeyField(Group, backref="dnmgroup")
 
 
-# Data for question-groups
-class QuestionData(BaseModel):
-    test = ForeignKeyField(Test, backref="questiondata")
-    group = ForeignKeyField(Group, backref="questiondata")
-    user = ForeignKeyField(User, backref="questiondata", null=True)
-    questionNumber = IntegerField(null=False)
-    version = IntegerField(null=False)
-    # flags
-    marked = BooleanField(default=False)
+class QGroup(BaseModel):
+    test = ForeignKeyField(Test, backref="qgroup")
+    group = ForeignKeyField(Group, backref="qgroup")
+    question = IntegerField(null=False)
+    version = IntegerField(null=False, default=1)
+    user = ForeignKeyField(User, backref="idgroup", null=True)
 
 
-# so we can have multiple annotations
-# This keeps the annotations that come back from a marker.
-# A single question can have multiple annotations.
+class TPage(BaseModel):  # a test page that knows it tpgv
+    test = ForeignKeyField(Test, backref="tpages")
+    pageNumber = IntegerField(null=False)
+    version = IntegerField(default=1)
+    group = ForeignKeyField(Group, backref="tpages")
+    image = ForeignKeyField(Image, backref="tpages", null=True)
+    scanned = BooleanField(default=False)  # we should get all of them
+
+
+class HWPage(BaseModel):  # a hw page that knows it tqv, but not p.
+    test = ForeignKeyField(Test, backref="hwpages")
+    group = ForeignKeyField(Group, backref="hwpages")
+    order = IntegerField(null=False)
+    version = IntegerField(default=1)  # infer from group
+    image = ForeignKeyField(Image, backref="hwpages")
+
+
+class XPage(BaseModel):  # a page that just knows it t.
+    test = ForeignKeyField(Test, backref="xpages")
+    order = IntegerField(null=False)
+    image = ForeignKeyField(Image, backref="xpages")
+
+
+class UnknownPage(BaseModel):
+    image = ForeignKeyField(Image, backref="upages", null=True)
+
+
+class CollidingPage(BaseModel):
+    tpage = ForeignKeyField(TPage, backref="collisions")
+    image = ForeignKeyField(Image, backref="collisions")
+
+
+class DiscardedPage(BaseModel):
+    image = ForeignKeyField(Image, backref="discards")
+    reason = CharField(null=True)
+
+
+class IDPage(BaseModel):
+    idgroup = ForeignKeyField(IDGroup, backref="idpages")
+    image = ForeignKeyField(Image, backref="idpages")
+    order = IntegerField(null=False)
+
+
+class DNMPage(BaseModel):
+    dnmgroup = ForeignKeyField(DNMGroup, backref="dnmpages")
+    image = ForeignKeyField(Image, backref="dnmpages")
+    order = IntegerField(null=False)
+
+
 class Annotation(BaseModel):
-    qdata = ForeignKeyField(QuestionData, backref="annotations")
+    qgroup = ForeignKeyField(QuestionData, backref="annotations")
     user = ForeignKeyField(User, backref="annotations", null=True)
     status = CharField(default="")
     image = ForeignKeyField(Image, backref="annotations", null=True)
@@ -123,70 +147,10 @@ class Annotation(BaseModel):
     tags = CharField(default="")
 
 
-# Page = submitted page - could be unstructured.
-# Page knows its test and some ordinal
-# it doesn't know its version, since multiple questions could be on same page
-class Page(BaseModel):
-    test = ForeignKeyField(Test, backref="pages")
-    pageNumber = IntegerField(null=False)
-    image = ForeignKeyField(Image, backref="pages")
-
-
-# Pages for each type of group
-class IDPage(BaseModel):
-    page = ForeignKeyField(Page, backref="idpages")
-    iddata = ForeignKeyField(IDData, backref="idpages")
-
-
-class DNMPage(BaseModel):
-    page = ForeignKeyField(Page, backref="dnmpages")
-    dnmdata = ForeignKeyField(IDData, backref="dnmpages")
-
-
 class APage(BaseModel):
     annotation = ForeignKeyField(Annotation, backref="apages")
-    page = ForeignKeyField(Page, backref="apages")
-
-
-# These are for structured uploads. Corresponds to the actual page given to students.
-class TestPage(BaseModel):
-    test = ForeignKeyField(Test, backref="testpages")
-    version = IntegerField(default=1)
-    group = ForeignKeyField(Group, backref="testpages")
-    pid = CharField(unique=True)  # store t*p*
-    pageNumber = IntegerField(null=False)  # corresponds to page on given test/homework.
-    image = ForeignKeyField(Image, backref="testpages", null=True)
-    scanned = BooleanField(default=False)
-
-
-class HWPage(BaseModel):
-    test = ForeignKeyField(Test, backref="hwpages")
-    order = IntegerField(null=False)  # corresponds to order within uploads
-    question = IntegerField(null=True)  # question if we know it.
-    image = ForeignKeyField(Image, backref="hwpages")
-
-
-# Colliding pages should be attached to the page their are duplicating
-# When collision status resolved we can move them about.
-class CollidingPage(BaseModel):
-    tpage = ForeignKeyField(TestPage, backref="collisions")
-    image = ForeignKeyField(Image, backref="collisions")
-
-
-# Unknown pages are basically just the file
-class UnknownPage(BaseModel):
-    image = ForeignKeyField(Image, backref="unknowns")
-
-
-# Discarded pages are basically just the file and a reason
-# reason could be "garbage", "duplicate of tpv-code", ...?
-class DiscardedPage(BaseModel):
-    image = ForeignKeyField(Image, backref="discards")
-    reason = CharField(null=True)
-
-
-# TODO: end of database scheme stuff
-######################################################################
+    image = ForeignKeyField(Image, backref="apages")
+    order = IntegerField(null=False)
 
 
 class PlomDB:
@@ -200,20 +164,26 @@ class PlomDB:
                     User,
                     Image,
                     Test,
-                    Group,
-                    IDData,
+                    ##
                     SumData,
-                    QuestionData,
-                    Annotation,
-                    Page,
-                    IDPage,
-                    DNMPage,
-                    APage,
-                    TestPage,
+                    ##
+                    Group,
+                    IDGroup,
+                    DNMGroup,
+                    QGroup,
+                    ##
+                    TPage,
                     HWPage,
+                    XPage,
                     UnknownPage,
                     CollidingPage,
                     DiscardedPage,
+                    ##
+                    Annotation,
+                    ##
+                    APage,
+                    IDPage,
+                    DNMPage,
                 ]
             )
         log.info("Database initialised.")
@@ -362,22 +332,39 @@ class PlomDB:
         return rval
 
     ########## Test creation stuff ##############
-    def createTest(self, t):
-        try:
-            tref = Test.create(testNumber=t)  # must be unique
-            # also create the sum-mark objects
-            sref = SumData.create(test=tref)
-        except IntegrityError as e:
-            log.error("Create test {} error - {}".format(t, e))
-            return False
-        return True
-
     def nextQueuePosition(self):
         lastPos = Group.select(fn.MAX(Group.queuePosition)).scalar()
         if lastPos is None:
             return 0
         else:
             return lastPos + 1
+
+    def createTest(self, t):
+        try:
+            tref = Test.create(testNumber=t)  # must be unique
+            sref = SumData.create(test=tref)  # also create the sum-data
+        except IntegrityError as e:
+            log.error("Create test {} error - {}".format(t, e))
+            return False
+        return True
+
+    def addTestPages(self, tref, gref, t, pages, v):
+        flag = True
+        with plomdb.atomic():
+            for p in pages:
+                try:
+                    TPage.create(
+                        test=tref,
+                        group=gref,
+                        pageNumber=p,
+                        version=v,
+                        pid="t{}p{}".format(t, p),
+                        scanned=False,
+                    )
+                except IntegrityError as e:
+                    log.error("Adding page {} for test {} error - {}".format(p, t, e))
+                    flag = False
+        return flag
 
     def createIDGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
@@ -485,23 +472,6 @@ class PlomDB:
             return False
 
         return self.addTestPages(tref, gref, t, pages, v)
-
-    def addTestPages(self, tref, gref, t, pages, v):
-        flag = True
-        with plomdb.atomic():
-            for p in pages:
-                try:
-                    TestPage.create(
-                        test=tref,
-                        group=gref,
-                        pageNumber=p,
-                        version=v,
-                        pid="t{}p{}".format(t, p),
-                    )
-                except IntegrityError as e:
-                    log.error("Adding page {} for test {} error - {}".format(p, t, e))
-                    flag = False
-        return flag
 
     def printGroups(self, t):
         tref = Test.get_or_none(testNumber=t)
