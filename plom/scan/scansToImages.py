@@ -154,17 +154,17 @@ def processFileToBitmaps(fname):
             )
 
         ## For testing, randomly make jpegs, sometimes of truly horrid quality
-        if random.uniform(0, 1) < 0.4:
-            outname = os.path.join("scanPNGs", basename + ".jpg")
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            quality = random.choice([4, 94, 94, 94, 94])
-            img.save(outname, "JPEG", quality=quality, optimize=True)
-            # TODO: random reorient half for debugging/testing, uses "exiftool" (Ubuntu: libimage-exiftool-perl)
-            r = random.choice([None, None, None, 3, 6, 8])
-            if r:
-                print("re-orienting randomly {}".format(r))
-                subprocess.check_call(["exiftool", "-overwrite_original", "-Orientation#={}".format(r), outname])
-            continue
+        # if random.uniform(0, 1) < 0.4:
+        #     outname = os.path.join("scanPNGs", basename + ".jpg")
+        #     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        #     quality = random.choice([4, 94, 94, 94, 94])
+        #     img.save(outname, "JPEG", quality=quality, optimize=True)
+        #     # random reorient half for debug/test, uses exiftool (Ubuntu: libimage-exiftool-perl)
+        #     r = random.choice([None, None, None, 3, 6, 8])
+        #     if r:
+        #         print("re-orienting randomly {}".format(r))
+        #         subprocess.check_call(["exiftool", "-overwrite_original", "-Orientation#={}".format(r), outname])
+        #     continue
 
         # TODO: experiment with jpg: generate both and see which is smaller?
         # (But be careful about "dim mult of 16" thing above.)
