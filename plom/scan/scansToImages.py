@@ -251,11 +251,16 @@ def gamma_adjust(fn):
 def normalizeJPEGOrientation(f):
     """Transform image according to its Exif metadata.
 
-    TODO: size must be multiple of 8/16
+    Gives a warning if size not a multiple 16 b/c underlying library
+    just quietly mucks up the bottom/right edge:
     https://github.com/jbaiter/jpegtran-cffi/issues/23
+
+    In Plom, we generally transcode jpeg's that are not multiples of 16.
     """
     im = jpegtran.JPEGImage(f)
     if im.exif_orientation:
+        if im.width % 16 or im.height % 16:
+            warnings.warn('  JPEG image "{}" dims not mult of 16: re-orientations may be lossy'.format(f))
         im2 = im.exif_autotransform()
         print('  normalizing "{}" {}x{} to "{}" {}x{}'.format(im.exif_orientation, im.width, im.height, im2.exif_orientation, im2.width, im2.height))
         im2.save(f)
