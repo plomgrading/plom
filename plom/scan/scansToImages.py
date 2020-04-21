@@ -167,6 +167,7 @@ def processFileToBitmaps(fname):
             continue
 
         # TODO: experiment with jpg: generate both and see which is smaller?
+        # (But be careful about "dim mult of 16" thing above.)
         outname = os.path.join("scanPNGs", basename + ".png")
         pix.writeImage(outname)
 
