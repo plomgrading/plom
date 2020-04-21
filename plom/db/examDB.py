@@ -98,7 +98,7 @@ class DNMData(BaseModel):
 class QuestionData(BaseModel):
     test = ForeignKeyField(Test, backref="questiondata")
     group = ForeignKeyField(Group, backref="questiondata")
-    status = CharField(default="")
+    user = ForeignKeyField(User, backref="questiondata", null=True)
     questionNumber = IntegerField(null=False)
     version = IntegerField(null=False)
     # flags
@@ -110,8 +110,9 @@ class QuestionData(BaseModel):
 # A single question can have multiple annotations.
 class Annotation(BaseModel):
     qdata = ForeignKeyField(QuestionData, backref="annotations")
-    user = ForeignKeyField(User, backref="annotations")
-    image = ForeignKeyField(Image, backref="annotations")
+    user = ForeignKeyField(User, backref="annotations", null=True)
+    status = CharField(default="")
+    image = ForeignKeyField(Image, backref="annotations", null=True)
     edition = IntegerField(null=True)
     # we need to order the annotations - want the latest.
     plomFile = CharField(null=True)
@@ -128,7 +129,6 @@ class Annotation(BaseModel):
 class Page(BaseModel):
     test = ForeignKeyField(Test, backref="pages")
     pageNumber = IntegerField(null=False)
-    pid = CharField(unique=True)  # to ensure uniqueness
     image = ForeignKeyField(Image, backref="pages")
 
 
@@ -148,20 +148,29 @@ class APage(BaseModel):
     page = ForeignKeyField(Page, backref="apages")
 
 
-# Produced page is the actual produced page that is given to students. always structured.
-class ProducedPage(BaseModel):
-    test = ForeignKeyField(Test, backref="prodpages")
-    group = ForeignKeyField(Group, backref="prodpages")
-    pageNumber = IntegerField(null=False)  # corresponds to page on given test/homework.
-    pid = CharField(unique=True)  # to ensure uniqueness
+# These are for structured uploads. Corresponds to the actual page given to students.
+class TestPage(BaseModel):
+    test = ForeignKeyField(Test, backref="testpages")
     version = IntegerField(default=1)
+    group = ForeignKeyField(Group, backref="testpages")
+    pid = CharField(unique=True)  # store t*p*
+    pageNumber = IntegerField(null=False)  # corresponds to page on given test/homework.
+    image = ForeignKeyField(Image, backref="testpages", null=True)
+    scanned = BooleanField(default=False)
+
+
+class HWPage(BaseModel):
+    test = ForeignKeyField(Test, backref="hwpages")
+    order = IntegerField(null=False)  # corresponds to order within uploads
+    question = IntegerField(null=True)  # question if we know it.
+    image = ForeignKeyField(Image, backref="hwpages")
 
 
 # Colliding pages should be attached to the page their are duplicating
 # When collision status resolved we can move them about.
-# class CollidingPage(BaseModel):
-#     page = ForeignKeyField(Page, backref="collisions")
-#     image = ForeignKeyField(Image, backref="collisions")
+class CollidingPage(BaseModel):
+    tpage = ForeignKeyField(TestPage, backref="collisions")
+    image = ForeignKeyField(Image, backref="collisions")
 
 
 # Unknown pages are basically just the file
@@ -174,33 +183,6 @@ class UnknownPage(BaseModel):
 class DiscardedPage(BaseModel):
     image = ForeignKeyField(Image, backref="discards")
     reason = CharField(null=True)
-
-
-###############
-# For unstructured uploads
-# definitely do not use for standard upload-my-test-scan
-
-# class UploadTest(BaseModel):
-#     uploadNumber = IntegerField(unique=True)
-#     testNumber = ForeignKeyField(unique=True, null=True)  # set this when we know it.
-#
-#
-# class UTPage(BaseModel):
-#     uploadNumber = ForeignKeyField(UploadTest, backref="uploadedpages")
-#     position = IntegerField()
-#     image = ForeignKeyField(Image, backref="uploadedpages")
-#
-#
-# class UploadQuestion(BaseModel):
-#     uploadNumber = IntegerField(unique=True)
-#     testNumber = ForeignKeyField(unique=True, null=True)  # set this when we know it.
-#     questionNumber = IntegerField(null=False)
-#
-#
-# class UQPage(BaseModel):
-#     uploadNumber = ForeignKeyField(UploadTest, backref="uploadedpages")
-#     position = IntegerField()
-#     image = ForeignKeyField(Image, backref="uploadedpages")
 
 
 # TODO: end of database scheme stuff
@@ -216,18 +198,21 @@ class PlomDB:
             plomdb.create_tables(
                 [
                     User,
+                    Image,
                     Test,
                     Group,
-                    Page,
                     IDData,
                     SumData,
                     QuestionData,
                     Annotation,
+                    Page,
                     IDPage,
                     DNMPage,
                     APage,
-                    ProducedPage,
+                    TestPage,
+                    HWPage,
                     UnknownPage,
+                    CollidingPage,
                     DiscardedPage,
                 ]
             )
@@ -425,7 +410,7 @@ class PlomDB:
                 )
             )
             return False
-        return self.addProductionPages(tref, gref, t, pages, 1)
+        return self.addTestPages(tref, gref, t, pages, 1)
 
     def createDNMGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
@@ -453,7 +438,7 @@ class PlomDB:
                 )
             )
             return False
-        return self.addProductionPages(tref, gref, t, pages, 1)
+        return self.addTestPages(tref, gref, t, pages, 1)
 
     def createQGroup(self, t, g, v, pages):
         tref = Test.get_or_none(testNumber=t)
@@ -489,17 +474,26 @@ class PlomDB:
                 )
             )
             return False
-        return self.addProductionPages(tref, gref, t, pages, v)
+        try:
+            aref = Annotation.create(qdata=qref, edition=0)
+        except IntegrityError as e:
+            log.error(
+                "Create A - cannot create Annotation {} of question {} {}.".format(
+                    aref, qref, e
+                )
+            )
+            return False
 
-    def addProductionPages(self, tref, gref, t, pages, v):
+        return self.addTestPages(tref, gref, t, pages, v)
+
+    def addTestPages(self, tref, gref, t, pages, v):
         flag = True
         with plomdb.atomic():
             for p in pages:
                 try:
-                    ProducedPage.create(
+                    TestPage.create(
                         test=tref,
                         group=gref,
-                        gid=gref.gid,
                         pageNumber=p,
                         version=v,
                         pid="t{}p{}".format(t, p),
@@ -543,7 +537,7 @@ class PlomDB:
         if tref is None:
             return {}
         else:
-            pvDict = {p.pageNumber: p.version for p in tref.prodpages}
+            pvDict = {p.pageNumber: p.version for p in tref.testpages}
             return pvDict
 
     def produceTest(self, t):
@@ -556,10 +550,6 @@ class PlomDB:
         else:
             # TODO - work out how to make this more efficient? Multiple updates in one op?
             with plomdb.atomic():
-                # for p in tref.pages:
-                # p.save()
-                # for g in tref.groups:
-                # g.save()
                 tref.produced = True
                 tref.save()
             log.info('Test {} is set to "produced"'.format(t))
@@ -811,12 +801,12 @@ class PlomDB:
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return [False, "testError", "Cannot find test {}".format(t)]
-        pref = Page.get_or_none(test=tref, pageNumber=p, version=v)
+        pref = TestPage.get_or_none(test=tref, pageNumber=p, version=v)
         if pref is None:
             return [
                 False,
                 "pageError",
-                "Cannot find page,version {} for test {}".format([p, v], t),
+                "Cannot find testpage,version {} for test {}".format([p, v], t),
             ]
         if pref.scanned:
             # have already loaded an image for this page - so this is actually a duplicate
@@ -834,15 +824,14 @@ class PlomDB:
             return [False, "collision", ["{}".format(pref.originalName), t, p, v]]
         else:  # this is a new page.
             with plomdb.atomic():
-                pref.originalName = oname
-                pref.fileName = nname
-                pref.md5sum = md5
-                pref.scanned = True
+                pref.image = Image.create(
+                    originalName=oname, fileName=nname, md5sum=md5
+                )
                 pref.save()
                 tref.used = True
                 tref.save()
             log.info("Uploaded image {} to tpv = {}.{}.{}".format(oname, t, p, v))
-            self.checkGroupAllUploaded(pref)
+            # self.checkGroupAllUploaded(pref)
             return [True, "success", "Page saved as {}".format(pref.pid)]
 
     def uploadUnknownPage(self, oname, nname, md5):
@@ -1546,8 +1535,8 @@ class PlomDB:
                 x.save()
                 log.info("Reset user {} ID task {}".format(uname, x.group.gid))
         with plomdb.atomic():
-            query = QuestionData.select().where(
-                QuestionData.user == uref, QuestionData.status == "out",
+            query = Annotation.select().where(
+                Annotation.user == uref, Annotation.status == "out",
             )
             for x in query:
                 x.status = "todo"
@@ -1555,7 +1544,11 @@ class PlomDB:
                 x.markingTime = 0
                 x.time = datetime.now()
                 x.save()
-                log.info("Reset user {} question task {}".format(uname, x.group.gid))
+                log.info(
+                    "Reset user {} question-annotation task {}".format(
+                        uname, x.qdata.group.gid
+                    )
+                )
         with plomdb.atomic():
             query = SumData.select().where(
                 SumData.user == uref, SumData.status == "out"
