@@ -47,7 +47,7 @@ def buildAllPapers(spec, dbFilename, named=False):
     examDB = PlomDB(dbFilename)
     makePDFargs = []
     for t in range(1, spec["numberToProduce"] + 1):
-        pv = examDB.getPageVersions(t)
+        pv = examDB.getProducedPageVersions(t)
         if named and t <= spec["numberToName"]:
             d = {"id": students[t][0], "name": students[t][1]}
         else:

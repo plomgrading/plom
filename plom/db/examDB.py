@@ -32,15 +32,6 @@ class User(BaseModel):
     # note that we must have "manger", "scanner", "reviewer" and "HAL" - HAL should never actually log in, but we need a name for who does the automagical stuff
 
 
-# the test contains groups
-# test bools something like
-# produced = we've built the PDF
-# used = we've scanned at least one page
-# scanned = we've fed it to students, scanned it into system.
-# identified = ID-ing is done
-# marked = marking is done
-# finished = we've rebuilt the PDF at the end with coverpages etc etc
-
 # A bucket for page images
 class Image(BaseModel):
     originalName = CharField(null=True)  # can be empty.
@@ -60,6 +51,17 @@ class Test(BaseModel):
     totalled = BooleanField(default=False)
 
 
+# Data for totalling the marks
+class SumData(BaseModel):
+    test = ForeignKeyField(Test, backref="sumdata")
+    user = ForeignKeyField(User, backref="sumdata", null=True)
+    status = CharField(default="")
+    sumMark = IntegerField(null=True)
+    time = DateTimeField(null=True)
+    # flags
+    summed = BooleanField(default=False)
+
+
 # group knows its test
 # group status will evolve something like... [ready, out, done]
 class Group(BaseModel):
@@ -68,35 +70,11 @@ class Group(BaseModel):
     groupType = CharField()  # to distinguish between ID, DNM, and Mark groups
     # flags
     scanned = BooleanField(default=False)
+    # queue position - to put tasks in some order
+    queuePosition = IntegerField(unique=True)
 
 
-# Page = submitted page - could be unstructured.
-# Page knows its test and some ordinal
-# it doesn't know its version, since multiple questions could be on same page
-class Page(BaseModel):
-    test = ForeignKeyField(Test, backref="pages")
-    pageNumber = IntegerField(null=False)
-    pid = CharField(unique=True)  # to ensure uniqueness
-    image = ForeignKeyField(Image, backref="pages")
-
-
-# The SPG is essentially an instance of a page in a group. So if a page appears in several groups - they will be be separate SPGs. While if a group contains several pages they are separate SPGs.
-class SPG(BaseModel):
-    group = ForeignKeyField(Group, backref="spg")
-    page = ForeignKeyField(Page, backref="spg")
-
-
-# Assigned page is the actual produced page that is given to students. always structured.
-class AssignedPage(BaseModel):
-    test = ForeignKeyField(Test, backref="apages")
-    group = ForeignKeyField(Group, backref="apages")
-    pageNumber = IntegerField(null=False)  # corresponds to page on given test/homework.
-    pid = CharField(unique=True)  # to ensure uniqueness
-    version = IntegerField(default=1)
-
-
-##### Data sets for groups
-
+# data for the different groups
 # Data for id-group
 class IDData(BaseModel):
     test = ForeignKeyField(Test, backref="iddata")
@@ -110,15 +88,10 @@ class IDData(BaseModel):
     identified = BooleanField(default=False)
 
 
-# Data for totalling the marks
-class SumData(BaseModel):
-    test = ForeignKeyField(Test, backref="sumdata")
-    user = ForeignKeyField(User, backref="sumdata", null=True)
-    status = CharField(default="")
-    sumMark = IntegerField(null=True)
-    time = DateTimeField(null=True)
-    # flags
-    summed = BooleanField(default=False)
+# Data for dnm-group - basically just a placeholder for its pages
+class DNMData(BaseModel):
+    test = ForeignKeyField(Test, backref="dnmdata")
+    group = ForeignKeyField(Group, backref="dnmdata", null=True)
 
 
 # Data for question-groups
@@ -132,10 +105,11 @@ class QuestionData(BaseModel):
     marked = BooleanField(default=False)
 
 
+# so we can have multiple annotations
 # This keeps the annotations that come back from a marker.
 # A single question can have multiple annotations.
 class Annotation(BaseModel):
-    qd = ForeignKeyField(QuestionData, backref="annotations")
+    qdata = ForeignKeyField(QuestionData, backref="annotations")
     user = ForeignKeyField(User, backref="annotations")
     image = ForeignKeyField(Image, backref="annotations")
     edition = IntegerField(null=True)
@@ -148,15 +122,46 @@ class Annotation(BaseModel):
     tags = CharField(default="")
 
 
-###############
-# For page image uploads
+# Page = submitted page - could be unstructured.
+# Page knows its test and some ordinal
+# it doesn't know its version, since multiple questions could be on same page
+class Page(BaseModel):
+    test = ForeignKeyField(Test, backref="pages")
+    pageNumber = IntegerField(null=False)
+    pid = CharField(unique=True)  # to ensure uniqueness
+    image = ForeignKeyField(Image, backref="pages")
+
+
+# Pages for each type of group
+class IDPage(BaseModel):
+    page = ForeignKeyField(Page, backref="idpages")
+    iddata = ForeignKeyField(IDData, backref="idpages")
+
+
+class DNMPage(BaseModel):
+    page = ForeignKeyField(Page, backref="dnmpages")
+    dnmdata = ForeignKeyField(IDData, backref="dnmpages")
+
+
+class APage(BaseModel):
+    annotation = ForeignKeyField(Annotation, backref="apages")
+    page = ForeignKeyField(Page, backref="apages")
+
+
+# Produced page is the actual produced page that is given to students. always structured.
+class ProducedPage(BaseModel):
+    test = ForeignKeyField(Test, backref="prodpages")
+    group = ForeignKeyField(Group, backref="prodpages")
+    pageNumber = IntegerField(null=False)  # corresponds to page on given test/homework.
+    pid = CharField(unique=True)  # to ensure uniqueness
+    version = IntegerField(default=1)
 
 
 # Colliding pages should be attached to the page their are duplicating
 # When collision status resolved we can move them about.
-class CollidingPage(BaseModel):
-    page = ForeignKeyField(Page, backref="collisions")
-    image = ForeignKeyField(Image, backref="collisions")
+# class CollidingPage(BaseModel):
+#     page = ForeignKeyField(Page, backref="collisions")
+#     image = ForeignKeyField(Image, backref="collisions")
 
 
 # Unknown pages are basically just the file
@@ -175,16 +180,27 @@ class DiscardedPage(BaseModel):
 # For unstructured uploads
 # definitely do not use for standard upload-my-test-scan
 
-
-class UploadBatch(BaseModel):
-    uploadNumber = IntegerField(unique=True)
-    testNumber = ForeignKeyField(unique=True, null=True)  # set this when we know it.
-
-
-class UploadedPage(BaseModel):
-    uploadNumber = ForeignKeyField(UploadBatch, backref="uploadedpages")
-    position = IntegerField()
-    image = ForeignKeyField(Image, backref="uploadedpages")
+# class UploadTest(BaseModel):
+#     uploadNumber = IntegerField(unique=True)
+#     testNumber = ForeignKeyField(unique=True, null=True)  # set this when we know it.
+#
+#
+# class UTPage(BaseModel):
+#     uploadNumber = ForeignKeyField(UploadTest, backref="uploadedpages")
+#     position = IntegerField()
+#     image = ForeignKeyField(Image, backref="uploadedpages")
+#
+#
+# class UploadQuestion(BaseModel):
+#     uploadNumber = IntegerField(unique=True)
+#     testNumber = ForeignKeyField(unique=True, null=True)  # set this when we know it.
+#     questionNumber = IntegerField(null=False)
+#
+#
+# class UQPage(BaseModel):
+#     uploadNumber = ForeignKeyField(UploadTest, backref="uploadedpages")
+#     position = IntegerField()
+#     image = ForeignKeyField(Image, backref="uploadedpages")
 
 
 # TODO: end of database scheme stuff
@@ -203,14 +219,15 @@ class PlomDB:
                     Test,
                     Group,
                     Page,
-                    SPG,
-                    AssignedPage,
                     IDData,
                     SumData,
                     QuestionData,
                     Annotation,
+                    IDPage,
+                    DNMPage,
+                    APage,
+                    ProducedPage,
                     UnknownPage,
-                    CollidingPage,
                     DiscardedPage,
                 ]
             )
@@ -359,7 +376,7 @@ class PlomDB:
             rval[uref.name] = val + self.RgetUserFullProgress(uref.name)
         return rval
 
-    ########## Test stuff ##############
+    ########## Test creation stuff ##############
     def createTest(self, t):
         try:
             tref = Test.create(testNumber=t)  # must be unique
@@ -370,35 +387,28 @@ class PlomDB:
             return False
         return True
 
-    def addPages(self, tref, gref, t, pages, v):
-        flag = True
-        with plomdb.atomic():
-            for p in pages:
-                try:
-                    Page.create(
-                        test=tref,
-                        group=gref,
-                        gid=gref.gid,
-                        pageNumber=p,
-                        version=v,
-                        pid="t{}p{}".format(t, p),
-                        originalName="",
-                        fileName="",
-                    )
-                except IntegrityError as e:
-                    log.error("Adding page {} for test {} error - {}".format(p, t, e))
-                    flag = False
-        return flag
+    def nextQueuePosition(self):
+        lastPos = Group.select(fn.MAX(Group.queuePosition)).scalar()
+        if lastPos is None:
+            return 0
+        else:
+            return lastPos + 1
 
     def createIDGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
+
         if tref is None:
             log.warning("Create ID - No test with number {}".format(t))
             return False
 
         gid = "i{}".format(str(t).zfill(4))
         try:
-            gref = Group.create(test=tref, gid=gid, groupType="i")  # must be unique
+            gref = Group.create(
+                test=tref,
+                gid=gid,
+                groupType="i",
+                queuePosition=self.nextQueuePosition(),
+            )  # must be unique
         except IntegrityError as e:
             log.error(
                 "Create ID - cannot create group {} of test {} error - {}".format(
@@ -415,7 +425,7 @@ class PlomDB:
                 )
             )
             return False
-        return self.addPages(tref, gref, t, pages, 1)
+        return self.addProductionPages(tref, gref, t, pages, 1)
 
     def createDNMGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
@@ -428,7 +438,13 @@ class PlomDB:
         try:
             # A DNM group may have 0 pages, in that case mark it as scanned and set status = "complete"
             sc = True if len(pages) == 0 else False
-            gref = Group.create(test=tref, gid=gid, groupType="d", scanned=sc)
+            gref = Group.create(
+                test=tref,
+                gid=gid,
+                groupType="d",
+                scanned=sc,
+                queuePosition=self.nextQueuePosition(),
+            )
 
         except IntegrityError as e:
             log.error(
@@ -437,7 +453,7 @@ class PlomDB:
                 )
             )
             return False
-        return self.addPages(tref, gref, t, pages, 1)
+        return self.addProductionPages(tref, gref, t, pages, 1)
 
     def createQGroup(self, t, g, v, pages):
         tref = Test.get_or_none(testNumber=t)
@@ -448,7 +464,13 @@ class PlomDB:
         gid = "m{}g{}".format(str(t).zfill(4), g)
         # make the mgroup
         try:
-            gref = Group.create(test=tref, gid=gid, groupType="m", version=v)
+            gref = Group.create(
+                test=tref,
+                gid=gid,
+                groupType="m",
+                version=v,
+                queuePosition=self.nextQueuePosition(),
+            )
         except IntegrityError as e:
             log.error(
                 "Create Q - cannot create group {} of Test {} error - {}".format(
@@ -467,7 +489,25 @@ class PlomDB:
                 )
             )
             return False
-        return self.addPages(tref, gref, t, pages, v)
+        return self.addProductionPages(tref, gref, t, pages, v)
+
+    def addProductionPages(self, tref, gref, t, pages, v):
+        flag = True
+        with plomdb.atomic():
+            for p in pages:
+                try:
+                    ProducedPage.create(
+                        test=tref,
+                        group=gref,
+                        gid=gref.gid,
+                        pageNumber=p,
+                        version=v,
+                        pid="t{}p{}".format(t, p),
+                    )
+                except IntegrityError as e:
+                    log.error("Adding page {} for test {} error - {}".format(p, t, e))
+                    flag = False
+        return flag
 
     def printGroups(self, t):
         tref = Test.get_or_none(testNumber=t)
@@ -491,23 +531,23 @@ class PlomDB:
             for p in x.pages.order_by(Page.pageNumber):
                 print("\t", [p.pageNumber, p.version])
 
-    def printPagesByTest(self, t):
+    def printProducedPagesByTest(self, t):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return
-        for p in tref.pages.order_by(Page.pageNumber):
+        for p in tref.prodpages.order_by(ProducedPage.pageNumber):
             print(p.pageNumber, p.version, p.group.gid)
 
-    def getPageVersions(self, t):
+    def getProducedPageVersions(self, t):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return {}
         else:
-            pvDict = {p.pageNumber: p.version for p in tref.pages}
+            pvDict = {p.pageNumber: p.version for p in tref.prodpages}
             return pvDict
 
     def produceTest(self, t):
-        # After creating the test (003 script) we'll turn the spec'd papers into PDFs
+        # After creating the test (plom-build) we'll turn the spec'd papers into PDFs
         # we'll refer to those as "produced"
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
@@ -516,10 +556,10 @@ class PlomDB:
         else:
             # TODO - work out how to make this more efficient? Multiple updates in one op?
             with plomdb.atomic():
-                for p in tref.pages:
-                    p.save()
-                for g in tref.groups:
-                    g.save()
+                # for p in tref.pages:
+                # p.save()
+                # for g in tref.groups:
+                # g.save()
                 tref.produced = True
                 tref.save()
             log.info('Test {} is set to "produced"'.format(t))
