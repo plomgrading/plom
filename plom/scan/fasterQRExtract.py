@@ -6,10 +6,13 @@ __license__ = "AGPL-3.0-or-later"
 
 import json
 import os
-from pyzbar.pyzbar import decode
-from PIL import Image
 import subprocess
 import sys
+
+from pyzbar.pyzbar import decode
+from PIL import Image
+
+from plom.scan import rotateBitmap
 
 
 def findCorner(qr, dim):
@@ -54,7 +57,7 @@ def QRextract(imgName):
     cmd = ["identify", "-format", "%[fx:w/h]", imgName]
     ratio = subprocess.check_output(cmd).decode().rstrip()
     if float(ratio) > 1:  # landscape
-        subprocess.check_call(["mogrify", "-quiet", "-rotate", "90", imgName])
+        rotateBitmap(imgName, 90)
 
     cornerQR = {"NW": [], "NE": [], "SW": [], "SE": []}
 

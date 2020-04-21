@@ -19,6 +19,7 @@ import toml
 from tqdm import tqdm
 import fitz
 from PIL import Image
+import jpegtran
 
 from plom import PlomImageExtWhitelist
 from plom import ScenePixelHeight
@@ -115,7 +116,19 @@ def processFileToBitmaps(fname):
                         basename, d["ext"], d["width"], d["height"]
                     )
                 )
-                if d["ext"] in PlomImageExtWhitelist:
+                if d["ext"].lower() in PlomImageExtWhitelist:
+                    converttopng = False
+                    # Bail on jpeg if dimensions are not multiples of 16.
+                    # (could relax: iMCU can also be 8x8, 16x8, 8x16: see PIL .layer)
+                    if d["ext"].lower() in ("jpeg", "jpg") and not (d["width"] % 16 == 0 and d["height"] % 16 == 0):
+                        converttopng = True
+                        print("  JPEG dim not mult. of 16; transcoding to PNG to avoid lossy transforms")
+                        # TODO: we know its jpeg, could use PIL instead of `convert` below
+                else:
+                    converttopng = True
+                    print("  {} format not whitelisted; transcoding to PNG".format(d["ext"]))
+
+                if not converttopng:
                     outname = os.path.join("scanPNGs", basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
@@ -124,7 +137,6 @@ def processFileToBitmaps(fname):
                     with tempfile.NamedTemporaryFile() as g:
                         with open(g.name, "wb") as f:
                             f.write(d["image"])
-                        print("  Cowardly transcoding to png (TODO)")
                         subprocess.check_call(["convert", g.name, outname])
                 continue
 
@@ -140,15 +152,22 @@ def processFileToBitmaps(fname):
                     pix.height, ScenePixelHeight
                 )
             )
+
         ## For testing, randomly make jpegs, sometimes of truly horrid quality
         # if random.uniform(0, 1) < 0.4:
         #     outname = os.path.join("scanPNGs", basename + ".jpg")
         #     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
         #     quality = random.choice([4, 94, 94, 94, 94])
         #     img.save(outname, "JPEG", quality=quality, optimize=True)
-        #     return
+        #     # random reorient half for debug/test, uses exiftool (Ubuntu: libimage-exiftool-perl)
+        #     r = random.choice([None, None, None, 3, 6, 8])
+        #     if r:
+        #         print("re-orienting randomly {}".format(r))
+        #         subprocess.check_call(["exiftool", "-overwrite_original", "-Orientation#={}".format(r), outname])
+        #     continue
 
         # TODO: experiment with jpg: generate both and see which is smaller?
+        # (But be careful about "dim mult of 16" thing above.)
         outname = os.path.join("scanPNGs", basename + ".png")
         pix.writeImage(outname)
 
@@ -229,6 +248,24 @@ def gamma_adjust(fn):
     )
 
 
+def normalizeJPEGOrientation(f):
+    """Transform image according to its Exif metadata.
+
+    Gives a warning if size not a multiple 16 b/c underlying library
+    just quietly mucks up the bottom/right edge:
+    https://github.com/jbaiter/jpegtran-cffi/issues/23
+
+    In Plom, we generally transcode jpeg's that are not multiples of 16.
+    """
+    im = jpegtran.JPEGImage(f)
+    if im.exif_orientation:
+        if im.width % 16 or im.height % 16:
+            warnings.warn('  JPEG image "{}" dims not mult of 16: re-orientations may be lossy'.format(f))
+        im2 = im.exif_autotransform()
+        print('  normalizing "{}" {}x{} to "{}" {}x{}'.format(im.exif_orientation, im.width, im.height, im2.exif_orientation, im2.width, im2.height))
+        im2.save(f)
+
+
 def processScans(fname):
     """Process file into bitmap pageimages and archive the pdf.
 
@@ -254,6 +291,13 @@ def processScans(fname):
     processFileToBitmaps(fname)
     archivePDF(fname)
     os.chdir("scanPNGs")
+
+    print("Normalizing jpeg orientation from Exif metadata")
+    stuff = list(glob.glob("*.jpg"))
+    stuff.extend(glob.glob("*.jpeg"))
+    N = len(stuff)
+    with Pool() as p:
+        r = list(tqdm(p.imap_unordered(normalizeJPEGOrientation, stuff), total=N))
 
     # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
     print("Gamma shift the PNG images")

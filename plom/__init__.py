@@ -16,7 +16,7 @@ from .version import __version__
 Plom_API_Version = "12"  # updated for bringing user-functions into API
 Default_Port = 41984
 
-# Image types we expect the client to be able to handle
+# Image types we expect the client to be able to handle, in lowercase
 # TODO: think about JBIG, etc: other stuff that commonly lives in PDF
 PlomImageExtWhitelist = ("png", "jpg", "jpeg")
 
