@@ -164,7 +164,7 @@ def processFileToBitmaps(fname):
             if r:
                 print("re-orienting randomly {}".format(r))
                 subprocess.check_call(["exiftool", "-overwrite_original", "-Orientation#={}".format(r), outname])
-            return
+            continue
 
         # TODO: experiment with jpg: generate both and see which is smaller?
         outname = os.path.join("scanPNGs", basename + ".png")
