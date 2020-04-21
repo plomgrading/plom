@@ -133,7 +133,7 @@ class DNMPage(BaseModel):
 
 
 class Annotation(BaseModel):
-    qgroup = ForeignKeyField(QuestionData, backref="annotations")
+    qgroup = ForeignKeyField(QGroup, backref="annotations")
     user = ForeignKeyField(User, backref="annotations", null=True)
     status = CharField(default="")
     image = ForeignKeyField(Image, backref="annotations", null=True)
@@ -375,7 +375,7 @@ class PlomDB:
             log.warning("Create IDGroup {} - No test with number {}".format(type, t))
             return False
         # make the Group
-        gid = "i{}".format(type, str(t).zfill(4))
+        gid = "i{}".format(str(t).zfill(4))
         try:
             gref = Group.create(
                 test=tref,
@@ -383,7 +383,6 @@ class PlomDB:
                 groupType=type,
                 queuePosition=self.nextQueuePosition(),
             )  # must be unique
-            return True, tref, gref
         except IntegrityError as e:
             log.error(
                 "Create ID - cannot create Group {} of test {} error - {}".format(
@@ -463,53 +462,52 @@ class PlomDB:
             )
             return False
         try:
-            qref = QuestionData.create(
-                test=tref, group=gref, questionNumber=g, version=v
-            )
+            qref = QGroup.create(test=tref, group=gref, question=g, version=v)
         except IntegrityError as e:
             log.error(
-                "Create Q - cannot create QuestionData {} of question {} error - {}.".format(
+                "Create Q - cannot create QGroup {} of question {} error - {}.".format(
                     qref, gid, e
                 )
             )
             return False
         return self.addTestPages(tref, gref, t, pages, v)
 
-    def printGroups(self, t):
-        tref = Test.get_or_none(testNumber=t)
-        if tref is None:
-            return
-        for x in tref.groups:
-            print(x.gid, x.groupType)
-            if x.groupType == "i":
-                idata = x.iddata[0]
-                print("\t", idata.studentID, idata.studentName)
-            elif x.groupType == "m":
-                qdata = x.questiondata[0]
-                print(
-                    "\t",
-                    qdata.questionNumber,
-                    qdata.version,
-                    qdata.status,
-                    qdata.mark,
-                    qdata.annotatedFile,
-                )
-            for p in x.pages.order_by(Page.pageNumber):
-                print("\t", [p.pageNumber, p.version])
-
-    def printProducedPagesByTest(self, t):
-        tref = Test.get_or_none(testNumber=t)
-        if tref is None:
-            return
-        for p in tref.prodpages.order_by(ProducedPage.pageNumber):
-            print(p.pageNumber, p.version, p.group.gid)
+    # def printGroups(self, t):
+    #     tref = Test.get_or_none(testNumber=t)
+    #     if tref is None:
+    #         return
+    #     for x in tref.groups:
+    #         print(x.gid, x.groupType)
+    #         if x.groupType == "i":
+    #             idata = x.iddata[0]
+    #             print("\t", idata.studentID, idata.studentName)
+    #         elif x.groupType == "m":
+    #             qdata = x.questiondata[0]
+    #             print(
+    #                 "\t",
+    #                 qdata.questionNumber,
+    #                 qdata.version,
+    #                 qdata.status,
+    #                 qdata.mark,
+    #                 qdata.annotatedFile,
+    #             )
+    #         for p in x.pages.order_by(Page.pageNumber):
+    #             print("\t", [p.pageNumber, p.version])
+    #
+    # def printProducedPagesByTest(self, t):
+    #     tref = Test.get_or_none(testNumber=t)
+    #     if tref is None:
+    #         return
+    #     for p in tref.prodpages.order_by(ProducedPage.pageNumber):
+    #         print(p.pageNumber, p.version, p.group.gid)
 
     def getProducedPageVersions(self, t):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return {}
         else:
-            pvDict = {p.pageNumber: p.version for p in tref.testpages}
+            pvDict = {p.pageNumber: p.version for p in tref.tpages}
+            print("PVDICT = ", pvDict)
             return pvDict
 
     def produceTest(self, t):
