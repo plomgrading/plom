@@ -349,6 +349,9 @@ class PlomDB:
         return True
 
     def addTestPages(self, tref, gref, t, pages, v):
+        """
+        For initial construction of test-pages for a test. We use these so we know what structured pages we should have.
+        """
         flag = True
         with plomdb.atomic():
             for p in pages:
@@ -368,36 +371,37 @@ class PlomDB:
 
     def createIDGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
-
         if tref is None:
-            log.warning("Create ID - No test with number {}".format(t))
+            log.warning("Create IDGroup {} - No test with number {}".format(type, t))
             return False
-
-        gid = "i{}".format(str(t).zfill(4))
+        # make the Group
+        gid = "i{}".format(type, str(t).zfill(4))
         try:
             gref = Group.create(
                 test=tref,
                 gid=gid,
-                groupType="i",
+                groupType=type,
                 queuePosition=self.nextQueuePosition(),
             )  # must be unique
+            return True, tref, gref
         except IntegrityError as e:
             log.error(
-                "Create ID - cannot create group {} of test {} error - {}".format(
+                "Create ID - cannot create Group {} of test {} error - {}".format(
                     gid, t, e
                 )
             )
             return False
+        # make the IDGroup
         try:
-            iref = IDData.create(test=tref, group=gref)
+            iref = IDGroup.create(test=tref, group=gref)
         except IntegrityError as e:
             log.error(
-                "Create ID - cannot create IDData {} of group {} error - {}.".format(
+                "Create ID - cannot create IDGroup {} of group {} error - {}.".format(
                     qref, gref, e
                 )
             )
             return False
-        return self.addTestPages(tref, gref, t, pages, 1)
+        return self.addTestPages(tref, gref, t, pages, 1)  # always version 1.
 
     def createDNMGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
@@ -417,11 +421,19 @@ class PlomDB:
                 scanned=sc,
                 queuePosition=self.nextQueuePosition(),
             )
-
         except IntegrityError as e:
             log.error(
                 "Create DNM - cannot make Group {} of Test {} error - {}".format(
                     gid, t, e
+                )
+            )
+            return False
+        try:
+            dref = DNMGroup.create(test=tref, group=gref)
+        except IntegrityError as e:
+            log.error(
+                "Create DNM - cannot create DNMGroup {} of group {} error - {}.".format(
+                    dref, gref, e
                 )
             )
             return False
@@ -433,13 +445,13 @@ class PlomDB:
             log.warning("Create Q - No test with number {}".format(t))
             return False
 
-        gid = "m{}g{}".format(str(t).zfill(4), g)
-        # make the mgroup
+        gid = "q{}g{}".format(str(t).zfill(4), g)
+        # make the qgroup
         try:
             gref = Group.create(
                 test=tref,
                 gid=gid,
-                groupType="m",
+                groupType="q",
                 version=v,
                 queuePosition=self.nextQueuePosition(),
             )
@@ -461,16 +473,6 @@ class PlomDB:
                 )
             )
             return False
-        try:
-            aref = Annotation.create(qdata=qref, edition=0)
-        except IntegrityError as e:
-            log.error(
-                "Create A - cannot create Annotation {} of question {} {}.".format(
-                    aref, qref, e
-                )
-            )
-            return False
-
         return self.addTestPages(tref, gref, t, pages, v)
 
     def printGroups(self, t):
