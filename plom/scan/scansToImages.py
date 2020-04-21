@@ -116,7 +116,7 @@ def processFileToBitmaps(fname):
                         basename, d["ext"], d["width"], d["height"]
                     )
                 )
-                if d["ext"] in PlomImageExtWhitelist:
+                if d["ext"].lower() in PlomImageExtWhitelist:
                     outname = os.path.join("scanPNGs", basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
