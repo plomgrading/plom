@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../qtCreatorFiles/ui_annotator_lhm.ui'
+# Form implementation generated from reading ui file 'qtCreatorFiles/ui_annotator_lhm.ui'
 #
-# Created by: PyQt5 UI code generator 5.12.3
+# Created by: PyQt5 UI code generator 5.13.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -189,9 +189,9 @@ class Ui_annotator_lhm(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
-        self.pushButton = QtWidgets.QPushButton(self.hideableBox)
-        self.pushButton.setObjectName("pushButton")
-        self.horizontalLayout.addWidget(self.pushButton)
+        self.noAnswerButton = QtWidgets.QPushButton(self.hideableBox)
+        self.noAnswerButton.setObjectName("noAnswerButton")
+        self.horizontalLayout.addWidget(self.noAnswerButton)
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem1)
         self.verticalLayout.addLayout(self.horizontalLayout)
@@ -346,7 +346,7 @@ class Ui_annotator_lhm(object):
         self.keyHelpButton.setText(_translate("annotator_lhm", "Key help"))
         self.viewButton.setToolTip(_translate("annotator_lhm", "Show entire paper in new window"))
         self.viewButton.setText(_translate("annotator_lhm", "View all"))
-        self.pushButton.setText(_translate("annotator_lhm", "No answer given"))
+        self.noAnswerButton.setText(_translate("annotator_lhm", "No answer given"))
         self.finishedButton.setToolTip(_translate("annotator_lhm", "Save and move to the next paper"))
         self.finishedButton.setText(_translate("annotator_lhm", "Next"))
         self.finishNoRelaunchButton.setToolTip(_translate("annotator_lhm", "Save and return to marker window"))
