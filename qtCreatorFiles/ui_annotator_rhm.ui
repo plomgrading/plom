@@ -51,7 +51,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QFrame" name="frame_3">
+       <widget class="QFrame" name="frame_1">
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
