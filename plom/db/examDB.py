@@ -61,26 +61,27 @@ class Group(BaseModel):
 
 
 class IDGroup(BaseModel):
-    test = ForeignKeyField(Test, backref="idgroup")
-    group = ForeignKeyField(Group, backref="idgroup")
+    test = ForeignKeyField(Test, backref="idgroups")
+    group = ForeignKeyField(Group, backref="idgroups")
     studentID = CharField(unique=True, null=True)
     studentName = CharField(null=True)
-    user = ForeignKeyField(User, backref="idgroup", null=True)
+    user = ForeignKeyField(User, backref="idgroups", null=True)
     status = CharField(default="")
     time = DateTimeField(null=True)
+    identified = BooleanField(default=False)
 
 
 class DNMGroup(BaseModel):
-    test = ForeignKeyField(Test, backref="dnmgroup")
-    group = ForeignKeyField(Group, backref="dnmgroup")
+    test = ForeignKeyField(Test, backref="dnmgroups")
+    group = ForeignKeyField(Group, backref="dnmgroups")
 
 
 class QGroup(BaseModel):
-    test = ForeignKeyField(Test, backref="qgroup")
-    group = ForeignKeyField(Group, backref="qgroup")
+    test = ForeignKeyField(Test, backref="qgroups")
+    group = ForeignKeyField(Group, backref="qgroups")
     question = IntegerField(null=False)
     version = IntegerField(null=False, default=1)
-    user = ForeignKeyField(User, backref="idgroup", null=True)
+    user = ForeignKeyField(User, backref="qgroups", null=True)
 
 
 class TPage(BaseModel):  # a test page that knows it tpgv
@@ -375,7 +376,7 @@ class PlomDB:
             gref = Group.create(
                 test=tref,
                 gid=gid,
-                groupType=type,
+                groupType="i",
                 queuePosition=self.nextQueuePosition(),
             )  # must be unique
         except IntegrityError as e:
@@ -570,7 +571,7 @@ class PlomDB:
     def setGroupReady(self, gref):
         log.debug("All of group {} is scanned".format(gref.gid))
         if gref.groupType == "i":
-            iref = gref.IDGroup[0]
+            iref = gref.idgroups[0]
             # check if group already identified - can happen if printed tests with names
             if iref.status == "done":
                 log.info("Group {} is already identified.".format(gref.gid))
@@ -585,9 +586,9 @@ class PlomDB:
                     gref.gid
                 )
             )
-        elif gref.groupType == "m":
+        elif gref.groupType == "q":
             log.info("Group {} is ready to be marked.".format(gref.gid))
-            qref = gref.questiondata[0]
+            qref = gref.qgroups[0]
             qref.status = "todo"
             qref.save()
         else:
@@ -596,7 +597,7 @@ class PlomDB:
     def checkGroupAllUploaded(self, pref):
         gref = pref.group
         sflag = True
-        for p in gref.pages:
+        for p in gref.tpages:
             if p.scanned == False:
                 sflag = False
                 break
@@ -786,16 +787,17 @@ class PlomDB:
             # At present just return "collision" - in future we need to check if this is a new collision
             # or if it is the duplicate of an existing collision.
             return [False, "collision", ["{}".format(pref.originalName), t, p, v]]
-        else:  # this is a new page.
+        else:  # this is a new testpage. create an image and link it to the testpage
             with plomdb.atomic():
                 pref.image = Image.create(
                     originalName=oname, fileName=nname, md5sum=md5
                 )
+                pref.scanned = True
                 pref.save()
                 tref.used = True
                 tref.save()
             log.info("Uploaded image {} to tpv = {}.{}.{}".format(oname, t, p, v))
-            # self.checkGroupAllUploaded(pref)
+            self.checkGroupAllUploaded(pref)
             return [True, "success", "Page saved as tpv = {}.{}.{}".format(t, p, v)]
 
     def uploadUnknownPage(self, oname, nname, md5):
