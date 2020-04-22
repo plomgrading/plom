@@ -90,7 +90,7 @@ class Ui_annotator_lhm(object):
         self.frame_1.setFrameShadow(QtWidgets.QFrame.Plain)
         self.frame_1.setObjectName("frame_1")
         self.modeLayout = QtWidgets.QHBoxLayout(self.frame_1)
-        self.modeLayout.setContentsMargins(3, 3, 3, 3)
+        self.modeLayout.setContentsMargins(12, 3, 12, 3)
         self.modeLayout.setSpacing(3)
         self.modeLayout.setObjectName("modeLayout")
         self.markLabel = QtWidgets.QLabel(self.frame_1)
