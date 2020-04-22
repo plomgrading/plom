@@ -203,9 +203,9 @@
         <property name="frameShadow">
          <enum>QFrame::Plain</enum>
         </property>
-        <layout class="QHBoxLayout" name="modeLayout" stretch="0,1,0">
+        <layout class="QHBoxLayout" name="modeLayout">
          <property name="spacing">
-          <number>6</number>
+          <number>3</number>
          </property>
          <property name="leftMargin">
           <number>3</number>
@@ -235,7 +235,7 @@
             </size>
            </property>
            <property name="text">
-            <string>mode: comment</string>
+            <string>&lt;mode&gt;</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -540,6 +540,18 @@
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QHBoxLayout" name="buttonsLayout">
+         <property name="leftMargin">
+          <number>12</number>
+         </property>
+         <property name="topMargin">
+          <number>3</number>
+         </property>
+         <property name="rightMargin">
+          <number>12</number>
+         </property>
+         <property name="bottomMargin">
+          <number>1</number>
+         </property>
          <item>
           <widget class="QPushButton" name="keyHelpButton">
            <property name="sizePolicy">
@@ -591,13 +603,13 @@
           <number>3</number>
          </property>
          <property name="topMargin">
-          <number>3</number>
+          <number>1</number>
          </property>
          <property name="rightMargin">
           <number>3</number>
          </property>
          <property name="bottomMargin">
-          <number>3</number>
+          <number>1</number>
          </property>
          <property name="spacing">
           <number>3</number>
@@ -672,7 +684,7 @@
           <number>3</number>
          </property>
          <property name="topMargin">
-          <number>3</number>
+          <number>1</number>
          </property>
          <property name="rightMargin">
           <number>3</number>
@@ -708,7 +720,7 @@
           <number>3</number>
          </property>
          <property name="bottomMargin">
-          <number>3</number>
+          <number>6</number>
          </property>
          <item>
           <widget class="QPushButton" name="finishedButton">

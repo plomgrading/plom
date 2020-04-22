@@ -228,7 +228,7 @@ class Ui_annotator_rhm(object):
         self.verticalLayout.addWidget(self.frame_2)
         self.horizontalLayout.addWidget(self.hideableBox)
         self.revealBox0 = QtWidgets.QFrame(annotator_rhm)
-        self.revealBox0.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.revealBox0.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.revealBox0.setFrameShadow(QtWidgets.QFrame.Raised)
         self.revealBox0.setObjectName("revealBox0")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.revealBox0)
