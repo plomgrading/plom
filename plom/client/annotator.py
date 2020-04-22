@@ -59,7 +59,7 @@ from .useful_classes import (
     NoAnswerBox,
 )
 from .comment_list import CommentWidget
-from .origscanviewer import OriginalScansViewer
+from .origscanviewer import OriginalScansViewer, RearrangementViewer
 from .uiFiles.ui_annotator_lhm import Ui_annotator_lhm
 from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm
 
@@ -463,7 +463,9 @@ class Annotator(QWidget):
             )
         # if we haven't built a testview, built it now
         if self.testView is None:
-            self.testView = OriginalScansViewer(self, testNumber, pageNames, self.testViewFiles)
+            self.testView = OriginalScansViewer(
+                self, testNumber, pageNames, self.testViewFiles
+            )
         else:
             # must have closed it, so re-show it.
             self.testView.show()
