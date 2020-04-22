@@ -52,12 +52,6 @@
       </property>
       <item>
        <widget class="QFrame" name="frame_3">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -82,12 +76,6 @@
          </property>
          <item alignment="Qt::AlignRight">
           <widget class="QPushButton" name="hideButton">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>1</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
            <property name="text">
             <string>Compact</string>
            </property>
@@ -95,12 +83,6 @@
          </item>
          <item alignment="Qt::AlignHCenter">
           <widget class="QLabel" name="modeLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-             <horstretch>1</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
            <property name="text">
             <string notr="true">&lt;mode&gt;</string>
            </property>
@@ -111,14 +93,8 @@
          </item>
          <item alignment="Qt::AlignRight">
           <widget class="QLabel" name="markLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
            <property name="text">
-            <string>kkk out of nnn</string>
+            <string>kk out of nn</string>
            </property>
           </widget>
          </item>
@@ -458,14 +434,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="zoomCB">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-          </widget>
+          <widget class="QComboBox" name="zoomCB"/>
          </item>
         </layout>
        </widget>
