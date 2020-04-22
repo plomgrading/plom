@@ -475,7 +475,7 @@ class PlomDB:
     #     for x in tref.groups:
     #         print(x.gid, x.groupType)
     #         if x.groupType == "i":
-    #             idata = x.IDGroup[0]
+    #             idata = x.idgroups[0]
     #             print("\t", idata.studentID, idata.studentName)
     #         elif x.groupType == "m":
     #             qdata = x.questiondata[0]
@@ -695,7 +695,7 @@ class PlomDB:
         return []
 
     def invalidateIDGroup(self, tref, gref):
-        iref = gref.IDGroup[0]
+        iref = gref.idgroups[0]
         with plomdb.atomic():
             tref.scanned = False
             tref.identified = False
@@ -1302,7 +1302,7 @@ class PlomDB:
             "totalled": tref.totalled,
         }
         if tref.identified:
-            iref = tref.IDGroup[0]
+            iref = tref.idgroups[0]
             rval["sid"] = iref.studentID
             rval["sname"] = iref.studentName
             rval["iwho"] = iref.user.name
@@ -1332,7 +1332,7 @@ class PlomDB:
                 "sid": "",
                 "sname": "",
             }
-            iref = tref.IDGroup[0]
+            iref = tref.idgroups[0]
             if tref.identified:
                 thisTest["sid"] = iref.studentID
                 thisTest["sname"] = iref.studentName
@@ -1360,7 +1360,7 @@ class PlomDB:
         if tref is None:
             return []
         # [ID, Name]
-        iref = tref.IDGroup[0]
+        iref = tref.idgroups[0]
         rval = [[iref.studentID, iref.studentName]]
         # then [q, v, mark]
         for g in tref.questiondata.order_by(QuestionData.questionNumber):
@@ -1582,7 +1582,7 @@ class PlomDB:
                 tref = Test.get_or_none(Test.testNumber == testNumber)
                 if tref is None:
                     return [False]
-                iref = tref.IDGroup[0]
+                iref = tref.idgroups[0]
                 # verify the id-group has been scanned - it should always be scanned.if we get here.
                 if iref.group.scanned == False:
                     return [False]
@@ -1601,8 +1601,10 @@ class PlomDB:
                 # return [true, page1, page2, etc]
                 gref = iref.group
                 rval = [True]
-                for p in gref.pages.order_by(Page.pageNumber):
-                    rval.append(p.fileName)
+                for p in gref.tpages.order_by(TPage.pageNumber):
+                    rval.append(p.image.fileName)
+                for p in gref.hwpages.order_by(HWPage.order):
+                    rval.append(p.image.fileName)
                 log.debug("Giving ID task {} to user {}".format(testNumber, uname))
                 return rval
 
@@ -1630,7 +1632,7 @@ class PlomDB:
         tref = Test.get_or_none(Test.testNumber == t)
         if tref.scanned == False:
             return [False]
-        iref = tref.IDGroup[0]
+        iref = tref.idgroups[0]
         # quick sanity check to make sure task given to user, (or if manager making request)
         if iref.user == uref or uname == "manager":
             pass
@@ -1676,7 +1678,7 @@ class PlomDB:
 
             if tref.scanned == False:
                 return
-            iref = tref.IDGroup[0]
+            iref = tref.idgroups[0]
             # sanity check that user has task
             if iref.user == uref and iref.status == "out":
                 pass
@@ -1702,7 +1704,7 @@ class PlomDB:
                 tref = Test.get_or_none(Test.testNumber == testNumber)
                 if tref is None:
                     return [False, False]
-                iref = tref.IDGroup[0]
+                iref = tref.idgroups[0]
                 # verify the id-group has been scanned - it should always be scanned.if we get here.
                 if iref.group.scanned == False:
                     return [False, False]
