@@ -235,7 +235,7 @@ class Ui_annotator_lhm(object):
         self.pageFrameGrid.setObjectName("pageFrameGrid")
         self.gridLayout.addWidget(self.pageFrame, 0, 0, 5, 1)
         self.revealBox0 = QtWidgets.QFrame(annotator_lhm)
-        self.revealBox0.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.revealBox0.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.revealBox0.setFrameShadow(QtWidgets.QFrame.Raised)
         self.revealBox0.setObjectName("revealBox0")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.revealBox0)

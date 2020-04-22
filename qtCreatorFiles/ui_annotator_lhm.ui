@@ -646,7 +646,7 @@
    <item row="0" column="1" rowspan="5">
     <widget class="QFrame" name="revealBox0">
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
