@@ -82,6 +82,7 @@ class QGroup(BaseModel):
     question = IntegerField(null=False)
     version = IntegerField(null=False, default=1)
     user = ForeignKeyField(User, backref="qgroups", null=True)
+    status = CharField(default="")
     marked = BooleanField(default=False)
 
 
@@ -139,7 +140,6 @@ class DNMPage(BaseModel):
 class Annotation(BaseModel):
     qgroup = ForeignKeyField(QGroup, backref="annotations")
     user = ForeignKeyField(User, backref="annotations", null=True)
-    status = CharField(default="")
     image = ForeignKeyField(Image, backref="annotations", null=True)
     edition = IntegerField(null=True)
     # we need to order the annotations - want the latest.
@@ -1489,18 +1489,20 @@ class PlomDB:
                 x.save()
                 log.info("Reset user {} ID task {}".format(uname, x.group.gid))
         with plomdb.atomic():
-            query = Annotation.select().where(
-                Annotation.user == uref, Annotation.status == "out",
-            )
+            query = QGroup.select().where(QGroup.user == uref, QGroup.status == "out",)
             for x in query:
                 x.status = "todo"
                 x.user = None
-                x.markingTime = 0
-                x.time = datetime.now()
                 x.save()
+                # reset the last annotation
+                aref = x.annotations[-1]
+                aref.markingTime = 0
+                aref.time = datetime.now()
+                aref.user = None
+                aref.save()
                 log.info(
                     "Reset user {} question-annotation task {}".format(
-                        uname, x.qdata.group.gid
+                        uname, x.group.gid
                     )
                 )
         with plomdb.atomic():
@@ -1811,7 +1813,10 @@ class PlomDB:
         )
         markList = []
         for x in query:
-            markList.append([x.group.gid, x.status, x.mark, x.markingTime, x.tags])
+            aref = x.annotations[-1]
+            markList.append(
+                [x.group.gid, x.status, aref.mark, aref.markingTime, aref.tags]
+            )
         log.debug('Sending completed Q{}v{} tasks to user "{}"'.format(q, v, uname))
         return markList
 
@@ -1849,11 +1854,15 @@ class PlomDB:
                     pass
                 else:  # has been claimed by someone else.
                     return [False]
-                # update status, Student-number, name, id-time.
+                # update status, username
                 qref.status = "out"
                 qref.user = uref
-                qref.time = datetime.now()
                 qref.save()
+                # update the associate annotation
+                aref = qref.annotations[-1]
+                aref.user = uref
+                aref.time = datetime.now()
+                aref.save()
                 # update user activity
                 uref.lastAction = "Took M task {}".format(groupID)
                 uref.lastActivity = datetime.now()
@@ -1861,10 +1870,10 @@ class PlomDB:
                 # return [true, tags, page1, page2, etc]
                 rval = [
                     True,
-                    qref.tags,
+                    aref.tags,
                 ]
-                for p in gref.pages.order_by(Page.pageNumber):
-                    rval.append(p.fileName)
+                for p in aref.apages.order_by(APage.order):
+                    rval.append(p.image.fileName)
                 log.debug('Giving marking task {} to user "{}"'.format(groupID, uname))
                 return rval
         except Group.DoesNotExist:
@@ -1889,15 +1898,18 @@ class PlomDB:
                 else:  # has been claimed by someone else.
                     return
 
-                # update status, Student-number, name, id-time.
+                # update status, etc
                 qref.status = "todo"
                 qref.user = None
-                qref.time = datetime.now()
-                qref.markingTime = 0
                 qref.marked = False
-                qref.save()
+                # update the annotation too
+                aref = qref.annotations[-1]
+                aref.time = datetime.now()
+                aref.markingTime = 0
                 qref.test.marked = False
                 qref.test.save()
+                aref.save()
+                qref.save()
                 # Log user returning given tgv.
                 log.info("User {} did not mark task {}".format(uname, groupID))
 
@@ -1923,16 +1935,17 @@ class PlomDB:
                 # update status, mark, annotate-file-name, time, and
                 # time spent marking the image
                 qref.status = "done"
-                qref.mark = mark
-                qref.annotatedFile = aname
-                qref.md5sum = md5
-                qref.plomFile = pname
-                qref.commentFile = cname
-                qref.time = datetime.now()
-                qref.markingTime = mtime
-                qref.tags = tags
                 qref.marked = True
+                aref = qref.annotations[-1]
+                aref.image = Image.create(fileName=aname, md5sum=md5)
+                aref.mark = mark
+                aref.plomFile = pname
+                aref.commentFile = cname
+                aref.time = datetime.now()
+                aref.markingTime = mtime
+                aref.tags = tags
                 qref.save()
+                aref.save()
                 # update user activity
                 uref.lastAction = "Returned M task {}".format(task)
                 uref.lastActivity = datetime.now()
@@ -1998,10 +2011,11 @@ class PlomDB:
                 # or
                 # return [true, n, page1,..,page.n, annotatedFile, plomFile]
                 pp = []
-                for p in gref.pages.order_by(Page.pageNumber):
-                    pp.append(p.fileName)
-                if qref.annotatedFile is not None:
-                    return [True, len(pp)] + pp + [qref.annotatedFile, qref.plomFile]
+                aref = qref.annotations[-1]
+                for p in aref.apages.order_by(APage.order):
+                    pp.append(p.image.fileName)
+                if aref.image is not None:
+                    return [True, len(pp)] + pp + [aref.image.fileName, aref.plomFile]
                 else:
                     return [True, len(pp)] + pp
         except Group.DoesNotExist:

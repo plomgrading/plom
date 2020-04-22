@@ -179,7 +179,7 @@ def upload(
     # do name sanity checks here
     aname, pname, cname = filenames
     if not (
-        code.startswith("m")
+        code.startswith("q")
         and os.path.basename(aname) == "G{}.png".format(code[1:])
         and os.path.basename(pname) == "G{}.plom".format(code[1:])
         and os.path.basename(cname) == "G{}.json".format(code[1:])
@@ -1019,7 +1019,7 @@ class MarkerClient(QWidget):
         """Start annotator on a particular task."""
         # Create annotated filename. If original mXXXXgYY, then
         # annotated version is GXXXXgYY (G=graded).
-        assert task.startswith("m")
+        assert task.startswith("q")
         Gtask = "G" + task[1:]
         paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
         log.debug("create paperdir {} for annotating".format(paperdir))
@@ -1093,9 +1093,9 @@ class MarkerClient(QWidget):
     @pyqtSlot(str)
     def callbackAnnDoneCancel(self, task):
         self.setEnabled(True)
-        prevState = self.exM.getStatusByTask("m" + task).split(":")[-1]
+        prevState = self.exM.getStatusByTask("q" + task).split(":")[-1]
         # TODO: could also erase the paperdir
-        self.exM.setStatusByTask("m" + task, prevState)
+        self.exM.setStatusByTask("q" + task, prevState)
 
     @pyqtSlot(str)
     def callbackAnnDoneClosing(self, task):
@@ -1105,7 +1105,7 @@ class MarkerClient(QWidget):
         if len(prIndex) == 0:
             return
         pr = prIndex[0].row()
-        if self.prxM.getPrefix(pr) == "m" + task:
+        if self.prxM.getPrefix(pr) == "q" + task:
             self.updateImage(pr)
 
     @pyqtSlot(str)
@@ -1113,7 +1113,7 @@ class MarkerClient(QWidget):
         log.debug("Marker is back and Ann Wants More")
         if not self.allowBackgroundOps:
             self.requestNext()
-        if self.moveToNextUnmarkedTest("m" + task):
+        if self.moveToNextUnmarkedTest("q" + task):
             self.annotateTest()
         else:
             log.debug("either we are done or problems downloading...")
@@ -1135,13 +1135,13 @@ class MarkerClient(QWidget):
 
         # Copy the mark, annotated filename and the markingtime into the table
         # TODO: sort this out whether task is "m00..." or "00..."?!
-        self.exM.markPaperByTask("m" + task, gr, aname, pname, mtime, paperdir)
+        self.exM.markPaperByTask("q" + task, gr, aname, pname, mtime, paperdir)
         # update the mtime to be the total marking time
-        totmtime = self.exM.getMTimeByTask("m" + task)
-        tags = self.exM.getTagsByTask("m" + task)
+        totmtime = self.exM.getMTimeByTask("q" + task)
+        tags = self.exM.getTagsByTask("q" + task)
 
         _data = (
-            "m" + task,  # current task
+            "q" + task,  # current task
             gr,  # grade
             (aname, pname, cname),  # annotated, plom, and comment filenames
             totmtime,  # total marking time
