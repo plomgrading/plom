@@ -404,9 +404,9 @@ class Annotator(QWidget):
         self.ui.hideButton.setText("Compact")
         # right-hand mouse = 0, left-hand mouse = 1
         if self.mouseHand == 0:
-            self.ui.modeLayout.addWidget(self.ui.hideButton)
-            self.ui.modeLayout.addWidget(self.ui.modeLabel)
-            self.ui.modeLayout.addWidget(self.ui.markLabel)
+            self.ui.modeLayout.addWidget(self.ui.hideButton, 0, Qt.AlignRight)
+            self.ui.modeLayout.addWidget(self.ui.modeLabel, 0, Qt.AlignCenter)
+            self.ui.modeLayout.addWidget(self.ui.markLabel, 0, Qt.AlignRight)
             # tools
             self.ui.toolLayout.addWidget(self.ui.panButton, 0, 0)
             self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 1)
@@ -424,9 +424,9 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.commentDownButton, 2, 3)
             self.ui.toolLayout.addWidget(self.ui.lineButton, 2, 4)
         else:  # left-hand mouse
-            self.ui.modeLayout.addWidget(self.ui.markLabel)
-            self.ui.modeLayout.addWidget(self.ui.modeLabel)
-            self.ui.modeLayout.addWidget(self.ui.hideButton)
+            self.ui.modeLayout.addWidget(self.ui.markLabel, 0, Qt.AlignRight)
+            self.ui.modeLayout.addWidget(self.ui.modeLabel, 0, Qt.AlignCenter)
+            self.ui.modeLayout.addWidget(self.ui.hideButton, 0, Qt.AlignRight)
             # tools
             self.ui.toolLayout.addWidget(self.ui.penButton, 0, 0)
             self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 1)
