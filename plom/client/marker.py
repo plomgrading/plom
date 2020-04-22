@@ -1134,7 +1134,7 @@ class MarkerClient(QWidget):
             return
 
         # Copy the mark, annotated filename and the markingtime into the table
-        # TODO: sort this out whether task is "m00..." or "00..."?!
+        # TODO: sort this out whether task is "q00..." or "00..."?!
         self.exM.markPaperByTask("q" + task, gr, aname, pname, mtime, paperdir)
         # update the mtime to be the total marking time
         totmtime = self.exM.getMTimeByTask("q" + task)
@@ -1375,7 +1375,7 @@ class MarkerClient(QWidget):
                 gn = self.question
             else:
                 return
-        task = "m{}g{}".format(str(tn).zfill(4), int(self.question))
+        task = "q{}g{}".format(str(tn).zfill(4), int(self.question))
         try:
             imageList = messenger.MrequestOriginalImages(task)
         except PlomNoMoreException as err:

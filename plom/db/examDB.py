@@ -469,9 +469,10 @@ class PlomDB:
                 )
             )
             return False
-        ## create annotation 0
+        ## create annotation 0 owned by HAL
         try:
-            aref = Annotation.create(qgroup=qref, edition=0)
+            uref = User.get(name="HAL")
+            aref = Annotation.create(qgroup=qref, edition=0, user=uref)
         except IntegrityError as e:
             log.error(
                 "Create Q - cannot create Annotation  of question {} error - {}.".format(
@@ -1494,12 +1495,13 @@ class PlomDB:
                 x.status = "todo"
                 x.user = None
                 x.save()
-                # reset the last annotation
+                # delete the last annotation and its pages
                 aref = x.annotations[-1]
-                aref.markingTime = 0
-                aref.time = datetime.now()
-                aref.user = None
-                aref.save()
+                for p in aref.apages:
+                    p.delete_instance()
+                aref.delete_instance()
+                # now clean up the qgroup
+                x.save()
                 log.info(
                     "Reset user {} question-annotation task {}".format(
                         uname, x.group.gid
@@ -1859,10 +1861,18 @@ class PlomDB:
                 qref.user = uref
                 qref.save()
                 # update the associate annotation
-                aref = qref.annotations[-1]
-                aref.user = uref
-                aref.time = datetime.now()
-                aref.save()
+                # - create a new annotation copied from the previous one
+                aref = qref.annotations[-1]  # are these in right order
+                nref = Annotation.create(
+                    qgroup=qref,
+                    user=uref,
+                    edition=aref.edition + 1,
+                    tags=aref.tags,
+                    time=datetime.now(),
+                )
+                # create its pages
+                for p in aref.apages.order_by(APage.order):
+                    APage.create(annotation=nref, order=p.order, image=p.image)
                 # update user activity
                 uref.lastAction = "Took M task {}".format(groupID)
                 uref.lastActivity = datetime.now()
@@ -1870,9 +1880,9 @@ class PlomDB:
                 # return [true, tags, page1, page2, etc]
                 rval = [
                     True,
-                    aref.tags,
+                    nref.tags,
                 ]
-                for p in aref.apages.order_by(APage.order):
+                for p in nref.apages.order_by(APage.order):
                     rval.append(p.image.fileName)
                 log.debug('Giving marking task {} to user "{}"'.format(groupID, uname))
                 return rval
@@ -1902,10 +1912,12 @@ class PlomDB:
                 qref.status = "todo"
                 qref.user = None
                 qref.marked = False
-                # update the annotation too
+                # delete the annotation and associated APages
                 aref = qref.annotations[-1]
-                aref.time = datetime.now()
-                aref.markingTime = 0
+                for p in aref.apages:
+                    p.delete_instance()
+                aref.delete_instance()
+                # now clean up the qgroup
                 qref.test.marked = False
                 qref.test.save()
                 aref.save()
@@ -2033,11 +2045,11 @@ class PlomDB:
                         )
                     )
                     return [False, "Task {} is not completely scanned".format(task)]
-                qref = gref.qgroups[0]
+                aref = gref.qgroups[0].annotations[0]  # the original annotation pages
                 # return [true, page1,..,page.n]
                 rval = [True]
-                for p in gref.pages.order_by(Page.pageNumber):
-                    rval.append(p.fileName)
+                for p in aref.apages.order_by(APage.order):
+                    rval.append(p.image.fileName)
                 return rval
         except Group.DoesNotExist:
             log.info("MgetOriginalImages - task {} not known".format(task))
@@ -2067,11 +2079,16 @@ class PlomDB:
             return [False]
         pageFiles = []
         pageNames = []
-        for pref in tref.pages:
-            # Don't include ID-group pages
-            if pref.group.groupType != "i":
-                pageNames.append(pref.pageNumber)
-                pageFiles.append(pref.fileName)
+        for p in tref.tpages.order_by(TPage.pageNumber):  # give TPages
+            if p.group.groupType == "i":  # skip IDpages
+                continue
+            pageNames.append("t{}".format(p.pageNumber))
+            pageFiles.append(p.image.fileName)
+        for p in tref.hwpages.order_by(HWPage.order):  # then give HWPages
+            if p.group.groupType == "i":  # skip IDpages
+                continue
+            pageNames.append("h{}".format(p.order))
+            pageFiles.append(p.image.fileName)
         return [True, pageNames] + pageFiles
 
     def MreviewQuestion(self, testNumber, question, version):
