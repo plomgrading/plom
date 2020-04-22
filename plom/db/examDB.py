@@ -468,35 +468,6 @@ class PlomDB:
             return False
         return self.addTPages(tref, gref, t, pages, v)
 
-    # def printGroups(self, t):
-    #     tref = Test.get_or_none(testNumber=t)
-    #     if tref is None:
-    #         return
-    #     for x in tref.groups:
-    #         print(x.gid, x.groupType)
-    #         if x.groupType == "i":
-    #             idata = x.idgroups[0]
-    #             print("\t", idata.studentID, idata.studentName)
-    #         elif x.groupType == "m":
-    #             qdata = x.questiondata[0]
-    #             print(
-    #                 "\t",
-    #                 qdata.questionNumber,
-    #                 qdata.version,
-    #                 qdata.status,
-    #                 qdata.mark,
-    #                 qdata.annotatedFile,
-    #             )
-    #         for p in x.pages.order_by(Page.pageNumber):
-    #             print("\t", [p.pageNumber, p.version])
-    #
-    # def printProducedPagesByTest(self, t):
-    #     tref = Test.get_or_none(testNumber=t)
-    #     if tref is None:
-    #         return
-    #     for p in tref.prodpages.order_by(ProducedPage.pageNumber):
-    #         print(p.pageNumber, p.version, p.group.gid)
-
     def getProducedPageVersions(self, t):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
@@ -1601,9 +1572,9 @@ class PlomDB:
                 # return [true, page1, page2, etc]
                 gref = iref.group
                 rval = [True]
-                for p in gref.tpages.order_by(TPage.pageNumber):
+                for p in gref.tpages.order_by(TPage.pageNumber):  # give TPages
                     rval.append(p.image.fileName)
-                for p in gref.hwpages.order_by(HWPage.order):
+                for p in gref.hwpages.order_by(HWPage.order):  # then give HWPages
                     rval.append(p.image.fileName)
                 log.debug("Giving ID task {} to user {}".format(testNumber, uname))
                 return rval
@@ -1640,8 +1611,10 @@ class PlomDB:
             return [False]
         gref = iref.group
         rval = [True]
-        for p in gref.pages.order_by(Page.pageNumber):
-            rval.append(p.fileName)
+        for p in gref.tpages.order_by(TPage.pageNumber):  # give TPages
+            rval.append(p.image.fileName)
+        for p in gref.hwpages.order_by(HWPage.order):  # then give HWPages
+            rval.append(p.image.fileName)
         log.debug("Sending IDpages of test {} to user {}".format(t, uname))
         return rval
 
@@ -1655,8 +1628,10 @@ class PlomDB:
                 continue
             # make a list of all the pages in the IDgroup
             pages = []
-            for p in gref.pages.order_by(Page.pageNumber):
+            for p in gref.tpages.order_by(TPage.pageNumber):
                 pages.append(p.fileName)
+            for p in gref.hwpages.order_by(HWPage.order):  # then give HWPages
+                rval.append(p.image.fileName)
             # grab the relevant page if there.
             if len(pages) > imageNumber:
                 rval[iref.test.testNumber] = pages[imageNumber]
@@ -1748,6 +1723,8 @@ class PlomDB:
         rval = [True]
         for p in gref.pages.order_by(Page.pageNumber):
             rval.append(p.fileName)
+        for p in gref.hwpages.order_by(HWPage.order):  # then give HWPages
+            rval.append(p.image.fileName)
         return rval
 
     def IDreviewID(self, testNumber):
