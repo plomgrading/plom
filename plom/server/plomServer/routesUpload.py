@@ -8,7 +8,7 @@ class UploadHandler:
     def __init__(self, plomServer):
         self.server = plomServer
 
-    async def uploadKnownPage(self, request):
+    async def uploadTestPage(self, request):
         reader = MultipartReader.from_response(request)
 
         part0 = await reader.next()  # should be parameters
@@ -34,7 +34,7 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         image = await part1.read()
         # file it away.
-        rmsg = self.server.addKnownPage(
+        rmsg = self.server.addTestPage(
             param["test"],
             param["page"],
             param["version"],
@@ -190,7 +190,7 @@ class UploadHandler:
         # TODO: unused, we should ensure this matches the data
         code = request.match_info["tpv"]
 
-        rval = self.server.getPageImage(data["test"], data["page"], data["version"])
+        rval = self.server.getTPageImage(data["test"], data["page"], data["version"])
         if rval[0]:
             return web.FileResponse(rval[1], status=200)  # all fine
         else:
@@ -399,7 +399,7 @@ class UploadHandler:
             return web.Response(status=404)
 
     def setUpRoutes(self, router):
-        router.add_put("/admin/knownPages/{tpv}", self.uploadKnownPage)
+        router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
         router.add_put("/admin/missingPage/{tpv}", self.replaceMissingPage)

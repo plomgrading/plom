@@ -39,7 +39,7 @@ class ScanMessenger(BaseMessenger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def uploadKnownPage(self, code, test, page, version, sname, fname, md5sum):
+    def uploadTestPage(self, code, test, page, version, sname, fname, md5sum):
         self.SRmutex.acquire()
         try:
             param = {
@@ -59,7 +59,7 @@ class ScanMessenger(BaseMessenger):
                 }
             )
             response = self.session.put(
-                "https://{}/admin/knownPages/{}".format(self.server, code),
+                "https://{}/admin/testPages/{}".format(self.server, code),
                 json={"user": self.user, "token": self.token},
                 data=dat,
                 headers={"Content-Type": dat.content_type},

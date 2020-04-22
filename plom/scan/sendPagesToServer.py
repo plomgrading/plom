@@ -73,14 +73,14 @@ def doFiling(rmsg, ts, ps, vs, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendKnownFiles(msgr, fileList):
+def sendTestFiles(msgr, fileList):
     for fname in fileList:
         shortName = os.path.split(fname)[1]
         ts, ps, vs = extractTPV(shortName)
         print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
-        rmsg = msgr.uploadKnownPage(
+        rmsg = msgr.uploadTestPage(
             code, int(ts), int(ps), int(vs), shortName, fname, md5
         )
         doFiling(rmsg, ts, ps, vs, shortName, fname)
@@ -120,6 +120,6 @@ def uploadPages(server=None, password=None):
     fileList = []
     for ext in PlomImageExtWhitelist:
         fileList.extend(glob("decodedPages/t*.{}".format(ext)))
-    sendKnownFiles(msgr, fileList)
+    sendTestFiles(msgr, fileList)
     msgr.closeUser()
     msgr.stop()

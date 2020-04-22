@@ -132,7 +132,7 @@ class Server(object):
         closeUser,
     )
     from .plomServer.serverUpload import (
-        addKnownPage,
+        addTestPage,
         addUnknownPage,
         addCollidingPage,
         replaceMissingPage,
@@ -143,7 +143,7 @@ class Server(object):
         getUnknownImage,
         getCollidingImage,
         getDiscardImage,
-        getPageImage,
+        getTPageImage,
         getQuestionImages,
         getTestImages,
         checkPage,

@@ -82,9 +82,10 @@ class QGroup(BaseModel):
     question = IntegerField(null=False)
     version = IntegerField(null=False, default=1)
     user = ForeignKeyField(User, backref="qgroups", null=True)
+    marked = BooleanField(default=False)
 
 
-class TPage(BaseModel):  # a test page that knows it tpgv
+class TPage(BaseModel):  # a test page that knows its tpgv
     test = ForeignKeyField(Test, backref="tpages")
     pageNumber = IntegerField(null=False)
     version = IntegerField(default=1)
@@ -93,7 +94,7 @@ class TPage(BaseModel):  # a test page that knows it tpgv
     scanned = BooleanField(default=False)  # we should get all of them
 
 
-class HWPage(BaseModel):  # a hw page that knows it tqv, but not p.
+class HWPage(BaseModel):  # a hw page that knows its tgv, but not p.
     test = ForeignKeyField(Test, backref="hwpages")
     group = ForeignKeyField(Group, backref="hwpages")
     order = IntegerField(null=False)
@@ -101,14 +102,16 @@ class HWPage(BaseModel):  # a hw page that knows it tqv, but not p.
     image = ForeignKeyField(Image, backref="hwpages")
 
 
-class XPage(BaseModel):  # a page that just knows it t.
+class XPage(BaseModel):  # a page that just knows its t.
     test = ForeignKeyField(Test, backref="xpages")
     order = IntegerField(null=False)
     image = ForeignKeyField(Image, backref="xpages")
 
 
+# still needs work - maybe some bundle object with unique key.
 class UnknownPage(BaseModel):
     image = ForeignKeyField(Image, backref="upages", null=True)
+    order = IntegerField(null=False)  # order within the upload.
 
 
 class CollidingPage(BaseModel):
@@ -368,7 +371,7 @@ class PlomDB:
     def createIDGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
-            log.warning("Create IDGroup {} - No test with number {}".format(type, t))
+            log.warning("Create IDGroup - No test with number {}".format(t))
             return False
         # make the Group
         gid = "i{}".format(str(t).zfill(4))
@@ -461,11 +464,22 @@ class PlomDB:
             qref = QGroup.create(test=tref, group=gref, question=g, version=v)
         except IntegrityError as e:
             log.error(
-                "Create Q - cannot create QGroup {} of question {} error - {}.".format(
-                    qref, gid, e
+                "Create Q - cannot create QGroup of question {} error - {}.".format(
+                    gid, e
                 )
             )
             return False
+        ## create annotation 0
+        try:
+            aref = Annotation.create(qgroup=qref, edition=0)
+        except IntegrityError as e:
+            log.error(
+                "Create Q - cannot create Annotation  of question {} error - {}.".format(
+                    gid, e
+                )
+            )
+            return False
+
         return self.addTPages(tref, gref, t, pages, v)
 
     def getProducedPageVersions(self, t):
@@ -586,12 +600,12 @@ class PlomDB:
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return [False, "testError", "Cannot find test {}".format(t)]
-        pref = Page.get_or_none(test=tref, pageNumber=p, version=v)
+        pref = TPage.get_or_none(test=tref, pageNumber=p, version=v)
         if pref is None:
             return [
                 False,
                 "pageError",
-                "Cannot find page {} for test {}".format(p, t),
+                "Cannot find tpage {} for test {}".format(p, t),
             ]
         if pref.scanned:
             return [
@@ -601,9 +615,9 @@ class PlomDB:
             ]
         else:  # this is a new page.
             with plomdb.atomic():
-                pref.originalName = oname
-                pref.fileName = nname
-                pref.md5sum = md5
+                pref.image = Image.create(
+                    originalName=oname, fileName=nname, md5sum=md5
+                )
                 pref.scanned = True
                 pref.save()
                 tref.used = True
@@ -686,7 +700,7 @@ class PlomDB:
     def invalidateQGroup(self, tref, gref, delPage=True):
         # When we delete a page, set "scanned" to false for group+test
         # If we are adding a page then we don't have to do that.
-        qref = gref.questiondata[0]
+        qref = gref.qgroups[0]
         sref = tref.sumdata[0]
         rval = []
         with plomdb.atomic():
@@ -708,7 +722,7 @@ class PlomDB:
             sref.time = datetime.now()
             sref.summed = False
             sref.save()
-            # update the questionData - first get filenames if they exist
+            # update the qgroups - first get filenames if they exist
             if qref.marked:
                 rval = [
                     qref.annotatedFile,
@@ -729,7 +743,7 @@ class PlomDB:
         log.info("Invalidated question {}".format(gref.gid))
         return rval
 
-    def uploadKnownPage(self, t, p, v, oname, nname, md5):
+    def uploadTestPage(self, t, p, v, oname, nname, md5):
         # return value is either [True, <success message>] or
         # [False, stuff] - but need to distinguish between "discard this image" and "you should perhaps keep this image"
         # So return either [False, "discard", discard message]
@@ -767,8 +781,22 @@ class PlomDB:
                 pref.save()
                 tref.used = True
                 tref.save()
+                # also link the image to an QPage, DNMPage, or IDPage
+                gref = pref.group
+                if gref.groupType == "i":
+                    iref = gref.idgroups[0]
+                    idp = IDPage.create(idgroup=iref, image=pref.image, order=p)
+                elif gref.groupType == "d":
+                    dref = gref.dnmgroups[0]
+                    dnmp = DNMPage.create(dnmgroup=dref, image=pref.image, order=p)
+                else:  # is a question page - always add to annotation 0.
+                    qref = gref.qgroups[0]
+                    aref = qref.annotations[0]
+                    ap = APage.create(annotation=aref, image=pref.image, order=p)
+
             log.info("Uploaded image {} to tpv = {}.{}.{}".format(oname, t, p, v))
             self.checkGroupAllUploaded(pref)
+
             return [True, "success", "Page saved as tpv = {}.{}.{}".format(t, p, v)]
 
     def uploadUnknownPage(self, oname, nname, md5):
@@ -792,7 +820,7 @@ class PlomDB:
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return [False, "testError", "Cannot find test {}".format(t)]
-        pref = Page.get_or_none(test=tref, pageNumber=p, version=v)
+        pref = TPage.get_or_none(test=tref, pageNumber=p, version=v)
         if pref is None:
             return [
                 False,
@@ -831,36 +859,36 @@ class PlomDB:
     def getUnknownPageNames(self):
         rval = []
         for uref in UnknownPage.select():
-            rval.append(uref.fileName)
+            rval.append(uref.image.fileName)
         return rval
 
     def getDiscardNames(self):
         rval = []
         for dref in DiscardedPage.select():
-            rval.append(dref.fileName)
+            rval.append(dref.image.fileName)
         return rval
 
     def getCollidingPageNames(self):
         rval = {}
         for cref in CollidingPage.select():
-            rval[cref.fileName] = [
-                cref.page.test.testNumber,
-                cref.page.pageNumber,
-                cref.page.version,
+            rval[cref.image.fileName] = [
+                cref.tpage.test.testNumber,
+                cref.tpage.pageNumber,
+                cref.tpage.version,
             ]
         return rval
 
-    def getPageImage(self, testNumber, pageNumber, version):
+    def getTPageImage(self, testNumber, pageNumber, version):
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:
             return [False]
-        pref = Page.get_or_none(
-            Page.test == tref, Page.pageNumber == pageNumber, Page.version == version
+        pref = TPage.get_or_none(
+            TPage.test == tref, TPage.pageNumber == pageNumber, TPage.version == version
         )
         if pref is None:
             return [False]
         else:
-            return [True, pref.fileName]
+            return [True, pref.image.fileName]
 
     def getUnknownImage(self, fname):
         uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
@@ -883,13 +911,11 @@ class PlomDB:
         else:
             return [True, cref.fileName]
 
-    def getQuestionImages(self, testNumber, questionNumber):
+    def getQuestionImages(self, testNumber, question):
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:
             return [False]
-        qref = QuestionData.get_or_none(
-            QuestionData.test == tref, QuestionData.questionNumber == questionNumber
-        )
+        qref = QGroup.get_or_none(QGroup.test == tref, QGroup.question == question)
         if qref is None:
             return [False]
         rval = [True]
@@ -1032,7 +1058,7 @@ class PlomDB:
         self.checkGroupAllUploaded(pref)
         return [True]
 
-    def moveExtraToPage(self, fname, nname, testNumber, questionNumber):
+    def moveExtraToPage(self, fname, nname, testNumber, question):
         uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
             return [False]
@@ -1040,7 +1066,7 @@ class PlomDB:
         if tref is None:
             return [False]
         # find the group to which the new page should belong
-        qref = QuestionData.get_or_none(test=tref, questionNumber=questionNumber)
+        qref = QGroup.get_or_none(test=tref, question=question)
         if qref is None:
             return [False]
         version = qref.version
@@ -1068,7 +1094,7 @@ class PlomDB:
             uref.delete_instance()
         log.info(
             "Saving extra {} as {} tp {}.{} of question {}".format(
-                fname, nname, testNumber, pageNumber, questionNumber
+                fname, nname, testNumber, pageNumber, question
             )
         )
         ## Now invalidate any work on the associated group
@@ -1095,7 +1121,7 @@ class PlomDB:
         rval = {}
         for tref in Test.select().where(Test.scanned == True):
             pScanned = []
-            for p in tref.pages:
+            for p in tref.tpages:
                 if p.scanned == True:
                     pScanned.append([p.pageNumber, p.version])
             rval[tref.testNumber] = pScanned
@@ -1135,13 +1161,9 @@ class PlomDB:
         SMark = 0
         SMTime = 0
         for x in (
-            QuestionData.select()
+            QGroup.select()
             .join(Group)
-            .where(
-                QuestionData.questionNumber == q,
-                QuestionData.version == v,
-                Group.scanned == True,
-            )
+            .where(QGroup.question == q, QGroup.version == v, Group.scanned == True,)
         ):
             NScanned += 1
             if x.marked == True:
@@ -1173,12 +1195,12 @@ class PlomDB:
         rhist = {}
         # defaultdict(lambda: defaultdict(int))
         for x in (
-            QuestionData.select()
+            QGroup.select()
             .join(Group)
             .where(
-                QuestionData.questionNumber == q,
-                QuestionData.version == v,
-                QuestionData.marked == True,
+                QGroup.question == q,
+                QGroup.version == v,
+                QGroup.marked == True,
                 Group.scanned == True,
             )
         ):
@@ -1196,13 +1218,9 @@ class PlomDB:
         rdat = {}
         nScan = 0
         for x in (
-            QuestionData.select()
+            QGroup.select()
             .join(Group)
-            .where(
-                QuestionData.questionNumber == q,
-                QuestionData.version == v,
-                Group.scanned == True,
-            )
+            .where(QGroup.question == q, QGroup.version == v, Group.scanned == True,)
         ):
             nScan += 1
             if x.marked == True:
@@ -1219,8 +1237,8 @@ class PlomDB:
         rval = {}
         for tref in Test.select().where(Test.scanned == True):
             numMarked = (
-                QuestionData.select()
-                .where(QuestionData.test == tref, QuestionData.marked == True)
+                QGroup.select()
+                .where(QGroup.test == tref, QGroup.marked == True)
                 .count()
             )
             rval[tref.testNumber] = [tref.identified, tref.totalled, numMarked]
@@ -1241,11 +1259,11 @@ class PlomDB:
                     iref.time.strftime("%y:%m:%d-%H:%M:%S"),
                 ]
             )
-        for mref in QuestionData.select().where(QuestionData.status == "out"):
+        for mref in QGroup.select().where(QGroup.status == "out"):
             rval.append(
                 [
                     "mrk-t{}-q{}-v{}".format(
-                        mref.test.testNumber, mref.questionNumber, mref.version
+                        mref.test.testNumber, mref.question, mref.version
                     ),
                     mref.user.name,
                     mref.time.strftime("%y:%m:%d-%H:%M:%S"),
@@ -1281,8 +1299,8 @@ class PlomDB:
             sref = tref.sumdata[0]
             rval["total"] = sref.sumMark
             rval["twho"] = sref.user.name
-        for qref in tref.questiondata:
-            rval[qref.questionNumber] = {
+        for qref in tref.qgroups:
+            rval[qref.question] = {
                 "marked": qref.marked,
                 "mark": qref.mark,
                 "version": qref.version,
@@ -1307,11 +1325,11 @@ class PlomDB:
             if tref.identified:
                 thisTest["sid"] = iref.studentID
                 thisTest["sname"] = iref.studentName
-            for qref in tref.questiondata:
-                thisTest["q{}v".format(qref.questionNumber)] = qref.version
-                thisTest["q{}m".format(qref.questionNumber)] = ""
+            for qref in tref.qgroups:
+                thisTest["q{}v".format(qref.question)] = qref.version
+                thisTest["q{}m".format(qref.question)] = ""
                 if qref.marked:
-                    thisTest["q{}m".format(qref.questionNumber)] = qref.mark
+                    thisTest["q{}m".format(qref.question)] = qref.mark
             rval[tref.testNumber] = thisTest
         log.debug("Sending spreadsheet (effectively)")
         return rval
@@ -1334,8 +1352,8 @@ class PlomDB:
         iref = tref.idgroups[0]
         rval = [[iref.studentID, iref.studentName]]
         # then [q, v, mark]
-        for g in tref.questiondata.order_by(QuestionData.questionNumber):
-            rval.append([g.questionNumber, g.version, g.mark])
+        for g in tref.qgroups.order_by(QGroup.question):
+            rval.append([g.question, g.version, g.mark])
         log.debug("Sending coverpage info of test {}".format(testNumber))
         return rval
 
@@ -1353,25 +1371,25 @@ class PlomDB:
         for p in gref.pages.order_by(Page.pageNumber):
             rval.append(p.fileName)
         # append questiongroups
-        for g in tref.questiondata.order_by(QuestionData.questionNumber):
+        for g in tref.qgroups.order_by(QGroup.question):
             rval.append(g.annotatedFile)
         log.debug("Sending annotated images for test {}".format(testNumber))
         return rval
 
     def RgetMarkReview(self, filterQ, filterV, filterU):
-        query = QuestionData.select().where(QuestionData.marked == True)
+        query = QGroup.select().where(QGroup.marked == True)
         if filterQ != "*":
-            query = query.where(QuestionData.questionNumber == filterQ)
+            query = query.where(QGroup.question == filterQ)
         if filterV != "*":
-            query = query.where(QuestionData.version == filterV)
+            query = query.where(QGroup.version == filterV)
         if filterU != "*":
-            query = query.where(QuestionData.user.name == filterU)
+            query = query.where(QGroup.user.name == filterU)
         rval = []
         for x in query:
             rval.append(
                 [
                     x.test.testNumber,
-                    x.questionNumber,
+                    x.question,
                     x.version,
                     x.mark,
                     x.user.name,
@@ -1387,21 +1405,21 @@ class PlomDB:
         )
         return rval
 
-    def RgetAnnotatedImage(self, testNumber, questionNumber, version):
+    def RgetAnnotatedImage(self, testNumber, question, version):
         tref = Test.get_or_none(testNumber=testNumber)
         if tref is None:
             return [False]
-        qref = QuestionData.get_or_none(
-            QuestionData.test == tref,
-            QuestionData.questionNumber == questionNumber,
-            QuestionData.version == version,
-            QuestionData.marked == True,
+        qref = QGroup.get_or_none(
+            QGroup.test == tref,
+            QGroup.question == question,
+            QGroup.version == version,
+            QGroup.marked == True,
         )
         if qref is None:
             return [False]
         log.debug(
             "Sending annotated image of tqv {}.{}.{}".format(
-                testNumber, questionNumber, version
+                testNumber, question, version
             )
         )
         return [True, qref.annotatedFile]
@@ -1450,9 +1468,7 @@ class PlomDB:
             SumData.select()
             .where(SumData.user == uref, SumData.summed == True)
             .count(),
-            QuestionData.select()
-            .where(QuestionData.user == uref, QuestionData.marked == True)
-            .count(),
+            QGroup.select().where(QGroup.user == uref, QGroup.marked == True).count(),
         ]
 
     # ------------------
@@ -1609,12 +1625,14 @@ class PlomDB:
             pass
         else:
             return [False]
-        gref = iref.group
+        # gref = iref.group
         rval = [True]
-        for p in gref.tpages.order_by(TPage.pageNumber):  # give TPages
+        for p in iref.idpages.order_by(IDPage.order):
             rval.append(p.image.fileName)
-        for p in gref.hwpages.order_by(HWPage.order):  # then give HWPages
-            rval.append(p.image.fileName)
+        # for p in gref.tpages.order_by(TPage.pageNumber):  # give TPages
+        #     rval.append(p.image.fileName)
+        # for p in gref.hwpages.order_by(HWPage.order):  # then give HWPages
+        #     rval.append(p.image.fileName)
         log.debug("Sending IDpages of test {} to user {}".format(t, uname))
         return rval
 
@@ -1628,10 +1646,12 @@ class PlomDB:
                 continue
             # make a list of all the pages in the IDgroup
             pages = []
-            for p in gref.tpages.order_by(TPage.pageNumber):
-                pages.append(p.fileName)
-            for p in gref.hwpages.order_by(HWPage.order):  # then give HWPages
-                rval.append(p.image.fileName)
+            for p in iref.idpages:
+                pages.append(p.image.fileName)
+            # for p in gref.tpages.order_by(TPage.pageNumber):
+            # pages.append(p.fileName)
+            # for p in gref.hwpages.order_by(HWPage.order):  # then give HWPages
+            # rval.append(p.image.fileName)
             # grab the relevant page if there.
             if len(pages) > imageNumber:
                 rval[iref.test.testNumber] = pages[imageNumber]
@@ -1751,33 +1771,31 @@ class PlomDB:
         """Count all the records"""
         try:
             return (
-                QuestionData.select()
+                QGroup.select()
                 .join(Group)
                 .where(
-                    QuestionData.questionNumber == q,
-                    QuestionData.version == v,
-                    Group.scanned == True,
+                    QGroup.question == q, QGroup.version == v, Group.scanned == True,
                 )
                 .count()
             )
-        except QuestionData.DoesNotExist:
+        except QGroup.DoesNotExist:
             return 0
 
     def McountMarked(self, q, v):
         """Count all the Marked records"""
         try:
             return (
-                QuestionData.select()
+                QGroup.select()
                 .join(Group)
                 .where(
-                    QuestionData.questionNumber == q,
-                    QuestionData.version == v,
-                    QuestionData.status == "done",
+                    QGroup.question == q,
+                    QGroup.version == v,
+                    QGroup.status == "done",
                     Group.scanned == True,
                 )
                 .count()
             )
-        except QuestionData.DoesNotExist:
+        except QGroup.DoesNotExist:
             return 0
 
     def MgetDoneTasks(self, uname, q, v):
@@ -1785,11 +1803,11 @@ class PlomDB:
         Send back the list."""
         uref = User.get(name=uname)  # authenticated, so not-None
 
-        query = QuestionData.select().where(
-            QuestionData.user == uref,
-            QuestionData.questionNumber == q,
-            QuestionData.version == v,
-            QuestionData.status == "done",
+        query = QGroup.select().where(
+            QGroup.user == uref,
+            QGroup.question == q,
+            QGroup.version == v,
+            QGroup.status == "done",
         )
         markList = []
         for x in query:
@@ -1802,17 +1820,17 @@ class PlomDB:
         with plomdb.atomic():
             try:
                 x = (
-                    QuestionData.select()
+                    QGroup.select()
                     .join(Group)
                     .where(
-                        QuestionData.status == "todo",
-                        QuestionData.questionNumber == q,
-                        QuestionData.version == v,
+                        QGroup.status == "todo",
+                        QGroup.question == q,
+                        QGroup.version == v,
                         Group.scanned == True,
                     )
                     .get()
                 )
-            except QuestionData.DoesNotExist as e:
+            except QGroup.DoesNotExist as e:
                 log.info("Nothing left on Q{}v{} to-do pile".format(q, v))
                 return None
 
@@ -1826,7 +1844,7 @@ class PlomDB:
                 gref = Group.get_or_none(Group.gid == groupID)
                 if gref.scanned == False:
                     return [False]
-                qref = gref.questiondata[0]
+                qref = gref.qgroups[0]
                 if qref.user is None or qref.user == uref:
                     pass
                 else:  # has been claimed by someone else.
@@ -1864,7 +1882,7 @@ class PlomDB:
                 gref = Group.get_or_none(Group.gid == groupID)
                 if gref.scanned == False:
                     return
-                qref = gref.questiondata[0]
+                qref = gref.qgroups[0]
                 # sanity check that user has task
                 if qref.user == uref and qref.status == "out":
                     pass
@@ -1897,7 +1915,7 @@ class PlomDB:
         try:
             with plomdb.atomic():
                 gref = Group.get_or_none(Group.gid == task)
-                qref = gref.questiondata[0]
+                qref = gref.qgroups[0]
 
                 if qref.user != uref:
                     return False  # has been claimed by someone else.
@@ -1928,15 +1946,13 @@ class PlomDB:
                 tref = qref.test
                 # check if there are any unmarked questions
                 if (
-                    QuestionData.get_or_none(
-                        QuestionData.test == tref, QuestionData.marked == False
-                    )
+                    QGroup.get_or_none(QGroup.test == tref, QGroup.marked == False)
                     is not None
                 ):
                     return True
                 # update the sum-mark
                 tot = 0
-                for qd in QuestionData.select().where(QuestionData.test == tref):
+                for qd in QGroup.select().where(QGroup.test == tref):
                     tot += qd.mark
                 sref = tref.sumdata[0]
                 autref = User.get(name="HAL")
@@ -1971,7 +1987,7 @@ class PlomDB:
                 gref = Group.get_or_none(Group.gid == task)
                 if gref.scanned == False:
                     return [False, "Task {} is not completely scanned".format(task)]
-                qref = gref.questiondata[0]
+                qref = gref.qgroups[0]
                 if qref.user != uref:
                     # belongs to another user
                     return [
@@ -2003,7 +2019,7 @@ class PlomDB:
                         )
                     )
                     return [False, "Task {} is not completely scanned".format(task)]
-                qref = gref.questiondata[0]
+                qref = gref.qgroups[0]
                 # return [true, page1,..,page.n]
                 rval = [True]
                 for p in gref.pages.order_by(Page.pageNumber):
@@ -2019,7 +2035,7 @@ class PlomDB:
         try:
             with plomdb.atomic():
                 gref = Group.get(Group.gid == task)
-                qref = gref.questiondata[0]
+                qref = gref.qgroups[0]
                 if qref.user != uref:
                     return False  # not your task
                 # update tag
@@ -2044,18 +2060,18 @@ class PlomDB:
                 pageFiles.append(pref.fileName)
         return [True, pageNames] + pageFiles
 
-    def MreviewQuestion(self, testNumber, questionNumber, version):
+    def MreviewQuestion(self, testNumber, question, version):
         # shift ownership to "reviewer"
         revref = User.get(name="reviewer")  # should always be there
 
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:
             return [False]
-        qref = QuestionData.get_or_none(
-            QuestionData.test == tref,
-            QuestionData.questionNumber == questionNumber,
-            QuestionData.version == version,
-            QuestionData.marked == True,
+        qref = QGroup.get_or_none(
+            QGroup.test == tref,
+            QGroup.question == question,
+            QGroup.version == version,
+            QGroup.marked == True,
         )
         if qref is None:
             return [False]
@@ -2063,7 +2079,7 @@ class PlomDB:
             qref.user = revref
             qref.time = datetime.now()
             qref.save()
-        log.info("Setting tq {}.{} for reviewer".format(testNumber, questionNumber))
+        log.info("Setting tq {}.{} for reviewer".format(testNumber, question))
         return [True]
 
     def MrevertTask(self, uname, task):
@@ -2073,7 +2089,7 @@ class PlomDB:
         if gref is None:
             return [False, "NST"]  # no such task
         # from the group get the test, question and sumdata - all need cleaning.
-        qref = gref.questiondata[0]
+        qref = gref.qgroups[0]
         tref = gref.test
         sref = tref.sumdata[0]
         # check user owns question and is "marked"
@@ -2112,7 +2128,7 @@ class PlomDB:
             uref.lastAction = "Reverted M task {}".format(task)
             uref.lastActivity = datetime.now()
             uref.save()
-        log.info("Reverting tq {}.{}".format(testNumber, questionNumber))
+        log.info("Reverting tq {}.{}".format(testNumber, question))
         return rval
 
     # ----- totaller stuff
@@ -2179,8 +2195,8 @@ class PlomDB:
                 uref.lastActivity = datetime.now()
                 uref.save()
                 # return [true, page1]
-                pref = Page.get(Page.test == tref, Page.pageNumber == 1)
-                return [True, pref.fileName]
+                pref = TPage.get(test=tref, pageNumber=1)
+                return [True, pref.image.fileName]
                 log.info(
                     "Giving totalling task {} to user {}".format(testNumber, uname)
                 )

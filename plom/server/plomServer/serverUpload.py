@@ -12,7 +12,7 @@ from plom.server import pageNotSubmitted
 log = logging.getLogger("server")
 
 
-def addKnownPage(self, t, p, v, fname, image, md5o):
+def addTestPage(self, t, p, v, fname, image, md5o):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -22,7 +22,7 @@ def addKnownPage(self, t, p, v, fname, image, md5o):
         newName = "pages/originalPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadKnownPage(t, p, v, fname, newName, md5o)
+    val = self.DB.uploadTestPage(t, p, v, fname, newName, md5o)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -107,8 +107,8 @@ def replaceMissingPage(self, testNumber, pageNumber, version):
     return rval
 
 
-def getPageImage(self, testNumber, pageNumber, version):
-    return self.DB.getPageImage(testNumber, pageNumber, version)
+def getTPageImage(self, testNumber, pageNumber, version):
+    return self.DB.getTPageImage(testNumber, pageNumber, version)
 
 
 def getUnknownImage(self, fname):
