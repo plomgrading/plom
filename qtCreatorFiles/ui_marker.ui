@@ -122,19 +122,19 @@
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
-           <layout class="QGridLayout" name="gridLayout">
-	    <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
+          <layout class="QGridLayout" name="gridLayout">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
            <item row="0" column="0" colspan="2">
             <widget class="QPushButton" name="annButton">
              <property name="sizePolicy">
@@ -212,12 +212,6 @@
           <layout class="QHBoxLayout" name="horizontalLayout_2">
            <item>
             <widget class="QPushButton" name="filterButton">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
              <property name="focusPolicy">
               <enum>Qt::NoFocus</enum>
              </property>
@@ -228,12 +222,6 @@
            </item>
            <item>
             <widget class="QCheckBox" name="filterInvCB">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
              <property name="text">
               <string>Inv</string>
              </property>
@@ -459,7 +447,7 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="markStyleGroup"/>
   <buttongroup name="mouseHandGroup"/>
+  <buttongroup name="markStyleGroup"/>
  </buttongroups>
 </ui>
