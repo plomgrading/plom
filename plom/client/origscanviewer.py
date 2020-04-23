@@ -45,7 +45,7 @@ class SourceList(QListWidget):
         self.originalItems = {}
 
     def addOriginalItem(self, p, pfile):
-        name = str(p).zfill(4)
+        name = str(p)
         self.addItem(QListWidgetItem(QIcon(pfile), name))
         self.originalItems[name] = pfile
 

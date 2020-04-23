@@ -190,15 +190,17 @@ class MarkHandler:
         else:
             return web.Response(status=409)  # this is not your task
 
-    # @routes.get("/MK/whole/{number}")
+    # @routes.get("/MK/whole/{number}/{question}")
     @authByToken_validFields([])
     def MgetWholePaper(self, data, request):
         number = request.match_info["number"]
-        rmesg = self.server.MgetWholePaper(number)
-        if rmesg[0]:  # return [True,[pn1,pn2,.],f1,f2,f3,...] or [False]
+        question = request.match_info["question"]
+        rmesg = self.server.MgetWholePaper(number, question)
+        if rmesg[0]:  # return [True,[qp1,qp2,..][pn1,pn2,.],f1,f2,f3,...] or [False]
             with MultipartWriter("images") as mpwriter:
-                mpwriter.append_json(rmesg[1])  # append the pageNames
-                for fn in rmesg[2:]:
+                mpwriter.append_json(rmesg[1])  # append the question-pageNames
+                mpwriter.append_json(rmesg[2])  # append the pageNames
+                for fn in rmesg[3:]:
                     mpwriter.append(open(fn, "rb"))
             return web.Response(body=mpwriter, status=200)
         else:
@@ -244,6 +246,6 @@ class MarkHandler:
         router.add_get("/MK/images/{task}", self.MgetImages)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
-        router.add_get("/MK/whole/{number}", self.MgetWholePaper)
+        router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_patch("/MK/review", self.MreviewQuestion)
         router.add_patch("/MK/revert/{task}", self.MrevertTask)

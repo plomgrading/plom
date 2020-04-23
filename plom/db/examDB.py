@@ -2073,23 +2073,33 @@ class PlomDB:
             log.error("MsetTag -  task {} / user {} pair not known".format(task, uname))
             return False
 
-    def MgetWholePaper(self, testNumber):
+    def MgetWholePaper(self, testNumber, question):
         tref = Test.get_or_none(Test.testNumber == testNumber, Test.scanned == True)
         if tref is None:  # don't know that test - this shouldn't happen
             return [False]
         pageFiles = []
         pageNames = []
+        questionPages = []
+        question = int(question)
         for p in tref.tpages.order_by(TPage.pageNumber):  # give TPages
             if p.group.groupType == "i":  # skip IDpages
                 continue
             pageNames.append("t{}".format(p.pageNumber))
             pageFiles.append(p.image.fileName)
+            # check if page belongs to our question
+            if p.group.groupType == "q":
+                if p.group.qgroups[0].question == question:
+                    questionPages.append("t{}".format(p.pageNumber))
         for p in tref.hwpages.order_by(HWPage.order):  # then give HWPages
             if p.group.groupType == "i":  # skip IDpages
                 continue
             pageNames.append("h{}".format(p.order))
             pageFiles.append(p.image.fileName)
-        return [True, pageNames] + pageFiles
+            # check if page belongs to our question
+            if p.group.groupType == "q":
+                if p.group.qgroups[0].question == question:
+                    questionPages.append("h{}".format(p.order))
+        return [True, questionPages, pageNames] + pageFiles
 
     def MreviewQuestion(self, testNumber, question, version):
         # shift ownership to "reviewer"
