@@ -669,6 +669,13 @@ class Annotator(QWidget):
             self._priv_relaunch = False
             self.close()
 
+    @pyqtSlot()
+    def shufflePageImages(self, imageList):
+        self._priv_shuffle = True
+        self._priv_shuffleList = imageList
+        print("SHUFFLE = {}".format(imageList))
+        self.close()
+
     def setMiscShortCuts(self):
         # shortcuts for next paper
         self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
