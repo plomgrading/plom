@@ -155,6 +155,7 @@ class Annotator(QWidget):
         self.ui.setupUi(self)
         # hide the "revealbox" which is revealed when the hideBox is hidden.
         self.ui.revealBox0.setHidden(True)
+        self.wideLayout()
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
         self.view = None
