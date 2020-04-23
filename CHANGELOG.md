@@ -5,15 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [Unreleased]
 
 ### Added
-* Manager-client can now enable/disable users.
 
 ### Changed
-* User credentials now handled by database rather than separate authentication object.
+* Minor UI tweaks.
 
 ### Fixed
+* Fix left-hand mouse mode.
+
+
+## [0.4.2] - 2020-04-21
+
+### Added
+* User-management can be performed by the manager client.
+
+### Changed
+* Greater fidelity to the original scan because JPEG files are (carefully) extracted and used directly.
+* JPEG transformations are done without lossy re-encoding, when possible.
+* PNG files should be a little smaller with fewer interpolation artifacts in the reass
+* User credentials now handled by database rather than separate authentication object.
+* Client can no longer revert; this feature may return later if needed.
+
+### Fixed
+* Various bug fixes.
+
 
 ## [0.4.1] - 2020-04-13
 
@@ -164,7 +182,8 @@ in most cases.
 
 This is the first release of Plom, PaperLess Open Marking.
 
-[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.1...master
+[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.2...master
+[0.4.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.1...v0.4.2
 [0.4.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.0...v0.4.1
 [0.4.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...v0.4.0
 [0.3.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.2...v0.3.0

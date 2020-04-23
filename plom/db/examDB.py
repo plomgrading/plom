@@ -1214,6 +1214,22 @@ class PlomDB:
         log.debug("Sending mark histogram for Q{}v{}".format(q, v))
         return rhist
 
+    def RgetMarked(self, q, v):
+        rval = []
+        for x in (
+            QuestionData.select()
+            .join(Group)
+            .where(
+                QuestionData.questionNumber == q,
+                QuestionData.version == v,
+                QuestionData.marked == True,
+                Group.scanned == True,
+            )
+        ):
+            rval.append(x.group.gid)
+        log.debug("Sending list of marked tasks for Q{}V{}".format(q, v))
+        return rval
+
     def RgetQuestionUserProgress(self, q, v):
         # return [ nScanned, [user, nmarked], [user, nmarked], etc]
         rdat = {}
@@ -2149,9 +2165,7 @@ class PlomDB:
         log.info("Setting tq {}.{} for reviewer".format(testNumber, question))
         return [True]
 
-    def MrevertTask(self, uname, task):
-        uref = User.get(name=uname)  # authenticated, so not-None
-
+    def MrevertTask(self, task):
         gref = Group.get_or_none(Group.gid == task)
         if gref is None:
             return [False, "NST"]  # no such task
@@ -2159,11 +2173,11 @@ class PlomDB:
         qref = gref.qgroups[0]
         tref = gref.test
         sref = tref.sumdata[0]
-        # check user owns question and is "marked"
-        if qref.user != uref or qref.status != "done" or qref.marked is False:
+        # check task is "done"
+        if qref.status != "done" or qref.marked is False:
             return [False, "NAC"]  # nothing to do here
         # now update things
-        log.info("User {} reverting task {}".format(uname, task))
+        log.info("Manager reverting task {}".format(task))
         with plomdb.atomic():
             # clean up test
             tref.marked = False
@@ -2178,10 +2192,11 @@ class PlomDB:
             sref.time = datetime.now()
             sref.summed = False
             sref.save()
-            # clean off the question data - but keep user and state = "out"
+            # clean off the question data - remove user and set status back to todo
             rval = [True, qref.annotatedFile, qref.plomFile, qref.commentFile]
             qref.marked = False
-            qref.status = "out"
+            qref.status = "todo"
+            qref.user = None
             qref.annotatedFile = None
             qref.md5sum = None
             qref.plomFile = None

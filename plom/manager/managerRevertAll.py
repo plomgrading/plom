@@ -18,7 +18,7 @@ import toml
 
 from plom import __version__, Plom_API_Version
 from plom.plom_exceptions import *
-from plom.messenger import Messenger
+from plom.messenger import ManagerMessenger
 
 
 # -------------------------------------------
@@ -32,8 +32,7 @@ def startReverting(question, version):
             question, version
         )
     )
-    markedList = messenger.MrequestDoneTasks(question, version)
-    tasksToRevert = [x[0] for x in markedList]
+    tasksToRevert = messenger.RgetMarked(q, v)
     print("Tasks to revert  = ", tasksToRevert)
     for task in tasksToRevert:
         try:
@@ -62,9 +61,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.server and ":" in args.server:
         s, p = args.server.split(":")
-        messenger = Messenger(s, port=p)
+        messenger = ManagerMessenger(s, port=p)
     else:
-        messenger = Messenger(args.server)
+        messenger = ManagerMessenger(args.server)
     messenger.start()
 
     user = "manager"

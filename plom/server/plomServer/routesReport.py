@@ -74,6 +74,13 @@ class ReportHandler:
             return web.Response(status=401)
         return web.json_response(self.server.RgetOutToDo(), status=200)
 
+    # @routes.get("/REP/marked")
+    @authByToken_validFields(["user", "q", "v"])
+    def RgetMarked(self, d, request):
+        if not d["user"] == "manager":
+            return web.Response(status=401)
+        return web.json_response(self.server.RgetMarked(d["q"], d["v"]), status=200)
+
     # @routes.get("/REP/status/{test}")
     @authByToken_validFields(["user"])
     def RgetStatus(self, d, request):
@@ -185,6 +192,7 @@ class ReportHandler:
         router.add_get("/REP/progress", self.RgetProgress)
         router.add_get("/REP/questionUserProgress", self.RgetQuestionUserProgress)
         router.add_get("/REP/markHistogram", self.RgetMarkHistogram)
+        router.add_get("/REP/marked", self.RgetMarked)
         router.add_get("/REP/identified", self.RgetIdentified)
         router.add_get("/REP/completions", self.RgetCompletions)
         router.add_get("/REP/outToDo", self.RgetOutToDo)

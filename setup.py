@@ -28,6 +28,8 @@ server_install_requires = [
     "passlib",
     "pymupdf>=1.16.14",
     "Pillow",
+    "cffi",  # not ours, why doesn't jpegtran-cffi pull this?
+    "jpegtran-cffi",
     "weasyprint",
     "aiohttp",
     "pyqrcode",
@@ -99,6 +101,9 @@ setup(
         ),
         ("share/plom/icons", iconList),
         ("share/plom/cursors", cursorList),
+        ("share/applications", ["org.plomgrading.PlomClient.desktop"]),
+        ("share/metainfo", ["org.plomgrading.PlomClient.appdata.xml"]),
+        ("share/icons/hicolor/128x128/apps/", ["org.plomgrading.PlomClient.png"]),
     ],
     install_requires=list(set(client_install_requires + server_install_requires)),
 )
