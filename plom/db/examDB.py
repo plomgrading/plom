@@ -1314,12 +1314,18 @@ class PlomDB:
             rval["total"] = sref.sumMark
             rval["twho"] = sref.user.name
         for qref in tref.qgroups:
-            rval[qref.question] = {
-                "marked": qref.marked,
-                "mark": qref.annotations[-1].mark,
-                "version": qref.version,
-                "who": qref.user.name,
-            }
+            if qref.marked:
+                rval[qref.question] = {
+                    "marked": True,
+                    "version": qref.version,
+                    "mark": qref.annotations[-1].mark,
+                    "who": qref.annotations[-1].user.name,
+                }
+            else:
+                rval[qref.question] = {
+                    "marked": False,
+                    "version": qref.version,
+                }
 
         log.debug("Sending status of test {}".format(testNumber))
         return [True, rval]
@@ -1757,8 +1763,8 @@ class PlomDB:
         if gref is None:
             return [False]
         rval = [True]
-        for p in gref.pages.order_by(Page.pageNumber):
-            rval.append(p.fileName)
+        for p in gref.tpages.order_by(TPage.pageNumber):
+            rval.append(p.image.fileName)
         for p in gref.hwpages.order_by(HWPage.order):  # then give HWPages
             rval.append(p.image.fileName)
         return rval

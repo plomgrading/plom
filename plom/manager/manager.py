@@ -319,6 +319,7 @@ class ProgressBox(QGroupBox):
         self.stats = stats
 
         self.setEnabled(True)
+        self.setVisible(True)
         self.pb.setMaximum(self.stats["NScanned"])
         self.pb.setValue(self.stats["NMarked"])
         self.nscL.setText("# Scanned = {}".format(self.stats["NScanned"]))
@@ -326,6 +327,7 @@ class ProgressBox(QGroupBox):
 
         if self.stats["NScanned"] == 0:
             self.setEnabled(False)
+            self.setVisible(False)
             return
         if self.stats["NMarked"] > 0:
             self.avgL.setText("Average mark = {:0.2f}".format(self.stats["avgMark"]))
