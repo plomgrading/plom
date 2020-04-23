@@ -427,7 +427,6 @@ class Annotator(QWidget):
             self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
             self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
             self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
-            self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
             # tools
             self.ui.toolLayout.addWidget(self.ui.panButton, 0, 0)
             self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 1)
@@ -448,7 +447,6 @@ class Annotator(QWidget):
             self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
             self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
             self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
-            self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
             # tools
             self.ui.toolLayout.addWidget(self.ui.penButton, 0, 0)
             self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 1)
