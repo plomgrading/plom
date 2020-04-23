@@ -60,8 +60,7 @@ from .useful_classes import (
 )
 from .comment_list import CommentWidget
 from .origscanviewer import OriginalScansViewer
-from .uiFiles.ui_annotator_lhm import Ui_annotator_lhm
-from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm
+from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm as Ui_annotator
 
 log = logging.getLogger("annotr")
 
@@ -151,10 +150,7 @@ class Annotator(QWidget):
         # Window depends on mouse-hand - si
         # right-hand mouse = 0, left-hand mouse = 1
         self.mouseHand = mouseHand
-        if self.mouseHand == 0:
-            self.ui = Ui_annotator_rhm()
-        else:
-            self.ui = Ui_annotator_lhm()
+        self.ui = Ui_annotator()
         # Set up the gui.
         self.ui.setupUi(self)
         # hide the "revealbox" which is revealed when the hideBox is hidden.
@@ -404,6 +400,9 @@ class Annotator(QWidget):
         self.ui.hideButton.setText("Compact")
         # right-hand mouse = 0, left-hand mouse = 1
         if self.mouseHand == 0:
+            self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
+            self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
+            self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
             self.ui.modeLayout.addWidget(self.ui.hideButton, 0, Qt.AlignRight)
             self.ui.modeLayout.addWidget(self.ui.modeLabel, 0, Qt.AlignCenter)
             self.ui.modeLayout.addWidget(self.ui.markLabel, 0, Qt.AlignRight)
@@ -424,6 +423,9 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.commentDownButton, 2, 3)
             self.ui.toolLayout.addWidget(self.ui.lineButton, 2, 4)
         else:  # left-hand mouse
+            self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
+            self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
+            self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
             self.ui.modeLayout.addWidget(self.ui.markLabel, 0, Qt.AlignRight)
             self.ui.modeLayout.addWidget(self.ui.modeLabel, 0, Qt.AlignCenter)
             self.ui.modeLayout.addWidget(self.ui.hideButton, 0, Qt.AlignRight)
