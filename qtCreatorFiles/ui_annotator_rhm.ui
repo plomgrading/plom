@@ -17,6 +17,9 @@
    <string>Annotate paper</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
    <property name="leftMargin">
     <number>0</number>
    </property>
@@ -38,18 +41,6 @@
       <enum>QFrame::Raised</enum>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
-      <property name="spacing">
-       <number>2</number>
-      </property>
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="topMargin">
-       <number>3</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
       <item>
        <widget class="QFrame" name="frame_1">
         <property name="frameShape">
@@ -59,20 +50,17 @@
          <enum>QFrame::Plain</enum>
         </property>
         <layout class="QHBoxLayout" name="modeLayout">
-         <property name="spacing">
-          <number>3</number>
-         </property>
          <property name="leftMargin">
-          <number>12</number>
+          <number>0</number>
          </property>
          <property name="topMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="rightMargin">
-          <number>12</number>
+          <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <item>
           <widget class="QPushButton" name="hamMenuButton">
@@ -152,6 +140,21 @@
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QHBoxLayout" name="buttonsLayout">
+         <property name="spacing">
+          <number>3</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
          <item>
           <widget class="QLabel" name="markLabel">
            <property name="text">
@@ -175,16 +178,16 @@
         </property>
         <layout class="QGridLayout" name="toolLayout">
          <property name="leftMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="topMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="rightMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="spacing">
           <number>3</number>
@@ -457,16 +460,16 @@
           <number>3</number>
          </property>
          <property name="leftMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="topMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="rightMargin">
-          <number>12</number>
+          <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>1</number>
+          <number>0</number>
          </property>
          <item>
           <widget class="QLabel" name="modeLabel">
@@ -491,16 +494,16 @@
         </property>
         <layout class="QGridLayout" name="markGrid">
          <property name="leftMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="topMargin">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="rightMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="spacing">
           <number>3</number>
@@ -515,16 +518,16 @@
           <number>6</number>
          </property>
          <property name="leftMargin">
-          <number>12</number>
+          <number>0</number>
          </property>
          <property name="topMargin">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="rightMargin">
-          <number>12</number>
+          <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>1</number>
+          <number>0</number>
          </property>
          <item>
           <spacer name="horizontalSpacer_2">
@@ -572,16 +575,16 @@
         </property>
         <layout class="QGridLayout" name="commentGrid">
          <property name="leftMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="topMargin">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="rightMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="spacing">
           <number>3</number>
@@ -595,26 +598,14 @@
    <item>
     <widget class="QFrame" name="revealBox0">
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">
-       <number>0</number>
-      </property>
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
+       <number>2</number>
       </property>
       <item alignment="Qt::AlignTop">
        <widget class="QFrame" name="revealBox1">
@@ -632,16 +623,16 @@
         </property>
         <layout class="QGridLayout" name="revealLayout">
          <property name="leftMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="topMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="rightMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="spacing">
           <number>3</number>
