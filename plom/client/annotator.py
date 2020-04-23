@@ -1148,6 +1148,11 @@ class Annotator(QWidget):
             ce.accept()
             return
 
+        if getattr(self, "_priv_shuffle", False):
+            self.ann_done_shuffle.emit(self.tgv, self._priv_shuffleList)
+            ce.accept()
+            return
+
         # We are here b/c of cancel button, titlebar close, or related
         if self.scene.areThereAnnotations():
             msg = SimpleMessage(
