@@ -358,6 +358,9 @@ class Annotator(QWidget):
         self.ui.revealLayout.addWidget(self.ui.hamMenuButton, 0, 1, 1, 1)
         self.ui.revealLayout.addWidget(self.ui.finishedButton, 0, 2, 1, 1)
         #self.ui.finishedButton.setText("N")
+        #self.ui.finishedButton.setStyleSheet("padding-left: 1px; padding-right: 1px;")
+        self.ui.finishedButton.setMaximumWidth(44)
+
         self.ui.revealLayout.addWidget(
             self.ui.zoomCB, 1, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
         )
@@ -472,6 +475,7 @@ class Annotator(QWidget):
         #spacerItem = QSpacerItem(6, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         #self.ui.modeLayout.addItem(spacerItem)
         self.ui.modeLayout.addWidget(self.ui.finishedButton)
+        self.ui.finishedButton.setMaximumWidth(16777215)  # back to default
         self.ui.modeLayout.addWidget(self.ui.finishNoRelaunchButton)
         self.ui.buttonsLayout.addWidget(self.ui.markLabel)
         #spacerItem = QSpacerItem(6, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
