@@ -220,19 +220,20 @@ class Annotator(QWidget):
         # TODO: end changes for qtCreator
 
         m = QMenu()
-        m.addAction("Next paper ** (ctrl-n)", self.menu1)
-        m.addAction("Done **", self.menu1)
-        m.addAction("Cancel (ctrl-c)", self.close)
-
+        m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
+        m.addAction("Done (save and close)", self.saveAndClose)
+        m.addAction("Cancel\tctrl-c", self.close)
+        m.addSeparator()
+        m.addAction("Defer and go to next\t<todo>", self.menu1)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
         m.addSeparator()
-        m.addAction("Compact UI", self.narrowLayout)
-        m.addAction("&Wide UI", self.wideLayout)
+        m.addAction("Compact UI\thome", self.narrowLayout)
+        m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
-        m.addAction("Help **", self.menu2)
-        m.addAction("Show shortcut keys... (?)", self.keyPopUp)
-        m.addAction("About Plom **", self.menu1)
+        m.addAction("Help\t<todo>", self.menu2)
+        m.addAction("Show shortcut keys...\t?", self.keyPopUp)
+        m.addAction("About Plom\t<todo>", self.menu1)
         self.ui.hamMenuButton.setMenu(m)
 
     def menu1(self):
