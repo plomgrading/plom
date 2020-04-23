@@ -674,7 +674,7 @@ class Annotator(QWidget):
     @pyqtSlot()
     def shufflePageImages(self, imageList):
         self._priv_shuffle = True
-        self._priv_shuffleList = imageList
+        self._priv_shuffleList = imageList  # is list of pairs [im-ref, filename]
         print("SHUFFLE = {}".format(imageList))
         self.close()
 

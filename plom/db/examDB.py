@@ -2102,6 +2102,31 @@ class PlomDB:
             pageFiles.append(p.image.fileName)
         return [True, pageData] + pageFiles
 
+    def MshuffleImages(self, uname, task, imageRefs):
+        uref = User.get(name=uname)  # authenticated, so not-None
+
+        with plomdb.atomic():
+            gref = Group.get(Group.gid == task)
+            qref = gref.qgroups[0]
+            if qref.user != uref:
+                return [False]  # not your task
+            # grab the last annotation
+            aref = gref.qgroups[0].annotations[-1]
+            # delete the old pages
+            for p in aref.apages:
+                p.delete_instance()
+            # now create new apages
+            ord = 0
+            for ir in imageRefs:
+                ord += 1
+                APage.create(annotation=aref, image=ir, order=ord)
+            aref.time = datetime.now()
+            uref.lastActivity = datetime.now()
+            uref.lastAction = "Shuffled images of {}".format(task)
+            aref.save()
+            uref.save()
+        return [True]
+
     def MreviewQuestion(self, testNumber, question, version):
         # shift ownership to "reviewer"
         revref = User.get(name="reviewer")  # should always be there

@@ -153,7 +153,7 @@ class RearrangementViewer(QDialog):
         self.setupUI()
         self.pageData = pageData
         self.pageFiles = pageFiles
-        self.nameToIref = {}
+        self.nameToIrefNFile = {}
         # note pagedata  triples [name, image-ref, true/false]
         self.populateList()
 
@@ -212,7 +212,10 @@ class RearrangementViewer(QDialog):
 
     def populateList(self):
         for k in range(len(self.pageData)):
-            self.nameToIref[self.pageData[k][0]] = self.pageData[k][1]
+            self.nameToIrefNFile[self.pageData[k][0]] = [
+                self.pageData[k][1],
+                self.pageFiles[k],
+            ]
             if self.pageData[k][2]:  # is a question page
                 self.listB.addOriginalItem(self.pageData[k][0], self.pageFiles[k])
             else:
@@ -243,7 +246,8 @@ class RearrangementViewer(QDialog):
 
         self.permute = []
         for n in self.listB.getNameList():
-            self.permute.append(self.nameToIref[n])
+            self.permute.append(self.nameToIrefNFile[n])
+            # return pairs of iref and file
         self.accept()
 
 

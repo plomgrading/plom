@@ -177,3 +177,7 @@ def MrevertTask(self, username, code):
         return [True]
     else:
         return rval
+
+
+def MshuffleImages(self, username, code, imageRefs):
+    return self.DB.MshuffleImages(username, code, imageRefs)

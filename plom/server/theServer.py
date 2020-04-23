@@ -184,6 +184,7 @@ class Server(object):
         MgetWholePaper,
         MreviewQuestion,
         MrevertTask,
+        MshuffleImages,
     )
     from .plomServer.serverTotal import (
         TgetMaxMark,

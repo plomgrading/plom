@@ -232,6 +232,16 @@ class MarkHandler:
         else:  # cannot find that task
             return web.Response(status=404)
 
+    # @routes.patch("/MK/shuffle/{task}")
+    @authByToken_validFields(["user", "imageRefs"])
+    def MshuffleImages(self, data, request):
+        task = request.match_info["task"]
+        rval = self.server.MshuffleImages(data["user"], task, data["imageRefs"])
+        if rval[0]:
+            return web.Response(status=200)
+        else:  # not your task
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         router.add_get("/MK/allMax", self.MgetAllMax)
         router.add_get("/MK/maxMark", self.MgetQuestionMark)
@@ -248,3 +258,4 @@ class MarkHandler:
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_patch("/MK/review", self.MreviewQuestion)
         router.add_patch("/MK/revert/{task}", self.MrevertTask)
+        router.add_patch("/MK/shuffle/{task}", self.MshuffleImages)

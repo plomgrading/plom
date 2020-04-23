@@ -1112,18 +1112,20 @@ class MarkerClient(QWidget):
 
     @pyqtSlot(str, list)
     def callbackAnnWantsShuffle(self, task, imageList):
-        print(
-            "Marker needs to remake image list for task {} = {}".format(task, imageList)
-        )
-        print("TODO")
-        ## TODO
-        # inames = []
-        # for i in range(len(imageList)):
-        #     tmp = os.path.join(self.workingDirectory, "{}.{}.png".format(task, i))
-        #     inames.append(tmp)
-        #     shutil.copy(imageList[i], tmp)
-        # self.exM.setOriginalFiles("m" + task, inames)
-        # self.annotateTest()
+        # we know the list of image-refs and files. copy files into place
+        # Image names = "<task>.<imagenumber>.<extension>"
+        inames = []
+        irefs = []
+        for i in range(len(imageList)):
+            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
+            shutil.copyfile(imageList[i][1], tmp)
+            inames.append(tmp)
+            irefs.append(imageList[i][0])
+        self.exM.setOriginalFiles("q" + task, inames)
+        # now tell server about new list of images for the annotation.
+        messenger.MshuffleImages("q" + task, irefs)
+        # finally relaunch the annotator
+        self.annotateTest()
 
     @pyqtSlot(str)
     def callbackAnnDoneWantsMore(self, task):
