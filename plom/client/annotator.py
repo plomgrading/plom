@@ -455,7 +455,12 @@ class Annotator(QWidget):
         if self.testViewFiles is None:
             testNumber = self.tgv[:4]
             log.debug("wholePage: downloading files for testnum {}".format(testNumber))
-            pageNames, self.testViewFiles = self.parent.downloadWholePaper(testNumber)
+            (
+                questionPages,
+                pageNames,
+                self.testViewFiles,
+            ) = self.parent.downloadWholePaper(testNumber)
+
             log.debug(
                 "wholePage: pageNames = {}, viewFiles = {}".format(
                     pageNames, self.testViewFiles

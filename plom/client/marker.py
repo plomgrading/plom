@@ -1244,7 +1244,9 @@ class MarkerClient(QWidget):
 
     def downloadWholePaper(self, testNumber):
         try:
-            pageNames, imagesAsBytes = messenger.MrequestWholePaper(testNumber)
+            questionPages, pageNames, imagesAsBytes = messenger.MrequestWholePaper(
+                testNumber
+            )
         except PlomTakenException as err:
             log.exception("Taken exception when downloading whole paper")
             ErrorMessage("{}".format(err)).exec_()
@@ -1259,7 +1261,7 @@ class MarkerClient(QWidget):
             with open(tfn, "wb") as fh:
                 fh.write(iab)
 
-        return [pageNames, viewFiles]
+        return [questionPages, pageNames, viewFiles]
 
     def doneWithWholePaperFiles(self, viewFiles):
         for f in viewFiles:
