@@ -1088,22 +1088,24 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MrequestWholePaper(self, code):
+    def MrequestWholePaper(self, code, questionNumber):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/MK/whole/{}".format(self.server, code),
+                "https://{}/MK/whole/{}/{}".format(self.server, code, questionNumber),
                 json={"user": self.user, "token": self.token},
                 verify=False,
             )
             response.raise_for_status()
 
-            # response should be multipart = [[pageNames], f1,f2,f3..]
+            # response should be multipart = [[questionpages], [pageNames], f1,f2,f3..]
             imagesAsBytes = MultipartDecoder.from_response(response).parts
             images = []
             i = 0
             for iab in imagesAsBytes:
                 if i == 0:
+                    questionPages = json.loads(iab.content)
+                elif i == 1:
                     pageNames = json.loads(iab.content)
                 else:
                     images.append(
@@ -1123,7 +1125,7 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        return [pageNames, images]
+        return [questionPages, pageNames, images]
 
     # ------------------------
     # ------------------------
