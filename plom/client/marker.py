@@ -997,6 +997,8 @@ class MarkerClient(QWidget):
         annotator.ann_done_wants_more.connect(self.callbackAnnDoneWantsMore)
         annotator.ann_done_closing.connect(self.callbackAnnDoneClosing)
         annotator.ann_done_reject.connect(self.callbackAnnDoneCancel)
+        annotator.ann_done_shuffle.connect(self.callbackAnnWantsShuffle)
+        # off we go
         self.setEnabled(False)
         annotator.show()
         # We had (have?) a bug: when `annotator` var goes out of scope, it can
@@ -1107,6 +1109,21 @@ class MarkerClient(QWidget):
         pr = prIndex[0].row()
         if self.prxM.getPrefix(pr) == "q" + task:
             self.updateImage(pr)
+
+    @pyqtSlot(str, list)
+    def callbackAnnWantsShuffle(self, task, imageList):
+        print(
+            "Marker needs to remake image list for task {} = {}".format(task, imageList)
+        )
+        print("TODO")
+        ## TODO
+        # inames = []
+        # for i in range(len(imageList)):
+        #     tmp = os.path.join(self.workingDirectory, "{}.{}.png".format(task, i))
+        #     inames.append(tmp)
+        #     shutil.copy(imageList[i], tmp)
+        # self.exM.setOriginalFiles("m" + task, inames)
+        # self.annotateTest()
 
     @pyqtSlot(str)
     def callbackAnnDoneWantsMore(self, task):
