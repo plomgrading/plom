@@ -95,6 +95,7 @@ class Annotator(QWidget):
     ann_done_wants_more = pyqtSignal(str)
     ann_done_closing = pyqtSignal(str)
     ann_done_reject = pyqtSignal(str)
+    ann_done_shuffle = pyqtSignal(str, list)
 
     def __init__(
         self,
