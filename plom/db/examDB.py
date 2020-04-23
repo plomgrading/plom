@@ -673,7 +673,6 @@ class PlomDB:
     def invalidateDNMGroup(self, gref):
         with plomdb.atomic():
             tref.scanned = False
-            tref.finished = False
             tref.save()
             gref.scanned = False
             gref.save()
@@ -685,7 +684,6 @@ class PlomDB:
         with plomdb.atomic():
             tref.scanned = False
             tref.identified = False
-            tref.finished = False
             tref.save()
             gref.scanned = False
             gref.save()
@@ -710,7 +708,6 @@ class PlomDB:
                 tref.scanned = False
             tref.marked = False
             tref.totalled = False
-            tref.finished = False
             tref.save()
             # update the group
             if delPage:
@@ -1169,9 +1166,9 @@ class PlomDB:
             NScanned += 1
             if x.marked == True:
                 NMarked += 1
-                SMark += x.mark
-                SMTime += x.markingTime
-                if datetime.now() - x.time < oneHour:
+                SMark += x.annotations[-1].mark
+                SMTime += x.annotations[-1].markingTime
+                if datetime.now() - x.annotations[-1].time < oneHour:
                     NRecent += 1
 
         log.debug("Sending progress summary for Q{}v{}".format(q, v))
@@ -1208,9 +1205,9 @@ class PlomDB:
             # make sure user.name and mark both in histogram
             if x.user.name not in rhist:
                 rhist[x.user.name] = {}
-            if x.mark not in rhist[x.user.name]:
-                rhist[x.user.name][x.mark] = 0
-            rhist[x.user.name][x.mark] += 1
+            if x.annotations[-1].mark not in rhist[x.user.name]:
+                rhist[x.user.name][x.annotations[-1].mark] = 0
+            rhist[x.user.name][x.annotations[-1].mark] += 1
         log.debug("Sending mark histogram for Q{}v{}".format(q, v))
         return rhist
 
@@ -1319,7 +1316,7 @@ class PlomDB:
         for qref in tref.qgroups:
             rval[qref.question] = {
                 "marked": qref.marked,
-                "mark": qref.mark,
+                "mark": qref.annotations[-1].mark,
                 "version": qref.version,
                 "who": qref.user.name,
             }
@@ -1334,7 +1331,6 @@ class PlomDB:
                 "identified": tref.identified,
                 "marked": tref.marked,
                 "totalled": tref.totalled,
-                "finished": tref.finished,
                 "sid": "",
                 "sname": "",
             }
@@ -1346,7 +1342,7 @@ class PlomDB:
                 thisTest["q{}v".format(qref.question)] = qref.version
                 thisTest["q{}m".format(qref.question)] = ""
                 if qref.marked:
-                    thisTest["q{}m".format(qref.question)] = qref.mark
+                    thisTest["q{}m".format(qref.question)] = qref.annotations[-1].mark
             rval[tref.testNumber] = thisTest
         log.debug("Sending spreadsheet (effectively)")
         return rval
@@ -1370,7 +1366,7 @@ class PlomDB:
         rval = [[iref.studentID, iref.studentName]]
         # then [q, v, mark]
         for g in tref.qgroups.order_by(QGroup.question):
-            rval.append([g.question, g.version, g.mark])
+            rval.append([g.question, g.version, g.annotations[-1].mark])
         log.debug("Sending coverpage info of test {}".format(testNumber))
         return rval
 
@@ -1380,16 +1376,16 @@ class PlomDB:
         if tref is None:
             return []
         # append ID-pages, then DNM-pages, then QuestionGroups
-        gref = Group.get_or_none(Group.test == tref, Group.groupType == "i")
-        for p in gref.pages.order_by(Page.pageNumber):
-            rval.append(p.fileName)
+        idref = IDGroup.get_or_none(test=tref)
+        for p in idref.idpages.order_by(IDPage.order):
+            rval.append(p.image.fileName)
         # append DNM pages
-        gref = Group.get_or_none(Group.test == tref, Group.groupType == "d")
-        for p in gref.pages.order_by(Page.pageNumber):
-            rval.append(p.fileName)
+        dnmref = DNMGroup.get_or_none(test=tref)
+        for p in dnmref.dnmpages.order_by(DNMPage.order):
+            rval.append(p.image.fileName)
         # append questiongroups
         for g in tref.qgroups.order_by(QGroup.question):
-            rval.append(g.annotatedFile)
+            rval.append(g.annotations[-1].image.fileName)
         log.debug("Sending annotated images for test {}".format(testNumber))
         return rval
 
@@ -1408,11 +1404,11 @@ class PlomDB:
                     x.test.testNumber,
                     x.question,
                     x.version,
-                    x.mark,
+                    x.annotations[-1].mark,
                     x.user.name,
-                    x.markingTime,
+                    x.annotations[-1].markingTime,
                     # CANNOT JSON DATETIMEFIELD.
-                    x.time.strftime("%y:%m:%d-%H:%M:%S"),
+                    x.annotations[-1].time.strftime("%y:%m:%d-%H:%M:%S"),
                 ]
             )
         log.debug(
@@ -1439,7 +1435,7 @@ class PlomDB:
                 testNumber, question, version
             )
         )
-        return [True, qref.annotatedFile]
+        return [True, qref.annotations[-1].image.fileName]
 
     def RgetIDReview(self):
         rval = []
@@ -1994,7 +1990,7 @@ class PlomDB:
                 # update the sum-mark
                 tot = 0
                 for qd in QGroup.select().where(QGroup.test == tref):
-                    tot += qd.mark
+                    tot += qd.annotations[-1].mark
                 sref = tref.sumdata[0]
                 autref = User.get(name="HAL")
                 sref.user = autref  # auto-totalled by HAL.
@@ -2182,7 +2178,6 @@ class PlomDB:
             # clean up test
             tref.marked = False
             tref.totalled = False
-            tref.finished = False
             tref.save()
             # clean up sum-data - no one should be totalling and marking at same time.
             # TODO = sort out the possible idiocy caused by simultaneous marking+totalling by client.
