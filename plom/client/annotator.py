@@ -455,22 +455,18 @@ class Annotator(QWidget):
         if self.testViewFiles is None:
             testNumber = self.tgv[:4]
             log.debug("wholePage: downloading files for testnum {}".format(testNumber))
-            (
-                questionPages,
-                pageNames,
-                self.testViewFiles,
-            ) = self.parent.downloadWholePaper(testNumber)
+            (pageData, self.testViewFiles,) = self.parent.downloadWholePaper(testNumber)
 
             log.debug(
-                "wholePage: pageNames = {}, viewFiles = {}".format(
-                    pageNames, self.testViewFiles
+                "wholePage: pageData = {}, viewFiles = {}".format(
+                    pageData, self.testViewFiles
                 )
             )
         # if we haven't built a testview, built it now
         if self.testView is None:
             # self.testView = OriginalScansViewer(self, testNumber, pageNames, self.testViewFiles)
             self.testView = RearrangementViewer(
-                self, testNumber, questionPages, pageNames, self.testViewFiles,
+                self, testNumber, pageData, self.testViewFiles,
             )
         if self.testView.exec_() == QDialog.Accepted:
             self.shufflePageImages(self.testView.permute)

@@ -85,14 +85,14 @@ class SinkList(QListWidget):
         self.itemDoubleClicked.connect(self.viewImage)
 
     def addOriginalItem(self, p, pfile):
-        name = str(p).zfill(4)
+        name = str(p)
         it = QListWidgetItem(QIcon(pfile), name)
         it.setBackground(QBrush(Qt.green))
         self.addItem(it)
         self.originalItems[name] = pfile
 
     def addPotentialItem(self, p, pfile):
-        name = str(p).zfill(4)
+        name = str(p)
         self.potentialItems[name] = pfile
 
     def removeItem(self):
@@ -136,30 +136,26 @@ class SinkList(QListWidget):
         else:
             self.parent.viewImage(self.potentialItems[qi.text()])
 
-    def getFileList(self):
-        flist = []
+    def getNameList(self):
+        nList = []
         for r in range(self.count()):
-            name = self.item(r).text()
-            if name in self.originalItems:
-                flist.append(self.originalItems[name])
-            else:
-                flist.append(self.potentialItems[name])
-        return flist
+            nList.append(self.item(r).text())
+        return nList
 
 
 class RearrangementViewer(QDialog):
-    def __init__(self, parent, testNumber, questionPages, pageNames, pageFiles):
+    def __init__(self, parent, testNumber, pageData, pageFiles):
         super().__init__()
         self.parent = parent
         self.testNumber = testNumber
         self.numberOfPages = len(pageFiles)
 
         self.setupUI()
-
-        pageDict = {}
-        for k in range(self.numberOfPages):
-            pageDict[pageNames[k]] = pageFiles[k]
-        self.populateList(pageDict, questionPages)
+        self.pageData = pageData
+        self.pageFiles = pageFiles
+        self.nameToIref = {}
+        # note pagedata  triples [name, image-ref, true/false]
+        self.populateList()
 
     def setupUI(self):
 
@@ -214,14 +210,14 @@ class RearrangementViewer(QDialog):
         self.removeB.clicked.connect(self.sinkToSource)
         self.acceptB.clicked.connect(self.doShuffle)
 
-    def populateList(self, pageDict, questionPages):
-        for p in pageDict:
-            pfile = pageDict[p]
-            if p in questionPages:
-                self.listB.addOriginalItem(p, pfile)
+    def populateList(self):
+        for k in range(len(self.pageData)):
+            self.nameToIref[self.pageData[k][0]] = self.pageData[k][1]
+            if self.pageData[k][2]:  # is a question page
+                self.listB.addOriginalItem(self.pageData[k][0], self.pageFiles[k])
             else:
-                self.listA.addOriginalItem(p, pfile)
-                self.listB.addPotentialItem(p, pfile)
+                self.listA.addOriginalItem(self.pageData[k][0], self.pageFiles[k])
+                self.listB.addPotentialItem(self.pageData[k][0], self.pageFiles[k])
 
     def sourceToSink(self):
         self.listB.appendItem(self.listA.removeItem())
@@ -244,9 +240,11 @@ class RearrangementViewer(QDialog):
         )
         if msg.exec() == QMessageBox.No:
             return
-        else:
-            self.permute = self.listB.getFileList()
-            self.accept()
+
+        self.permute = []
+        for n in self.listB.getNameList():
+            self.permute.append(self.nameToIref[n])
+        self.accept()
 
 
 class OriginalScansViewer(QWidget):

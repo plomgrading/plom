@@ -1098,15 +1098,13 @@ class Messenger(BaseMessenger):
             )
             response.raise_for_status()
 
-            # response should be multipart = [[questionpages], [pageNames], f1,f2,f3..]
+            # response should be multipart = [ pageData, f1,f2,f3..]
             imagesAsBytes = MultipartDecoder.from_response(response).parts
             images = []
             i = 0
             for iab in imagesAsBytes:
                 if i == 0:
-                    questionPages = json.loads(iab.content)
-                elif i == 1:
-                    pageNames = json.loads(iab.content)
+                    pageData = json.loads(iab.content)
                 else:
                     images.append(
                         BytesIO(iab.content).getvalue()
@@ -1125,7 +1123,7 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        return [questionPages, pageNames, images]
+        return [pageData, images]
 
     # ------------------------
     # ------------------------

@@ -2077,29 +2077,30 @@ class PlomDB:
         tref = Test.get_or_none(Test.testNumber == testNumber, Test.scanned == True)
         if tref is None:  # don't know that test - this shouldn't happen
             return [False]
+        pageData = []
         pageFiles = []
-        pageNames = []
-        questionPages = []
         question = int(question)
         for p in tref.tpages.order_by(TPage.pageNumber):  # give TPages
             if p.group.groupType == "i":  # skip IDpages
                 continue
-            pageNames.append("t{}".format(p.pageNumber))
-            pageFiles.append(p.image.fileName)
+            val = ["t{}".format(p.pageNumber), p.image.id, False]
             # check if page belongs to our question
             if p.group.groupType == "q":
                 if p.group.qgroups[0].question == question:
-                    questionPages.append("t{}".format(p.pageNumber))
+                    val[2] = True
+            pageData.append(val)
+            pageFiles.append(p.image.fileName)
         for p in tref.hwpages.order_by(HWPage.order):  # then give HWPages
             if p.group.groupType == "i":  # skip IDpages
                 continue
-            pageNames.append("h{}".format(p.order))
-            pageFiles.append(p.image.fileName)
+            val = ["t{}".format(p.order), p.image.id, False]
             # check if page belongs to our question
             if p.group.groupType == "q":
                 if p.group.qgroups[0].question == question:
-                    questionPages.append("h{}".format(p.order))
-        return [True, questionPages, pageNames] + pageFiles
+                    val[2] = True
+            pageData.append(val)
+            pageFiles.append(p.image.fileName)
+        return [True, pageData] + pageFiles
 
     def MreviewQuestion(self, testNumber, question, version):
         # shift ownership to "reviewer"

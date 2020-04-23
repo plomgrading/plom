@@ -196,11 +196,10 @@ class MarkHandler:
         number = request.match_info["number"]
         question = request.match_info["question"]
         rmesg = self.server.MgetWholePaper(number, question)
-        if rmesg[0]:  # return [True,[qp1,qp2,..][pn1,pn2,.],f1,f2,f3,...] or [False]
+        if rmesg[0]:  # return [True, pageData,f1,f2,f3,...] or [False]
             with MultipartWriter("images") as mpwriter:
-                mpwriter.append_json(rmesg[1])  # append the question-pageNames
-                mpwriter.append_json(rmesg[2])  # append the pageNames
-                for fn in rmesg[3:]:
+                mpwriter.append_json(rmesg[1])  # append the pageData
+                for fn in rmesg[2:]:
                     mpwriter.append(open(fn, "rb"))
             return web.Response(body=mpwriter, status=200)
         else:
