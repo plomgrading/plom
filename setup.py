@@ -89,7 +89,7 @@ setup(
             "share/plom",
             [
                 "plom/templateTestSpec.toml",
-                "plom/produce/digits.npz",
+                "plom/produce/digits.json",
                 "plom/serverDetails.toml",
                 "plom/templateUserList.csv",
                 "plom/demoClassList.csv",
