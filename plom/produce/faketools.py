@@ -112,6 +112,7 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
             )
             img = fitz.Pixmap(fitz.csGRAY, 28, 28, imgArray)
             page.insertImage(rect1, pixmap=img, keep_proportion=True)
+            # todo - there should be an assert or something here?
 
         rect2 = fitz.Rect(228, 335, 550, 450)
         rc = page.insertTextbox(
