@@ -14,12 +14,18 @@ import random
 from pathlib import Path
 from glob import glob
 
+import numpy as np
 import fitz
 import pandas
+
+# import tools for dealing with resource files
+import pkg_resources
 
 from . import paperdir as _paperdir
 from plom import specdir as _specdir
 
+digitData = pkg_resources.resource_stream("plom", "produce/digits.npz")
+digitArray = np.load(digitData)["arr_0"]
 
 possibleAns = [
     "I am so sorry, I really did study this... :(",
@@ -94,24 +100,20 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
         doc = fitz.open(fname)
         page = doc[0]
 
-        # TODO: use insertText
-        rect1 = fitz.Rect(228, 262, 550, 350)
+        # insert digit images into rectangles - some hackery required to get correct positions.
+        w = 28
+        b = 8
+        for k in range(8):
+            rect1 = fitz.Rect(
+                220 + b * k + w * k, 265, 220 + b * k + w * (k + 1), 265 + w
+            )
+            imgArray = bytearray(
+                digitArray[int(sn[k]) * 16 + random.randrange(16)].tostring()
+            )
+            img = fitz.Pixmap(fitz.csGRAY, 28, 28, imgArray)
+            page.insertImage(rect1, pixmap=img, keep_proportion=True)
+
         rect2 = fitz.Rect(228, 335, 550, 450)
-
-        # manually kern the student number to fit the boxes
-        text = "   ".join([c for c in sn])
-
-        rc = page.insertTextbox(
-            rect1,
-            text,
-            fontsize=25.5,
-            color=blue,
-            fontname="Helvetica",
-            fontfile=None,
-            align=0,
-        )
-        assert rc > 0
-
         rc = page.insertTextbox(
             rect2,
             name,
