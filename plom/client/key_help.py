@@ -136,7 +136,7 @@ class KeyHelp(QDialog):
             ],
             [
                 "Show whole paper",
-                ["f1", "fn-f1"],
+                ["F1", "Fn-F1"],
                 "Opens a window to display all the pages of the current test being annotated (except the ID-page).",
             ],
             [
