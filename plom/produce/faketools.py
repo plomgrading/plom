@@ -25,7 +25,7 @@ import pkg_resources
 from . import paperdir as _paperdir
 from plom import specdir as _specdir
 
-NDigit = 64  # how many of each digit were collected
+NDigit = 32  # how many of each digit were collected
 digitData = pkg_resources.resource_stream("plom", "produce/digits.json")
 
 possibleAns = [

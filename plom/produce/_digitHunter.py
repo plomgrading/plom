@@ -20,7 +20,7 @@ mnist = tf.keras.datasets.mnist.load_data()
 names = mnist[1][1]
 images = mnist[1][0]
 
-N = 64  # how many of each digit to collect
+N = 32  # how many of each digit to collect
 digits = defaultdict(list)
 
 for k in range(len(names)):
