@@ -61,7 +61,12 @@ class KeyHelp(QDialog):
                 "Save the current annotations and move on to next paper.",
             ],
         ],
-        "Help": [["Show key help", ["?"], "Show this window."]],
+        "General": [
+            ["Show key help", ["?"], "Show this window."],
+            ["Main menu", ["F10"], "Open the main menu"],
+            ["Redo", ["w", "o", "ctrl-y"], "Redo the last undone-action."],
+            ["Undo", ["s", "l", "ctrl-z"], "Undo the last action."],
+        ],
         "Marks": [
             ["Delta=0", ["`"], "Set the delta-mark value to 0."],
             [
@@ -107,10 +112,6 @@ class KeyHelp(QDialog):
                 ["g", "h"],
                 "Creates a text-item under the mouse click, or opens an existing text-item for editing. End the edit with shift-enter or escape.",
             ],
-        ],
-        "Undo": [
-            ["Redo", ["w", "o", "ctrl-y"], "Redo the last undone-action."],
-            ["Undo", ["s", "l", "ctrl-z"], "Undo the last action."],
         ],
         "View": [
             ["Pan", ["q", "p"], "Click and drag moves the current view."],

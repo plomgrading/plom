@@ -343,6 +343,7 @@ class Annotator(QWidget):
             Qt.Key_Home: lambda: self.toggleTools(),
             # view whole paper
             Qt.Key_F1: lambda: self.viewWholePaper(),
+            Qt.Key_F10: lambda: self.ui.hamMenuButton.animateClick(),
         }
 
     def toggleTools(self):
