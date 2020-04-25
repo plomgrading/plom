@@ -14,11 +14,23 @@ import random
 from pathlib import Path
 from glob import glob
 
+import json
+import base64
 import fitz
 import pandas
 
+# import tools for dealing with resource files
+import pkg_resources
+
 from . import paperdir as _paperdir
 from plom import specdir as _specdir
+
+
+# load the digit images
+digitArray = json.load(pkg_resources.resource_stream("plom", "produce/digits.json"))
+# how many of each digit were collected
+NDigit = len(digitArray) // 10
+assert len(digitArray) % 10 == 0
 
 
 possibleAns = [
@@ -62,6 +74,7 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
             something like `which=range(10, 16)` here to scribble on a
             subset.
     """
+
     paperdir = Path(paperdir)
     classlist = Path(classlist)
     outfile = Path(outfile)
@@ -94,24 +107,21 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
         doc = fitz.open(fname)
         page = doc[0]
 
-        # TODO: use insertText
-        rect1 = fitz.Rect(228, 262, 550, 350)
+        # insert digit images into rectangles - some hackery required to get correct positions.
+        w = 28
+        b = 8
+        for k in range(8):
+            rect1 = fitz.Rect(
+                220 + b * k + w * k, 265, 220 + b * k + w * (k + 1), 265 + w
+            )
+            uuImg = digitArray[
+                int(sn[k]) * NDigit + random.randrange(NDigit)
+            ]  # uu-encoded png
+            imgBString = base64.b64decode(uuImg)
+            page.insertImage(rect1, stream=imgBString, keep_proportion=True)
+            # todo - there should be an assert or something here?
+
         rect2 = fitz.Rect(228, 335, 550, 450)
-
-        # manually kern the student number to fit the boxes
-        text = "   ".join([c for c in sn])
-
-        rc = page.insertTextbox(
-            rect1,
-            text,
-            fontsize=25.5,
-            color=blue,
-            fontname="Helvetica",
-            fontfile=None,
-            align=0,
-        )
-        assert rc > 0
-
         rc = page.insertTextbox(
             rect2,
             name,
