@@ -64,7 +64,7 @@ def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName):
     )  # some subset of questions.
     doneQ = random.sample(list(range(1, 1 + numberOfQuestions)), did)
     for q in doneQ:
-        fname = Path("submittedHomework") / "hw.{}.q{}.pdf".format(studentID, q)
+        fname = Path("submittedHomework") / "hw.{}.{}.pdf".format(studentID, q)
         doc = fitz.open()
         # construct pages
         for pn in range(random.randint(1, 3)):
