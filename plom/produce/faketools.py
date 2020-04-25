@@ -25,8 +25,13 @@ import pkg_resources
 from . import paperdir as _paperdir
 from plom import specdir as _specdir
 
-NDigit = 32  # how many of each digit were collected
-digitData = pkg_resources.resource_stream("plom", "produce/digits.json")
+
+# load the digit images
+digitArray = json.load(pkg_resources.resource_stream("plom", "produce/digits.json"))
+# how many of each digit were collected
+NDigit = len(digitArray) // 10
+assert len(digitArray) % 10 == 0
+
 
 possibleAns = [
     "I am so sorry, I really did study this... :(",
@@ -83,8 +88,6 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
     df = pandas.read_csv(classlist, dtype="object")
     # sample from the classlist
     df = df.sample(len(papers))
-    # load the digit images
-    digitArray = json.load(digitData)
 
     bigdoc = fitz.open()
 
