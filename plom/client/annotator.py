@@ -214,33 +214,28 @@ class Annotator(QWidget):
         self.timer = QElapsedTimer()
         self.timer.start()
 
-        # TODO: various mucking around, should be done in qtCreator
-        #self.ui.buttonsLayout.addWidget(self.ui.modeLabel)
-        #self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
-        # TODO: end changes for qtCreator
-
+        # TODO: use QAction, share with other UI, shortcut keys written once
         m = QMenu()
         m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
         m.addAction("Done (save and close)", self.saveAndClose)
-        m.addAction("Cancel\tctrl-c", self.close)
-        m.addSeparator()
-        m.addAction("Defer and go to next\t<todo>", self.menu1)
+        m.addAction("Defer and go to next", self.menudummy).setEnabled(False)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
         m.addSeparator()
         m.addAction("Compact UI\thome", self.narrowLayout)
         m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
-        m.addAction("Help\t<todo>", self.menu2)
+        m.addAction("Help", self.menudummy).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
-        m.addAction("About Plom\t<todo>", self.menu1)
+        m.addAction("About Plom", self.menudummy).setEnabled(False)
+        m.addSeparator()
+        m.addAction("Close without saving\tctrl-c", self.close)
         self.ui.hamMenuButton.setMenu(m)
+        self.ui.hamMenuButton.setToolTip("Menu (F10)")
 
-    def menu1(self):
+
+    def menudummy(self):
         print("TODO: menu placeholder 1")
-    def menu2(self):
-        print("TODO: menu placeholder 2")
-
 
     def setCurrentMarkMode(self):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
