@@ -43,8 +43,6 @@ from PyQt5.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QToolButton,
-    QSpacerItem,
-    QSizePolicy,
 )
 
 from .mark_handler import MarkHandler
@@ -354,8 +352,9 @@ class Annotator(QWidget):
         self.ui.hideableBox.hide()
         self.ui.revealLayout.addWidget(self.ui.hamMenuButton, 0, 1, 1, 1)
         self.ui.revealLayout.addWidget(self.ui.finishedButton, 0, 2, 1, 1)
-        #self.ui.finishedButton.setText("N")
-        #self.ui.finishedButton.setStyleSheet("padding-left: 1px; padding-right: 1px;")
+        ## TODO: just use an icon in compact?
+        # self.ui.finishedButton.setText("N")
+        # self.ui.finishedButton.setStyleSheet("padding-left: 1px; padding-right: 1px;")
         self.ui.finishedButton.setMaximumWidth(44)
 
         self.ui.revealLayout.addWidget(
@@ -415,9 +414,6 @@ class Annotator(QWidget):
         self.ui.revealLayout.addWidget(
             self.ui.modeLabel, 10, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
         )
-        #self.ui.revealLayout.addWidget(
-        #    self.ui.frame_2, 10, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
-        #)
 
     def wideLayout(self):
         self.ui.hideableBox.show()
@@ -463,20 +459,12 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
             self.ui.toolLayout.addWidget(self.ui.deleteButton, 2, 3)
             self.ui.toolLayout.addWidget(self.ui.moveButton, 2, 4)
-        # TODO
-        #self.ui.revealLayout.addWidget(
-        #    self.ui.frame_2, 10, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
-        #)
         self.ui.ebLayout.addWidget(self.ui.modeLabel)
         self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
-        #spacerItem = QSpacerItem(6, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        #self.ui.modeLayout.addItem(spacerItem)
         self.ui.modeLayout.addWidget(self.ui.finishedButton)
         self.ui.finishedButton.setMaximumWidth(16777215)  # back to default
         self.ui.modeLayout.addWidget(self.ui.finishNoRelaunchButton)
         self.ui.buttonsLayout.addWidget(self.ui.markLabel)
-        #spacerItem = QSpacerItem(6, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        #self.ui.buttonsLayout.addItem(spacerItem)
         self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
 
     def viewWholePaper(self):
@@ -811,11 +799,11 @@ class Annotator(QWidget):
         self.ui.redoButton.clicked.connect(self.scene.redo)
         # The key-help button connects to the keyPopUp command.
         # TODO: messy viz hacks
-        #self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
+        # self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
         self.ui.keyHelpButton.setVisible(False)
         self.ui.cancelButton.setVisible(False)
         # The view button connects to the viewWholePaper
-        #self.ui.viewButton.clicked.connect(self.viewWholePaper)
+        # self.ui.viewButton.clicked.connect(self.viewWholePaper)
         self.ui.viewButton.setVisible(False)
 
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
