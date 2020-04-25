@@ -36,6 +36,9 @@ for d in range(10):
         img = ~images[c]  # since digit is bitwise-inverted.
         assert img.shape == (28, 28)
 
+        # quantize
+        #img = np.round(np.round(img / 255.0 * 3) / 3.0 * 255)
+
         # colorize
         bgr = np.zeros((28, 28, 3))
         bgr[:,:,0] = 255
@@ -43,6 +46,15 @@ for d in range(10):
         bgr[:,:,2] = img
 
         worked, buf = cv2.imencode(".png", bgr)
+
+        # pngquant to compress to 4-colour
+        # TODO: faster to use a pipe instead of so much disk access
+        fname = "tmpdigit.png"
+        with open(fname, "wb") as f:
+            f.write(buf)
+        subprocess.check_call(["pngquant", "4", "--force", fname])
+        with open(fname.replace(".png", "-fs8.png"), "rb") as f:
+            buf = f.read()
 
         #cv2.imshow("argh", img)
         if worked is False:
