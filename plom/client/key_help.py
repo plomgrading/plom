@@ -194,7 +194,7 @@ class KeyHelp(QDialog):
                     k,
                     1,
                     QTableWidgetItem(
-                        ", ".join(list(map(lambda x: '"{}"'.format(x), fun[1])))
+                        ", ".join(list(map(lambda x: "{}".format(x), fun[1])))
                     ),
                 )
                 if len(fun) == 3:
@@ -224,7 +224,7 @@ class KeyHelp(QDialog):
                     k,
                     1,
                     QTableWidgetItem(
-                        ", ".join(list(map(lambda x: '"{}"'.format(x), fun[1])))
+                        ", ".join(list(map(lambda x: "{}".format(x), fun[1])))
                     ),
                 )
                 if len(fun) == 3:
