@@ -293,7 +293,7 @@ if __name__ == "__main__":
 
     # Headless QT: https://stackoverflow.com/a/35355906
     L = sys.argv
-    L.extend(['-platform', 'minimal'])
+    L.extend(['-platform', 'offscreen'])
     app = QApplication(L)
 
     for q in range(1, spec["numberOfQuestions"] + 1):
