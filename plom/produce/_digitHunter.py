@@ -14,6 +14,7 @@ import numpy as np
 from random import sample
 import tensorflow as tf
 from collections import defaultdict
+import subprocess
 
 # pair (x_train, y_train), (x_test, y_test) from mnist dataset
 mnist = tf.keras.datasets.mnist.load_data()
@@ -33,8 +34,17 @@ for d in range(10):
     for k in range(N):
         c = digits[d][k]
         img = ~images[c]  # since digit is bitwise-inverted.
-        worked, buf = cv2.imencode(".png", img)
-        cv2.imshow("argh", img)
+        assert img.shape == (28, 28)
+
+        # colorize
+        bgr = np.zeros((28, 28, 3))
+        bgr[:,:,0] = 255
+        bgr[:,:,1] = img
+        bgr[:,:,2] = img
+
+        worked, buf = cv2.imencode(".png", bgr)
+
+        #cv2.imshow("argh", img)
         if worked is False:
             print("EEK - problem")
             quit()
