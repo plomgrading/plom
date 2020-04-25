@@ -41,7 +41,7 @@ for d in range(10):
 
         # colorize
         bgr = np.zeros((28, 28, 3))
-        bgr[:,:,0] = 255
+        bgr[:,:,0] = img // 4 + 192  # blue to [192, 255]
         bgr[:,:,1] = img
         bgr[:,:,2] = img
 
