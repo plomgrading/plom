@@ -13,6 +13,7 @@ import subprocess
 import random
 from pathlib import Path
 from glob import glob
+import argparse
 
 import json
 import base64
@@ -24,6 +25,7 @@ import pkg_resources
 
 from . import paperdir as _paperdir
 from plom import specdir as _specdir
+from plom import __version__
 
 
 # load the digit images
@@ -165,6 +167,10 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    args = parser.parse_args()
+
     specdir = Path(_specdir)
     classlist = specdir / "classlist.csv"
     outfile = "fake_scribbled_exams.pdf"

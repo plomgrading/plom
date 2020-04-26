@@ -8,11 +8,17 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from plom import __version__
+import argparse
 from textwrap import dedent
+
+from plom import __version__
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    args = parser.parse_args()
+
     print("Plom version {}".format(__version__))
 
     print(

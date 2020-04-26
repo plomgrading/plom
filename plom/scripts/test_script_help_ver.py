@@ -1,8 +1,17 @@
+# Copyright (C) 2020 Colin B. Macdonald
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 import subprocess
+import pkg_resources
 from plom import __version__
 
-# TODO: -init?
-scripts = ["plom-demo", "plom-build", "plom-scan", "plom-finish", "plom-server", "plom-client", "plom-manager"]
+## Get list of console scripts
+# https://stackoverflow.com/questions/35275787/create-a-list-of-console-scripts-defined-in-a-python-package
+def find_my_console_scripts(package_name):
+    entrypoints = (ep.name for ep in pkg_resources.iter_entry_points("console_scripts")
+                   if ep.module_name.startswith(package_name))
+    return entrypoints
+scripts = find_my_console_scripts("plom")
 
 
 def test_scripts_have_hyphen_version():
