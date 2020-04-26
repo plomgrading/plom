@@ -11,7 +11,7 @@ def find_my_console_scripts(package_name):
     entrypoints = (ep.name for ep in pkg_resources.iter_entry_points("console_scripts")
                    if ep.module_name.startswith(package_name))
     return entrypoints
-scripts = find_my_console_scripts("plom")
+scripts = list(find_my_console_scripts("plom"))
 
 
 def test_scripts_have_hyphen_version():
