@@ -31,11 +31,7 @@ class MarkHandler(QWidget):
             "qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, "
             "stop: 0.3 #ffcccc, stop: 0.7 #ffcccc, stop: 1 #ff0000);"
         )
-        self.greenStyle = (
-            "border: 2px solid #00aaaa; background: "
-            "qlineargradient(x1:0,y1:0,x2:0,y2:1, stop: 0 #00dddd, "
-            "stop: 1 #00aaaa); "
-        )
+        self.blueStyle = "border: 2px solid #3daee9; " "background: solid #3daee9;"
         # By default we set style to marking-UP.
         self.style = "Up"
         # Keep last delta used
@@ -127,7 +123,7 @@ class MarkHandler(QWidget):
     def setDeltaMark(self):
         self.pdmb.setStyleSheet("")
         self.pdmb = self.sender()
-        self.pdmb.setStyleSheet(self.greenStyle)
+        self.pdmb.setStyleSheet(self.blueStyle)
         self.currentDelta = self.sender().text()
         self.parent.deltaMarkSet(self.currentDelta)
 
