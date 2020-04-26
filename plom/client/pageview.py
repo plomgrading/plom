@@ -28,7 +28,7 @@ class PageView(QGraphicsView):
             base_path = sys._MEIPASS
         except Exception:
             base_path = os.path.dirname(__file__)
-        if any(
+        if hasattr(self.parent.parent, "ui") and any(
             x in self.parent.parent.ui.userLabel.text().lower()
             for x in ["omer", "angel"]
         ):
