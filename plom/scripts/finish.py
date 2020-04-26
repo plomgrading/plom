@@ -30,6 +30,8 @@ import os
 import shutil
 from textwrap import dedent
 
+from plom import __version__
+
 # TODO: be more decisive about how this should be
 from plom.finish.clearLogin import clearLogin
 import plom.finish.check_completed
@@ -45,6 +47,8 @@ parser = argparse.ArgumentParser(
     epilog="\n".join(__doc__.split("\n")[1:]),
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
+parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+
 sub = parser.add_subparsers(dest="command")
 
 spCheck = sub.add_parser(

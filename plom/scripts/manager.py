@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 
 from plom.manager.manager import Manager
 from plom import Default_Port
+from plom import __version__
 
 
 # Pop up a dialog for unhandled exceptions and then exit
@@ -83,6 +84,7 @@ def main():
     window.show()
 
     parser = argparse.ArgumentParser(description="Plom management tasks.")
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
     parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
     parser.add_argument(
         "-s",

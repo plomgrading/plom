@@ -15,6 +15,7 @@ import shutil
 # import tools for dealing with resource files
 import pkg_resources
 
+from plom import __version__
 from plom import SpecVerifier, SpecParser
 from plom import specdir
 from plom.produce import buildAllPapers, confirmProcessed, confirmNamed
@@ -135,6 +136,7 @@ def buildDatabaseAndPapers(blank):
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 sub = parser.add_subparsers(
     dest="command", description="Perform tasks related to building tests."
 )

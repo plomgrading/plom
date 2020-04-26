@@ -12,6 +12,8 @@ import argparse
 import os
 import shutil
 
+from plom import __version__
+
 
 # TODO: this bit of code from messenger could be useful here
 #    if os.path.isfile("server.toml"):
@@ -87,6 +89,7 @@ def uploadImages(server, password, unknowns=False, collisions=False):
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 sub = parser.add_subparsers(dest="command", description="Tools for dealing with scans.")
 #
 spP = sub.add_parser("process", help="Process scanned PDFs to images.")

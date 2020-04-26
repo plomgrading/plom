@@ -17,6 +17,7 @@ import traceback as tblib
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 
+from plom import __version__
 from plom.client.chooser import Chooser
 from plom import Default_Port
 
@@ -78,6 +79,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Run the Plom client. No arguments = run as normal."
     )
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
     parser.add_argument("user", type=str, nargs="?")
     parser.add_argument("password", type=str, nargs="?")
     parser.add_argument(
