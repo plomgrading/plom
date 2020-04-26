@@ -23,3 +23,8 @@ def test_scripts_have_hyphen_help():
     for s in scripts:
         subprocess.check_call([s, "--help"])
         subprocess.check_call([s, "-h"])
+
+
+def test_scripts_nonsense_cmdline():
+    for s in scripts:
+        assert subprocess.call([s, "--TheCatHasAlreadyBeenFed"]) != 0
