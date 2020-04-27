@@ -74,7 +74,8 @@ def buildAllPapers(spec, dbFilename, named=False):
 
 def confirmProcessed(spec, dbFilename):
     examDB = PlomDB(dbFilename)
-    students = readClassList()
+    if spec["numberToName"] > 0:
+        students = readClassList()
     for t in range(1, spec["numberToProduce"] + 1):
         if t <= spec["numberToName"]:
             fname = Path(paperdir) / "exam_{}_{}.pdf".format(
@@ -89,7 +90,6 @@ def confirmProcessed(spec, dbFilename):
 
 
 def confirmNamed(spec, dbFilename):
-    students = readClassList()
     if spec["numberToName"] > 0:
         students = readClassList()
     examDB = PlomDB(dbFilename)
