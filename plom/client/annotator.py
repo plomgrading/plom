@@ -630,7 +630,7 @@ class Annotator(QWidget):
         self.setIcon(self.ui.boxButton, "box", "{}/rectangle.svg".format(base_path))
         self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
         self.setIcon(
-            self.ui.commentDownButton, "com dn", "{}/comment_down.svg".format(base_path)
+            self.ui.commentDownButton, "com down", "{}/comment_down.svg".format(base_path)
         )
         self.setIcon(
             self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path)
