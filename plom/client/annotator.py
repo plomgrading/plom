@@ -250,19 +250,13 @@ class Annotator(QWidget):
             Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
             Qt.Key_X: lambda: self.ui.deleteButton.animateClick(),
             Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
-            Qt.Key_V: lambda: (
-                self.commentW.nextItem(),
-                self.commentW.CL.handleClick(),
-            ),
+            Qt.Key_V: lambda: self.ui.commentDownButton.animateClick(),
             Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
             # upper-row
             Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
             Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
             Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
-            Qt.Key_R: lambda: (
-                self.commentW.previousItem(),
-                self.commentW.CL.handleClick(),
-            ),
+            Qt.Key_R: lambda: self.ui.commentUpButton.animateClick(),
             Qt.Key_T: lambda: self.ui.penButton.animateClick(),
             # and then the same but for the left-handed
             # home-row
@@ -273,19 +267,13 @@ class Annotator(QWidget):
             Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
             # lower-row
             Qt.Key_N: lambda: self.ui.lineButton.animateClick(),
-            Qt.Key_M: lambda: (
-                self.commentW.nextItem(),
-                self.commentW.CL.handleClick(),
-            ),
+            Qt.Key_M: lambda: self.ui.commentDownButton.animateClick(),
             Qt.Key_Comma: lambda: self.ui.boxButton.animateClick(),
             Qt.Key_Period: lambda: self.ui.deleteButton.animateClick(),
             Qt.Key_Slash: lambda: self.ui.moveButton.animateClick(),
             # top-row
             Qt.Key_Y: lambda: self.ui.penButton.animateClick(),
-            Qt.Key_U: lambda: (
-                self.commentW.previousItem(),
-                self.commentW.CL.handleClick(),
-            ),
+            Qt.Key_U: lambda: self.ui.commentUpButton.animateClick(),
             Qt.Key_I: lambda: self.ui.crossButton.animateClick(),
             Qt.Key_O: lambda: self.ui.redoButton.animateClick(),
             Qt.Key_P: lambda: self.ui.panButton.animateClick(),
