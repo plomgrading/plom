@@ -418,12 +418,17 @@ class Annotator(QWidget):
     def wideLayout(self):
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
-        # right-hand mouse = 0, left-hand mouse = 1
-        if self.mouseHand == 0:
+
+        if self.parent._AnnSidebarOnRight:
+            self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
+            self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
+            self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
+        else:
             self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
             self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
             self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
-            # tools
+
+        if self.mouseHand == 0:  # right-hand mouse = 0
             self.ui.toolLayout.addWidget(self.ui.panButton, 0, 0)
             self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 1)
             self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 2)
@@ -440,10 +445,6 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.commentDownButton, 2, 3)
             self.ui.toolLayout.addWidget(self.ui.lineButton, 2, 4)
         else:  # left-hand mouse
-            self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
-            self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
-            self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
-            # tools
             self.ui.toolLayout.addWidget(self.ui.penButton, 0, 0)
             self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 1)
             self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 2)

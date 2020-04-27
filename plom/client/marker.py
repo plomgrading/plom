@@ -557,6 +557,9 @@ class MarkerClient(QWidget):
         if lastTime.get("FOREGROUND", False):
             self.allowBackgroundOps = False
 
+        # TODO: stupid variable for Annotator, fix after Annotator rework
+        self._AnnSidebarOnRight = lastTime.get("SidebarOnRight", False)
+
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.getNextButton.clicked.connect(self.requestNext)
