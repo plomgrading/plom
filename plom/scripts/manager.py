@@ -67,6 +67,18 @@ def sigint_handler(*args):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Plom management tasks.")
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
+    parser.add_argument(
+        "-s",
+        "--server",
+        metavar="SERVER[:PORT]",
+        action="store",
+        help="Which server to contact, port defaults to {}.".format(Default_Port),
+    )
+    args = parser.parse_args()
+
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory.create("Fusion"))
 
@@ -83,17 +95,6 @@ def main():
     window = Manager(app)
     window.show()
 
-    parser = argparse.ArgumentParser(description="Plom management tasks.")
-    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
-    parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
-    parser.add_argument(
-        "-s",
-        "--server",
-        metavar="SERVER[:PORT]",
-        action="store",
-        help="Which server to contact, port defaults to {}.".format(Default_Port),
-    )
-    args = parser.parse_args()
     window.ui.userLE.setText("manager")
     window.ui.passwordLE.setText(args.password)
     if args.server:
