@@ -1,11 +1,12 @@
-# -*- coding: utf-8 -*-
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Andrew Rechnitzer
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Plom tools for scribbling fake answers on PDF files"""
 
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and Colin B. Macdonald"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import os
 import sys
@@ -13,6 +14,7 @@ import subprocess
 import random
 from pathlib import Path
 from glob import glob
+import argparse
 
 import json
 import base64
@@ -24,6 +26,7 @@ import pkg_resources
 
 from . import paperdir as _paperdir
 from plom import specdir as _specdir
+from plom import __version__
 
 
 # load the digit images
@@ -165,6 +168,10 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    args = parser.parse_args()
+
     specdir = Path(_specdir)
     classlist = specdir / "classlist.csv"
     outfile = "fake_scribbled_exams.pdf"

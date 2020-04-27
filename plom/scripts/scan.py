@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Plom tools for scanning tests and pushing to servers."""
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import argparse
 import os
 import shutil
+
+from plom import __version__
 
 
 # TODO: this bit of code from messenger could be useful here
@@ -87,6 +91,7 @@ def uploadImages(server, password, unknowns=False, collisions=False):
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 sub = parser.add_subparsers(dest="command", description="Tools for dealing with scans.")
 #
 spP = sub.add_parser("process", help="Process scanned PDFs to images.")

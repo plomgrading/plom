@@ -20,6 +20,7 @@ from textwrap import fill, dedent
 # import tools for dealing with resource files
 import pkg_resources
 
+from plom import __version__
 from plom import SpecVerifier, SpecParser
 from plom.produce import processClasslist
 from plom import specdir
@@ -376,6 +377,7 @@ parser = argparse.ArgumentParser(
     + server_instructions,
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
+parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 sub = parser.add_subparsers(
     dest="command", description="Perform various server-related tasks."
 )
