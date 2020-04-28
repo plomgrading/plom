@@ -1025,7 +1025,7 @@ class Manager(QWidget):
     def selectRectangle(self):
         try:
             imageList = managerMessenger.IDgetRandomImage()
-        except PlomBenignException as err:
+        except PlomNoMoreException as err:
             ErrorMessage("No unIDd images to show.").exec_()
             return
         # Image names = "i<testnumber>.<imagenumber>.<ext>"

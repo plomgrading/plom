@@ -1735,9 +1735,9 @@ class PlomDB:
             .limit(1)
         )
         if query.count() == 0:
-            log.info('No unIDd IDPages to sennd to User "{}"'.format(uname))
+            log.info("No unIDd IDPages to sennd to manager")
             return [False]
-        log.info('Sending first unIDd IDPages to User "{}"'.format(uname))
+        log.info("Sending first unIDd IDPages to manager")
         gref = query[0]
         rval = [True]
         for p in gref.pages.order_by(Page.pageNumber):
