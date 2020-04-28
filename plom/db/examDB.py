@@ -1724,9 +1724,20 @@ class PlomDB:
 
     def IDgetRandomImage(self):
         # TODO - make random image rather than 1st
-        gref = Group.get_or_none(Group.groupType == "i", Group.scanned == True)
-        if gref is None:
+        query = (
+            Group.select()
+            .join(IDData)
+            .where(
+                Group.groupType == "i",
+                Group.scanned == True,
+                IDData.identified == False,
+            )
+            .limit(1)
+        )
+        if query.count() == 0:
             return [False]
+        gref = query[0]
+        print("ARGH - gref = ", gref)
         rval = [True]
         for p in gref.pages.order_by(Page.pageNumber):
             rval.append(p.fileName)
