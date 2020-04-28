@@ -9,12 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Client now has a menu button for less-commonly used commands.
 
 ### Changed
-* Minor UI tweaks.
+* Various UI tweaks.
+* Scripts can report their version.
+* Example demo data uses handwritten digits instead of fonts.
 
 ### Fixed
 * Fix left-hand mouse mode.
+* Other bug fixes.
 
 
 ## [0.4.2] - 2020-04-21
