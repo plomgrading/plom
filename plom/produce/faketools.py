@@ -81,7 +81,9 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
 
     print("Annotating papers with fake student data and scribbling on pages...")
     if not which:
-        papers = glob(str(paperdir / "exam_*.pdf"))
+        namedPapers = glob(str(paperdir / "exam_*_*.pdf"))
+        anonPapers = glob(str(paperdir / "exam_*.pdf"))
+        papers = namedPapers + anonPapers
     else:
         papers = [paperdir / "exam_{}.pdf".format(str(i).zfill(4)) for i in which]
 
@@ -101,37 +103,38 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
             )
         )
 
-        name = r.studentName
-        sn = str(r.id)
+        if fname in anonPapers:
+            name = r.studentName
+            sn = str(r.id)
 
-        doc = fitz.open(fname)
-        page = doc[0]
+            doc = fitz.open(fname)
+            page = doc[0]
 
-        # insert digit images into rectangles - some hackery required to get correct positions.
-        w = 28
-        b = 8
-        for k in range(8):
-            rect1 = fitz.Rect(
-                220 + b * k + w * k, 265, 220 + b * k + w * (k + 1), 265 + w
+            # insert digit images into rectangles - some hackery required to get correct positions.
+            w = 28
+            b = 8
+            for k in range(8):
+                rect1 = fitz.Rect(
+                    220 + b * k + w * k, 265, 220 + b * k + w * (k + 1), 265 + w
+                )
+                uuImg = digitArray[
+                    int(sn[k]) * NDigit + random.randrange(NDigit)
+                ]  # uu-encoded png
+                imgBString = base64.b64decode(uuImg)
+                page.insertImage(rect1, stream=imgBString, keep_proportion=True)
+                # todo - there should be an assert or something here?
+
+            rect2 = fitz.Rect(228, 335, 550, 450)
+            rc = page.insertTextbox(
+                rect2,
+                name,
+                fontsize=24,
+                color=blue,
+                fontname="Helvetica",
+                fontfile=None,
+                align=0,
             )
-            uuImg = digitArray[
-                int(sn[k]) * NDigit + random.randrange(NDigit)
-            ]  # uu-encoded png
-            imgBString = base64.b64decode(uuImg)
-            page.insertImage(rect1, stream=imgBString, keep_proportion=True)
-            # todo - there should be an assert or something here?
-
-        rect2 = fitz.Rect(228, 335, 550, 450)
-        rc = page.insertTextbox(
-            rect2,
-            name,
-            fontsize=24,
-            color=blue,
-            fontname="Helvetica",
-            fontfile=None,
-            align=0,
-        )
-        assert rc > 0
+            assert rc > 0
 
         # write some stuff on pages
         for j, pg in enumerate(doc):
