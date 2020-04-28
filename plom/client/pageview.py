@@ -9,6 +9,7 @@ import time
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QCursor, QPainter, QPixmap
 from PyQt5.QtWidgets import QGraphicsView, QApplication
+from plom.client.backGrid import BackGrid
 
 
 class PageView(QGraphicsView):
@@ -24,21 +25,8 @@ class PageView(QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # set the area outside the groupimage to be tiled grid png
-        try:
-            base_path = sys._MEIPASS
-        except Exception:
-            base_path = os.path.dirname(__file__)
-        if hasattr(self.parent.parent, "ui") and any(
-            x in self.parent.parent.ui.userLabel.text().lower()
-            for x in ["omer", "angel"]
-        ):
-            self.setBackgroundBrush(
-                QBrush(QPixmap(os.path.join(base_path, "backGrid3.png")))
-            )
-        else:
-            self.setBackgroundBrush(
-                QBrush(QPixmap(os.path.join(base_path, "backGrid1.png")))
-            )
+        self.setBackgroundBrush(QBrush(BackGrid(self.parent.username)))
+
         # Nice antialiasing and scaling of objects (esp the groupimage)
         self.setRenderHint(QPainter.Antialiasing, True)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)

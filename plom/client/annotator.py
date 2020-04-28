@@ -97,6 +97,7 @@ class Annotator(QWidget):
 
     def __init__(
         self,
+        username,
         tgv,
         testname,
         paperdir,
@@ -109,6 +110,8 @@ class Annotator(QWidget):
         plomDict=None,
     ):
         super(Annotator, self).__init__()
+        # set username
+        self.username = username
         # remember parent
         self.parent = parent
         # Grab filename of image, max mark, mark style (total/up/down)
