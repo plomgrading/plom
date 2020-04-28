@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 # This directory
 dir_setup = os.path.dirname(os.path.realpath(__file__))
 
-with open(os.path.join(dir_setup, 'plom', 'version.py')) as f:
+with open(os.path.join(dir_setup, "plom", "version.py")) as f:
     # Defines __version__
     exec(f.read())
 
@@ -89,6 +89,7 @@ setup(
             "share/plom",
             [
                 "plom/templateTestSpec.toml",
+                "plom/produce/digits.json",
                 "plom/serverDetails.toml",
                 "plom/templateUserList.csv",
                 "plom/demoClassList.csv",

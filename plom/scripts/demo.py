@@ -27,6 +27,7 @@ from plom import __version__
 parser = argparse.ArgumentParser(
     description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
 )
+parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 
 
 def main():
@@ -48,8 +49,8 @@ def main():
             raise RuntimeError('Directory "{}" must not exist for this demo.'.format(f))
 
     subprocess.check_call(split("plom-build new --demo"))
-    subprocess.check_call(split("plom-build make"))
     subprocess.check_call(split("plom-build class --demo"))
+    subprocess.check_call(split("plom-build make"))
     subprocess.check_call(split("plom-fake-scribbles"))
     subprocess.check_call(split("plom-server init"))
     subprocess.check_call(split("plom-server users --demo"))
@@ -66,7 +67,7 @@ def main():
         print("Server has prematurely stopped with return code {}".format(r))
         # TODO: server could send specific return code for "address already in use"?
         msg = "Server didn't start.  Is one already running?  See errors above."
-        #raise RuntimeError(msg) from None
+        # raise RuntimeError(msg) from None
         print(msg)
         exit(r)
 
@@ -89,7 +90,6 @@ def main():
         msg = "Server may have unexpectedly died during uploading.  See errors above."
         print(msg)
         exit(r)
-
 
     print('\n*** Now run "plom-client" ***\n')
     # TODO: output account info directly, perhaps just "user*"?

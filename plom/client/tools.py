@@ -652,7 +652,7 @@ class DeltaItem(QGraphicsTextItem):
         self.setPlainText(" {} ".format(self.delta))
         self.font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        self.font.setPointSize(min(30, fontsize * 3))
+        self.font.setPointSizeF(1.25*fontsize)
         self.setFont(self.font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
@@ -1474,7 +1474,7 @@ class TextItem(QGraphicsTextItem):
         self.setPlainText("")
         self.contents = ""
         self.font = QFont("Helvetica")
-        self.font.setPointSizeF(min(24, fontsize * 2.5))
+        self.font.setPointSizeF(fontsize)
         self.setFont(self.font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
@@ -1769,7 +1769,7 @@ class GhostDelta(QGraphicsTextItem):
         self.setPlainText(" {} ".format(self.delta))
         self.font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        self.font.setPointSize(min(30, fontsize * 3))
+        self.font.setPointSizeF(1.25*fontsize)
         self.setFont(self.font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
@@ -1796,7 +1796,7 @@ class GhostText(QGraphicsTextItem):
         self.setDefaultTextColor(Qt.blue)
         self.setPlainText(txt)
         self.font = QFont("Helvetica")
-        self.font.setPointSizeF(min(24, fontsize * 2.5))
+        self.font.setPointSizeF(fontsize)
         self.setFont(self.font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         # Set it as editably with the text-editor

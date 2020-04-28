@@ -23,6 +23,7 @@ from PyQt5.QtWidgets import QApplication, QWidget
 from plom.plom_exceptions import *
 from plom.client.pageview import PageView
 from plom.client.pagescene import PageScene
+from plom import AnnFontSizePts
 
 from plom.client.tools import (
     CommandArrow,
@@ -129,7 +130,7 @@ class SceneParent(QWidget):
         self.scene.undoStack.push(c(self.scene, pth))
 
     def GDT(self):
-        blurb = TextItem(self, 12)
+        blurb = TextItem(self, AnnFontSizePts)
         dlt = random.choice([1, -1])
         if self.markStyle == 2:  # mark up
             dlt *= random.randint(0, self.maxMark - self.scene.score) // 2
@@ -140,7 +141,7 @@ class SceneParent(QWidget):
             else:
                 blurb.setPlainText(random.choice(self.posComments))
                 self.scene.undoStack.push(
-                    CommandGDT(self.scene, self.rpt(), dlt, blurb, 12)
+                    CommandGDT(self.scene, self.rpt(), dlt, blurb, AnnFontSizePts)
                 )
         else:  # mark up
             dlt *= random.randint(0, self.scene.score) // 2
@@ -151,7 +152,7 @@ class SceneParent(QWidget):
             else:
                 blurb.setPlainText(random.choice(self.negComments))
                 self.scene.undoStack.push(
-                    CommandGDT(self.scene, self.rpt(), dlt, blurb, 12)
+                    CommandGDT(self.scene, self.rpt(), dlt, blurb, AnnFontSizePts)
                 )
 
     def doRandomAnnotations(self):
@@ -293,7 +294,7 @@ if __name__ == "__main__":
 
     # Headless QT: https://stackoverflow.com/a/35355906
     L = sys.argv
-    L.extend(['-platform', 'minimal'])
+    L.extend(['-platform', 'offscreen'])
     app = QApplication(L)
 
     for q in range(1, spec["numberOfQuestions"] + 1):

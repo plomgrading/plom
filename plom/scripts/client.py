@@ -17,6 +17,7 @@ import traceback as tblib
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
 
+from plom import __version__
 from plom.client.chooser import Chooser
 from plom import Default_Port
 
@@ -59,25 +60,10 @@ def sigint_handler(*args):
 
 
 def main():
-    app = QApplication(sys.argv)
-    app.setStyle(QStyleFactory.create("Fusion"))
-
-    signal.signal(signal.SIGINT, sigint_handler)
-
-    # create a small timer here, so that we can
-    # kill the app with ctrl-c.
-    timer = QTimer()
-    timer.timeout.connect(lambda: None)
-    timer.start(1000)
-    # got this solution from
-    # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
-
-    window = Chooser(app)
-    window.show()
-
     parser = argparse.ArgumentParser(
         description="Run the Plom client. No arguments = run as normal."
     )
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
     parser.add_argument("user", type=str, nargs="?")
     parser.add_argument("password", type=str, nargs="?")
     parser.add_argument(
@@ -101,6 +87,22 @@ def main():
         help="Run the marker. Pass either -m n:k (to run on pagegroup n, version k) or -m (to run on whatever was used last time).",
     )
     args = parser.parse_args()
+
+    app = QApplication(sys.argv)
+    app.setStyle(QStyleFactory.create("Fusion"))
+
+    signal.signal(signal.SIGINT, sigint_handler)
+
+    # create a small timer here, so that we can
+    # kill the app with ctrl-c.
+    timer = QTimer()
+    timer.timeout.connect(lambda: None)
+    timer.start(1000)
+    # got this solution from
+    # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
+
+    window = Chooser(app)
+    window.show()
 
     window.ui.userLE.setText(args.user)
     window.ui.passwordLE.setText(args.password)

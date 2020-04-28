@@ -22,4 +22,7 @@ PlomImageExtWhitelist = ("png", "jpg", "jpeg")
 
 ScenePixelHeight = 2000
 
+# in points; absolute not relative to the above, TODO: should redo in absolute scale
+AnnFontSizePts = 24.0
+
 from .rules import isValidStudentNumber

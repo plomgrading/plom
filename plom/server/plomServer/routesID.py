@@ -115,6 +115,9 @@ class IDHandler:
             return web.Response(status=401)  # only manager
 
         rmsg = self.server.IDgetRandomImage()
+        if rmsg[0] is False:
+            return web.Response(status=410)
+
         log.debug("Appending file {}".format(rmsg))
         with MultipartWriter("images") as mpwriter:
             for fn in rmsg[1:]:

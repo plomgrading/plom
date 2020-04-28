@@ -32,6 +32,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom import ScenePixelHeight
+from plom import AnnFontSizePts
 
 # Import all the tool commands for undo/redo stack.
 from .tools import (
@@ -75,7 +76,7 @@ class ScoreBox(QGraphicsTextItem):
         self.maxScore = maxScore
         self.setDefaultTextColor(Qt.red)
         self.font = QFont("Helvetica")
-        self.fontSize = min(fontsize * 3.5, 36)
+        self.fontSize = 1.25*fontsize
         self.font.setPointSizeF(self.fontSize)
         self.setFont(self.font)
         # Not editable.
@@ -189,8 +190,9 @@ class PageScene(QGraphicsScene):
         # initialise the undo-stack
         self.undoStack = QUndoStack()
 
-        # Get current font size to use as base for size of comments etc.
-        self.fontSize = self.font().pointSizeF()
+        # we don't want current font size from UI; use fixed physical size
+        # self.fontSize = self.font().pointSizeF()
+        self.fontSize = AnnFontSizePts
         # Define standard pen, highlight, fill, light-fill
         self.ink = QPen(Qt.red, 2)
         self.highlight = QPen(QColor(255, 255, 0, 64), 50)

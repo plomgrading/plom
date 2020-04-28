@@ -240,10 +240,8 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.".format(code)
-                ) from None
+            elif response.status_code == 410:
+                raise PlomNoMoreException("Cannot find ID image.") from None
             elif response.status_code == 409:
                 raise PlomSeriousException(
                     "Another user has the image for {}. This should not happen".format(

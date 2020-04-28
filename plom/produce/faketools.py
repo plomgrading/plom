@@ -1,11 +1,12 @@
-# -*- coding: utf-8 -*-
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Andrew Rechnitzer
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Plom tools for scribbling fake answers on PDF files"""
 
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and Colin B. Macdonald"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import os
 import sys
@@ -13,12 +14,26 @@ import subprocess
 import random
 from pathlib import Path
 from glob import glob
+import argparse
 
+import json
+import base64
 import fitz
 import pandas
 
+# import tools for dealing with resource files
+import pkg_resources
+
 from . import paperdir as _paperdir
 from plom import specdir as _specdir
+from plom import __version__
+
+
+# load the digit images
+digitArray = json.load(pkg_resources.resource_stream("plom", "produce/digits.json"))
+# how many of each digit were collected
+NDigit = len(digitArray) // 10
+assert len(digitArray) % 10 == 0
 
 
 possibleAns = [
@@ -62,13 +77,15 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
             something like `which=range(10, 16)` here to scribble on a
             subset.
     """
+
     paperdir = Path(paperdir)
     classlist = Path(classlist)
     outfile = Path(outfile)
 
     print("Annotating papers with fake student data and scribbling on pages...")
     if not which:
-        papers = glob(str(paperdir / "exam_*.pdf"))
+        namedPapers = glob(str(paperdir / "exam_*_*.pdf"))  # those with an ID number
+        papers = glob(str(paperdir / "exam_*.pdf"))  # everything
     else:
         papers = [paperdir / "exam_{}.pdf".format(str(i).zfill(4)) for i in which]
 
@@ -94,34 +111,32 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
         doc = fitz.open(fname)
         page = doc[0]
 
-        # TODO: use insertText
-        rect1 = fitz.Rect(228, 262, 550, 350)
-        rect2 = fitz.Rect(228, 335, 550, 450)
+        if fname not in namedPapers:  # can draw on front page
+            # insert digit images into rectangles - some hackery required to get correct positions.
+            w = 28
+            b = 8
+            for k in range(8):
+                rect1 = fitz.Rect(
+                    220 + b * k + w * k, 265, 220 + b * k + w * (k + 1), 265 + w
+                )
+                uuImg = digitArray[
+                    int(sn[k]) * NDigit + random.randrange(NDigit)
+                ]  # uu-encoded png
+                imgBString = base64.b64decode(uuImg)
+                page.insertImage(rect1, stream=imgBString, keep_proportion=True)
+                # todo - there should be an assert or something here?
 
-        # manually kern the student number to fit the boxes
-        text = "   ".join([c for c in sn])
-
-        rc = page.insertTextbox(
-            rect1,
-            text,
-            fontsize=25.5,
-            color=blue,
-            fontname="Helvetica",
-            fontfile=None,
-            align=0,
-        )
-        assert rc > 0
-
-        rc = page.insertTextbox(
-            rect2,
-            name,
-            fontsize=24,
-            color=blue,
-            fontname="Helvetica",
-            fontfile=None,
-            align=0,
-        )
-        assert rc > 0
+            rect2 = fitz.Rect(228, 335, 550, 450)
+            rc = page.insertTextbox(
+                rect2,
+                name,
+                fontsize=24,
+                color=blue,
+                fontname="Helvetica",
+                fontfile=None,
+                align=0,
+            )
+            assert rc > 0
 
         # write some stuff on pages
         for j, pg in enumerate(doc):
@@ -155,6 +170,10 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    args = parser.parse_args()
+
     specdir = Path(_specdir)
     classlist = specdir / "classlist.csv"
     outfile = "fake_scribbled_exams.pdf"
