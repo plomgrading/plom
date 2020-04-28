@@ -32,7 +32,8 @@ class ExamViewWindow(QWidget):
         # Grab an examview widget (QGraphicsView)
         self.view = ExamView(fnames)
         # Render nicely
-        self.view.setRenderHint(QPainter.HighQualityAntialiasing)
+        self.view.setRenderHint(QPainter.Antialiasing, True)
+        self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
         # reset view button passes to the examview.
         self.resetB = QPushButton("&reset view")
         self.resetB.clicked.connect(lambda: self.view.resetView())
