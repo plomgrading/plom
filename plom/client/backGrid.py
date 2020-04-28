@@ -9,7 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import os
 import sys
-from PyQt5.QtGui import QBrush, QImage, QPixmap
+from PyQt5.QtGui import QBrush, QPixmap
 
 
 class BackGrid(QBrush):
@@ -24,6 +24,6 @@ class BackGrid(QBrush):
         if username is not None and any(
             x in username.lower() for x in ["omer", "remo", "legna", "angel"]
         ):
-            self.setTextureImage(QImage(os.path.join(base_path, "backGrid2.png")))
+            self.setTexture(QPixmap(os.path.join(base_path, "backGrid2.png")))
         else:
-            self.setTextureImage(QImage(os.path.join(base_path, "backGrid1.svg")))
+            self.setTexture(QPixmap(os.path.join(base_path, "backGrid1.svg")))
