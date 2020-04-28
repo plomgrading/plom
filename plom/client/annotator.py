@@ -500,7 +500,7 @@ class Annotator(QWidget):
         """
         # Start the pageview - pass it this widget (so it can communicate
         # back to us) and the filename of the image.
-        self.view = PageView(self)
+        self.view = PageView(self, self.username)
         self.scene = PageScene(
             self,
             self.imageFiles,

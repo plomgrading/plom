@@ -17,7 +17,7 @@ class PageView(QGraphicsView):
     comments, delta-marks, save and zoom in /out
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, username=None):
         # init the qgraphicsview
         super(PageView, self).__init__(parent)
         self.parent = parent
@@ -25,7 +25,7 @@ class PageView(QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # set the area outside the groupimage to be tiled grid png
-        self.setBackgroundBrush(QBrush(BackGrid(self.parent.username)))
+        self.setBackgroundBrush(QBrush(BackGrid(username)))
 
         # Nice antialiasing and scaling of objects (esp the groupimage)
         self.setRenderHint(QPainter.Antialiasing, True)
