@@ -79,6 +79,8 @@ class ExamView(QGraphicsView):
     def initUI(self, fnames):
         # set background
         self.setBackgroundBrush(BackGrid())
+        self.setRenderHint(QPainter.Antialiasing, True)
+        self.setRenderHint(QPainter.SmoothPixmapTransform, True)
         # Make QGraphicsScene
         self.scene = QGraphicsScene()
         # TODO = handle different image sizes.
