@@ -81,9 +81,8 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
 
     print("Annotating papers with fake student data and scribbling on pages...")
     if not which:
-        namedPapers = glob(str(paperdir / "exam_*_*.pdf"))
-        anonPapers = glob(str(paperdir / "exam_*.pdf"))
-        papers = namedPapers + anonPapers
+        namedPapers = glob(str(paperdir / "exam_*_*.pdf"))  # those with an ID number
+        papers = glob(str(paperdir / "exam_*.pdf"))  # everything
     else:
         papers = [paperdir / "exam_{}.pdf".format(str(i).zfill(4)) for i in which]
 
@@ -103,7 +102,7 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
             )
         )
 
-        if fname in anonPapers:
+        if fname not in namedPapers:  # can draw on front page
             name = r.studentName
             sn = str(r.id)
 
