@@ -102,13 +102,13 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
             )
         )
 
+        name = r.studentName
+        sn = str(r.id)
+
+        doc = fitz.open(fname)
+        page = doc[0]
+
         if fname not in namedPapers:  # can draw on front page
-            name = r.studentName
-            sn = str(r.id)
-
-            doc = fitz.open(fname)
-            page = doc[0]
-
             # insert digit images into rectangles - some hackery required to get correct positions.
             w = 28
             b = 8
