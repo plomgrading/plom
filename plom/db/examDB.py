@@ -1735,9 +1735,10 @@ class PlomDB:
             .limit(1)
         )
         if query.count() == 0:
+            log.info('No unIDd IDPages to sennd to User "{}"'.format(uname))
             return [False]
+        log.info('Sending first unIDd IDPages to User "{}"'.format(uname))
         gref = query[0]
-        print("ARGH - gref = ", gref)
         rval = [True]
         for p in gref.pages.order_by(Page.pageNumber):
             rval.append(p.fileName)
