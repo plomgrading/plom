@@ -629,7 +629,7 @@ class Annotator(QWidget):
             base_path = os.path.join(os.path.dirname(__file__), "icons")
             # base_path = "./icons"
 
-        self.setIcon(self.ui.boxButton, "box", "{}/rectangle.svg".format(base_path))
+        self.setIcon(self.ui.boxButton, "box", "{}/rectangle_highlight.svg".format(base_path))
         self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
         self.setIcon(
             self.ui.commentDownButton, "com down", "{}/comment_down.svg".format(base_path)
