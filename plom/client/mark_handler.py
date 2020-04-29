@@ -6,6 +6,7 @@ __license__ = "AGPLv3"
 from PyQt5.QtWidgets import (
     QWidget,
     QPushButton,
+    QButtonGroup,
     QGridLayout,
     QStackedWidget,
     QLabel,
@@ -31,7 +32,6 @@ class MarkHandler(QWidget):
             "qlineargradient(x1:0,y1:0,x2:1,y2:0, stop: 0 #ff0000, "
             "stop: 0.3 #ffcccc, stop: 0.7 #ffcccc, stop: 1 #ff0000);"
         )
-        self.blueStyle = "border: 2px solid #3daee9; " "background: solid #3daee9;"
         # By default we set style to marking-UP.
         self.style = "Up"
         # Keep last delta used
@@ -51,6 +51,11 @@ class MarkHandler(QWidget):
         else:
             # Default to mark-up.
             self.setMarkingUp()
+        self.ve = QButtonGroup()
+        self.ve.setExclusive(True)
+        for s, x in self.markButtons.items():
+            self.ve.addButton(x)
+
 
     def setMarkingUp(self):
         self.setMark(0)
@@ -64,6 +69,8 @@ class MarkHandler(QWidget):
 
         for k in range(0, self.numButtons + 1):
             self.markButtons["p{}".format(k)] = QPushButton("+{}".format(k))
+            self.markButtons["p{}".format(k)].setCheckable(True)
+            #self.markButtons["p{}".format(k)].setAutoExclusive(True)
             grid.addWidget(
                 self.markButtons["p{}".format(k)], k // ncolumn + 1, k % ncolumn, 1, 1
             )
@@ -87,6 +94,8 @@ class MarkHandler(QWidget):
 
         for k in range(0, self.numButtons + 1):
             self.markButtons["m{}".format(k)] = QPushButton("-{}".format(k))
+            self.markButtons["m{}".format(k)].setCheckable(True)
+            #self.markButtons["m{}".format(k)].setAutoExclusive(True)
             grid.addWidget(
                 self.markButtons["m{}".format(k)], k // ncolumn + 1, k % ncolumn, 1, 1
             )
@@ -121,9 +130,8 @@ class MarkHandler(QWidget):
         self.style = "Total"
 
     def setDeltaMark(self):
-        self.pdmb.setStyleSheet("")
         self.pdmb = self.sender()
-        self.pdmb.setStyleSheet(self.blueStyle)
+        self.pdmb.setChecked(True)
         self.currentDelta = self.sender().text()
         self.parent.deltaMarkSet(self.currentDelta)
 
@@ -139,10 +147,15 @@ class MarkHandler(QWidget):
         self.parent.totalMarkSet(self.currentScore)
 
     def clearButtonStyle(self):
+        # TODO: kill this?  but how to uncheck all in an exclusive group?
         if self.style == "Total":
             pass  # don't clear the styling when marking total.
         else:
-            self.pdmb.setStyleSheet("")
+            # Try this one wierd trick...
+            self.ve.setExclusive(False)
+            for k, x in self.markButtons.items():
+                x.setChecked(False)
+            self.ve.setExclusive(True)
 
     def loadDeltaValue(self, delta):
         # delta is a string

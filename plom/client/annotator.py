@@ -139,10 +139,6 @@ class Annotator(QWidget):
         self.testViewFiles = None
         # Set current mark to 0.
         self.score = 0
-        # make styling of currently selected button/tool.
-        self.currentButtonStyleBackground = (
-            "border: 2px solid #3daee9; " "background: solid #3daee9;"
-        )
         # when comments are used, we just outline the comment list - not
         # the whole background - so make a style for that.
         self.currentButtonStyleOutline = "border: 2px solid #3daee9; "
@@ -567,16 +563,9 @@ class Annotator(QWidget):
         also the cursor.
         """
         # self.currentButton should only ever be set to a button - nothing else.
-        # Clear styling of the what was until now the current button
-        if self.currentButton is not None:
-            self.currentButton.setStyleSheet("")
         # A bit of a hack to take care of comment-mode and delta-mode
         if self.scene.mode == "comment" and newMode != "comment":
-            # clear the comment button styling
-            self.ui.commentButton.setStyleSheet("")
             self.commentW.CL.setStyleSheet("")
-        if self.scene.mode == "delta" and newMode != "delta":
-            self.ui.deltaButton.setStyleSheet("")
         # We change currentbutton to which ever widget sent us
         # to this function. We have to be a little careful since
         # not all widgets get the styling in the same way.
@@ -587,15 +576,13 @@ class Annotator(QWidget):
             # has come from mark-change button in handler, so
             # set button=none, since markHandler does its own styling
             self.currentButton = None
-        elif isinstance(
-            self.sender(), QToolButton
-        ):  # only toolbuttons are the mode-changing ones.
+        elif isinstance(self.sender(), QToolButton):  # only toolbuttons are the mode-changing ones.
             self.currentButton = self.sender()
-            self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
+            self.currentButton.setChecked(True)
         elif self.sender() is self.commentW.CL:
             self.markHandler.clearButtonStyle()
             self.commentW.CL.setStyleSheet(self.currentButtonStyleOutline)
-            self.ui.commentButton.setStyleSheet(self.currentButtonStyleBackground)
+            self.ui.commentButton.setChecked(True)
         elif self.sender() is self.markHandler:
             # Clear the style of the mark-handler (this will mostly not do
             # anything, but saves us testing if we had styled it)
@@ -875,8 +862,7 @@ class Annotator(QWidget):
             return
         # Else, the delta is now set, so now change the mode here.
         self.setMode("delta", QCursor(Qt.IBeamCursor))
-        # and set style of the delta-button
-        self.ui.deltaButton.setStyleSheet(self.currentButtonStyleBackground)
+        self.ui.deltaButton.setChecked(True)
 
     def changeMark(self, score):
         """The mark has been changed. Update the mark-handler.
