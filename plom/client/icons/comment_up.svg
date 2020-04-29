@@ -10,13 +10,14 @@
    inkscape:export-ydpi="60"
    inkscape:export-xdpi="60"
    sodipodi:docname="comment_up.svg"
-   inkscape:version="1.0beta2 (unknown)"
+   inkscape:version="1.0rc1 (09960d6f05, 2020-04-09)"
    version="1.1"
    id="svg2"
    viewBox="0 0 74.999998 74.999997"
    height="21.166666mm"
    width="21.166666mm">
   <sodipodi:namedview
+     units="px"
      inkscape:document-rotation="0"
      inkscape:snap-bbox-midpoints="true"
      fit-margin-bottom="0"
@@ -27,17 +28,17 @@
      inkscape:object-paths="false"
      inkscape:bbox-nodes="true"
      inkscape:snap-bbox="true"
-     inkscape:window-maximized="0"
-     inkscape:window-y="23"
-     inkscape:window-x="26"
+     inkscape:window-maximized="1"
+     inkscape:window-y="0"
+     inkscape:window-x="0"
      inkscape:window-height="1369"
-     inkscape:window-width="1280"
+     inkscape:window-width="2560"
      showgrid="true"
      inkscape:current-layer="layer1"
      inkscape:document-units="px"
-     inkscape:cy="19.558352"
-     inkscape:cx="-17.295099"
-     inkscape:zoom="5.0499998"
+     inkscape:cy="42.980383"
+     inkscape:cx="25.248993"
+     inkscape:zoom="5.6568542"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="1.0"
@@ -47,9 +48,9 @@
     <inkscape:grid
        originy="-70.499997"
        originx="-34.499999"
-       empspacing="6"
-       spacingy="6.0000001"
-       spacingx="6"
+       empspacing="3"
+       spacingy="1.875"
+       spacingx="1.875"
        id="grid4174"
        type="xygrid" />
   </sodipodi:namedview>
@@ -63,7 +64,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -75,17 +76,17 @@
     <path
        inkscape:connector-curvature="0"
        id="path1678-2"
-       d="m 60.000001,920.3622 -12,24 12,24"
-       style="fill:none;stroke:#050505;stroke-width:4.6875;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+       d="m 56.269409,920.34279 -11.79138,24.01941 11.77176,24.01941"
+       style="fill:none;stroke:#df0000;stroke-width:4.64868;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <path
        inkscape:connector-curvature="0"
        id="path1678-9-7"
-       d="m 84.000002,920.3622 11.999999,24 -11.999999,24"
-       style="fill:none;stroke:#050505;stroke-width:4.6875;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+       d="m 87.750002,920.3622 11.999999,24 -11.999999,24"
+       style="fill:none;stroke:#df0000;stroke-width:4.6875;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     <path
        inkscape:connector-curvature="0"
        id="path1729"
        d="m 66.000001,932.36208 6,-12 6,12 z"
-       style="fill:#000000;stroke:#050505;stroke-width:3.75;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;fill-opacity:1" />
+       style="fill:none;stroke:#050505;stroke-width:2.34374992;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;fill-opacity:1" />
   </g>
 </svg>
