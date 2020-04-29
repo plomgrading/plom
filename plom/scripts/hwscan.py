@@ -11,6 +11,8 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
+from collections import defaultdict
+import glob
 import os
 import shutil
 
@@ -29,9 +31,27 @@ def scanStatus(server, password):
     checkScanStatus.checkStatus(server, password)
 
 
-def processScans(PDFs):
-    from plom.scan import scansToImages
+def extractIDQ(fileName):
+    """Expecting filename of the form blah.SID.Q.pdf - return SID and Q"""
+    splut = fileName.split(".")
+    return (splut[-3], int(splut[-2]))
 
+
+def whoDidWhat():
+    subs = defaultdict(list)
+    summary = defaultdict(list)
+    for fn in glob.glob("submittedHomework/*.pdf"):
+        sid, q = extractIDQ(fn)
+        subs[sid].append(q)
+    for sid in sorted(subs.keys()):
+        summary[len(subs[sid])].append(sid)
+        print("#{} submitted {}".format(sid, sorted(subs[sid])))
+    print(">> summary <<")
+    for s in summary:
+        print("Students submitting {} items = {}".format(s, summary[s]))
+
+
+def processScans():
     # make PDF archive directory
     os.makedirs("archivedPDFs/submittedHomework", exist_ok=True)
     # make a directory into which our (temp) PDF->bitmap will go
@@ -39,13 +59,15 @@ def processScans(PDFs):
     # finally a directory into which pageImages go
     os.makedirs("pageImages/submittedHomework", exist_ok=True)
 
-    # first check that we can find all the files
-    for fname in PDFs:
-        if not os.path.isfile(fname):
-            print("Cannot find file {} - skipping".format(fname))
-            continue
-        print("Processing PDF {} to images".format(fname))
-        scansToImages.processScans(fname)
+    from plom.scan import scansToImages
+
+    subs = defaultdict(list)
+    for fn in glob.glob("submittedHomework/*.pdf"):
+        # record who did what
+        sid, q = extractIDQ(fn)
+        subs[sid].append(q)
+        print("Processing PDF {} to images".format(fn))
+        scansToImages.processScans(fn, homework=True)
 
 
 def uploadHWImages(server, password, unknowns=False, collisions=False):
@@ -62,6 +84,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 sub = parser.add_subparsers(dest="command", description="Tools for dealing with scans.")
 #
+spW = sub.add_parser(
+    "submitted",
+    help="Get a list of SID and questions submitted in the submittedHomework directory.",
+)
 spP = sub.add_parser("process", help="Process scanned PDFs to images.")
 spU = sub.add_parser("upload", help="Upload page images to scanner")
 spS = sub.add_parser("status", help="Get scanning status report from server")
@@ -71,7 +97,6 @@ spC = sub.add_parser(
     description="Clear 'scanner' login after a crash or other expected event.",
 )
 #
-spP.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
 
 for x in (spU, spS, spC):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
@@ -80,16 +105,11 @@ for x in (spU, spS, spC):
 
 def main():
     args = parser.parse_args()
-    parser.add_argument(
-        "--version", action="version", version="%(prog)s " + __version__
-    )
-    sub = parser.add_subparsers(
-        dest="command", description="Perform tasks related to building tests."
-    )
-    #
 
-    if args.command == "process":
-        processScans(args.scanPDF)
+    if args.command == "submitted":
+        whoDidWhat()
+    elif args.command == "process":
+        processScans()
     elif args.command == "upload":
         uploadImages(args.server, args.password)
     elif args.command == "status":
