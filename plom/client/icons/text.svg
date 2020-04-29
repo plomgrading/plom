@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -9,52 +7,53 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="21.166666mm"
-   height="21.166666mm"
-   viewBox="0 0 74.999998 74.999997"
-   id="svg2"
-   version="1.1"
-   inkscape:version="0.91 r13725"
-   sodipodi:docname="text.svg"
-   inkscape:export-filename="/home/andrew/Dropbox/QR_hacking/allTogether/clients/icons/text.png"
+   inkscape:export-ydpi="60"
    inkscape:export-xdpi="60"
-   inkscape:export-ydpi="60">
+   inkscape:export-filename="/home/andrew/Dropbox/QR_hacking/allTogether/clients/icons/text.png"
+   sodipodi:docname="text.svg"
+   inkscape:version="1.0beta2 (unknown)"
+   version="1.1"
+   id="svg2"
+   viewBox="0 0 74.999998 74.999997"
+   height="21.166666mm"
+   width="21.166666mm">
   <defs
      id="defs4" />
   <sodipodi:namedview
-     id="base"
-     pagecolor="#ffffff"
-     bordercolor="#666666"
-     borderopacity="1.0"
-     inkscape:pageopacity="0.0"
-     inkscape:pageshadow="2"
-     inkscape:zoom="7.9308348"
-     inkscape:cx="65.908627"
-     inkscape:cy="31.24856"
-     inkscape:document-units="px"
-     inkscape:current-layer="layer1"
-     showgrid="true"
-     inkscape:window-width="1680"
-     inkscape:window-height="1021"
-     inkscape:window-x="1680"
-     inkscape:window-y="0"
-     inkscape:window-maximized="1"
-     inkscape:snap-bbox="true"
-     inkscape:bbox-nodes="true"
-     inkscape:object-paths="false"
-     inkscape:object-nodes="true"
-     fit-margin-top="0"
-     fit-margin-left="0"
+     inkscape:document-rotation="0"
+     fit-margin-bottom="0"
      fit-margin-right="0"
-     fit-margin-bottom="0">
+     fit-margin-left="0"
+     fit-margin-top="0"
+     inkscape:object-nodes="true"
+     inkscape:object-paths="false"
+     inkscape:bbox-nodes="true"
+     inkscape:snap-bbox="true"
+     inkscape:window-maximized="1"
+     inkscape:window-y="0"
+     inkscape:window-x="0"
+     inkscape:window-height="1369"
+     inkscape:window-width="2560"
+     showgrid="true"
+     inkscape:current-layer="layer1"
+     inkscape:document-units="px"
+     inkscape:cy="31.24856"
+     inkscape:cx="65.908627"
+     inkscape:zoom="7.9308348"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base">
     <inkscape:grid
-       type="xygrid"
-       id="grid4174"
-       spacingx="6"
-       spacingy="6.0000001"
-       empspacing="6"
+       originy="-70.499997"
        originx="-34.499999"
-       originy="-70.499997" />
+       empspacing="6"
+       spacingy="6.0000001"
+       spacingx="6"
+       id="grid4174"
+       type="xygrid" />
   </sodipodi:namedview>
   <metadata
      id="metadata7">
@@ -64,29 +63,19 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
+     transform="translate(-34.5,-906.86221)"
      id="layer1"
-     transform="translate(-34.5,-906.86221)">
-    <rect
-       inkscape:export-ydpi="57.25"
-       inkscape:export-xdpi="57.25"
-       style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-start:none;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
-       id="rect4176"
-       width="72"
-       height="72"
-       x="36"
-       y="908.36218"
-       ry="12.000023" />
+     inkscape:groupmode="layer"
+     inkscape:label="Layer 1">
     <path
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:70px;line-height:125%;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 78.870115,952.54822 -17.94433,0 -3.14453,7.31445 q -1.16211,2.70019 -1.16211,4.0332 0,1.05957 0.99121,1.87988 1.02539,0.78614 4.375,1.0254 l 0,1.26464 -14.59473,0 0,-1.26464 q 2.90528,-0.5127 3.75977,-1.33301 1.74316,-1.64063 3.8623,-6.66504 l 16.30371,-38.14453 1.19629,0 16.13282,38.55468 q 1.94824,4.64844 3.5205,6.04981 1.60645,1.36719 4.44336,1.53809 l 0,1.26464 -18.28613,0 0,-1.26464 q 2.76855,-0.13672 3.72559,-0.92286 0.99121,-0.78613 0.99121,-1.91406 0,-1.5039 -1.36719,-4.75098 l -2.80274,-6.66503 z m -0.95703,-2.5293 -7.86132,-18.73047 -8.06641,18.73047 15.92773,0 z"
+       inkscape:connector-curvature="0"
        id="path13373"
-       inkscape:connector-curvature="0" />
+       d="m 78.870115,952.54822 -17.94433,0 -3.14453,7.31445 q -1.16211,2.70019 -1.16211,4.0332 0,1.05957 0.99121,1.87988 1.02539,0.78614 4.375,1.0254 l 0,1.26464 -14.59473,0 0,-1.26464 q 2.90528,-0.5127 3.75977,-1.33301 1.74316,-1.64063 3.8623,-6.66504 l 16.30371,-38.14453 1.19629,0 16.13282,38.55468 q 1.94824,4.64844 3.5205,6.04981 1.60645,1.36719 4.44336,1.53809 l 0,1.26464 -18.28613,0 0,-1.26464 q 2.76855,-0.13672 3.72559,-0.92286 0.99121,-0.78613 0.99121,-1.91406 0,-1.5039 -1.36719,-4.75098 l -2.80274,-6.66503 z m -0.95703,-2.5293 -7.86132,-18.73047 -8.06641,18.73047 15.92773,0 z"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:70px;line-height:125%;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#df0000;fill-opacity:1;stroke:#df0000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
   </g>
 </svg>

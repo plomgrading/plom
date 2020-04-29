@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom import ScenePixelHeight
+from plom.client.backGrid import BackGrid
 
 
 class ExamViewWindow(QWidget):
@@ -31,7 +32,8 @@ class ExamViewWindow(QWidget):
         # Grab an examview widget (QGraphicsView)
         self.view = ExamView(fnames)
         # Render nicely
-        self.view.setRenderHint(QPainter.HighQualityAntialiasing)
+        self.view.setRenderHint(QPainter.Antialiasing, True)
+        self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
         # reset view button passes to the examview.
         self.resetB = QPushButton("&reset view")
         self.resetB.clicked.connect(lambda: self.view.resetView())
@@ -75,6 +77,10 @@ class ExamView(QGraphicsView):
         self.initUI(fnames)
 
     def initUI(self, fnames):
+        # set background
+        self.setBackgroundBrush(BackGrid())
+        self.setRenderHint(QPainter.Antialiasing, True)
+        self.setRenderHint(QPainter.SmoothPixmapTransform, True)
         # Make QGraphicsScene
         self.scene = QGraphicsScene()
         # TODO = handle different image sizes.
@@ -99,7 +105,7 @@ class ExamView(QGraphicsView):
                 sf = float(ScenePixelHeight) / float(pix.height())
                 self.images[n].setScale(sf)
                 self.scene.addItem(self.images[n])
-                #x += self.images[n].boundingRect().width() + 10
+                # x += self.images[n].boundingRect().width() + 10
                 # TODO: why did this have + 10 but the scene did not?
                 x += sf * (pix.width() - 1.0)
                 # TODO: don't floor here if units of scene are large!

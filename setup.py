@@ -99,6 +99,8 @@ setup(
                 "plom/testTemplates/latexTemplate.tex",
                 "plom/testTemplates/latexTemplatev2.tex",
                 "plom/testTemplates/idBox2.pdf",
+                "plom/client/backGrid1.svg",
+                "plom/client/backGrid2.png",
             ],
         ),
         ("share/plom/icons", iconList),

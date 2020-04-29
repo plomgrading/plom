@@ -98,6 +98,7 @@ class Annotator(QWidget):
 
     def __init__(
         self,
+        username,
         tgv,
         testname,
         paperdir,
@@ -110,6 +111,8 @@ class Annotator(QWidget):
         plomDict=None,
     ):
         super(Annotator, self).__init__()
+        # set username
+        self.username = username
         # remember parent
         self.parent = parent
         # Grab filename of image, max mark, mark style (total/up/down)
@@ -139,13 +142,11 @@ class Annotator(QWidget):
         self.score = 0
         # make styling of currently selected button/tool.
         self.currentButtonStyleBackground = (
-            "border: 2px solid #00aaaa; "
-            "background: qlineargradient(x1:0,y1:0,x2:0,y2:1, "
-            "stop: 0 #00dddd, stop: 1 #00aaaa);"
+            "border: 2px solid #3daee9; " "background: solid #3daee9;"
         )
         # when comments are used, we just outline the comment list - not
         # the whole background - so make a style for that.
-        self.currentButtonStyleOutline = "border: 2px solid #00aaaa; "
+        self.currentButtonStyleOutline = "border: 2px solid #3daee9; "
         # No button yet selected.
         self.currentButton = None
         # Window depends on mouse-hand - si
@@ -231,7 +232,6 @@ class Annotator(QWidget):
         m.addAction("Close without saving\tctrl-c", self.close)
         self.ui.hamMenuButton.setMenu(m)
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
-
 
     def menudummy(self):
         print("TODO: menu placeholder 1")
@@ -504,7 +504,7 @@ class Annotator(QWidget):
         """
         # Start the pageview - pass it this widget (so it can communicate
         # back to us) and the filename of the image.
-        self.view = PageView(self)
+        self.view = PageView(self, self.username)
         self.scene = PageScene(
             self,
             self.imageFiles,
@@ -634,10 +634,14 @@ class Annotator(QWidget):
             base_path = os.path.join(os.path.dirname(__file__), "icons")
             # base_path = "./icons"
 
-        self.setIcon(self.ui.boxButton, "box", "{}/rectangle.svg".format(base_path))
+        self.setIcon(
+            self.ui.boxButton, "box", "{}/rectangle_highlight.svg".format(base_path)
+        )
         self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
         self.setIcon(
-            self.ui.commentDownButton, "com down", "{}/comment_down.svg".format(base_path)
+            self.ui.commentDownButton,
+            "com down",
+            "{}/comment_down.svg".format(base_path),
         )
         self.setIcon(
             self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path)

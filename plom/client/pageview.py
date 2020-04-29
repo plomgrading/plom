@@ -3,10 +3,13 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+import os
+import sys
 import time
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QBrush, QPainter, QCursor
+from PyQt5.QtGui import QBrush, QCursor, QPainter, QPixmap
 from PyQt5.QtWidgets import QGraphicsView, QApplication
+from plom.client.backGrid import BackGrid
 
 
 class PageView(QGraphicsView):
@@ -14,15 +17,16 @@ class PageView(QGraphicsView):
     comments, delta-marks, save and zoom in /out
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, username=None):
         # init the qgraphicsview
         super(PageView, self).__init__(parent)
         self.parent = parent
         # Set scrollbars
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        # set the area outside the groupimage to be dark-cyan.
-        self.setBackgroundBrush(QBrush(Qt.darkCyan))
+        # set the area outside the groupimage to be tiled grid png
+        self.setBackgroundBrush(QBrush(BackGrid(username)))
+
         # Nice antialiasing and scaling of objects (esp the groupimage)
         self.setRenderHint(QPainter.Antialiasing, True)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)

@@ -947,6 +947,7 @@ class MarkerClient(QWidget):
         # build the annotator - pass it the image filename, the max-mark
         # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
+            self.ui.userLabel.text(),
             task,
             self.testInfo["testName"],
             paperdir,
