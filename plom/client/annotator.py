@@ -97,6 +97,7 @@ class Annotator(QWidget):
 
     def __init__(
         self,
+        username,
         tgv,
         testname,
         paperdir,
@@ -109,6 +110,8 @@ class Annotator(QWidget):
         plomDict=None,
     ):
         super(Annotator, self).__init__()
+        # set username
+        self.username = username
         # remember parent
         self.parent = parent
         # Grab filename of image, max mark, mark style (total/up/down)
@@ -138,13 +141,11 @@ class Annotator(QWidget):
         self.score = 0
         # make styling of currently selected button/tool.
         self.currentButtonStyleBackground = (
-            "border: 2px solid #00aaaa; "
-            "background: qlineargradient(x1:0,y1:0,x2:0,y2:1, "
-            "stop: 0 #00dddd, stop: 1 #00aaaa);"
+            "border: 2px solid #3daee9; " "background: solid #3daee9;"
         )
         # when comments are used, we just outline the comment list - not
         # the whole background - so make a style for that.
-        self.currentButtonStyleOutline = "border: 2px solid #00aaaa; "
+        self.currentButtonStyleOutline = "border: 2px solid #3daee9; "
         # No button yet selected.
         self.currentButton = None
         # Window depends on mouse-hand - si
@@ -468,7 +469,9 @@ class Annotator(QWidget):
             )
         # if we haven't built a testview, built it now
         if self.testView is None:
-            self.testView = OriginalScansViewer(self, testNumber, pageNames, self.testViewFiles)
+            self.testView = OriginalScansViewer(
+                self, testNumber, pageNames, self.testViewFiles
+            )
         else:
             # must have closed it, so re-show it.
             self.testView.show()
@@ -499,7 +502,7 @@ class Annotator(QWidget):
         """
         # Start the pageview - pass it this widget (so it can communicate
         # back to us) and the filename of the image.
-        self.view = PageView(self)
+        self.view = PageView(self, self.username)
         self.scene = PageScene(
             self,
             self.imageFiles,
