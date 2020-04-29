@@ -81,6 +81,7 @@ setup(
             "plom-manager=plom.scripts.manager:main",
             "plom-finish=plom.scripts.finish:main",
             "plom-fake-scribbles=plom.produce.faketools:main",
+            "plom-hwscan=plom.scripts.hwscan:main",
         ],
     },
     include_package_data=True,

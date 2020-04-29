@@ -22,11 +22,6 @@ from plom import specdir as _specdir
 from plom import specParser
 
 
-# import tools for dealing with resource files
-# import pkg_resources
-# NDigit = 64  # how many of each digit were collected
-# digitData = pkg_resources.resource_stream("plom", "produce/digits.json")
-
 possibleAns = [
     "I am so sorry, I really did study this... :(",
     "I know this, I just can't explain it",
@@ -57,8 +52,8 @@ possibleAns = [
 
 
 def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName):
-    with open("digits.json", "rb") as digitData:
-        digitArray = json.load(digitData)
+    # with open("digits.json", "rb") as digitData:
+    # digitArray = json.load(digitData)
     did = random.randint(
         numberOfQuestions - 1, numberOfQuestions
     )  # some subset of questions.
@@ -84,21 +79,11 @@ def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName):
             )
             assert rc > 0
 
-        # put name and student number on p1
+        # put name and student number on p1 of the submission
         page = doc[0]
-        # insert digit images into rectangles - some hackery required to get correct positions.
-        # w = 10
-        # b = 0
-        # for k in range(8):
-        #     rect1 = fitz.Rect(20 + b * k + w * k, 10, 20 + b * k + w * (k + 1), 10 + w)
-        #     uuImg = digitArray[
-        #         int(studentID[k]) * NDigit + random.randrange(NDigit)
-        #     ]  # uu-encoded png
-        #     imgBString = base64.b64decode(uuImg)
-        #     page.insertImage(rect1, stream=imgBString, keep_proportion=False)
-        rect2 = fitz.Rect(20, 24, 300, 44)
+        rect1 = fitz.Rect(20, 24, 300, 44)
         rc = page.insertTextbox(
-            rect2,
+            rect1,
             "Q.{} -".format(q) + studentName + ":" + studentID,
             fontsize=12,
             color=[0.1, 0.1, 0.1],
