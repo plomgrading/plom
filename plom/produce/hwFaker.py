@@ -7,6 +7,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import argparse
 import csv
 import os
 import random
@@ -20,6 +21,7 @@ import fitz
 from . import paperdir as _paperdir
 from plom import specdir as _specdir
 from plom import specParser
+from plom import __version__
 
 
 possibleAns = [
@@ -97,6 +99,12 @@ def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
+    args = parser.parse_args()
+
     os.makedirs("submittedHomework", exist_ok=True)
 
     # some cludgery here for the moment
