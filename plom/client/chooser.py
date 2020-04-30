@@ -395,7 +395,7 @@ class Chooser(QDialog):
         if not stuff:
             return
         # update mouse-hand and up/down style for lasttime file
-        markStyle, mouseHand = stuff
+        markStyle, mouseHand, sidebarRight = stuff
         global lastTime
         if markStyle == 2:
             lastTime["upDown"] = "up"
@@ -409,3 +409,4 @@ class Chooser(QDialog):
             lastTime["mouse"] = "left"
         else:
             raise RuntimeError("tertium non datur")
+        lastTime["SidebarOnRight"] = sidebarRight

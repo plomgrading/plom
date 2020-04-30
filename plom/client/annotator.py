@@ -419,7 +419,8 @@ class Annotator(QWidget):
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
 
-        if self.parent._AnnSidebarOnRight:
+        # TODO: not polite to be grubbing around in parent.ui, fix with QSetting
+        if self.parent.ui.sidebarRightCB.isChecked():
             self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
             self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
             self.ui.horizontalLayout.addWidget(self.ui.hideableBox)

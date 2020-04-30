@@ -277,32 +277,26 @@
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="handChoiceBox">
+       <widget class="QGroupBox" name="OptionsBox">
         <property name="title">
-         <string>Mouse Hand</string>
+         <string>Options</string>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
-          <widget class="QRadioButton" name="leftMouseRB">
-           <property name="text">
-            <string>&amp;Left</string>
+          <widget class="QCheckBox" name="leftMouseCB">
+           <property name="toolTip">
+            <string>Move keyboard shortcuts to right hand</string>
            </property>
-           <attribute name="buttonGroup">
-            <string notr="true">mouseHandGroup</string>
-           </attribute>
+           <property name="text">
+            <string>&amp;Left-handed mouse</string>
+           </property>
           </widget>
          </item>
          <item>
-          <widget class="QRadioButton" name="rightMouseRB">
+          <widget class="QCheckBox" name="sidebarRightCB">
            <property name="text">
-            <string>Ri&amp;ght</string>
+            <string>&amp;Sidebar on right</string>
            </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-           <attribute name="buttonGroup">
-            <string notr="true">mouseHandGroup</string>
-           </attribute>
           </widget>
          </item>
         </layout>
@@ -424,7 +418,6 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="mouseHandGroup"/>
   <buttongroup name="markStyleGroup"/>
  </buttongroups>
 </ui>
