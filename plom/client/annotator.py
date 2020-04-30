@@ -142,8 +142,6 @@ class Annotator(QWidget):
         # when comments are used, we just outline the comment list - not
         # the whole background - so make a style for that.
         self.currentButtonStyleOutline = "border: 2px solid #3daee9; "
-        # No button yet selected.
-        self.currentButton = None
         # Window depends on mouse-hand - si
         # right-hand mouse = 0, left-hand mouse = 1
         self.mouseHand = mouseHand
@@ -558,27 +556,23 @@ class Annotator(QWidget):
         super(Annotator, self).keyPressEvent(event)
 
     def setMode(self, newMode, newCursor):
-        """Change the current tool mode.
-        Changes the styling of the corresponding button, and
-        also the cursor.
+        """Change the current tool mode and cursor.
+
+        TODO: this does various other mucking around for legacy
+        reasons: could probably still use some refactoring.
         """
-        # self.currentButton should only ever be set to a button - nothing else.
         # A bit of a hack to take care of comment-mode and delta-mode
         if self.scene.mode == "comment" and newMode != "comment":
             self.commentW.CL.setStyleSheet("")
-        # We change currentbutton to which ever widget sent us
-        # to this function. We have to be a little careful since
+        # We have to be a little careful since
         # not all widgets get the styling in the same way.
         # If the mark-handler widget sent us here, it takes care
         # of its own styling - so we update the little tool-tip
-        # and set current button to none.
         if isinstance(self.sender(), QPushButton):
-            # has come from mark-change button in handler, so
-            # set button=none, since markHandler does its own styling
-            self.currentButton = None
+            # has come from mark-change button, markHandler does its own styling
+            pass
         elif isinstance(self.sender(), QToolButton):  # only toolbuttons are the mode-changing ones.
-            self.currentButton = self.sender()
-            self.currentButton.setChecked(True)
+            self.sender().setChecked(True)
             self.markHandler.clearButtonStyle()
         elif self.sender() is self.commentW.CL:
             self.markHandler.clearButtonStyle()
