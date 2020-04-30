@@ -579,6 +579,7 @@ class Annotator(QWidget):
         elif isinstance(self.sender(), QToolButton):  # only toolbuttons are the mode-changing ones.
             self.currentButton = self.sender()
             self.currentButton.setChecked(True)
+            self.markHandler.clearButtonStyle()
         elif self.sender() is self.commentW.CL:
             self.markHandler.clearButtonStyle()
             self.commentW.CL.setStyleSheet(self.currentButtonStyleOutline)
