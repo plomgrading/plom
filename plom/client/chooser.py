@@ -154,6 +154,8 @@ class Chooser(QDialog):
         lastTime["LogToFile"] = stuff[2]
         lastTime["CommentsWarnings"] = stuff[3]
         lastTime["MarkWarnings"] = stuff[4]
+        lastTime["mouse"] = "left" if stuff[5] else "right"
+        lastTime["SidebarOnRight"] = stuff[6]
         logging.getLogger().setLevel(lastTime["LogLevel"].upper())
 
     def validate(self):
@@ -394,7 +396,7 @@ class Chooser(QDialog):
         if not stuff:
             return
         # update mouse-hand and up/down style for lasttime file
-        markStyle, mouseHand = stuff
+        markStyle, mouseHand, sidebarRight = stuff
         global lastTime
         if markStyle == 2:
             lastTime["upDown"] = "up"
@@ -408,3 +410,4 @@ class Chooser(QDialog):
             lastTime["mouse"] = "left"
         else:
             raise RuntimeError("tertium non datur")
+        lastTime["SidebarOnRight"] = sidebarRight
