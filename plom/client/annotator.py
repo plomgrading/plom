@@ -373,6 +373,7 @@ class Annotator(QWidget):
         self.ui.revealLayout.addWidget(
             self.ui.deltaButton, 7, 2, Qt.AlignHCenter | Qt.AlignTop
         )
+        self.ui.deltaButton.setVisible(True)
 
         self.ui.revealLayout.addWidget(
             self.ui.deleteButton, 8, 1, Qt.AlignHCenter | Qt.AlignTop
@@ -428,6 +429,7 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
             self.ui.toolLayout.addWidget(self.ui.commentDownButton, 2, 3)
             self.ui.toolLayout.addWidget(self.ui.lineButton, 2, 4)
+            self.ui.toolLayout.addWidget(self.ui.deltaButton, 2, 5)
         else:  # left-hand mouse
             self.ui.toolLayout.addWidget(self.ui.penButton, 0, 0)
             self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 1)
@@ -444,6 +446,8 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
             self.ui.toolLayout.addWidget(self.ui.deleteButton, 2, 3)
             self.ui.toolLayout.addWidget(self.ui.moveButton, 2, 4)
+            self.ui.toolLayout.addWidget(self.ui.deltaButton, 2, 5)
+        self.ui.deltaButton.setVisible(False)
         self.ui.ebLayout.addWidget(self.ui.modeLabel)
         self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
         self.ui.modeLayout.addWidget(self.ui.finishedButton)
