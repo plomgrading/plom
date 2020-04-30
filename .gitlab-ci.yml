@@ -86,8 +86,8 @@ job demoServer:
     - mkdir demo
     - pushd demo
     - plom-build new --demo
-    - plom-build make
     - plom-server class --demo
+    - plom-build make
     - python3 -m plom.produce.faketools
     - plom-scan process fake_scribbled_exams.pdf
     # Start server
@@ -126,6 +126,7 @@ job fullWorkFlow:
     - pushd play
     - plom-build new
     - plom-build parse
+    - plom-server class --demo
     - python3 -m plom.produce.demotools
     # TODO: override the private seed
     # sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
@@ -134,7 +135,6 @@ job fullWorkFlow:
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
     # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/695
-    - plom-server class --demo
     - python3 -m plom.produce.faketools
     # Scan and upload
     # supposed to fail:

@@ -94,13 +94,10 @@ class Annotator(QWidget):
     ann_done_closing = pyqtSignal(str)
     ann_done_reject = pyqtSignal(str)
 
-    def __init__(
-        self,
-        mouseHand,
-        parent=None,
-        initialData=None,
-    ):
+    def __init__(self, username, mouseHand, parent=None, initialData=None):
         super(Annotator, self).__init__()
+        # set username
+        self.username = username
         # remember parent
         self.parent = parent
         # mouse-hand (left/right) doesn't change throughout life of the annotator
@@ -116,17 +113,9 @@ class Annotator(QWidget):
         self.testView = None
         self.testViewFiles = None
 
-        # make styling of currently selected button/tool.
-        self.currentButtonStyleBackground = (
-            "border: 2px solid #00aaaa; "
-            "background: qlineargradient(x1:0,y1:0,x2:0,y2:1, "
-            "stop: 0 #00dddd, stop: 1 #00aaaa);"
-        )
         # when comments are used, we just outline the comment list - not
         # the whole background - so make a style for that.
-        self.currentButtonStyleOutline = "border: 2px solid #00aaaa; "
-        # No button yet selected.
-        self.currentButton = None
+        self.currentButtonStyleOutline = "border: 2px solid #3daee9; "
         # Window depends on mouse-hand - si
         # right-hand mouse = 0, left-hand mouse = 1
         self.mouseHand = mouseHand
@@ -138,7 +127,7 @@ class Annotator(QWidget):
         self.wideLayout()
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
-        self.view = PageView(self)
+        self.view = PageView(self, self.username)
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
 
         # Create the comment list widget and put into gui.
@@ -309,19 +298,13 @@ class Annotator(QWidget):
             Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
             Qt.Key_X: lambda: self.ui.deleteButton.animateClick(),
             Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
-            Qt.Key_V: lambda: (
-                self.commentW.nextItem(),
-                self.commentW.CL.handleClick(),
-            ),
+            Qt.Key_V: lambda: self.ui.commentDownButton.animateClick(),
             Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
             # upper-row
             Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
             Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
             Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
-            Qt.Key_R: lambda: (
-                self.commentW.previousItem(),
-                self.commentW.CL.handleClick(),
-            ),
+            Qt.Key_R: lambda: self.ui.commentUpButton.animateClick(),
             Qt.Key_T: lambda: self.ui.penButton.animateClick(),
             # and then the same but for the left-handed
             # home-row
@@ -332,19 +315,13 @@ class Annotator(QWidget):
             Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
             # lower-row
             Qt.Key_N: lambda: self.ui.lineButton.animateClick(),
-            Qt.Key_M: lambda: (
-                self.commentW.nextItem(),
-                self.commentW.CL.handleClick(),
-            ),
+            Qt.Key_M: lambda: self.ui.commentDownButton.animateClick(),
             Qt.Key_Comma: lambda: self.ui.boxButton.animateClick(),
             Qt.Key_Period: lambda: self.ui.deleteButton.animateClick(),
             Qt.Key_Slash: lambda: self.ui.moveButton.animateClick(),
             # top-row
             Qt.Key_Y: lambda: self.ui.penButton.animateClick(),
-            Qt.Key_U: lambda: (
-                self.commentW.previousItem(),
-                self.commentW.CL.handleClick(),
-            ),
+            Qt.Key_U: lambda: self.ui.commentUpButton.animateClick(),
             Qt.Key_I: lambda: self.ui.crossButton.animateClick(),
             Qt.Key_O: lambda: self.ui.redoButton.animateClick(),
             Qt.Key_P: lambda: self.ui.panButton.animateClick(),
@@ -426,6 +403,7 @@ class Annotator(QWidget):
         self.ui.revealLayout.addWidget(
             self.ui.deltaButton, 7, 2, Qt.AlignHCenter | Qt.AlignTop
         )
+        self.ui.deltaButton.setVisible(True)
 
         self.ui.revealLayout.addWidget(
             self.ui.deleteButton, 8, 1, Qt.AlignHCenter | Qt.AlignTop
@@ -454,12 +432,18 @@ class Annotator(QWidget):
     def wideLayout(self):
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
-        # right-hand mouse = 0, left-hand mouse = 1
-        if self.mouseHand == 0:
+
+        # TODO: not polite to be grubbing around in parent.ui, fix with QSetting
+        if self.parent.ui.sidebarRightCB.isChecked():
+            self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
+            self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
+            self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
+        else:
             self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
             self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
             self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
-            # tools
+
+        if self.mouseHand == 0:  # right-hand mouse = 0
             self.ui.toolLayout.addWidget(self.ui.panButton, 0, 0)
             self.ui.toolLayout.addWidget(self.ui.redoButton, 0, 1)
             self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 2)
@@ -475,11 +459,8 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
             self.ui.toolLayout.addWidget(self.ui.commentDownButton, 2, 3)
             self.ui.toolLayout.addWidget(self.ui.lineButton, 2, 4)
+            self.ui.toolLayout.addWidget(self.ui.deltaButton, 2, 5)
         else:  # left-hand mouse
-            self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
-            self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
-            self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
-            # tools
             self.ui.toolLayout.addWidget(self.ui.penButton, 0, 0)
             self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 1)
             self.ui.toolLayout.addWidget(self.ui.crossButton, 0, 2)
@@ -495,6 +476,8 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
             self.ui.toolLayout.addWidget(self.ui.deleteButton, 2, 3)
             self.ui.toolLayout.addWidget(self.ui.moveButton, 2, 4)
+            self.ui.toolLayout.addWidget(self.ui.deltaButton, 2, 5)
+        self.ui.deltaButton.setVisible(False)
         self.ui.ebLayout.addWidget(self.ui.modeLabel)
         self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
         self.ui.modeLayout.addWidget(self.ui.finishedButton)
@@ -516,7 +499,9 @@ class Annotator(QWidget):
             )
         # if we haven't built a testview, built it now
         if self.testView is None:
-            self.testView = OriginalScansViewer(self, testNumber, pageNames, self.testViewFiles)
+            self.testView = OriginalScansViewer(
+                self, testNumber, pageNames, self.testViewFiles
+            )
         else:
             # must have closed it, so re-show it.
             self.testView.show()
@@ -603,40 +588,28 @@ class Annotator(QWidget):
         super(Annotator, self).keyPressEvent(event)
 
     def setMode(self, newMode, newCursor):
-        """Change the current tool mode.
-        Changes the styling of the corresponding button, and
-        also the cursor.
+        """Change the current tool mode and cursor.
+
+        TODO: this does various other mucking around for legacy
+        reasons: could probably still use some refactoring.
         """
-        # self.currentButton should only ever be set to a button - nothing else.
-        # Clear styling of the what was until now the current button
-        if self.currentButton is not None:
-            self.currentButton.setStyleSheet("")
         # A bit of a hack to take care of comment-mode and delta-mode
         if self.scene and self.scene.mode == "comment" and newMode != "comment":
-            # clear the comment button styling
-            self.ui.commentButton.setStyleSheet("")
             self.commentW.CL.setStyleSheet("")
-        if self.scene and self.scene.mode == "delta" and newMode != "delta":
-            self.ui.deltaButton.setStyleSheet("")
-        # We change currentbutton to which ever widget sent us
-        # to this function. We have to be a little careful since
+        # We have to be a little careful since
         # not all widgets get the styling in the same way.
         # If the mark-handler widget sent us here, it takes care
         # of its own styling - so we update the little tool-tip
-        # and set current button to none.
         if isinstance(self.sender(), QPushButton):
-            # has come from mark-change button in handler, so
-            # set button=none, since markHandler does its own styling
-            self.currentButton = None
-        elif isinstance(
-            self.sender(), QToolButton
-        ):  # only toolbuttons are the mode-changing ones.
-            self.currentButton = self.sender()
-            self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
+            # has come from mark-change button, markHandler does its own styling
+            pass
+        elif isinstance(self.sender(), QToolButton):  # only toolbuttons are the mode-changing ones.
+            self.sender().setChecked(True)
+            self.markHandler.clearButtonStyle()
         elif self.sender() is self.commentW.CL:
             self.markHandler.clearButtonStyle()
             self.commentW.CL.setStyleSheet(self.currentButtonStyleOutline)
-            self.ui.commentButton.setStyleSheet(self.currentButtonStyleBackground)
+            self.ui.commentButton.setChecked(True)
         elif self.sender() is self.markHandler:
             # Clear the style of the mark-handler (this will mostly not do
             # anything, but saves us testing if we had styled it)
@@ -676,7 +649,7 @@ class Annotator(QWidget):
             base_path = os.path.join(os.path.dirname(__file__), "icons")
             # base_path = "./icons"
 
-        self.setIcon(self.ui.boxButton, "box", "{}/rectangle.svg".format(base_path))
+        self.setIcon(self.ui.boxButton, "box", "{}/rectangle_highlight.svg".format(base_path))
         self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
         self.setIcon(
             self.ui.commentDownButton, "com down", "{}/comment_down.svg".format(base_path)
@@ -930,8 +903,7 @@ class Annotator(QWidget):
             return
         # Else, the delta is now set, so now change the mode here.
         self.setMode("delta", QCursor(Qt.IBeamCursor))
-        # and set style of the delta-button
-        self.ui.deltaButton.setStyleSheet(self.currentButtonStyleBackground)
+        self.ui.deltaButton.setChecked(True)
 
     def changeMark(self, score):
         """The mark has been changed. Update the mark-handler.

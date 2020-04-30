@@ -74,8 +74,15 @@ def buildAllPapers(spec, dbFilename, named=False):
 
 def confirmProcessed(spec, dbFilename):
     examDB = PlomDB(dbFilename)
+    if spec["numberToName"] > 0:
+        students = readClassList()
     for t in range(1, spec["numberToProduce"] + 1):
-        fname = Path(paperdir) / "exam_{}.pdf".format(str(t).zfill(4))
+        if t <= spec["numberToName"]:
+            fname = Path(paperdir) / "exam_{}_{}.pdf".format(
+                str(t).zfill(4), students[t][0]
+            )
+        else:
+            fname = Path(paperdir) / "exam_{}.pdf".format(str(t).zfill(4))
         if os.path.isfile(fname):
             examDB.produceTest(t)
         else:
@@ -88,7 +95,9 @@ def confirmNamed(spec, dbFilename):
     examDB = PlomDB(dbFilename)
     for t in range(1, spec["numberToProduce"] + 1):
         if t <= spec["numberToName"]:
-            fname = Path(paperdir) / "exam_{}.pdf".format(str(t).zfill(4))
+            fname = Path(paperdir) / "exam_{}_{}.pdf".format(
+                str(t).zfill(4), students[t][0]
+            )
             if os.path.isfile(fname):
                 examDB.identifyTest(t, students[t][0], students[t][1])
             else:

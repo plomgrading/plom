@@ -559,6 +559,8 @@ class MarkerClient(QWidget):
         if lastTime.get("FOREGROUND", False):
             self.allowBackgroundOps = False
 
+        self.ui.sidebarRightCB.setChecked(lastTime.get("SidebarOnRight", False))
+
         # Connect gui buttons to appropriate functions
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.getNextButton.clicked.connect(self.requestNext)
@@ -587,16 +589,8 @@ class MarkerClient(QWidget):
         elif lastTime["upDown"] == "down":
             self.ui.markDownRB.animateClick()
 
-        # Give IDs to the radio buttons which select which mouse-hand is used
-        # 0 = Right-handed user will typically have right-hand on mouse and
-        # left hand on the keyboard. The annotator layout will follow this.
-        # 1 = Left-handed user - reverse layout
-        self.ui.mouseHandGroup.setId(self.ui.rightMouseRB, 0)
-        self.ui.mouseHandGroup.setId(self.ui.leftMouseRB, 1)
-        if lastTime["mouse"] == "right":
-            self.ui.rightMouseRB.animateClick()
-        elif lastTime["mouse"] == "left":
-            self.ui.leftMouseRB.animateClick()
+        if lastTime["mouse"] == "left":
+            self.ui.leftMouseCB.setChecked(True)
 
         # Get the max-mark for the question from the server.
         try:
@@ -930,9 +924,10 @@ class MarkerClient(QWidget):
     def startTheAnnotator(self, data):
         """This fires up the annotation window for user annotation + marking."""
         # Set mousehand left/right - will pass to annotator
-        mouseHand = self.ui.mouseHandGroup.checkedId()
+        mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
 
         annotator = Annotator(
+            self.ui.userLabel.text(),
             mouseHand,
             parent=self,
             initialData=data
@@ -1217,8 +1212,9 @@ class MarkerClient(QWidget):
             self.throwSeriousError(err)
 
         markStyle = self.ui.markStyleGroup.checkedId()
-        mouseHand = self.ui.mouseHandGroup.checkedId()
-        self.my_shutdown_signal.emit(2, [markStyle, mouseHand])
+        mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
+        sidebarRight = self.ui.sidebarRightCB.isChecked()
+        self.my_shutdown_signal.emit(2, [markStyle, mouseHand, sidebarRight])
         self.close()
 
     def DNF(self):

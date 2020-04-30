@@ -137,12 +137,8 @@ def makePDF(name, code, length, versions, test, pageVersions, extra=None):
             txt = "{}\n{}".format(sid, sname)
             sidW = (
                 max(
-                    fitz.getTextlength(
-                        sid, fontsize=36, fontname="Helvetica"
-                    ),
-                    fitz.getTextlength(
-                        sname, fontsize=36, fontname="Helvetica"
-                    ),
+                    fitz.getTextlength(sid, fontsize=36, fontname="Helvetica"),
+                    fitz.getTextlength(sname, fontsize=36, fontname="Helvetica"),
                     fitz.getTextlength(
                         "Please sign here", fontsize=48, fontname="Helvetica"
                     ),
@@ -206,11 +202,15 @@ def makePDF(name, code, length, versions, test, pageVersions, extra=None):
     # also do garbage collection to remove duplications within pdf
     # and try to clean up as much as possible.
     # `linear=True` causes https://gitlab.math.ubc.ca/andrewr/MLP/issues/284
+    if extra:
+        saveName = Path(paperdir) / "exam_{}_{}.pdf".format(
+            str(test).zfill(4), extra["id"]
+        )
+    else:
+        saveName = Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4))
+    # save with ID-number is making named papers = issue 790
     exam.save(
-        Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4)),
-        garbage=4,
-        deflate=True,
-        clean=True,
+        saveName, garbage=4, deflate=True, clean=True,
     )
 
 
