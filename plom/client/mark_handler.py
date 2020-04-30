@@ -129,6 +129,8 @@ class MarkHandler(QWidget):
 
     def setDeltaMark(self):
         self.sender().setChecked(True)
+        # yuck, but this will ensure other tools are not checked
+        self.parent.ui.deltaButton.setChecked(True)
         self.currentDelta = self.sender().text()
         self.parent.deltaMarkSet(self.currentDelta)
 
