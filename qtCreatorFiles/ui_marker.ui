@@ -240,7 +240,7 @@
          <item>
           <widget class="QRadioButton" name="markUpRB">
            <property name="text">
-            <string>&amp;Up</string>
+            <string>Mark &amp;Up</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -253,7 +253,7 @@
          <item>
           <widget class="QRadioButton" name="markDownRB">
            <property name="text">
-            <string>&amp;Down</string>
+            <string>Mark &amp;Down</string>
            </property>
            <property name="checked">
             <bool>false</bool>
