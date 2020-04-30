@@ -60,7 +60,6 @@ class MarkHandler(QWidget):
     def setMarkingUp(self):
         self.setMark(0)
         grid = QGridLayout()
-        self.pdmb = QPushButton()
 
         if self.numButtons > 5:
             ncolumn = 3
@@ -85,7 +84,6 @@ class MarkHandler(QWidget):
     def setMarkingDown(self):
         self.setMark(self.maxScore)
         grid = QGridLayout()
-        self.pdmb = QPushButton()
 
         if self.numButtons > 5:
             ncolumn = 3
@@ -130,8 +128,7 @@ class MarkHandler(QWidget):
         self.style = "Total"
 
     def setDeltaMark(self):
-        self.pdmb = self.sender()
-        self.pdmb.setChecked(True)
+        self.sender().setChecked(True)
         self.currentDelta = self.sender().text()
         self.parent.deltaMarkSet(self.currentDelta)
 
