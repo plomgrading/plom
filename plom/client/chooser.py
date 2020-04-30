@@ -154,7 +154,8 @@ class Chooser(QDialog):
         lastTime["LogToFile"] = stuff[2]
         lastTime["CommentsWarnings"] = stuff[3]
         lastTime["MarkWarnings"] = stuff[4]
-        lastTime["SidebarOnRight"] = stuff[5]
+        lastTime["mouse"] = "left" if stuff[5] else "right"
+        lastTime["SidebarOnRight"] = stuff[6]
         logging.getLogger().setLevel(lastTime["LogLevel"].upper())
 
     def validate(self):
