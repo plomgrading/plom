@@ -139,15 +139,9 @@ class Annotator(QWidget):
         self.testViewFiles = None
         # Set current mark to 0.
         self.score = 0
-        # make styling of currently selected button/tool.
-        self.currentButtonStyleBackground = (
-            "border: 2px solid #3daee9; " "background: solid #3daee9;"
-        )
         # when comments are used, we just outline the comment list - not
         # the whole background - so make a style for that.
         self.currentButtonStyleOutline = "border: 2px solid #3daee9; "
-        # No button yet selected.
-        self.currentButton = None
         # Window depends on mouse-hand - si
         # right-hand mouse = 0, left-hand mouse = 1
         self.mouseHand = mouseHand
@@ -379,6 +373,7 @@ class Annotator(QWidget):
         self.ui.revealLayout.addWidget(
             self.ui.deltaButton, 7, 2, Qt.AlignHCenter | Qt.AlignTop
         )
+        self.ui.deltaButton.setVisible(True)
 
         self.ui.revealLayout.addWidget(
             self.ui.deleteButton, 8, 1, Qt.AlignHCenter | Qt.AlignTop
@@ -434,6 +429,7 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
             self.ui.toolLayout.addWidget(self.ui.commentDownButton, 2, 3)
             self.ui.toolLayout.addWidget(self.ui.lineButton, 2, 4)
+            self.ui.toolLayout.addWidget(self.ui.deltaButton, 2, 5)
         else:  # left-hand mouse
             self.ui.toolLayout.addWidget(self.ui.penButton, 0, 0)
             self.ui.toolLayout.addWidget(self.ui.commentUpButton, 0, 1)
@@ -450,6 +446,8 @@ class Annotator(QWidget):
             self.ui.toolLayout.addWidget(self.ui.boxButton, 2, 2)
             self.ui.toolLayout.addWidget(self.ui.deleteButton, 2, 3)
             self.ui.toolLayout.addWidget(self.ui.moveButton, 2, 4)
+            self.ui.toolLayout.addWidget(self.ui.deltaButton, 2, 5)
+        self.ui.deltaButton.setVisible(False)
         self.ui.ebLayout.addWidget(self.ui.modeLabel)
         self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
         self.ui.modeLayout.addWidget(self.ui.finishedButton)
@@ -562,40 +560,28 @@ class Annotator(QWidget):
         super(Annotator, self).keyPressEvent(event)
 
     def setMode(self, newMode, newCursor):
-        """Change the current tool mode.
-        Changes the styling of the corresponding button, and
-        also the cursor.
+        """Change the current tool mode and cursor.
+
+        TODO: this does various other mucking around for legacy
+        reasons: could probably still use some refactoring.
         """
-        # self.currentButton should only ever be set to a button - nothing else.
-        # Clear styling of the what was until now the current button
-        if self.currentButton is not None:
-            self.currentButton.setStyleSheet("")
         # A bit of a hack to take care of comment-mode and delta-mode
         if self.scene.mode == "comment" and newMode != "comment":
-            # clear the comment button styling
-            self.ui.commentButton.setStyleSheet("")
             self.commentW.CL.setStyleSheet("")
-        if self.scene.mode == "delta" and newMode != "delta":
-            self.ui.deltaButton.setStyleSheet("")
-        # We change currentbutton to which ever widget sent us
-        # to this function. We have to be a little careful since
+        # We have to be a little careful since
         # not all widgets get the styling in the same way.
         # If the mark-handler widget sent us here, it takes care
         # of its own styling - so we update the little tool-tip
-        # and set current button to none.
         if isinstance(self.sender(), QPushButton):
-            # has come from mark-change button in handler, so
-            # set button=none, since markHandler does its own styling
-            self.currentButton = None
-        elif isinstance(
-            self.sender(), QToolButton
-        ):  # only toolbuttons are the mode-changing ones.
-            self.currentButton = self.sender()
-            self.currentButton.setStyleSheet(self.currentButtonStyleBackground)
+            # has come from mark-change button, markHandler does its own styling
+            pass
+        elif isinstance(self.sender(), QToolButton):  # only toolbuttons are the mode-changing ones.
+            self.sender().setChecked(True)
+            self.markHandler.clearButtonStyle()
         elif self.sender() is self.commentW.CL:
             self.markHandler.clearButtonStyle()
             self.commentW.CL.setStyleSheet(self.currentButtonStyleOutline)
-            self.ui.commentButton.setStyleSheet(self.currentButtonStyleBackground)
+            self.ui.commentButton.setChecked(True)
         elif self.sender() is self.markHandler:
             # Clear the style of the mark-handler (this will mostly not do
             # anything, but saves us testing if we had styled it)
@@ -875,8 +861,7 @@ class Annotator(QWidget):
             return
         # Else, the delta is now set, so now change the mode here.
         self.setMode("delta", QCursor(Qt.IBeamCursor))
-        # and set style of the delta-button
-        self.ui.deltaButton.setStyleSheet(self.currentButtonStyleBackground)
+        self.ui.deltaButton.setChecked(True)
 
     def changeMark(self, score):
         """The mark has been changed. Update the mark-handler.
