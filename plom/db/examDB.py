@@ -818,6 +818,16 @@ class PlomDB:
             )
             aref = qref.annotations[0]
             ap = APage.create(annotation=aref, image=img, order=order)
+            # TODO: this should only happen at end of hw upload.
+            tref.used = True
+            tref.scanned = True
+            gref.scanned = True
+            qref.status = "todo"
+            tref.save()
+            gref.save()
+            qref.save()
+            href.save()
+            img.save()
         return [True]
 
     def uploadUnknownPage(self, oname, nname, md5):
@@ -1155,6 +1165,8 @@ class PlomDB:
             pState = []
             for p in tref.pages:
                 pState.append([p.pageNumber, p.version, p.scanned])
+            for p in tref.hwpages:
+                pScanned.append([p.order, p.version, p.scanned])
             rval[tref.testNumber] = pState
         log.debug("Sending list of incomplete tests")
         return rval
@@ -2134,6 +2146,8 @@ class PlomDB:
         pageFiles = []
         question = int(question)
         for p in tref.tpages.order_by(TPage.pageNumber):  # give TPages
+            if p.scanned is False:
+                continue
             if p.group.groupType == "i":  # skip IDpages
                 continue
             val = ["t{}".format(p.pageNumber), p.image.id, False]
@@ -2146,7 +2160,7 @@ class PlomDB:
         for p in tref.hwpages.order_by(HWPage.order):  # then give HWPages
             if p.group.groupType == "i":  # skip IDpages
                 continue
-            val = ["t{}".format(p.order), p.image.id, False]
+            val = ["h{}".format(p.order), p.image.id, False]
             # check if page belongs to our question
             if p.group.groupType == "q":
                 if p.group.qgroups[0].question == question:
