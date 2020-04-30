@@ -78,6 +78,45 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
+    def uploadHWPage(self, sid, question, order, sname, fname, md5sum):
+        self.SRmutex.acquire()
+        try:
+            param = {
+                "user": self.user,
+                "token": self.token,
+                "fileName": sname,
+                "sid": sid,
+                "question": question,
+                "order": order,
+                "md5sum": md5sum,
+            }
+            mime_type = mimetypes.guess_type(sname)[0]
+            dat = MultipartEncoder(
+                fields={
+                    "param": json.dumps(param),
+                    "originalImage": (sname, open(fname, "rb"), mime_type),  # image
+                }
+            )
+            response = self.session.put(
+                "https://{}/admin/hwPages".format(self.server),
+                json={"user": self.user, "token": self.token},
+                data=dat,
+                headers={"Content-Type": dat.content_type},
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
     def uploadUnknownPage(self, sname, fname, md5sum):
         self.SRmutex.acquire()
         try:

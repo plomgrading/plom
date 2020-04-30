@@ -86,7 +86,73 @@ def sendTestFiles(msgr, fileList):
         doFiling(rmsg, ts, ps, vs, shortName, fname)
 
 
+def extractIDQO(fileName):  # get ID, Question and Order
+    """Expecting filename of the form blah.SID.Q-N.pdf - return SID Q and N"""
+    splut = fileName.split(".")  # easy to get SID, and Q
+    id = splut[-3]
+    # split again, now on "-" to separate Q and N
+    resplut = splut[-2].split("-")
+    q = int(resplut[0])
+    n = int(resplut[1])
+
+    return (id, q, n)
+
+
+def sendHWFiles(msgr, fileList):
+    for fname in fileList:
+        print("Upload hw page image {}".format(fname))
+        shortName = os.path.split(fname)[1]
+        sid, q, n = extractIDQO(shortName)
+        print("Upload HW {},{},{} = {} to server".format(sid, q, n, shortName))
+        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+        rmsg = msgr.uploadHWPage(sid, q, n, shortName, fname, md5)
+        # code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
+        # rmsg = msgr.uploadTestPage(
+        # code, int(ts), int(ps), int(vs), shortName, fname, md5
+        # )
+        # doFiling(rmsg, ts, ps, vs, shortName, fname)
+
+
 def uploadPages(server=None, password=None):
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ScanMessenger(s, port=p)
+    else:
+        msgr = ScanMessenger(server)
+    msgr.start()
+
+    # get the password if not specified
+    if password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'scanner' password:")
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = password
+
+    # get started
+    try:
+        msgr.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-scan clear" or "plom-hwscan clear"'
+        )
+        exit(10)
+
+    # Look for pages in decodedPages
+    fileList = []
+    for ext in PlomImageExtWhitelist:
+        fileList.extend(glob("decodedPages/t*.{}".format(ext)))
+    sendTestFiles(msgr, fileList)
+    msgr.closeUser()
+    msgr.stop()
+
+
+def uploadHWPages(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -119,7 +185,7 @@ def uploadPages(server=None, password=None):
     # Look for pages in decodedPages
     fileList = []
     for ext in PlomImageExtWhitelist:
-        fileList.extend(glob("decodedPages/t*.{}".format(ext)))
-    sendTestFiles(msgr, fileList)
+        fileList.extend(glob("decodedPages/submittedHomework/*.{}".format(ext)))
+    sendHWFiles(msgr, fileList)
     msgr.closeUser()
     msgr.stop()

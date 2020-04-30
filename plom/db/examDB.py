@@ -797,6 +797,29 @@ class PlomDB:
 
             return [True, "success", "Page saved as tpv = {}.{}.{}".format(t, p, v)]
 
+    def uploadHWPage(self, sid, question, order, oname, nname, md5):
+        # first of all find the test corresponding to that sid.
+        iref = IDGroup.get_or_none(studentID=sid)
+        if iref is None:
+            return [False, "SID does not correspond to any test on file."]
+        tref = iref.test
+        qref = QGroup.get_or_none(test=tref, question=question)
+        gref = qref.group
+        href = HWPage.get_or_none(
+            test=tref, group=gref, order=order
+        )  # this should be none.
+        if href is not None:
+            return [False, "A HWPage with that SID,Q,O already exists."]
+        # create one.
+        with plomdb.atomic():
+            img = Image.create(originalName=oname, fileName=nname, md5sum=md5)
+            href = HWPage.create(
+                test=tref, group=gref, order=order, image=img, version=qref.version
+            )
+            aref = qref.annotations[0]
+            ap = APage.create(annotation=aref, image=img, order=order)
+        return [True]
+
     def uploadUnknownPage(self, oname, nname, md5):
         # return value is either [True, <success message>] or
         # [False, <duplicate message>]

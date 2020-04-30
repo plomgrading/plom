@@ -44,6 +44,38 @@ class UploadHandler:
         )
         return web.json_response(rmsg, status=200)  # all good
 
+    async def uploadHWPage(self, request):
+        reader = MultipartReader.from_response(request)
+
+        part0 = await reader.next()  # should be parameters
+        if part0 is None:  # weird error
+            return web.Response(status=406)  # should have sent 3 parts
+        param = await part0.json()
+
+        if not validFields(
+            param, ["user", "token", "sid", "question", "order", "fileName", "md5sum"]
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(param["user"], param["token"]):
+            return web.Response(status=401)
+        if not param["user"] in ("manager", "scanner"):
+            return web.Response(status=401)
+
+        part1 = await reader.next()  # should be the image file
+        if part1 is None:  # weird error
+            return web.Response(status=406)  # should have sent 3 parts
+        image = await part1.read()
+        # file it away.
+        rmsg = self.server.addHWPage(
+            param["sid"],
+            param["question"],
+            param["order"],
+            param["fileName"],
+            image,
+            param["md5sum"],
+        )
+        return web.json_response(rmsg, status=200)  # all good
+
     async def uploadUnknownPage(self, request):
         reader = MultipartReader.from_response(request)
 
@@ -400,6 +432,7 @@ class UploadHandler:
 
     def setUpRoutes(self, router):
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
+        router.add_put("/admin/hwPages", self.uploadHWPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
         router.add_put("/admin/missingPage/{tpv}", self.replaceMissingPage)

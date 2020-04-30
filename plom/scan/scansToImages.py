@@ -314,6 +314,8 @@ def processScans(fname, homework=False):
     processFileToBitmaps(fname)
     archivePDF(fname, homework)
     os.chdir("scanPNGs")
+    if homework:
+        os.chdir("submittedHomework")
 
     print("Normalizing jpeg orientation from Exif metadata")
     stuff = list(glob.glob("*.jpg"))
@@ -337,6 +339,15 @@ def processScans(fname, homework=False):
     fileList = []
     for ext in PlomImageExtWhitelist:
         fileList.extend(glob.glob("*.{}".format(ext)))
-    for file in fileList:
-        shutil.move(file, os.path.join("..", "pageImages"))
-    os.chdir("..")
+    if (
+        homework
+    ):  # move directly to decodedPages/submittedHomework - there is no "read" step
+        for file in fileList:
+            shutil.move(
+                file, os.path.join("..", "..", "decodedPages", "submittedHomework")
+            )
+        os.chdir(os.path.join("..", ".."))
+    else:  # move them to pageimages for barcode reading
+        for file in fileList:
+            shutil.move(file, os.path.join("..", "pageImages"))
+        os.chdir("..")

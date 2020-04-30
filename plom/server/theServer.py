@@ -133,6 +133,7 @@ class Server(object):
     )
     from .plomServer.serverUpload import (
         addTestPage,
+        addHWPage,
         addUnknownPage,
         addCollidingPage,
         replaceMissingPage,

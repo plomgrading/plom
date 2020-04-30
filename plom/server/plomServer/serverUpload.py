@@ -34,6 +34,28 @@ def addTestPage(self, t, p, v, fname, image, md5o):
     return val
 
 
+def addHWPage(self, sid, q, o, fname, image, md5o):
+    # take extension from the client filename
+    base, ext = os.path.splitext(fname)
+    # create a filename for the image
+    prefix = "s{}q{}o{}".format(sid, q, o)
+    while True:
+        unique = "." + str(uuid.uuid4())[:8]
+        newName = "pages/originalPages/" + prefix + unique + ext
+        if not os.path.isfile(newName):
+            break
+    val = self.DB.uploadHWPage(sid, q, o, fname, newName, md5o)
+    if val[0]:
+        with open(newName, "wb") as fh:
+            fh.write(image)
+        md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
+        assert md5n == md5o
+        log.debug("Storing {} as {} = {}".format(prefix, newName, val))
+    else:
+        log.debug("Did not store page.  From database = {}".format(val[1]))
+    return val
+
+
 def addUnknownPage(self, fname, image, md5o):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)

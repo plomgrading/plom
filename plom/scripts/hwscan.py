@@ -57,7 +57,7 @@ def processScans():
     # make a directory into which our (temp) PDF->bitmap will go
     os.makedirs("scanPNGs/submittedHomework", exist_ok=True)
     # finally a directory into which pageImages go
-    os.makedirs("pageImages/submittedHomework", exist_ok=True)
+    os.makedirs("decodedPages/submittedHomework", exist_ok=True)
 
     from plom.scan import scansToImages
 
@@ -77,7 +77,7 @@ def uploadHWImages(server, password, unknowns=False, collisions=False):
     os.makedirs("sentPages", exist_ok=True)
 
     print("Upload hw images to server")
-    sendPagesToServer.uploadPages(server, password)
+    sendPagesToServer.uploadHWPages(server, password)
 
 
 parser = argparse.ArgumentParser()
@@ -111,7 +111,7 @@ def main():
     elif args.command == "process":
         processScans()
     elif args.command == "upload":
-        uploadImages(args.server, args.password)
+        uploadHWImages(args.server, args.password)
     elif args.command == "status":
         scanStatus(args.server, args.password)
     elif args.command == "clear":
