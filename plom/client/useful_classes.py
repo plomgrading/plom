@@ -205,6 +205,23 @@ class ClientSettingsDialog(QDialog):
         line.setFrameShadow(QFrame.Sunken)
         flay.addRow(line)
 
+        self.leftHandMouse = QCheckBox("Left-handed mouse")
+        self.leftHandMouse.setCheckState(
+            Qt.Checked if s.get("mouse").lower() == "left" else Qt.Unchecked
+        )
+        flay.addWidget(self.leftHandMouse)
+
+        self.checkSidebarOnRight = QCheckBox("Annotator sidebar on right")
+        self.checkSidebarOnRight.setCheckState(
+            Qt.Checked if s.get("SidebarOnRight") else Qt.Unchecked
+        )
+        flay.addWidget(self.checkSidebarOnRight)
+
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        flay.addRow(line)
+
         self.checkWarnCom = QCheckBox(
             "Warn on insufficient feedback (e.g., no comments)"
         )
@@ -238,4 +255,6 @@ class ClientSettingsDialog(QDialog):
             self.checkLogFile.checkState() == Qt.Checked,
             self.checkWarnCom.checkState() == Qt.Checked,
             self.checkWarnMark.checkState() == Qt.Checked,
+            self.leftHandMouse.checkState() == Qt.Checked,
+            self.checkSidebarOnRight.checkState() == Qt.Checked,
         )
