@@ -41,6 +41,8 @@ class Test(BaseModel):
     identified = BooleanField(default=False)
     marked = BooleanField(default=False)
     totalled = BooleanField(default=False)
+    # a recentUpload flag to see which tests to check after uploads
+    recentUpload = BooleanField(default=False)
 
 
 # Data for totalling the marks
@@ -123,6 +125,9 @@ class CollidingPage(BaseModel):
 class DiscardedPage(BaseModel):
     image = ForeignKeyField(Image, backref="discards")
     reason = CharField(null=True)
+    # in case we are removing an annotation
+    plomFile = CharField(null=True)
+    commentFile = CharField(null=True)
 
 
 class IDPage(BaseModel):
@@ -808,27 +813,175 @@ class PlomDB:
         href = HWPage.get_or_none(
             test=tref, group=gref, order=order
         )  # this should be none.
-        if href is not None:
+        if href is not None:  ### FIX THIS
             return [False, "A HWPage with that SID,Q,O already exists."]
         # create one.
         with plomdb.atomic():
+            aref = qref.annotations[0]
+            # create image, hwpage, annotationpage and link.
             img = Image.create(originalName=oname, fileName=nname, md5sum=md5)
             href = HWPage.create(
                 test=tref, group=gref, order=order, image=img, version=qref.version
             )
-            aref = qref.annotations[0]
             ap = APage.create(annotation=aref, image=img, order=order)
-            # TODO: this should only happen at end of hw upload.
+            # set the recentUpload flag for the test
             tref.used = True
-            tref.scanned = True
+            tref.recentUpload = True
+            tref.save()
+        self.processUpdatedTests()
+        return [True]
+
+    def cleanIDGroup(self, tref, iref):
+        with plomdb.atomic():
+            iref.status = ""
+            iref.user = None
+            iref.time = datetime.now()
+            iref.studentID = None
+            iref.studentName = None
+            iref.identified = False
+            iref.time = datetime.now()
+            iref.save()
+            tref.identified = False
+            tref.save()
+            log.info("IDGroup of test {} cleaned.".format(tref.testNumber))
+
+    def cleanSData(self, tref, sref):
+        with plomdb.atomic():
+            sref.sumMark = None
+            sref.user = None
+            sref.status = ""
+            sref.time = datetime.now()
+            tref.totalled = False
+            sref.save()
+            tref.save()
+            log.info("SumData of test {} cleaned.".format(tref.testNumber))
+
+    def cleanQGroup(self, tref, qref):
+        with plomdb.atomic():
+            # do not delete old annotations, instead make new annotation that belongs to HAL
+            # now delete old annotations
+            for aref in qref.annotations:
+                # skip the 0th edition - it belongs to HAL.
+                if aref.edition > 0:
+                    # discard the annotated images
+                    DiscardedPage.create(
+                        image=aref.image,
+                        reason="cleaningQGroup",
+                        plomFile=plomFile,
+                        commentFile=commentFile,
+                    )
+                    # discard the APages
+                    for p in aref.apages:
+                        p.delete_instance()
+                    aref.delete_instance()
+            qref.user = None
+            qref.status = ""
+            qref.marked = False
+            qref.save()
+            tref.marked = False
+            tref.save()
+
+        log.info("QGroup {} of test {} cleaned".format(qref.question, tref.testNumber))
+
+    def processUpdatedIDGroup(self, tref, iref):
+        # if IDGroup belongs to HAL then don't touch it - was auto IDd.
+        if iref.user == User.get(name="HAL"):
+            return True
+        # return IDGroup to initial state clean.
+        self.cleanIDGroup(tref, iref)
+        # homework does not upload ID pages, so only have to check testPages
+        gref = iref.group
+        # check all the test-pages
+        for p in gref.tpages:
+            if p.scanned is False:
+                return False
+        # all test pages present, and group cleaned, so set things ready to go.
+        with plomdb.atomic():
+            gref.scanned = True
+            iref.status = "todo"
+            iref.save()
+            gref.save()
+            log.info(
+                "IDGroup of test {} is ready to be identified.".format(tref.testNumber)
+            )
+        return True
+
+    def processUpdatedDNMGroup(self, tref, dref):
+        # homework does not upload DNM pages, so only have to check testPages
+        gref = dref.group
+        # check all the test-pages
+        for p in gref.tpages:
+            if p.scanned is False:
+                return False
+        # all test pages present, so set things ready to go.
+        with plomdb.atomic():
+            gref.scanned = True
+            gref.save()
+            log.info("DNMGroup of test {} is all scanned.".format(tref.testNumber))
+        return True
+
+    def processUpdatedQGroup(self, tref, qref):
+        # clean up the QGroup and its annotations
+        self.cleanQGroup(tref, qref)
+        # now some logic.
+        # if homework pages present - ready to go.
+        # elif all testpages present - ready to go.
+        # else - not ready.
+
+        gref = qref.group
+        # check if HW pages = 0
+        if qref.group.hwpages.count() == 0:
+            # then check for testpages
+            for p in gref.tpages:  # there is always at least one.
+                if p.scanned is False:  # missing a test-page - not ready.
+                    return False
+
+        # otherwise we are ready to go.
+        with plomdb.atomic():
             gref.scanned = True
             qref.status = "todo"
-            tref.save()
-            gref.save()
             qref.save()
-            href.save()
-            img.save()
-        return [True]
+            gref.save()
+            log.info(
+                "QGroup {} of test {} is ready to be identified.".format(
+                    qref.question, tref.testNumber
+                )
+            )
+
+        # return True
+
+    def cleanIDGroup(iref):
+        # if IDGroup belongs to HAL then don't touch it - was auto IDd.
+        if iref.user == User.get(name="HAL"):
+            return
+        with plomdb.atomic():
+            iref.status = ""
+            iref.user = None
+            iref.time = datetime.now()
+            iref.studentID = None
+            iref.studentName = None
+            iref.save()
+            log.info("IDGroup of test {} cleaned.".format(tref.testNumber))
+
+    def processSpecificUpdatedTest(self, tref):
+        rval = []
+        rval.append(self.processUpdatedIDGroup(tref, tref.idgroups[0]))
+        rval.append(self.processUpdatedDNMGroup(tref, tref.dnmgroups[0]))
+        for qref in tref.qgroups:
+            rval.append(self.processUpdatedQGroup(tref, qref))
+        # clean out the sumdata
+        rval.append(self.cleanSData(tref, tref.sumdata[0]))
+        # now clear the update flag.
+        with plomdb.atomic():
+            tref.recentUpload = False
+            tref.save()
+        return rval
+
+    def processUpdatedTests(self):
+        query = Test.select().where(Test.recentUpload == True)
+        print("These tests")
+        for tref in query:
+            print(self.processSpecificUpdatedTest(tref))
 
     def uploadUnknownPage(self, oname, nname, md5):
         # return value is either [True, <success message>] or
@@ -1163,10 +1316,10 @@ class PlomDB:
         rval = {}
         for tref in Test.select().where(Test.scanned == False, Test.used == True):
             pState = []
-            for p in tref.pages:
+            for p in tref.tpages:
                 pState.append([p.pageNumber, p.version, p.scanned])
             for p in tref.hwpages:
-                pScanned.append([p.order, p.version, p.scanned])
+                pState.append([p.order, p.version, True])
             rval[tref.testNumber] = pState
         log.debug("Sending list of incomplete tests")
         return rval

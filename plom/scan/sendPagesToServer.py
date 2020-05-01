@@ -98,7 +98,13 @@ def extractIDQO(fileName):  # get ID, Question and Order
     return (id, q, n)
 
 
+def doHWFiling(rmsg, sid, q, n, shortName, fname):
+    if rmsg[0]:  # msg should be [True]
+        shutil.move(fname, os.path.join("sentPages", "submittedHomework", shortName))
+
+
 def sendHWFiles(msgr, fileList):
+    sidUsed = set()
     for fname in fileList:
         print("Upload hw page image {}".format(fname))
         shortName = os.path.split(fname)[1]
@@ -106,11 +112,10 @@ def sendHWFiles(msgr, fileList):
         print("Upload HW {},{},{} = {} to server".format(sid, q, n, shortName))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         rmsg = msgr.uploadHWPage(sid, q, n, shortName, fname, md5)
-        # code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
-        # rmsg = msgr.uploadTestPage(
-        # code, int(ts), int(ps), int(vs), shortName, fname, md5
-        # )
-        # doFiling(rmsg, ts, ps, vs, shortName, fname)
+        doHWFiling(rmsg, sid, q, n, shortName, fname)
+        if rmsg[0]:  # was successful upload
+            sidUsed.add(sid)
+    return sidUsed
 
 
 def uploadPages(server=None, password=None):
@@ -178,7 +183,7 @@ def uploadHWPages(server=None, password=None):
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another scanner-script running,\n"
             "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-scan clear"'
+            'In order to force-logout the existing authorisation run "plom-hwscan clear"'
         )
         exit(10)
 
@@ -186,6 +191,7 @@ def uploadHWPages(server=None, password=None):
     fileList = []
     for ext in PlomImageExtWhitelist:
         fileList.extend(glob("decodedPages/submittedHomework/*.{}".format(ext)))
-    sendHWFiles(msgr, fileList)
+    sidUsed = sendHWFiles(msgr, fileList)
     msgr.closeUser()
     msgr.stop()
+    return sidUsed

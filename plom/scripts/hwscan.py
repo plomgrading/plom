@@ -74,10 +74,12 @@ def uploadHWImages(server, password, unknowns=False, collisions=False):
     from plom.scan import sendPagesToServer
 
     # make directories for upload
-    os.makedirs("sentPages", exist_ok=True)
+    os.makedirs("sentPages/submittedHomework", exist_ok=True)
 
     print("Upload hw images to server")
-    sendPagesToServer.uploadHWPages(server, password)
+    sidUsed = sendPagesToServer.uploadHWPages(server, password)
+    print("The following studentID's homworks were updated")
+    print(sidUsed)
 
 
 parser = argparse.ArgumentParser()
