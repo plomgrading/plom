@@ -133,6 +133,10 @@ def getTPageImage(self, testNumber, pageNumber, version):
     return self.DB.getTPageImage(testNumber, pageNumber, version)
 
 
+def getHWPageImage(self, testNumber, question, order):
+    return self.DB.getHWPageImage(testNumber, question, order)
+
+
 def getUnknownImage(self, fname):
     return self.DB.getUnknownImage(fname)
 

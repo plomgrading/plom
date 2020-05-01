@@ -147,6 +147,7 @@ class Server(object):
         getCollidingImage,
         getDiscardImage,
         getTPageImage,
+        getHWPageImage,
         getQuestionImages,
         getTestImages,
         checkPage,

@@ -52,6 +52,7 @@ class SumData(BaseModel):
     status = CharField(default="")
     user = ForeignKeyField(User, backref="sumdata", null=True)
     time = DateTimeField(null=True)
+    summed = BooleanField(default=False)
 
 
 class Group(BaseModel):
@@ -1107,6 +1108,19 @@ class PlomDB:
         else:
             return [True, pref.image.fileName]
 
+    def getHWPageImage(self, testNumber, question, order):
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        gref = QGroup.get(test=tref, question=question).group
+        pref = HWPage.get_or_none(
+            HWPage.test == tref, HWPage.group == gref, HWPage.order == order
+        )
+        if pref is None:
+            return [False]
+        else:
+            return [True, pref.image.fileName]
+
     def getUnknownImage(self, fname):
         uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
         if uref is None:
@@ -1338,9 +1352,17 @@ class PlomDB:
         rval = {}
         for tref in Test.select().where(Test.scanned == True):
             pScanned = []
+            # first append test-pages
             for p in tref.tpages:
                 if p.scanned == True:
-                    pScanned.append([p.pageNumber, p.version])
+                    pScanned.append(["t.{}".format(p.pageNumber), p.version])
+            # then append hw-pages in question-order
+            for qref in tref.qgroups:
+                gref = qref.group
+                for p in gref.hwpages:
+                    pScanned.append(
+                        ["hw.{}.{}".format(qref.question, p.order), p.version]
+                    )
             rval[tref.testNumber] = pScanned
         log.debug("Sending list of scanned tests")
         return rval
@@ -1350,9 +1372,14 @@ class PlomDB:
         for tref in Test.select().where(Test.scanned == False, Test.used == True):
             pState = []
             for p in tref.tpages:
-                pState.append([p.pageNumber, p.version, p.scanned])
-            for p in tref.hwpages:
-                pState.append([p.order, p.version, True])
+                pState.append(["t.{}".format(p.pageNumber), p.version, p.scanned])
+            # then append hw-pages in question-order
+            for qref in tref.qgroups:
+                gref = qref.group
+                for p in gref.hwpages:
+                    pScanned.append(
+                        ["hw.{}.{}".format(qref.question, p.order), p.version, True]
+                    )
             rval[tref.testNumber] = pState
         log.debug("Sending list of incomplete tests")
         return rval

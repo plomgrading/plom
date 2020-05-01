@@ -555,8 +555,17 @@ class Manager(QWidget):
                 l0.addChild(l1)
             self.ui.scanTW.addTopLevelItem(l0)
 
-    def viewPage(self, t, p, v):
-        vp = managerMessenger.getPageImage(t, p, v)
+    def viewPage(self, t, pdetails, v):
+        if pdetails[0] == "t":  # is a test-page t.PPP
+            p = pdetails.split(".")[1]
+            vp = managerMessenger.getTPageImage(t, p, v)
+        elif pdetails[0] == "h":  # is a hw-page = hw.q.o
+            q = pdetails.split(".")[1]
+            o = pdetails.split(".")[2]
+            vp = managerMessenger.getHWPageImage(t, q, o)
+        else:  # future = extra-page
+            return
+
         if vp is None:
             return
         with tempfile.NamedTemporaryFile() as fh:
@@ -572,10 +581,10 @@ class Manager(QWidget):
             pt = int(pvi[0].text(0))
             self.viewWholeTest(pt)
             return
-        pp = int(pvi[0].text(1))
+        pdetails = pvi[0].text(1)
         pv = int(pvi[0].text(2))
         pt = int(pvi[0].parent().text(0))  # grab test number from parent
-        self.viewPage(pt, pp, pv)
+        self.viewPage(pt, pdetails, pv)
 
     def viewISTest(self):
         pvi = self.ui.incompTW.selectedItems()

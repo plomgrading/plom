@@ -225,7 +225,7 @@ class UploadHandler:
         rval = self.server.getCollidingPageNames()
         return web.json_response(rval, status=200)  # all fine
 
-    async def getPageImage(self, request):
+    async def getTPageImage(self, request):
         data = await request.json()
         if not validFields(data, ["user", "token", "test", "page", "version"]):
             return web.Response(status=400)
@@ -234,10 +234,22 @@ class UploadHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        # TODO: unused, we should ensure this matches the data
-        code = request.match_info["tpv"]
-
         rval = self.server.getTPageImage(data["test"], data["page"], data["version"])
+        if rval[0]:
+            return web.FileResponse(rval[1], status=200)  # all fine
+        else:
+            return web.Response(status=404)
+
+    async def getHWPageImage(self, request):  # should this use version too?
+        data = await request.json()
+        if not validFields(data, ["user", "token", "test", "question", "order"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.getHWPageImage(data["test"], data["question"], data["order"])
         if rval[0]:
             return web.FileResponse(rval[1], status=200)  # all fine
         else:
@@ -467,7 +479,8 @@ class UploadHandler:
         router.add_put("/admin/missingTestPage/{tpv}", self.replaceMissingTestPage)
         router.add_put("/admin/missingHWQuestion", self.replaceMissingHWQuestion)
         router.add_delete("/admin/scannedPage/{tpv}", self.removeScannedPage)
-        router.add_get("/admin/scannedPage/{tpv}", self.getPageImage)
+        router.add_get("/admin/scannedTPage", self.getTPageImage)
+        router.add_get("/admin/scannedHWPage", self.getHWPageImage)
         router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)
         router.add_get("/admin/discardNames", self.getDiscardNames)
         router.add_get("/admin/collidingPageNames", self.getCollidingPageNames)
