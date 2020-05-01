@@ -271,3 +271,34 @@ class ScanMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return response.json()
+
+    def replaceMissingHWQuestion(self, sid, q):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/admin/missingHWQuestion".format(self.server),
+                verify=False,
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "question": q,
+                    "sid": sid,
+                },
+            )
+            response.raise_for_status()
+            rval = response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 404:
+                raise PlomSeriousException(
+                    "Server could not find the TPV - this should not happen!"
+                ) from None
+            elif response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return rval

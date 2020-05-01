@@ -7,6 +7,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+from collections import defaultdict
 from glob import glob
 import getpass
 import hashlib
@@ -104,7 +105,8 @@ def doHWFiling(rmsg, sid, q, n, shortName, fname):
 
 
 def sendHWFiles(msgr, fileList):
-    sidUsed = set()
+    # keep track of which SID uploaded which Q.
+    SIDQ = defaultdict(list)
     for fname in fileList:
         print("Upload hw page image {}".format(fname))
         shortName = os.path.split(fname)[1]
@@ -114,8 +116,8 @@ def sendHWFiles(msgr, fileList):
         rmsg = msgr.uploadHWPage(sid, q, n, shortName, fname, md5)
         doHWFiling(rmsg, sid, q, n, shortName, fname)
         if rmsg[0]:  # was successful upload
-            sidUsed.add(sid)
-    return sidUsed
+            SIDQ[sid].append(q)
+    return SIDQ
 
 
 def uploadPages(server=None, password=None):
@@ -187,12 +189,21 @@ def uploadHWPages(server=None, password=None):
         )
         exit(10)
 
+    # grab number of questions - so we can work out what is missing
+    spec = msgr.getInfoGeneral()
+    numberOfQuestions = spec["numberOfQuestions"]
+
     # Look for pages in decodedPages
     fileList = []
     for ext in PlomImageExtWhitelist:
         fileList.extend(sorted(glob("decodedPages/submittedHomework/*.{}".format(ext))))
-    sidUsed = sendHWFiles(msgr, fileList)
+    SIDQ = sendHWFiles(msgr, fileList)  # returns list of which SID did whic q.
+    for sid in SIDQ:
+        for q in range(1, numberOfQuestions + 1):
+            if q not in SIDQ[sid]:
+                print("SID {} missing question {}".format(sid, q))
+                msgr.replaceMissingHWQuestion(sid, q)
     updates = msgr.sendHWUploadDone()
     msgr.closeUser()
     msgr.stop()
-    return [sidUsed, updates]
+    return [SIDQ, updates]

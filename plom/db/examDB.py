@@ -1007,9 +1007,9 @@ class PlomDB:
             # create image, hwpage, annotationpage and link.
             img = Image.create(originalName=oname, fileName=nname, md5sum=md5)
             href = HWPage.create(
-                test=tref, group=gref, order=order, image=img, version=qref.version
+                test=tref, group=gref, order=1, image=img, version=qref.version
             )
-            ap = APage.create(annotation=aref, image=img, order=order)
+            ap = APage.create(annotation=aref, image=img, order=1)
             # set the recentUpload flag for the test
             tref.used = True
             tref.recentUpload = True

@@ -77,8 +77,8 @@ def uploadHWImages(server, password, unknowns=False, collisions=False):
     os.makedirs("sentPages/submittedHomework", exist_ok=True)
 
     print("Upload hw images to server")
-    [sidUsed, updates] = sendPagesToServer.uploadHWPages(server, password)
-    print("Homework was uploaded to the following studentIDs: {}".format(sidUsed))
+    [SIDQ, updates] = sendPagesToServer.uploadHWPages(server, password)
+    print("Homework was uploaded to the following studentIDs: {}".format(SIDQ.keys()))
     print("Server reports {} papers updated.".format(updates))
 
 
