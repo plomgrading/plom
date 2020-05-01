@@ -371,11 +371,11 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def replaceMissingPage(self, code, t, p, v):
+    def replaceMissingTestPage(self, code, t, p, v):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
-                "https://{}/admin/missingPage/{}".format(self.server, code),
+                "https://{}/admin/missingTestPage/{}".format(self.server, code),
                 verify=False,
                 json={
                     "user": self.user,

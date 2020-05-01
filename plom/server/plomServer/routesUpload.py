@@ -134,7 +134,7 @@ class UploadHandler:
         )
         return web.json_response(rmsg, status=200)  # all good
 
-    async def replaceMissingPage(self, request):
+    async def replaceMissingTestPage(self, request):
         data = await request.json()
         if not validFields(data, ["user", "token", "test", "page", "version"]):
             return web.Response(status=400)
@@ -146,9 +146,24 @@ class UploadHandler:
         # TODO: unused, we should ensure this matches the data
         code = request.match_info["tpv"]
 
-        rval = self.server.replaceMissingPage(
+        rval = self.server.replaceMissingTestPage(
             data["test"], data["page"], data["version"]
         )
+        if rval[0]:
+            return web.json_response(rval, status=200)  # all fine
+        else:
+            return web.Response(status=404)  # page not found at all
+
+    async def replaceMissingHWQuestion(self, request):
+        data = await request.json()
+        if not validFields(data, ["user", "token", "sid", "question"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if data["user"] != "manager" and data["user"] != "scanner":
+            return web.Response(status=401)
+
+        rval = self.server.replaceMissingHWQuestion(data["sid"], data["question"])
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
@@ -435,7 +450,8 @@ class UploadHandler:
         router.add_put("/admin/hwPages", self.uploadHWPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
-        router.add_put("/admin/missingPage/{tpv}", self.replaceMissingPage)
+        router.add_put("/admin/missingTestPage/{tpv}", self.replaceMissingTestPage)
+        router.add_put("/admin/missingHWQuestion", self.replaceMissingHWQuestion)
         router.add_delete("/admin/scannedPage/{tpv}", self.removeScannedPage)
         router.add_get("/admin/scannedPage/{tpv}", self.getPageImage)
         router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)

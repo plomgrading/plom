@@ -828,7 +828,6 @@ class PlomDB:
             tref.used = True
             tref.recentUpload = True
             tref.save()
-        self.processUpdatedTests()
         return [True]
 
     def cleanIDGroup(self, tref, iref):
@@ -990,6 +989,31 @@ class PlomDB:
         query = Test.select().where(Test.recentUpload == True)
         for tref in query:
             self.processSpecificUpdatedTest(tref)
+
+    def replaceMissingHWQuestion(self, sid, question, oname, nname, md5):
+        iref = IDGroup.get_or_none(studentID=sid)
+        if iref is None:
+            return [False, "SID does not correspond to any test on file."]
+        tref = iref.test
+        qref = QGroup.get_or_none(test=tref, question=question)
+        gref = qref.group
+        href = HWPage.get_or_none(test=tref, group=gref)  # this should be none.
+        if href is not None:
+            return [False, "Question already has pages."]
+        # no HW page present, so create things as per a HWPage upload
+        with plomdb.atomic():
+            aref = qref.annotations[0]
+            # create image, hwpage, annotationpage and link.
+            img = Image.create(originalName=oname, fileName=nname, md5sum=md5)
+            href = HWPage.create(
+                test=tref, group=gref, order=order, image=img, version=qref.version
+            )
+            ap = APage.create(annotation=aref, image=img, order=order)
+            # set the recentUpload flag for the test
+            tref.used = True
+            tref.recentUpload = True
+            tref.save()
+        return [True]
 
     def uploadUnknownPage(self, oname, nname, md5):
         # return value is either [True, <success message>] or

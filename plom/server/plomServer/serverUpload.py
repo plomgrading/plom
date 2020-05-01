@@ -100,9 +100,9 @@ def addCollidingPage(self, t, p, v, fname, image, md5o):
     return val
 
 
-def replaceMissingPage(self, testNumber, pageNumber, version):
+def replaceMissingTestPage(self, testNumber, pageNumber, version):
     # TODO - we should probably have some sort of try/except around this.
-    pageNotSubmitted.buildSubstitute(testNumber, pageNumber, version)
+    pageNotSubmitted.buildTestPageSubstitute(testNumber, pageNumber, version)
     # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
     originalName = "pns.{}.{}.{}.png".format(testNumber, pageNumber, version)
     prefix = "pages/originalPages/pns.{}p{}v{}".format(
@@ -280,3 +280,28 @@ def discardToUnknown(self, fname):
         return [True]
     else:
         return [False]
+
+
+def replaceMissingHWQuestion(self, sid, question):
+    # TODO - we should probably have some sort of try/except around this.
+    pageNotSubmitted.buildHWQuestionSubstitute(sid, question)
+    # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
+    originalName = "qns.{}.{}.png".format(sid, question)
+    prefix = "pages/originalPages/pns.{}q{}".format(sid, question)
+    # make a non-colliding name
+    while True:
+        unique = "." + str(uuid.uuid4())[:8]
+        newName = prefix + unique + ".png"
+        if not os.path.isfile(newName):
+            break
+        newName = "pages/originalPages/" + prefix + unique + ".png"
+    # compute md5sum and put into database
+    md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
+    # now try to put it into place
+    rval = self.DB.replaceMissingHWQuestion(sid, question, originalName, newName, md5)
+    # if move successful then actually move file into place, else delete it
+    if rval[0]:
+        shutil.move(originalName, newName)
+    else:
+        os.unlink(originalName)
+    return rval

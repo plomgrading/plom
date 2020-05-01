@@ -136,7 +136,7 @@ class Server(object):
         addHWPage,
         addUnknownPage,
         addCollidingPage,
-        replaceMissingPage,
+        replaceMissingTestPage,
         removeScannedPage,
         getUnknownPageNames,
         getDiscardNames,

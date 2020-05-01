@@ -193,6 +193,7 @@ def doLatexChecks():
     keepfiles = ("checkThing.png", "pns.0.0.0.png")
     ct = os.path.join(cdir, "pleaseCheck", keepfiles[0])
     pns = os.path.join(cdir, specdir, "pageNotSubmitted.pdf")
+    qns = os.path.join(cdir, specdir, "questionNotSubmitted.pdf")
 
     fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ worked okay for plom."
 
@@ -206,11 +207,21 @@ def doLatexChecks():
         raise PlomServerConfigurationError(
             "Error building 'pageNotSubmitted.pdf' template page. Please check your latex distribution."
         )
+    # build template pageNotSubmitted.pdf just in case needed
+    if not pageNotSubmitted.buildQNSPage(qns):
+        raise PlomServerConfigurationError(
+            "Error building 'questionNotSubmitted.pdf' template page. Please check your latex distribution."
+        )
 
     # Try building a replacement for missing page.
-    if not pageNotSubmitted.buildSubstitute(0, 0, 0):
+    if not pageNotSubmitted.buildTestPageSubstitute(0, 0, 0):
         raise PlomServerConfigurationError(
-            "Error building replacement for missing page."
+            "Error building replacement for missing test page."
+        )
+    # Try building a replacement for missing page.
+    if not pageNotSubmitted.buildHWQuestionSubstitute(0, 0):
+        raise PlomServerConfigurationError(
+            "Error building replacement for missing homework question."
         )
 
     shutil.move(keepfiles[1], os.path.join("pleaseCheck", keepfiles[1]))
