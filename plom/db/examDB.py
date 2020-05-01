@@ -909,11 +909,13 @@ class PlomDB:
     def processUpdatedDNMGroup(self, tref, dref):
         # homework does not upload DNM pages, so only have to check testPages
         gref = dref.group
-        # check all the test-pages
+        # check all the test-pages - we want either all non-scanned, or all scanned.
+        sList = []
         for p in gref.tpages:
-            if p.scanned is False:
-                return False
-        # all test pages present, so set things ready to go.
+            sList.append(p.scanned)
+        if True in sList and False in sList:
+            return False
+        # all test pages scanned (or all unscanned), so set things ready to go.
         with plomdb.atomic():
             gref.scanned = True
             gref.save()
@@ -943,12 +945,11 @@ class PlomDB:
             qref.save()
             gref.save()
             log.info(
-                "QGroup {} of test {} is ready to be identified.".format(
+                "QGroup {} of test {} is ready to be marked.".format(
                     qref.question, tref.testNumber
                 )
             )
-
-        # return True
+        return True
 
     def cleanIDGroup(iref):
         # if IDGroup belongs to HAL then don't touch it - was auto IDd.
@@ -964,24 +965,31 @@ class PlomDB:
             log.info("IDGroup of test {} cleaned.".format(tref.testNumber))
 
     def processSpecificUpdatedTest(self, tref):
+        log.info("Updating test {}.".format(tref.testNumber))
         rval = []
         rval.append(self.processUpdatedIDGroup(tref, tref.idgroups[0]))
         rval.append(self.processUpdatedDNMGroup(tref, tref.dnmgroups[0]))
         for qref in tref.qgroups:
             rval.append(self.processUpdatedQGroup(tref, qref))
-        # clean out the sumdata
-        rval.append(self.cleanSData(tref, tref.sumdata[0]))
+        # clean out the sumdata. Don't need ready-flag.
+        # todo - think about better flag for sumdata. presence of page 0?
+        self.cleanSData(tref, tref.sumdata[0])
         # now clear the update flag.
         with plomdb.atomic():
             tref.recentUpload = False
+            if all(rv for rv in rval):
+                log.info("Test {} ready to go.".format(tref.testNumber))
+                tref.scanned = True
+            else:
+                log.info(
+                    "Test {} still missing pages - {}.".format(tref.testNumber, rval)
+                )
             tref.save()
-        return rval
 
     def processUpdatedTests(self):
         query = Test.select().where(Test.recentUpload == True)
-        print("These tests")
         for tref in query:
-            print(self.processSpecificUpdatedTest(tref))
+            self.processSpecificUpdatedTest(tref)
 
     def uploadUnknownPage(self, oname, nname, md5):
         # return value is either [True, <success message>] or
