@@ -483,4 +483,4 @@ class UploadHandler:
         router.add_put("/admin/unknownToExtraPage", self.unknownToExtraPage)
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
-        router.add_put("/admin/admin/hwPagesUploaded", self.processHWUploads)
+        router.add_put("/admin/hwPagesUploaded", self.processHWUploads)

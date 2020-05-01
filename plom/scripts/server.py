@@ -254,7 +254,9 @@ def initialiseServer():
     createServerConfig()
     print("Build blank predictionlist for identifying.")
     createBlankPredictions()
-    print("Do latex checks and build 'pageNotSubmitted.pdf' in case needed")
+    print(
+        "Do latex checks and build 'pageNotSubmitted.pdf', 'questionNotSubmitted.pdf' in case needed"
+    )
     doLatexChecks()
 
 
