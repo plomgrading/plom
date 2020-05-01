@@ -305,3 +305,7 @@ def replaceMissingHWQuestion(self, sid, question):
     else:
         os.unlink(originalName)
     return rval
+
+
+def processHWUploads(self):
+    return self.DB.processUpdatedTests()

@@ -151,7 +151,7 @@ def uploadPages(server=None, password=None):
     # Look for pages in decodedPages
     fileList = []
     for ext in PlomImageExtWhitelist:
-        fileList.extend(glob("decodedPages/t*.{}".format(ext)))
+        fileList.extend(sorted(glob("decodedPages/t*.{}".format(ext))))
     sendTestFiles(msgr, fileList)
     msgr.closeUser()
     msgr.stop()
@@ -190,8 +190,9 @@ def uploadHWPages(server=None, password=None):
     # Look for pages in decodedPages
     fileList = []
     for ext in PlomImageExtWhitelist:
-        fileList.extend(glob("decodedPages/submittedHomework/*.{}".format(ext)))
+        fileList.extend(sorted(glob("decodedPages/submittedHomework/*.{}".format(ext))))
     sidUsed = sendHWFiles(msgr, fileList)
+    updates = msgr.sendHWUploadDone()
     msgr.closeUser()
     msgr.stop()
-    return sidUsed
+    return [sidUsed, updates]

@@ -989,6 +989,7 @@ class PlomDB:
         query = Test.select().where(Test.recentUpload == True)
         for tref in query:
             self.processSpecificUpdatedTest(tref)
+        return [True, query.count()]
 
     def replaceMissingHWQuestion(self, sid, question, oname, nname, md5):
         iref = IDGroup.get_or_none(studentID=sid)

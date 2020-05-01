@@ -62,7 +62,7 @@ def processScans():
     from plom.scan import scansToImages
 
     subs = defaultdict(list)
-    for fn in glob.glob("submittedHomework/*.pdf"):
+    for fn in sorted(glob.glob("submittedHomework/*.pdf")):
         # record who did what
         sid, q = extractIDQ(fn)
         subs[sid].append(q)
@@ -77,9 +77,9 @@ def uploadHWImages(server, password, unknowns=False, collisions=False):
     os.makedirs("sentPages/submittedHomework", exist_ok=True)
 
     print("Upload hw images to server")
-    sidUsed = sendPagesToServer.uploadHWPages(server, password)
-    print("The following studentID's homworks were updated")
-    print(sidUsed)
+    [sidUsed, updates] = sendPagesToServer.uploadHWPages(server, password)
+    print("Homework was uploaded to the following studentIDs: {}".format(sidUsed))
+    print("Server reports {} papers updated.".format(updates))
 
 
 parser = argparse.ArgumentParser()

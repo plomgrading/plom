@@ -250,3 +250,24 @@ class ScanMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return response.json()
+
+    def sendHWUploadDone(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/admin/hwPagesUploaded".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
