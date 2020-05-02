@@ -313,3 +313,7 @@ def replaceMissingHWQuestion(self, sid, question):
 
 def processHWUploads(self):
     return self.DB.processUpdatedTests()
+
+
+def processTUploads(self):
+    return self.DB.processUpdatedTests()

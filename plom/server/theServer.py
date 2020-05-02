@@ -135,6 +135,7 @@ class Server(object):
         addTestPage,
         addHWPage,
         processHWUploads,
+        processTUploads,
         addUnknownPage,
         addCollidingPage,
         replaceMissingTestPage,

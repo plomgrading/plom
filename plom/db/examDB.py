@@ -784,6 +784,7 @@ class PlomDB:
                 pref.scanned = True
                 pref.save()
                 tref.used = True
+                tref.recentUpload = True
                 tref.save()
                 # also link the image to an QPage, DNMPage, or IDPage
                 gref = pref.group
@@ -799,8 +800,6 @@ class PlomDB:
                     ap = APage.create(annotation=aref, image=pref.image, order=p)
 
             log.info("Uploaded image {} to tpv = {}.{}.{}".format(oname, t, p, v))
-            self.checkGroupAllUploaded(pref)
-
             return [True, "success", "Page saved as tpv = {}.{}.{}".format(t, p, v)]
 
     def uploadHWPage(self, sid, question, order, oname, nname, md5):
@@ -951,7 +950,7 @@ class PlomDB:
             )
         return True
 
-    def cleanIDGroup(iref):
+    def cleanIDGroup(self, tref, iref):
         # if IDGroup belongs to HAL then don't touch it - was auto IDd.
         if iref.user == User.get(name="HAL"):
             return
@@ -1521,14 +1520,14 @@ class PlomDB:
                     iref.time.strftime("%y:%m:%d-%H:%M:%S"),
                 ]
             )
-        for mref in QGroup.select().where(QGroup.status == "out"):
+        for qref in QGroup.select().where(QGroup.status == "out"):
             rval.append(
                 [
                     "mrk-t{}-q{}-v{}".format(
-                        mref.test.testNumber, mref.question, mref.version
+                        qref.test.testNumber, qref.question, qref.version
                     ),
-                    mref.user.name,
-                    mref.time.strftime("%y:%m:%d-%H:%M:%S"),
+                    qref.user.name,
+                    qref.annotations[-1].time.strftime("%y:%m:%d-%H:%M:%S"),
                 ]
             )
         for sref in SumData.select().where(SumData.status == "out"):

@@ -471,6 +471,20 @@ class UploadHandler:
             rval[1], status=200
         )  # all fine - report number of tests updated
 
+    async def processTUploads(self, request):
+        data = await request.json()
+        if not validFields(data, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if data["user"] != "manager" and data["user"] != "scanner":
+            return web.Response(status=401)
+
+        rval = self.server.processTUploads()
+        return web.json_response(
+            rval[1], status=200
+        )  # all fine - report number of tests updated
+
     def setUpRoutes(self, router):
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/hwPages", self.uploadHWPage)
@@ -497,3 +511,4 @@ class UploadHandler:
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
         router.add_put("/admin/hwPagesUploaded", self.processHWUploads)
+        router.add_put("/admin/testPagesUploaded", self.processHWUploads)

@@ -75,6 +75,7 @@ def doFiling(rmsg, ts, ps, vs, shortName, fname):
 
 
 def sendTestFiles(msgr, fileList):
+    TUP = defaultdict(list)
     for fname in fileList:
         shortName = os.path.split(fname)[1]
         ts, ps, vs = extractTPV(shortName)
@@ -85,6 +86,9 @@ def sendTestFiles(msgr, fileList):
             code, int(ts), int(ps), int(vs), shortName, fname, md5
         )
         doFiling(rmsg, ts, ps, vs, shortName, fname)
+        if rmsg[0]:  # was successful upload
+            TUP[ts].append(ps)
+    return TUP
 
 
 def extractIDQO(fileName):  # get ID, Question and Order
@@ -150,13 +154,27 @@ def uploadPages(server=None, password=None):
         )
         exit(10)
 
+    spec = msgr.getInfoGeneral()
+    numberOfPages = spec["numberOfPages"]
+
     # Look for pages in decodedPages
     fileList = []
     for ext in PlomImageExtWhitelist:
         fileList.extend(sorted(glob("decodedPages/t*.{}".format(ext))))
-    sendTestFiles(msgr, fileList)
+
+    TUP = sendTestFiles(msgr, fileList)
+    # for tn in TUP:
+    #     for p in range(1, numberOfPages + 1):
+    #         if p not in TUP[tn]:
+    #             print("Test {} missing page {}".format(tn, p))
+    #             msgr.replaceMissingTPage(t, p)
+
+    updates = msgr.sendTUploadDone()
+
     msgr.closeUser()
     msgr.stop()
+
+    return [TUP, updates]
 
 
 def uploadHWPages(server=None, password=None):
