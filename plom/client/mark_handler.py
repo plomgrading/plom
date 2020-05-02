@@ -36,6 +36,8 @@ class MarkHandler(QWidget):
         self.style = "Up"
         # Keep last delta used
         self.lastDelta = 0
+        self.setLayout(QGridLayout())
+
 
     def setStyle(self, markStyle):
         """Sets the mark entry style - either total, up or down
@@ -59,7 +61,7 @@ class MarkHandler(QWidget):
 
     def setMarkingUp(self):
         self.setMark(0)
-        grid = QGridLayout()
+        grid = self.layout()
 
         if self.numButtons > 5:
             ncolumn = 3
@@ -78,12 +80,11 @@ class MarkHandler(QWidget):
                 QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
             )
 
-        self.setLayout(grid)
         self.style = "Up"
 
     def setMarkingDown(self):
         self.setMark(self.maxScore)
-        grid = QGridLayout()
+        grid = self.layout()
 
         if self.numButtons > 5:
             ncolumn = 3
@@ -102,12 +103,11 @@ class MarkHandler(QWidget):
                 QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
             )
 
-        self.setLayout(grid)
         self.parent.totalMarkSet(self.currentScore)
         self.style = "Down"
 
     def setMarkingTotal(self):
-        grid = QGridLayout()
+        grid = self.layout()
         self.ptmb = QPushButton()
 
         if self.maxScore > 5:
@@ -123,7 +123,6 @@ class MarkHandler(QWidget):
                 QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
             )
 
-        self.setLayout(grid)
         self.parent.totalMarkSet(self.currentScore)
         self.style = "Total"
 
