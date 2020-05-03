@@ -1047,7 +1047,7 @@ class MarkerClient(QWidget):
             paperdir,
             fnames,
             aname,
-            self.maxScore + random.randrange(0, 5),  # TODO: TEMPORARY TESTING
+            self.maxScore,
             markStyle,
             pdict
         )
