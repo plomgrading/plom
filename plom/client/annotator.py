@@ -137,6 +137,7 @@ class Annotator(QWidget):
         # also when we set this up we have to connect various
         # mark set, delta-set, mark change functions
         self.scene = None  # TODO?
+        self.markHandler = None
         self.setMiscShortCuts()
         # set the zoom combobox
         self.setZoomComboBox()
@@ -208,6 +209,7 @@ class Annotator(QWidget):
         self.paperdir = None
         self.imageFiles = None
         self.saveName = None
+        #self.destroyMarkHandler()
 
 
     def loadNewTGV(self, tgv, testname, paperdir, fnames, saveName, maxMark, markStyle, plomDict):
@@ -250,7 +252,10 @@ class Annotator(QWidget):
         self.commentW.setQuestionNumberFromTGV(tgv)
         self.commentW.setTestname(testname)
 
-        self.setMarkHandler(maxMark, markStyle)
+        if not self.markHandler:
+            self.setMarkHandler(maxMark, markStyle)
+        else:
+            self.markHandler.resetAndMaybeChange(maxMark, markStyle)
         self.setDeltaButtonMenu()
 
         # Very last thing = unpickle scene from plomDict
@@ -875,9 +880,8 @@ class Annotator(QWidget):
         image.
         """
         # Build the mark handler and put into the gui.
-        self.markHandler = MarkHandler(self, maxMark)
-        self.markHandler.setStyle(markStyle)
-        self.ui.markGrid.addWidget(self.markHandler, 1, 1)
+        self.markHandler = MarkHandler(self, maxMark, markStyle)
+        self.ui.markGrid.addWidget(self.markHandler)
 
     def totalMarkSet(self, tm):
         # Set the total mark and pass that info to the comment list

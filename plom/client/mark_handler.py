@@ -3,6 +3,8 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
+import logging
+
 from PyQt5.QtWidgets import (
     QWidget,
     QPushButton,
@@ -15,8 +17,11 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 
 
+log = logging.getLogger("markhndlr")
+
+
 class MarkHandler(QWidget):
-    def __init__(self, parent, maxScore):
+    def __init__(self, parent, maxScore, markStyle):
         super(MarkHandler, self).__init__()
         self.parent = parent
         # Set max score/mark
@@ -37,9 +42,10 @@ class MarkHandler(QWidget):
         # Keep last delta used
         self.lastDelta = 0
         self.setLayout(QGridLayout())
+        self._setStyle(markStyle)
 
 
-    def setStyle(self, markStyle):
+    def _setStyle(self, markStyle):
         """Sets the mark entry style - either total, up or down
         Total - user just clicks the total mark.
         Up - score starts at zero and increments.
@@ -57,6 +63,33 @@ class MarkHandler(QWidget):
         self.ve.setExclusive(True)
         for s, x in self.markButtons.items():
             self.ve.addButton(x)
+
+
+    def resetAndMaybeChange(self, maxScore, markStyle):
+        """Reset score, replace max/style with new values, regen buttons.
+
+        Total - user just clicks the total mark.
+        Up - score starts at zero and increments.
+        Down - score starts at max and decrements.
+        """
+        d = {"Total": 1, "Up": 2, "Down": 3}
+        if self.maxScore == maxScore and d[self.style] == markStyle:
+            if markStyle == 3:
+                self.setMark(self.maxScore)
+            else:
+                self.setMark(0)
+            return
+        log.info("Adjusting for new number or new style")
+        for k, x in self.markButtons.items():
+            self.ve.removeButton(x)
+            self.layout().removeWidget(x)
+            x.deleteLater()
+        self.markButtons.clear()
+        self.currentScore = 0
+        self.maxScore = maxScore
+        self.numButtons = self.maxScore
+        self.markButtons = {}
+        self._setStyle(markStyle)
 
 
     def setMarkingUp(self):
