@@ -1117,7 +1117,7 @@ class MarkerClient(QWidget):
             )
 
     def gimmeMore(self, oldtgv):
-        print("Debug: Marker: Ann Wants More (w/o closing)")
+        log.debug("Annotator wants more (w/o closing)")
         if not self.allowBackgroundOps:
             self.requestNext()
         if not self.moveToNextUnmarkedTest("t" + oldtgv if oldtgv else None):
@@ -1132,7 +1132,6 @@ class MarkerClient(QWidget):
         tgv = self.prxM.getPrefix(row)
 
         data = self.getDataForAnnotator(tgv)
-        print("gimmeMore: {}".format(data))
         assert tgv[1:] == data[0]
         pdict = data[-1]
         assert pdict is None, "Annotator should not pull a regrade"
