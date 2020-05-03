@@ -264,11 +264,15 @@ class MarkHandler(QWidget):
             for k in range(0, self.maxScore + 1):
                 if self.currentScore + k <= self.maxScore:
                     self.deltaActions[k].setEnabled(True)
+                    self.markButtons[k].setEnabled(True)
                 else:
                     self.deltaActions[k].setEnabled(False)
+                    self.markButtons[k].setEnabled(False)
         elif self.style == "Down":
             for k in range(0, self.maxScore + 1):
                 if self.currentScore >= k:
                     self.deltaActions[k].setEnabled(True)
+                    self.markButtons[k].setEnabled(True)
                 else:
                     self.deltaActions[k].setEnabled(False)
+                    self.markButtons[k].setEnabled(False)
