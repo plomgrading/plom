@@ -578,10 +578,7 @@ class Annotator(QWidget):
         if buttonNumber > self.maxMark:
             return
         # Otherwise click the appropriate button.
-        if self.markHandler.style == "Up":
-            self.markHandler.markButtons["p{}".format(buttonNumber)].animateClick()
-        elif self.markHandler.style == "Down" and buttonNumber >= 0:
-            self.markHandler.markButtons["m{}".format(buttonNumber)].animateClick()
+        self.markHandler.markButtons[buttonNumber].animateClick()
 
     def keyPressEvent(self, event):
         """Translates key-presses into tool-button presses if
@@ -1271,14 +1268,14 @@ class Annotator(QWidget):
             for k in range(0, self.maxMark + 1):
                 self.deltaActions[k] = self.ui.deltaMenu.addAction("+{}".format(k))
                 self.deltaActions[k].triggered.connect(
-                    self.markHandler.markButtons["p{}".format(k)].animateClick
+                    self.markHandler.markButtons[k].animateClick
                 )
         elif self.markStyle == 3:
             # set to mark down
             for k in range(0, self.maxMark + 1):
                 self.deltaActions[k] = self.ui.deltaMenu.addAction("-{}".format(k))
                 self.deltaActions[k].triggered.connect(
-                    self.markHandler.markButtons["m{}".format(k)].animateClick
+                    self.markHandler.markButtons[k].animateClick
                 )
         self.ui.deltaButton.setMenu(self.ui.deltaMenu)
         self.updateDeltaMarkMenu()

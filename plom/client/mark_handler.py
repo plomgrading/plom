@@ -102,14 +102,12 @@ class MarkHandler(QWidget):
             ncolumn = 2
 
         for k in range(0, self.numButtons + 1):
-            self.markButtons["p{}".format(k)] = QPushButton("+{}".format(k))
-            self.markButtons["p{}".format(k)].setCheckable(True)
-            #self.markButtons["p{}".format(k)].setAutoExclusive(True)
-            grid.addWidget(
-                self.markButtons["p{}".format(k)], k // ncolumn + 1, k % ncolumn, 1, 1
-            )
-            self.markButtons["p{}".format(k)].clicked.connect(self.setDeltaMark)
-            self.markButtons["p{}".format(k)].setSizePolicy(
+            self.markButtons[k] = QPushButton("+{}".format(k))
+            self.markButtons[k].setCheckable(True)
+            # self.markButtons[k].setAutoExclusive(True)
+            grid.addWidget(self.markButtons[k], k // ncolumn + 1, k % ncolumn, 1, 1)
+            self.markButtons[k].clicked.connect(self.setDeltaMark)
+            self.markButtons[k].setSizePolicy(
                 QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
             )
 
@@ -125,14 +123,12 @@ class MarkHandler(QWidget):
             ncolumn = 2
 
         for k in range(0, self.numButtons + 1):
-            self.markButtons["m{}".format(k)] = QPushButton("-{}".format(k))
-            self.markButtons["m{}".format(k)].setCheckable(True)
-            #self.markButtons["m{}".format(k)].setAutoExclusive(True)
-            grid.addWidget(
-                self.markButtons["m{}".format(k)], k // ncolumn + 1, k % ncolumn, 1, 1
-            )
-            self.markButtons["m{}".format(k)].clicked.connect(self.setDeltaMark)
-            self.markButtons["m{}".format(k)].setSizePolicy(
+            self.markButtons[k] = QPushButton("-{}".format(k))
+            self.markButtons[k].setCheckable(True)
+            # self.markButtons[k].setAutoExclusive(True)
+            grid.addWidget(self.markButtons[k], k // ncolumn + 1, k % ncolumn, 1, 1)
+            self.markButtons[k].clicked.connect(self.setDeltaMark)
+            self.markButtons[k].setSizePolicy(
                 QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
             )
 
@@ -149,10 +145,10 @@ class MarkHandler(QWidget):
             ncolumn = 2
 
         for k in range(0, self.maxScore + 1):
-            self.markButtons["{}".format(k)] = QPushButton("{}".format(k))
-            grid.addWidget(self.markButtons["{}".format(k)], k // ncolumn, k % ncolumn)
-            self.markButtons["{}".format(k)].clicked.connect(self.setTotalMark)
-            self.markButtons["{}".format(k)].setSizePolicy(
+            self.markButtons[k] = QPushButton("{}".format(k))
+            grid.addWidget(self.markButtons[k], k // ncolumn, k % ncolumn)
+            self.markButtons[k].clicked.connect(self.setTotalMark)
+            self.markButtons[k].setSizePolicy(
                 QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
             )
 
@@ -193,14 +189,11 @@ class MarkHandler(QWidget):
         idelta = int(delta)
         if abs(idelta) > self.maxScore or self.style == "Total":
             return
-        if idelta <= 0 and self.style == "Down":
-            self.markButtons["m{}".format(-idelta)].animateClick()
-        elif idelta >= 0 and self.style == "Up":
-            self.markButtons["p{}".format(idelta)].animateClick()
+        self.markButtons[abs(idelta)].animateClick()
 
     def unpickleTotal(self, score):
         if (score <= self.maxScore) and (score >= 0) and (self.style == "Total"):
-            self.markButtons["{}".format(score)].animateClick()
+            self.markButtons[score].animateClick()
 
     def incrementDelta(self, dlt):
         # dlt is a string, so make int(delta)
@@ -212,7 +205,7 @@ class MarkHandler(QWidget):
                 delta += 1
             if delta > self.maxScore:
                 delta = 0
-            self.markButtons["p{}".format(delta)].animateClick()
+            self.markButtons[delta].animateClick()
         elif self.style == "Down":
             if delta > 0:
                 delta = -1
@@ -220,7 +213,7 @@ class MarkHandler(QWidget):
                 delta -= 1
             if abs(delta) > self.maxScore:
                 delta = -1
-            self.markButtons["m{}".format(-delta)].animateClick()
+            self.markButtons[-delta].animateClick()
 
     def clickDelta(self, dlt):
         # dlt is a string, so make int(delta)
@@ -232,8 +225,8 @@ class MarkHandler(QWidget):
         if self.style == "Up":
             if delta < 0:
                 delta = 0
-            self.markButtons["p{}".format(delta)].animateClick()
+            self.markButtons[delta].animateClick()
         elif self.style == "Down":
             if delta > 0:
                 delta = 0
-            self.markButtons["m{}".format(-delta)].animateClick()
+            self.markButtons[-delta].animateClick()
