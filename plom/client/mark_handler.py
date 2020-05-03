@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QStackedWidget,
     QLabel,
+    QMenu,
     QSizePolicy,
 )
 from PyQt5.QtCore import Qt
@@ -42,6 +43,7 @@ class MarkHandler(QWidget):
         self.lastDelta = 0
         self.setLayout(QGridLayout())
         self._setStyle(markStyle)
+        self.setDeltaButtonMenu()
 
 
     def _setStyle(self, markStyle):
@@ -88,6 +90,7 @@ class MarkHandler(QWidget):
         self.maxScore = maxScore
         self.markButtons = {}
         self._setStyle(markStyle)
+        self.setDeltaButtonMenu()
 
 
     def setMarkingUp(self):
@@ -228,3 +231,44 @@ class MarkHandler(QWidget):
             if delta > 0:
                 delta = 0
             self.markButtons[-delta].animateClick()
+
+
+    def setDeltaButtonMenu(self):
+        if self.style == "Total":
+            # mark total - don't set anything
+            return
+        deltaMenu = QMenu("Set Delta")
+        self.deltaActions = {}
+        if self.style == "Up":
+            # set to mark up
+            for k in range(0, self.maxScore + 1):
+                self.deltaActions[k] = deltaMenu.addAction("+{}".format(k))
+                self.deltaActions[k].triggered.connect(
+                    self.markButtons[k].animateClick
+                )
+        elif self.style == "Down":
+            # set to mark down
+            for k in range(0, self.maxScore + 1):
+                self.deltaActions[k] = deltaMenu.addAction("-{}".format(k))
+                self.deltaActions[k].triggered.connect(
+                    self.markButtons[k].animateClick
+                )
+        self.parent.ui.deltaButton.setMenu(deltaMenu)
+        self.updateDeltaMarkMenu()
+
+
+    def updateDeltaMarkMenu(self):
+        if self.style == "Total":
+            return
+        elif self.style == "Up":
+            for k in range(0, self.maxScore + 1):
+                if self.currentScore + k <= self.maxScore:
+                    self.deltaActions[k].setEnabled(True)
+                else:
+                    self.deltaActions[k].setEnabled(False)
+        elif self.style == "Down":
+            for k in range(0, self.maxScore + 1):
+                if self.currentScore >= k:
+                    self.deltaActions[k].setEnabled(True)
+                else:
+                    self.deltaActions[k].setEnabled(False)
