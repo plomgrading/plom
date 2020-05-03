@@ -79,6 +79,7 @@ class MarkHandler(QWidget):
                 self.setMark(self.maxScore)
             else:
                 self.setMark(0)
+            self.updateRelevantDeltaActions()
             return
         log.info("Adjusting for new number or new style")
         for k, x in self.markButtons.items():
@@ -254,10 +255,10 @@ class MarkHandler(QWidget):
                     self.markButtons[k].animateClick
                 )
         self.parent.ui.deltaButton.setMenu(deltaMenu)
-        self.updateDeltaMarkMenu()
+        self.updateRelevantDeltaActions()
 
 
-    def updateDeltaMarkMenu(self):
+    def updateRelevantDeltaActions(self):
         if self.style == "Total":
             return
         elif self.style == "Up":

@@ -907,7 +907,7 @@ class Annotator(QWidget):
         )
         self.markHandler.setMark(self.score)
         self.markHandler.repaint()
-        self.markHandler.updateDeltaMarkMenu()
+        self.markHandler.updateRelevantDeltaActions()
 
     def loadWindowSettings(self):
         # load the window geometry, else maximise.
