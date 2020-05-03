@@ -130,6 +130,15 @@ class SinkList(QListWidget):
         self.insertItem(cr + 1, ci)
         self.setCurrentRow(cr + 1)
 
+    def reverseOrder(self):
+        rc = self.count()
+        for n in range(rc // 2):
+            # swap item[n] with item [rc-n-1]
+            ri = self.takeItem(rc - n - 1)
+            li = self.takeItem(n)
+            self.insertItem(n, ri)
+            self.insertItem(rc - n - 1, li)
+
     def viewImage(self, qi):
         if qi.text() in self.originalItems:
             self.parent.viewImage(self.originalItems[qi.text()])
@@ -172,6 +181,7 @@ class RearrangementViewer(QDialog):
         self.removeB = QPushButton("Remove")
         self.sLeftB = QPushButton("Shuffle Left")
         self.sRightB = QPushButton("Shuffle Right")
+        self.reverseB = QPushButton("Reverse Order")
 
         self.page = ExamViewWindow([])
 
@@ -185,6 +195,7 @@ class RearrangementViewer(QDialog):
         vb1.addWidget(self.scrollA)
         vb1.addWidget(self.scrollB)
         hb1 = QHBoxLayout()
+        hb1.addWidget(self.reverseB)
         hb1.addWidget(self.sLeftB)
         hb1.addWidget(self.sRightB)
         vb2 = QVBoxLayout()
@@ -206,7 +217,8 @@ class RearrangementViewer(QDialog):
         self.closeB.clicked.connect(self.close)
         self.sLeftB.clicked.connect(self.shuffleLeft)
         self.sRightB.clicked.connect(self.shuffleRight)
-        self.appendB.clicked.connect(self.sourceToSink)
+        self.reverseB.clicked.connect(self.reverseOrder)
+        self.sRightB.clicked.connect(self.shuffleRight)
         self.removeB.clicked.connect(self.sinkToSource)
         self.acceptB.clicked.connect(self.doShuffle)
 
@@ -233,6 +245,9 @@ class RearrangementViewer(QDialog):
 
     def shuffleRight(self):
         self.listB.shuffleRight()
+
+    def reverseOrder(self):
+        self.listB.reverseOrder()
 
     def viewImage(self, fname):
         self.page.updateImage(fname)
