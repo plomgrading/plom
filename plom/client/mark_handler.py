@@ -29,7 +29,6 @@ class MarkHandler(QWidget):
         # Set current score/mark.
         self.currentScore = 0
         # One button for each possible mark, and a dictionary to store them.
-        self.numButtons = self.maxScore
         self.markButtons = {}
         # Styling for buttons
         self.redStyle = (
@@ -87,7 +86,6 @@ class MarkHandler(QWidget):
         self.markButtons.clear()
         self.currentScore = 0
         self.maxScore = maxScore
-        self.numButtons = self.maxScore
         self.markButtons = {}
         self._setStyle(markStyle)
 
@@ -96,12 +94,12 @@ class MarkHandler(QWidget):
         self.setMark(0)
         grid = self.layout()
 
-        if self.numButtons > 5:
+        if self.maxScore > 5:
             ncolumn = 3
         else:
             ncolumn = 2
 
-        for k in range(0, self.numButtons + 1):
+        for k in range(0, self.maxScore + 1):
             self.markButtons[k] = QPushButton("+{}".format(k))
             self.markButtons[k].setCheckable(True)
             # self.markButtons[k].setAutoExclusive(True)
@@ -117,12 +115,12 @@ class MarkHandler(QWidget):
         self.setMark(self.maxScore)
         grid = self.layout()
 
-        if self.numButtons > 5:
+        if self.maxScore > 5:
             ncolumn = 3
         else:
             ncolumn = 2
 
-        for k in range(0, self.numButtons + 1):
+        for k in range(0, self.maxScore + 1):
             self.markButtons[k] = QPushButton("-{}".format(k))
             self.markButtons[k].setCheckable(True)
             # self.markButtons[k].setAutoExclusive(True)
