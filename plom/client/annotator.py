@@ -253,7 +253,9 @@ class Annotator(QWidget):
         self.commentW.setTestname(testname)
 
         if not self.markHandler:
-            self.setMarkHandler(maxMark, markStyle)
+            # Build the mark handler and put into the gui.
+            self.markHandler = MarkHandler(self, maxMark, markStyle)
+            self.ui.markGrid.addWidget(self.markHandler)
         else:
             self.markHandler.resetAndMaybeChange(maxMark, markStyle)
         self.setDeltaButtonMenu()
@@ -869,19 +871,6 @@ class Annotator(QWidget):
         self.setMode("comment", QCursor(Qt.IBeamCursor))
         # Grab the delta from the arguments
         self.scene.changeTheComment(dlt_txt[0], dlt_txt[1], annotatorUpdate=True)
-
-    def setMarkHandler(self, maxMark, markStyle):
-        """Set up the mark handling widget inside the annotator gui.
-        Can be one of 3 styles - mark up, down or total.
-        Also connect the handler's signals - when the mark is set,
-        or delta-mark set to appropriate functions in the annotator.
-        Also - to set up the mark-delta correctly - the view has to
-        signal back to the annotator when a delta is pasted onto the
-        image.
-        """
-        # Build the mark handler and put into the gui.
-        self.markHandler = MarkHandler(self, maxMark, markStyle)
-        self.ui.markGrid.addWidget(self.markHandler)
 
     def totalMarkSet(self, tm):
         # Set the total mark and pass that info to the comment list
