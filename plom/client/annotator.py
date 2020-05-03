@@ -160,6 +160,8 @@ class Annotator(QWidget):
 
         self.timer = QElapsedTimer()
 
+        self._yuckyuck = "move"
+
         if initialData:
             self.loadNewTGV(*initialData)
 
@@ -195,6 +197,7 @@ class Annotator(QWidget):
         #self.view = None
         # TODO: how to reset the scene?
         # This may be heavy handed, but for now we delete the old scene
+        self._yuckyuck = self.scene.mode
         del self.scene
         self.scene = None
 
@@ -262,6 +265,10 @@ class Annotator(QWidget):
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
             self.unpickleIt(plomDict)
+
+        # TODO: but commentW was torn down, this probably won't work there
+        self.scene.setMode(self._yuckyuck)
+
         # reset the timer (its not needed to make a new one)
         self.timer.start()
 
