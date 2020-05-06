@@ -137,6 +137,7 @@ class Annotator(QWidget):
         # a test view pop-up window - initially set to None
         # for viewing whole paper
         self.testView = None
+        self.rearrangeView = None
         self.testViewFiles = None
         # Set current mark to 0.
         self.score = 0
@@ -215,6 +216,7 @@ class Annotator(QWidget):
         m.addAction("Defer and go to next", self.menudummy).setEnabled(False)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
+        m.addAction("Rearrange pages", self.rearrangePages)
         m.addSeparator()
         m.addAction("Compact UI\thome", self.narrowLayout)
         m.addAction("&Wide UI\thome", self.wideLayout)
@@ -458,24 +460,50 @@ class Annotator(QWidget):
 
     def viewWholePaper(self):
         # grab the files if needed.
+        testNumber = self.tgv[:4]
         if self.testViewFiles is None:
-            testNumber = self.tgv[:4]
             log.debug("wholePage: downloading files for testnum {}".format(testNumber))
-            (pageData, self.testViewFiles,) = self.parent.downloadWholePaper(testNumber)
+            (self.pageData, self.testViewFiles,) = self.parent.downloadWholePaper(
+                testNumber
+            )
 
             log.debug(
                 "wholePage: pageData = {}, viewFiles = {}".format(
-                    pageData, self.testViewFiles
+                    self.pageData, self.testViewFiles
                 )
             )
         # if we haven't built a testview, built it now
         if self.testView is None:
-            # self.testView = OriginalScansViewer(self, testNumber, pageNames, self.testViewFiles)
-            self.testView = RearrangementViewer(
-                self, testNumber, pageData, self.testViewFiles,
+            self.testView = OriginalScansViewer(
+                self, testNumber, self.pageData, self.testViewFiles
             )
-        if self.testView.exec_() == QDialog.Accepted:
-            self.shufflePageImages(self.testView.permute)
+        self.testView.show()
+        return
+
+    def rearrangePages(self):
+        testNumber = self.tgv[:4]
+        # grab the files if needed.
+        if self.testViewFiles is None:
+            log.debug(
+                "rearrangePage: downloading files for testnum {}".format(testNumber)
+            )
+            (self.pageData, self.testViewFiles,) = self.parent.downloadWholePaper(
+                testNumber
+            )
+
+            log.debug(
+                "rearrangePage: pageData = {}, viewFiles = {}".format(
+                    self.pageData, self.testViewFiles
+                )
+            )
+        # if we haven't built a testview, built it now
+        if self.rearrangeView is None:
+            # self.testView = OriginalScansViewer(self, testNumber, pageNames, self.testViewFiles)
+            self.rearrangeView = RearrangementViewer(
+                self, testNumber, self.pageData, self.testViewFiles,
+            )
+        if self.rearrangeView.exec_() == QDialog.Accepted:
+            self.shufflePageImages(self.rearrangeView.permute)
         return
 
     def doneViewingPaper(self):
@@ -577,7 +605,9 @@ class Annotator(QWidget):
         if isinstance(self.sender(), QPushButton):
             # has come from mark-change button, markHandler does its own styling
             pass
-        elif isinstance(self.sender(), QToolButton):  # only toolbuttons are the mode-changing ones.
+        elif isinstance(
+            self.sender(), QToolButton
+        ):  # only toolbuttons are the mode-changing ones.
             self.sender().setChecked(True)
             self.markHandler.clearButtonStyle()
         elif self.sender() is self.commentW.CL:

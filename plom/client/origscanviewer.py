@@ -55,6 +55,7 @@ class SourceList(QListWidget):
         if ci is None:
             return None
         self.setCurrentItem(None)
+        print("Removing {}".format(ci.text()))
         return ci.text()
 
     def returnItem(self, name):
@@ -108,6 +109,7 @@ class SinkList(QListWidget):
             return ci.text()
 
     def appendItem(self, name):
+        print("Name = {}".format(name))
         if name is None:
             return
         ci = QListWidgetItem(QIcon(self.potentialItems[name]), name)
@@ -195,8 +197,8 @@ class RearrangementViewer(QDialog):
         vb1.addWidget(self.scrollA)
         vb1.addWidget(self.scrollB)
         hb1 = QHBoxLayout()
-        hb1.addWidget(self.reverseB)
         hb1.addWidget(self.sLeftB)
+        hb1.addWidget(self.reverseB)
         hb1.addWidget(self.sRightB)
         vb2 = QVBoxLayout()
         vb2.addWidget(self.appendB)
@@ -219,6 +221,7 @@ class RearrangementViewer(QDialog):
         self.sRightB.clicked.connect(self.shuffleRight)
         self.reverseB.clicked.connect(self.reverseOrder)
         self.sRightB.clicked.connect(self.shuffleRight)
+        self.appendB.clicked.connect(self.sourceToSink)
         self.removeB.clicked.connect(self.sinkToSource)
         self.acceptB.clicked.connect(self.doShuffle)
 
