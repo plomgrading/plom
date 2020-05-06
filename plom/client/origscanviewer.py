@@ -270,13 +270,14 @@ class RearrangementViewer(QDialog):
 
 
 class OriginalScansViewer(QWidget):
-    def __init__(self, parent, testNumber, pageNames, pages):
+    def __init__(self, parent, testNumber, pageData, pages):
         super().__init__()
         self.parent = parent
         self.testNumber = testNumber
         self.numberOfPages = len(pages)
         self.pageList = pages
-        self.pageNames = pageNames
+        # note pagedata  triples [name, image-ref, true/false]
+        self.pageNames = [x[0] for x in pageData]
         self.ui = Ui_TestView()
         self.ui.setupUi(self)
         self.connectButtons()

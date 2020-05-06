@@ -498,7 +498,6 @@ class Annotator(QWidget):
             )
         # if we haven't built a testview, built it now
         if self.rearrangeView is None:
-            # self.testView = OriginalScansViewer(self, testNumber, pageNames, self.testViewFiles)
             self.rearrangeView = RearrangementViewer(
                 self, testNumber, self.pageData, self.testViewFiles,
             )
