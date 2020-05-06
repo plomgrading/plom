@@ -85,9 +85,11 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
     print("Annotating papers with fake student data and scribbling on pages...")
     if not which:
         namedPapers = glob(str(paperdir / "exam_*_*.pdf"))  # those with an ID number
-        papers = glob(str(paperdir / "exam_*.pdf"))  # everything
+        papers = sorted(glob(str(paperdir / "exam_*.pdf")))  # everything
     else:
-        papers = [paperdir / "exam_{}.pdf".format(str(i).zfill(4)) for i in which]
+        papers = sorted(
+            [paperdir / "exam_{}.pdf".format(str(i).zfill(4)) for i in which]
+        )
 
     df = pandas.read_csv(classlist, dtype="object")
     # sample from the classlist
@@ -158,9 +160,21 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
                 )
                 assert rc > 0
 
-        # doc.saveIncr()   # update file
-        # doc.save("new{}.pdf".format(str(which[i]).zfill(4)))
         bigdoc.insertPDF(doc)
+        # with probability 0.2 insert 1 extrapage
+        if random.random() < 0.2:
+            # filename = blah/exam_XXXX.pdf or blah/exam_XXXX_YYYYYYY.pdf, test number is the XXXX
+            tnumber = os.path.basename(fname)[5:9]
+            if fname in namedPapers:
+                sn = os.path.basename(fname)[10:18]  # else is set above
+            print("Making an extra page for test {} and sid {}".format(tnumber, sn))
+            bigdoc.insertPage(
+                -1,
+                text="EXTRA PAGE - t{} Q1 - {}".format(tnumber, sn),
+                fontsize=18,
+                color=blue,
+            )
+
         doc.close()
 
     # need to use `str(outfile)` for pumypdf < 1.16.14
@@ -169,15 +183,37 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
     print('Assembled in "{}"'.format(outfile))
 
 
+def deleteOnePage(outfile):
+    bigdoc = fitz.open(outfile)
+    p = random.randint(0, len(bigdoc) - 1)
+    bigdoc.deletePage(p)
+    bigdoc.saveIncr()
+
+
+def makeGarbagePage(outfile, n=1):
+    green = [0, 0.75, 0]
+    bigdoc = fitz.open(outfile)
+    print("Doc has {} pages".format(len(bigdoc)))
+    for k in range(n):
+        p = random.randint(-1, len(bigdoc))
+        print("Insert garbage page at p={}".format(p))
+        bigdoc.insertPage(p, text="This is a garbage page", fontsize=18, color=green)
+    bigdoc.saveIncr()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
     args = parser.parse_args()
 
     specdir = Path(_specdir)
     classlist = specdir / "classlist.csv"
     outfile = "fake_scribbled_exams.pdf"
     fillInFakeDataOnExams(_paperdir, classlist, outfile)
+    deleteOnePage(outfile)
+    makeGarbagePage(outfile, n=2)
 
 
 if __name__ == "__main__":
