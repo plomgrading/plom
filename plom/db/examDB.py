@@ -1063,7 +1063,7 @@ class PlomDB:
             uref.delete_instance()
         log.info(
             "Saving extra {} as {} tp {}.{} of question {}".format(
-                fname, nname, testNumber, pageNumber, questionNumber
+                fname, nname, testNumber, nextPageNumber, questionNumber
             )
         )
         ## Now invalidate any work on the associated group
