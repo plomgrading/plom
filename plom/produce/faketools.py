@@ -187,6 +187,7 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
 def deleteOnePage(outfile):
     bigdoc = fitz.open(outfile)
     p = random.randint(0, len(bigdoc) - 1)
+    print("Deleting page {} from output".format(p))
     bigdoc.deletePage(p)
     bigdoc.saveIncr()
 
@@ -214,6 +215,9 @@ def main():
     outfile = "fake_scribbled_exams.pdf"
     fillInFakeDataOnExams(_paperdir, classlist, outfile)
     deleteOnePage(outfile)
+    # deleteOnePage(outfile)
+    # deleteOnePage(outfile)
+    # deleteOnePage(outfile)
     makeGarbagePage(outfile, n=2)
 
 

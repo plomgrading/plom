@@ -887,8 +887,11 @@ class PlomDB:
 
     def processUpdatedIDGroup(self, tref, iref):
         # if IDGroup belongs to HAL then don't touch it - was auto IDd.
-        if iref.user == User.get(name="HAL"):
-            return True
+        if iref.user != User.get(name="HAL"):
+            dave = True
+        else:
+            dave = False
+
         # return IDGroup to initial state clean.
         self.cleanIDGroup(tref, iref)
         # homework does not upload ID pages, so only have to check testPages
@@ -900,12 +903,22 @@ class PlomDB:
         # all test pages present, and group cleaned, so set things ready to go.
         with plomdb.atomic():
             gref.scanned = True
-            iref.status = "todo"
+            if dave:
+                iref.status = "todo"
             iref.save()
             gref.save()
-            log.info(
-                "IDGroup of test {} is ready to be identified.".format(tref.testNumber)
-            )
+            if dave:
+                log.info(
+                    "IDGroup of test {} is ready to be identified.".format(
+                        tref.testNumber
+                    )
+                )
+            else:
+                log.info(
+                    "IDGroup of test {} is present and already IDd.".format(
+                        tref.testNumber
+                    )
+                )
         return True
 
     def processUpdatedDNMGroup(self, tref, dref):
@@ -2011,11 +2024,11 @@ class PlomDB:
         # TODO - make random image rather than 1st
         query = (
             Group.select()
-            .join(IDData)
+            .join(IDGroup)
             .where(
                 Group.groupType == "i",
                 Group.scanned == True,
-                IDData.identified == False,
+                IDGroup.identified == False,
             )
             .limit(1)
         )

@@ -539,6 +539,9 @@ class Annotator(QWidget):
             stuff = self.parent.permuteAndGimmeSame(
                 self.tgv, self.rearrangeView.permute
             )
+            ## TODO: do we need to do this?
+            ## TODO: before or after stuff = ...?
+            # closeCurrentTGV(self)
             log.debug("permuted: new stuff is {}".format(stuff))
             self.loadNewTGV(*stuff)
         return
