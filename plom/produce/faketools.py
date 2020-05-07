@@ -163,15 +163,11 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
         bigdoc.insertPDF(doc)
         # with probability 0.2 insert 1 extrapage
         if random.random() < 0.2:
-            # filename = blah/exam_XXXX.pdf or blah/exam_XXXX_YYYYYYY.pdf, test number is the XXXX
-            fn = os.path.basename(fname)
+            # blah/exam_XXXX.pdf or blah/exam_XXXX_YYYYYYY.pdf, drop blah and .pdf
+            fn = os.path.splitext(os.path.basename(fname))[0]
+            tnumber = fn.split("_")[1]
             if fname in namedPapers:  # fn is exam_XXXX_YYYYYYY.pdf
-                tnumber = fn.split("_")[1]
-                sn = (fn.split("_")[2]).split(".")[0]
-                pass
-            else:  # fn is exam_XXXX.pdf
-                tnumber = (fn.split("_")[1]).split(".")[0]
-
+                sn = fn.split("_")[2]
             print("Making an extra page for test {} and sid {}".format(tnumber, sn))
             bigdoc.insertPage(
                 -1,
