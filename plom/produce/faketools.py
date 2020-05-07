@@ -215,9 +215,6 @@ def main():
     outfile = "fake_scribbled_exams.pdf"
     fillInFakeDataOnExams(_paperdir, classlist, outfile)
     deleteOnePage(outfile)
-    # deleteOnePage(outfile)
-    # deleteOnePage(outfile)
-    # deleteOnePage(outfile)
     makeGarbagePage(outfile, n=2)
 
 

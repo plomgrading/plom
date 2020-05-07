@@ -17,6 +17,7 @@ import os
 import shutil
 
 from plom import __version__
+from plom.rules import isValidStudentNumber
 
 
 def clearLogin(server, password):
@@ -31,55 +32,75 @@ def scanStatus(server, password):
     checkScanStatus.checkStatus(server, password)
 
 
-def extractIDQ(fileName):
-    """Expecting filename of the form blah.SID.Q.pdf - return SID and Q"""
-    splut = fileName.split(".")
-    return (splut[-3], int(splut[-2]))
+def IDQorIDorBad(fullfname):
+    fname = os.path.basename(fullfname)
+    splut = fname.split(".")
+    QFlag = splut[-2].isnumeric()
+    IDFlag = isValidStudentNumber(splut[-3])
+    if QFlag and IDFlag:  # [-3] is ID and [-2] is Q.
+        return ["IDQ", splut[-3], splut[-2]]  # ID and Q
+    elif isValidStudentNumber(splut[-2]):  # [-2] is ID
+        return ["JID", splut[-2]]  # Just ID
+    else:
+        return ["BAD"]  # Bad format
 
 
 def whoDidWhat():
-    subs = defaultdict(list)
-    summary = defaultdict(list)
-    for fn in glob.glob("submittedHomework/*.pdf"):
-        sid, q = extractIDQ(fn)
-        subs[sid].append(q)
-    for sid in sorted(subs.keys()):
-        summary[len(subs[sid])].append(sid)
-        print("#{} submitted {}".format(sid, sorted(subs[sid])))
-    print(">> summary <<")
-    for s in summary:
-        print("Students submitting {} items = {}".format(s, summary[s]))
+    from plom.scan.hwSubmissionsCheck import whoSubmittedWhat
+
+    whoSubmittedWhat()
 
 
 def processScans():
     # make PDF archive directory
-    os.makedirs("archivedPDFs/submittedHomework", exist_ok=True)
+    os.makedirs("archivedPDFs/submittedHWByQ", exist_ok=True)
+    os.makedirs("archivedPDFs/submittedHWOneFile", exist_ok=True)
     # make a directory into which our (temp) PDF->bitmap will go
-    os.makedirs("scanPNGs/submittedHomework", exist_ok=True)
+    os.makedirs("scanPNGs/submittedHWOneFile", exist_ok=True)
+    os.makedirs("scanPNGs/submittedHWByQ", exist_ok=True)
     # finally a directory into which pageImages go
-    os.makedirs("decodedPages/submittedHomework", exist_ok=True)
+    os.makedirs("decodedPages/submittedHWByQ", exist_ok=True)
+    os.makedirs("decodedPages/submittedHWOneFile", exist_ok=True)
 
     from plom.scan import scansToImages
 
-    subs = defaultdict(list)
-    for fn in sorted(glob.glob("submittedHomework/*.pdf")):
-        # record who did what
-        sid, q = extractIDQ(fn)
-        subs[sid].append(q)
+    # process HWByQ first
+    for fn in sorted(glob.glob("submittedHWByQ/*.pdf")):
+        IDQ = IDQorIDorBad(fn)
+        if len(IDQ) != 3:
+            print("Skipping file {} - wrong format".format(fn))
+            continue  # this is not the right file format
         print("Processing PDF {} to images".format(fn))
-        scansToImages.processScans(fn, homework=True)
+        scansToImages.processScans(fn, hwByQ=True)
+    # then process HWOneFile first
+    for fn in sorted(glob.glob("submittedHWOneFile/*.pdf")):
+        IDQ = IDQorIDorBad(fn)
+        if len(IDQ) != 2:
+            print("Skipping file {} - wrong format".format(fn))
+            continue  # this is not the right file format
+        print("Processing PDF {} to images".format(fn))
+        scansToImages.processScans(fn, hwOneFile=True)
 
 
 def uploadHWImages(server, password, unknowns=False, collisions=False):
     from plom.scan import sendPagesToServer
 
     # make directories for upload
-    os.makedirs("sentPages/submittedHomework", exist_ok=True)
+    os.makedirs("sentPages/submittedHWByQ", exist_ok=True)
+    os.makedirs("sentPages/submittedHWOneFile", exist_ok=True)
 
     print("Upload hw images to server")
-    [SIDQ, updates] = sendPagesToServer.uploadHWPages(server, password)
-    print("Homework was uploaded to the following studentIDs: {}".format(SIDQ.keys()))
-    print("Server reports {} papers updated.".format(updates))
+    [SIDQ, SIDO] = sendPagesToServer.uploadHWPages(server, password)
+    print(
+        "Homework (by Q) was uploaded to the following studentIDs: {}".format(
+            SIDQ.keys()
+        )
+    )
+    print(
+        "Homework (one file) was uploaded to the following studentIDs: {}".format(
+            SIDO.keys()
+        )
+    )
 
 
 parser = argparse.ArgumentParser()

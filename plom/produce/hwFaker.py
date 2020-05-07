@@ -58,7 +58,7 @@ def makeHWOneFile(numberOfQuestions, paperNumber, studentID, studentName):
         numberOfQuestions - 1, numberOfQuestions
     )  # some subset of questions.
     doneQ = random.sample(list(range(1, 1 + numberOfQuestions)), did)
-    fname = Path("submittedHomework") / "hwx.{}.pdf".format(studentID)
+    fname = Path("submittedHWOneFile") / "hwx.{}.pdf".format(studentID)
     doc = fitz.open()
     for q in doneQ:
         # construct pages
@@ -102,11 +102,11 @@ def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName, oneFile=F
     )  # some subset of questions.
     doneQ = sorted(random.sample(list(range(1, 1 + numberOfQuestions)), did))
     if oneFile:
-        fname = Path("submittedHomework") / "hwx.{}.pdf".format(studentID)
+        fname = Path("submittedHWOneFile") / "hw.{}.pdf".format(studentID)
         doc = fitz.open()
     for q in doneQ:
         if not oneFile:
-            fname = Path("submittedHomework") / "hw.{}.{}.pdf".format(studentID, q)
+            fname = Path("submittedHWByQ") / "hwByQ.{}.{}.pdf".format(studentID, q)
             doc = fitz.open()
         # construct pages
         for pn in range(random.randint(1, 3)):
@@ -152,7 +152,8 @@ def main():
     )
     args = parser.parse_args()
 
-    os.makedirs("submittedHomework", exist_ok=True)
+    os.makedirs("submittedHWByQ", exist_ok=True)
+    os.makedirs("submittedHWOneFile", exist_ok=True)
 
     # some cludgery here for the moment
 

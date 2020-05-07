@@ -43,6 +43,8 @@ class Test(BaseModel):
     totalled = BooleanField(default=False)
     # a recentUpload flag to see which tests to check after uploads
     recentUpload = BooleanField(default=False)
+    # an XPage flag to see if test has outstanding extra-pages
+    extraPage = BooleanField(default=False)
 
 
 # Data for totalling the marks
@@ -816,7 +818,7 @@ class PlomDB:
         if href is not None:
             # we found a page with that order, so we need to put the uploaded page at the end.
             for hwp in HWPage.select().where(HWPage.test == tref, HWPage.group == gref):
-                lastOrder = hwp.order
+                lastOrder = hwp.order  # sinister!
             order = lastOrder + 1
         # create one.
         with plomdb.atomic():
@@ -830,6 +832,30 @@ class PlomDB:
             # set the recentUpload flag for the test
             tref.used = True
             tref.recentUpload = True
+            tref.save()
+        return [True]
+
+    def uploadXPage(self, sid, order, oname, nname, md5):
+        # first of all find the test corresponding to that sid.
+        iref = IDGroup.get_or_none(studentID=sid)
+        if iref is None:
+            return [False, "SID does not correspond to any test on file."]
+        tref = iref.test
+        xref = XPage.get_or_none(test=tref, order=order)  # this should be none.
+        if xref is not None:
+            # we found a page with that order, so we need to put the uploaded page at the end.
+            for xp in XPage.select().where(XPage.test == tref):
+                lastOrder = xp.order
+            order = lastOrder + 1
+        # create one.
+        with plomdb.atomic():
+            # create image, xpage, and link.
+            img = Image.create(originalName=oname, fileName=nname, md5sum=md5)
+            xref = XPage.create(test=tref, order=order, image=img)
+            # set the recentUpload flag for the test
+            tref.used = True
+            tref.recentUpload = True
+            tref.extraPage = True
             tref.save()
         return [True]
 

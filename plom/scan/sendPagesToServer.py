@@ -20,6 +20,7 @@ import toml
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 from plom import PlomImageExtWhitelist
+from plom.rules import isValidStudentNumber
 
 
 def extractTPV(name):
@@ -94,6 +95,7 @@ def sendTestFiles(msgr, fileList):
 def extractIDQO(fileName):  # get ID, Question and Order
     """Expecting filename of the form blah.SID.Q-N.pdf - return SID Q and N"""
     splut = fileName.split(".")  # easy to get SID, and Q
+
     id = splut[-3]
     # split again, now on "-" to separate Q and N
     resplut = splut[-2].split("-")
@@ -103,9 +105,24 @@ def extractIDQO(fileName):  # get ID, Question and Order
     return (id, q, n)
 
 
-def doHWFiling(rmsg, sid, q, n, shortName, fname):
-    if rmsg[0]:  # msg should be [True]
-        shutil.move(fname, os.path.join("sentPages", "submittedHomework", shortName))
+def extractJIDO(fileName):  # get just ID, Order
+    """Expecting filename of the form blah.SID-N.pdf - return SID and N"""
+
+    splut = fileName.split(".")  # easy to get SID-N
+    # split again, now on "-" to separate SID and N
+    resplut = splut[-2].split("-")
+    id = int(resplut[0])
+    n = int(resplut[1])
+
+    return (id, n)
+
+
+def doHWFiling(shortName, fname):
+    shutil.move(fname, os.path.join("sentPages", "submittedHWByQ", shortName))
+
+
+def doXFiling(shortName, fname):
+    shutil.move(fname, os.path.join("sentPages", "submittedHWOneFile", shortName))
 
 
 def sendHWFiles(msgr, fileList):
@@ -118,10 +135,27 @@ def sendHWFiles(msgr, fileList):
         print("Upload HW {},{},{} = {} to server".format(sid, q, n, shortName))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         rmsg = msgr.uploadHWPage(sid, q, n, shortName, fname, md5)
-        doHWFiling(rmsg, sid, q, n, shortName, fname)
         if rmsg[0]:  # was successful upload
+            doHWFiling(shortName, fname)
             SIDQ[sid].append(q)
     return SIDQ
+
+
+def sendXFiles(msgr, fileList):
+    # keep track of which SID uploaded.
+    JSID = {}
+    for fname in fileList:
+        print("Upload hw page image {}".format(fname))
+        shortName = os.path.split(fname)[1]
+        sid, n = extractJIDO(shortName)
+
+        print("Upload X {},{} = {} to server".format(sid, n, shortName))
+        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+        rmsg = msgr.uploadXPage(sid, n, shortName, fname, md5)
+        if rmsg[0]:  # was successful upload
+            doXFiling(shortName, fname)
+            JSID[sid] = True
+    return JSID
 
 
 def uploadPages(server=None, password=None):
@@ -163,11 +197,7 @@ def uploadPages(server=None, password=None):
         fileList.extend(sorted(glob("decodedPages/t*.{}".format(ext))))
 
     TUP = sendTestFiles(msgr, fileList)
-    # for tn in TUP:
-    #     for p in range(1, numberOfPages + 1):
-    #         if p not in TUP[tn]:
-    #             print("Test {} missing page {}".format(tn, p))
-    #             msgr.replaceMissingTPage(t, p)
+    # we do not update any missing pages, since that is a serious issue for tests, and should not be done automagically
 
     updates = msgr.sendTUploadDone()
 
@@ -211,10 +241,10 @@ def uploadHWPages(server=None, password=None):
     spec = msgr.getInfoGeneral()
     numberOfQuestions = spec["numberOfQuestions"]
 
-    # Look for pages in decodedPages
+    # Look for HWbyQ pages in decodedPages
     fileList = []
     for ext in PlomImageExtWhitelist:
-        fileList.extend(sorted(glob("decodedPages/submittedHomework/*.{}".format(ext))))
+        fileList.extend(sorted(glob("decodedPages/submittedHWByQ/*.{}".format(ext))))
     SIDQ = sendHWFiles(msgr, fileList)  # returns list of which SID did whic q.
     for sid in SIDQ:
         for q in range(1, numberOfQuestions + 1):
@@ -224,8 +254,16 @@ def uploadHWPages(server=None, password=None):
                     msgr.replaceMissingHWQuestion(sid, q)
                 except PlomTakenException:
                     print("That question already has pages. Skipping.")
-
     updates = msgr.sendHWUploadDone()
+
+    # now look for HW OneFile in decodedPages
+    fileList = []
+    for ext in PlomImageExtWhitelist:
+        fileList.extend(
+            sorted(glob("decodedPages/submittedHWOneFile/*.{}".format(ext)))
+        )
+    SIDO = sendXFiles(msgr, fileList)  # returns list of which SID uploaded
+
     msgr.closeUser()
     msgr.stop()
-    return [SIDQ, updates]
+    return [SIDQ, SIDO]

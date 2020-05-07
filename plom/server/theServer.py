@@ -134,6 +134,7 @@ class Server(object):
     from .plomServer.serverUpload import (
         addTestPage,
         addHWPage,
+        addXPage,
         processHWUploads,
         processTUploads,
         addUnknownPage,
