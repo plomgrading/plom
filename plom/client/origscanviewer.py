@@ -43,11 +43,16 @@ class SourceList(QListWidget):
         self.setWrapping(False)
         self.itemDoubleClicked.connect(self.viewImage)
         self.originalItems = {}
+        self.potentialItems = {}
 
     def addOriginalItem(self, p, pfile):
         name = str(p)
         self.addItem(QListWidgetItem(QIcon(pfile), name))
         self.originalItems[name] = pfile
+
+    def addPotentialItem(self, p, pfile):
+        name = str(p)
+        self.potentialItems[name] = pfile
 
     def removeItem(self):
         cr = self.currentRow()
@@ -61,7 +66,12 @@ class SourceList(QListWidget):
     def returnItem(self, name):
         if name in self.originalItems:
             self.addItem(QListWidgetItem(QIcon(self.originalItems[name]), name))
-            self.sortItems()
+        else:
+            it = QListWidgetItem(QIcon(self.potentialItems[name]), name)
+            it.setBackground(QBrush(Qt.green))
+            self.addItem(it)
+
+        self.sortItems()
 
     def viewImage(self, qi):
         self.parent.viewImage(self.originalItems[qi.text()])
@@ -101,18 +111,23 @@ class SinkList(QListWidget):
         ci = self.currentItem()
         if ci is None:
             return None
-        elif ci.text() in self.originalItems:
+        elif self.count() == 1:  # cannot remove all pages
             return None
+        # elif ci.text() in self.originalItems:
+        # return None
         else:
             ci = self.takeItem(cr)
             self.setCurrentItem(None)
             return ci.text()
 
     def appendItem(self, name):
-        print("Name = {}".format(name))
         if name is None:
             return
-        ci = QListWidgetItem(QIcon(self.potentialItems[name]), name)
+        if name in self.potentialItems:
+            ci = QListWidgetItem(QIcon(self.potentialItems[name]), name)
+        else:
+            ci = QListWidgetItem(QIcon(self.originalItems[name]), name)
+            ci.setBackground(QBrush(Qt.green))
         self.addItem(ci)
         self.setCurrentItem(ci)
 
@@ -232,6 +247,7 @@ class RearrangementViewer(QDialog):
                 self.pageFiles[k],
             ]
             if self.pageData[k][2]:  # is a question page
+                self.listA.addPotentialItem(self.pageData[k][0], self.pageFiles[k])
                 self.listB.addOriginalItem(self.pageData[k][0], self.pageFiles[k])
             else:
                 self.listA.addOriginalItem(self.pageData[k][0], self.pageFiles[k])

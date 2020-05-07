@@ -2375,7 +2375,11 @@ class PlomDB:
         for p in tref.hwpages.order_by(HWPage.order):  # then give HWPages
             if p.group.groupType == "i":  # skip IDpages
                 continue
-            val = ["h{}".format(p.order), p.image.id, False]
+            elif p.group.groupType == "d":  # is DNM group
+                q = 0
+            else:
+                q = p.group.qgroups[0].question
+            val = ["h{}.{}".format(q, p.order), p.image.id, False]
             # check if page belongs to our question
             if p.group.groupType == "q":
                 if p.group.qgroups[0].question == question:
