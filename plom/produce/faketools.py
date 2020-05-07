@@ -168,7 +168,7 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
             tnumber = fn.split("_")[1]
             if fname in namedPapers:  # fn is exam_XXXX_YYYYYYY.pdf
                 sn = fn.split("_")[2]
-            print("Making an extra page for test {} and sid {}".format(tnumber, sn))
+            print("  making an extra page for test {} and sid {}".format(tnumber, sn))
             bigdoc.insertPage(
                 -1,
                 text="EXTRA PAGE - t{} Q1 - {}".format(tnumber, sn),
