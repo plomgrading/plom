@@ -53,16 +53,14 @@ possibleAns = [
 ]
 
 
-def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName):
-    # with open("digits.json", "rb") as digitData:
-    # digitArray = json.load(digitData)
+def makeHWOneFile(numberOfQuestions, paperNumber, studentID, studentName):
     did = random.randint(
         numberOfQuestions - 1, numberOfQuestions
     )  # some subset of questions.
     doneQ = random.sample(list(range(1, 1 + numberOfQuestions)), did)
+    fname = Path("submittedHomework") / "hwx.{}.pdf".format(studentID)
+    doc = fitz.open()
     for q in doneQ:
-        fname = Path("submittedHomework") / "hw.{}.{}.pdf".format(studentID, q)
-        doc = fitz.open()
         # construct pages
         for pn in range(random.randint(1, 3)):
             page = doc.newPage(0, 612, 792)
@@ -95,6 +93,55 @@ def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName):
         )
         assert rc > 0
 
+    doc.save(fname)
+
+
+def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName, oneFile=False):
+    did = random.randint(
+        numberOfQuestions - 1, numberOfQuestions
+    )  # some subset of questions.
+    doneQ = sorted(random.sample(list(range(1, 1 + numberOfQuestions)), did))
+    if oneFile:
+        fname = Path("submittedHomework") / "hwx.{}.pdf".format(studentID)
+        doc = fitz.open()
+    for q in doneQ:
+        if not oneFile:
+            fname = Path("submittedHomework") / "hw.{}.{}.pdf".format(studentID, q)
+            doc = fitz.open()
+        # construct pages
+        for pn in range(random.randint(1, 3)):
+            page = doc.newPage(-1, 612, 792)
+            if pn == 0:
+                # put name and student number on p1 of the submission
+                rect1 = fitz.Rect(20, 24, 300, 44)
+                rc = page.insertTextbox(
+                    rect1,
+                    "Q.{} -".format(q) + studentName + ":" + studentID,
+                    fontsize=12,
+                    color=[0.1, 0.1, 0.1],
+                    fontname="helv",
+                    fontfile=None,
+                    align=0,
+                )
+                assert rc > 0
+
+            rect = fitz.Rect(
+                100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
+            )
+            text = random.choice(possibleAns)
+            rc = page.insertTextbox(
+                rect,
+                text,
+                fontsize=13,
+                color=[0.1, 0.1, 0.8],
+                fontname="helv",
+                fontfile=None,
+                align=0,
+            )
+            assert rc > 0
+        if not oneFile:
+            doc.save(fname)
+    if oneFile:
         doc.save(fname)
 
 
@@ -130,7 +177,7 @@ def main():
                 break
 
     for k in range(numberNamed):
-        makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1])
+        makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], oneFile=True)
 
 
 if __name__ == "__main__":
