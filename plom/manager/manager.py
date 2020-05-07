@@ -377,7 +377,7 @@ class Manager(QWidget):
         self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
 
         self.ui.removePageB.clicked.connect(self.removePage)
-        self.ui.subsPageB.clicked.connect(self.subsPage)
+        self.ui.subsPageB.clicked.connect(self.subsTestPage)
         self.ui.actionUButton.clicked.connect(self.doUActions)
         self.ui.actionCButton.clicked.connect(self.doCActions)
         self.ui.actionDButton.clicked.connect(self.doDActions)
@@ -626,7 +626,7 @@ class Manager(QWidget):
             ErrorMessage("{}".format(rval)).exec_()
             self.refreshSList()
 
-    def subsPage(self):
+    def subsTestPage(self):
         # THIS SHOULD KEEP VERSION INFORMATION
         pvi = self.ui.incompTW.selectedItems()
         # if nothing selected - return
@@ -635,7 +635,10 @@ class Manager(QWidget):
         # if selected a top-level item (ie a test) - return
         if pvi[0].childCount() > 0:
             return
-        pp = int(pvi[0].text(1))
+        # text should be t.n - else is homework page - cannot subs those.
+        if pvi[0].text(1)[0] != "t":
+            return
+        pp = int(pvi[0].text(1)[2:])  # drop the "t."
         pv = int(pvi[0].text(2))
         pt = int(pvi[0].parent().text(0))  # grab test number from parent
         msg = SimpleMessage(
@@ -647,7 +650,7 @@ class Manager(QWidget):
             return
         else:
             code = "t{}p{}v{}".format(str(pt).zfill(4), str(pp).zfill(2), pv)
-            rval = managerMessenger.replaceMissingPage(code, pt, pp, pv)
+            rval = managerMessenger.replaceMissingTestPage(code, pt, pp, pv)
             ErrorMessage("{}".format(rval)).exec_()
             self.refreshIList()
 
