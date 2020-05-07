@@ -18,9 +18,11 @@ import sys
 import tempfile
 import threading
 import time
-import toml
 import queue
 import logging
+import random
+
+import toml
 
 from PyQt5.QtCore import (
     Qt,
@@ -853,7 +855,7 @@ class MarkerClient(QWidget):
             "safe to continue from here...".format(errmsg)
         ).exec_()
 
-    def moveToNextUnmarkedTest(self, task):
+    def moveToNextUnmarkedTest(self, task=None):
         """Move the list to the next unmarked test, if possible.
 
         Return True if we moved and False if not, for any reason."""
@@ -884,9 +886,11 @@ class MarkerClient(QWidget):
         prt = self.prxM.rowCount()
         if prt == 0:
             return False
-        # get current position from the tgv
-        prstart = self.prxM.rowFromTask(task)
 
+        prstart = None
+        if task:
+            # get current position from the task,
+            prstart = self.prxM.rowFromTask(task)
         if not prstart:
             # it might be hidden by filters
             prstart = 0
@@ -917,45 +921,16 @@ class MarkerClient(QWidget):
             return
         self.exM.deferPaper(task)
 
-    def startTheAnnotator(self, task, paperdir, fnames, saveName, pname=None):
+    def startTheAnnotator(self, data):
         """This fires up the annotation window for user annotation + marking."""
-        # Set marking style total/up/down - will pass to annotator
-        markStyle = self.ui.markStyleGroup.checkedId()
         # Set mousehand left/right - will pass to annotator
         mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
-        # Set plom-dictionary to none
-        pdict = None
-        # check if given a plom-file and override markstyle + pdict accordingly
-        if pname is not None:
-            with open(pname, "r") as fh:
-                pdict = json.load(fh)
-            markStyle = pdict["markStyle"]
-            # TODO: there should be a filename sanity check here to
-            # make sure plom file matches current image-file
 
-        if self.allowBackgroundOps:
-            # while annotator is firing up request next paper in background
-            # after giving system a moment to do `annotator.exec_()`
-            if self.exM.countReadyToMark() == 0:
-                self.requestNextInBackgroundStart()
-        # build the annotator - pass it the image filename, the max-mark
-        # the markingstyle (up/down/total) and mouse-hand (left/right)
         annotator = Annotator(
-            self.ui.userLabel.text(),
-            task,
-            self.testInfo["testName"],
-            paperdir,
-            fnames,
-            saveName,
-            self.maxScore,
-            markStyle,
-            mouseHand,
-            parent=self,
-            plomDict=pdict,
+            self.ui.userLabel.text(), mouseHand, parent=self, initialData=data
         )
         # run the annotator
         annotator.ann_upload.connect(self.callbackAnnWantsUsToUpload)
-        annotator.ann_done_wants_more.connect(self.callbackAnnDoneWantsMore)
         annotator.ann_done_closing.connect(self.callbackAnnDoneClosing)
         annotator.ann_done_reject.connect(self.callbackAnnDoneCancel)
         annotator.ann_done_shuffle.connect(self.callbackAnnWantsShuffle)
@@ -975,10 +950,19 @@ class MarkerClient(QWidget):
         else:
             return
         task = self.prxM.getPrefix(row)
-        # split fcn: maybe we want to start the annotator not based on current selection
-        self.annotateTest_doit(task)
 
-    def annotateTest_doit(self, task):
+        inidata = self.getDataForAnnotator(task)
+
+        if self.allowBackgroundOps:
+            # while annotator is firing up request next paper in background
+            # after giving system a moment to do `annotator.exec_()`
+            if self.exM.countReadyToMark() == 0:
+                self.requestNextInBackgroundStart()
+
+        self.startTheAnnotator(inidata)
+        # we started the annotator, we'll get a signal back when its done
+
+    def getDataForAnnotator(self, task):
         """Start annotator on a particular task."""
         # Create annotated filename. If original mXXXXgYY, then
         # annotated version is GXXXXgYY (G=graded).
@@ -1047,18 +1031,25 @@ class MarkerClient(QWidget):
         self.exM.setStatusByTask(task, "ann:" + prevState)
 
         if remarkFlag:
-            self.startTheAnnotator(task[1:], paperdir, fnames, aname, pname)
+            with open(pname, "r") as fh:
+                pdict = json.load(fh)
         else:
-            self.startTheAnnotator(task[1:], paperdir, fnames, aname, None)
-        # we started the annotator, we'll get a signal back when its done
+            pdict = None
+
+        testname = self.testInfo["testName"]
+        markStyle = self.ui.markStyleGroup.checkedId()
+        tgv = task[1:]
+        return (tgv, testname, paperdir, fnames, aname, self.maxScore, markStyle, pdict)
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
     def callbackAnnDoneCancel(self, task):
         self.setEnabled(True)
-        prevState = self.exM.getStatusByTask("q" + task).split(":")[-1]
-        # TODO: could also erase the paperdir
-        self.exM.setStatusByTask("q" + task, prevState)
+        if task:
+            prevState = self.exM.getStatusByTask("q" + task).split(":")[-1]
+            # TODO: could also erase the paperdir
+            self.exM.setStatusByTask("q" + task, prevState)
+        # TODO: see below re "done grading".
 
     @pyqtSlot(str)
     def callbackAnnDoneClosing(self, task):
@@ -1068,36 +1059,10 @@ class MarkerClient(QWidget):
         if len(prIndex) == 0:
             return
         pr = prIndex[0].row()
-        if self.prxM.getPrefix(pr) == "q" + task:
-            self.updateImage(pr)
-
-    @pyqtSlot(str, list)
-    def callbackAnnWantsShuffle(self, task, imageList):
-        # we know the list of image-refs and files. copy files into place
-        # Image names = "<task>.<imagenumber>.<extension>"
-        inames = []
-        irefs = []
-        for i in range(len(imageList)):
-            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            shutil.copyfile(imageList[i][1], tmp)
-            inames.append(tmp)
-            irefs.append(imageList[i][0])
-        self.exM.setOriginalFiles("q" + task, inames)
-        # now tell server about new list of images for the annotation.
-        messenger.MshuffleImages("q" + task, irefs)
-        # finally relaunch the annotator
-        self.annotateTest()
-
-    @pyqtSlot(str)
-    def callbackAnnDoneWantsMore(self, task):
-        log.debug("Marker is back and Ann Wants More")
-        if not self.allowBackgroundOps:
-            self.requestNext()
-        if self.moveToNextUnmarkedTest("q" + task):
-            self.annotateTest()
-        else:
-            log.debug("either we are done or problems downloading...")
-            self.setEnabled(True)
+        # TODO: when done grading, if ann stays open, then close, this doesn't happen
+        if task:
+            if self.prxM.getPrefix(pr) == "q" + task:
+                self.updateImage(pr)
 
     @pyqtSlot(str, list)
     def callbackAnnWantsUsToUpload(self, task, stuff):
@@ -1138,6 +1103,34 @@ class MarkerClient(QWidget):
                 failcallback=self.backgroundUploadFailed,
                 successcallback=self.backgroundUploadFinished
             )
+
+    def gimmeMore(self, oldtgv):
+        log.debug("Annotator wants more (w/o closing)")
+        if not self.allowBackgroundOps:
+            self.requestNext()
+        if not self.moveToNextUnmarkedTest("t" + oldtgv if oldtgv else None):
+            return False
+        # TODO: copy paste of annotateTest()
+        # probably don't need len check
+        if len(self.ui.tableView.selectedIndexes()):
+            row = self.ui.tableView.selectedIndexes()[0].row()
+        else:
+            # TODO: what to do here?
+            return False
+        tgv = self.prxM.getPrefix(row)
+
+        data = self.getDataForAnnotator(tgv)
+        assert tgv[1:] == data[0]
+        pdict = data[-1]
+        assert pdict is None, "Annotator should not pull a regrade"
+
+        if self.allowBackgroundOps:
+            # while annotator is firing up request next paper in background
+            # after giving system a moment to do `annotator.exec_()`
+            if self.exM.countReadyToMark() == 0:
+                self.requestNextInBackgroundStart()
+
+        return data
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""

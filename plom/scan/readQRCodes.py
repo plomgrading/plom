@@ -211,7 +211,7 @@ def checkQRsValid(spec, examsScannedNow):
             if warnFlag:
                 print("[W] {0}: {1}".format(fname, msg))
                 print(
-                    "   (high occurences of these warnings may mean printer/scanner problems)"
+                    "   (high occurrences of these warnings may mean printer/scanner problems)"
                 )
             # store the tpv in examsScannedNow
             examsScannedNow[fname] = [tn, pn, vn]
