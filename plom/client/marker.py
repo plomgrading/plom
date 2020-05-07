@@ -933,7 +933,7 @@ class MarkerClient(QWidget):
         annotator.ann_upload.connect(self.callbackAnnWantsUsToUpload)
         annotator.ann_done_closing.connect(self.callbackAnnDoneClosing)
         annotator.ann_done_reject.connect(self.callbackAnnDoneCancel)
-        annotator.ann_done_shuffle.connect(self.callbackAnnWantsShuffle)
+        # annotator.ann_done_shuffle.connect(self.callbackAnnWantsShuffle)
         # off we go
         self.setEnabled(False)
         annotator.show()
@@ -1131,6 +1131,24 @@ class MarkerClient(QWidget):
                 self.requestNextInBackgroundStart()
 
         return data
+
+    def permuteAndGimmeSame(self, task, imageList):
+        log.info("Rearranging image list for task {} = {}".format(task, imageList))
+        # we know the list of image-refs and files. copy files into place
+        # Image names = "<task>.<imagenumber>.<extension>"
+        inames = []
+        irefs = []
+        for i in range(len(imageList)):
+            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
+            shutil.copyfile(imageList[i][1], tmp)
+            inames.append(tmp)
+            irefs.append(imageList[i][0])
+        task = "q" + task
+        self.exM.setOriginalFiles(task, inames)
+        # now tell server about new list of images for the annotation.
+        messenger.MshuffleImages(task, irefs)
+        # finally relaunch the annotator
+        return self.getDataForAnnotator(task)
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""

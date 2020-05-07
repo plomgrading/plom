@@ -2411,6 +2411,7 @@ class PlomDB:
             uref.lastAction = "Shuffled images of {}".format(task)
             aref.save()
             uref.save()
+        log.info("MshuffleImages - task {} now irefs {}".format(task, imageRefs))
         return [True]
 
     def MreviewQuestion(self, testNumber, question, version):

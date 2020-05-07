@@ -93,7 +93,7 @@ class Annotator(QWidget):
     ann_upload = pyqtSignal(str, list)
     ann_done_closing = pyqtSignal(str)
     ann_done_reject = pyqtSignal(str)
-    ann_done_shuffle = pyqtSignal(str, list)
+    # ann_done_shuffle = pyqtSignal(str, list)
 
     def __init__(self, username, mouseHand, parent=None, initialData=None):
         super(Annotator, self).__init__()
@@ -165,7 +165,6 @@ class Annotator(QWidget):
         if initialData:
             self.loadNewTGV(*initialData)
 
-
         # TODO: use QAction, share with other UI, shortcut keys written once
         m = QMenu()
         m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
@@ -189,12 +188,11 @@ class Annotator(QWidget):
     def menudummy(self):
         print("TODO: menu placeholder 1")
 
-
     def closeCurrentTGV(self):
         """Stop looking at the current TGV, reset things safely."""
         self.commentW.reset()
-        #TODO: self.view.disconnectFrom(self.scene)
-        #self.view = None
+        # TODO: self.view.disconnectFrom(self.scene)
+        # self.view = None
         # TODO: how to reset the scene?
         # This may be heavy handed, but for now we delete the old scene
         del self.scene
@@ -211,10 +209,11 @@ class Annotator(QWidget):
         self.paperdir = None
         self.imageFiles = None
         self.saveName = None
-        #self.destroyMarkHandler()
+        # self.destroyMarkHandler()
 
-
-    def loadNewTGV(self, tgv, testname, paperdir, fnames, saveName, maxMark, markStyle, plomDict):
+    def loadNewTGV(
+        self, tgv, testname, paperdir, fnames, saveName, maxMark, markStyle, plomDict
+    ):
         """Load data for marking.
 
         TODO: maintain current tool not working yet.
@@ -272,9 +271,7 @@ class Annotator(QWidget):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
         if self.scene:
             self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
-        self.ui.markLabel.setText(
-            "{} out of {}".format(self.score, self.maxMark)
-        )
+        self.ui.markLabel.setText("{} out of {}".format(self.score, self.maxMark))
 
     def loadCursors(self):
         # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
@@ -539,7 +536,11 @@ class Annotator(QWidget):
                 self, testNumber, self.pageData, self.testViewFiles,
             )
         if self.rearrangeView.exec_() == QDialog.Accepted:
-            self.shufflePageImages(self.rearrangeView.permute)
+            stuff = self.parent.permuteAndGimmeSame(
+                self.tgv, self.rearrangeView.permute
+            )
+            log.debug("permuted: new stuff is {}".format(stuff))
+            self.loadNewTGV(*stuff)
         return
 
     def doneViewingPaper(self):
@@ -583,11 +584,11 @@ class Annotator(QWidget):
         # put the view into the gui.
         # set the initial view to contain the entire scene which at
         # this stage is just the image.
-        #self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
+        # self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
         # Centre at top-left of image.
-        #self.view.centerOn(0, 0)
+        # self.view.centerOn(0, 0)
         # click the move button
-        #self.ui.moveButton.animateClick()
+        # self.ui.moveButton.animateClick()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
@@ -739,12 +740,12 @@ class Annotator(QWidget):
         self._priv_force_close = True
         self.close()
 
-    @pyqtSlot()
-    def shufflePageImages(self, imageList):
-        self._priv_shuffle = True
-        self._priv_shuffleList = imageList  # is list of pairs [im-ref, filename]
-        print("SHUFFLE = {}".format(imageList))
-        self.close()
+    # @pyqtSlot()
+    # def shufflePageImages(self, imageList):
+    #     self._priv_shuffle = True
+    #     self._priv_shuffleList = imageList  # is list of pairs [im-ref, filename]
+    #     print("SHUFFLE = {}".format(imageList))
+    #     self.close()
 
     def setMiscShortCuts(self):
         # shortcuts for next paper
@@ -920,7 +921,7 @@ class Annotator(QWidget):
         self.score = tm
         self.commentW.changeMark(self.score)
         # also tell the scene what the new mark is
-        if self.scene:   # TODO: bit of a hack
+        if self.scene:  # TODO: bit of a hack
             self.scene.setTheMark(self.score)
 
     def deltaMarkSet(self, dm):
@@ -1207,10 +1208,10 @@ class Annotator(QWidget):
             ce.accept()
             return
 
-        if getattr(self, "_priv_shuffle", False):
-            self.ann_done_shuffle.emit(self.tgv, self._priv_shuffleList)
-            ce.accept()
-            return
+        # if getattr(self, "_priv_shuffle", False):
+        #     self.ann_done_shuffle.emit(self.tgv, self._priv_shuffleList)
+        #     ce.accept()
+        #     return
 
         # We are here b/c of cancel button, titlebar close, or related
         if self.scene and self.scene.areThereAnnotations():
