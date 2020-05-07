@@ -166,6 +166,8 @@ class UploadHandler:
         rval = self.server.replaceMissingHWQuestion(data["sid"], data["question"])
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
+        elif rval[1]:
+            return web.Response(status=409)  # that question already has pages
         else:
             return web.Response(status=404)  # page not found at all
 

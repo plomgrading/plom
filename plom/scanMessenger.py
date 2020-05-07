@@ -315,6 +315,8 @@ class ScanMessenger(BaseMessenger):
                 ) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            elif response.status_code == 409:  # that question already has pages
+                raise PlomTakenException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)

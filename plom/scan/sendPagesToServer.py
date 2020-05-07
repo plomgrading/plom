@@ -220,7 +220,11 @@ def uploadHWPages(server=None, password=None):
         for q in range(1, numberOfQuestions + 1):
             if q not in SIDQ[sid]:
                 print("SID {} missing question {}".format(sid, q))
-                msgr.replaceMissingHWQuestion(sid, q)
+                try:
+                    msgr.replaceMissingHWQuestion(sid, q)
+                except PlomTakenException:
+                    print("That question already has pages. Skipping.")
+
     updates = msgr.sendHWUploadDone()
     msgr.closeUser()
     msgr.stop()

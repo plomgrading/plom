@@ -813,8 +813,11 @@ class PlomDB:
         href = HWPage.get_or_none(
             test=tref, group=gref, order=order
         )  # this should be none.
-        if href is not None:  ### FIX THIS
-            return [False, "A HWPage with that SID,Q,O already exists."]
+        if href is not None:
+            # we found a page with that order, so we need to put the uploaded page at the end.
+            for hwp in HWPage.select().where(HWPage.test == tref, HWPage.group == gref):
+                lastOrder = hwp.order
+            order = lastOrder + 1
         # create one.
         with plomdb.atomic():
             aref = qref.annotations[0]
@@ -994,13 +997,13 @@ class PlomDB:
     def replaceMissingHWQuestion(self, sid, question, oname, nname, md5):
         iref = IDGroup.get_or_none(studentID=sid)
         if iref is None:
-            return [False, "SID does not correspond to any test on file."]
+            return [False, False, "SID does not correspond to any test on file."]
         tref = iref.test
         qref = QGroup.get_or_none(test=tref, question=question)
         gref = qref.group
         href = HWPage.get_or_none(test=tref, group=gref)  # this should be none.
         if href is not None:
-            return [False, "Question already has pages."]
+            return [False, True, "Question already has pages."]
         # no HW page present, so create things as per a HWPage upload
         with plomdb.atomic():
             aref = qref.annotations[0]
