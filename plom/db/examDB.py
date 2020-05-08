@@ -108,8 +108,17 @@ class HWPage(BaseModel):  # a hw page that knows its tgv, but not p.
     image = ForeignKeyField(Image, backref="hwpages")
 
 
+class XGroup(BaseModel):
+    test = ForeignKeyField(Test, backref="xgroups")
+    user = ForeignKeyField(User, backref="xgroups", null=True)
+    status = CharField(default="")
+    time = DateTimeField(null=True)
+    allocated = BooleanField(default=False)
+
+
 class XPage(BaseModel):  # a page that just knows its t.
     test = ForeignKeyField(Test, backref="xpages")
+    group = ForeignKeyField(XGroup, backref="xpages")
     order = IntegerField(null=False)
     image = ForeignKeyField(Image, backref="xpages")
 
@@ -183,6 +192,7 @@ class PlomDB:
                     IDGroup,
                     DNMGroup,
                     QGroup,
+                    XGroup,
                     ##
                     TPage,
                     HWPage,
@@ -849,9 +859,12 @@ class PlomDB:
             order = lastOrder + 1
         # create one.
         with plomdb.atomic():
+            gref = XGroup.get_or_none(test=tref)
+            if gref is None:
+                gref = XGroup.create(test=tref)
             # create image, xpage, and link.
             img = Image.create(originalName=oname, fileName=nname, md5sum=md5)
-            xref = XPage.create(test=tref, order=order, image=img)
+            xref = XPage.create(test=tref, group=gref, order=order, image=img)
             # set the recentUpload flag for the test
             tref.used = True
             tref.recentUpload = True
