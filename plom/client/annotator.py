@@ -258,7 +258,6 @@ class Annotator(QWidget):
             self.ui.markGrid.addWidget(self.markHandler)
         else:
             self.markHandler.resetAndMaybeChange(maxMark, markStyle)
-        self.setDeltaButtonMenu()
 
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
@@ -578,10 +577,7 @@ class Annotator(QWidget):
         if buttonNumber > self.maxMark:
             return
         # Otherwise click the appropriate button.
-        if self.markHandler.style == "Up":
-            self.markHandler.markButtons["p{}".format(buttonNumber)].animateClick()
-        elif self.markHandler.style == "Down" and buttonNumber >= 0:
-            self.markHandler.markButtons["m{}".format(buttonNumber)].animateClick()
+        self.markHandler.markButtons[buttonNumber].animateClick()
 
     def keyPressEvent(self, event):
         """Translates key-presses into tool-button presses if
@@ -911,8 +907,7 @@ class Annotator(QWidget):
         )
         self.markHandler.setMark(self.score)
         self.markHandler.repaint()
-        # update the delta-mark-menu
-        self.updateDeltaMarkMenu()
+        self.markHandler.updateRelevantDeltaActions()
 
     def loadWindowSettings(self):
         # load the window geometry, else maximise.
@@ -1259,45 +1254,6 @@ class Annotator(QWidget):
         else:
             pass
         self.view.setFocus()
-
-    def setDeltaButtonMenu(self):
-        if self.markStyle == 1:
-            # mark total - don't set anything
-            return
-        self.ui.deltaMenu = QMenu("Set Delta")
-        self.deltaActions = {}
-        if self.markStyle == 2:
-            # set to mark up
-            for k in range(0, self.maxMark + 1):
-                self.deltaActions[k] = self.ui.deltaMenu.addAction("+{}".format(k))
-                self.deltaActions[k].triggered.connect(
-                    self.markHandler.markButtons["p{}".format(k)].animateClick
-                )
-        elif self.markStyle == 3:
-            # set to mark down
-            for k in range(0, self.maxMark + 1):
-                self.deltaActions[k] = self.ui.deltaMenu.addAction("-{}".format(k))
-                self.deltaActions[k].triggered.connect(
-                    self.markHandler.markButtons["m{}".format(k)].animateClick
-                )
-        self.ui.deltaButton.setMenu(self.ui.deltaMenu)
-        self.updateDeltaMarkMenu()
-
-    def updateDeltaMarkMenu(self):
-        if self.markStyle == 1:
-            return
-        elif self.markStyle == 2:
-            for k in range(0, self.maxMark + 1):
-                if self.score + k <= self.maxMark:
-                    self.deltaActions[k].setEnabled(True)
-                else:
-                    self.deltaActions[k].setEnabled(False)
-        elif self.markStyle == 3:
-            for k in range(0, self.maxMark + 1):
-                if self.score >= k:
-                    self.deltaActions[k].setEnabled(True)
-                else:
-                    self.deltaActions[k].setEnabled(False)
 
     def noAnswer(self):
         if self.markStyle == 2:
