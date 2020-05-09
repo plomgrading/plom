@@ -1233,9 +1233,14 @@ class PlomDB:
         if tref is None:
             return [False]
         rval = [True]
-        for p in tref.pages.order_by(Page.pageNumber):
+        for p in tref.tpages.order_by(TPage.pageNumber):
             if p.scanned == True:
-                rval.append(p.fileName)
+                rval.append(p.image.fileName)
+        for p in tref.hwpages.order_by(HWPage.order):  # then give HWPages
+            rval.append(p.image.fileName)
+        for p in tref.xpages.order_by(XPage.order):  # then give XPages
+            rval.append(p.image.fileName)
+
         return rval
 
     def checkPage(self, testNumber, pageNumber):

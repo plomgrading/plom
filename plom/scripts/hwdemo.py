@@ -76,7 +76,13 @@ def main():
     print("Server seems to be running, so we move on to uploading")
 
     subprocess.check_call(split("plom-hwscan submitted"))
-    subprocess.check_call(split("plom-hwscan process"))
+    print("Processing complete hw only")
+    subprocess.check_call(split("plom-hwscan process -w 4567"))
+    print("Processing incomplete hw also")
+    subprocess.check_call(split("plom-hwscan process -i -w 4567"))
+    print("Processing hw extra pages")
+    subprocess.check_call(split("plom-hwscan process -x -w 4567"))
+    print("Now upload the images")
     subprocess.check_call(split("plom-hwscan upload -w 4567"))
 
     time.sleep(0.5)

@@ -12,6 +12,8 @@ import glob
 import os
 
 from plom.rules import isValidStudentNumber
+from plom.messenger import ScanMessenger
+from plom.plom_exceptions import *
 
 
 def IDQorIDorBad(fullfname):
@@ -81,3 +83,55 @@ def whoSubmittedWhat():
             )
         )
         print("Please check them before proceeding. They will not be processed.")
+
+
+def verifiedComplete(server=None, password=None):
+
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ScanMessenger(s, port=p)
+    else:
+        msgr = ScanMessenger(server)
+    msgr.start()
+
+    # get the password if not specified
+    if password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'scanner' password:")
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = password
+
+    # get started
+    try:
+        msgr.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-hwscan clear"'
+        )
+        exit(10)
+
+    # grab number of questions - so we can work out what is missing
+    spec = msgr.getInfoGeneral()
+    numberOfQuestions = spec["numberOfQuestions"]
+
+    msgr.closeUser()
+    msgr.stop()
+
+    hwByQ = defaultdict(list)
+    for fn in glob.glob("submittedHWByQ/*.pdf"):
+        IDQ = IDQorIDorBad(fn)
+        if len(IDQ) == 3:
+            sid, q = IDQ[1:]
+            hwByQ[sid].append([fn, q])
+    # return fileNames belonging to complete homeworks
+    validFiles = []
+    for sid in hwByQ:
+        if len(hwByQ[sid]) == numberOfQuestions:
+            validFiles += [x[0] for x in hwByQ[sid]]
+    return validFiles

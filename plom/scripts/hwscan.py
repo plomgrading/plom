@@ -51,7 +51,7 @@ def whoDidWhat():
     whoSubmittedWhat()
 
 
-def processScans():
+def processScans(server, password, incomplete=False, extra=False):
     # make PDF archive directory
     os.makedirs("archivedPDFs/submittedHWByQ", exist_ok=True)
     os.makedirs("archivedPDFs/submittedHWExtra", exist_ok=True)
@@ -62,24 +62,31 @@ def processScans():
     os.makedirs("decodedPages/submittedHWByQ", exist_ok=True)
     os.makedirs("decodedPages/submittedHWExtra", exist_ok=True)
 
+    from plom.scan.hwSubmissionsCheck import verifiedComplete
     from plom.scan import scansToImages
 
     # process HWByQ first
-    for fn in sorted(glob.glob("submittedHWByQ/*.pdf")):
+    if incomplete:
+        fileList = sorted(glob.glob("submittedHWByQ/*.pdf"))
+    else:
+        fileList = verifiedComplete(server, password)
+
+    for fn in fileList:
         IDQ = IDQorIDorBad(fn)
         if len(IDQ) != 3:
             print("Skipping file {} - wrong format".format(fn))
             continue  # this is not the right file format
         print("Processing PDF {} to images".format(fn))
         scansToImages.processScans(fn, hwByQ=True)
-    # then process HWExtra first
-    for fn in sorted(glob.glob("submittedHWExtra/*.pdf")):
-        IDQ = IDQorIDorBad(fn)
-        if len(IDQ) != 2:
-            print("Skipping file {} - wrong format".format(fn))
-            continue  # this is not the right file format
-        print("Processing PDF {} to images".format(fn))
-        scansToImages.processScans(fn, hwExtra=True)
+    # then process HWExtra (if flagged)
+    if extra:
+        for fn in sorted(glob.glob("submittedHWExtra/*.pdf")):
+            IDQ = IDQorIDorBad(fn)
+            if len(IDQ) != 2:
+                print("Skipping file {} - wrong format".format(fn))
+                continue  # this is not the right file format
+            print("Processing PDF {} to images".format(fn))
+            scansToImages.processScans(fn, hwExtra=True)
 
 
 def uploadHWImages(server, password, unknowns=False, collisions=False):
@@ -120,8 +127,23 @@ spC = sub.add_parser(
     description="Clear 'scanner' login after a crash or other expected event.",
 )
 #
+spP.add_argument(
+    "-i",
+    "--incomplete",
+    action="store_true",
+    default=False,
+    help="Process incomplete homeworks (ie not all questions present)",
+)
+spP.add_argument(
+    "-x",
+    "--extra",
+    action="store_true",
+    default=False,
+    help="Process extra pages for homeworks (ie one-file)",
+)
 
-for x in (spU, spS, spC):
+
+for x in (spP, spU, spS, spC):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
@@ -132,7 +154,7 @@ def main():
     if args.command == "submitted":
         whoDidWhat()
     elif args.command == "process":
-        processScans()
+        processScans(args.server, args.password, args.incomplete, args.extra)
     elif args.command == "upload":
         uploadHWImages(args.server, args.password)
     elif args.command == "status":
