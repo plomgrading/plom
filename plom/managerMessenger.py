@@ -561,6 +561,30 @@ class ManagerMessenger(BaseMessenger):
 
         return image
 
+    def getXPageImage(self, t, o):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/admin/scannedXPage".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token, "test": t, "order": o,},
+            )
+            response.raise_for_status()
+            image = BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                return None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return image
+
     def getUnknownImage(self, fname):
         self.SRmutex.acquire()
         try:

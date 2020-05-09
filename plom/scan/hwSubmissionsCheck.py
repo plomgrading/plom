@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Check which students have submitted what in the submittedHWByQ and submittedHWOneFile directories"""
+"""Check which students have submitted what in the submittedHWByQ and submittedHWExtra directories"""
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
 __credits__ = "The Plom Project Developers"
@@ -41,7 +41,7 @@ def whoSubmittedWhat():
             problemFQ.append(os.path.basename(fn))
 
     problemOF = []
-    for fn in glob.glob("submittedHWOneFile/*.pdf"):
+    for fn in glob.glob("submittedHWExtra/*.pdf"):
         IDQ = IDQorIDorBad(fn)
         if len(IDQ) == 2:
             sid = IDQ[1]
@@ -76,7 +76,7 @@ def whoSubmittedWhat():
     if len(problemOF) > 0:
         print(">>> Warning <<<")
         print(
-            "These files in submittedHWOneFile have the wrong name format: {}".format(
+            "These files in submittedHWExtra have the wrong name format: {}".format(
                 problemOF
             )
         )

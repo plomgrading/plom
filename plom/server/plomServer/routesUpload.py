@@ -284,6 +284,21 @@ class UploadHandler:
         else:
             return web.Response(status=404)
 
+    async def getXPageImage(self, request):
+        data = await request.json()
+        if not validFields(data, ["user", "token", "test", "order"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.getXPageImage(data["test"], data["order"])
+        if rval[0]:
+            return web.FileResponse(rval[1], status=200)  # all fine
+        else:
+            return web.Response(status=404)
+
     async def getUnknownImage(self, request):
         data = await request.json()
         if not validFields(data, ["user", "token", "fileName"]):
@@ -525,6 +540,7 @@ class UploadHandler:
         router.add_delete("/admin/scannedPage/{tpv}", self.removeScannedPage)
         router.add_get("/admin/scannedTPage", self.getTPageImage)
         router.add_get("/admin/scannedHWPage", self.getHWPageImage)
+        router.add_get("/admin/scannedXPage", self.getXPageImage)
         router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)
         router.add_get("/admin/discardNames", self.getDiscardNames)
         router.add_get("/admin/collidingPageNames", self.getCollidingPageNames)

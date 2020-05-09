@@ -122,7 +122,7 @@ def doHWFiling(shortName, fname):
 
 
 def doXFiling(shortName, fname):
-    shutil.move(fname, os.path.join("sentPages", "submittedHWOneFile", shortName))
+    shutil.move(fname, os.path.join("sentPages", "submittedHWExtra", shortName))
 
 
 def sendHWFiles(msgr, fileList):
@@ -254,15 +254,13 @@ def uploadHWPages(server=None, password=None):
                     msgr.replaceMissingHWQuestion(sid, q)
                 except PlomTakenException:
                     print("That question already has pages. Skipping.")
-    updates = msgr.sendHWUploadDone()
 
-    # now look for HW OneFile in decodedPages
+    # now look for HW Extra in decodedPages
     fileList = []
     for ext in PlomImageExtWhitelist:
-        fileList.extend(
-            sorted(glob("decodedPages/submittedHWOneFile/*.{}".format(ext)))
-        )
+        fileList.extend(sorted(glob("decodedPages/submittedHWExtra/*.{}".format(ext))))
     SIDO = sendXFiles(msgr, fileList)  # returns list of which SID uploaded
+    updates = msgr.sendHWUploadDone()
 
     msgr.closeUser()
     msgr.stop()

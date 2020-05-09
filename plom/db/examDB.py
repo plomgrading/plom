@@ -43,8 +43,6 @@ class Test(BaseModel):
     totalled = BooleanField(default=False)
     # a recentUpload flag to see which tests to check after uploads
     recentUpload = BooleanField(default=False)
-    # an XPage flag to see if test has outstanding extra-pages
-    extraPage = BooleanField(default=False)
 
 
 # Data for totalling the marks
@@ -108,17 +106,8 @@ class HWPage(BaseModel):  # a hw page that knows its tgv, but not p.
     image = ForeignKeyField(Image, backref="hwpages")
 
 
-class XGroup(BaseModel):
-    test = ForeignKeyField(Test, backref="xgroups")
-    user = ForeignKeyField(User, backref="xgroups", null=True)
-    status = CharField(default="")
-    time = DateTimeField(null=True)
-    allocated = BooleanField(default=False)
-
-
 class XPage(BaseModel):  # a page that just knows its t.
     test = ForeignKeyField(Test, backref="xpages")
-    group = ForeignKeyField(XGroup, backref="xpages")
     order = IntegerField(null=False)
     image = ForeignKeyField(Image, backref="xpages")
 
@@ -192,7 +181,6 @@ class PlomDB:
                     IDGroup,
                     DNMGroup,
                     QGroup,
-                    XGroup,
                     ##
                     TPage,
                     HWPage,
@@ -827,8 +815,11 @@ class PlomDB:
         )  # this should be none.
         if href is not None:
             # we found a page with that order, so we need to put the uploaded page at the end.
-            for hwp in HWPage.select().where(HWPage.test == tref, HWPage.group == gref):
-                lastOrder = hwp.order  # sinister!
+            lastOrder = (
+                HWPage.select(fn.MAX(HWPage.order))
+                .where(HWPage.test == tref, HWPage.group == gref)
+                .scalar()
+            )
             order = lastOrder + 1
         # create one.
         with plomdb.atomic():
@@ -854,21 +845,35 @@ class PlomDB:
         xref = XPage.get_or_none(test=tref, order=order)  # this should be none.
         if xref is not None:
             # we found a page with that order, so we need to put the uploaded page at the end.
-            for xp in XPage.select().where(XPage.test == tref):
-                lastOrder = xp.order
-            order = lastOrder + 1
+            lastOrder = (
+                XPage.select(fn.MAX(XPage.order)).where(XPage.test == tref).scalar()
+            )
+            if lastOrder is None:
+                order = 1
+            else:
+                order = lastOrder + 1
         # create one.
         with plomdb.atomic():
-            gref = XGroup.get_or_none(test=tref)
-            if gref is None:
-                gref = XGroup.create(test=tref)
             # create image, xpage, and link.
             img = Image.create(originalName=oname, fileName=nname, md5sum=md5)
-            xref = XPage.create(test=tref, group=gref, order=order, image=img)
+            xref = XPage.create(test=tref, order=order, image=img)
+            # now we have to append this page to every annotation.
+            # BIG TODO - improve this so human decides what goes where.
+            for qref in QGroup.select().where(QGroup.test == tref):
+                aref = qref.annotations[0]
+                lastOrder = (
+                    APage.select(fn.MAX(APage.order))
+                    .where(APage.annotation == aref)
+                    .scalar()
+                )
+                if lastOrder is None:
+                    order = 0
+                else:
+                    order = lastOrder + 1
+                ap = APage.create(annotation=aref, image=img, order=order)
             # set the recentUpload flag for the test
             tref.used = True
             tref.recentUpload = True
-            tref.extraPage = True
             tref.save()
         return [True]
 
@@ -933,13 +938,15 @@ class PlomDB:
 
         # return IDGroup to initial state clean.
         self.cleanIDGroup(tref, iref)
-        # homework does not upload ID pages, so only have to check testPages
         gref = iref.group
-        # check all the test-pages
-        for p in gref.tpages:
-            if p.scanned is False:
-                return False
-        # all test pages present, and group cleaned, so set things ready to go.
+        # if hwpages then skip the IDpage check (essentially)
+        if tref.hwpages.count() > 0:
+            pass
+        else:  # if no HWPages then check all the test-pages
+            for p in gref.tpages:
+                if p.scanned is False:
+                    return False
+        # all test ID pages present, and group cleaned, so set things ready to go.
         with plomdb.atomic():
             gref.scanned = True
             if dave:
@@ -983,14 +990,17 @@ class PlomDB:
         # if homework pages present - ready to go.
         # elif all testpages present - ready to go.
         # else - not ready.
+        # BUT if there are xpages then we are ready to go.
 
         gref = qref.group
-        # check if HW pages = 0
-        if qref.group.hwpages.count() == 0:
-            # then check for testpages
-            for p in gref.tpages:  # there is always at least one.
-                if p.scanned is False:  # missing a test-page - not ready.
-                    return False
+
+        if tref.xpages.count() == 0:
+            # check if HW pages = 0
+            if qref.group.hwpages.count() == 0:
+                # then check for testpages
+                for p in gref.tpages:  # there is always at least one.
+                    if p.scanned is False:  # missing a test-page - not ready.
+                        return False
 
         # otherwise we are ready to go.
         with plomdb.atomic():
@@ -1170,6 +1180,16 @@ class PlomDB:
         pref = HWPage.get_or_none(
             HWPage.test == tref, HWPage.group == gref, HWPage.order == order
         )
+        if pref is None:
+            return [False]
+        else:
+            return [True, pref.image.fileName]
+
+    def getXPageImage(self, testNumber, order):
+        tref = Test.get_or_none(Test.testNumber == testNumber)
+        if tref is None:
+            return [False]
+        pref = XPage.get_or_none(XPage.test == tref, XPage.order == order)
         if pref is None:
             return [False]
         else:
@@ -1417,6 +1437,11 @@ class PlomDB:
                     pScanned.append(
                         ["hw.{}.{}".format(qref.question, p.order), p.version]
                     )
+            # then append x-pages in order
+            for p in tref.xpages:
+                pScanned.append(
+                    ["x.{}".format(p.order), 0]
+                )  # we don't know the version
             rval[tref.testNumber] = pScanned
         log.debug("Sending list of scanned tests")
         return rval
@@ -1434,6 +1459,11 @@ class PlomDB:
                     pScanned.append(
                         ["hw.{}.{}".format(qref.question, p.order), p.version, True]
                     )
+            # then append x-pages in order
+            for p in tref.xpages:
+                pScanned.append(
+                    ["x.{}".format(p.order), 0, True]
+                )  # we don't know the version
             rval[tref.testNumber] = pState
         log.debug("Sending list of incomplete tests")
         return rval
@@ -2436,6 +2466,10 @@ class PlomDB:
             if p.group.groupType == "q":
                 if p.group.qgroups[0].question == question:
                     val[2] = True
+            pageData.append(val)
+            pageFiles.append(p.image.fileName)
+        for p in tref.xpages.order_by(XPage.order):  # then give HWPages
+            val = ["x{}".format(p.order), p.image.id, False]
             pageData.append(val)
             pageFiles.append(p.image.fileName)
         return [True, pageData] + pageFiles

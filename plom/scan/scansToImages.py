@@ -30,14 +30,14 @@ from plom import ScenePixelHeight
 archivedir = "archivedPDFs"
 
 
-def archivePDF(fname, hwByQ, hwOneFile):
+def archivePDF(fname, hwByQ, hwExtra):
     print("Archiving {}".format(fname))
     md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
     # TODO: is ".." portable?  maybe we should keep some absolute paths handy
     if hwByQ:
         shutil.move(fname, Path(archivedir) / "submittedHWByQ")
-    elif hwOneFile:
-        shutil.move(fname, Path(archivedir) / "submittedHWOneFile")
+    elif hwExtra:
+        shutil.move(fname, Path(archivedir) / "submittedHWExtra")
     else:
         shutil.move(fname, archivedir)
     # open the existing archive if it is there
@@ -294,7 +294,7 @@ def normalizeJPEGOrientation(f):
         im2.save(f)
 
 
-def processScans(fname, hwByQ=False, hwOneFile=False):
+def processScans(fname, hwByQ=False, hwExtra=False):
     """Process file into bitmap pageimages and archive the pdf.
 
     Process each page of a pdf file into bitmaps.  Then move the processed
@@ -317,10 +317,10 @@ def processScans(fname, hwByQ=False, hwOneFile=False):
         return
 
     processFileToBitmaps(fname)
-    archivePDF(fname, hwByQ, hwOneFile)
+    archivePDF(fname, hwByQ, hwExtra)
     os.chdir("scanPNGs")
-    if hwOneFile:
-        os.chdir("submittedHWOneFile")
+    if hwExtra:
+        os.chdir("submittedHWExtra")
     elif hwByQ:
         os.chdir("submittedHWByQ")
 
@@ -346,17 +346,17 @@ def processScans(fname, hwByQ=False, hwOneFile=False):
     fileList = []
     for ext in PlomImageExtWhitelist:
         fileList.extend(glob.glob("*.{}".format(ext)))
-    # move directly to decodedPages/submittedHWByQ or  OneFile - there is no "read" step
+    # move directly to decodedPages/submittedHWByQ or  Extra - there is no "read" step
     if hwByQ:
         for file in fileList:
             shutil.move(
                 file, os.path.join("..", "..", "decodedPages", "submittedHWByQ")
             )
         os.chdir(os.path.join("..", ".."))
-    elif hwOneFile:
+    elif hwExtra:
         for file in fileList:
             shutil.move(
-                file, os.path.join("..", "..", "decodedPages", "submittedHWOneFile")
+                file, os.path.join("..", "..", "decodedPages", "submittedHWExtra")
             )
         os.chdir(os.path.join("..", ".."))
     else:  # move them to pageimages for barcode reading

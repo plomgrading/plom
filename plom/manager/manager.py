@@ -563,6 +563,9 @@ class Manager(QWidget):
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
             vp = managerMessenger.getHWPageImage(t, q, o)
+        elif pdetails[0] == "x":  # is a hw-page = hw.o
+            o = pdetails.split(".")[1]
+            vp = managerMessenger.getXPageImage(t, o)
         else:  # future = extra-page
             return
 

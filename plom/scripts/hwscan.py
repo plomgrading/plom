@@ -54,13 +54,13 @@ def whoDidWhat():
 def processScans():
     # make PDF archive directory
     os.makedirs("archivedPDFs/submittedHWByQ", exist_ok=True)
-    os.makedirs("archivedPDFs/submittedHWOneFile", exist_ok=True)
+    os.makedirs("archivedPDFs/submittedHWExtra", exist_ok=True)
     # make a directory into which our (temp) PDF->bitmap will go
-    os.makedirs("scanPNGs/submittedHWOneFile", exist_ok=True)
+    os.makedirs("scanPNGs/submittedHWExtra", exist_ok=True)
     os.makedirs("scanPNGs/submittedHWByQ", exist_ok=True)
     # finally a directory into which pageImages go
     os.makedirs("decodedPages/submittedHWByQ", exist_ok=True)
-    os.makedirs("decodedPages/submittedHWOneFile", exist_ok=True)
+    os.makedirs("decodedPages/submittedHWExtra", exist_ok=True)
 
     from plom.scan import scansToImages
 
@@ -72,14 +72,14 @@ def processScans():
             continue  # this is not the right file format
         print("Processing PDF {} to images".format(fn))
         scansToImages.processScans(fn, hwByQ=True)
-    # then process HWOneFile first
-    for fn in sorted(glob.glob("submittedHWOneFile/*.pdf")):
+    # then process HWExtra first
+    for fn in sorted(glob.glob("submittedHWExtra/*.pdf")):
         IDQ = IDQorIDorBad(fn)
         if len(IDQ) != 2:
             print("Skipping file {} - wrong format".format(fn))
             continue  # this is not the right file format
         print("Processing PDF {} to images".format(fn))
-        scansToImages.processScans(fn, hwOneFile=True)
+        scansToImages.processScans(fn, hwExtra=True)
 
 
 def uploadHWImages(server, password, unknowns=False, collisions=False):
@@ -87,7 +87,7 @@ def uploadHWImages(server, password, unknowns=False, collisions=False):
 
     # make directories for upload
     os.makedirs("sentPages/submittedHWByQ", exist_ok=True)
-    os.makedirs("sentPages/submittedHWOneFile", exist_ok=True)
+    os.makedirs("sentPages/submittedHWExtra", exist_ok=True)
 
     print("Upload hw images to server")
     [SIDQ, SIDO] = sendPagesToServer.uploadHWPages(server, password)
@@ -97,7 +97,7 @@ def uploadHWImages(server, password, unknowns=False, collisions=False):
         )
     )
     print(
-        "Homework (one file) was uploaded to the following studentIDs: {}".format(
+        "Homework (extra) was uploaded to the following studentIDs: {}".format(
             SIDO.keys()
         )
     )

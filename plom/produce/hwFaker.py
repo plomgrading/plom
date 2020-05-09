@@ -53,17 +53,35 @@ possibleAns = [
 ]
 
 
-def makeHWOneFile(numberOfQuestions, paperNumber, studentID, studentName):
-    did = random.randint(
-        numberOfQuestions - 1, numberOfQuestions
-    )  # some subset of questions.
-    doneQ = random.sample(list(range(1, 1 + numberOfQuestions)), did)
-    fname = Path("submittedHWOneFile") / "hwx.{}.pdf".format(studentID)
+def makeHWExtra(numberOfQuestions, paperNumber, studentID, studentName):
+    # pick one or two questions to "do" with one or 2 pages.
+    didA = random.randint(1, 1 + numberOfQuestions)
+    didB = random.randint(1, 1 + numberOfQuestions)
+    if random.random() < 0.5 or didA == didB:
+        doneQ = [didA]
+    else:
+        doneQ = [didA, didB]
+
+    fname = Path("submittedHWExtra") / "hwx.{}.pdf".format(studentID)
     doc = fitz.open()
+
     for q in doneQ:
         # construct pages
-        for pn in range(random.randint(1, 3)):
-            page = doc.newPage(0, 612, 792)
+        for pn in range(random.randint(1, 2)):
+            page = doc.newPage(-1, 612, 792)  # put page at end
+            if pn == 0:  # put name and student number on start of Q
+                page = doc[0]
+                rect1 = fitz.Rect(20, 24, 300, 44)
+                rc = page.insertTextbox(
+                    rect1,
+                    "Extra for Q.{} -".format(q) + studentName + ":" + studentID,
+                    fontsize=14,
+                    color=[0.1, 0.1, 0.1],
+                    fontname="helv",
+                    fontfile=None,
+                    align=0,
+                )
+                assert rc > 0
             rect = fitz.Rect(
                 100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
             )
@@ -79,45 +97,27 @@ def makeHWOneFile(numberOfQuestions, paperNumber, studentID, studentName):
             )
             assert rc > 0
 
-        # put name and student number on p1 of the submission
-        page = doc[0]
-        rect1 = fitz.Rect(20, 24, 300, 44)
-        rc = page.insertTextbox(
-            rect1,
-            "Q.{} -".format(q) + studentName + ":" + studentID,
-            fontsize=12,
-            color=[0.1, 0.1, 0.1],
-            fontname="helv",
-            fontfile=None,
-            align=0,
-        )
-        assert rc > 0
-
     doc.save(fname)
 
 
-def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName, oneFile=False):
+def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName):
     did = random.randint(
         numberOfQuestions - 1, numberOfQuestions
     )  # some subset of questions.
     doneQ = sorted(random.sample(list(range(1, 1 + numberOfQuestions)), did))
-    if oneFile:
-        fname = Path("submittedHWOneFile") / "hw.{}.pdf".format(studentID)
-        doc = fitz.open()
     for q in doneQ:
-        if not oneFile:
-            fname = Path("submittedHWByQ") / "hwByQ.{}.{}.pdf".format(studentID, q)
-            doc = fitz.open()
+        fname = Path("submittedHWByQ") / "hwByQ.{}.{}.pdf".format(studentID, q)
+        doc = fitz.open()
         # construct pages
         for pn in range(random.randint(1, 3)):
-            page = doc.newPage(-1, 612, 792)
+            page = doc.newPage(-1, 612, 792)  # page at end
             if pn == 0:
-                # put name and student number on p1 of the submission
+                # put name and student number on p1 of the Question
                 rect1 = fitz.Rect(20, 24, 300, 44)
                 rc = page.insertTextbox(
                     rect1,
                     "Q.{} -".format(q) + studentName + ":" + studentID,
-                    fontsize=12,
+                    fontsize=14,
                     color=[0.1, 0.1, 0.1],
                     fontname="helv",
                     fontfile=None,
@@ -139,9 +139,6 @@ def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName, oneFile=F
                 align=0,
             )
             assert rc > 0
-        if not oneFile:
-            doc.save(fname)
-    if oneFile:
         doc.save(fname)
 
 
@@ -153,7 +150,7 @@ def main():
     args = parser.parse_args()
 
     os.makedirs("submittedHWByQ", exist_ok=True)
-    os.makedirs("submittedHWOneFile", exist_ok=True)
+    os.makedirs("submittedHWExtra", exist_ok=True)
 
     # some cludgery here for the moment
 
@@ -178,7 +175,10 @@ def main():
                 break
 
     for k in range(numberNamed):
-        makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], oneFile=True)
+        makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1])
+    # give a few extra pages to the first two students
+    for k in range(2):
+        makeHWExtra(numberOfQuestions, k, sid[k][0], sid[k][1])
 
 
 if __name__ == "__main__":
