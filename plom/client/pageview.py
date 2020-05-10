@@ -25,6 +25,7 @@ class PageView(QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # set the area outside the groupimage to be tiled grid png
+        self.setStyleSheet("background: transparent")
         self.setBackgroundBrush(QBrush(BackGrid(username)))
 
         # Nice antialiasing and scaling of objects (esp the groupimage)
