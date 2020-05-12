@@ -2441,14 +2441,16 @@ class PlomDB:
             return False
 
     def MgetWholePaper(self, testNumber, question):
-        tref = Test.get_or_none(Test.testNumber == testNumber, Test.scanned == True)
+        tref = Test.get_or_none(
+            Test.testNumber == testNumber
+        )  # show not totally scanned test.
         if tref is None:  # don't know that test - this shouldn't happen
             return [False]
         pageData = []
         pageFiles = []
         question = int(question)
         for p in tref.tpages.order_by(TPage.pageNumber):  # give TPages
-            if p.scanned is False:
+            if p.scanned is False:  # skip unscanned testpages
                 continue
             if p.group.groupType == "i":  # skip IDpages
                 continue
