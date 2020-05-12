@@ -597,9 +597,7 @@ class Manager(QWidget):
         if pvi[0].childCount() == 0:
             if pvi[0].text(3) == "scanned":
                 self.viewPage(
-                    int(pvi[0].parent().text(0)),
-                    int(pvi[0].text(1)),
-                    int(pvi[0].text(2)),
+                    int(pvi[0].parent().text(0)), pvi[0].text(1), int(pvi[0].text(2)),
                 )
             return
         # else fire up the whole test.
