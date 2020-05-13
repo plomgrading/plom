@@ -57,27 +57,32 @@ def main():
 
     # Start server into background
     serverproc = subprocess.Popen(split("plom-server launch"))
+
+    def closeServer(msg):
+        r = serverproc.returncode
+        print("Server has prematurely stopped with return code {}".format(r))
+        print(msg)
+        exit(r)
+
     time.sleep(1.0)
     try:
         serverproc.wait(1.0)
     except subprocess.TimeoutExpired:
         pass
     else:
-        r = serverproc.returncode
-        print("Server has prematurely stopped with return code {}".format(r))
+       closeServer("Server didn't start.  Is one already running?  See errors above.")
         # TODO: server could send specific return code for "address already in use"?
-        msg = "Server didn't start.  Is one already running?  See errors above."
-        # raise RuntimeError(msg) from None
-        print(msg)
-        exit(r)
 
     assert serverproc.returncode is None, "has the server died?"
 
     print("Server seems to be running, so we move on to uploading")
 
-    subprocess.check_call(split("plom-scan process fake_scribbled_exams.pdf"))
-    subprocess.check_call(split("plom-scan read -w 4567"))
-    subprocess.check_call(split("plom-scan upload -u -w 4567"))
+    try:
+        subprocess.check_call(split("plom-scan process fake_scribbled_exams.pdf"))
+        subprocess.check_call(split("plom-scan read -w 4567"))
+        subprocess.check_call(split("plom-scan upload -w 4567"))
+    except subprocess.CalledProcessError:
+        closeServer("A problem occured. Please see errors above.")
 
     time.sleep(0.5)
     try:
@@ -85,11 +90,7 @@ def main():
     except subprocess.TimeoutExpired:
         pass
     else:
-        r = serverproc.returncode
-        print("Server has prematurely stopped with return code {}".format(r))
-        msg = "Server may have unexpectedly died during uploading.  See errors above."
-        print(msg)
-        exit(r)
+        closeServer("Server may have unexpectedly died during uploading.  See errors above.")
 
     print('\n*** Now run "plom-client" ***\n')
     # TODO: output account info directly, perhaps just "user*"?
