@@ -21,7 +21,7 @@ RUN apt-get --no-install-recommends --yes install  \
     texlive-latex-extra dvipng latexmk texlive-fonts-recommended \
     mupdf libmupdf-dev \
     python3-tqdm libpango-1.0 libpangocairo-1.0 \
-    libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi \
+    libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi \
     appstream-util
 RUN pip3 install --upgrade pip
 
