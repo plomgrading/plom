@@ -10,7 +10,7 @@ Installing on Popular GNU/Linux Distros
 Fedora
 ------
 
-Tested on Fedora 31.  Some stuff from the package manager:
+Tested on Fedora 32.  Some stuff from the package manager:
 ```
   # sudo dnf install ImageMagick \
                      turbojpeg-devel libjpeg-turbo-devel python3-cffi \
@@ -24,6 +24,7 @@ Tested on Fedora 31.  Some stuff from the package manager:
                      tex-preview tex-dvipng texlive-scheme-basic tex-xwatermark \
                      tex-charter
 ```
+(Upcoming Fedora 33 has a sufficiently recent python3-PyMuPDF.)
 
 Other stuff we install locally with `pip`:
 ```
