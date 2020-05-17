@@ -14,7 +14,7 @@ Tested on Fedora 32.  Some stuff from the package manager:
 ```
   # sudo dnf install ImageMagick \
                      turbojpeg-devel libjpeg-turbo-devel python3-cffi \
-                     python3-passlib python3-pypng \
+                     python3-passlib python3-pypng python3-qt5 \
                      python3-jsmin python3-defusedxml python3-yaml \
                      python3-urllib3 python3-more-itertools \
                      python3-seaborn python3-matplotlib-qt5 python3-aiohttp \
