@@ -17,7 +17,7 @@ Tested on Fedora 32.  Some stuff from the package manager:
                      python3-passlib python3-pypng python3-qt5 \
                      python3-jsmin python3-defusedxml python3-yaml \
                      python3-urllib3 python3-more-itertools \
-                     python3-seaborn python3-matplotlib-qt5 python3-aiohttp \
+                     python3-seaborn python3-aiohttp \
                      python3-peewee python3-pandas python3-requests-toolbelt \
                      python3-pip python3-toml python3-weasyprint python3-pillow \
                      python3-tqdm python3-pytest \
