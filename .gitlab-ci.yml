@@ -202,4 +202,4 @@ job backgroundTest:
 job appstreamValid:
   stage: test
   script:
-    - appstream-util validate-relax org.plomgrading.PlomClient.mineinfo.xml
+    - appstream-util validate-relax org.plomgrading.PlomClient.metainfo.xml
