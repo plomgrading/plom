@@ -4,7 +4,7 @@ __credits__ = ["Andrew Rechnitzer"]
 __license__ = "AGPLv3"
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QBrush, QIcon, QResizeEvent
+from PyQt5.QtGui import QBrush, QIcon, QPixmap, QResizeEvent, QTransform
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -60,17 +60,17 @@ class SourceList(QListWidget):
         if ci is None:
             return None
         self.setCurrentItem(None)
-        print("Removing {}".format(ci.text()))
         return ci.text()
 
     def returnItem(self, name):
         if name in self.originalItems:
             self.addItem(QListWidgetItem(QIcon(self.originalItems[name]), name))
-        else:
+        elif name in self.potentialItems:
             it = QListWidgetItem(QIcon(self.potentialItems[name]), name)
-            it.setBackground(QBrush(Qt.green))
+            it.setBackground(QBrush(Qt.darkGreen))
             self.addItem(it)
-
+        else:
+            return
         self.sortItems()
 
     def viewImage(self, qi):
@@ -127,7 +127,7 @@ class SinkList(QListWidget):
             ci = QListWidgetItem(QIcon(self.potentialItems[name]), name)
         else:
             ci = QListWidgetItem(QIcon(self.originalItems[name]), name)
-            ci.setBackground(QBrush(Qt.green))
+            ci.setBackground(QBrush(Qt.darkGreen))
         self.addItem(ci)
         self.setCurrentItem(ci)
 
@@ -155,6 +155,23 @@ class SinkList(QListWidget):
             li = self.takeItem(n)
             self.insertItem(n, ri)
             self.insertItem(rc - n - 1, li)
+
+    def rotateImage(self, angle=90):
+        ci = self.currentItem()
+        name = ci.text()
+        rot = QTransform()
+        rot.rotate(angle)
+
+        if name in self.potentialItems:
+            rname = self.potentialItems[name]
+        else:
+            rname = self.originalItems[name]
+
+        cpix = QPixmap(rname)
+        npix = cpix.transformed(rot)
+        npix.save(rname, format="PNG")
+
+        ci.setIcon(QIcon(rname))
 
     def viewImage(self, qi):
         if qi.text() in self.originalItems:
@@ -199,6 +216,7 @@ class RearrangementViewer(QDialog):
         self.sLeftB = QPushButton("Shuffle Left")
         self.sRightB = QPushButton("Shuffle Right")
         self.reverseB = QPushButton("Reverse Order")
+        self.rotateB = QPushButton("Rotate 90 (local copy only)")
 
         self.page = ExamViewWindow([])
 
@@ -222,6 +240,7 @@ class RearrangementViewer(QDialog):
         vb3 = QVBoxLayout()
         vb3.addWidget(self.acceptB)
         vb3.addLayout(vb2)
+        vb3.addWidget(self.rotateB)
         vb3.addWidget(self.closeB)
         hb0.addLayout(vb1)
         hb0.addLayout(vb3)
@@ -235,6 +254,7 @@ class RearrangementViewer(QDialog):
         self.sLeftB.clicked.connect(self.shuffleLeft)
         self.sRightB.clicked.connect(self.shuffleRight)
         self.reverseB.clicked.connect(self.reverseOrder)
+        self.rotateB.clicked.connect(self.rotateImage)
         self.sRightB.clicked.connect(self.shuffleRight)
         self.appendB.clicked.connect(self.sourceToSink)
         self.removeB.clicked.connect(self.sinkToSource)
@@ -268,6 +288,9 @@ class RearrangementViewer(QDialog):
     def reverseOrder(self):
         self.listB.reverseOrder()
 
+    def rotateImage(self):
+        self.listB.rotateImage()
+
     def viewImage(self, fname):
         self.page.updateImage(fname)
 
@@ -281,7 +304,8 @@ class RearrangementViewer(QDialog):
         self.permute = []
         for n in self.listB.getNameList():
             self.permute.append(self.nameToIrefNFile[n])
-            # return pairs of iref and file
+            # return pairs of [iref, file]
+        print(self.permute)
         self.accept()
 
 

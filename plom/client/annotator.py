@@ -93,7 +93,6 @@ class Annotator(QWidget):
     ann_upload = pyqtSignal(str, list)
     ann_done_closing = pyqtSignal(str)
     ann_done_reject = pyqtSignal(str)
-    # ann_done_shuffle = pyqtSignal(str, list)
 
     def __init__(self, username, mouseHand, parent=None, initialData=None):
         super(Annotator, self).__init__()
@@ -743,13 +742,6 @@ class Annotator(QWidget):
         self._priv_force_close = True
         self.close()
 
-    # @pyqtSlot()
-    # def shufflePageImages(self, imageList):
-    #     self._priv_shuffle = True
-    #     self._priv_shuffleList = imageList  # is list of pairs [im-ref, filename]
-    #     print("SHUFFLE = {}".format(imageList))
-    #     self.close()
-
     def setMiscShortCuts(self):
         # shortcuts for next paper
         self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
@@ -1210,11 +1202,6 @@ class Annotator(QWidget):
             self.ann_done_closing.emit(self.tgv)
             ce.accept()
             return
-
-        # if getattr(self, "_priv_shuffle", False):
-        #     self.ann_done_shuffle.emit(self.tgv, self._priv_shuffleList)
-        #     ce.accept()
-        #     return
 
         # We are here b/c of cancel button, titlebar close, or related
         if self.scene and self.scene.areThereAnnotations():
