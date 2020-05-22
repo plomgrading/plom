@@ -288,6 +288,7 @@ class Annotator(QWidget):
                                 rebuild those objects, etc.
 
         Returns:
+            None -- Modifies many instance vars.
 
         """
         self.tgvID = tgvID

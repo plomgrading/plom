@@ -9,12 +9,12 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_annotator_rhm(object):
     def setupUi(self, annotator_rhm):
         annotator_rhm.setObjectName("annotator_rhm")
         annotator_rhm.setWindowModality(QtCore.Qt.WindowModal)
         annotator_rhm.resize(862, 670)
+
         self.horizontalLayout = QtWidgets.QHBoxLayout(annotator_rhm)
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout.setSpacing(0)
@@ -23,21 +23,28 @@ class Ui_annotator_rhm(object):
         self.hideableBox.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.hideableBox.setFrameShadow(QtWidgets.QFrame.Raised)
         self.hideableBox.setObjectName("hideableBox")
+
         self.verticalLayout = QtWidgets.QVBoxLayout(self.hideableBox)
         self.verticalLayout.setObjectName("verticalLayout")
+
         self.frame_1 = QtWidgets.QFrame(self.hideableBox)
         self.frame_1.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.frame_1.setFrameShadow(QtWidgets.QFrame.Plain)
         self.frame_1.setObjectName("frame_1")
+
         self.modeLayout = QtWidgets.QHBoxLayout(self.frame_1)
         self.modeLayout.setContentsMargins(0, 0, 0, 0)
         self.modeLayout.setObjectName("modeLayout")
+
         self.hamMenuButton = QtWidgets.QPushButton(self.frame_1)
         self.hamMenuButton.setMaximumSize(QtCore.QSize(42, 16777215))
+
         self.hamMenuButton.setObjectName("hamMenuButton")
         self.modeLayout.addWidget(self.hamMenuButton)
+
         self.keyHelpButton = QtWidgets.QPushButton(self.frame_1)
         self.keyHelpButton.setObjectName("keyHelpButton")
+
         self.modeLayout.addWidget(self.keyHelpButton)
         self.viewButton = QtWidgets.QPushButton(self.frame_1)
         self.viewButton.setObjectName("viewButton")
@@ -75,96 +82,95 @@ class Ui_annotator_rhm(object):
         sizePolicy.setHeightForWidth(self.frameTools.sizePolicy().hasHeightForWidth())
         self.frameTools.setSizePolicy(sizePolicy)
         self.frameTools.setObjectName("frameTools")
+
         self.toolLayout = QtWidgets.QGridLayout(self.frameTools)
         self.toolLayout.setContentsMargins(0, 0, 0, 0)
         self.toolLayout.setSpacing(3)
         self.toolLayout.setObjectName("toolLayout")
+
+        #configurate all buttons:
+
         self.penButton = QtWidgets.QToolButton(self.frameTools)
-        self.penButton.setMinimumSize(QtCore.QSize(45, 0))
-        self.penButton.setCheckable(True)
-        self.penButton.setAutoExclusive(True)
-        self.penButton.setObjectName("penButton")
-        self.toolLayout.addWidget(self.penButton, 0, 4, 1, 1)
         self.textButton = QtWidgets.QToolButton(self.frameTools)
-        self.textButton.setMinimumSize(QtCore.QSize(45, 0))
-        self.textButton.setCheckable(True)
-        self.textButton.setAutoExclusive(True)
-        self.textButton.setObjectName("textButton")
+        self.panButton = QtWidgets.QToolButton(self.frameTools)
+        self.lineButton = QtWidgets.QToolButton(self.frameTools)
+        self.tickButton = QtWidgets.QToolButton(self.frameTools)
+        self.moveButton = QtWidgets.QToolButton(self.frameTools)
+        self.zoomButton = QtWidgets.QToolButton(self.frameTools)
+        self.deleteButton = QtWidgets.QToolButton(self.frameTools)
+        self.commentButton = QtWidgets.QToolButton(self.frameTools)
+        self.crossButton = QtWidgets.QToolButton(self.frameTools)
+        self.boxButton = QtWidgets.QToolButton(self.frameTools)
+
+        buttons = [[self.penButton, "penButton", False],
+                   [self.textButton, "textButton", False],
+                   [self.panButton, "panButton", False],
+                   [self.lineButton, "lineButton", False],
+                   [self.tickButton, "tickButton", True],
+                   [self.moveButton, "moveButton", False],
+                   [self.zoomButton, "zoomButton", False],
+                   [self.deleteButton, "deleteButton", False],
+                   [self.commentButton, "commentButton", True],
+                   [self.crossButton, "crossButton", False],
+                   [self.boxButton, "boxButton", False]]
+
+        def configButton(button, name, w, h, setTipNeg1):
+            """
+            Configures inputted button standard checkable, auto exclusive button.
+            Modifies: button
+            :param button: button to be configured
+            :param name: string name of the button
+            :param w: width (typically 45)
+            :param h: height (typically 0)
+            :param setTipNeg1: True if Tool Tip Duration should be set to -1, False otherwise.
+            """
+            button.setMinimumSize(QtCore.QSize(w, h))
+            if setTipNeg1:
+                button.setToolTipDuration(-1)
+            button.setCheckable(True)
+            button.setAutoExclusive(True)
+            button.setObjectName(name)
+
+        for button in buttons:
+            configButton(button[0], button[1], 45, 0, button[2])
+
+        self.toolLayout.addWidget(self.penButton, 0, 4, 1, 1)
         self.toolLayout.addWidget(self.textButton, 1, 4, 1, 1)
+
         self.commentDownButton = QtWidgets.QToolButton(self.frameTools)
         self.commentDownButton.setMinimumSize(QtCore.QSize(45, 0))
         self.commentDownButton.setToolTipDuration(-1)
         self.commentDownButton.setObjectName("commentDownButton")
         self.toolLayout.addWidget(self.commentDownButton, 2, 3, 1, 1)
+
         self.commentUpButton = QtWidgets.QToolButton(self.frameTools)
         self.commentUpButton.setMinimumSize(QtCore.QSize(45, 0))
         self.commentUpButton.setToolTipDuration(-1)
         self.commentUpButton.setObjectName("commentUpButton")
         self.toolLayout.addWidget(self.commentUpButton, 0, 3, 1, 1)
-        self.panButton = QtWidgets.QToolButton(self.frameTools)
-        self.panButton.setMinimumSize(QtCore.QSize(45, 0))
-        self.panButton.setCheckable(True)
-        self.panButton.setAutoExclusive(True)
-        self.panButton.setObjectName("panButton")
+
         self.toolLayout.addWidget(self.panButton, 0, 0, 1, 1)
-        self.lineButton = QtWidgets.QToolButton(self.frameTools)
-        self.lineButton.setMinimumSize(QtCore.QSize(45, 0))
-        self.lineButton.setCheckable(True)
-        self.lineButton.setAutoExclusive(True)
-        self.lineButton.setObjectName("lineButton")
         self.toolLayout.addWidget(self.lineButton, 2, 4, 1, 1)
-        self.tickButton = QtWidgets.QToolButton(self.frameTools)
-        self.tickButton.setMinimumSize(QtCore.QSize(45, 0))
-        self.tickButton.setToolTipDuration(-1)
-        self.tickButton.setCheckable(True)
-        self.tickButton.setAutoExclusive(True)
-        self.tickButton.setObjectName("tickButton")
         self.toolLayout.addWidget(self.tickButton, 1, 2, 1, 1)
-        self.moveButton = QtWidgets.QToolButton(self.frameTools)
-        self.moveButton.setMinimumSize(QtCore.QSize(45, 0))
-        self.moveButton.setCheckable(True)
-        self.moveButton.setAutoExclusive(True)
-        self.moveButton.setObjectName("moveButton")
         self.toolLayout.addWidget(self.moveButton, 2, 0, 1, 1)
+
         self.redoButton = QtWidgets.QToolButton(self.frameTools)
         self.redoButton.setMinimumSize(QtCore.QSize(45, 0))
         self.redoButton.setObjectName("redoButton")
         self.toolLayout.addWidget(self.redoButton, 0, 1, 1, 1)
-        self.zoomButton = QtWidgets.QToolButton(self.frameTools)
-        self.zoomButton.setMinimumSize(QtCore.QSize(45, 0))
-        self.zoomButton.setCheckable(True)
-        self.zoomButton.setAutoExclusive(True)
-        self.zoomButton.setObjectName("zoomButton")
+
         self.toolLayout.addWidget(self.zoomButton, 1, 0, 1, 1)
-        self.deleteButton = QtWidgets.QToolButton(self.frameTools)
-        self.deleteButton.setMinimumSize(QtCore.QSize(45, 0))
-        self.deleteButton.setCheckable(True)
-        self.deleteButton.setAutoExclusive(True)
-        self.deleteButton.setObjectName("deleteButton")
         self.toolLayout.addWidget(self.deleteButton, 2, 1, 1, 1)
-        self.commentButton = QtWidgets.QToolButton(self.frameTools)
-        self.commentButton.setMinimumSize(QtCore.QSize(45, 0))
-        self.commentButton.setToolTipDuration(-1)
-        self.commentButton.setCheckable(True)
-        self.commentButton.setAutoExclusive(True)
-        self.commentButton.setObjectName("commentButton")
         self.toolLayout.addWidget(self.commentButton, 1, 3, 1, 1)
+
         self.undoButton = QtWidgets.QToolButton(self.frameTools)
         self.undoButton.setMinimumSize(QtCore.QSize(45, 0))
         self.undoButton.setObjectName("undoButton")
+
         self.toolLayout.addWidget(self.undoButton, 1, 1, 1, 1)
-        self.crossButton = QtWidgets.QToolButton(self.frameTools)
-        self.crossButton.setMinimumSize(QtCore.QSize(45, 0))
-        self.crossButton.setCheckable(True)
-        self.crossButton.setAutoExclusive(True)
-        self.crossButton.setObjectName("crossButton")
         self.toolLayout.addWidget(self.crossButton, 0, 2, 1, 1)
-        self.boxButton = QtWidgets.QToolButton(self.frameTools)
-        self.boxButton.setMinimumSize(QtCore.QSize(45, 0))
-        self.boxButton.setCheckable(True)
-        self.boxButton.setAutoExclusive(True)
-        self.boxButton.setObjectName("boxButton")
         self.toolLayout.addWidget(self.boxButton, 2, 2, 1, 1)
+
         self.verticalLayout.addWidget(self.frameTools, 0, QtCore.Qt.AlignHCenter)
         self.frame_4 = QtWidgets.QFrame(self.hideableBox)
         self.frame_4.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -263,7 +269,7 @@ class Ui_annotator_rhm(object):
         self.revealLayout2.setContentsMargins(3, 3, 3, 3)
         self.revealLayout2.setSpacing(3)
         self.revealLayout2.setObjectName("revealLayout2")
-        self.verticalLayout_2.addWidget(self.revealBox2, 0, QtCore.Qt.AlignHCenter|QtCore.Qt.AlignBottom)
+        self.verticalLayout_2.addWidget(self.revealBox2, 0, QtCore.Qt.AlignHCenter | QtCore.Qt.AlignBottom)
         self.horizontalLayout.addWidget(self.revealBox0)
         self.pageFrame = QtWidgets.QFrame(annotator_rhm)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
@@ -294,7 +300,8 @@ class Ui_annotator_rhm(object):
         self.finishedButton.setText(_translate("annotator_rhm", "Next"))
         self.finishNoRelaunchButton.setToolTip(_translate("annotator_rhm", "Save and return to marker window"))
         self.finishNoRelaunchButton.setText(_translate("annotator_rhm", "Done"))
-        self.cancelButton.setToolTip(_translate("annotator_rhm", "Cancel the current annotations and return to marker window"))
+        self.cancelButton.setToolTip(
+            _translate("annotator_rhm", "Cancel the current annotations and return to marker window"))
         self.cancelButton.setText(_translate("annotator_rhm", "&Cancel"))
         self.markLabel.setText(_translate("annotator_rhm", "kk out of nn"))
         self.penButton.setToolTip(_translate("annotator_rhm", "press t"))
