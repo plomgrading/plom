@@ -750,7 +750,7 @@ class Annotator(QWidget):
             pass
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
-            self.scene.setToolMode(newMode)
+            self.scene.setMode(newMode)
             self.view.setCursor(newCursor)
             # set the modelabel
             self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
