@@ -20,7 +20,7 @@ from plom import SpecVerifier, SpecParser
 from plom import specdir
 from plom.produce import buildAllPapers, confirmProcessed, confirmNamed
 from plom.produce import paperdir
-from plom.produce import processClasslist
+from plom.produce import process_class_list
 from plom.produce.demotools import buildDemoSourceFiles
 
 
@@ -167,7 +167,7 @@ spP.add_argument(
 spL = sub.add_parser(
     "class",
     help="Read in a classlist",
-    epilog=processClasslist.__doc__,
+    epilog=process_class_list.__doc__,
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 group = spL.add_mutually_exclusive_group(required=True)
@@ -218,7 +218,7 @@ def main():
         parseAndVerifySpecification(fname)
     elif args.command == "class":
         # process the class list and copy into place
-        processClasslist(args.classlist, args.demo)
+        process_class_list(args.classlist, args.demo)
     elif args.command == "make":
         # get building.
         buildDatabaseAndPapers(args.blank)
