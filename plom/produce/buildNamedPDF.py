@@ -130,7 +130,7 @@ def build_all_papers(spec, DB_file_name, named=False):
 
     # Same as:
     # for x in make_PDF_args:
-    #     makePDF(*x)
+    #     make_PDF(*x)
     num_PDFs = len(make_PDF_args)
     with Pool() as pool:
         r = list(tqdm(pool.imap_unordered(_make_PDF, make_PDF_args), total=num_PDFs))
