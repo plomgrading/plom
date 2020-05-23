@@ -66,6 +66,7 @@ possibleAns = [
 
 
 def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
+    print("bugger")
     """Simulate writing an exam by scribbling names, numbers, and answers.
 
     Args:
