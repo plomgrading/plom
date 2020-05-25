@@ -260,7 +260,9 @@ class Annotator(QWidget):
         self.saveName = None
         # self.destroyMarkHandler()
 
-    def loadNewTGV(self, tgvID, testName, paperdir, fnames, saveName, maxMark, markStyle, plomDict):
+    def loadNewTGV(
+        self, tgvID, testName, paperdir, fnames, saveName, maxMark, markStyle, plomDict
+    ):
         """Loads new Data into the Toggle View window for marking.
 
         TODO: maintain current tool not working yet: #799.
@@ -318,7 +320,9 @@ class Annotator(QWidget):
 
         # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
         self.comment_widget.setStyle(self.markStyle)
-        self.comment_widget.maxMark = maxMark  # TODO: add helper?  combine with changeMark?
+        self.comment_widget.maxMark = (
+            maxMark  # TODO: add helper?  combine with changeMark?
+        )
         self.comment_widget.changeMark(self.score)
         self.comment_widget.setQuestionNumberFromTGV(tgvID)
         self.comment_widget.setTestname(testName)
@@ -348,9 +352,7 @@ class Annotator(QWidget):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
         if self.scene:
             self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
-        self.ui.markLabel.setText(
-            "{} out of {}".format(self.score, self.maxMark)
-        )
+        self.ui.markLabel.setText("{} out of {}".format(self.score, self.maxMark))
 
     def loadCursors(self):
         """
@@ -479,20 +481,22 @@ class Annotator(QWidget):
         # self.ui.finishedButton.setStyleSheet("padding-left: 1px; padding-right: 1px;")
         self.ui.finishedButton.setMaximumWidth(44)
 
-        to_reveal = [[self.ui.penButton, 4, 1],
-                     [self.ui.lineButton, 4, 2],
-                     [self.ui.tickButton, 5, 1],
-                     [self.ui.crossButton, 5, 2],
-                     [self.ui.textButton, 6, 1],
-                     [self.ui.commentButton, 6, 2],
-                     [self.ui.boxButton, 7, 1],
-                     [self.ui.deltaButton, 7, 2],
-                     [self.ui.deleteButton, 8, 1],
-                     [self.ui.panButton, 8, 2],
-                     [self.ui.undoButton, 8, 1],
-                     [self.ui.redoButton, 8, 2],
-                     [self.ui.zoomButton, 9, 1],
-                     [self.ui.moveButton, 9, 2]]
+        to_reveal = [
+            [self.ui.penButton, 4, 1],
+            [self.ui.lineButton, 4, 2],
+            [self.ui.tickButton, 5, 1],
+            [self.ui.crossButton, 5, 2],
+            [self.ui.textButton, 6, 1],
+            [self.ui.commentButton, 6, 2],
+            [self.ui.boxButton, 7, 1],
+            [self.ui.deltaButton, 7, 2],
+            [self.ui.deleteButton, 8, 1],
+            [self.ui.panButton, 8, 2],
+            [self.ui.undoButton, 8, 1],
+            [self.ui.redoButton, 8, 2],
+            [self.ui.zoomButton, 9, 1],
+            [self.ui.moveButton, 9, 2],
+        ]
 
         self.ui.revealLayout.addWidget(
             self.ui.zoomCB, 1, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
@@ -533,12 +537,30 @@ class Annotator(QWidget):
             Returns:
                 None -- adds tool widgets to self.ui.toolLayout
             """
-            tools = [[self.ui.panButton, self.ui.redoButton, self.ui.crossButton, self.ui.commentUpButton,
-                      self.ui.penButton],
-                     [self.ui.zoomButton, self.ui.undoButton, self.ui.tickButton, self.ui.commentButton,
-                      self.ui.textButton],
-                     [self.ui.moveButton, self.ui.deleteButton, self.ui.boxButton, self.ui.commentDownButton,
-                      self.ui.lineButton, self.ui.deltaButton]]
+            tools = [
+                [
+                    self.ui.panButton,
+                    self.ui.redoButton,
+                    self.ui.crossButton,
+                    self.ui.commentUpButton,
+                    self.ui.penButton,
+                ],
+                [
+                    self.ui.zoomButton,
+                    self.ui.undoButton,
+                    self.ui.tickButton,
+                    self.ui.commentButton,
+                    self.ui.textButton,
+                ],
+                [
+                    self.ui.moveButton,
+                    self.ui.deleteButton,
+                    self.ui.boxButton,
+                    self.ui.commentDownButton,
+                    self.ui.lineButton,
+                    self.ui.deltaButton,
+                ],
+            ]
 
             row_index = 0
             for row in tools:
@@ -588,7 +610,9 @@ class Annotator(QWidget):
         if self.testViewFiles is None:
             testNumber = self.tgvID[:4]
             log.debug("wholePage: downloading files for testnum {}".format(testNumber))
-            pageNames, self.testViewFiles = self.parentMarkerUI.downloadWholePaper(testNumber)
+            pageNames, self.testViewFiles = self.parentMarkerUI.downloadWholePaper(
+                testNumber
+            )
             log.debug(
                 "wholePage: pageNames = {}, viewFiles = {}".format(
                     pageNames, self.testViewFiles
@@ -722,7 +746,9 @@ class Annotator(QWidget):
         if isinstance(self.sender(), QPushButton):
             # has come from mark-change button, markHandler does its own styling
             pass
-        elif isinstance(self.sender(), QToolButton):  # only tool buttons are the mode-changing ones.
+        elif isinstance(
+            self.sender(), QToolButton
+        ):  # only tool buttons are the mode-changing ones.
             self.sender().setChecked(True)
             self.markHandler.clearButtonStyle()
         elif self.sender() is self.comment_widget.CL:
@@ -782,10 +808,18 @@ class Annotator(QWidget):
             base_path = os.path.join(os.path.dirname(__file__), "icons")
             # base_path = "./icons"
 
-        self.setIcon(self.ui.boxButton, "box", "{}/rectangle_highlight.svg".format(base_path))
+        self.setIcon(
+            self.ui.boxButton, "box", "{}/rectangle_highlight.svg".format(base_path)
+        )
         self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
-        self.setIcon(self.ui.commentDownButton, "com down", "{}/comment_down.svg".format(base_path))
-        self.setIcon(self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path))
+        self.setIcon(
+            self.ui.commentDownButton,
+            "com down",
+            "{}/comment_down.svg".format(base_path),
+        )
+        self.setIcon(
+            self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path)
+        )
         self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
         self.setIcon(self.ui.deleteButton, "delete", "{}/delete.svg".format(base_path))
         self.setIcon(self.ui.deltaButton, "delta", "{}/delta.svg".format(base_path))
@@ -1170,15 +1204,21 @@ class Annotator(QWidget):
 
         """
         self.parentMarkerUI.annotatorSettings["geometry"] = self.saveGeometry()
-        self.parentMarkerUI.annotatorSettings["viewRectangle"] = self.view.getCurrentViewRect()
+        self.parentMarkerUI.annotatorSettings[
+            "viewRectangle"
+        ] = self.view.getCurrentViewRect()
         self.parentMarkerUI.annotatorSettings["markWarnings"] = self.markWarn
         self.parentMarkerUI.annotatorSettings["commentWarnings"] = self.commentWarn
-        self.parentMarkerUI.annotatorSettings["zoomState"] = self.ui.zoomCB.currentIndex()
+        self.parentMarkerUI.annotatorSettings[
+            "zoomState"
+        ] = self.ui.zoomCB.currentIndex()
         self.parentMarkerUI.annotatorSettings["tool"] = self.scene.mode
         if self.scene.mode == "delta":
             self.parentMarkerUI.annotatorSettings["delta"] = self.scene.markDelta
         if self.scene.mode == "comment":
-            self.parentMarkerUI.annotatorSettings["comment"] = self.comment_widget.getCurrentItemRow()
+            self.parentMarkerUI.annotatorSettings[
+                "comment"
+            ] = self.comment_widget.getCurrentItemRow()
 
         if self.ui.hideableBox.isVisible():
             self.parentMarkerUI.annotatorSettings["compact"] = False
@@ -1210,9 +1250,9 @@ class Annotator(QWidget):
 
         # warn if points where lost but insufficient annotations
         if (
-                self.commentWarn
-                and 0 < self.score < self.maxMark
-                and self.scene.hasOnlyTicksCrossesDeltas()
+            self.commentWarn
+            and 0 < self.score < self.maxMark
+            and self.scene.hasOnlyTicksCrossesDeltas()
         ):
             msg = SimpleMessageCheckBox(
                 "<p>You have given neither comments nor detailed annotations "
