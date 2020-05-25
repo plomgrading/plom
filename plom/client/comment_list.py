@@ -190,7 +190,7 @@ class CommentWidget(QWidget):
 
     def setQuestionNumberFromTGV(self, tgv):
         """Extract question number from TGV, set, and refresh view."""
-        n = int(self.parent.tgv[5:7])
+        n = int(self.parent.tgvID[5:7])
         self.setQuestionNumber(n)
 
     def setStyle(self, markStyle):
