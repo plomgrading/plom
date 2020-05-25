@@ -16,6 +16,11 @@ from plom.textools import buildLaTeX
 
 
 def buildDemoSourceFiles():
+    """Builds the LaTeX source files for the demo.
+
+    Returns:
+        bool -- Returns True if successful, False if it failed.
+    """
     os.makedirs("sourceVersions", exist_ok=True)
     print("LaTeXing example exam file: latexTemplate.tex -> version1.pdf")
     content = pkg_resources.resource_string("plom", "testTemplates/latexTemplate.tex")
@@ -30,11 +35,17 @@ def buildDemoSourceFiles():
 
 
 def buildLaTeXExam2(src, filename):
-    """Compile a string or bytes of latex.
+    """Compile a string or bytes of latex. Silent function.
 
-    Silent and return True if everything worked, print to stdout and
+    Arguments:
+        src {str, bytes} -- The LaTeX resource to build.
+        filename {str} -- The name of the file.
+
+    Returns:
+        bool -- Returns True if everything worked, print to stdout and
     return False if latex failed.
     """
+
     with open(filename, "wb") as f:
         r, out = buildLaTeX(src, f)
     if r:
@@ -52,3 +63,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

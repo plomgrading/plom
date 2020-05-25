@@ -15,6 +15,9 @@ def buildExamDatabase(spec, dbFname):
     """Build the metadata for a bunch of exams from a spec file
     and inserts all into the database.
 
+    Arguments:
+        spec {dict} -- The spec file for the database that is being setup.
+        dbFname {str} -- The name of the database we are creating.
     """
 
     random.seed(spec["privateSeed"])
@@ -41,8 +44,8 @@ def buildExamDatabase(spec, dbFname):
             errFlag = True
 
         for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
-            gs = str(g + 1)  # now 1,2,3,...
-            if spec["question"][gs]["select"] == "fix":  # all are version 1
+            gs = str(g + 1)  # now a str and 1,2,3,...
+            if spec["question"][gs]["select"] == "fix":  # there is only one version so all are version 1
                 v = 1
                 vstr = "f{}".format(v)
             elif (
@@ -67,3 +70,4 @@ def buildExamDatabase(spec, dbFname):
             "There were errors during database creation. Remove the database and try again."
         )
         print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
+
