@@ -86,9 +86,9 @@ tipText = {
 
 
 class Annotator(QWidget):
-    """ The main annotation window for annotating group-images.
+    """The main annotation window for annotating group-images.
 
-        A subclass of QWidget
+    A subclass of QWidget
     """
 
     annotator_upload = pyqtSignal(str, list)
