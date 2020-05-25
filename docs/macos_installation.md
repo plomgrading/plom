@@ -4,8 +4,8 @@ __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald"
 __license__ = "GFDL"
  -->
-Installing on Popular MacOS
-=======================================
+Installing on MacOS
+===================
 
 
 Tested on Catalina 10.15.4. Some stuff from the package manager (Homebrew used in this case) :
@@ -27,8 +27,8 @@ Other stuff we install locally with `pip`:
 ```
 $ pip3 install passlib \
                pypng defusedxml pyYAML urllib3 more-itertools seaborn \
-               matplotlib PyQt5 aiohttp peewee pandas requests-toolbelt \
-               toml weasyprint pillow tqdm pytest tex jpegtran-cffi 
+               PyQt5 aiohttp peewee pandas requests-toolbelt toml\
+               weasyprint pillow tqdm pytest tex jpegtran-cffi 
 ```
 
 More dependencies for the tensorflow-based ID reader:

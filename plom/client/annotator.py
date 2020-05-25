@@ -86,12 +86,9 @@ tipText = {
 
 
 class Annotator(QWidget):
-    """
-    A subclass of QWidget.
+    """ The main annotation window for annotating group-images.
 
-    The main annotation window for annotating group-images
-    and assigning marks.
-
+        A subclass of QWidget
     """
 
     annotator_upload = pyqtSignal(str, list)
@@ -123,7 +120,7 @@ class Annotator(QWidget):
                                                    2 = mark-up = mark starts at 0 and user increments it
                                                    3 = mark-down = mark starts at max and user decrements it
                                 plomDict (dict) -- a dictionary of annotation information.
-                                                A very simple dict that contains sufficient information to recreate the
+                                                A dict that contains sufficient information to recreate the
                                                 annotation objects on the page if you go back to continue annotating a
                                                 question. ie - is it mark up/down, where are all the objects, how to
                                                 rebuild those objects, etc.
@@ -217,7 +214,7 @@ class Annotator(QWidget):
         self.ui.hamMenuButton.setMenu(m)
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
 
-    #TODO: ask andrew what this does....
+    # TODO: ask andrew what this does....
     def menuDummy(self):
         """
         Prints "TODO: menu placeholder 1"
@@ -266,7 +263,7 @@ class Annotator(QWidget):
     def loadNewTGV(self, tgvID, testName, paperdir, fnames, saveName, maxMark, markStyle, plomDict):
         """
         TODO: maintain current tool not working yet.
-        [Loads new Data into the Toggle View window for marking.]
+        Loads new Data into the Toggle View window for marking.
 
         Args:
             tgvID (str) --  Test-Group-Version ID.
@@ -345,7 +342,7 @@ class Annotator(QWidget):
         Checks if page scene (self.scene) is not none, in which case
 
         Returns:
-            [None]
+            None
 
         """
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
@@ -454,7 +451,7 @@ class Annotator(QWidget):
 
     def toggleTools(self):
         """
-        Shows/Hides tools making more space to view the group-image
+        Shows/Hides tools making more space to view the group-image.
 
         Returns:
             None -- modifies self.ui.hideableBox
@@ -467,7 +464,7 @@ class Annotator(QWidget):
 
     def narrowLayout(self):
         """
-        Changes view to narrow Layout style
+        Changes view to narrow Layout style.
 
         Returns:
             None -- modifies self.ui
@@ -506,7 +503,7 @@ class Annotator(QWidget):
 
         for button in to_reveal:
             self.ui.revealLayout.addWidget(
-                    button[0], button[1], button[2], Qt.AlignHCenter | Qt.AlignTop
+                button[0], button[1], button[2], Qt.AlignHCenter | Qt.AlignTop
             )
 
         self.ui.deltaButton.setVisible(True)
@@ -608,7 +605,8 @@ class Annotator(QWidget):
 
     def doneViewingPaper(self):
         """
-        Logs that user is done with testViewFiles,
+        Called when user is done with testViewFiles.
+        Adds the action to log.debug and informs self.parentMarkerUI.
 
         Returns:
             None -- Modifies self.testView
@@ -623,13 +621,7 @@ class Annotator(QWidget):
             self.testView = None
 
     def keyPopUp(self):
-        """
-        Sets KeyPress shortcuts.
-
-        Returns:
-            None
-
-        """
+        """ Sets KeyPress shortcuts. """
         kp = KeyHelp()
         # Pop it up.
         kp.exec_()
@@ -659,7 +651,6 @@ class Annotator(QWidget):
         self.view.connectScene(self.scene)
         # scene knows which views are connected via self.views()
         log.debug("Scene has this list of views: {}".format(self.scene.views()))
-
 
     def swapMaxNorm(self):
         """
@@ -693,6 +684,8 @@ class Annotator(QWidget):
 
     def keyPressEvent(self, event):
         """
+        Overrides QWidget.keyPressEvent()
+
         Translates key-presses into tool-button presses if
         appropriate.
 
@@ -812,13 +805,7 @@ class Annotator(QWidget):
 
     @pyqtSlot()
     def saveAndGetNext(self):
-        """
-        Saves the current annotations, and moves on to the next paper.
-
-        Returns:
-            None -- modifies
-
-        """
+        """ Saves the current annotations, and moves on to the next paper. """
         if self.scene:
             if not self.saveAnnotations():
                 return
@@ -889,40 +876,20 @@ class Annotator(QWidget):
         self.slowDepanShortCut.activated.connect(lambda: self.view.depanThrough(0.02))
 
     def undo(self):
-        """
-        Undoes the last action in the UI.
-
-        Returns:
-            None -- Modifies self.scene
-        """
+        """ Undoes the last action in the UI. """
         self.scene.undo()
 
     def redo(self):
-        """
-        Redoes the last action in the UI.
-
-        Returns:
-            None -- Modifies self.scene
-        """
+        """ Redoes the last action in the UI. """
         self.scene.redo()
 
     # Simple mode change functions
     def boxMode(self):
-        """
-        Changes the tool to box.
-
-        Returns:
-            None -- Modifies toolMode
-        """
+        """ Changes the tool to box. """
         self.setToolMode("box", self.cursorBox)
 
     def commentMode(self):
-        """
-        Changes the tool to comment.
-
-        Returns:
-            None -- Modifies toolMode
-        """
+        """ Changes the tool to comment."""
         if self.scene.mode == "comment":
             self.comment_widget.nextItem()
         else:
@@ -930,65 +897,61 @@ class Annotator(QWidget):
         self.comment_widget.CL.handleClick()
 
     def crossMode(self):
-        """
-        Changes the tool to crossMode.
-
-        Returns:
-            None -- Modifies toolMode
-        """
+        """ Changes the tool to crossMode. """
         self.setToolMode("cross", self.cursorCross)
 
     def deleteMode(self):
-        """
-        Changes the tool to delete.
-
-        Returns:
-            None -- Modifies toolMode
-        """
+        """ Changes the tool to delete. """
         self.setToolMode("delete", self.cursorDelete)
 
     def deltaButtonMode(self):
-        """
-        Changes the tool to the delta button.
-
-        Returns:
-            None -- Modifies toolMode
-        """
+        """ Changes the tool to the delta button. """
         if QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier:
             self.ui.deltaButton.showMenu()
         else:
             self.setToolMode("delta", Qt.IBeamCursor)
 
     def lineMode(self):
-        """
-        Changes the tool to the line button.
-
-        Returns:
-            None -- Modifies toolMode
-        """
+        """ Changes the tool to the line button.  """
         self.setToolMode("line", self.cursorLine)
 
     def moveMode(self):
+        """ Changes the tool to the move button. """
         self.setToolMode("move", Qt.OpenHandCursor)
 
     def panMode(self):
+        """ Changes the tool to the pan button. """
         self.setToolMode("pan", Qt.OpenHandCursor)
         # The pan button also needs to change dragmode in the view
         self.view.setDragMode(1)
 
     def penMode(self):
+        """ Changes the tool to the pen button. """
         self.setToolMode("pen", self.cursorPen)
 
     def textMode(self):
+        """ Changes the tool to the text button. """
         self.setToolMode("text", Qt.IBeamCursor)
 
     def tickMode(self):
+        """ Changes the tool to the tick button. """
         self.setToolMode("tick", self.cursorTick)
 
     def zoomMode(self):
+        """ Changes the tool to the zoom button. """
         self.setToolMode("zoom", Qt.SizeFDiagCursor)
 
     def loadModeFromBefore(self, mode, aux=None):
+        """
+        Loads mode from previous.
+
+        Args:
+            mode (str): String corresponding to the toolMode to be loaded
+            aux (int) : the row of the current comment if applicable.
+
+        Returns:
+
+        """
         self.loadModes = {
             "box": lambda: self.ui.boxButton.animateClick(),
             "comment": lambda: self.commentMode(),
@@ -1007,8 +970,7 @@ class Annotator(QWidget):
             self.loadModes.get(mode, lambda *args: None)()
 
     def setButtons(self):
-        """Connect buttons to functions.
-        """
+        """ Connects buttons to their corresponding functions. """
         # List of tool buttons, the corresponding modes and cursor shapes
         self.ui.boxButton.clicked.connect(self.boxMode)
         self.ui.crossButton.clicked.connect(self.crossMode)
@@ -1061,23 +1023,18 @@ class Annotator(QWidget):
 
     def handleComment(self, dlt_txt):
         """
-        [Ha
+        Handles comments by passing the comment's delta value and text to self.scene.
 
         Args:
-            dlt_txt:
+            dlt_txt (tuple [double, string] ) -- consists of a number corresponding to the delta for
+                               the comment, followed by a string with it's corresponding text.
+                               Ex:  for a +1 comment with text "forgot the chain rule"
+                                    [1, "forgot the chain rule"]
 
         Returns:
+            None -- Modifies self.scene and self.toolMode
 
         """
-        """
-                When the user selects a comment this function will be triggered.
-                The function is passed dlt_txt = [delta, comment text].
-                It sets the mode to text, but also passes the comment's text and
-                value (ie +/- n marks) to the pageview - which in turn tells the
-                pagescene. The scene's mode will be set to 'comment' so that when
-                the user clicks there the delta+comment items are created and
-                then pasted into place.
-                """
         # Set the model to text and change cursor.
         # self.setMode("comment", self.cursorComment)
         self.setToolMode("comment", QCursor(Qt.IBeamCursor))
@@ -1085,8 +1042,16 @@ class Annotator(QWidget):
         self.scene.changeTheComment(dlt_txt[0], dlt_txt[1], annotatorUpdate=True)
 
     def totalMarkSet(self, tm):
-        # Set the total mark and pass that info to the comment list
-        # so it can shade over deltas that are no longer applicable.
+        """
+        Sets the total mark and passes that info to the comment list.
+
+        Args:
+            tm (double) : the total mark of the paper.
+
+        Returns:
+            None -- modifies self.scoree and self.scene.
+
+        """
         self.score = tm
         self.comment_widget.changeMark(self.score)
         # also tell the scene what the new mark is
@@ -1094,9 +1059,23 @@ class Annotator(QWidget):
             self.scene.setTheMark(self.score)
 
     def deltaMarkSet(self, dm):
-        """When a delta-mark button is clicked, or a comment selected
-        the view (and scene) need to know what the current delta is so
-        that it can be pasted in correctly (when user clicks on image).
+        """
+        Handles when the delta button, or a comment is clicked.
+        Proceeds to set set the scene and view based on the current
+        delta.
+
+        Args:
+            dm (double) -- the positive or negative value corresponding
+                           to the delta change in mark.
+
+        Notes:
+            The delta will be checked for "legality" (i.e. will the delta
+             cause the grade to go below zero or above the max) at a later
+             date. This will not cause the method to break.
+
+        Returns:
+            None -- Modifies self.scene
+
         """
         # Change the mode to delta
         self.setToolMode("delta", QCursor(Qt.IBeamCursor))
@@ -1110,13 +1089,21 @@ class Annotator(QWidget):
         self.setToolMode("delta", QCursor(Qt.IBeamCursor))
         self.ui.deltaButton.setChecked(True)
 
-    def changeMark(self, score):
-        """The mark has been changed. Update the mark-handler.
+    def changeMark(self, mark):
+        """
+        Updates the mark-handler.
+
+        Args:
+            mark: the new mark for the given tgv.
+
+        Returns:
+            None -- modifies self.score, self.ui and self.markHandler
+
         """
         # Tell the mark-handler what the new mark is and force a repaint.
         assert self.markStyle != 1, "Should not be called if mark-total"
 
-        self.score = score
+        self.score = mark
         # update the markline
         self.ui.markLabel.setText(
             "{} out of {}".format(self.scene.score, self.scene.maxMark)
@@ -1126,18 +1113,11 @@ class Annotator(QWidget):
         self.markHandler.updateRelevantDeltaActions()
 
     def loadWindowSettings(self):
+        """ Loads the window settings. """
         # load the window geometry, else maximise.
         if self.parentMarkerUI.annotatorSettings["geometry"] is not None:
             self.restoreGeometry(self.parentMarkerUI.annotatorSettings["geometry"])
-            # TODO - delete the below
-            # since we can't directly jsonify QByteArray:
-            # self.restoreGeometry(
-            #     QByteArray.fromBase64(
-            #         self.parent.annotatorSettings["geometry"].encode()
-            #     )
-            # )
         else:
-            # Make sure window is maximised.
             self.showMaximized()
 
         # remember the "do not show again" checks
@@ -1186,19 +1166,13 @@ class Annotator(QWidget):
             self.toggleTools()
 
     def saveWindowSettings(self):
-        # TODO - delete below
-        # since we can't directly jsonify QByteArray:
-        # self.parent.annotatorSettings["geometry"] = (
-        #     self.saveGeometry().toBase64().data().decode()
-        # )
-        # since we can't directly jsonify qrectf:
-        # jsrect = self.view.getCurrentViewRect()
-        # self.parent.annotatorSettings["viewRectangle"] = [
-        #     jsrect.x(),
-        #     jsrect.y(),
-        #     jsrect.width(),
-        #     jsrect.height(),
-        # ]
+        """
+        saves current window settings
+
+        Returns:
+            None -- modifies self.parentMarkerUI and self.scene
+
+        """
         self.parentMarkerUI.annotatorSettings["geometry"] = self.saveGeometry()
         self.parentMarkerUI.annotatorSettings["viewRectangle"] = self.view.getCurrentViewRect()
         self.parentMarkerUI.annotatorSettings["markWarnings"] = self.markWarn
@@ -1216,7 +1190,8 @@ class Annotator(QWidget):
             self.parentMarkerUI.annotatorSettings["compact"] = True
 
     def saveAnnotations(self):
-        """Try to save the annotations and signal Marker to upload them.
+        """
+        Try to save the annotations and signal Marker to upload them.
 
         There are various sanity checks and user interaction to be
         done.  Return `False` if user cancels.  Return `True` if we
@@ -1226,6 +1201,10 @@ class Annotator(QWidget):
         Be careful of max-score when marking down.
         In either case - get user to confirm the score before closing.
         Also confirm various "not enough feedback" cases.
+
+        Returns:
+            False if user cancels, True if annotator is closed successfully.
+
         """
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
@@ -1236,8 +1215,7 @@ class Annotator(QWidget):
         # warn if points where lost but insufficient annotations
         if (
                 self.commentWarn
-                and self.score > 0
-                and self.score < self.maxMark
+                and 0 < self.score < self.maxMark
                 and self.scene.hasOnlyTicksCrossesDeltas()
         ):
             msg = SimpleMessageCheckBox(
@@ -1253,6 +1231,8 @@ class Annotator(QWidget):
             if msg.cb.checkState() == Qt.Checked:
                 # Note: these are only saved if we ultimately accept
                 self.commentWarn = False
+
+        # TODO: reformat these into two methods (one for 0 marks and one for full marks).
 
         # if marking total or up, be careful when giving 0-marks
         if self.score == 0 and self.markHandler.style != "Down":
@@ -1353,19 +1333,25 @@ class Annotator(QWidget):
         self.annotator_upload.emit(self.tgvID, stuff)
         return True
 
-    def closeEvent(self, ce):
+    def closeEvent(self, event):
         """
+        Overrides QWidget.closeEvent().
+
         Deal with various cases of window trying to close.
 
-        There are various things that can happen.
+        Notes:
+        These include:
           * User closes window via titlebar close icon (or alt-f4 or...)
           * User clicks "Cancel"
           * User clicks "Done"
-
-        Currently all these events end up here, eventually.
-
         Window close or Cancel are currently treated the same way:
         discard all annotations.
+
+        Args:
+            event: the event of the window closing.
+
+        Returns:
+            None -- modifies many instance vars.
         """
         print("========CLOSE EVENT======: {}".format(self))
         # weird hacking to force close if we came from saving.
@@ -1374,7 +1360,7 @@ class Annotator(QWidget):
         if force:
             log.debug("emitting the closing signal")
             self.annotator_done_closing.emit(self.tgvID)
-            ce.accept()
+            event.accept()
             return
 
         # We are here b/c of cancel button, titlebar close, or related
@@ -1384,30 +1370,53 @@ class Annotator(QWidget):
                 "<p>Do you want to discard them and close the annotator?</p>"
             )
             if msg.exec_() == QMessageBox.No:
-                ce.ignore()
+                event.ignore()
                 return
         log.debug("emitting reject/cancel signal, discarding, and closing")
         self.annotator_done_reject.emit(self.tgvID)
         # clean up after a testview
         self.doneViewingPaper()
-        ce.accept()
+        event.accept()
 
     def getComments(self):
+        """ Retrieves comments from self.scene. """
         return self.scene.getComments()
 
     def saveMarkerComments(self):
+        """ Saves the markers current comments as a commentFile. """
         commentList = self.getComments()
         # savefile is <blah>.png, save comments as <blah>.json
         with open(self.saveName[:-3] + "json", "w") as commentFile:
             json.dump(commentList, commentFile)
 
     def latexAFragment(self, txt):
+        """
+        Handles Latex text.
+
+        Args:
+            txt: the text to be Latexed
+
+        Returns:
+            None -- modifies self.parentMarkerUI
+
+        """
         return self.parentMarkerUI.latexAFragment(txt)
 
     def pickleIt(self):
+        """
+        Pickles the current page and saves it as a .plom file.
+        1. Retrieves current scene items
+        2. Reverses list such that newest items show last
+        3. Saves pickled file as a .plom file
+        4. Adds a dictionary of current Plom Data to the .plom file.
+
+        Returns:
+            None -- builds a .plom file.
+
+        """
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
-        plomDict = {
+        plomData = {
             "fileNames": [os.path.basename(fn) for fn in self.imageFiles],
             "saveName": os.path.basename(self.saveName),
             "markStyle": self.markStyle,
@@ -1418,17 +1427,36 @@ class Annotator(QWidget):
         # save pickled file as <blah>.plom
         plomFile = self.saveName[:-3] + "plom"
         with open(plomFile, "w") as fh:
-            json.dump(plomDict, fh)
+            json.dump(plomData, fh)
 
-    def unpickleIt(self, plomDict):
+    def unpickleIt(self, plomData):
+        """
+        Unpickles the page by calling scene.unpickleSceneItems and sets
+        the page's mark.
+
+        Args:
+            plomData (dict) -- a dictionary containing the data for the
+                                pickled .plom file.
+
+        Returns:
+            None -- modifies self.mark
+
+        """
         self.view.setHidden(True)
-        self.scene.unpickleSceneItems(plomDict["sceneItems"])
+        self.scene.unpickleSceneItems(plomData["sceneItems"])
         # if markstyle is "Total", then click appropriate button
         if self.markStyle == 1:
-            self.markHandler.unpickleTotal(plomDict["currentMark"])
+            self.markHandler.unpickleTotal(plomData["currentMark"])
         self.view.setHidden(False)
 
     def setZoomComboBox(self):
+        """
+        Sets the combo box for the zoom method.
+
+        Returns:
+            None -- Modifies self.ui
+
+        """
         self.ui.zoomCB.addItem("User")
         self.ui.zoomCB.addItem("Fit page")
         self.ui.zoomCB.addItem("Fit width")
@@ -1441,17 +1469,47 @@ class Annotator(QWidget):
         self.ui.zoomCB.currentIndexChanged.connect(self.zoomCBChanged)
 
     def isZoomFitWidth(self):
+        """
+        Sets the zoom ui text when user has selected "Fit Width."
+
+        Returns:
+            None -- Modifies self.ui
+        """
         return self.ui.zoomCB.currentText() == "Fit width"
 
     def isZoomFitHeight(self):
+        """
+        Sets the zoom ui text when user has selected "Fit Height."
+
+        Returns:
+            None -- Modifies self.ui
+
+        """
         return self.ui.zoomCB.currentText() == "Fit height"
 
-    def changeCBZoom(self, v):
+    def changeCBZoom(self, CBIndex):
+        """
+        Keeps zoom combo box at selected index.
+
+        Args:
+            CBIndex (int) : the current zoom Combo Box Index
+
+        Returns:
+            None -- Modifies self.ui
+
+        """
         old = self.ui.zoomCB.blockSignals(True)
-        self.ui.zoomCB.setCurrentIndex(v)
+        self.ui.zoomCB.setCurrentIndex(CBIndex)
         self.ui.zoomCB.blockSignals(old)
 
     def zoomCBChanged(self):
+        """
+        Modifies the page view based on the selected zoom option.
+
+        Returns:
+            None -- Modifies self.ui
+
+        """
         if self.ui.zoomCB.currentText() == "Fit page":
             self.view.zoomAll()
         elif self.ui.zoomCB.currentText() == "Fit width":
@@ -1473,6 +1531,15 @@ class Annotator(QWidget):
         self.view.setFocus()
 
     def noAnswer(self):
+        """
+        Handles when the user selects the "No Answer Given" option
+        and ensures the user has not assigned deltas on the page. If
+        deltas have been assigned, displays an error message.
+
+        Returns:
+            None
+
+        """
         if self.markStyle == 2:
             if self.score > 0:  # is mark-up
                 ErrorMessage(
