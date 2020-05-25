@@ -17,6 +17,25 @@ def buildExamDatabase(spec, dbFname):
 
     Arguments:
         spec {dict} -- The spec file for the database that is being setup.
+                          Example below:
+                          {
+                            'name': 'plomdemo', 
+                            'longName': 'Midterm Demo using Plom', 
+                            'numberOfVersions': 2, 
+                            'numberOfPages': 6, 
+                            'numberToProduce': 20, 
+                            'numberToName': 10, <--- This is typically zero 
+                            'numberOfQuestions': 3, 
+                            'privateSeed': '1001378822317872', 
+                            'publicCode': '270385', 
+                            'idPages': {'pages': [1]}, 
+                            'doNotMark': {'pages': [2]}, 
+                            'question': {
+                                '1': {'pages': [3], 'mark': 5, 'select': 'shuffle'}, 
+                                '2': {'pages': [4], 'mark': 10, 'select': 'fix'}, 
+                                '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
+                            }
+                          }
         dbFname {str} -- The name of the database we are creating.
     """
 
@@ -45,7 +64,9 @@ def buildExamDatabase(spec, dbFname):
 
         for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
             gs = str(g + 1)  # now a str and 1,2,3,...
-            if spec["question"][gs]["select"] == "fix":  # there is only one version so all are version 1
+            if (
+                spec["question"][gs]["select"] == "fix"
+            ):  # there is only one version so all are version 1
                 v = 1
                 vstr = "f{}".format(v)
             elif (
@@ -70,4 +91,3 @@ def buildExamDatabase(spec, dbFname):
             "There were errors during database creation. Remove the database and try again."
         )
         print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
-

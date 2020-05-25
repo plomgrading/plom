@@ -42,7 +42,7 @@ def read_class_list():
         for row in red:
             k += 1
             students[k] = [row[0], row[1]]
-    
+
     return students
 
 
@@ -102,7 +102,7 @@ def build_all_papers(spec, DB_file_name, named=False):
     Keyword Arguments:
         named {bool} -- [description] (default: {False})
     """
-    
+
     if named and spec["numberToName"] > 0:
         students = read_class_list()
 
@@ -111,9 +111,12 @@ def build_all_papers(spec, DB_file_name, named=False):
     make_PDF_args = []
     for paper_index in range(1, spec["numberToProduce"] + 1):
         page_version = exam_DB.getPageVersions(paper_index)
-        
+
         if named and paper_index <= spec["numberToName"]:
-            student_info = {"id": students[paper_index][0], "name": students[paper_index][1]}
+            student_info = {
+                "id": students[paper_index][0],
+                "name": students[paper_index][1],
+            }
         else:
             student_info = None
         make_PDF_args.append(
@@ -153,14 +156,16 @@ def confirm_processed(spec, DB_file_name):
     if spec["numberToName"] > 0:
         students = read_class_list()
     for paper_index in range(1, spec["numberToProduce"] + 1):
-        # TODO: explain this better, we need to consider the nameless papers 
+        # TODO: explain this better, we need to consider the nameless papers
         if paper_index <= spec["numberToName"]:
             PDF_file_name = Path(paperdir) / "exam_{}_{}.pdf".format(
                 str(paper_index).zfill(4), students[paper_index][0]
             )
         else:
-            PDF_file_name = Path(paperdir) / "exam_{}.pdf".format(str(paper_index).zfill(4))
-        
+            PDF_file_name = Path(paperdir) / "exam_{}.pdf".format(
+                str(paper_index).zfill(4)
+            )
+
         # We will raise and error if the pdf file was not found
         if os.path.isfile(PDF_file_name):
             exam_DB.produceTest(paper_index)
@@ -189,6 +194,10 @@ def confirm_named(spec, DB_file_name):
                 str(paper_index).zfill(4), students[paper_index][0]
             )
             if os.path.isfile(PDF_file_name):
-                exam_DB.identifyTest(paper_index, students[paper_index][0], students[paper_index][1])
+                exam_DB.identifyTest(
+                    paper_index, students[paper_index][0], students[paper_index][1]
+                )
             else:
-                raise RuntimeError('Cannot find pdf for paper "{}"'.format(PDF_file_name))
+                raise RuntimeError(
+                    'Cannot find pdf for paper "{}"'.format(PDF_file_name)
+                )

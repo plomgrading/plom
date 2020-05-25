@@ -21,20 +21,19 @@ from ..finish.return_tools import import_canvas_csv
 from plom import specdir
 
 
-
 possible_lastname_list = ["surname", "familyName", "lastName"]
 
 possible_firstname_list = [
-                            "name",
-                            "givenName",
-                            "firstName",
-                            "givenNames",
-                            "firstNames",
-                            "preferredName",
-                            "preferredNames",
-                            "nickName",
-                            "nickNames",
-                          ]
+    "name",
+    "givenName",
+    "firstName",
+    "givenNames",
+    "firstNames",
+    "preferredName",
+    "preferredNames",
+    "nickName",
+    "nickNames",
+]
 
 canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 
@@ -56,7 +55,11 @@ def clean_non_canvas_csv(csv_file_name):
     """
 
     student_info_data_frame = pandas.read_csv(csv_file_name, dtype="object")
-    print('Loading from non-Canvas csv file to clean the column titles: "{0}"'.format(csv_file_name))
+    print(
+        'Loading from non-Canvas csv file to clean the column titles: "{0}"'.format(
+            csv_file_name
+        )
+    )
 
     # strip excess whitespace from column names
     student_info_data_frame.rename(columns=lambda x: x.strip(), inplace=True)
@@ -65,8 +68,10 @@ def clean_non_canvas_csv(csv_file_name):
     if "id" in student_info_data_frame.columns:
         print('"id" column present')
         # strip excess whitespace
-        student_info_data_frame["id"] = student_info_data_frame["id"].apply(lambda X: X.strip())
-    
+        student_info_data_frame["id"] = student_info_data_frame["id"].apply(
+            lambda X: X.strip()
+        )
+
     # if we have fullname then we are good to go.
     if "studentName" in student_info_data_frame.columns:
         print('"studentName" column present')
@@ -77,33 +82,42 @@ def clean_non_canvas_csv(csv_file_name):
     # we need one of some approx of last-name field
     firstname_column_title = None
     for column_title in student_info_data_frame.columns:
-        if column_title.casefold() in (possible_title.casefold() for possible_title in possible_lastname_list):
+        if column_title.casefold() in (
+            possible_title.casefold() for possible_title in possible_lastname_list
+        ):
             print('"{}" column present'.format(column_title))
             firstname_column_title = column_title
             break
     # strip the excess whitespace
-    student_info_data_frame[firstname_column_title] = student_info_data_frame[firstname_column_title].apply(lambda X: X.strip())
-
+    student_info_data_frame[firstname_column_title] = student_info_data_frame[
+        firstname_column_title
+    ].apply(lambda X: X.strip())
 
     # we need one of some approx of given-name field
     lastname_column_title = None
     for column_title in student_info_data_frame.columns:
-        if column_title.casefold() in (possible_title.casefold() for possible_title in possible_firstname_list):
+        if column_title.casefold() in (
+            possible_title.casefold() for possible_title in possible_firstname_list
+        ):
             print('"{}" column present'.format(column_title))
             lastname_column_title = column_title
             break
     # strip the excess whitespace
-    student_info_data_frame[lastname_column_title] = student_info_data_frame[lastname_column_title].apply(lambda X: X.strip())
+    student_info_data_frame[lastname_column_title] = student_info_data_frame[
+        lastname_column_title
+    ].apply(lambda X: X.strip())
 
     # concat firstname_column_title and lastname_column_title fields into fullName field
     # strip excess whitespace from those fields
-    student_info_data_frame["studentName"] = student_info_data_frame[firstname_column_title] + ", " + student_info_data_frame[lastname_column_title]
+    student_info_data_frame["studentName"] = (
+        student_info_data_frame[firstname_column_title]
+        + ", "
+        + student_info_data_frame[lastname_column_title]
+    )
 
     student_info_data_frame.columns = ["id", "studentName"]
 
     return student_info_data_frame
-
-
 
 
 def check_is_non_canvas_csv(csv_file_name):
@@ -123,7 +137,7 @@ def check_is_non_canvas_csv(csv_file_name):
 
     student_info_data_frame = pandas.read_csv(csv_file_name, dtype="object")
     print('Loading from non-Canvas csv file to check file: "{0}"'.format(csv_file_name))
-    
+
     # strip excess whitespace from column names
     student_info_data_frame.rename(columns=lambda x: x.strip(), inplace=True)
 
@@ -131,37 +145,47 @@ def check_is_non_canvas_csv(csv_file_name):
         print('Cannot find "id" column')
         print("Columns present = {}".format(student_info_data_frame.columns))
         return False
-    
+
     # if we have don't have  then we are good to go.
     if "studentName" not in student_info_data_frame.columns:
-        
+
         # we need one of some approx of last-name field
         firstname_column_title = None
         for column_title in student_info_data_frame.columns:
-            if column_title.casefold() in (possible_title.casefold() for possible_title in possible_lastname_list):
+            if column_title.casefold() in (
+                possible_title.casefold() for possible_title in possible_lastname_list
+            ):
                 print('"{}" column present'.format(column_title))
                 firstname_column_title = column_title
                 break
         if firstname_column_title is None:
-            print('Cannot find column to use for "surname", tried {}'.format(possible_lastname_list))
+            print(
+                'Cannot find column to use for "surname", tried {}'.format(
+                    possible_lastname_list
+                )
+            )
             print("Columns present = {}".format(student_info_data_frame.columns))
             return False
-        
+
         # we need one of some approx of given-name field
         lastname_column_title = None
         for column_title in student_info_data_frame.columns:
-            if column_title.casefold() in (possible_title.casefold() for possible_title in possible_firstname_list):
+            if column_title.casefold() in (
+                possible_title.casefold() for possible_title in possible_firstname_list
+            ):
                 print('"{}" column present'.format(column_title))
                 lastname_column_title = column_title
                 break
         if lastname_column_title is None:
-            print('Cannot find column to use for "given name", tried {}'.format(possible_firstname_list))
+            print(
+                'Cannot find column to use for "given name", tried {}'.format(
+                    possible_firstname_list
+                )
+            )
             print("Columns present = {}".format(student_info_data_frame.columns))
             return False
-    
-    return True
-    
 
+    return True
 
 
 def clean_canvas_csv(csv_file_name):
@@ -182,7 +206,6 @@ def clean_canvas_csv(csv_file_name):
     return student_info_data_frame
 
 
-
 def check_is_canvas_csv(csv_file_name):
     """ Checks to see if a function is a canvas style csv file
         
@@ -198,8 +221,6 @@ def check_is_canvas_csv(csv_file_name):
         csv_reader = csv.DictReader(csvfile, skipinitialspace=True)
         csv_fields = csv_reader.fieldnames
     return all(x in csv_fields for x in canvas_columns_format)
-
-
 
 
 def check_latin_names(student_info_data_frame):
@@ -235,7 +256,6 @@ def check_latin_names(student_info_data_frame):
         return True
 
 
-
 def process_classlist_backend(student_csv_file_name, outputfile):
     """ Processes the classlist depending on weter its a canvas style csv folder or if it isn't 
         1- Check if the file is canvas style csv, if so clean 
@@ -253,10 +273,10 @@ def process_classlist_backend(student_csv_file_name, outputfile):
         csv_fields = csv_reader.fieldnames
     print("Class list headers = {}".format(csv_fields))
 
-    # Depending on the type of file, wether its a Canvas file or not, 
+    # Depending on the type of file, wether its a Canvas file or not,
     # we need to check it has the minimum information ie student name/id.
     # If not we will fail the process.
-    
+
     # First we check if this csv file is a Canvas output using check_canvas_csv
     if check_is_canvas_csv(student_csv_file_name):
         print("This file looks like it was exported from Canvas")
@@ -264,9 +284,13 @@ def process_classlist_backend(student_csv_file_name, outputfile):
         print("We have successfully extracted columns from Canvas data and renaming")
     # Is not a Canvas formed file, we will check if the canvas data is usable using check_non_canvas_csv
     elif check_is_non_canvas_csv(student_csv_file_name):
-        print("This file looks like it was not exported from Canvas, we will check the function for the required information")
-        student_info_data_frame = clean_non_canvas_csv(student_csv_file_name)           
-        print("We have successfully extracted and renamed columns from the non Canvas data and have the required information")
+        print(
+            "This file looks like it was not exported from Canvas, we will check the function for the required information"
+        )
+        student_info_data_frame = clean_non_canvas_csv(student_csv_file_name)
+        print(
+            "We have successfully extracted and renamed columns from the non Canvas data and have the required information"
+        )
     # Otherwise we have an error
     else:
         print("Problems with the classlist you supplied. See output above.")
@@ -284,8 +308,6 @@ def process_classlist_backend(student_csv_file_name, outputfile):
 
     print("Saving to {}".format(outputfile))
     student_info_data_frame.to_csv(outputfile, index=False)
-
-
 
 
 def process_class_list(student_csv_file_name, demo=False):
@@ -317,7 +339,9 @@ def process_class_list(student_csv_file_name, demo=False):
     os.makedirs(specdir, exist_ok=True)
     if os.path.isfile(Path(specdir) / "classlist.csv"):
         print(
-            "Classlist file already present in '{}' directory. Aborting.".format(specdir)
+            "Classlist file already present in '{}' directory. Aborting.".format(
+                specdir
+            )
         )
         exit(1)
         pass
@@ -335,7 +359,9 @@ def process_class_list(student_csv_file_name, demo=False):
 
     # grab the file, process it and copy it into place.
     if os.path.isfile(student_csv_file_name):
-        process_classlist_backend(student_csv_file_name, Path(specdir) / "classlist.csv")
+        process_classlist_backend(
+            student_csv_file_name, Path(specdir) / "classlist.csv"
+        )
     else:
         print('Cannot find file "{}"'.format(student_csv_file_name))
         exit(1)

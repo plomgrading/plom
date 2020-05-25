@@ -13,4 +13,3 @@ def test_latex_demofiles(tmpdir):
     assert buildDemoSourceFiles()
     assert set(os.listdir("sourceVersions")) == set(("version1.pdf", "version2.pdf"))
     os.chdir(cdir)
-

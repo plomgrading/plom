@@ -69,4 +69,3 @@ for d in range(10):
 
 with open("digits.json", "w") as fh:
     json.dump(imgs, fh)
-
