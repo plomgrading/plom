@@ -261,9 +261,9 @@ class Annotator(QWidget):
         # self.destroyMarkHandler()
 
     def loadNewTGV(self, tgvID, testName, paperdir, fnames, saveName, maxMark, markStyle, plomDict):
-        """
-        TODO: maintain current tool not working yet.
-        Loads new Data into the Toggle View window for marking.
+        """Loads new Data into the Toggle View window for marking.
+
+        TODO: maintain current tool not working yet: #799.
 
         Args:
             tgvID (str) --  Test-Group-Version ID.
@@ -279,7 +279,7 @@ class Annotator(QWidget):
                              2 = mark-up = mark starts at 0 and user increments it
                               3 = mark-down = mark starts at max and user decrements it
             plomDict (dict)  -- a dictionary of annotation information.
-                                A very simple dict that contains sufficient information to recreate the
+                                A dict that contains sufficient information to recreate the
                                 annotation objects on the page if you go back to continue annotating a
                                 question. ie - is it mark up/down, where are all the objects, how to
                                 rebuild those objects, etc.
@@ -683,11 +683,7 @@ class Annotator(QWidget):
         self.markHandler.markButtons[buttonNumber].animateClick()
 
     def keyPressEvent(self, event):
-        """
-        Overrides QWidget.keyPressEvent()
-
-        Translates key-presses into tool-button presses if
-        appropriate.
+        """Translates key-presses into tool-button presses if appropriate.
 
         Notes:
             This overrides the QWidget keyPressEvent method.
