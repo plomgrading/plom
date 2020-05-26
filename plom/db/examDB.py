@@ -895,7 +895,6 @@ class PlomDB:
         with plomdb.atomic():
             sref.sumMark = None
             sref.user = None
-            sref.status = ""
             sref.time = datetime.now()
             tref.totalled = False
             sref.save()
@@ -1015,6 +1014,12 @@ class PlomDB:
             )
         return True
 
+    def processUpdatedSData(self, tref, sref):
+        with plomdb.atomic():
+            sref.status = "todo"
+            sref.save()
+            log.info("SumData of test {} ready for totalling.".format(tref.testNumber))
+
     def cleanIDGroup(self, tref, iref):
         # if IDGroup belongs to HAL then don't touch it - was auto IDd.
         if iref.user == User.get(name="HAL"):
@@ -1035,9 +1040,9 @@ class PlomDB:
         rval.append(self.processUpdatedDNMGroup(tref, tref.dnmgroups[0]))
         for qref in tref.qgroups:
             rval.append(self.processUpdatedQGroup(tref, qref))
-        # clean out the sumdata. Don't need ready-flag.
-        # todo - think about better flag for sumdata. presence of page 0?
+        # clean out the sumdata and set ready status.
         self.cleanSData(tref, tref.sumdata[0])
+        self.processUpdatedSData(tref, tref.sumdata[0])
         # now clear the update flag.
         with plomdb.atomic():
             tref.recentUpload = False
@@ -2695,7 +2700,7 @@ class PlomDB:
             pass
         else:
             return [False]
-        pref = Page.get(Page.test == tref, Page.pageNumber == 1)
+        pref = TPage.get(TPage.test == tref, TPage.pageNumber == 1)
         log.info(
             "Sending cover-page of test {} to user {} = {}".format(
                 t, uname, pref.fileName
