@@ -98,8 +98,7 @@ class Server(object):
         self.loadUsers()
 
     def loadUsers(self):
-        """Load the users from json file, add them to the database. Do some simple sanity checks of pwd hashes to see if they have changed.
-        """
+        """Load the users from json file, add them to the database. Do some simple sanity checks of pwd hashes to see if they have changed."""
         if os.path.exists("serverConfiguration/userList.json"):
             with open("serverConfiguration/userList.json") as data_file:
                 # load list of users + pwd hashes
@@ -238,10 +237,10 @@ def getServerInfo():
 
 
 def launch(masterToken=None):
-    """[summary]
+    """Launches the Plom server
 
     Keyword Arguments:
-        masterToken {[type]} -- [description] (default: {None})
+        masterToken {str} -- Token that is authenticated by the authority, if None, one is created in authenticate.py. default: {None}
     """
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
     getServerInfo()
