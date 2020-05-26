@@ -238,6 +238,11 @@ def getServerInfo():
 
 
 def launch(masterToken=None):
+    """[summary]
+
+    Keyword Arguments:
+        masterToken {[type]} -- [description] (default: {None})
+    """
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
     getServerInfo()
     examDB = PlomDB(Path(specdir) / "plom.db")
