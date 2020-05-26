@@ -232,15 +232,15 @@
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="styleChoiceBox">
+       <widget class="QGroupBox" name="OptionsBox">
         <property name="title">
-         <string>Marking style</string>
+         <string>Options</string>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
           <widget class="QRadioButton" name="markUpRB">
            <property name="text">
-            <string>Mark &amp;Up</string>
+            <string>Mark &amp;Up style</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -253,7 +253,7 @@
          <item>
           <widget class="QRadioButton" name="markDownRB">
            <property name="text">
-            <string>Mark &amp;Down</string>
+            <string>Mark &amp;Down style</string>
            </property>
            <property name="checked">
             <bool>false</bool>
@@ -266,22 +266,13 @@
          <item>
           <widget class="QRadioButton" name="markTotalRB">
            <property name="text">
-            <string>&amp;Total</string>
+            <string>&amp;Total style</string>
            </property>
            <attribute name="buttonGroup">
             <string notr="true">markStyleGroup</string>
            </attribute>
           </widget>
          </item>
-        </layout>
-       </widget>
-      </item>
-      <item>
-       <widget class="QGroupBox" name="OptionsBox">
-        <property name="title">
-         <string>Options</string>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
           <widget class="QCheckBox" name="leftMouseCB">
            <property name="toolTip">

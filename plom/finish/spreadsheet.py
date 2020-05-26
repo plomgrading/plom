@@ -14,10 +14,19 @@ from plom.plom_exceptions import *
 
 CSVFilename = "testMarks.csv"
 
-# ----------------------
+# ---------------------------
 
 
 def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
+    """Private function that writes all of the current marks to a csv.
+
+    Arguments:
+        numberOfQuestions {int} -- Number of questions in this test
+        spreadSheetDict {dict} -- Dictionary containing the tests to be written to a spreadsheet
+
+    Returns:
+        bool, bool -- The first returned boolean is False if each test in spreadSheetDict is marked, True otherwise. The second boolean is False if there is a test with no ID, True otherwise
+    """
     head = ["StudentID", "StudentName", "TestNumber"]
     for q in range(1, numberOfQuestions + 1):
         head.append("Question {} Mark".format(q))
@@ -36,12 +45,13 @@ def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
             quoting=csv.QUOTE_NONNUMERIC,
         )
         testWriter.writeheader()
+        existsUnmarked = False
+        existsMissingID = False
         for t in spreadSheetDict:
             thisTest = spreadSheetDict[t]
 
             if thisTest["marked"] is False:
-                pass  # for testing only
-                # continue
+                existsUnmarked = True  # Check for unmarked tests as to return the appropriate warning
             row = {}
             row["StudentID"] = thisTest["sid"]
             row["StudentName"] = thisTest["sname"]
@@ -62,13 +72,17 @@ def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
                 warnString += "[Unidentified]"
             if "Blank" in thisTest["sname"]:
                 warnString += "[Blank ID]"
+                existsMissingID = True
             if "No ID" in thisTest["sname"]:
                 warnString += "[No ID]"
+                existsMissingID = True
             if not thisTest["marked"]:
                 warnString += "[Unmarked]"
             row["Warnings"] = warnString
 
             testWriter.writerow(row)
+
+    return existsUnmarked, existsMissingID
 
 
 def main(server=None, password=None):
@@ -96,7 +110,7 @@ def main(server=None, password=None):
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another finishing-script or manager-client running,\n"
             "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run `plom-finish clear`."
+            "In order to force-logout the existing authorization run `plom-finish clear`."
         )
         exit(0)
 
@@ -107,13 +121,30 @@ def main(server=None, password=None):
     msgr.closeUser()
     msgr.stop()
 
-    # TODO: do we need this warning?
-    print(">>> Warning <<<")
-    print(
-        "This script currently outputs all scanned papers whether or not they have been marked completely."
+    # Write the appropriate warning depending on if everything has been marked or there are warnings present
+    existsUnmarked, existsMissingID = writeSpreadsheet(
+        numberOfQuestions, spreadSheetDict
     )
-    writeSpreadsheet(numberOfQuestions, spreadSheetDict)
-    print('Marks written to "{}"'.format(CSVFilename))
+    if existsUnmarked and existsMissingID:
+        print(
+            'Partial marks written to "{}" (marking is not complete). Warning: not every test is identified.'.format(
+                CSVFilename
+            )
+        )
+    elif existsUnmarked:
+        print(
+            'Partial marks written to "{}" (marking is not complete)'.format(
+                CSVFilename
+            )
+        )
+    elif existsMissingID:
+        print(
+            'Marks written to "{}". Warning: not every test is identified.'.format(
+                CSVFilename
+            )
+        )
+    else:
+        print('Marks written to "{}"'.format(CSVFilename))
 
 
 if __name__ == "__main__":
