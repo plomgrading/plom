@@ -18,15 +18,24 @@ from plom import specdir
 from plom.textools import buildLaTeX
 
 
-# If all is good then build a substitute page and save it in the correct place
-def buildSubstitute(test, page, ver):
+def build_substitute(test, page, ver):
+    """If all is good then build a substitute page and save it in the correct place.
+
+    Arguments:
+        test {int} -- The test number.
+        page {int} -- The page number.
+        ver {int} -- Version number
+
+    Returns:
+        bool -- True if successful.
+    """
     tpImage = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
 
     DNS = fitz.open(Path(specdir) / "pageNotSubmitted.pdf")
 
     # create a box for the test number near top-centre
     # Get page width
-    pW = DNS[0].bound().width
+    page = DNS[0].bound().width
     rect = fitz.Rect(pW // 2 - 40, 20, pW // 2 + 40, 44)
     text = "{}.{}".format(str(test).zfill(4), str(page).zfill(2))
     rc = DNS[0].insertTextbox(
@@ -47,7 +56,15 @@ def buildSubstitute(test, page, ver):
     return True
 
 
-def buildPNSPage(outName):
+def build_page_not_submitted_page(outName):
+    """Builds the Page Not Submitted page to a pdf using LaTeX.
+
+    Arguments:
+        outName {str} -- Thhe name of the file that we will build to.
+
+    Returns:
+        bool -- True if successful, False otherwise.
+    """  
     PNStex = r"""
 \documentclass[12pt,letterpaper]{article}
 \usepackage[]{fullpage}
@@ -62,7 +79,7 @@ def buildPNSPage(outName):
 \end{document}
 """
     with open(outName, "wb") as f:
-        returncode, out = buildLaTeX(PNStex, f)
+        returncode, _ = buildLaTeX(PNStex, f)
     if returncode != 0:
         print(">>> Latex problems - see below <<<\n")
         print(out)

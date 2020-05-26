@@ -80,7 +80,7 @@ def addCollidingPage(self, t, p, v, fname, image, md5o):
 
 def replaceMissingPage(self, testNumber, pageNumber, version):
     # TODO - we should probably have some sort of try/except around this.
-    pageNotSubmitted.buildSubstitute(testNumber, pageNumber, version)
+    pageNotSubmitted.build_substitute(testNumber, pageNumber, version)
     # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
     originalName = "pns.{}.{}.{}.png".format(testNumber, pageNumber, version)
     prefix = "pages/originalPages/pns.{}p{}v{}".format(
