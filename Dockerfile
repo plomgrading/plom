@@ -13,5 +13,5 @@ RUN apt-get --no-install-recommends --yes install  \
 RUN pip3 install --upgrade pip
 RUN pip3 install --upgrade \
     pymupdf weasyprint imutils lapsolver peewee toml \
-    requests requests-toolbelt aiohttp pyzbar python3-cffi pyinstaller
+    requests requests-toolbelt aiohttp pyzbar jpegtran-cffi pyinstaller
 RUN pip3 install --upgrade imutils tensorflow lapsolver

@@ -927,14 +927,12 @@ class MarkerClient(QWidget):
         mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
 
         annotator = Annotator(
-            self.ui.userLabel.text(), mouseHand, parent=self, initialData=data
+            self.ui.userLabel.text(), mouseHand, parentMarkerUI=self, initialData=data
         )
         # run the annotator
-        annotator.ann_upload.connect(self.callbackAnnWantsUsToUpload)
-        annotator.ann_done_closing.connect(self.callbackAnnDoneClosing)
-        annotator.ann_done_reject.connect(self.callbackAnnDoneCancel)
-
-        # off we go
+        annotator.annotator_upload.connect(self.callbackAnnWantsUsToUpload)
+        annotator.annotator_done_closing.connect(self.callbackAnnDoneClosing)
+        annotator.annotator_done_reject.connect(self.callbackAnnDoneCancel)
         self.setEnabled(False)
         annotator.show()
         # We had (have?) a bug: when `annotator` var goes out of scope, it can
