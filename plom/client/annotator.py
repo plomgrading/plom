@@ -138,6 +138,7 @@ class Annotator(QWidget):
         # mark set, delta-set, mark change functions
         self.scene = None  # TODO?
         self.markHandler = None
+
         self.setMiscShortCuts()
         # set the zoom combobox
         self.setZoomComboBox()
@@ -152,19 +153,21 @@ class Annotator(QWidget):
         self.setWindowFlags(
             self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint
         )
-        # Grab window settings from parent
-        self.loadWindowSettings()
 
         # Keyboard shortcuts.
         self.keycodes = self.getKeyCodes()
 
         self.timer = QElapsedTimer()
 
-        self._yuckyuck = "move"
+        self.modeInformation = ["move"]
 
         if initialData:
             self.loadNewTGV(*initialData)
 
+        # Grab window settings from parent
+        # Do this late so that mark-handler is set up properly
+        # See merge !439. Problem setting delta before mark-handler set up.
+        self.loadWindowSettings()
 
         # TODO: use QAction, share with other UI, shortcut keys written once
         m = QMenu()
@@ -185,19 +188,25 @@ class Annotator(QWidget):
         self.ui.hamMenuButton.setMenu(m)
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
 
-
     def menudummy(self):
         print("TODO: menu placeholder 1")
 
-
     def closeCurrentTGV(self):
         """Stop looking at the current TGV, reset things safely."""
-        self.commentW.reset()
-        #TODO: self.view.disconnectFrom(self.scene)
-        #self.view = None
+        # TODO: self.view.disconnectFrom(self.scene)
+        # self.view = None
         # TODO: how to reset the scene?
         # This may be heavy handed, but for now we delete the old scene
-        self._yuckyuck = self.scene.mode
+
+        # Attempt at keeping mode information.
+        self.modeInformation = [self.scene.mode]
+        if self.scene.mode == "delta":
+            self.modeInformation.append(self.scene.markDelta)
+        elif self.scene.mode == "comment":
+            self.modeInformation.append(self.commentW.getCurrentItemRow())
+
+        self.commentW.reset()
+
         del self.scene
         self.scene = None
 
@@ -212,10 +221,11 @@ class Annotator(QWidget):
         self.paperdir = None
         self.imageFiles = None
         self.saveName = None
-        #self.destroyMarkHandler()
+        # self.destroyMarkHandler()
 
-
-    def loadNewTGV(self, tgv, testname, paperdir, fnames, saveName, maxMark, markStyle, plomDict):
+    def loadNewTGV(
+        self, tgv, testname, paperdir, fnames, saveName, maxMark, markStyle, plomDict
+    ):
         """Load data for marking.
 
         TODO: maintain current tool not working yet.
@@ -266,8 +276,14 @@ class Annotator(QWidget):
         if plomDict is not None:
             self.unpickleIt(plomDict)
 
-        # TODO: but commentW was torn down, this probably won't work there
-        self.scene.setMode(self._yuckyuck)
+        # TODO: Make handling of comment less hack.
+        print("Restore mode info = ", self.modeInformation)
+        self.scene.setMode(self.modeInformation[0])
+        if self.modeInformation[0] == "delta":
+            self.markHandler.clickDelta(self.modeInformation[1])
+        if self.modeInformation[0] == "comment":
+            self.commentW.setCurrentItemRow(self.modeInformation[1])
+            self.commentW.CL.handleClick()
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()
@@ -276,9 +292,7 @@ class Annotator(QWidget):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
         if self.scene:
             self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
-        self.ui.markLabel.setText(
-            "{} out of {}".format(self.score, self.maxMark)
-        )
+        self.ui.markLabel.setText("{} out of {}".format(self.score, self.maxMark))
 
     def loadCursors(self):
         # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
@@ -560,11 +574,11 @@ class Annotator(QWidget):
         # put the view into the gui.
         # set the initial view to contain the entire scene which at
         # this stage is just the image.
-        #self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
+        # self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatioByExpanding)
         # Centre at top-left of image.
-        #self.view.centerOn(0, 0)
+        # self.view.centerOn(0, 0)
         # click the move button
-        #self.ui.moveButton.animateClick()
+        # self.ui.moveButton.animateClick()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
@@ -613,7 +627,9 @@ class Annotator(QWidget):
         if isinstance(self.sender(), QPushButton):
             # has come from mark-change button, markHandler does its own styling
             pass
-        elif isinstance(self.sender(), QToolButton):  # only toolbuttons are the mode-changing ones.
+        elif isinstance(
+            self.sender(), QToolButton
+        ):  # only toolbuttons are the mode-changing ones.
             self.sender().setChecked(True)
             self.markHandler.clearButtonStyle()
         elif self.sender() is self.commentW.CL:
@@ -659,10 +675,14 @@ class Annotator(QWidget):
             base_path = os.path.join(os.path.dirname(__file__), "icons")
             # base_path = "./icons"
 
-        self.setIcon(self.ui.boxButton, "box", "{}/rectangle_highlight.svg".format(base_path))
+        self.setIcon(
+            self.ui.boxButton, "box", "{}/rectangle_highlight.svg".format(base_path)
+        )
         self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
         self.setIcon(
-            self.ui.commentDownButton, "com down", "{}/comment_down.svg".format(base_path)
+            self.ui.commentDownButton,
+            "com down",
+            "{}/comment_down.svg".format(base_path),
         )
         self.setIcon(
             self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path)
@@ -800,6 +820,7 @@ class Annotator(QWidget):
             "tick": lambda: self.ui.tickButton.animateClick(),
         }
         if mode == "delta" and aux is not None:
+            # make sure that the mark handler has been set.
             self.markHandler.loadDeltaValue(aux)
         elif mode == "comment" and aux is not None:
             self.commentW.setCurrentItemRow(aux)
@@ -881,7 +902,7 @@ class Annotator(QWidget):
         self.score = tm
         self.commentW.changeMark(self.score)
         # also tell the scene what the new mark is
-        if self.scene:   # TODO: bit of a hack
+        if self.scene:  # TODO: bit of a hack
             self.scene.setTheMark(self.score)
 
     def deltaMarkSet(self, dm):
