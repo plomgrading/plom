@@ -160,7 +160,13 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
                 )
                 assert rc > 0
 
+        # delete last page from the zeroth test.
+        if i == 0:
+            doc.deletePage(-1)
+            print("Deleting last page of test {}".format(tnumber))
+
         bigdoc.insertPDF(doc)
+
         # with probability 0.2 insert 1 extrapage
         if random.random() < 0.2:
             # blah/exam_XXXX.pdf or blah/exam_XXXX_YYYYYYY.pdf, drop blah and .pdf
@@ -182,13 +188,6 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
     # https://github.com/pymupdf/PyMuPDF/issues/466
     bigdoc.save(outfile)
     print('Assembled in "{}"'.format(outfile))
-
-
-def deleteOnePage(outfile):
-    bigdoc = fitz.open(outfile)
-    p = random.randint(0, len(bigdoc) - 1)
-    bigdoc.deletePage(p)
-    bigdoc.saveIncr()
 
 
 def makeGarbagePage(outfile, n=1):
@@ -213,7 +212,6 @@ def main():
     classlist = specdir / "classlist.csv"
     outfile = "fake_scribbled_exams.pdf"
     fillInFakeDataOnExams(_paperdir, classlist, outfile)
-    deleteOnePage(outfile)
     makeGarbagePage(outfile, n=2)
 
 
