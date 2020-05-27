@@ -184,8 +184,6 @@ class Annotator(QWidget):
         self.setWindowFlags(
             self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint
         )
-        # Grab window settings from parent
-        self.loadWindowSettings()
 
         # Keyboard shortcuts.
         self.key_codes = self.getKeyShortcuts()
@@ -194,6 +192,9 @@ class Annotator(QWidget):
 
         if initialData:
             self.loadNewTGV(*initialData)
+
+        # Grab window settings from parent
+        self.loadWindowSettings()
 
         # TODO: use QAction, share with other UI, shortcut keys written once
         m = QMenu()
@@ -302,11 +303,16 @@ class Annotator(QWidget):
             log.warn("Is changing maxMark supported?  we just did it...")
         self.maxMark = maxMark
 
+        print("plomdict = ", plomDict)
+
         # get markstyle from plomDict
         if plomDict is None:
             self.markStyle = markStyle
         else:
             self.markStyle = plomDict["markStyle"]
+        # from here on be sure to use self.markStyle and not markstyle
+
+        print("markstyle = ", self.markStyle)
 
         # Set current mark to 0.
         self.score = 0
@@ -329,10 +335,10 @@ class Annotator(QWidget):
 
         if not self.markHandler:
             # Build the mark handler and put into the gui.
-            self.markHandler = MarkHandler(self, maxMark, markStyle)
+            self.markHandler = MarkHandler(self, maxMark, self.markStyle)
             self.ui.markGrid.addWidget(self.markHandler)
         else:
-            self.markHandler.resetAndMaybeChange(maxMark, markStyle)
+            self.markHandler.resetAndMaybeChange(maxMark, self.markStyle)
 
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
