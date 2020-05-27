@@ -315,6 +315,9 @@ class Annotator(QWidget):
         del markStyle
         log.debug("markstyle = ", self.markStyle)
 
+        if plomDict:
+            assert plomDict["maxMark"] == self.maxMark, "mismatch between maxMarks"
+
         # Set current mark to 0.
         self.score = 0
 
@@ -328,7 +331,7 @@ class Annotator(QWidget):
         # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
         self.comment_widget.setStyle(self.markStyle)
         self.comment_widget.maxMark = (
-            maxMark  # TODO: add helper?  combine with changeMark?
+            self.maxMark  # TODO: add helper?  combine with changeMark?
         )
         self.comment_widget.changeMark(self.score)
         self.comment_widget.setQuestionNumberFromTGV(tgvID)
@@ -336,10 +339,10 @@ class Annotator(QWidget):
 
         if not self.markHandler:
             # Build the mark handler and put into the gui.
-            self.markHandler = MarkHandler(self, maxMark, self.markStyle)
+            self.markHandler = MarkHandler(self, self.maxMark, self.markStyle)
             self.ui.markGrid.addWidget(self.markHandler)
         else:
-            self.markHandler.resetAndMaybeChange(maxMark, self.markStyle)
+            self.markHandler.resetAndMaybeChange(self.maxMark, self.markStyle)
 
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
