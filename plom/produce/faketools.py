@@ -163,7 +163,7 @@ def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
         # delete last page from the zeroth test.
         if i == 0:
             doc.deletePage(-1)
-            print("Deleting last page of test {}".format(tnumber))
+            print("Deleting last page of test {}".format(fname))
 
         bigdoc.insertPDF(doc)
 
