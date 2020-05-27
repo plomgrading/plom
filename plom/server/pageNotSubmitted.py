@@ -35,8 +35,8 @@ def build_substitute(test, page, ver):
 
     # create a box for the test number near top-centre
     # Get page width
-    page = DNS[0].bound().width
-    rect = fitz.Rect(pW // 2 - 40, 20, pW // 2 + 40, 44)
+    page_width = DNS[0].bound().width
+    rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
     text = "{}.{}".format(str(test).zfill(4), str(page).zfill(2))
     rc = DNS[0].insertTextbox(
         rect,
@@ -60,11 +60,11 @@ def build_page_not_submitted_page(outName):
     """Builds the Page Not Submitted page to a pdf using LaTeX.
 
     Arguments:
-        outName {str} -- Thhe name of the file that we will build to.
+        outName {str} -- The name of the file that we will build to.
 
     Returns:
         bool -- True if successful, False otherwise.
-    """  
+    """
     PNStex = r"""
 \documentclass[12pt,letterpaper]{article}
 \usepackage[]{fullpage}
