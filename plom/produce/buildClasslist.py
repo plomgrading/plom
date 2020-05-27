@@ -39,7 +39,7 @@ canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 
 
 def clean_non_canvas_csv(csv_file_name):
-    """ Read the csv file and clean the csv file
+    """Read the csv file and clean the csv file
         1- Retreive the id
         2- Retreive the studentName is preset
         3- If not, retreive student given name and surname in the document
