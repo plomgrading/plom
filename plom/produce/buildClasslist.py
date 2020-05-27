@@ -40,12 +40,11 @@ canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 
 def clean_non_canvas_csv(csv_file_name):
     """Read the csv file and clean the csv file
-        1- Retreive the id
-        2- Retreive the studentName is preset
-        3- If not, retreive student given name and surname in the document
-        
-        IMPORTANT: This function must be run after being checked
-        by check_is_non_canvas_csv, otherwise this would not work
+    1. Retreive the id
+    2. Retreive the studentName is preset
+    3. If not, retreive student given name and surname in the document
+    
+    Must be run after being checked by check_is_non_canvas_csv.
 
     Arguments:
         csv_file_name {Str} -- Name of the csv file
