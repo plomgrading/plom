@@ -87,11 +87,23 @@ names = names.split()
 
 
 def simplePassword():
+    """Creates a new simple password of the form word, number, word.
+
+    Returns:
+        str -- Password.
+    """
     return secrets.choice(words) + str(secrets.randbelow(100)) + secrets.choice(words)
 
 
 def makeRandomUserList(number=None):
-    # if number given, pick random selection from names. (unless number too large)
+    """Makes a list of random users.
+
+    Keyword Arguments:
+        number {int} -- Number of names in random user list (if the number is too large it is truncated). If None is given it is selected randomly. (default: {None})
+
+    Returns:
+        list -- List of [user, pasword] tuples.
+    """
     if number is None or number > len(names):
         nlist = names
     else:
@@ -105,7 +117,14 @@ def makeRandomUserList(number=None):
 
 
 def makeNumberedUserList(number=None):
-    # if number given then
+    """Makes a list of numbered users (rather than named users).
+
+    Keyword Arguments:
+        number {int} -- Number of users to include in the list, if None is given users equal to the number of names is returned. (default: {None})
+
+    Returns:
+        list -- List of [user, pasword] tuples (user is a number).
+    """
     if number is None:
         number = len(names)
     lst = []
