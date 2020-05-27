@@ -53,7 +53,7 @@ def clean_non_canvas_csv(csv_file_name):
         pandas.core.frame.DataFrame -- Dataframe object returned with columns id and studentName
     """
 
-    student_info_data_frame = pandas.read_csv(csv_file_name, dtype="object")
+    student_info_df = pandas.read_csv(csv_file_name, dtype="object")
     print(
         'Loading from non-Canvas csv file to clean the column titles: "{0}"'.format(
             csv_file_name
@@ -61,26 +61,26 @@ def clean_non_canvas_csv(csv_file_name):
     )
 
     # strip excess whitespace from column names
-    student_info_data_frame.rename(columns=lambda x: x.strip(), inplace=True)
+    student_info_df.rename(columns=lambda x: x.strip(), inplace=True)
 
     # now check we have the columns needed
-    if "id" in student_info_data_frame.columns:
+    if "id" in student_info_df.columns:
         print('"id" column present')
         # strip excess whitespace
-        student_info_data_frame["id"] = student_info_data_frame["id"].apply(
+        student_info_df["id"] = student_info_df["id"].apply(
             lambda X: X.strip()
         )
 
     # if we have fullname then we are good to go.
-    if "studentName" in student_info_data_frame.columns:
+    if "studentName" in student_info_df.columns:
         print('"studentName" column present')
-        student_info_data_frame["studentName"].apply(lambda X: X.strip())
-        return student_info_data_frame
+        student_info_df["studentName"].apply(lambda X: X.strip())
+        return student_info_df
 
     # Otherwise, we will check the titles again
     # we need one of some approx of last-name field
     firstname_column_title = None
-    for column_title in student_info_data_frame.columns:
+    for column_title in student_info_df.columns:
         if column_title.casefold() in (
             possible_title.casefold() for possible_title in possible_lastname_list
         ):
@@ -88,13 +88,13 @@ def clean_non_canvas_csv(csv_file_name):
             firstname_column_title = column_title
             break
     # strip the excess whitespace
-    student_info_data_frame[firstname_column_title] = student_info_data_frame[
+    student_info_df[firstname_column_title] = student_info_df[
         firstname_column_title
     ].apply(lambda X: X.strip())
 
     # we need one of some approx of given-name field
     lastname_column_title = None
-    for column_title in student_info_data_frame.columns:
+    for column_title in student_info_df.columns:
         if column_title.casefold() in (
             possible_title.casefold() for possible_title in possible_firstname_list
         ):
@@ -102,21 +102,21 @@ def clean_non_canvas_csv(csv_file_name):
             lastname_column_title = column_title
             break
     # strip the excess whitespace
-    student_info_data_frame[lastname_column_title] = student_info_data_frame[
+    student_info_df[lastname_column_title] = student_info_df[
         lastname_column_title
     ].apply(lambda X: X.strip())
 
     # concat firstname_column_title and lastname_column_title fields into fullName field
     # strip excess whitespace from those fields
-    student_info_data_frame["studentName"] = (
-        student_info_data_frame[firstname_column_title]
+    student_info_df["studentName"] = (
+        student_info_df[firstname_column_title]
         + ", "
-        + student_info_data_frame[lastname_column_title]
+        + student_info_df[lastname_column_title]
     )
 
-    student_info_data_frame.columns = ["id", "studentName"]
+    student_info_df.columns = ["id", "studentName"]
 
-    return student_info_data_frame
+    return student_info_df
 
 
 def check_is_non_canvas_csv(csv_file_name):
@@ -134,23 +134,23 @@ def check_is_non_canvas_csv(csv_file_name):
         bool -- True/False
     """
 
-    student_info_data_frame = pandas.read_csv(csv_file_name, dtype="object")
+    student_info_df = pandas.read_csv(csv_file_name, dtype="object")
     print('Loading from non-Canvas csv file to check file: "{0}"'.format(csv_file_name))
 
     # strip excess whitespace from column names
-    student_info_data_frame.rename(columns=lambda x: x.strip(), inplace=True)
+    student_info_df.rename(columns=lambda x: x.strip(), inplace=True)
 
-    if "id" not in student_info_data_frame.columns:
+    if "id" not in student_info_df.columns:
         print('Cannot find "id" column')
-        print("Columns present = {}".format(student_info_data_frame.columns))
+        print("Columns present = {}".format(student_info_df.columns))
         return False
 
     # if we have don't have  then we are good to go.
-    if "studentName" not in student_info_data_frame.columns:
+    if "studentName" not in student_info_df.columns:
 
         # we need one of some approx of last-name field
         firstname_column_title = None
-        for column_title in student_info_data_frame.columns:
+        for column_title in student_info_df.columns:
             if column_title.casefold() in (
                 possible_title.casefold() for possible_title in possible_lastname_list
             ):
@@ -163,12 +163,12 @@ def check_is_non_canvas_csv(csv_file_name):
                     possible_lastname_list
                 )
             )
-            print("Columns present = {}".format(student_info_data_frame.columns))
+            print("Columns present = {}".format(student_info_df.columns))
             return False
 
         # we need one of some approx of given-name field
         lastname_column_title = None
-        for column_title in student_info_data_frame.columns:
+        for column_title in student_info_df.columns:
             if column_title.casefold() in (
                 possible_title.casefold() for possible_title in possible_firstname_list
             ):
@@ -181,7 +181,7 @@ def check_is_non_canvas_csv(csv_file_name):
                     possible_firstname_list
                 )
             )
-            print("Columns present = {}".format(student_info_data_frame.columns))
+            print("Columns present = {}".format(student_info_df.columns))
             return False
 
     return True
@@ -199,10 +199,10 @@ def clean_canvas_csv(csv_file_name):
     Returns:
         pandas.core.frame.DataFrame -- Dataframe object returned with columns id and studentName
     """
-    student_info_data_frame = import_canvas_csv(csv_file_name)
-    student_info_data_frame = student_info_data_frame[["Student Number", "Student"]]
-    student_info_data_frame.columns = ["id", "studentName"]
-    return student_info_data_frame
+    student_info_df = import_canvas_csv(csv_file_name)
+    student_info_df = student_info_df[["Student Number", "Student"]]
+    student_info_df.columns = ["id", "studentName"]
+    return student_info_df
 
 
 def check_is_canvas_csv(csv_file_name):
@@ -222,13 +222,13 @@ def check_is_canvas_csv(csv_file_name):
     return all(x in csv_fields for x in canvas_columns_format)
 
 
-def check_latin_names(student_info_data_frame):
+def check_latin_names(student_info_df):
     """ Pass the pandas object and check studentNames encode to Latin-1
         Print out a warning message for any that are not
         Note: This functions prints warnings about the encoding issues
 
     Arguments:
-        student_info_data_frame {pandas.core.frame.DataFrame} -- Dataframe object returned with columns id and studentName
+        student_info_df {pandas.core.frame.DataFrame} -- Dataframe object returned with columns id and studentName
 
     Returns:
         bool -- True/False
@@ -236,7 +236,7 @@ def check_latin_names(student_info_data_frame):
 
     # TODO - make this less eurocentric in the future.
     encoding_problems = []
-    for index, row in student_info_data_frame.iterrows():
+    for index, row in student_info_df.iterrows():
         try:
             tmp = row["studentName"].encode("Latin-1")
         except UnicodeEncodeError:
@@ -279,14 +279,14 @@ def process_classlist_backend(student_csv_file_name, outputfile):
     # First we check if this csv file is a Canvas output using check_canvas_csv
     if check_is_canvas_csv(student_csv_file_name):
         print("This file looks like it was exported from Canvas")
-        student_info_data_frame = clean_canvas_csv(student_csv_file_name)
+        student_info_df = clean_canvas_csv(student_csv_file_name)
         print("We have successfully extracted columns from Canvas data and renaming")
     # Is not a Canvas formed file, we will check if the canvas data is usable using check_non_canvas_csv
     elif check_is_non_canvas_csv(student_csv_file_name):
         print(
             "This file looks like it was not exported from Canvas, we will check the function for the required information"
         )
-        student_info_data_frame = clean_non_canvas_csv(student_csv_file_name)
+        student_info_df = clean_non_canvas_csv(student_csv_file_name)
         print(
             "We have successfully extracted and renamed columns from the non Canvas data and have the required information"
         )
@@ -296,7 +296,7 @@ def process_classlist_backend(student_csv_file_name, outputfile):
         exit(1)
 
     # Check characters in names are latin-1 compatible
-    if not check_latin_names(student_info_data_frame):
+    if not check_latin_names(student_info_df):
         print(">>> WARNING <<<")
         print(
             "Potential classlist problems",
@@ -306,7 +306,7 @@ def process_classlist_backend(student_csv_file_name, outputfile):
         )
 
     print("Saving to {}".format(outputfile))
-    student_info_data_frame.to_csv(outputfile, index=False)
+    student_info_df.to_csv(outputfile, index=False)
 
 
 def process_class_list(student_csv_file_name, demo=False):
