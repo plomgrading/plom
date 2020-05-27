@@ -55,7 +55,7 @@ def clean_non_canvas_csv(csv_file_name):
 
     student_info_df = pandas.read_csv(csv_file_name, dtype="object")
     print(
-        'Loading from non-Canvas csv file to clean the column titles: "{0}"'.format(
+        'Extracting columns from csv file: "{0}"'.format(
             csv_file_name
         )
     )
