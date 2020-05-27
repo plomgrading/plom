@@ -121,14 +121,14 @@ def clean_non_canvas_csv(csv_file_name):
 
 def check_is_non_canvas_csv(csv_file_name):
     """ Read the csv file and check to see if the id and student name exist.
-        1- Check if id is present
-        2- Check if studentName is preset
-        3- If not, check for given name and surname in the document
-        
-        IMPORTANT: This function must be run before clean_non_canvas_csv
+    1- Check if id is present.
+    2- Check if studentName is preset.
+    3- If not, check for given name and surname in the document.
+    
+    Must be run before clean_non_canvas_csv.
 
     Arguments:
-        csv_file_name {Str} -- Name of the csv file
+        csv_file_name {Str} -- Name of the csv file.
 
     Returns:
         bool -- True/False
