@@ -258,10 +258,10 @@ def check_latin_names(student_info_data_frame):
 
 def process_classlist_backend(student_csv_file_name, outputfile):
     """ Processes the classlist depending on weter its a canvas style csv folder or if it isn't 
-        1- Check if the file is canvas style csv, if so clean 
-        2- Otherwise check if te function has the id/name info, if so clean it 
-        3- Otherwise exit(1)
-        4- If not exited, check for latin character encodability
+    1. Check if the file is canvas style csv, if so clean 
+    2. Otherwise check if te function has the id/name info, if so clean it 
+    3. Otherwise exit(1)
+    4. If not exited, check for latin character encodability
 
     Arguments:
         student_csv_file_name {Str} -- Name of the class info csv file
