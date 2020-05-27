@@ -306,13 +306,11 @@ class Annotator(QWidget):
         del maxMark
 
         log.debug("plomdict = ", plomDict)
-        # get markstyle from plomDict
-        if plomDict is None:
-            self.markStyle = markStyle
-        else:
+        if plomDict:
             self.markStyle = plomDict["markStyle"]
-        # from here on be sure to use self.markStyle and not markstyle
-        del markStyle
+        else:
+            self.markStyle = markStyle
+        del markStyle  # prevent use of non-overridden value
         log.debug("markstyle = ", self.markStyle)
 
         if plomDict:
