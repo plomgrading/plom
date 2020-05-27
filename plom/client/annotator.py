@@ -280,7 +280,8 @@ class Annotator(QWidget):
             markStyle (int) -- marking style
                              1 = mark total = user clicks the total-mark
                              2 = mark-up = mark starts at 0 and user increments it
-                              3 = mark-down = mark starts at max and user decrements it
+                             3 = mark-down = mark starts at max and user decrements it
+                             Note: can be overridden by the plomDict.
             plomDict (dict)  -- a dictionary of annotation information.
                                 A dict that contains sufficient information to recreate the
                                 annotation objects on the page if you go back to continue annotating a
@@ -302,17 +303,17 @@ class Annotator(QWidget):
         if getattr(self, "maxMark", None) != maxMark:
             log.warn("Is changing maxMark supported?  we just did it...")
         self.maxMark = maxMark
+        del maxMark
 
-        print("plomdict = ", plomDict)
-
+        log.debug("plomdict = ", plomDict)
         # get markstyle from plomDict
         if plomDict is None:
             self.markStyle = markStyle
         else:
             self.markStyle = plomDict["markStyle"]
         # from here on be sure to use self.markStyle and not markstyle
-
-        print("markstyle = ", self.markStyle)
+        del markStyle
+        log.debug("markstyle = ", self.markStyle)
 
         # Set current mark to 0.
         self.score = 0
