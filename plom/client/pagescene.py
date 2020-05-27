@@ -76,7 +76,7 @@ class ScoreBox(QGraphicsTextItem):
         self.maxScore = maxScore
         self.setDefaultTextColor(Qt.red)
         self.font = QFont("Helvetica")
-        self.fontSize = 1.25*fontsize
+        self.fontSize = 1.25 * fontsize
         self.font.setPointSizeF(self.fontSize)
         self.setFont(self.font)
         # Not editable.
@@ -120,7 +120,7 @@ class UnderlyingImage(QGraphicsItemGroup):
             sf = float(ScenePixelHeight) / float(pix.height())
             self.images[n].setScale(sf)
             # TODO: why not?
-            #x += self.images[n].boundingRect().width()
+            # x += self.images[n].boundingRect().width()
             # help prevent hairline: subtract one pixel before converting
             x += sf * (pix.width() - 1.0)
             # TODO: don't floor here if units of scene are large!
@@ -138,6 +138,7 @@ mousePress = {
     "delta": "mousePressDelta",
     "line": "mousePressLine",
     "move": "mousePressMove",
+    "pan": "mousePressPan",
     "pen": "mousePressPen",
     "text": "mousePressText",
     "tick": "mousePressTick",
@@ -460,6 +461,14 @@ class PageScene(QGraphicsScene):
         self.views()[0].setCursor(Qt.ClosedHandCursor)
         super(PageScene, self).mousePressEvent(event)
 
+    def mousePressPan(self, event):
+        """The mouse press while pan-tool selected changes the cursor to
+        a closed hand, but otherwise does not do much. Do not pass on event to superclass
+        since we want to avoid selecting an object and moving that (fixes #834)
+        """
+        self.views()[0].setCursor(Qt.ClosedHandCursor)
+        return
+
     def mousePressText(self, event):
         """Create a textobject under the mouse click, unless there
         is already a textobject under the click.
@@ -526,7 +535,8 @@ class PageScene(QGraphicsScene):
         self.update()
 
     def mouseReleasePan(self, event):
-        """Update the current stored view rectangle."""
+        """Change cursor back to open-hand, and update the current stored view rectangle."""
+        self.views()[0].setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
         self.views()[0].zoomNull()
 
