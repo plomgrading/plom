@@ -26,7 +26,7 @@ from . import paperdir
 # TODO: may not be obvious (the `confirmedNamed` fcn).  Needs some re-org.
 def read_class_list():
     """Creates a dictionary of the students name and ids and returns it
-        TODO: Perhaps this function should be reformatted
+    TODO: Perhaps this function should be reformatted
 
     Returns:
         dict -- A dictionary of the form {int: list[Str, Str]} with:
@@ -47,7 +47,7 @@ def read_class_list():
 
 
 def _make_PDF(x):
-    """A function that basically uses make_PDF from mergeAdCodePages. See there for more info
+    """A function that basically uses make_PDF from mergeAdCodePages.
 
     Arguments:
         x {tuple} --   
@@ -72,8 +72,10 @@ def _make_PDF(x):
 
 
 def build_all_papers(spec, DB_file_name, named=False):
-    """This function builds the papers using _make_PDF while also creating extra papers 
-        considering the numberToName parameter
+    """Builds the papers using _make_PDF.
+    
+    Based on `numberToName` this uses `_make_PDF` to create some
+    papers with names stamped on the front as well as some papers without.
 
     Arguments:
         spec {dict} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
@@ -97,10 +99,10 @@ def build_all_papers(spec, DB_file_name, named=False):
                             }
                           }
 
-        DB_file_name {Str} -- Database file name path
+        DB_file_name {Str} -- Database file name path.
 
     Keyword Arguments:
-        named {bool} -- [description] (default: {False})
+        named {boolean} -- Whether the document is named or not. (default: {False})
     """
 
     if named and spec["numberToName"] > 0:
@@ -137,11 +139,10 @@ def build_all_papers(spec, DB_file_name, named=False):
     num_PDFs = len(make_PDF_args)
     with Pool() as pool:
         r = list(tqdm(pool.imap_unordered(_make_PDF, make_PDF_args), total=num_PDFs))
-    return
 
 
 def confirm_processed(spec, DB_file_name):
-    """A function that checks if the pdfs are created in the suposed folder
+    """A function that checks if the pdfs are created in the suposed folder.
 
     Arguments:
         spec {type} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
