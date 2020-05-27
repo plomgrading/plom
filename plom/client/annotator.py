@@ -249,7 +249,15 @@ class Annotator(QWidget):
             self.markStyle = plomDict["markStyle"]
 
         # Set current mark to 0.
-        self.score = 0
+        # 2 = mark-up = mark starts at 0 and user increments it
+        # 3 = mark-down = mark starts at max and user decrements it
+        if self.markStyle == 2:  # markUp
+            self.score = 0
+        elif self.markStyle == 3:  # markDown
+            self.score = self.maxMark
+        else:  # must be mark-total
+            log.warn("Using mark-total. This should not happen.")
+            self.score = 0
 
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
@@ -277,7 +285,7 @@ class Annotator(QWidget):
             self.unpickleIt(plomDict)
 
         # TODO: Make handling of comment less hack.
-        print("Restore mode info = ", self.modeInformation)
+        log.debug("Restore mode info = {}".format(self.modeInformation))
         self.scene.setMode(self.modeInformation[0])
         if self.modeInformation[0] == "delta":
             self.markHandler.clickDelta(self.modeInformation[1])
