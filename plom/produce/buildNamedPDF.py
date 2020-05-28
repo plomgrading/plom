@@ -25,6 +25,7 @@ from . import paperdir
 # TODO: even worse, the row indices are mapped to test numbers in a way that
 # TODO: may not be obvious (the `confirmedNamed` fcn).  Needs some re-org.
 
+
 def read_class_list():
     """Creates a dictionary of the students name and ids and returns it
     

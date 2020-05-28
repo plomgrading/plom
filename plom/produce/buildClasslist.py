@@ -55,11 +55,7 @@ def clean_non_canvas_csv(csv_file_name):
     """
 
     student_info_df = pandas.read_csv(csv_file_name, dtype="object")
-    print(
-        'Extracting columns from csv file: "{0}"'.format(
-            csv_file_name
-        )
-    )
+    print('Extracting columns from csv file: "{0}"'.format(csv_file_name))
 
     # strip excess whitespace from column names
     student_info_df.rename(columns=lambda x: x.strip(), inplace=True)
@@ -68,9 +64,7 @@ def clean_non_canvas_csv(csv_file_name):
     if "id" in student_info_df.columns:
         print('"id" column present')
         # strip excess whitespace
-        student_info_df["id"] = student_info_df["id"].apply(
-            lambda X: X.strip()
-        )
+        student_info_df["id"] = student_info_df["id"].apply(lambda X: X.strip())
 
     # if we have fullname then we are good to go.
     if "studentName" in student_info_df.columns:

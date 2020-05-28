@@ -191,7 +191,6 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
             pdf_document.deletePage(-1)
             print("Deleting last page of test {}".format(file_name))
 
-
         # We then add the pdfs into the document collection
         all_pdf_documents.insertPDF(pdf_document)
 
