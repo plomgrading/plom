@@ -39,18 +39,19 @@ canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 
 
 def clean_non_canvas_csv(csv_file_name):
-    """Read the csv file and clean the csv file
-    1. Retreive the id
-    2. Retreive the studentName is preset
-    3. If not, retreive student given name and surname in the document
+    """Read the csv file and clean the csv file.
+    
+    1. Retreive the id.
+    2. Retreive the studentName is preset.
+    3. If not, retreive student given name and surname in the document.
     
     Must be run after being checked by check_is_non_canvas_csv.
 
     Arguments:
-        csv_file_name {Str} -- Name of the csv file
+        csv_file_name {Str} -- Name of the csv file.
 
     Returns:
-        pandas.core.frame.DataFrame -- Dataframe object returned with columns id and studentName
+        pandas.core.frame.DataFrame -- Dataframe object returned with columns id and studentName.
     """
 
     student_info_df = pandas.read_csv(csv_file_name, dtype="object")
@@ -120,10 +121,11 @@ def clean_non_canvas_csv(csv_file_name):
 
 
 def check_is_non_canvas_csv(csv_file_name):
-    """ Read the csv file and check to see if the id and student name exist.
-    1- Check if id is present.
-    2- Check if studentName is preset.
-    3- If not, check for given name and surname in the document.
+    """Read the csv file and check to see if the id and student name exist.
+    
+    1. Check if id is present.
+    2. Check if studentName is preset.
+    3. If not, check for given name and surname in the document.
     
     Must be run before clean_non_canvas_csv.
 
@@ -188,16 +190,15 @@ def check_is_non_canvas_csv(csv_file_name):
 
 
 def clean_canvas_csv(csv_file_name):
-    """ Read the canvas csv file and clean the csv file
+    """Read the canvas csv file and clean the csv file.
         
-        IMPORTANT: This function must be run after being checked
-        by check_is_canvas_csv, otherwise this would not work
+    Must be run after being checked by check_is_canvas_csv.
 
     Arguments:
-        csv_file_name {Str} -- Name of the csv file
+        csv_file_name {Str} -- Name of the csv file.
 
     Returns:
-        pandas.core.frame.DataFrame -- Dataframe object returned with columns id and studentName
+        pandas.core.frame.DataFrame -- Dataframe object returned with columns id and studentName.
     """
     student_info_df = import_canvas_csv(csv_file_name)
     student_info_df = student_info_df[["Student Number", "Student"]]
@@ -206,12 +207,12 @@ def clean_canvas_csv(csv_file_name):
 
 
 def check_is_canvas_csv(csv_file_name):
-    """ Checks to see if a function is a canvas style csv file
+    """Checks to see if a function is a canvas style csv file.
         
-        IMPORTANT: This function must be run before clean_canvas_csv
+    Must be run before clean_canvas_csv.
 
     Arguments:
-        csv_file_name {Str} -- Name of the csv file
+        csv_file_name {Str} -- Name of the csv file.
 
     Returns:
         boolean -- True/False
@@ -223,12 +224,12 @@ def check_is_canvas_csv(csv_file_name):
 
 
 def check_latin_names(student_info_df):
-    """ Pass the pandas object and check studentNames encode to Latin-1
-        Print out a warning message for any that are not
-        Note: This functions prints warnings about the encoding issues
+    """Pass the pandas object and check studentNames encode to Latin-1.
+    
+    Prints out a warning message for any that are not encodable.
 
     Arguments:
-        student_info_df {pandas.core.frame.DataFrame} -- Dataframe object returned with columns id and studentName
+        student_info_df {pandas.core.frame.DataFrame} -- Dataframe object returned with columns id and studentName.
 
     Returns:
         bool -- True/False
@@ -256,11 +257,12 @@ def check_latin_names(student_info_df):
 
 
 def process_classlist_backend(student_csv_file_name, outputfile):
-    """ Processes the classlist depending on weter its a canvas style csv folder or if it isn't 
-    1. Check if the file is canvas style csv, if so clean 
-    2. Otherwise check if te function has the id/name info, if so clean it 
-    3. Otherwise exit(1)
-    4. If not exited, check for latin character encodability
+    """Processes the classlist depending on weter its a canvas style csv folder or if it isn't.
+    
+    1. Check if the file is canvas style csv, if so clean.
+    2. Otherwise check if te function has the id/name info, if so clean it.
+    3. Otherwise exit(1).
+    4. If not exited, check for latin character encodability.
 
     Arguments:
         student_csv_file_name {Str} -- Name of the class info csv file
@@ -310,26 +312,26 @@ def process_classlist_backend(student_csv_file_name, outputfile):
 
 
 def process_class_list(student_csv_file_name, demo=False):
-    """ Get student names/numbers from csv, process, and save for server
+    """Get student names/numbers from csv, process, and save for server
         
-        Student numbers come from an `id` column.  There is some
-        flexibility about student names: most straightforward is a
-        second column named `studentNames`.  The results are copied
-        into a new csv file in a simplied format.
+    Student numbers come from an `id` column.  There is some
+    flexibility about student names: most straightforward is a
+    second column named `studentNames`.  The results are copied
+    into a new csv file in a simplied format.
         
-        The classlist can be a .csv file with column headers:
-        • `id` - student ID number
-        • `studentName` - student name in a single field
+    The classlist can be a .csv file with column headers:
+    - `id` - student ID number
+    - `studentName` - student name in a single field
 
-        Or the student name can be split into two fields:
-        • id
-        • surname, familyName, or lastName
-        • name, firstName, givenName, nickName, or preferredName
+    Or the student name can be split into two fields:
+    - id
+    - surname, familyName, or lastName
+    - name, firstName, givenName, nickName, or preferredName
 
-        Alternatively, give a .csv exported from Canvas (experimental!)
+    Alternatively, give a .csv exported from Canvas (experimental!)
 
     Arguments:
-        student_csv_file_name {Str} -- Name of the class info csv file
+        student_csv_file_name {Str} -- Name of the class info csv file.
 
     Keyword Arguments:
         demo {bool} -- Indicating whether we are in demo mode (default: {False})

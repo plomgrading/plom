@@ -24,14 +24,16 @@ from . import paperdir
 #
 # TODO: even worse, the row indices are mapped to test numbers in a way that
 # TODO: may not be obvious (the `confirmedNamed` fcn).  Needs some re-org.
+
 def read_class_list():
     """Creates a dictionary of the students name and ids and returns it
+    
     TODO: Perhaps this function should be reformatted
 
     Returns:
         dict -- A dictionary of the form {int: list[Str, Str]} with:
-                Index integer is the key
-                List of student id0 and student name is the value
+                - Index integer is the key
+                - List of student id and student name is the value
     """
     students = {}
     # read in the classlist
@@ -79,25 +81,25 @@ def build_all_papers(spec, DB_file_name, named=False):
 
     Arguments:
         spec {dict} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
-                          Example below:
-                          {
-                            'name': 'plomdemo', 
-                            'longName': 'Midterm Demo using Plom', 
-                            'numberOfVersions': 2, 
-                            'numberOfPages': 6, 
-                            'numberToProduce': 20, 
-                            'numberToName': 10, <--- This is typically zero 
-                            'numberOfQuestions': 3, 
-                            'privateSeed': '1001378822317872', 
-                            'publicCode': '270385', 
-                            'idPages': {'pages': [1]}, 
-                            'doNotMark': {'pages': [2]}, 
-                            'question': {
-                                '1': {'pages': [3], 'mark': 5, 'select': 'shuffle'}, 
-                                '2': {'pages': [4], 'mark': 10, 'select': 'fix'}, 
-                                '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
-                            }
+                       Example below:
+                       {
+                       'name': 'plomdemo', 
+                       'longName': 'Midterm Demo using Plom', 
+                       'numberOfVersions': 2, 
+                       'numberOfPages': 6, 
+                       'numberToProduce': 20, 
+                       'numberToName': 10, <--- This is typically zero 
+                       'numberOfQuestions': 3, 
+                       'privateSeed': '1001378822317872', 
+                       'publicCode': '270385', 
+                       'idPages': {'pages': [1]}, 
+                       'doNotMark': {'pages': [2]}, 
+                       'question': {
+                           '1': {'pages': [3], 'mark': 5, 'select': 'shuffle'}, 
+                           '2': {'pages': [4], 'mark': 10, 'select': 'fix'}, 
+                           '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
                           }
+                       }
 
         DB_file_name {Str} -- Database file name path.
 
@@ -146,7 +148,6 @@ def confirm_processed(spec, DB_file_name):
 
     Arguments:
         spec {type} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
-                          Example: See description for build_all_papers
         DB_file_name {Str} -- Database file name path
 
     Raises:

@@ -22,18 +22,18 @@ from . import paperdir
 def create_QR_file_dictionary(
     length, test, page_versions, code, tmp_dir, test_mode=False, test_folder=None
 ):
-    """A function used to create a dictionary of the QR codes and save them.
+    """Creates a dictionary of the QR codes and save them.
 
     Arguments:
-        length {int} -- Length of the document or number of pages
-        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests 
-        page_versions {dict} -- A (int,int) dictionary representing the version of each page for this test
-        code {Str} -- 6 digit distinguished code for the document
-        tmp_dir {Str} -- A path string representing the directory paht of a QR code
+        length {int} -- Length of the document or number of pages.
+        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
+        page_versions {dict} -- (int:int) Dictionary representing the version of each page for this test.
+        code {Str} -- 6 digit distinguished code for the document.
+        tmp_dir {Str} -- Path string representing the directory paht of a QR code.
 
     Keyword Arguments:
-        test_mode {bool} -- boolean elements used for testing, testing case with show the documents (default: {False})
-        test_folder {Str} -- A String for where to place the generated test files (default: {None})
+        test_mode {bool} -- boolean elements used for testing, testing case with show the documents (default: {False}).
+        test_folder {Str} -- String for where to place the generated test files (default: {None}).
 
     Returns:
         dict -- dict(int: dict(int: Str)) a dictionary that has another embedded dictionary for each page.
@@ -84,26 +84,28 @@ def create_exam_and_insert_QR(
     test_mode=False,
     test_folder=None,
 ):
-    """A function to create the exam objects and insert the QR codes.
-       This function creates the exams objects from the pdfs stored at sourceVersions.
-       Then it adds the 3 QR codes for each page (We create 4 QR codes but only add 3 of them because of the staple side, see below)
+    """Creates the exam objects and insert the QR codes.
+    
+    Creates the exams objects from the pdfs stored at sourceVersions.
+    Then adds the 3 QR codes for each page.
+    (We create 4 QR codes but only add 3 of them because of the staple side, see below).
 
     Arguments:
-        name {Str} -- Document Name
-        code {Str} -- 6 digit distinguished code for the document
-        length {int} -- Length of the document or number of pages
-        versions {int} -- Number of version of this Document
-        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests 
-        page_versions {dict} -- A (int,int) dictionary representing the version of each page for this test
-        qr_file {dict} -- dict(int: dict(int: Str)) a dictionary that has another embedded dictionary for each page.
-                             The embedded dictionary has a string for QR code paths saved for each corner.
+        name {Str} -- Document Name.
+        code {Str} -- 6 digit distinguished code for the document.
+        length {int} -- Length of the document or number of pages.
+        versions {int} -- Number of version of this Document.
+        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests .
+        page_versions {dict} -- (int,int) dictionary representing the version of each page for this test.
+        qr_file {dict} -- dict(int: dict(int: Str)) Dictionary that has another embedded dictionary for each page.
+                          The embedded dictionary has a string for QR code paths saved for each corner.
 
     Keyword Arguments:
-        test_mode {bool} -- Boolean elements used for testing, testing case with show the documents  (default: {False})
-        test_folder {Str} -- A String for where to place the generated test files (default: {None})
+        test_mode {bool} -- Boolean elements used for testing, testing case with show the documents.  (default: {False})
+        test_folder {Str} -- String for where to place the generated test files. (default: {None})
 
     Returns:
-        fitz.Document -- A PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys
+        fitz.Document -- PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys.
     """
 
     # A (int : fitz.fitz.Document) dictionary that has the page document/path from each source based on page version
@@ -222,11 +224,11 @@ def create_exam_and_insert_QR(
 
 # TODO: Complete the test mode functionality
 def is_possible_to_encode_as(s, x):
-    """A function that checks if string s is encodable by format x
+    """A function that checks if string s is encodable by format x.
 
     Arguments:
-        s {Str} -- Text String given
-        x {Str} -- Encoding type
+        s {Str} -- Text String given.
+        x {Str} -- Encoding type.
 
     Returns:
         bool -- True/False
@@ -240,22 +242,21 @@ def is_possible_to_encode_as(s, x):
 
 # TODO: Complete the test mode functionality
 def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
-    """A function used to insert the extra info (mainly student id and name ) into the first page of the document.
-        This function creates the student name and id boxes and places them in the first page.
+    """Creates the extra info (ususally student name and id) boxes and places them in the first page.
 
     Arguments:
-        extra {dict} -- A (Str:Str) dictioary with student id and name
-        exam {fitz.Document} -- A PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys
+        extra {dict} -- (Str:Str) dictioary with student id and name.
+        exam {fitz.Document} -- PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys.
 
     Keyword Arguments:
-        test_mode {bool} -- Boolean elements used for testing, testing case with show the documents (default: {False})
-        test_folder {Str} -- A String for where to place the generated test files (default: {None})
+        test_mode {bool} -- Boolean elements used for testing, testing case with show the documents. (default: {False})
+        test_folder {Str} -- String for where to place the generated test files. (default: {None})
 
     Raises:
-        ValueError: Raise error if the student name and number is not encodable
+        ValueError: Raise error if the student name and number is not encodable.
 
     Returns:
-        fitz.Document -- The same exam object as the input, except we add the extra infor into the first page
+        fitz.Document -- The same exam object as the input, except we add the extra infor into the first page.
     """
 
     # Get page width and height
@@ -346,16 +347,16 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
 
 # TODO: Complete the test mode functionality
 def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
-    """Used for saving the exams in paperdir
+    """Used for saving the exams in paperdir.
 
     Arguments:
-        extra {dict} -- A (Str:Str) dictioary with student id and name
+        extra {dict} -- A (Str:Str) dictioary with student id and name.
         exam {fitz.Document} -- The same exam object as the input, except we add the extra infor into the first page.
-        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests 
+        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests. 
     
     Keyword Arguments:
-        test_mode {bool} -- boolean elements used for testing, testing case with show the documents (default: {False})
-        test_folder {Str} -- A String for where to place the generated test files (default: {None})
+        test_mode {bool} -- boolean elements used for testing, testing case with show the documents. (default: {False})
+        test_folder {Str} -- A String for where to place the generated test files. (default: {None})
     """
 
     # Add the deflate option to compress the embedded pngs
@@ -389,25 +390,26 @@ def make_PDF(
     test_mode=False,
     test_folder=None,
 ):
-    """A function that makes the PDFs and saves the modified exam files 
-       Overall it has 4 steps for each document:
-       1- Create and save Qr codes
-       2- Create and save exams with the addition of the QR codes
-       3- If extra is defined, add student id and student name
-       4- Finally save the Documents
+    """A function that makes the PDFs and saves the modified exam files.
+
+    Overall it has 4 steps for each document:
+    1- Create and save Qr codes.
+    2- Create and save exams with the addition of the QR codes.
+    3- If extra is defined, add student id and student name.
+    4- Finally save the Documents.
 
     Arguments:
-        name {Str} -- Document Name
-        code {Str} -- 6 digit distinguished code for the document
-        length {int} -- Length of the document or number of pages
-        versions {int} -- Number of version of this Document
-        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests
-        page_versions {dict} -- A (int,int) dictionary representing the version of each page for this test
+        name {Str} -- Document Name.
+        code {Str} -- 6 digit distinguished code for the document.
+        length {int} -- Length of the document or number of pages.
+        versions {int} -- Number of version of this Document.
+        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
+        page_versions {dict} -- (int:int) dictionary representing the version of each page for this test.
 
     Keyword Arguments:
-        extra {dict} -- A (Str:Str) dictioary with student id and name (default: {None})
+        extra {dict} -- (Str:Str) Dictioary with student id and name (default: {None})
         test_mode {bool} -- Boolean elements used for testing, testing case with show the documents (default: {False})
-        test_folder {Str} -- A String for where to place the generated test files (default: {None})
+        test_folder {Str} -- String for where to place the generated test files (default: {None})
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable

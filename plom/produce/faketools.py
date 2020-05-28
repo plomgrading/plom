@@ -70,9 +70,8 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
     """A fcuntion that fills in the exams with fake data for the demo test.
 
     Arguments:
-        paper_dir_path {Str of convertable to pathlib obj} -- directory containing the blank exams.
-                              Can be a string or anything convertible to pathlib `Path` object.
-        students_list_path {Str} -- path and filename of the students in the class (as csv file).
+        paper_dir_path {Str or convertable to pathlib obj} -- Directory containing the blank exams. 
+        students_list_path {Str} -- Path and filename of the students in the class (as csv file).
         outfile {Str} -- Path to write results into this concatenated PDF file.
 
     Keyword Arguments:
@@ -225,7 +224,9 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
 
 
 def delete_one_page(out_file_path):
-    """Randomly deletes one page from the pdf. This is purely used for testing.
+    """Randomly deletes one page from the pdf. 
+    
+    Purely used for testing.
 
     Arguments:
         out_file_path {Str} -- String path for a pdf file for which we will delete one random page from
@@ -237,7 +238,9 @@ def delete_one_page(out_file_path):
 
 
 def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
-    """Randomly genertes garbage pages for the purpose of testing only
+    """Randomly genertes garbage pages.
+
+    Purely used for testing.
 
     Arguments:
         out_file_path {Str} -- String path for a pdf file to which we will add a random garbage page
@@ -262,11 +265,12 @@ def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
 
 
 def main():
-    """Main function used for running
-        1- Generates teh files
-        2- Creates the fake data filled pdfs using fill_in_fake_data_on_exams
-        3- Deletes from the pdf file using delete_one_page
-        4- We also add some garbage pages using delete_one_page
+    """Main function used for running.
+
+    1. Generates teh files.
+    2. Creates the fake data filled pdfs using fill_in_fake_data_on_exams.
+    3. Deletes from the pdf file using delete_one_page.
+    4. We also add some garbage pages using delete_one_page.
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
