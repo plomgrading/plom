@@ -186,6 +186,12 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
                 )
                 assert insertion_confirmed > 0
 
+        # delete last page from the zeroth test.
+        if index == 0:
+            doc.deletePage(-1)
+            print("Deleting last page of test {}".format(file_name))
+
+
         # We then add the pdfs into the document collection
         all_pdf_documents.insertPDF(pdf_document)
 
@@ -221,20 +227,6 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
     # Here we only need to save the generated pdf files with random test answers
     all_pdf_documents.save(out_file_path)
     print('Assembled in "{}"'.format(out_file_path))
-
-
-def delete_one_page(out_file_path):
-    """Randomly deletes one page from the pdf. 
-    
-    Purely used for testing.
-
-    Arguments:
-        out_file_path {Str} -- String path for a pdf file for which we will delete one random page from
-    """
-    all_pdf_documents = fitz.open(out_file_path)
-    delete_page_index = random.randint(0, len(all_pdf_documents) - 1)
-    all_pdf_documents.deletePage(delete_page_index)
-    all_pdf_documents.saveIncr()
 
 
 def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
@@ -282,7 +274,6 @@ def main():
     out_file_path = "fake_scribbled_exams.pdf"
 
     fill_in_fake_data_on_exams(_paperdir, students_list_path, out_file_path)
-    delete_one_page(out_file_path)
     make_garbage_page(out_file_path, number_of_grarbage_pages=2)
 
 
