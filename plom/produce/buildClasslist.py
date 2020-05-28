@@ -45,7 +45,7 @@ def clean_non_canvas_csv(csv_file_name):
     2. Retrieve the studentName is preset.
     3. If not, retrieve student given name and surname in the document.
 
-    Must be run after being checked by check_is_non_canvas_csv.
+    You may want to check first with `check_is_non_canvas_csv`.
 
     Arguments:
         csv_file_name {Str} -- Name of the csv file.
@@ -126,8 +126,6 @@ def check_is_non_canvas_csv(csv_file_name):
     1. Check if id is present.
     2. Check if studentName is preset.
     3. If not, check for given name and surname in the document.
-    
-    Must be run before clean_non_canvas_csv.
 
     Arguments:
         csv_file_name {Str} -- Name of the csv file.
@@ -191,8 +189,9 @@ def check_is_non_canvas_csv(csv_file_name):
 
 def clean_canvas_csv(csv_file_name):
     """Read the canvas csv file and clean the csv file.
-        
-    Must be run after being checked by check_is_canvas_csv.
+
+    You may want to first check if the file is a Canvas-exported file
+    using `check_is_canvas_csv`.
 
     Arguments:
         csv_file_name {Str} -- Name of the csv file.
@@ -208,8 +207,6 @@ def clean_canvas_csv(csv_file_name):
 
 def check_is_canvas_csv(csv_file_name):
     """Checks to see if a function is a canvas style csv file.
-
-    Must be run before clean_canvas_csv.
 
     Arguments:
         csv_file_name {Str} -- Name of the csv file.
