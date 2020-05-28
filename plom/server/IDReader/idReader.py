@@ -90,9 +90,9 @@ def download_or_train_model():
         print(
             "This will take some time -- on the order of 10-20 minutes depending on your computer."
         )
-        from .IDReader.trainModelTensorFlow import trainAndSaveModel
+        from .IDReader.trainModelTensorFlow import train_and_save_model
 
-        trainAndSaveModel()
+        train_and_save_model()
 
 
 def log_likelihood(student_ids, probs):

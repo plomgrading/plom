@@ -13,14 +13,17 @@ import tensorflow as tf
 from tensorflow import keras
 
 
-def trainAndSaveModel():
+def train_and_save_model():
+    """Trains a Tensorflow digit recognition model and saves it locally.
+    """
     # grab the mnist data to train against.
 
     print("Getting mnist handwritten digit data set.")
     mnist = tf.keras.datasets.mnist
     (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
-    # build the model
+    # define the model using keras Sequential
+    # https://keras.io/guides/sequential_model/
     print("Build and compile digit-recognition model")
     model = keras.Sequential(
         [
@@ -60,4 +63,4 @@ def trainAndSaveModel():
 
 
 if __name__ == "__main__":
-    trainAndSaveModel()
+    train_and_save_model()
