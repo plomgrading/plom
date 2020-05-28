@@ -489,7 +489,7 @@ class PlomDB:
 
         return self.addTPages(tref, gref, t, pages, v)
 
-    def getProducedPageVersions(self, t):
+    def getPageVersions(self, t):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return {}
