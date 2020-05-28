@@ -142,7 +142,7 @@ def build_all_papers(spec, DB_file_name, named=False):
 
 
 def confirm_processed(spec, DB_file_name):
-    """A function that checks if the pdfs are created in the suposed folder.
+    """A function that checks if the pdfs are created in the correct folder.
 
     Arguments:
         spec {type} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
@@ -175,15 +175,15 @@ def confirm_processed(spec, DB_file_name):
 
 
 def confirm_named(spec, DB_file_name):
-    """[TODO: I don't know what this function does sine it is similar to confirmProcessed]
+    """Confirms that each paper in the spec has a corresponding PDF present.
 
     Arguments:
-        spec {[type]} -- [A dictionary embedding the exam info. This dictionary does not have a normal format.
-                          Example: See description for build_all_papers]
-        DB_file_name {[Str]} -- [Database file name path]
+        spec {dict} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
+                          Example: See description for build_all_papers
+        DB_file_name {Str} -- Database file name path
 
     Raises:
-        RuntimeError: [Runtime error thrown if the pdf file is not found]
+        RuntimeError: Runtime error thrown if the pdf file is not found
     """
 
     exam_DB = PlomDB(DB_file_name)
