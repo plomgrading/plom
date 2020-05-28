@@ -78,6 +78,7 @@ class ExamView(QGraphicsView):
 
     def initUI(self, fnames):
         # set background
+        self.setStyleSheet("background: transparent")
         self.setBackgroundBrush(BackGrid())
         self.setRenderHint(QPainter.Antialiasing, True)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)

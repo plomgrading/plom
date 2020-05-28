@@ -25,5 +25,5 @@ class BackGrid(QBrush):
             x in username.lower() for x in ["omer", "remo", "legna", "angel"]
         ):
             self.setTexture(QPixmap(os.path.join(base_path, "backGrid2.png")))
-        else:
-            self.setTexture(QPixmap(os.path.join(base_path, "backGrid1.svg")))
+        # else:
+        #    self.setTexture(QPixmap(os.path.join(base_path, "backGrid1.svg")))

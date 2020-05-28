@@ -22,7 +22,7 @@ import pkg_resources
 
 from plom import __version__
 from plom import SpecVerifier, SpecParser
-from plom.produce import processClasslist
+from plom.produce import process_class_list
 from plom import specdir
 
 #################
@@ -193,6 +193,7 @@ def doLatexChecks():
     keepfiles = ("checkThing.png", "pns.0.0.0.png")
     ct = os.path.join(cdir, "pleaseCheck", keepfiles[0])
     pns = os.path.join(cdir, specdir, "pageNotSubmitted.pdf")
+    qns = os.path.join(cdir, specdir, "questionNotSubmitted.pdf")
 
     fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ worked okay for plom."
 
@@ -206,11 +207,21 @@ def doLatexChecks():
         raise PlomServerConfigurationError(
             "Error building 'pageNotSubmitted.pdf' template page. Please check your latex distribution."
         )
+    # build template pageNotSubmitted.pdf just in case needed
+    if not pageNotSubmitted.buildQNSPage(qns):
+        raise PlomServerConfigurationError(
+            "Error building 'questionNotSubmitted.pdf' template page. Please check your latex distribution."
+        )
 
     # Try building a replacement for missing page.
-    if not pageNotSubmitted.build_substitute(0, 0, 0):
+    if not pageNotSubmitted.buildTestPageSubstitute(0, 0, 0):
         raise PlomServerConfigurationError(
-            "Error building replacement for missing page."
+            "Error building replacement for missing test page."
+        )
+    # Try building a replacement for missing page.
+    if not pageNotSubmitted.buildHWQuestionSubstitute(0, 0):
+        raise PlomServerConfigurationError(
+            "Error building replacement for missing homework question."
         )
 
     shutil.move(keepfiles[1], os.path.join("pleaseCheck", keepfiles[1]))
@@ -243,7 +254,9 @@ def initialiseServer():
     createServerConfig()
     print("Build blank predictionlist for identifying.")
     createBlankPredictions()
-    print("Do latex checks and build 'pageNotSubmitted.pdf' in case needed")
+    print(
+        "Do latex checks and build 'pageNotSubmitted.pdf', 'questionNotSubmitted.pdf' in case needed"
+    )
     doLatexChecks()
 
 
@@ -386,7 +399,7 @@ spI = sub.add_parser("init", help="Initialise server.")
 spL = sub.add_parser(
     "class",
     help="Read in a classlist.",
-    epilog=processClasslist.__doc__,
+    epilog=process_class_list.__doc__,
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 spU = sub.add_parser("users", help="Create required users.")
@@ -431,7 +444,7 @@ def main():
         initialiseServer()
     elif args.command == "class":
         # process the class list and copy into place
-        processClasslist(args.classlist, args.demo)
+        process_class_list(args.classlist, args.demo)
     elif args.command == "users":
         # process the class list and copy into place
         processUsers(args.userlist, args.demo, args.auto)

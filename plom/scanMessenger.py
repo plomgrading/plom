@@ -39,7 +39,7 @@ class ScanMessenger(BaseMessenger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def uploadKnownPage(self, code, test, page, version, sname, fname, md5sum):
+    def uploadTestPage(self, code, test, page, version, sname, fname, md5sum):
         self.SRmutex.acquire()
         try:
             param = {
@@ -59,7 +59,84 @@ class ScanMessenger(BaseMessenger):
                 }
             )
             response = self.session.put(
-                "https://{}/admin/knownPages/{}".format(self.server, code),
+                "https://{}/admin/testPages/{}".format(self.server, code),
+                json={"user": self.user, "token": self.token},
+                data=dat,
+                headers={"Content-Type": dat.content_type},
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def uploadHWPage(self, sid, question, order, sname, fname, md5sum):
+        self.SRmutex.acquire()
+        try:
+            param = {
+                "user": self.user,
+                "token": self.token,
+                "fileName": sname,
+                "sid": sid,
+                "question": question,
+                "order": order,
+                "md5sum": md5sum,
+            }
+            mime_type = mimetypes.guess_type(sname)[0]
+            dat = MultipartEncoder(
+                fields={
+                    "param": json.dumps(param),
+                    "originalImage": (sname, open(fname, "rb"), mime_type),  # image
+                }
+            )
+            response = self.session.put(
+                "https://{}/admin/hwPages".format(self.server),
+                json={"user": self.user, "token": self.token},
+                data=dat,
+                headers={"Content-Type": dat.content_type},
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def uploadXPage(self, sid, order, sname, fname, md5sum):
+        self.SRmutex.acquire()
+        try:
+            param = {
+                "user": self.user,
+                "token": self.token,
+                "fileName": sname,
+                "sid": sid,
+                "order": order,
+                "md5sum": md5sum,
+            }
+            mime_type = mimetypes.guess_type(sname)[0]
+            dat = MultipartEncoder(
+                fields={
+                    "param": json.dumps(param),
+                    "originalImage": (sname, open(fname, "rb"), mime_type),  # image
+                }
+            )
+            response = self.session.put(
+                "https://{}/admin/xPages".format(self.server),
                 json={"user": self.user, "token": self.token},
                 data=dat,
                 headers={"Content-Type": dat.content_type},
@@ -211,3 +288,78 @@ class ScanMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return response.json()
+
+    def sendTUploadDone(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/admin/testPagesUploaded".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def sendHWUploadDone(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/admin/hwPagesUploaded".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def replaceMissingHWQuestion(self, sid, q):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/admin/missingHWQuestion".format(self.server),
+                verify=False,
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "question": q,
+                    "sid": sid,
+                },
+            )
+            response.raise_for_status()
+            rval = response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 404:
+                raise PlomSeriousException(
+                    "Server could not find the TPV - this should not happen!"
+                ) from None
+            elif response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 409:  # that question already has pages
+                raise PlomTakenException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return rval

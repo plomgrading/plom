@@ -13,7 +13,7 @@ specdir = "specAndDatabase"
 from .specParser import SpecVerifier, SpecParser
 from .version import __version__
 
-Plom_API_Version = "12"  # updated for bringing user-functions into API
+Plom_API_Version = "15"  # updated (with jump) for new DB hackery
 Default_Port = 41984
 
 # Image types we expect the client to be able to handle, in lowercase

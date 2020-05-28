@@ -18,9 +18,9 @@ import pkg_resources
 from plom import __version__
 from plom import SpecVerifier, SpecParser
 from plom import specdir
-from plom.produce import buildAllPapers, confirmProcessed, confirmNamed
+from plom.produce import build_all_papers, confirm_processed, confirm_named
 from plom.produce import paperdir
-from plom.produce import processClasslist
+from plom.produce import process_class_list
 from plom.produce.demotools import buildDemoSourceFiles
 
 
@@ -84,9 +84,9 @@ def buildDatabase(spec):
 
 def buildBlankPapers(spec):
     print("Building blank papers")
-    buildAllPapers(spec, dbfile)
+    build_all_papers(spec, dbfile)
     print("Checking papers produced and updating databases")
-    confirmProcessed(spec, dbfile)
+    confirm_processed(spec, dbfile)
 
 
 def buildNamedPapers(spec):
@@ -105,10 +105,10 @@ def buildNamedPapers(spec):
             )
         )
 
-    buildAllPapers(spec, dbfile, named=True)
+    build_all_papers(spec, dbfile, named=True)
     print("Checking papers produced and updating databases")
-    confirmProcessed(spec, dbfile)
-    confirmNamed(spec, dbfile)
+    confirm_processed(spec, dbfile)
+    confirm_named(spec, dbfile)
 
 
 def buildDatabaseAndPapers(blank):
@@ -167,7 +167,7 @@ spP.add_argument(
 spL = sub.add_parser(
     "class",
     help="Read in a classlist",
-    epilog=processClasslist.__doc__,
+    epilog=process_class_list.__doc__,
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 group = spL.add_mutually_exclusive_group(required=True)
@@ -218,7 +218,7 @@ def main():
         parseAndVerifySpecification(fname)
     elif args.command == "class":
         # process the class list and copy into place
-        processClasslist(args.classlist, args.demo)
+        process_class_list(args.classlist, args.demo)
     elif args.command == "make":
         # get building.
         buildDatabaseAndPapers(args.blank)
