@@ -7,6 +7,7 @@ __license__ = "AGPL-3.0-or-later"
 import glob
 import hashlib
 import os
+from pathlib import Path
 import shutil
 import subprocess
 from multiprocessing import Pool
@@ -29,10 +30,16 @@ from plom import ScenePixelHeight
 archivedir = "archivedPDFs"
 
 
-def archivePDF(fname):
+def archivePDF(fname, hwByQ, hwExtra):
+    print("Archiving {}".format(fname))
     md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
     # TODO: is ".." portable?  maybe we should keep some absolute paths handy
-    shutil.move(fname, archivedir)
+    if hwByQ:
+        shutil.move(fname, Path(archivedir) / "submittedHWByQ")
+    elif hwExtra:
+        shutil.move(fname, Path(archivedir) / "submittedHWExtra")
+    else:
+        shutil.move(fname, archivedir)
     # open the existing archive if it is there
     arcName = os.path.join(archivedir, "archive.toml")
     if os.path.isfile(arcName):
@@ -120,13 +127,21 @@ def processFileToBitmaps(fname):
                     converttopng = False
                     # Bail on jpeg if dimensions are not multiples of 16.
                     # (could relax: iMCU can also be 8x8, 16x8, 8x16: see PIL .layer)
-                    if d["ext"].lower() in ("jpeg", "jpg") and not (d["width"] % 16 == 0 and d["height"] % 16 == 0):
+                    if d["ext"].lower() in ("jpeg", "jpg") and not (
+                        d["width"] % 16 == 0 and d["height"] % 16 == 0
+                    ):
                         converttopng = True
-                        print("  JPEG dim not mult. of 16; transcoding to PNG to avoid lossy transforms")
+                        print(
+                            "  JPEG dim not mult. of 16; transcoding to PNG to avoid lossy transforms"
+                        )
                         # TODO: we know its jpeg, could use PIL instead of `convert` below
                 else:
                     converttopng = True
-                    print("  {} format not whitelisted; transcoding to PNG".format(d["ext"]))
+                    print(
+                        "  {} format not whitelisted; transcoding to PNG".format(
+                            d["ext"]
+                        )
+                    )
 
                 if not converttopng:
                     outname = os.path.join("scanPNGs", basename + "." + d["ext"])
@@ -192,7 +207,7 @@ def extractImageFromFitzPage(page, doc):
 
     d = doc.extractImage(imlist[0][0])
     # TODO: log.debug this:
-    #print("  " + "; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
+    # print("  " + "; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
     width = d.get("width")
     height = d.get("height")
     if not (width and height):
@@ -235,7 +250,7 @@ def processFileToPng_w_ghostscript(fname):
 
 
 # TODO: for debugging, can replace with the older ghostscript
-#processFileToBitmaps = processFileToPng_w_ghostscript
+# processFileToBitmaps = processFileToPng_w_ghostscript
 
 
 def gamma_adjust(fn):
@@ -260,13 +275,26 @@ def normalizeJPEGOrientation(f):
     im = jpegtran.JPEGImage(f)
     if im.exif_orientation:
         if im.width % 16 or im.height % 16:
-            warnings.warn('  JPEG image "{}" dims not mult of 16: re-orientations may be lossy'.format(f))
+            warnings.warn(
+                '  JPEG image "{}" dims not mult of 16: re-orientations may be lossy'.format(
+                    f
+                )
+            )
         im2 = im.exif_autotransform()
-        print('  normalizing "{}" {}x{} to "{}" {}x{}'.format(im.exif_orientation, im.width, im.height, im2.exif_orientation, im2.width, im2.height))
+        print(
+            '  normalizing "{}" {}x{} to "{}" {}x{}'.format(
+                im.exif_orientation,
+                im.width,
+                im.height,
+                im2.exif_orientation,
+                im2.width,
+                im2.height,
+            )
+        )
         im2.save(f)
 
 
-def processScans(fname):
+def processScans(fname, hwByQ=False, hwExtra=False):
     """Process file into bitmap pageimages and archive the pdf.
 
     Process each page of a pdf file into bitmaps.  Then move the processed
@@ -289,8 +317,12 @@ def processScans(fname):
         return
 
     processFileToBitmaps(fname)
-    archivePDF(fname)
+    archivePDF(fname, hwByQ, hwExtra)
     os.chdir("scanPNGs")
+    if hwExtra:
+        os.chdir("submittedHWExtra")
+    elif hwByQ:
+        os.chdir("submittedHWByQ")
 
     print("Normalizing jpeg orientation from Exif metadata")
     stuff = list(glob.glob("*.jpg"))
@@ -314,6 +346,20 @@ def processScans(fname):
     fileList = []
     for ext in PlomImageExtWhitelist:
         fileList.extend(glob.glob("*.{}".format(ext)))
-    for file in fileList:
-        shutil.move(file, os.path.join("..", "pageImages"))
-    os.chdir("..")
+    # move directly to decodedPages/submittedHWByQ or  Extra - there is no "read" step
+    if hwByQ:
+        for file in fileList:
+            shutil.move(
+                file, os.path.join("..", "..", "decodedPages", "submittedHWByQ")
+            )
+        os.chdir(os.path.join("..", ".."))
+    elif hwExtra:
+        for file in fileList:
+            shutil.move(
+                file, os.path.join("..", "..", "decodedPages", "submittedHWExtra")
+            )
+        os.chdir(os.path.join("..", ".."))
+    else:  # move them to pageimages for barcode reading
+        for file in fileList:
+            shutil.move(file, os.path.join("..", "pageImages"))
+        os.chdir("..")

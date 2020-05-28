@@ -5,6 +5,9 @@ from glob import glob
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+# TODO: "stop importing things from the local path" or use this workaround:
+#sys.path.insert(0, os.dirname(__file__))
+
 # This directory
 dir_setup = os.path.dirname(os.path.realpath(__file__))
 
@@ -74,6 +77,7 @@ setup(
         "console_scripts": [
             "plom-client=plom.scripts.client:main",
             "plom-demo=plom.scripts.demo:main",
+            "plom-hwdemo=plom.scripts.hwdemo:main",
             "plom-init=plom.scripts.plominit:main",
             "plom-build=plom.scripts.build:main",
             "plom-server=plom.scripts.server:main",
@@ -81,6 +85,8 @@ setup(
             "plom-manager=plom.scripts.manager:main",
             "plom-finish=plom.scripts.finish:main",
             "plom-fake-scribbles=plom.produce.faketools:main",
+            "plom-fake-hwscribbles=plom.produce.hwFaker:main",
+            "plom-hwscan=plom.scripts.hwscan:main",
         ],
     },
     include_package_data=True,
@@ -105,7 +111,7 @@ setup(
         ("share/plom/icons", iconList),
         ("share/plom/cursors", cursorList),
         ("share/applications", ["org.plomgrading.PlomClient.desktop"]),
-        ("share/metainfo", ["org.plomgrading.PlomClient.appdata.xml"]),
+        ("share/metainfo", ["org.plomgrading.PlomClient.metainfo.xml"]),
         ("share/icons/hicolor/128x128/apps/", ["org.plomgrading.PlomClient.png"]),
     ],
     install_requires=list(set(client_install_requires + server_install_requires)),

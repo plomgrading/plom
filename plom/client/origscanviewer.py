@@ -3,30 +3,321 @@ __copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer"]
 __license__ = "AGPLv3"
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QBrush, QIcon, QPixmap, QResizeEvent, QTransform
 from PyQt5.QtWidgets import (
+    QAbstractItemView,
     QApplication,
     QDialog,
     QFormLayout,
+    QHBoxLayout,
     QGridLayout,
+    QListView,
+    QListWidget,
+    QListWidgetItem,
     QLabel,
+    QMessageBox,
     QPushButton,
+    QScrollArea,
     QSpinBox,
     QTabWidget,
+    QVBoxLayout,
     QWidget,
 )
 from .uiFiles.ui_test_view import Ui_TestView
 from .examviewwindow import ExamViewWindow
+from .useful_classes import SimpleMessage
+
+
+class SourceList(QListWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.setViewMode(QListWidget.IconMode)
+        self.setAcceptDrops(False)
+        self.setSelectionBehavior(QAbstractItemView.SelectItems)
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setFlow(QListView.LeftToRight)
+        self.setIconSize(QSize(128, 128))
+        self.setSpacing(16)
+        self.setWrapping(False)
+        self.itemDoubleClicked.connect(self.viewImage)
+        self.originalItems = {}
+        self.potentialItems = {}
+
+    def addOriginalItem(self, p, pfile):
+        name = str(p)
+        self.addItem(QListWidgetItem(QIcon(pfile), name))
+        self.originalItems[name] = pfile
+
+    def addPotentialItem(self, p, pfile):
+        name = str(p)
+        self.potentialItems[name] = pfile
+
+    def removeItem(self):
+        cr = self.currentRow()
+        ci = self.takeItem(cr)
+        if ci is None:
+            return None
+        self.setCurrentItem(None)
+        return ci.text()
+
+    def returnItem(self, name):
+        if name in self.originalItems:
+            self.addItem(QListWidgetItem(QIcon(self.originalItems[name]), name))
+        elif name in self.potentialItems:
+            it = QListWidgetItem(QIcon(self.potentialItems[name]), name)
+            it.setBackground(QBrush(Qt.darkGreen))
+            self.addItem(it)
+        else:
+            return
+        self.sortItems()
+
+    def viewImage(self, qi):
+        self.parent.viewImage(self.originalItems[qi.text()])
+
+
+class SinkList(QListWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.setViewMode(QListWidget.IconMode)
+        self.setFlow(QListView.LeftToRight)
+        self.setAcceptDrops(False)
+        self.setSelectionBehavior(QAbstractItemView.SelectItems)
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setFlow(QListView.LeftToRight)
+        # self.setResizeMode(QListView.Adjust)
+        self.setIconSize(QSize(128, 128))
+        self.setSpacing(16)
+        self.setWrapping(False)
+        self.originalItems = {}
+        self.potentialItems = {}
+        self.itemDoubleClicked.connect(self.viewImage)
+
+    def addOriginalItem(self, p, pfile):
+        name = str(p)
+        it = QListWidgetItem(QIcon(pfile), name)
+        it.setBackground(QBrush(Qt.green))
+        self.addItem(it)
+        self.originalItems[name] = pfile
+
+    def addPotentialItem(self, p, pfile):
+        name = str(p)
+        self.potentialItems[name] = pfile
+
+    def removeItem(self):
+        cr = self.currentRow()
+        ci = self.currentItem()
+        if ci is None:
+            return None
+        elif self.count() == 1:  # cannot remove all pages
+            return None
+        # elif ci.text() in self.originalItems:
+        # return None
+        else:
+            ci = self.takeItem(cr)
+            self.setCurrentItem(None)
+            return ci.text()
+
+    def appendItem(self, name):
+        if name is None:
+            return
+        if name in self.potentialItems:
+            ci = QListWidgetItem(QIcon(self.potentialItems[name]), name)
+        else:
+            ci = QListWidgetItem(QIcon(self.originalItems[name]), name)
+            ci.setBackground(QBrush(Qt.darkGreen))
+        self.addItem(ci)
+        self.setCurrentItem(ci)
+
+    def shuffleLeft(self):
+        cr = self.currentRow()
+        if cr in [-1, 0]:
+            return
+        ci = self.takeItem(cr)
+        self.insertItem(cr - 1, ci)
+        self.setCurrentRow(cr - 1)
+
+    def shuffleRight(self):
+        cr = self.currentRow()
+        if cr in [-1, self.count() - 1]:
+            return
+        ci = self.takeItem(cr)
+        self.insertItem(cr + 1, ci)
+        self.setCurrentRow(cr + 1)
+
+    def reverseOrder(self):
+        rc = self.count()
+        for n in range(rc // 2):
+            # swap item[n] with item [rc-n-1]
+            ri = self.takeItem(rc - n - 1)
+            li = self.takeItem(n)
+            self.insertItem(n, ri)
+            self.insertItem(rc - n - 1, li)
+
+    def rotateImage(self, angle=90):
+        ci = self.currentItem()
+        name = ci.text()
+        rot = QTransform()
+        rot.rotate(angle)
+
+        if name in self.potentialItems:
+            rname = self.potentialItems[name]
+        else:
+            rname = self.originalItems[name]
+
+        cpix = QPixmap(rname)
+        npix = cpix.transformed(rot)
+        npix.save(rname, format="PNG")
+
+        ci.setIcon(QIcon(rname))
+
+    def viewImage(self, qi):
+        if qi.text() in self.originalItems:
+            self.parent.viewImage(self.originalItems[qi.text()])
+        else:
+            self.parent.viewImage(self.potentialItems[qi.text()])
+
+    def getNameList(self):
+        nList = []
+        for r in range(self.count()):
+            nList.append(self.item(r).text())
+        return nList
+
+
+class RearrangementViewer(QDialog):
+    def __init__(self, parent, testNumber, pageData, pageFiles):
+        super().__init__()
+        self.parent = parent
+        self.testNumber = testNumber
+        self.numberOfPages = len(pageFiles)
+
+        self.setupUI()
+        self.pageData = pageData
+        self.pageFiles = pageFiles
+        self.nameToIrefNFile = {}
+        # note pagedata  triples [name, image-ref, true/false]
+        self.populateList()
+
+    def setupUI(self):
+
+        self.scrollA = QScrollArea()
+        self.listA = SourceList(self)
+        self.scrollA.setWidget(self.listA)
+        self.scrollA.setWidgetResizable(True)
+        self.scrollB = QScrollArea()
+        self.listB = SinkList(self)
+        self.scrollB.setWidget(self.listB)
+        self.scrollB.setWidgetResizable(True)
+
+        self.appendB = QPushButton("Append")
+        self.removeB = QPushButton("Remove")
+        self.sLeftB = QPushButton("Shuffle Left")
+        self.sRightB = QPushButton("Shuffle Right")
+        self.reverseB = QPushButton("Reverse Order")
+        self.rotateB = QPushButton("Rotate 90 (local copy only)")
+
+        self.page = ExamViewWindow([])
+
+        self.closeB = QPushButton("Close")
+        self.acceptB = QPushButton("Accept new layout")
+
+        self.permute = [False]
+
+        hb0 = QHBoxLayout()
+        vb1 = QVBoxLayout()
+        vb1.addWidget(self.scrollA)
+        vb1.addWidget(self.scrollB)
+        hb1 = QHBoxLayout()
+        hb1.addWidget(self.sLeftB)
+        hb1.addWidget(self.reverseB)
+        hb1.addWidget(self.sRightB)
+        vb2 = QVBoxLayout()
+        vb2.addWidget(self.appendB)
+        vb2.addWidget(self.removeB)
+        vb2.addLayout(hb1)
+        vb3 = QVBoxLayout()
+        vb3.addWidget(self.acceptB)
+        vb3.addLayout(vb2)
+        vb3.addWidget(self.rotateB)
+        vb3.addWidget(self.closeB)
+        hb0.addLayout(vb1)
+        hb0.addLayout(vb3)
+        hb0.addWidget(self.page)
+
+        hb0.setStretch(0, 2)
+        hb0.setStretch(2, 3)
+        self.setLayout(hb0)
+
+        self.closeB.clicked.connect(self.close)
+        self.sLeftB.clicked.connect(self.shuffleLeft)
+        self.sRightB.clicked.connect(self.shuffleRight)
+        self.reverseB.clicked.connect(self.reverseOrder)
+        self.rotateB.clicked.connect(self.rotateImage)
+        self.sRightB.clicked.connect(self.shuffleRight)
+        self.appendB.clicked.connect(self.sourceToSink)
+        self.removeB.clicked.connect(self.sinkToSource)
+        self.acceptB.clicked.connect(self.doShuffle)
+
+    def populateList(self):
+        for k in range(len(self.pageData)):
+            self.nameToIrefNFile[self.pageData[k][0]] = [
+                self.pageData[k][1],
+                self.pageFiles[k],
+            ]
+            if self.pageData[k][2]:  # is a question page
+                self.listA.addPotentialItem(self.pageData[k][0], self.pageFiles[k])
+                self.listB.addOriginalItem(self.pageData[k][0], self.pageFiles[k])
+            else:
+                self.listA.addOriginalItem(self.pageData[k][0], self.pageFiles[k])
+                self.listB.addPotentialItem(self.pageData[k][0], self.pageFiles[k])
+
+    def sourceToSink(self):
+        self.listB.appendItem(self.listA.removeItem())
+
+    def sinkToSource(self):
+        self.listA.returnItem(self.listB.removeItem())
+
+    def shuffleLeft(self):
+        self.listB.shuffleLeft()
+
+    def shuffleRight(self):
+        self.listB.shuffleRight()
+
+    def reverseOrder(self):
+        self.listB.reverseOrder()
+
+    def rotateImage(self):
+        self.listB.rotateImage()
+
+    def viewImage(self, fname):
+        self.page.updateImage(fname)
+
+    def doShuffle(self):
+        msg = SimpleMessage(
+            "Are you sure you want to shuffle pages. This will erase all your annotations and relaunch the annotator."
+        )
+        if msg.exec() == QMessageBox.No:
+            return
+
+        self.permute = []
+        for n in self.listB.getNameList():
+            self.permute.append(self.nameToIrefNFile[n])
+            # return pairs of [iref, file]
+        print(self.permute)
+        self.accept()
 
 
 class OriginalScansViewer(QWidget):
-    def __init__(self, parent, testNumber, pageNames, pages):
+    def __init__(self, parent, testNumber, pageData, pages):
         super().__init__()
         self.parent = parent
         self.testNumber = testNumber
         self.numberOfPages = len(pages)
         self.pageList = pages
-        self.pageNames = pageNames
+        # note pagedata  triples [name, image-ref, true/false]
+        self.pageNames = [x[0] for x in pageData]
         self.ui = Ui_TestView()
         self.ui.setupUi(self)
         self.connectButtons()

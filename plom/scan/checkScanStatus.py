@@ -59,10 +59,42 @@ def checkStatus(server=None, password=None):
 
     print("Scanned tests in the system:")
     for t in ST:
-        scannedPages = [x[0] for x in ST[t]]
-        print("\t{}: [{}]".format(t, format_int_list_with_runs(scannedPages)))
+        scannedTPages = []
+        scannedHWPages = []
+        for x in ST[t]:
+            if x[0][0] == "t":  # is a test page = "t.p"
+                p = int(x[0].split(".")[1])
+                scannedTPages.append(p)
+            elif x[0][0] == "h":  # is a hw page = "h.q.o"
+                q = int(x[0].split(".")[1])
+                if q not in scannedHWPages:
+                    scannedHWPages.append(q)
+
+        print(
+            "\t{}: testPages [{}] hwPages [{}]".format(
+                t,
+                format_int_list_with_runs(scannedTPages),
+                format_int_list_with_runs(scannedHWPages),
+            )
+        )
 
     print("Incomplete scans - listed with their missing pages: ")
     for t in IT:
-        missingPages = [x[0] for x in IT[t]]
-        print("\t{}: [{}]".format(t, format_int_list_with_runs(missingPages)))
+        missingPagesT = []
+        missingPagesH = []
+        for x in IT[t]:  # each entry is [page, version, scanned?]
+            if x[0][0] == "t":  # is a test page
+                p = int(x[0].split(".")[1])
+                if x[2] is False:
+                    missingPagesT.append(p)
+            elif x[0][0] == "h":  # is a w page
+                q = int(x[0].split(".")[1])
+                if x[2] is False:
+                    missingPagesT.append(q)
+        print(
+            "\t{}: t[{}] h[{}]".format(
+                t,
+                format_int_list_with_runs(missingPagesT),
+                format_int_list_with_runs(missingPagesH),
+            )
+        )
