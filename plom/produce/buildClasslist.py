@@ -345,7 +345,6 @@ def process_class_list(student_csv_file_name, demo=False):
             )
         )
         exit(1)
-        pass
 
     if demo:
         print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
