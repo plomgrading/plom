@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
-"""Digit hunter extracts random digit images from the MNIST database and stores then in a json file. The results are used by faketools.py to create ID-pages for the plom-demo."""
+"""
+Digit hunter extracts random digit images from the MNIST database and stores then in a json file (used to create digits.json). The results are used by faketools.py to create ID-pages for the plom-demo.
+This python program not run on a normal Plom (or demo) run, however it is being kept in the repo for posterity. 
+
+Dataset used: https://en.wikipedia.org/wiki/MNIST_database
+"""
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
 __credits__ = "The Plom Project Developers"
@@ -37,13 +42,13 @@ for d in range(10):
         assert img.shape == (28, 28)
 
         # quantize
-        #img = np.round(np.round(img / 255.0 * 3) / 3.0 * 255)
+        # img = np.round(np.round(img / 255.0 * 3) / 3.0 * 255)
 
         # colorize
         bgr = np.zeros((28, 28, 3))
-        bgr[:,:,0] = img // 4 + 192  # blue to [192, 255]
-        bgr[:,:,1] = img
-        bgr[:,:,2] = img
+        bgr[:, :, 0] = img // 4 + 192  # blue to [192, 255]
+        bgr[:, :, 1] = img
+        bgr[:, :, 2] = img
 
         worked, buf = cv2.imencode(".png", bgr)
 
@@ -56,7 +61,7 @@ for d in range(10):
         with open(fname.replace(".png", "-fs8.png"), "rb") as f:
             buf = f.read()
 
-        #cv2.imshow("argh", img)
+        # cv2.imshow("argh", img)
         if worked is False:
             print("EEK - problem")
             quit()

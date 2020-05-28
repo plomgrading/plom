@@ -22,7 +22,7 @@ import pkg_resources
 
 from plom import __version__
 from plom import SpecVerifier, SpecParser
-from plom.produce import processClasslist
+from plom.produce import process_class_list
 from plom import specdir
 
 #################
@@ -399,7 +399,7 @@ spI = sub.add_parser("init", help="Initialise server.")
 spL = sub.add_parser(
     "class",
     help="Read in a classlist.",
-    epilog=processClasslist.__doc__,
+    epilog=process_class_list.__doc__,
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 spU = sub.add_parser("users", help="Create required users.")
@@ -444,7 +444,7 @@ def main():
         initialiseServer()
     elif args.command == "class":
         # process the class list and copy into place
-        processClasslist(args.classlist, args.demo)
+        process_class_list(args.classlist, args.demo)
     elif args.command == "users":
         # process the class list and copy into place
         processUsers(args.userlist, args.demo, args.auto)

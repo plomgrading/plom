@@ -23,20 +23,21 @@ import pandas
 
 # import tools for dealing with resource files
 import pkg_resources
-
 from . import paperdir as _paperdir
 from plom import specdir as _specdir
 from plom import __version__
 
 
 # load the digit images
-digitArray = json.load(pkg_resources.resource_stream("plom", "produce/digits.json"))
+digits_folder_path = "produce/digits.json"
+digit_array = json.load(pkg_resources.resource_stream("plom", digits_folder_path))
 # how many of each digit were collected
-NDigit = len(digitArray) // 10
-assert len(digitArray) % 10 == 0
+
+number_of_digits = len(digit_array) // 10
+assert len(digit_array) % 10 == 0
 
 
-possibleAns = [
+possible_answers = [
     "I am so sorry, I really did study this... :(",
     "I know this, I just can't explain it",
     "Hey, at least its not in Comic Sans",
@@ -65,157 +66,214 @@ possibleAns = [
 ]
 
 
-def fillInFakeDataOnExams(paperdir, classlist, outfile, which=None):
-    """Simulate writing an exam by scribbling names, numbers, and answers.
+def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, which=None):
+    """A fcuntion that fills in the exams with fake data for the demo test.
 
-    Args:
-        paperdir: directory containing the blank exams.
-            Can be a string or anything convertible to pathlib `Path` object.
-        classlist: path and filename of the classlist (as csv file).
-        outfile: write results into this concatenated PDF file.
-        which (optional): by default, scribble on all exams or specify
-            something like `which=range(10, 16)` here to scribble on a
-            subset.
+    Arguments:
+        paper_dir_path {Str or convertable to pathlib obj} -- Directory containing the blank exams.
+        students_list_path {Str} -- Path and filename of the students in the class (as csv file).
+        outfile {Str} -- Path to write results into this concatenated PDF file.
+
+    Keyword Arguments:
+        which {type} -- by default, scribble on all exams or specify
+                           something like `which=range(10, 16)` here to scribble on a
+                           subset. (default: {None})
     """
 
-    paperdir = Path(paperdir)
-    classlist = Path(classlist)
-    outfile = Path(outfile)
+    # Customizable data
+    blue = [0, 0, 0.75]
+    student_number_length = 8
+    extra_page_probability = 0.2
+    digit_font_size = 24
+    answer_font_size = 13
+    extra_page_font_size = 18
+
+    # We create the path objects
+    paper_dir_path = Path(paper_dir_path)
+    students_list_path = Path(students_list_path)
+    out_file_path = Path(outfile)
 
     print("Annotating papers with fake student data and scribbling on pages...")
     if not which:
-        namedPapers = glob(str(paperdir / "exam_*_*.pdf"))  # those with an ID number
-        papers = sorted(glob(str(paperdir / "exam_*.pdf")))  # everything
+        named_papers_paths = glob(
+            str(paper_dir_path / "exam_*_*.pdf")
+        )  # those with an ID number
+        papers_paths = sorted(glob(str(paper_dir_path / "exam_*.pdf")))  # everything
     else:
-        papers = sorted(
-            [paperdir / "exam_{}.pdf".format(str(i).zfill(4)) for i in which]
+        papers_paths = sorted(
+            [
+                paper_dir_path / "exam_{}.pdf".format(str(index).zfill(4))
+                for index in which
+            ]
         )
 
-    df = pandas.read_csv(classlist, dtype="object")
-    # sample from the classlist
-    df = df.sample(len(papers))
+    # A pandas DataFrame object including the student id and student_name
+    students_list = pandas.read_csv(students_list_path, dtype="object")
 
-    bigdoc = fitz.open()
+    # sample from the students_list
+    students_list = students_list.sample(len(papers_paths))
 
-    blue = [0, 0, 0.75]
+    # A complete collection of the pdfs created
+    all_pdf_documents = fitz.open()
 
-    for i, fname in enumerate(papers):
-        r = df.iloc[i]
+    for index, file_name in enumerate(papers_paths):
+
+        student_pandas_object = students_list.iloc[index]
+
         print(
             "  {}: {}, {}, scribbled".format(
-                os.path.basename(fname), r.id, r.studentName
+                os.path.basename(file_name),
+                student_pandas_object.id,
+                student_pandas_object.studentName,
             )
         )
 
-        name = r.studentName
-        sn = str(r.id)
+        student_name = student_pandas_object.studentName
+        student_number = str(student_pandas_object.id)
 
-        doc = fitz.open(fname)
-        page = doc[0]
+        pdf_document = fitz.open(file_name)
+        front_page = pdf_document[0]
 
-        if fname not in namedPapers:  # can draw on front page
+        # First we input the student names
+        if file_name not in named_papers_paths:  # can draw on front page
             # insert digit images into rectangles - some hackery required to get correct positions.
-            w = 28
-            b = 8
-            for k in range(8):
+            width = 28
+            border = 8
+            for digit_index in range(student_number_length):
                 rect1 = fitz.Rect(
-                    220 + b * k + w * k, 265, 220 + b * k + w * (k + 1), 265 + w
+                    220 + border * digit_index + width * digit_index,
+                    265,
+                    220 + border * digit_index + width * (digit_index + 1),
+                    265 + width,
                 )
-                uuImg = digitArray[
-                    int(sn[k]) * NDigit + random.randrange(NDigit)
+                uuImg = digit_array[
+                    int(student_number[digit_index]) * number_of_digits
+                    + random.randrange(number_of_digits)
                 ]  # uu-encoded png
-                imgBString = base64.b64decode(uuImg)
-                page.insertImage(rect1, stream=imgBString, keep_proportion=True)
-                # todo - there should be an assert or something here?
+                img_BString = base64.b64decode(uuImg)
+                front_page.insertImage(rect1, stream=img_BString, keep_proportion=True)
+                # TODO - there should be an assert or something here?
 
-            rect2 = fitz.Rect(228, 335, 550, 450)
-            rc = page.insertTextbox(
-                rect2,
-                name,
-                fontsize=24,
+            digit_rectangle = fitz.Rect(228, 335, 550, 450)
+            insertion_confirmed = front_page.insertTextbox(
+                digit_rectangle,
+                student_name,
+                fontsize=digit_font_size,
                 color=blue,
                 fontname="Helvetica",
                 fontfile=None,
                 align=0,
             )
-            assert rc > 0
+            assert insertion_confirmed > 0
 
-        # write some stuff on pages
-        for j, pg in enumerate(doc):
-            rect = fitz.Rect(
+        # Write some random answers on the pages
+        for page_index, pdf_page in enumerate(pdf_document):
+            random_answer_rect = fitz.Rect(
                 100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
             )
-            text = random.choice(possibleAns)
+            random_answer_text = random.choice(possible_answers)
 
             # TODO: "helv" vs "Helvetica"
-            if j >= 1:
-                rc = pg.insertTextbox(
-                    rect,
-                    text,
-                    fontsize=13,
+            if page_index >= 1:
+                insertion_confirmed = pdf_page.insertTextbox(
+                    random_answer_rect,
+                    random_answer_text,
+                    fontsize=answer_font_size,
                     color=blue,
                     fontname="helv",
                     fontfile=None,
                     align=0,
                 )
-                assert rc > 0
+                assert insertion_confirmed > 0
 
-        bigdoc.insertPDF(doc)
-        # with probability 0.2 insert 1 extrapage
-        if random.random() < 0.2:
-            # blah/exam_XXXX.pdf or blah/exam_XXXX_YYYYYYY.pdf, drop blah and .pdf
-            fn = os.path.splitext(os.path.basename(fname))[0]
-            tnumber = fn.split("_")[1]
-            if fname in namedPapers:  # fn is exam_XXXX_YYYYYYY.pdf
-                sn = fn.split("_")[2]
-            print("  making an extra page for test {} and sid {}".format(tnumber, sn))
-            bigdoc.insertPage(
+        # delete last page from the zeroth test.
+        if index == 0:
+            pdf_document.deletePage(-1)
+            print("Deleting last page of test {}".format(file_name))
+
+        # We then add the pdfs into the document collection
+        all_pdf_documents.insertPDF(pdf_document)
+
+        # For a comprehensive test, we will add some extrapages with the probability of 0.2 precent
+        if random.random() < extra_page_probability:
+            # folder_name/exam_XXXX.pdf or folder_name/exam_XXXX_YYYYYYY.pdf,
+            # file_pdf_name drops the folder name and the .pdf parts
+            file_pdf_name = os.path.splitext(os.path.basename(file_name))[0]
+
+            # Then we get the test number and student_number from file_pdf_name
+            test_number = file_pdf_name.split("_")[1]
+            if (
+                file_name in named_papers_paths
+            ):  # file_pdf_name is exam_XXXX_YYYYYYY.pdf
+                student_number = file_pdf_name.split("_")[2]
+
+            print(
+                "  making an extra page for test {} and sid {}".format(
+                    test_number, student_number
+                )
+            )
+            all_pdf_documents.insertPage(
                 -1,
-                text="EXTRA PAGE - t{} Q1 - {}".format(tnumber, sn),
-                fontsize=18,
+                text="EXTRA PAGE - t{} Q1 - {}".format(test_number, student_number),
+                fontsize=extra_page_font_size,
                 color=blue,
             )
 
-        doc.close()
+        pdf_document.close()
 
-    # need to use `str(outfile)` for pumypdf < 1.16.14
+    # need to use `str(out_file_path)` for pumypdf < 1.16.14
     # https://github.com/pymupdf/PyMuPDF/issues/466
-    bigdoc.save(outfile)
-    print('Assembled in "{}"'.format(outfile))
+    # Here we only need to save the generated pdf files with random test answers
+    all_pdf_documents.save(out_file_path)
+    print('Assembled in "{}"'.format(out_file_path))
 
 
-def deleteOnePage(outfile):
-    bigdoc = fitz.open(outfile)
-    p = random.randint(0, len(bigdoc) - 1)
-    print("Deleting page {} from output".format(p))
-    bigdoc.deletePage(p)
-    bigdoc.saveIncr()
+def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
+    """Randomly genertes garbage pages.
 
+    Purely used for testing.
 
-def makeGarbagePage(outfile, n=1):
+    Arguments:
+        out_file_path {Str} -- String path for a pdf file to which we will add a random garbage page
+
+    Keyword Arguments:
+        number_of_grarbage_pages {int} -- Number of added garbage pages for this document (default: {1})
+    """
+
+    # Customizable data
     green = [0, 0.75, 0]
-    bigdoc = fitz.open(outfile)
-    print("Doc has {} pages".format(len(bigdoc)))
-    for k in range(n):
-        p = random.randint(-1, len(bigdoc))
-        print("Insert garbage page at p={}".format(p))
-        bigdoc.insertPage(p, text="This is a garbage page", fontsize=18, color=green)
-    bigdoc.saveIncr()
+    garbage_page_font_size = 18
+
+    all_pdf_documents = fitz.open(out_file_path)
+    print("Doc has {} pages".format(len(all_pdf_documents)))
+    for index in range(number_of_grarbage_pages):
+        garbage_page_index = random.randint(-1, len(all_pdf_documents))
+        print("Insert garbage page at garbage_page_index={}".format(garbage_page_index))
+        all_pdf_documents.insertPage(
+            garbage_page_index, text="This is a garbage page", fontsize=18, color=green
+        )
+    all_pdf_documents.saveIncr()
 
 
 def main():
+    """Main function used for running.
+
+    1. Generates teh files.
+    2. Creates the fake data filled pdfs using fill_in_fake_data_on_exams.
+    3. Deletes from the pdf file using delete_one_page.
+    4. We also add some garbage pages using delete_one_page.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
     )
     args = parser.parse_args()
+    spec_dir = Path(_specdir)
+    students_list_path = spec_dir / "classlist.csv"
+    out_file_path = "fake_scribbled_exams.pdf"
 
-    specdir = Path(_specdir)
-    classlist = specdir / "classlist.csv"
-    outfile = "fake_scribbled_exams.pdf"
-    fillInFakeDataOnExams(_paperdir, classlist, outfile)
-    deleteOnePage(outfile)
-    makeGarbagePage(outfile, n=2)
+    fill_in_fake_data_on_exams(_paperdir, students_list_path, out_file_path)
+    make_garbage_page(out_file_path, number_of_grarbage_pages=2)
 
 
 if __name__ == "__main__":
