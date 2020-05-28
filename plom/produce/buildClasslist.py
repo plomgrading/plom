@@ -208,7 +208,7 @@ def clean_canvas_csv(csv_file_name):
 
 def check_is_canvas_csv(csv_file_name):
     """Checks to see if a function is a canvas style csv file.
-        
+
     Must be run before clean_canvas_csv.
 
     Arguments:
@@ -225,7 +225,7 @@ def check_is_canvas_csv(csv_file_name):
 
 def check_latin_names(student_info_df):
     """Pass the pandas object and check studentNames encode to Latin-1.
-    
+
     Prints out a warning message for any that are not encodable.
 
     Arguments:
@@ -258,7 +258,7 @@ def check_latin_names(student_info_df):
 
 def process_classlist_backend(student_csv_file_name, outputfile):
     """Processes the classlist depending on weter its a canvas style csv folder or if it isn't.
-    
+
     1. Check if the file is canvas style csv, if so clean.
     2. Otherwise check if te function has the id/name info, if so clean it.
     3. Otherwise exit(1).
