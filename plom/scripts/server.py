@@ -203,7 +203,7 @@ def doLatexChecks():
         )
 
     # build template pageNotSubmitted.pdf just in case needed
-    if not pageNotSubmitted.build_page_not_submitted_page(pns):
+    if not pageNotSubmitted.buildPNSPage(pns):
         raise PlomServerConfigurationError(
             "Error building 'pageNotSubmitted.pdf' template page. Please check your latex distribution."
         )
