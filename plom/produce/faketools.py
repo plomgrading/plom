@@ -188,7 +188,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
 
         # delete last page from the zeroth test.
         if index == 0:
-            doc.deletePage(-1)
+            pdf_document.deletePage(-1)
             print("Deleting last page of test {}".format(file_name))
 
 
