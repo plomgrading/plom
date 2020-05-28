@@ -1,0 +1,4 @@
+include CONTRIBUTORS CHANGELOG.md Dockerfile LICENSE.md
+
+# TODO: requirements.txt
+# TODO: docs?
