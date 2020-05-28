@@ -40,11 +40,11 @@ canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 
 def clean_non_canvas_csv(csv_file_name):
     """Read the csv file and clean the csv file.
-    
-    1. Retreive the id.
-    2. Retreive the studentName is preset.
-    3. If not, retreive student given name and surname in the document.
-    
+
+    1. Retrieve the id.
+    2. Retrieve the studentName is preset.
+    3. If not, retrieve student given name and surname in the document.
+
     Must be run after being checked by check_is_non_canvas_csv.
 
     Arguments:
@@ -122,7 +122,7 @@ def clean_non_canvas_csv(csv_file_name):
 
 def check_is_non_canvas_csv(csv_file_name):
     """Read the csv file and check to see if the id and student name exist.
-    
+
     1. Check if id is present.
     2. Check if studentName is preset.
     3. If not, check for given name and surname in the document.
@@ -257,7 +257,7 @@ def check_latin_names(student_info_df):
 
 
 def process_classlist_backend(student_csv_file_name, outputfile):
-    """Processes the classlist depending on weter its a canvas style csv folder or if it isn't.
+    """Processes the classlist depending on whether its a canvas style csv folder or if it isn't.
 
     1. Check if the file is canvas style csv, if so clean.
     2. Otherwise check if te function has the id/name info, if so clean it.
@@ -313,12 +313,12 @@ def process_classlist_backend(student_csv_file_name, outputfile):
 
 def process_class_list(student_csv_file_name, demo=False):
     """Get student names/numbers from csv, process, and save for server
-        
+
     Student numbers come from an `id` column.  There is some
     flexibility about student names: most straightforward is a
     second column named `studentNames`.  The results are copied
     into a new csv file in a simplied format.
-        
+
     The classlist can be a .csv file with column headers:
     - `id` - student ID number
     - `studentName` - student name in a single field
