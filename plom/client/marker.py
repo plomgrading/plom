@@ -181,7 +181,7 @@ def upload(
     # do name sanity checks here
     aname, pname, cname = filenames
     if not (
-        code.startswith("m")
+        code.startswith("q")
         and os.path.basename(aname) == "G{}.png".format(code[1:])
         and os.path.basename(pname) == "G{}.plom".format(code[1:])
         and os.path.basename(cname) == "G{}.json".format(code[1:])
@@ -927,10 +927,7 @@ class MarkerClient(QWidget):
         mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
 
         annotator = Annotator(
-            self.ui.userLabel.text(),
-            mouseHand,
-            parentMarkerUI=self,
-            initialData=data
+            self.ui.userLabel.text(), mouseHand, parentMarkerUI=self, initialData=data
         )
         # run the annotator
         annotator.annotator_upload.connect(self.callbackAnnWantsUsToUpload)
@@ -963,12 +960,11 @@ class MarkerClient(QWidget):
         self.startTheAnnotator(inidata)
         # we started the annotator, we'll get a signal back when its done
 
-
     def getDataForAnnotator(self, task):
         """Start annotator on a particular task."""
         # Create annotated filename. If original mXXXXgYY, then
         # annotated version is GXXXXgYY (G=graded).
-        assert task.startswith("m")
+        assert task.startswith("q")
         Gtask = "G" + task[1:]
         paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
         log.debug("create paperdir {} for annotating".format(paperdir))
@@ -1041,26 +1037,16 @@ class MarkerClient(QWidget):
         testname = self.testInfo["testName"]
         markStyle = self.ui.markStyleGroup.checkedId()
         tgv = task[1:]
-        return (
-            tgv,
-            testname,
-            paperdir,
-            fnames,
-            aname,
-            self.maxScore,
-            markStyle,
-            pdict
-        )
-
+        return (tgv, testname, paperdir, fnames, aname, self.maxScore, markStyle, pdict)
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
     def callbackAnnDoneCancel(self, task):
         self.setEnabled(True)
         if task:
-            prevState = self.exM.getStatusByTask("m" + task).split(":")[-1]
+            prevState = self.exM.getStatusByTask("q" + task).split(":")[-1]
             # TODO: could also erase the paperdir
-            self.exM.setStatusByTask("m" + task, prevState)
+            self.exM.setStatusByTask("q" + task, prevState)
         # TODO: see below re "done grading".
 
     @pyqtSlot(str)
@@ -1073,7 +1059,7 @@ class MarkerClient(QWidget):
         pr = prIndex[0].row()
         # TODO: when done grading, if ann stays open, then close, this doesn't happen
         if task:
-            if self.prxM.getPrefix(pr) == "m" + task:
+            if self.prxM.getPrefix(pr) == "q" + task:
                 self.updateImage(pr)
 
     @pyqtSlot(str, list)
@@ -1091,14 +1077,14 @@ class MarkerClient(QWidget):
             return
 
         # Copy the mark, annotated filename and the markingtime into the table
-        # TODO: sort this out whether task is "m00..." or "00..."?!
-        self.exM.markPaperByTask("m" + task, gr, aname, pname, mtime, paperdir)
+        # TODO: sort this out whether task is "q00..." or "00..."?!
+        self.exM.markPaperByTask("q" + task, gr, aname, pname, mtime, paperdir)
         # update the mtime to be the total marking time
-        totmtime = self.exM.getMTimeByTask("m" + task)
-        tags = self.exM.getTagsByTask("m" + task)
+        totmtime = self.exM.getMTimeByTask("q" + task)
+        tags = self.exM.getTagsByTask("q" + task)
 
         _data = (
-            "m" + task,  # current task
+            "q" + task,  # current task
             gr,  # grade
             (aname, pname, cname),  # annotated, plom, and comment filenames
             totmtime,  # total marking time
@@ -1144,6 +1130,24 @@ class MarkerClient(QWidget):
 
         return data
 
+    def permuteAndGimmeSame(self, task, imageList):
+        log.info("Rearranging image list for task {} = {}".format(task, imageList))
+        # we know the list of image-refs and files. copy files into place
+        # Image names = "<task>.<imagenumber>.<extension>"
+        inames = []
+        irefs = []
+        for i in range(len(imageList)):
+            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
+            shutil.copyfile(imageList[i][1], tmp)
+            inames.append(tmp)
+            irefs.append(imageList[i][0])
+
+        task = "q" + task
+        self.exM.setOriginalFiles(task, inames)
+        # now tell server about new list of images for the annotation.
+        messenger.MshuffleImages(task, irefs)
+        # finally relaunch the annotator
+        return self.getDataForAnnotator(task)
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
         """An upload has finished, do appropriate UI updates"""
@@ -1231,7 +1235,9 @@ class MarkerClient(QWidget):
 
     def downloadWholePaper(self, testNumber):
         try:
-            pageNames, imagesAsBytes = messenger.MrequestWholePaper(testNumber)
+            pageData, imagesAsBytes = messenger.MrequestWholePaper(
+                testNumber, self.question
+            )
         except PlomTakenException as err:
             log.exception("Taken exception when downloading whole paper")
             ErrorMessage("{}".format(err)).exec_()
@@ -1246,7 +1252,7 @@ class MarkerClient(QWidget):
             with open(tfn, "wb") as fh:
                 fh.write(iab)
 
-        return [pageNames, viewFiles]
+        return [pageData, viewFiles]
 
     def doneWithWholePaperFiles(self, viewFiles):
         for f in viewFiles:
@@ -1362,7 +1368,7 @@ class MarkerClient(QWidget):
                 gn = self.question
             else:
                 return
-        task = "m{}g{}".format(str(tn).zfill(4), int(self.question))
+        task = "q{}g{}".format(str(tn).zfill(4), int(self.question))
         try:
             imageList = messenger.MrequestOriginalImages(task)
         except PlomNoMoreException as err:

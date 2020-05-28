@@ -59,7 +59,7 @@ from .useful_classes import (
     NoAnswerBox,
 )
 from .comment_list import CommentWidget
-from .origscanviewer import OriginalScansViewer
+from .origscanviewer import OriginalScansViewer, RearrangementViewer
 from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm as Ui_annotator
 
 log = logging.getLogger("annotr")
@@ -138,6 +138,7 @@ class Annotator(QWidget):
 
         # a test view pop-up window - initially set to None for viewing whole paper
         self.testView = None
+        self.rearrangeView = None
         self.testViewFiles = None
 
         # when comments are used, we just outline the comment list - not
@@ -184,8 +185,6 @@ class Annotator(QWidget):
         self.setWindowFlags(
             self.windowFlags() | Qt.WindowSystemMenuHint | Qt.WindowMinMaxButtonsHint
         )
-        # Grab window settings from parent
-        self.loadWindowSettings()
 
         # Keyboard shortcuts.
         self.key_codes = self.getKeyShortcuts()
@@ -195,6 +194,9 @@ class Annotator(QWidget):
         if initialData:
             self.loadNewTGV(*initialData)
 
+        # Grab window settings from parent
+        self.loadWindowSettings()
+
         # TODO: use QAction, share with other UI, shortcut keys written once
         m = QMenu()
         m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
@@ -202,6 +204,7 @@ class Annotator(QWidget):
         m.addAction("Defer and go to next", self.menuDummy).setEnabled(False)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
+        m.addAction("Rearrange pages", self.rearrangePages)
         m.addSeparator()
         m.addAction("Compact UI\thome", self.narrowLayout)
         m.addAction("&Wide UI\thome", self.wideLayout)
@@ -279,7 +282,8 @@ class Annotator(QWidget):
             markStyle (int) -- marking style
                              1 = mark total = user clicks the total-mark
                              2 = mark-up = mark starts at 0 and user increments it
-                              3 = mark-down = mark starts at max and user decrements it
+                             3 = mark-down = mark starts at max and user decrements it
+                             Note: can be overridden by the plomDict.
             plomDict (dict)  -- a dictionary of annotation information.
                                 A dict that contains sufficient information to recreate the
                                 annotation objects on the page if you go back to continue annotating a
@@ -301,12 +305,18 @@ class Annotator(QWidget):
         if getattr(self, "maxMark", None) != maxMark:
             log.warn("Is changing maxMark supported?  we just did it...")
         self.maxMark = maxMark
+        del maxMark
 
-        # get markstyle from plomDict
-        if plomDict is None:
-            self.markStyle = markStyle
-        else:
+        log.debug("plomdict = ", plomDict)
+        if plomDict:
             self.markStyle = plomDict["markStyle"]
+        else:
+            self.markStyle = markStyle
+        del markStyle  # prevent use of non-overridden value
+        log.debug("markstyle = ", self.markStyle)
+
+        if plomDict:
+            assert plomDict["maxMark"] == self.maxMark, "mismatch between maxMarks"
 
         # Set current mark to 0.
         self.score = 0
@@ -321,7 +331,7 @@ class Annotator(QWidget):
         # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
         self.comment_widget.setStyle(self.markStyle)
         self.comment_widget.maxMark = (
-            maxMark  # TODO: add helper?  combine with changeMark?
+            self.maxMark  # TODO: add helper?  combine with changeMark?
         )
         self.comment_widget.changeMark(self.score)
         self.comment_widget.setQuestionNumberFromTGV(tgvID)
@@ -329,10 +339,10 @@ class Annotator(QWidget):
 
         if not self.markHandler:
             # Build the mark handler and put into the gui.
-            self.markHandler = MarkHandler(self, maxMark, markStyle)
+            self.markHandler = MarkHandler(self, self.maxMark, self.markStyle)
             self.ui.markGrid.addWidget(self.markHandler)
         else:
-            self.markHandler.resetAndMaybeChange(maxMark, markStyle)
+            self.markHandler.resetAndMaybeChange(self.maxMark, self.markStyle)
 
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
@@ -607,25 +617,54 @@ class Annotator(QWidget):
             None -- modifies self.testView
         """
         # grab the files if needed.
+        testNumber = self.tgvID[:4]
         if self.testViewFiles is None:
-            testNumber = self.tgvID[:4]
             log.debug("wholePage: downloading files for testnum {}".format(testNumber))
-            pageNames, self.testViewFiles = self.parentMarkerUI.downloadWholePaper(
-                testNumber
-            )
-            log.debug(
-                "wholePage: pageNames = {}, viewFiles = {}".format(
-                    pageNames, self.testViewFiles
-                )
-            )
+            (
+                self.pageData,
+                self.testViewFiles,
+            ) = self.parentMarkerUI.downloadWholePaper(testNumber)
+
         # if we haven't built a testview, built it now
         if self.testView is None:
             self.testView = OriginalScansViewer(
-                self, testNumber, pageNames, self.testViewFiles
+                self, testNumber, self.pageData, self.testViewFiles
             )
-        else:
-            # must have closed it, so re-show it.
-            self.testView.show()
+        self.testView.show()
+        return
+
+    def rearrangePages(self):
+        testNumber = self.tgvID[:4]
+        # grab the files if needed.
+        if self.testViewFiles is None:
+            log.debug(
+                "rearrangePage: downloading files for testnum {}".format(testNumber)
+            )
+            (
+                self.pageData,
+                self.testViewFiles,
+            ) = self.parentMarkerUI.downloadWholePaper(testNumber)
+
+            log.debug(
+                "rearrangePage: pageData = {}, viewFiles = {}".format(
+                    self.pageData, self.testViewFiles
+                )
+            )
+        # if we haven't built a testview, built it now
+        if self.rearrangeView is None:
+            self.rearrangeView = RearrangementViewer(
+                self, testNumber, self.pageData, self.testViewFiles,
+            )
+        if self.rearrangeView.exec_() == QDialog.Accepted:
+            stuff = self.parentMarkerUI.permuteAndGimmeSame(
+                self.tgvID, self.rearrangeView.permute
+            )
+            ## TODO: do we need to do this?
+            ## TODO: before or after stuff = ...?
+            # closeCurrentTGV(self)
+            log.debug("permuted: new stuff is {}".format(stuff))
+            self.loadNewTGV(*stuff)
+        return
 
     def doneViewingPaper(self):
         """

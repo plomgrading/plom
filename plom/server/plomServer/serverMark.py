@@ -160,8 +160,8 @@ def MsetTag(self, user, task, tag):
     return self.DB.MsetTag(user, task, tag)
 
 
-def MgetWholePaper(self, testNumber):
-    return self.DB.MgetWholePaper(testNumber)
+def MgetWholePaper(self, testNumber, questionNumber):
+    return self.DB.MgetWholePaper(testNumber, questionNumber)
 
 
 def MreviewQuestion(self, testNumber, questionNumber, version):
@@ -177,3 +177,7 @@ def MrevertTask(self, code):
         return [True]
     else:
         return rval
+
+
+def MshuffleImages(self, username, code, imageRefs):
+    return self.DB.MshuffleImages(username, code, imageRefs)

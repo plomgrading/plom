@@ -8,5 +8,5 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 paperdir = "papersToPrint"
-from .buildNamedPDF import buildAllPapers, confirmProcessed, confirmNamed
-from .buildClasslist import processClasslist
+from .buildNamedPDF import build_all_papers, confirm_processed, confirm_named
+from .buildClasslist import process_class_list
