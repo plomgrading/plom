@@ -70,7 +70,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
     """A fcuntion that fills in the exams with fake data for the demo test.
 
     Arguments:
-        paper_dir_path {Str or convertable to pathlib obj} -- Directory containing the blank exams. 
+        paper_dir_path {Str or convertable to pathlib obj} -- Directory containing the blank exams.
         students_list_path {Str} -- Path and filename of the students in the class (as csv file).
         outfile {Str} -- Path to write results into this concatenated PDF file.
 

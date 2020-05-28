@@ -12,7 +12,7 @@ from plom.server import pageNotSubmitted
 log = logging.getLogger("server")
 
 
-def addKnownPage(self, t, p, v, fname, image, md5o):
+def addTestPage(self, t, p, v, fname, image, md5o):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -22,7 +22,51 @@ def addKnownPage(self, t, p, v, fname, image, md5o):
         newName = "pages/originalPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadKnownPage(t, p, v, fname, newName, md5o)
+    val = self.DB.uploadTestPage(t, p, v, fname, newName, md5o)
+    if val[0]:
+        with open(newName, "wb") as fh:
+            fh.write(image)
+        md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
+        assert md5n == md5o
+        log.debug("Storing {} as {} = {}".format(prefix, newName, val))
+    else:
+        log.debug("Did not store page.  From database = {}".format(val[1]))
+    return val
+
+
+def addHWPage(self, sid, q, o, fname, image, md5o):
+    # take extension from the client filename
+    base, ext = os.path.splitext(fname)
+    # create a filename for the image
+    prefix = "s{}q{}o{}".format(sid, q, o)
+    while True:
+        unique = "." + str(uuid.uuid4())[:8]
+        newName = "pages/originalPages/" + prefix + unique + ext
+        if not os.path.isfile(newName):
+            break
+    val = self.DB.uploadHWPage(sid, q, o, fname, newName, md5o)
+    if val[0]:
+        with open(newName, "wb") as fh:
+            fh.write(image)
+        md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
+        assert md5n == md5o
+        log.debug("Storing {} as {} = {}".format(prefix, newName, val))
+    else:
+        log.debug("Did not store page.  From database = {}".format(val[1]))
+    return val
+
+
+def addXPage(self, sid, o, fname, image, md5o):
+    # take extension from the client filename
+    base, ext = os.path.splitext(fname)
+    # create a filename for the image
+    prefix = "s{}o{}".format(sid, o)
+    while True:
+        unique = "." + str(uuid.uuid4())[:8]
+        newName = "pages/originalPages/" + prefix + unique + ext
+        if not os.path.isfile(newName):
+            break
+    val = self.DB.uploadXPage(sid, o, fname, newName, md5o)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -78,9 +122,9 @@ def addCollidingPage(self, t, p, v, fname, image, md5o):
     return val
 
 
-def replaceMissingPage(self, testNumber, pageNumber, version):
+def replaceMissingTestPage(self, testNumber, pageNumber, version):
     # TODO - we should probably have some sort of try/except around this.
-    pageNotSubmitted.buildSubstitute(testNumber, pageNumber, version)
+    pageNotSubmitted.buildTestPageSubstitute(testNumber, pageNumber, version)
     # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
     originalName = "pns.{}.{}.{}.png".format(testNumber, pageNumber, version)
     prefix = "pages/originalPages/pns.{}p{}v{}".format(
@@ -107,8 +151,16 @@ def replaceMissingPage(self, testNumber, pageNumber, version):
     return rval
 
 
-def getPageImage(self, testNumber, pageNumber, version):
-    return self.DB.getPageImage(testNumber, pageNumber, version)
+def getTPageImage(self, testNumber, pageNumber, version):
+    return self.DB.getTPageImage(testNumber, pageNumber, version)
+
+
+def getHWPageImage(self, testNumber, question, order):
+    return self.DB.getHWPageImage(testNumber, question, order)
+
+
+def getXPageImage(self, testNumber, order):
+    return self.DB.getXPageImage(testNumber, order)
 
 
 def getUnknownImage(self, fname):
@@ -258,3 +310,36 @@ def discardToUnknown(self, fname):
         return [True]
     else:
         return [False]
+
+
+def replaceMissingHWQuestion(self, sid, question):
+    # TODO - we should probably have some sort of try/except around this.
+    pageNotSubmitted.buildHWQuestionSubstitute(sid, question)
+    # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
+    originalName = "qns.{}.{}.png".format(sid, question)
+    prefix = "pages/originalPages/pns.{}q{}".format(sid, question)
+    # make a non-colliding name
+    while True:
+        unique = "." + str(uuid.uuid4())[:8]
+        newName = prefix + unique + ".png"
+        if not os.path.isfile(newName):
+            break
+        newName = "pages/originalPages/" + prefix + unique + ".png"
+    # compute md5sum and put into database
+    md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
+    # now try to put it into place
+    rval = self.DB.replaceMissingHWQuestion(sid, question, originalName, newName, md5)
+    # if move successful then actually move file into place, else delete it
+    if rval[0]:
+        shutil.move(originalName, newName)
+    else:
+        os.unlink(originalName)
+    return rval
+
+
+def processHWUploads(self):
+    return self.DB.processUpdatedTests()
+
+
+def processTUploads(self):
+    return self.DB.processUpdatedTests()

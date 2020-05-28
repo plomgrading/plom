@@ -28,7 +28,7 @@ from . import paperdir
 
 def read_class_list():
     """Creates a dictionary of the students name and ids and returns it
-    
+
     TODO: Perhaps this function should be reformatted
 
     Returns:
@@ -53,7 +53,7 @@ def _make_PDF(x):
     """A function that basically uses make_PDF from mergeAdCodePages.
 
     Arguments:
-        x {tuple} --   
+        x {tuple} --
                         name {Str} -- Document Name
                         code {Str} -- 6 digit distinguished code for the document
                         length {int} -- Length of the document or number of pages
@@ -63,20 +63,20 @@ def _make_PDF(x):
                         extra {dict} -- A (Str:Str) dictioary with student id and name (default: {None})
 
                         Example:
-                        name: 'plomdemo', 
-                        code: '980275', 
-                        length: 6, 
-                        versions: 2, 
-                        test: 1, 
-                        page_versions: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1}, 
-                        extra: {'id': '10050380', 'name': 'Fink, Iris'}              
+                        name: 'plomdemo',
+                        code: '980275',
+                        length: 6,
+                        versions: 2,
+                        test: 1,
+                        page_versions: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1},
+                        extra: {'id': '10050380', 'name': 'Fink, Iris'}
     """
     make_PDF(*x)
 
 
 def build_all_papers(spec, DB_file_name, named=False):
     """Builds the papers using _make_PDF.
-    
+
     Based on `numberToName` this uses `_make_PDF` to create some
     papers with names stamped on the front as well as some papers without.
 
@@ -84,20 +84,20 @@ def build_all_papers(spec, DB_file_name, named=False):
         spec {dict} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
                        Example below:
                        {
-                       'name': 'plomdemo', 
-                       'longName': 'Midterm Demo using Plom', 
-                       'numberOfVersions': 2, 
-                       'numberOfPages': 6, 
-                       'numberToProduce': 20, 
-                       'numberToName': 10, <--- This is typically zero 
-                       'numberOfQuestions': 3, 
-                       'privateSeed': '1001378822317872', 
-                       'publicCode': '270385', 
-                       'idPages': {'pages': [1]}, 
-                       'doNotMark': {'pages': [2]}, 
+                       'name': 'plomdemo',
+                       'longName': 'Midterm Demo using Plom',
+                       'numberOfVersions': 2,
+                       'numberOfPages': 6,
+                       'numberToProduce': 20,
+                       'numberToName': 10, <--- This is typically zero
+                       'numberOfQuestions': 3,
+                       'privateSeed': '1001378822317872',
+                       'publicCode': '270385',
+                       'idPages': {'pages': [1]},
+                       'doNotMark': {'pages': [2]},
                        'question': {
-                           '1': {'pages': [3], 'mark': 5, 'select': 'shuffle'}, 
-                           '2': {'pages': [4], 'mark': 10, 'select': 'fix'}, 
+                           '1': {'pages': [3], 'mark': 5, 'select': 'shuffle'},
+                           '2': {'pages': [4], 'mark': 10, 'select': 'fix'},
                            '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
                           }
                        }

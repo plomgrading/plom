@@ -77,6 +77,7 @@ setup(
         "console_scripts": [
             "plom-client=plom.scripts.client:main",
             "plom-demo=plom.scripts.demo:main",
+            "plom-hwdemo=plom.scripts.hwdemo:main",
             "plom-init=plom.scripts.plominit:main",
             "plom-build=plom.scripts.build:main",
             "plom-server=plom.scripts.server:main",
@@ -84,6 +85,8 @@ setup(
             "plom-manager=plom.scripts.manager:main",
             "plom-finish=plom.scripts.finish:main",
             "plom-fake-scribbles=plom.produce.faketools:main",
+            "plom-fake-hwscribbles=plom.produce.hwFaker:main",
+            "plom-hwscan=plom.scripts.hwscan:main",
         ],
     },
     include_package_data=True,

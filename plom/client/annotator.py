@@ -59,7 +59,7 @@ from .useful_classes import (
     NoAnswerBox,
 )
 from .comment_list import CommentWidget
-from .origscanviewer import OriginalScansViewer
+from .origscanviewer import OriginalScansViewer, RearrangementViewer
 from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm as Ui_annotator
 
 log = logging.getLogger("annotr")
@@ -138,6 +138,7 @@ class Annotator(QWidget):
 
         # a test view pop-up window - initially set to None for viewing whole paper
         self.testView = None
+        self.rearrangeView = None
         self.testViewFiles = None
 
         # when comments are used, we just outline the comment list - not
@@ -203,6 +204,7 @@ class Annotator(QWidget):
         m.addAction("Defer and go to next", self.menuDummy).setEnabled(False)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
+        m.addAction("Rearrange pages", self.rearrangePages)
         m.addSeparator()
         m.addAction("Compact UI\thome", self.narrowLayout)
         m.addAction("&Wide UI\thome", self.wideLayout)
@@ -615,25 +617,54 @@ class Annotator(QWidget):
             None -- modifies self.testView
         """
         # grab the files if needed.
+        testNumber = self.tgvID[:4]
         if self.testViewFiles is None:
-            testNumber = self.tgvID[:4]
             log.debug("wholePage: downloading files for testnum {}".format(testNumber))
-            pageNames, self.testViewFiles = self.parentMarkerUI.downloadWholePaper(
-                testNumber
-            )
-            log.debug(
-                "wholePage: pageNames = {}, viewFiles = {}".format(
-                    pageNames, self.testViewFiles
-                )
-            )
+            (
+                self.pageData,
+                self.testViewFiles,
+            ) = self.parentMarkerUI.downloadWholePaper(testNumber)
+
         # if we haven't built a testview, built it now
         if self.testView is None:
             self.testView = OriginalScansViewer(
-                self, testNumber, pageNames, self.testViewFiles
+                self, testNumber, self.pageData, self.testViewFiles
             )
-        else:
-            # must have closed it, so re-show it.
-            self.testView.show()
+        self.testView.show()
+        return
+
+    def rearrangePages(self):
+        testNumber = self.tgvID[:4]
+        # grab the files if needed.
+        if self.testViewFiles is None:
+            log.debug(
+                "rearrangePage: downloading files for testnum {}".format(testNumber)
+            )
+            (
+                self.pageData,
+                self.testViewFiles,
+            ) = self.parentMarkerUI.downloadWholePaper(testNumber)
+
+            log.debug(
+                "rearrangePage: pageData = {}, viewFiles = {}".format(
+                    self.pageData, self.testViewFiles
+                )
+            )
+        # if we haven't built a testview, built it now
+        if self.rearrangeView is None:
+            self.rearrangeView = RearrangementViewer(
+                self, testNumber, self.pageData, self.testViewFiles,
+            )
+        if self.rearrangeView.exec_() == QDialog.Accepted:
+            stuff = self.parentMarkerUI.permuteAndGimmeSame(
+                self.tgvID, self.rearrangeView.permute
+            )
+            ## TODO: do we need to do this?
+            ## TODO: before or after stuff = ...?
+            # closeCurrentTGV(self)
+            log.debug("permuted: new stuff is {}".format(stuff))
+            self.loadNewTGV(*stuff)
+        return
 
     def doneViewingPaper(self):
         """

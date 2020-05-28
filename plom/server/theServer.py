@@ -132,10 +132,15 @@ class Server(object):
         closeUser,
     )
     from .plomServer.serverUpload import (
-        addKnownPage,
+        addTestPage,
+        addHWPage,
+        addXPage,
+        processHWUploads,
+        processTUploads,
         addUnknownPage,
         addCollidingPage,
-        replaceMissingPage,
+        replaceMissingTestPage,
+        replaceMissingHWQuestion,
         removeScannedPage,
         getUnknownPageNames,
         getDiscardNames,
@@ -143,7 +148,9 @@ class Server(object):
         getUnknownImage,
         getCollidingImage,
         getDiscardImage,
-        getPageImage,
+        getTPageImage,
+        getHWPageImage,
+        getXPageImage,
         getQuestionImages,
         getTestImages,
         checkPage,
@@ -184,6 +191,7 @@ class Server(object):
         MgetWholePaper,
         MreviewQuestion,
         MrevertTask,
+        MshuffleImages,
     )
     from .plomServer.serverTotal import (
         TgetMaxMark,
