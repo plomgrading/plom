@@ -17,7 +17,7 @@ from pathlib import Path
 from plom import specdir
 from plom.textools import buildLaTeX
 
-def build_substitute(test, page, ver):
+def buildTestPageSubstitute(test, page, ver):
     """If all is good then build a substitute page and save it in the correct place.
 
     Arguments:
