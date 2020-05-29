@@ -18,14 +18,14 @@ from passlib.context import CryptContext
 plomctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
 
-def buildCannedUsers(number):
+def build_canned_users(number):
     """Creates a list of fake users.
 
     Arguments:
         number {int} -- Number of fake users to create.
 
     Returns:
-        [type] -- [description]
+        list -- List of users (either named or numbered users)
     """
     if number == 0:
         print("Must produce at least 1 regular user. Aborting.")
@@ -51,22 +51,36 @@ def buildCannedUsers(number):
     return lst
 
 
-def checkNamePassword(u, p):
-    # basic sanity check of username and password
-    # username checks
-    if not (len(u) >= 4 and u.isalnum()):
+def check_name_password(username, password):
+    """Basic sanity check of username and password.
+
+    Arguments:
+        username {str} -- Username to check.
+        password {str} -- Password to check.
+
+    Returns:
+        bool -- True if the password is valid, False otherwise.
+    """
+    # basic username checks
+    if not (len(username) >= 4 and username.isalnum()):
         print(
             "Usernames must be at least 4 alphanumeric characters. Username '{}' is problematic.".format(
-                u
+                username
             )
         )
         return False
 
     # basic password checks
-    if len(p) < 4 or u in p:
+    if len(password) < 4:
         print(
-            "Passwords must be at least 4 characters and cannot contain the username. Password of '{}' is problematic.".format(
-                u
+            "Passwords must be at least 4 characters. Password of '{}' is problematic.".format(
+                password
+            )
+        )
+    elif username in password:
+        print(
+            "Passwords must not contain the username. Password of '{}' is problematic.".format(
+                password
             )
         )
         return False
@@ -74,12 +88,22 @@ def checkNamePassword(u, p):
     return True
 
 
-def saveUsers(userHash):
+def save_users(userHash):
+    """Saves all of the users to a json file
+
+    Arguments:
+        userHash {hex} -- Information about users to write to json.
+    """
     with open("serverConfiguration/userList.json", "w") as fh:
         fh.write(json.dumps(userHash, indent=2))
 
 
-def parseUserlist(userFile):
+def parse_user_list(userFile):
+    """Parses the user information to a list from a specified file.
+
+    Arguments:
+        userFile {str} -- Name of the file containing user information.
+    """
     userRaw = {}
     userHash = {}
     # read file to dict
@@ -106,7 +130,7 @@ def parseUserlist(userFile):
         exit(1)
 
     for u in userRaw:
-        if checkNamePassword(u, userRaw[u]):
+        if check_name_password(u, userRaw[u]):
             print("Encoding password for user {}".format(u))
             userHash[u] = plomctx.hash(userRaw[u])
         else:
