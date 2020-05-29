@@ -55,7 +55,7 @@ logging.getLogger().setLevel("Debug".upper())
 
 
 # ----------------------
-def buildDirectories():
+def build_directories():
     """Build the directories that this script needs"""
     # the list of directories. Might need updating.
     lst = [
@@ -95,9 +95,9 @@ class Server(object):
         self.tempDirectory = tempfile.TemporaryDirectory()
         # Give directory correct permissions.
         subprocess.check_call(["chmod", "o-r", self.tempDirectory.name])
-        self.loadUsers()
+        self.load_users()
 
-    def loadUsers(self):
+    def load_users(self):
         """Load the users from json file, add them to the database. Do some simple sanity checks of pwd hashes to see if they have changed."""
         if os.path.exists("serverConfiguration/userList.json"):
             with open("serverConfiguration/userList.json") as data_file:
@@ -228,7 +228,7 @@ class Server(object):
     )
 
 
-def getServerInfo():
+def get_server_info():
     """Read the server info from config file."""
     global serverInfo
     try:
@@ -251,10 +251,10 @@ def launch(masterToken=None):
         masterToken {str} -- Token that is authenticated by the authority, if None, one is created in authenticate.py. default: {None}
     """
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
-    getServerInfo()
+    get_server_info()
     examDB = PlomDB(Path(specdir) / "plom.db")
     spec = SpecParser(Path(specdir) / "verifiedSpec.toml").spec
-    buildDirectories()
+    build_directories()
     peon = Server(spec, examDB, masterToken)
     userIniter = UserInitHandler(peon)
     uploader = UploadHandler(peon)
