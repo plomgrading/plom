@@ -6,7 +6,7 @@ __license__ = "AGPLv3"
 import csv
 import json
 
-from .aliceBob import simplePassword, make_random_user_list, make_numbered_user_list
+from .aliceBob import simple_password, make_random_user_list, make_numbered_user_list
 
 
 # TODO - instead of running a cryptocontext here - move stuff into authenticate.py?
@@ -19,6 +19,14 @@ plomctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
 
 def buildCannedUsers(number):
+    """Creates a list of fake users.
+
+    Arguments:
+        number {int} -- Number of fake users to create.
+
+    Returns:
+        [type] -- [description]
+    """
     if number == 0:
         print("Must produce at least 1 regular user. Aborting.")
         exit(1)
@@ -26,7 +34,7 @@ def buildCannedUsers(number):
     # build list of required users
     lst = []
     for n in ["manager", "scanner", "reviewer"]:
-        lst.append([n, simplePassword()])
+        lst.append([n, simple_password()])
     # now append list of standard users - some sanity checks about numbers
     if number <= 20:
         print("Making list of named users")
