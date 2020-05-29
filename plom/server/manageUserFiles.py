@@ -136,4 +136,4 @@ def parse_user_list(userFile):
         else:
             exit(1)
 
-    saveUsers(userHash)
+    save_users(userHash)
