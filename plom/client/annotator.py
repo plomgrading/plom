@@ -246,7 +246,7 @@ class Annotator(QWidget):
             None -- Modifies self
 
         """
-        self.comment_widget.reset()
+
         # TODO: self.view.disconnectFrom(self.scene)
         # self.view = None
         # TODO: how to reset the scene?
@@ -257,9 +257,10 @@ class Annotator(QWidget):
         if self.scene.mode == "delta":
             self.modeInformation.append(self.scene.markDelta)
         elif self.scene.mode == "comment":
-            self.modeInformation.append(self.commentW.getCurrentItemRow())
+            self.modeInformation.append(self.comment_widget.getCurrentItemRow())
 
-        self.commentW.reset()
+        # after grabbed mode information, reset comment_widget
+        self.comment_widget.reset()
 
         del self.scene
         self.scene = None
@@ -375,8 +376,8 @@ class Annotator(QWidget):
         if self.modeInformation[0] == "delta":
             self.markHandler.clickDelta(self.modeInformation[1])
         if self.modeInformation[0] == "comment":
-            self.commentW.setCurrentItemRow(self.modeInformation[1])
-            self.commentW.CL.handleClick()
+            self.comment_widget.setCurrentItemRow(self.modeInformation[1])
+            self.comment_widget.CL.handleClick()
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()
@@ -909,7 +910,7 @@ class Annotator(QWidget):
         if self.scene:
             if not self.saveAnnotations():
                 return
-            print("We have surrendered {}".format(self.tgvID))
+            log.debug("We have surrendered {}".format(self.tgvID))
             oldtgv = self.tgvID
             self.closeCurrentTGV()
         else:
