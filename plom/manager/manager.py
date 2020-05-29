@@ -51,7 +51,7 @@ from .reviewview import ReviewViewWindow
 from .selectrectangle import SelectRectangleWindow, IDViewWindow
 from plom.plom_exceptions import *
 from plom.messenger import ManagerMessenger
-from plom.server.aliceBob import simplePassword
+from plom.server.aliceBob import simple_password
 
 from plom import __version__, Plom_API_Version, Default_Port
 
