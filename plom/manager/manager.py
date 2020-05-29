@@ -75,7 +75,7 @@ class UserDialog(QDialog):
         self.pwL = QLabel("Password:")
         self.pwL2 = QLabel("and again:")
         self.userLE = QLineEdit(self.name)
-        initialpw = simplePassword()
+        initialpw = simple_password()
         self.pwLE = QLineEdit(initialpw)
         # self.pwLE.setEchoMode(QLineEdit.Password)
         self.pwLE2 = QLineEdit(initialpw)
@@ -113,7 +113,7 @@ class UserDialog(QDialog):
             self.pwLE.setEchoMode(QLineEdit.Normal)
 
     def newRandomPassword(self):
-        newpw = simplePassword()
+        newpw = simple_password()
         self.pwLE.setText(newpw)
         self.pwLE2.setText(newpw)
 
