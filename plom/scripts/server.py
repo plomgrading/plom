@@ -203,23 +203,23 @@ def doLatexChecks():
         )
 
     # build template pageNotSubmitted.pdf just in case needed
-    if not pageNotSubmitted.buildPNSPage(pns):
+    if not pageNotSubmitted.build_not_submitted_page(pns):
         raise PlomServerConfigurationError(
             "Error building 'pageNotSubmitted.pdf' template page. Please check your latex distribution."
         )
     # build template pageNotSubmitted.pdf just in case needed
-    if not pageNotSubmitted.buildQNSPage(qns):
+    if not pageNotSubmitted.build_not_subimtted_question(qns):
         raise PlomServerConfigurationError(
             "Error building 'questionNotSubmitted.pdf' template page. Please check your latex distribution."
         )
 
     # Try building a replacement for missing page.
-    if not pageNotSubmitted.buildTestPageSubstitute(0, 0, 0):
+    if not pageNotSubmitted.build_test_page_substitute(0, 0, 0):
         raise PlomServerConfigurationError(
             "Error building replacement for missing test page."
         )
     # Try building a replacement for missing page.
-    if not pageNotSubmitted.buildHWQuestionSubstitute(0, 0):
+    if not pageNotSubmitted.build_homework_question_substitute(0, 0):
         raise PlomServerConfigurationError(
             "Error building replacement for missing homework question."
         )
