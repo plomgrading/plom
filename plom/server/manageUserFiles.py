@@ -6,7 +6,7 @@ __license__ = "AGPLv3"
 import csv
 import json
 
-from .aliceBob import simplePassword, makeRandomUserList, makeNumberedUserList
+from .aliceBob import simplePassword, make_random_user_list, make_numbered_user_list
 
 
 # TODO - instead of running a cryptocontext here - move stuff into authenticate.py?
@@ -30,10 +30,10 @@ def buildCannedUsers(number):
     # now append list of standard users - some sanity checks about numbers
     if number <= 20:
         print("Making list of named users")
-        lst = lst + makeRandomUserList(number)
+        lst = lst + make_random_user_list(number)
     elif number <= 50:
         print("Making list of numbered users")
-        lst = lst + makeNumberedUserList(number)
+        lst = lst + make_numbered_user_list(number)
     else:
         print(
             "This is too many canned users. You should make your own list of users. Aborting."

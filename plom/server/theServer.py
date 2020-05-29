@@ -89,7 +89,7 @@ class Server(object):
         self.Version = __version__
         print(
             "Server launching with masterToken = '{}' {}".format(
-                self.authority.getMasterToken(), type(self.authority.getMasterToken())
+                self.authority.get_master_token(), type(self.authority.get_master_token())
             )
         )
         self.tempDirectory = tempfile.TemporaryDirectory()

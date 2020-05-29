@@ -86,7 +86,7 @@ names = """aiden azami basia bob caris carol dave duska erin evander fatima fran
 names = names.split()
 
 
-def simplePassword():
+def simple_password():
     """Creates a new simple password of the form word, number, word.
 
     Returns:
@@ -95,7 +95,7 @@ def simplePassword():
     return secrets.choice(words) + str(secrets.randbelow(100)) + secrets.choice(words)
 
 
-def makeRandomUserList(number=None):
+def make_random_user_list(number=None):
     """Makes a list of random users.
 
     Keyword Arguments:
@@ -111,12 +111,12 @@ def makeRandomUserList(number=None):
 
     lst = []
     for n in sorted(nlist):
-        p = simplePassword()
+        p = simple_password()
         lst.append([n, p])
     return lst
 
 
-def makeNumberedUserList(number=None):
+def make_numbered_user_list(number=None):
     """Makes a list of numbered users (rather than named users).
 
     Keyword Arguments:
@@ -130,6 +130,6 @@ def makeNumberedUserList(number=None):
     lst = []
     for i in range(0, number):
         n = "user{}".format(i)
-        p = simplePassword()
+        p = simple_password()
         lst.append([n, p])
     return lst
