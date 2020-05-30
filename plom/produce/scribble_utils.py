@@ -66,8 +66,9 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
         outfile (str/pathlib.Path): write results into this concatenated PDF file.
 
     Keyword Arguments:
-        which: by default ("`which=None`") scribble on all exams or specify
-            something like `which=range(10, 16)` to scribble on a subset.
+        which (iterable): By default we scribble on all exams or specify
+            something like `which=range(10, 16)` here to scribble on a
+            subset. (default: `None`)
     """
     # Customizable data
     blue = [0, 0, 0.75]
