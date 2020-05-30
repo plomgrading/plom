@@ -35,7 +35,7 @@ More dependencies for the tensorflow-based ID reader:
 ```
   # sudo dnf install python3-termcolor python3-wheel python3-grpcio \
                      python3-markdown python3-h5py
-  # pip3 install --user imutils lapsolver tensorflow
+  # pip3 install --user imutils lapsolver opencv-python tensorflow
 ```
 
 
@@ -50,7 +50,7 @@ Some stuff from the package manager:
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
         python3-pyqrcode python3-png python3-dev \
         python3-pip python3-setuptools python3-wheel \
-        python3-requests-toolbelt python3-opencv texlive-latex-extra \
+        python3-requests-toolbelt texlive-latex-extra \
         latexmk texlive-fonts-recommended python3-peewee python3-pil \
         python3-tqdm libpango-1.0 libpangocairo-1.0
 ```
@@ -68,7 +68,7 @@ Other stuff we get from pip:
   # python3 -m pip install --upgrade --user setuptools
   # python3 -m pip install --upgrade --user pymupdf weasyprint imutils toml \
         aiohttp pyzbar jpegtran-cffi
-  # python3 -m pip install --upgrade --user imutils lapsolver tensorflow
+  # python3 -m pip install --upgrade --user imutils lapsolver opencv-python tensorflow
 ```
 (Note `python3 -m pip` to use the newly upgraded pip).
 
