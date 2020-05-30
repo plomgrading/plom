@@ -26,6 +26,9 @@ Plom Build
 .. automodule:: plom.produce
     :members:
 
+.. automodule:: plom.produce.faketools
+    :members:
+
 TODO: our modules don't seem to have enough of their contents in the
 actual modules so `automodule` doesn't pick up much...
 
