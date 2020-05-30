@@ -9,6 +9,8 @@ Welcome to Plom's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   install.rst
+
 
 .. automodule:: plom
     :members:
@@ -40,6 +42,13 @@ Plom client
     :members:
 .. automodule:: plom.client.annotator
     :members:
+
+
+TODO: new sphinx deps
+=====================
+
+Fedora: `dnf install python3-recommonmark python3-sphinx`, others
+
 
 Indices and tables
 ==================
