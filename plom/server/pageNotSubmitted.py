@@ -158,7 +158,7 @@ def build_not_submitted_page(output_file_name):
     return True
 
 
-def build_not_subimtted_question(output_file_name):
+def build_not_submitted_question(output_file_name):
     """Creates the page not submitted document.
 
     Arguments:
