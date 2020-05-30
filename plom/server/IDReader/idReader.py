@@ -78,8 +78,7 @@ def download_model():
 
 
 def download_or_train_model():
-    """Downloads the pretrained model, if that fails it trains the model locally.
-    """
+    """Downloads the pretrained model, if that fails it trains the model locally."""
     print(
         "Will try to download model and if that fails, then build it locally (which is time-consuming)"
     )
