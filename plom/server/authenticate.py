@@ -8,9 +8,7 @@ from passlib.context import CryptContext
 
 
 class Authority:
-    """
-    A class to do all our authentication - passwords and tokens.
-    """
+    """A class to do all our authentication - passwords and tokens."""
 
     def __init__(self, masterToken):
         """Set up cryptocontext, userlist and tokenlist"""
@@ -50,7 +48,7 @@ class Authority:
         return self.masterToken
 
     def check_password(self, password, passwordHash):
-        """Check the password against the hashed one
+        """Check the password against the hashed one.
 
         Arguments:
             password {str} -- Password to check.
@@ -90,7 +88,7 @@ class Authority:
             return False
 
     def check_string_is_UUID(self, tau):
-        """Checks that a given string is a valid UUID
+        """Checks that a given string is a valid UUID.
 
         Arguments:
             tau {str} -- String to check.
@@ -105,7 +103,7 @@ class Authority:
         return True
 
     def basic_user_password_check(self, username, password):
-        """Sanity check for usernames and passwords
+        """Sanity check for usernames and passwords.
 
         Arguments:
             username {str} -- Given username.
@@ -123,7 +121,7 @@ class Authority:
         return True
 
     def create_password_hash(self, password):
-        """Creates a hash of a string password
+        """Creates a hash of a string password.
 
         Arguments:
             password {str} -- Password to hash.
