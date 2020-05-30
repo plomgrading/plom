@@ -33,6 +33,14 @@ TODO: our modules don't seem to have enough of their contents in the
 actual modules so `automodule` doesn't pick up much...
 
 
+Plom client
+-----------
+
+.. automodule:: plom.client
+    :members:
+.. automodule:: plom.client.annotator
+    :members:
+
 Indices and tables
 ==================
 
