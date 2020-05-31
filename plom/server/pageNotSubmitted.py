@@ -61,10 +61,6 @@ def build_test_page_substitute(test_number, page_number, version_number):
         bool -- True/False
     """
 
-
-    # TODO: Please check since this is never used, I am not sure if I should remove it.
-    test_page = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-
     page_not_submitted_pdf = fitz.open(Path(specdir) / "pageNotSubmitted.pdf")
 
     # create a box for the test number near top-centre
@@ -106,9 +102,6 @@ def build_homework_question_substitute(student_id, question_number):
         bool -- True/False
     """
 
-    # TODO: Please check since this is never used, I am not sure if I should remove it.
-    homework_page = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-
     question_not_submitted_pdf = fitz.open(Path(specdir) / "questionNotSubmitted.pdf")
 
     # create a box for the test number near top-centre
@@ -142,19 +135,20 @@ def build_not_submitted_page(output_file_name):
     """Creates the page not submitted document.
 
     Arguments:
-        output_file_name {String} -- Name of the out-put files for page_not_submitted document. 
+        output_file_name {String} -- Name of the output files for page_not_submitted document. 
 
     Returns:
         bool -- True/False
     """
 
     with open(output_file_name, "wb") as file:
-        return_code, out_put = buildLaTeX(page_not_submitted_text, file)
+        return_code, output = buildLaTeX(page_not_submitted_text, file)
     if return_code != 0:
         print(">>> Latex problems - see below <<<\n")
-        print(out_put)
+        print(output)
         print(">>> Latex problems - see above <<<")
         return False
+    
     return True
 
 
@@ -169,10 +163,11 @@ def build_not_submitted_question(output_file_name):
     """
 
     with open(output_file_name, "wb") as file:
-        return_code, out_put = buildLaTeX(question_not_submitted_text, file)
+        return_code, output = buildLaTeX(question_not_submitted_text, file)
     if return_code != 0:
         print(">>> Latex problems - see below <<<\n")
-        print(out_put)
+        print(output)
         print(">>> Latex problems - see above <<<")
         return False
+    
     return True

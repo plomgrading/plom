@@ -18,6 +18,7 @@ from passlib.context import CryptContext
 plomctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 user_hash_login_json_path = "serverConfiguration/userList.json"
 list_of_required_users = ["manager", "scanner", "reviewer"]
+list_of_expected_header = ["user", "password"]
 minimum_number_of_required_users = 4
 cutoff_for_named_users = 20
 cutoff_for_numbered_users = 50
@@ -70,13 +71,13 @@ def save_users(username_hash_dict, user_hash_login_json_path):
         fh.write(json.dumps(username_hash_dict, indent=2))
 
 
-def return_user_hash(username_pasword_dict):
+def return_user_hash(username_password_dict):
     """Creates a dictionary for username and hash which is derived from the user's password.
     
     TODO: Would be really nice if the hash function was somehow passed in as a parameter.
 
     Arguments:
-        username_pasword_dict {dict} -- A dictionary of the form {Str:Str} which repersents 
+        username_password_dict {dict} -- A dictionary of the form {Str:Str} which repersents 
                                         {username: password} objects.
 
     Returns:
@@ -85,27 +86,27 @@ def return_user_hash(username_pasword_dict):
     """
 
     username_hash_dict = {}
-    for user in username_pasword_dict:
-        username_hash_dict[user] = plomctx.hash(username_pasword_dict[user])    
+    for user in username_password_dict:
+        username_hash_dict[user] = plomctx.hash(username_password_dict[user])    
     return username_hash_dict
 
 
-def check_username_password_format(username_pasword_dict):
+def check_username_password_format(username_password_dict):
     """Checks that the username-passwords are valid and to a specific standard.
         
     Must be done after the header file checks and the username checks.
     TODO: More checks could be added, Could be cleaned up further.
 
     Arguments:
-        username_pasword_dict {dict} -- A dict(Str:Str) which repersents (username: password).
+        username_password_dict {dict} -- A dict(Str:Str) which repersents (username: password).
 
     Returns:
         boolean -- True/False
     """
 
-    for username, password in username_pasword_dict.items():
-        # basic sanity check of username and password
-
+    for username, password in username_password_dict.items():
+        
+        # basic sanity check of username
         if not (len(username) >= 4 and username.isalnum()):
             print("Usernames must be at least 4 alphanumeric characters. Username '{}' is problematic.".format(username))
             return False
@@ -118,104 +119,97 @@ def check_username_password_format(username_pasword_dict):
     return True
 
 
-def check_user_file_header(reader):
-    """Checks the headers in the file at user_file_path to make sure it has the reaquired headers.
+def check_user_file_header(csv_headers):
+    """Checks the headers in csv_headers to make sure it has the reaquired headers.
     
     Currently (username,password) format, but can be changed in the future. 
 
     Arguments:
-        user_file_path {_csv.reader} -- csv Reader for username file.
+        csv_headers {list} -- List[Str] having the headers in the csv file.
 
     Returns:
         boolean -- True/False
     """
-    
-    # first line should be just header
-    headers = next(reader, None)
-    if headers != ["user", "password"]:
+
+    if csv_headers != list_of_expected_header:
         return False
     
     return True
 
 
-def check_usernames_requirements(reader):
-    """Checks if the file at user_file_path meets the minimum requirements in terms of the 
+def check_usernames_requirements(username_password_dict):
+    """Checks if username_password_dict meets the minimum requirements in terms of the 
     number and type of users.
     
     Must be run before check_user_file_header.
 
     Arguments:
-        user_file_path {_csv.reader} -- csv Reader for username file.
+        username_password_dict {dict} -- A dict(Str:Str) which repersents (username: password).
 
     Returns:
         boolean -- True/False
     """
     
-    username_pasword_dict = {}
-    for row in reader:
-        username_pasword_dict[row[0]] = row[1]
-    
     # check we have manager, scanner and reviewer + at least 1 regular user.
-    if (len(username_pasword_dict) < minimum_number_of_required_users or not all(user in username_pasword_dict for user in list_of_required_users)):
+    if (len(username_password_dict) < minimum_number_of_required_users or not all(user in username_password_dict for user in list_of_required_users)):
         return False
 
     return True
 
 
-def return_usernames(reader):
-    """Returns the usernames-password dictionary created in the user_file_path.
-
-    Must be called after running check_usernames_requirementsand check_user_file_header.
+def return_csv_info(user_file_path):
+    """Gets the header and user/password dictionary from the file and returns it.
 
     Arguments:
-        user_file_path {_csv.reader} -- csv Reader for username file.
+        user_file_path {Str} -- Path to the user files.
 
     Returns:
-        dict -- Returning the a dictionary of the form {Str:Str} which repersents 
-                {username: password} Objects.
+        list -- List[Str] which represents the extracted headers.
+        dict -- A dict(Str:Str) which repersents (username: password).
     """
 
-    username_pasword_dict = {}
-    for row in reader:
-        username_pasword_dict[row[0]] = row[1]
+    csv_headers = []
+    username_password_dict = {}
+
+    with open(user_file_path, "r") as save_file:
+        reader = csv.reader(save_file, skipinitialspace=True)
+        
+        # first line should be just header
+        csv_headers = next(reader, None)
+        
+        for row in reader:
+            username_password_dict[row[0]] = row[1]
     
-    return username_pasword_dict
-            
+    return csv_headers, username_password_dict
     
 
 def parse_user_list(user_file_path):
     """Parses the user list provided and saves the user hash dictionary. 
-    1. Checks the header and minimum requirements in term of user types and number.
-    2. Creates the username/password dictionary.
+    
+    1. Reads the header and username/password dictionary in the user_file_path.
+    2. Checks the header and minimum requirements in term of user types and number.
     3. Check the password and username format requirements.
     4. Gets the Hash dictionary and saves it.
 
     Arguments:
         user_file_path {Str} -- Path to the user files.
     """
+    
+    # First we get the csv info
+    csv_headers, username_password_dict = return_csv_info(user_file_path)
 
-    username_pasword_dict = {}
-    username_hash_dict = {}
+    if not check_user_file_header(csv_headers):
+        print('Malformed header in user_file_path - should have 2 columns with headers "user" and "password". Aborting.')
+        exit(1)
+    elif not check_usernames_requirements(username_password_dict):
+        print("Userlist must contain 'manager', 'scanner', 'reviewer' and at least 1 regular user.")
+        exit(1)
+    elif not check_username_password_format(username_password_dict):
+        print("Username and passwords are not in the required format.")
+        exit(1)
+    else:
+        username_hash_dict = return_user_hash(username_password_dict)
+
+    save_users(username_hash_dict, user_hash_login_json_path)
 
 
-    username_pasword_dict = {}
-    with open(user_file_path, "r") as save_file:
-        reader = csv.reader(save_file, skipinitialspace=True)
-
-        if not check_user_file_header(reader):
-            print('Malformed header in user_file_path - should have 2 columns with headers "user" and "password". Aborting.')
-            exit(1)
-        elif not check_usernames_requirements(reader):
-            print("Userlist must contain 'manager', 'scanner', 'reviewer' and at least 1 regular user.")
-            exit(1)
-        else: 
-            username_pasword_dict = return_usernames(reader)
-
-
-        if not check_username_password_format(username_pasword_dict):
-            print("Username and passwords are not in the required format.")
-            exit(1)
-        else:
-            username_hash_dict = return_user_hash(username_pasword_dict)
-
-        save_users(username_hash_dict, user_hash_login_json_path)
