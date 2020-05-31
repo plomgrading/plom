@@ -37,7 +37,6 @@ def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
         testWriter = csv.DictWriter(
             csvfile,
             fieldnames=head,
-            delimiter="\t",
             quotechar='"',
             quoting=csv.QUOTE_NONNUMERIC,
         )

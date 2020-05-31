@@ -78,7 +78,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
 
     print('Loading "{}" data'.format(CSVFilename))
     # TODO: should we be doing all this whereever the csv file is created?
-    marks = pandas.read_csv(CSVFilename, sep='\t', dtype='object')
+    marks = pandas.read_csv(CSVFilename, dtype='object')
 
     # Make dict: this looks fragile, try merge instead...
     #marks = marks[['StudentID', 'Total']].set_index("StudentID").to_dict()
@@ -124,7 +124,7 @@ def csv_add_return_codes(csvin, csvout, idcol):
     """
     from plom import isValidStudentNumber
 
-    df = pandas.read_csv(csvin, dtype="object", sep="\t")
+    df = pandas.read_csv(csvin, dtype="object")
 
     assert idcol in df.columns, 'CSV file missing "{}" column'.format(idcol)
 
@@ -166,7 +166,7 @@ def csv_add_salted_return_codes(csvin, csvout, saltstr, idcol):
     """
     from plom import isValidStudentNumber
 
-    df = pandas.read_csv(csvin, dtype="object", sep="\t")
+    df = pandas.read_csv(csvin, dtype="object")
 
     assert idcol in df.columns, 'CSV file missing "{}" column'.format(idcol)
 
