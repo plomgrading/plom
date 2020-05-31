@@ -57,6 +57,7 @@ logging.getLogger().setLevel("Debug".upper())
 # ----------------------
 def build_directories():
     """Build the directories that this script needs"""
+    
     # the list of directories. Might need updating.
     lst = [
         "pages",
@@ -98,7 +99,11 @@ class Server(object):
         self.load_users()
 
     def load_users(self):
-        """Load the users from json file, add them to the database. Do some simple sanity checks of pwd hashes to see if they have changed."""
+        """Load the users from json file, add them to the database and checks pwd hashes. 
+        
+        It does simple sanity checks of pwd hashes to see if they have changed.
+        """
+
         if os.path.exists("serverConfiguration/userList.json"):
             with open("serverConfiguration/userList.json") as data_file:
                 # load list of users + pwd hashes
@@ -230,6 +235,7 @@ class Server(object):
 
 def get_server_info():
     """Read the server info from config file."""
+
     global serverInfo
     try:
         with open("serverConfiguration/serverDetails.toml") as data_file:
@@ -245,11 +251,12 @@ def get_server_info():
 
 
 def launch(masterToken=None):
-    """Launches the Plom server
+    """Launches the Plom server.
 
     Keyword Arguments:
         masterToken {str} -- Token that is authenticated by the authority, if None, one is created in authenticate.py. default: {None}
     """
+
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
     get_server_info()
     examDB = PlomDB(Path(specdir) / "plom.db")
