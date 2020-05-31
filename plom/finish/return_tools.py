@@ -17,6 +17,7 @@ from io import StringIO
 import pandas
 
 from .utils import myhash, mysecret
+from plom.finish import CSVFilename
 
 
 def import_canvas_csv(canvas_fromfile):
@@ -75,9 +76,9 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead='Test'):
         print(df[testheader])
         input('Press Enter to continue and overwrite...')
 
-    print('Loading "testMarks.csv" data')
-    # TODO: should we be doing all this whereever testMarks.csv is created?
-    marks = pandas.read_csv('testMarks.csv', sep='\t', dtype='object')
+    print('Loading "{}" data'.format(CSVFilename))
+    # TODO: should we be doing all this whereever the csv file is created?
+    marks = pandas.read_csv(CSVFilename, sep='\t', dtype='object')
 
     # Make dict: this looks fragile, try merge instead...
     #marks = marks[['StudentID', 'Total']].set_index("StudentID").to_dict()
