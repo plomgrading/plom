@@ -13,12 +13,22 @@ from plom.client.backGrid import BackGrid
 
 
 class PageView(QGraphicsView):
-    """Extend the graphicsview so that it can pass undo/redo
-    comments, delta-marks, save and zoom in /out
+    """
+    Manages the mutable aspects of viewing the paper.
+
+    Extend the graphicsview so that it can pass undo/redo
+    comments, delta-marks, save and zoom in /out.
     """
 
     def __init__(self, parent, username=None):
-        # init the qgraphicsview
+        """
+        Initializes a new pageView object.
+
+        Args:
+            parent (annotator) -- The annotator creating the pageview
+            username (str) -- The username of the marker
+
+        """
         super(PageView, self).__init__(parent)
         self.parent = parent
         # Set scrollbars
@@ -33,20 +43,52 @@ class PageView(QGraphicsView):
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
         # the graphics view accepts drag/drop from the comment list
         self.setAcceptDrops(True)
+        self.paperWindow = None
 
     def connectScene(self, scene):
+        """
+        Connects a pagescene to the current pageview.
+
+        Args:
+            scene (pageScene) -- the scene to be connected to.
+
+        Returns:
+            None
+
+        """
         self.setScene(scene)
         self.fitInView(self.scene().underImage, Qt.KeepAspectRatio)
         # the current view
-        self.vrect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
+        self.paperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
 
-    def resizeEvent(self, e):
+    def resizeEvent(self, event):
+        """
+        Resizes the
+        Overrides Base Method.
+
+        Notes:
+             Currently unused.
+
+        Args:
+            event (QEvent) - the event to be resized.
+        """
+
         # re-zoom
         self.parent.zoomCBChanged()
         # then any other stuff needed by parent class
-        super(PageView, self).resizeEvent(e)
+        super(PageView, self).resizeEvent(event)
 
     def latexAFragment(self, txt):
+        """
+        Latexes a fragment of text.
+
+        Args:
+            txt (str) -- text to be formatted.
+
+        Returns:
+            A png file containing the Latexed text.
+
+        """
         cur = self.cursor()
         self.setCursor(QCursor(Qt.WaitCursor))
         QApplication.processEvents()  # this triggers a cursor update
@@ -54,117 +96,218 @@ class PageView(QGraphicsView):
         self.setCursor(cur)
         return ret
 
-    def zoomNull(self, update=False):
+    def setZoomSelector(self, update=False):
+        """
+        Sets Zoom combo box to show current selction.
+
+        Args:
+            update (bool) -- True if combo box needs updating, False otherwise.
+
+        Returns:
+            None
+
+        """
         # sets the current view rect
-        self.vrect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
+        self.paperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         if update:
             self.parent.changeCBZoom(0)
 
     def zoomIn(self):
-        self.scale(1.25, 1.25)
-        self.zoomNull(True)
+        """ Zooms in the paper 1.25 x """
+        self._zoomHelper(1.25)
 
     def zoomOut(self):
-        self.scale(0.8, 0.8)
-        self.zoomNull(True)
+        """ Zooms out the paper 1.25 x """
+        self._zoomHelper(0.8)
+
+    def _zoomHelper(self, modifier):
+        self.scale(modifier, modifier)
+        self.setZoomSelector(True)
 
     def zoomToggle(self):
-        # cycle the zoom state setting between width and height
-        if self.parent.isZoomFitWidth():
-            self.zoomHeight(True)
-        elif self.parent.isZoomFitHeight():
-            self.zoomWidth(True)
-        else:
-            self.zoomWidth(True)
+        """
+        If current zoom is FitWidth, changes to FitHeight.
+        If current zoom is FitHeight, changes to FitWidth.
+        """
 
-    def zoomAll(self, update=False):
-        crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
-        if (
-            self.scene().height() / crect.height()
-            > self.scene().width() / crect.width()
-        ):
-            self.zoomHeight(False)
+        if self.parent.isZoomFitWidth():
+            self.zoomFitHeight(True)
+        elif self.parent.isZoomFitHeight():
+            self.zoomFitWidth(True)
         else:
-            self.zoomWidth(False)
+            self.zoomFitWidth(True)
+
+    def zoomFitPage(self, update=False):
+        """
+        Zooms such that the entire page is visible.
+
+        Args:
+            update (bool) -- True if combo box needs updating, False otherwise.
+
+        Returns:
+            None
+
+        """
+        tempPaperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
+        if (
+            self.scene().height() / tempPaperWindow.height()
+            > self.scene().width() / tempPaperWindow.width()
+        ):
+            self.zoomFitHeight(False)
+        else:
+            self.zoomFitWidth(False)
         if update:
             self.parent.changeCBZoom(1)
 
-    def zoomHeight(self, update=True):
-        # scale to full height, but move center to user-zoomed center
-        crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
-        rat = crect.height() / self.scene().height()
-        self.scale(rat, rat)
-        self.centerOn(self.vrect.center())
+    def zoomFitHeight(self, update=True):
+        """
+        Changes the zoom to fit height.
+
+        Args:
+            update (bool) -- True if combo box needs updating, False otherwise.
+
+        Returns:
+            None
+        """
+        tempPaperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
+        ratio = tempPaperWindow.height() / self.scene().height()
+        self.scale(ratio, ratio)
+        self.centerOn(self.paperWindow.center())
         if update:
             self.parent.changeCBZoom(3)
 
-    def zoomWidth(self, update=True):
-        # scale to full width, but move center to user-zoomed center
+    def zoomFitWidth(self, update=True):
+        """
+        Changes the zoom to fit width.
+
+        Args:
+            update (bool) -- True if combo box needs updating, False otherwise.
+
+        Notes:
+            scale to full width, but move center to user-zoomed center
+
+        Returns:
+            None
+        """
         crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         rat = crect.width() / self.scene().width()
         self.scale(rat, rat)
-        self.centerOn(self.vrect.center())
+        self.centerOn(self.paperWindow.center())
         if update:
             self.parent.changeCBZoom(2)
 
-    def zoomReset(self, rat):
-        # reset the view to 1:1 but center on current vrect
+    def zoomToScale(self, scale):
+        """
+        Sets the current view based on desired scale for the paper, while
+        maintaining aspect ratio.
+
+        Args:
+            scale (int) -- the ratio to be scaled to. (1 = 100%, 1.5 = 150% etc)
+
+        Returns:
+            None
+
+        """
         self.resetTransform()
-        self.scale(rat, rat)
-        self.centerOn(self.vrect.center())
-        self.zoomNull(False)
+        self.scale(scale, scale)
+        self.centerOn(self.paperWindow.center())
+        self.setZoomSelector(False)
 
     def zoomPrevious(self):
-        self.fitInView(self.vrect, Qt.KeepAspectRatio)
+        """
+        Zooms to fit the paper window to the view at the current aspect ratio.
+
+        Notes:
+            Currently Unused
+
+        Returns:
+            None
+
+        """
+        self.fitInView(self.paperWindow, Qt.KeepAspectRatio)
         self.parent.changeCBZoom(0)
 
-    def initialZoom(self, initRect):
+    def initializeZoom(self, initRect):
+        """
+        Initializes zoom upon startup.
+
+        Args:
+            initRect (QRectF) -- the rectangle to be initialized with.
+
+        Returns:
+            None
+
+        """
         if initRect is None:
             self.fitInView(self.scene().underImage, Qt.KeepAspectRatio)
         else:
             self.fitInView(initRect, Qt.KeepAspectRatio)
-        self.zoomNull()
+        self.setZoomSelector()
 
     def getCurrentViewRect(self):
+        """
+        Returns:
+            (QRect) -- the current view rectangle
+        """
         return self.mapToScene(self.viewport().contentsRect()).boundingRect()
 
     def panThrough(self, dy=0.8):
-        hv = self.horizontalScrollBar().value()
-        vv = self.verticalScrollBar().value()
+        """
+        Pans through the view.
+
+        Args:
+            dy (double) -- amount to adjust by in each scroll.
+
+        Returns:
+            None
+        """
+        horizSliderPos = self.horizontalScrollBar().value()
+        vertSliderPos = self.verticalScrollBar().value()
         # if not at bottom of view, step down via scrollbar
-        if vv < self.verticalScrollBar().maximum():
+        if vertSliderPos < self.verticalScrollBar().maximum():
             self.verticalScrollBar().setValue(
-                vv + self.verticalScrollBar().pageStep() * dy
+                int(vertSliderPos + self.verticalScrollBar().pageStep() * dy)
             )
         else:
             # else move up to top of view
             self.verticalScrollBar().setValue(0)
             # if not at right of view, step right via scrollbar
-            if hv < self.horizontalScrollBar().maximum():
+            if horizSliderPos < self.horizontalScrollBar().maximum():
                 self.horizontalScrollBar().setValue(
-                    hv + self.horizontalScrollBar().pageStep()
+                    horizSliderPos + self.horizontalScrollBar().pageStep()
                 )
             else:
                 # else move back to origin.
                 self.horizontalScrollBar().setValue(0)
 
-        self.zoomNull()
+        self.setZoomSelector()
+
 
     def depanThrough(self, dy=0.8):
-        hv = self.horizontalScrollBar().value()
-        vv = self.verticalScrollBar().value()
+        """
+        Depans through the view.
+
+        Args:
+            dy (double) -- amount to adjust by in each scroll.
+
+        Returns:
+            None
+
+        """
+        horizSliderPos = self.horizontalScrollBar().value()
+        verticalSliderPos = self.verticalScrollBar().value()
         # if not at bottom of view, step down via scrollbar
-        if vv > 0:
+        if verticalSliderPos > 0:
             self.verticalScrollBar().setValue(
-                vv - self.verticalScrollBar().pageStep() * dy
+                verticalSliderPos - self.verticalScrollBar().pageStep() * dy
             )
         else:
             # else move up to top of view
             self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
             # if not at right of view, step right via scrollbar
-            if hv > 0:
+            if horizSliderPos > 0:
                 self.horizontalScrollBar().setValue(
-                    hv - self.horizontalScrollBar().pageStep()
+                    horizSliderPos - self.horizontalScrollBar().pageStep()
                 )
             else:
                 # else move back to origin.
@@ -172,4 +315,4 @@ class PageView(QGraphicsView):
                     self.horizontalScrollBar().maximum()
                 )
 
-        self.zoomNull()
+        self.setZoomSelector()

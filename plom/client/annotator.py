@@ -1215,7 +1215,7 @@ class Annotator(QWidget):
                 QTimer.singleShot(200, lambda: self.ui.zoomCB.setCurrentIndex(0))
                 QTimer.singleShot(
                     200,
-                    lambda: self.view.initialZoom(
+                    lambda: self.view.initializeZoom(
                         self.parentMarkerUI.annotatorSettings["viewRectangle"]
                     ),
                 )
@@ -1586,21 +1586,21 @@ class Annotator(QWidget):
 
         """
         if self.ui.zoomCB.currentText() == "Fit page":
-            self.view.zoomAll()
+            self.view.zoomFitPage()
         elif self.ui.zoomCB.currentText() == "Fit width":
-            self.view.zoomWidth()
+            self.view.zoomFitWidth()
         elif self.ui.zoomCB.currentText() == "Fit height":
-            self.view.zoomHeight()
+            self.view.zoomFitHeight()
         elif self.ui.zoomCB.currentText() == "100%":
-            self.view.zoomReset(1)
+            self.view.zoomToScale(1)
         elif self.ui.zoomCB.currentText() == "150%":
-            self.view.zoomReset(1.5)
+            self.view.zoomToScale(1.5)
         elif self.ui.zoomCB.currentText() == "200%":
-            self.view.zoomReset(2)
+            self.view.zoomToScale(2)
         elif self.ui.zoomCB.currentText() == "50%":
-            self.view.zoomReset(0.5)
+            self.view.zoomToScale(0.5)
         elif self.ui.zoomCB.currentText() == "33%":
-            self.view.zoomReset(0.33)
+            self.view.zoomToScale(0.33)
         else:
             pass
         self.view.setFocus()
