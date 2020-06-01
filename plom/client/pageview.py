@@ -117,7 +117,7 @@ class PageView(QGraphicsView):
         self._zoomHelper(1.25)
 
     def zoomOut(self):
-        """ Zooms out the paper 1.25 x """
+        """ Zooms out the paper 0.8 x """
         self._zoomHelper(0.8)
 
     def _zoomHelper(self, modifier):
@@ -128,6 +128,9 @@ class PageView(QGraphicsView):
         """
         If current zoom is FitWidth, changes to FitHeight.
         If current zoom is FitHeight, changes to FitWidth.
+
+        Returns:
+            None
         """
 
         if self.parent.isZoomFitWidth():
