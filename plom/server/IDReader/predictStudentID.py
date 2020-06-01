@@ -22,13 +22,25 @@ from tensorflow import keras
 import tensorflow.python.keras.backend as K
 
 # from https://fairyonice.github.io/Measure-the-uncertainty-in-deep-learning-models-using-dropout.html
-class KerasDropoutPrediction(object):
+class keras_dropout_prediction_object(object):
     def __init__(self, model):
+        # setup a function to predict the digit with dropout (default is to predict without dropout)
         self.f = K.function(
             [model.layers[0].input, K.symbolic_learning_phase()], [model.output],
         )
 
     def predict(self, x, n_iter=20):
+        """Calculates digit predictions with dropout.
+
+        Arguments:
+            x {np.array} -- The image that we are intersted in.
+
+        Keyword Arguments:
+            n_iter {int} -- Number of iterations to run the predictions with dropout. (default: {20})
+
+        Returns:
+            np.array -- The digit predictions for each forward pass of the model, dimensions [10 (for the 10 digit classes), n_iter].
+        """
         result = []
         for _ in range(n_iter):
             result.append(self.f([x, True]))
@@ -36,7 +48,18 @@ class KerasDropoutPrediction(object):
         return result
 
 
-def getDigits(kdp, fileName, top, bottom):
+def get_digits(kdp, fileName, top, bottom):
+    """Returns the probabilies for each digit for a given file
+
+    Arguments:
+        kdp {keras_dropout_prediction_object} -- The dropout prediction object used to find the confidence intervals for the model.
+        fileName {str} -- The name of the file we are getting the digits for.
+        top {int} -- Top index of the image.
+        bottom {int} -- Bottom index of the image.
+
+    Returns:
+        list -- list of probabilites for each digit 
+    """
     # define this in order to sort by area of bounding rect
     def boundingRectArea(tau):
         x, y, w, h = cv2.boundingRect(tau)
@@ -130,7 +153,7 @@ def getDigits(kdp, fileName, top, bottom):
         px = int((28 - w) // 2)
         py = int((28 - h) // 2)
         # and a bit more clean-up - put black around border where needed
-        roi2 = cv2.copyMakeBorder(
+        roi2 = cv2.copyMakeBorder(https://gitlab.com/drydenwiebe/plom.git
             roi, px, 28 - w - px, py, 28 - h - py, cv2.BORDER_CONSTANT, value=[0, 0, 0]
         )
         # get it into format needed by tensorflow predictor
@@ -148,16 +171,12 @@ def computeProbabilities(fileDict, top, bottom):
     model = tf.keras.models.load_model("plomBuzzword")
     model.compile(
         optimizer="adam",
-        loss="sparse_categorical_crossentropy",
+        loss="sparse_categorical_crossentropy",  # we are using integer classes
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
     )
-    kdp = KerasDropoutPrediction(model)
-
-    # Dictionary of test numbers their digit-probabilities
-    probabilities = {}
-
+    kdp = keras_dropout_prediction_object(model)
     for testNumber in fileDict:
-        lst = getDigits(kdp, fileDict[testNumber], top, bottom)
+        lst = get_digits(kdp, fileDict[testNumber], top, bottom)
         if lst is None:  # couldn't recognize digits
             continue
         probabilities[testNumber] = lst
