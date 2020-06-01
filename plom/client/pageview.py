@@ -126,8 +126,10 @@ class PageView(QGraphicsView):
 
     def zoomToggle(self):
         """
-        If current zoom is FitWidth, changes to FitHeight.
-        If current zoom is FitHeight, changes to FitWidth.
+        Toggles zoom setting between Fit Height and Fit Width.
+
+        If current zoom is Fit Width, changes to Fit Height.
+        If current zoom is Fit Height, changes to Fit Width.
 
         Returns:
             None
