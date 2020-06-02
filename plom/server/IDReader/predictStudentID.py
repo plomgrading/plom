@@ -61,7 +61,7 @@ def get_digits(kdp, fileName, top, bottom):
         list -- list of probabilites for each digit 
     """
     # define this in order to sort by area of bounding rect
-    def boundingRectArea(tau):
+    def bounding_rect_area(tau):
         x, y, w, h = cv2.boundingRect(tau)
         return w * h
 
@@ -117,7 +117,7 @@ def get_digits(kdp, fileName, top, bottom):
         )
         contourList = imutils.grab_contours(contours)
         # sort by bounding box area
-        sortedContours = sorted(contourList, key=boundingRectArea, reverse=True)
+        sortedContours = sorted(contourList, key=bounding_rect_area, reverse=True)
         # make sure we can find at least one contour
         if len(sortedContours) == 0:
             # can't make a prediction so return
