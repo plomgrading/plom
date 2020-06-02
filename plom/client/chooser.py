@@ -230,7 +230,7 @@ class Chooser(QDialog):
             markerwin = marker.MarkerClient(self.parent)
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
-            markerwin.getToWork(messenger, pg, v, lastTime)
+            markerwin.setup(messenger, pg, v, lastTime)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.

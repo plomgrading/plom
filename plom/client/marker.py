@@ -8,6 +8,7 @@ __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPL-3.0-or-later"
+
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 from collections import defaultdict
@@ -72,6 +73,7 @@ log = logging.getLogger("marker")
 # set up variables to store paths for marker and id clients
 tempDirectory = tempfile.TemporaryDirectory(prefix="plom_")
 directoryPath = tempDirectory.name
+
 
 # Read https://mayaposch.wordpress.com/2011/11/01/how-to-really-truly-use-qthreads-the-full-explanation/
 # and https://stackoverflow.com/questions/6783194/background-thread-with-qthread-in-pyqt
@@ -176,15 +178,15 @@ class BackgroundUploader(QThread):
 
 
 def upload(
-    code, gr, filenames, mtime, qu, ver, tags, failcallback=None, successcallback=None,
+        code, gr, filenames, mtime, qu, ver, tags, failcallback=None, successcallback=None,
 ):
     # do name sanity checks here
     aname, pname, cname = filenames
     if not (
-        code.startswith("q")
-        and os.path.basename(aname) == "G{}.png".format(code[1:])
-        and os.path.basename(pname) == "G{}.plom".format(code[1:])
-        and os.path.basename(cname) == "G{}.json".format(code[1:])
+            code.startswith("q")
+            and os.path.basename(aname) == "G{}.png".format(code[1:])
+            and os.path.basename(pname) == "G{}.plom".format(code[1:])
+            and os.path.basename(cname) == "G{}.json".format(code[1:])
     ):
         raise PlomSeriousException(
             "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
@@ -437,8 +439,8 @@ class ProxyModel(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, pos, index):
         if (len(self.filterString) == 0) or (
-            self.filterString.casefold()
-            in self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
+                self.filterString.casefold()
+                in self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
         ):
             # we'd return true here, unless INVERT, then false
             if self.invert:
@@ -489,25 +491,85 @@ class ProxyModel(QSortFilterProxyModel):
 # TODO: should be a QMainWindow but at any rate not a Dialog
 # TODO: should this be parented by the QApplication?
 class MarkerClient(QWidget):
+    """
+    Setup for marking client and annotator
+    """
+
     my_shutdown_signal = pyqtSignal(int, list)
 
     def __init__(self, Qapp):
+        """
+        Initialize a new MarkerClient
+
+        Args:
+            Qapp(QApplication): Main client application
+
+        """
         super(MarkerClient, self).__init__()
         self.Qapp = Qapp
 
-    def getToWork(self, mess, question, version, lastTime):
+        # instance vars we can initialize now
+        self.workingDirectory = directoryPath  # local temp directory for image files and the class list.
+        self.viewFiles = []  # For viewing the whole paper we'll need these two lists.
+        self.maxMark = -1  # temp value
+        self.exM = ExamModel()  # Exam model for the table of groupimages - connect to table
+        self.prxM = ProxyModel()  # set proxy for filtering and sorting
+        self.testImg = ExamViewWindow()  # A view window for the papers so user can zoom in as needed.
+        self.annotatorSettings = defaultdict(lambda: None)  # settings variable for annotator settings (initially None)
+        self.commentCache = {}  # cache for Latex Comments
+        self.backgroundDownloader = None
+        self.backgroundUploader = None
 
-        # TODO or `self.msgr = mess`?  trouble in threads?
+        self.allowBackgroundOps = True
+        self.canViewAll = False
+
+        # instance vars that get initialized later
+        self.question = None
+        self.version = None
+        self.testInfo = None
+        self.ui = None
+        self.canViewAll = None
+
+    def setup(self, markerMessenger, question, version, lastTime):
+        """
+        Performs setup procedure for markerClient.
+
+        TODO: Change the __init__ params to include the
+            params below and move this method into init
+
+        TODO: verify all lastTime Params, there are almost certainly some missing
+
+        Args:
+            markerMessenger (Messenger): messenger client for communicating with server
+            question (int): question number.
+            version (int): version number
+            lastTime (dict): a dictionary containing
+                                 {"user": username
+                                "server": serverNumber
+                                 "pg": page number
+                                 "version": version number
+                                 "fontsize"
+                                 "POWERUSER"
+                                 "FOREGROUND"
+                                 "upDown": marking style (up vs down)
+                                 "LogLevel"
+                                 "LogToFile"
+                                 "CommentsWarnings"
+                                 "MarkWarnings"
+                                 "mouse": left or right mouse hand
+                                 "SidebarOnRight": True if sidebar is on right
+                                  }
+                                and potentially others
+
+        Returns:
+            None
+
+        """
+
         global messenger
-        messenger = mess
-        # local temp directory for image files and the class list.
-        self.workingDirectory = directoryPath
+        messenger = markerMessenger  # initializes global messenger
         self.question = question
         self.version = version
-        # create max-mark, but not set until we get info from server
-        self.maxScore = -1
-        # For viewing the whole paper we'll need these two lists.
-        self.viewFiles = []
 
         # Get the number of Tests, Pages, Questions and Versions
         try:
@@ -516,6 +578,82 @@ class MarkerClient(QWidget):
             self.throwSeriousError(err, rethrow=False)
             return
 
+        self.UIInitialization()
+        self.applyLastTimeOptions(lastTime)
+        self.connectGuiButtons()
+        self.setMarkStyleID()
+
+        if not self.getMaxMark():  # indicates exception was caught
+            return
+        self.ui.maxscoreLabel.setText(str(self.maxMark))
+
+        try:
+            self.getMarkedList()  # Get list of papers already marked and add to table.
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+            return
+
+        # Keep the original format around in case we need to change it
+        self.ui._cachedProgressFormatStr = self.ui.mProgressBar.format()
+        self.updateProgress()  # Update counts
+
+        # Connect the view **after** list updated.
+        # Connect the table-model's selection change to appropriate function
+        self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
+
+        self.requestNext()  # Get a question to mark from the server
+        self.testImg.resetB.animateClick()  # reset the view so whole exam shown.
+        # resize the table too.
+        QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
+        log.debug("Marker main thread: " + str(threading.get_ident()))
+
+        if self.allowBackgroundOps:
+            self.backgroundUploader = BackgroundUploader()
+            self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
+            self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
+            self.backgroundUploader.start()
+        self.cacheLatexComments()  # Now cache latex for comments:
+
+    def applyLastTimeOptions(self, lastTime):
+        """
+        Applies all settings from previous client.
+
+        Args:
+            lastTime (dict): a dictionary containing information
+                            for prev client. See setup for more info.
+
+        Returns:
+            None
+        """
+        self.annotatorSettings["commentWarnings"] = lastTime.get("CommentWarnings")
+        self.annotatorSettings["markWarnings"] = lastTime.get("MarkWarnings")
+
+        if lastTime.get("POWERUSER", False):
+            # if POWERUSER is set, disable warnings and allow viewing all
+            self.canViewAll = True
+
+        if lastTime.get("FOREGROUND", False):
+            self.allowBackgroundOps = False
+
+        self.ui.sidebarRightCB.setChecked(lastTime.get("SidebarOnRight", False))
+
+        if lastTime["upDown"] == "up":
+            self.ui.markUpRB.animateClick()
+
+        elif lastTime["upDown"] == "down":
+            self.ui.markDownRB.animateClick()
+
+        if lastTime["mouse"] == "left":
+            self.ui.leftMouseCB.setChecked(True)
+
+    def UIInitialization(self):
+        """
+        Startup procedure for the user interface
+
+        Returns:
+            None: Modifies self.ui
+
+        """
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
@@ -527,41 +665,31 @@ class MarkerClient(QWidget):
                 self.question, self.version, self.testInfo["testName"]
             )
         )
-        # Exam model for the table of groupimages - connect to table
-        self.exM = ExamModel()
-        # set proxy for filtering and sorting
-        self.prxM = ProxyModel()
+
         self.prxM.setSourceModel(self.exM)
         self.ui.tableView.setModel(self.prxM)
         self.ui.tableView.hideColumn(5)  # hide original filename
         self.ui.tableView.hideColumn(6)  # hide annotated filename
         self.ui.tableView.hideColumn(7)  # hide plom filename
         self.ui.tableView.hideColumn(8)  # hide paperdir
-        # Double-click or signale fires up the annotator window
+
+        # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
         # A view window for the papers so user can zoom in as needed.
         # Paste into appropriate location in gui.
-        self.testImg = ExamViewWindow()
         self.ui.gridLayout_6.addWidget(self.testImg, 0, 0)
-        # create a settings variable for saving annotator window settings
-        # initially all settings are "none"
-        self.annotatorSettings = defaultdict(lambda: None)
 
-        self.annotatorSettings["commentWarnings"] = lastTime.get("CommentWarnings")
-        self.annotatorSettings["markWarnings"] = lastTime.get("MarkWarnings")
-        self.canViewAll = False
-        if lastTime.get("POWERUSER", False):
-            # if POWERUSER is set, disable warnings and allow viewing all
-            self.canViewAll = True
-        self.allowBackgroundOps = True
-        # unless special key was set:
-        if lastTime.get("FOREGROUND", False):
-            self.allowBackgroundOps = False
+    def connectGuiButtons(self):
+        """
+        Connect gui buttons to appropriate functions
 
-        self.ui.sidebarRightCB.setChecked(lastTime.get("SidebarOnRight", False))
+        Notes:
+            TODO: remove the total-radiobutton
 
-        # Connect gui buttons to appropriate functions
+        Returns:
+            None - Modifies self.ui
+        """
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
@@ -572,11 +700,41 @@ class MarkerClient(QWidget):
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
         self.ui.viewButton.clicked.connect(self.viewSpecificImage)
         # self.ui.filterLE.focusInEvent.connect(lambda: self.ui.filterButton.setFocus())
-        # Give IDs to the radio-buttons which select the marking style
-        # 1 = mark total = user clicks the total-mark
-        # 2 = mark-up = mark starts at 0 and user increments it
-        # 3 = mark-down = mark starts at max and user decrements it
-        # TODO: remove the total-radiobutton, but
+
+    def getMaxMark(self):
+        """
+        Get the max-mark for the question from the server.
+
+        Returns
+            True if max score retrieved successfully, False otherwise
+        """
+        try:
+            self.maxMark = messenger.MgetMaxMark(self.question, self.version)
+        except PlomRangeException as err:
+            log.error(err.args[1])
+            ErrorMessage(err.args[1]).exec_()
+            self.shutDownError()
+            return False
+        except PlomSeriousException as err:
+            self.throwSeriousError(err, rethrow=False)
+            return False
+        return True
+
+    def setMarkStyleID(self):
+        """
+        Give IDs to the radio-buttons which select the marking style.
+
+        Notes:
+            Hides "mark total" style by default
+            Mark style ID's are as follows
+                1 = mark total = user clicks the total-mark
+                2 = mark-up = mark starts at 0 and user increments it
+                3 = mark-down = mark starts at max and user decrements it
+
+        Returns:
+            None
+
+        """
         # for the timebeing we hide the totalrb from the user.
         self.ui.markStyleGroup.setId(self.ui.markTotalRB, 1)
         self.ui.markTotalRB.hide()
@@ -584,63 +742,17 @@ class MarkerClient(QWidget):
         # continue with the other buttons
         self.ui.markStyleGroup.setId(self.ui.markUpRB, 2)
         self.ui.markStyleGroup.setId(self.ui.markDownRB, 3)
-        if lastTime["upDown"] == "up":
-            self.ui.markUpRB.animateClick()
-        elif lastTime["upDown"] == "down":
-            self.ui.markDownRB.animateClick()
 
-        if lastTime["mouse"] == "left":
-            self.ui.leftMouseCB.setChecked(True)
+    def resizeEvent(self, event):
+        """
+        Overrides QWidget.resizeEvent()
 
-        # Get the max-mark for the question from the server.
-        try:
-            self.maxScore = messenger.MgetMaxMark(self.question, self.version)
-        except PlomRangeException as err:
-            log.error(err.args[1])
-            ErrorMessage(err.args[1]).exec_()
-            self.shutDownError()
-            return
-        except PlomSeriousException as err:
-            self.throwSeriousError(err, rethrow=False)
-            return
-        # Paste the max-mark into the gui.
-        self.ui.maxscoreLabel.setText(str(self.maxScore))
+        Args:
+            event:
 
-        # Get list of papers already marked and add to table.
-        try:
-            self.getMarkedList()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
+        Returns:
 
-        # Keep the original format around in case we need to change it
-        self.ui._cachedProgressFormatStr = self.ui.mProgressBar.format()
-
-        # Update counts
-        self.updateProgress()
-        # Connect the view **after** list updated.
-        # Connect the table-model's selection change to appropriate function
-        self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
-        # A simple cache table for latex'd comments
-        self.commentCache = {}
-        self.backgroundDownloader = None
-        self.backgroundUploader = None
-        # Get a question to mark from the server
-        self.requestNext()
-        # reset the view so whole exam shown.
-        self.testImg.resetB.animateClick()
-        # resize the table too.
-        QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
-        log.debug("Marker main thread: " + str(threading.get_ident()))
-        if self.allowBackgroundOps:
-            self.backgroundUploader = BackgroundUploader()
-            self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
-            self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
-            self.backgroundUploader.start()
-        # Now cache latex for comments:
-        self.cacheLatexComments()
-
-    def resizeEvent(self, e):
+        """
         # a resize can be triggered before we "getToWork" is called.
         if hasattr(self, "testImg"):
             # On resize used to resize the image to keep it all in view
@@ -648,7 +760,7 @@ class MarkerClient(QWidget):
         # resize the table too.
         if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
-        super(MarkerClient, self).resizeEvent(e)
+        super(MarkerClient, self).resizeEvent(event)
 
     def throwSeriousError(self, err, rethrow=True):
         """Log an exception, pop up a dialog, shutdown.
