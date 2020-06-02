@@ -54,8 +54,8 @@ def get_digits(kdp, fileName, top, bottom):
     Arguments:
         kdp {keras_dropout_prediction_object} -- The dropout prediction object used to find the confidence intervals for the model.
         fileName {str} -- The name of the file we are getting the digits for.
-        top {int} -- Top index of the image.
-        bottom {int} -- Bottom index of the image.
+        top {int} -- Location of the top of the image.
+        bottom {int} -- Location of the bottom of the image.
 
     Returns:
         list -- list of probabilites for each digit 
@@ -169,15 +169,15 @@ def get_digits(kdp, fileName, top, bottom):
 
 
 def compute_probabilities(fileDict, top, bottom):
-    """Find the probabilites for each digit 
+    """Find the probabilites for each digit in the studentID for specified files.
 
     Arguments:
         fileDict {dict} -- test number -> file mapping for appropriate files
-        top {[type]} -- [description]
-        bottom {[type]} -- [description]
+        top {int} -- Location of the top of the image.
+        bottom {int} -- Location of the bottom of the image.
 
     Returns:
-        [type] -- [description]
+        dict -- testNumber -> probabilities for each digit. 
     """
     # fire up the model
     model = tf.keras.models.load_model("plomBuzzword")
