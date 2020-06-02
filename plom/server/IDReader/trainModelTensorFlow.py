@@ -14,8 +14,6 @@ from tensorflow import keras
 
 
 def train_and_save_model():
-    """Trains a Tensorflow digit recognition model and saves it locally.
-    """
     # grab the mnist data to train against.
 
     print("Getting mnist handwritten digit data set.")

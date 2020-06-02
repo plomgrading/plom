@@ -26,11 +26,6 @@ from .predictStudentID import computeProbabilities
 
 
 def is_model_absent():
-    """Checks for the saved tensorflow model locally.
-
-    Returns:
-        bool -- True if the model is not downloaded, False otherwise.
-    """
     # this directory is created with downloadModel is called
     basePath = Path("plomBuzzword")
     files = [
@@ -47,11 +42,6 @@ def is_model_absent():
 
 
 def download_model():
-    """Downloads the student ID reading model from online.
-
-    Returns:
-        bool -- True if successful, false otherwise.
-    """
     # make a directory into which to save things
     basePath = Path("plomBuzzword")
     # make both the basepath and its variables subdir
@@ -78,7 +68,6 @@ def download_model():
 
 
 def download_or_train_model():
-    """Downloads the pretrained model, if that fails it trains the model locally."""
     print(
         "Will try to download model and if that fails, then build it locally (which is time-consuming)"
     )
@@ -95,15 +84,6 @@ def download_or_train_model():
 
 
 def log_likelihood(student_ids, probs):
-    """Calculates the (negative) log likelihood that the id is correct.
-
-    Arguments:
-        student_ids {list} -- Student ids.
-        probs {list} -- probs[k][n] = approx prob that digit k of ID is n.
-
-    Returns:
-        list -- the -log probabilities that each digit is present. 
-    """
     # pass in the student ID-digits and the probs
     # probs = scans[fn]
     # probs[k][n] = approx prob that digit k of ID is n.
@@ -117,12 +97,6 @@ def log_likelihood(student_ids, probs):
 
 
 def run_id_reader(file_dict, rectangle):
-    """
-
-    Arguments:
-        file_dict {dict} -- Stores the test numbers and their corresponding filenames on disk.
-        rectangle {list} -- 4-tuple left, top, width, height (floats)
-    """
     # convert rectangle to "top" and "bottom"
     # rectangle is a 4-tuple left,top,width,height - floats, but we'll need ints.
     top = int(rectangle[1])

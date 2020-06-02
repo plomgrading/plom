@@ -29,17 +29,6 @@ class KerasDropoutPrediction(object):
         )
 
     def predict(self, x, n_iter=20):
-        """Calculates digit predictions with dropout.
-
-        Arguments:
-            x {np.array} -- The confidences for each digit.
-
-        Keyword Arguments:
-            n_iter {int} -- number of iterations to run the prediction. (default: {20})
-
-        Returns:
-            np.array -- The digit predictions.
-        """
         result = []
         for _ in range(n_iter):
             result.append(self.f([x, True]))
@@ -48,17 +37,6 @@ class KerasDropoutPrediction(object):
 
 
 def getDigits(kdp, fileName, top, bottom):
-    """[summary]
-
-    Arguments:
-        kdp {[type]} -- [description]
-        fileName {[type]} -- [description]
-        top {[type]} -- [description]
-        bottom {[type]} -- [description]
-
-    Returns:
-        [type] -- [description]
-    """
     # define this in order to sort by area of bounding rect
     def boundingRectArea(tau):
         x, y, w, h = cv2.boundingRect(tau)
