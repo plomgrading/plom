@@ -62,7 +62,7 @@ def save_users(username_hash_dict, user_hash_login_json_path):
     """Saves the user hash login info to the file at user_hash_login_json_path.
 
     Arguments:
-        username_hash_dict {dict} -- Dictionary of the form {Str:Str} which repersents
+        username_hash_dict {dict} -- Dictionary of the form {Str:Str} which represents
                                      {username: hashed_password} objects.
         user_hash_login_json_path {Str} -- File path for saving the login hash info.
     """
@@ -77,11 +77,11 @@ def return_user_hash(username_password_dict):
     TODO: Would be really nice if the hash function was somehow passed in as a parameter.
 
     Arguments:
-        username_password_dict {dict} -- A dictionary of the form {Str:Str} which repersents
+        username_password_dict {dict} -- A dictionary of the form {Str:Str} which represents
                                         {username: password} objects.
 
     Returns:
-        dict -- A dictionary of the form {Str:Str} which repersents {username: hashed_password}
+        dict -- A dictionary of the form {Str:Str} which represents {username: hashed_password}
                 objects.
     """
 
@@ -98,7 +98,7 @@ def check_username_password_format(username_password_dict):
     TODO: More checks could be added, Could be cleaned up further.
 
     Arguments:
-        username_password_dict {dict} -- A dict(Str:Str) which repersents (username: password).
+        username_password_dict {dict} -- A dict(Str:Str) which represents (username: password).
 
     Returns:
         boolean -- True/False
@@ -144,7 +144,7 @@ def check_usernames_requirements(username_password_dict):
     Must be run before check_user_file_header.
 
     Arguments:
-        username_password_dict {dict} -- A dict(Str:Str) which repersents (username: password).
+        username_password_dict {dict} -- A dict(Str:Str) which represents (username: password).
 
     Returns:
         boolean -- True/False
@@ -165,7 +165,7 @@ def return_csv_info(user_file_path):
 
     Returns:
         list -- List[Str] which represents the extracted headers.
-        dict -- A dict(Str:Str) which repersents (username: password).
+        dict -- A dict(Str:Str) which represents (username: password).
     """
 
     csv_headers = []
