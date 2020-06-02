@@ -11,57 +11,43 @@ __license__ = "AGPL-3.0-or-later"
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from collections import defaultdict
-import os
 import json
+import logging
+import os
+
+# in order to get shortcuts under OSX this needs to set this.... but only osx.
+# To test platform
+import platform
+import queue
 import shutil
-import sys
 import tempfile
 import threading
 import time
-import queue
-import logging
-import random
-
-import toml
+from collections import defaultdict
 
 from PyQt5.QtCore import (
     Qt,
-    QAbstractTableModel,
-    QElapsedTimer,
-    QModelIndex,
-    QObject,
     QSortFilterProxyModel,
     QTimer,
     QThread,
     pyqtSlot,
-    QVariant,
     pyqtSignal,
 )
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QDialog,
-    QInputDialog,
-    QMainWindow,
     QMessageBox,
     QProgressDialog,
-    QPushButton,
     QWidget,
 )
 
-from .examviewwindow import ExamViewWindow
-from .annotator import Annotator
 from plom.plom_exceptions import *
-from .useful_classes import ErrorMessage, SimpleMessage
+from .annotator import Annotator
 from .comment_list import AddTagBox, commentLoadAll, commentIsVisible
-from .reorientationwindow import ExamReorientWindow
-from .uiFiles.ui_marker import Ui_MarkerWindow
+from .examviewwindow import ExamViewWindow
 from .origscanviewer import GroupView, SelectTestQuestion
-from plom import Plom_API_Version
-
-# in order to get shortcuts under OSX this needs to set this.... but only osx.
-# To test platform
-import platform
+from .uiFiles.ui_marker import Ui_MarkerWindow
+from .useful_classes import ErrorMessage, SimpleMessage
 
 if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
@@ -164,7 +150,7 @@ class BackgroundUploader(QThread):
             upload(
                 *data,
                 failcallback=self.uploadFail.emit,
-                successcallback=self.uploadSuccess.emit
+                successcallback=self.uploadSuccess.emit,
             )
 
         self.q = queue.Queue()
@@ -178,15 +164,15 @@ class BackgroundUploader(QThread):
 
 
 def upload(
-        code, gr, filenames, mtime, qu, ver, tags, failcallback=None, successcallback=None,
+    code, gr, filenames, mtime, qu, ver, tags, failcallback=None, successcallback=None,
 ):
     # do name sanity checks here
     aname, pname, cname = filenames
     if not (
-            code.startswith("q")
-            and os.path.basename(aname) == "G{}.png".format(code[1:])
-            and os.path.basename(pname) == "G{}.plom".format(code[1:])
-            and os.path.basename(cname) == "G{}.json".format(code[1:])
+        code.startswith("q")
+        and os.path.basename(aname) == "G{}.png".format(code[1:])
+        and os.path.basename(pname) == "G{}.plom".format(code[1:])
+        and os.path.basename(cname) == "G{}.json".format(code[1:])
     ):
         raise PlomSeriousException(
             "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
@@ -439,8 +425,8 @@ class ProxyModel(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, pos, index):
         if (len(self.filterString) == 0) or (
-                self.filterString.casefold()
-                in self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
+            self.filterString.casefold()
+            in self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
         ):
             # we'd return true here, unless INVERT, then false
             if self.invert:
@@ -509,13 +495,22 @@ class MarkerClient(QWidget):
         self.Qapp = Qapp
 
         # instance vars we can initialize now
-        self.workingDirectory = directoryPath  # local temp directory for image files and the class list.
+        self.workingDirectory = (
+            directoryPath
+            # local temp directory for image files and the class list.
+        )
         self.viewFiles = []  # For viewing the whole paper we'll need these two lists.
         self.maxMark = -1  # temp value
-        self.exM = ExamModel()  # Exam model for the table of groupimages - connect to table
+        self.exM = (
+            ExamModel()
+        )  # Exam model for the table of groupimages - connect to table
         self.prxM = ProxyModel()  # set proxy for filtering and sorting
-        self.testImg = ExamViewWindow()  # A view window for the papers so user can zoom in as needed.
-        self.annotatorSettings = defaultdict(lambda: None)  # settings variable for annotator settings (initially None)
+        self.testImg = (
+            ExamViewWindow()
+        )  # A view window for the papers so user can zoom in as needed.
+        self.annotatorSettings = defaultdict(
+            lambda: None
+        )  # settings variable for annotator settings (initially None)
         self.commentCache = {}  # cache for Latex Comments
         self.backgroundDownloader = None
         self.backgroundUploader = None
@@ -1211,7 +1206,7 @@ class MarkerClient(QWidget):
             upload(
                 *_data,
                 failcallback=self.backgroundUploadFailed,
-                successcallback=self.backgroundUploadFinished
+                successcallback=self.backgroundUploadFinished,
             )
 
     def gimmeMore(self, oldtgv):
