@@ -138,8 +138,7 @@ def check_user_file_header(csv_headers):
 
 
 def check_usernames_requirements(username_password_dict):
-    """Checks if username_password_dict meets the minimum requirements in terms of the
-    number and type of users.
+    """Check for minimum requires users.
 
     Must be run before check_user_file_header.
 
