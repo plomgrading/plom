@@ -88,10 +88,8 @@ class Annotator(QWidget):
 
         Args:
             username (str): username of Marker
-            mouseHand (int): The location of the grader's mouse hand. Right
-                = 0, Left = 1 (in this code, all values other than 0 will be
-                treated as Left.)mouseHand doesn't change throughout lifetime
-                of an annotator instance.
+            mouseHand (int): The location of the grader's mouse hand. (
+                Right = 0, Left != 0)
             parentMarkerUI (MarkerClient): the parent of annotator UI.
             initialData (dict): contains
                 {
