@@ -41,5 +41,4 @@ RUN pip3 install \
 COPY setup.py README.md org.plomgrading.PlomClient.* /src/
 COPY plom/ /src/plom/
 WORKDIR /src
-RUN python3 ./setup.py build bdist_wheel && rm -rf build
-RUN cd dist && pip3 install plom-*.whl
+RUN pip3 install .
