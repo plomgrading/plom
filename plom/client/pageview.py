@@ -25,8 +25,8 @@ class PageView(QGraphicsView):
         Initializes a new pageView object.
 
         Args:
-            parent (annotator) -- The annotator creating the pageview
-            username (str) -- The username of the marker
+            parent (Annotator): The Annotator creating the pageview
+            username (str): The username of the marker
 
         """
         super(PageView, self).__init__(parent)
@@ -50,7 +50,7 @@ class PageView(QGraphicsView):
         Connects a pagescene to the current pageview.
 
         Args:
-            scene (pageScene) -- the scene to be connected to.
+            scene (PageScene): the scene to be connected to.
 
         Returns:
             None
@@ -63,7 +63,7 @@ class PageView(QGraphicsView):
 
     def resizeEvent(self, event):
         """
-        Resizes the
+        Resizes the paper.
         Overrides Base Method.
 
         Notes:
@@ -83,10 +83,10 @@ class PageView(QGraphicsView):
         Latexes a fragment of text.
 
         Args:
-            txt (str) -- text to be formatted.
+            txt (str): text to be formatted.
 
         Returns:
-            A png file containing the Latexed text.
+            (png): a file containing the Latexed text.
 
         """
         cur = self.cursor()
@@ -101,7 +101,7 @@ class PageView(QGraphicsView):
         Sets Zoom combo box to show current selction.
 
         Args:
-            update (bool) -- True if combo box needs updating, False otherwise.
+            update (bool): True if combo box needs updating, False otherwise.
 
         Returns:
             None
@@ -147,7 +147,7 @@ class PageView(QGraphicsView):
         Zooms such that the entire page is visible.
 
         Args:
-            update (bool) -- True if combo box needs updating, False otherwise.
+            update (bool): True if combo box needs updating, False otherwise.
 
         Returns:
             None
@@ -169,7 +169,7 @@ class PageView(QGraphicsView):
         Changes the zoom to fit height.
 
         Args:
-            update (bool) -- True if combo box needs updating, False otherwise.
+            update (bool): True if combo box needs updating, False otherwise.
 
         Returns:
             None
@@ -186,7 +186,7 @@ class PageView(QGraphicsView):
         Changes the zoom to fit width.
 
         Args:
-            update (bool) -- True if combo box needs updating, False otherwise.
+            update (bool): True if combo box needs updating, False otherwise.
 
         Notes:
             scale to full width, but move center to user-zoomed center
@@ -203,11 +203,10 @@ class PageView(QGraphicsView):
 
     def zoomToScale(self, scale):
         """
-        Sets the current view based on desired scale for the paper, while
-        maintaining aspect ratio.
+        Zooms to a desired scale with original aspect ratio.
 
         Args:
-            scale (int) -- the ratio to be scaled to. (1 = 100%, 1.5 = 150% etc)
+            scale (float): the ratio to be scaled to. (1 = 100%, 1.5 = 150% etc)
 
         Returns:
             None
@@ -237,7 +236,7 @@ class PageView(QGraphicsView):
         Initializes zoom upon startup.
 
         Args:
-            initRect (QRectF) -- the rectangle to be initialized with.
+            initRect (QRectF): the rectangle to be initialized with.
 
         Returns:
             None
@@ -252,7 +251,7 @@ class PageView(QGraphicsView):
     def getCurrentViewRect(self):
         """
         Returns:
-            (QRect) -- the current view rectangle
+            (QRect): the current view rectangle
         """
         return self.mapToScene(self.viewport().contentsRect()).boundingRect()
 
@@ -261,7 +260,7 @@ class PageView(QGraphicsView):
         Pans through the view.
 
         Args:
-            dy (double) -- amount to adjust by in each scroll.
+            dy (float): amount to adjust by in each scroll.
 
         Returns:
             None
@@ -293,7 +292,7 @@ class PageView(QGraphicsView):
         Depans through the view.
 
         Args:
-            dy (double) -- amount to adjust by in each scroll.
+            dy (float): amount to adjust by in each scroll.
 
         Returns:
             None
@@ -304,7 +303,7 @@ class PageView(QGraphicsView):
         # if not at bottom of view, step down via scrollbar
         if verticalSliderPos > 0:
             self.verticalScrollBar().setValue(
-                verticalSliderPos - self.verticalScrollBar().pageStep() * dy
+                int(verticalSliderPos - self.verticalScrollBar().pageStep() * dy)
             )
         else:
             # else move up to top of view
