@@ -91,7 +91,7 @@ def log_likelihood(student_ids, probs):
     # logP will be the approx -log(prob) - so more probable means smaller logP.
     # make it negative since we'll minimise "cost" when we do the linear assignment problem stuff below.
     for k in range(0, 8):
-        d = int(sid[k])
+        d = int(student_ids[k])
         logP -= np.log(max(probs[k][d], 1e-30))  # avoids taking log of 0.
     return logP
 
