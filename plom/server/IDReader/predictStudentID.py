@@ -62,7 +62,7 @@ def get_digits(kdp, fileName, top, bottom):
     """
     # define this in order to sort by area of bounding rect
     def bounding_rect_area(tau):
-        x, y, w, h = cv2.boundingRect(tau)
+        _, _, w, h = cv2.boundingRect(tau)
         return w * h
 
     # read in the whole
