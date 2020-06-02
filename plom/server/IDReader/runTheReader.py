@@ -16,8 +16,8 @@ if not os.path.isfile(lockFile):
 
 with open(lockFile) as fh:
     fileDictAndRect = json.load(fh)
-    from .idReader import runIDReader
+    from .idReader import run_id_reader
 
-    runIDReader(fileDictAndRect[0], fileDictAndRect[1])
+    run_id_reader(fileDictAndRect[0], fileDictAndRect[1])
 
 os.unlink(lockFile)

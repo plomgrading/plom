@@ -25,7 +25,8 @@ import sys
 from .predictStudentID import computeProbabilities
 
 
-def isModelAbsent():
+def is_model_absent():
+    # this directory is created with downloadModel is called
     basePath = Path("plomBuzzword")
     files = [
         "saved_model.pb",
@@ -40,7 +41,7 @@ def isModelAbsent():
     return False
 
 
-def downloadModel():
+def download_model():
     # make a directory into which to save things
     basePath = Path("plomBuzzword")
     # make both the basepath and its variables subdir
@@ -66,23 +67,23 @@ def downloadModel():
     return True
 
 
-def downloadOrTrainModel():
+def download_or_train_model():
     print(
         "Will try to download model and if that fails, then build it locally (which is time-consuming)"
     )
-    if downloadModel():
+    if download_model():
         print("Successfully downloaded tensorflow model.")
     else:
         print("Could not download the model, need to train model instead.")
         print(
             "This will take some time -- on the order of 10-20 minutes depending on your computer."
         )
-        from .IDReader.trainModelTensorFlow import trainAndSaveModel
+        from .IDReader.trainModelTensorFlow import train_and_save_model
 
-        trainAndSaveModel()
+        train_and_save_model()
 
 
-def logLike(sid, probs):
+def log_likelihood(student_ids, probs):
     # pass in the student ID-digits and the probs
     # probs = scans[fn]
     # probs[k][n] = approx prob that digit k of ID is n.
@@ -95,25 +96,24 @@ def logLike(sid, probs):
     return logP
 
 
-def runIDReader(fileDict, rectangle):
+def run_id_reader(file_dict, rectangle):
     # convert rectangle to "top" and "bottom"
-    # IDrectangle is a 4-tuple left,top,width,height - floats, but we'll need ints.
-
+    # rectangle is a 4-tuple left,top,width,height - floats, but we'll need ints.
     top = int(rectangle[1])
     bottom = int(rectangle[1] + rectangle[3])
 
     # keeps a list of testNumbers... the ith test in list has testNumber k (i != k?)
     # will need this for cost-matrix
-    testList = list(fileDict.keys())
+    testList = list(file_dict.keys())
 
     # check to see if model already there and if not get it or train it.
-    if isModelAbsent():
-        downloadOrTrainModel()
+    if is_model_absent():
+        download_or_train_model()
     # probabilities that digit k of ID is "n" for each file.
     # this is potentially time-consuming - could be parallelised
     # pass in the list of files to check, top /bottom of image-region to check.
     print("Computing probabilities")
-    probabilities = computeProbabilities(fileDict, top, bottom)
+    probabilities = computeProbabilities(file_dict, top, bottom)
     # put studentNumbers in list
     studentNumbers = []
     with open(
@@ -129,12 +129,12 @@ def runIDReader(fileDict, rectangle):
     for test in testList:
         lst = []
         for sid in studentNumbers:
-            lst.append(logLike(sid, probabilities[test]))
+            lst.append(log_likelihood(sid, probabilities[test]))
         costs.append(lst)
     # use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm
-    # as  coded up in lapsolver
+    # as coded up in lapsolver
     # to find least cost assignment of tests to studentIDs
-    # this is potentially time-consuming, cannot be parallelised.
+    # this is potentially time-consuming, cannot be parallelized.
     print("Going hungarian")
     rowIDs, columnIDs = solve_dense(costs)
 
