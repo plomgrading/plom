@@ -57,7 +57,7 @@ logging.getLogger().setLevel("Debug".upper())
 # ----------------------
 def build_directories():
     """Build the directories that this script needs"""
-    
+
     # the list of directories. Might need updating.
     lst = [
         "pages",
@@ -99,8 +99,8 @@ class Server(object):
         self.load_users()
 
     def load_users(self):
-        """Load the users from json file, add them to the database and checks pwd hashes. 
-        
+        """Load the users from json file, add them to the database and checks pwd hashes.
+
         It does simple sanity checks of pwd hashes to see if they have changed.
         """
 

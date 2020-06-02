@@ -62,7 +62,7 @@ def save_users(username_hash_dict, user_hash_login_json_path):
     """Saves the user hash login info to the file at user_hash_login_json_path.
 
     Arguments:
-        username_hash_dict {dict} -- Dictionary of the form {Str:Str} which repersents 
+        username_hash_dict {dict} -- Dictionary of the form {Str:Str} which repersents
                                      {username: hashed_password} objects.
         user_hash_login_json_path {Str} -- File path for saving the login hash info.
     """
@@ -73,27 +73,27 @@ def save_users(username_hash_dict, user_hash_login_json_path):
 
 def return_user_hash(username_password_dict):
     """Creates a dictionary for username and hash which is derived from the user's password.
-    
+
     TODO: Would be really nice if the hash function was somehow passed in as a parameter.
 
     Arguments:
-        username_password_dict {dict} -- A dictionary of the form {Str:Str} which repersents 
+        username_password_dict {dict} -- A dictionary of the form {Str:Str} which repersents
                                         {username: password} objects.
 
     Returns:
-        dict -- A dictionary of the form {Str:Str} which repersents {username: hashed_password} 
+        dict -- A dictionary of the form {Str:Str} which repersents {username: hashed_password}
                 objects.
     """
 
     username_hash_dict = {}
     for user in username_password_dict:
-        username_hash_dict[user] = plomctx.hash(username_password_dict[user])    
+        username_hash_dict[user] = plomctx.hash(username_password_dict[user])
     return username_hash_dict
 
 
 def check_username_password_format(username_password_dict):
     """Checks that the username-passwords are valid and to a specific standard.
-        
+
     Must be done after the header file checks and the username checks.
     TODO: More checks could be added, Could be cleaned up further.
 
@@ -105,7 +105,7 @@ def check_username_password_format(username_password_dict):
     """
 
     for username, password in username_password_dict.items():
-        
+
         # basic sanity check of username
         if not (len(username) >= 4 and username.isalnum()):
             print("Usernames must be at least 4 alphanumeric characters. Username '{}' is problematic.".format(username))
@@ -121,8 +121,8 @@ def check_username_password_format(username_password_dict):
 
 def check_user_file_header(csv_headers):
     """Checks the headers in csv_headers to make sure it has the reaquired headers.
-    
-    Currently (username,password) format, but can be changed in the future. 
+
+    Currently (username,password) format, but can be changed in the future.
 
     Arguments:
         csv_headers {list} -- List[Str] having the headers in the csv file.
@@ -133,14 +133,14 @@ def check_user_file_header(csv_headers):
 
     if csv_headers != list_of_expected_header:
         return False
-    
+
     return True
 
 
 def check_usernames_requirements(username_password_dict):
-    """Checks if username_password_dict meets the minimum requirements in terms of the 
+    """Checks if username_password_dict meets the minimum requirements in terms of the
     number and type of users.
-    
+
     Must be run before check_user_file_header.
 
     Arguments:
@@ -149,7 +149,7 @@ def check_usernames_requirements(username_password_dict):
     Returns:
         boolean -- True/False
     """
-    
+
     # check we have manager, scanner and reviewer + at least 1 regular user.
     if (len(username_password_dict) < minimum_number_of_required_users or not all(user in username_password_dict for user in list_of_required_users)):
         return False
@@ -173,19 +173,19 @@ def return_csv_info(user_file_path):
 
     with open(user_file_path, "r") as save_file:
         reader = csv.reader(save_file, skipinitialspace=True)
-        
+
         # first line should be just header
         csv_headers = next(reader, None)
-        
+
         for row in reader:
             username_password_dict[row[0]] = row[1]
-    
+
     return csv_headers, username_password_dict
-    
+
 
 def parse_user_list(user_file_path):
-    """Parses the user list provided and saves the user hash dictionary. 
-    
+    """Parses the user list provided and saves the user hash dictionary.
+
     1. Reads the header and username/password dictionary in the user_file_path.
     2. Checks the header and minimum requirements in term of user types and number.
     3. Check the password and username format requirements.
@@ -194,7 +194,6 @@ def parse_user_list(user_file_path):
     Arguments:
         user_file_path {Str} -- Path to the user files.
     """
-    
     # First we get the csv info
     csv_headers, username_password_dict = return_csv_info(user_file_path)
 
