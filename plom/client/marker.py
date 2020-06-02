@@ -544,22 +544,22 @@ class MarkerClient(QWidget):
             question (int): question number.
             version (int): version number
             lastTime (dict): a dictionary containing
-                                 {"user": username
-                                "server": serverNumber
-                                 "pg": page number
-                                 "version": version number
-                                 "fontsize"
-                                 "POWERUSER"
-                                 "FOREGROUND"
-                                 "upDown": marking style (up vs down)
-                                 "LogLevel"
-                                 "LogToFile"
-                                 "CommentsWarnings"
-                                 "MarkWarnings"
-                                 "mouse": left or right mouse hand
-                                 "SidebarOnRight": True if sidebar is on right
-                                  }
-                                and potentially others
+                 {"user": username
+                "server": serverNumber
+                 "pg": page number
+                 "version": version number
+                 "fontsize"
+                 "POWERUSER"
+                 "FOREGROUND"
+                 "upDown": marking style (up vs down)
+                 "LogLevel"
+                 "LogToFile"
+                 "CommentsWarnings"
+                 "MarkWarnings"
+                 "mouse": left or right mouse hand
+                 "SidebarOnRight": True if sidebar is on right
+                  }
+                and potentially others
 
         Returns:
             None
