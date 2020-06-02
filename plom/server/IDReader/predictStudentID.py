@@ -29,7 +29,7 @@ class keras_dropout_prediction_object(object):
             [model.layers[0].input, K.symbolic_learning_phase()], [model.output],
         )
 
-    def predict(self, x, n_iter=20):
+    def predict_with_dropout(self, x, n_iter=20):
         """Calculates digit predictions with dropout.
 
         Arguments:
@@ -49,7 +49,7 @@ class keras_dropout_prediction_object(object):
 
 
 def get_digits(kdp, fileName, top, bottom):
-    """Returns the probabilies for each digit for a given file
+    """Returns the probabilies for each digit (of a student number) for a given file.
 
     Arguments:
         kdp {keras_dropout_prediction_object} -- The dropout prediction object used to find the confidence intervals for the model.
@@ -69,11 +69,13 @@ def get_digits(kdp, fileName, top, bottom):
     wholeImage = cv2.imread(fileName)
     # extract only the required portion of the image.
     image = wholeImage[:][top:bottom]
-    # proces the image so as to find the countours
+    # process the image so as to find the countours
+    # greyscale -> gaussian blur -> edge dector 
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(grey, (5, 5), 0)
     edged = cv2.Canny(blurred, 50, 200, 255)
 
+    # create a useable, sorted list of contours
     contours = cv2.findContours(
         edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
     )
@@ -159,14 +161,24 @@ def get_digits(kdp, fileName, top, bottom):
         # get it into format needed by tensorflow predictor
         roi3 = np.expand_dims(roi2, 0)
         # do the actual prediction! (ie approx probabilities that image is digit 0,1,2,..,9)
-        pred = kdp.predict(roi3).mean(axis=1)
+        pred = kdp.predict_with_dropout(roi3).mean(axis=1)
 
         # and append that prediction to list
         lst.append(pred)
     return lst
 
 
-def computeProbabilities(fileDict, top, bottom):
+def compute_probabilities(fileDict, top, bottom):
+    """Find the probabilites for each digit 
+
+    Arguments:
+        fileDict {dict} -- test number -> file mapping for appropriate files
+        top {[type]} -- [description]
+        bottom {[type]} -- [description]
+
+    Returns:
+        [type] -- [description]
+    """
     # fire up the model
     model = tf.keras.models.load_model("plomBuzzword")
     model.compile(
