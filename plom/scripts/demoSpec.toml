@@ -1,0 +1,52 @@
+# Example test specification for Plom
+
+# >>> Edit the data below <<<
+
+# Human-readable names of the test - one long, one short.
+#name = "m101mt1"
+#longName = "Midterm 1 for Mathematics 101"
+name = "plomdemo"
+longName = "Midterm Demo using Plom"
+
+# Information about the test
+# A test may have one or more versions
+numberOfVersions = 2
+# how many pages
+numberOfPages = 6
+# total number of papers to produce
+numberToProduce = 20
+# how many of those should be preprinted with names from a classlist - typically 0.
+numberToName = 10
+# how many questions to mark
+numberOfQuestions = 3
+
+# the id-pages - always taken from Version1
+[idPages]
+pages = [1]  # must contain at least 1 page and be contiguous
+
+# pages that are not marked (like instructions, formula sheets, examination rules etc) - always taken from Version1
+[doNotMark]
+pages = [2]  # can be an empty list.
+
+# Now the actual questions (groups of pages) to be marked
+# [question.n] with n a positive integer [1, 2, 3, ... etc] - contiguous please.
+# pages = [4, 5, 6] - contiguous ordered list of positive integers.
+# mark = positive integer, the marks for this question.
+# select = "shuffle" or "fix".
+# --> "fix" = that question will always be drawn from source-version 1.
+# --> "shuffle" = that question will be drawn randomly from one of the source versions.
+
+[question.1]
+pages = [3]
+mark = 5
+select = "shuffle"
+
+[question.2]
+pages = [4]
+mark = 10
+select = "fix"
+
+[question.3]
+pages = [5, 6]
+mark = 10
+select = "shuffle"
