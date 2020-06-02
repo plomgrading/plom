@@ -371,11 +371,11 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def replaceMissingPage(self, code, t, p, v):
+    def replaceMissingTestPage(self, code, t, p, v):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
-                "https://{}/admin/missingPage/{}".format(self.server, code),
+                "https://{}/admin/missingTestPage/{}".format(self.server, code),
                 verify=False,
                 json={
                     "user": self.user,
@@ -501,12 +501,11 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def getPageImage(self, t, p, v):
-        code = "t{}p{}v{}".format(str(t).zfill(4), str(p).zfill(2), str(v))
+    def getTPageImage(self, t, p, v):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/admin/scannedPage/{}".format(self.server, code),
+                "https://{}/admin/scannedTPage".format(self.server),
                 verify=False,
                 json={
                     "user": self.user,
@@ -515,6 +514,60 @@ class ManagerMessenger(BaseMessenger):
                     "page": p,
                     "version": v,
                 },
+            )
+            response.raise_for_status()
+            image = BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                return None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return image
+
+    def getHWPageImage(self, t, q, o):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/admin/scannedHWPage".format(self.server),
+                verify=False,
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "test": t,
+                    "question": q,
+                    "order": o,
+                },
+            )
+            response.raise_for_status()
+            image = BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                return None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return image
+
+    def getXPageImage(self, t, o):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/admin/scannedXPage".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token, "test": t, "order": o,},
             )
             response.raise_for_status()
             image = BytesIO(response.content).getvalue()

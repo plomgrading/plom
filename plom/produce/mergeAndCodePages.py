@@ -15,203 +15,434 @@ from pathlib import Path
 from plom.tpv_utils import encodeTPV
 from . import paperdir
 
+# paperdir = "papersToPrint"
 
-def makePDF(name, code, length, versions, test, pageVersions, extra=None):
+
+# TODO: Complete the test mode functionality
+def create_QR_file_dictionary(
+    length, test, page_versions, code, tmp_dir, test_mode=False, test_folder=None
+):
+    """Creates a dictionary of the QR codes and save them.
+
+    Arguments:
+        length {int} -- Length of the document or number of pages.
+        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
+        page_versions {dict} -- (int:int) Dictionary representing the version of each page for this test.
+        code {Str} -- 6 digit distinguished code for the document.
+        tmp_dir {Str} -- Path string representing the directory paht of a QR code.
+
+    Keyword Arguments:
+        test_mode {bool} -- boolean elements used for testing, testing case with show the documents (default: {False}).
+        test_folder {Str} -- String for where to place the generated test files (default: {None}).
+
+    Returns:
+        dict -- dict(int: dict(int: Str)) a dictionary that has another embedded dictionary for each page.
+                The embedded dictionary has a string for QR code paths saved for each corner.
+    """
 
     # Command line parameters to imagemagick's mogrify
     # puts a frame around the image.
     mogParams = ' -mattecolor black -frame 1x1 -background "#FFFFFF" ' "-flatten"
 
-    # Which pdfsource file from which to extract each page version
-    V = {}
-    for v in range(1, versions + 1):
-        V[v] = fitz.open("sourceVersions/version{}.pdf".format(v))
+    qr_file = {}
+
+    for page_index in range(1, length + 1):
+        # 4 qr codes for the corners (one will be omitted for the staple)
+        qr_file[page_index] = {}
+
+        for corner_index in range(1, 5):
+            # the tpv (test page version) is a code used for creating the qr code
+            tpv = encodeTPV(
+                test, page_index, page_versions[page_index], corner_index, code
+            )
+            qr_code = pyqrcode.create(tpv, error="H")
+
+            # save it in the associated file
+            qr_file[page_index][corner_index] = os.path.join(
+                tmp_dir, "page{}_{}.png".format(page_index, corner_index)
+            )
+            qr_code.png(qr_file[page_index][corner_index], scale=4)
+
+            # use a terminal mogrify process to put a border around the QR code
+            cmd = shlex.split(
+                "mogrify {} {}".format(mogParams, qr_file[page_index][corner_index])
+            )
+            subprocess.run(cmd, check=True)
+
+    return qr_file
+
+
+# TODO: Complete the test mode functionality
+def create_exam_and_insert_QR(
+    name,
+    code,
+    length,
+    versions,
+    test,
+    page_versions,
+    qr_file,
+    test_mode=False,
+    test_folder=None,
+):
+    """Creates the exam objects and insert the QR codes.
+    
+    Creates the exams objects from the pdfs stored at sourceVersions.
+    Then adds the 3 QR codes for each page.
+    (We create 4 QR codes but only add 3 of them because of the staple side, see below).
+
+    Arguments:
+        name {Str} -- Document Name.
+        code {Str} -- 6 digit distinguished code for the document.
+        length {int} -- Length of the document or number of pages.
+        versions {int} -- Number of version of this Document.
+        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests .
+        page_versions {dict} -- (int,int) dictionary representing the version of each page for this test.
+        qr_file {dict} -- dict(int: dict(int: Str)) Dictionary that has another embedded dictionary for each page.
+                          The embedded dictionary has a string for QR code paths saved for each corner.
+
+    Keyword Arguments:
+        test_mode {bool} -- Boolean elements used for testing, testing case with show the documents.  (default: {False})
+        test_folder {Str} -- String for where to place the generated test files. (default: {None})
+
+    Returns:
+        fitz.Document -- PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys.
+    """
+
+    # A (int : fitz.fitz.Document) dictionary that has the page document/path from each source based on page version
+    version_paths_for_pages = {}
+    for version_index in range(1, versions + 1):
+        version_paths_for_pages[version_index] = fitz.open(
+            "sourceVersions/version{}.pdf".format(version_index)
+        )
 
     # Create test pdf as "exam"
     exam = fitz.open()
     # Insert the relevant page-versions into this pdf.
-    for p in range(1, length + 1):
+    for page_index in range(1, length + 1):
         # Pymupdf starts pagecounts from 0 rather than 1. So offset things.
-        exam.insertPDF(V[pageVersions[p]], from_page=p - 1, to_page=p - 1, start_at=-1)
+        exam.insertPDF(
+            version_paths_for_pages[page_versions[page_index]],
+            from_page=page_index - 1,
+            to_page=page_index - 1,
+            start_at=-1,
+        )
 
-    # Start to decorate the pages with qr-codes etc
     # Get page width and height
-    pW = exam[0].bound().width
-    pH = exam[0].bound().height
+    page_width = exam[0].bound().width
+    page_height = exam[0].bound().height
+
     # create a box for the test number near top-centre
-    rTC = fitz.Rect(pW // 2 - 50, 20, pW // 2 + 50, 40)
+    rTC = fitz.Rect(page_width // 2 - 50, 20, page_width // 2 + 50, 40)
+
     # put marks at top left/right so students don't write near
     # staple or near where client will stamp marks
-    # create two "do not write" rectangles accordingly
-    rDNW0 = fitz.Rect(15, 15, 90, 90)
-    rDNW1 = fitz.Rect(pW - 90, 15, pW - 15, 90)
+
+    # create two "do not write" (DNW) rectangles accordingly with TL (top left) and TR (top right)
+    rDNW_TL = fitz.Rect(15, 15, 90, 90)
+    rDNW_TR = fitz.Rect(page_width - 90, 15, page_width - 15, 90)
+
     # 70x70 page-corner boxes for the QR codes
-    rNW = fitz.Rect(15, 20, 85, 90)
-    rNE = fitz.Rect(pW - 85, 20, pW - 15, 90)
-    rSW = fitz.Rect(15, pH - 90, 85, pH - 20)
-    rSE = fitz.Rect(pW - 85, pH - 90, pW - 15, pH - 20)
+    # TL: Top Left, TR: Top Right, BL: Bottom Left, BR: Bottom Right
+    rTL = fitz.Rect(15, 20, 85, 90)
+    rTR = fitz.Rect(page_width - 85, 20, page_width - 15, 90)
+    rBL = fitz.Rect(15, page_height - 90, 85, page_height - 20)
+    rBR = fitz.Rect(
+        page_width - 85, page_height - 90, page_width - 15, page_height - 20
+    )
 
-    # Build all relevant pngs in a temp directory
-    with tempfile.TemporaryDirectory() as tmpDir:
-        # create QR codes and other stamps for each test/page/version
-        qrFile = {}
-        tpFile = {}
-        for p in range(1, length + 1):
-            # 4 qr codes for the corners (one will be omitted for the staple)
-            qrFile[p] = {}
-            for i in range(1, 5):
-                tpv = encodeTPV(test, p, pageVersions[p], i, code)
-                qr = pyqrcode.create(tpv, error="H")
-                # save it in the associated file
-                qrFile[p][i] = os.path.join(tmpDir, "page{}_{}.png".format(p, i))
-                qr.png(qrFile[p][i], scale=4)
-                # put a border around it
-                cmd = shlex.split("mogrify {} {}".format(mogParams, qrFile[p][i]))
-                subprocess.run(cmd, check=True)
+    for page_index in range(length):
+        # test/page stamp in top-centre of page
+        # Rectangle size hacked by hand. TODO = do this more algorithmically
+        # VALA SAYS: TODO still tands given that the pages are all the same
+        # size. Will ask what it mean to do it algorithmically
+        rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
+        text = "{}.{}".format(str(test).zfill(4), str(page_index + 1).zfill(2))
+        insertion_confirmed = exam[page_index].insertTextbox(
+            rect,
+            text,
+            fontsize=18,
+            color=[0, 0, 0],
+            fontname="Helvetica",
+            fontfile=None,
+            align=1,
+        )
+        exam[page_index].drawRect(rect, color=[0, 0, 0])
+        assert insertion_confirmed > 0
 
-        # After creating all of the QRcodes etc we can put them onto
-        # the actual pdf pages as pixmaps using pymupdf
-        for p in range(length):
-            # test/page stamp in top-centre of page
-            # Rectangle size hacked by hand. TODO = do this more algorithmically
-            rect = fitz.Rect(pW // 2 - 40, 20, pW // 2 + 40, 44)
-            text = "{}.{}".format(str(test).zfill(4), str(p + 1).zfill(2))
-            rc = exam[p].insertTextbox(
-                rect,
-                text,
-                fontsize=18,
-                color=[0, 0, 0],
-                fontname="Helvetica",
-                fontfile=None,
-                align=1,
-            )
-            exam[p].drawRect(rect, color=[0, 0, 0])
-            assert rc > 0
+        # stamp DNW near staple: even/odd pages different
+        # Top Left for even pages, Top Right for odd pages
+        # TODO: Perhaps this process could be improved by putting
+        # into functions
+        rDNW = rDNW_TL if page_index % 2 == 0 else rDNW_TR
+        shape = exam[page_index].newShape()
+        shape.drawLine(rDNW.top_left, rDNW.top_right)
+        if page_index % 2 == 0:
+            shape.drawLine(rDNW.top_right, rDNW.bottom_left)
+        else:
+            shape.drawLine(rDNW.top_right, rDNW.bottom_right)
+        shape.finish(width=0.5, color=[0, 0, 0], fill=[0.75, 0.75, 0.75])
+        shape.commit()
+        if page_index % 2 == 0:
+            # offset by trial-and-error, could be improved
+            rDNW = rDNW + (19, 19, 19, 19)
+        else:
+            rDNW = rDNW + (-19, 19, -19, 19)
+        mat = fitz.Matrix(45 if page_index % 2 == 0 else -45)
+        pivot = rDNW.tr / 2 + rDNW.bl / 2
+        morph = (pivot, mat)
+        insertion_confirmed = exam[page_index].insertTextbox(
+            rDNW,
+            name,
+            fontsize=8,
+            fontname="Helvetica",
+            fontfile=None,
+            align=1,
+            morph=morph,
+        )
+        # exam[page_index].drawRect(rDNW, morph=morph)
+        assert (
+            insertion_confirmed > 0
+        ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
-            # stamp DNW near staple: even/odd pages different
-            r = rDNW0 if p % 2 == 0 else rDNW1
-            shape = exam[p].newShape()
-            shape.drawLine(r.top_left, r.top_right)
-            if p % 2 == 0:
-                shape.drawLine(r.top_right, r.bottom_left)
-            else:
-                shape.drawLine(r.top_right, r.bottom_right)
-            shape.finish(width=0.5, color=[0, 0, 0], fill=[0.75, 0.75, 0.75])
-            shape.commit()
-            if p % 2 == 0:
-                # offset by trial-and-error, could be improved
-                r = r + (19, 19, 19, 19)
-            else:
-                r = r + (-19, 19, -19, 19)
-            mat = fitz.Matrix(45 if p % 2 == 0 else -45)
-            pivot = r.tr / 2 + r.bl / 2
-            morph = (pivot, mat)
-            rc = exam[p].insertTextbox(
-                r,
-                name,
-                fontsize=8,
-                fontname="Helvetica",
-                fontfile=None,
-                align=1,
-                morph=morph,
-            )
-            # exam[p].drawRect(r, morph=morph)
-            assert rc > 0, "Text didn't fit: shortname too long?  or font issue/bug?"
-            # grab the tpv QRcodes for current page
-            qr = {}
-            for i in range(1, 5):
-                qr[i] = fitz.Pixmap(qrFile[p + 1][i])
-            if p % 2 == 0:
-                exam[p].insertImage(rNE, pixmap=qr[1], overlay=True)
-                exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
-                exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
-            else:
-                exam[p].insertImage(rNW, pixmap=qr[2], overlay=True)
-                exam[p].insertImage(rSW, pixmap=qr[3], overlay=True)
-                exam[p].insertImage(rSE, pixmap=qr[4], overlay=True)
-        if extra:
-            sid = extra["id"]
-            sname = extra["name"]
-            # a file for the student-details
-            YSHIFT = 0.4  # where on page is centre of box 0=top, 1=bottom
-            txt = "{}\n{}".format(sid, sname)
-            sidW = (
-                max(
-                    fitz.getTextlength(sid, fontsize=36, fontname="Helvetica"),
-                    fitz.getTextlength(sname, fontsize=36, fontname="Helvetica"),
-                    fitz.getTextlength(
-                        "Please sign here", fontsize=48, fontname="Helvetica"
-                    ),
-                )
-                * 1.1
-                * 0.5
-            )
-            sidH = 36 * 1.3
-            sidRect = fitz.Rect(
-                pW // 2 - sidW, pH * YSHIFT - sidH, pW // 2 + sidW, pH * YSHIFT + sidH
-            )
-            sidRect2 = fitz.Rect(
-                sidRect.x0, sidRect.y1, sidRect.x1, sidRect.y1 + 48 * 1.3
-            )
-            sidRect3 = fitz.Rect(
-                sidRect.x0 - 8, sidRect.y0 - 8, sidRect.x1 + 8, sidRect2.y1 + 8
-            )
-            exam[0].drawRect(sidRect3, color=[0, 0, 0], fill=[1, 1, 1], width=4)
-            exam[0].drawRect(sidRect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
-            exam[0].drawRect(sidRect2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+        # Grab the tpv QRcodes for current page and put them on the pdf
+        # Remember that we only add 3 of the 4 QR codes for each page since
+        # we always have a corner section for staples and such
+        qr_code = {}
+        for corner_index in range(1, 5):
+            qr_code[corner_index] = fitz.Pixmap(qr_file[page_index + 1][corner_index])
+        if page_index % 2 == 0:
+            exam[page_index].insertImage(rTR, pixmap=qr_code[1], overlay=True)
+            exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
+            exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
+        else:
+            exam[page_index].insertImage(rTL, pixmap=qr_code[2], overlay=True)
+            exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
+            exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
 
-            def isPossibleToEncodeAs(s, x):
-                try:
-                    _tmp = s.encode(x)
-                    return True
-                except UnicodeEncodeError:
-                    return False
+    return exam
 
-            if isPossibleToEncodeAs(txt, "Latin-1"):
-                fontname = "Helvetica"
-            elif isPossibleToEncodeAs(txt, "gb2312"):
-                # TODO: Double-check encoding name.  Add other CJK (how does Big5
-                # vs GB work?).  Check printers can handle these or do we need to
-                # embed a font?  (Adobe Acrobat users need to download something)
-                fontname = "china-ss"
-            else:
-                # TODO: or warn use Helvetica, get "?" chars
-                raise ValueError("Don't know how to write name {} into PDF".format(txt))
-            rc = exam[0].insertTextbox(
-                sidRect,
-                txt,
-                fontsize=36,
-                color=[0, 0, 0],
-                fontname=fontname,
-                fontfile=None,
-                align=1,
-            )
-            rc = exam[0].insertTextbox(
-                sidRect2,
-                "Please sign here",
-                fontsize=48,
-                color=[0.9, 0.9, 0.9],
-                fontname="Helvetica",
-                fontfile=None,
-                align=1,
-            )
 
-    # Finally save the resulting pdf.
+# TODO: Complete the test mode functionality
+def is_possible_to_encode_as(s, x):
+    """A function that checks if string s is encodable by format x.
+
+    Arguments:
+        s {Str} -- Text String given.
+        x {Str} -- Encoding type.
+
+    Returns:
+        bool -- True/False
+    """
+    try:
+        _tmp = s.encode(x)
+        return True
+    except UnicodeEncodeError:
+        return False
+
+
+# TODO: Complete the test mode functionality
+def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
+    """Creates the extra info (ususally student name and id) boxes and places them in the first page.
+
+    Arguments:
+        extra {dict} -- (Str:Str) dictioary with student id and name.
+        exam {fitz.Document} -- PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys.
+
+    Keyword Arguments:
+        test_mode {bool} -- Boolean elements used for testing, testing case with show the documents. (default: {False})
+        test_folder {Str} -- String for where to place the generated test files. (default: {None})
+
+    Raises:
+        ValueError: Raise error if the student name and number is not encodable.
+
+    Returns:
+        fitz.Document -- The same exam object as the input, except we add the extra infor into the first page.
+    """
+
+    # Get page width and height
+    page_width = exam[0].bound().width
+    page_height = exam[0].bound().height
+
+    student_id = extra["id"]
+    student_name = extra["name"]
+    # a file for the student-details
+    YSHIFT = 0.4  # where on page is centre of box 0=top, 1=bottom
+
+    # Creating the student id \n name text file
+    txt = "{}\n{}".format(student_id, student_name)
+
+    # Getting the dimentions of the box
+    student_id_width = (
+        max(
+            fitz.getTextlength(student_id, fontsize=36, fontname="Helvetica"),
+            fitz.getTextlength(student_name, fontsize=36, fontname="Helvetica"),
+            fitz.getTextlength("Please sign here", fontsize=48, fontname="Helvetica"),
+        )
+        * 1.1
+        * 0.5
+    )
+    student_id_height = 36 * 1.3
+
+    # We have 2 rectangles for the student name and student id
+    student_id_rect_1 = fitz.Rect(
+        page_width // 2 - student_id_width,
+        page_height * YSHIFT - student_id_height,
+        page_width // 2 + student_id_width,
+        page_height * YSHIFT + student_id_height,
+    )
+    student_id_rect_2 = fitz.Rect(
+        student_id_rect_1.x0,
+        student_id_rect_1.y1,
+        student_id_rect_1.x1,
+        student_id_rect_1.y1 + 48 * 1.3,
+    )
+    exam[0].drawRect(student_id_rect_1, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+    exam[0].drawRect(student_id_rect_2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+
+    # TODO: This could be put into one function
+    # Also VALA doesn't understand the TODO s
+    if is_possible_to_encode_as(txt, "Latin-1"):
+        fontname = "Helvetica"
+    elif is_possible_to_encode_as(txt, "gb2312"):
+        # TODO: Double-check encoding name.  Add other CJK (how does Big5
+        # vs GB work?).  Check printers can handle these or do we need to
+        # embed a font?  (Adobe Acrobat users need to download something)
+        fontname = "china-ss"
+    else:
+        # TODO: or warn use Helvetica, get "?" chars
+        raise ValueError("Don't know how to write name {} into PDF".format(txt))
+
+    # We insert the student id text boxes
+    insertion_confirmed = exam[0].insertTextbox(
+        student_id_rect_1,
+        txt,
+        fontsize=36,
+        color=[0, 0, 0],
+        fontname=fontname,
+        fontfile=None,
+        align=1,
+    )
+    # TODO: VALA suggests we do the insertion_confirmed check here as well
+    assert (
+        insertion_confirmed > 0
+    ), "Text didn't fit: shortname too long?  or font issue/bug?"
+
+    # We insert the student name text boxes
+    insertion_confirmed = exam[0].insertTextbox(
+        student_id_rect_2,
+        "Please sign here",
+        fontsize=48,
+        color=[0.9, 0.9, 0.9],
+        fontname="Helvetica",
+        fontfile=None,
+        align=1,
+    )
+    # TODO: VALA suggests we do the insertion_confirmed check here as well
+    assert (
+        insertion_confirmed > 0
+    ), "Text didn't fit: shortname too long?  or font issue/bug?"
+
+    return exam
+
+
+# TODO: Complete the test mode functionality
+def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
+    """Used for saving the exams in paperdir.
+
+    Arguments:
+        extra {dict} -- A (Str:Str) dictioary with student id and name.
+        exam {fitz.Document} -- The same exam object as the input, except we add the extra infor into the first page.
+        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests. 
+    
+    Keyword Arguments:
+        test_mode {bool} -- boolean elements used for testing, testing case with show the documents. (default: {False})
+        test_folder {Str} -- A String for where to place the generated test files. (default: {None})
+    """
+
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
     # also do garbage collection to remove duplications within pdf
     # and try to clean up as much as possible.
     # `linear=True` causes https://gitlab.math.ubc.ca/andrewr/MLP/issues/284
     if extra:
-        saveName = Path(paperdir) / "exam_{}_{}.pdf".format(
+        save_name = Path(paperdir) / "exam_{}_{}.pdf".format(
             str(test).zfill(4), extra["id"]
         )
     else:
-        saveName = Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4))
+        save_name = Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4))
     # save with ID-number is making named papers = issue 790
     exam.save(
-        saveName, garbage=4, deflate=True, clean=True,
+        save_name, garbage=4, deflate=True, clean=True,
     )
+
+    return
+
+
+# TODO: Complete the test mode functionality
+def make_PDF(
+    name,
+    code,
+    length,
+    versions,
+    test,
+    page_versions,
+    extra=None,
+    test_mode=False,
+    test_folder=None,
+):
+    """A function that makes the PDFs and saves the modified exam files.
+
+    Overall it has 4 steps for each document:
+    1- Create and save Qr codes.
+    2- Create and save exams with the addition of the QR codes.
+    3- If extra is defined, add student id and student name.
+    4- Finally save the Documents.
+
+    Arguments:
+        name {Str} -- Document Name.
+        code {Str} -- 6 digit distinguished code for the document.
+        length {int} -- Length of the document or number of pages.
+        versions {int} -- Number of version of this Document.
+        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
+        page_versions {dict} -- (int:int) dictionary representing the version of each page for this test.
+
+    Keyword Arguments:
+        extra {dict} -- (Str:Str) Dictioary with student id and name (default: {None})
+        test_mode {bool} -- Boolean elements used for testing, testing case with show the documents (default: {False})
+        test_folder {Str} -- String for where to place the generated test files (default: {None})
+
+    Raises:
+        ValueError: Raise error if the student name and number is not encodable
+    """
+
+    # Build all relevant pngs in a temp directory
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        # create QR codes and other stamps for each test/page/version
+        qr_file = create_QR_file_dictionary(
+            length, test, page_versions, code, tmp_dir, test_mode, test_folder
+        )
+
+        # We then create the exam pdfs while adding the QR codes to it
+        exam = create_exam_and_insert_QR(
+            name,
+            code,
+            length,
+            versions,
+            test,
+            page_versions,
+            qr_file,
+            test_mode,
+            test_folder,
+        )
+
+        # If we are provided with the student number and student id,
+        # we would preferably want to insert them into the first page
+        # as a box.
+        if extra:
+            exam = insert_extra_info(extra, exam, test_mode, test_folder)
+
+    # Finally save the resulting pdf.
+    save_PDFs(extra, exam, test)
 
 
 if __name__ == "__main__":
@@ -221,11 +452,11 @@ if __name__ == "__main__":
     # 3 = length (ie number of pages)
     # 4 = number of versions
     # 5 = the test test number
-    # 6 = list of the version number for each page
+    # 6 = dict of the version number for each page
     name = sys.argv[1]
     code = sys.argv[2]
     length = int(sys.argv[3])
     versions = int(sys.argv[4])
     test = int(sys.argv[5])
-    pageVersions = eval(sys.argv[6])
-    makePDF(name, code, length, versions, test, pageVersions)
+    page_versions = eval(sys.argv[6])
+    make_PDF(name, code, length, versions, test, page_versions)

@@ -65,7 +65,6 @@ def readImages(server, password):
     os.makedirs("unknownPages", exist_ok=True)
     readQRCodes.processBitmaps(server, password)
 
-
 def uploadImages(server, password, unknowns=False, collisions=False):
     from plom.scan import sendPagesToServer
 
@@ -75,19 +74,22 @@ def uploadImages(server, password, unknowns=False, collisions=False):
     os.makedirs("collidingPages", exist_ok=True)
 
     print("Upload images to server")
-    sendPagesToServer.uploadPages(server, password)
+    [TPN, updates] = sendPagesToServer.uploadPages(server, password)
+    print("Tests were uploaded to the following studentIDs: {}".format(TPN.keys()))
+    print("Server reports {} papers updated.".format(updates))
+
     if unknowns:
-        from plom.scan import sendUnknownsToServer
-
-        print("Also upload unknowns")
-        os.makedirs("sentPages/unknowns", exist_ok=True)
-        sendUnknownsToServer.uploadUnknowns(server, password)
+        print(">> TO DO FIX <<")
+        # from plom.scan import sendUnknownsToServer
+        # print("Also upload unknowns")
+        # os.makedirs("sentPages/unknowns", exist_ok=True)
+        # [SIDQ, updates] = sendUnknownsToServer.uploadUnknowns(server, password)
     if collisions:
-        from plom.scan import sendCollisionsToServer
-
-        print("Also collisions unknowns")
-        os.makedirs("sentPages/collisions", exist_ok=True)
-        sendCollisionsToServer.uploadCollisions(server, password)
+        print(">> TO DO FIX <<")
+        # from plom.scan import sendCollisionsToServer
+        # print("Also collisions unknowns")
+        # os.makedirs("sentPages/collisions", exist_ok=True)
+        # sendCollisionsToServer.uploadCollisions(server, password)
 
 
 parser = argparse.ArgumentParser()
@@ -98,7 +100,11 @@ spP = sub.add_parser("process", help="Process scanned PDFs to images.")
 spR = sub.add_parser("read", help="Read QR-codes from images and collate.")
 spU = sub.add_parser("upload", help="Upload page images to scanner")
 spS = sub.add_parser("status", help="Get scanning status report from server")
-spC = sub.add_parser("clear", help="Clear 'scanner' login", description="Clear 'scanner' login after a crash or other expected event.")
+spC = sub.add_parser(
+    "clear",
+    help="Clear 'scanner' login",
+    description="Clear 'scanner' login after a crash or other expected event.",
+)
 #
 spP.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
 spU.add_argument(

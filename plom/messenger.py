@@ -1066,23 +1066,23 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MrequestWholePaper(self, code):
+    def MrequestWholePaper(self, code, questionNumber):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/MK/whole/{}".format(self.server, code),
+                "https://{}/MK/whole/{}/{}".format(self.server, code, questionNumber),
                 json={"user": self.user, "token": self.token},
                 verify=False,
             )
             response.raise_for_status()
 
-            # response should be multipart = [[pageNames], f1,f2,f3..]
+            # response should be multipart = [ pageData, f1,f2,f3..]
             imagesAsBytes = MultipartDecoder.from_response(response).parts
             images = []
             i = 0
             for iab in imagesAsBytes:
                 if i == 0:
-                    pageNames = json.loads(iab.content)
+                    pageData = json.loads(iab.content)
                 else:
                     images.append(
                         BytesIO(iab.content).getvalue()
@@ -1101,7 +1101,26 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        return [pageNames, images]
+        return [pageData, images]
+
+    def MshuffleImages(self, code, imageRefs):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.patch(
+                "https://{}/MK/shuffle/{}".format(self.server, code),
+                json={"user": self.user, "token": self.token, "imageRefs": imageRefs},
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
 
     # ------------------------
     # ------------------------
