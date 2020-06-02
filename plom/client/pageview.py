@@ -64,10 +64,10 @@ class PageView(QGraphicsView):
     def resizeEvent(self, event):
         """
         Resizes the paper.
-        Overrides Base Method.
 
         Notes:
-             Currently unused.
+            Overrides Base Method.
+            Currently unused.
 
         Args:
             event (QEvent) - the event to be resized.
