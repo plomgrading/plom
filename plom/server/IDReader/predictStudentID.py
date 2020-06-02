@@ -70,7 +70,7 @@ def get_digits(kdp, fileName, top, bottom):
     # extract only the required portion of the image.
     image = wholeImage[:][top:bottom]
     # process the image so as to find the countours
-    # greyscale -> gaussian blur -> edge dector 
+    # greyscale -> gaussian blur -> edge dector
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(grey, (5, 5), 0)
     edged = cv2.Canny(blurred, 50, 200, 255)
@@ -130,7 +130,7 @@ def get_digits(kdp, fileName, top, bottom):
         yt = max(0, bnd[0] - pad)
         # grab the image - should be the digit.
         digit4 = digit2[xl : bnd[1] + bnd[3] + pad, yt : bnd[0] + bnd[2] + pad]
-        # Do some clean-up
+        # Do some clean-up by thresholding pixels
         digit5 = cv2.adaptiveThreshold(
             cv2.cvtColor(digit4, cv2.COLOR_BGR2GRAY),
             255,
@@ -139,10 +139,10 @@ def get_digits(kdp, fileName, top, bottom):
             31,
             1,
         )
-        # and a little more - blur helps get rid of "dust" artefacts
+        # and a little more - blur helps get rid of "dust" artifacts
         digit6 = cv2.blur(digit5, (3, 3))
         # now need to resize it to height or width =28 (depending on aspect ratio)
-        # the "28" comes from mnist dataset
+        # the "28" comes from mnist dataset, mnist digits are 28 x 28
         rat = digit5.shape[0] / digit5.shape[1]
         if rat > 1:
             w = 28
@@ -155,7 +155,7 @@ def get_digits(kdp, fileName, top, bottom):
         px = int((28 - w) // 2)
         py = int((28 - h) // 2)
         # and a bit more clean-up - put black around border where needed
-        roi2 = cv2.copyMakeBorder(https://gitlab.com/drydenwiebe/plom.git
+        roi2 = cv2.copyMakeBorder(
             roi, px, 28 - w - px, py, 28 - h - py, cv2.BORDER_CONSTANT, value=[0, 0, 0]
         )
         # get it into format needed by tensorflow predictor
