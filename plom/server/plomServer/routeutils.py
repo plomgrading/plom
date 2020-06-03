@@ -63,7 +63,7 @@ def authenticate_by_token(function):
     """
 
     @functools.wraps(function)
-    async def wrapped(self, request):
+    async def wrapped(zelf, request):
         """Wrapper function used for authentication.
 
         Arguments:
@@ -79,10 +79,10 @@ def authenticate_by_token(function):
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
+        if not zelf.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         log.debug('{} authenticated "{}" via token'.format(function.__name__, data["user"]))
-        return function(self)
+        return function(zelf)
 
     return wrapped
 
@@ -97,7 +97,7 @@ def authenticate_by_token_validate_required_fields(fields):
     -------
     ```
     @authenticate_by_token_validate_required_fields(["bar", "baz"])
-    def foo(self, data, request):
+    def foo(zelf, data, request):
         return ...
     ```
     Here `data` is the result of `request.json()` and `request` is the
@@ -116,7 +116,7 @@ def authenticate_by_token_validate_required_fields(fields):
 
     def _decorate(function):
         @functools.wraps(function)
-        async def wrapped(self, request):
+        async def wrapped(zelf, request):
             """Wrapper function used for authentication.
 
             Arguments:
@@ -133,10 +133,10 @@ def authenticate_by_token_validate_required_fields(fields):
             log.debug("{} validating fields {}".format(function.__name__, fields))
             if not validate_required_fields(data, fields):
                 return web.Response(status=400)
-            if not self.server.validate(data["user"], data["token"]):
+            if not zelf.server.validate(data["user"], data["token"]):
                 return web.Response(status=401)
             log.debug('{} authenticated "{}" via token'.format(function.__name__, data["user"]))
-            return function(self, data, request)
+            return function(zelf, data, request)
 
         return wrapped
 
@@ -156,7 +156,7 @@ def no_authentication_only_log_request(function):
     """
 
     @functools.wraps(function)
-    def wrapped(self, request):
+    def wrapped(zelf, request):
         """Wrapper function used for authentication.
 
         Arguments:
@@ -169,5 +169,5 @@ def no_authentication_only_log_request(function):
                                 into an authentication function.
         """
         log_request(function.__name__, request)
-        return function(self, request)
+        return function(zelf, request)
     return wrapped
