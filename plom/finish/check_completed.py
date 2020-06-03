@@ -42,7 +42,7 @@ def print_everything(comps, numPapersProduced, numQ):
     print("** Completion data **")
     print("Produced papers: {}".format(numPapersProduced))
     if numPapersProduced == numScanned:
-        print("Scanned papers: {} (currently)".format(numScanned))
+        print("Scanned papers: {}".format(numScanned))
     else:
         print("Scanned papers: {} (currently)".format(numScanned))
     print("Completed papers: {}".format(format_int_list_with_runs(cList)))
