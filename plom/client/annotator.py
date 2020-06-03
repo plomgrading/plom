@@ -728,7 +728,8 @@ class Annotator(QWidget):
             self.setWindowState(Qt.WindowNoState)
 
     def keyToChangeMark(self, buttonNumber):
-        """Translates a key-press (0,1,2,..,9) into a button-press.
+        """
+        Translates a key-press (0,1,2,..,9) into a button-press.
 
         Each key clicks one of the delta-mark buttons in the mark-entry widget.
         If mark-up style then they trigger the positive mark buttons,

@@ -1018,6 +1018,7 @@ class MarkerClient(QWidget):
     def requestNextInBackgroundNoneAvailable(self):
         """
         Empty.
+
         Notes:
             Keep this function here just in case we want to do something in the
             future.
@@ -1364,6 +1365,7 @@ class MarkerClient(QWidget):
 
     def getMoreTests(self, oldtgvID):
         """
+        Loads more tests.
 
         Args:
             oldtgvID(str): the Test-Group-Version ID for the previous test.
@@ -1486,11 +1488,13 @@ class MarkerClient(QWidget):
             self._updateImage(idx[0].row())
 
     def shutDownError(self):
+        """ Shuts down self due to error. """
         log.error("shutting down")
         self.my_shutdown_signal.emit(2, [])
         self.close()
 
     def shutDown(self):
+        """ Shuts down self."""
         log.debug("Marker shutdown from thread " + str(threading.get_ident()))
         if self.backgroundUploader:
             count = 42
@@ -1533,9 +1537,19 @@ class MarkerClient(QWidget):
         self.close()
 
     def DNF(self):
-        # Go through table and send a 'did not finish' message for anything
-        # that is not marked.
-        # Note - do this for everything, not just the proxy-model
+        """
+        Marks files that are not finished as "did not finish."
+
+        Returns:
+            None
+
+        Notes:
+            Note - do this for everything, not just the proxy-model
+
+        Raises:
+            PlomSeriousException if an error occurs in server.
+
+        """
         for r in range(self.examModel.rowCount()):
             if self.examModel.data(self.examModel.index(r, 1)) != "marked":
                 # Tell server the task fo any paper that is not marked.
@@ -1548,6 +1562,16 @@ class MarkerClient(QWidget):
                     self.throwSeriousError(err)
 
     def downloadWholePaper(self, testNumber):
+        """
+
+        Args:
+            testNumber (float): the test number.
+
+        Returns:
+            (tuple) containing pageData and viewFiles
+
+
+        """
         try:
             pageData, imagesAsBytes = messenger.MrequestWholePaper(
                 testNumber, self.question
@@ -1569,11 +1593,13 @@ class MarkerClient(QWidget):
         return [pageData, viewFiles]
 
     def doneWithWholePaperFiles(self, viewFiles):
+        """ Unlinks files in viewFiles to os. """
         for f in viewFiles:
             if os.path.isfile(f):
                 os.unlink(f)
 
     def cacheLatexComments(self):
+        """Caches Latexed comments."""
         clist = commentLoadAll()
         # sort list in order of longest comment to shortest comment
         clist.sort(key=lambda C: -len(C["text"]))
@@ -1606,9 +1632,17 @@ class MarkerClient(QWidget):
                 pd.setValue(c)
 
     def latexAFragment(self, txt):
-        """Run LaTeX on a fragment of text and return the file name of a png.
+        """
+        Run LaTeX on a fragment of text and return the file name of a png.
 
         The files are cached for reuse if the same text is passed again.
+
+        Args:
+            txt (str): the text to be Latexed.
+
+        Returns:
+            (png): a file containing the Latexed text.
+
         """
         if txt in self.commentCache:
             # have already latex'd this comment
@@ -1630,6 +1664,7 @@ class MarkerClient(QWidget):
         return fragFile
 
     def tagTest(self):
+        """ Adds a tag to the current Test."""
         if len(self.ui.tableView.selectedIndexes()):
             pr = self.ui.tableView.selectedIndexes()[0].row()
         else:
@@ -1660,6 +1695,7 @@ class MarkerClient(QWidget):
         return
 
     def setFilter(self):
+        """ Sets a filter tag. """
         self.prxM.setFilterString(self.ui.filterLE.text().strip())
         # check to see if invert-filter is checked
         if self.ui.filterInvCB.checkState() == Qt.Checked:
@@ -1668,6 +1704,7 @@ class MarkerClient(QWidget):
             self.prxM.filterTags()
 
     def viewSpecificImage(self):
+        """ shows the image.  """
         if self.canViewAll:
             tgs = SelectTestQuestion(self.testInfo, self.question)
             if tgs.exec_() == QDialog.Accepted:
