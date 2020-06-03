@@ -757,7 +757,6 @@ class MarkerClient(QWidget):
             self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(event)
 
-
     def throwSeriousError(self, error, rethrow=True):
         """
         Logs an exception, pops up a dialog and shuts down.
@@ -808,7 +807,8 @@ class MarkerClient(QWidget):
         Loads the original image files for a given task.
 
         Args:
-            task (str?): the task for the image files to be loaded from
+            task (str): the task for the image files to be loaded from.
+                Takes the form "m1234g9" = test 1234 question 9
 
         Returns:
             None
@@ -861,7 +861,7 @@ class MarkerClient(QWidget):
         updates the image if needed.
 
         Args:
-            pr (str?): prefix of image to be loaded
+            pr (str): prefix of image to be loaded
 
         Returns:
             None
@@ -970,9 +970,10 @@ class MarkerClient(QWidget):
 
     def requestNextInBackgroundStart(self):
         """
+        Requests the next TGV in the background
 
         Returns:
-
+            None
         """
         if self.backgroundDownloader:
             log.info(
@@ -984,7 +985,7 @@ class MarkerClient(QWidget):
             self.backgroundDownloader.wait()
         self.backgroundDownloader = BackgroundDownloader(self.question, self.version)
         self.backgroundDownloader.downloadSuccess.connect(
-            self.requestNextInBackgroundFinished
+            self._requestNextInBackgroundFinished
         )
         self.backgroundDownloader.downloadNoneAvailable.connect(
             self.requestNextInBackgroundNoneAvailable
@@ -994,17 +995,44 @@ class MarkerClient(QWidget):
         )
         self.backgroundDownloader.start()
 
-    def requestNextInBackgroundFinished(self, test, fnames, tags):
-        self.examModel.addPaper(Testquestion(test, fnames, tags=tags))
+    def _requestNextInBackgroundFinished(self, task, fnames, tags):
+        """
+        Adds paper to exam model once it's been requested.
+
+        Args:
+            task (str): the task name for the next test.
+            fnames (str): the file name for next test
+            tags (str): tags for the TGV.
+
+        Returns:
+            None
+
+        """
+        self.examModel.addPaper(Testquestion(task, fnames, tags=tags))
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
 
     def requestNextInBackgroundNoneAvailable(self):
-        # Keep this function here just in case we want to do something in the future.
+        """
+        Empty.
+        Notes:
+            Keep this function here just in case we want to do something in the
+            future.
+        """
         pass
 
     def requestNextInBackgroundFailed(self, errmsg):
+        """
+        Sends an error message when requesting the next exam fails.
+
+        Args:
+            errmsg (str): Error message received.
+
+        Returns:
+            None
+
+        """
         # TODO what should we do?  Is there a realistic way forward
         # or should we just die with an exception?
         ErrorMessage(
@@ -1015,9 +1043,15 @@ class MarkerClient(QWidget):
         ).exec_()
 
     def moveToNextUnmarkedTest(self, task=None):
-        """Move the list to the next unmarked test, if possible.
+        """
+        Move the list to the next unmarked test, if possible.
 
-        Return True if we moved and False if not, for any reason."""
+        Args:
+            task (str): the task number of the next unmarked test.
+
+        Returns:
+             True if move was successful, False if not, for any reason.
+        """
         if self.backgroundDownloader:
             # Might need to wait for a background downloader.  Important to
             # processEvents() so we can receive the downloader-finished signal.
@@ -1048,7 +1082,6 @@ class MarkerClient(QWidget):
 
         prstart = None
         if task:
-            # get current position from the task,
             prstart = self.prxM.rowFromTask(task)
         if not prstart:
             # it might be hidden by filters
@@ -1081,8 +1114,36 @@ class MarkerClient(QWidget):
         self.examModel.deferPaper(task)
 
     def startTheAnnotator(self, data):
-        """This fires up the annotation window for user annotation + marking."""
-        # Set mousehand left/right - will pass to annotator
+        """
+        This fires up the annotation window for user annotation + marking.
+
+        Args:
+            data (list): contains
+                {
+                tgvID (Str): Test-Group-Version ID.
+                     For Example: for Test # 0027, group # 13, Version #2
+                     tgvID = t0027g13v2
+                testname (str): test name
+                paperdir (dir): Working directory for the current task
+                fnames (str): original file name (unannotated)
+                aname (str):  annotated file name
+                maxMark (int): maximum possible score for that test question
+                markStyle (int): marking style
+                       1 = mark total = user clicks the total-mark
+                       2 = mark-up = mark starts at 0 and user increments it
+                       3 = mark-down = mark starts at max and user decrements it
+                plomDict (dict): a dictionary of annotation information.
+                    A dict that contains sufficient information to recreate
+                    the annotation objects on the page if you go back to
+                    continue annotating a question. ie - is it mark up/down,
+                    where are all the objects, how to rebuild those objects,
+                    etc.
+                }
+
+        Returns:
+            None
+
+        """
         mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
 
         annotator = Annotator(
@@ -1094,8 +1155,7 @@ class MarkerClient(QWidget):
         annotator.annotator_done_reject.connect(self.callbackAnnDoneCancel)
         self.setEnabled(False)
         annotator.show()
-        # We had (have?) a bug: when `annotator` var goes out of scope, it can
-        # get GC'd, killing the new Annotator.  Fix: keep a ref in self.
+
         # TODO: the old one might still be closing when we get here, but dropping
         # the ref now won't hurt (I think).
         self._annotator = annotator
@@ -1106,13 +1166,11 @@ class MarkerClient(QWidget):
             row = self.ui.tableView.selectedIndexes()[0].row()
         else:
             return
-        task = self.prxM.getPrefix(row)
 
+        task = self.prxM.getPrefix(row)
         inidata = self.getDataForAnnotator(task)
 
         if self.allowBackgroundOps:
-            # while annotator is firing up request next paper in background
-            # after giving system a moment to do `annotator.exec_()`
             if self.examModel.countReadyToMark() == 0:
                 self.requestNextInBackgroundStart()
 
@@ -1120,9 +1178,16 @@ class MarkerClient(QWidget):
         # we started the annotator, we'll get a signal back when its done
 
     def getDataForAnnotator(self, task):
-        """Start annotator on a particular task."""
-        # Create annotated filename. If original mXXXXgYY, then
-        # annotated version is GXXXXgYY (G=graded).
+        """
+        Start annotator on a particular task.
+
+        Args:
+            task (str): the task id.  If original mXXXXgYY, then annotated
+                version is GXXXXgYY (G=graded).
+        Returns
+            data (list): (as described by startTheAnnotator) if successful.
+        """
+        # Create annotated filename.
         assert task.startswith("q")
         Gtask = "G" + task[1:]
         paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
@@ -1131,8 +1196,6 @@ class MarkerClient(QWidget):
         cname = os.path.join(paperdir, Gtask + ".json")
         pname = os.path.join(paperdir, Gtask + ".plom")
 
-        # If image has been marked confirm with user if they want
-        # to annotate further.
         remarkFlag = False
 
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
@@ -1145,12 +1208,10 @@ class MarkerClient(QWidget):
             assert oldpaperdir is not None
             oldaname = os.path.join(oldpaperdir, Gtask + ".png")
             oldpname = os.path.join(oldpaperdir, Gtask + ".plom")
-            # oldcname = os.path.join(oldpaperdir, Gtask + ".json")
             # TODO: json file not downloaded
             # https://gitlab.math.ubc.ca/andrewr/MLP/issues/415
             shutil.copyfile(oldaname, aname)
             shutil.copyfile(oldpname, pname)
-            # shutil.copyfile(oldcname, cname)
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
@@ -1196,7 +1257,8 @@ class MarkerClient(QWidget):
         testname = self.testInfo["testName"]
         markStyle = self.ui.markStyleGroup.checkedId()
         tgv = task[1:]
-        return (tgv, testname, paperdir, fnames, aname, self.maxScore, markStyle, pdict)
+        return tgv, testname, paperdir, fnames, aname, self.maxScore, \
+               markStyle, pdict
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
@@ -1388,7 +1450,9 @@ class MarkerClient(QWidget):
                 # Tell server the code fo any paper that is not marked.
                 # server will put that back on the todo-pile.
                 try:
-                    messenger.MdidNotFinishTask(self.examModel.data(self.examModel.index(r, 0)))
+                    messenger.MdidNotFinishTask(
+                        self.examModel.data(self.examModel.index(r, 0))
+                    )
                 except PlomSeriousException as err:
                     self.throwSeriousError(err)
 

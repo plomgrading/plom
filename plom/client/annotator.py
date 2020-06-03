@@ -105,7 +105,7 @@ class Annotator(QWidget):
                                 (in this code, all values other than 0 will be treated as Left.)
                                 mouseHand doesn't change throughout lifetime of an annotator instance.
             parentMarkerUI (MarkerClient) -- the parent of annotator UI.
-            initialData (dict) -- contains
+            initialData (list) -- contains
                                 {
                                 tgvID (Str) --  Test-Group-Version ID.
                                                  For Example: for Test # 0027, group # 13, Version #2
