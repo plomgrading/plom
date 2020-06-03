@@ -164,15 +164,16 @@ class BackgroundUploader(QThread):
 
 
 def upload(
-    code, gr, filenames, mtime, qu, ver, tags, failcallback=None, successcallback=None,
+    task, gr, filenames, mtime, qu, ver, tags, failcallback=None,
+        successcallback=None,
 ):
     # do name sanity checks here
     aname, pname, cname = filenames
     if not (
-        code.startswith("q")
-        and os.path.basename(aname) == "G{}.png".format(code[1:])
-        and os.path.basename(pname) == "G{}.plom".format(code[1:])
-        and os.path.basename(cname) == "G{}.json".format(code[1:])
+            task.startswith("q")
+            and os.path.basename(aname) == "G{}.png".format(task[1:])
+            and os.path.basename(pname) == "G{}.plom".format(task[1:])
+            and os.path.basename(cname) == "G{}.json".format(task[1:])
     ):
         raise PlomSeriousException(
             "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
@@ -181,22 +182,22 @@ def upload(
         )
     try:
         msg = messenger.MreturnMarkedTask(
-            code, qu, ver, gr, mtime, tags, aname, pname, cname
+            task, qu, ver, gr, mtime, tags, aname, pname, cname
         )
     except Exception as ex:
         # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
         errmsg = template.format(type(ex).__name__, ex.args)
-        failcallback(code, errmsg)
+        failcallback(task, errmsg)
         return
 
     numdone = msg[0]
     numtotal = msg[1]
-    successcallback(code, numdone, numtotal)
+    successcallback(task, numdone, numtotal)
 
 
 class Testquestion:
-    """A simple container for storing a groupimage's code (task),
+    """A simple container for storing a groupimage's task ID,
     numer, group, version, status, the mark, the original image
     filename, the annotated image filename, the mark, and the
     time spent marking the groupimage.
@@ -205,7 +206,7 @@ class Testquestion:
     def __init__(self, task, fnames=[], stat="untouched", mrk="-1", mtime="0", tags=""):
         # task will be of the form m1234g9 = test 1234 question 9
         # ... = 0123456789
-        # the test code
+        # the test task
         self.prefix = task
         # the test number
         self.status = stat
@@ -594,7 +595,7 @@ class MarkerClient(QWidget):
 
         # Connect the view **after** list updated.
         # Connect the table-model's selection change to appropriate function
-        self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
+        self.ui.tableView.selectionModel().selectionChanged.connect(self.updateImg)
 
         self.requestNext()  # Get a question to mark from the server
         self.testImg.resetB.animateClick()  # reset the view so whole exam shown.
@@ -856,7 +857,7 @@ class MarkerClient(QWidget):
             fh.write(plImage)
         self.examModel.setAnnotatedFile(task, aname, pname)
 
-    def updateImage(self, pr=0):
+    def _updateImage(self, pr=0):
         """
         updates the image if needed.
 
@@ -963,7 +964,7 @@ class MarkerClient(QWidget):
         if pr is not None:
             # if newly-added row is visible, select it and redraw
             self.ui.tableView.selectRow(pr)
-            self.updateImage(pr)
+            self._updateImage(pr)
             # Clean up the table
             self.ui.tableView.resizeColumnsToContents()
             self.ui.tableView.resizeRowsToContents()
@@ -974,6 +975,7 @@ class MarkerClient(QWidget):
 
         Returns:
             None
+
         """
         if self.backgroundDownloader:
             log.info(
@@ -1113,12 +1115,12 @@ class MarkerClient(QWidget):
             return
         self.examModel.deferPaper(task)
 
-    def startTheAnnotator(self, data):
+    def startTheAnnotator(self, initialData):
         """
         This fires up the annotation window for user annotation + marking.
 
         Args:
-            data (list): contains
+            initialData (list): contains
                 {
                 tgvID (Str): Test-Group-Version ID.
                      For Example: for Test # 0027, group # 13, Version #2
@@ -1147,7 +1149,7 @@ class MarkerClient(QWidget):
         mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
 
         annotator = Annotator(
-            self.ui.userLabel.text(), mouseHand, parentMarkerUI=self, initialData=data
+            self.ui.userLabel.text(), mouseHand, parentMarkerUI=self, initialData=initialData
         )
         # run the annotator
         annotator.annotator_upload.connect(self.callbackAnnWantsUsToUpload)
@@ -1263,6 +1265,16 @@ class MarkerClient(QWidget):
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
     def callbackAnnDoneCancel(self, task):
+        """
+        Called when anotator is done grading.
+
+        Args:
+            task (str): task name
+
+        Returns:
+            None
+
+        """
         self.setEnabled(True)
         if task:
             prevState = self.examModel.getStatusByTask("q" + task).split(":")[-1]
@@ -1272,6 +1284,16 @@ class MarkerClient(QWidget):
 
     @pyqtSlot(str)
     def callbackAnnDoneClosing(self, task):
+        """
+        Called when annotator is done grading and is closing.
+
+        Args:
+            task (str): the task ID of the current test.
+
+        Returns:
+            None
+
+        """
         self.setEnabled(True)
         # update image view, if the row we just finished is selected
         prIndex = self.ui.tableView.selectedIndexes()
@@ -1281,11 +1303,28 @@ class MarkerClient(QWidget):
         # TODO: when done grading, if ann stays open, then close, this doesn't happen
         if task:
             if self.prxM.getPrefix(pr) == "q" + task:
-                self.updateImage(pr)
+                self._updateImage(pr)
 
     @pyqtSlot(str, list)
     def callbackAnnWantsUsToUpload(self, task, stuff):
-        gr, mtime, paperdir, fnames, aname, pname, cname = stuff
+        """
+        Called when annotator wants to upload.
+
+        Args:
+            task (str): the task ID of the current test.
+            stuff (list): a list containing
+                gr(float): grade given by marker.
+                markingTime(float): total time spent marking.
+                paperDir(dir): Working directory for the current task
+                fnames(str): original file name (unannotated)
+                aname(str): annotated file name
+                plomFileName(str): the name of thee .plom file
+                commentFileName(str): the name of the comment file.
+
+        Returns:
+
+        """
+        gr, markingTime, paperDir, fnames, aname, plomFileName, commentFileName = stuff
 
         if not (0 <= gr and gr <= self.maxScore):
             msg = ErrorMessage(
@@ -1299,15 +1338,15 @@ class MarkerClient(QWidget):
 
         # Copy the mark, annotated filename and the markingtime into the table
         # TODO: sort this out whether task is "q00..." or "00..."?!
-        self.examModel.markPaperByTask("q" + task, gr, aname, pname, mtime, paperdir)
-        # update the mtime to be the total marking time
+        self.examModel.markPaperByTask("q" + task, gr, aname, plomFileName, markingTime, paperDir)
+        # update the markingTime to be the total marking time
         totmtime = self.examModel.getMTimeByTask("q" + task)
         tags = self.examModel.getTagsByTask("q" + task)
 
         _data = (
             "q" + task,  # current task
             gr,  # grade
-            (aname, pname, cname),  # annotated, plom, and comment filenames
+            (aname, plomFileName, commentFileName),  # annotated, plom, and comment filenames
             totmtime,  # total marking time
             self.question,
             self.version,
@@ -1323,11 +1362,20 @@ class MarkerClient(QWidget):
                 successcallback=self.backgroundUploadFinished,
             )
 
-    def gimmeMore(self, oldtgv):
+    def getMoreTests(self, oldtgvID):
+        """
+
+        Args:
+            oldtgvID(str): the Test-Group-Version ID for the previous test.
+
+        Returns:
+            initialData: as described by getDataForAnnotator
+
+        """
         log.debug("Annotator wants more (w/o closing)")
         if not self.allowBackgroundOps:
             self.requestNext()
-        if not self.moveToNextUnmarkedTest("t" + oldtgv if oldtgv else None):
+        if not self.moveToNextUnmarkedTest("t" + oldtgvID if oldtgvID else None):
             return False
         # TODO: copy paste of annotateTest()
         # probably don't need len check
@@ -1336,11 +1384,11 @@ class MarkerClient(QWidget):
         else:
             # TODO: what to do here?
             return False
-        tgv = self.prxM.getPrefix(row)
+        tgvID = self.prxM.getPrefix(row)
 
-        data = self.getDataForAnnotator(tgv)
-        assert tgv[1:] == data[0]
-        pdict = data[-1]
+        initialData = self.getDataForAnnotator(tgvID)
+        assert tgvID[1:] == initialData[0]
+        pdict = initialData[-1]
         assert pdict is None, "Annotator should not pull a regrade"
 
         if self.allowBackgroundOps:
@@ -1349,9 +1397,21 @@ class MarkerClient(QWidget):
             if self.examModel.countReadyToMark() == 0:
                 self.requestNextInBackgroundStart()
 
-        return data
+        return initialData
 
     def permuteAndGimmeSame(self, task, imageList):
+        """
+        Allows user to reorganize pages of an exam.
+
+        Args:
+            task (str): the task ID of the current test.
+            imageList (list[str]): list of image names to which are being
+                rearranged.
+
+        Returns:
+            initialData (as described by getDataForAnnotator)
+
+        """
         log.info("Rearranging image list for task {} = {}".format(task, imageList))
         # we know the list of image-refs and files. copy files into place
         # Image names = "<task>.<imagenumber>.<extension>"
@@ -1371,28 +1431,59 @@ class MarkerClient(QWidget):
         return self.getDataForAnnotator(task)
 
     def backgroundUploadFinished(self, code, numdone, numtotal):
-        """An upload has finished, do appropriate UI updates"""
+        """
+        An upload has finished, do appropriate UI updates
+
+        Args:
+            task(str): the task ID of the current test.
+            numDone(int): number of exams marked
+            numTotal(int): total number of exams to mark.
+
+        Returns:
+            None
+
+        """
         stat = self.examModel.getStatusByTask(code)
         # maybe it changed while we waited for the upload
         if stat == "uploading...":
             self.examModel.setStatusByTask(code, "marked")
         self.updateProgress(numdone, numtotal)
 
-    def backgroundUploadFailed(self, code, errmsg):
-        """An upload has failed, not sure what to do but do to it LOADLY"""
-        self.examModel.setStatusByTask(code, "???")
+    def backgroundUploadFailed(self, task, errmsg):
+        """
+        An upload has failed, not sure what to do but do to it LOADLY.
+
+        Args:
+            task (str): the task ID of the current test.
+            errmsg (str): the error message.
+
+        Returns:
+            None
+
+        """
+        self.examModel.setStatusByTask(task, "???")
         ErrorMessage(
             "Unfortunately, there was an unexpected error; server did "
             "not accept our marked paper {}.\n\n{}\n\n"
             "Please consider filing an issue?  Perhaps you could try "
-            "annotating that paper again?".format(code, errmsg)
+            "annotating that paper again?".format(task, errmsg)
         ).exec_()
 
-    def selChanged(self, selnew, selold):
-        # When selection changed, update the displayed image
-        idx = selnew.indexes()
+    def updateImg(self, newImg, oldImg):
+        """
+        Updates the displayed image when the selection has changed.
+
+        Args:
+            newImg:
+            oldImg:
+
+        Returns:
+            None
+
+        """
+        idx = newImg.indexes()
         if len(idx) > 0:
-            self.updateImage(idx[0].row())
+            self._updateImage(idx[0].row())
 
     def shutDownError(self):
         log.error("shutting down")
@@ -1447,7 +1538,7 @@ class MarkerClient(QWidget):
         # Note - do this for everything, not just the proxy-model
         for r in range(self.examModel.rowCount()):
             if self.examModel.data(self.examModel.index(r, 1)) != "marked":
-                # Tell server the code fo any paper that is not marked.
+                # Tell server the task fo any paper that is not marked.
                 # server will put that back on the todo-pile.
                 try:
                     messenger.MdidNotFinishTask(
@@ -1595,7 +1686,7 @@ class MarkerClient(QWidget):
         try:
             imageList = messenger.MrequestOriginalImages(task)
         except PlomNoMoreException as err:
-            msg = ErrorMessage("No image corresponding to code {}".format(task))
+            msg = ErrorMessage("No image corresponding to task {}".format(task))
             msg.exec_()
             return
         ifilenames = []
