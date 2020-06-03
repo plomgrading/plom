@@ -22,13 +22,25 @@ from tensorflow import keras
 import tensorflow.python.keras.backend as K
 
 # from https://fairyonice.github.io/Measure-the-uncertainty-in-deep-learning-models-using-dropout.html
-class KerasDropoutPrediction(object):
+class keras_dropout_prediction_object(object):
     def __init__(self, model):
+        # setup a function to predict the digit with dropout (default is to predict without dropout)
         self.f = K.function(
             [model.layers[0].input, K.symbolic_learning_phase()], [model.output],
         )
 
-    def predict(self, x, n_iter=20):
+    def predict_with_dropout(self, x, n_iter=20):
+        """Calculates digit predictions with dropout.
+
+        Arguments:
+            x {np.array} -- The image that we are intersted in.
+
+        Keyword Arguments:
+            n_iter {int} -- Number of iterations to run the predictions with dropout. (default: {20})
+
+        Returns:
+            np.array -- The digit predictions for each forward pass of the model, dimensions [10 (for the 10 digit classes), n_iter].
+        """
         result = []
         for _ in range(n_iter):
             result.append(self.f([x, True]))
@@ -36,21 +48,34 @@ class KerasDropoutPrediction(object):
         return result
 
 
-def getDigits(kdp, fileName, top, bottom):
+def get_digits(kdp, fileName, top, bottom):
+    """Returns the probabilies for each digit (of a student number) for a given file.
+
+    Arguments:
+        kdp {keras_dropout_prediction_object} -- The dropout prediction object used to find the confidence intervals for the model.
+        fileName {str} -- The name of the file we are getting the digits for.
+        top {int} -- Location of the top of the image.
+        bottom {int} -- Location of the bottom of the image.
+
+    Returns:
+        list -- list of probabilites for each digit 
+    """
     # define this in order to sort by area of bounding rect
-    def boundingRectArea(tau):
-        x, y, w, h = cv2.boundingRect(tau)
+    def bounding_rect_area(tau):
+        _, _, w, h = cv2.boundingRect(tau)
         return w * h
 
     # read in the whole
     wholeImage = cv2.imread(fileName)
     # extract only the required portion of the image.
     image = wholeImage[:][top:bottom]
-    # proces the image so as to find the countours
+    # process the image so as to find the countours
+    # greyscale -> gaussian blur -> edge dector
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(grey, (5, 5), 0)
     edged = cv2.Canny(blurred, 50, 200, 255)
 
+    # create a useable, sorted list of contours
     contours = cv2.findContours(
         edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
     )
@@ -92,7 +117,7 @@ def getDigits(kdp, fileName, top, bottom):
         )
         contourList = imutils.grab_contours(contours)
         # sort by bounding box area
-        sortedContours = sorted(contourList, key=boundingRectArea, reverse=True)
+        sortedContours = sorted(contourList, key=bounding_rect_area, reverse=True)
         # make sure we can find at least one contour
         if len(sortedContours) == 0:
             # can't make a prediction so return
@@ -105,7 +130,7 @@ def getDigits(kdp, fileName, top, bottom):
         yt = max(0, bnd[0] - pad)
         # grab the image - should be the digit.
         digit4 = digit2[xl : bnd[1] + bnd[3] + pad, yt : bnd[0] + bnd[2] + pad]
-        # Do some clean-up
+        # Do some clean-up by thresholding pixels
         digit5 = cv2.adaptiveThreshold(
             cv2.cvtColor(digit4, cv2.COLOR_BGR2GRAY),
             255,
@@ -114,10 +139,10 @@ def getDigits(kdp, fileName, top, bottom):
             31,
             1,
         )
-        # and a little more - blur helps get rid of "dust" artefacts
+        # and a little more - blur helps get rid of "dust" artifacts
         digit6 = cv2.blur(digit5, (3, 3))
         # now need to resize it to height or width =28 (depending on aspect ratio)
-        # the "28" comes from mnist dataset
+        # the "28" comes from mnist dataset, mnist digits are 28 x 28
         rat = digit5.shape[0] / digit5.shape[1]
         if rat > 1:
             w = 28
@@ -136,28 +161,34 @@ def getDigits(kdp, fileName, top, bottom):
         # get it into format needed by tensorflow predictor
         roi3 = np.expand_dims(roi2, 0)
         # do the actual prediction! (ie approx probabilities that image is digit 0,1,2,..,9)
-        pred = kdp.predict(roi3).mean(axis=1)
+        pred = kdp.predict_with_dropout(roi3).mean(axis=1)
 
         # and append that prediction to list
         lst.append(pred)
     return lst
 
 
-def computeProbabilities(fileDict, top, bottom):
+def compute_probabilities(fileDict, top, bottom):
+    """Find the probabilites for each digit in the studentID for specified files.
+
+    Arguments:
+        fileDict {dict} -- test number -> file mapping for appropriate files
+        top {int} -- Location of the top of the image.
+        bottom {int} -- Location of the bottom of the image.
+
+    Returns:
+        dict -- testNumber -> probabilities for each digit. 
+    """
     # fire up the model
     model = tf.keras.models.load_model("plomBuzzword")
     model.compile(
         optimizer="adam",
-        loss="sparse_categorical_crossentropy",
+        loss="sparse_categorical_crossentropy",  # we are using integer classes
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
     )
-    kdp = KerasDropoutPrediction(model)
-
-    # Dictionary of test numbers their digit-probabilities
-    probabilities = {}
-
+    kdp = keras_dropout_prediction_object(model)
     for testNumber in fileDict:
-        lst = getDigits(kdp, fileDict[testNumber], top, bottom)
+        lst = get_digits(kdp, fileDict[testNumber], top, bottom)
         if lst is None:  # couldn't recognize digits
             continue
         probabilities[testNumber] = lst

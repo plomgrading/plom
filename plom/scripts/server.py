@@ -203,23 +203,23 @@ def doLatexChecks():
         )
 
     # build template pageNotSubmitted.pdf just in case needed
-    if not pageNotSubmitted.buildPNSPage(pns):
+    if not pageNotSubmitted.build_not_submitted_page(pns):
         raise PlomServerConfigurationError(
             "Error building 'pageNotSubmitted.pdf' template page. Please check your latex distribution."
         )
     # build template pageNotSubmitted.pdf just in case needed
-    if not pageNotSubmitted.buildQNSPage(qns):
+    if not pageNotSubmitted.build_not_submitted_question(qns):
         raise PlomServerConfigurationError(
             "Error building 'questionNotSubmitted.pdf' template page. Please check your latex distribution."
         )
 
     # Try building a replacement for missing page.
-    if not pageNotSubmitted.buildTestPageSubstitute(0, 0, 0):
+    if not pageNotSubmitted.build_test_page_substitute(0, 0, 0):
         raise PlomServerConfigurationError(
             "Error building replacement for missing test page."
         )
     # Try building a replacement for missing page.
-    if not pageNotSubmitted.buildHWQuestionSubstitute(0, 0):
+    if not pageNotSubmitted.build_homework_question_substitute(0, 0):
         raise PlomServerConfigurationError(
             "Error building replacement for missing homework question."
         )
@@ -271,7 +271,7 @@ def processUsers(userFile, demo, auto):
             print("WARNING - this will overwrite the existing userList.json file.")
         from plom.server import manageUserFiles
 
-        manageUserFiles.parseUserlist(userFile)
+        manageUserFiles.parse_user_list(userFile)
         return
 
     # otherwise we have to make one for the user - check if one already there.
@@ -291,7 +291,7 @@ def processUsers(userFile, demo, auto):
         cl = pkg_resources.resource_string("plom", "demoUserList.csv")
         with open(rawfile, "wb") as fh:
             fh.write(cl)
-        manageUserFiles.parseUserlist(rawfile)
+        manageUserFiles.parse_user_list(rawfile)
         return
 
     if auto is not None:
@@ -302,7 +302,7 @@ def processUsers(userFile, demo, auto):
         from plom.server import manageUserFiles
 
         # grab required users and regular users
-        lst = manageUserFiles.buildCannedUsers(auto)
+        lst = manageUserFiles.build_canned_users(auto)
         with open(os.path.join("serverConfiguration", "userListRaw.csv"), "w+") as fh:
             fh.write("user, password\n")
             for np in lst:

@@ -124,7 +124,7 @@ def addCollidingPage(self, t, p, v, fname, image, md5o):
 
 def replaceMissingTestPage(self, testNumber, pageNumber, version):
     # TODO - we should probably have some sort of try/except around this.
-    pageNotSubmitted.buildTestPageSubstitute(testNumber, pageNumber, version)
+    pageNotSubmitted.build_test_page_substitute(testNumber, pageNumber, version)
     # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
     originalName = "pns.{}.{}.{}.png".format(testNumber, pageNumber, version)
     prefix = "pages/originalPages/pns.{}p{}v{}".format(
@@ -314,7 +314,7 @@ def discardToUnknown(self, fname):
 
 def replaceMissingHWQuestion(self, sid, question):
     # TODO - we should probably have some sort of try/except around this.
-    pageNotSubmitted.buildHWQuestionSubstitute(sid, question)
+    pageNotSubmitted.build_homework_question_substitute(sid, question)
     # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
     originalName = "qns.{}.{}.png".format(sid, question)
     prefix = "pages/originalPages/pns.{}q{}".format(sid, question)

@@ -4,16 +4,12 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"
 __license__ = "AGPLv3"
 
 import json
+import logging
 import os
 import sys
-import logging
-import pkg_resources
 
 from PyQt5.QtCore import (
     Qt,
-    QByteArray,
-    QRectF,
-    QSettings,
     QSize,
     QTimer,
     QElapsedTimer,
@@ -26,41 +22,32 @@ from PyQt5.QtGui import (
     QIcon,
     QKeySequence,
     QPixmap,
-    QCloseEvent,
 )
 from PyQt5.QtWidgets import (
-    QAbstractItemView,
-    QAction,
     QDialog,
     QWidget,
-    QMainWindow,
-    QGridLayout,
-    QLabel,
     QMenu,
     QMessageBox,
     QPushButton,
     QShortcut,
-    QTableWidget,
-    QTableWidgetItem,
     QToolButton,
 )
 
-from .mark_handler import MarkHandler
-from .pageview import PageView
-from .pagescene import PageScene
+from .comment_list import CommentWidget
 
 # import the key-help popup window class
 from .key_help import KeyHelp
-
+from .mark_handler import MarkHandler
+from .origscanviewer import OriginalScansViewer, RearrangementViewer
+from .pagescene import PageScene
+from .pageview import PageView
+from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm as Ui_annotator
 from .useful_classes import (
     ErrorMessage,
     SimpleMessage,
     SimpleMessageCheckBox,
     NoAnswerBox,
 )
-from .comment_list import CommentWidget
-from .origscanviewer import OriginalScansViewer, RearrangementViewer
-from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm as Ui_annotator
 
 log = logging.getLogger("annotr")
 
@@ -100,31 +87,31 @@ class Annotator(QWidget):
         Initializes a new annotator window.
 
         Args:
-            username (str) -- username of Marker
-            mouseHand (int) -- The location of the grader's mouse hand. Right = 0, Left = 1
-                                (in this code, all values other than 0 will be treated as Left.)
-                                mouseHand doesn't change throughout lifetime of an annotator instance.
-            parentMarkerUI (MarkerClient) -- the parent of annotator UI.
-            initialData (list) -- contains
-                                {
-                                tgvID (Str) --  Test-Group-Version ID.
-                                                 For Example: for Test # 0027, group # 13, Version #2
-                                                 tgvID = t0027g13v2
-                                testname (str) -- test name
-                                paperdir (dir) -- Working directory for the current task
-                                fnames (str) -- original file name (unannotated)
-                                aname (str) -- annotated file name
-                                maxMark (int) -- maximum possible score for that test question
-                                markStyle (int) -- marking style
-                                                   1 = mark total = user clicks the total-mark
-                                                   2 = mark-up = mark starts at 0 and user increments it
-                                                   3 = mark-down = mark starts at max and user decrements it
-                                plomDict (dict) -- a dictionary of annotation information.
-                                                A dict that contains sufficient information to recreate the
-                                                annotation objects on the page if you go back to continue annotating a
-                                                question. ie - is it mark up/down, where are all the objects, how to
-                                                rebuild those objects, etc.
-                                }
+            username (str): username of Marker
+            mouseHand (int): The location of the grader's mouse hand. (
+                Right = 0, Left != 0)
+            parentMarkerUI (MarkerClient): the parent of annotator UI.
+            initialData (dict): contains
+                {
+                tgvID (Str):  Test-Group-Version ID.
+                    For Example: for Test # 0027, group # 13,
+                    Version #2, tgvID = t0027g13v2
+                testname (str): test name
+                paperdir (dir): Working directory for the
+                    current task
+                fnames (str): original file name (unannotated)
+                aname (str): annotated file name
+                maxMark (int): maximum possible score for that test question
+                markStyle (int): marking style
+                    1 = mark total = user clicks the total-mark
+                    2 = mark-up = mark starts at 0 and user increments it
+                    3 = mark-down = mark starts at max and user decrements it
+                plomDict (dict): a dictionary of annotation information.
+                    A dict that contains sufficient information to recreate the
+                    annotation objects on the page if you go back to continue annotating a
+                    question. ie - is it mark up/down, where are all the objects, how to
+                    rebuild those objects, etc.
+                }
         """
         super(Annotator, self).__init__()
 
@@ -140,6 +127,20 @@ class Annotator(QWidget):
         self.testView = None
         self.rearrangeView = None
         self.testViewFiles = None
+
+        # declares some instance vars
+        self.cursorBox = None
+        self.cursorCross = None
+        self.cursorDelete = None
+        self.cursorLine = None
+        self.cursorPen = None
+        self.cursorTick = None
+        self.testName = None
+        self.paperDir = None
+        self.imageFiles = None
+        self.saveName = None
+        self.score = None
+        self.maxMark = None
 
         # when comments are used, we just outline the comment list - not
         # the whole background - so make a style for that.
@@ -240,7 +241,7 @@ class Annotator(QWidget):
             Be cautious of how these variables will be handled in cases where they are None.
 
         Returns:
-            None -- Modifies self
+            None: Modifies self
 
         """
         self.comment_widget.reset()
@@ -258,7 +259,7 @@ class Annotator(QWidget):
         self.tgvID = None
         self.testName = None
         self.setWindowTitle("Annotator")
-        self.paperdir = None
+        self.paperDir = None
         self.imageFiles = None
         self.saveName = None
         # self.destroyMarkHandler()
@@ -271,34 +272,34 @@ class Annotator(QWidget):
         TODO: maintain current tool not working yet: #799.
 
         Args:
-            tgvID (str) --  Test-Group-Version ID.
+            tgvID (str):  Test-Group-Version ID.
                             For Example: for Test # 0027, group # 13, Version #2
                                          tgv = t0027g13v2
-            testName (str) -- Test Name
-            paperdir (dir) -- Working directory for the current task
-            fnames (str) -- original file name (unannotated)
-            saveName (str) -- name the tgv is saved as
-            maxMark (int) -- maximum possible score for that test question
-            markStyle (int) -- marking style
+            testName (str): Test Name
+            paperdir (dir): Working directory for the current task
+            fnames (str): original file name (unannotated)
+            saveName (str): name the tgv is saved as
+            maxMark (int): maximum possible score for that test question
+            markStyle (int): marking style
                              1 = mark total = user clicks the total-mark
                              2 = mark-up = mark starts at 0 and user increments it
                              3 = mark-down = mark starts at max and user decrements it
                              Note: can be overridden by the plomDict.
-            plomDict (dict)  -- a dictionary of annotation information.
+            plomDict (dict) : a dictionary of annotation information.
                                 A dict that contains sufficient information to recreate the
                                 annotation objects on the page if you go back to continue annotating a
                                 question. ie - is it mark up/down, where are all the objects, how to
                                 rebuild those objects, etc.
 
         Returns:
-            None -- Modifies many instance vars.
+            None: Modifies many instance vars.
 
         """
         self.tgvID = tgvID
         self.testName = testName
         self.setWindowTitle("Annotator: {} of test {}".format(tgvID, testName))
         print("========= Annotator: {} of test {}".format(tgvID, testName))
-        self.paperdir = paperdir
+        self.paperDir = paperdir
         self.imageFiles = fnames
         self.saveName = saveName
 
@@ -368,11 +369,14 @@ class Annotator(QWidget):
         """
         Loads Cursors by generating a temp folder in _MEIPASS to store cursors.
 
+        Starts by:
+            1. Reads the path to PyInstaller's temporary folder through sys._MEIPASS
+               More info at: https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
+            2. uses QCursor to using step 1's path to set the cursor path,
+
         Returns:
             None
         """
-        # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
-        # pyinstaller creates a temp folder and stores path in _MEIPASS
 
         try:
             base_path = sys._MEIPASS
@@ -394,7 +398,7 @@ class Annotator(QWidget):
         Builds dictionary containing hotkeys and their actions.
 
         Returns:
-            (Dict) -- a dictionary containing hot keys for annotator.
+            (Dict): a dictionary containing hot keys for annotator.
         """
         return {
             # home-row
@@ -466,7 +470,7 @@ class Annotator(QWidget):
         Shows/Hides tools making more space to view the group-image.
 
         Returns:
-            None -- modifies self.ui.hideableBox
+            None: modifies self.ui.hideableBox
         """
         # All tools in gui inside 'hideablebox' - so easily shown/hidden
         if self.ui.hideableBox.isHidden():
@@ -479,14 +483,14 @@ class Annotator(QWidget):
         Changes view to narrow Layout style.
 
         Returns:
-            None -- modifies self.ui
+            None: modifies self.ui
 
         """
         self.ui.revealBox0.show()
         self.ui.hideableBox.hide()
         self.ui.revealLayout.addWidget(self.ui.hamMenuButton, 0, 1, 1, 1)
         self.ui.revealLayout.addWidget(self.ui.finishedButton, 0, 2, 1, 1)
-        ## TODO: just use an icon in compact?
+        # TODO: just use an icon in compact?
         # self.ui.finishedButton.setText("N")
         # self.ui.finishedButton.setStyleSheet("padding-left: 1px; padding-right: 1px;")
         self.ui.finishedButton.setMaximumWidth(44)
@@ -528,11 +532,10 @@ class Annotator(QWidget):
 
     def wideLayout(self):
         """
-        Changes view to Wide Layout style
+        Changes view to Wide Layout style.
 
         Returns:
-            None -- modifies self.ui
-
+            None: modifies self.ui
         """
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
@@ -542,10 +545,10 @@ class Annotator(QWidget):
             Loads tools based on left or right handed mouse.
 
             Args:
-                mouse_hand(int) -- left or right handed mouse. Right = 0, Left != 0
+                mouse_hand(int): left or right handed mouse. Right = 0, Left != 0
 
             Returns:
-                None -- adds tool widgets to self.ui.toolLayout
+                None: adds tool widgets to self.ui.toolLayout
             """
             tools = [
                 [
@@ -611,10 +614,11 @@ class Annotator(QWidget):
     def viewWholePaper(self):
         """
         Changes view layout to show entire paper.
+
         If paper has not been opened, downloads it by it's tgvID and shows.
 
         Returns:
-            None -- modifies self.testView
+            None: modifies self.testView
         """
         # grab the files if needed.
         testNumber = self.tgvID[:4]
@@ -634,6 +638,13 @@ class Annotator(QWidget):
         return
 
     def rearrangePages(self):
+        """
+        Rearranges pages in UI.
+
+        Returns:
+            None
+
+        """
         testNumber = self.tgvID[:4]
         # grab the files if needed.
         if self.testViewFiles is None:
@@ -668,11 +679,14 @@ class Annotator(QWidget):
 
     def doneViewingPaper(self):
         """
-        Called when user is done with testViewFiles.
-        Adds the action to log.debug and informs self.parentMarkerUI.
+        Performs end tasks to close the Paper and view next.
+
+        Notes:
+            Called when user is done with testViewFiles.
+            Adds the action to log.debug and informs self.parentMarkerUI.
 
         Returns:
-            None -- Modifies self.testView
+            None: Modifies self.testView
         """
         if self.testViewFiles:
             log.debug("wholePage: done with viewFiles {}".format(self.testViewFiles))
@@ -700,7 +714,7 @@ class Annotator(QWidget):
         its annotations.
 
         Returns:
-            None -- modifies self.scene from None to a pagescene object and connects it to a pageview object.
+            None: modifies self.scene from None to a pagescene object and connects it to a pageview object.
         """
         self.scene = PageScene(
             self,
@@ -717,10 +731,10 @@ class Annotator(QWidget):
 
     def swapMaxNorm(self):
         """
-        Toggles the window size between max and normal
+        Toggles the window size between max and normal.
 
         Returns
-             None -- modifies self.windowState
+             None: modifies self.windowState
         """
         if self.windowState() != Qt.WindowMaximized:
             self.setWindowState(Qt.WindowMaximized)
@@ -729,15 +743,16 @@ class Annotator(QWidget):
 
     def keyToChangeMark(self, buttonNumber):
         """
-        Translates a key-press (0,1,2,..,9) into a button-press.
+        Translates a key-press into a button-press.
 
-        Each key clicks one of the delta-mark buttons in the mark-entry widget.
-        If mark-up style then they trigger the positive mark buttons,
-        hence p0,p1 etc... if mark down then triggers the negative mark
-        buttons - n1,n2, etc.
+        Notes:
+            Each key clicks one of the delta-mark buttons in the mark-entry widget.
+            If mark-up style then they trigger the positive mark buttons,
+            hence p0,p1 etc... if mark down then triggers the negative mark
+            buttons - n1,n2, etc.
 
         Returns:
-            None -- modifies self.markHandler.
+            None: modifies self.markHandler.
 
         """
         # if key is higher than maxMark then no such button.
@@ -747,16 +762,17 @@ class Annotator(QWidget):
         self.markHandler.markButtons[buttonNumber].animateClick()
 
     def keyPressEvent(self, event):
-        """Translates key-presses into tool-button presses if appropriate.
+        """
+        Translates a key press into tool-button press if appropriate.
 
         Notes:
             This overrides the QWidget keyPressEvent method.
 
         Args:
-            event(QKeyEvent) -- a key event (a key being pressed or released)
+            event(QKeyEvent): a key event (a key being pressed or released)
 
         Returns:
-            None -- modifies self
+            None: modifies self
 
         """
         # Check to see if no mousebutton pressed
@@ -768,14 +784,14 @@ class Annotator(QWidget):
 
     def setToolMode(self, newMode, newCursor):
         """
-        Change the current tool mode and cursor.
+        Changes the current tool mode and cursor.
 
         Notes:
             TODO: this does various other mucking around for legacy
             reasons: could probably still use some refactoring.
 
         Returns:
-            None -- Modifies self
+            None: Modifies self
         """
         # A bit of a hack to take care of comment-mode and delta-mode
         if self.scene and self.scene.mode == "comment" and newMode != "comment":
@@ -817,12 +833,12 @@ class Annotator(QWidget):
         Sets a name and svg icon for a given QToolButton.
 
         Args:
-            toolButton (QToolButton) -- the ui Tool Button for a name and icon to be added to.
-            iconName (str) -- a name defining toolButton.
-            absoluteIconPath (str) -- the absolute path to the icon for toolButton.
+            toolButton (QToolButton): the ui Tool Button for a name and icon to be added to.
+            iconName (str): a name defining toolButton.
+            absoluteIconPath (str): the absolute path to the icon for toolButton.
 
         Returns:
-            None -- alters toolButton
+            None: alters toolButton
         """
         toolButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(iconName, iconName)))
@@ -831,16 +847,16 @@ class Annotator(QWidget):
 
     def setAllIcons(self):
         """
-        Sets all icons for the ui Tool Buttons. Does this by:
+        Sets all icons for the ui Tool Buttons.
+
+        Does this by:
             1. Reads the path to PyInstaller's temporary folder through sys._MEIPASS
                More info at: https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
             2. calls the setIcon method using step 1's path to set the Icon path.
 
         Returns:
-            None -- Modifies ui Tool Buttons.
+            None: Modifies ui Tool Buttons.
         """
-        # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
-        # pyinstaller creates a temp folder and stores path in _MEIPASS
         try:
             base_path = sys._MEIPASS
         except Exception:
@@ -898,7 +914,7 @@ class Annotator(QWidget):
         Save the current annotations, and then close.
 
         Returns:
-            None -- alters self.scene
+            None: alters self.scene
         """
         if self.scene and not self.saveAnnotations():
             return
@@ -910,7 +926,7 @@ class Annotator(QWidget):
         Sets miscellaneous shortcuts.
 
         Returns:
-            None -- adds shortcuts.
+            None: adds shortcuts.
 
         """
         # shortcuts for next paper
@@ -1096,13 +1112,13 @@ class Annotator(QWidget):
         Handles comments by passing the comment's delta value and text to self.scene.
 
         Args:
-            dlt_txt (tuple [double, string] ) -- consists of a number corresponding to the delta for
+            dlt_txt (tuple [double, string] ): consists of a number corresponding to the delta for
                                the comment, followed by a string with it's corresponding text.
                                Ex:  for a +1 comment with text "forgot the chain rule"
                                     [1, "forgot the chain rule"]
 
         Returns:
-            None -- Modifies self.scene and self.toolMode
+            None: Modifies self.scene and self.toolMode
 
         """
         # Set the model to text and change cursor.
@@ -1119,7 +1135,7 @@ class Annotator(QWidget):
             tm (double) : the total mark of the paper.
 
         Returns:
-            None -- modifies self.scoree and self.scene.
+            None: modifies self.scoree and self.scene.
 
         """
         self.score = tm
@@ -1135,7 +1151,7 @@ class Annotator(QWidget):
         delta.
 
         Args:
-            dm (double) -- the positive or negative value corresponding
+            dm (double): the positive or negative value corresponding
                            to the delta change in mark.
 
         Notes:
@@ -1144,7 +1160,7 @@ class Annotator(QWidget):
              date. This will not cause the method to break.
 
         Returns:
-            None -- Modifies self.scene
+            None: Modifies self.scene
 
         """
         # Change the mode to delta
@@ -1167,7 +1183,7 @@ class Annotator(QWidget):
             mark: the new mark for the given tgv.
 
         Returns:
-            None -- modifies self.score, self.ui and self.markHandler
+            None: modifies self.score, self.ui and self.markHandler
 
         """
         # Tell the mark-handler what the new mark is and force a repaint.
@@ -1240,7 +1256,7 @@ class Annotator(QWidget):
         saves current window settings
 
         Returns:
-            None -- modifies self.parentMarkerUI and self.scene
+            None: modifies self.parentMarkerUI and self.scene
 
         """
         self.parentMarkerUI.annotatorSettings["geometry"] = self.saveGeometry()
@@ -1269,14 +1285,15 @@ class Annotator(QWidget):
         """
         Try to save the annotations and signal Marker to upload them.
 
-        There are various sanity checks and user interaction to be
-        done.  Return `False` if user cancels.  Return `True` if we
-        should move on (for example, to close the Annotator).
+        Notes:
+            There are various sanity checks and user interaction to be
+            done.  Return `False` if user cancels.  Return `True` if we
+            should move on (for example, to close the Annotator).
 
-        Be careful of a score of 0 - when mark total or mark up.
-        Be careful of max-score when marking down.
-        In either case - get user to confirm the score before closing.
-        Also confirm various "not enough feedback" cases.
+            Be careful of a score of 0 - when mark total or mark up.
+            Be careful of max-score when marking down.
+            In either case - get user to confirm the score before closing.
+            Also confirm various "not enough feedback" cases.
 
         Returns:
             False if user cancels, True if annotator is closed successfully.
@@ -1308,82 +1325,17 @@ class Annotator(QWidget):
                 # Note: these are only saved if we ultimately accept
                 self.commentWarn = False
 
-        # TODO: reformat these into two methods (one for 0 marks and one for full marks).
-
-        # if marking total or up, be careful when giving 0-marks
         if self.score == 0 and self.markHandler.style != "Down":
-            warn = False
-            forceWarn = False
-            msg = "<p>You have given <b>0/{}</b>,".format(self.maxMark)
-            if self.scene.hasOnlyTicks():
-                warn = True
-                forceWarn = True
-                msg += " but there are <em>only ticks on the page!</em>"
-            elif self.scene.hasAnyTicks():
-                # forceWarn = True
-                warn = True
-                msg += " but there are some ticks on the page."
-            if warn:
-                msg += "  Please confirm, or consider using comments to clarify.</p>"
-                msg += "\n<p>Do you wish to submit?</p>"
-                if forceWarn:
-                    msg = SimpleMessage(msg)
-                    if msg.exec_() == QMessageBox.No:
-                        return False
-                elif self.markWarn:
-                    msg = SimpleMessageCheckBox(msg, "Don't ask me again this session.")
-                    if msg.exec_() == QMessageBox.No:
-                        return False
-                    if msg.cb.checkState() == Qt.Checked:
-                        self.markWarn = False
-
-        # if marking down, be careful of giving max-marks
-        if self.score == self.maxMark and self.markHandler.style == "Down":
-            msg = "<p>You have given full {0}/{0},".format(self.maxMark)
-            forceWarn = False
-            if self.scene.hasOnlyTicks():
-                warn = False
-            elif self.scene.hasOnlyCrosses():
-                warn = True
-                forceWarn = True
-                msg += " <em>but there are only crosses on the page!</em>"
-            elif self.scene.hasAnyCrosses():
-                warn = True
-                # forceWarn = True
-                msg += " but there are crosses on the page."
-            elif self.scene.hasAnyComments():
-                warn = False
-            else:
-                warn = True
-                msg += " but there are other annotations on the page which might be contradictory."
-            if warn:
-                msg += "  Please confirm, or consider using comments to clarify.</p>"
-                msg += "\n<p>Do you wish to submit?</p>"
-                if forceWarn:
-                    msg = SimpleMessage(msg)
-                    if msg.exec_() == QMessageBox.No:
-                        return False
-                elif self.markWarn:
-                    msg = SimpleMessageCheckBox(msg, "Don't ask me again this session.")
-                    if msg.exec_() == QMessageBox.No:
-                        return False
-                    if msg.cb.checkState() == Qt.Checked:
-                        self.markWarn = False
-
-        if not self.scene.checkAllObjectsInside():
-            msg = SimpleMessage(
-                "Some annotations are outside the page image. "
-                "Do you really want to finish?"
-            )
-            if msg.exec_() == QMessageBox.No:
+            if not self._zeroMarksWarn():
                 return False
 
-        # Save the scene to file.
+        if self.score == self.maxMark and self.markHandler.style == "Down":
+            if not self._fullMarkWarn():
+                return False
+
         self.scene.save()
-        # Save the marker's comments
         self.saveMarkerComments()
-        # Pickle the scene as a plom-file
-        self.pickleIt()
+        self.pickleIt()  # Pickle the scene as a plom-file
 
         # TODO: we should assume its dead?  Or not... let it be and fix scene?
         self.view.setHidden(True)
@@ -1394,19 +1346,99 @@ class Annotator(QWidget):
 
         log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
+
         # some things here hardcoded elsewhere too, and up in marker
         plomFile = self.saveName[:-3] + "plom"
         commentFile = self.saveName[:-3] + "json"
         stuff = [
             self.score,
             tim,
-            self.paperdir,
+            self.paperDir,
             self.imageFiles,
             self.saveName,
             plomFile,
             commentFile,
         ]
         self.annotator_upload.emit(self.tgvID, stuff)
+        return True
+
+    def _zeroMarksWarn(self):
+        """
+        A helper method for saveAnnotations.
+
+        Controls warnings for when paper has 0 marks.
+
+        Returns:
+            False if user cancels, True otherwise.
+
+        """
+        warn = False
+        forceWarn = False
+        msg = "<p>You have given <b>0/{}</b>,".format(self.maxMark)
+        if self.scene.hasOnlyTicks():
+            warn = True
+            forceWarn = True
+            msg += " but there are <em>only ticks on the page!</em>"
+        elif self.scene.hasAnyTicks():
+            # forceWarn = True
+            warn = True
+            msg += " but there are some ticks on the page."
+        if warn:
+            msg += "  Please confirm, or consider using comments to clarify.</p>"
+            msg += "\n<p>Do you wish to submit?</p>"
+            if forceWarn:
+                msg = SimpleMessage(msg)
+                if msg.exec_() == QMessageBox.No:
+                    return False
+            elif self.markWarn:
+                msg = SimpleMessageCheckBox(msg, "Don't ask me again this session.")
+                if msg.exec_() == QMessageBox.No:
+                    return False
+                if msg.cb.checkState() == Qt.Checked:
+                    self.markWarn = False
+        return True
+
+    def _fullMarkWarn(self):
+        """
+         A helper method for saveAnnotations.
+
+         Controls warnings for when paper has full marks.
+
+         Returns:
+             False if user cancels, True otherwise.
+
+         """
+        msg = "<p>You have given full {0}/{0},".format(self.maxMark)
+        forceWarn = False
+        if self.scene.hasOnlyTicks():
+            warn = False
+        elif self.scene.hasOnlyCrosses():
+            warn = True
+            forceWarn = True
+            msg += " <em>but there are only crosses on the page!</em>"
+        elif self.scene.hasAnyCrosses():
+            warn = True
+            # forceWarn = True
+            msg += " but there are crosses on the page."
+        elif self.scene.hasAnyComments():
+            warn = False
+        else:
+            warn = True
+            msg += " but there are other annotations on the page which might be contradictory."
+        if warn:
+            msg += "  Please confirm, or consider using comments to clarify.</p>"
+            msg += "\n<p>Do you wish to submit?</p>"
+            if forceWarn:
+                msg = SimpleMessage(msg)
+                if msg.exec_() == QMessageBox.No:
+                    return False
+            elif self.markWarn:
+                msg = SimpleMessageCheckBox(msg, "Don't ask me again this session.")
+                if msg.exec_() == QMessageBox.No:
+                    return False
+                if msg.cb.checkState() == Qt.Checked:
+                    self.markWarn = False
+
         return True
 
     def closeEvent(self, event):
@@ -1427,7 +1459,7 @@ class Annotator(QWidget):
             event: the event of the window closing.
 
         Returns:
-            None -- modifies many instance vars.
+            None: modifies many instance vars.
         """
         print("========CLOSE EVENT======: {}".format(self))
         # weird hacking to force close if we came from saving.
@@ -1473,7 +1505,7 @@ class Annotator(QWidget):
             txt: the text to be Latexed
 
         Returns:
-            None -- modifies self.parentMarkerUI
+            None: modifies self.parentMarkerUI
 
         """
         return self.parentMarkerUI.latexAFragment(txt)
@@ -1487,7 +1519,7 @@ class Annotator(QWidget):
         4. Adds a dictionary of current Plom Data to the .plom file.
 
         Returns:
-            None -- builds a .plom file.
+            None: builds a .plom file.
 
         """
         lst = self.scene.pickleSceneItems()  # newest items first
@@ -1511,11 +1543,11 @@ class Annotator(QWidget):
         the page's mark.
 
         Args:
-            plomData (dict) -- a dictionary containing the data for the
+            plomData (dict): a dictionary containing the data for the
                                 pickled .plom file.
 
         Returns:
-            None -- modifies self.mark
+            None: modifies self.mark
 
         """
         self.view.setHidden(True)
@@ -1530,7 +1562,7 @@ class Annotator(QWidget):
         Sets the combo box for the zoom method.
 
         Returns:
-            None -- Modifies self.ui
+            None: Modifies self.ui
 
         """
         self.ui.zoomCB.addItem("User")
@@ -1549,7 +1581,7 @@ class Annotator(QWidget):
         Sets the zoom ui text when user has selected "Fit Width."
 
         Returns:
-            None -- Modifies self.ui
+            None: Modifies self.ui
         """
         return self.ui.zoomCB.currentText() == "Fit width"
 
@@ -1558,7 +1590,7 @@ class Annotator(QWidget):
         Sets the zoom ui text when user has selected "Fit Height."
 
         Returns:
-            None -- Modifies self.ui
+            None: Modifies self.ui
 
         """
         return self.ui.zoomCB.currentText() == "Fit height"
@@ -1571,7 +1603,7 @@ class Annotator(QWidget):
             CBIndex (int) : the current zoom Combo Box Index
 
         Returns:
-            None -- Modifies self.ui
+            None: Modifies self.ui
 
         """
         old = self.ui.zoomCB.blockSignals(True)
@@ -1583,7 +1615,7 @@ class Annotator(QWidget):
         Modifies the page view based on the selected zoom option.
 
         Returns:
-            None -- Modifies self.ui
+            None: Modifies self.ui
 
         """
         if self.ui.zoomCB.currentText() == "Fit page":
