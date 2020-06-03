@@ -41,7 +41,10 @@ def print_everything(comps, numPapersProduced, numQ):
     print("*********************")
     print("** Completion data **")
     print("Produced papers: {}".format(numPapersProduced))
-    print("Scanned papers: {} (currently)".format(numScanned))
+    if numPapersProduced == numScanned:
+        print("Scanned papers: {}".format(numScanned))
+    else:
+        print("Scanned papers: {} (currently)".format(numScanned))
     print("Completed papers: {}".format(format_int_list_with_runs(cList)))
     print("Identified papers: {}".format(format_int_list_with_runs(idList)))
     print("Totalled papers: {}".format(format_int_list_with_runs(tList)))
@@ -89,7 +92,7 @@ def main(server=None, password=None):
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another finishing-script or manager-client running,\n"
             "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run `plom-finish clear`."
+            "In order to force-logout the existing authorization run `plom-finish clear`."
         )
         exit(-1)
 
