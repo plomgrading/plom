@@ -1,6 +1,6 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 
-from .routeutils import authByToken, authByToken_validFields
+from .routeutils import authenticate_by_token, authenticate_by_token_validate_required_fields
 
 
 class ReportHandler:
@@ -8,35 +8,35 @@ class ReportHandler:
         self.server = plomServer
 
     # @routes.get("/REP/scanned")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetScannedTests(self, d, request):
         if not d["user"] in ("manager", "scanner"):
             return web.Response(status=401)
         return web.json_response(self.server.RgetScannedTests(), status=200)
 
     # @routes.get("/REP/incomplete")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetIncompleteTests(self, d, request):
         if not d["user"] in ("manager", "scanner"):
             return web.Response(status=401)
         return web.json_response(self.server.RgetIncompleteTests(), status=200)
 
     # @routes.get("/REP/unused")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetUnusedTests(self, d, request):
         if not d["user"] in ("manager", "scanner"):
             return web.Response(status=401)
         return web.json_response(self.server.RgetUnusedTests(), status=200)
 
     # @routes.get("/REP/progress")
-    @authByToken_validFields(["user", "q", "v"])
+    @authenticate_by_token_validate_required_fields(["user", "q", "v"])
     def RgetProgress(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
         return web.json_response(self.server.RgetProgress(d["q"], d["v"]), status=200)
 
     # @routes.get("/REP/questionUserProgress")
-    @authByToken_validFields(["user", "q", "v"])
+    @authenticate_by_token_validate_required_fields(["user", "q", "v"])
     def RgetQuestionUserProgress(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
@@ -45,7 +45,7 @@ class ReportHandler:
         )
 
     # @routes.get("/REP/markHistogram")
-    @authByToken_validFields(["user", "q", "v"])
+    @authenticate_by_token_validate_required_fields(["user", "q", "v"])
     def RgetMarkHistogram(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
@@ -54,35 +54,35 @@ class ReportHandler:
         )
 
     # @routes.get("/REP/progress")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetIdentified(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
         return web.json_response(self.server.RgetIdentified(), status=200)
 
     # @routes.get("/REP/completions")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetCompletions(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
         return web.json_response(self.server.RgetCompletions(), status=200)
 
     # @routes.get("/REP/outToDo")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetOutToDo(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
         return web.json_response(self.server.RgetOutToDo(), status=200)
 
     # @routes.get("/REP/marked")
-    @authByToken_validFields(["user", "q", "v"])
+    @authenticate_by_token_validate_required_fields(["user", "q", "v"])
     def RgetMarked(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
         return web.json_response(self.server.RgetMarked(d["q"], d["v"]), status=200)
 
     # @routes.get("/REP/status/{test}")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetStatus(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
@@ -94,7 +94,7 @@ class ReportHandler:
             return web.Response(status=404)
 
     # @routes.get("/REP/spreadSheet")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetSpreadsheet(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
@@ -102,7 +102,7 @@ class ReportHandler:
         return web.json_response(rmsg, status=200)
 
     # @routes.get("/REP/coverPageInfo/{test}")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetCoverPageInfo(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
@@ -111,7 +111,7 @@ class ReportHandler:
         return web.json_response(rmsg, status=200)
 
     # @routes.get("/REP/originalFiles/{test}")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetOriginalFiles(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
@@ -123,7 +123,7 @@ class ReportHandler:
             return web.Response(status=404)
 
     # @routes.get("/REP/annotatedFiles/{test}")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetAnnotatedFiles(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
@@ -135,21 +135,21 @@ class ReportHandler:
             return web.Response(status=404)
 
     # @routes.get("/REP/userList")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetUserList(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
         return web.json_response(self.server.RgetUserList(), status=200)
 
     # @routes.get("/REP/userDetails")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetUserDetails(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
         return web.json_response(self.server.RgetUserDetails(), status=200)
 
     # @routes.get("/REP/markReview")
-    @authByToken_validFields(["user", "filterQ", "filterV", "filterU"])
+    @authenticate_by_token_validate_required_fields(["user", "filterQ", "filterV", "filterU"])
     def RgetMarkReview(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
@@ -157,7 +157,7 @@ class ReportHandler:
         return web.json_response(rmsg, status=200)
 
     # @routes.get("/REP/idReview")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetIDReview(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
@@ -165,7 +165,7 @@ class ReportHandler:
         return web.json_response(rmsg, status=200)
 
     # @routes.get("/REP/totReview")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def RgetTotReview(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
@@ -173,7 +173,7 @@ class ReportHandler:
         return web.json_response(rmsg, status=200)
 
     # @routes.get("/REP/annotatedImage")
-    @authByToken_validFields(["user", "testNumber", "questionNumber", "version"])
+    @authenticate_by_token_validate_required_fields(["user", "testNumber", "questionNumber", "version"])
     def RgetAnnotatedImage(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)

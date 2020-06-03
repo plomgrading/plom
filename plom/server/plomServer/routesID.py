@@ -4,7 +4,7 @@ from pathlib import Path
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from plom import specdir
-from .routeutils import authByToken, authByToken_validFields
+from .routeutils import authenticate_by_token, authenticate_by_token_validate_required_fields
 from .routeutils import log
 
 # I couldn't make this work with the auth deco
@@ -17,12 +17,12 @@ class IDHandler:
         # self.local_route_table = routes
 
     # @routes.get("/ID/progress")
-    @authByToken
+    @authenticate_by_token
     def IDprogressCount(self):
         return web.json_response(self.server.IDprogressCount(), status=200)
 
     # @routes.get("/ID/classlist")
-    @authByToken
+    @authenticate_by_token
     def IDgetClasslist(self):
         if os.path.isfile(Path(specdir) / "classlist.csv"):
             return web.FileResponse(Path(specdir) / "classlist.csv", status=200)
@@ -30,7 +30,7 @@ class IDHandler:
             return web.Response(status=404)
 
     # @routes.get("/ID/predictions")
-    @authByToken
+    @authenticate_by_token
     def IDgetPredictions(self):
         if os.path.isfile(Path(specdir) / "predictionlist.csv"):
             return web.FileResponse(Path(specdir) / "predictionlist.csv", status=200)
@@ -38,13 +38,13 @@ class IDHandler:
             return web.Response(status=404)
 
     # @routes.get("/ID/tasks/complete")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def IDgetDoneTasks(self, data, request):
         # return the completed list
         return web.json_response(self.server.IDgetDoneTasks(data["user"]), status=200)
 
     # @routes.get("/ID/images/{test}")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def IDgetImage(self, data, request):
         test = request.match_info["test"]
         rmsg = self.server.IDgetImage(data["user"], test)
@@ -59,7 +59,7 @@ class IDHandler:
             return web.Response(body=mpwriter, status=200)
 
     # @routes.get("/ID/tasks/available")
-    @authByToken
+    @authenticate_by_token
     def IDgetNextTask(self):
         rmsg = self.server.IDgetNextTask()  # returns [True, code] or [False]
         if rmsg[0]:
@@ -68,7 +68,7 @@ class IDHandler:
             return web.Response(status=204)  # no papers left
 
     # @routes.patch("/ID/tasks/{task}")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def IDclaimThisTask(self, data, request):
         testNumber = request.match_info["task"]
         rmsg = self.server.IDclaimThisTask(data["user"], testNumber)
@@ -84,7 +84,7 @@ class IDHandler:
             return web.Response(status=204)  # that task already taken.
 
     # @routes.put("/ID/tasks/{task}")
-    @authByToken_validFields(["user", "sid", "sname"])
+    @authenticate_by_token_validate_required_fields(["user", "sid", "sname"])
     def IDreturnIDdTask(self, data, request):
         testNumber = request.match_info["task"]
         rmsg = self.server.IDreturnIDdTask(
@@ -101,14 +101,14 @@ class IDHandler:
             return web.Response(status=404)
 
     # @routes.delete("/ID/tasks/{task}")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def IDdidNotFinishTask(self, data, request):
         testNumber = request.match_info["task"]
         self.server.IDdidNotFinish(data["user"], testNumber)
         return web.json_response(status=200)
 
     # @routes.get("/ID/randomImage")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def IDgetRandomImage(self, data, request):
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
@@ -127,7 +127,7 @@ class IDHandler:
                     return web.Response(status=404)
             return web.Response(body=mpwriter, status=200)
 
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_validate_required_fields(["user"])
     def IDdeletePredictions(self, data, request):
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
@@ -135,7 +135,7 @@ class IDHandler:
 
         return web.json_response(self.server.IDdeletePredictions(), status=200)
 
-    @authByToken_validFields(["user", "rectangle", "fileNumber", "ignoreStamp"])
+    @authenticate_by_token_validate_required_fields(["user", "rectangle", "fileNumber", "ignoreStamp"])
     def IDrunPredictions(self, data, request):
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
@@ -153,7 +153,7 @@ class IDHandler:
             return web.Response(text=rmsg[1], status=205)
 
     # @routes.patch("/ID/review")
-    @authByToken_validFields(["testNumber"])
+    @authenticate_by_token_validate_required_fields(["testNumber"])
     def IDreviewID(self, data, request):
         if self.server.IDreviewID(data["testNumber"]):
             return web.Response(status=200)

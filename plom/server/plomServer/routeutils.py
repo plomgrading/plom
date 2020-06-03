@@ -14,17 +14,32 @@ from aiohttp import web
 log = logging.getLogger("routes")
 
 
-def validFields(d, fields):
-    """Check that input dict has (and only has) expected fields."""
-    return set(d.keys()) == set(fields)
+def validate_required_fields(user_login_info, user_login_required_fields):
+    """Check that input dict has (and only has) expected fields.
+
+    Arguments:
+        user_login_info {dict} -- A user's login info.
+        user_login_required_fields {list} -- Required login fields.
+
+    Returns:
+        bool -- True/False.
+    """
+
+    return set(user_login_info.keys()) == set(user_login_required_fields)
 
 
-def logRequest(name, request):
-    log.info("{} {} {}".format(name, request.method, request.rel_url))
+def log_request(request_name, request):
+    """Logs the requests done by the server.
+
+    Arguments:
+        request_name {Str} -- Name of the request function.
+        request {aiohttp.web_request.Request} -- The aiohttp request object.
+    """
+    log.info("{} {} {}".format(request_name, request.method, request.rel_url))
 
 
 # TODO: try to work the @routes decorator in too
-def authByToken(f):
+def authenticate_by_token(function):
     """Decorator for authentication by token, logging and field validation.
 
     This deals with authenication and logging so your function doesn't
@@ -36,24 +51,43 @@ def authByToken(f):
 
     The request input must contain the fields "user" and "token".  It
     must not contain any other fields: if this is not so, see the
-    `@authByToken_validFields` decorator.
+    `@authenticate_by_token_validate_required_fields` decorator.
+
+    Arguments:
+        function {function} -- A function primarily from ManagerMessenger, IDHandler, TotalHandler, etc 
+                               that required authentication in order to operate.
+
+    Returns:
+        class 'function' -- TODO: Not sure but I believe this is a the input function wrapped
+                            into an authentication function.
     """
 
-    @functools.wraps(f)
-    async def wrapped(zelf, request):
-        logRequest(f.__name__, request)
+    @functools.wraps(function)
+    async def wrapped(self, request):
+        """Wrapper function used for authentication.
+
+        Arguments:
+            request {aiohttp.web_request.Request} -- The aiohttp request object.
+                                                     The data in request must have the user and token
+                                                     fields.
+
+        Returns:
+            class 'function' -- TODO: Not sure but I believe this is a the input function wrapped
+                                into an authentication function.
+        """
+        log_request(function.__name__, request)
         data = await request.json()
-        if not validFields(data, ["user", "token"]):
+        if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
-        if not zelf.server.validate(data["user"], data["token"]):
+        if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
-        log.debug('{} authenticated "{}" via token'.format(f.__name__, data["user"]))
-        return f(zelf)
+        log.debug('{} authenticated "{}" via token'.format(function.__name__, data["user"]))
+        return function(self)
 
     return wrapped
 
 
-def authByToken_validFields(fields):
+def authenticate_by_token_validate_required_fields(fields):
     """Decorator for field validation, authentication by token, and logging.
 
     Return `web.Response(status=400)` if the input request does not
@@ -62,37 +96,78 @@ def authByToken_validFields(fields):
     Example
     -------
     ```
-    @authByToken_validFields(["bar", "baz"])
+    @authenticate_by_token_validate_required_fields(["bar", "baz"])
     def foo(self, data, request):
         return ...
     ```
     Here `data` is the result of `request.json()` and `request` is the
     original request (don't try to take data from it again!)
+
+    Arguments:
+        fields {list} -- A list of the fields for this request.
+                         Remember we must also add `user`, `token`.
+
+    Returns:
+        class 'function' -- TODO: Not sure but I believe this is a the input function wrapped
+                            into an authentication function.
     """
+
     fields.extend(["user", "token"])
 
-    def _decorate(f):
-        @functools.wraps(f)
-        async def wrapped(zelf, request):
-            logRequest(f.__name__, request)
+    def _decorate(function):
+        @functools.wraps(function)
+        async def wrapped(self, request):
+            """Wrapper function used for authentication.
+
+            Arguments:
+                request {aiohttp.web_request.Request} -- The aiohttp request object.
+                                                         The data in request must have the user and token
+                                                         fields.
+
+            Returns:
+                class 'function' -- TODO: Not sure but I believe this is a the input function wrapped
+                                    into an authentication function.
+            """
+            log_request(function.__name__, request)
             data = await request.json()
-            log.debug("{} validating fields {}".format(f.__name__, fields))
-            if not validFields(data, fields):
+            log.debug("{} validating fields {}".format(function.__name__, fields))
+            if not validate_required_fields(data, fields):
                 return web.Response(status=400)
-            if not zelf.server.validate(data["user"], data["token"]):
+            if not self.server.validate(data["user"], data["token"]):
                 return web.Response(status=401)
-            log.debug('{} authenticated "{}" via token'.format(f.__name__, data["user"]))
-            return f(zelf, data, request)
+            log.debug('{} authenticated "{}" via token'.format(function.__name__, data["user"]))
+            return function(self, data, request)
 
         return wrapped
 
     return _decorate
 
 
-def noAuthOnlyLog(f):
-    """Decorator for logging requests."""
-    @functools.wraps(f)
+def no_authentication_only_log_request(function):
+    """Decorator for logging requests only.
+
+    Arguments:
+        function {function} -- A function primarily from UserInitHandler etc 
+                               that required authentication in order to operate.
+
+    Returns:
+        class 'function' -- TODO: Not sure but I believe this is a the input function wrapped
+                            into an authentication function.
+    """
+
+    @functools.wraps(function)
     def wrapped(self, request):
-        logRequest(f.__name__, request)
-        return f(self, request)
+        """Wrapper function used for authentication.
+
+        Arguments:
+            request {aiohttp.web_request.Request} -- The aiohttp request object.
+                                                         The data in request must have the user and token
+                                                         fields.
+
+        Returns:
+            class 'function' -- TODO: Not sure but I believe this is a the input function wrapped
+                                into an authentication function.
+        """
+        log_request(function.__name__, request)
+        return function(self, request)
     return wrapped
