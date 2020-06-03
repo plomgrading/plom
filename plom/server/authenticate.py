@@ -113,7 +113,7 @@ class Authority:
             bool -- True if valid, false otherwise.
         """
         # username must be length 4 and alphanumeric
-        if not (len(username) >= 4 and user.isalnum()):
+        if not (len(username) >= 4 and username.isalnum()):
             return False
         # password must be length 4 and not contain username.
         if (len(password) < 4) or (username in password):
