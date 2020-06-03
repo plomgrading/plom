@@ -36,8 +36,12 @@ def my_hash(s, salt=None):
     return str(int(h, 16) % b + l)
 
 
-def mysecret():
-    """Proper random 12-digit code."""
+def my_secret():
+    """Proper random 12-digit code (between 100_000_000_000 and 999_999_999_999).
+
+    Returns:
+        int: random code.
+    """
     b = 900_000_000_000
     l = 100_000_000_000
     return secrets.randbelow(b) + l
