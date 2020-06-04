@@ -100,10 +100,10 @@ class BackgroundDownloader(QThread):
 
     def run(self):
         """
-        Runs self.
+        Runs the background downloader.
 
         Notes:
-            Overrides run method of QThread
+            Overrides run method of QThread.
 
         Returns:
             None
@@ -150,10 +150,7 @@ class BackgroundDownloader(QThread):
 
 
 class BackgroundUploader(QThread):
-    """
-    Uploads exams in Background.
-
-    """
+    """Uploads exams in Background."""
 
     uploadSuccess = pyqtSignal(str, int, int)
     uploadFail = pyqtSignal(str, str)
@@ -170,6 +167,15 @@ class BackgroundUploader(QThread):
 
         Args:
             *args:
+                task (str): the Task ID for the page being uploaded. Takes the form
+                    "m1234g9" = test 1234 question 9.
+                grade (float): grade given to question.
+                filenames (list[str]): a list containing the annotated file's name,
+                the .plom file's name and the comment file's name, in that order.
+                mtime (float): the marking time for this specific queestion.
+                question (int or str): the question number
+                ver (int or str): the version number
+                tags (str): any tags associated with this exam.
 
         Returns:
             None
@@ -656,7 +662,7 @@ class ProxyModel(QSortFilterProxyModel):
         Initializes a new ProxyModel object.
 
         Args:
-            parent: unused.
+            parent (QObject): self's parent.
         """
         QSortFilterProxyModel.__init__(self, parent)
         self.setFilterKeyColumn(4)
