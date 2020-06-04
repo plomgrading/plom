@@ -121,6 +121,7 @@ def buildRequiredDirectories():
 
 
 def buildSSLKeys():
+    """Make new key and cert files if they do not yet exist."""
     key = Path("serverConfiguration") / "plom.key"
     cert = Path("serverConfiguration") / "plom-selfsigned.crt"
     if os.path.isfile(key) and os.path.isfile(cert):
