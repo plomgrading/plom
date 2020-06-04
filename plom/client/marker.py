@@ -803,11 +803,6 @@ class ProxyModel(QSortFilterProxyModel):
         return r0[0]
 
 
-##########################
-
-
-# TODO: should be a QMainWindow but at any rate not a Dialog
-# TODO: should this be parented by the QApplication?
 class MarkerClient(QWidget):
     """
     Setup for marking client and annotator
