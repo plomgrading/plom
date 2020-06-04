@@ -950,6 +950,9 @@ class MarkerClient(QWidget):
         task = self.prxM.getPrefix(row)
 
         inidata = self.getDataForAnnotator(task)
+        # make sure getDataForAnnotator did not fail
+        if inidata is None:
+            return
 
         if self.allowBackgroundOps:
             # while annotator is firing up request next paper in background
@@ -961,9 +964,16 @@ class MarkerClient(QWidget):
         # we started the annotator, we'll get a signal back when its done
 
     def getDataForAnnotator(self, task):
-        """Start annotator on a particular task."""
-        # Create annotated filename. If original mXXXXgYY, then
-        # annotated version is GXXXXgYY (G=graded).
+        """Assemble data needed to annotate a particular task.
+
+        Args:
+            task (str): of the form `qXXXXgYY`, specifying paper number
+                `XXXX` and question group `YY`.
+
+        Returns:
+            Either a tuple of various stuff or None in case of failure.
+        """
+        # original task qXXXXgYY -> annotated file GXXXXgYY (G=graded)
         assert task.startswith("q")
         Gtask = "G" + task[1:]
         paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
@@ -1118,6 +1128,10 @@ class MarkerClient(QWidget):
         tgv = self.prxM.getPrefix(row)
 
         data = self.getDataForAnnotator(tgv)
+        # make sure getDataForAnnotator did not fail
+        if data is None:
+            return
+
         assert tgv[1:] == data[0]
         pdict = data[-1]
         assert pdict is None, "Annotator should not pull a regrade"
