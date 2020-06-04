@@ -128,10 +128,7 @@ def buildSSLKeys():
         print("SSL key and certificate already exist - will not change.")
         return
 
-    # Command to generate the self-signed key:
-    # openssl req -x509 -newkey rsa:2048 -keyout selfsigned.key \
-    #          -nodes -out selfsigned.cert -sha256 -days 1000
-
+    # Generate new self-signed key/cert:
     # TODO = use os.path.join here.
     sslcmd = (
         "openssl req -x509 -sha256 -newkey rsa:2048 -keyout "
