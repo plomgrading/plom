@@ -16,7 +16,7 @@ from io import StringIO
 
 import pandas
 
-from .utils import myhash, mysecret
+from .utils import my_hash, my_secret
 
 
 def import_canvas_csv(canvas_fromfile):
@@ -139,7 +139,7 @@ def csv_add_return_codes(csvin, csvout, idcol):
         # blanks, not ID'd yet for example
         if not sn == 'nan':
             assert isValidStudentNumber(sn), "Invalid student ID"
-            code = mysecret()
+            code = my_secret()
             df.loc[i, "Return Code"] = code
             sns[sn] = code
 
@@ -176,7 +176,7 @@ def csv_add_salted_return_codes(csvin, csvout, saltstr, idcol):
         # blanks, not ID'd yet for example
         if not sn == 'nan':
             assert isValidStudentNumber(sn), "Invalid student ID"
-            code = myhash(sn, saltstr)
+            code = my_hash(sn, saltstr)
             df.loc[i, "Return Code"] = code
             sns[sn] = code
     df.to_csv(csvout, index=False)
@@ -208,7 +208,7 @@ def canvas_csv_add_return_codes(csvin, csvout, saltstr):
         assert len(name) > 0, "Student name is empty"
         assert len(sn) == 8, "Student number is not 8 characters: row = " + str(row)
 
-        code = myhash(sn, saltstr)
+        code = my_hash(sn, saltstr)
 
         oldcode = row[rcode]
         if pandas.isnull(oldcode):
