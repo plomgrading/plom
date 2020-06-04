@@ -136,16 +136,32 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
-sub = parser.add_subparsers(dest="command", description="Tools for dealing with scans.")
-#
-spP = sub.add_parser("process", help="Process scanned PDFs to images.")
-spR = sub.add_parser("read", help="Read QR-codes from images and collate.")
-spU = sub.add_parser("upload", help="Upload page images to scanner")
-spS = sub.add_parser("status", help="Get scanning status report from server")
+sub = parser.add_subparsers(dest="command")
+
+spP = sub.add_parser(
+    "process",
+    help="Process scanned PDFs to images",
+    description="Process one or more scanned PDFs into page images.",
+)
+spR = sub.add_parser(
+    "read",
+    help="Read QR-codes from images and collate",
+    description="Read QR-codes from page images and check unfo  with server (e.g., versions match).",
+)
+spU = sub.add_parser(
+    "upload",
+    help="Upload page images to scanner",
+    description="Upload page images to scanner.",
+)
+spS = sub.add_parser(
+    "status",
+    help="Get scanning status report from server",
+    description="Get scanning status report from server.",
+)
 spC = sub.add_parser(
     "clear",
-    help="Clear 'scanner' login",
-    description="Clear 'scanner' login after a crash or other expected event.",
+    help='Clear "scanner" login',
+    description='Clear "scanner" login after a crash or other expected event.',
 )
 #
 spP.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
