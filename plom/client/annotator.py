@@ -900,7 +900,7 @@ class Annotator(QWidget):
             self.closeCurrentTGV()
         else:
             oldtgv = None
-        stuff = self.parentMarkerUI.getMoreTests(oldtgv)
+        stuff = self.parentMarkerUI.getMorePapers(oldtgv)
         if not stuff:
             ErrorMessage("No more to grade?").exec_()
             # Not really safe to give it back? (at least we did the view...)
