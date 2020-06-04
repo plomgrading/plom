@@ -76,6 +76,7 @@ class BackgroundDownloader(QThread):
         (Done in the simpler subclassing way.)
 
     """
+
     downloadSuccess = pyqtSignal(str, list, str)  # [task, files, tags]
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
@@ -153,6 +154,7 @@ class BackgroundUploader(QThread):
     Uploads exams in Background.
 
     """
+
     uploadSuccess = pyqtSignal(str, int, int)
     uploadFail = pyqtSignal(str, str)
 
@@ -197,6 +199,7 @@ class BackgroundUploader(QThread):
             None
 
         """
+
         def tryToUpload():
             # define this inside run so it will run in the new thread
             # https://stackoverflow.com/questions/52036021/qtimer-on-a-qthread
@@ -225,8 +228,15 @@ class BackgroundUploader(QThread):
 
 
 def upload(
-    task, grade, filenames, mtime, question, ver, tags, failCallback=None,
-        successCallback=None,
+    task,
+    grade,
+    filenames,
+    mtime,
+    question,
+    ver,
+    tags,
+    failCallback=None,
+    successCallback=None,
 ):
     """
     Uploads a paper.
@@ -256,10 +266,10 @@ def upload(
     aname, pname, cname = filenames
 
     if not (
-            task.startswith("q")
-            and os.path.basename(aname) == "G{}.png".format(task[1:])
-            and os.path.basename(pname) == "G{}.plom".format(task[1:])
-            and os.path.basename(cname) == "G{}.json".format(task[1:])
+        task.startswith("q")
+        and os.path.basename(aname) == "G{}.png".format(task[1:])
+        and os.path.basename(pname) == "G{}.plom".format(task[1:])
+        and os.path.basename(cname) == "G{}.json".format(task[1:])
     ):
         raise PlomSeriousException(
             "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
@@ -313,8 +323,8 @@ class ExamQuestion:
         self.status = stat
         self.mark = mrk
         self.originalFiles = fnames
-        self.annotatedFile = "" # The filename for the (future) annotated image
-        self.plomFile = "" # The filename for the (future) plom file
+        self.annotatedFile = ""  # The filename for the (future) annotated image
+        self.plomFile = ""  # The filename for the (future) plom file
         self.markingTime = mtime
         self.tags = tags
 
@@ -719,8 +729,7 @@ class ProxyModel(QSortFilterProxyModel):
         """
         if (len(self.filterString) == 0) or (
             self.filterString.casefold()
-            in self.sourceModel().data(self.sourceModel().index(pos,
-                                                                4)).casefold()
+            in self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
         ):
             # we'd return true here, unless INVERT, then false
             if self.invert:
@@ -1480,7 +1489,10 @@ class MarkerClient(QWidget):
         mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
 
         annotator = Annotator(
-            self.ui.userLabel.text(), mouseHand, parentMarkerUI=self, initialData=initialData
+            self.ui.userLabel.text(),
+            mouseHand,
+            parentMarkerUI=self,
+            initialData=initialData,
         )
         # run the annotator
         annotator.annotator_upload.connect(self.callbackAnnWantsUsToUpload)
@@ -1590,8 +1602,7 @@ class MarkerClient(QWidget):
         testname = self.testInfo["testName"]
         markStyle = self.ui.markStyleGroup.checkedId()
         tgv = task[1:]
-        return tgv, testname, paperdir, fnames, aname, self.maxMark, \
-               markStyle, pdict
+        return tgv, testname, paperdir, fnames, aname, self.maxMark, markStyle, pdict
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
@@ -1670,7 +1681,9 @@ class MarkerClient(QWidget):
 
         # Copy the mark, annotated filename and the markingtime into the table
         # TODO: sort this out whether task is "q00..." or "00..."?!
-        self.examModel.markPaperByTask("q" + task, gr, aname, plomFileName, markingTime, paperDir)
+        self.examModel.markPaperByTask(
+            "q" + task, gr, aname, plomFileName, markingTime, paperDir
+        )
         # update the markingTime to be the total marking time
         totmtime = self.examModel.getMTimeByTask("q" + task)
         tags = self.examModel.getTagsByTask("q" + task)
@@ -1678,7 +1691,11 @@ class MarkerClient(QWidget):
         _data = (
             "q" + task,  # current task
             gr,  # grade
-            (aname, plomFileName, commentFileName),  # annotated, plom, and comment filenames
+            (
+                aname,
+                plomFileName,
+                commentFileName,
+            ),  # annotated, plom, and comment filenames
             totmtime,  # total marking time
             self.question,
             self.version,
