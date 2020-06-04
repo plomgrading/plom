@@ -22,7 +22,7 @@ def my_hash(s, salt=None):
         salt (str, optional): Salt string for the hash. Defaults to None (but will raise an error). https://en.wikipedia.org/wiki/Salt_(cryptography)
 
     Raises:
-        ValueError: if the given value for salt is None.
+        ValueError -- if the given value for salt is None.
 
     Returns:
         str -- The hashed (and salted string) string.
