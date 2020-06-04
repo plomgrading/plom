@@ -41,6 +41,10 @@
 
   7. If something goes wrong such as crashes or interruptions, you may
      need to clear the "scanner" login with the `clear` command.
+
+  These steps may be repeated as new PDF files come in: it is not
+  necessary to wait until scanning is complete to start processing and
+  uploading.
 """
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
