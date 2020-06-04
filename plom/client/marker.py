@@ -172,7 +172,7 @@ class BackgroundUploader(QThread):
                 grade (float): grade given to question.
                 filenames (list[str]): a list containing the annotated file's name,
                 the .plom file's name and the comment file's name, in that order.
-                mtime (float): the marking time for this specific queestion.
+                mtime (int): the marking time for this specific queestion.
                 question (int or str): the question number
                 ver (int or str): the version number
                 tags (str): any tags associated with this exam.
@@ -253,7 +253,7 @@ def upload(
         grade (float): grade given to question.
         filenames (list[str]): a list containing the annotated file's name,
             the .plom file's name and the comment file's name, in that order.
-        mtime (float): the marking time for this specific queestion.
+        mtime (int): the marking time for this specific question.
         question (int or str): the question number
         ver (int or str): the version number
         tags (str): any tags associated with this exam.
@@ -319,7 +319,7 @@ class ExamQuestion:
             original image/images for the test question.
             stat (str): test status.
             mrk (float): the mark of the question.
-            mtime (float): marking time spent on that page.
+            mtime (int): marking time spent on that page.
             tags (str): Tags corresponding to the exam.
 
         Notes:
@@ -573,7 +573,7 @@ class MarkerExamModel(QStandardItemModel):
         return tags
 
     def getMTimeByTask(self, task):
-        """Return total marking time for task, (task(str), return(float).)"""
+        """Return total marking time for task, (task(str), return(int).)"""
         return int(self._getDataByTask(task, 3))
 
     def getPaperDirByTask(self, task):
@@ -616,7 +616,7 @@ class MarkerExamModel(QStandardItemModel):
             mrk (float): the mark for this paper.
             aname (str): the annotated file name.
             pname (str): the .plom file name.
-            mtime (float): total marking time.
+            mtime (int): total marking time.
             tdir (dir): the temporary directory for task to be set to.
 
         Returns:
