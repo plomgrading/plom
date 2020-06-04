@@ -169,7 +169,7 @@ class BackgroundUploader(QThread):
             *args:
                 task (str): the Task ID for the page being uploaded. Takes the form
                     "q1234g9" = test 1234 question 9.
-                grade (float): grade given to question.
+                grade (int): grade given to question.
                 filenames (list[str]): a list containing the annotated file's name,
                 the .plom file's name and the comment file's name, in that order.
                 mtime (int): the marking time for this specific question
@@ -251,7 +251,7 @@ def upload(
     Args:
         task (str): the Task ID for the page being uploaded. Takes the form
             "q1234g9" = test 1234 question 9.
-        grade (float): grade given to question.
+        grade (int): grade given to question.
         filenames (list[str]): a list containing the annotated file's name,
             the .plom file's name and the comment file's name, in that order.
         mtime (int): the marking time (s) for this specific question.
@@ -319,7 +319,7 @@ class ExamQuestion:
             fnames (list[str]): a list containing the filename for the
             original image/images for the test question.
             stat (str): test status.
-            mrk (float): the mark of the question.
+            mrk (int): the mark of the question.
             mtime (int): marking time spent on that page in seconds.
             tags (str): Tags corresponding to the exam.
 
@@ -614,7 +614,7 @@ class MarkerExamModel(QStandardItemModel):
 
         Args:
             task (str): the task for the image files to be loaded from.
-            mrk (float): the mark for this paper.
+            mrk (int): the mark for this paper.
             aname (str): the annotated file name.
             pname (str): the .plom file name.
             mtime (int): total marking time in seconds.
@@ -1663,8 +1663,8 @@ class MarkerClient(QWidget):
         Args:
             task (str): the task ID of the current test.
             stuff (list): a list containing
-                grade(float): grade given by marker.
-                markingTime(float): total time spent marking.
+                grade(int): grade given by marker.
+                markingTime(int): total time spent marking.
                 paperDir(dir): Working directory for the current task
                 fnames(str): original file name (unannotated)
                 aname(str): annotated file name
@@ -1921,7 +1921,7 @@ class MarkerClient(QWidget):
         """
 
         Args:
-            testNumber (float): the test number.
+            testNumber (int): the test number.
 
         Returns:
             (tuple) containing pageData and viewFiles
