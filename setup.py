@@ -47,6 +47,7 @@ server_install_requires = [
 ]
 
 # Non-Python deps for server
+#   - openssl
 #   - imagemagick
 #   - ghostscript (optional)
 #   - latex installation including (Debian/Ubuntu pkg names):
