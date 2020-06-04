@@ -102,6 +102,7 @@ def readImages(server, password):
     os.makedirs("unknownPages", exist_ok=True)
     readQRCodes.processBitmaps(server, password)
 
+
 def uploadImages(server, password, unknowns=False, collisions=False):
     from plom.scan import sendPagesToServer
 
