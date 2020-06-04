@@ -11,12 +11,21 @@ import secrets
 import hashlib
 
 
-def myhash(s, salt=None):
-    """
-    Hash a string to a 12-digit code
+def my_hash(s, salt=None):
+    """Hash a string to a 12-digit code
 
     Combine the string with a salt string, compute the md5sum, grab
     the first few digits as an integer between 100000000000 and 999999999999.
+
+    Args:
+        s (str): string to hash.
+        salt (str, optional): Salt string for the hash. Defaults to None (but will raise an error). https://en.wikipedia.org/wiki/Salt_(cryptography)
+
+    Raises:
+        ValueError -- if the given value for salt is None.
+
+    Returns:
+        str -- The hashed (and salted string) string.
     """
     if not salt:
         raise ValueError("You must set the Salt String")
@@ -27,8 +36,12 @@ def myhash(s, salt=None):
     return str(int(h, 16) % b + l)
 
 
-def mysecret():
-    """Proper random 12-digit code."""
+def my_secret():
+    """Proper random 12-digit code (between 100_000_000_000 and 999_999_999_999).
+
+    Returns:
+        int: random code.
+    """
     b = 900_000_000_000
     l = 100_000_000_000
     return secrets.randbelow(b) + l
