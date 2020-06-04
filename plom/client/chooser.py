@@ -47,7 +47,7 @@ def readLastTime():
     # set some reasonable defaults.
     lastTime["user"] = ""
     lastTime["server"] = "localhost"
-    lastTime["pg"] = 1
+    lastTime["question"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
     lastTime["upDown"] = "up"
@@ -128,7 +128,7 @@ class Chooser(QDialog):
         # set login etc from last time client ran.
         self.ui.userLE.setText(lastTime["user"])
         self.setServer(lastTime["server"])
-        self.ui.pgSB.setValue(int(lastTime["pg"]))
+        self.ui.pgSB.setValue(int(lastTime["question"]))
         self.ui.vSB.setValue(int(lastTime["v"]))
         self.ui.fontSB.setValue(int(lastTime["fontSize"]))
         self.setFont()
@@ -223,7 +223,7 @@ class Chooser(QDialog):
         # Now run the appropriate client sub-application
         if self.runIt == "Marker":
             # Run the marker client.
-            pg = self.getpg()
+            pg = self.getQuestion()
             v = self.getv()
             self.setEnabled(False)
             self.hide()
@@ -268,7 +268,7 @@ class Chooser(QDialog):
         lastTime["server"] = "{}:{}".format(
             self.ui.serverLE.text(), self.ui.mportSB.value()
         )
-        lastTime["pg"] = self.getpg()
+        lastTime["question"] = self.getQuestion()
         lastTime["v"] = self.getv()
         lastTime["fontSize"] = self.ui.fontSB.value()
         writeLastTime()
@@ -285,14 +285,14 @@ class Chooser(QDialog):
         fnt.setPointSize(v)
         self.parent.setFont(fnt)
 
-    def getpg(self):
+    def getQuestion(self):
         """Return the integer question or None"""
         if self.ui.pgDrop.isVisible():
-            pg = self.ui.pgDrop.currentText().lstrip("Q")
+            question = self.ui.pgDrop.currentText().lstrip("Q")
         else:
-            pg = self.ui.pgSB.value()
+            question = self.ui.pgSB.value()
         try:
-            return int(pg)
+            return int(question)
         except:
             return None
 
@@ -309,7 +309,7 @@ class Chooser(QDialog):
 
     def ungetInfo(self):
         self.ui.markGBox.setTitle("Marking information")
-        pg = self.getpg()
+        pg = self.getQuestion()
         v = self.getv()
         self.ui.pgSB.setVisible(True)
         self.ui.vSB.setVisible(True)
@@ -353,7 +353,7 @@ class Chooser(QDialog):
         self.ui.markGBox.setTitle(
             "Marking information for “{}”".format(info["testName"])
         )
-        pg = self.getpg()
+        pg = self.getQuestion()
         v = self.getv()
         self.ui.pgSB.setVisible(False)
         self.ui.vSB.setVisible(False)

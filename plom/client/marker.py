@@ -168,7 +168,7 @@ class BackgroundUploader(QThread):
         Args:
             *args:
                 task (str): the Task ID for the page being uploaded. Takes the form
-                    "m1234g9" = test 1234 question 9.
+                    "q1234g9" = test 1234 question 9.
                 grade (float): grade given to question.
                 filenames (list[str]): a list containing the annotated file's name,
                 the .plom file's name and the comment file's name, in that order.
@@ -249,7 +249,7 @@ def upload(
 
     Args:
         task (str): the Task ID for the page being uploaded. Takes the form
-            "m1234g9" = test 1234 question 9.
+            "q1234g9" = test 1234 question 9.
         grade (float): grade given to question.
         filenames (list[str]): a list containing the annotated file's name,
             the .plom file's name and the comment file's name, in that order.
@@ -314,7 +314,7 @@ class ExamQuestion:
 
         Args:
             task (str): the Task ID for the page being uploaded. Takes the form
-            "m1234g9" = test 1234 question 9.
+            "q1234g9" = test 1234 question 9.
             fnames (list[str]): a list containing the filename for the
             original image/images for the test question.
             stat (str): test status.
@@ -500,7 +500,7 @@ class MarkerExamModel(QStandardItemModel):
 
         Args:
             task (str): the task for the image files to be loaded from.
-                Takes the form "m1234g9" = test 1234 question 9
+                Takes the form "q1234g9" = test 1234 question 9
 
         Raises:
              ValueError if not found.
@@ -887,7 +887,7 @@ class MarkerClient(QWidget):
             lastTime (dict): a dictionary containing
                  {"user": username
                 "server": serverNumber
-                 "pg": page number
+                 "question": question number
                  "version": version number
                  "fontsize"
                  "POWERUSER"
@@ -1067,7 +1067,8 @@ class MarkerClient(QWidget):
         Notes:
             Hides "mark total" style by default
             Mark style ID's are as follows
-                1 = mark total = user clicks the total-mark
+                1 = mark total = user clicks the total-mark, will likely be
+                    removed in the future.
                 2 = mark-up = mark starts at 0 and user increments it
                 3 = mark-down = mark starts at max and user decrements it
 
@@ -1154,7 +1155,7 @@ class MarkerClient(QWidget):
 
         Args:
             task (str): the task for the image files to be loaded from.
-                Takes the form "m1234g9" = test 1234 question 9
+                Takes the form "q1234g9" = test 1234 question 9
 
         Returns:
             None
@@ -1755,7 +1756,7 @@ class MarkerClient(QWidget):
 
         return initialData
 
-    def permuteAndGimmeSame(self, task, imageList):
+    def PermuteAndGetSamePaper(self, task, imageList):
         """
         Allows user to reorganize pages of an exam.
 

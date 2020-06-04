@@ -667,7 +667,7 @@ class Annotator(QWidget):
                 self, testNumber, self.pageData, self.testViewFiles,
             )
         if self.rearrangeView.exec_() == QDialog.Accepted:
-            stuff = self.parentMarkerUI.permuteAndGimmeSame(
+            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(
                 self.tgvID, self.rearrangeView.permute
             )
             ## TODO: do we need to do this?
