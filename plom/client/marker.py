@@ -964,12 +964,16 @@ class MarkerClient(QWidget):
         # we started the annotator, we'll get a signal back when its done
 
     def getDataForAnnotator(self, task):
-        """Start annotator on a particular task.
-        Notice that this returns None in case of failure.
-        """
+        """Assemble data needed to annotate a particular task.
 
-        # Create annotated filename. If original mXXXXgYY, then
-        # annotated version is GXXXXgYY (G=graded).
+        Args:
+            task (str): of the form `qXXXXgYY`, specifying paper number
+                `XXXX` and question group `YY`.
+
+        Returns:
+            Either a tuple of various stuff or None in case of failure.
+        """
+        # original task qXXXXgYY -> annotated file GXXXXgYY (G=graded)
         assert task.startswith("q")
         Gtask = "G" + task[1:]
         paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
