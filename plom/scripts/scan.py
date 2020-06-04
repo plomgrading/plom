@@ -169,13 +169,14 @@ spU.add_argument(
     "-u",
     "--unknowns",
     action="store_true",
-    help="Upload 'unknowns'. Unknowns are pages from which the QR-codes could not be read.",
+    help='Upload "unknowns", pages from which the QR-codes could not be read.',
 )
 spU.add_argument(
     "-c",
     "--collisions",
     action="store_true",
-    help="Upload 'collisions'. Collisions are pages which appear to be already on the server. You should not need this option except under exceptional circumstances.",
+    help='Upload "collisions", pages which appear to already be on the server. '
+    + "You should not need this option except under exceptional circumstances.",
 )
 for x in (spR, spU, spS, spC):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
