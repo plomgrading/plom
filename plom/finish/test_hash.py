@@ -5,8 +5,4 @@ def test_hash():
     assert my_hash("12345678", salt="salt") == "351525727036"
     assert my_hash("12345678", salt="salty") == "782385405730"
     assert my_hash("12345679", salt="salt") == "909470548567"
-    print("\n\n\nTESTS RUNNING\n\n\n")
-    print("\n\n\nTESTS RUNNING\n\n\n")
-    print("\n\n\nTESTS RUNNING\n\n\n")
-    print("\n\n\nTESTS RUNNING\n\n\n")
-    print("\n\n\nTESTS RUNNING\n\n\n")
+    assert 1 == 0
