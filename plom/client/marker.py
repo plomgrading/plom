@@ -859,7 +859,7 @@ class MarkerClient(QWidget):
 
     def _updateImage(self, pr=0):
         """
-        updates the image if needed.
+        Updates the image if needed.
 
         Args:
             pr (str): prefix of image to be loaded
@@ -971,7 +971,7 @@ class MarkerClient(QWidget):
 
     def requestNextInBackgroundStart(self):
         """
-        Requests the next TGV in the background
+        Requests the next TGV in the background.
 
         Returns:
             None
@@ -1323,6 +1323,7 @@ class MarkerClient(QWidget):
                 commentFileName(str): the name of the comment file.
 
         Returns:
+            None
 
         """
         gr, markingTime, paperDir, fnames, aname, plomFileName, commentFileName = stuff
@@ -1432,24 +1433,24 @@ class MarkerClient(QWidget):
         # finally relaunch the annotator
         return self.getDataForAnnotator(task)
 
-    def backgroundUploadFinished(self, code, numdone, numtotal):
+    def backgroundUploadFinished(self, task, numDone, numtotal):
         """
         An upload has finished, do appropriate UI updates
 
         Args:
-            task(str): the task ID of the current test.
-            numDone(int): number of exams marked
-            numTotal(int): total number of exams to mark.
+            task (str): the task ID of the current test.
+            numDone (int): number of exams marked
+            numTotal (int): total number of exams to mark.
 
         Returns:
             None
 
         """
-        stat = self.examModel.getStatusByTask(code)
+        stat = self.examModel.getStatusByTask(task)
         # maybe it changed while we waited for the upload
         if stat == "uploading...":
-            self.examModel.setStatusByTask(code, "marked")
-        self.updateProgress(numdone, numtotal)
+            self.examModel.setStatusByTask(task, "marked")
+        self.updateProgress(numDone, numtotal)
 
     def backgroundUploadFailed(self, task, errmsg):
         """
@@ -1476,8 +1477,8 @@ class MarkerClient(QWidget):
         Updates the displayed image when the selection has changed.
 
         Args:
-            newImg:
-            oldImg:
+            newImg (QItem): new image
+            oldImg (QItem): old image
 
         Returns:
             None
@@ -1540,11 +1541,11 @@ class MarkerClient(QWidget):
         """
         Marks files that are not finished as "did not finish."
 
+        Notes:
+            do this for everything, not just the proxy-model
+
         Returns:
             None
-
-        Notes:
-            Note - do this for everything, not just the proxy-model
 
         Raises:
             PlomSeriousException if an error occurs in server.
