@@ -13,7 +13,7 @@ def validate(self, user, token):
     """Check the user's token is valid"""
     # log.debug("Validating user {}.".format(user))
     dbToken = self.DB.getUserToken(user)
-    return self.authority.validateToken(token, dbToken)
+    return self.authority.validate_token(token, dbToken)
 
 
 def InfoShortName(self):
@@ -76,7 +76,7 @@ def reloadUsers(self, password):
 def checkPassword(self, user, password):
     # Check the pwd and enabled. Get the hash from DB
     passwordHash = self.DB.getUserPasswordHash(user)
-    return self.authority.checkPassword(password, passwordHash)
+    return self.authority.check_password(password, passwordHash)
 
 
 def checkUserEnabled(self, user):
@@ -116,7 +116,7 @@ def giveUserToken(self, user, password, clientAPI):
             log.debug('User "{}" already has token'.format(user))
             return [False, "UHT", "User already has token."]
         # give user a token, and store the xor'd version.
-        [clientToken, storageToken] = self.authority.createToken()
+        [clientToken, storageToken] = self.authority.create_token()
         self.DB.setUserToken(user, storageToken)
         # On token request also make sure anything "out" with that user is reset as todo.
         # We keep this here in case of client crash - todo's get reset on login and logout.
@@ -137,12 +137,12 @@ def setUserEnable(self, user, enableFlag):
 
 def createModifyUser(self, username, password):
     # basic sanity check of username / password
-    if not self.authority.basicUserPasswordCheck(username, password):
+    if not self.authority.basic_user_password_check(username, password):
         return [False, "Username/Password fails basic checks."]
     if username == "HAL":  # Don't mess with HAL
         return [False, "I'm sorry, Dave. I'm afraid I can't do that."]
     # hash the password
-    passwordHash = self.authority.createPasswordHash(password)
+    passwordHash = self.authority.create_password_hash(password)
     if self.DB.doesUserExist(username):  # user exists, so update password
         if self.DB.setUserPasswordHash(username, passwordHash):
             return [True, False]
