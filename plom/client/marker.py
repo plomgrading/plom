@@ -1538,7 +1538,7 @@ class MarkerClient(QWidget):
         Start annotator on a particular task.
 
         Args:
-            task (str): the task id.  If original mXXXXgYY, then annotated
+            task (str): the task id.  If original qXXXXgYY, then annotated
                 version is GXXXXgYY (G=graded).
         Returns
             data (list): (as described by startTheAnnotator) if successful.
