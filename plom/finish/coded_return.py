@@ -15,7 +15,7 @@ import argparse
 
 from plom import SpecParser
 from plom.rules import isValidStudentNumber
-from .utils import myhash
+from .utils import my_hash
 from .return_tools import csv_add_return_codes
 
 

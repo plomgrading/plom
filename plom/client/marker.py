@@ -1522,6 +1522,9 @@ class MarkerClient(QWidget):
 
         task = self.prxM.getPrefix(row)
         inidata = self.getDataForAnnotator(task)
+        # make sure getDataForAnnotator did not fail
+        if inidata is None:
+            return
 
         if self.allowBackgroundOps:
             if self.examModel.countReadyToMark() == 0:
@@ -1744,9 +1747,13 @@ class MarkerClient(QWidget):
             return False
         tgvID = self.prxM.getPrefix(row)
 
-        initialData = self.getDataForAnnotator(tgvID)
-        assert tgvID[1:] == initialData[0]
-        pdict = initialData[-1]
+        data = self.getDataForAnnotator(tgv)
+        # make sure getDataForAnnotator did not fail
+        if data is None:
+            return
+
+        assert tgv[1:] == data[0]
+        pdict = data[-1]
         assert pdict is None, "Annotator should not pull a regrade"
 
         if self.allowBackgroundOps:
