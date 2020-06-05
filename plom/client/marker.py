@@ -1229,8 +1229,8 @@ class MarkerClient(QWidget):
         Updates the progress bar.
 
         Args:
-            val (float): value for the progress bar
-            maxm (float): maximum for the progress bar.
+            val (int): value for the progress bar
+            maxm (int): maximum for the progress bar.
 
         Returns:
             None

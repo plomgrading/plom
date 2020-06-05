@@ -223,14 +223,14 @@ class Chooser(QDialog):
         # Now run the appropriate client sub-application
         if self.runIt == "Marker":
             # Run the marker client.
-            pg = self.getQuestion()
+            question = self.getQuestion()
             v = self.getv()
             self.setEnabled(False)
             self.hide()
             markerwin = marker.MarkerClient(self.parent)
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
-            markerwin.setup(messenger, pg, v, lastTime)
+            markerwin.setup(messenger, question, v, lastTime)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
@@ -309,12 +309,12 @@ class Chooser(QDialog):
 
     def ungetInfo(self):
         self.ui.markGBox.setTitle("Marking information")
-        pg = self.getQuestion()
+        question = self.getQuestion()
         v = self.getv()
         self.ui.pgSB.setVisible(True)
         self.ui.vSB.setVisible(True)
-        if pg:
-            self.ui.pgSB.setValue(pg)
+        if question:
+            self.ui.pgSB.setValue(question)
         if v:
             self.ui.vSB.setValue(v)
         self.ui.vDrop.clear()
@@ -353,7 +353,7 @@ class Chooser(QDialog):
         self.ui.markGBox.setTitle(
             "Marking information for “{}”".format(info["testName"])
         )
-        pg = self.getQuestion()
+        question = self.getQuestion()
         v = self.getv()
         self.ui.pgSB.setVisible(False)
         self.ui.vSB.setVisible(False)
@@ -369,9 +369,9 @@ class Chooser(QDialog):
         self.ui.pgDrop.addItems(
             ["Q{}".format(x + 1) for x in range(0, info["numberOfQuestions"])]
         )
-        if pg:
-            if pg >= 1 and pg <= info["numberOfQuestions"]:
-                self.ui.pgDrop.setCurrentIndex(pg - 1)
+        if question:
+            if question >= 1 and question <= info["numberOfQuestions"]:
+                self.ui.pgDrop.setCurrentIndex(question - 1)
         self.ui.pgDrop.setVisible(True)
         # TODO should we also let people type in?
         self.ui.pgDrop.setEditable(False)
