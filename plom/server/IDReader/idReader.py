@@ -22,10 +22,16 @@ import json
 import os
 import sys
 
-from .predictStudentID import computeProbabilities
+from .predictStudentID import compute_probabilities
 
 
-def isModelAbsent():
+def is_model_absent():
+    """Checks if we have the files for the model downloaded.
+
+    Returns:
+        bool -- True if model files are present, False otherwise.
+    """
+    # this directory is created with downloadModel is called
     basePath = Path("plomBuzzword")
     files = [
         "saved_model.pb",
@@ -40,7 +46,12 @@ def isModelAbsent():
     return False
 
 
-def downloadModel():
+def download_model():
+    """Downloads the model from the gitlab repository.
+
+    Returns:
+        bool -- True if successful, False otherwise.
+    """
     # make a directory into which to save things
     basePath = Path("plomBuzzword")
     # make both the basepath and its variables subdir
@@ -55,65 +66,77 @@ def downloadModel():
     for fn in files:
         url = baseUrl + fn
         print("Getting {} - ".format(fn))
-        r = requests.get(url)
-        if r.status_code != 200:
+        response = requests.get(url)
+        if response.status_code != 200:
             print("\tError getting file {}.".format(fn))
             return False
         else:
             print("\tDone.")
         with open(basePath / fn, "wb+") as fh:
-            fh.write(r.content)
+            fh.write(response.content)
     return True
 
 
-def downloadOrTrainModel():
+def download_or_train_model():
+    """Gives us a local, working model either through downloading a model or training the Tensorflow model from scratch."""
     print(
         "Will try to download model and if that fails, then build it locally (which is time-consuming)"
     )
-    if downloadModel():
+    if download_model():
         print("Successfully downloaded tensorflow model.")
     else:
         print("Could not download the model, need to train model instead.")
         print(
             "This will take some time -- on the order of 10-20 minutes depending on your computer."
         )
-        from .IDReader.trainModelTensorFlow import trainAndSaveModel
+        from .IDReader.trainModelTensorFlow import train_and_save_model
 
-        trainAndSaveModel()
+        train_and_save_model()
 
 
-def logLike(sid, probs):
-    # pass in the student ID-digits and the probs
-    # probs = scans[fn]
-    # probs[k][n] = approx prob that digit k of ID is n.
+def log_likelihood(student_ids, probabilities):
+    """Calculates the (negative) log likelihood for digits detected.
+
+    Arguments:
+        student_ids {list} -- list of the correct student numbers we are looking for.
+        probabilities {list} -- probabilities[k][n] = approx probability that digit k of ID is n.
+
+    Returns:
+        float -- sum of the negative log likelihoods that each digit of student_ids digit is present.
+    """
     logP = 0
     # logP will be the approx -log(prob) - so more probable means smaller logP.
     # make it negative since we'll minimise "cost" when we do the linear assignment problem stuff below.
     for k in range(0, 8):
-        d = int(sid[k])
-        logP -= np.log(max(probs[k][d], 1e-30))  # avoids taking log of 0.
+        d = int(student_ids[k])
+        logP -= np.log(max(probabilities[k][d], 1e-30))  # avoids taking log of 0.
     return logP
 
 
-def runIDReader(fileDict, rectangle):
-    # convert rectangle to "top" and "bottom"
-    # IDrectangle is a 4-tuple left,top,width,height - floats, but we'll need ints.
+def run_id_reader(file_dict, rectangle):
+    """Reads the ids for given test numbers in a directory (and test page configuration). 
 
+    Arguments:
+        file_dict {dict} -- test number -> filename.
+        rectangle {list} -- contains the four corners of the rectangle the id (should) exist in.
+    """
+    # convert rectangle to "top" and "bottom"
+    # rectangle is a 4-tuple left,top,width,height - floats, but we'll need ints.
     top = int(rectangle[1])
     bottom = int(rectangle[1] + rectangle[3])
 
     # keeps a list of testNumbers... the ith test in list has testNumber k (i != k?)
     # will need this for cost-matrix
-    testList = list(fileDict.keys())
+    testList = list(file_dict.keys())
 
     # check to see if model already there and if not get it or train it.
-    if isModelAbsent():
-        downloadOrTrainModel()
+    if is_model_absent():
+        download_or_train_model()
     # probabilities that digit k of ID is "n" for each file.
-    # this is potentially time-consuming - could be parallelised
+    # this is potentially time-consuming - could be parallelized
     # pass in the list of files to check, top /bottom of image-region to check.
     print("Computing probabilities")
-    probabilities = computeProbabilities(fileDict, top, bottom)
+    probabilities = compute_probabilities(file_dict, top, bottom)
     # put studentNumbers in list
     studentNumbers = []
     with open(
@@ -129,12 +152,12 @@ def runIDReader(fileDict, rectangle):
     for test in testList:
         lst = []
         for sid in studentNumbers:
-            lst.append(logLike(sid, probabilities[test]))
+            lst.append(log_likelihood(sid, probabilities[test]))
         costs.append(lst)
     # use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm
-    # as  coded up in lapsolver
+    # as coded up in lapsolver
     # to find least cost assignment of tests to studentIDs
-    # this is potentially time-consuming, cannot be parallelised.
+    # this is potentially time-consuming, cannot be parallelized.
     print("Going hungarian")
     rowIDs, columnIDs = solve_dense(costs)
 

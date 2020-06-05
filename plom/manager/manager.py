@@ -51,7 +51,7 @@ from .reviewview import ReviewViewWindow
 from .selectrectangle import SelectRectangleWindow, IDViewWindow
 from plom.plom_exceptions import *
 from plom.messenger import ManagerMessenger
-from plom.server.aliceBob import simplePassword
+from plom.server.aliceBob import simple_password
 
 from plom import __version__, Plom_API_Version, Default_Port
 
@@ -75,7 +75,7 @@ class UserDialog(QDialog):
         self.pwL = QLabel("Password:")
         self.pwL2 = QLabel("and again:")
         self.userLE = QLineEdit(self.name)
-        initialpw = simplePassword()
+        initialpw = simple_password()
         self.pwLE = QLineEdit(initialpw)
         # self.pwLE.setEchoMode(QLineEdit.Password)
         self.pwLE2 = QLineEdit(initialpw)
@@ -113,7 +113,7 @@ class UserDialog(QDialog):
             self.pwLE.setEchoMode(QLineEdit.Normal)
 
     def newRandomPassword(self):
-        newpw = simplePassword()
+        newpw = simple_password()
         self.pwLE.setText(newpw)
         self.pwLE2.setText(newpw)
 
