@@ -538,7 +538,7 @@ class PageScene(QGraphicsScene):
         """Change cursor back to open-hand, and update the current stored view rectangle."""
         self.views()[0].setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
-        self.views()[0].zoomNull()
+        self.views()[0].setZoomSelector()
 
     # Handle drag / drop events
     def dragEnterEvent(self, e):
@@ -977,7 +977,7 @@ class PageScene(QGraphicsScene):
             # sets the view rectangle and updates zoom-dropdown.
             self.views()[0].scale(0.8, 0.8)
             self.views()[0].centerOn(event.scenePos())
-            self.views()[0].zoomNull(True)
+            self.views()[0].setZoomSelector(True)
             self.zoomFlag = 0
             return
         else:
@@ -1029,7 +1029,7 @@ class PageScene(QGraphicsScene):
             self.views()[0].fitInView(self.zoomBoxItem, Qt.KeepAspectRatio)
 
         # sets the view rectangle and updates zoom-dropdown.
-        self.views()[0].zoomNull(True)
+        self.views()[0].setZoomSelector(True)
         # remove the box and put flag back.
         self.removeItem(self.zoomBoxItem)
         self.zoomFlag = 0
