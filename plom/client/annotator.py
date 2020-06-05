@@ -699,7 +699,7 @@ class Annotator(QWidget):
                 self, testNumber, self.pageData, self.testViewFiles,
             )
         if self.rearrangeView.exec_() == QDialog.Accepted:
-            stuff = self.parentMarkerUI.permuteAndGimmeSame(
+            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(
                 self.tgvID, self.rearrangeView.permute
             )
             ## TODO: do we need to do this?
@@ -932,7 +932,7 @@ class Annotator(QWidget):
             self.closeCurrentTGV()
         else:
             oldtgv = None
-        stuff = self.parentMarkerUI.gimmeMore(oldtgv)
+        stuff = self.parentMarkerUI.getMorePapers(oldtgv)
         if not stuff:
             ErrorMessage("No more to grade?").exec_()
             # Not really safe to give it back? (at least we did the view...)
