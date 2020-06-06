@@ -50,7 +50,7 @@ def read_class_list():
 
 
 def _make_PDF(x):
-    """A function that basically uses make_PDF from mergeAdCodePages.
+    """A function that basically uses make_PDF from mergeAndCodePages.
 
     Arguments:
         x {tuple} --
@@ -89,7 +89,7 @@ def build_all_papers(spec, DB_file_name, named=False):
                        'numberOfVersions': 2,
                        'numberOfPages': 6,
                        'numberToProduce': 20,
-                       'numberToName': 10, <--- This is typically zero
+                       'numberToName': 10,
                        'numberOfQuestions': 3,
                        'privateSeed': '1001378822317872',
                        'publicCode': '270385',
