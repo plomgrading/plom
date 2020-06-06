@@ -3,7 +3,7 @@ import json
 
 from aiohttp import web, MultipartWriter, MultipartReader
 
-from .routeutils import authenticate_by_token, authenticate_by_token_validate_required_fields, no_authentication_only_log_request
+from .routeutils import authenticate_by_token, authenticate_by_token_required_fields, no_authentication_only_log_request
 from .routeutils import validate_required_fields, log_request
 from .routeutils import log
 
@@ -35,7 +35,7 @@ class UserInitHandler:
         return web.Response(status=200)
 
     # @routes.delete("/users/{user}")
-    @authenticate_by_token_validate_required_fields(["user"])
+    @authenticate_by_token_required_fields(["user"])
     def closeUser(self, data, request):
         # TODO: should manager be allowed to do this for anyone?
         if data["user"] != request.match_info["user"]:
@@ -44,7 +44,7 @@ class UserInitHandler:
         return web.Response(status=200)
 
     # @routes.delete("/authorisation/{user}")
-    @authenticate_by_token_validate_required_fields(["user"])
+    @authenticate_by_token_required_fields(["user"])
     def clearAuthorisationUser(self, data, request):
         # Only manager can clear other users, via token auth
         # TODO: ok for manager to clear manager via token auth?
@@ -57,7 +57,7 @@ class UserInitHandler:
         return web.Response(status=200)
 
     # @routes.post("/authorisation/{user}")
-    @authenticate_by_token_validate_required_fields(["password"])
+    @authenticate_by_token_required_fields(["password"])
     def createModifyUser(self, data, request):
         # update password of existing user, or create new user.
         theuser = request.match_info["user"]

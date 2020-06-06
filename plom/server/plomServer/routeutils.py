@@ -51,7 +51,7 @@ def authenticate_by_token(function):
 
     The request input must contain the fields "user" and "token".  It
     must not contain any other fields: if this is not so, see the
-    `@authenticate_by_token_validate_required_fields` decorator.
+    `@authenticate_by_token_required_fields` decorator.
 
     Arguments:
         function {function} -- A function primarily from ManagerMessenger, IDHandler, TotalHandler, etc 
@@ -87,7 +87,7 @@ def authenticate_by_token(function):
     return wrapped
 
 
-def authenticate_by_token_validate_required_fields(fields):
+def authenticate_by_token_required_fields(fields):
     """Decorator for field validation, authentication by token, and logging.
 
     Return `web.Response(status=400)` if the input request does not
@@ -96,7 +96,7 @@ def authenticate_by_token_validate_required_fields(fields):
     Example
     -------
     ```
-    @authenticate_by_token_validate_required_fields(["bar", "baz"])
+    @authenticate_by_token_required_fields(["bar", "baz"])
     def foo(zelf, data, request):
         return ...
     ```

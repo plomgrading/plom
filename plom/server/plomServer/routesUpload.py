@@ -1,6 +1,6 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 
-from .routeutils import authenticate_by_token, authenticate_by_token_validate_required_fields
+from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 from .routeutils import validate_required_fields
 
 
@@ -345,7 +345,7 @@ class UploadHandler:
             return web.Response(status=404)
 
     # @route.get("/admin/questionImages")
-    @authenticate_by_token_validate_required_fields(["user", "test", "question"])
+    @authenticate_by_token_required_fields(["user", "test", "question"])
     def getQuestionImages(self, data, request):
         if not data["user"] == "manager":
             return web.Response(status=401)
@@ -361,7 +361,7 @@ class UploadHandler:
             return web.Response(status=404)  # couldnt find that test/question
 
     # @routes.get("/admin/testImages")
-    @authenticate_by_token_validate_required_fields(["user", "test"])
+    @authenticate_by_token_required_fields(["user", "test"])
     def getTestImages(self, data, request):
         if not data["user"] == "manager":
             return web.Response(status=401)

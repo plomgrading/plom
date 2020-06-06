@@ -1,7 +1,7 @@
 import os
 from aiohttp import web, MultipartWriter, MultipartReader
 
-from .routeutils import authenticate_by_token, authenticate_by_token_validate_required_fields
+from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request
 from .routeutils import log
 
@@ -11,7 +11,7 @@ class MarkHandler:
         self.server = plomServer
 
     # @routes.get("/MK/maxMark")
-    @authenticate_by_token_validate_required_fields(["q", "v"])
+    @authenticate_by_token_required_fields(["q", "v"])
     def MgetQuestionMark(self, data, request):
         rmsg = self.server.MgetQuestionMax(data["q"], data["v"])
         if rmsg[0]:
@@ -30,14 +30,14 @@ class MarkHandler:
             )
 
     # @routes.get("/MK/progress")
-    @authenticate_by_token_validate_required_fields(["q", "v"])
+    @authenticate_by_token_required_fields(["q", "v"])
     def MprogressCount(self, data, request):
         return web.json_response(
             self.server.MprogressCount(data["q"], data["v"]), status=200
         )
 
     # @routes.get("/MK/tasks/complete")
-    @authenticate_by_token_validate_required_fields(["user", "q", "v"])
+    @authenticate_by_token_required_fields(["user", "q", "v"])
     def MgetDoneTasks(self, data, request):
         # return the completed list
         return web.json_response(
@@ -45,7 +45,7 @@ class MarkHandler:
         )
 
     # @routes.get("/MK/tasks/available")
-    @authenticate_by_token_validate_required_fields(["q", "v"])
+    @authenticate_by_token_required_fields(["q", "v"])
     def MgetNextTask(self, data, request):
         rmsg = self.server.MgetNextTask(data["q"], data["v"])
         # returns [True, task] or [False]
@@ -55,7 +55,7 @@ class MarkHandler:
             return web.Response(status=204)  # no papers left
 
     # @routes.get("/MK/latex")
-    @authenticate_by_token_validate_required_fields(["user", "fragment"])
+    @authenticate_by_token_required_fields(["user", "fragment"])
     def MlatexFragment(self, data, request):
         rmsg = self.server.MlatexFragment(data["user"], data["fragment"])
         if rmsg[0]:
@@ -64,7 +64,7 @@ class MarkHandler:
             return web.Response(status=406)  # a latex error
 
     # @routes.patch("/MK/tasks/{task}")
-    @authenticate_by_token_validate_required_fields(["user"])
+    @authenticate_by_token_required_fields(["user"])
     def MclaimThisTask(self, data, request):
         task = request.match_info["task"]
         rmesg = self.server.MclaimThisTask(data["user"], task)
@@ -78,7 +78,7 @@ class MarkHandler:
             return web.Response(status=204)  # that task already taken.
 
     # @routes.delete("/MK/tasks/{task}")
-    @authenticate_by_token_validate_required_fields(["user"])
+    @authenticate_by_token_required_fields(["user"])
     def MdidNotFinishTask(self, data, request):
         task = request.match_info["task"]
         self.server.MdidNotFinish(data["user"], task)
@@ -152,7 +152,7 @@ class MarkHandler:
             return web.Response(status=400)  # some sort of error with image file
 
     # @routes.get("/MK/images/{task}")
-    @authenticate_by_token_validate_required_fields(["user"])
+    @authenticate_by_token_required_fields(["user"])
     def MgetImages(self, data, request):
         task = request.match_info["task"]
         rmsg = self.server.MgetImages(data["user"], task)
@@ -167,7 +167,7 @@ class MarkHandler:
             return web.Response(status=409)  # someone else has that image
 
     # @routes.get("/MK/originalImage/{task}")
-    @authenticate_by_token_validate_required_fields([])
+    @authenticate_by_token_required_fields([])
     def MgetOriginalImages(self, data, request):
         task = request.match_info["task"]
         rmsg = self.server.MgetOriginalImages(task)
@@ -181,7 +181,7 @@ class MarkHandler:
             return web.Response(status=204)  # no content there
 
     # @routes.patch("/MK/tags/{task}")
-    @authenticate_by_token_validate_required_fields(["user", "tags"])
+    @authenticate_by_token_required_fields(["user", "tags"])
     def MsetTag(self, data, request):
         task = request.match_info["task"]
         rmsg = self.server.MsetTag(data["user"], task, data["tags"])
@@ -192,7 +192,7 @@ class MarkHandler:
 
 
     # @routes.get("/MK/whole/{number}")
-    @authenticate_by_token_validate_required_fields([])
+    @authenticate_by_token_required_fields([])
     def MgetWholePaper(self, data, request):
         number = request.match_info["number"]
         question = request.match_info["question"]
@@ -213,7 +213,7 @@ class MarkHandler:
         return web.json_response(self.server.MgetAllMax(), status=200)
 
     # @routes.patch("/MK/review")
-    @authenticate_by_token_validate_required_fields(["testNumber", "questionNumber", "version"])
+    @authenticate_by_token_required_fields(["testNumber", "questionNumber", "version"])
     def MreviewQuestion(self, data, request):
         if self.server.MreviewQuestion(
             data["testNumber"], data["questionNumber"], data["version"]
@@ -223,7 +223,7 @@ class MarkHandler:
             return web.Response(status=404)
 
     # @routes.patch("/MK/revert/{task}")
-    @authenticate_by_token_validate_required_fields(["user"])
+    @authenticate_by_token_required_fields(["user"])
     def MrevertTask(self, data, request):
         # only manager can do this
         task = request.match_info["task"]
@@ -238,7 +238,7 @@ class MarkHandler:
             return web.Response(status=404)
 
     # @routes.patch("/MK/shuffle/{task}")
-    @authenticate_by_token_validate_required_fields(["user", "imageRefs"])
+    @authenticate_by_token_required_fields(["user", "imageRefs"])
     def MshuffleImages(self, data, request):
         task = request.match_info["task"]
         rval = self.server.MshuffleImages(data["user"], task, data["imageRefs"])
