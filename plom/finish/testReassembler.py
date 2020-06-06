@@ -20,8 +20,15 @@ papersize_landscape = (792, 612)
 margin = 10
 
 
-def iswider(f):
-    """True if image is wider than it is high"""
+def is_wider(f):
+    """True if image is wider than it is high.
+
+    Args:
+        f ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     # TODO: shell likely SLOW for this task...?
     ratio = (
         subprocess.check_output(["identify", "-format", "%[fx:w/h]", f])
@@ -43,6 +50,7 @@ def reassemble(outname, shortName, sid, coverfname, imglist):
     [1] https://gitlab.math.ubc.ca/andrewr/MLP/issues/392
 
     """
+    print(type(imglist))
     if os.path.isfile(outname):
         return False
 
@@ -52,7 +60,7 @@ def reassemble(outname, shortName, sid, coverfname, imglist):
 
     for img in imglist:
         # Rotate page not the image: we want landscape on screen
-        if iswider(img):
+        if is_wider(img):
             w, h = papersize_landscape
         else:
             w, h = papersize_portrait
