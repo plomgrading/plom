@@ -6,7 +6,7 @@
 import random
 from plom.db import PlomDB
 
-def buildExamDatabaseFromSpec(spec, dbFname):
+def buildExamDatabaseFromSpec(spec, examDB):
     """Build metadata for exams from spec and insert into the database.
 
     TODO: stop printing; this is a library call.
@@ -32,11 +32,10 @@ def buildExamDatabaseFromSpec(spec, dbFname):
                                 '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
                             }
                           }
-        dbFname {str} -- The name of the database we are creating.
+        db (database): the database to populate
     """
 
     random.seed(spec["privateSeed"])
-    examDB = PlomDB(dbFname)
 
     errFlag = False
     # Note: need to produce these in a particular order for random seed to be
