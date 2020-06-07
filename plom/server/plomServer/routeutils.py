@@ -18,11 +18,11 @@ def validate_required_fields(user_login_info, user_login_required_fields):
     """Check that input dict has (and only has) expected fields.
 
     Arguments:
-        user_login_info {dict} -- A user's login info.
-        user_login_required_fields {list} -- Required login fields.
+        user_login_info (dict): A user's login info.
+        user_login_required_fields (iterable): the required fields.
 
     Returns:
-        bool -- True/False.
+        bool: True iff the fields are present.
     """
 
     return set(user_login_info.keys()) == set(user_login_required_fields)
@@ -32,8 +32,8 @@ def log_request(request_name, request):
     """Logs the requests done by the server.
 
     Arguments:
-        request_name {Str} -- Name of the request function.
-        request {aiohttp.web_request.Request} -- The aiohttp request object.
+        request_name (str): Name of the request function.
+        request (aiohttp.web_request.Request): an `aiohttp` request object.
     """
     log.info("{} {} {}".format(request_name, request.method, request.rel_url))
 
@@ -47,32 +47,21 @@ def authenticate_by_token(f):
     boilerplate code.
 
     The function under decoration should be a class method with no
-    further arugments.
+    further arguments.
 
     The request input must contain the fields "user" and "token".  It
     must not contain any other fields: if this is not so, see the
-    `@authenticate_by_token_required_fields` decorator.
+    `@authenticate_by_token_required_fields` decorator instead.
 
     Arguments:
-        f {function} -- A method primarily from the class ManagerMessenger, IDHandler, TotalHandler, etc 
-                        to be decorated with token-based authentication.
+        f (function): a routing method associated with the Plom server.
 
     Returns:
-        class 'function' -- The original function wrapped with token-based authentication.
+        function: the input wrapped with token-based authentication.
     """
 
     @functools.wraps(f)
     async def wrapped(zelf, request):
-        """Wrapper function used for authentication.
-
-        Arguments:
-            request {aiohttp.web_request.Request} -- The aiohttp request object.
-                                                     The data in request must have the user and token
-                                                     fields.
-
-        Returns:
-            class 'function' -- The original function wrapped with token-based authentication.
-        """
         log_request(f.__name__, request)
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
@@ -88,8 +77,9 @@ def authenticate_by_token(f):
 def authenticate_by_token_required_fields(fields):
     """Decorator for field validation, authentication by token, and logging.
 
-    Return `web.Response(status=400)` if the input request does not
-    contain exactly the fields `Union(fields, ["user", "token"])`.
+    The decorated function returns `web.Response(status=400)` if the
+    input request does not contain exactly the fields
+    `Union(fields, ["user", "token"])`.
 
     Example
     -------
@@ -102,11 +92,13 @@ def authenticate_by_token_required_fields(fields):
     original request (don't try to take data from it again!)
 
     Arguments:
-        fields {list} -- A list of the fields for this request.
-                         Remember we must also add `user`, `token`.
+        f (function): the function to be decorated (TODO: not listed
+            above for some reason).
+        fields (iterable): The fields for this request.  `user` and
+            `token` will be added to this list.
 
     Returns:
-        class 'function' -- The original function wrapped with token-based authentication.
+        function: the original function wrapped with authentication.
     """
 
     fields.extend(["user", "token"])
@@ -114,16 +106,6 @@ def authenticate_by_token_required_fields(fields):
     def _decorate(f):
         @functools.wraps(f)
         async def wrapped(zelf, request):
-            """Wrapper function used for authentication.
-
-            Arguments:
-                request {aiohttp.web_request.Request} -- The aiohttp request object.
-                                                         The data in request must have the user and token
-                                                         fields.
-
-            Returns:
-                class 'function' -- The original function wrapped with token-based authentication.
-            """
             log_request(f.__name__, request)
             data = await request.json()
             log.debug("{} validating fields {}".format(f.__name__, fields))
@@ -143,26 +125,15 @@ def no_authentication_only_log_request(f):
     """Decorator for logging requests only.
 
     Arguments:
-        f {function} -- A method primarily from the class UserInitHandler to be 
-                        decorated with token-based authentication.
+        f (function): a routing method associated with the Plom server.
 
     Returns:
-        class 'function' -- The original function wrapped with token-based authentication.
+        function: the original wrapped with logging.
     """
 
     @functools.wraps(f)
     def wrapped(zelf, request):
-        """Wrapper function used for authentication.
-
-        Arguments:
-            request {aiohttp.web_request.Request} -- The aiohttp request object.
-                                                     The data in request must have the user and token
-                                                     fields.
-
-        Returns:
-            class 'function' -- The original function wrapped with token-based authentication.
-        """
         log_request(f.__name__, request)
         return f(zelf, request)
-    
+
     return wrapped
