@@ -8,7 +8,7 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import random
-from plom.db.examDB import *
+from plom.db import PlomDB
 
 
 def buildExamDatabase(spec, dbFname):

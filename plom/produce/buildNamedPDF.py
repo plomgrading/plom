@@ -14,7 +14,7 @@ from multiprocessing import Pool
 from tqdm import tqdm
 
 from plom import specdir
-from plom.db.examDB import PlomDB
+from plom.db import PlomDB
 from .mergeAndCodePages import make_PDF
 from . import paperdir
 
