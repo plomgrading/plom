@@ -1,18 +1,15 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2020 Colin B. Macdonald
 
 import random
 from plom.db import PlomDB
 
-
-def buildExamDatabase(spec, dbFname):
+def buildExamDatabaseFromSpec(spec, dbFname):
     """Build metadata for exams from spec and insert into the database.
+
+    TODO: stop printing; this is a library call.
 
     Arguments:
         spec {dict} -- The spec file for the database that is being setup.

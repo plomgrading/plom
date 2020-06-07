@@ -71,15 +71,15 @@ def parseAndVerifySpecification(fname):
 
 
 def buildDatabase(spec):
-    from plom.produce import buildPlomDB
+    from plom.db import buildExamDatabaseFromSpec
 
     if os.path.isfile(dbfile):
         print("Database already exists - aborting.")
         exit(1)
 
-    print("Creating plom database")
-    buildPlomDB.buildExamDatabase(spec, dbfile)
-    print("Database created successfully")
+    print("Populating Plom exam database")
+    buildExamDatabaseFromSpec(spec, dbfile)
+    print("Database populated successfully")
 
 
 def buildBlankPapers(spec):
