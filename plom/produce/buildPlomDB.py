@@ -43,6 +43,8 @@ def buildExamDatabase(spec, dbFname):
     examDB = PlomDB(dbFname)
 
     errFlag = False
+    # Note: need to produce these in a particular order for random seed to be
+    # reproducibile: so this really must be a loop, not a Pool.
     for t in range(1, spec["numberToProduce"] + 1):
         if examDB.createTest(t):
             print("DB entry for test {:04}:".format(t), end="")
