@@ -1,7 +1,7 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 
-from .routeutils import authByToken, authByToken_validFields
-from .routeutils import validFields
+from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
+from .routeutils import validate_required_fields
 
 
 class UploadHandler:
@@ -16,7 +16,7 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         param = await part0.json()
 
-        if not validFields(
+        if not validate_required_fields(
             param, ["user", "token", "test", "page", "version", "fileName", "md5sum"]
         ):
             return web.Response(status=400)
@@ -52,7 +52,7 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         param = await part0.json()
 
-        if not validFields(
+        if not validate_required_fields(
             param, ["user", "token", "sid", "question", "order", "fileName", "md5sum"]
         ):
             return web.Response(status=400)
@@ -84,7 +84,7 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         param = await part0.json()
 
-        if not validFields(
+        if not validate_required_fields(
             param, ["user", "token", "sid", "order", "fileName", "md5sum"]
         ):
             return web.Response(status=400)
@@ -111,7 +111,7 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         param = await part0.json()
 
-        if not validFields(param, ["user", "token", "fileName", "md5sum"]):
+        if not validate_required_fields(param, ["user", "token", "fileName", "md5sum"]):
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
             return web.Response(status=401)
@@ -134,7 +134,7 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 2 parts
         param = await part0.json()
 
-        if not validFields(
+        if not validate_required_fields(
             param, ["user", "token", "fileName", "md5sum", "test", "page", "version"]
         ):
             return web.Response(status=400)
@@ -163,7 +163,7 @@ class UploadHandler:
 
     async def replaceMissingTestPage(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "test", "page", "version"]):
+        if not validate_required_fields(data, ["user", "token", "test", "page", "version"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -183,7 +183,7 @@ class UploadHandler:
 
     async def replaceMissingHWQuestion(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "sid", "question"]):
+        if not validate_required_fields(data, ["user", "token", "sid", "question"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -200,7 +200,7 @@ class UploadHandler:
 
     async def removeScannedPage(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "test", "page", "version"]):
+        if not validate_required_fields(data, ["user", "token", "test", "page", "version"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -220,7 +220,7 @@ class UploadHandler:
 
     async def getUnknownPageNames(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token"]):
+        if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -232,7 +232,7 @@ class UploadHandler:
 
     async def getDiscardNames(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token"]):
+        if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -244,7 +244,7 @@ class UploadHandler:
 
     async def getCollidingPageNames(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token"]):
+        if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -256,7 +256,7 @@ class UploadHandler:
 
     async def getTPageImage(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "test", "page", "version"]):
+        if not validate_required_fields(data, ["user", "token", "test", "page", "version"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -271,7 +271,7 @@ class UploadHandler:
 
     async def getHWPageImage(self, request):  # should this use version too?
         data = await request.json()
-        if not validFields(data, ["user", "token", "test", "question", "order"]):
+        if not validate_required_fields(data, ["user", "token", "test", "question", "order"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -286,7 +286,7 @@ class UploadHandler:
 
     async def getXPageImage(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "test", "order"]):
+        if not validate_required_fields(data, ["user", "token", "test", "order"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -301,7 +301,7 @@ class UploadHandler:
 
     async def getUnknownImage(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "fileName"]):
+        if not validate_required_fields(data, ["user", "token", "fileName"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -316,7 +316,7 @@ class UploadHandler:
 
     async def getDiscardImage(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "fileName"]):
+        if not validate_required_fields(data, ["user", "token", "fileName"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -331,7 +331,7 @@ class UploadHandler:
 
     async def getCollidingImage(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "fileName"]):
+        if not validate_required_fields(data, ["user", "token", "fileName"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -345,7 +345,7 @@ class UploadHandler:
             return web.Response(status=404)
 
     # @route.get("/admin/questionImages")
-    @authByToken_validFields(["user", "test", "question"])
+    @authenticate_by_token_required_fields(["user", "test", "question"])
     def getQuestionImages(self, data, request):
         if not data["user"] == "manager":
             return web.Response(status=401)
@@ -361,7 +361,7 @@ class UploadHandler:
             return web.Response(status=404)  # couldnt find that test/question
 
     # @routes.get("/admin/testImages")
-    @authByToken_validFields(["user", "test"])
+    @authenticate_by_token_required_fields(["user", "test"])
     def getTestImages(self, data, request):
         if not data["user"] == "manager":
             return web.Response(status=401)
@@ -381,7 +381,7 @@ class UploadHandler:
 
     async def checkPage(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "test", "page", "images"]):
+        if not validate_required_fields(data, ["user", "token", "test", "page", "images"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -401,7 +401,7 @@ class UploadHandler:
 
     async def removeUnknownImage(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "fileName"]):
+        if not validate_required_fields(data, ["user", "token", "fileName"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -416,7 +416,7 @@ class UploadHandler:
 
     async def removeCollidingImage(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "fileName"]):
+        if not validate_required_fields(data, ["user", "token", "fileName"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -431,7 +431,7 @@ class UploadHandler:
 
     async def unknownToTestPage(self, request):
         data = await request.json()
-        if not validFields(
+        if not validate_required_fields(
             data, ["user", "token", "fileName", "test", "page", "rotation"]
         ):
             return web.Response(status=400)
@@ -450,7 +450,7 @@ class UploadHandler:
 
     async def unknownToExtraPage(self, request):
         data = await request.json()
-        if not validFields(
+        if not validate_required_fields(
             data, ["user", "token", "fileName", "test", "question", "rotation"]
         ):
             return web.Response(status=400)
@@ -469,7 +469,7 @@ class UploadHandler:
 
     async def collidingToTestPage(self, request):
         data = await request.json()
-        if not validFields(
+        if not validate_required_fields(
             data, ["user", "token", "fileName", "test", "page", "version"]
         ):
             return web.Response(status=400)
@@ -488,7 +488,7 @@ class UploadHandler:
 
     async def discardToUnknown(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token", "fileName"]):
+        if not validate_required_fields(data, ["user", "token", "fileName"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -503,7 +503,7 @@ class UploadHandler:
 
     async def processHWUploads(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token"]):
+        if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -517,7 +517,7 @@ class UploadHandler:
 
     async def processTUploads(self, request):
         data = await request.json()
-        if not validFields(data, ["user", "token"]):
+        if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
