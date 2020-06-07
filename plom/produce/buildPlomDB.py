@@ -78,7 +78,7 @@ def buildExamDatabase(spec, dbFname):
                 vstr = "v{}".format(v)
             else:
                 print(
-                    "ERROR - problem with specification - this should not happen!! Please check it carefully."
+                    'ERROR - problem with spec: expected "fix" or "shuffle" but got "{}".'.format(spec["question"][gs]["select"])
                 )
                 exit(1)
             if examDB.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
