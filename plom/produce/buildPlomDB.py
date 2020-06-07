@@ -8,7 +8,7 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import random
-from plom.db.examDB import *
+from plom.db import PlomDB
 
 
 def buildExamDatabase(spec, dbFname):
@@ -43,6 +43,8 @@ def buildExamDatabase(spec, dbFname):
     examDB = PlomDB(dbFname)
 
     errFlag = False
+    # Note: need to produce these in a particular order for random seed to be
+    # reproducibile: so this really must be a loop, not a Pool.
     for t in range(1, spec["numberToProduce"] + 1):
         if examDB.createTest(t):
             print("DB entry for test {:04}:".format(t), end="")
@@ -76,7 +78,7 @@ def buildExamDatabase(spec, dbFname):
                 vstr = "v{}".format(v)
             else:
                 print(
-                    "ERROR - problem with specification - this should not happen!! Please check it carefully."
+                    'ERROR - problem with spec: expected "fix" or "shuffle" but got "{}".'.format(spec["question"][gs]["select"])
                 )
                 exit(1)
             if examDB.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
