@@ -50,6 +50,27 @@ class ManagerMessenger(BaseMessenger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def TriggerPopulateDB(self, force=False):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/DEV/admin/populateDB".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
     def RgetCompletions(self):
         self.SRmutex.acquire()
         try:

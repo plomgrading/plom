@@ -1,7 +1,7 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
-from .routeutils import validate_required_fields
+from .routeutils import validate_required_fields, log
 
 
 class UploadHandler:
@@ -529,6 +529,29 @@ class UploadHandler:
             rval[1], status=200
         )  # all fine - report number of tests updated
 
+    @authenticate_by_token_required_fields(["user"])
+    def populateExamDatabase(self, data, request):
+        """TODO summary.
+
+        TODO: maybe the api call should just be for one row of the database.
+
+        TODO: or maybe we can pass the page-to-version mapping to this?
+        """
+        if not data["user"] == "manager":
+            return web.Response(status=400)  # malformed request.
+
+        # TODO: should ensure its empty, or require some "force" flag otherwise?
+        #force_flag = request.match_info["force"]
+
+        from plom.db import buildExamDatabaseFromSpec
+        # TODO needs some return or try except
+        # TODO this is not the design we have elsewhere, should call helper function
+        buildExamDatabaseFromSpec(self.server.testSpec, self.server.DB)
+        if True:
+            return web.json_response(True, status=200)  # all is fine
+        else:
+            return web.Response(status=404)
+
     def setUpRoutes(self, router):
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/hwPages", self.uploadHWPage)
@@ -558,3 +581,4 @@ class UploadHandler:
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
         router.add_put("/admin/hwPagesUploaded", self.processHWUploads)
         router.add_put("/admin/testPagesUploaded", self.processHWUploads)
+        router.add_put("/DEV/admin/populateDB", self.populateExamDatabase)
