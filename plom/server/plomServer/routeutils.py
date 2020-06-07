@@ -39,10 +39,10 @@ def log_request(request_name, request):
 
 
 # TODO: try to work the @routes decorator in too
-def authenticate_by_token(function):
+def authenticate_by_token(f):
     """Decorator for authentication by token, logging and field validation.
 
-    This deals with authenication and logging so your function doesn't
+    This deals with authentication and logging so your function doesn't
     have too.  This is essentially a way to avoid copy-pasting lots of
     boilerplate code.
 
@@ -54,15 +54,14 @@ def authenticate_by_token(function):
     `@authenticate_by_token_required_fields` decorator.
 
     Arguments:
-        function {function} -- A function primarily from ManagerMessenger, IDHandler, TotalHandler, etc 
-                               that required authentication in order to operate.
+        f {function} -- A method primarily from the class ManagerMessenger, IDHandler, TotalHandler, etc 
+                        to be decorated with token-based authentication.
 
     Returns:
-        class 'function' -- TODO: Not sure but I believe this is a the input function wrapped
-                            into an authentication function.
+        class 'function' -- The original function wrapped with token-based authentication.
     """
 
-    @functools.wraps(function)
+    @functools.wraps(f)
     async def wrapped(zelf, request):
         """Wrapper function used for authentication.
 
@@ -72,17 +71,16 @@ def authenticate_by_token(function):
                                                      fields.
 
         Returns:
-            class 'function' -- TODO: Not sure but I believe this is a the input function wrapped
-                                into an authentication function.
+            class 'function' -- The original function wrapped with token-based authentication.
         """
-        log_request(function.__name__, request)
+        log_request(f.__name__, request)
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
         if not zelf.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
-        log.debug('{} authenticated "{}" via token'.format(function.__name__, data["user"]))
-        return function(zelf)
+        log.debug('{} authenticated "{}" via token'.format(f.__name__, data["user"]))
+        return f(zelf)
 
     return wrapped
 
@@ -108,14 +106,13 @@ def authenticate_by_token_required_fields(fields):
                          Remember we must also add `user`, `token`.
 
     Returns:
-        class 'function' -- TODO: Not sure but I believe this is a the input function wrapped
-                            into an authentication function.
+        class 'function' -- The original function wrapped with token-based authentication.
     """
 
     fields.extend(["user", "token"])
 
-    def _decorate(function):
-        @functools.wraps(function)
+    def _decorate(f):
+        @functools.wraps(f)
         async def wrapped(zelf, request):
             """Wrapper function used for authentication.
 
@@ -125,49 +122,47 @@ def authenticate_by_token_required_fields(fields):
                                                          fields.
 
             Returns:
-                class 'function' -- TODO: Not sure but I believe this is a the input function wrapped
-                                    into an authentication function.
+                class 'function' -- The original function wrapped with token-based authentication.
             """
-            log_request(function.__name__, request)
+            log_request(f.__name__, request)
             data = await request.json()
-            log.debug("{} validating fields {}".format(function.__name__, fields))
+            log.debug("{} validating fields {}".format(f.__name__, fields))
             if not validate_required_fields(data, fields):
                 return web.Response(status=400)
             if not zelf.server.validate(data["user"], data["token"]):
                 return web.Response(status=401)
-            log.debug('{} authenticated "{}" via token'.format(function.__name__, data["user"]))
-            return function(zelf, data, request)
+            log.debug('{} authenticated "{}" via token'.format(f.__name__, data["user"]))
+            return f(zelf, data, request)
 
         return wrapped
 
     return _decorate
 
 
-def no_authentication_only_log_request(function):
+def no_authentication_only_log_request(f):
     """Decorator for logging requests only.
 
     Arguments:
-        function {function} -- A function primarily from UserInitHandler etc 
-                               that required authentication in order to operate.
+        f {function} -- A method primarily from the class UserInitHandler to be 
+                        decorated with token-based authentication.
 
     Returns:
-        class 'function' -- TODO: Not sure but I believe this is a the input function wrapped
-                            into an authentication function.
+        class 'function' -- The original function wrapped with token-based authentication.
     """
 
-    @functools.wraps(function)
+    @functools.wraps(f)
     def wrapped(zelf, request):
         """Wrapper function used for authentication.
 
         Arguments:
             request {aiohttp.web_request.Request} -- The aiohttp request object.
-                                                         The data in request must have the user and token
-                                                         fields.
+                                                     The data in request must have the user and token
+                                                     fields.
 
         Returns:
-            class 'function' -- TODO: Not sure but I believe this is a the input function wrapped
-                                into an authentication function.
+            class 'function' -- The original function wrapped with token-based authentication.
         """
-        log_request(function.__name__, request)
-        return function(zelf, request)
+        log_request(f.__name__, request)
+        return f(zelf, request)
+    
     return wrapped
