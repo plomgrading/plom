@@ -12,8 +12,7 @@ from plom.db.examDB import *
 
 
 def buildExamDatabase(spec, dbFname):
-    """Build the metadata for a bunch of exams from a spec file
-    and inserts all into the database.
+    """Build metadata for exams from spec and insert into the database.
 
     Arguments:
         spec {dict} -- The spec file for the database that is being setup.
