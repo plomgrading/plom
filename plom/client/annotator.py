@@ -367,6 +367,9 @@ class Annotator(QWidget):
         else:
             self.markHandler.resetAndMaybeChange(self.maxMark, self.markStyle)
 
+        # update the displayed score - fixes #843
+        self.changeMark(self.score)
+
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
             self.unpickleIt(plomDict)
