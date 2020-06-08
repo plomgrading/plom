@@ -1055,7 +1055,11 @@ class Manager(QWidget):
             if srw.exec_() == QDialog.Accepted:
                 self.IDrectangle = srw.rectangle
                 self.IDwhichFile = srw.whichFile
-                self.ui.predictButton.setEnabled(True)
+                if self.IDrectangle is None:   # We do not allow the IDReader to run if no rectangle is selected (this would cause a crash)
+                    self.ui.predictButton.setEnabled(False)
+                else:
+                    self.ui.predictButton.setEnabled(True)
+                
 
     def viewIDPage(self):
         idi = self.ui.predictionTW.selectedIndexes()
