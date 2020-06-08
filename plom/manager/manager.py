@@ -1139,7 +1139,6 @@ class Manager(QWidget):
             return
         # returns [True] or [False, message]
         rval = managerMessenger.IDdeletePredictions()
-        print(rval)
         if rval[0] is False:  # some sort of problem, show returned message
             ErrorMessage(rval[1]).exec_()
         else:
