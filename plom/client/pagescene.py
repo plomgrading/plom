@@ -18,7 +18,7 @@ from PyQt5.QtGui import (
     QPixmap,
     QTransform,
     QFont,
-)
+    QImage)
 from PyQt5.QtWidgets import (
     QGraphicsEllipseItem,
     QGraphicsItemGroup,
@@ -29,7 +29,7 @@ from PyQt5.QtWidgets import (
     QGraphicsScene,
     QUndoStack,
     QGraphicsTextItem,
-)
+    QFileDialog, QGraphicsItem)
 
 from plom import ScenePixelHeight
 from plom import AnnFontSizePts
@@ -143,6 +143,7 @@ mousePress = {
     "text": "mousePressText",
     "tick": "mousePressTick",
     "zoom": "mousePressZoom",
+    "image": "mousePressImage",
 }
 mouseMove = {
     "box": "mouseMoveBox",
@@ -152,6 +153,7 @@ mouseMove = {
     "comment": "mouseMoveComment",
     "delta": "mouseMoveDelta",
     "zoom": "mouseMoveZoom",
+    "image": "mouseMoveImage",
 }
 mouseRelease = {
     "box": "mouseReleaseBox",
@@ -161,6 +163,7 @@ mouseRelease = {
     "pen": "mouseReleasePen",
     "pan": "mouseReleasePan",
     "zoom": "mouseReleaseZoom",
+    "image": "mouseReleaseImage",
 }
 
 
@@ -221,6 +224,7 @@ class PageScene(QGraphicsScene):
         self.zoomBoxItem = QGraphicsRectItem()
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
+        self.imageItem = QGraphicsPixmapItem
         self.blurb = TextItem(self, self.fontSize)
         self.deleteItem = None
         # Add a ghost comment to scene, but make it invisible
@@ -239,6 +243,7 @@ class PageScene(QGraphicsScene):
         self.addItem(self.scoreBox)
         # make a box around the scorebox where mouse-press-event won't work.
         self.avoidBox = self.scoreBox.boundingRect().adjusted(0, 0, 24, 24)
+        self.tempImage = None
 
     # def patchImagesTogether(self, imageList):
     #     x = 0
@@ -539,6 +544,53 @@ class PageScene(QGraphicsScene):
         self.views()[0].setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
         self.views()[0].zoomNull()
+
+    def mousePressImage(self, event):
+        """
+
+        Args:
+            event:
+
+        Returns:
+
+        """
+        if self.tempImage is not None:
+            currentPos = event.scenePos()
+            Image = QImage(self.tempImage)
+            pixMap = QGraphicsPixmapItem(QPixmap.fromImage(Image))
+            pixMap.setPos(currentPos)
+            pixMap.setFlag(QGraphicsItem.ItemIsMovable)
+            pixMap.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+            self.addItem(pixMap)
+            self.mode = "move"
+            self.tempImage = None
+        else:
+            self.currentPos = event.scenePos()
+            self.imageItem = self.itemAt(event.scenePos(), QTransform())
+
+    def mouseMoveImage(self, event):
+        """
+        TODO: FINISH METHOD
+        Args:
+            event:
+
+        Returns:
+
+        """
+        print(str(event.scenePos()))
+
+
+    def mouseReleaseImage(self, event):
+        """
+        TODO: FINISH METHOD
+        Args:
+            event:
+
+        Returns:
+
+        """
+        self.imageItem.setPos(event.scenePos())
+
 
     # Handle drag / drop events
     def dragEnterEvent(self, e):
@@ -1306,3 +1358,5 @@ class PageScene(QGraphicsScene):
             self, br.center() + br.topRight() / 8, delta, self.blurb, self.fontSize
         )
         self.undoStack.push(command)
+
+

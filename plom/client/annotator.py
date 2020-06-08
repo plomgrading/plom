@@ -22,7 +22,7 @@ from PyQt5.QtGui import (
     QIcon,
     QKeySequence,
     QPixmap,
-)
+    QImage)
 from PyQt5.QtWidgets import (
     QDialog,
     QWidget,
@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QShortcut,
     QToolButton,
-)
+    QFileDialog)
 
 from .comment_list import CommentWidget
 
@@ -814,7 +814,7 @@ class Annotator(QWidget):
             self.key_codes.get(event.key(), lambda *args: None)()
         super(Annotator, self).keyPressEvent(event)
 
-    def setToolMode(self, newMode, newCursor):
+    def setToolMode(self, newMode, newCursor, imagePath=None):
         """
         Changes the current tool mode and cursor.
 
@@ -851,6 +851,9 @@ class Annotator(QWidget):
         else:
             # this should also not happen - except by strange async race issues. So we don't change anything.
             pass
+
+        if imagePath is not None:
+            self.scene.tempImage = imagePath
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
             self.scene.setMode(newMode)
@@ -1088,6 +1091,16 @@ class Annotator(QWidget):
         else:
             self.loadModes.get(mode, lambda *args: None)()
 
+    def addImageMode(self):
+        options = QFileDialog.Options()
+        fileName, _ = QFileDialog.getOpenFileName(self, 'Open file',
+                                                      'c:\\',
+                                                  "Image files (*.jpg *.gif "
+                                                  "*.png *.xpm" 
+                                                  ")")
+        self.setToolMode("image", Qt.ClosedHandCursor, fileName)
+
+
     def setButtons(self):
         """ Connects buttons to their corresponding functions. """
         # List of tool buttons, the corresponding modes and cursor shapes
@@ -1103,6 +1116,8 @@ class Annotator(QWidget):
         self.ui.zoomButton.clicked.connect(self.zoomMode)
         # Also the "hidden" delta-button
         self.ui.deltaButton.clicked.connect(self.deltaButtonMode)
+
+        self.ui.uploadImage.clicked.connect(self.addImageMode)
 
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.undo)

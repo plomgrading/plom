@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'qtCreatorFiles/ui_annotator_rhm.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.2
+# Created by: PyQt5 UI code generator 5.14.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -205,6 +205,9 @@ class Ui_annotator_rhm(object):
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem1)
         self.verticalLayout.addWidget(self.frame_5)
+        self.uploadImage = QtWidgets.QPushButton(self.hideableBox)
+        self.uploadImage.setObjectName("uploadImage")
+        self.verticalLayout.addWidget(self.uploadImage)
         self.frame_3 = QtWidgets.QFrame(self.hideableBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -329,4 +332,5 @@ class Ui_annotator_rhm(object):
         self.boxButton.setText(_translate("annotator_rhm", "..."))
         self.modeLabel.setText(_translate("annotator_rhm", "mode: comment"))
         self.noAnswerButton.setText(_translate("annotator_rhm", "No answer given"))
+        self.uploadImage.setText(_translate("annotator_rhm", "Upload Image"))
         self.deltaButton.setText(_translate("annotator_rhm", "..."))
