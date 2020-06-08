@@ -1762,7 +1762,7 @@ class MarkerClient(QWidget):
             if self.examModel.countReadyToMark() == 0:
                 self.requestNextInBackgroundStart()
 
-        return initialData
+        return data
 
     def PermuteAndGetSamePaper(self, task, imageList):
         """
