@@ -21,6 +21,14 @@ from plom.finish import CSVFilename
 
 
 def import_canvas_csv(canvas_fromfile):
+    """Imports a student information from canvas.
+
+    Args:
+        canvas_fromfile (str): name of the csv file from Canvas.
+
+    Returns:
+        pandas.DataFrame : dataframe of the student information from the Canvas csv file.
+    """
     df = pandas.read_csv(canvas_fromfile, dtype="object")
     print('Loading from Canvas csv file: "{0}"'.format(canvas_fromfile))
 
@@ -51,6 +59,19 @@ def import_canvas_csv(canvas_fromfile):
 
 
 def find_partial_column_name(df, parthead, atStart=True):
+    """[summary]
+
+    Args:
+        df (pandas.DataFrame): the dataframe that we get the column from.
+        parthead (str): the first part of the column name(s) we are interested.
+        atStart (bool, optional): if True we search for parthead from the begining of the column name, if False then parthead can be anywhere in the column name. Defaults to True.
+
+    Raises:
+        ValueError: If there are no possible matches (or no unique matches).
+
+    Returns:
+        pandas.DataFrame: the column(s) we are interested in.
+    """
     parthead = parthead.lower()
     if atStart:
         print('Searching for column starting with "{0}":'.format(parthead))
@@ -69,6 +90,16 @@ def find_partial_column_name(df, parthead, atStart=True):
 
 
 def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead="Test"):
+    """Makes a 
+
+    Args:
+        canvas_fromfile (str): name of the csv file containing student information from canvas.
+        canvas_tofile (str): name of the csv file we are writing the marks to.
+        test_parthead (bool, optional): if True we search for parthead from the begining of the column name, if False then parthead can be anywhere in the column name. Defaults to True.
+
+    Returns:
+        pandas.DataFrame : the dataframe with student information (it is also written to a csv).
+    """
     print("*** Generating Grade Spreadsheet ***")
     df = import_canvas_csv(canvas_fromfile)
 
@@ -199,6 +230,19 @@ def csv_add_salted_return_codes(csvin, csvout, saltstr, idcol):
 
 
 def canvas_csv_add_return_codes(csvin, csvout, saltstr):
+    """Adds or replaces the return codes to the canvas csv.
+
+    Args:
+        csvin (str): the name of the csv file to read in from canvas.
+        csvout (str): the name of the output csv file when we are done.
+        saltstr (str): the string to salt the student numbers.
+
+    Raises:
+        ValueError: if the canvas return code is present but not correct.
+
+    Returns:
+        dict : student number (str) -> hashed code.
+    """
     print("*** Generating Return Codes Spreadsheet ***")
     df = import_canvas_csv(csvin)
 
@@ -270,6 +314,11 @@ def canvas_csv_add_return_codes(csvin, csvout, saltstr):
 
 
 def canvas_csv_check_pdf(sns):
+    """Checks that each returned paper has a corresponding student number in the canvas files.
+
+    Args:
+        sns (): student number (str) -> hashed code.
+    """
     print(
         "Checking that each codedReturn paper has a corresponding student in the canvas sheet..."
     )
