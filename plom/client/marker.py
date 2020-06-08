@@ -1747,12 +1747,12 @@ class MarkerClient(QWidget):
             return False
         tgvID = self.prxM.getPrefix(row)
 
-        data = self.getDataForAnnotator(tgv)
+        data = self.getDataForAnnotator(tgvID)
         # make sure getDataForAnnotator did not fail
         if data is None:
             return
 
-        assert tgv[1:] == data[0]
+        assert tgvID[1:] == data[0]
         pdict = data[-1]
         assert pdict is None, "Annotator should not pull a regrade"
 
@@ -1762,7 +1762,7 @@ class MarkerClient(QWidget):
             if self.examModel.countReadyToMark() == 0:
                 self.requestNextInBackgroundStart()
 
-        return initialData
+        return data
 
     def PermuteAndGetSamePaper(self, task, imageList):
         """
