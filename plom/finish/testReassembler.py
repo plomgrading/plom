@@ -50,7 +50,6 @@ def reassemble(outname, shortName, sid, coverfname, imglist):
     [1] https://gitlab.math.ubc.ca/andrewr/MLP/issues/392
 
     """
-    print(type(imglist))
     if os.path.isfile(outname):
         return False
 
