@@ -14,12 +14,11 @@ from plom.produce import paperdir
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import *
 
-dbfile = os.path.join(specdir, "plom.db")
-
 # todo: support both direct DB file or via server?
 # TODO or remove?
 def _buildDatabase(spec):
     from plom.db import buildExamDatabaseFromSpec, PlomDB
+    dbfile = os.path.join(specdir, "plom.db")
 
     if os.path.isfile(dbfile):
         print("Database already exists - aborting.")
@@ -64,9 +63,6 @@ def buildNamedPapers(spec, pvmap):
         )
 
     build_all_papers(spec, pvmap, named=True)
-    print("Checking papers produced and updating databases")
-    confirm_processed(spec, dbfile)
-    confirm_named(spec, dbfile)
 
 
 def buildDatabaseAndPapers(server=None, password=None, localonly=False):
@@ -84,6 +80,11 @@ def buildDatabaseAndPapers(server=None, password=None, localonly=False):
 
     os.makedirs(paperdir, exist_ok=True)
     buildNamedPapers(spec, pvmap)
+
+    print("Checking papers produced and updating databases")
+    dbfile = os.path.join(specdir, "plom.db")
+    confirm_processed(spec, dbfile)
+    confirm_named(spec, dbfile)
 
 
 def serverBuildDatabase(server=None, password=None):
