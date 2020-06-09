@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (
     QUndoStack,
 )
 
-from plom import AnnFontSizePts
+from plom import AnnFontSizePts, ScenePixelHeight
 
 # Import all the tool commands for undo/redo stack.
 from .tools import *
