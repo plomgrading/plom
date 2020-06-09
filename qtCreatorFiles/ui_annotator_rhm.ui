@@ -632,13 +632,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="uploadImage">
-        <property name="text">
-         <string>Upload Image</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QFrame" name="frame_3">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
