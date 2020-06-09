@@ -568,6 +568,13 @@ class PageScene(QGraphicsScene):
             self.currentPos = event.scenePos()
             self.imageItem = self.itemAt(event.scenePos(), QTransform())
 
+    def mouseMoveImage(self, event):
+        pass
+
+    def mouseReleaseImage(self, event):
+        pass
+
+
     # Handle drag / drop events
     def dragEnterEvent(self, e):
         if e.mimeData().hasFormat("text/plain"):
