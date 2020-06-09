@@ -89,7 +89,7 @@ def build_all_papers(spec, global_page_version_map, named=False):
                           }
                        }
         global_page_version_map (dict): dict of dicts mapping first by
-            paper number then by page number to version.
+            paper number (int) then by page number (int) to version (int).
 
     Keyword Arguments:
         named {boolean} -- Whether the document is named or not. (default: {False})

@@ -90,7 +90,14 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        return response.json()
+        #import pickle
+        #return pickle.loads(response.json())
+        # ^&#king JSON mucks up dict keys
+        d = response.json()
+        dd = {}
+        for k, v in d.items():
+            dd[int(k)] = {int(kk): vv for kk, vv in v.items()}
+        return dd
 
     def RgetCompletions(self):
         self.SRmutex.acquire()

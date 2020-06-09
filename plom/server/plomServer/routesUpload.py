@@ -556,7 +556,12 @@ class UploadHandler:
     # TODO: why can't I use authenticate_by_token decorator?
     @authenticate_by_token_required_fields([])
     def getPageVersionMap(self, data, request):
-        """Get the mapping between page number and version for one test."""
+        """Get the mapping between page number and version for one test.
+
+        Returns:
+            dict: keyed by page number.  Note keys are strings b/c of
+                json limitations; you may want to convert back to int.
+        """
         spec = self.server.testSpec
         paper_idx = request.match_info["t"]
         ver = self.server.DB.getPageVersions(paper_idx)
@@ -571,7 +576,8 @@ class UploadHandler:
 
         Returns:
             dict: dict of dicts, keyed first by paper index then by page
-                number.
+                number.  Both keys are strings b/c of json limitations;
+                you may need to iterate and convert back to int.
         """
         spec = self.server.testSpec
         vers = {}
@@ -580,6 +586,9 @@ class UploadHandler:
             #if not ver:
             #    TODO return 500
             vers[paper_idx] = ver
+        # TODO: json converts int keys to strings
+        #import pickle
+        #return web.json_response(str(pickle.dumps(vers)), status=200)
         return web.json_response(vers, status=200)
 
     def setUpRoutes(self, router):

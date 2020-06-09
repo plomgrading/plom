@@ -496,8 +496,8 @@ class PlomDB:
             t (int): a paper number.
 
         Returns:
-            dict: keys are page numbers and value is the page version,
-                or empty dict is there was no such paper.
+            dict: keys are page numbers (int) and value is the page
+                version (int), or empty dict if there was no such paper.
         """
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
