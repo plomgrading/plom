@@ -1,7 +1,11 @@
 from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt
 from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
-from PyQt5.QtWidgets import QUndoCommand, QGraphicsObject, QGraphicsPathItem, \
-    QGraphicsItem
+from PyQt5.QtWidgets import (
+    QUndoCommand,
+    QGraphicsObject,
+    QGraphicsPathItem,
+    QGraphicsItem,
+)
 
 from plom.client.tools import CommandMoveItem
 

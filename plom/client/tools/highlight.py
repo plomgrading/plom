@@ -1,7 +1,11 @@
 from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt
 from PyQt5.QtGui import QPen, QColor, QBrush
-from PyQt5.QtWidgets import QUndoCommand, QGraphicsObject, QGraphicsPathItem, \
-    QGraphicsItem
+from PyQt5.QtWidgets import (
+    QUndoCommand,
+    QGraphicsObject,
+    QGraphicsPathItem,
+    QGraphicsItem,
+)
 
 from plom.client.tools import log
 from plom.client.tools.move import CommandMoveItem
@@ -87,7 +91,9 @@ class HighLightItem(QGraphicsPathItem):
                 if e.isLineTo():
                     pth.append(["l", e.x + self.x(), e.y + self.y()])
                 else:
-                    log.error("Problem pickling highlightitem path {}".format(self.path))
+                    log.error(
+                        "Problem pickling highlightitem path {}".format(self.path)
+                    )
         return ["Highlight", pth]
 
     def paint(self, painter, option, widget):

@@ -2,8 +2,12 @@ from math import sqrt
 
 from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
-from PyQt5.QtWidgets import QUndoCommand, QGraphicsObject, QGraphicsPathItem, \
-    QGraphicsItem
+from PyQt5.QtWidgets import (
+    QUndoCommand,
+    QGraphicsObject,
+    QGraphicsPathItem,
+    QGraphicsItem,
+)
 
 from plom.client.tools.move import CommandMoveItem
 

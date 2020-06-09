@@ -42,7 +42,7 @@ class DeltaItem(QGraphicsTextItem):
         self.setPlainText(" {} ".format(self.delta))
         self.font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        self.font.setPointSizeF(1.25*fontsize)
+        self.font.setPointSizeF(1.25 * fontsize)
         self.setFont(self.font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
@@ -124,7 +124,7 @@ class GhostDelta(QGraphicsTextItem):
         self.setPlainText(" {} ".format(self.delta))
         self.font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        self.font.setPointSizeF(1.25*fontsize)
+        self.font.setPointSizeF(1.25 * fontsize)
         self.setFont(self.font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)

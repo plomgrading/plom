@@ -29,8 +29,7 @@ class CommandDelete(QUndoCommand):
         if self.deleteItem.animator is not None:
             for X in self.deleteItem.animator:
                 X.flash_undo()
-            QTimer.singleShot(200,
-                              lambda: self.scene.removeItem(self.deleteItem))
+            QTimer.singleShot(200, lambda: self.scene.removeItem(self.deleteItem))
         else:
             self.scene.removeItem(self.deleteItem)
 

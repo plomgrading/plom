@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItem
 
+
 class CommandMoveItem(QUndoCommand):
     # Moves the graphicsitem. we give it an ID so it can be merged with other
     # commandmoves on the undo-stack.
