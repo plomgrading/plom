@@ -166,6 +166,8 @@ def confirm_processed(spec, DB_file_name):
 def confirm_named(spec, DB_file_name):
     """Confirms that each paper in the spec has a corresponding PDF present.
 
+    TODO: also identifies them?!  Poor name "confirm" if so...
+
     Arguments:
         spec {dict} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
                           Example: See description for build_all_papers
