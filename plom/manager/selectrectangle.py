@@ -60,7 +60,7 @@ class SelectRectangleWindow(QDialog):
         self.maxNormB = QPushButton("&max/norm")
 
         self.cancelB.clicked.connect(self.reject)
-        self.acceptB.clicked.connect(self.accept)
+        self.acceptB.clicked.connect(self.accept_and_check)
         # self.resetB.clicked.connect(lambda: self.view.resetView())
         self.maxNormB.clicked.connect(self.swapMaxNorm)
         self.zoomB.clicked.connect(self.zoomTool)
@@ -83,6 +83,12 @@ class SelectRectangleWindow(QDialog):
         self.show()
 
         self.rectB.animateClick()
+
+    def accept_and_check(self):
+        """Checks and accepts only if there is a valid rectangle."""
+        if not self.rectangle is None:
+            # if the user has selected a valid rectangle then we accept it, otherwise do nothing.
+            self.accept()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
