@@ -47,13 +47,6 @@ def _buildDatabase(spec):
     return vers
 
 
-def buildBlankPapers(spec):
-    print("Building blank papers")
-    build_all_papers(spec, dbfile)
-    print("Checking papers produced and updating databases")
-    confirm_processed(spec, dbfile)
-
-
 def buildNamedPapers(spec, pvmap):
     if spec["numberToName"] > 0:
         print(
@@ -76,20 +69,12 @@ def buildNamedPapers(spec, pvmap):
     confirm_named(spec, dbfile)
 
 
-def buildDatabaseAndPapers(server=None, password=None, blank=False, localonly=False):
+def buildDatabaseAndPapers(server=None, password=None, localonly=False):
     print("Reading specification")
     if not os.path.isfile(os.path.join(specdir, "verifiedSpec.toml")):
         print('Cannot find verified specFile - have you run "plom-build parse" yet?')
         exit(1)
     spec = SpecParser().spec
-
-    if blank == "true" and spec["numberToName"] > 0:
-        print(
-            ">>> WARNING <<< "
-            "Your spec says to produce {} named-papers, but you have run with the '--blank' option. Building unnamed papers.".format(
-                spec["numberToName"]
-            )
-        )
 
     if localonly:
         pvmap = _buildDatabase(spec)
@@ -98,11 +83,7 @@ def buildDatabaseAndPapers(server=None, password=None, blank=False, localonly=Fa
         pvmap = getPageVersionMap(server, password)
 
     os.makedirs(paperdir, exist_ok=True)
-
-    if blank:
-        buildBlankPapers(spec)
-    else:
-        buildNamedPapers(spec, pvmap)
+    buildNamedPapers(spec, pvmap)
 
 
 def serverBuildDatabase(server=None, password=None):

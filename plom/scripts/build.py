@@ -123,12 +123,6 @@ spB = sub.add_parser(
 spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
 spB.add_argument(
-    "-b",
-    "--blank",
-    action="store_true",
-    help="Force building only blank papers, ignoring spec",
-)
-spB.add_argument(
     "--local",
     action="store_true",
     help="Build locally without talking to server (NOT RECOMMENDED except for "
@@ -162,7 +156,7 @@ def main():
         # process the class list and copy into place
         process_class_list(args.classlist, args.demo)
     elif args.command == "make":
-        buildDatabaseAndPapers(args.server, args.password, args.blank, args.local)
+        buildDatabaseAndPapers(args.server, args.password, args.local)
     else:
         # no command given so print help.
         parser.print_help()
