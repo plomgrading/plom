@@ -68,9 +68,7 @@ def sigint_handler(*args):
 
 def main():
     parser = argparse.ArgumentParser(description="Plom management tasks.")
-    parser.add_argument(
-        "--version", action="version", version="%(prog)s " + __version__
-    )
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
     parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
     parser.add_argument(
         "-s",
