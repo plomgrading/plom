@@ -801,7 +801,4 @@
  </widget>
  <resources/>
  <connections/>
- <slots>
-  <slot>uploadImage()</slot>
- </slots>
 </ui>
