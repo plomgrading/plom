@@ -1094,15 +1094,6 @@ class Annotator(QWidget):
         else:
             self.loadModes.get(mode, lambda *args: None)()
 
-    def addImageMode(self):
-        options = QFileDialog.Options()
-        fileName, _ = QFileDialog.getOpenFileName(self, 'Open file',
-                                                      'c:\\',
-                                                  "Image files (*.jpg *.gif "
-                                                  "*.png *.xpm" 
-                                                  ")")
-        self.setToolMode("image", Qt.ClosedHandCursor, fileName)
-
 
     def setButtons(self):
         """ Connects buttons to their corresponding functions. """
@@ -1119,8 +1110,6 @@ class Annotator(QWidget):
         self.ui.zoomButton.clicked.connect(self.zoomMode)
         # Also the "hidden" delta-button
         self.ui.deltaButton.clicked.connect(self.deltaButtonMode)
-
-        self.ui.uploadImage.clicked.connect(self.addImageMode)
 
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.undo)
