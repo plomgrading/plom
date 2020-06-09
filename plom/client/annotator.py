@@ -22,7 +22,7 @@ from PyQt5.QtGui import (
     QIcon,
     QKeySequence,
     QPixmap,
-    QImage)
+)
 from PyQt5.QtWidgets import (
     QDialog,
     QWidget,
@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QShortcut,
     QToolButton,
-    QFileDialog)
+)
 
 from .comment_list import CommentWidget
 
@@ -817,7 +817,7 @@ class Annotator(QWidget):
             self.key_codes.get(event.key(), lambda *args: None)()
         super(Annotator, self).keyPressEvent(event)
 
-    def setToolMode(self, newMode, newCursor, imagePath=None):
+    def setToolMode(self, newMode, newCursor):
         """
         Changes the current tool mode and cursor.
 
@@ -855,8 +855,6 @@ class Annotator(QWidget):
             # this should also not happen - except by strange async race issues. So we don't change anything.
             pass
 
-        if imagePath is not None:
-            self.scene.tempImage = imagePath
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
             self.scene.setMode(newMode)
