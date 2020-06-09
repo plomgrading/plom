@@ -50,7 +50,7 @@ def main():
 
     subprocess.check_call(split("plom-build new --demo"))
     subprocess.check_call(split("plom-build class --demo"))
-    subprocess.check_call(split("plom-build make"))
+    subprocess.check_call(split("plom-build make --local"))
     subprocess.check_call(split("plom-fake-scribbles"))
     subprocess.check_call(split("plom-server init"))
     subprocess.check_call(split("plom-server users --demo"))

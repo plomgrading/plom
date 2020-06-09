@@ -10,7 +10,6 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
-import shutil
 
 # import tools for dealing with resource files
 import pkg_resources
@@ -18,9 +17,8 @@ import pkg_resources
 from plom import __version__
 from plom import SpecVerifier, SpecParser
 from plom import specdir
-from plom.produce import build_all_papers, confirm_processed, confirm_named
-from plom.produce import paperdir
 from plom.produce import process_class_list
+from plom.produce import buildDatabaseAndPapers
 from plom.produce.demotools import buildDemoSourceFiles
 
 
@@ -68,72 +66,6 @@ def parseAndVerifySpecification(fname):
         print(
             'Your spec indicates that you wish to print named papers.\nPlease process your class list using "plom-build class ".'
         )
-
-
-def buildDatabase(spec):
-    from plom.db import buildExamDatabaseFromSpec, PlomDB
-
-    if os.path.isfile(dbfile):
-        print("Database already exists - aborting.")
-        exit(1)
-
-    print("Populating Plom exam database")
-    DB = PlomDB(dbfile)
-    buildExamDatabaseFromSpec(spec, DB)
-    print("Database populated successfully")
-
-
-def buildBlankPapers(spec):
-    print("Building blank papers")
-    build_all_papers(spec, dbfile)
-    print("Checking papers produced and updating databases")
-    confirm_processed(spec, dbfile)
-
-
-def buildNamedPapers(spec):
-    if spec["numberToName"] > 0:
-        print(
-            'Building {} pre-named papers and {} blank papers in "{}"...'.format(
-                spec["numberToName"],
-                spec["numberToProduce"] - spec["numberToName"],
-                paperdir,
-            )
-        )
-    else:
-        print(
-            'Building {} blank papers in "{}"...'.format(
-                spec["numberToProduce"], paperdir
-            )
-        )
-
-    build_all_papers(spec, dbfile, named=True)
-    print("Checking papers produced and updating databases")
-    confirm_processed(spec, dbfile)
-    confirm_named(spec, dbfile)
-
-
-def buildDatabaseAndPapers(blank):
-    print("Reading specification")
-    if not os.path.isfile(os.path.join(specdir, "verifiedSpec.toml")):
-        print('Cannot find verified specFile - have you run "plom-build parse" yet?')
-        exit(1)
-    spec = SpecParser().spec
-
-    if blank == "true" and spec["numberToName"] > 0:
-        print(
-            ">>> WARNING <<< "
-            "Your spec says to produce {} named-papers, but you have run with the '--blank' option. Building unnamed papers.".format(
-                spec["numberToName"]
-            )
-        )
-
-    buildDatabase(spec)
-
-    os.makedirs(paperdir, exist_ok=True)
-    if blank:
-        buildBlankPapers(spec)
-    else:
-        buildNamedPapers(spec)
 
 
 parser = argparse.ArgumentParser()
@@ -188,11 +120,20 @@ spB = sub.add_parser(
         spec, some of the papers may have names printed on them from the
         classlist ("pre-named") and the remainder will be blank.""",
 )
+spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
 spB.add_argument(
     "-b",
     "--blank",
     action="store_true",
     help="Force building only blank papers, ignoring spec",
+)
+spB.add_argument(
+    "--local",
+    action="store_true",
+    help="Build locally without talking to server (NOT RECOMMENDED except for "
+    "testing).  May not work with named-papers (?)  Perhaps we should not "
+    "have this feature: asking for user error if these are printed!?"
 )
 
 
@@ -221,8 +162,7 @@ def main():
         # process the class list and copy into place
         process_class_list(args.classlist, args.demo)
     elif args.command == "make":
-        # get building.
-        buildDatabaseAndPapers(args.blank)
+        buildDatabaseAndPapers(args.server, args.password, args.blank, args.local)
     else:
         # no command given so print help.
         parser.print_help()
