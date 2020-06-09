@@ -371,7 +371,7 @@ class UploadHandler:
         if rmsg[0]:
             with MultipartWriter("images") as mpwriter:
                 for fn in rmsg[1:]:
-                    if fn is "":
+                    if fn == "":
                         mpwriter.append("")
                     else:
                         mpwriter.append(open(fn, "rb"))
