@@ -490,6 +490,15 @@ class PlomDB:
         return self.addTPages(tref, gref, t, pages, v)
 
     def getPageVersions(self, t):
+        """Get the mapping between page numbers and version for a test.
+
+        Args:
+            t (int): a paper number.
+
+        Returns:
+            dict: keys are page numbers and value is the page version,
+                or empty dict is there was no such paper.
+        """
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
             return {}
