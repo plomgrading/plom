@@ -96,12 +96,14 @@ def build_all_papers(spec, DB_file_name, named=False):
     """
 
     if named and spec["numberToName"] > 0:
+        # TODO: get from server
         students = read_class_list()
 
     exam_DB = PlomDB(DB_file_name)
 
     make_PDF_args = []
     for paper_index in range(1, spec["numberToProduce"] + 1):
+        # TODO: instead download the PageVersions map from server
         page_version = exam_DB.getPageVersions(paper_index)
 
         if named and paper_index <= spec["numberToName"]:
@@ -157,6 +159,7 @@ def confirm_processed(spec, DB_file_name):
             )
 
         # We will raise and error if the pdf file was not found
+        # TODO: what does this do?  What do we need from server?
         if os.path.isfile(PDF_file_name):
             exam_DB.produceTest(paper_index)
         else:
@@ -186,6 +189,7 @@ def confirm_named(spec, DB_file_name):
                 str(paper_index).zfill(4), students[paper_index][0]
             )
             if os.path.isfile(PDF_file_name):
+                # TODO: replace with api call
                 exam_DB.identifyTest(
                     paper_index, students[paper_index][0], students[paper_index][1]
                 )
