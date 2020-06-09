@@ -124,7 +124,8 @@ def doTheThing(server=None, password=None):
         exit(10)
 
     #spec = msgr.getInfoGeneral()
-    msgr.TriggerPopulateDB(force=False)
-
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        msgr.TriggerPopulateDB(force=False)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
