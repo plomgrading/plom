@@ -1,65 +1,27 @@
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
+__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai",
+               "Matt Coles"]
 __license__ = "AGPLv3"
 
-import json
-import logging
-
-from PyQt5.QtCore import Qt, QElapsedTimer, QEvent, QLineF, QPointF, QRectF
+from PyQt5.QtCore import QEvent, QRectF
 from PyQt5.QtGui import (
-    QBrush,
-    QColor,
     QCursor,
     QGuiApplication,
     QPainter,
-    QPainterPath,
-    QPen,
     QPixmap,
     QTransform,
-    QFont,
-    QImage)
+)
 from PyQt5.QtWidgets import (
-    QGraphicsEllipseItem,
-    QGraphicsItemGroup,
-    QGraphicsLineItem,
-    QGraphicsPathItem,
     QGraphicsPixmapItem,
-    QGraphicsRectItem,
     QGraphicsScene,
     QUndoStack,
-    QGraphicsTextItem,
-    QFileDialog, QGraphicsItem)
-
-from plom import ScenePixelHeight
-from plom import AnnFontSizePts
-
-# Import all the tool commands for undo/redo stack.
-from .tools import (
-    CommandArrow,
-    CommandArrowDouble,
-    CommandBox,
-    CommandCross,
-    CommandDelete,
-    CommandDelta,
-    CommandEllipse,
-    CommandHighlight,
-    CommandLine,
-    CommandPen,
-    CommandPenArrow,
-    CommandQMark,
-    CommandText,
-    CommandTick,
-    CommandGDT,
-    CrossItem,
-    DeltaItem,
-    TextItem,
-    TickItem,
-    GroupDTItem,
-    GhostComment,
-    GhostDelta,
-    GhostText,
 )
+
+from plom import AnnFontSizePts
+from plom import ScenePixelHeight
+# Import all the tool commands for undo/redo stack.
+from .tools import *
 
 log = logging.getLogger("pagescene")
 
@@ -377,9 +339,9 @@ class PageScene(QGraphicsScene):
         under = self.itemAt(event.scenePos(), QTransform())
         # If it is a Delta or Text or GDT then do nothing.
         if (
-            isinstance(under, DeltaItem)
-            or isinstance(under, TextItem)
-            or isinstance(under, GroupDTItem)
+                isinstance(under, DeltaItem)
+                or isinstance(under, TextItem)
+                or isinstance(under, GroupDTItem)
         ):
             return
         # grab the location of the mouse-click
@@ -395,7 +357,8 @@ class PageScene(QGraphicsScene):
         # create a delta-object with a different offset.
         # else just place the comment.
 
-        if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
+        if self.commentDelta == "." or not self.isLegalDelta(
+                self.commentDelta):
             # make sure blurb has text interaction turned off
             prevState = self.blurb.textInteractionFlags()
             self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
@@ -406,7 +369,8 @@ class PageScene(QGraphicsScene):
             # return blurb to previous state
             self.blurb.setTextInteractionFlags(prevState)
         else:
-            command = CommandGDT(self, pt, self.commentDelta, self.blurb, self.fontSize)
+            command = CommandGDT(self, pt, self.commentDelta, self.blurb,
+                                 self.fontSize)
             # push the delta onto the undo stack.
             self.undoStack.push(command)
 
@@ -417,11 +381,11 @@ class PageScene(QGraphicsScene):
         # Grab the mouseclick location and create command.
         pt = event.scenePos()
         if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+                QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             command = CommandTick(self, pt)
         elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+                QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
         ):
             command = CommandQMark(self, pt)
         else:
@@ -438,14 +402,14 @@ class PageScene(QGraphicsScene):
         # Grab mouse click location and create command.
         pt = event.scenePos()
         if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+                QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             if int(self.markDelta) > 0:
                 command = CommandCross(self, pt)
             else:
                 command = CommandTick(self, pt)
         elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+                QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
         ):
             command = CommandQMark(self, pt)
         else:
@@ -517,11 +481,11 @@ class PageScene(QGraphicsScene):
         # See mouse press cross function.
         pt = event.scenePos()
         if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+                QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             command = CommandCross(self, pt)
         elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+                QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
         ):
             command = CommandQMark(self, pt)
         else:
@@ -543,7 +507,7 @@ class PageScene(QGraphicsScene):
         """Change cursor back to open-hand, and update the current stored view rectangle."""
         self.views()[0].setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
-        self.views()[0].zoomNull()
+        self.views()[0].setZoomSelector()
 
     def mousePressImage(self, event):
         """
@@ -574,15 +538,15 @@ class PageScene(QGraphicsScene):
     def mouseReleaseImage(self, event):
         pass
 
-
     # Handle drag / drop events
     def dragEnterEvent(self, e):
         if e.mimeData().hasFormat("text/plain"):
             # User has dragged in plain text from somewhere
             e.acceptProposedAction()
         elif e.mimeData().hasFormat(
-            "application/x-qabstractitemmodeldatalist"
-        ) or e.mimeData().hasFormat("application/x-qstandarditemmodeldatalist"):
+                "application/x-qabstractitemmodeldatalist"
+        ) or e.mimeData().hasFormat(
+            "application/x-qstandarditemmodeldatalist"):
             # User has dragged in a comment from the comment-list.
             e.setDropAction(Qt.CopyAction)
         else:
@@ -599,8 +563,9 @@ class PageScene(QGraphicsScene):
             self.mousePressComment(e)
 
         elif e.mimeData().hasFormat(
-            "application/x-qabstractitemmodeldatalist"
-        ) or e.mimeData().hasFormat("application/x-qstandarditemmodeldatalist"):
+                "application/x-qabstractitemmodeldatalist"
+        ) or e.mimeData().hasFormat(
+            "application/x-qstandarditemmodeldatalist"):
             # Simulate a comment click.
             self.mousePressComment(e)
             # User has dragged in a comment from the comment-list.
@@ -644,15 +609,15 @@ class PageScene(QGraphicsScene):
         # clear all items from scene.
         for X in self.items():
             if any(
-                isinstance(X, Y)
-                for Y in [
-                    ScoreBox,
-                    QGraphicsPixmapItem,
-                    UnderlyingImage,
-                    GhostComment,
-                    GhostDelta,
-                    GhostText,
-                ]
+                    isinstance(X, Y)
+                    for Y in [
+                        ScoreBox,
+                        QGraphicsPixmapItem,
+                        UnderlyingImage,
+                        GhostComment,
+                        GhostDelta,
+                        GhostText,
+                    ]
             ):
                 continue
             else:
@@ -691,7 +656,8 @@ class PageScene(QGraphicsScene):
     def unpickleArrowDouble(self, X):
         if len(X) == 4:
             self.undoStack.push(
-                CommandArrowDouble(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
+                CommandArrowDouble(self, QPointF(X[0], X[1]),
+                                   QPointF(X[2], X[3]))
             )
 
     def unpickleLine(self, X):
@@ -702,11 +668,13 @@ class PageScene(QGraphicsScene):
 
     def unpickleBox(self, X):
         if len(X) == 4:
-            self.undoStack.push(CommandBox(self, QRectF(X[0], X[1], X[2], X[3])))
+            self.undoStack.push(
+                CommandBox(self, QRectF(X[0], X[1], X[2], X[3])))
 
     def unpickleEllipse(self, X):
         if len(X) == 4:
-            self.undoStack.push(CommandEllipse(self, QRectF(X[0], X[1], X[2], X[3])))
+            self.undoStack.push(
+                CommandEllipse(self, QRectF(X[0], X[1], X[2], X[3])))
 
     def unpickleText(self, X):
         if len(X) == 3:
@@ -732,7 +700,8 @@ class PageScene(QGraphicsScene):
             self.blurb.setPos(QPointF(X[0], X[1]))
             # knows to latex it if needed.
             self.undoStack.push(
-                CommandGDT(self, QPointF(X[0], X[1]), X[2], self.blurb, self.fontSize)
+                CommandGDT(self, QPointF(X[0], X[1]), X[2], self.blurb,
+                           self.fontSize)
             )
 
     def unpicklePen(self, X):
@@ -787,7 +756,7 @@ class PageScene(QGraphicsScene):
         # If left-click then a highlight box, else an ellipse.
         # Set a flag to tell the mouseReleaseBox function which.
         if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+                QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             self.boxFlag = 2
             self.ellipseItem = QGraphicsEllipseItem(
@@ -801,7 +770,8 @@ class PageScene(QGraphicsScene):
             # Create a temp box item for animating the drawing as the
             # user moves the mouse.
             # Do not push command onto undoStack until drawing finished.
-            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem = QGraphicsRectItem(
+                QRectF(self.originPos, self.currentPos))
             self.boxItem.setPen(self.ink)
             self.boxItem.setBrush(self.lightBrush)
             self.addItem(self.boxItem)
@@ -822,7 +792,8 @@ class PageScene(QGraphicsScene):
                 ry = abs(self.originPos.y() - self.currentPos.y())
                 self.ellipseItem.setRect(
                     QRectF(
-                        self.originPos.x() - rx, self.originPos.y() - ry, 2 * rx, 2 * ry
+                        self.originPos.x() - rx, self.originPos.y() - ry,
+                        2 * rx, 2 * ry
                     )
                 )
         elif self.boxFlag == 1:
@@ -853,8 +824,8 @@ class PageScene(QGraphicsScene):
             self.removeItem(self.ellipseItem)
             # check if ellipse has some area (don't allow long/thin)
             if (
-                self.ellipseItem.rect().width() > 16
-                and self.ellipseItem.rect().height() > 16
+                    self.ellipseItem.rect().width() > 16
+                    and self.ellipseItem.rect().height() > 16
             ):
                 command = CommandEllipse(self, self.ellipseItem.rect())
                 self.undoStack.push(command)
@@ -872,11 +843,11 @@ class PageScene(QGraphicsScene):
             # mid line draw so ignore press
             return
         if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+                QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             self.arrowFlag = 2
         elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+                QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
         ):
             self.arrowFlag = 4
         else:
@@ -885,7 +856,8 @@ class PageScene(QGraphicsScene):
         # Do not push command onto undoStack until drawing finished.
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
-        self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
+        self.lineItem = QGraphicsLineItem(
+            QLineF(self.originPos, self.currentPos))
         self.lineItem.setPen(self.ink)
         self.addItem(self.lineItem)
 
@@ -938,12 +910,12 @@ class PageScene(QGraphicsScene):
         # set penFlag so correct object created on mouse-release
         # non-zero value so we don't add to path after mouse-release
         if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+                QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             self.pathItem.setPen(self.highlight)
             self.penFlag = 2
         elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+                QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
         ):
             # middle button is pen-path with arrows at both ends
             self.pathItem.setPen(self.ink)
@@ -1007,12 +979,12 @@ class PageScene(QGraphicsScene):
             return
 
         if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+                QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
             # sets the view rectangle and updates zoom-dropdown.
             self.views()[0].scale(0.8, 0.8)
             self.views()[0].centerOn(event.scenePos())
-            self.views()[0].zoomNull(True)
+            self.views()[0].setZoomSelector(True)
             self.zoomFlag = 0
             return
         else:
@@ -1020,7 +992,8 @@ class PageScene(QGraphicsScene):
 
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
-        self.zoomBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.zoomBoxItem = QGraphicsRectItem(
+            QRectF(self.originPos, self.currentPos))
         self.zoomBoxItem.setPen(Qt.blue)
         self.zoomBoxItem.setBrush(self.zoomBrush)
         self.addItem(self.zoomBoxItem)
@@ -1042,7 +1015,8 @@ class PageScene(QGraphicsScene):
                 self.zoomBoxItem.setBrush(self.zoomBrush)
                 self.addItem(self.zoomBoxItem)
             else:
-                self.zoomBoxItem.setRect(QRectF(self.originPos, self.currentPos))
+                self.zoomBoxItem.setRect(
+                    QRectF(self.originPos, self.currentPos))
 
     def mouseReleaseZoom(self, event):
         """Either zoom-in a little (if zoombox small), else fit the zoombox in view.
@@ -1064,7 +1038,7 @@ class PageScene(QGraphicsScene):
             self.views()[0].fitInView(self.zoomBoxItem, Qt.KeepAspectRatio)
 
         # sets the view rectangle and updates zoom-dropdown.
-        self.views()[0].zoomNull(True)
+        self.views()[0].setZoomSelector(True)
         # remove the box and put flag back.
         self.removeItem(self.zoomBoxItem)
         self.zoomFlag = 0
@@ -1078,7 +1052,8 @@ class PageScene(QGraphicsScene):
         self.deleteFlag = 1
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
-        self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.delBoxItem = QGraphicsRectItem(
+            QRectF(self.originPos, self.currentPos))
         self.delBoxItem.setPen(self.ink)
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
@@ -1100,7 +1075,8 @@ class PageScene(QGraphicsScene):
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
             else:
-                self.delBoxItem.setRect(QRectF(self.originPos, self.currentPos))
+                self.delBoxItem.setRect(
+                    QRectF(self.originPos, self.currentPos))
 
     def deleteIfLegal(self, item):
         # can't delete the pageimage, scorebox, delete-box, ghostitem and its constituents
@@ -1142,7 +1118,8 @@ class PageScene(QGraphicsScene):
                 return
             else:
                 # delete the zeroth element of the list
-                if nearby[0].group() is not None:  # object part of GroupDeltaText
+                if nearby[
+                    0].group() is not None:  # object part of GroupDeltaText
                     self.deleteIfLegal(nearby[0].group())  # delete the group
                 else:
                     self.deleteIfLegal(nearby[0])
@@ -1150,7 +1127,8 @@ class PageScene(QGraphicsScene):
             # check all items against the delete-box - this is a little clumsy, but works and there are not so many items typically.
             for X in self.items():
                 # make sure is not background image or the scorebox, or the delbox itself.
-                if X.collidesWithItem(self.delBoxItem, mode=Qt.ContainsItemShape):
+                if X.collidesWithItem(self.delBoxItem,
+                                      mode=Qt.ContainsItemShape):
                     if X.group() is None:
                         self.deleteIfLegal(X)
                     else:
@@ -1208,13 +1186,14 @@ class PageScene(QGraphicsScene):
                 continue
             # And be careful - there might be a GhostComment floating about
             if (
-                isinstance(X, GhostComment)
-                or isinstance(X, GhostDelta)
-                or isinstance(X, GhostText)
+                    isinstance(X, GhostComment)
+                    or isinstance(X, GhostDelta)
+                    or isinstance(X, GhostText)
             ):
                 continue
             # make sure is inside image
-            if not X.collidesWithItem(self.underImage, mode=Qt.ContainsItemShape):
+            if not X.collidesWithItem(self.underImage,
+                                      mode=Qt.ContainsItemShape):
                 return False
         return True
 
@@ -1311,9 +1290,9 @@ class PageScene(QGraphicsScene):
             # check the the delta is legal for the marking style.
             # if delta<0 when mark up OR delta>0 when mark down OR mark-total then pass delta="."
             if (
-                (id < 0 and self.markStyle == 2)
-                or (id > 0 and self.markStyle == 3)
-                or self.markStyle == 1
+                    (id < 0 and self.markStyle == 2)
+                    or (id > 0 and self.markStyle == 3)
+                    or self.markStyle == 1
             ):
                 delta = "."
         self.commentDelta = delta
@@ -1338,8 +1317,7 @@ class PageScene(QGraphicsScene):
         self.blurb = TextItem(self, self.fontSize)
         self.blurb.setPlainText("NO ANSWER GIVEN")
         command = CommandGDT(
-            self, br.center() + br.topRight() / 8, delta, self.blurb, self.fontSize
+            self, br.center() + br.topRight() / 8, delta, self.blurb,
+            self.fontSize
         )
         self.undoStack.push(command)
-
-
