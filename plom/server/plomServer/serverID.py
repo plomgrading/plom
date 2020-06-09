@@ -70,9 +70,15 @@ def IDgetRandomImage(self):
 
 
 def IDdeletePredictions(self):
+    # check to see if predictor is running
+    lockFile = os.path.join(specdir, "IDReader.lock")
+    if os.path.isfile(lockFile):
+        log.info("ID reader currently running.")
+        return [False, "ID reader is currently running"]
+
     # move old file out of way
     if not os.path.isfile(Path(specdir) / "predictionlist.csv"):
-        return False
+        return [False, "No prediction file present."]
     shutil.move(
         Path(specdir) / "predictionlist.csv", Path(specdir) / "predictionlist.bak"
     )
@@ -80,7 +86,7 @@ def IDdeletePredictions(self):
         fh.write("test, id\n")
     log.info("ID prediction list deleted")
 
-    return True
+    return [True]
 
 
 def IDreviewID(self, testNumber):

@@ -200,32 +200,27 @@ def startMarking(question, version):
         try:
             print("Marking task ", task)
             imageList, tags = messenger.MclaimThisTask(task)
-            with tempfile.TemporaryDirectory() as td:
-                aFile = os.path.join(td, "argh.png")
-                plomFile = aFile[:-3] + "plom"
-                commentFile = aFile[:-3] + "json"
-                score = annotatePaper(task, imageList, aFile, tags)
-                messenger.MreturnMarkedTask(
-                    task,
-                    question,
-                    version,
-                    score,
-                    random.randint(1, 20),
-                    "",
-                    aFile,
-                    plomFile,
-                    commentFile,
-                )
-
-        except PlomBenignException as e:
+        except PlomTakenException as e:
             print("Another user got that task. Trying again.")
-        except PlomSeriousException as e:
-            print("EEK, some error: {}".format(e))
-        except Exception as e:
-            print("Nasty error trying to return task {} = {}".format(task, e))
+            continue
 
+        with tempfile.TemporaryDirectory() as td:
+            aFile = os.path.join(td, "argh.png")
+            plomFile = aFile[:-3] + "plom"
+            commentFile = aFile[:-3] + "json"
+            score = annotatePaper(task, imageList, aFile, tags)
+            messenger.MreturnMarkedTask(
+                task,
+                question,
+                version,
+                score,
+                random.randint(1, 20),
+                "",
+                aFile,
+                plomFile,
+                commentFile,
+            )
 
-# -------------------------------------------
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

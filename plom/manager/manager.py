@@ -1137,8 +1137,12 @@ class Manager(QWidget):
         )
         if msg.exec_() == QMessageBox.No:
             return
-        managerMessenger.IDdeletePredictions()
-        self.getPredictions()
+        # returns [True] or [False, message]
+        rval = managerMessenger.IDdeletePredictions()
+        if rval[0] is False:  # some sort of problem, show returned message
+            ErrorMessage(rval[1]).exec_()
+        else:
+            self.getPredictions()
 
     def initMarkTab(self):
         grid = QGridLayout()
