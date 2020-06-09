@@ -9,8 +9,6 @@ from plom.db import PlomDB
 def buildExamDatabaseFromSpec(spec, examDB):
     """Build metadata for exams from spec and insert into the database.
 
-    TODO: stop printing; this is a library call.
-
     Arguments:
         spec {dict} -- The spec file for the database that is being setup.
                           Example below:
@@ -33,31 +31,38 @@ def buildExamDatabaseFromSpec(spec, examDB):
                             }
                           }
         db (database): the database to populate
+
+    Returns:
+        bool: True if succuess
+        str: a status string, one line per test, ending with an error if failure.
     """
 
     random.seed(spec["privateSeed"])
 
-    errFlag = False
+    # TODO: why not fail on first error?
+    ok = True
+    status = ""
+
     # Note: need to produce these in a particular order for random seed to be
     # reproducibile: so this really must be a loop, not a Pool.
     for t in range(1, spec["numberToProduce"] + 1):
         if examDB.createTest(t):
-            print("DB entry for test {:04}:".format(t), end="")
+            status += "DB entry for test {:04}:".format(t)
         else:
-            print("Error - problem creating test {}".format(t))
-            errFlag = True
+            status += " Error creating"
+            ok = False
 
         if examDB.createIDGroup(t, spec["idPages"]["pages"]):
-            print(" ID", end="")
+            status += " ID"
         else:
-            print("Error - problem creating idgroup for test {}".format(t))
-            errFlag = True
+            status += " Error creating idgroup"
+            ok = False
 
         if examDB.createDNMGroup(t, spec["doNotMark"]["pages"]):
-            print(" DNM", end="")
+            status += " DNM"
         else:
-            print("Error - problem creating DoNotMark-group for test {}".format(t))
-            errFlag = True
+            status += "Error creating DoNotMark-group"
+            ok = False
 
         for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
             gs = str(g + 1)  # now a str and 1,2,3,...
@@ -72,19 +77,14 @@ def buildExamDatabaseFromSpec(spec, examDB):
                 v = random.randint(1, spec["numberOfVersions"])
                 vstr = "v{}".format(v)
             else:
-                print(
-                    'ERROR - problem with spec: expected "fix" or "shuffle" but got "{}".'.format(spec["question"][gs]["select"])
+                # TODO: or RuntimeError?
+                raise ValueError(
+                    'problem with spec: expected "fix" or "shuffle" but got "{}".'.format(spec["question"][gs]["select"])
                 )
-                exit(1)
             if examDB.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
-                print(" Q{}{}".format(gs, vstr), end="")
+                status += " Q{}{}".format(gs, vstr)
             else:
-                print("Error - problem creating Question {} for test {}".format(gs, t))
-                errFlag = True
-        print("")
-    if errFlag:
-        print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
-        print(
-            "There were errors during database creation. Remove the database and try again."
-        )
-        print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
+                status += "Error creating Question {} ver {}".format(gs, vstr)
+                ok = False
+        status += "\n"
+    return ok, status

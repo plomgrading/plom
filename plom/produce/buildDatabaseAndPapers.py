@@ -3,6 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 
 import os
+import sys
 
 import getpass  # local?
 
@@ -22,11 +23,19 @@ def _buildDatabase(spec):
 
     if os.path.isfile(dbfile):
         print("Database already exists - aborting.")
-        exit(1)
+        sys.exit(1)
 
     print("Populating Plom exam database")
     DB = PlomDB(dbfile)
-    buildExamDatabaseFromSpec(spec, DB)
+    r, st = buildExamDatabaseFromSpec(spec, DB)
+    print(st)
+    if not r:
+        print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
+        print(
+            "There were errors during database creation. Remove the database and try again."
+        )
+        print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
+        sys.exit(2)
     print("Database populated successfully")
 
 
@@ -125,7 +134,8 @@ def doTheThing(server=None, password=None):
 
     #spec = msgr.getInfoGeneral()
     try:
-        msgr.TriggerPopulateDB(force=False)
+        r, status = msgr.TriggerPopulateDB(force=False)
     finally:
         msgr.closeUser()
         msgr.stop()
+    print(status)

@@ -536,6 +536,8 @@ class UploadHandler:
         TODO: maybe the api call should just be for one row of the database.
 
         TODO: or maybe we can pass the page-to-version mapping to this?
+
+        TODO: plom-build does error out, but I'd prefer an explicit nonempty test.
         """
         if not data["user"] == "manager":
             return web.Response(status=400)  # malformed request.
@@ -544,11 +546,10 @@ class UploadHandler:
         #force_flag = request.match_info["force"]
 
         from plom.db import buildExamDatabaseFromSpec
-        # TODO needs some return or try except
         # TODO this is not the design we have elsewhere, should call helper function
-        buildExamDatabaseFromSpec(self.server.testSpec, self.server.DB)
-        if True:
-            return web.json_response(True, status=200)  # all is fine
+        r, status = buildExamDatabaseFromSpec(self.server.testSpec, self.server.DB)
+        if r:
+            return web.json_response([r, status], status=200)  # all is fine
         else:
             return web.Response(status=404)
 
