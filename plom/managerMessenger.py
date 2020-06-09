@@ -71,6 +71,27 @@ class ManagerMessenger(BaseMessenger):
 
         return response.json()
 
+    def getGlobalPageVersionMap(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/DEV/admin/pageVersionMap".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
     def RgetCompletions(self):
         self.SRmutex.acquire()
         try:

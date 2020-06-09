@@ -553,6 +553,35 @@ class UploadHandler:
         else:
             return web.Response(status=404)
 
+    # TODO: why can't I use authenticate_by_token decorator?
+    @authenticate_by_token_required_fields([])
+    def getPageVersionMap(self, data, request):
+        """Get the mapping between page number and version for one test."""
+        spec = self.server.testSpec
+        paper_idx = request.match_info["t"]
+        ver = self.server.DB.getPageVersions(paper_idx)
+        if ver:
+            return web.json_response(ver, status=200)
+        else:
+            return web.Response(status=404)
+
+    @authenticate_by_token_required_fields([])
+    def getGlobalPageVersionMap(self, data, request):
+        """Get the mapping between page number and version for all tests.
+
+        Returns:
+            dict: dict of dicts, keyed first by paper index then by page
+                number.
+        """
+        spec = self.server.testSpec
+        vers = {}
+        for paper_idx in range(1, spec["numberToProduce"] + 1):
+            ver = self.server.DB.getPageVersions(paper_idx)
+            #if not ver:
+            #    TODO return 500
+            vers[paper_idx] = ver
+        return web.json_response(vers, status=200)
+
     def setUpRoutes(self, router):
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/hwPages", self.uploadHWPage)
@@ -583,3 +612,5 @@ class UploadHandler:
         router.add_put("/admin/hwPagesUploaded", self.processHWUploads)
         router.add_put("/admin/testPagesUploaded", self.processHWUploads)
         router.add_put("/DEV/admin/populateDB", self.populateExamDatabase)
+        router.add_get("/DEV/admin/pageVersionMap/{t}", self.getPageVersionMap)
+        router.add_get("/DEV/admin/pageVersionMap", self.getGlobalPageVersionMap)

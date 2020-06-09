@@ -37,6 +37,14 @@ def _buildDatabase(spec):
         print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
         sys.exit(2)
     print("Database populated successfully")
+    print("Producing local page->version map")
+    vers = {}
+    for paper_idx in range(1, spec["numberToProduce"] + 1):
+        ver = DB.getPageVersions(paper_idx)
+        if not ver:
+            raise RuntimeError("we expected each paper to exist!")
+        vers[paper_idx] = ver
+    return vers
 
 
 def buildBlankPapers(spec):
@@ -46,7 +54,7 @@ def buildBlankPapers(spec):
     confirm_processed(spec, dbfile)
 
 
-def buildNamedPapers(spec):
+def buildNamedPapers(spec, pvmap):
     if spec["numberToName"] > 0:
         print(
             'Building {} pre-named papers and {} blank papers in "{}"...'.format(
@@ -62,7 +70,7 @@ def buildNamedPapers(spec):
             )
         )
 
-    build_all_papers(spec, dbfile, named=True)
+    build_all_papers(spec, pvmap, named=True)
     print("Checking papers produced and updating databases")
     confirm_processed(spec, dbfile)
     confirm_named(spec, dbfile)
@@ -84,24 +92,20 @@ def buildDatabaseAndPapers(server=None, password=None, blank=False, localonly=Fa
         )
 
     if localonly:
-        _buildDatabase(spec)
+        pvmap = _buildDatabase(spec)
     else:
-        doTheThing(server, password)
-        # TODO: need pagever mapping or many api calls
+        serverBuildDatabase(server, password)
+        pvmap = getPageVersionMap(server, password)
 
     os.makedirs(paperdir, exist_ok=True)
+
     if blank:
         buildBlankPapers(spec)
     else:
-        buildNamedPapers(spec)
+        buildNamedPapers(spec, pvmap)
 
 
-#def doTheThing2(server=None, password=None, local=False):
-#    if not local:
-#        doTheThing(server, password)
-
-
-def doTheThing(server=None, password=None):
+def serverBuildDatabase(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
@@ -139,3 +143,42 @@ def doTheThing(server=None, password=None):
         msgr.closeUser()
         msgr.stop()
     print(status)
+
+
+def getPageVersionMap(server=None, password=None):
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ManagerMessenger(s, port=p)
+    else:
+        msgr = ManagerMessenger(server)
+    msgr.start()
+
+    # get the password if not specified
+    if password is None:
+        try:
+            pwd = getpass.getpass('Please enter the "manager" password: ')
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = password
+
+    try:
+        msgr.requestAndSaveToken("manager", pwd)
+    except PlomExistingLoginException:
+        # TODO: bit annoying, maybe want manager UI open...
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another management tool running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-build clear"'
+        )
+        exit(10)
+
+    #spec = msgr.getInfoGeneral()
+    try:
+        pvmap = msgr.getGlobalPageVersionMap()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
+    return pvmap

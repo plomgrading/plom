@@ -61,7 +61,7 @@ def _make_PDF(x):
     make_PDF(*x)
 
 
-def build_all_papers(spec, DB_file_name, named=False):
+def build_all_papers(spec, global_page_version_map, named=False):
     """Builds the papers using _make_PDF.
 
     Based on `numberToName` this uses `_make_PDF` to create some
@@ -88,8 +88,8 @@ def build_all_papers(spec, DB_file_name, named=False):
                            '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
                           }
                        }
-
-        DB_file_name {Str} -- Database file name path.
+        global_page_version_map (dict): dict of dicts mapping first by
+            paper number then by page number to version.
 
     Keyword Arguments:
         named {boolean} -- Whether the document is named or not. (default: {False})
@@ -99,13 +99,9 @@ def build_all_papers(spec, DB_file_name, named=False):
         # TODO: get from server
         students = read_class_list()
 
-    exam_DB = PlomDB(DB_file_name)
-
     make_PDF_args = []
     for paper_index in range(1, spec["numberToProduce"] + 1):
-        # TODO: instead download the PageVersions map from server
-        page_version = exam_DB.getPageVersions(paper_index)
-
+        page_version = global_page_version_map[paper_index]
         if named and paper_index <= spec["numberToName"]:
             student_info = {
                 "id": students[paper_index][0],
