@@ -351,7 +351,7 @@ class Chooser(QDialog):
 
         info = messenger.getInfoGeneral()
         self.ui.markGBox.setTitle(
-            "Marking information for “{}”".format(info["testName"])
+            "Marking information for “{}”".format(info["name"])
         )
         question = self.getQuestion()
         v = self.getv()

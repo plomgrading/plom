@@ -222,7 +222,7 @@ class BaseMessenger(object):
             self.SRmutex.release()
 
         fields = (
-            "testName",
+            "name",
             "numberOfTests",
             "numberOfPages",
             "numberOfQuestions",
