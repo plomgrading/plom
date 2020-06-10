@@ -74,21 +74,12 @@ def buildDatabaseAndPapers(server=None, password=None, localonly=False):
 
     if localonly:
         pvmap = _buildDatabase(spec)
-    else:
-        serverBuildDatabase(server, password)
-        pvmap = getPageVersionMap(server, password)
+        os.makedirs(paperdir, exist_ok=True)
+        buildNamedPapers(spec, pvmap)
+        print("Papers build locally, but they are not connected to the server.")
+        print("Be careful!")
+        return
 
-    os.makedirs(paperdir, exist_ok=True)
-    buildNamedPapers(spec, pvmap)
-
-    print("Checking papers produced and updating databases")
-    my_confirm_processed(spec, server, password)
-    dbfile = os.path.join(specdir, "plom.db")
-    confirm_named(spec, dbfile)
-
-
-def my_confirm_processed(spec, server=None, password=None):
-    """TODO: refactor this."""
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
@@ -118,87 +109,19 @@ def my_confirm_processed(spec, server=None, password=None):
         )
         exit(10)
 
+
     try:
+        #spec = msgr.getInfoGeneral()
+        r, status = msgr.TriggerPopulateDB(force=False)
+        print(status)
+        pvmap = msgr.getGlobalPageVersionMap()
+        os.makedirs(paperdir, exist_ok=True)
+        buildNamedPapers(spec, pvmap)
+
+        print("Checking papers produced and updating databases")
         confirm_processed(spec, msgr)
     finally:
         msgr.closeUser()
         msgr.stop()
-
-
-def serverBuildDatabase(server=None, password=None):
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
-
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass('Please enter the "manager" password: ')
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
-
-    # get started
-    try:
-        msgr.requestAndSaveToken("manager", pwd)
-    except PlomExistingLoginException:
-        # TODO: bit annoying, maybe want manager UI open...
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another management tool running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-build clear"'
-        )
-        exit(10)
-
-    #spec = msgr.getInfoGeneral()
-    try:
-        r, status = msgr.TriggerPopulateDB(force=False)
-    finally:
-        msgr.closeUser()
-        msgr.stop()
-    print(status)
-
-
-def getPageVersionMap(server=None, password=None):
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
-
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass('Please enter the "manager" password: ')
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
-
-    try:
-        msgr.requestAndSaveToken("manager", pwd)
-    except PlomExistingLoginException:
-        # TODO: bit annoying, maybe want manager UI open...
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another management tool running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-build clear"'
-        )
-        exit(10)
-
-    #spec = msgr.getInfoGeneral()
-    try:
-        pvmap = msgr.getGlobalPageVersionMap()
-    finally:
-        msgr.closeUser()
-        msgr.stop()
-    return pvmap
+    dbfile = os.path.join(specdir, "plom.db")
+    confirm_named(spec, dbfile)
