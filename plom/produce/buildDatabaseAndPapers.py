@@ -82,6 +82,7 @@ def buildDatabaseAndPapers(server=None, password=None, localonly=False):
     buildNamedPapers(spec, pvmap)
 
     print("Checking papers produced and updating databases")
+    my_confirm_processed(spec, server, password)
     dbfile = os.path.join(specdir, "plom.db")
     confirm_named(spec, dbfile)
 

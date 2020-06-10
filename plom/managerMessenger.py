@@ -81,7 +81,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
-                "https://{}/DEV/admin/IMadeThisPDF/{}".format(test_num),
+                "https://{}/DEV/admin/IMadeThisPDF/{}".format(self.server, test_num),
                 verify=False,
                 json={"user": self.user, "token": self.token},
             )
