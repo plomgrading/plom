@@ -18,7 +18,7 @@ from plom import __version__
 from plom import SpecVerifier, SpecParser
 from plom import specdir
 from plom.produce import process_class_list
-from plom.produce import buildDatabaseAndPapers
+from plom.produce import buildDatabaseAndPapers, buildPapersLocal
 from plom.produce.demotools import buildDemoSourceFiles
 
 
@@ -156,7 +156,10 @@ def main():
         # process the class list and copy into place
         process_class_list(args.classlist, args.demo)
     elif args.command == "make":
-        buildDatabaseAndPapers(args.server, args.password, args.local)
+        if args.local:
+            buildPapersLocal()
+        else:
+            buildDatabaseAndPapers(args.server, args.password)
     else:
         # no command given so print help.
         parser.print_help()

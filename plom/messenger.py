@@ -210,7 +210,6 @@ class BaseMessenger(object):
                 "https://{}/info/general".format(self.server), verify=False,
             )
             response.raise_for_status()
-            pv = response.json()
         except requests.HTTPError as e:
             if response.status_code == 404:
                 raise PlomSeriousException(
@@ -221,15 +220,7 @@ class BaseMessenger(object):
         finally:
             self.SRmutex.release()
 
-        fields = (
-            "name",
-            "numberToProduce",
-            "numberOfPages",
-            "numberOfQuestions",
-            "numberOfVersions",
-            "publicCode",
-        )
-        return dict(zip(fields, pv))
+        return response.json()
 
 
 class Messenger(BaseMessenger):

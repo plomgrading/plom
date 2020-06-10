@@ -14,10 +14,17 @@ from plom.produce import paperdir
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import *
 
+
 # todo: support both direct DB file or via server?
 # TODO or remove?
-def _buildDatabase(spec):
+def buildPapersLocal():
     from plom.db import buildExamDatabaseFromSpec, PlomDB
+
+    print("Reading specification")
+    if not os.path.isfile(os.path.join(specdir, "verifiedSpec.toml")):
+        print('Cannot find verified specFile - have you run "plom-build parse" yet?')
+        exit(1)
+    spec = SpecParser().spec
     dbfile = os.path.join(specdir, "plom.db")
 
     if os.path.isfile(dbfile):
@@ -37,13 +44,15 @@ def _buildDatabase(spec):
         sys.exit(2)
     print("Database populated successfully")
     print("Producing local page->version map")
-    vers = {}
+    pvmap = {}
     for paper_idx in range(1, spec["numberToProduce"] + 1):
         ver = DB.getPageVersions(paper_idx)
         if not ver:
             raise RuntimeError("we expected each paper to exist!")
-        vers[paper_idx] = ver
-    return vers
+        pvmap[paper_idx] = ver
+    os.makedirs(paperdir, exist_ok=True)
+    buildNamedPapers(spec, pvmap)
+    print("Papers build locally, but they are not connected to the server: be careful!")
 
 
 def buildNamedPapers(spec, pvmap):
@@ -65,21 +74,7 @@ def buildNamedPapers(spec, pvmap):
     build_all_papers(spec, pvmap, named=True)
 
 
-def buildDatabaseAndPapers(server=None, password=None, localonly=False):
-    print("Reading specification")
-    if not os.path.isfile(os.path.join(specdir, "verifiedSpec.toml")):
-        print('Cannot find verified specFile - have you run "plom-build parse" yet?')
-        exit(1)
-    spec = SpecParser().spec
-
-    if localonly:
-        pvmap = _buildDatabase(spec)
-        os.makedirs(paperdir, exist_ok=True)
-        buildNamedPapers(spec, pvmap)
-        print("Papers build locally, but they are not connected to the server.")
-        print("Be careful!")
-        return
-
+def buildDatabaseAndPapers(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
@@ -108,10 +103,8 @@ def buildDatabaseAndPapers(server=None, password=None, localonly=False):
             'In order to force-logout the existing authorisation run "plom-build clear"'
         )
         exit(10)
-
-
     try:
-        #spec = msgr.getInfoGeneral()
+        spec = msgr.getInfoGeneral()
         r, status = msgr.TriggerPopulateDB(force=False)
         print(status)
         pvmap = msgr.getGlobalPageVersionMap()
