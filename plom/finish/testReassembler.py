@@ -24,10 +24,10 @@ def is_wider(f):
     """True if image is wider than it is high.
 
     Args:
-        f ([type]): [description]
+        f (str): The name of the file we are checking.
 
     Returns:
-        [type]: [description]
+        boolean : True if the image is wider than it is tall, False otherwise.
     """
     # TODO: shell likely SLOW for this task...?
     ratio = (

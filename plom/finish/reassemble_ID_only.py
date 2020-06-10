@@ -22,12 +22,28 @@ numberOfTests = 0
 numberOfQuestions = 0
 
 
-# Parallel function used below, must be defined in root of module
 def parfcn(y):
+    """Parallel function used below, must be defined in root of module.
+
+    Args:
+        y ([type]): [description]
+    """
     reassemble(*y)
 
 
-def reassembleTestCMD(msgr, shortName, outDir, t, sid):
+def reassemble_test_CMD(msgr, shortName, outDir, t, sid):
+    """[summary]
+
+    Args:
+        msgr (FinishMessenger): the 
+        shortName ([type]): [description]
+        outDir ([type]): [description]
+        t ([type]): [description]
+        sid ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     fnames = msgr.RgetOriginalFiles(t)
     if len(fnames) == 0:
         # TODO: what is supposed to happen here?
@@ -77,7 +93,7 @@ def main(server=None, pwd=None):
     pagelists = []
     for t in identifiedTests:
         if identifiedTests[t][0] is not None:
-            dat = reassembleTestCMD(msgr, shortName, outDir, t, identifiedTests[t][0])
+            dat = reassemble_test_CMD(msgr, shortName, outDir, t, identifiedTests[t][0])
             pagelists.append(dat)
         else:
             print(">>WARNING<< Test {} has no ID".format(t))

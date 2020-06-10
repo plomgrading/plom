@@ -59,7 +59,7 @@ def import_canvas_csv(canvas_fromfile):
 
 
 def find_partial_column_name(df, parthead, atStart=True):
-    """[summary]
+    """Finds columns in a dataframe that includes a specific string.
 
     Args:
         df (pandas.DataFrame): the dataframe that we get the column from.
@@ -90,7 +90,7 @@ def find_partial_column_name(df, parthead, atStart=True):
 
 
 def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead="Test"):
-    """Makes a 
+    """Makes a csv file appropriate for canvas including the hashed student numbers.
 
     Args:
         canvas_fromfile (str): name of the csv file containing student information from canvas.
