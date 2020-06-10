@@ -83,8 +83,45 @@ def buildDatabaseAndPapers(server=None, password=None, localonly=False):
 
     print("Checking papers produced and updating databases")
     dbfile = os.path.join(specdir, "plom.db")
-    confirm_processed(spec, dbfile)
     confirm_named(spec, dbfile)
+
+
+def my_confirm_processed(spec, server=None, password=None):
+    """TODO: refactor this."""
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ManagerMessenger(s, port=p)
+    else:
+        msgr = ManagerMessenger(server)
+    msgr.start()
+
+    # get the password if not specified
+    if password is None:
+        try:
+            pwd = getpass.getpass('Please enter the "manager" password: ')
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = password
+
+    try:
+        msgr.requestAndSaveToken("manager", pwd)
+    except PlomExistingLoginException:
+        # TODO: bit annoying, maybe want manager UI open...
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another management tool running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-build clear"'
+        )
+        exit(10)
+
+    try:
+        confirm_processed(spec, msgr)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
 
 def serverBuildDatabase(server=None, password=None):

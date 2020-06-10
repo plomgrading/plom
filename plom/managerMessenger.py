@@ -71,6 +71,31 @@ class ManagerMessenger(BaseMessenger):
 
         return response.json()
 
+    def notify_pdf_of_paper_produced(self, test_num):
+        """Notify the server that we have produced the PDF for a paper.
+
+        Args:
+            test_num (int): the test number.  TODO: what about nonsense
+                or nonexisting input?  https://gitlab.com/plom/plom/-/issues/884
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/DEV/admin/IMadeThisPDF/{}".format(test_num),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
     def getGlobalPageVersionMap(self):
         self.SRmutex.acquire()
         try:

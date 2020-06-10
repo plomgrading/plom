@@ -591,6 +591,23 @@ class UploadHandler:
         #return web.json_response(str(pickle.dumps(vers)), status=200)
         return web.json_response(vers, status=200)
 
+    @authenticate_by_token_required_fields(["user"])
+    def notify_pdf_of_paper_produced(self, data, request):
+        """A PDF file for this test has been produced.
+
+        TODO: one at a time?  Add bulk upload version?
+        """
+        if not data["user"] == "manager":
+            return web.Response(status=400)  # malformed request.
+
+        # TODO: should ensure its not been produced before and perhaps support a "force" flag?
+        #force_flag = request.match_info["force"]
+
+        # TODO: any error handling needed?
+        paper_idx = request.match_info["t"]
+        self.server.DB.produceTest(paper_idx)
+        return web.Response(status=200)
+
     def setUpRoutes(self, router):
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/hwPages", self.uploadHWPage)
@@ -623,3 +640,4 @@ class UploadHandler:
         router.add_put("/DEV/admin/populateDB", self.populateExamDatabase)
         router.add_get("/DEV/admin/pageVersionMap/{t}", self.getPageVersionMap)
         router.add_get("/DEV/admin/pageVersionMap", self.getGlobalPageVersionMap)
+        router.add_put("/DEV/admin/IMadeThisPDF/{t}", self.notify_pdf_of_paper_produced)

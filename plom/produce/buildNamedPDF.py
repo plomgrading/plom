@@ -129,18 +129,17 @@ def build_all_papers(spec, global_page_version_map, named=False):
         r = list(tqdm(pool.imap_unordered(_make_PDF, make_PDF_args), total=num_PDFs))
 
 
-def confirm_processed(spec, DB_file_name):
-    """A function that checks if the pdfs are created in the correct folder.
+def confirm_processed(spec, msgr):
+    """Checks that each PDF file was created and notify server.
 
     Arguments:
-        spec {type} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
-        DB_file_name {Str} -- Database file name path
+        spec (dict): specificaiton of the exam, see :func:`plom.SpecVerifier`.
+        msgr (Messenger): an open active connection to the server.
 
     Raises:
-        RuntimeError: Runtime error thrown if the pdf file is not found
+        RuntimeError: Runtime error thrown if the pdf file is not found.
     """
 
-    exam_DB = PlomDB(DB_file_name)
     if spec["numberToName"] > 0:
         students = read_class_list()
     for paper_index in range(1, spec["numberToProduce"] + 1):
@@ -155,9 +154,8 @@ def confirm_processed(spec, DB_file_name):
             )
 
         # We will raise and error if the pdf file was not found
-        # TODO: what does this do?  What do we need from server?
         if os.path.isfile(PDF_file_name):
-            exam_DB.produceTest(paper_index)
+            msgr.notify_pdf_of_paper_produced(paper_index)
         else:
             raise RuntimeError('Cannot find pdf for paper "{}"'.format(PDF_file_name))
 
