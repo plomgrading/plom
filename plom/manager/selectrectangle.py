@@ -23,6 +23,9 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+# TODO: client references to be avoided, refactor to common utils?
+from plom.client.useful_classes import ErrorMessage
+
 
 class SelectRectangleWindow(QDialog):
     """Simple view window for pageimages"""
@@ -60,7 +63,7 @@ class SelectRectangleWindow(QDialog):
         self.maxNormB = QPushButton("&max/norm")
 
         self.cancelB.clicked.connect(self.reject)
-        self.acceptB.clicked.connect(self.accept_and_check)
+        self.acceptB.clicked.connect(self.check_and_accept_rect)
         # self.resetB.clicked.connect(lambda: self.view.resetView())
         self.maxNormB.clicked.connect(self.swapMaxNorm)
         self.zoomB.clicked.connect(self.zoomTool)
@@ -84,10 +87,13 @@ class SelectRectangleWindow(QDialog):
 
         self.rectB.animateClick()
 
-    def accept_and_check(self):
+    def check_and_accept_rect(self):
         """Checks and accepts only if there is a valid rectangle."""
-        if not self.rectangle is None:
-            # if the user has selected a valid rectangle then we accept it, otherwise do nothing.
+        if self.rectangle is None:
+            # if the user has selected a valid rectangle then we accept it, otherwise do we throw this warning.
+            ErrorMessage("Error: no rectangle selected.").exec_()
+            pass
+        else:
             self.accept()
 
     def swapMaxNorm(self):
