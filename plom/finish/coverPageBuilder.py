@@ -27,10 +27,17 @@ table, th, td {
 """
 )
 
-# Create html page of name ID etc and table of marks
+
+
 def makeCover(testnum, sname, sid, tab):
-    
-    fadsd = 0
+    """Create html page of name ID etc and table of marks.
+
+    Args:
+        testnum (int): the test number for the test wea re making the cover for. 
+        sname (str): student name.
+        sid (str): student id.
+        tab (list): information about the test that should be put on the coverpage.
+    """
     htmlText = """
 <html>
 <body>
