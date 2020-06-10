@@ -124,6 +124,44 @@ class ManagerMessenger(BaseMessenger):
             dd[int(k)] = {int(kk): vv for kk, vv in v.items()}
         return dd
 
+    # TODO: copy pasted from class Messenger: can we dedupe?
+    def IDreturnIDdTask(self, code, studentID, studentName):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/DEV/ID/tasks/{}".format(self.server, code),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "sid": studentID,
+                    "sname": studentName,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 409:
+                raise PlomBenignException(
+                    "Student number {} already in use".format(e)
+                ) from None
+            elif response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomSeriousException(
+                    "Another user has the image for {}. This should not happen".format(
+                        code
+                    )
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        # TODO - do we need this return value?
+        return True
+
     def RgetCompletions(self):
         self.SRmutex.acquire()
         try:
