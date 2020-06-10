@@ -27,9 +27,10 @@ table, th, td {
 """
 )
 
-
+# Create html page of name ID etc and table of marks
 def makeCover(testnum, sname, sid, tab):
-    # Create html page of name ID etc and table of marks
+    
+    fadsd = 0
     htmlText = """
 <html>
 <body>

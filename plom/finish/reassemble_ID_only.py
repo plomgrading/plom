@@ -23,26 +23,32 @@ numberOfQuestions = 0
 
 
 def parfcn(y):
-    """Parallel function used below, must be defined in root of module.
+    """Parallel function used below, must be defined in root of module. Reassemble a pdf from the cover and question images.
+
+    Leave coverfname as None to omit it (e.g., when totalling).
 
     Args:
-        y ([type]): [description]
+        y : arguments to testReassembler.reassemble
     """
     reassemble(*y)
 
 
 def reassemble_test_CMD(msgr, shortName, outDir, t, sid):
-    """[summary]
+    """Reassembles a test with a filename that includes the directory and student id.
 
     Args:
-        msgr (FinishMessenger): the 
-        shortName ([type]): [description]
-        outDir ([type]): [description]
-        t ([type]): [description]
-        sid ([type]): [description]
+        msgr (FinishMessenger): the messenger to the plom server. 
+        shortName (str): the name of the test.
+        outDir (str): the directory the reassembled test will exist in.
+        t (int): test number.
+        sid (str): student id.
 
     Returns:
-        [type]: [description]
+        tuple (outname, shortName, sid, None, rnames): descriptions below.
+        outname (str): the full name of the file.
+        shortName (str): same as argument.
+        sid (str): sane as argument.
+        rnames (str): the real file name.
     """
     fnames = msgr.RgetOriginalFiles(t)
     if len(fnames) == 0:
@@ -73,7 +79,7 @@ def main(server=None, pwd=None):
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another finishing-script or manager-client running,\n"
             "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run `plom-finish clear`."
+            "In order to force-logout the existing authorization run `plom-finish clear`."
         )
         exit(1)
 
@@ -93,6 +99,8 @@ def main(server=None, pwd=None):
     pagelists = []
     for t in identifiedTests:
         if identifiedTests[t][0] is not None:
+            print(identifiedTests[t][0])
+            print(type(identifiedTests[t][0]))
             dat = reassemble_test_CMD(msgr, shortName, outDir, t, identifiedTests[t][0])
             pagelists.append(dat)
         else:
