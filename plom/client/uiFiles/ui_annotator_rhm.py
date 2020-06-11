@@ -283,7 +283,6 @@ class Ui_annotator_rhm(object):
         self.horizontalLayout.addWidget(self.pageFrame)
 
         self.retranslateUi(annotator_rhm)
-        self.uploadImage.clicked.connect(annotator_rhm.uploadImage)
         QtCore.QMetaObject.connectSlotsByName(annotator_rhm)
 
     def retranslateUi(self, annotator_rhm):

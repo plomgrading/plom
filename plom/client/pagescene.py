@@ -114,7 +114,6 @@ mouseMove = {
     "comment": "mouseMoveComment",
     "delta": "mouseMoveDelta",
     "zoom": "mouseMoveZoom",
-    "image": "mouseMoveImage",
 }
 mouseRelease = {
     "box": "mouseReleaseBox",
@@ -124,7 +123,6 @@ mouseRelease = {
     "pen": "mouseReleasePen",
     "pan": "mouseReleasePan",
     "zoom": "mouseReleaseZoom",
-    "image": "mouseReleaseImage",
 }
 
 
@@ -517,8 +515,8 @@ class PageScene(QGraphicsScene):
         """
         if self.tempImage is not None:
             currentPos = event.scenePos()
-            image = QImage(self.tempImage)
-            command = self.CommandImage(currentPos, image)
+            imageFilePath = self.tempImage
+            command = CommandImage(self, currentPos, imageFilePath)
             self.undoStack.push(command)
             self.mode = "move"
             self.tempImage = None
@@ -728,6 +726,11 @@ class PageScene(QGraphicsScene):
                 # ['l',x,y]
                 pth.lineTo(QPointF(Y[1], Y[2]))
             self.undoStack.push(CommandHighlight(self, pth))
+
+    def unpickleImage(self, X):
+        if len(X) == 2:
+            self.undoStack.push(CommandImage(self, QPointF(X[0]),
+                                             X[1].decode('base64')))
 
     # Mouse press tool functions
     def mousePressBox(self, event):
