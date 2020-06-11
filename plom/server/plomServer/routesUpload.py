@@ -591,11 +591,19 @@ class UploadHandler:
         #return web.json_response(str(pickle.dumps(vers)), status=200)
         return web.json_response(vers, status=200)
 
+    #@route.put("/DEV/admin/IMadeThisPDF/{t}")
     @authenticate_by_token_required_fields(["user"])
     def notify_pdf_of_paper_produced(self, data, request):
         """A PDF file for this test has been produced.
 
         TODO: one at a time?  Add bulk upload version?
+
+        Responses:
+            200 OK:
+            400 Bad Request: only "manager" is allowed to do this.
+            404 Not Found: paper number is outside valid range.
+            409 Conflict: this paper has already been produced, so its
+                unusual to be making it again. Maybe try `force=True`.
         """
         if not data["user"] == "manager":
             return web.Response(status=400)  # malformed request.
@@ -603,7 +611,7 @@ class UploadHandler:
         # TODO: should ensure its not been produced before and perhaps support a "force" flag?
         #force_flag = request.match_info["force"]
 
-        # TODO: any error handling needed?
+        # TODO: error handling needed for page out of range
         paper_idx = request.match_info["t"]
         self.server.DB.produceTest(paper_idx)
         return web.Response(status=200)
