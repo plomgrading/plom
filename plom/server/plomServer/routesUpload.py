@@ -594,12 +594,22 @@ class UploadHandler:
     #@route.put("/DEV/admin/IMadeThisPDF/{t}")
     @authenticate_by_token_required_fields(["user"])
     def notify_pdf_of_paper_produced(self, data, request):
-        """A PDF file for this test has been produced.
+        """Inform server that a PDF for this paper has been produced.
 
-        TODO: one at a time?  Add bulk upload version?
+        This is to be called one-at-a-time for each paper.  If this is a
+        bottleneck we could consider adding a "bulk" version.
+
+        Note that the file itself is not uploaded to the server: we're
+        just merely creating a record that such a file exists somewhere.
 
         TODO: pass in md5sum too and if its unchanged no need to
         complain about conflict, just quietly return 200.
+
+        Inputs:
+            t (int?, str?): part of URL that specifies the paper number.
+            user (str): who's calling?  A field of the request.
+            force (bool): force production even if paper already exists.
+            md5sum (str): md5sum of the file that was produced.
 
         Responses:
             200 OK:
