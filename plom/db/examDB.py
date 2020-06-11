@@ -26,7 +26,13 @@ class User(BaseModel):
     lastAction = CharField(null=True)
 
 
+class Bundle(BaseModel):
+    originalName = CharField(unique=True, null=True)  # no "scan.pdf" please
+    md5sum = CharField(null=True)  # to check for duplications
+
+
 class Image(BaseModel):
+    bundle = ForeignKeyField(Bundle, backref="images")
     originalName = CharField(null=True)  # can be empty.
     fileName = CharField(null=True)
     md5sum = CharField(null=True)  # to check for duplications
@@ -173,6 +179,7 @@ class PlomDB:
                 [
                     User,
                     Image,
+                    Bundle,
                     Test,
                     ##
                     SumData,
@@ -340,6 +347,28 @@ class PlomDB:
                 ]
             rval[uref.name] = val + self.RgetUserFullProgress(uref.name)
         return rval
+
+    ########## Bundle creation ##########
+    def createAnnotationBundle(self, question, version):
+        try:
+            bref = Bundle.create(
+                originalName="annotation.bundle.{}.{}".format(question, version)
+            )
+        except IntegrityError as e:
+            log.error(
+                "Create bundle for q.v = {}.{} error - {}".format(question, version, e)
+            )
+            return False
+        return True
+
+    def declareBundle(self, fname, md5):
+        if Bundle.get_or_none(originalName=fname) is not None:
+            return [False, "name"]
+        if Bundle.get_or_none(md5sum=md5) is not None:
+            return [False, "md5sum"]
+        else:
+            Bundle.create(originalName=fname, md5sum=md5)
+            return [True]
 
     ########## Test creation stuff ##############
     def nextQueuePosition(self):
@@ -747,7 +776,7 @@ class PlomDB:
         log.info("Invalidated question {}".format(gref.gid))
         return rval
 
-    def uploadTestPage(self, t, p, v, oname, nname, md5):
+    def uploadTestPage(self, t, p, v, oname, nname, md5, bname):
         # return value is either [True, <success message>] or
         # [False, stuff] - but need to distinguish between "discard this image" and "you should perhaps keep this image"
         # So return either [False, "discard", discard message]

@@ -42,6 +42,18 @@ def buildExamDatabase(spec, dbFname):
     examDB = PlomDB(dbFname)
 
     errFlag = False
+    for q in range(spec["numberOfQuestions"]):
+        for v in range(spec["numberOfVersions"]):
+            if examDB.createAnnotationBundle(q + 1, v + 1):
+                print("Created image bundle for q.v={}.{}".format(q + 1, v + 1))
+            else:
+                print(
+                    "Error - problem creating image bundle for q.v={}.{}".format(
+                        q + 1, v + 1
+                    )
+                )
+                errFlag = True
+
     # Note: need to produce these in a particular order for random seed to be
     # reproducibile: so this really must be a loop, not a Pool.
     for t in range(1, spec["numberToProduce"] + 1):
@@ -77,7 +89,9 @@ def buildExamDatabase(spec, dbFname):
                 vstr = "v{}".format(v)
             else:
                 print(
-                    'ERROR - problem with spec: expected "fix" or "shuffle" but got "{}".'.format(spec["question"][gs]["select"])
+                    'ERROR - problem with spec: expected "fix" or "shuffle" but got "{}".'.format(
+                        spec["question"][gs]["select"]
+                    )
                 )
                 exit(1)
             if examDB.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):

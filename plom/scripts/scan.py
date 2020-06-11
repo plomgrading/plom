@@ -38,23 +38,41 @@ def scanStatus(server, password):
     checkScanStatus.checkStatus(server, password)
 
 
-def processScans(PDFs):
+def processScans(server, password, PDFs):
     from plom.scan import scansToImages
+    from plom.scan import sendPagesToServer
 
     # make PDF archive directory
     os.makedirs("archivedPDFs", exist_ok=True)
-    # make a directory into which our (temp) PDF->bitmap will go
-    os.makedirs("scanPNGs", exist_ok=True)
-    # finally a directory into which pageImages go
-    os.makedirs("pageImages", exist_ok=True)
+    # make a bundle directory into which all our images go
+    os.makedirs("bundles", exist_ok=True)
 
     # first check that we can find all the files
     for fname in PDFs:
         if not os.path.isfile(fname):
             print("Cannot find file {} - skipping".format(fname))
             continue
+        print("Declaring bundle PDF {} to server".format(fname))
+        rval = sendPagesToServer.declareBundle(fname, server, password)
+        if rval[0] is False:
+            if rval[1] == "name":
+                print(
+                    "The bundle name {} has been used previously. Stopping".format(
+                        fname
+                    )
+                )
+            elif rval[1] == "md5sum":
+                print(
+                    "A bundle with matching md5sum is already in system. Stopping".format(
+                        fname
+                    )
+                )
+            else:
+                print("Should not be here!")
+            exit(1)
+
         print("Processing PDF {} to images".format(fname))
-        scansToImages.processScans(fname)
+    scansToImages.processScans(PDFs)
 
 
 def readImages(server, password):
@@ -64,6 +82,7 @@ def readImages(server, password):
     os.makedirs("decodedPages", exist_ok=True)
     os.makedirs("unknownPages", exist_ok=True)
     readQRCodes.processBitmaps(server, password)
+
 
 def uploadImages(server, password, unknowns=False, collisions=False):
     from plom.scan import sendPagesToServer
@@ -80,10 +99,11 @@ def uploadImages(server, password, unknowns=False, collisions=False):
 
     if unknowns:
         print(">> TO DO FIX <<")
-        # from plom.scan import sendUnknownsToServer
-        # print("Also upload unknowns")
-        # os.makedirs("sentPages/unknowns", exist_ok=True)
-        # [SIDQ, updates] = sendUnknownsToServer.uploadUnknowns(server, password)
+        from plom.scan import sendUnknownsToServer
+
+        print("Also upload unknowns")
+        os.makedirs("sentPages/unknowns", exist_ok=True)
+        [SIDQ, updates] = sendUnknownsToServer.uploadUnknowns(server, password)
     if collisions:
         print(">> TO DO FIX <<")
         # from plom.scan import sendCollisionsToServer
@@ -119,7 +139,7 @@ spU.add_argument(
     action="store_true",
     help="Upload 'collisions'. Collisions are pages which appear to be already on the server. You should not need this option except under exceptional circumstances.",
 )
-for x in (spR, spU, spS, spC):
+for x in (spR, spU, spS, spC, spP):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
@@ -128,7 +148,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "process":
-        processScans(args.scanPDF)
+        processScans(args.server, args.password, args.scanPDF)
     elif args.command == "read":
         readImages(args.server, args.password)
     elif args.command == "upload":

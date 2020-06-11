@@ -63,7 +63,7 @@ def isInArchive(fname):
     return [False]
 
 
-def processFileToBitmaps(fname):
+def processFileToBitmaps(bundleDir, fname):
     """Extract/convert each page of pdf into bitmap.
 
     We have various ways to do this, in rough order of preference:
@@ -82,6 +82,8 @@ def processFileToBitmaps(fname):
 
     NOT IMPLEMENTED YET: You can force one of these...
     """
+
+    destDir = os.path.join(bundleDir, "scanPNGs")
 
     scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
@@ -144,11 +146,11 @@ def processFileToBitmaps(fname):
                     )
 
                 if not converttopng:
-                    outname = os.path.join("scanPNGs", basename + "." + d["ext"])
+                    outname = os.path.join(destDir, basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
                 else:
-                    outname = os.path.join("scanPNGs", basename + ".png")
+                    outname = os.path.join(destDir, basename + ".png")
                     with tempfile.NamedTemporaryFile() as g:
                         with open(g.name, "wb") as f:
                             f.write(d["image"])
@@ -183,7 +185,7 @@ def processFileToBitmaps(fname):
 
         # TODO: experiment with jpg: generate both and see which is smaller?
         # (But be careful about "dim mult of 16" thing above.)
-        outname = os.path.join("scanPNGs", basename + ".png")
+        outname = os.path.join(destDir, basename + ".png")
         pix.writeImage(outname)
 
 
@@ -294,35 +296,31 @@ def normalizeJPEGOrientation(f):
         im2.save(f)
 
 
-def processScans(fname, hwByQ=False, hwExtra=False):
-    """Process file into bitmap pageimages and archive the pdf.
-
-    Process each page of a pdf file into bitmaps.  Then move the processed
-    pdf into "alreadyProcessed" so as to avoid duplications.
-
-    Do a small amount of post-processing when possible to do losslessly
-    (e.g., png).  A simple gamma shift to leave white-white but make
-    everything else darker.  Improves images when students write in very
-    light pencil.
+def makeBundleDirectories(fname):
+    """Each bundle needs its own subdirectory of pageImages and scanPNGs, so we have to make them.
     """
 
-    # check if fname is in archive (by checking md5sum)
-    tf = isInArchive(fname)
-    if tf[0]:
-        print(
-            "WARNING - {} is in the PDF archive - we checked md5sum - it the same as file {}. It will not be processed.".format(
-                fname, tf[1]
-            )
-        )
-        return
+    scan, fext = os.path.splitext(fname)
+    # issue #126 - replace spaces in names with underscores for output names.
+    safeScan = scan.replace(" ", "_")
+    # make directory for that bundle inside scanPNGs
+    bundleDir = os.path.join("bundles", safeScan)
+    os.makedirs(bundleDir, exist_ok=True)
+    # now inside that we need other subdir [pageImages, scanPNGs, decodedPages, unknownPages]
+    for dir in ["pageImages", "scanPNGs", "decodedPages", "unknownPages"]:
+        os.makedirs(os.path.join(bundleDir, dir), exist_ok=True)
 
-    processFileToBitmaps(fname)
-    archivePDF(fname, hwByQ, hwExtra)
-    os.chdir("scanPNGs")
-    if hwExtra:
-        os.chdir("submittedHWExtra")
-    elif hwByQ:
-        os.chdir("submittedHWByQ")
+    return bundleDir
+
+
+def postProcessing(bundleDir):
+    """Do the post processing on the files inside bundleDir
+    """
+    # get current directory, we need to go back there at the end.
+    startDir = os.getcwd()
+    # now cd into the scanPNGs directory of the current bundle.
+
+    os.chdir(os.path.join(bundleDir, "scanPNGs"))
 
     print("Normalizing jpeg orientation from Exif metadata")
     stuff = list(glob.glob("*.jpg"))
@@ -342,24 +340,66 @@ def processScans(fname, hwByQ=False, hwExtra=False):
     # for x in glob.glob("..."):
     #     gamma_adjust(x)
 
-    # move all the images into pageimages directory
+    # move all the images into pageimages directory of this bundle
+    dest = os.path.join("../pageImages")
     fileList = []
     for ext in PlomImageExtWhitelist:
         fileList.extend(glob.glob("*.{}".format(ext)))
-    # move directly to decodedPages/submittedHWByQ or  Extra - there is no "read" step
-    if hwByQ:
-        for file in fileList:
-            shutil.move(
-                file, os.path.join("..", "..", "decodedPages", "submittedHWByQ")
+    # move them to pageimages for barcode reading
+    for file in fileList:
+        shutil.move(file, dest)
+
+    # now cd back to the starting directory
+    os.chdir(startDir)
+
+
+def processScans(PDFs, hwByQ=False, hwExtra=False):
+    """Process files into bitmap pageimages and archive the pdf.
+
+    Process each page of a pdf file into bitmaps.  Then move the processed
+    pdf into "alreadyProcessed" so as to avoid duplications.
+
+    Do a small amount of post-processing when possible to do losslessly
+    (e.g., png).  A simple gamma shift to leave white-white but make
+    everything else darker.  Improves images when students write in very
+    light pencil.
+    """
+
+    for fname in PDFs:
+        # check if fname is in archive (by checking md5sum)
+        tf = isInArchive(fname)
+        if tf[0]:
+            print(
+                "WARNING - {} is in the PDF archive - we checked md5sum - it the same as file {}. It will not be processed.".format(
+                    fname, tf[1]
+                )
             )
-        os.chdir(os.path.join("..", ".."))
-    elif hwExtra:
-        for file in fileList:
-            shutil.move(
-                file, os.path.join("..", "..", "decodedPages", "submittedHWExtra")
-            )
-        os.chdir(os.path.join("..", ".."))
-    else:  # move them to pageimages for barcode reading
-        for file in fileList:
-            shutil.move(file, os.path.join("..", "pageImages"))
-        os.chdir("..")
+            continue
+        else:
+            # PDF is not in archive, so is new bundle.
+            # make a directory for it # is of form "bundle/fname/"
+            bundleDir = makeBundleDirectories(fname)
+            processFileToBitmaps(bundleDir, fname)
+            postProcessing(bundleDir)
+            # finally archive the PDF
+            archivePDF(fname, hwByQ, hwExtra)
+
+    # TODO - sort out homeworks
+    # if hwExtra:
+    # os.chdir("submittedHWExtra")
+    # elif hwByQ:
+    # os.chdir("submittedHWByQ")
+    # TODO - sort out homework again.
+    # # move directly to decodedPages/submittedHWByQ or  Extra - there is no "read" step
+    # if hwByQ:
+    #     for file in fileList:
+    #         shutil.move(
+    #             file, os.path.join("..", "..", "decodedPages", "submittedHWByQ")
+    #         )
+    #     os.chdir(os.path.join("..", ".."))
+    # elif hwExtra:
+    #     for file in fileList:
+    #         shutil.move(
+    #             file, os.path.join("..", "..", "decodedPages", "submittedHWExtra")
+    #         )
+    #     os.chdir(os.path.join("..", ".."))

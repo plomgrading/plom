@@ -38,10 +38,12 @@ def decodeQRs():
     If their QRcodes have not been successfully decoded previously
     then decode them.  The results are stored in blah.<ext>.qr files.
     """
-    os.chdir("pageImages")
+    # look at files in the pageImages directory of every bundle
+    # the .qr files will have same path, so do not need to do bundles separately
+
     stuff = []
     for ext in PlomImageExtWhitelist:
-        stuff.extend(glob.glob("*.{}".format(ext)))
+        stuff.extend(glob.glob("*/pageImages/*.{}".format(ext)))
     N = len(stuff)
     # TODO: processes=8?  Seems its chosen automatically (?)
     with Pool() as p:
@@ -49,8 +51,6 @@ def decodeQRs():
     # This does the same as the following serial loop but in parallel
     # for x in glob.glob(...):
     #     QRextract(x)
-
-    os.chdir("..")
 
 
 def reOrientPage(fname, qrs):
@@ -120,9 +120,8 @@ def checkQRsValid(spec, examsScannedNow):
 
     TODO: maybe we should split this function up a bit!
     """
-    # go into page image directory and look at each .qr file.
-    os.chdir("pageImages/")
-    for fnqr in glob.glob("*.qr"):
+    # go into page image directory of each bundle and look at each .qr file.
+    for fnqr in glob.glob("*/pageImages/*.qr"):
         fname = fnqr[:-3]  # blah.<ext>.qr -> blah.<ext>
         with open(fnqr, "r") as qrfile:
             qrs = json.load(qrfile)
@@ -218,16 +217,18 @@ def checkQRsValid(spec, examsScannedNow):
             # later we check that list against those produced during build
 
         if problemFlag:
-            # Difficulty scanning this pageimage so move it
-            # to unknownPages
+            # Difficulty scanning this pageimage so move it to unknownPages
+            # fname =  bname/pageImages/blah-n.png
+            # dst = bname/unknownPages/blah-n.png
+            [prefix, suffix] = os.path.split(
+                fname
+            )  # pref = "bname/pageImages", suf = blah-n.png
+            dst = os.path.join(os.path.split(prefix)[0], "unknownPages", suffix)
+
             print("[F] {0}: {1} - moving to unknownPages".format(fname, msg))
             # move blah.<ext> and blah.<ext>.qr
-            shutil.move(fname, os.path.join("..", "unknownPages", fname))
-            shutil.move(
-                fname + ".qr", os.path.join("..", "unknownPages", fname + ".qr")
-            )
-
-    os.chdir("..")
+            shutil.move(fname, dst)
+            shutil.move(fname + ".qr", dst + ".qr")
 
 
 def validateQRsAgainstSpec(spec, examsScannedNow):
@@ -258,27 +259,37 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
                 )
             )
             print(">> Moving problem files to unknownPages")
+            # fname =  bname/pageImages/blah-n.png
+            # dst = bname/unknownPages/blah-n.png
+            [prefix, suffix] = os.path.split(
+                fname
+            )  # pref = "bname/pageImages", suf = blah-n.png
+            dst = os.path.join(os.path.split(prefix)[0], "unknownPages", suffix)
+
+            print("[F] {0}: {1} - moving to unknownPages".format(fname, msg))
             # move the blah.<ext> and blah.<ext>.qr
             # this means that they won't be added to the
             # list of correctly scanned page images
-            shutil.move(fn, os.path.join("..", "unknownPages"))
-            shutil.move(fn + ".qr", os.path.join("..", "unknownPages"))
+            shutil.move(fname, dst)
+            shutil.move(fname + ".qr", dst + ".qr")
 
 
 def moveScansIntoPlace(examsScannedNow):
-    os.chdir("pageImages")
+    # os.chdir("pageImages")
     # For each test we have just scanned
     for fname in examsScannedNow:
         t = examsScannedNow[fname][0]
         p = examsScannedNow[fname][1]
         v = examsScannedNow[fname][2]
 
-        dpath = os.path.join("..", "decodedPages")
-        dname = "t{}p{}v{}.{}".format(str(t).zfill(4), str(p).zfill(2), str(v), fname)
+        [prefix, suffix] = os.path.split(
+            fname
+        )  # pref = "bname/pageImages", suf = blah-n.png
+        dpath = os.path.join(os.path.split(prefix)[0], "decodedPages")
+        # move blah-n.png to txxxxpyyvz.blah-n.png
+        dname = "t{}p{}v{}.{}".format(str(t).zfill(4), str(p).zfill(2), str(v), suffix)
         shutil.move(fname, os.path.join(dpath, dname))
         shutil.move(fname + ".qr", os.path.join(dpath, dname + ".qr"))
-
-    os.chdir("..")
 
 
 def processBitmaps(server=None, password=None):
@@ -318,7 +329,11 @@ def processBitmaps(server=None, password=None):
     scanMessenger.closeUser()
     scanMessenger.stop()
 
+    # go into the bundle directory
+    os.chdir("bundles")
     decodeQRs()
     checkQRsValid(spec, examsScannedNow)
     validateQRsAgainstSpec(spec, examsScannedNow)
     moveScansIntoPlace(examsScannedNow)
+
+    os.chdir("..")
