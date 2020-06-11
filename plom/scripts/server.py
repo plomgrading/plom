@@ -90,11 +90,10 @@ def checkSpecAndDatabase():
         exit(1)
 
     if os.path.isfile(Path(specdir) / "plom.db"):
-        print("Database present.")
+        print("Database present: using existing database.")
     else:
-        print("Database not yet present.")
-        print("TODO: should we do it on demand or have `plom-server init` makes it?")
-        print("Continuing... for now!")
+        print("Database not yet present: it will be created on first run.")
+        # TODO: or should `plom-server init` create it?")
 
     if os.path.isfile(Path(specdir) / "classlist.csv"):
         print("Classlist present.")
