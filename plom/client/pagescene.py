@@ -517,12 +517,9 @@ class PageScene(QGraphicsScene):
         """
         if self.tempImage is not None:
             currentPos = event.scenePos()
-            Image = QImage(self.tempImage)
-            pixMap = QGraphicsPixmapItem(QPixmap.fromImage(Image))
-            pixMap.setPos(currentPos)
-            pixMap.setFlag(QGraphicsItem.ItemIsMovable)
-            pixMap.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-            self.addItem(pixMap)
+            image = QImage(self.tempImage)
+            command = self.CommandImage(currentPos, image)
+            self.undoStack.push(command)
             self.mode = "move"
             self.tempImage = None
         else:

@@ -551,6 +551,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="uploadImage">
+        <property name="text">
+         <string>Upload Image</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QFrame" name="markBox">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -800,5 +807,25 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>uploadImage</sender>
+   <signal>clicked()</signal>
+   <receiver>annotator_rhm</receiver>
+   <slot>uploadImage()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>241</x>
+     <y>239</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>430</x>
+     <y>334</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>uploadImage()</slot>
+ </slots>
 </ui>
