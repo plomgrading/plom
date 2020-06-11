@@ -868,7 +868,7 @@ class MarkerClient(QWidget):
         # instance vars that get initialized later
         self.question = None
         self.version = None
-        self.testInfo = None
+        self.exam_spec = None
         self.ui = None
         self.canViewAll = None
 
@@ -915,7 +915,7 @@ class MarkerClient(QWidget):
 
         # Get the number of Tests, Pages, Questions and Versions
         try:
-            self.testInfo = messenger.getInfoGeneral()
+            self.exam_spec = messenger.getInfoGeneral()
         except PlomSeriousException as err:
             self.throwSeriousError(err, rethrow=False)
             return
@@ -999,12 +999,12 @@ class MarkerClient(QWidget):
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
-        self.setWindowTitle('Plom Marker: "{}"'.format(self.testInfo["testName"]))
+        self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         # Paste the username, question and version into GUI.
         self.ui.userLabel.setText(messenger.whoami())
         self.ui.infoBox.setTitle(
             "Marking Q{} (ver. {}) of “{}”".format(
-                self.question, self.version, self.testInfo["testName"]
+                self.question, self.version, self.exam_spec["name"]
             )
         )
 
@@ -1473,7 +1473,7 @@ class MarkerClient(QWidget):
                 tgvID (Str): Test-Group-Version ID.
                      For Example: for Test # 0027, group # 13, Version #2
                      tgvID = t0027g13v2
-                testname (str): test name
+                exam_name (str): exam name
                 paperdir (dir): Working directory for the current task
                 fnames (str): original file name (unannotated)
                 aname (str):  annotated file name
@@ -1610,10 +1610,10 @@ class MarkerClient(QWidget):
         else:
             pdict = None
 
-        testname = self.testInfo["testName"]
+        exam_name = self.exam_spec["name"]
         markStyle = self.ui.markStyleGroup.checkedId()
         tgv = task[1:]
-        return tgv, testname, paperdir, fnames, aname, self.maxMark, markStyle, pdict
+        return tgv, exam_name, paperdir, fnames, aname, self.maxMark, markStyle, pdict
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
@@ -1975,10 +1975,10 @@ class MarkerClient(QWidget):
         # Start caching.
         c = 0
         n = int(self.question)
-        testname = self.testInfo["testName"]
+        exam_name = self.exam_spec["name"]
 
         for X in clist:
-            if commentIsVisible(X, n, testname) and X["text"][:4].upper() == "TEX:":
+            if commentIsVisible(X, n, exam_name) and X["text"][:4].upper() == "TEX:":
                 txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version
@@ -2069,14 +2069,14 @@ class MarkerClient(QWidget):
     def viewSpecificImage(self):
         """ shows the image.  """
         if self.canViewAll:
-            tgs = SelectTestQuestion(self.testInfo, self.question)
+            tgs = SelectTestQuestion(self.exam_spec, self.question)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
                 gn = tgs.gsb.value()
             else:
                 return
         else:
-            tgs = SelectTestQuestion(self.testInfo)
+            tgs = SelectTestQuestion(self.exam_spec)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
                 gn = self.question

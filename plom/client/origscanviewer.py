@@ -467,7 +467,7 @@ class SelectTestQuestion(QDialog):
 
         fg = QFormLayout()
         self.tsb = QSpinBox()
-        self.tsb.setRange(1, info["numberOfTests"])
+        self.tsb.setRange(1, info["numberToProduce"])
         self.tsb.setValue(1)
         fg.addRow("Select test:", self.tsb)
         if gn is not None:
