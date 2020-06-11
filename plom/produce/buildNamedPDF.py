@@ -14,7 +14,7 @@ from multiprocessing import Pool
 from tqdm import tqdm
 
 from plom import specdir
-from plom.db.examDB import PlomDB
+from plom.db import PlomDB
 from .mergeAndCodePages import make_PDF
 from . import paperdir
 
@@ -50,26 +50,13 @@ def read_class_list():
 
 
 def _make_PDF(x):
-    """A function that basically uses make_PDF from mergeAdCodePages.
+    """Call make_PDF from mergeAndCodePages with arguments expanded.
+
+    *Note*: this is a little bit of glue to make the parallel Pool code
+    elsewhere work.
 
     Arguments:
-        x {tuple} --
-                        name {Str} -- Document Name
-                        code {Str} -- 6 digit distinguished code for the document
-                        length {int} -- Length of the document or number of pages
-                        versions {int} -- Number of version of this Document
-                        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests
-                        page_versions {dict} -- A (int,int) dictionary representing the version of each page for this test
-                        extra {dict} -- A (Str:Str) dictioary with student id and name (default: {None})
-
-                        Example:
-                        name: 'plomdemo',
-                        code: '980275',
-                        length: 6,
-                        versions: 2,
-                        test: 1,
-                        page_versions: {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1},
-                        extra: {'id': '10050380', 'name': 'Fink, Iris'}
+        x (tuple): this is expanded as the arguments to :func:`make_PDF`.
     """
     make_PDF(*x)
 
@@ -89,7 +76,7 @@ def build_all_papers(spec, DB_file_name, named=False):
                        'numberOfVersions': 2,
                        'numberOfPages': 6,
                        'numberToProduce': 20,
-                       'numberToName': 10, <--- This is typically zero
+                       'numberToName': 10,
                        'numberOfQuestions': 3,
                        'privateSeed': '1001378822317872',
                        'publicCode': '270385',

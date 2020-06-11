@@ -24,7 +24,7 @@ from plom import Plom_API_Version as serverAPI
 from plom import Default_Port
 from plom import SpecParser
 from plom import specdir
-from plom.db.examDB import PlomDB
+from plom.db import PlomDB
 
 from .authenticate import Authority
 
