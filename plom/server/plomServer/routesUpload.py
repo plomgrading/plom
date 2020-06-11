@@ -598,6 +598,9 @@ class UploadHandler:
 
         TODO: one at a time?  Add bulk upload version?
 
+        TODO: pass in md5sum too and if its unchanged no need to
+        complain about conflict, just quietly return 200.
+
         Responses:
             200 OK:
             400 Bad Request: only "manager" is allowed to do this.
