@@ -507,18 +507,29 @@ class PlomDB:
             return pvDict
 
     def produceTest(self, t):
-        # After creating the test (plom-build) we'll turn the spec'd papers into PDFs
-        # we'll refer to those as "produced"
+        """Someone has told us they produced (made PDF) for this paper.
+
+        Args:
+            t (int): a paper number.
+
+        Exceptions:
+            IndexError: no such paper exists.
+            ValueError: you already told us you made it.
+        """
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
-            log.error('Cannot set test {} to "produced" - it does not exist'.format(t))
-            return
+            log.error('Cannot set paper {} to "produced" - it does not exist'.format(t))
+            raise IndexError("Paper number does not exist: out of range?")
         else:
             # TODO - work out how to make this more efficient? Multiple updates in one op?
             with plomdb.atomic():
+                if tref.produced:
+                    # TODO be less harsh if we have the same md5sum
+                    log.error('Paper {} was already "produced"!'.format(t))
+                    raise ValueError("Paper was already produced")
                 tref.produced = True
                 tref.save()
-            log.info('Test {} is set to "produced"'.format(t))
+            log.info('Paper {} is set to "produced"'.format(t))
 
     def identifyTest(self, t, sid, sname):
         tref = Test.get_or_none(testNumber=t)

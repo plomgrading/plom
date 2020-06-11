@@ -87,8 +87,18 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
+            if response.status_code == 400:
+                raise PlomAuthenticationException() from None
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomRangeException(
+                    "Paper number {} is outside valid range".format(test_num)
+                ) from None
+            elif response.status_code == 409:
+                raise PlomSeriousException(
+                    "Paper number {} has already been produced".format(test_num)
+                ) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)

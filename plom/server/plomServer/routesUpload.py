@@ -619,14 +619,15 @@ class UploadHandler:
                 unusual to be making it again. Maybe try `force=True`.
         """
         if not data["user"] == "manager":
-            return web.Response(status=400)  # malformed request.
-
-        # TODO: should ensure its not been produced before and perhaps support a "force" flag?
+            return web.Response(status=400)
         #force_flag = request.match_info["force"]
-
-        # TODO: error handling needed for page out of range
         paper_idx = request.match_info["t"]
-        self.server.DB.produceTest(paper_idx)
+        try:
+            self.server.DB.produceTest(paper_idx)
+        except IndexError:
+            return web.Response(status=404)
+        except ValueError:
+            return web.Response(status=409)
         return web.Response(status=200)
 
     def setUpRoutes(self, router):
