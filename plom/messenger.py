@@ -223,7 +223,7 @@ class BaseMessenger(object):
 
         fields = (
             "name",
-            "numberOfTests",
+            "numberToProduce",
             "numberOfPages",
             "numberOfQuestions",
             "numberOfVersions",

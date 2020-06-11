@@ -481,7 +481,7 @@ class Manager(QWidget):
     # -------------------
     def getTPQV(self):
         info = managerMessenger.getInfoGeneral()
-        self.numberOfTests = info["numberOfTests"]
+        self.max_papers = info["numberToProduce"]
         self.numberOfPages = info["numberOfPages"]
         self.numberOfQuestions = info["numberOfQuestions"]
         self.numberOfVersions = info["numberOfVersions"]
@@ -709,7 +709,7 @@ class Manager(QWidget):
             uvw = UnknownViewWindow(
                 self,
                 [fh.name],
-                [self.numberOfTests, self.numberOfPages, self.numberOfQuestions],
+                [self.max_papers, self.numberOfPages, self.numberOfQuestions],
             )
             if uvw.exec_() == QDialog.Accepted:
                 self.unknownModel.item(r, 2).setText(uvw.action)
