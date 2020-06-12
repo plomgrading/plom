@@ -1136,7 +1136,7 @@ class PlomDB:
             return [False, "bundleError", "Cannot find bundle {}".format(bname)]
 
         with plomdb.atomic():
-            image = Image.create(
+            iref = Image.create(
                 originalName=oname, fileName=nname, md5sum=md5, bundle=bref
             )
             uref = UnknownPage.create(image=iref, order=order)
@@ -1241,11 +1241,11 @@ class PlomDB:
             return [True, pref.image.fileName]
 
     def getUnknownImage(self, fname):
-        uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
-        if uref is None:
+        iref = Image.get_or_none(Image.fileName == fname)
+        if iref is None:
             return [False]
         else:
-            return [True, uref.fileName]
+            return [True, iref.fileName]
 
     def getDiscardImage(self, fname):
         dref = DiscardedPage.get_or_none(DiscardedPage.fileName == fname)
