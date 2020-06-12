@@ -4,8 +4,7 @@
 
 import os
 import sys
-
-import getpass  # local?
+import getpass
 
 from plom import SpecParser
 from plom import specdir
