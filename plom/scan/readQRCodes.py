@@ -242,7 +242,7 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
         v = examsScannedNow[fname][2]
         # make a valid flag
         flag = True
-        if t < 0 or t > spec["numberOfTests"]:  # slight bastardisation of normal spec
+        if t < 0 or t > spec["numberToProduce"]:
             flag = False
         if p < 0 or p > spec["numberOfPages"]:
             flag = False
@@ -253,7 +253,7 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
             print(">> Produced t{} p{} v{}".format(t, p, tfv[1]))
             print(
                 ">> Must have t-code in [1,{}], p-code in [1,{}], v-code in [1,{}]".format(
-                    spec["numberOfTests"],
+                    spec["numberToProduce"],
                     spec["numberOfPages"],
                     spec["numberOfVersions"],
                 )

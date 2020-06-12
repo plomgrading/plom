@@ -349,9 +349,9 @@ class Chooser(QDialog):
             return
         self.ui.infoLabel.setText(r)
 
-        info = messenger.getInfoGeneral()
+        spec = messenger.getInfoGeneral()
         self.ui.markGBox.setTitle(
-            "Marking information for “{}”".format(info["testName"])
+            "Marking information for “{}”".format(spec["name"])
         )
         question = self.getQuestion()
         v = self.getv()
@@ -359,18 +359,18 @@ class Chooser(QDialog):
         self.ui.vSB.setVisible(False)
 
         self.ui.vDrop.clear()
-        self.ui.vDrop.addItems([str(x + 1) for x in range(0, info["numberOfVersions"])])
+        self.ui.vDrop.addItems([str(x + 1) for x in range(0, spec["numberOfVersions"])])
         if v:
-            if v >= 1 and v <= info["numberOfVersions"]:
+            if v >= 1 and v <= spec["numberOfVersions"]:
                 self.ui.vDrop.setCurrentIndex(v - 1)
         self.ui.vDrop.setVisible(True)
 
         self.ui.pgDrop.clear()
         self.ui.pgDrop.addItems(
-            ["Q{}".format(x + 1) for x in range(0, info["numberOfQuestions"])]
+            ["Q{}".format(x + 1) for x in range(0, spec["numberOfQuestions"])]
         )
         if question:
-            if question >= 1 and question <= info["numberOfQuestions"]:
+            if question >= 1 and question <= spec["numberOfQuestions"]:
                 self.ui.pgDrop.setCurrentIndex(question - 1)
         self.ui.pgDrop.setVisible(True)
         # TODO should we also let people type in?

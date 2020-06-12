@@ -26,25 +26,11 @@ from plom.client.pagescene import PageScene
 from plom import AnnFontSizePts
 
 from plom.client.tools import (
-    CommandArrow,
-    CommandArrowDouble,
-    CommandBox,
-    CommandCross,
-    CommandDelete,
-    CommandDelta,
-    CommandEllipse,
-    CommandHighlight,
-    CommandLine,
-    CommandPen,
-    CommandPenArrow,
-    CommandQMark,
-    CommandText,
-    CommandTick,
-    CommandGDT,
     DeltaItem,
-    TextItem,
     GroupDTItem,
 )
+from plom.client.tools.delete import CommandDelete
+from plom.client.tools import *
 
 from plom import __version__, Plom_API_Version
 from plom.messenger import Messenger

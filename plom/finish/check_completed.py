@@ -97,7 +97,7 @@ def main(server=None, password=None):
         exit(-1)
 
     spec = msgr.getInfoGeneral()
-    numberOfTests = spec["numberOfTests"]
+    max_papers = spec["numberToProduce"]
     numberOfQuestions = spec["numberOfQuestions"]
     completions = msgr.RgetCompletions()
     outToDo = msgr.RgetOutToDo()
@@ -105,7 +105,7 @@ def main(server=None, password=None):
     msgr.closeUser()
     msgr.stop()
 
-    print_everything(completions, numberOfTests, numberOfQuestions)
+    print_everything(completions, max_papers, numberOfQuestions)
 
     idList, tList, mList, sList, cList, numScanned = proc_everything(
         completions, numberOfQuestions
