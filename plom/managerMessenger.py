@@ -81,7 +81,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
-                "https://{}/DEV/admin/IMadeThisPDF/{}".format(self.server, test_num),
+                "https://{}/admin/pdf_produced/{}".format(self.server, test_num),
                 verify=False,
                 json={"user": self.user, "token": self.token},
             )
@@ -89,7 +89,7 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 400:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 401:
+            elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomRangeException(

@@ -591,7 +591,7 @@ class UploadHandler:
         #return web.json_response(str(pickle.dumps(vers)), status=200)
         return web.json_response(vers, status=200)
 
-    #@route.put("/DEV/admin/IMadeThisPDF/{t}")
+    #@route.put("/admin/pdf_produced/{t}")
     @authenticate_by_token_required_fields(["user"])
     def notify_pdf_of_paper_produced(self, data, request):
         """Inform server that a PDF for this paper has been produced.
@@ -604,6 +604,7 @@ class UploadHandler:
 
         TODO: pass in md5sum too and if its unchanged no need to
         complain about conflict, just quietly return 200.
+        TODO: implement force as mentioned below.
 
         Inputs:
             t (int?, str?): part of URL that specifies the paper number.
@@ -611,9 +612,13 @@ class UploadHandler:
             force (bool): force production even if paper already exists.
             md5sum (str): md5sum of the file that was produced.
 
-        Responses:
-            200 OK:
+        Returns:
+            aiohttp.web.Response: with status code as below.
+
+        Status codes:
+            200 OK: the info was recorded.
             400 Bad Request: only "manager" is allowed to do this.
+            401 Unauthorized: invalid credientials.
             404 Not Found: paper number is outside valid range.
             409 Conflict: this paper has already been produced, so its
                 unusual to be making it again. Maybe try `force=True`.
@@ -662,4 +667,4 @@ class UploadHandler:
         router.add_put("/DEV/admin/populateDB", self.populateExamDatabase)
         router.add_get("/DEV/admin/pageVersionMap/{t}", self.getPageVersionMap)
         router.add_get("/DEV/admin/pageVersionMap", self.getGlobalPageVersionMap)
-        router.add_put("/DEV/admin/IMadeThisPDF/{t}", self.notify_pdf_of_paper_produced)
+        router.add_put("/admin/pdf_produced/{t}", self.notify_pdf_of_paper_produced)
