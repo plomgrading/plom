@@ -258,6 +258,8 @@ def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
 def splitFakeFile(out_file_path):
     """Split the scribble pdf into three files
     """
+
+    print("Splitting PDF into 3 in order to test bundles.")
     originalPDF = fitz.open(out_file_path)
     newPDFName = os.path.splitext(out_file_path)[0]
     length = len(originalPDF) // 3

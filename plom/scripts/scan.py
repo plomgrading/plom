@@ -38,14 +38,26 @@ def scanStatus(server, password):
     checkScanStatus.checkStatus(server, password)
 
 
+def make_required_directories():
+    # we need
+    directory_list = [
+        "archivedPDFs",
+        "bundles",
+        "uploads/sentPages",
+        "uploads/discardedPages",
+        "uploads/collidingPages",
+        "uploads/sentPages/unknowns",
+        "uploads/sentPages/collisions",
+    ]
+    for dir in directory_list:
+        os.makedirs(dir, exist_ok=True)
+
+
 def processScans(server, password, PDFs):
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
-    # make PDF archive directory
-    os.makedirs("archivedPDFs", exist_ok=True)
-    # make a bundle directory into which all our images go
-    os.makedirs("bundles", exist_ok=True)
+    make_required_directories()
 
     # first check that we can find all the files
     for fname in PDFs:
@@ -78,19 +90,11 @@ def processScans(server, password, PDFs):
 def readImages(server, password):
     from plom.scan import readQRCodes
 
-    # make decodedPages and unknownPages directories
-    os.makedirs("decodedPages", exist_ok=True)
-    os.makedirs("unknownPages", exist_ok=True)
     readQRCodes.processBitmaps(server, password)
 
 
 def uploadImages(server, password, unknowns=False, collisions=False):
     from plom.scan import sendPagesToServer
-
-    # make directories for upload
-    os.makedirs("sentPages", exist_ok=True)
-    os.makedirs("discardedPages", exist_ok=True)
-    os.makedirs("collidingPages", exist_ok=True)
 
     print("Upload images to server")
     [TPN, updates] = sendPagesToServer.uploadPages(server, password)
@@ -98,17 +102,14 @@ def uploadImages(server, password, unknowns=False, collisions=False):
     print("Server reports {} papers updated.".format(updates))
 
     if unknowns:
-        print(">> TO DO FIX <<")
         from plom.scan import sendUnknownsToServer
 
         print("Also upload unknowns")
-        os.makedirs("sentPages/unknowns", exist_ok=True)
-        [SIDQ, updates] = sendUnknownsToServer.uploadUnknowns(server, password)
+        sendUnknownsToServer.uploadUnknowns(server, password)
     if collisions:
         print(">> TO DO FIX <<")
         # from plom.scan import sendCollisionsToServer
         # print("Also collisions unknowns")
-        # os.makedirs("sentPages/collisions", exist_ok=True)
         # sendCollisionsToServer.uploadCollisions(server, password)
 
 

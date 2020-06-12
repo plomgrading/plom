@@ -791,10 +791,14 @@ class PlomDB:
                 "pageError",
                 "Cannot find TPage,version {} for test {}".format([p, v], t),
             ]
+        # make sure we know the bundle
+        bref = Bundle.get_or_none(originalName=bname)
+        if bref is None:
+            return [False, "bundleError", "Cannot find bundle {}".format(bname)]
         if pref.scanned:
             # have already loaded an image for this page - so this is actually a duplicate
             log.debug("This appears to be a duplicate. Checking md5sums")
-            if md5 == pref.md5sum:
+            if md5 == pref.image.md5sum:
                 # Exact duplicate - md5sum of this image is sames as the one already in database
                 return [
                     False,
@@ -808,7 +812,7 @@ class PlomDB:
         else:  # this is a new testpage. create an image and link it to the testpage
             with plomdb.atomic():
                 pref.image = Image.create(
-                    originalName=oname, fileName=nname, md5sum=md5
+                    originalName=oname, fileName=nname, md5sum=md5, bundle=bref
                 )
                 pref.scanned = True
                 pref.save()
@@ -1115,20 +1119,27 @@ class PlomDB:
             tref.save()
         return [True]
 
-    def uploadUnknownPage(self, oname, nname, md5):
+    def uploadUnknownPage(self, oname, nname, order, md5, bname):
         # return value is either [True, <success message>] or
         # [False, <duplicate message>]
         # check if md5 is already in Unknown pages
-        uref = UnknownPage.get_or_none(md5sum=md5)
-        if uref is not None:
+        iref = Image.get_or_none(md5sum=md5)
+        if iref is not None:
             return [
                 False,
                 "duplicate",
                 "Exact duplicate of page already in database",
             ]
+        # make sure we know the bundle
+        bref = Bundle.get_or_none(originalName=bname)
+        if bref is None:
+            return [False, "bundleError", "Cannot find bundle {}".format(bname)]
+
         with plomdb.atomic():
-            uref = UnknownPage.create(originalName=oname, fileName=nname, md5sum=md5)
-            uref.save()
+            image = Image.create(
+                originalName=oname, fileName=nname, md5sum=md5, bundle=bref
+            )
+            uref = UnknownPage.create(image=iref, order=order)
         log.info("Uploaded image {} as unknown".format(oname))
         return [True, "success", "Page saved in UnknownPage list"]
 

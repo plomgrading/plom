@@ -65,7 +65,7 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadTestPage(self, code, test, page, version, sname, fname, md5sum):
+    def uploadTestPage(self, code, test, page, version, sname, fname, md5sum, bundle):
         self.SRmutex.acquire()
         try:
             param = {
@@ -76,6 +76,7 @@ class ScanMessenger(BaseMessenger):
                 "page": page,
                 "version": version,
                 "md5sum": md5sum,
+                "bundle": bundle,
             }
             mime_type = mimetypes.guess_type(sname)[0]
             dat = MultipartEncoder(
@@ -181,14 +182,16 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadUnknownPage(self, sname, fname, md5sum):
+    def uploadUnknownPage(self, sname, fname, order, md5sum, bundle):
         self.SRmutex.acquire()
         try:
             param = {
                 "user": self.user,
                 "token": self.token,
                 "fileName": sname,
+                "order": order,
                 "md5sum": md5sum,
+                "bundle": bundle,
             }
             mime_type = mimetypes.guess_type(sname)[0]
             dat = MultipartEncoder(

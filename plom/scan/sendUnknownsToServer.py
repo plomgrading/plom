@@ -19,31 +19,48 @@ from plom import PlomImageExtWhitelist
 
 
 def doFiling(rmsg, shortName, fname):
+    # current directory is "bundle", but we need to put files in "../upload/blah"
     if rmsg[0]:  # msg should be [True, "success", success message]
         # print(rmsg[2])
         print("{} uploaded as unknown page.".format(fname))
-        shutil.move(fname, os.path.join("sentPages", "unknowns", shortName))
         shutil.move(
-            fname + ".qr", os.path.join("sentPages", "unknowns", shortName + "qr")
+            fname, os.path.join("..", "uploads", "sentPages", "unknowns", shortName)
+        )
+        shutil.move(
+            fname + ".qr",
+            os.path.join("..", "uploads", "sentPages", "unknowns", shortName + "qr"),
         )
     else:  # msg = [False, reason, message]
         if rmsg[1] == "duplicate":
             print(rmsg[2])
-            shutil.move(fname, os.path.join("discardedPages", shortName))
             shutil.move(
-                fname + ".qr", os.path.join("discardedPages", shortName + ".qr")
+                fname, os.path.join("..", "uploads", "discardedPages", shortName)
+            )
+            shutil.move(
+                fname + ".qr",
+                os.path.join("..", "uploads", "discardedPages", shortName + ".qr"),
             )
         else:
             print(rmsg[2])
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendUnknownFiles(scanMessenger, fileList):
-    for fname in fileList:
-        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        shortName = os.path.split(fname)[1]
-        rmsg = scanMessenger.uploadUnknownPage(shortName, fname, md5)
-        doFiling(rmsg, shortName, fname)
+def extractOrder(fname):
+    """filename is of the form blah-n.png, extract the 'n' and return it as an integer
+    """
+    npng = fname.split("-")[-1]
+    n = npng.split(".")[0]
+    return int(n)
+
+
+def sendUnknownFiles(scanMessenger, fileDict):
+    for bundle in fileDict:
+        for fname in fileDict[bundle]:
+            md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+            shortName = os.path.split(fname)[1]
+            order = extractOrder(shortName)
+            rmsg = scanMessenger.uploadUnknownPage(shortName, fname, order, md5, bundle)
+            doFiling(rmsg, shortName, fname)
 
 
 def uploadUnknowns(server=None, password=None):
@@ -76,10 +93,20 @@ def uploadUnknowns(server=None, password=None):
         )
         exit(10)
 
-    # Look for pages in unknowns
-    fileList = []
-    for ext in PlomImageExtWhitelist:
-        fileList.extend(glob("unknownPages/*.{}".format(ext)))
-    sendUnknownFiles(scanMessenger, fileList)
+    fileDict = {}  # list of files by bundle
+
+    # go into bundles directory
+    os.chdir("bundles")
+    for bundleDir in os.scandir():
+        # make sure is directory
+        if not bundleDir.is_dir():
+            continue
+        fileDict[bundleDir.name] = []
+        # Look for pages in unknowns
+        for ext in PlomImageExtWhitelist:
+            fileDict[bundleDir.name].extend(
+                glob(os.path.join(bundleDir, "unknownPages", "*.{}".format(ext)))
+            )
+    sendUnknownFiles(scanMessenger, fileDict)
     scanMessenger.closeUser()
     scanMessenger.stop()

@@ -12,7 +12,11 @@ from plom.server import pageNotSubmitted
 log = logging.getLogger("server")
 
 
-def addTestPage(self, t, p, v, fname, image, md5o):
+def declareBundle(self, bundle_file, md5):
+    return self.DB.declareBundle(bundle_file, md5)
+
+
+def addTestPage(self, t, p, v, fname, image, md5o, bundle):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -22,7 +26,7 @@ def addTestPage(self, t, p, v, fname, image, md5o):
         newName = "pages/originalPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadTestPage(t, p, v, fname, newName, md5o)
+    val = self.DB.uploadTestPage(t, p, v, fname, newName, md5o, bundle)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -78,7 +82,7 @@ def addXPage(self, sid, o, fname, image, md5o):
     return val
 
 
-def addUnknownPage(self, fname, image, md5o):
+def addUnknownPage(self, fname, image, order, md5o, bundle):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -88,7 +92,7 @@ def addUnknownPage(self, fname, image, md5o):
         newName = "pages/unknownPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadUnknownPage(fname, newName, md5o)
+    val = self.DB.uploadUnknownPage(fname, newName, order, md5o, bundle)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)

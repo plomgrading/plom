@@ -8,6 +8,17 @@ class UploadHandler:
     def __init__(self, plomServer):
         self.server = plomServer
 
+    async def declareBundle(self, request):
+        data = await request.json()
+        if not validate_required_fields(data, ["user", "token", "bundle", "md5sum"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] in ["scanner", "manager"]:
+            return web.Response(status=401)
+        rval = self.server.declareBundle(data["bundle"], data["md5sum"])
+        return web.json_response(rval, status=200)  # all fine
+
     async def uploadTestPage(self, request):
         reader = MultipartReader.from_response(request)
 
@@ -17,7 +28,17 @@ class UploadHandler:
         param = await part0.json()
 
         if not validate_required_fields(
-            param, ["user", "token", "test", "page", "version", "fileName", "md5sum"]
+            param,
+            [
+                "user",
+                "token",
+                "test",
+                "page",
+                "version",
+                "fileName",
+                "md5sum",
+                "bundle",
+            ],
         ):
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
@@ -41,6 +62,7 @@ class UploadHandler:
             param["fileName"],
             image,
             param["md5sum"],
+            param["bundle"],
         )
         return web.json_response(rmsg, status=200)  # all good
 
@@ -111,7 +133,9 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         param = await part0.json()
 
-        if not validate_required_fields(param, ["user", "token", "fileName", "md5sum"]):
+        if not validate_required_fields(
+            param, ["user", "token", "fileName", "order", "md5sum", "bundle"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
             return web.Response(status=401)
@@ -123,7 +147,9 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         image = await part1.read()
         # file it away.
-        rmsg = self.server.addUnknownPage(param["fileName"], image, param["md5sum"],)
+        rmsg = self.server.addUnknownPage(
+            param["fileName"], image, param["order"], param["md5sum"], param["bundle"]
+        )
         return web.json_response(rmsg, status=200)  # all good
 
     async def uploadCollidingPage(self, request):
@@ -163,7 +189,9 @@ class UploadHandler:
 
     async def replaceMissingTestPage(self, request):
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "page", "version"]):
+        if not validate_required_fields(
+            data, ["user", "token", "test", "page", "version"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -200,7 +228,9 @@ class UploadHandler:
 
     async def removeScannedPage(self, request):
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "page", "version"]):
+        if not validate_required_fields(
+            data, ["user", "token", "test", "page", "version"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -256,7 +286,9 @@ class UploadHandler:
 
     async def getTPageImage(self, request):
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "page", "version"]):
+        if not validate_required_fields(
+            data, ["user", "token", "test", "page", "version"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -271,7 +303,9 @@ class UploadHandler:
 
     async def getHWPageImage(self, request):  # should this use version too?
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "question", "order"]):
+        if not validate_required_fields(
+            data, ["user", "token", "test", "question", "order"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -381,7 +415,9 @@ class UploadHandler:
 
     async def checkPage(self, request):
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "page", "images"]):
+        if not validate_required_fields(
+            data, ["user", "token", "test", "page", "images"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -530,6 +566,7 @@ class UploadHandler:
         )  # all fine - report number of tests updated
 
     def setUpRoutes(self, router):
+        router.add_put("/admin/bundle", self.declareBundle)
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/hwPages", self.uploadHWPage)
         router.add_put("/admin/xPages", self.uploadXPage)

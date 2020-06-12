@@ -50,19 +50,26 @@ def extractTPV(name):
 
 
 def doFiling(rmsg, ts, ps, vs, shortName, fname):
+    # current directory is "bundle", but we need to put files in "../upload/blah"
+
     if rmsg[0]:  # msg should be [True, "success", success message]
-        shutil.move(fname, os.path.join("sentPages", shortName))
-        shutil.move(fname + ".qr", os.path.join("sentPages", shortName + ".qr"))
+        shutil.move(fname, os.path.join("..", "uploads", "sentPages", shortName))
+        shutil.move(
+            fname + ".qr", os.path.join("..", "uploads", "sentPages", shortName + ".qr")
+        )
     else:  # msg = [False, reason, message]
         print(rmsg[1], rmsg[2])
         if rmsg[1] == "duplicate":
-            shutil.move(fname, os.path.join("discardedPages", shortName))
             shutil.move(
-                fname + ".qr", os.path.join("discardedPages", shortName + ".qr")
+                fname, os.path.join("..", "uploads", "discardedPages", shortName)
+            )
+            shutil.move(
+                fname + ".qr",
+                os.path.join("..", "uploads", "discardedPages", shortName + ".qr"),
             )
 
         elif rmsg[1] == "collision":
-            nname = os.path.join("collidingPages", shortName)
+            nname = os.path.join("..", "uploads", "collidingPages", shortName)
             shutil.move(fname, nname)
             shutil.move(fname + ".qr", nname + ".qr")
             # and write the name of the colliding file
@@ -73,22 +80,26 @@ def doFiling(rmsg, ts, ps, vs, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
         elif rmsg[1] == "pageError":
             print("This should not happen - todo = log error in sensible way")
+        elif rmsg[1] == "bundleError":
+            print("This should not happen - todo = log error in sensible way")
 
 
-def sendTestFiles(msgr, fileList):
+def sendTestFiles(msgr, fileDict):
+
     TUP = defaultdict(list)
-    for fname in fileList:
-        shortName = os.path.split(fname)[1]
-        ts, ps, vs = extractTPV(shortName)
-        print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
-        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
-        rmsg = msgr.uploadTestPage(
-            code, int(ts), int(ps), int(vs), shortName, fname, md5
-        )
-        doFiling(rmsg, ts, ps, vs, shortName, fname)
-        if rmsg[0]:  # was successful upload
-            TUP[ts].append(ps)
+    for bundle in fileDict:
+        for fname in fileDict[bundle]:
+            shortName = os.path.split(fname)[1]
+            ts, ps, vs = extractTPV(shortName)
+            print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
+            md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+            code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
+            rmsg = msgr.uploadTestPage(
+                code, int(ts), int(ps), int(vs), shortName, fname, md5, bundle
+            )
+            doFiling(rmsg, ts, ps, vs, shortName, fname)
+            if rmsg[0]:  # was successful upload
+                TUP[ts].append(ps)
     return TUP
 
 
@@ -191,16 +202,31 @@ def uploadPages(server=None, password=None):
     spec = msgr.getInfoGeneral()
     numberOfPages = spec["numberOfPages"]
 
-    # Look for pages in decodedPages
-    fileList = []
-    for ext in PlomImageExtWhitelist:
-        fileList.extend(sorted(glob("decodedPages/t*.{}".format(ext))))
+    fileDict = {}  # list of files by bundle
 
-    TUP = sendTestFiles(msgr, fileList)
+    # go into bundles directory
+    os.chdir("bundles")
+    for bundleDir in os.scandir():
+        # make sure is directory
+        if not bundleDir.is_dir():
+            continue
+        fileDict[bundleDir.name] = []
+        # Look for pages in decodedPages
+        for ext in PlomImageExtWhitelist:
+            fileDict[bundleDir.name].extend(
+                sorted(
+                    glob(os.path.join(bundleDir, "decodedPages", "t*.{}".format(ext)))
+                )
+            )
+    TUP = sendTestFiles(msgr, fileDict)
     # we do not update any missing pages, since that is a serious issue for tests, and should not be done automagically
 
     updates = msgr.sendTUploadDone()
 
+    # go back to original dir
+    os.chdir("..")
+
+    # close down messenger
     msgr.closeUser()
     msgr.stop()
 
@@ -265,3 +291,44 @@ def uploadHWPages(server=None, password=None):
     msgr.closeUser()
     msgr.stop()
     return [SIDQ, SIDO]
+
+
+def declareBundle(bundle_file, server=None, password=None):
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ScanMessenger(s, port=p)
+    else:
+        msgr = ScanMessenger(server)
+    msgr.start()
+
+    # get the password if not specified
+    if password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'scanner' password:")
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = password
+
+    # get started
+    try:
+        msgr.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-scan clear"'
+        )
+        exit(10)
+
+    # get bundle's name without path or extension.
+    # make name safeer by replacing space by underscore
+    bundle_name = os.path.splitext(os.path.basename(bundle_file))[0].replace(" ", "_")
+    md5 = hashlib.md5(open(bundle_file, "rb").read()).hexdigest()
+    bundle_success = msgr.declareBundle(bundle_name, md5)
+
+    msgr.closeUser()
+    msgr.stop()
+    return bundle_success

@@ -81,8 +81,6 @@ def main():
         )
     )
     subprocess.check_call(split("plom-scan read -w 4567"))
-    exit(0)
-
     subprocess.check_call(split("plom-scan upload -u -w 4567"))
 
     time.sleep(0.5)
