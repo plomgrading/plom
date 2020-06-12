@@ -75,8 +75,10 @@ class ManagerMessenger(BaseMessenger):
         """Notify the server that we have produced the PDF for a paper.
 
         Args:
-            test_num (int): the test number.  TODO: what about nonsense
-                or nonexisting input?  https://gitlab.com/plom/plom/-/issues/884
+            test_num (int): the test number.
+
+        Returns:
+            None
         """
         self.SRmutex.acquire()
         try:
