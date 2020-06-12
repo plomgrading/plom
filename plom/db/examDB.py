@@ -1268,9 +1268,13 @@ class PlomDB:
         qref = QGroup.get_or_none(QGroup.test == tref, QGroup.question == question)
         if qref is None:
             return [False]
+        gref = qref.group
         rval = [True]
-        for p in qref.group.pages.order_by(Page.pageNumber):
-            rval.append(p.fileName)
+        # return the test-pages and then the hw-pages
+        for p in gref.tpages.order_by(TPage.pageNumber):
+            rval.append(p.image.fileName)
+        for p in gref.hwpages.order_by(HWPage.order):
+            rval.append(p.image.fileName)
         return rval
 
     def getTestImages(self, testNumber):
