@@ -75,10 +75,14 @@ def main():
 
     print("Server seems to be running, so we move on to uploading")
 
+    subprocess.check_call(
+        split(
+            "plom-scan process -w 4567 fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf"
+        )
+    )
+    subprocess.check_call(split("plom-scan read -w 4567"))
     exit(0)
 
-    subprocess.check_call(split("plom-scan process fake_scribbled_exams.pdf"))
-    subprocess.check_call(split("plom-scan read -w 4567"))
     subprocess.check_call(split("plom-scan upload -u -w 4567"))
 
     time.sleep(0.5)

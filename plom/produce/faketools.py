@@ -255,6 +255,28 @@ def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
     all_pdf_documents.saveIncr()
 
 
+def splitFakeFile(out_file_path):
+    """Split the scribble pdf into three files
+    """
+    originalPDF = fitz.open(out_file_path)
+    newPDFName = os.path.splitext(out_file_path)[0]
+    length = len(originalPDF) // 3
+
+    doc1 = fitz.open()
+    doc2 = fitz.open()
+    doc3 = fitz.open()
+
+    doc1.insertPDF(originalPDF, from_page=0, to_page=length)
+    doc2.insertPDF(originalPDF, from_page=length + 1, to_page=2 * length)
+    doc3.insertPDF(originalPDF, from_page=2 * length + 1)
+
+    doc1.save(newPDFName + "1.pdf")
+    doc2.save(newPDFName + "2.pdf")
+    doc3.save(newPDFName + "3.pdf")
+
+    os.unlink(out_file_path)
+
+
 def main():
     """Main function used for running.
 
@@ -274,6 +296,7 @@ def main():
 
     fill_in_fake_data_on_exams(_paperdir, students_list_path, out_file_path)
     make_garbage_page(out_file_path, number_of_grarbage_pages=2)
+    splitFakeFile(out_file_path)
 
 
 if __name__ == "__main__":
