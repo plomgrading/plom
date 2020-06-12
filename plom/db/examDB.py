@@ -531,25 +531,6 @@ class PlomDB:
                 tref.save()
             log.info('Paper {} is set to "produced"'.format(t))
 
-    def identifyTest(self, t, sid, sname):
-        tref = Test.get_or_none(testNumber=t)
-        if tref is None:
-            return
-        iref = IDGroup.get_or_none(test=tref)
-        if iref is None:
-            return
-        autref = User.get(name="HAL")
-        with plomdb.atomic():
-            iref.status = "done"
-            iref.studentID = sid
-            iref.studentName = sname
-            iref.identified = True
-            iref.user = autref
-            iref.time = datetime.now()
-            iref.save()
-            tref.identified = True
-            tref.save()
-        log.info("Test {} id'd as {} {}".format(t, censorID(sid), censorName(sname)))
 
     def checkTestAllUploaded(self, gref):
         tref = gref.test
@@ -2073,24 +2054,48 @@ class PlomDB:
             tref.save()
             log.info("User {} did not ID task {}".format(uname, testNumber))
 
-    def IDtakeTaskFromClient(self, testNumber, uname, sid, sname):
-        """Get ID'dimage back from client - update record in database."""
-        uref = User.get(name=uname)
+    def id_a_paper(self, paper_num, username, sid, sname, checks=True):
+        """Associate student name and id with a paper in the database.
+
+        Args:
+            paper_num (int)
+            username (str): User who did the IDing.
+            sid (str): student id.
+            sname (str): student name.
+            checks (bool): by default (True), the paper must be scanned
+                and the `username` must match the current owner of the
+                paper (typically because the paper was assigned to them).
+                You can pass False if its ID the paper without being
+                owner (e.g., during automated IDing of prenamed papers.)
+
+        Returns:
+            [True] if all good
+            [False, True]: if student number already in use.
+            [False, False]: if bigger error, can't find in DB, wrong
+                user, other cases.
+
+        TODO: lots of ways this can fail, maybe improve the return here
+        so those messages could get back to the end-user.
+        """
+        uref = User.get(name=username)
         # since user authenticated, this will always return legit ref.
 
         try:
             with plomdb.atomic():
-                tref = Test.get_or_none(Test.testNumber == testNumber)
+                tref = Test.get_or_none(Test.testNumber == paper_num)
                 if tref is None:
+                    log.error('User "{}" tried to ID paper {}: denied b/c paper not found'.format(username, paper_num))
                     return [False, False]
                 iref = tref.idgroups[0]
                 # verify the id-group has been scanned - it should always be scanned.if we get here.
-                if iref.group.scanned == False:
+                if checks and iref.group.scanned == False:
+                    log.error('User "{}" tried to ID paper {}: denied b/c its not scanned yet'.format(username, paper_num))
                     return [False, False]
 
-                if iref.user != uref:
-                    # that belongs to someone else - this is a serious error
+                if checks and iref.user != uref:
+                    log.error('User "{}" tried to ID paper {}: denied b/c it belongs to user "{}"'.format(username, paper_num, iref.user))
                     return [False, False]
+                iref.user = uref
                 # update status, Student-number, name, id-time.
                 iref.status = "done"
                 iref.studentID = sid
@@ -2101,23 +2106,23 @@ class PlomDB:
                 tref.identified = True
                 tref.save()
                 # update user activity
-                uref.lastAction = "Returned ID task {}".format(testNumber)
+                uref.lastAction = "Returned ID task {}".format(paper_num)
                 uref.lastActivity = datetime.now()
                 uref.save()
-                return [True]
                 log.info(
-                    'User "{}" returning ID-task "{}" with "{}" "{}"'.format(
-                        uname, testNumber, censorID(sid), censorName(sname)
+                    'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
+                        paper_num, username, censorID(sid), censorName(sname)
                     )
                 )
         except IDGroup.DoesNotExist:
-            log.error("ID take task - That test number {} not known".format(testNumber))
+            log.error('User "{}" tried to ID paper {} but that test number is not known'.format(username, paper_num))
             return [False, False]
         except IntegrityError:
             log.error(
-                "ID take task - Student number {} already entered".format(censorID(sid))
+                'User "{}" tried to ID paper {} but student id {} already entered elsewhere'.format(username, paper_num, censorID(sid))
             )
             return [False, True]
+        return [True]
 
     def IDgetRandomImage(self):
         # TODO - make random image rather than 1st

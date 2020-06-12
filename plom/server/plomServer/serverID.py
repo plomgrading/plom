@@ -44,17 +44,12 @@ def IDclaimThisTask(self, user, testNumber):
     # or return [false]
 
 
-def IDreturnIDdTask(self, user, ret, sid, sname):
-    """Client has ID'd the pageimage with code=ret, student-number=sid,
-    and student-name=sname. Send the information to the database (which
-    checks if that number has been used previously). If okay then send
-    and ACK, else send an error that the number has been used.
+def IdentifyAPaper(self, *args, **kwargs):
+    """Some glue between service routes and the database.
+
+    See :func:`plom.db.examDb.id_a_paper` for details.
     """
-    # TODO - improve this
-    # returns [True] if all good
-    # [False, True] - if student number already in use
-    # [False, False] - if bigger error
-    return self.DB.IDtakeTaskFromClient(ret, user, sid, sname)
+    return self.DB.id_a_paper(*args, **kwargs)
 
 
 def IDdidNotFinish(self, user, testNumber):

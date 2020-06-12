@@ -173,7 +173,7 @@ class Server(object):
         IDgetRandomImage,
         IDclaimThisTask,
         IDdidNotFinish,
-        IDreturnIDdTask,
+        IdentifyAPaper,
         IDdeletePredictions,
         IDrunPredictions,
         IDreviewID,
