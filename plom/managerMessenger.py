@@ -50,7 +50,18 @@ class ManagerMessenger(BaseMessenger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def TriggerPopulateDB(self, force=False):
+    def TriggerPopulateDB(self):
+        """Instruct the server to generate paper data in the database.
+
+        Returns:
+            str: a big block of largely useless status or summary info
+                from the database commands.
+
+        Raises:
+            PlomBenignException: already has a populated database.
+            PlomAuthenticationException: cannot login.
+            PlomSeriousException: unexpected errors.
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.put(
@@ -62,14 +73,14 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            elif response.status_code == 409:
+                raise PlomBenignException(e) from None
             else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+                raise PlomSeriousException("Unexpected {}".format(e)) from None
         finally:
             self.SRmutex.release()
 
-        return response.json()
+        return response.text
 
     def notify_pdf_of_paper_produced(self, test_num):
         """Notify the server that we have produced the PDF for a paper.

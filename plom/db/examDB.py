@@ -347,6 +347,10 @@ class PlomDB:
         return rval
 
     ########## Test creation stuff ##############
+    def areAnyPapersProduced(self):
+        """True if any papers have been produced."""
+        return len(Test.select()) > 0
+
     def nextQueuePosition(self):
         lastPos = Group.select(fn.MAX(Group.queuePosition)).scalar()
         if lastPos is None:

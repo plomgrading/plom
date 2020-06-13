@@ -6,7 +6,7 @@ import random
 from plom.db import PlomDB
 
 
-def buildExamDatabaseFromSpec(spec, examDB):
+def buildExamDatabaseFromSpec(spec, db):
     """Build metadata for exams from spec and insert into the database.
 
     Arguments:
@@ -30,12 +30,17 @@ def buildExamDatabaseFromSpec(spec, examDB):
                                 '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
                             }
                           }
-        db (database): the database to populate
+        db (database): the database to populate.
 
     Returns:
-        bool: True if succuess
+        bool: True if succuess.
         str: a status string, one line per test, ending with an error if failure.
+
+    Raises:
+        ValueError: if database already populated.
     """
+    if db.areAnyPapersProduced():
+        raise ValueError("Database already populated")
 
     random.seed(spec["privateSeed"])
 
@@ -46,19 +51,19 @@ def buildExamDatabaseFromSpec(spec, examDB):
     # Note: need to produce these in a particular order for random seed to be
     # reproducibile: so this really must be a loop, not a Pool.
     for t in range(1, spec["numberToProduce"] + 1):
-        if examDB.createTest(t):
+        if db.createTest(t):
             status += "DB entry for test {:04}:".format(t)
         else:
             status += " Error creating"
             ok = False
 
-        if examDB.createIDGroup(t, spec["idPages"]["pages"]):
+        if db.createIDGroup(t, spec["idPages"]["pages"]):
             status += " ID"
         else:
             status += " Error creating idgroup"
             ok = False
 
-        if examDB.createDNMGroup(t, spec["doNotMark"]["pages"]):
+        if db.createDNMGroup(t, spec["doNotMark"]["pages"]):
             status += " DNM"
         else:
             status += "Error creating DoNotMark-group"
@@ -81,7 +86,7 @@ def buildExamDatabaseFromSpec(spec, examDB):
                 raise ValueError(
                     'problem with spec: expected "fix" or "shuffle" but got "{}".'.format(spec["question"][gs]["select"])
                 )
-            if examDB.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
+            if db.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
                 status += " Q{}{}".format(gs, vstr)
             else:
                 status += "Error creating Question {} ver {}".format(gs, vstr)

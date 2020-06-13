@@ -28,7 +28,7 @@ def buildPapersLocal():
 
     if os.path.isfile(dbfile):
         print("Database already exists - aborting.")
-        sys.exit(1)
+        sys.exit(3)
 
     print("Populating Plom exam database")
     DB = PlomDB(dbfile)
@@ -98,7 +98,11 @@ def buildDatabaseAndPapers(server=None, password=None):
         exit(10)
     try:
         spec = msgr.getInfoGeneral()
-        r, status = msgr.TriggerPopulateDB(force=False)
+        try:
+            status = msgr.TriggerPopulateDB()
+        except PlomBenignException:
+            print("Error: Server already has a populated database")
+            exit(3)
         print(status)
         pvmap = msgr.getGlobalPageVersionMap()
         os.makedirs(paperdir, exist_ok=True)

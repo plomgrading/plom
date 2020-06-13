@@ -531,27 +531,25 @@ class UploadHandler:
 
     @authenticate_by_token_required_fields(["user"])
     def populateExamDatabase(self, data, request):
-        """TODO summary.
+        """Instruct the server to generate paper data in the database.
 
         TODO: maybe the api call should just be for one row of the database.
 
         TODO: or maybe we can pass the page-to-version mapping to this?
-
-        TODO: plom-build does error out, but I'd prefer an explicit nonempty test.
         """
         if not data["user"] == "manager":
             return web.Response(status=400)  # malformed request.
 
-        # TODO: should ensure its empty, or require some "force" flag otherwise?
-        #force_flag = request.match_info["force"]
-
         from plom.db import buildExamDatabaseFromSpec
         # TODO this is not the design we have elsewhere, should call helper function
-        r, status = buildExamDatabaseFromSpec(self.server.testSpec, self.server.DB)
+        try:
+            r, summary = buildExamDatabaseFromSpec(self.server.testSpec, self.server.DB)
+        except ValueError:
+            raise web.HTTPConflict(reason="Database already present: not overwriting") from None
         if r:
-            return web.json_response([r, status], status=200)  # all is fine
+            return web.Response(text=summary, status=200)
         else:
-            return web.Response(status=404)
+            raise web.HTTPInternalServerError(text=summary)
 
     # TODO: why can't I use authenticate_by_token decorator?
     @authenticate_by_token_required_fields([])
