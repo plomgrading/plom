@@ -2082,32 +2082,34 @@ class PlomDB:
                 owner (e.g., during automated IDing of prenamed papers.)
 
         Returns:
-            [True] if all good
-            [False, True]: if student number already in use.
-            [False, False]: if bigger error, can't find in DB, wrong
-                user, other cases.
+            tuple: `(True,)` if succesful. `(False, True, msg)` means
+                `sid` is inuse elsewhere, a serious problem for the
+                caller to deal with.  `(False, False, msg)` covers all
+                other errors.  `msg` gives details about errors.  Some
+                of these should not occur, and indicate possible bugs.
 
-        TODO: lots of ways this can fail, maybe improve the return here
-        so those messages could get back to the end-user.
+        TODO: perhaps several sorts of exceptions woudl be better.
         """
         uref = User.get(name=username)
         # since user authenticated, this will always return legit ref.
 
+        logbase = 'User "{}" tried to ID paper {}'.format(username, paper_num)
         try:
             with plomdb.atomic():
                 tref = Test.get_or_none(Test.testNumber == paper_num)
                 if tref is None:
-                    log.error('User "{}" tried to ID paper {}: denied b/c paper not found'.format(username, paper_num))
-                    return [False, False]
+                    msg = "denied b/c paper not found"
+                    log.error("{}: {}".format(logbase, msg))
+                    return False, False, msg
                 iref = tref.idgroups[0]
-                # verify the id-group has been scanned - it should always be scanned.if we get here.
                 if checks and iref.group.scanned == False:
-                    log.error('User "{}" tried to ID paper {}: denied b/c its not scanned yet'.format(username, paper_num))
-                    return [False, False]
-
+                    msg = "denied b/c its not scanned yet"
+                    log.error("{}: {}".format(logbase, msg))
+                    return False, False, msg
                 if checks and iref.user != uref:
-                    log.error('User "{}" tried to ID paper {}: denied b/c it belongs to user "{}"'.format(username, paper_num, iref.user))
-                    return [False, False]
+                    msg = 'denied b/c it belongs to user "{}"'.format(iref.user)
+                    log.error("{}: {}".format(logbase, msg))
+                    return False, False, msg
                 iref.user = uref
                 # update status, Student-number, name, id-time.
                 iref.status = "done"
@@ -2128,14 +2130,14 @@ class PlomDB:
                     )
                 )
         except IDGroup.DoesNotExist:
-            log.error('User "{}" tried to ID paper {} but that test number is not known'.format(username, paper_num))
-            return [False, False]
+            msg = "that test number is not known"
+            log.error("{} but {}".format(logbase, msg))
+            return False, False, msg
         except IntegrityError:
-            log.error(
-                'User "{}" tried to ID paper {} but student id {} already entered elsewhere'.format(username, paper_num, censorID(sid))
-            )
-            return [False, True]
-        return [True]
+            msg = "student id {} already entered elsewhere".format(censorID(sid))
+            log.error("{} but {}".format(logbase, msg))
+            return False, True, msg
+        return True
 
     def IDgetRandomImage(self):
         # TODO - make random image rather than 1st

@@ -97,10 +97,10 @@ class IDHandler:
         rmsg = self.server.id_paper(papernum, data["user"], data["sid"], data["sname"])
         if rmsg[0]:
             return web.Response(status=200)
-        elif rmsg[1]:  # student number already in use
-            return web.Response(status=409)
-        else:  # a more serious error, e.g., can't find this in database
-            return web.Response(status=404)
+        elif rmsg[1]:
+            return web.Response(status=409, text=rmsg[2])
+        else:
+            return web.Response(status=404, text=rmsg[2])
 
     # @routes.put("/ID/{papernum}")
     @authenticate_by_token_required_fields(["user", "sid", "sname"])
@@ -119,10 +119,10 @@ class IDHandler:
         )
         if rmsg[0]:
             return web.Response(status=200)
-        elif rmsg[1]:  # student number already in use
-            return web.Response(status=409)
-        else:  # a more serious error, e.g., can't find this in database
-            return web.Response(status=404)
+        elif rmsg[1]:
+            return web.Response(status=409, text=rmsg[2])
+        else:
+            return web.Response(status=404, text=rmsg[2])
 
     # @routes.delete("/ID/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
