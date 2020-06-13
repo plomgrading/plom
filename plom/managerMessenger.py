@@ -144,8 +144,15 @@ class ManagerMessenger(BaseMessenger):
             d[int(k)] = {int(kk): vv for kk, vv in v.items()}
         return d
 
-    # TODO: copy pasted from class Messenger: can we dedupe?
-    def IDreturnIDdTask(self, code, studentID, studentName):
+    # TODO: copy pasted from Messenger.IDreturnIDdTask: can we dedupe?
+    def id_paper(self, code, studentID, studentName):
+        """Identify a paper directly, not as part of a IDing task.
+
+        Exceptions:
+            PlomConflict: `studentID` already used on a different paper.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.put(
@@ -161,9 +168,7 @@ class ManagerMessenger(BaseMessenger):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 409:
-                raise PlomBenignException(
-                    "Student number {} already in use".format(e)
-                ) from None
+                raise PlomConflict(e) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:

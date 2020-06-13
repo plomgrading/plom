@@ -98,7 +98,7 @@ class IDHandler:
         if rmsg[0]:
             return web.Response(status=200)
         elif rmsg[1]:
-            return web.Response(status=409, text=rmsg[2])
+            raise web.HTTPConflict(reason=rmsg[2])
         else:
             return web.Response(status=404, text=rmsg[2])
 
@@ -120,7 +120,7 @@ class IDHandler:
         if rmsg[0]:
             return web.Response(status=200)
         elif rmsg[1]:
-            return web.Response(status=409, text=rmsg[2])
+            raise web.HTTPConflict(reason=rmsg[2])
         else:
             return web.Response(status=404, text=rmsg[2])
 

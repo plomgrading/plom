@@ -177,7 +177,7 @@ def identify_named(spec, msgr):
                 str(paper_index).zfill(4), students[paper_index][0]
             )
             if os.path.isfile(PDF_file_name):
-                msgr.IDreturnIDdTask(
+                msgr.id_paper(
                     paper_index, students[paper_index][0], students[paper_index][1]
                 )
             else:

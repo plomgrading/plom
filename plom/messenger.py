@@ -440,6 +440,13 @@ class Messenger(BaseMessenger):
         return imageList
 
     def IDreturnIDdTask(self, code, studentID, studentName):
+        """Return a completed IDing task: identify a paper.
+
+        Exceptions:
+            PlomConflict: `studentID` already used on a different paper.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.put(
@@ -455,9 +462,7 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 409:
-                raise PlomBenignException(
-                    "Student number {} already in use".format(e)
-                ) from None
+                raise PlomConflict(e) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
