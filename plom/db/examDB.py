@@ -355,12 +355,13 @@ class PlomDB:
             return lastPos + 1
 
     def createTest(self, t):
-        try:
-            tref = Test.create(testNumber=t)  # must be unique
-            sref = SumData.create(test=tref)  # also create the sum-data
-        except IntegrityError as e:
-            log.error("Create test {} error - {}".format(t, e))
-            return False
+        with plomdb.atomic():
+            try:
+                tref = Test.create(testNumber=t)  # must be unique
+                sref = SumData.create(test=tref)  # also create the sum-data
+            except IntegrityError as e:
+                log.error("Create test {} error - {}".format(t, e))
+                return False
         return True
 
     def addTPages(self, tref, gref, t, pages, v):
@@ -379,6 +380,7 @@ class PlomDB:
                     flag = False
         return flag
 
+    @plomdb.atomic()
     def createIDGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
@@ -412,6 +414,7 @@ class PlomDB:
             return False
         return self.addTPages(tref, gref, t, pages, 1)  # always version 1.
 
+    @plomdb.atomic()
     def createDNMGroup(self, t, pages):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
@@ -448,6 +451,7 @@ class PlomDB:
             return False
         return self.addTPages(tref, gref, t, pages, 1)
 
+    @plomdb.atomic()
     def createQGroup(self, t, g, v, pages):
         tref = Test.get_or_none(testNumber=t)
         if tref is None:
