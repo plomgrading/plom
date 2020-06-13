@@ -89,7 +89,6 @@ job demoServer:
     - plom-server class --demo
     - plom-build make
     - python3 -m plom.produce.faketools
-    - plom-scan process fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf -w 4567
     # Start server
     - ip addr
     - plom-server init
@@ -101,6 +100,7 @@ job demoServer:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
+    - plom-scan process fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf -w 4567
     - plom-scan read   -w 4567
     - plom-scan upload -w 4567
     - plom-scan status -w 4567
@@ -139,7 +139,6 @@ job fullWorkFlow:
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
-    - plom-scan process fake_scribbled_exams1.pdf  fake_scribbled_exams2.pdf  fake_scribbled_exams3.pdf -w 4567
     # Start server
     - ip addr
     - plom-server init
@@ -151,6 +150,7 @@ job fullWorkFlow:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
+    - plom-scan process fake_scribbled_exams1.pdf  fake_scribbled_exams2.pdf  fake_scribbled_exams3.pdf -w 4567
     - plom-scan read -s localhost -w 4567
     - plom-scan upload -s localhost -w 4567
     - plom-scan upload -u -s localhost -w 4567
