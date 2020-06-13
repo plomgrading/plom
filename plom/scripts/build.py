@@ -10,6 +10,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
+from warnings import warn
 
 # import tools for dealing with resource files
 import pkg_resources
@@ -166,6 +167,7 @@ def main():
         process_class_list(args.classlist, args.demo)
     elif args.command == "make":
         if args.local:
+            warn("Deprecated: the '--local' feature is likely to be removed/reworked.")
             buildPapersLocal()
         else:
             buildDatabaseAndPapers(args.server, args.password)
