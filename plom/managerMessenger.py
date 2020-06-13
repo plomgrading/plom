@@ -65,7 +65,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
-                "https://{}/DEV/admin/populateDB".format(self.server),
+                "https://{}/admin/populateDB".format(self.server),
                 verify=False,
                 json={"user": self.user, "token": self.token},
             )
@@ -123,7 +123,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/DEV/admin/pageVersionMap".format(self.server),
+                "https://{}/admin/pageVersionMap".format(self.server),
                 verify=False,
                 json={"user": self.user, "token": self.token},
             )
