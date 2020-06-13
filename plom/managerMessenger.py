@@ -127,14 +127,11 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        #import pickle
-        #return pickle.loads(response.json())
-        # ^&#king JSON mucks up dict keys
-        d = response.json()
-        dd = {}
-        for k, v in d.items():
-            dd[int(k)] = {int(kk): vv for kk, vv in v.items()}
-        return dd
+        # JSON casts dict keys to str, force back to ints
+        d = {}
+        for k, v in response.json().items():
+            d[int(k)] = {int(kk): vv for kk, vv in v.items()}
+        return d
 
     # TODO: copy pasted from class Messenger: can we dedupe?
     def IDreturnIDdTask(self, code, studentID, studentName):

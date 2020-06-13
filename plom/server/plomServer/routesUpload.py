@@ -586,9 +586,8 @@ class UploadHandler:
             #if not ver:
             #    TODO return 500
             vers[paper_idx] = ver
-        # TODO: json converts int keys to strings
-        #import pickle
-        #return web.json_response(str(pickle.dumps(vers)), status=200)
+        # JSON converts int keys to strings, we'll fix this at the far end
+        # return web.json_response(str(pickle.dumps(vers)), status=200)
         return web.json_response(vers, status=200)
 
     #@route.put("/admin/pdf_produced/{t}")
