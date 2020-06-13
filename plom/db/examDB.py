@@ -2394,12 +2394,20 @@ class PlomDB:
                 if qref.user != uref:
                     return False  # has been claimed by someone else.
 
+                # grab the annotation bundle for the image
+                # this should perhaps be hard-coded for the qgroups.
+                bref = Bundle.get(
+                    originalName="annotation.bundle.{}.{}".format(
+                        qref.question, qref.version
+                    )
+                )
+
                 # update status, mark, annotate-file-name, time, and
                 # time spent marking the image
                 qref.status = "done"
                 qref.marked = True
                 aref = qref.annotations[-1]
-                aref.image = Image.create(fileName=aname, md5sum=md5)
+                aref.image = Image.create(fileName=aname, md5sum=md5, bundle=bref)
                 aref.mark = mark
                 aref.plomFile = pname
                 aref.commentFile = cname
