@@ -466,11 +466,7 @@ class Messenger(BaseMessenger):
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
+                raise PlomSeriousException(e) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
