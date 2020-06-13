@@ -243,34 +243,23 @@ def unknownToTestPage(self, fname, test, page, rotation):
                 shutil.move(fname, newFilename)
                 return [True, "collision"]
         else:
-            newFilename = "pages/originalPages/" + os.path.split(fname)[1]
-            log.debug("Original = {}".format(newFilename))
-            if self.DB.moveUnknownToTPage(fname, newFilename, test, page)[0]:
-                shutil.move(fname, newFilename)
+            if self.DB.moveUnknownToTPage(fname, test, page)[0]:
                 return [True, "testPage"]
     else:  # some sort of problem occurred
         return [False]
 
 
 def unknownToExtraPage(self, fname, test, question, rotation):
-    newFilename = "pages/originalPages/" + os.path.split(fname)[1]
-    rval = self.DB.moveUnknownToExtraPage(fname, newFilename, test, question)
-    # returns [True, [file1,file2,..]] or [False]
-    # the files are annotations to be deleted
+    rval = self.DB.moveUnknownToExtraPage(fname, test, question)
+    # returns [True] or [False]
     if rval[0]:
-        # move file into place
-        shutil.move(fname, newFilename)
         # moved successfully. now rotate the page
         subprocess.run(
-            ["mogrify", "-quiet", "-rotate", rotation, newFilename],
+            ["mogrify", "-quiet", "-rotate", rotation, fname],
             stderr=subprocess.STDOUT,
             shell=False,
             check=True,
         )
-        # clean up any annotation files
-        print("TODO = clean up old annotation files")
-        # for fn in rval[1]:
-        # os.unlink(fn)
     else:
         return [False]
     return [True]

@@ -679,7 +679,7 @@ class PlomDB:
             originalName=oname, fileName=fname, md5sum=md5, reason=r, tpv=tpv
         )
 
-    def removeScannedPage(self, fname, nname):
+    def removeScannedPage(self, fname):
         pref = Page.get_or_none(fileName=fname)
         if pref is None:
             return False
@@ -1361,7 +1361,7 @@ class PlomDB:
         log.info("Removing collision {} to discard {}".format(fname, nname))
         return True
 
-    def moveUnknownToTPage(self, fname, nname, testNumber, pageNumber):
+    def moveUnknownToTPage(self, fname, testNumber, pageNumber):
         # get image by filename - check it belongs to unknown.
         iref = Image.get_or_none(Image.fileName == fname)
         if iref is None:
@@ -1381,8 +1381,8 @@ class PlomDB:
             pref.save()
             uref.delete_instance()
         log.info(
-            "Moving unknown {} to image {} of tp {}.{}".format(
-                fname, nname, testNumber, pageNumber
+            "Moving unknown {} to image of tp {}.{}".format(
+                fname, testNumber, pageNumber
             )
         )
         self.checkGroupAllUploaded(pref)
@@ -1440,7 +1440,7 @@ class PlomDB:
         self.checkGroupAllUploaded(pref)
         return [True]
 
-    def moveUnknownToExtraPage(self, fname, nname, testNumber, question):
+    def moveUnknownToExtraPage(self, fname, testNumber, question):
         # move unknownpage to the first available hwpage for that question.
         # get image by filename - check it belongs to unknown.
         iref = Image.get_or_none(Image.fileName == fname)
@@ -1471,9 +1471,6 @@ class PlomDB:
             nextOrder = 1
 
         with plomdb.atomic():
-            # since file moves - update image
-            iref.fileName = nname
-            iref.save()
             # create a hw page
             hpref = HWPage.create(
                 test=tref,
@@ -1485,8 +1482,8 @@ class PlomDB:
             # delete the unknownpage
             uref.delete_instance()
         log.info(
-            "Saving extra {} as {} tp {}.{} of question {}".format(
-                fname, nname, testNumber, nextOrder, question
+            "Saving extra {} to question {} of test {}".format(
+                fname, question, testNumber
             )
         )
         ## Now update the qgroup
