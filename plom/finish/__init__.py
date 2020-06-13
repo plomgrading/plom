@@ -8,3 +8,5 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 CSVFilename = "marks.csv"
+
+from .clearLogin import clear_manager_login

@@ -20,6 +20,8 @@ from plom import specdir
 from plom.produce import process_class_list
 from plom.produce import buildDatabaseAndPapers, buildPapersLocal
 from plom.produce.demotools import buildDemoSourceFiles
+# TODO: relocate https://gitlab.com/plom/plom/-/issues/891
+from plom.finish import clear_manager_login
 
 
 dbfile = os.path.join(specdir, "plom.db")
@@ -129,6 +131,13 @@ spB.add_argument(
     "testing).  May not work with named-papers (?)  Perhaps we should not "
     "have this feature: asking for user error if these are printed!?"
 )
+spClear = sub.add_parser(
+    "clear",
+    help='Clear "manager" login',
+    description='Clear "manager" login after a crash or other expected event.',
+)
+spClear.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+spClear.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
 
 def main():
@@ -160,6 +169,8 @@ def main():
             buildPapersLocal()
         else:
             buildDatabaseAndPapers(args.server, args.password)
+    elif args.command == "clear":
+        clear_manager_login(args.server, args.password)
     else:
         # no command given so print help.
         parser.print_help()

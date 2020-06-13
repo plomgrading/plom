@@ -1,34 +1,33 @@
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2020 Colin B. Macdonald
 
-import getpass
+from getpass import getpass
 
-from plom.messenger import FinishMessenger
+from plom.messenger import Messenger
 
 
-def clearLogin(server=None, password=None):
+def clear_manager_login(server=None, password=None):
+    """Force clear the "manager" authorisation, e.g., after a crash.
+
+    Args:
+        server (str): in the form "example.com" or "example.com:41984".
+        password (str): if not specified, prompt on the command line.
+    """
     if server and ":" in server:
         s, p = server.split(":")
-        msgr = FinishMessenger(s, port=p)
+        msgr = Messenger(s, port=p)
     else:
-        msgr = FinishMessenger(server)
+        msgr = Messenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
+    if not password:
         try:
-            pwd = getpass.getpass("Please enter the 'manager' password: ")
+            password = getpass('Please enter the "manager" password: ')
         except Exception as error:
             print("ERROR", error)
             exit(1)
-    else:
-        pwd = password
 
-    msgr.clearAuthorisation("manager", pwd)
+    msgr.clearAuthorisation("manager", password)
     print("Manager login cleared.")
     msgr.stop()
