@@ -112,10 +112,10 @@ class HWPage(BaseModel):  # a hw page that knows its tgv, but not p.
     image = ForeignKeyField(Image, backref="hwpages")
 
 
-class XPage(BaseModel):  # a page that just knows its t.
-    test = ForeignKeyField(Test, backref="xpages")
+class LPage(BaseModel):  # a page that just knows its t. - a loose page.
+    test = ForeignKeyField(Test, backref="lpages")
     order = IntegerField(null=False)
-    image = ForeignKeyField(Image, backref="xpages")
+    image = ForeignKeyField(Image, backref="lpages")
 
 
 # still needs work - maybe some bundle object with unique key.
@@ -191,7 +191,7 @@ class PlomDB:
                     ##
                     TPage,
                     HWPage,
-                    XPage,
+                    LPage,
                     UnknownPage,
                     CollidingPage,
                     DiscardedPage,
@@ -674,6 +674,7 @@ class PlomDB:
         return pref.fileName
 
     def createDiscardedPage(self, oname, fname, md5, r, tpv):
+        # TODO - update
         DiscardedPage.create(
             originalName=oname, fileName=fname, md5sum=md5, reason=r, tpv=tpv
         )
@@ -869,17 +870,17 @@ class PlomDB:
             tref.save()
         return [True]
 
-    def uploadXPage(self, sid, order, oname, nname, md5):
+    def uploadLPage(self, sid, order, oname, nname, md5):
         # first of all find the test corresponding to that sid.
         iref = IDGroup.get_or_none(studentID=sid)
         if iref is None:
             return [False, "SID does not correspond to any test on file."]
         tref = iref.test
-        xref = XPage.get_or_none(test=tref, order=order)  # this should be none.
-        if xref is not None:
+        lref = LPage.get_or_none(test=tref, order=order)  # this should be none.
+        if lref is not None:
             # we found a page with that order, so we need to put the uploaded page at the end.
             lastOrder = (
-                XPage.select(fn.MAX(XPage.order)).where(XPage.test == tref).scalar()
+                LPage.select(fn.MAX(LPage.order)).where(LPage.test == tref).scalar()
             )
             if lastOrder is None:
                 order = 1
@@ -887,9 +888,9 @@ class PlomDB:
                 order = lastOrder + 1
         # create one.
         with plomdb.atomic():
-            # create image, xpage, and link.
+            # create image, lpage, and link.
             img = Image.create(originalName=oname, fileName=nname, md5sum=md5)
-            xref = XPage.create(test=tref, order=order, image=img)
+            lref = LPage.create(test=tref, order=order, image=img)
             # now we have to append this page to every annotation.
             # BIG TODO - improve this so human decides what goes where.
             for qref in QGroup.select().where(QGroup.test == tref):
@@ -939,9 +940,28 @@ class PlomDB:
             # do not delete old annotations, instead make new annotation that belongs to HAL
             # now delete old annotations
             for aref in qref.annotations:
-                # skip the 0th edition - it belongs to HAL.
-                if aref.edition > 0:
-                    # discard the annotated images
+                # 0th ed belongs to HAL - update its apages
+                if aref.edition == 0:
+                    # delete old apages
+                    for p in aref.apages:
+                        p.delete_instance()
+                    # now create new ones - testpages first, then hw pages, finally any lpages
+                    ord = 0
+                    for p in qref.group.tpages.order_by(TPage.pageNumber):
+                        # make sure the tpage is actually scanned.
+                        if p.scanned:
+                            ord += 1
+                            print("Trying to add tpage {}".format(p))
+                            APage.create(annotation=aref, image=p.image, order=ord)
+                    for p in qref.group.hwpages.order_by(HWPage.order):
+                        ord += 1
+                        print("Trying to add hwpage {}".format(p))
+                        APage.create(annotation=aref, image=p.image, order=ord)
+                    for p in tref.lpages.order_by(LPage.order):
+                        ord += 1
+                        print("Trying to add lpage {}".format(p))
+                        APage.create(annotation=aref, image=p.image, order=ord)
+                else:  # we discard all other annotations
                     DiscardedPage.create(
                         image=aref.image,
                         reason="cleaningQGroup",
@@ -1022,11 +1042,11 @@ class PlomDB:
         # if homework pages present - ready to go.
         # elif all testpages present - ready to go.
         # else - not ready.
-        # BUT if there are xpages then we are ready to go.
+        # BUT if there are lpages then we are ready to go.
 
         gref = qref.group
 
-        if tref.xpages.count() == 0:
+        if tref.lpages.count() == 0:
             # check if HW pages = 0
             if qref.group.hwpages.count() == 0:
                 # then check for testpages
@@ -1230,17 +1250,18 @@ class PlomDB:
         else:
             return [True, pref.image.fileName]
 
-    def getXPageImage(self, testNumber, order):
+    def getLPageImage(self, testNumber, order):
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:
             return [False]
-        pref = XPage.get_or_none(XPage.test == tref, XPage.order == order)
+        pref = LPage.get_or_none(LPage.test == tref, LPage.order == order)
         if pref is None:
             return [False]
         else:
             return [True, pref.image.fileName]
 
     def getUnknownImage(self, fname):
+        # TODO - this is really just "get image" - I think we can clean up some API around this.
         iref = Image.get_or_none(Image.fileName == fname)
         if iref is None:
             return [False]
@@ -1248,18 +1269,20 @@ class PlomDB:
             return [True, iref.fileName]
 
     def getDiscardImage(self, fname):
-        dref = DiscardedPage.get_or_none(DiscardedPage.fileName == fname)
-        if dref is None:
+        # TODO - this is really just "get image" - I think we can clean up some API around this.
+        iref = Image.get_or_none(Image.fileName == fname)
+        if iref is None:
             return [False]
         else:
-            return [True, dref.fileName]
+            return [True, iref.fileName]
 
     def getCollidingImage(self, fname):
-        cref = CollidingPage.get_or_none(CollidingPage.fileName == fname)
+        # TODO - this is really just "get image" - I think we can clean up some API around this.
+        iref = Image.get_or_none(Image.fileName == fname)
         if cref is None:
             return [False]
         else:
-            return [True, cref.fileName]
+            return [True, iref.fileName]
 
     def getQuestionImages(self, testNumber, question):
         tref = Test.get_or_none(Test.testNumber == testNumber)
@@ -1270,10 +1293,12 @@ class PlomDB:
             return [False]
         gref = qref.group
         rval = [True]
-        # return the test-pages and then the hw-pages
+        # return the test-pages and then the hw-pages and then any loose-pages
         for p in gref.tpages.order_by(TPage.pageNumber):
             rval.append(p.image.fileName)
         for p in gref.hwpages.order_by(HWPage.order):
+            rval.append(p.image.fileName)
+        for p in tref.lpages.order_by(LPage.order):
             rval.append(p.image.fileName)
         return rval
 
@@ -1282,12 +1307,13 @@ class PlomDB:
         if tref is None:
             return [False]
         rval = [True]
-        for p in tref.tpages.order_by(TPage.pageNumber):
+        for p in tref.tpages.order_by(TPage.pageNumber):  # give test pages
             if p.scanned == True:
                 rval.append(p.image.fileName)
-        for p in tref.hwpages.order_by(HWPage.order):  # then give HWPages
-            rval.append(p.image.fileName)
-        for p in tref.xpages.order_by(XPage.order):  # then give XPages
+        for qref in tref.qgroups.order_by(QGroup.question):  # give hw pages by question
+            for p in qref.group.hwpages.order_by(HWPage.order):
+                rval.append(p.image.fileName)
+        for p in tref.lpages.order_by(LPage.order):  # then give loose pages
             rval.append(p.image.fileName)
 
         return rval
@@ -1304,26 +1330,21 @@ class PlomDB:
         else:  # no collision since the page hasn't been scanned yet
             return [True, pref.version]
 
-    def checkUnknownImage(self, fname):
-        uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
-        if uref is None:
-            return None
-        return [uref.fileName, uref.originalName, uref.md5sum]
-
-    def checkCollidingImage(self, fname):
-        cref = CollidingPage.get_or_none(CollidingPage.fileName == fname)
-        if cref is None:
-            return None
-        return [cref.fileName, cref.originalName, cref.md5sum]
-
     def removeUnknownImage(self, fname, nname):
-        uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
-        if uref is None:
+        """Remove the unknown image with filename=fname, and make a discardpage with same image, but the underlying file will be moved to nname. Update image accordingly.
+        """
+        iref = Image.get_or_none(
+            Image.fileName == fname
+        )  # look up the image by filename
+        if iref is None:
             return False
+        uref = UnknownPage.get_or_none(UnknownPage.image == iref)
+        if uref is None:
+            return False  # have just tried to remove an image that is not an unknown.
         with plomdb.atomic():
-            DiscardedPage.create(
-                fileName=nname, originalName=uref.originalName, md5sum=uref.md5sum
-            )
+            iref.fileName = nname
+            iref.save()
+            DiscardedPage.create(image=iref, reason="Discard an unknown")
             uref.delete_instance()
         log.info("Removing unknown {} to discard {}".format(fname, nname))
         return True
@@ -1340,20 +1361,22 @@ class PlomDB:
         log.info("Removing collision {} to discard {}".format(fname, nname))
         return True
 
-    def moveUnknownToPage(self, fname, nname, testNumber, pageNumber):
-        uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
+    def moveUnknownToTPage(self, fname, nname, testNumber, pageNumber):
+        # get image by filename - check it belongs to unknown.
+        iref = Image.get_or_none(Image.fileName == fname)
+        if iref is None:
+            return [False]
+        uref = UnknownPage.get_or_none(UnknownPage.image == iref)
         if uref is None:
             return [False]
         tref = Test.get_or_none(Test.testNumber == testNumber)
         if tref is None:
             return [False]
-        pref = Page.get_or_none(Page.test == tref, Page.pageNumber == pageNumber)
+        pref = TPage.get_or_none(TPage.test == tref, TPage.pageNumber == pageNumber)
         if pref is None:
             return [False]
         with plomdb.atomic():
-            pref.fileName = nname
-            pref.md5sum = uref.md5sum
-            pref.originalName = uref.originalName
+            pref.image = iref
             pref.scanned = True
             pref.save()
             uref.delete_instance()
@@ -1417,8 +1440,13 @@ class PlomDB:
         self.checkGroupAllUploaded(pref)
         return [True]
 
-    def moveExtraToPage(self, fname, nname, testNumber, question):
-        uref = UnknownPage.get_or_none(UnknownPage.fileName == fname)
+    def moveUnknownToExtraPage(self, fname, nname, testNumber, question):
+        # move unknownpage to the first available hwpage for that question.
+        # get image by filename - check it belongs to unknown.
+        iref = Image.get_or_none(Image.fileName == fname)
+        if iref is None:
+            return [False]
+        uref = UnknownPage.get_or_none(UnknownPage.image == iref)
         if uref is None:
             return [False]
         tref = Test.get_or_none(Test.testNumber == testNumber)
@@ -1428,46 +1456,55 @@ class PlomDB:
         qref = QGroup.get_or_none(test=tref, question=question)
         if qref is None:
             return [False]
-        version = qref.version
-        # get the last page in the test.
-        pref = (
-            Page.select()
-            .where(Page.test == tref)
-            .order_by(Page.pageNumber.desc())
-            .get()
-        )
-        # extra pages start with page-number 1001
-        nextPageNumber = max(pref.pageNumber + 1, 1001)
+
+        # add this as last HWPage for that question
+        try:
+            pref = (
+                HWPage.select()
+                .where(HWPage.group == qref.group)
+                .order_by(HWPage.order.desc())
+                .get()
+            )
+            nextOrder = pref.order + 1
+        except Exception as err:
+            print(err, type(err))
+            nextOrder = 1
+
         with plomdb.atomic():
-            npref = Page.create(
+            # since file moves - update image
+            iref.fileName = nname
+            iref.save()
+            # create a hw page
+            hpref = HWPage.create(
                 test=tref,
                 group=qref.group,
-                gid=qref.group.gid,
-                pageNumber=nextPageNumber,
-                version=version,
-                originalName=uref.originalName,
-                fileName=nname,  # since the file is moved
-                md5sum=uref.md5sum,
-                scanned=True,
+                order=nextOrder,
+                version=qref.version,
+                image=iref,
             )
+            # delete the unknownpage
             uref.delete_instance()
         log.info(
             "Saving extra {} as {} tp {}.{} of question {}".format(
-                fname, nname, testNumber, nextPageNumber, questionNumber
+                fname, nname, testNumber, nextOrder, question
             )
         )
-        ## Now invalidate any work on the associated group
-        # now update the group and keep list of files to delete potentially
-        return [True, self.invalidateQGroup(tref, qref.group, delPage=False)]
+        ## Now update the qgroup
+        return [True, self.processUpdatedQGroup(tref, qref)]
 
     def moveDiscardToUnknown(self, fname, nname):
-        dref = DiscardedPage.get_or_none(fileName=fname)
+        iref = Image.get_or_none(Image.fileName == fname)
+        if iref is None:
+            return [False]
+        dref = DiscardedPage.get_or_none(image=iref)
         if dref is None:
             return [False]
         with plomdb.atomic():
-            uref = UnknownPage.create(
-                originalName=dref.originalName, fileName=nname, md5sum=dref.md5sum
-            )
+            # update image filename - it moved
+            iref.fileName = nname
+            iref.save()
+            # now create an unknown
+            uref = UnknownPage.create(image=iref, order=0)  # do not know order anymore.
             uref.save()
             dref.delete_instance()
         log.info("Moving discard {} back to unknown {}".format(fname, nname))
@@ -1492,7 +1529,7 @@ class PlomDB:
                         ["hw.{}.{}".format(qref.question, p.order), p.version]
                     )
             # then append x-pages in order
-            for p in tref.xpages:
+            for p in tref.lpages:
                 pScanned.append(
                     ["x.{}".format(p.order), 0]
                 )  # we don't know the version
@@ -1510,12 +1547,12 @@ class PlomDB:
             for qref in tref.qgroups:
                 gref = qref.group
                 for p in gref.hwpages:
-                    pScanned.append(
+                    pState.append(
                         ["hw.{}.{}".format(qref.question, p.order), p.version, True]
                     )
             # then append x-pages in order
-            for p in tref.xpages:
-                pScanned.append(
+            for p in tref.lpages:
+                pState.append(
                     ["x.{}".format(p.order), 0, True]
                 )  # we don't know the version
             rval[tref.testNumber] = pState
@@ -2524,7 +2561,7 @@ class PlomDB:
                     val[2] = True
             pageData.append(val)
             pageFiles.append(p.image.fileName)
-        for p in tref.xpages.order_by(XPage.order):  # then give HWPages
+        for p in tref.lpages.order_by(LPage.order):  # then give HWPages
             val = ["x{}".format(p.order), p.image.id, False]
             pageData.append(val)
             pageFiles.append(p.image.fileName)

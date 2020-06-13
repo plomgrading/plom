@@ -245,7 +245,7 @@ def unknownToTestPage(self, fname, test, page, rotation):
         else:
             newFilename = "pages/originalPages/" + os.path.split(fname)[1]
             log.debug("Original = {}".format(newFilename))
-            if self.DB.moveUnknownToPage(fname, newFilename, test, page)[0]:
+            if self.DB.moveUnknownToTPage(fname, newFilename, test, page)[0]:
                 shutil.move(fname, newFilename)
                 return [True, "testPage"]
     else:  # some sort of problem occurred
@@ -254,7 +254,7 @@ def unknownToTestPage(self, fname, test, page, rotation):
 
 def unknownToExtraPage(self, fname, test, question, rotation):
     newFilename = "pages/originalPages/" + os.path.split(fname)[1]
-    rval = self.DB.moveExtraToPage(fname, newFilename, test, question)
+    rval = self.DB.moveUnknownToExtraPage(fname, newFilename, test, question)
     # returns [True, [file1,file2,..]] or [False]
     # the files are annotations to be deleted
     if rval[0]:
@@ -268,8 +268,9 @@ def unknownToExtraPage(self, fname, test, question, rotation):
             check=True,
         )
         # clean up any annotation files
-        for fn in rval[1]:
-            os.unlink(fn)
+        print("TODO = clean up old annotation files")
+        # for fn in rval[1]:
+        # os.unlink(fn)
     else:
         return [False]
     return [True]
