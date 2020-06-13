@@ -89,18 +89,25 @@ class IDHandler:
         """Identify a paper based on a task.
 
         Returns:
-            404: papernum not found, or other data errors, check
-                `Response.text` for details.
+            403: some other user owns this task.
+            404: papernum not found, or other data errors.
             409: student number `data["sid"]` is already in use.
         """
         papernum = request.match_info["task"]
-        rmsg = self.server.id_paper(papernum, data["user"], data["sid"], data["sname"])
-        if rmsg[0]:
+        r, what, msg = self.server.id_paper(
+            papernum, data["user"], data["sid"], data["sname"]
+        )
+        if r:
             return web.Response(status=200)
-        elif rmsg[1]:
-            raise web.HTTPConflict(reason=rmsg[2])
+        elif what == 409:
+            raise web.HTTPConflict(reason=msg)
+        elif what == 404:
+            raise web.HTTPNotFound(reason=msg)
+        elif what == 403:
+            raise web.HTTPForbidden(reason=msg)
         else:
-            return web.Response(status=404, text=rmsg[2])
+            # catch all that should not happen.
+            raise web.HTTPInternalServerError(reason=msg)
 
     # @routes.put("/ID/{papernum}")
     @authenticate_by_token_required_fields(["user", "sid", "sname"])
@@ -108,21 +115,29 @@ class IDHandler:
         """Identify a paper directly without certain checks.
 
         Only "manager" can perform this action.  Typical client IDing
-        would call func:`IdentifyPaperTask` instead.  Return values
-        are as documented in that function.
+        would call func:`IdentifyPaperTask` instead.
+
+        Returns:
+            404: papernum not found, or other data errors.
+            409: student number `data["sid"]` is already in use.
         """
         if not data["user"] == "manager":
             return web.Response(status=400)  # malformed request.
         papernum = request.match_info["papernum"]
-        rmsg = self.server.id_paper(
+        r, what, msg = self.server.id_paper(
             papernum, "HAL", data["sid"], data["sname"], checks=False
         )
-        if rmsg[0]:
+        if r:
             return web.Response(status=200)
-        elif rmsg[1]:
-            raise web.HTTPConflict(reason=rmsg[2])
+        elif what == 409:
+            raise web.HTTPConflict(reason=msg)
+        elif what == 404:
+            raise web.HTTPNotFound(reason=msg)
+        elif what == 403:
+            raise web.HTTPForbidden(reason=msg)
         else:
-            return web.Response(status=404, text=rmsg[2])
+            # catch all that should not happen.
+            raise web.HTTPInternalServerError(reason=msg)
 
     # @routes.delete("/ID/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])

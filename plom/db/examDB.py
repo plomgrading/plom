@@ -2082,13 +2082,15 @@ class PlomDB:
                 owner (e.g., during automated IDing of prenamed papers.)
 
         Returns:
-            tuple: `(True,)` if succesful. `(False, True, msg)` means
-                `sid` is inuse elsewhere, a serious problem for the
-                caller to deal with.  `(False, False, msg)` covers all
+            tuple: `(True, None, None)` if succesful, `(False, 409, msg)`
+                means `sid` is in use elsewhere, a serious problem for
+                the caller to deal with.  `(False, int, msg)` covers all
                 other errors.  `msg` gives details about errors.  Some
                 of these should not occur, and indicate possible bugs.
+                `int` gives a hint of suggested HTTP status code,
+                currently it can be 404, 403, or 409.
 
-        TODO: perhaps several sorts of exceptions woudl be better.
+        TODO: perhaps several sorts of exceptions would be better.
         """
         uref = User.get(name=username)
         # since user authenticated, this will always return legit ref.
@@ -2100,16 +2102,16 @@ class PlomDB:
                 if tref is None:
                     msg = "denied b/c paper not found"
                     log.error("{}: {}".format(logbase, msg))
-                    return False, False, msg
+                    return False, 404, msg
                 iref = tref.idgroups[0]
                 if checks and iref.group.scanned == False:
                     msg = "denied b/c its not scanned yet"
                     log.error("{}: {}".format(logbase, msg))
-                    return False, False, msg
+                    return False, 404, msg
                 if checks and iref.user != uref:
                     msg = 'denied b/c it belongs to user "{}"'.format(iref.user)
                     log.error("{}: {}".format(logbase, msg))
-                    return False, False, msg
+                    return False, 403, msg
                 iref.user = uref
                 # update status, Student-number, name, id-time.
                 iref.status = "done"
@@ -2132,12 +2134,12 @@ class PlomDB:
         except IDGroup.DoesNotExist:
             msg = "that test number is not known"
             log.error("{} but {}".format(logbase, msg))
-            return False, False, msg
+            return False, 404, msg
         except IntegrityError:
             msg = "student id {} already entered elsewhere".format(censorID(sid))
             log.error("{} but {}".format(logbase, msg))
-            return False, True, msg
-        return True
+            return False, 409, msg
+        return True, None, None
 
     def IDgetRandomImage(self):
         # TODO - make random image rather than 1st
