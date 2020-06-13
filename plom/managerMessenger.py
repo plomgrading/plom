@@ -149,7 +149,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
-                "https://{}/DEV/ID/tasks/{}".format(self.server, code),
+                "https://{}/ID/{}".format(self.server, code),
                 json={
                     "user": self.user,
                     "token": self.token,

@@ -85,29 +85,39 @@ class IDHandler:
 
     # @routes.put("/ID/tasks/{task}")
     @authenticate_by_token_required_fields(["user", "sid", "sname"])
-    def IdentifyAPaper(self, data, request):
-        testNumber = request.match_info["task"]
-        rmsg = self.server.IdentifyAPaper(
-            testNumber, data["user"], data["sid"], data["sname"]
-        )
-        if rmsg[0]:  # all good
+    def IdentifyPaperTask(self, data, request):
+        """Identify a paper based on a task.
+
+        Returns:
+            404: papernum not found, or other data errors, check
+                `Response.text` for details.
+            409: student number `data["sid"]` is already in use.
+        """
+        papernum = request.match_info["task"]
+        rmsg = self.server.id_paper(papernum, data["user"], data["sid"], data["sname"])
+        if rmsg[0]:
             return web.Response(status=200)
         elif rmsg[1]:  # student number already in use
             return web.Response(status=409)
         else:  # a more serious error, e.g., can't find this in database
             return web.Response(status=404)
 
-    # TODO: can we use the same api as above?
-    # @routes.put("/DEV/ID/tasks/{task}")
+    # @routes.put("/ID/{papernum}")
     @authenticate_by_token_required_fields(["user", "sid", "sname"])
-    def IdentifyAPaper2(self, data, request):
+    def IdentifyPaper(self, data, request):
+        """Identify a paper directly without certain checks.
+
+        Only "manager" can perform this action.  Typical client IDing
+        would call func:`IdentifyPaperTask` instead.  Return values
+        are as documented in that function.
+        """
         if not data["user"] == "manager":
             return web.Response(status=400)  # malformed request.
-        testNumber = request.match_info["task"]
-        rmsg = self.server.IdentifyAPaper(
-            testNumber, "HAL", data["sid"], data["sname"], checks=False
+        papernum = request.match_info["papernum"]
+        rmsg = self.server.id_paper(
+            papernum, "HAL", data["sid"], data["sname"], checks=False
         )
-        if rmsg[0]:  # all good
+        if rmsg[0]:
             return web.Response(status=200)
         elif rmsg[1]:  # student number already in use
             return web.Response(status=409)
@@ -184,8 +194,8 @@ class IDHandler:
         router.add_get("/ID/images/{test}", self.IDgetImage)
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
-        router.add_put("/ID/tasks/{task}", self.IdentifyAPaper)
-        router.add_put("/DEV/ID/tasks/{task}", self.IdentifyAPaper2)
+        router.add_put("/ID/{papernum}", self.IdentifyPaper)
+        router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
         router.add_delete("/ID/tasks/{task}", self.IDdidNotFinishTask)
         router.add_get("/ID/randomImage", self.IDgetRandomImage)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)

@@ -2067,7 +2067,7 @@ class PlomDB:
             tref.save()
             log.info("User {} did not ID task {}".format(uname, testNumber))
 
-    def id_a_paper(self, paper_num, username, sid, sname, checks=True):
+    def id_paper(self, paper_num, username, sid, sname, checks=True):
         """Associate student name and id with a paper in the database.
 
         Args:
