@@ -577,14 +577,15 @@ class UploadHandler:
         Returns:
             dict: dict of dicts, keyed first by paper index then by page
                 number.  Both keys are strings b/c of json limitations;
-                you may need to iterate and convert back to int.
+                you may need to iterate and convert back to int.  Fails
+                with 500 Internal Server Error if a test does not exist.
         """
         spec = self.server.testSpec
         vers = {}
         for paper_idx in range(1, spec["numberToProduce"] + 1):
             ver = self.server.DB.getPageVersions(paper_idx)
-            #if not ver:
-            #    TODO return 500
+            if not ver:
+                return web.Response(status=500)
             vers[paper_idx] = ver
         # JSON converts int keys to strings, we'll fix this at the far end
         # return web.json_response(str(pickle.dumps(vers)), status=200)
