@@ -4,7 +4,7 @@
 
 import os
 import sys
-import getpass
+from getpass import getpass
 
 from plom import SpecParser
 from plom import specdir
@@ -81,17 +81,11 @@ def buildDatabaseAndPapers(server=None, password=None):
         msgr = ManagerMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass('Please enter the "manager" password: ')
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
+    if not password:
+        password = getpass('Please enter the "manager" password: ')
 
     try:
-        msgr.requestAndSaveToken("manager", pwd)
+        msgr.requestAndSaveToken("manager", password)
     except PlomExistingLoginException:
         # TODO: bit annoying, maybe want manager UI open...
         print(
