@@ -40,7 +40,7 @@ server_instructions = """Overview of running the Plom server:
        1a. If you did not prepare the classlist earlier, then run
            'plom-server class <filename>'.
 
-  2. Run '%(prog)s' - this will check that everything is in place
+  2. Run '%(prog)s init' - this will check that everything is in place
      and create necessary sub-directories *and* create config files for
      you to edit.
 
