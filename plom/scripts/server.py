@@ -30,15 +30,10 @@ from plom import specdir
 
 server_instructions = """Overview of running the Plom server:
 
-  0. Decide on a working directory for the server and cd into it - this
-     need not be the same directory where you started the project.
+  0. Decide on a working directory for the server and cd into it.
 
   1. Copy the `{specdir}` directory (not just its contents) to your
-     server directory.   It should be located where you started the
-     project and built the PDFs.
-
-       1a. If you did not prepare the classlist earlier, then run
-           'plom-server class <filename>'.
+     server directory.
 
   2. Run '%(prog)s init' - this will check that everything is in place
      and create necessary sub-directories *and* create config files for
