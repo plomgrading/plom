@@ -308,7 +308,7 @@ def process_class_list(student_csv_file_name, demo=False):
     Student numbers come from an `id` column.  There is some
     flexibility about student names: most straightforward is a
     second column named `studentNames`.  The results are copied
-    into a new csv file in a simplied format.
+    into a new csv file in a simplified format.
 
     The classlist can be a .csv file with column headers:
     - `id` - student ID number
