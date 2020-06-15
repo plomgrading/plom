@@ -1,15 +1,18 @@
-from plom.db.tables import *
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
 
 from datetime import datetime
+import logging
+
+from peewee import fn
+import peewee as pw
 
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
-
-import logging
+from plom.db.tables import *
 
 log = logging.getLogger("DB")
-
-from peewee import fn
 
 
 ########## Test creation stuff ##############
