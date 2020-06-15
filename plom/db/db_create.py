@@ -42,7 +42,7 @@ def addTPages(self, tref, gref, t, pages, v):
                 TPage.create(
                     test=tref, group=gref, page_number=p, version=v, scanned=False,
                 )
-            except IntegrityError as e:
+            except pw.IntegrityError as e:
                 log.error("Adding page {} for test {} error - {}".format(p, t, e))
                 flag = False
     return flag
@@ -62,7 +62,7 @@ def createIDGroup(self, t, pages):
             group_type="i",
             queue_position=self.nextqueue_position(),
         )  # must be unique
-    except IntegrityError as e:
+    except pw.IntegrityError as e:
         log.error(
             "Create ID - cannot create Group {} of test {} error - {}".format(gid, t, e)
         )
@@ -70,7 +70,7 @@ def createIDGroup(self, t, pages):
     # make the IDGroup
     try:
         iref = IDGroup.create(test=tref, group=gref)
-    except IntegrityError as e:
+    except pw.IntegrityError as e:
         log.error(
             "Create ID - cannot create IDGroup {} of group {} error - {}.".format(
                 qref, gref, e
@@ -98,14 +98,14 @@ def createDNMGroup(self, t, pages):
             scanned=sc,
             queue_position=self.nextqueue_position(),
         )
-    except IntegrityError as e:
+    except pw.IntegrityError as e:
         log.error(
             "Create DNM - cannot make Group {} of Test {} error - {}".format(gid, t, e)
         )
         return False
     try:
         dref = DNMGroup.create(test=tref, group=gref)
-    except IntegrityError as e:
+    except pw.IntegrityError as e:
         log.error(
             "Create DNM - cannot create DNMGroup {} of group {} error - {}.".format(
                 dref, gref, e
@@ -131,14 +131,14 @@ def createQGroup(self, t, g, v, pages):
             version=v,
             queue_position=self.nextqueue_position(),
         )
-    except IntegrityError as e:
+    except pw.IntegrityError as e:
         log.error(
             "Create Q - cannot create group {} of Test {} error - {}".format(gid, t, e)
         )
         return False
     try:
         qref = QGroup.create(test=tref, group=gref, question=g, version=v)
-    except IntegrityError as e:
+    except pw.IntegrityError as e:
         log.error(
             "Create Q - cannot create QGroup of question {} error - {}.".format(gid, e)
         )

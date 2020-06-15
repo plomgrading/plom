@@ -14,7 +14,7 @@ def createUser(self, uname, passwordHash):
             last_activity=datetime.now(),
             last_action="Created",
         )
-    except IntegrityError as e:
+    except pw.IntegrityError as e:
         log.error("Create User {} error - {}".format(uname, e))
         return False
     return True

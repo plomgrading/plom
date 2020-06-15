@@ -1,6 +1,9 @@
 from plom.db.tables import *
 from datetime import datetime
 
+from plom.rules import censorStudentNumber as censorID
+from plom.rules import censorStudentName as censorName
+
 import logging
 
 log = logging.getLogger("DB")
@@ -229,7 +232,7 @@ def IDtakeTaskFromClient(self, test_number, uname, sid, sname):
     except IDGroup.DoesNotExist:
         log.error("ID take task - That test number {} not known".format(test_number))
         return [False, False]
-    except IntegrityError:
+    except pw.IntegrityError:
         log.error(
             "ID take task - Student number {} already entered".format(censorID(sid))
         )
