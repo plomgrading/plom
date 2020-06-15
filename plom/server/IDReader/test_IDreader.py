@@ -1,4 +1,4 @@
-from .idreader import is_model_absent, log_likelihood
+from .idReader import is_model_absent, log_likelihood
 
 
 def test_IDreader():
