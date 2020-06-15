@@ -7,6 +7,8 @@ import logging
 
 import peewee as pw
 
+from plom.rules import censorStudentNumber as censorID
+from plom.rules import censorStudentName as censorName
 from plom.db.tables import *
 
 
