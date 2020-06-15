@@ -1,4 +1,4 @@
-from .idReader import is_model_absent, log_likelihood, download_model
+from .idReader import is_model_absent, log_likelihood, download_or_train_model
 
 
 def test_is_model_absent():
@@ -20,7 +20,7 @@ def test_log_likelihood():
     assert log_likelihood(student_ids, probabilities) == 5.545177444479562
 
 
-def download_or_train_model():
+def test_download_or_train_model():
     assert download_or_train_model() == True
     assert False
     assert is_model_absent() == False
