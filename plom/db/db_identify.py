@@ -1,7 +1,14 @@
-from plom.db.tables import *
-from datetime import datetime
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
 
+from datetime import datetime
 import logging
+
+import peewee as pw
+
+from plom.db.tables import *
+
 
 log = logging.getLogger("DB")
 
@@ -257,7 +264,7 @@ def id_paper(self, paper_num, username, sid, sname, checks=True):
         msg = "that test number is not known"
         log.error("{} but {}".format(logbase, msg))
         return False, 404, msg
-    except IntegrityError:
+    except pw.IntegrityError:
         msg = "student id {} already entered elsewhere".format(censorID(sid))
         log.error("{} but {}".format(logbase, msg))
         return False, 409, msg
