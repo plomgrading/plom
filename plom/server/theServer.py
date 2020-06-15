@@ -90,7 +90,8 @@ class Server(object):
         self.Version = __version__
         print(
             "Server launching with masterToken = '{}' {}".format(
-                self.authority.get_master_token(), type(self.authority.get_master_token())
+                self.authority.get_master_token(),
+                type(self.authority.get_master_token()),
             )
         )
         self.tempDirectory = tempfile.TemporaryDirectory()
@@ -170,7 +171,7 @@ class Server(object):
         IDgetNextTask,
         IDgetDoneTasks,
         IDgetImage,
-        IDgetRandomImage,
+        IDgetImageFromATest,
         IDclaimThisTask,
         IDdidNotFinish,
         IDreturnIDdTask,

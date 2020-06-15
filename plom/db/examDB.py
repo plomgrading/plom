@@ -190,10 +190,10 @@ class PlomDB:
         IDgiveTaskToClient,
         IDgetDoneTasks,
         IDgetImage,
-        IDgetImageList,
+        IDgetImageByNumber,
         IDdidNotFinish,
         IDtakeTaskFromClient,
-        IDgetRandomImage,
+        IDgetImageFromATest,
         IDreviewID,
     )
 
