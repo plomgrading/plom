@@ -183,6 +183,44 @@ class ManagerMessenger(BaseMessenger):
         # TODO - do we need this return value?
         return True
 
+
+    def upload_classlist(self, classdict):
+        """Give the server a classlist.
+
+        Args:
+            classdict (dict): keys are student IDs (str), values are
+                student names.
+
+        Exceptions:
+            PlomConflict: server already has one.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/ID/classlist".format(self.server),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "classlist": classdict,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 409:
+                raise PlomConflict(e) from None
+            elif response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+
     def RgetCompletions(self):
         self.SRmutex.acquire()
         try:

@@ -18,7 +18,7 @@ import pkg_resources
 from plom import __version__
 from plom import SpecVerifier, SpecParser
 from plom import specdir
-from plom.produce import process_class_list
+from plom.produce import process_class_list, upload_classlist
 from plom.produce import buildDatabaseAndPapers
 from plom.produce.demotools import buildDemoSourceFiles
 # TODO: relocate https://gitlab.com/plom/plom/-/issues/891
@@ -106,6 +106,8 @@ spL = sub.add_parser(
     epilog=process_class_list.__doc__,
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
+spL.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+spL.add_argument("-w", "--password", type=str, help='for the "manager" user')
 group = spL.add_mutually_exclusive_group(required=True)
 group.add_argument("classlist", nargs="?", help="filename in csv format")
 group.add_argument(
@@ -156,8 +158,8 @@ def main():
         # copy the template spec into place
         parseAndVerifySpecification(fname)
     elif args.command == "class":
-        # process the class list and copy into place
-        process_class_list(args.classlist, args.demo)
+        cl = process_class_list(args.classlist, args.demo)
+        upload_classlist(cl, args.server, args.password)
     elif args.command == "make":
         buildDatabaseAndPapers(args.server, args.password)
     elif args.command == "clear":
