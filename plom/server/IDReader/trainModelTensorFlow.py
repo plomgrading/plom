@@ -14,7 +14,7 @@ from tensorflow import keras
 
 
 def train_and_save_model():
-    # grab the mnist data to train against.
+    """Grab the mnist data to train against."""
 
     print("Getting mnist handwritten digit data set.")
     mnist = tf.keras.datasets.mnist
