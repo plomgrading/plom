@@ -227,7 +227,7 @@ def id_paper(self, paper_num, username, sid, sname, checks=True):
     logbase = 'User "{}" tried to ID paper {}'.format(username, paper_num)
     try:
         with plomdb.atomic():
-            tref = Test.get_or_none(Test.testNumber == paper_num)
+            tref = Test.get_or_none(Test.test_number == paper_num)
             if tref is None:
                 msg = "denied b/c paper not found"
                 log.error("{}: {}".format(logbase, msg))
