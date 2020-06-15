@@ -6,7 +6,6 @@ def test_is_model_absent():
 
 
 def test_log_likelihood():
-    '''
     student_ids = [i for i in range(0, 9)]
     probabilities = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -19,5 +18,5 @@ def test_log_likelihood():
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ]
-    assert log_likelihood(student_ids, probabilities) == True'''
+    print(log_likelihood(student_ids, probabilities))
     assert 1 == 1
