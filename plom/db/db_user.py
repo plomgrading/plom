@@ -188,4 +188,8 @@ def resetUsersToDo(self, uname):
             x.user = None
             x.time = datetime.now()
             x.save()
-            log.info("Reset user {} totalling task {}".format(uname, x.group.gid))
+            log.info(
+                "Reset user {} totalling test_number {}".format(
+                    uname, x.test.test_number
+                )
+            )
