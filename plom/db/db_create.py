@@ -54,40 +54,39 @@ def addTPages(self, tref, gref, t, pages, v):
     return flag
 
 
-@plomdb.atomic
 def createIDGroup(self, t, pages):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
         log.warning("Create IDGroup - No test with number {}".format(t))
         return False
-    # make the Group
-    gid = "i{}".format(str(t).zfill(4))
-    try:
-        gref = Group.create(
-            test=tref,
-            gid=gid,
-            group_type="i",
-            queue_position=self.nextqueue_position(),
-        )  # must be unique
-    except IntegrityError as e:
-        log.error(
-            "Create ID - cannot create Group {} of test {} error - {}".format(gid, t, e)
-        )
-        return False
-    # make the IDGroup
-    try:
-        iref = IDGroup.create(test=tref, group=gref)
-    except IntegrityError as e:
-        log.error(
-            "Create ID - cannot create IDGroup {} of group {} error - {}.".format(
-                qref, gref, e
+    with plomdb.atomic():
+        # make the Group
+        gid = "i{}".format(str(t).zfill(4))
+        try:
+            gref = Group.create(
+                test=tref,
+                gid=gid,
+                group_type="i",
+                queue_position=self.nextqueue_position(),
+            )  # must be unique
+        except IntegrityError as e:
+            log.error(
+                "Create ID - cannot create Group {} of test {} error - {}".format(gid, t, e)
             )
-        )
-        return False
-    return self.addTPages(tref, gref, t, pages, 1)  # always version 1.
+            return False
+        # make the IDGroup
+        try:
+            iref = IDGroup.create(test=tref, group=gref)
+        except IntegrityError as e:
+            log.error(
+                "Create ID - cannot create IDGroup {} of group {} error - {}.".format(
+                    qref, gref, e
+                )
+            )
+            return False
+        return self.addTPages(tref, gref, t, pages, 1)  # always version 1.
 
 
-@plomdb.atomic
 def createDNMGroup(self, t, pages):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
@@ -95,35 +94,35 @@ def createDNMGroup(self, t, pages):
         return False
 
     gid = "d{}".format(str(t).zfill(4))
-    # make the dnmgroup
-    try:
-        # A DNM group may have 0 pages, in that case mark it as scanned and set status = "complete"
-        sc = True if len(pages) == 0 else False
-        gref = Group.create(
-            test=tref,
-            gid=gid,
-            group_type="d",
-            scanned=sc,
-            queue_position=self.nextqueue_position(),
-        )
-    except IntegrityError as e:
-        log.error(
-            "Create DNM - cannot make Group {} of Test {} error - {}".format(gid, t, e)
-        )
-        return False
-    try:
-        dref = DNMGroup.create(test=tref, group=gref)
-    except IntegrityError as e:
-        log.error(
-            "Create DNM - cannot create DNMGroup {} of group {} error - {}.".format(
-                dref, gref, e
+    with plomdb.atomic():
+        # make the dnmgroup
+        try:
+            # A DNM group may have 0 pages, in that case mark it as scanned and set status = "complete"
+            sc = True if len(pages) == 0 else False
+            gref = Group.create(
+                test=tref,
+                gid=gid,
+                group_type="d",
+                scanned=sc,
+                queue_position=self.nextqueue_position(),
             )
-        )
-        return False
-    return self.addTPages(tref, gref, t, pages, 1)
+        except IntegrityError as e:
+            log.error(
+                "Create DNM - cannot make Group {} of Test {} error - {}".format(gid, t, e)
+            )
+            return False
+        try:
+            dref = DNMGroup.create(test=tref, group=gref)
+        except IntegrityError as e:
+            log.error(
+                "Create DNM - cannot create DNMGroup {} of group {} error - {}.".format(
+                    dref, gref, e
+                )
+            )
+            return False
+        return self.addTPages(tref, gref, t, pages, 1)
 
 
-@plomdb.atomic
 def createQGroup(self, t, g, v, pages):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
@@ -131,40 +130,41 @@ def createQGroup(self, t, g, v, pages):
         return False
 
     gid = "q{}g{}".format(str(t).zfill(4), g)
-    # make the qgroup
-    try:
-        gref = Group.create(
-            test=tref,
-            gid=gid,
-            group_type="q",
-            version=v,
-            queue_position=self.nextqueue_position(),
-        )
-    except IntegrityError as e:
-        log.error(
-            "Create Q - cannot create group {} of Test {} error - {}".format(gid, t, e)
-        )
-        return False
-    try:
-        qref = QGroup.create(test=tref, group=gref, question=g, version=v)
-    except IntegrityError as e:
-        log.error(
-            "Create Q - cannot create QGroup of question {} error - {}.".format(gid, e)
-        )
-        return False
-    ## create annotation 0 owned by HAL
-    try:
-        uref = User.get(name="HAL")
-        aref = Annotation.create(qgroup=qref, edition=0, user=uref)
-    except IntegrityError as e:
-        log.error(
-            "Create Q - cannot create Annotation  of question {} error - {}.".format(
-                gid, e
+    with plomdb.atomic():
+        # make the qgroup
+        try:
+            gref = Group.create(
+                test=tref,
+                gid=gid,
+                group_type="q",
+                version=v,
+                queue_position=self.nextqueue_position(),
             )
-        )
-        return False
+        except IntegrityError as e:
+            log.error(
+                "Create Q - cannot create group {} of Test {} error - {}".format(gid, t, e)
+            )
+            return False
+        try:
+            qref = QGroup.create(test=tref, group=gref, question=g, version=v)
+        except IntegrityError as e:
+            log.error(
+                "Create Q - cannot create QGroup of question {} error - {}.".format(gid, e)
+            )
+            return False
+        ## create annotation 0 owned by HAL
+        try:
+            uref = User.get(name="HAL")
+            aref = Annotation.create(qgroup=qref, edition=0, user=uref)
+        except IntegrityError as e:
+            log.error(
+                "Create Q - cannot create Annotation  of question {} error - {}.".format(
+                    gid, e
+                )
+            )
+            return False
 
-    return self.addTPages(tref, gref, t, pages, v)
+        return self.addTPages(tref, gref, t, pages, v)
 
 
 def getPageVersions(self, t):
