@@ -14,25 +14,6 @@ from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import *
 
 
-def buildNamedPapers(spec, pvmap):
-    if spec["numberToName"] > 0:
-        print(
-            'Building {} pre-named papers and {} blank papers in "{}"...'.format(
-                spec["numberToName"],
-                spec["numberToProduce"] - spec["numberToName"],
-                paperdir,
-            )
-        )
-    else:
-        print(
-            'Building {} blank papers in "{}"...'.format(
-                spec["numberToProduce"], paperdir
-            )
-        )
-
-    build_all_papers(spec, pvmap, named=True)
-
-
 def buildDatabaseAndPapers(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
@@ -66,7 +47,22 @@ def buildDatabaseAndPapers(server=None, password=None):
         print(status)
         pvmap = msgr.getGlobalPageVersionMap()
         os.makedirs(paperdir, exist_ok=True)
-        buildNamedPapers(spec, pvmap)
+
+        if spec["numberToName"] > 0:
+            print(
+                'Building {} pre-named papers and {} blank papers in "{}"...'.format(
+                    spec["numberToName"],
+                    spec["numberToProduce"] - spec["numberToName"],
+                    paperdir,
+                )
+            )
+        else:
+            print(
+                'Building {} blank papers in "{}"...'.format(
+                    spec["numberToProduce"], paperdir
+                )
+            )
+        build_all_papers(spec, pvmap, named=True)
 
         print("Checking papers produced and updating databases")
         confirm_processed(spec, msgr)
