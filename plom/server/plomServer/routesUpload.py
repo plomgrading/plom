@@ -561,7 +561,7 @@ class UploadHandler:
                 json limitations; you may want to convert back to int.
         """
         spec = self.server.testSpec
-        paper_idx = request.match_info["t"]
+        paper_idx = request.match_info["papernum"]
         ver = self.server.DB.getPageVersions(paper_idx)
         if ver:
             return web.json_response(ver, status=200)
@@ -624,7 +624,7 @@ class UploadHandler:
         if not data["user"] == "manager":
             return web.Response(status=400)
         #force_flag = request.match_info["force"]
-        paper_idx = request.match_info["t"]
+        paper_idx = request.match_info["papernum"]
         try:
             self.server.DB.produceTest(paper_idx)
         except IndexError:
@@ -663,6 +663,6 @@ class UploadHandler:
         router.add_put("/admin/hwPagesUploaded", self.processHWUploads)
         router.add_put("/admin/testPagesUploaded", self.processHWUploads)
         router.add_put("/admin/populateDB", self.populateExamDatabase)
-        router.add_get("/admin/pageVersionMap/{t}", self.getPageVersionMap)
+        router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
-        router.add_put("/admin/pdf_produced/{t}", self.notify_pdf_of_paper_produced)
+        router.add_put("/admin/pdf_produced/{papernum}", self.notify_pdf_of_paper_produced)
