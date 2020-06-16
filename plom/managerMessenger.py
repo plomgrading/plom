@@ -223,7 +223,7 @@ class ManagerMessenger(BaseMessenger):
 
         return predictions
 
-    def IDgetRandomImage(self):
+    def IDgetImageFromATest(self):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
