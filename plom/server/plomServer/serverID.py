@@ -47,7 +47,7 @@ def IDclaimThisTask(self, user, testNumber):
 def id_paper(self, *args, **kwargs):
     """Some glue between service routes and the database.
 
-    See :func:`plom.db.examDb.id_a_paper` for details.
+    See :func:`plom.db.db_identify.id_paper` for details.
     """
     return self.DB.id_paper(*args, **kwargs)
 
