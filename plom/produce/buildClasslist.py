@@ -12,6 +12,7 @@ import json
 import os
 import sys
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pkg_resources
@@ -337,8 +338,13 @@ def process_class_list(student_csv_file_name, demo=False):
     if demo:
         print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
         cl = pkg_resources.resource_string("plom", "demoClassList.csv")
-        # TODO: context manager to pretend its a file
-        return process_class_list(cl)
+        # this is dumb, make it work right out of the string/bytes
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as f:
+            with open(f.name, "wb") as fh:
+                fh.write(cl)
+            return process_class_list(f.name)
+        # from io import StringIO, BytesIO
+        # student_csv_file_name = BytesIO(cl)
 
     if not student_csv_file_name:
         print("Please provide a classlist file: see help")
