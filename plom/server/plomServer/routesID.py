@@ -133,8 +133,6 @@ class IDHandler:
             raise web.HTTPConflict(reason=msg)
         elif what == 404:
             raise web.HTTPNotFound(reason=msg)
-        elif what == 403:
-            raise web.HTTPForbidden(reason=msg)
         else:
             # catch all that should not happen.
             raise web.HTTPInternalServerError(reason=msg)
