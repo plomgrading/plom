@@ -159,7 +159,7 @@ def confirm_processed(spec, msgr):
             raise RuntimeError('Cannot find pdf for paper "{}"'.format(PDF_file_name))
 
 
-def identify_named(spec, msgr):
+def identify_prenamed(spec, msgr):
     """Identify papers that pre-printed names on the server.
 
     Arguments:
