@@ -212,3 +212,58 @@ def produceTest(self, t):
             tref.produced = True
             tref.save()
         log.info('Paper {} is set to "produced"'.format(t))
+
+
+def id_paper(self, paper_num, user_name, sid, sname):
+    """Associate student name and id with a paper in the database.
+
+    See also :func:`plom.db.db_identify.ID_id_paper` which is similar.
+
+    Args:
+        paper_num (int)
+        user_name (str): User who did the IDing.
+        sid (str): student id.
+        sname (str): student name.
+
+    Returns:
+        tuple: `(True, None, None)` if succesful, `(False, 409, msg)`
+            means `sid` is in use elsewhere, a serious problem for
+            the caller to deal with.  `(False, int, msg)` covers all
+            other errors.  `msg` gives details about errors.  Some
+            of these should not occur, and indicate possible bugs.
+            `int` gives a hint of suggested HTTP status code,
+            currently it can be 404 or 409.
+
+    TODO: perhaps several sorts of exceptions would be better.
+    """
+    uref = User.get(name=user_name)  # TODO: or hardcode HAL like before
+    # since user authenticated, this will always return legit ref.
+
+    logbase = 'User "{}" tried to ID paper {}'.format(user_name, paper_num)
+    with plomdb.atomic():
+        tref = Test.get_or_none(Test.test_number == paper_num)
+        if tref is None:
+            msg = "denied b/c paper not found"
+            log.error("{}: {}".format(logbase, msg))
+            return False, 404, msg
+        iref = tref.idgroups[0]
+        iref.user = uref
+        iref.status = "done"
+        iref.student_id = sid
+        iref.student_name = sname
+        iref.identified = True
+        iref.time = datetime.now()
+        try:
+            iref.save()
+        except pw.IntegrityError:
+            msg = "student id {} already entered elsewhere".format(censorID(sid))
+            log.error("{} but {}".format(logbase, msg))
+            return False, 409, msg
+        tref.identified = True
+        tref.save()
+        log.info(
+            'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
+                paper_num, user_name, censorID(sid), censorName(sname)
+            )
+        )
+    return True, None, None

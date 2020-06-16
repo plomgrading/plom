@@ -114,6 +114,7 @@ class PlomDB:
         createQGroup,
         getPageVersions,
         produceTest,
+        id_paper,
     )
 
     from plom.db.db_upload import (
@@ -198,7 +199,7 @@ class PlomDB:
         IDgetImage,
         IDgetImageByNumber,
         IDdidNotFinish,
-        id_paper,
+        ID_id_paper,
         IDgetImageFromATest,
         IDreviewID,
     )

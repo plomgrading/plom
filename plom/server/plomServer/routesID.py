@@ -94,7 +94,7 @@ class IDHandler:
             409: student number `data["sid"]` is already in use.
         """
         papernum = request.match_info["task"]
-        r, what, msg = self.server.id_paper(
+        r, what, msg = self.server.ID_id_paper(
             papernum, data["user"], data["sid"], data["sname"]
         )
         if r:
@@ -124,9 +124,7 @@ class IDHandler:
         if not data["user"] == "manager":
             return web.Response(status=400)  # malformed request.
         papernum = request.match_info["papernum"]
-        r, what, msg = self.server.id_paper(
-            papernum, "HAL", data["sid"], data["sname"], checks=False
-        )
+        r, what, msg = self.server.id_paper(papernum, "HAL", data["sid"], data["sname"])
         if r:
             return web.Response(status=200)
         elif what == 409:

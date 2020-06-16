@@ -193,8 +193,11 @@ def IDdidNotFinish(self, user_name, test_number):
         log.info("User {} did not ID task {}".format(user_name, test_number))
 
 
-def id_paper(self, paper_num, user_name, sid, sname, checks=True):
+def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
     """Associate student name and id with a paper in the database.
+
+    See also :func:`plom.db.db_create.id_paper` which is just this with
+    `checks=False`.
 
     Args:
         paper_num (int)
