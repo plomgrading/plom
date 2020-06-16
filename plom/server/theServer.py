@@ -175,6 +175,7 @@ class Server(object):
         IDclaimThisTask,
         IDdidNotFinish,
         id_paper,
+        ID_id_paper,
         IDdeletePredictions,
         IDrunPredictions,
         IDreviewID,
