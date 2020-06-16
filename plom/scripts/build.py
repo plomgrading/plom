@@ -11,6 +11,7 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import os
 from warnings import warn
+from textwrap import dedent, wrap
 
 # import tools for dealing with resource files
 import pkg_resources
@@ -20,7 +21,9 @@ from plom import SpecVerifier, SpecParser
 from plom import specdir
 from plom.produce import process_class_list, upload_classlist
 from plom.produce import buildDatabaseAndPapers
+from plom.produce import possible_surname_fields, possible_given_name_fields
 from plom.produce.demotools import buildDemoSourceFiles
+
 # TODO: relocate https://gitlab.com/plom/plom/-/issues/891
 from plom.finish import clear_manager_login
 
@@ -103,7 +106,25 @@ spP.add_argument(
 spL = sub.add_parser(
     "class",
     help="Read in a classlist",
-    epilog=process_class_list.__doc__,
+    description="Get student names/numbers from csv, process, and upload to server.",
+    epilog=dedent(
+        """
+        The classlist can be a .csv file with column headers:
+          * id - student ID number
+          * studentName - student name in a single field
+
+        The student name can be split into multiple fields; the following names
+        will be tried for each header:
+          * id
+          * {}
+          * {}
+
+        Alternatively, give a .csv exported from Canvas (experimental!)
+        """
+    ).format(
+        "\n    ".join(wrap(", ".join(possible_surname_fields), 72)),
+        "\n    ".join(wrap(", ".join(possible_given_name_fields), 72)),
+    ),
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 spL.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")

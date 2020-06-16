@@ -20,10 +20,9 @@ import pandas
 
 from ..finish.return_tools import import_canvas_csv
 
+possible_surname_fields = ["surname", "familyName", "lastName"]
 
-possible_lastname_list = ["surname", "familyName", "lastName"]
-
-possible_firstname_list = [
+possible_given_name_fields = [
     "name",
     "givenName",
     "firstName",
@@ -77,7 +76,7 @@ def clean_non_canvas_csv(csv_file_name):
     firstname_column_title = None
     for column_title in student_info_df.columns:
         if column_title.casefold() in (
-            possible_title.casefold() for possible_title in possible_lastname_list
+            possible_title.casefold() for possible_title in possible_surname_fields
         ):
             print('"{}" column present'.format(column_title))
             firstname_column_title = column_title
@@ -91,7 +90,7 @@ def clean_non_canvas_csv(csv_file_name):
     lastname_column_title = None
     for column_title in student_info_df.columns:
         if column_title.casefold() in (
-            possible_title.casefold() for possible_title in possible_firstname_list
+            possible_title.casefold() for possible_title in possible_given_name_fields
         ):
             print('"{}" column present'.format(column_title))
             lastname_column_title = column_title
@@ -153,8 +152,8 @@ def check_is_non_canvas_csv(csv_file_name):
                 break
         if firstname_column_title is None:
             print(
-                'Cannot find column to use for "surname", tried {}'.format(
-                    possible_lastname_list
+                'Cannot find column to use for "surname", tried: {}'.format(
+                    ", ".join(possible_surname_fields)
                 )
             )
             print("Columns present = {}".format(student_info_df.columns))
@@ -171,8 +170,8 @@ def check_is_non_canvas_csv(csv_file_name):
                 break
         if lastname_column_title is None:
             print(
-                'Cannot find column to use for "given name", tried {}'.format(
-                    possible_firstname_list
+                'Cannot find column to use for "given name", tried: {}'.format(
+                    ", ".join(possible_given_name_fields)
                 )
             )
             print("Columns present = {}".format(student_info_df.columns))
@@ -308,29 +307,25 @@ def process_classlist_backend(student_csv_file_name):
 
 
 def process_class_list(student_csv_file_name, demo=False):
-    """Get student names/numbers from csv, process, and save for server.
+    """Get student names/IDs from a csv file.
 
     Student numbers come from an `id` column.  There is some
     flexibility about student names: most straightforward is a
-    second column named `studentNames`.  The results are copied
-    into a new csv file in a simplified format.
+    second column named `studentNames`.  If that isn't present,
+    try to construct a name from surname, given name, guessing
+    column names from the following lists:
 
-    The classlist can be a .csv file with column headers:
-    - `id` - student ID number
-    - `studentName` - student name in a single field
-
-    Or the student name can be split into two fields:
-    - id
-    - surname, familyName, or lastName
-    - name, firstName, givenName, nickName, or preferredName
+      - :func:`plom.produce.possible_surname_fields`
+      - :func:`plom.produce.possible_given_name_fields`
 
     Alternatively, give a .csv exported from Canvas (experimental!)
 
     Arguments:
-        student_csv_file_name {Str} -- Name of the class info csv file.
+        student_csv_file_name (str): Name of the class info csv file.
 
     Keyword Arguments:
-        demo {bool} -- Indicating whether we are in demo mode (default: {False})
+        demo (bool): if `True`, the filename is ignored and we use demo
+            data (default: `False`).
 
     Return:
         dict: keys are student IDs (str), values are student names (str).

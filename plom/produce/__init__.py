@@ -9,6 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 
 paperdir = "papersToPrint"
 from .buildNamedPDF import build_all_papers, confirm_processed, identify_named
+from .buildClasslist import possible_surname_fields, possible_given_name_fields
 from .buildClasslist import process_class_list
 from .upload_classlist import upload_classlist
 from .buildDatabaseAndPapers import buildDatabaseAndPapers
