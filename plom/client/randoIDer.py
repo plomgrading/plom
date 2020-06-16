@@ -46,6 +46,7 @@ def startIdentifying():
         while True:
             try:
                 c = random.choice(idList)
+                c[1] += " [randomly chosen]"
                 messenger.IDreturnIDdTask(task, c[0], c[1])
                 break
             except PlomBenignException as e:
