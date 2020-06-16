@@ -150,6 +150,11 @@ class SceneParent(QWidget):
             random.choice([self.TQX, self.BE, self.LA, self.PTH])()
         for k in range(5):
             self.GDT()
+        # add comment about radom annotations
+        blurb = TextItem(self, AnnFontSizePts)
+        blurb.setPlainText("Random annotations for testing only.")
+        blurb.setPos(QPointF(200, 100))
+        self.scene.undoStack.push(CommandText(self.scene, blurb, self.ink))
 
     def doneAnnotating(self):
         plomFile = self.saveName[:-3] + "plom"
@@ -275,7 +280,7 @@ if __name__ == "__main__":
 
     # Headless QT: https://stackoverflow.com/a/35355906
     L = sys.argv
-    L.extend(['-platform', 'offscreen'])
+    L.extend(["-platform", "offscreen"])
     app = QApplication(L)
 
     for q in range(1, spec["numberOfQuestions"] + 1):
