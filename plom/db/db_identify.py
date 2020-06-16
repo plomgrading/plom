@@ -193,12 +193,12 @@ def IDdidNotFinish(self, user_name, test_number):
         log.info("User {} did not ID task {}".format(user_name, test_number))
 
 
-def id_paper(self, paper_num, username, sid, sname, checks=True):
+def id_paper(self, paper_num, user_name, sid, sname, checks=True):
     """Associate student name and id with a paper in the database.
 
     Args:
         paper_num (int)
-        username (str): User who did the IDing.
+        user_name (str): User who did the IDing.
         sid (str): student id.
         sname (str): student name.
         checks (bool): by default (True), the paper must be scanned
@@ -218,10 +218,10 @@ def id_paper(self, paper_num, username, sid, sname, checks=True):
 
     TODO: perhaps several sorts of exceptions would be better.
     """
-    uref = User.get(name=username)
+    uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
 
-    logbase = 'User "{}" tried to ID paper {}'.format(username, paper_num)
+    logbase = 'User "{}" tried to ID paper {}'.format(user_name, paper_num)
     with plomdb.atomic():
         tref = Test.get_or_none(Test.test_number == paper_num)
         if tref is None:
@@ -239,8 +239,8 @@ def id_paper(self, paper_num, username, sid, sname, checks=True):
             return False, 403, msg
         iref.user = uref
         iref.status = "done"
-        iref.studentID = sid
-        iref.studentName = sname
+        iref.student_id = sid
+        iref.student_name = sname
         iref.identified = True
         iref.time = datetime.now()
         try:
@@ -252,12 +252,12 @@ def id_paper(self, paper_num, username, sid, sname, checks=True):
         tref.identified = True
         tref.save()
         # update user activity
-        uref.lastAction = "Returned ID task {}".format(paper_num)
-        uref.lastActivity = datetime.now()
+        uref.last_action = "Returned ID task {}".format(paper_num)
+        uref.last_activity = datetime.now()
         uref.save()
         log.info(
             'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
-                paper_num, username, censorID(sid), censorName(sname)
+                paper_num, user_name, censorID(sid), censorName(sname)
             )
         )
     return True, None, None
