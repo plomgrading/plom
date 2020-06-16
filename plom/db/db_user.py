@@ -1,7 +1,7 @@
 from plom.db.tables import *
 from datetime import datetime
-
 import logging
+import peewee as pw
 
 log = logging.getLogger("DB")
 

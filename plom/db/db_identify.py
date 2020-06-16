@@ -1,6 +1,6 @@
 from plom.db.tables import *
 from datetime import datetime
-
+import peewee as pw
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 

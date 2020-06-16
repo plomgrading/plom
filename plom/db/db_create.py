@@ -1,5 +1,5 @@
 from plom.db.tables import *
-
+import peewee as pw
 from datetime import datetime
 
 from plom.rules import censorStudentNumber as censorID
@@ -25,7 +25,7 @@ def createTest(self, t):
     try:
         tref = Test.create(test_number=t)  # must be unique
         sref = SumData.create(test=tref)  # also create the sum-data
-    except IntegrityError as e:
+    except pw.IntegrityError as e:
         log.error("Create test {} error - {}".format(t, e))
         return False
     return True
@@ -42,7 +42,7 @@ def addTPages(self, tref, gref, t, pages, v):
                 TPage.create(
                     test=tref, group=gref, page_number=p, version=v, scanned=False,
                 )
-            except pw.IntegrityError as e:
+            except pw.pw.IntegrityError as e:
                 log.error("Adding page {} for test {} error - {}".format(p, t, e))
                 flag = False
     return flag
@@ -62,7 +62,7 @@ def createIDGroup(self, t, pages):
             group_type="i",
             queue_position=self.nextqueue_position(),
         )  # must be unique
-    except pw.IntegrityError as e:
+    except pw.pw.IntegrityError as e:
         log.error(
             "Create ID - cannot create Group {} of test {} error - {}".format(gid, t, e)
         )
@@ -70,7 +70,7 @@ def createIDGroup(self, t, pages):
     # make the IDGroup
     try:
         iref = IDGroup.create(test=tref, group=gref)
-    except pw.IntegrityError as e:
+    except pw.pw.IntegrityError as e:
         log.error(
             "Create ID - cannot create IDGroup {} of group {} error - {}.".format(
                 qref, gref, e
@@ -98,14 +98,14 @@ def createDNMGroup(self, t, pages):
             scanned=sc,
             queue_position=self.nextqueue_position(),
         )
-    except pw.IntegrityError as e:
+    except pw.pw.IntegrityError as e:
         log.error(
             "Create DNM - cannot make Group {} of Test {} error - {}".format(gid, t, e)
         )
         return False
     try:
         dref = DNMGroup.create(test=tref, group=gref)
-    except pw.IntegrityError as e:
+    except pw.pw.IntegrityError as e:
         log.error(
             "Create DNM - cannot create DNMGroup {} of group {} error - {}.".format(
                 dref, gref, e
@@ -131,14 +131,14 @@ def createQGroup(self, t, g, v, pages):
             version=v,
             queue_position=self.nextqueue_position(),
         )
-    except pw.IntegrityError as e:
+    except pw.pw.IntegrityError as e:
         log.error(
             "Create Q - cannot create group {} of Test {} error - {}".format(gid, t, e)
         )
         return False
     try:
         qref = QGroup.create(test=tref, group=gref, question=g, version=v)
-    except pw.IntegrityError as e:
+    except pw.pw.IntegrityError as e:
         log.error(
             "Create Q - cannot create QGroup of question {} error - {}.".format(gid, e)
         )
@@ -147,7 +147,7 @@ def createQGroup(self, t, g, v, pages):
     try:
         uref = User.get(name="HAL")
         aref = Annotation.create(qgroup=qref, edition=0, user=uref)
-    except IntegrityError as e:
+    except pw.IntegrityError as e:
         log.error(
             "Create Q - cannot create Annotation  of question {} error - {}.".format(
                 gid, e
