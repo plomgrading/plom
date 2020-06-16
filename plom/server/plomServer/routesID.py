@@ -118,11 +118,12 @@ class IDHandler:
         would call func:`IdentifyPaperTask` instead.
 
         Returns:
+            400: not manager.
             404: papernum not found, or other data errors.
             409: student number `data["sid"]` is already in use.
         """
         if not data["user"] == "manager":
-            return web.Response(status=400)  # malformed request.
+            raise web.HTTPBadRequest(reason="Not manager")
         papernum = request.match_info["papernum"]
         r, what, msg = self.server.id_paper(papernum, "HAL", data["sid"], data["sname"])
         if r:
