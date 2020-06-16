@@ -8,7 +8,7 @@ from getpass import getpass
 
 from plom import SpecParser
 from plom import specdir
-from plom.produce import build_all_papers, confirm_processed, identify_named
+from plom.produce import build_all_papers, confirm_processed, identify_prenamed
 from plom.produce import paperdir
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import *
@@ -67,7 +67,7 @@ def buildDatabaseAndPapers(server=None, password=None):
         print("Checking papers produced and updating databases")
         confirm_processed(spec, msgr)
         print("Identifying pre-named papers in database")
-        identify_named(spec, msgr)
+        identify_prenamed(spec, msgr)
     finally:
         msgr.closeUser()
         msgr.stop()

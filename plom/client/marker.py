@@ -1138,7 +1138,7 @@ class MarkerClient(QWidget):
             # TODO: might not the "markedList" have some other statuses?
             self.examModel.addPaper(
                 ExamQuestion(
-                    x[0], fnames=[], stat="marked", mrk=x[2], mtime=x[3], tags=x[4]
+                    x[0], fnames=[], stat="marked", mrk=x[1], mtime=x[2], tags=x[3]
                 )
             )
 
