@@ -324,13 +324,13 @@ def RgetAnnotatedFiles(self, test_number):
 
 
 def RgetMarkReview(self, filterQ, filterV, filterU):
-    query = QGroup.select().where(QGroup.marked == True)
+    query = QGroup.select().join(User).where(QGroup.marked == True)
     if filterQ != "*":
         query = query.where(QGroup.question == filterQ)
     if filterV != "*":
         query = query.where(QGroup.version == filterV)
     if filterU != "*":
-        query = query.where(QGroup.user.name == filterU)
+        query = query.where(User.name == filterU)
     rval = []
     for x in query:
         rval.append(
