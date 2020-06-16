@@ -516,10 +516,17 @@ class PageScene(QGraphicsScene):
         if self.tempImage is not None:
             currentPos = event.scenePos()
             imageFilePath = self.tempImage
-            command = CommandImage(self, currentPos, imageFilePath)
+            command = CommandImage(self, currentPos, QImage(imageFilePath))
             self.undoStack.push(command)
             self.mode = "move"
             self.tempImage = None
+
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setWindowTitle("Image Information")
+            msg.setText("You can double-click on an Image to Rescale")
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
         else:
             self.currentPos = event.scenePos()
             self.imageItem = self.itemAt(event.scenePos(), QTransform())
@@ -590,10 +597,12 @@ class PageScene(QGraphicsScene):
 
     def pickleSceneItems(self):
         lst = []
+        print(self.items())
         for X in self.items():
             # check if object has "saveable" attribute and it is set to true.
             if getattr(X, "saveable", False):
                 lst.append(X.pickle())
+        print(lst)
         return lst
 
     def unpickleSceneItems(self, lst):
@@ -609,7 +618,7 @@ class PageScene(QGraphicsScene):
                     GhostDelta,
                     GhostText,
                 ]
-            ):
+            ) and X is not isinstance(X, ImageItem):
                 continue
             else:
                 command = CommandDelete(self, X)
@@ -728,9 +737,24 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(CommandHighlight(self, pth))
 
     def unpickleImage(self, X):
-        if len(X) == 2:
-            self.undoStack.push(CommandImage(self, QPointF(X[0]),
-                                             X[1].decode('base64')))
+        print("time to unpickle this image")
+        print(X[2])
+        if len(X) == 4:
+
+            data = QByteArray().fromBase64(bytes(X[2][2:len(X[2])-2],
+                                                 encoding='utf-8'))
+            print("data")
+            print(data)
+            img = QImage()
+            if img.loadFromData(data):
+                img.loadFromData(data)
+                print("worked")
+                print(img.colorTable())
+                img.setColor(155, 35)
+            else:
+                print("uhoh")
+            self.undoStack.push(CommandImage(self, QPointF(X[0], X[1]), img,
+                                             X[3]))
 
     # Mouse press tool functions
     def mousePressBox(self, event):

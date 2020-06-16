@@ -1,37 +1,40 @@
 import base64
 
-from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, pyqtProperty
+from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, pyqtProperty, \
+    QByteArray, QBuffer, QDataStream, QIODevice, QVariant
 from PyQt5.QtGui import QFont, QImage, QPen, QColor, QBrush, QPixmap, \
     QImageReader
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItem, QGraphicsTextItem, \
-    QGraphicsPixmapItem, QGraphicsObject
+    QGraphicsPixmapItem, QGraphicsObject, QMessageBox, QInputDialog, \
+    QGraphicsSceneHoverEvent, QGraphicsSceneMouseEvent
 
 from plom.client.tools import CommandMoveItem
 
 
 class CommandImage(QUndoCommand):
     # Very similar to CommandArrow.
-    def __init__(self, scene, pt, image):
+    def __init__(self, scene, pt, image, scale=1):
         super(CommandImage, self).__init__()
         self.scene = scene
         self.pt = pt
-        self.image = QImage(image)
-        self.imageItem = ImageItemObject(self.pt, self.image)
+        self.image = image
+        self.imageItem = ImageItemObject(self.pt, self.image, scale)
         self.setText("Image")
 
     def redo(self):
         self.imageItem.flash_redo()
-        self.scene.addItem(self.imageItem.ci.pixmap)
+        self.scene.addItem(self.imageItem.ci)
 
     def undo(self):
         self.imageItem.flash_undo()
         QTimer.singleShot(200,
-                          lambda: self.scene.removeItem(self.imageItem.ci.pixmap))
+                          lambda: self.scene.removeItem(
+                              self.imageItem.ci.pixmap))
 
 
 class ImageItemObject(QGraphicsObject):
     # As per the ArrowItemObject
-    def __init__(self, pt, image):
+    def __init__(self, pt, image, scale):
         """
 
         Args:
@@ -40,7 +43,7 @@ class ImageItemObject(QGraphicsObject):
         """
         super(ImageItemObject, self).__init__()
         self.image = image
-        self.ci = ImageItem(pt, image)
+        self.ci = ImageItem(QPixmap.fromImage(image), pt, self, scale)
         self.anim = QPropertyAnimation(self, b"scale")
 
     def flash_undo(self):
@@ -59,38 +62,32 @@ class ImageItemObject(QGraphicsObject):
 
 
 class ImageItem(QGraphicsPixmapItem):
-    def __init__(self, pt, image, parent=None):
+    def __init__(self, qpixmap, pt, parent, scale):
         super(ImageItem, self).__init__()
-        pixmap = QGraphicsPixmapItem(QPixmap.fromImage(image))
-        pixmap.setPos(pt)
-        self.qImage = image
-        self.pt = pt
-        self.pixmap = pixmap
-        pixmap.setFlag(QGraphicsItem.ItemIsMovable)
-        pixmap.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setPixmap(qpixmap)
+        self.setPos(pt)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
-
-    #
-    # def itemChange(self, change, value):
-    #     if change == QGraphicsItem.ItemPositionChange and self.scene():
-    #         command = CommandMoveItem(self, value)
-    #         self.scene().undoStack.push(command)
-    #     return QGraphicsPixmapItem.itemChange(self, change, value)
+        self.parent = parent
+        self.setScale(scale)
 
     def pickle(self):
-        pickle = ["Image", self.pt, base64.b64encode(QImageReader(
-            self.qImage))]
+        ba = QByteArray()
+        img = self.parent.image
+        buffer = QBuffer(ba)
+        buffer.open(QIODevice.WriteOnly)
+        img.save(buffer, 'PNG')
+        pos = self.pos()
+        pickle = ["Image", self.x(), self.y(),
+                  str(ba.toBase64().data()), self.scale()]
         return pickle
 
-    def paint(self, painter, option, widget):
-        if not self.collidesWithItem(
-                self.scene().underImage, mode=Qt.ContainsItemShape
-        ):
-            # paint a bounding rectangle out-of-bounds warning
-            painter.setPen(QPen(QColor(255, 165, 0), 8))
-            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
-            painter.drawRoundedRect(option.rect, 10, 10)
-            # paint the normal item with the default 'paint' method
-        super(ImageItem, self).paint(painter, option, widget)
+    def mouseDoubleClickEvent(self, event: 'QGraphicsSceneMouseEvent'):
+        scale, ok = QInputDialog().getInt(None, "Image Scaling",
+                                          "Percentage:",
+                                          value=int(self.scale() * 100), )
+        if ok:
+            self.setScale(scale / 100)
