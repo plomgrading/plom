@@ -551,7 +551,7 @@ class UploadHandler:
         else:
             raise web.HTTPInternalServerError(text=summary)
 
-    # TODO: why can't I use authenticate_by_token decorator?
+    # TODO: would be nice to use @authenticate_by_token, see comments in routeutils.py
     @authenticate_by_token_required_fields([])
     def getPageVersionMap(self, data, request):
         """Get the mapping between page number and version for one test.
