@@ -138,7 +138,7 @@ def IDgetImage(self, user_name, test_number):
     rval = [True]
     for p in iref.idpages.order_by(IDPage.order):
         rval.append(p.image.file_name)
-    log.debug("Sending IDpages of test {} to user {}".format(tests, user_name))
+    log.debug("Sending IDpages of test {} to user {}".format(test_number, user_name))
     return rval
 
 
