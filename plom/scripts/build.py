@@ -19,7 +19,7 @@ from plom import __version__
 from plom import SpecVerifier, SpecParser
 from plom import specdir
 from plom.produce import process_class_list
-from plom.produce import buildDatabaseAndPapers, buildPapersLocal
+from plom.produce import buildDatabaseAndPapers
 from plom.produce.demotools import buildDemoSourceFiles
 # TODO: relocate https://gitlab.com/plom/plom/-/issues/891
 from plom.finish import clear_manager_login
@@ -114,7 +114,6 @@ group.add_argument(
     help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
 )
 
-#
 spB = sub.add_parser(
     "make",
     help="Make the PDFs",
@@ -125,13 +124,7 @@ spB = sub.add_parser(
 )
 spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
-spB.add_argument(
-    "--local",
-    action="store_true",
-    help="Build locally without talking to server (NOT RECOMMENDED except for "
-    "testing).  May not work with named-papers (?)  Perhaps we should not "
-    "have this feature: asking for user error if these are printed!?"
-)
+
 spClear = sub.add_parser(
     "clear",
     help='Clear "manager" login',
@@ -166,11 +159,7 @@ def main():
         # process the class list and copy into place
         process_class_list(args.classlist, args.demo)
     elif args.command == "make":
-        if args.local:
-            warn("Deprecated: the '--local' feature is likely to be removed/reworked.")
-            buildPapersLocal()
-        else:
-            buildDatabaseAndPapers(args.server, args.password)
+        buildDatabaseAndPapers(args.server, args.password)
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:

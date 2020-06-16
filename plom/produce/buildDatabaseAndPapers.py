@@ -14,46 +14,6 @@ from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import *
 
 
-# todo: support both direct DB file or via server?
-# TODO or remove?
-def buildPapersLocal():
-    from plom.db import buildExamDatabaseFromSpec, PlomDB
-
-    print("Reading specification")
-    if not os.path.isfile(os.path.join(specdir, "verifiedSpec.toml")):
-        print('Cannot find verified specFile - have you run "plom-build parse" yet?')
-        exit(1)
-    spec = SpecParser().spec
-    dbfile = os.path.join(specdir, "plom.db")
-
-    if os.path.isfile(dbfile):
-        print("Database already exists - aborting.")
-        sys.exit(3)
-
-    print("Populating Plom exam database")
-    DB = PlomDB(dbfile)
-    r, st = buildExamDatabaseFromSpec(spec, DB)
-    print(st)
-    if not r:
-        print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
-        print(
-            "There were errors during database creation. Remove the database and try again."
-        )
-        print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
-        sys.exit(2)
-    print("Database populated successfully")
-    print("Producing local page->version map")
-    pvmap = {}
-    for paper_idx in range(1, spec["numberToProduce"] + 1):
-        ver = DB.getPageVersions(paper_idx)
-        if not ver:
-            raise RuntimeError("we expected each paper to exist!")
-        pvmap[paper_idx] = ver
-    os.makedirs(paperdir, exist_ok=True)
-    buildNamedPapers(spec, pvmap)
-    print("Papers build locally, but they are not connected to the server: be careful!")
-
-
 def buildNamedPapers(spec, pvmap):
     if spec["numberToName"] > 0:
         print(
