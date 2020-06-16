@@ -29,10 +29,20 @@ class IDHandler:
     # @routes.get("/ID/classlist")
     @authenticate_by_token
     def IDgetClasslist(self):
-        if os.path.isfile(Path(specdir) / "classlist.csv"):
-            return web.FileResponse(Path(specdir) / "classlist.csv", status=200)
-        else:
-            return web.Response(status=404)
+        """Return the classlist.
+
+        Returns:
+            200: the classlist dict.
+            404: there is no classlist.
+        """
+        try:
+            with open(Path(specdir) / "classlist.csv") as csvfile:
+                reader = csv.reader(csvfile)
+                next(reader)  # skip header row
+                cl = dict(reader)
+        except FileNotFoundError:
+            raise web.HTTPNotFound(reason="classlist not found")
+        return web.json_response(cl)
 
     # @routes.put("/ID/classlist")
     @authenticate_by_token_required_fields(["user", "classlist"])
