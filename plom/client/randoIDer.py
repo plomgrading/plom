@@ -17,7 +17,11 @@ import sys
 import tempfile
 import toml
 
-from plom.plom_exceptions import *
+from plom.plom_exceptions import (
+    PlomConflict,
+    PlomExistingLoginException,
+    PlomTakenException,
+)
 from plom import __version__, Plom_API_Version
 from plom.messenger import Messenger
 
@@ -36,7 +40,7 @@ def startIdentifying():
         try:
             print("Identifying task ", task)
             imageList = messenger.IDclaimThisTask(task)
-        except PlomBenignException as err:
+        except PlomTakenException:
             # task already taken.
             continue
 
@@ -45,7 +49,7 @@ def startIdentifying():
                 c = random.choice(idList)
                 messenger.IDreturnIDdTask(task, c[0], c[1])
                 break
-            except PlomBenignException as e:
+            except PlomConflict:
                 print("SID/SN {}/{} already used".format(c[0], c[1]))
 
 
