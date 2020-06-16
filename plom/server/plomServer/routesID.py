@@ -148,12 +148,12 @@ class IDHandler:
 
     # @routes.get("/ID/randomImage")
     @authenticate_by_token_required_fields(["user"])
-    def IDgetRandomImage(self, data, request):
+    def IDgetImageFromATest(self, data, request):
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
             return web.Response(status=401)  # only manager
 
-        rmsg = self.server.IDgetRandomImage()
+        rmsg = self.server.IDgetImageFromATest()
         if rmsg[0] is False:
             return web.Response(status=410)
 
@@ -174,7 +174,9 @@ class IDHandler:
 
         return web.json_response(self.server.IDdeletePredictions(), status=200)
 
-    @authenticate_by_token_required_fields(["user", "rectangle", "fileNumber", "ignoreStamp"])
+    @authenticate_by_token_required_fields(
+        ["user", "rectangle", "fileNumber", "ignoreStamp"]
+    )
     def IDrunPredictions(self, data, request):
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
@@ -212,7 +214,7 @@ class IDHandler:
         router.add_put("/ID/{papernum}", self.IdentifyPaper)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
         router.add_delete("/ID/tasks/{task}", self.IDdidNotFinishTask)
-        router.add_get("/ID/randomImage", self.IDgetRandomImage)
+        router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.IDrunPredictions)
         router.add_patch("/ID/review", self.IDreviewID)

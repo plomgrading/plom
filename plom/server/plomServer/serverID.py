@@ -60,8 +60,8 @@ def IDdidNotFinish(self, user, testNumber):
     return
 
 
-def IDgetRandomImage(self):
-    return self.DB.IDgetRandomImage()
+def IDgetImageFromATest(self):
+    return self.DB.IDgetImageFromATest()
 
 
 def IDdeletePredictions(self):
@@ -112,7 +112,7 @@ def IDrunPredictions(self, rectangle, fileNumber, ignoreStamp):
 
     # get list of [testNumber, image]
     log.info("ID get images for ID reader")
-    testImageDict = self.DB.IDgetImageList(fileNumber)
+    testImageDict = self.DB.IDgetImageByNumber(fileNumber)
     # dump this as json / lockfile for subprocess to use in background.
     with open(lockFile, "w") as fh:
         json.dump([testImageDict, rectangle], fh)
