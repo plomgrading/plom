@@ -1,11 +1,16 @@
-from plom.db.tables import *
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+
 from datetime import datetime
+import logging
+
 import peewee as pw
 
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
+from plom.db.tables import *
 
-import logging
 
 log = logging.getLogger("DB")
 
@@ -188,27 +193,54 @@ def IDdidNotFinish(self, user_name, test_number):
         log.info("User {} did not ID task {}".format(user_name, test_number))
 
 
-def IDtakeTaskFromClient(self, test_number, user_name, sid, sname):
-    """Get ID'dimage back from client - update record in database."""
+def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
+    """Associate student name and id with a paper in the database.
+
+    See also :func:`plom.db.db_create.id_paper` which is just this with
+    `checks=False`.
+
+    Args:
+        paper_num (int)
+        user_name (str): User who did the IDing.
+        sid (str): student id.
+        sname (str): student name.
+        checks (bool): by default (True), the paper must be scanned
+            and the `username` must match the current owner of the
+            paper (typically because the paper was assigned to them).
+            You can pass False if its ID the paper without being
+            owner (e.g., during automated IDing of prenamed papers.)
+
+    Returns:
+        tuple: `(True, None, None)` if succesful, `(False, 409, msg)`
+            means `sid` is in use elsewhere, a serious problem for
+            the caller to deal with.  `(False, int, msg)` covers all
+            other errors.  `msg` gives details about errors.  Some
+            of these should not occur, and indicate possible bugs.
+            `int` gives a hint of suggested HTTP status code,
+            currently it can be 404, 403, or 409.
+
+    TODO: perhaps several sorts of exceptions would be better.
+    """
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
 
+    logbase = 'User "{}" tried to ID paper {}'.format(user_name, paper_num)
     with plomdb.atomic():
-        tref = Test.get_or_none(Test.test_number == test_number)
-        if tref is None:  # this should not happen
-            log.error(
-                "ID take task - That test number {} not known".format(test_number)
-            )
-            return [False, False]
+        tref = Test.get_or_none(Test.test_number == paper_num)
+        if tref is None:
+            msg = "denied b/c paper not found"
+            log.error("{}: {}".format(logbase, msg))
+            return False, 404, msg
         iref = tref.idgroups[0]
-        # verify the id-group has been scanned - it should always be scanned.if we get here.
-        if iref.group.scanned == False:
-            return [False, False]
-
-        if iref.user != uref:
-            # that belongs to someone else - this is a serious error
-            return [False, False]
-        # update status, Student-number, name, id-time.
+        if checks and iref.group.scanned == False:
+            msg = "denied b/c its not scanned yet"
+            log.error("{}: {}".format(logbase, msg))
+            return False, 404, msg
+        if checks and iref.user != uref:
+            msg = 'denied b/c it belongs to user "{}"'.format(iref.user)
+            log.error("{}: {}".format(logbase, msg))
+            return False, 403, msg
+        iref.user = uref
         iref.status = "done"
         iref.student_id = sid
         iref.student_name = sname
@@ -217,23 +249,21 @@ def IDtakeTaskFromClient(self, test_number, user_name, sid, sname):
         try:
             iref.save()
         except pw.IntegrityError:
-            log.error(
-                "ID take task - Student number {} already entered".format(censorID(sid))
-            )
-            return [False, True]
-
+            msg = "student id {} already entered elsewhere".format(censorID(sid))
+            log.error("{} but {}".format(logbase, msg))
+            return False, 409, msg
         tref.identified = True
         tref.save()
         # update user activity
-        uref.last_action = "Returned ID task {}".format(test_number)
+        uref.last_action = "Returned ID task {}".format(paper_num)
         uref.last_activity = datetime.now()
         uref.save()
-        return [True]
         log.info(
-            'User "{}" returning ID-task "{}" with "{}" "{}"'.format(
-                user_name, test_number, censorID(sid), censorName(sname)
+            'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
+                paper_num, user_name, censorID(sid), censorName(sname)
             )
         )
+    return True, None, None
 
 
 def IDgetImageFromATest(self):

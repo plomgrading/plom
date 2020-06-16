@@ -132,10 +132,10 @@ class UserInitHandler:
     # @routes.get("/info/general")
     @no_authentication_only_log_request
     async def InfoGeneral(self, request):
-        rmsg = self.server.InfoGeneral()
-        if rmsg[0]:
-            return web.json_response(rmsg[1:], status=200)
-        else:  # this should not happen
+        r, spec = self.server.InfoGeneral()
+        if r:
+            return web.json_response(spec, status=200)
+        else:  # server does not have a spec
             return web.Response(status=404)
 
     # @routes.get("/info/shortName")

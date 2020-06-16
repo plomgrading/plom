@@ -1,7 +1,12 @@
-from plom.db.tables import *
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+
 from datetime import datetime
 import logging
+
 import peewee as pw
+
+from plom.db.tables import *
 
 log = logging.getLogger("DB")
 

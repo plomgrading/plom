@@ -1,4 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+
 from datetime import datetime, timedelta
+
+from peewee import *
 
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
@@ -99,6 +105,7 @@ class PlomDB:
     )
 
     from plom.db.db_create import (
+        areAnyPapersProduced,
         nextqueue_position,
         createTest,
         addTPages,
@@ -107,7 +114,7 @@ class PlomDB:
         createQGroup,
         getPageVersions,
         produceTest,
-        identifyTest,
+        id_paper,
     )
 
     from plom.db.db_upload import (
@@ -192,7 +199,7 @@ class PlomDB:
         IDgetImage,
         IDgetImageByNumber,
         IDdidNotFinish,
-        IDtakeTaskFromClient,
+        ID_id_paper,
         IDgetImageFromATest,
         IDreviewID,
     )
