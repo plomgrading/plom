@@ -38,6 +38,8 @@ from .origscanviewer import WholeTestView
 from plom.plom_exceptions import *
 from plom import Plom_API_Version
 from plom import isValidStudentNumber
+from plom.rules import censorStudentNumber as censorID
+from plom.rules import censorStudentName as censorName
 
 log = logging.getLogger("identr")
 
@@ -267,22 +269,32 @@ class IDClient(QWidget):
         self.moveToNextUnID()
 
     def getClassList(self):
-        """Send request for classlist (iRCL) to server. The server then sends
-        back the CSV of the classlist.
-        Merge the two name-fields. Should replace this with the requirement
-        of either two fields = FamilyName+GivenName or a single Name field.
+        """Get the classlist from the server.
+
+        Returns nothing but modifies the state of self, adding two
+        dicts to the class data:
+
+        `student_id_to_name_map`
+            Maps unique ID (str) to name (str).
+
+        `student_name_to_idlist`
+            Names are not unique so we map each name to a list of IDs.
         """
-        # Send request for classlist (iRCL) to server
-        csvfile = messenger.IDrequestClasslist()
-        # create dictionaries from the classlist
-        self.studentNamesToNumbers = defaultdict(int)
-        self.studentNumbersToNames = defaultdict(str)
-        reader = csv.DictReader(csvfile, skipinitialspace=True)
-        for row in reader:
-            sn = row["studentName"]
-            self.studentNamesToNumbers[sn] = str(row["id"])
-            self.studentNumbersToNames[str(row["id"])] = sn
-        return True
+        self.student_id_to_name_map = messenger.IDrequestClasslist()
+        self.student_name_to_idlist = {}
+        for sid, sname in self.student_id_to_name_map.items():
+            if not self.student_name_to_idlist.get(sname):
+                self.student_name_to_idlist[sname] = [sid]
+            else:
+                self.student_name_to_idlist[sname].append(sid)
+                log.warn(
+                    'multiple students with name "{}": associated id list is now {}'.format(
+                        censorName(sname),
+                        ", ".join(
+                            [censorID(x) for x in self.student_name_to_idlist[sname]]
+                        ),
+                    )
+                )
 
     def getPredictions(self):
         """Send request for prediction list (iRPL) to server. The server then sends
@@ -321,8 +333,8 @@ class IDClient(QWidget):
         self.sidlist = QStringListModel()
         self.snamelist = QStringListModel()
         # Feed in the numbers and names.
-        self.sidlist.setStringList(list(self.studentNumbersToNames.keys()))
-        self.snamelist.setStringList(list(self.studentNamesToNumbers.keys()))
+        self.sidlist.setStringList(list(self.student_id_to_name_map.keys()))
+        self.snamelist.setStringList(list(self.student_name_to_idlist.keys()))
         # Build the number-completer
         self.sidcompleter = QCompleter()
         self.sidcompleter.setModel(self.sidlist)
@@ -433,7 +445,7 @@ class IDClient(QWidget):
             QTimer.singleShot(0, self.setuiedit)
         elif tn in self.predictedTestToNumbers:
             psid = self.predictedTestToNumbers[tn]
-            pname = self.studentNumbersToNames[psid]
+            pname = self.student_id_to_name_map[psid]
             if pname == "":
                 self.ui.predictionBox.hide()
             else:
@@ -607,9 +619,9 @@ class IDClient(QWidget):
                 alreadyIDd = True
 
         # Check if the entered ID is in the list from the classlist.
-        if self.ui.idEdit.text() in self.studentNumbersToNames:
+        if self.ui.idEdit.text() in self.student_id_to_name_map:
             # If so then fill in the name-edit with the corresponding name.
-            self.ui.nameEdit.setText(self.studentNumbersToNames[self.ui.idEdit.text()])
+            self.ui.nameEdit.setText(self.student_id_to_name_map[self.ui.idEdit.text()])
             # Ask user to confirm ID/Name
             msg = SimpleMessage(
                 "Student ID {} = {}. Enter and move to next?".format(
@@ -699,9 +711,21 @@ class IDClient(QWidget):
             else:
                 alreadyIDd = True
         # Check if the entered name is in the list from the classlist.
-        if self.ui.nameEdit.text() in self.studentNamesToNumbers:
+        if self.ui.nameEdit.text() in self.student_name_to_idlist:
             # If so then fill in the ID-edit with the corresponding number.
-            self.ui.idEdit.setText(self.studentNamesToNumbers[self.ui.nameEdit.text()])
+            sidlist = self.student_name_to_idlist[self.ui.nameEdit.text()]
+            if len(sidlist) == 1:
+                self.ui.idEdit.setText(sidlist[0])
+            else:
+                ErrorMessage(
+                    'Student name "{}" is not unique in the class list.\n'.format(
+                        self.ui.nameEdit.text()
+                    )
+                    + "Corresponding students IDs include:\n"
+                    + ", ".join(sidlist)
+                ).exec_()
+                return
+
             # Ask user to confirm ID/Name
             msg = SimpleMessage(
                 "Student ID {} = {}. Enter and move to next?".format(

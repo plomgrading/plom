@@ -25,11 +25,8 @@ from plom.messenger import Messenger
 
 
 def startIdentifying():
-    csvfile = messenger.IDrequestClasslist()
-    idList = []
-    reader = csv.DictReader(csvfile, skipinitialspace=True)
-    for row in reader:
-        idList.append([row["id"], row["studentName"]])
+    d = messenger.IDrequestClasslist()
+    idList = [[k, v] for k, v in d.items()]
 
     while True:
         task = messenger.IDaskNextTask()
