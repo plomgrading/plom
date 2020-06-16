@@ -238,7 +238,6 @@ def id_paper(self, paper_num, username, sid, sname, checks=True):
             log.error("{}: {}".format(logbase, msg))
             return False, 403, msg
         iref.user = uref
-        # update status, Student-number, name, id-time.
         iref.status = "done"
         iref.studentID = sid
         iref.studentName = sname
@@ -261,7 +260,7 @@ def id_paper(self, paper_num, username, sid, sname, checks=True):
                 paper_num, username, censorID(sid), censorName(sname)
             )
         )
-        return True, None, None
+    return True, None, None
 
 
 def IDgetImageFromATest(self):
