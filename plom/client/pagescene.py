@@ -43,7 +43,7 @@ class ScoreBox(QGraphicsTextItem):
         # Not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setPos(4, 4)
-        self.changeScore(0)
+        self.changeScore(self.score)
 
     def changeScore(self, x):
         # set the current mark.
