@@ -183,11 +183,11 @@ class ManagerMessenger(BaseMessenger):
         # TODO - do we need this return value?
         return True
 
-    def RgetCompletions(self):
+    def RgetCompletionStatus(self):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/REP/completions".format(self.server),
+                "https://{}/REP/completionStatus".format(self.server),
                 verify=False,
                 json={"user": self.user, "token": self.token},
             )
@@ -694,11 +694,11 @@ class ManagerMessenger(BaseMessenger):
 
         return image
 
-    def getXPageImage(self, t, o):
+    def getLPageImage(self, t, o):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/admin/scannedXPage".format(self.server),
+                "https://{}/admin/scannedLPage".format(self.server),
                 verify=False,
                 json={"user": self.user, "token": self.token, "test": t, "order": o,},
             )
