@@ -563,9 +563,9 @@ class Manager(QWidget):
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
             vp = managerMessenger.getHWPageImage(t, q, o)
-        elif pdetails[0] == "x":  # is a hw-page = hw.o
+        elif pdetails[0] == "l":  # is an l-page = l.o
             o = pdetails.split(".")[1]
-            vp = managerMessenger.getXPageImage(t, o)
+            vp = managerMessenger.getLPageImage(t, o)
         else:  # future = extra-page
             return
 
@@ -990,7 +990,7 @@ class Manager(QWidget):
         self.ui.overallTW.clearContents()
         self.ui.overallTW.setRowCount(0)
 
-        opDict = managerMessenger.RgetCompletions()
+        opDict = managerMessenger.RgetCompletionStatus()
         tk = list(opDict.keys())
         tk.sort(key=int)  # sort in numeric order
         r = 0

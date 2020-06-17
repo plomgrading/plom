@@ -56,7 +56,7 @@ def addHWPage(self, sid, q, o, fname, image, md5o):
     return val
 
 
-def addXPage(self, sid, o, fname, image, md5o):
+def addLPage(self, sid, o, fname, image, md5o):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -66,7 +66,7 @@ def addXPage(self, sid, o, fname, image, md5o):
         newName = "pages/originalPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadXPage(sid, o, fname, newName, md5o)
+    val = self.DB.uploadLPage(sid, o, fname, newName, md5o)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -159,8 +159,8 @@ def getHWPageImage(self, testNumber, question, order):
     return self.DB.getHWPageImage(testNumber, question, order)
 
 
-def getXPageImage(self, testNumber, order):
-    return self.DB.getXPageImage(testNumber, order)
+def getLPageImage(self, testNumber, order):
+    return self.DB.getLPageImage(testNumber, order)
 
 
 def getUnknownImage(self, fname):

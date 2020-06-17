@@ -93,7 +93,7 @@ def main(server=None, pwd=None):
     os.makedirs("coverPages", exist_ok=True)
     os.makedirs(outDir, exist_ok=True)
 
-    completedTests = msgr.RgetCompletions()
+    completedTests = msgr.RgetCompletionStatus()
     # dict key = testnumber, then list id'd, tot'd, #q's marked
     identifiedTests = msgr.RgetIdentified()
     # dict key = testNumber, then pairs [sid, sname]
