@@ -24,25 +24,35 @@ class IDHandler:
     # @routes.get("/ID/progress")
     @authenticate_by_token
     def IDprogressCount(self):
+        """Send back current ID progress counts to the client.
+
+        Responds with status 200.
+
+        Returns:
+            list: A list of [all the ID'd record , all the records] in the form of int.
+        """
         return web.json_response(self.server.IDprogressCount(), status=200)
 
     # @routes.get("/ID/classlist")
     @authenticate_by_token
     def IDgetClasslist(self):
-        """Return the classlist.
+        """Returns the classlist to the client.
+
+        Used, for example, to fill in the student details for the searchbar autofill.
+
+        Responds with status success or HTTPNotFound.
 
         Returns:
-            200: the classlist dict.
-            404: there is no classlist.
+            class 'aiohttp.web_fileresponse.FileResponse: A file response that includes the classlist.
         """
         try:
             with open(Path(specdir) / "classlist.csv") as csvfile:
                 reader = csv.reader(csvfile)
                 next(reader)  # skip header row
-                cl = dict(reader)
+                class_list = dict(reader)
         except FileNotFoundError:
             raise web.HTTPNotFound(reason="classlist not found")
-        return web.json_response(cl)
+        return web.json_response(class_list)
 
     # @routes.put("/ID/classlist")
     @authenticate_by_token_required_fields(["user", "classlist"])
@@ -50,25 +60,32 @@ class IDHandler:
         """Accept classlist upload.
 
         Only "manager" can perform this action.
+        Responds with status success, HTTPBadRequest or HTTPConflict.
 
         Returns:
-            400: not manager
-            409: we already have one.  TODO: try again with force.
+            aiohttp.web_response.Response: A response indicating whether the operation was a failure or a success.
         """
         if not data["user"] == "manager":
             raise web.HTTPBadRequest(reason="Not manager")
-        cl = data["classlist"]
+        class_list = data["classlist"]
         if os.path.isfile(Path(specdir) / "classlist.csv"):
             raise web.HTTPConflict(reason="we already have a classlist")
         with open(Path(specdir) / "classlist.csv", "w") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["id", "studentName"])
-            writer.writerows(cl.items())
+            writer.writerows(class_list.items())
         return web.Response()
 
     # @routes.get("/ID/predictions")
     @authenticate_by_token
     def IDgetPredictions(self):
+        """Returns the files involving the ML model's student id's prediction.
+
+        Responds with status 200/404.
+
+        Returns:
+            aiohttp.web_fileresponse.FileResponse: File response including the predictions.
+        """
         if os.path.isfile(Path(specdir) / "predictionlist.csv"):
             return web.FileResponse(Path(specdir) / "predictionlist.csv", status=200)
         else:
@@ -77,46 +94,109 @@ class IDHandler:
     # @routes.get("/ID/tasks/complete")
     @authenticate_by_token_required_fields(["user"])
     def IDgetDoneTasks(self, data, request):
+        """Responds with a list of id/name which have already been confirmed by the client.
+
+        Args:
+            data (dict): A (str:str) dictionary having keys `user` and `token`.
+            request (aiohttp.web_request.Request): GET /ID/tasks/complete  request type.
+
+        Returns:
+            aiohttp.web_request.Request: A response including a list of lists indicating information about 
+                the users who already have confirmed predictions. 
+                Each list in the response is of the format: [task_number, task_status, student_id, student_name]
+        """
+
         # return the completed list
         return web.json_response(self.server.IDgetDoneTasks(data["user"]), status=200)
 
     # @routes.get("/ID/images/{test}")
     @authenticate_by_token_required_fields(["user"])
     def IDgetImage(self, data, request):
-        test = request.match_info["test"]
-        rmsg = self.server.IDgetImage(data["user"], test)
-        if not rmsg[0]:  # user allowed access - returns [true, fname0, fname1,...]
+        """Return the images for a specified paper number.
+
+        Responds with status 200/404/409.
+
+        Args:
+            data (dict): A (str:str) dictionary having keys `user` and `token`.
+            request (aiohttp.web_request.Request): DELETE /ID/predictedID type request object.
+
+        Returns:
+            aiohttp.web_fileresponse.FileResponse: A response including a aiohttp object which 
+                includes a multipart object with the images.
+        """
+
+        # A string having the sting number.
+        test_number = request.match_info["test"]
+
+        image_path = self.server.IDgetImage(data["user"], test_number)
+        allow_access = image_path[0]
+
+        if not allow_access:  # user allowed access - returns [true, fname0, fname1,...]
             return web.Response(status=409)  # someone else has that image
-        with MultipartWriter("images") as mpwriter:
-            for fn in rmsg[1:]:
-                if os.path.isfile(fn):
-                    mpwriter.append(open(fn, "rb"))
+        with MultipartWriter("images") as writer:
+            image_paths = image_path[1:]
+
+            for file_name in image_paths:
+                if os.path.isfile(file_name):
+                    writer.append(open(file_name, "rb"))
                 else:
                     return web.Response(status=404)
-            return web.Response(body=mpwriter, status=200)
+            return web.Response(body=writer, status=200)
 
     # @routes.get("/ID/tasks/available")
     @authenticate_by_token
     def IDgetNextTask(self):
-        rmsg = self.server.IDgetNextTask()  # returns [True, code] or [False]
-        if rmsg[0]:
-            return web.json_response(rmsg[1], status=200)
+        """Responds with a code for the the next available identify task.
+
+        Note: There is no guarantee that task will still be available later but at this moment in time, 
+        no one else has claimed it
+
+        Responds with status 200/204.
+
+        Returns:
+            aiohttp.web_response.Response: A response object with the code for the next task/paper.
+        """
+
+        next_task_code = self.server.IDgetNextTask()  # returns [True, code] or [False]
+        next_task_available = next_task_code[0]
+        next_task_code = next_task_code[1]
+
+        if next_task_available:
+            return web.json_response(next_task_code, status=200)
         else:
             return web.Response(status=204)  # no papers left
 
     # @routes.patch("/ID/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
     def IDclaimThisTask(self, data, request):
+        """Claims this identifying task and returns images of the ID pages.
+
+        Responds with status 200/204/404.
+
+        Args:
+            data (dict): A (str:str) dictionary having keys `user` and `token`.
+            request (aiohttp.web_request.Request): PATCH /ID/tasks request object.
+
+        Returns:
+            aiohttp.web_response.Response: A response including a aiohttp object which 
+                includes a multipart object with the images.
+        """
+        
         testNumber = request.match_info["task"]
-        rmsg = self.server.IDclaimThisTask(data["user"], testNumber)
-        if rmsg[0]:  # user allowed access - returns [true, fname0, fname1,...]
-            with MultipartWriter("images") as mpwriter:
-                for fn in rmsg[1:]:
-                    if os.path.isfile(fn):
-                        mpwriter.append(open(fn, "rb"))
+        image_path = self.server.IDclaimThisTask(data["user"], testNumber) # returns [True, IMG_path] or [False]
+
+        allow_access = image_path[0]
+        
+        if allow_access:  # user allowed access - returns [true, fname0, fname1,...]
+            with MultipartWriter("images") as writer:
+                image_paths = image_path[1:]
+
+                for file_name in image_paths:
+                    if os.path.isfile(file_name):
+                        writer.append(open(file_name, "rb"))
                     else:
                         return web.Response(status=404)
-                return web.Response(body=mpwriter, status=200)
+                return web.Response(body=writer, status=200)
         else:
             return web.Response(status=204)  # that task already taken.
 
@@ -176,6 +256,19 @@ class IDHandler:
     # @routes.delete("/ID/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
     def IDdidNotFinishTask(self, data, request):
+        """Accept the client's surrender of a previously-claimed identifying task.
+
+        This could occur for example when the client closes with unfinished tasks.
+        Responds with status 200.
+
+        Args:
+            data (dict): A (str:str) dictionary having keys `user` and `token`.
+            request (aiohttp.web_request.Request'): Request of type DELETE /ID/tasks/#TaskNumber.
+
+        Returns:
+            aiohttp.web_response.Response: A response with status 200.
+        """
+
         testNumber = request.match_info["task"]
         self.server.IDdidNotFinish(data["user"], testNumber)
         return web.json_response(status=200)
@@ -183,25 +276,60 @@ class IDHandler:
     # @routes.get("/ID/randomImage")
     @authenticate_by_token_required_fields(["user"])
     def IDgetImageFromATest(self, data, request):
+        """Gets a random image to extract the bounding box corresponding to the student name and id.
+
+        The bounding box indicated on this image will be later used to extract the 
+        student ids from the other papers. 
+        Responds with status 200/404/410.
+        Logs activity.
+
+        Args:
+            data (dict): A (str:str) dictionary having keys `user` and `token`. 
+            request (aiohttp.web_request.Request): request of type GET /ID/randomImage.
+        Returns:
+            aiohttp.web_fileresponse.FileResponse: A response including a aiohttp object which 
+                includes a multipart object with the images.
+        """
+
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
             return web.Response(status=401)  # only manager
 
-        rmsg = self.server.IDgetImageFromATest()
-        if rmsg[0] is False:
+        # A list with a boolean (indicating wether the objects exist) and a list of the exam images. 
+        random_image_paths = self.server.IDgetImageFromATest()
+
+        allow_access = random_image_paths[0]
+
+        # No access to the files
+        if allow_access is False:
             return web.Response(status=410)
 
-        log.debug("Appending file {}".format(rmsg))
-        with MultipartWriter("images") as mpwriter:
-            for fn in rmsg[1:]:
-                if os.path.isfile(fn):
-                    mpwriter.append(open(fn, "rb"))
+        log.debug("Appending file {}".format(random_image_paths))
+        with MultipartWriter("images") as writer:
+            image_paths = random_image_paths[1:]
+
+            for file_name in image_paths:
+                if os.path.isfile(file_name):
+                    writer.append(open(file_name, "rb"))
                 else:
                     return web.Response(status=404)
-            return web.Response(body=mpwriter, status=200)
+            return web.Response(body=writer, status=200)
 
     @authenticate_by_token_required_fields(["user"])
     def IDdeletePredictions(self, data, request):
+        """Deletes the machine-learning predicted IDs for all papers.
+
+        Responds with status 200/401.
+
+        Args:
+            data (dict): A (str:str) dictionary having keys `user` and `token`.
+            request (aiohttp.web_request.Request): DELETE /ID/predictedID type request object.
+
+        Returns:
+            aiohttp.web_response.Response: Returns a response with a True or False indicating if the deletion
+                was successful.
+        """
+
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
             return web.Response(status=401)
@@ -212,30 +340,68 @@ class IDHandler:
         ["user", "rectangle", "fileNumber", "ignoreStamp"]
     )
     def IDrunPredictions(self, data, request):
+        """Runs the id prediction on all paper images.
+
+        Responds with status 200/202/205/401.
+
+        Args:
+            data (dict): A dictionary having the user/token in addition to information from the rectangle 
+                bounding box coordinates and file information.
+            request (aiohttp.web_request.Request): Request of type POST /ID/predictedID.
+
+        Returns:
+            aiohttp.web_response.Response: Returns a response with the date and time of the prediction run. 
+                Or responds with saying the prediction is already running.
+        """
+
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
             return web.Response(status=401)
 
-        rmsg = self.server.IDrunPredictions(
+        prediction_results = self.server.IDrunPredictions(
             data["rectangle"], data["fileNumber"], data["ignoreStamp"]
         )
-        if rmsg[0]:  # set running or is running
-            if rmsg[1]:
+
+        timestamp_found = prediction_results[0]
+
+        if timestamp_found:  # set running or is running
+            is_running = prediction_results[1]
+            
+            if is_running:
                 return web.Response(status=200)
             else:
                 return web.Response(status=202)  # is already running
         else:  # isn't running because we found a time-stamp
-            return web.Response(text=rmsg[1], status=205)
+            return web.Response(text=is_running, status=205)
 
     # @routes.patch("/ID/review")
     @authenticate_by_token_required_fields(["testNumber"])
     def IDreviewID(self, data, request):
+        """Responds with an empty response object indicating if the review ID is possible and the document exists.
+
+        Responds with status 200/404.
+
+        Args:
+            data (dict): A dictionary having the user/token in addition to the `testNumber`.
+            request (aiohttp.web_request.Request): Request of type PATCH /ID/review.
+
+        Returns:
+            aiohttp.web_fileresponse.FileResponse: An empty response indicating the availability status of 
+                the review document.
+        """
+
         if self.server.IDreviewID(data["testNumber"]):
             return web.Response(status=200)
         else:
             return web.Response(status=404)
 
     def setUpRoutes(self, router):
+        """Adds the response functions to the router object.
+
+        Args:
+            router (aiohttp.web_urldispatcher.UrlDispatcher): Router object which we will add the response functions to.
+        """
+
         # router.add_routes(self.local_route_table)
         # But see above: doesn't work with auth deco
         router.add_get("/ID/progress", self.IDprogressCount)
