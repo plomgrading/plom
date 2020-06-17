@@ -22,7 +22,6 @@ import pkg_resources
 
 from plom import __version__
 from plom import SpecVerifier, SpecParser
-from plom.produce import process_class_list
 from plom import specdir
 
 #################
@@ -30,17 +29,12 @@ from plom import specdir
 
 server_instructions = """Overview of running the Plom server:
 
-  0. Decide on a working directory for the server and cd into it - this
-     need not be the same directory where you started the project.
+  0. Decide on a working directory for the server and cd into it.
 
   1. Copy the `{specdir}` directory (not just its contents) to your
-     server directory.   It should be located where you started the
-     project and built the PDFs.
+     server directory.
 
-       1a. If you did not prepare the classlist earlier, then run
-           'plom-server class <filename>'.
-
-  2. Run '%(prog)s' - this will check that everything is in place
+  2. Run '%(prog)s init' - this will check that everything is in place
      and create necessary sub-directories *and* create config files for
      you to edit.
 
@@ -98,10 +92,7 @@ def checkSpecAndDatabase():
     if os.path.isfile(Path(specdir) / "classlist.csv"):
         print("Classlist present.")
     else:
-        print(
-            "Cannot find the classlist. Aborting.\nYou do not have to return to 'plom-build'. To process a classlist please run 'plom-server class <filename>'"
-        )
-        exit(1)
+        print("Cannot find the classlist: expect it later...")
 
 
 def buildRequiredDirectories():
@@ -396,12 +387,6 @@ sub = parser.add_subparsers(
 )
 #
 spI = sub.add_parser("init", help="Initialise server.")
-spL = sub.add_parser(
-    "class",
-    help="Read in a classlist.",
-    epilog=process_class_list.__doc__,
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-)
 spU = sub.add_parser("users", help="Create required users.")
 spR = sub.add_parser("launch", help="Launch server.")
 spR.add_argument(
@@ -410,14 +395,6 @@ spR.add_argument(
     help="The master token is a 32 hex-digit string used to encrypt tokens in database. If you do not supply one then the server will create one. You should record the token somewhere (and reuse it at next server-start) if you want to be able to hot-restart the server (ie - restart the server without requiring users to log-off and log-in again).",
 )
 #
-group = spL.add_mutually_exclusive_group(required=True)
-group.add_argument("classlist", nargs="?", help="filename in csv format")
-group.add_argument(
-    "--demo",
-    action="store_true",
-    help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
-)
-##
 spU.add_argument(
     "userlist",
     nargs="?",
@@ -442,9 +419,6 @@ def main():
 
     if args.command == "init":
         initialiseServer()
-    elif args.command == "class":
-        # process the class list and copy into place
-        process_class_list(args.classlist, args.demo)
     elif args.command == "users":
         # process the class list and copy into place
         processUsers(args.userlist, args.demo, args.auto)

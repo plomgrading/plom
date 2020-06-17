@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+
+import csv
 import os
 from pathlib import Path
 
@@ -24,10 +29,42 @@ class IDHandler:
     # @routes.get("/ID/classlist")
     @authenticate_by_token
     def IDgetClasslist(self):
+        """Return the classlist.
+
+        Returns:
+            200: the classlist dict.
+            404: there is no classlist.
+        """
+        try:
+            with open(Path(specdir) / "classlist.csv") as csvfile:
+                reader = csv.reader(csvfile)
+                next(reader)  # skip header row
+                cl = dict(reader)
+        except FileNotFoundError:
+            raise web.HTTPNotFound(reason="classlist not found")
+        return web.json_response(cl)
+
+    # @routes.put("/ID/classlist")
+    @authenticate_by_token_required_fields(["user", "classlist"])
+    def IDputClasslist(self, data, request):
+        """Accept classlist upload.
+
+        Only "manager" can perform this action.
+
+        Returns:
+            400: not manager
+            409: we already have one.  TODO: try again with force.
+        """
+        if not data["user"] == "manager":
+            raise web.HTTPBadRequest(reason="Not manager")
+        cl = data["classlist"]
         if os.path.isfile(Path(specdir) / "classlist.csv"):
-            return web.FileResponse(Path(specdir) / "classlist.csv", status=200)
-        else:
-            return web.Response(status=404)
+            raise web.HTTPConflict(reason="we already have a classlist")
+        with open(Path(specdir) / "classlist.csv", "w") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["id", "studentName"])
+            writer.writerows(cl.items())
+        return web.Response()
 
     # @routes.get("/ID/predictions")
     @authenticate_by_token
@@ -203,6 +240,7 @@ class IDHandler:
         # But see above: doesn't work with auth deco
         router.add_get("/ID/progress", self.IDprogressCount)
         router.add_get("/ID/classlist", self.IDgetClasslist)
+        router.add_put("/ID/classlist", self.IDputClasslist)
         router.add_get("/ID/predictions", self.IDgetPredictions)
         router.add_get("/ID/tasks/complete", self.IDgetDoneTasks)
         router.add_get("/ID/images/{test}", self.IDgetImage)
