@@ -17,7 +17,11 @@ import sys
 import tempfile
 import toml
 
-from plom.plom_exceptions import *
+from plom.plom_exceptions import (
+    PlomConflict,
+    PlomExistingLoginException,
+    PlomTakenException,
+)
 from plom import __version__, Plom_API_Version
 from plom.messenger import Messenger
 
@@ -25,11 +29,8 @@ from plom.messenger import Messenger
 
 
 def startIdentifying():
-    csvfile = messenger.IDrequestClasslist()
-    idList = []
-    reader = csv.DictReader(csvfile, skipinitialspace=True)
-    for row in reader:
-        idList.append([row["id"], row["studentName"]])
+    d = messenger.IDrequestClasslist()
+    idList = [[k, v] for k, v in d.items()]
 
     while True:
         task = messenger.IDaskNextTask()
@@ -39,16 +40,17 @@ def startIdentifying():
         try:
             print("Identifying task ", task)
             imageList = messenger.IDclaimThisTask(task)
-        except PlomBenignException as err:
+        except PlomTakenException:
             # task already taken.
             continue
 
         while True:
             try:
                 c = random.choice(idList)
+                c[1] += " [randomly chosen]"
                 messenger.IDreturnIDdTask(task, c[0], c[1])
                 break
-            except PlomBenignException as e:
+            except PlomConflict:
                 print("SID/SN {}/{} already used".format(c[0], c[1]))
 
 

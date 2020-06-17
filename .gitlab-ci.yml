@@ -86,10 +86,6 @@ job demoServer:
     - mkdir demo
     - pushd demo
     - plom-build new --demo
-    - plom-server class --demo
-    - plom-build make
-    - python3 -m plom.produce.faketools
-    - plom-scan process fake_scribbled_exams.pdf
     # Start server
     - ip addr
     - plom-server init
@@ -101,6 +97,10 @@ job demoServer:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
+    - plom-build class --demo -w 1234
+    - plom-build make -w 1234
+    - python3 -m plom.produce.faketools
+    - plom-scan process fake_scribbled_exams.pdf
     - plom-scan read   -w 4567
     - plom-scan upload -w 4567
     - plom-scan status -w 4567
@@ -126,20 +126,10 @@ job fullWorkFlow:
     - pushd play
     - plom-build new
     - plom-build parse
-    - plom-server class --demo
     - python3 -m plom.produce.demotools
     # TODO: override the private seed
     # sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
     # diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
-    - plom-build make
-    - A=`ls papersToPrint/ | wc -l`  # How many files?
-    - bash -c "[[ $A == 20 ]]"       # should be 20
-    # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/695
-    - python3 -m plom.produce.faketools
-    # Scan and upload
-    # supposed to fail:
-    - if (plom-scan process); then false; else true; fi
-    - plom-scan process fake_scribbled_exams.pdf
     # Start server
     - ip addr
     - plom-server init
@@ -151,6 +141,16 @@ job fullWorkFlow:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
+    - plom-build class --demo -w 1234
+    - plom-build make -w 1234
+    - A=`ls papersToPrint/ | wc -l`  # How many files?
+    - bash -c "[[ $A == 20 ]]"       # should be 20
+    # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/695
+    - python3 -m plom.produce.faketools
+    # Scan and upload
+    # supposed to fail:
+    - if (plom-scan process); then false; else true; fi
+    - plom-scan process fake_scribbled_exams.pdf
     - plom-scan read -s localhost -w 4567
     - plom-scan upload -s localhost -w 4567
     - plom-scan upload -u -s localhost -w 4567
@@ -162,9 +162,9 @@ job fullWorkFlow:
     - python3 -m plom.client.randoMarker -s localhost -u user0 -w 0123
     - plom-finish status -w 1234
     - plom-finish csv -w 1234
-    - A=`cat testMarks.csv  | wc -l`  # How many lines?
+    - A=`cat marks.csv  | wc -l`      # How many lines?
     - bash -c "[[ $A == 20 ]]"        # should be 19 + 1 - since 1 page from 1 test is deleted
-    - file -b testMarks.csv  | grep ASCII   # should be ascii test
+    - file -b marks.csv  | grep ASCII   # should be ascii test
     - plom-finish reassemble -w 1234
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 19 ]]" # since 1 test incomplete

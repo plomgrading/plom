@@ -187,6 +187,10 @@ def compute_probabilities(fileDict, top, bottom):
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
     )
     kdp = keras_dropout_prediction_object(model)
+
+    # Dictionary of test numbers their digit-probabilities
+    probabilities = {}
+
     for testNumber in fileDict:
         lst = get_digits(kdp, fileDict[testNumber], top, bottom)
         if lst is None:  # couldn't recognize digits

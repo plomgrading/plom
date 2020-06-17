@@ -1,7 +1,7 @@
 import os
 from aiohttp import web, MultipartWriter, MultipartReader
 
-from .routeutils import authByToken, authByToken_validFields
+from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 
 
 class TotalHandler:
@@ -9,23 +9,23 @@ class TotalHandler:
         self.server = plomServer
 
     # @routes.get("/TOT/maxMark")
-    @authByToken
+    @authenticate_by_token
     def TgetMarkMark(self):
         return web.json_response(self.server.TgetMaxMark(), status=200)
 
     # @routes.get("/TOT/progress")
-    @authByToken
+    @authenticate_by_token
     def TprogressCount(self):
         return web.json_response(self.server.TprogressCount(), status=200)
 
     # @routes.get("/TOT/tasks/complete")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_required_fields(["user"])
     def TgetDoneTasks(self, data, request):
         # return the completed list
         return web.json_response(self.server.TgetDoneTasks(data["user"]), status=200)
 
     # @routes.get("/TOT/image/{test}")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_required_fields(["user"])
     def TgetImage(self, data, request):
         test = request.match_info["test"]
         rmsg = self.server.TgetImage(data["user"], test)
@@ -35,7 +35,7 @@ class TotalHandler:
             return web.Response(status=409)  # someone else has that image
 
     # @routes.get("/TOT/tasks/available")
-    @authByToken
+    @authenticate_by_token
     def TgetNextTask(self):
         rmsg = self.server.TgetNextTask()  # returns [True, code] or [False]
         if rmsg[0]:
@@ -44,7 +44,7 @@ class TotalHandler:
             return web.Response(status=204)  # no papers left
 
     # @routes.patch("/TOT/tasks/{task}")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_required_fields(["user"])
     def TclaimThisTask(self, data, request):
         testNumber = request.match_info["task"]
         rmsg = self.server.TclaimThisTask(data["user"], testNumber)
@@ -54,7 +54,7 @@ class TotalHandler:
             return web.Response(status=204)  # that task already taken.
 
     # @routes.put("/TOT/tasks/{task}")
-    @authByToken_validFields(["user", "mark"])
+    @authenticate_by_token_required_fields(["user", "mark"])
     def TreturnTotalledTask(self, data, request):
         testNumber = request.match_info["task"]
         rmsg = self.server.TreturnTotalledTask(data["user"], testNumber, data["mark"])
@@ -64,7 +64,7 @@ class TotalHandler:
             return web.Response(status=404)
 
     # @routes.delete("/TOT/tasks/{task}")
-    @authByToken_validFields(["user"])
+    @authenticate_by_token_required_fields(["user"])
     def TdidNotFinish(self, data, request):
         testNumber = request.match_info["task"]
         self.server.TdidNotFinish(data["user"], testNumber)

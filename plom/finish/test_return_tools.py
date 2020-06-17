@@ -3,6 +3,8 @@ from pytest import raises
 
 from .return_tools import canvas_csv_add_return_codes
 
+"""Tests for canvas_csv_add_return_codes from return_tools"""
+
 
 def test_csv_general_test():
     s1 = """Student,ID,SIS User ID,SIS Login ID,Student Number,Section,Midterm1,Return Code (241017),Assignments
@@ -17,21 +19,21 @@ John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,349284813368
 Jane Smith,43,12345679,ABCDEFGHIJ02,Math 123 S102v,12345679,919005618467
 """
     infile = StringIO(s1)
-    outfile = StringIO('')
-    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default");
+    outfile = StringIO("")
+    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default")
     s = outfile.getvalue()
-    assert s == s2 or s.replace('\r\n', '\n') == s2
+    assert s == s2 or s.replace("\r\n", "\n") == s2
 
     # return codes already exist
     infile = StringIO(s2)
-    outfile = StringIO('')
-    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default");
+    outfile = StringIO("")
+    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default")
     s = outfile.getvalue()
-    assert s == s2 or s.replace('\r\n', '\n') == s2
+    assert s == s2 or s.replace("\r\n", "\n") == s2
 
 
 def test_csv2():
-    # quotes, commas and decimals
+    """Tests quotes, commas and decimals."""
     s1 = """Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code ()
 ,,,,,,Muted
   Points Possible,,,,,,999999999999
@@ -47,66 +49,95 @@ C Smith,44,12347777,ABCDEFGHIJ03,103,12347777,894464449308
 D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,149766785804
 """
     infile = StringIO(s1)
-    outfile = StringIO('')
-    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default");
+    outfile = StringIO("")
+    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default")
     s = outfile.getvalue()
-    assert s == s2 or s.replace('\r\n', '\n') == s2
+    assert s == s2 or s.replace("\r\n", "\n") == s2
 
 
 def test_csv3():
-    # changing return code is an error
-    infile = StringIO("""Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code ()
+    """Changing return code is an error."""
+    infile = StringIO(
+        """Student,ID,SIS User ID,SIS Login ID,Section,Student Number,Return Code ()
 ,,,,,,Muted
 Points Possible,,,,,,999999999999
 John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,111222333444
-""")
-    outfile = StringIO('')
-    raises(ValueError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
+"""
+    )
+    outfile = StringIO("")
+    raises(
+        ValueError,
+        lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"),
+    )
 
 
 def test_csv_missing_header_Student():
     infile = StringIO("""xxStudentxx,SIS User ID,Return Code ()""")
-    outfile = StringIO('')
-    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
+    outfile = StringIO("")
+    raises(
+        AssertionError,
+        lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"),
+    )
 
 
 def test_csv_missing_header_SIS_User_ID():
     infile = StringIO("""Student,SISTER User IDLE,Return Code ()""")
-    outfile = StringIO('')
-    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
+    outfile = StringIO("")
+    raises(
+        AssertionError,
+        lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"),
+    )
 
 
 def test_csv_cantfind_return_code():
     infile = StringIO("""Student,SIS User ID,Retrun C0de ()""")
-    outfile = StringIO('')
-    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
+    outfile = StringIO("")
+    raises(
+        AssertionError,
+        lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"),
+    )
 
 
 def test_csv_studentnum_too_long():
     # UBC specific?
-    infile = StringIO("""Student,SIS User ID,Return Code ()
+    infile = StringIO(
+        """Student,SIS User ID,Return Code ()
 ,,
 ,,
 John Smith,12345678910,
-""")
-    outfile = StringIO('')
-    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
+"""
+    )
+    outfile = StringIO("")
+    raises(
+        AssertionError,
+        lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"),
+    )
 
 
 def test_csv_empty_student_name():
-    infile = StringIO("""Student,SIS User ID,Return Code ()
+    infile = StringIO(
+        """Student,SIS User ID,Return Code ()
 ,,
 ,,
 John Smith,12345678,
 ,12348888,
-""")
-    outfile = StringIO('')
-    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
+"""
+    )
+    outfile = StringIO("")
+    raises(
+        AssertionError,
+        lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"),
+    )
 
 
 def test_csv_missing_header_rows():
-    infile = StringIO("""Student,SIS User ID,Return Code ()
+    infile = StringIO(
+        """Student,SIS User ID,Return Code ()
 John Smith,12345678,
-""")
-    outfile = StringIO('')
-    raises(AssertionError, lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"))
+"""
+    )
+    outfile = StringIO("")
+    raises(
+        AssertionError,
+        lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"),
+    )

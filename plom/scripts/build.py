@@ -10,7 +10,8 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
-import shutil
+from warnings import warn
+from textwrap import dedent, wrap
 
 # import tools for dealing with resource files
 import pkg_resources
@@ -18,10 +19,13 @@ import pkg_resources
 from plom import __version__
 from plom import SpecVerifier, SpecParser
 from plom import specdir
-from plom.produce import build_all_papers, confirm_processed, confirm_named
-from plom.produce import paperdir
-from plom.produce import process_class_list
+from plom.produce import process_class_list, upload_classlist
+from plom.produce import buildDatabaseAndPapers
+from plom.produce import possible_surname_fields, possible_given_name_fields
 from plom.produce.demotools import buildDemoSourceFiles
+
+# TODO: relocate https://gitlab.com/plom/plom/-/issues/891
+from plom.finish import clear_manager_login
 
 
 dbfile = os.path.join(specdir, "plom.db")
@@ -70,71 +74,6 @@ def parseAndVerifySpecification(fname):
         )
 
 
-def buildDatabase(spec):
-    from plom.produce import buildPlomDB
-
-    if os.path.isfile(dbfile):
-        print("Database already exists - aborting.")
-        exit(1)
-
-    print("Creating plom database")
-    buildPlomDB.buildExamDatabase(spec, dbfile)
-    print("Database created successfully")
-
-
-def buildBlankPapers(spec):
-    print("Building blank papers")
-    build_all_papers(spec, dbfile)
-    print("Checking papers produced and updating databases")
-    confirm_processed(spec, dbfile)
-
-
-def buildNamedPapers(spec):
-    if spec["numberToName"] > 0:
-        print(
-            'Building {} pre-named papers and {} blank papers in "{}"...'.format(
-                spec["numberToName"],
-                spec["numberToProduce"] - spec["numberToName"],
-                paperdir,
-            )
-        )
-    else:
-        print(
-            'Building {} blank papers in "{}"...'.format(
-                spec["numberToProduce"], paperdir
-            )
-        )
-
-    build_all_papers(spec, dbfile, named=True)
-    print("Checking papers produced and updating databases")
-    confirm_processed(spec, dbfile)
-    confirm_named(spec, dbfile)
-
-
-def buildDatabaseAndPapers(blank):
-    print("Reading specification")
-    if not os.path.isfile(os.path.join(specdir, "verifiedSpec.toml")):
-        print('Cannot find verified specFile - have you run "plom-build parse" yet?')
-        exit(1)
-    spec = SpecParser().spec
-
-    if blank == "true" and spec["numberToName"] > 0:
-        print(
-            ">>> WARNING <<< "
-            "Your spec says to produce {} named-papers, but you have run with the '--blank' option. Building unnamed papers.".format(
-                spec["numberToName"]
-            )
-        )
-
-    buildDatabase(spec)
-
-    os.makedirs(paperdir, exist_ok=True)
-    if blank:
-        buildBlankPapers(spec)
-    else:
-        buildNamedPapers(spec)
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 sub = parser.add_subparsers(
@@ -167,9 +106,29 @@ spP.add_argument(
 spL = sub.add_parser(
     "class",
     help="Read in a classlist",
-    epilog=process_class_list.__doc__,
+    description="Get student names/numbers from csv, process, and upload to server.",
+    epilog=dedent(
+        """
+        The classlist can be a .csv file with column headers:
+          * id - student ID number
+          * studentName - student name in a single field
+
+        The student name can be split into multiple fields; the following names
+        will be tried for each header:
+          * id
+          * {}
+          * {}
+
+        Alternatively, give a .csv exported from Canvas (experimental!)
+        """
+    ).format(
+        "\n    ".join(wrap(", ".join(possible_surname_fields), 72)),
+        "\n    ".join(wrap(", ".join(possible_given_name_fields), 72)),
+    ),
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
+spL.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+spL.add_argument("-w", "--password", type=str, help='for the "manager" user')
 group = spL.add_mutually_exclusive_group(required=True)
 group.add_argument("classlist", nargs="?", help="filename in csv format")
 group.add_argument(
@@ -178,7 +137,6 @@ group.add_argument(
     help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
 )
 
-#
 spB = sub.add_parser(
     "make",
     help="Make the PDFs",
@@ -187,12 +145,16 @@ spB = sub.add_parser(
         spec, some of the papers may have names printed on them from the
         classlist ("pre-named") and the remainder will be blank.""",
 )
-spB.add_argument(
-    "-b",
-    "--blank",
-    action="store_true",
-    help="Force building only blank papers, ignoring spec",
+spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
+
+spClear = sub.add_parser(
+    "clear",
+    help='Clear "manager" login',
+    description='Clear "manager" login after a crash or other expected event.',
 )
+spClear.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+spClear.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
 
 def main():
@@ -217,16 +179,15 @@ def main():
         # copy the template spec into place
         parseAndVerifySpecification(fname)
     elif args.command == "class":
-        # process the class list and copy into place
-        process_class_list(args.classlist, args.demo)
+        cl = process_class_list(args.classlist, args.demo)
+        upload_classlist(cl, args.server, args.password)
     elif args.command == "make":
-        # get building.
-        buildDatabaseAndPapers(args.blank)
+        buildDatabaseAndPapers(args.server, args.password)
+    elif args.command == "clear":
+        clear_manager_login(args.server, args.password)
     else:
         # no command given so print help.
         parser.print_help()
-
-    exit(0)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,151 @@
+import peewee as pw
+
+plomdb = pw.SqliteDatabase(None)
+
+
+class BaseModel(pw.Model):
+    class Meta:
+        database = plomdb
+
+
+class User(BaseModel):
+    name = pw.CharField(unique=True)
+    enabled = pw.BooleanField(default=True)
+    password = pw.CharField(null=True)  # hash of password for comparison
+    token = pw.CharField(null=True)  # authentication token
+    last_activity = pw.DateTimeField(null=True)
+    last_action = pw.CharField(null=True)
+
+
+class Image(BaseModel):
+    original_name = pw.CharField(null=True)  # can be empty.
+    file_name = pw.CharField(null=True)
+    md5sum = pw.CharField(null=True)  # to check for duplications
+
+
+class Test(BaseModel):
+    test_number = pw.IntegerField(primary_key=True, unique=True)
+    # some state pw.Bools
+    produced = pw.BooleanField(default=False)
+    used = pw.BooleanField(default=False)
+    scanned = pw.BooleanField(default=False)
+    identified = pw.BooleanField(default=False)
+    marked = pw.BooleanField(default=False)
+    totalled = pw.BooleanField(default=False)
+    # a recentUpload flag to see which tests to check after uploads
+    recent_upload = pw.BooleanField(default=False)
+
+
+# Data for totalling the marks
+class SumData(BaseModel):
+    test = pw.ForeignKeyField(Test, backref="sumdata")
+    sum_mark = pw.IntegerField(null=True)
+    status = pw.CharField(default="")
+    user = pw.ForeignKeyField(User, backref="sumdata", null=True)
+    time = pw.DateTimeField(null=True)
+    summed = pw.BooleanField(default=False)
+
+
+class Group(BaseModel):
+    test = pw.ForeignKeyField(Test, backref="groups")
+    gid = pw.CharField(unique=True)  # must be unique
+    group_type = pw.CharField()  # to distinguish between ID, DNM, and Mark groups
+    queue_position = pw.IntegerField(unique=True, null=False)
+    scanned = pw.BooleanField(default=False)  # should get all its tpages
+
+
+class IDGroup(BaseModel):
+    test = pw.ForeignKeyField(Test, backref="idgroups")
+    group = pw.ForeignKeyField(Group, backref="idgroups")
+    student_id = pw.CharField(unique=True, null=True)
+    student_name = pw.CharField(null=True)
+    user = pw.ForeignKeyField(User, backref="idgroups", null=True)
+    status = pw.CharField(default="")
+    time = pw.DateTimeField(null=True)
+    identified = pw.BooleanField(default=False)
+
+
+class DNMGroup(BaseModel):
+    test = pw.ForeignKeyField(Test, backref="dnmgroups")
+    group = pw.ForeignKeyField(Group, backref="dnmgroups")
+
+
+class QGroup(BaseModel):
+    test = pw.ForeignKeyField(Test, backref="qgroups")
+    group = pw.ForeignKeyField(Group, backref="qgroups")
+    question = pw.IntegerField(null=False)
+    version = pw.IntegerField(null=False, default=1)
+    user = pw.ForeignKeyField(User, backref="qgroups", null=True)
+    status = pw.CharField(default="")
+    marked = pw.BooleanField(default=False)
+
+
+class TPage(BaseModel):  # a test page that knows its tpgv
+    test = pw.ForeignKeyField(Test, backref="tpages")
+    page_number = pw.IntegerField(null=False)
+    version = pw.IntegerField(default=1)
+    group = pw.ForeignKeyField(Group, backref="tpages")
+    image = pw.ForeignKeyField(Image, backref="tpages", null=True)
+    scanned = pw.BooleanField(default=False)  # we should get all of them
+
+
+class HWPage(BaseModel):  # a hw page that knows its tgv, but not p.
+    test = pw.ForeignKeyField(Test, backref="hwpages")
+    group = pw.ForeignKeyField(Group, backref="hwpages")
+    order = pw.IntegerField(null=False)
+    version = pw.IntegerField(default=1)  # infer from group
+    image = pw.ForeignKeyField(Image, backref="hwpages")
+
+
+class LPage(BaseModel):  # a page that just knows its t. - a loose page
+    test = pw.ForeignKeyField(Test, backref="lpages")
+    order = pw.IntegerField(null=False)
+    image = pw.ForeignKeyField(Image, backref="lpages")
+
+
+# still needs work - maybe some bundle object with unique key.
+class UnknownPage(BaseModel):
+    image = pw.ForeignKeyField(Image, backref="upages", null=True)
+    order = pw.IntegerField(null=False)  # order within the upload.
+
+
+class CollidingPage(BaseModel):
+    tpage = pw.ForeignKeyField(TPage, backref="collisions")
+    image = pw.ForeignKeyField(Image, backref="collisions")
+
+
+class DiscardedPage(BaseModel):
+    image = pw.ForeignKeyField(Image, backref="discards")
+    reason = pw.CharField(null=True)
+
+
+class IDPage(BaseModel):
+    idgroup = pw.ForeignKeyField(IDGroup, backref="idpages")
+    image = pw.ForeignKeyField(Image, backref="idpages")
+    order = pw.IntegerField(null=False)
+
+
+class DNMPage(BaseModel):
+    dnmgroup = pw.ForeignKeyField(DNMGroup, backref="dnmpages")
+    image = pw.ForeignKeyField(Image, backref="dnmpages")
+    order = pw.IntegerField(null=False)
+
+
+class Annotation(BaseModel):
+    qgroup = pw.ForeignKeyField(QGroup, backref="annotations")
+    user = pw.ForeignKeyField(User, backref="annotations", null=True)
+    image = pw.ForeignKeyField(Image, backref="annotations", null=True)
+    edition = pw.IntegerField(null=True)
+    # we need to order the annotations - want the latest.
+    plom_file = pw.CharField(null=True)
+    comment_file = pw.CharField(null=True)
+    mark = pw.IntegerField(null=True)
+    marking_time = pw.IntegerField(null=True)
+    time = pw.DateTimeField(null=True)
+    tags = pw.CharField(default="")
+
+
+class APage(BaseModel):
+    annotation = pw.ForeignKeyField(Annotation, backref="apages")
+    image = pw.ForeignKeyField(Image, backref="apages")
+    order = pw.IntegerField(null=False)

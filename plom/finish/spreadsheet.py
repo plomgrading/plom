@@ -11,10 +11,7 @@ import getpass
 
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import *
-
-CSVFilename = "testMarks.csv"
-
-# ---------------------------
+from plom.finish import CSVFilename
 
 
 def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
@@ -40,7 +37,6 @@ def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
         testWriter = csv.DictWriter(
             csvfile,
             fieldnames=head,
-            delimiter="\t",
             quotechar='"',
             quoting=csv.QUOTE_NONNUMERIC,
         )

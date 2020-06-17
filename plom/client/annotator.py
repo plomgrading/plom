@@ -172,6 +172,7 @@ class Annotator(QWidget):
         # mark set, delta-set, mark change functions
         self.scene = None  # TODO?
         self.markHandler = None
+
         self.setMiscShortCuts()
         # set the zoom combobox
         self.setZoomComboBox()
@@ -191,6 +192,8 @@ class Annotator(QWidget):
         self.key_codes = self.getKeyShortcuts()
 
         self.timer = QElapsedTimer()
+
+        self.modeInformation = ["move"]
 
         if initialData:
             self.loadNewTGV(*initialData)
@@ -244,11 +247,22 @@ class Annotator(QWidget):
             None: Modifies self
 
         """
-        self.comment_widget.reset()
+
         # TODO: self.view.disconnectFrom(self.scene)
         # self.view = None
         # TODO: how to reset the scene?
         # This may be heavy handed, but for now we delete the old scene
+
+        # Attempt at keeping mode information.
+        self.modeInformation = [self.scene.mode]
+        if self.scene.mode == "delta":
+            self.modeInformation.append(self.scene.markDelta)
+        elif self.scene.mode == "comment":
+            self.modeInformation.append(self.comment_widget.getCurrentItemRow())
+
+        # after grabbed mode information, reset comment_widget
+        self.comment_widget.reset()
+
         del self.scene
         self.scene = None
 
@@ -320,7 +334,15 @@ class Annotator(QWidget):
             assert plomDict["maxMark"] == self.maxMark, "mismatch between maxMarks"
 
         # Set current mark to 0.
-        self.score = 0
+        # 2 = mark-up = mark starts at 0 and user increments it
+        # 3 = mark-down = mark starts at max and user decrements it
+        if self.markStyle == 2:  # markUp
+            self.score = 0
+        elif self.markStyle == 3:  # markDown
+            self.score = self.maxMark
+        else:  # must be mark-total
+            log.warn("Using mark-total. This should not happen.")
+            self.score = 0
 
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
@@ -345,9 +367,22 @@ class Annotator(QWidget):
         else:
             self.markHandler.resetAndMaybeChange(self.maxMark, self.markStyle)
 
+        # update the displayed score - fixes #843
+        self.changeMark(self.score)
+
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
             self.unpickleIt(plomDict)
+
+        # TODO: Make handling of comment less hack.
+        log.debug("Restore mode info = {}".format(self.modeInformation))
+        self.scene.setMode(self.modeInformation[0])
+        if self.modeInformation[0] == "delta":
+            self.markHandler.clickDelta(self.modeInformation[1])
+        if self.modeInformation[0] == "comment":
+            self.comment_widget.setCurrentItemRow(self.modeInformation[1])
+            self.comment_widget.CL.handleClick()
+
         # reset the timer (its not needed to make a new one)
         self.timer.start()
 
@@ -667,7 +702,7 @@ class Annotator(QWidget):
                 self, testNumber, self.pageData, self.testViewFiles,
             )
         if self.rearrangeView.exec_() == QDialog.Accepted:
-            stuff = self.parentMarkerUI.permuteAndGimmeSame(
+            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(
                 self.tgvID, self.rearrangeView.permute
             )
             ## TODO: do we need to do this?
@@ -819,6 +854,7 @@ class Annotator(QWidget):
         else:
             # this should also not happen - except by strange async race issues. So we don't change anything.
             pass
+
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
             self.scene.setMode(newMode)
@@ -895,12 +931,12 @@ class Annotator(QWidget):
         if self.scene:
             if not self.saveAnnotations():
                 return
-            print("We have surrendered {}".format(self.tgvID))
+            log.debug("We have surrendered {}".format(self.tgvID))
             oldtgv = self.tgvID
             self.closeCurrentTGV()
         else:
             oldtgv = None
-        stuff = self.parentMarkerUI.gimmeMore(oldtgv)
+        stuff = self.parentMarkerUI.getMorePapers(oldtgv)
         if not stuff:
             ErrorMessage("No more to grade?").exec_()
             # Not really safe to give it back? (at least we did the view...)
@@ -1048,12 +1084,14 @@ class Annotator(QWidget):
             "tick": lambda: self.ui.tickButton.animateClick(),
         }
         if mode == "delta" and aux is not None:
+            # make sure that the mark handler has been set.
             self.markHandler.loadDeltaValue(aux)
         elif mode == "comment" and aux is not None:
             self.comment_widget.setCurrentItemRow(aux)
             self.ui.commentButton.animateClick()
         else:
             self.loadModes.get(mode, lambda *args: None)()
+
 
     def setButtons(self):
         """ Connects buttons to their corresponding functions. """

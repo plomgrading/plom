@@ -18,7 +18,8 @@
 ## Identifier
 * get "/ID/progress" - return [#done, #total]
 * get "/ID/tasks/available" - return [next available task] or 204-code (if none)
-* get "/ID/classlist" - return classlist file
+* get "/ID/classlist" - return classlist data
+* put "/ID/classlist" - upload classlist data
 * get "/ID/predictions" - return prediction-list file
 * get "/ID/tasks/complete" - return list of tasks completed by that user
 * get "/ID/images/{tgv}" - return the image-file for that TGV

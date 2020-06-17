@@ -24,7 +24,7 @@ from plom import Plom_API_Version as serverAPI
 from plom import Default_Port
 from plom import SpecParser
 from plom import specdir
-from plom.db.examDB import PlomDB
+from plom.db import PlomDB
 
 from .authenticate import Authority
 
@@ -90,7 +90,8 @@ class Server(object):
         self.Version = __version__
         print(
             "Server launching with masterToken = '{}' {}".format(
-                self.authority.get_master_token(), type(self.authority.get_master_token())
+                self.authority.get_master_token(),
+                type(self.authority.get_master_token()),
             )
         )
         self.tempDirectory = tempfile.TemporaryDirectory()
@@ -138,7 +139,7 @@ class Server(object):
     from .plomServer.serverUpload import (
         addTestPage,
         addHWPage,
-        addXPage,
+        addLPage,
         processHWUploads,
         processTUploads,
         addUnknownPage,
@@ -154,7 +155,7 @@ class Server(object):
         getDiscardImage,
         getTPageImage,
         getHWPageImage,
-        getXPageImage,
+        getLPageImage,
         getQuestionImages,
         getTestImages,
         checkPage,
@@ -170,10 +171,11 @@ class Server(object):
         IDgetNextTask,
         IDgetDoneTasks,
         IDgetImage,
-        IDgetRandomImage,
+        IDgetImageFromATest,
         IDclaimThisTask,
         IDdidNotFinish,
-        IDreturnIDdTask,
+        id_paper,
+        ID_id_paper,
         IDdeletePredictions,
         IDrunPredictions,
         IDreviewID,
@@ -217,7 +219,7 @@ class Server(object):
         RgetMarkHistogram,
         RgetMarked,
         RgetIdentified,
-        RgetCompletions,
+        RgetCompletionStatus,
         RgetOutToDo,
         RgetStatus,
         RgetSpreadsheet,
