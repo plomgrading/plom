@@ -117,7 +117,7 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadXPage(self, sid, order, sname, fname, md5sum):
+    def uploadLPage(self, sid, order, sname, fname, md5sum):
         self.SRmutex.acquire()
         try:
             param = {
@@ -136,7 +136,7 @@ class ScanMessenger(BaseMessenger):
                 }
             )
             response = self.session.put(
-                "https://{}/admin/xPages".format(self.server),
+                "https://{}/admin/lPages".format(self.server),
                 json={"user": self.user, "token": self.token},
                 data=dat,
                 headers={"Content-Type": dat.content_type},

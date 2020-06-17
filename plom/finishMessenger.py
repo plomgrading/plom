@@ -37,11 +37,11 @@ class FinishMessenger(BaseMessenger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def RgetCompletions(self):
+    def RgetCompletionStatus(self):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/REP/completions".format(self.server),
+                "https://{}/REP/completionStatus".format(self.server),
                 verify=False,
                 json={"user": self.user, "token": self.token},
             )

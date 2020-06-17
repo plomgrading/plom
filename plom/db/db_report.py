@@ -54,7 +54,7 @@ def RgetIncompleteTests(self):
                     )
         # then append l-pages in order
         for p in tref.lpages:
-            page_state.append(["x.{}".format(p.order), 0, True])
+            page_state.append(["l.{}".format(p.order), 0, True])
             # we don't know the version
         incomp_dict[tref.test_number] = page_state
     log.debug("Sending list of incomplete tests")
@@ -107,7 +107,7 @@ def RgetProgress(self, q, v):
             NMarked += 1
             SMark += qref.annotations[-1].mark
             SMTime += qref.annotations[-1].marking_time
-            if datetime.now() - x.annotations[-1].time < one_hour:
+            if datetime.now() - qref.annotations[-1].time < one_hour:
                 NRecent += 1
 
     log.debug("Sending progress summary for Q{}v{}".format(q, v))
@@ -150,7 +150,7 @@ def RgetMarkHistogram(self, q, v):
         if qref.annotations[-1].mark not in histogram[qref.user.name]:
             histogram[qref.user.name][qref.annotations[-1].mark] = 0
         # add to the count.
-        histogram[x.user.name][x.annotations[-1].mark] += 1
+        histogram[qref.user.name][qref.annotations[-1].mark] += 1
     log.debug("Sending mark histogram for Q{}v{}".format(q, v))
     return histogram
 

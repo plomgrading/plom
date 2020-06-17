@@ -60,7 +60,7 @@ class ReportHandler:
             return web.Response(status=401)
         return web.json_response(self.server.RgetIdentified(), status=200)
 
-    # @routes.get("/REP/completions")
+    # @routes.get("/REP/completionStatus")
     @authenticate_by_token_required_fields(["user"])
     def RgetCompletionStatus(self, d, request):
         if not d["user"] == "manager":

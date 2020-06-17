@@ -76,7 +76,7 @@ class UploadHandler:
         )
         return web.json_response(rmsg, status=200)  # all good
 
-    async def uploadXPage(self, request):
+    async def uploadLPage(self, request):
         reader = MultipartReader.from_response(request)
 
         part0 = await reader.next()  # should be parameters
@@ -98,7 +98,7 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         image = await part1.read()
         # file it away.
-        rmsg = self.server.addXPage(
+        rmsg = self.server.addLPage(
             param["sid"], param["order"], param["fileName"], image, param["md5sum"],
         )
         return web.json_response(rmsg, status=200)  # all good
@@ -649,7 +649,7 @@ class UploadHandler:
     def setUpRoutes(self, router):
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/hwPages", self.uploadHWPage)
-        router.add_put("/admin/xPages", self.uploadXPage)
+        router.add_put("/admin/lPages", self.uploadLPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
         router.add_put("/admin/missingTestPage/{tpv}", self.replaceMissingTestPage)
