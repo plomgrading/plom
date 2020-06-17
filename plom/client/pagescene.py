@@ -728,9 +728,8 @@ class PageScene(QGraphicsScene):
             img = QImage()
             if img.loadFromData(data):
                 img.loadFromData(data)
-                print("worked")
             else:
-                print("uhoh")
+                print("Encountered a problem loading image.")
             self.undoStack.push(CommandImage(self, QPointF(X[0], X[1]), img,
                                              X[3], X[4], X[2]))
 
