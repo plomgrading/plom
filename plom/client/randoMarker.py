@@ -170,7 +170,7 @@ class SceneParent(QWidget):
         self.score += delta
 
 
-def annotatePaper(task, imageList, aname, tags):
+def annotatePaper(maxMark, task, imageList, aname, tags):
     print("Do stuff to task ", task)
     print("Tags are ", tags)
     # Image names = "<task>.<imagenumber>.<ext>"
@@ -183,7 +183,7 @@ def annotatePaper(task, imageList, aname, tags):
                 with open(tmp, "wb+") as fh:
                     fh.write(imageList[i])
             annot = SceneParent()
-            annot.doStuff(inames, aname, 10, random.choice([2, 3]))
+            annot.doStuff(inames, aname, maxMark, random.choice([2, 3]))
             annot.doRandomAnnotations()
             return annot.doneAnnotating()
     except Exception as e:
@@ -193,8 +193,8 @@ def annotatePaper(task, imageList, aname, tags):
 
 def startMarking(question, version):
     print("Start work on question {} version {}".format(question, version))
-    mx = messenger.MgetMaxMark(question, version)
-    print("Maximum mark = ", mx)
+    maxMark = messenger.MgetMaxMark(question, version)
+    print("Maximum mark = ", maxMark)
     k = 0
     while True:
         task = messenger.MaskNextTask(question, version)
@@ -213,7 +213,8 @@ def startMarking(question, version):
             aFile = os.path.join(td, "argh.png")
             plomFile = aFile[:-3] + "plom"
             commentFile = aFile[:-3] + "json"
-            score = annotatePaper(task, imageList, aFile, tags)
+            score = annotatePaper(maxMark, task, imageList, aFile, tags)
+            print("Score of {} out of {}".format(score, maxMark))
             messenger.MreturnMarkedTask(
                 task,
                 question,
