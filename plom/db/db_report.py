@@ -14,7 +14,7 @@ def RgetScannedTests(self):
     Each test lists pairs [page-code, page-version].
     page-code is t{page}, hw{question}{order}, or l{order}.
     """
-    rval = {}
+    scan_dict = {}
     for tref in Test.select().where(Test.scanned == True):
         pScanned = []
         # first append test-pages
@@ -29,9 +29,9 @@ def RgetScannedTests(self):
         # then append x-pages in order
         for p in tref.lpages:
             pScanned.append(["l.{}".format(p.order), 0])  # we don't know the version
-        rval[tref.test_number] = pScanned
+        scan_dict[tref.test_number] = pScanned
     log.debug("Sending list of scanned tests")
-    return rval
+    return scan_dict
 
 
 def RgetIncompleteTests(self):
@@ -40,7 +40,7 @@ def RgetIncompleteTests(self):
     Each test lists triples [page-code, page-version, scanned_or_not].
     page-code is t{page}, hw{question}{order}, or l{order}.
     """
-    rval = {}
+    incomp_dict = {}
     for tref in Test.select().where(Test.scanned == False, Test.used == True):
         page_state = []
         for p in tref.tpages:
@@ -56,19 +56,19 @@ def RgetIncompleteTests(self):
         for p in tref.lpages:
             page_state.append(["x.{}".format(p.order), 0, True])
             # we don't know the version
-        rval[tref.test_number] = page_state
+        incomp_dict[tref.test_number] = page_state
     log.debug("Sending list of incomplete tests")
-    return rval
+    return incomp_dict
 
 
 def RgetUnusedTests(self):
     """Return list of tests (by testnumber) that have not been used - ie no test-pages scanned, no hw pages scanned, no loose pages scanned.
     """
-    rval = []
+    unused_list = []
     for tref in Test.select().where(Test.used == False):
-        rval.append(tref.test_number)
+        unused_list.append(tref.test_number)
     log.debug("Sending list of unused tests")
-    return rval
+    return unused_list
 
 
 def RgetIdentified(self):
@@ -76,11 +76,11 @@ def RgetIdentified(self):
     Return dict of identified tests - ie ones for which student ID/name are known.
     Indexed by test-number, lists pairs (student_id/student_name).
     """
-    rval = {}
+    idd_dict = {}
     for iref in IDGroup.select().where(IDGroup.identified == True):
-        rval[iref.test.test_number] = (iref.student_id, iref.student_name)
+        idd_dict[iref.test.test_number] = (iref.student_id, iref.student_name)
     log.debug("Sending list of identified tests")
-    return rval
+    return idd_dict
 
 
 def RgetProgress(self, q, v):
