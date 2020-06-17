@@ -159,9 +159,9 @@ class IDHandler:
 
         next_task_code = self.server.IDgetNextTask()  # returns [True, code] or [False]
         next_task_available = next_task_code[0]
-        next_task_code = next_task_code[1]
 
         if next_task_available:
+            next_task_code = next_task_code[1]
             return web.json_response(next_task_code, status=200)
         else:
             return web.Response(status=204)  # no papers left
