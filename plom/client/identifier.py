@@ -722,7 +722,8 @@ class IDClient(QWidget):
                         self.ui.nameEdit.text()
                     )
                     + "Corresponding students IDs include:\n"
-                    + ", ".join(sidlist)
+                    + ", ".join(sidlist) + ".\n\n"
+                    + "Try entering the student ID instead."
                 ).exec_()
                 return
 
