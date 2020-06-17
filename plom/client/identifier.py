@@ -380,7 +380,7 @@ class IDClient(QWidget):
         idList = messenger.IDrequestDoneTasks()
         for x in idList:
             self.addPaperToList(
-                Paper(x[0], fnames=[], stat="identified", id=x[2], name=x[3]),
+                Paper(x[0], fnames=[], stat="identified", id=x[1], name=x[2]),
                 update=False,
             )
 

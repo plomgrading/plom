@@ -210,7 +210,6 @@ class BaseMessenger(object):
                 "https://{}/info/general".format(self.server), verify=False,
             )
             response.raise_for_status()
-            pv = response.json()
         except requests.HTTPError as e:
             if response.status_code == 404:
                 raise PlomSeriousException(
@@ -221,15 +220,7 @@ class BaseMessenger(object):
         finally:
             self.SRmutex.release()
 
-        fields = (
-            "name",
-            "numberToProduce",
-            "numberOfPages",
-            "numberOfQuestions",
-            "numberOfVersions",
-            "publicCode",
-        )
-        return dict(zip(fields, pv))
+        return response.json()
 
 
 class Messenger(BaseMessenger):
@@ -449,6 +440,13 @@ class Messenger(BaseMessenger):
         return imageList
 
     def IDreturnIDdTask(self, code, studentID, studentName):
+        """Return a completed IDing task: identify a paper.
+
+        Exceptions:
+            PlomConflict: `studentID` already used on a different paper.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.put(
@@ -464,17 +462,11 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 409:
-                raise PlomBenignException(
-                    "Student number {} already in use".format(e)
-                ) from None
+                raise PlomConflict(e) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
+                raise PlomSeriousException(e) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)

@@ -39,6 +39,8 @@ def log_request(request_name, request):
 
 
 # TODO: try to work the @routes decorator in too
+# TODO: does not work if the function to be decorated needs access to `requests`,
+#       see e.g., `routesUpload.getPageVersionMap`
 def authenticate_by_token(f):
     """Decorator for authentication by token, logging and field validation.
 

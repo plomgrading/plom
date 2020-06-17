@@ -22,6 +22,10 @@ class PlomBenignException(BenignException):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
+class PlomConflict(BenignException):
+    """The action was contradictory to info already in the system."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
 
 class PlomNoMoreException(BenignException):
     def __init__(self, *args, **kwargs):

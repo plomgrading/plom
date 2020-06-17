@@ -14,7 +14,6 @@ from multiprocessing import Pool
 from tqdm import tqdm
 
 from plom import specdir
-from plom.db import PlomDB
 from .mergeAndCodePages import make_PDF
 from . import paperdir
 
@@ -61,7 +60,7 @@ def _make_PDF(x):
     make_PDF(*x)
 
 
-def build_all_papers(spec, DB_file_name, named=False):
+def build_all_papers(spec, global_page_version_map, named=False):
     """Builds the papers using _make_PDF.
 
     Based on `numberToName` this uses `_make_PDF` to create some
@@ -88,22 +87,20 @@ def build_all_papers(spec, DB_file_name, named=False):
                            '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
                           }
                        }
-
-        DB_file_name {Str} -- Database file name path.
+        global_page_version_map (dict): dict of dicts mapping first by
+            paper number (int) then by page number (int) to version (int).
 
     Keyword Arguments:
         named {boolean} -- Whether the document is named or not. (default: {False})
     """
 
     if named and spec["numberToName"] > 0:
+        # TODO: get from server
         students = read_class_list()
-
-    exam_DB = PlomDB(DB_file_name)
 
     make_PDF_args = []
     for paper_index in range(1, spec["numberToProduce"] + 1):
-        page_version = exam_DB.getPageVersions(paper_index)
-
+        page_version = global_page_version_map[paper_index]
         if named and paper_index <= spec["numberToName"]:
             student_info = {
                 "id": students[paper_index][0],
@@ -131,18 +128,17 @@ def build_all_papers(spec, DB_file_name, named=False):
         r = list(tqdm(pool.imap_unordered(_make_PDF, make_PDF_args), total=num_PDFs))
 
 
-def confirm_processed(spec, DB_file_name):
-    """A function that checks if the pdfs are created in the correct folder.
+def confirm_processed(spec, msgr):
+    """Checks that each PDF file was created and notify server.
 
     Arguments:
-        spec {type} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
-        DB_file_name {Str} -- Database file name path
+        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
+        msgr (Messenger): an open active connection to the server.
 
     Raises:
-        RuntimeError: Runtime error thrown if the pdf file is not found
+        RuntimeError: raised if any of the expected PDF files not found.
     """
 
-    exam_DB = PlomDB(DB_file_name)
     if spec["numberToName"] > 0:
         students = read_class_list()
     for paper_index in range(1, spec["numberToProduce"] + 1):
@@ -158,24 +154,21 @@ def confirm_processed(spec, DB_file_name):
 
         # We will raise and error if the pdf file was not found
         if os.path.isfile(PDF_file_name):
-            exam_DB.produceTest(paper_index)
+            msgr.notify_pdf_of_paper_produced(paper_index)
         else:
             raise RuntimeError('Cannot find pdf for paper "{}"'.format(PDF_file_name))
 
 
-def confirm_named(spec, DB_file_name):
-    """Confirms that each paper in the spec has a corresponding PDF present.
+def identify_prenamed(spec, msgr):
+    """Identify papers that pre-printed names on the server.
 
     Arguments:
-        spec {dict} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
-                          Example: See description for build_all_papers
-        DB_file_name {Str} -- Database file name path
+        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
+        msgr (Messenger): an open active connection to the server.
 
     Raises:
-        RuntimeError: Runtime error thrown if the pdf file is not found
+        RuntimeError: raised if any of the expected PDF files not found.
     """
-
-    exam_DB = PlomDB(DB_file_name)
     if spec["numberToName"] > 0:
         students = read_class_list()
     for paper_index in range(1, spec["numberToProduce"] + 1):
@@ -184,7 +177,7 @@ def confirm_named(spec, DB_file_name):
                 str(paper_index).zfill(4), students[paper_index][0]
             )
             if os.path.isfile(PDF_file_name):
-                exam_DB.identifyTest(
+                msgr.id_paper(
                     paper_index, students[paper_index][0], students[paper_index][1]
                 )
             else:

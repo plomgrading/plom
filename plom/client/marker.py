@@ -166,21 +166,13 @@ class BackgroundUploader(QThread):
             thread: it depends on where that code is called!
 
         Args:
-            *args:
-                task (str): the Task ID for the page being uploaded. Takes the form
-                    "q1234g9" = test 1234 question 9.
-                grade (int): grade given to question.
-                filenames (list[str]): a list containing the annotated file's name,
-                the .plom file's name and the comment file's name, in that order.
-                mtime (int): the marking time for this specific question
-                    (in seconds).
-                question (int or str): the question number
-                ver (int or str): the version number
-                tags (str): any tags associated with this exam.
+            *args: all input arguments are cached and will eventually be
+                passed untouched to the `upload` function.  There is one
+                exception: `args[0]` is assumed to contain the task str
+                of the form `"q1234g9"` for printing debugging messages.
 
         Returns:
             None
-
         """
         log.debug("upQ enqueing item from main thread " + str(threading.get_ident()))
         self.q.put(args)
@@ -1146,7 +1138,7 @@ class MarkerClient(QWidget):
             # TODO: might not the "markedList" have some other statuses?
             self.examModel.addPaper(
                 ExamQuestion(
-                    x[0], fnames=[], stat="marked", mrk=x[2], mtime=x[3], tags=x[4]
+                    x[0], fnames=[], stat="marked", mrk=x[1], mtime=x[2], tags=x[3]
                 )
             )
 

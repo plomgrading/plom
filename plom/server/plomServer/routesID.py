@@ -85,20 +85,56 @@ class IDHandler:
 
     # @routes.put("/ID/tasks/{task}")
     @authenticate_by_token_required_fields(["user", "sid", "sname"])
-    def IDreturnIDdTask(self, data, request):
-        testNumber = request.match_info["task"]
-        rmsg = self.server.IDreturnIDdTask(
-            data["user"], testNumber, data["sid"], data["sname"]
+    def IdentifyPaperTask(self, data, request):
+        """Identify a paper based on a task.
+
+        Returns:
+            403: some other user owns this task.
+            404: papernum not found, or other data errors.
+            409: student number `data["sid"]` is already in use.
+        """
+        papernum = request.match_info["task"]
+        r, what, msg = self.server.ID_id_paper(
+            papernum, data["user"], data["sid"], data["sname"]
         )
-        # returns [True] if all good
-        # [False, True] - if student number already in use
-        # [False, False] - if bigger error
-        if rmsg[0]:  # all good
+        if r:
             return web.Response(status=200)
-        elif rmsg[1]:  # student number already in use
-            return web.Response(status=409)
-        else:  # a more serious error - can't find this in database
-            return web.Response(status=404)
+        elif what == 409:
+            raise web.HTTPConflict(reason=msg)
+        elif what == 404:
+            raise web.HTTPNotFound(reason=msg)
+        elif what == 403:
+            raise web.HTTPForbidden(reason=msg)
+        else:
+            # catch all that should not happen.
+            raise web.HTTPInternalServerError(reason=msg)
+
+    # @routes.put("/ID/{papernum}")
+    @authenticate_by_token_required_fields(["user", "sid", "sname"])
+    def IdentifyPaper(self, data, request):
+        """Identify a paper directly without certain checks.
+
+        Only "manager" can perform this action.  Typical client IDing
+        would call func:`IdentifyPaperTask` instead.
+
+        Returns:
+            400: not manager.
+            404: papernum not found, or other data errors.
+            409: student number `data["sid"]` is already in use.
+        """
+        if not data["user"] == "manager":
+            raise web.HTTPBadRequest(reason="Not manager")
+        papernum = request.match_info["papernum"]
+        r, what, msg = self.server.id_paper(papernum, "HAL", data["sid"], data["sname"])
+        if r:
+            return web.Response(status=200)
+        elif what == 409:
+            raise web.HTTPConflict(reason=msg)
+        elif what == 404:
+            raise web.HTTPNotFound(reason=msg)
+        else:
+            # catch all that should not happen.
+            raise web.HTTPInternalServerError(reason=msg)
 
     # @routes.delete("/ID/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
@@ -109,12 +145,12 @@ class IDHandler:
 
     # @routes.get("/ID/randomImage")
     @authenticate_by_token_required_fields(["user"])
-    def IDgetRandomImage(self, data, request):
+    def IDgetImageFromATest(self, data, request):
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
             return web.Response(status=401)  # only manager
 
-        rmsg = self.server.IDgetRandomImage()
+        rmsg = self.server.IDgetImageFromATest()
         if rmsg[0] is False:
             return web.Response(status=410)
 
@@ -135,7 +171,9 @@ class IDHandler:
 
         return web.json_response(self.server.IDdeletePredictions(), status=200)
 
-    @authenticate_by_token_required_fields(["user", "rectangle", "fileNumber", "ignoreStamp"])
+    @authenticate_by_token_required_fields(
+        ["user", "rectangle", "fileNumber", "ignoreStamp"]
+    )
     def IDrunPredictions(self, data, request):
         # TODO: maybe we want some special message here?
         if data["user"] != "manager":
@@ -170,9 +208,10 @@ class IDHandler:
         router.add_get("/ID/images/{test}", self.IDgetImage)
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
-        router.add_put("/ID/tasks/{task}", self.IDreturnIDdTask)
+        router.add_put("/ID/{papernum}", self.IdentifyPaper)
+        router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
         router.add_delete("/ID/tasks/{task}", self.IDdidNotFinishTask)
-        router.add_get("/ID/randomImage", self.IDgetRandomImage)
+        router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.IDrunPredictions)
         router.add_patch("/ID/review", self.IDreviewID)

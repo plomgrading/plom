@@ -1,17 +1,12 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2020 Colin B. Macdonald
 
 import random
 from plom.db import PlomDB
 
 
-def buildExamDatabase(spec, dbFname):
+def buildExamDatabaseFromSpec(spec, db):
     """Build metadata for exams from spec and insert into the database.
 
     Arguments:
@@ -35,13 +30,22 @@ def buildExamDatabase(spec, dbFname):
                                 '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
                             }
                           }
-        dbFname {str} -- The name of the database we are creating.
+        db (database): the database to populate.
+
+    Returns:
+        bool: True if succuess.
+        str: a status string, one line per test, ending with an error if failure.
+
+    Raises:
+        ValueError: if database already populated.
     """
+    if db.areAnyPapersProduced():
+        raise ValueError("Database already populated")
 
     random.seed(spec["privateSeed"])
-    examDB = PlomDB(dbFname)
 
-    errFlag = False
+    ok = True
+    status = ""
     for q in range(spec["numberOfQuestions"]):
         for v in range(spec["numberOfVersions"]):
             if examDB.createAnnotationBundle(q + 1, v + 1):
@@ -52,28 +56,29 @@ def buildExamDatabase(spec, dbFname):
                         q + 1, v + 1
                     )
                 )
-                errFlag = True
+                ok = False
+                status += "Error making bundle for q.v={}.{}".format(q + 1, v + 1)
 
     # Note: need to produce these in a particular order for random seed to be
     # reproducibile: so this really must be a loop, not a Pool.
     for t in range(1, spec["numberToProduce"] + 1):
-        if examDB.createTest(t):
-            print("DB entry for test {:04}:".format(t), end="")
+        if db.createTest(t):
+            status += "DB entry for test {:04}:".format(t)
         else:
-            print("Error - problem creating test {}".format(t))
-            errFlag = True
+            status += " Error creating"
+            ok = False
 
-        if examDB.createIDGroup(t, spec["idPages"]["pages"]):
-            print(" ID", end="")
+        if db.createIDGroup(t, spec["idPages"]["pages"]):
+            status += " ID"
         else:
-            print("Error - problem creating idgroup for test {}".format(t))
-            errFlag = True
+            status += " Error creating idgroup"
+            ok = False
 
-        if examDB.createDNMGroup(t, spec["doNotMark"]["pages"]):
-            print(" DNM", end="")
+        if db.createDNMGroup(t, spec["doNotMark"]["pages"]):
+            status += " DNM"
         else:
-            print("Error - problem creating DoNotMark-group for test {}".format(t))
-            errFlag = True
+            status += "Error creating DoNotMark-group"
+            ok = False
 
         for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
             gs = str(g + 1)  # now a str and 1,2,3,...
@@ -88,21 +93,16 @@ def buildExamDatabase(spec, dbFname):
                 v = random.randint(1, spec["numberOfVersions"])
                 vstr = "v{}".format(v)
             else:
-                print(
-                    'ERROR - problem with spec: expected "fix" or "shuffle" but got "{}".'.format(
+                # TODO: or RuntimeError?
+                raise ValueError(
+                    'problem with spec: expected "fix" or "shuffle" but got "{}".'.format(
                         spec["question"][gs]["select"]
                     )
                 )
-                exit(1)
-            if examDB.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
-                print(" Q{}{}".format(gs, vstr), end="")
+            if db.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
+                status += " Q{}{}".format(gs, vstr)
             else:
-                print("Error - problem creating Question {} for test {}".format(gs, t))
-                errFlag = True
-        print("")
-    if errFlag:
-        print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
-        print(
-            "There were errors during database creation. Remove the database and try again."
-        )
-        print(">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<")
+                status += "Error creating Question {} ver {}".format(gs, vstr)
+                ok = False
+        status += "\n"
+    return ok, status

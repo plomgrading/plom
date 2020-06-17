@@ -563,9 +563,9 @@ class Manager(QWidget):
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
             vp = managerMessenger.getHWPageImage(t, q, o)
-        elif pdetails[0] == "x":  # is a hw-page = hw.o
+        elif pdetails[0] == "l":  # is an l-page = l.o
             o = pdetails.split(".")[1]
-            vp = managerMessenger.getXPageImage(t, o)
+            vp = managerMessenger.getLPageImage(t, o)
         else:  # future = extra-page
             return
 
@@ -990,7 +990,7 @@ class Manager(QWidget):
         self.ui.overallTW.clearContents()
         self.ui.overallTW.setRowCount(0)
 
-        opDict = managerMessenger.RgetCompletions()
+        opDict = managerMessenger.RgetCompletionStatus()
         tk = list(opDict.keys())
         tk.sort(key=int)  # sort in numeric order
         r = 0
@@ -1039,7 +1039,7 @@ class Manager(QWidget):
 
     def selectRectangle(self):
         try:
-            imageList = managerMessenger.IDgetRandomImage()
+            imageList = managerMessenger.IDgetImageFromATest()
         except PlomNoMoreException as err:
             ErrorMessage("No unIDd images to show.").exec_()
             return
@@ -1055,11 +1055,12 @@ class Manager(QWidget):
             if srw.exec_() == QDialog.Accepted:
                 self.IDrectangle = srw.rectangle
                 self.IDwhichFile = srw.whichFile
-                if self.IDrectangle is None:   # We do not allow the IDReader to run if no rectangle is selected (this would cause a crash)
+                if (
+                    self.IDrectangle is None
+                ):  # We do not allow the IDReader to run if no rectangle is selected (this would cause a crash)
                     self.ui.predictButton.setEnabled(False)
                 else:
                     self.ui.predictButton.setEnabled(True)
-                
 
     def viewIDPage(self):
         idi = self.ui.predictionTW.selectedIndexes()
