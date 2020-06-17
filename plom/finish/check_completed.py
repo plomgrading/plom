@@ -99,7 +99,7 @@ def main(server=None, password=None):
     spec = msgr.getInfoGeneral()
     max_papers = spec["numberToProduce"]
     numberOfQuestions = spec["numberOfQuestions"]
-    completions = msgr.RgetCompletions()
+    completions = msgr.RgetCompletionStatus()
     outToDo = msgr.RgetOutToDo()
 
     msgr.closeUser()

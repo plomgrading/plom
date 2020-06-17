@@ -76,7 +76,7 @@ class UploadHandler:
         )
         return web.json_response(rmsg, status=200)  # all good
 
-    async def uploadXPage(self, request):
+    async def uploadLPage(self, request):
         reader = MultipartReader.from_response(request)
 
         part0 = await reader.next()  # should be parameters
@@ -98,7 +98,7 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         image = await part1.read()
         # file it away.
-        rmsg = self.server.addXPage(
+        rmsg = self.server.addLPage(
             param["sid"], param["order"], param["fileName"], image, param["md5sum"],
         )
         return web.json_response(rmsg, status=200)  # all good
@@ -163,7 +163,9 @@ class UploadHandler:
 
     async def replaceMissingTestPage(self, request):
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "page", "version"]):
+        if not validate_required_fields(
+            data, ["user", "token", "test", "page", "version"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -200,7 +202,9 @@ class UploadHandler:
 
     async def removeScannedPage(self, request):
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "page", "version"]):
+        if not validate_required_fields(
+            data, ["user", "token", "test", "page", "version"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -256,7 +260,9 @@ class UploadHandler:
 
     async def getTPageImage(self, request):
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "page", "version"]):
+        if not validate_required_fields(
+            data, ["user", "token", "test", "page", "version"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -271,7 +277,9 @@ class UploadHandler:
 
     async def getHWPageImage(self, request):  # should this use version too?
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "question", "order"]):
+        if not validate_required_fields(
+            data, ["user", "token", "test", "question", "order"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -284,7 +292,7 @@ class UploadHandler:
         else:
             return web.Response(status=404)
 
-    async def getXPageImage(self, request):
+    async def getLPageImage(self, request):
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "test", "order"]):
             return web.Response(status=400)
@@ -293,7 +301,7 @@ class UploadHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rval = self.server.getXPageImage(data["test"], data["order"])
+        rval = self.server.getLPageImage(data["test"], data["order"])
         if rval[0]:
             return web.FileResponse(rval[1], status=200)  # all fine
         else:
@@ -381,7 +389,9 @@ class UploadHandler:
 
     async def checkPage(self, request):
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "page", "images"]):
+        if not validate_required_fields(
+            data, ["user", "token", "test", "page", "images"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
@@ -541,11 +551,14 @@ class UploadHandler:
             return web.Response(status=400)  # malformed request.
 
         from plom.db import buildExamDatabaseFromSpec
+
         # TODO this is not the design we have elsewhere, should call helper function
         try:
             r, summary = buildExamDatabaseFromSpec(self.server.testSpec, self.server.DB)
         except ValueError:
-            raise web.HTTPConflict(reason="Database already present: not overwriting") from None
+            raise web.HTTPConflict(
+                reason="Database already present: not overwriting"
+            ) from None
         if r:
             return web.Response(text=summary, status=200)
         else:
@@ -589,7 +602,7 @@ class UploadHandler:
         # return web.json_response(str(pickle.dumps(vers)), status=200)
         return web.json_response(vers, status=200)
 
-    #@route.put("/admin/pdf_produced/{t}")
+    # @route.put("/admin/pdf_produced/{t}")
     @authenticate_by_token_required_fields(["user"])
     def notify_pdf_of_paper_produced(self, data, request):
         """Inform server that a PDF for this paper has been produced.
@@ -623,7 +636,7 @@ class UploadHandler:
         """
         if not data["user"] == "manager":
             return web.Response(status=400)
-        #force_flag = request.match_info["force"]
+        # force_flag = request.match_info["force"]
         paper_idx = request.match_info["papernum"]
         try:
             self.server.DB.produceTest(paper_idx)
@@ -636,7 +649,7 @@ class UploadHandler:
     def setUpRoutes(self, router):
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/hwPages", self.uploadHWPage)
-        router.add_put("/admin/xPages", self.uploadXPage)
+        router.add_put("/admin/lPages", self.uploadLPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
         router.add_put("/admin/missingTestPage/{tpv}", self.replaceMissingTestPage)
@@ -644,7 +657,7 @@ class UploadHandler:
         router.add_delete("/admin/scannedPage/{tpv}", self.removeScannedPage)
         router.add_get("/admin/scannedTPage", self.getTPageImage)
         router.add_get("/admin/scannedHWPage", self.getHWPageImage)
-        router.add_get("/admin/scannedXPage", self.getXPageImage)
+        router.add_get("/admin/scannedLPage", self.getLPageImage)
         router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)
         router.add_get("/admin/discardNames", self.getDiscardNames)
         router.add_get("/admin/collidingPageNames", self.getCollidingPageNames)
@@ -665,4 +678,6 @@ class UploadHandler:
         router.add_put("/admin/populateDB", self.populateExamDatabase)
         router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
-        router.add_put("/admin/pdf_produced/{papernum}", self.notify_pdf_of_paper_produced)
+        router.add_put(
+            "/admin/pdf_produced/{papernum}", self.notify_pdf_of_paper_produced
+        )

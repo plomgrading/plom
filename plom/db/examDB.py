@@ -176,7 +176,7 @@ class PlomDB:
         RgetMarkHistogram,
         RgetMarked,
         RgetQuestionUserProgress,
-        RgetCompletions,
+        RgetCompletionStatus,
         RgetOutToDo,
         RgetStatus,
         RgetSpreadsheet,
