@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
     QGraphicsScene,
     QUndoStack,
-)
+    QMessageBox)
 
 from plom import AnnFontSizePts, ScenePixelHeight
 
@@ -505,14 +505,7 @@ class PageScene(QGraphicsScene):
         self.views()[0].setZoomSelector()
 
     def mousePressImage(self, event):
-        """
-
-        Args:
-            event:
-
-        Returns:
-
-        """
+        """Adds the selected image at the location the mouse is pressed."""
         if self.tempImage is not None:
             currentPos = event.scenePos()
             imageFilePath = self.tempImage
@@ -524,19 +517,10 @@ class PageScene(QGraphicsScene):
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Information)
             msg.setWindowTitle("Image Information")
-            msg.setText("You can double-click on an Image to Rescale")
+            msg.setText("You can double-click on an Image to modify its "
+                        "scale and border.")
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
-        else:
-            self.currentPos = event.scenePos()
-            self.imageItem = self.itemAt(event.scenePos(), QTransform())
-
-    def mouseMoveImage(self, event):
-        pass
-
-    def mouseReleaseImage(self, event):
-        pass
-
 
     # Handle drag / drop events
     def dragEnterEvent(self, e):
@@ -737,24 +721,18 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(CommandHighlight(self, pth))
 
     def unpickleImage(self, X):
-        print("time to unpickle this image")
         print(X[2])
-        if len(X) == 4:
-
+        if len(X) == 5:
             data = QByteArray().fromBase64(bytes(X[2][2:len(X[2])-2],
                                                  encoding='utf-8'))
-            print("data")
-            print(data)
             img = QImage()
             if img.loadFromData(data):
                 img.loadFromData(data)
                 print("worked")
-                print(img.colorTable())
-                img.setColor(155, 35)
             else:
                 print("uhoh")
             self.undoStack.push(CommandImage(self, QPointF(X[0], X[1]), img,
-                                             X[3]))
+                                             X[3], X[4], X[2]))
 
     # Mouse press tool functions
     def mousePressBox(self, event):
