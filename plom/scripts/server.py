@@ -112,23 +112,16 @@ def buildRequiredDirectories():
 
 
 def buildSSLKeys():
-    # check if key/crt already exist;
-    if os.path.isfile(
-        os.path.join("serverConfiguration", "plom.key")
-    ) and os.path.isfile(os.path.join("serverConfiguration", "plom-selfsigned.crt")):
+    """Make new key and cert files if they do not yet exist."""
+    key = Path("serverConfiguration") / "plom.key"
+    cert = Path("serverConfiguration") / "plom-selfsigned.crt"
+    if os.path.isfile(key) and os.path.isfile(cert):
         print("SSL key and certificate already exist - will not change.")
         return
 
-    # Command to generate the self-signed key:
-    # openssl req -x509 -newkey rsa:2048 -keyout selfsigned.key \
-    #          -nodes -out selfsigned.cert -sha256 -days 1000
-
-    # TODO = use os.path.join here.
-    sslcmd = (
-        "openssl req -x509 -sha256 -newkey rsa:2048 -keyout "
-        "serverConfiguration/plom.key -nodes -out "
-        "serverConfiguration/plom-selfsigned.crt -days 1000 -subj"
-    )
+    # Generate new self-signed key/cert
+    sslcmd = "openssl req -x509 -sha256 -newkey rsa:2048"
+    sslcmd += " -keyout {} -nodes -out {} -days 1000 -subj".format(key, cert)
 
     # TODO: is this the way to get two digit country code?
     tmp = locale.getdefaultlocale()[0]

@@ -14,7 +14,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 # Note: Ubuntu ships "python3-opencv" but pip will later grab "opencv_python" anyway
 
 RUN apt-get --no-install-recommends --yes install  \
-    cmake make imagemagick g++ \
+    cmake make imagemagick g++ openssl \
     python3-passlib python3-pandas python3-pyqt5 python3-pytest \
     python3-pyqrcode python3-png python3-dev \
     python3-pip python3-setuptools python3-wheel python3-pil \
