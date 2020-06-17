@@ -159,8 +159,8 @@ def getHWPageImage(self, testNumber, question, order):
     return self.DB.getHWPageImage(testNumber, question, order)
 
 
-def getXPageImage(self, testNumber, order):
-    return self.DB.getXPageImage(testNumber, order)
+def getLPageImage(self, testNumber, order):
+    return self.DB.getLPageImage(testNumber, order)
 
 
 def getUnknownImage(self, fname):

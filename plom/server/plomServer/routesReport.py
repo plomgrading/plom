@@ -62,10 +62,10 @@ class ReportHandler:
 
     # @routes.get("/REP/completions")
     @authenticate_by_token_required_fields(["user"])
-    def RgetCompletions(self, d, request):
+    def RgetCompletionStatus(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
-        return web.json_response(self.server.RgetCompletions(), status=200)
+        return web.json_response(self.server.RgetCompletionStatus(), status=200)
 
     # @routes.get("/REP/outToDo")
     @authenticate_by_token_required_fields(["user"])
@@ -173,7 +173,9 @@ class ReportHandler:
         return web.json_response(rmsg, status=200)
 
     # @routes.get("/REP/annotatedImage")
-    @authenticate_by_token_required_fields(["user", "testNumber", "questionNumber", "version"])
+    @authenticate_by_token_required_fields(
+        ["user", "testNumber", "questionNumber", "version"]
+    )
     def RgetAnnotatedImage(self, d, request):
         if not d["user"] == "manager":
             return web.Response(status=401)
@@ -194,7 +196,7 @@ class ReportHandler:
         router.add_get("/REP/markHistogram", self.RgetMarkHistogram)
         router.add_get("/REP/marked", self.RgetMarked)
         router.add_get("/REP/identified", self.RgetIdentified)
-        router.add_get("/REP/completions", self.RgetCompletions)
+        router.add_get("/REP/completionStatus", self.RgetCompletionStatus)
         router.add_get("/REP/outToDo", self.RgetOutToDo)
         router.add_get("/REP/status/{test}", self.RgetStatus)
         router.add_get("/REP/spreadSheet", self.RgetSpreadsheet)
