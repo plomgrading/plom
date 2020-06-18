@@ -203,7 +203,38 @@ class BaseMessenger(object):
 
         return shortName
 
+    def get_spec(self):
+        """Get the specification of the exam from the server.
+
+        Returns:
+            dict: the server's spec file, as in :func:`plom.SpecVerifier`.
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/info/spec".format(self.server), verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 404:
+                raise PlomSeriousException("Server could not find the spec") from None
+            else:
+                raise PlomSeriousException("Some other sort of error {}".format(e))
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+
     def getInfoGeneral(self):
+        """Get some info from pre-0.5.0 server which don't expose the spec.
+
+        Probably we can deprecate or remove this.  Old clients trying to
+        talk to newer servers will just get a 404.
+
+        Returns:
+            dict: some of the fields of the server's spec file.
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.get(
@@ -212,15 +243,22 @@ class BaseMessenger(object):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server could not find the spec - this should not happen!"
-                )
+                raise PlomSeriousException("Server could not find the spec") from None
             else:
                 raise PlomSeriousException("Some other sort of error {}".format(e))
         finally:
             self.SRmutex.release()
 
-        return response.json()
+        pv = response.json()
+        fields = (
+            "name",
+            "numberToProduce",
+            "numberOfPages",
+            "numberOfQuestions",
+            "numberOfVersions",
+            "publicCode",
+        )
+        return dict(zip(fields, pv))
 
 
 class Messenger(BaseMessenger):

@@ -129,10 +129,10 @@ class UserInitHandler:
         else:
             return web.Response(status=401)  # you are not authorised
 
-    # @routes.get("/info/general")
+    # @routes.get("/info/spec")
     @no_authentication_only_log_request
-    async def InfoGeneral(self, request):
-        r, spec = self.server.InfoGeneral()
+    async def info_spec(self, request):
+        r, spec = self.server.info_spec()
         if r:
             return web.json_response(spec, status=200)
         else:  # server does not have a spec
@@ -153,7 +153,7 @@ class UserInitHandler:
         router.add_put("/users/{user}", self.giveUserToken)
         router.add_put("/admin/reloadUsers", self.adminReloadUsers)
         router.add_get("/info/shortName", self.InfoShortName)
-        router.add_get("/info/general", self.InfoGeneral)
+        router.add_get("/info/spec", self.info_spec)
         router.add_delete("/authorisation", self.clearAuthorisation)
         router.add_delete("/authorisation/{user}", self.clearAuthorisationUser)
         router.add_post("/authorisation/{user}", self.createModifyUser)
