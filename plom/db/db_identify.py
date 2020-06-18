@@ -129,12 +129,16 @@ def IDgetImage(self, user_name, test_number):
     # since user authenticated, this will always return legit ref.
 
     tref = Test.get_or_none(Test.test_number == test_number)
-    if tref.scanned == False:
-        return [False]
+    if tref is None:
+        return [False, "NoTest"]
+    # grab the IDData
     iref = tref.idgroups[0]
+    # check corresponding group is scanned
+    if iref.group.scanned is False:
+        return [False, "NoScan"]
     # quick sanity check to make sure task given to user, (or if manager making request)
     if iref.user != uref and user_name != "manager":
-        return [False]
+        return [False, "NotOwner"]
     rval = [True]
     for p in iref.idpages.order_by(IDPage.order):
         rval.append(p.image.file_name)

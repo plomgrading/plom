@@ -86,7 +86,13 @@ class IDHandler:
         test = request.match_info["test"]
         rmsg = self.server.IDgetImage(data["user"], test)
         if not rmsg[0]:  # user allowed access - returns [true, fname0, fname1,...]
-            return web.Response(status=409)  # someone else has that image
+            if rmsg[1] == "NotOwner":
+                return web.Response(status=409)  # someone else has that image
+            elif rmsg[1] == "NoScan":
+                return web.Response(status=410)  # no such test.
+            else:  # rmsg[1] == "NoTest":
+                return web.Response(status=404)  # no such test.
+
         with MultipartWriter("images") as mpwriter:
             for fn in rmsg[1:]:
                 if os.path.isfile(fn):
