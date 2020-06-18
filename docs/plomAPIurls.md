@@ -1,4 +1,4 @@
-# URLs used for the PLOM API
+# URLs used for the Plom API
 
 ## TODOs
 * build a proper API document which shows inputs and return values etc.
