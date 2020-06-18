@@ -110,8 +110,8 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
     # A pandas DataFrame object including the student id and student_name
     students_list = pandas.read_csv(students_list_path, dtype="object")
 
-    # sample from the students_list
-    students_list = students_list.sample(len(papers_paths))
+    # sample from the students_list - skip the first 100 since they might be used to prename in demo.
+    students_list = students_list[100:].sample(len(papers_paths))
 
     # A complete collection of the pdfs created
     all_pdf_documents = fitz.open()
