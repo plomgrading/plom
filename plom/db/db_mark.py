@@ -215,7 +215,8 @@ def MtakeTaskFromClient(
         qref.status = "done"
         qref.marked = True
         aref = qref.annotations[-1]
-        aref.image = Image.create(file_name=annot_fname, md5sum=md5)
+        # the bundle for this image is given by the (fixed) bundle for the parent qgroup.
+        aref.image = Image.create(file_name=annot_fname, md5sum=md5, bundle=qref.bundle)
         aref.mark = mark
         aref.plom_file = plom_fname
         aref.comment_file = comment_fname

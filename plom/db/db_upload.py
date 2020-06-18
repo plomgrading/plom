@@ -12,29 +12,318 @@ log = logging.getLogger("DB")
 from peewee import fn
 
 
+# clean commands here.
+
+## - upload functions
+def uploadTestPage(
+    self, test_number, page_number, version, original_name, file_name, md5, bundle_name
+):
+    # return value is either [True, <success message>] or
+    # [False, stuff] - but need to distinguish between "discard this image" and "you should perhaps keep this image"
+    tref = Test.get_or_none(test_number=test_number)
+    if tref is None:
+        return [False, "testError", "Cannot find test {}".format(t)]
+    pref = TPage.get_or_none(test=tref, page_number=page_number, version=version)
+    if pref is None:
+        return [
+            False,
+            "pageError",
+            "Cannot find TPage,version {} for test {}".format(
+                [page_number, versions], test_number
+            ),
+        ]
+    if pref.scanned:
+        # have already loaded an image for this page - so this is actually a duplicate
+        log.debug("This appears to be a duplicate. Checking md5sums")
+        if md5 == pref.image.md5sum:
+            # Exact duplicate - md5sum of this image is sames as the one already in database
+            return [
+                False,
+                "duplicate",
+                "Exact duplicate of page already in database",
+            ]
+        # Deal with duplicate pages separately. return to sender (as it were)
+        return [
+            False,
+            "collision",
+            ["{}".format(pref.original_name), test_number, page_number, version],
+        ]
+    else:  # this is a new testpage. create an image and link it to the testpage
+        # we need the bundle-ref now.
+        bref = Bundle.get_or_none(name=bundle_name)
+        if bref is None:
+            return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+
+        with plomdb.atomic():
+            pref.image = Image.create(
+                original_name=original_name,
+                file_name=file_name,
+                md5sum=md5,
+                bundle=bref,
+            )
+            pref.scanned = True
+            pref.save()
+            tref.used = True
+            tref.save()
+            # also link the image to an QPage, DNMPage, or IDPage
+            gref = pref.group
+            gref.save()
+            # set the group as recently uploaded - use to trigger a "clean" later.
+            tref.recent_upload = True
+            if gref.group_type == "i":
+                iref = gref.idgroups[0]
+                idp = IDPage.create(idgroup=iref, image=pref.image, order=page_number)
+            elif gref.group_type == "d":
+                dref = gref.dnmgroups[0]
+                dnmp = DNMPage.create(
+                    dnmgroup=dref, image=pref.image, order=page_number
+                )
+            else:  # is a question page - always add to annotation 0.
+                qref = gref.qgroups[0]
+                aref = qref.annotations[0]
+                ap = APage.create(annotation=aref, image=pref.image, order=page_number)
+
+        log.info(
+            "Uploaded image {} to tpv = {}.{}.{}".format(
+                original_name, test_number, page_number, version
+            )
+        )
+        return [
+            True,
+            "success",
+            "Page saved as tpv = {}.{}.{}".format(test_number, page_number, version),
+        ]
+
+
+def uploadUnknownPage(self, original_name, file_name, order, md5, bundle_name):
+    iref = Image.get_or_none(md5sum=md5)
+    if iref is not None:
+        return [
+            False,
+            "duplicate",
+            "Exact duplicate of page already in database",
+        ]
+    # make sure we know the bundle
+    bref = Bundle.get_or_none(name=bundle_name)
+    if bref is None:
+        return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+    with plomdb.atomic():
+        iref = Image.create(
+            original_name=original_name, file_name=file_name, md5sum=md5, bundle=bref
+        )
+        uref = UnknownPage.create(image=iref, order=order)
+
+    log.info("Uploaded image {} as unknown".format(original_name))
+    return [True, "success", "Page saved in UnknownPage list"]
+
+
+## clean up after uploads
+
+
+def updateDNMGroup(self, dref):
+    """Check all pages present in dnm group and set scanned flag accordingly.
+    Since homework does not upload DNM pages, only check testpages.
+    Will fail if some, but not all, pages scanned.
+    Note - a DNM group can be empty.
+    """
+    gref = dref.group  # find the group-parent of the dnmgroup
+    scan_list = []
+    for p in gref.tpages:
+        scan_list.append(p.scanned)
+    if True in scan_list and False in scan_list:  # some scanned, but not all.
+        return False
+    # all test pages scanned (or all unscanned), so set things ready to go.
+    with plomdb.atomic():
+        gref.scanned = True
+        gref.save()
+        log.info("DNMGroup of test {} is all scanned.".format(tref.test_number))
+    return True
+
+
+def cleanIDGroup(self, iref):
+    tref = iref.test
+    with plomdb.atomic():
+        iref.status = ""
+        iref.user = None
+        iref.time = datetime.now()
+        iref.student_id = None
+        iref.student_name = None
+        iref.identified = False
+        iref.time = datetime.now()
+        iref.save()
+        tref.identified = False
+        tref.save()
+        log.info("IDGroup of test {} cleaned.".format(tref.test_number))
+
+
+def updateIDGroup(self, iref):
+    """Update the ID task when new pages uploaded to IDGroup.
+    If group is all scanned then the associated ID-task should be set to "todo".
+    Note - be careful when group was auto-IDd (which happens when the associated user = HAL) - then we don't change anything.
+    Note - this should only be triggered by a tpage upload.
+    """
+
+    # if IDGroup belongs to HAL then don't mess with it - was auto IDd.
+    if iref.user == User.get(name="HAL"):
+        auto_id = True
+    else:
+        auto_id = False
+        # clean the ID-task and set test-identified flag to false.
+        self.cleanIDGroup(iref)
+
+    # grab associated parent group
+    gref = iref.group
+    # now check if all test-pages pesent - note none-present when a hw upload.
+    for p in gref.tpages:
+        if p.scanned is False:
+            return False  # not yet completely present.
+
+    # all test ID pages present, and group cleaned, so set things ready to go.
+    with plomdb.atomic():
+        gref.scanned = True
+        gref.save()
+        if auto_id is False:
+            iref.status = "todo"
+            iref.save()
+            log.info(
+                "IDGroup of test {} is ready to be identified.".format(
+                    gref.test.test_number
+                )
+            )
+        else:
+            log.info(
+                "IDGroup of test {} is present and already IDd.".format(
+                    gref.test.test_number
+                )
+            )
+    return True
+
+
+def cleanQGroup(self, tref, qref):
+    # TODO
+
+    with plomdb.atomic():
+        # do not delete old annotations, instead make new annotation that belongs to HAL
+        # now delete old annotations
+        for aref in qref.annotations:
+            # skip the 0th edition - it belongs to HAL.
+            if aref.edition > 0:
+                # discard the annotated images
+                DiscardedPage.create(
+                    image=aref.image,
+                    reason="cleaningQGroup",
+                    plom_file=plom_file,
+                    comment_file=comment_file,
+                )
+                # discard the APages
+                for p in aref.apages:
+                    p.delete_instance()
+                aref.delete_instance()
+        qref.user = None
+        qref.status = ""
+        qref.marked = False
+        qref.save()
+        tref.marked = False
+        tref.save()
+
+    log.info("QGroup {} of test {} cleaned".format(qref.question, tref.test_number))
+
+
+def updateQGroup(self, qref):
+    TODO
+
+    # clean up the QGroup and its annotations
+    self.cleanQGroup(tref, qref)
+    # now some logic.
+    # if homework pages present - ready to go.
+    # elif all testpages present - ready to go.
+    # else - not ready.
+    # BUT if there are lpages then we are ready to go.
+
+    gref = qref.group
+
+    if tref.lpages.count() == 0:
+        # check if HW pages = 0
+        if qref.group.hwpages.count() == 0:
+            # then check for testpages
+            for p in gref.tpages:  # there is always at least one.
+                if p.scanned is False:  # missing a test-page - not ready.
+                    return False
+
+    # otherwise we are ready to go.
+    with plomdb.atomic():
+        gref.scanned = True
+        qref.status = "todo"
+        qref.save()
+        gref.save()
+        log.info(
+            "QGroup {} of test {} is ready to be marked.".format(
+                qref.question, tref.testNumber
+            )
+        )
+    return True
+
+
+def updateGroupAfterUpload(self, gref):
+    """Check the type of the group and update accordingly.
+    return success/failure of that update.
+    """
+    if gref.group_type == "i":
+        return self.updateIDGroup(gref.idgroups[0])
+    elif gref.group_type == "d":
+        return self.updateDNMGroup(gref.dnmgroups[0])
+    elif gref.group_type == "q":
+        return self.updateQGroup(gref.qgroups[0])
+    else:
+        raise ValueError("Tertium non datur: should never happen")
+
+
+def processUpdatedTests(self):
+    """Update the groups of tests in response to new uploads.
+    The recent_upload flag is set either for the whole test or for a given group.
+    If the whole test then we must update every group - this happens when lpages are uploaded.
+    If a group is flagged, then we update just that group - this happens when tpages or hwpages are uploaded.
+    """
+    update_count = 0  # how many groups updated
+    # process whole tests first
+    for tref in Test.select.where(Test.recent_upload == True):
+        update_count += self.updateTestAfterUpload(tref)
+    # then process groups
+    for gref in Group.select().where(Group.recent_upload == True):
+        update_count += self.updateGroupAfterUpload(gref)
+
+    return [True, update_count]
+
+
+# still todo below
+
+
 def checkTestAllUploaded(self, gref):
+    """Group gref is all scanned, so now check if testpages for whole test are scanned.
+    """
+    # grab ref to the test.
     tref = gref.test
-    sflag = True
-    for g in tref.groups:
-        if g.scanned == False:
+    scan_flag = True  # whether or not whole test scanned.
+    for gref in tref.groups:
+        if gref.scanned == False:
             # TODO - deal with empty DO NOT MARK groups correctly
-            sflag = False
+            scan_flag = False
             log.debug(
                 "Check: Test {} not yet fully scanned: (at least) {} not present".format(
-                    tref.test_number, g.gid
+                    tref.test_number, gref.gid
                 )
             )
             break
     with plomdb.atomic():
-        if sflag:
+        if scan_flag:
             tref.scanned = True
             log.info(
                 "Check uploaded - Test {} is now fully scanned".format(tref.test_number)
             )
-            # set the status of the sumdata
-            sdref = tref.sumdata[0]
-            sdref.status = "todo"
-            sdref.save()
+            # set the status of the sumdata - it is ready to go.
+            sref = tref.sumdata[0]
+            sref.status = "todo"
+            sref.save()
         else:
             tref.scanned = False
         tref.save()
@@ -232,60 +521,6 @@ def invalidateQGroup(self, tref, gref, delPage=True):
     return rval
 
 
-def uploadTestPage(self, t, p, v, oname, nname, md5):
-    # return value is either [True, <success message>] or
-    # [False, stuff] - but need to distinguish between "discard this image" and "you should perhaps keep this image"
-    # So return either [False, "discard", discard message]
-    # or [False, "keep", keep this image message]
-    tref = Test.get_or_none(test_number=t)
-    if tref is None:
-        return [False, "testError", "Cannot find test {}".format(t)]
-    pref = TPage.get_or_none(test=tref, page_number=p, version=v)
-    if pref is None:
-        return [
-            False,
-            "pageError",
-            "Cannot find TPage,version {} for test {}".format([p, v], t),
-        ]
-    if pref.scanned:
-        # have already loaded an image for this page - so this is actually a duplicate
-        log.debug("This appears to be a duplicate. Checking md5sums")
-        if md5 == pref.md5sum:
-            # Exact duplicate - md5sum of this image is sames as the one already in database
-            return [
-                False,
-                "duplicate",
-                "Exact duplicate of page already in database",
-            ]
-        # Deal with duplicate pages separately. return to sender (as it were)
-        # At present just return "collision" - in future we need to check if this is a new collision
-        # or if it is the duplicate of an existing collision.
-        return [False, "collision", ["{}".format(pref.original_name), t, p, v]]
-    else:  # this is a new testpage. create an image and link it to the testpage
-        with plomdb.atomic():
-            pref.image = Image.create(original_name=oname, file_name=nname, md5sum=md5)
-            pref.scanned = True
-            pref.save()
-            tref.used = True
-            tref.recent_upload = True
-            tref.save()
-            # also link the image to an QPage, DNMPage, or IDPage
-            gref = pref.group
-            if gref.group_type == "i":
-                iref = gref.idgroups[0]
-                idp = IDPage.create(idgroup=iref, image=pref.image, order=p)
-            elif gref.group_type == "d":
-                dref = gref.dnmgroups[0]
-                dnmp = DNMPage.create(dnmgroup=dref, image=pref.image, order=p)
-            else:  # is a question page - always add to annotation 0.
-                qref = gref.qgroups[0]
-                aref = qref.annotations[0]
-                ap = APage.create(annotation=aref, image=pref.image, order=p)
-
-        log.info("Uploaded image {} to tpv = {}.{}.{}".format(oname, t, p, v))
-        return [True, "success", "Page saved as tpv = {}.{}.{}".format(t, p, v)]
-
-
 def uploadHWPage(self, sid, question, order, oname, nname, md5):
     # first of all find the test corresponding to that sid.
     iref = IDGroup.get_or_none(student_id=sid)
@@ -361,21 +596,6 @@ def uploadLPage(self, sid, order, oname, nname, md5):
     return [True]
 
 
-def cleanIDGroup(self, tref, iref):
-    with plomdb.atomic():
-        iref.status = ""
-        iref.user = None
-        iref.time = datetime.now()
-        iref.student_id = None
-        iref.student_name = None
-        iref.identified = False
-        iref.time = datetime.now()
-        iref.save()
-        tref.identified = False
-        tref.save()
-        log.info("IDGroup of test {} cleaned.".format(tref.test_number))
-
-
 def cleanSData(self, tref, sref):
     with plomdb.atomic():
         sref.sum_mark = None
@@ -385,88 +605,6 @@ def cleanSData(self, tref, sref):
         sref.save()
         tref.save()
         log.info("SumData of test {} cleaned.".format(tref.test_number))
-
-
-def cleanQGroup(self, tref, qref):
-    with plomdb.atomic():
-        # do not delete old annotations, instead make new annotation that belongs to HAL
-        # now delete old annotations
-        for aref in qref.annotations:
-            # skip the 0th edition - it belongs to HAL.
-            if aref.edition > 0:
-                # discard the annotated images
-                DiscardedPage.create(
-                    image=aref.image,
-                    reason="cleaningQGroup",
-                    plom_file=plom_file,
-                    comment_file=comment_file,
-                )
-                # discard the APages
-                for p in aref.apages:
-                    p.delete_instance()
-                aref.delete_instance()
-        qref.user = None
-        qref.status = ""
-        qref.marked = False
-        qref.save()
-        tref.marked = False
-        tref.save()
-
-    log.info("QGroup {} of test {} cleaned".format(qref.question, tref.test_number))
-
-
-def processUpdatedIDGroup(self, tref, iref):
-    # if IDGroup belongs to HAL then don't touch it - was auto IDd.
-    if iref.user != User.get(name="HAL"):
-        dave = True
-    else:
-        dave = False
-
-    # return IDGroup to initial state clean.
-    self.cleanIDGroup(tref, iref)
-    gref = iref.group
-    # if hwpages then skip the IDpage check (essentially)
-    if tref.hwpages.count() > 0:
-        pass
-    else:  # if no HWPages then check all the test-pages
-        for p in gref.tpages:
-            if p.scanned is False:
-                return False
-    # all test ID pages present, and group cleaned, so set things ready to go.
-    with plomdb.atomic():
-        gref.scanned = True
-        if dave:
-            iref.status = "todo"
-        iref.save()
-        gref.save()
-        if dave:
-            log.info(
-                "IDGroup of test {} is ready to be identified.".format(tref.test_number)
-            )
-        else:
-            log.info(
-                "IDGroup of test {} is present and already IDd.".format(
-                    tref.test_number
-                )
-            )
-    return True
-
-
-def processUpdatedDNMGroup(self, tref, dref):
-    # homework does not upload DNM pages, so only have to check testPages
-    gref = dref.group
-    # check all the test-pages - we want either all non-scanned, or all scanned.
-    sList = []
-    for p in gref.tpages:
-        sList.append(p.scanned)
-    if True in sList and False in sList:
-        return False
-    # all test pages scanned (or all unscanned), so set things ready to go.
-    with plomdb.atomic():
-        gref.scanned = True
-        gref.save()
-        log.info("DNMGroup of test {} is all scanned.".format(tref.test_number))
-    return True
 
 
 def processUpdatedQGroup(self, tref, qref):
@@ -544,13 +682,6 @@ def processSpecificUpdatedTest(self, tref):
         tref.save()
 
 
-def processUpdatedTests(self):
-    query = Test.select().where(Test.recent_upload == True)
-    for tref in query:
-        self.processSpecificUpdatedTest(tref)
-    return [True, query.count()]
-
-
 def replaceMissingHWQuestion(self, sid, question, oname, nname, md5):
     iref = IDGroup.get_or_none(student_id=sid)
     if iref is None:
@@ -575,24 +706,6 @@ def replaceMissingHWQuestion(self, sid, question, oname, nname, md5):
         tref.recent_upload = True
         tref.save()
     return [True]
-
-
-def uploadUnknownPage(self, oname, nname, md5):
-    # return value is either [True, <success message>] or
-    # [False, <duplicate message>]
-    # check if md5 is already in Unknown pages
-    uref = UnknownPage.get_or_none(md5sum=md5)
-    if uref is not None:
-        return [
-            False,
-            "duplicate",
-            "Exact duplicate of page already in database",
-        ]
-    with plomdb.atomic():
-        uref = UnknownPage.create(original_name=oname, file_name=nname, md5sum=md5)
-        uref.save()
-    log.info("Uploaded image {} as unknown".format(oname))
-    return [True, "success", "Page saved in UnknownPage list"]
 
 
 def uploadCollidingPage(self, t, p, v, oname, nname, md5):

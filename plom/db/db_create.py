@@ -15,6 +15,28 @@ from plom.db.tables import *
 log = logging.getLogger("DB")
 
 
+########## Bundle creation ##########
+def createAnnotationBundle(self, question, version):
+    try:
+        bref = Bundle.create(name="annotations.{}.{}".format(question, version))
+    except IntegrityError as e:
+        log.error(
+            "Create bundle for q.v = {}.{} error - {}".format(question, version, e)
+        )
+        return False
+    return True
+
+
+def declareBundle(self, file_name, md5):
+    if Bundle.get_or_none(name=file_name) is not None:
+        return [False, "name"]
+    if Bundle.get_or_none(md5sum=md5) is not None:
+        return [False, "md5sum"]
+    else:
+        Bundle.create(name=file_name, md5sum=md5)
+        return [True]
+
+
 ########## Test creation stuff ##############
 def areAnyPapersProduced(self):
     """True if any papers have been produced."""
@@ -74,7 +96,9 @@ def createIDGroup(self, t, pages):
             )  # must be unique
         except pw.IntegrityError as e:
             log.error(
-                "Create ID - cannot create Group {} of test {} error - {}".format(gid, t, e)
+                "Create ID - cannot create Group {} of test {} error - {}".format(
+                    gid, t, e
+                )
             )
             return False
         # make the IDGroup
@@ -111,7 +135,9 @@ def createDNMGroup(self, t, pages):
             )
         except pw.IntegrityError as e:
             log.error(
-                "Create DNM - cannot make Group {} of Test {} error - {}".format(gid, t, e)
+                "Create DNM - cannot make Group {} of Test {} error - {}".format(
+                    gid, t, e
+                )
             )
             return False
         try:
@@ -126,13 +152,17 @@ def createDNMGroup(self, t, pages):
         return self.addTPages(tref, gref, t, pages, 1)
 
 
-def createQGroup(self, t, g, v, pages):
+def createQGroup(self, t, q, v, pages):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
         log.warning("Create Q - No test with number {}".format(t))
         return False
 
-    gid = "q{}g{}".format(str(t).zfill(4), g)
+    gid = "q{}g{}".format(str(t).zfill(4), q)
+    # grab the associated bundle for annotation images for this qgroup
+    bref = Bundle.get_or_none(name="annotations.{}.{}".format(q, v))
+    if bref is None:  # this should not happen
+        return False
     with plomdb.atomic():
         # make the qgroup
         try:
@@ -145,14 +175,20 @@ def createQGroup(self, t, g, v, pages):
             )
         except pw.IntegrityError as e:
             log.error(
-                "Create Q - cannot create group {} of Test {} error - {}".format(gid, t, e)
+                "Create Q - cannot create group {} of Test {} error - {}".format(
+                    gid, t, e
+                )
             )
             return False
         try:
-            qref = QGroup.create(test=tref, group=gref, question=g, version=v)
+            qref = QGroup.create(
+                test=tref, group=gref, question=q, version=v, bundle=bref
+            )
         except pw.IntegrityError as e:
             log.error(
-                "Create Q - cannot create QGroup of question {} error - {}.".format(gid, e)
+                "Create Q - cannot create QGroup of question {} error - {}.".format(
+                    gid, e
+                )
             )
             return False
         ## create annotation 0 owned by HAL

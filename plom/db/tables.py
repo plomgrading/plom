@@ -17,7 +17,13 @@ class User(BaseModel):
     last_action = pw.CharField(null=True)
 
 
+class Bundle(BaseModel):
+    name = pw.CharField(unique=True, null=True)  # unique names please
+    md5sum = pw.CharField(null=True)  # to check for duplications
+
+
 class Image(BaseModel):
+    bundle = pw.ForeignKeyField(Bundle, backref="images")
     original_name = pw.CharField(null=True)  # can be empty.
     file_name = pw.CharField(null=True)
     md5sum = pw.CharField(null=True)  # to check for duplications
@@ -52,6 +58,8 @@ class Group(BaseModel):
     group_type = pw.CharField()  # to distinguish between ID, DNM, and Mark groups
     queue_position = pw.IntegerField(unique=True, null=False)
     scanned = pw.BooleanField(default=False)  # should get all its tpages
+    # a recentUpload flag to see which groups to check after uploads
+    recent_upload = pw.BooleanField(default=False)
 
 
 class IDGroup(BaseModel):
@@ -78,6 +86,7 @@ class QGroup(BaseModel):
     user = pw.ForeignKeyField(User, backref="qgroups", null=True)
     status = pw.CharField(default="")
     marked = pw.BooleanField(default=False)
+    bundle = pw.ForeignKeyField(Bundle, backref="bundle")
 
 
 class TPage(BaseModel):  # a test page that knows its tpgv

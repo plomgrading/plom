@@ -134,6 +134,7 @@ def IDgetImage(self, user_name, test_number):
     iref = tref.idgroups[0]
     # quick sanity check to make sure task given to user, (or if manager making request)
     if iref.user != uref and user_name != "manager":
+        print("EEK ", user_name)
         return [False]
     rval = [True]
     for p in iref.idpages.order_by(IDPage.order):

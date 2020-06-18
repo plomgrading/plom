@@ -46,18 +46,16 @@ def buildExamDatabaseFromSpec(spec, db):
 
     ok = True
     status = ""
-    for q in range(spec["numberOfQuestions"]):
-        for v in range(spec["numberOfVersions"]):
-            if examDB.createAnnotationBundle(q + 1, v + 1):
-                print("Created image bundle for q.v={}.{}".format(q + 1, v + 1))
+    for q in range(1, 1 + spec["numberOfQuestions"]):
+        for v in range(1, 1 + spec["numberOfVersions"]):
+            if db.createAnnotationBundle(q, v):
+                print("Created image bundle for q.v={}.{}".format(q, v))
             else:
                 print(
-                    "Error - problem creating image bundle for q.v={}.{}".format(
-                        q + 1, v + 1
-                    )
+                    "Error - problem creating image bundle for q.v={}.{}".format(q, v)
                 )
                 ok = False
-                status += "Error making bundle for q.v={}.{}".format(q + 1, v + 1)
+                status += "Error making bundle for q.v={}.{}".format(q, v)
 
     # Note: need to produce these in a particular order for random seed to be
     # reproducibile: so this really must be a loop, not a Pool.
