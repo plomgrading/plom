@@ -41,8 +41,11 @@ class CommandImage(QUndoCommand):
         super(CommandImage, self).__init__()
         self.scene = scene
         self.width = image.width()
-        toMidpoint = QPoint(-image.width()/2, -image.height()/2)
-        self.midPt = pt + toMidpoint
+        if data is None:
+            toMidpoint = QPoint(-image.width()/2, -image.height()/2)
+            self.midPt = pt + toMidpoint
+        else:
+            self.midPt = pt
         self.image = image
         self.imageItem = ImageItemObject(self.midPt, self.image, scale, border,
                                          data)
