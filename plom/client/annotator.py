@@ -1102,7 +1102,16 @@ class Annotator(QWidget):
                                                   "Image files (*.jpg *.gif "
                                                   "*.png *.xpm" 
                                                   ")")
-        self.setToolMode("image", Qt.ClosedHandCursor, fileName)
+        if os.path.getsize(fileName) > 200000:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setWindowTitle("Image too large.")
+            msg.setText("Max image size (200kB) reached. Please try again "
+                        "with a smaller image.")
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
+        else:
+            self.setToolMode("image", Qt.ClosedHandCursor, fileName)
 
 
 

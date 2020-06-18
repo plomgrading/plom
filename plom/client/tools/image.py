@@ -53,7 +53,7 @@ class CommandImage(QUndoCommand):
     def undo(self):
         """ Undoes adding the image to the scene. """
         self.imageItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.imageItem.ci.pixmap))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.imageItem.ci))
 
 
 class ImageItemObject(QGraphicsObject):
