@@ -817,7 +817,7 @@ class Annotator(QWidget):
             self.key_codes.get(event.key(), lambda *args: None)()
         super(Annotator, self).keyPressEvent(event)
 
-    def setToolMode(self, newMode, newCursor, imagePath = None):
+    def setToolMode(self, newMode, newCursor, imagePath=None):
         """
         Changes the current tool mode and cursor.
 
@@ -1096,7 +1096,13 @@ class Annotator(QWidget):
             self.loadModes.get(mode, lambda *args: None)()
 
     def addImageMode(self):
-        options = QFileDialog.Options()
+        """
+        Opens a file dialog for images, shows a message box if the image is
+        too large, otherwise continues to image mode.
+
+        Returns:
+            None
+        """
         fileName, _ = QFileDialog.getOpenFileName(self, 'Open file',
                                                       'c:\\',
                                                   "Image files (*.jpg *.gif "
@@ -1105,7 +1111,7 @@ class Annotator(QWidget):
         if os.path.getsize(fileName) > 200000:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Critical)
-            msg.setWindowTitle("Image too large.")
+            msg.setWindowTitle("Image Too large.")
             msg.setText("Max image size (200kB) reached. Please try again "
                         "with a smaller image.")
             msg.setStandardButtons(QMessageBox.Ok)

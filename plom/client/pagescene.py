@@ -507,9 +507,8 @@ class PageScene(QGraphicsScene):
     def mousePressImage(self, event):
         """Adds the selected image at the location the mouse is pressed."""
         if self.tempImage is not None:
-            currentPos = event.scenePos()
             imageFilePath = self.tempImage
-            command = CommandImage(self, currentPos, QImage(imageFilePath))
+            command = CommandImage(self, event.scenePos(), QImage(imageFilePath))
             self.undoStack.push(command)
             self.mode = "move"
             self.tempImage = None

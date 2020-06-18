@@ -4,7 +4,7 @@ from PyQt5.QtCore import (
     QByteArray,
     QBuffer,
     QIODevice,
-)
+    QPoint)
 from PyQt5.QtGui import QImage, QPixmap, QPen, QColor
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -40,9 +40,12 @@ class CommandImage(QUndoCommand):
         """
         super(CommandImage, self).__init__()
         self.scene = scene
-        self.pt = pt
+        self.width = image.width()
+        toMidpoint = QPoint(-image.width()/2, -image.height()/2)
+        self.midPt = pt + toMidpoint
         self.image = image
-        self.imageItem = ImageItemObject(self.pt, self.image, scale, border, data)
+        self.imageItem = ImageItemObject(self.midPt, self.image, scale, border,
+                                         data)
         self.setText("Image")
 
     def redo(self):
@@ -59,10 +62,10 @@ class CommandImage(QUndoCommand):
 class ImageItemObject(QGraphicsObject):
     """Similar to the ArrowItemObject."""
 
-    def __init__(self, pt, image, scale, border, data):
+    def __init__(self, midPt, image, scale, border, data):
         """
         Args:
-            pt (QPoint): the point of the top left corner of the image.
+            midPt (QPoint): the point middle of the image.
             image (QImage): the image being added to the scene.
             scale (float): the scaling value, <1 decreases size, >1 increases.
             border (bool): True if the image has a border, false otherwise.
@@ -70,7 +73,7 @@ class ImageItemObject(QGraphicsObject):
                 previously been json serialized.
         """
         super(ImageItemObject, self).__init__()
-        self.ci = ImageItem(pt, image, self, scale, border, data)
+        self.ci = ImageItem(midPt, image, self, scale, border, data)
         self.anim = QPropertyAnimation(self, b"scale")
 
     def flash_undo(self):
@@ -95,7 +98,7 @@ class ImageItem(QGraphicsPixmapItem):
     An image added to a paper.
     """
 
-    def __init__(self, pt, qImage, parent, scale, border, data):
+    def __init__(self, midPt, qImage, parent, scale, border, data):
         """
         Initializes a new ImageItem.
 
@@ -111,7 +114,7 @@ class ImageItem(QGraphicsPixmapItem):
         self.qImage = qImage
         self.border = border
         self.setPixmap(QPixmap.fromImage(self.qImage))
-        self.setPos(pt)
+        self.setPos(midPt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.saveable = True
