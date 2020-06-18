@@ -34,7 +34,7 @@ server_install_requires = [
     "cffi",  # not ours, why doesn't jpegtran-cffi pull this?
     "jpegtran-cffi",
     "weasyprint",
-    "aiohttp",
+    "aiohttp~=3.6.2",
     "pyqrcode",
     "pyzbar",
     "peewee",
