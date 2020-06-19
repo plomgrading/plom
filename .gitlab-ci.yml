@@ -163,11 +163,11 @@ job fullWorkFlow:
     - plom-finish status -w 1234
     - plom-finish csv -w 1234
     - A=`cat marks.csv  | wc -l`      # How many lines?
-    - bash -c "[[ $A == 21 ]]"        # should be 20 + 1 
+    - bash -c "[[ $A == 21 ]]"        # should be 20 + 1
     - file -b marks.csv  | grep ASCII   # should be ascii test
     - plom-finish reassemble -w 1234
     - A=`ls reassembled/ | wc -l`    # How many files?
-    - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
+    - bash -c "[[ $A == 20 ]]" # since 1 test incomplete
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
     - bash -c "[[ $A -lt 40 ]]"          # not more than 10 MB
     - plom-finish webpage
