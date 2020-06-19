@@ -53,7 +53,7 @@ possibleAns = [
 ]
 
 
-def makeHWExtra(numberOfQuestions, paperNumber, studentID, studentName):
+def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName):
     # pick one or two questions to "do" with one or 2 pages.
     didA = random.randint(1, 1 + numberOfQuestions)
     didB = random.randint(1, 1 + numberOfQuestions)
@@ -62,7 +62,7 @@ def makeHWExtra(numberOfQuestions, paperNumber, studentID, studentName):
     else:
         doneQ = [didA, didB]
 
-    fname = Path("submittedHWExtra") / "hwx.{}.pdf".format(studentID)
+    fname = Path("submittedHWLoose") / "hwl.{}.pdf".format(studentID)
     doc = fitz.open()
 
     for q in doneQ:
@@ -74,7 +74,7 @@ def makeHWExtra(numberOfQuestions, paperNumber, studentID, studentName):
                 rect1 = fitz.Rect(20, 24, 300, 44)
                 rc = page.insertTextbox(
                     rect1,
-                    "Extra for Q.{} -".format(q) + studentName + ":" + studentID,
+                    "Page for Q.{} -".format(q) + studentName + ":" + studentID,
                     fontsize=14,
                     color=[0.1, 0.1, 0.1],
                     fontname="helv",
@@ -149,11 +149,6 @@ def main():
     )
     args = parser.parse_args()
 
-    os.makedirs("submittedHWByQ", exist_ok=True)
-    os.makedirs("submittedHWExtra", exist_ok=True)
-
-    # some cludgery here for the moment
-
     # grab classlist
     specdir = Path(_specdir)
     classlist = specdir / "classlist.csv"
@@ -174,11 +169,24 @@ def main():
             if k >= numberNamed:
                 break
 
-    for k in range(numberNamed):
-        makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1])
-    # give a few extra pages to the first two students
-    for k in range(2):
-        makeHWExtra(numberOfQuestions, k, sid[k][0], sid[k][1])
+    hw_batches = ["hw1", "hw2"]
+    for hw_path in hw_batches:
+        os.makedirs(hw_path, exist_ok=True)
+        os.chdir(hw_path)
+        os.makedirs("submittedHWByQ", exist_ok=True)
+        os.makedirs("submittedHWLoose", exist_ok=True)
+
+        if hw_path == "hw1":
+            for k in range(numberNamed):
+                makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1])
+        else:
+            for k in range(numberNamed // 2):  # fewer in second batch
+                makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1])
+
+        # give a few loose pages to the first two students in both batches
+        for k in range(2):
+            makeHWLoose(numberOfQuestions, k, sid[k][0], sid[k][1])
+        os.chdir("..")
 
 
 if __name__ == "__main__":

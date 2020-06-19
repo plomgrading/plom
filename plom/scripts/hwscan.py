@@ -45,22 +45,33 @@ def IDQorIDorBad(fullfname):
         return ["BAD"]  # Bad format
 
 
-def whoDidWhat():
+def whoDidWhat(hw_dir):
     from plom.scan.hwSubmissionsCheck import whoSubmittedWhat
 
-    whoSubmittedWhat()
+    whoSubmittedWhat(hw_dir)
 
 
-def processScans(server, password, incomplete=False, extra=False):
-    # make PDF archive directory
-    os.makedirs("archivedPDFs/submittedHWByQ", exist_ok=True)
-    os.makedirs("archivedPDFs/submittedHWExtra", exist_ok=True)
-    # make a directory into which our (temp) PDF->bitmap will go
-    os.makedirs("scanPNGs/submittedHWExtra", exist_ok=True)
-    os.makedirs("scanPNGs/submittedHWByQ", exist_ok=True)
-    # finally a directory into which pageImages go
-    os.makedirs("decodedPages/submittedHWByQ", exist_ok=True)
-    os.makedirs("decodedPages/submittedHWExtra", exist_ok=True)
+def make_required_directories():
+    # we need
+    directory_list = [
+        "archivedPDFs/submittedHWByQ",
+        "archivedPDFs/submittedHWLoose",
+        "bundles",
+        "uploads/sentPages",
+        "uploads/discardedPages",
+        "uploads/collidingPages",
+        "uploads/sentPages/unknowns",
+        "uploads/sentPages/collisions",
+    ]
+    for dir in directory_list:
+        os.makedirs(dir, exist_ok=True)
+
+
+def processScans(hw_dir, server, password, incomplete=False, loose=False):
+    if not os.path.isdir(hw_dir):
+        print("Cannot find hw directory {} - skipping".format(hw_dir))
+
+    make_required_directories()
 
     from plom.scan.hwSubmissionsCheck import verifiedComplete
     from plom.scan import scansToImages
@@ -78,15 +89,15 @@ def processScans(server, password, incomplete=False, extra=False):
             continue  # this is not the right file format
         print("Processing PDF {} to images".format(fn))
         scansToImages.processScans(fn, hwByQ=True)
-    # then process HWExtra (if flagged)
-    if extra:
-        for fn in sorted(glob.glob("submittedHWExtra/*.pdf")):
+    # then process HWLoose (if flagged)
+    if loose:
+        for fn in sorted(glob.glob("submittedHWLoose/*.pdf")):
             IDQ = IDQorIDorBad(fn)
             if len(IDQ) != 2:
                 print("Skipping file {} - wrong format".format(fn))
                 continue  # this is not the right file format
             print("Processing PDF {} to images".format(fn))
-            scansToImages.processScans(fn, hwExtra=True)
+            scansToImages.processScans(fn, hwLoose=True)
 
 
 def uploadHWImages(server, password, unknowns=False, collisions=False):
@@ -127,6 +138,10 @@ spC = sub.add_parser(
     description="Clear 'scanner' login after a crash or other expected event.",
 )
 #
+spW.add_argument("hwDir", help="The directory containing homeworks.")
+spP.add_argument("hwDir", help="The directory containing homeworks.")
+
+
 spP.add_argument(
     "-i",
     "--incomplete",
@@ -135,11 +150,11 @@ spP.add_argument(
     help="Process incomplete homeworks (ie not all questions present)",
 )
 spP.add_argument(
-    "-x",
-    "--extra",
+    "-l",
+    "--loose",
     action="store_true",
     default=False,
-    help="Process extra pages for homeworks (ie one-file)",
+    help="Process loose pages for homeworks (ie one-file)",
 )
 
 
@@ -152,9 +167,11 @@ def main():
     args = parser.parse_args()
 
     if args.command == "submitted":
-        whoDidWhat()
+        whoDidWhat(args.hwDir)
     elif args.command == "process":
-        processScans(args.server, args.password, args.incomplete, args.extra)
+        processScans(
+            args.hwDir, args.server, args.password, args.incomplete, args.loose
+        )
     elif args.command == "upload":
         uploadHWImages(args.server, args.password)
     elif args.command == "status":

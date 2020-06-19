@@ -353,7 +353,7 @@ def postProcessing(bundleDir):
     os.chdir(startDir)
 
 
-def processScans(PDFs, hwByQ=False, hwExtra=False):
+def processScans(PDFs, hwByQ=False, hwLoose=False):
     """Process files into bitmap pageimages and archive the pdf.
 
     Process each page of a pdf file into bitmaps.  Then move the processed
@@ -382,7 +382,7 @@ def processScans(PDFs, hwByQ=False, hwExtra=False):
             processFileToBitmaps(bundleDir, fname)
             postProcessing(bundleDir)
             # finally archive the PDF
-            archivePDF(fname, hwByQ, hwExtra)
+            archivePDF(fname, hwByQ, hwLoose)
 
     # TODO - sort out homeworks
     # if hwExtra:
