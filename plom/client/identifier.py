@@ -280,7 +280,7 @@ class IDClient(QWidget):
         `student_name_to_idlist`
             Names are not unique so we map each name to a list of IDs.
         """
-        self.student_id_to_name_map = messenger.IDrequestClasslist()
+        self.student_id_to_name_map = dict(messenger.IDrequestClasslist())
         self.student_name_to_idlist = {}
         for sid, sname in self.student_id_to_name_map.items():
             if not self.student_name_to_idlist.get(sname):
