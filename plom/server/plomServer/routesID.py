@@ -73,7 +73,7 @@ class IDHandler:
         with open(Path(specdir) / "classlist.csv", "w") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["id", "studentName"])
-            writer.writerows(class_list
+            writer.writerows(class_list)
         return web.Response()
 
     # @routes.get("/ID/predictions")
