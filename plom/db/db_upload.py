@@ -95,6 +95,51 @@ def uploadTestPage(
         ]
 
 
+def uploadHWPage(
+    self, sid, question, order, original_name, file_name, md5, bundle_name
+):
+    # first of all find the test corresponding to that sid.
+    iref = IDGroup.get_or_none(student_id=sid)
+    if iref is None:
+        return [False, "SID does not correspond to any test on file."]
+    tref = iref.test
+    qref = QGroup.get_or_none(test=tref, question=question)
+    if qref is None:  # should not happen.
+        return [False, "Test/Question does not correspond to anything on file."]
+
+    gref = qref.group
+    href = HWPage.get_or_none(test=tref, group=gref, order=order)
+    # the href should be none - but could exist if uploading HW in two bundles
+    if href is not None:
+        # we found a page with that order, so we need to put the uploaded page at the end.
+        lastOrder = (
+            HWPage.select(fn.MAX(HWPage.order))
+            .where(HWPage.test == tref, HWPage.group == gref)
+            .scalar()
+        )
+        order = lastOrder + 1
+    # we need the bundle.
+    bref = Bundle.get_or_none(name=bundle_name)
+    if bref is None:
+        return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+    # create a HW page
+    with plomdb.atomic():
+        aref = qref.annotations[0]
+        # create image, hwpage, annotationpage and link.
+        hw_image = Image.create(
+            original_name=original_name, file_name=file_name, md5sum=md5, bundle=bref
+        )
+        href = HWPage.create(
+            test=tref, group=gref, order=order, image=hw_image, version=qref.version
+        )
+        ap = APage.create(annotation=aref, image=hw_image, order=order)
+        # set the recent_upload flag for the test
+        tref.used = True
+        tref.recent_upload = True
+        tref.save()
+    return [True]
+
+
 def uploadUnknownPage(self, original_name, file_name, order, md5, bundle_name):
     iref = Image.get_or_none(md5sum=md5)
     if iref is not None:
@@ -321,12 +366,12 @@ def cleanSDataNotReady(self, tref):
         sref.sum_mark = None
         sref.user = None
         sref.time = datetime.now()
-        tref.totalled = False
-        sref.status = "todo"
+        sref.status = ""
         sref.save()
+        tref.totalled = False
         tref.save()
         log.info(
-            "SumData of test {} cleaned and ready for totalling.".format(
+            "SumData of test {} cleaned but not yet ready for totalling.".format(
                 tref.test_number
             )
         )
@@ -390,7 +435,7 @@ def updateTestAfterUpload(self, tref):
     # now make sure the whole thing is scanned and update the sumdata if ready to go.
     if self.checkTestScanned(tref):
         # set the sdata ready to go
-        self.updateSData(tref)
+        self.cleanAndReadySData(tref)
         # set the test as scanned
         with plomdb.atomic():
             tref.scanned = True
@@ -432,49 +477,6 @@ def processUpdatedTests(self):
 
 
 # still todo below
-
-
-def setGroupReady(self, gref):
-    log.debug("All of group {} is scanned".format(gref.gid))
-    if gref.group_type == "i":
-        iref = gref.idgroups[0]
-        # check if group already identified - can happen if printed tests with names
-        if iref.status == "done":
-            log.info("Group {} is already identified.".format(gref.gid))
-        else:
-            iref.status = "todo"
-            log.info("Group {} is ready to be identified.".format(gref.gid))
-        iref.save()
-    elif gref.group_type == "d":
-        # we don't do anything with these groups
-        log.info(
-            "Group {} is DoNotMark - all scanned, nothing to be done.".format(gref.gid)
-        )
-    elif gref.group_type == "q":
-        log.info("Group {} is ready to be marked.".format(gref.gid))
-        qref = gref.qgroups[0]
-        qref.status = "todo"
-        qref.save()
-    else:
-        raise ValueError("Tertium non datur: should never happen")
-
-
-def checkGroupAllUploaded(self, pref):
-    gref = pref.group
-    sflag = True
-    for p in gref.tpages:
-        if p.scanned == False:
-            sflag = False
-            break
-    with plomdb.atomic():
-        if sflag:
-            gref.scanned = True
-            self.setGroupReady(gref)
-        else:
-            gref.scanned = False
-        gref.save()
-    if sflag:
-        self.checkTestAllUploaded(gref)
 
 
 def replaceMissingPage(self, t, p, v, oname, nname, md5):
@@ -624,41 +626,6 @@ def invalidateQGroup(self, tref, gref, delPage=True):
         qref.save
     log.info("Invalidated question {}".format(gref.gid))
     return rval
-
-
-def uploadHWPage(self, sid, question, order, oname, nname, md5):
-    # first of all find the test corresponding to that sid.
-    iref = IDGroup.get_or_none(student_id=sid)
-    if iref is None:
-        return [False, "SID does not correspond to any test on file."]
-    tref = iref.test
-    qref = QGroup.get_or_none(test=tref, question=question)
-    gref = qref.group
-    href = HWPage.get_or_none(
-        test=tref, group=gref, order=order
-    )  # this should be none.
-    if href is not None:
-        # we found a page with that order, so we need to put the uploaded page at the end.
-        lastOrder = (
-            HWPage.select(fn.MAX(HWPage.order))
-            .where(HWPage.test == tref, HWPage.group == gref)
-            .scalar()
-        )
-        order = lastOrder + 1
-    # create one.
-    with plomdb.atomic():
-        aref = qref.annotations[0]
-        # create image, hwpage, annotationpage and link.
-        img = Image.create(original_name=oname, file_name=nname, md5sum=md5)
-        href = HWPage.create(
-            test=tref, group=gref, order=order, image=img, version=qref.version
-        )
-        ap = APage.create(annotation=aref, image=img, order=order)
-        # set the recent_upload flag for the test
-        tref.used = True
-        tref.recent_upload = True
-        tref.save()
-    return [True]
 
 
 def uploadLPage(self, sid, order, oname, nname, md5):

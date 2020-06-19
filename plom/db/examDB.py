@@ -103,6 +103,7 @@ class PlomDB:
 
     from plom.db.db_upload import (
         uploadTestPage,
+        uploadHWPage,
         uploadUnknownPage,
         updateDNMGroup,
         updateIDGroup,
