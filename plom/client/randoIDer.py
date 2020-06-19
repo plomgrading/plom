@@ -106,8 +106,6 @@ if __name__ == "__main__":
 
     spec = messenger.getInfoGeneral()
 
-    print(spec)
-
     try:
         startIdentifying()
     except Exception as e:
@@ -116,5 +114,3 @@ if __name__ == "__main__":
 
     messenger.closeUser()
     messenger.stop()
-
-    exit(0)
