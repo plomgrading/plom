@@ -12,18 +12,17 @@ import json
 import os
 import sys
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pkg_resources
 import pandas
 
 from ..finish.return_tools import import_canvas_csv
-from plom import specdir
 
+possible_surname_fields = ["surname", "familyName", "lastName"]
 
-possible_lastname_list = ["surname", "familyName", "lastName"]
-
-possible_firstname_list = [
+possible_given_name_fields = [
     "name",
     "givenName",
     "firstName",
@@ -77,7 +76,7 @@ def clean_non_canvas_csv(csv_file_name):
     firstname_column_title = None
     for column_title in student_info_df.columns:
         if column_title.casefold() in (
-            possible_title.casefold() for possible_title in possible_lastname_list
+            possible_title.casefold() for possible_title in possible_surname_fields
         ):
             print('"{}" column present'.format(column_title))
             firstname_column_title = column_title
@@ -91,7 +90,7 @@ def clean_non_canvas_csv(csv_file_name):
     lastname_column_title = None
     for column_title in student_info_df.columns:
         if column_title.casefold() in (
-            possible_title.casefold() for possible_title in possible_firstname_list
+            possible_title.casefold() for possible_title in possible_given_name_fields
         ):
             print('"{}" column present'.format(column_title))
             lastname_column_title = column_title
@@ -153,8 +152,8 @@ def check_is_non_canvas_csv(csv_file_name):
                 break
         if firstname_column_title is None:
             print(
-                'Cannot find column to use for "surname", tried {}'.format(
-                    possible_lastname_list
+                'Cannot find column to use for "surname", tried: {}'.format(
+                    ", ".join(possible_surname_fields)
                 )
             )
             print("Columns present = {}".format(student_info_df.columns))
@@ -171,8 +170,8 @@ def check_is_non_canvas_csv(csv_file_name):
                 break
         if lastname_column_title is None:
             print(
-                'Cannot find column to use for "given name", tried {}'.format(
-                    possible_firstname_list
+                'Cannot find column to use for "given name", tried: {}'.format(
+                    ", ".join(possible_given_name_fields)
                 )
             )
             print("Columns present = {}".format(student_info_df.columns))
@@ -247,17 +246,21 @@ def check_latin_names(student_info_df):
         return True
 
 
-def process_classlist_backend(student_csv_file_name, outputfile):
-    """Processes the classlist depending on whether its a canvas style csv folder or if it isn't.
+def process_classlist_backend(student_csv_file_name):
+    """Process classlist, either from a canvas style csv or user-formatted.
 
-    1. Check if the file is canvas style csv, if so clean.
-    2. Otherwise check if te function has the id/name info, if so clean it.
-    3. Otherwise exit(1).
-    4. If not exited, check for latin character encodability.
+    1. Check if the file is a csv exported from Canvas.  If so extract
+       relevant headers and clean-up the file.
+    2. Otherwise check for suitable ID and name columns.
+    3. Otherwise exit(1).  TODO: library calls shouldn't do this!
+    4. Check for latin character encodability, a restriction to be
+       loosened in the future.
 
     Arguments:
-        student_csv_file_name {Str} -- Name of the class info csv file
-        outputfile {pathlib.PosixPath} -- Output file for the saved csv file
+        student_csv_file_name (str): Name of the class info csv file.
+
+    Return:
+        pandas dataframe: the processed classlist data.
     """
 
     with open(student_csv_file_name) as csvfile:
@@ -265,7 +268,7 @@ def process_classlist_backend(student_csv_file_name, outputfile):
         csv_fields = csv_reader.fieldnames
     print("Class list headers = {}".format(csv_fields))
 
-    # Depending on the type of file, wether its a Canvas file or not,
+    # Depending on the type of file, whether its a Canvas file or not,
     # we need to check it has the minimum information ie student name/id.
     # If not we will fail the process.
 
@@ -298,61 +301,52 @@ def process_classlist_backend(student_csv_file_name, outputfile):
             "Apologies for the eurocentricity.",
         )
 
-    print("Saving to {}".format(outputfile))
-    student_info_df.to_csv(outputfile, index=False)
+    #print("Saving to {}".format(outputfile))
+    #df.to_csv(outputfile, index=False)
+    return student_info_df
 
 
 def process_class_list(student_csv_file_name, demo=False):
-    """Get student names/numbers from csv, process, and save for server
+    """Get student names/IDs from a csv file.
 
     Student numbers come from an `id` column.  There is some
     flexibility about student names: most straightforward is a
-    second column named `studentNames`.  The results are copied
-    into a new csv file in a simplied format.
+    second column named `studentNames`.  If that isn't present,
+    try to construct a name from surname, given name, guessing
+    column names from the following lists:
 
-    The classlist can be a .csv file with column headers:
-    - `id` - student ID number
-    - `studentName` - student name in a single field
-
-    Or the student name can be split into two fields:
-    - id
-    - surname, familyName, or lastName
-    - name, firstName, givenName, nickName, or preferredName
+      - :func:`plom.produce.possible_surname_fields`
+      - :func:`plom.produce.possible_given_name_fields`
 
     Alternatively, give a .csv exported from Canvas (experimental!)
 
     Arguments:
-        student_csv_file_name {Str} -- Name of the class info csv file.
+        student_csv_file_name (str): Name of the class info csv file.
 
     Keyword Arguments:
-        demo {bool} -- Indicating whether we are in demo mode (default: {False})
+        demo (bool): if `True`, the filename is ignored and we use demo
+            data (default: `False`).
+
+    Return:
+        dict: keys are student IDs (str), values are student names (str).
     """
-
-    os.makedirs(specdir, exist_ok=True)
-    if os.path.isfile(Path(specdir) / "classlist.csv"):
-        print(
-            "Classlist file already present in '{}' directory. Aborting.".format(
-                specdir
-            )
-        )
-        exit(1)
-
     if demo:
         print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
         cl = pkg_resources.resource_string("plom", "demoClassList.csv")
-        with open(Path(specdir) / "classlist.csv", "wb") as fh:
-            fh.write(cl)
-        return
+        # this is dumb, make it work right out of the string/bytes
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as f:
+            with open(f.name, "wb") as fh:
+                fh.write(cl)
+            return process_class_list(f.name)
+        # from io import StringIO, BytesIO
+        # student_csv_file_name = BytesIO(cl)
 
     if not student_csv_file_name:
         print("Please provide a classlist file: see help")
         exit(1)
 
-    # grab the file, process it and copy it into place.
-    if os.path.isfile(student_csv_file_name):
-        process_classlist_backend(
-            student_csv_file_name, Path(specdir) / "classlist.csv"
-        )
-    else:
+    if not os.path.isfile(student_csv_file_name):
         print('Cannot find file "{}"'.format(student_csv_file_name))
         exit(1)
+    df = process_classlist_backend(student_csv_file_name)
+    return dict(zip(df.id, df.studentName))

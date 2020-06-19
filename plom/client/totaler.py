@@ -223,10 +223,10 @@ class TotalClient(QWidget):
         ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
 
     def getMaxMark(self):
-        """Send request for maximum mark (tGMM) to server. The server then sends
+        """Send request for maximum mark to server. The server then sends
         back the value.
         """
-        # Get the classlist from server for name/ID completion.
+        # Get the max mark from the server
         self.maxMark = messenger.TgetMaxMark()
         # Update the groupbox label
         self.ui.totalBox.setTitle("Enter total out of {}".format(self.maxMark))
@@ -268,11 +268,12 @@ class TotalClient(QWidget):
 
     def getAlreadyTotaledList(self):
         # Ask server for list of previously marked papers
+        # each item in list is a pair of [test_number, mark]
         tList = messenger.TrequestDoneTasks()
         # Add those marked papers to our paper-list
         for x in tList:
             self.addPaperToList(
-                Paper(x[0], fname="", stat="totaled", mark=x[2]), update=False
+                Paper(x[0], fname="", stat="totaled", mark=x[1]), update=False
             )
 
     def selChanged(self, selnew, selold):

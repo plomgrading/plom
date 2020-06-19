@@ -417,13 +417,13 @@ def RgetMarkReview(self, filterQ, filterV, filterU):
     For each matching qgroup we return a tuple of
     [testnumber, question, version, mark of latest annotation, username, marking_time, time finished.]
     """
-    query = QGroup.select().where(QGroup.marked == True)
+    query = QGroup.select().join(User).where(QGroup.marked == True)
     if filterQ != "*":
         query = query.where(QGroup.question == filterQ)
     if filterV != "*":
         query = query.where(QGroup.version == filterV)
     if filterU != "*":
-        query = query.where(QGroup.user.name == filterU)
+        query = query.where(User.name == filterU)
     filtered = []
     for qref in query:
         filtered.append(

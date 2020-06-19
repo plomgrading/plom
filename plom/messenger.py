@@ -304,7 +304,8 @@ class Messenger(BaseMessenger):
             # TODO: define API such that classlist must be utf-8?
             # print(response.encoding)
             # response.encoding = 'utf-8'
-            classlist = StringIO(response.text)
+            # classlist = StringIO(response.text)
+            classlist = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
