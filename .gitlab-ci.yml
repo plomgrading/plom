@@ -160,7 +160,7 @@ job fullWorkFlow:
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
     - plom-scan process fake_scribbled_exams.pdf
->>>>>>> master
+
     - plom-scan read -s localhost -w 4567
     - plom-scan upload -s localhost -w 4567
     - plom-scan upload -u -s localhost -w 4567
