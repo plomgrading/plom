@@ -356,7 +356,7 @@ def MgetWholePaper(self, test_number, question):
     # true/false - if belongs to the given question or not.
     pageFiles = []  # the corresponding filenames.
     question = int(question)
-    # give TPages (aside from ID pages), then HWPages and then LPages
+    # give TPages (aside from ID pages), then HWPages, then EXPages, and then LPages
     for p in tref.tpages.order_by(TPage.page_number):
         if p.scanned is False:  # skip unscanned testpages
             continue
@@ -368,7 +368,7 @@ def MgetWholePaper(self, test_number, question):
             val[2] = True
         pageData.append(val)
         pageFiles.append(p.image.file_name)
-    # give HW pages by question
+    # give HW and EX pages by question
     for qref in tref.qgroups.order_by(QGroup.question):
         for p in qref.group.hwpages:
             val = ["h{}.{}".format(q, p.order), p.image.id, False]
@@ -376,9 +376,15 @@ def MgetWholePaper(self, test_number, question):
                 val[2] = True
             pageData.append(val)
             pageFiles.append(p.image.file_name)
+        for p in qref.group.expages:
+            val = ["e{}.{}".format(q, p.order), p.image.id, False]
+            if qref.question == question:  # check if page belongs to our question
+                val[2] = True
+            pageData.append(val)
+            pageFiles.append(p.image.file_name)
     # then give LPages
     for p in tref.lpages.order_by(LPage.order):
-        pageData.append(["x{}".format(p.order), p.image.id, False])
+        pageData.append(["l{}".format(p.order), p.image.id, False])
         pageFiles.append(p.image.file_name)
     return [True, pageData] + pageFiles
 
@@ -472,19 +478,39 @@ def MrevertTask(self, task):
         qref.user = None
         qref.save()
         rval = [True]  # keep list of files to delete.
-        # now clean up annotations
+        # now move existing annotations to oldannotations
+        # set starting edition for oldannot to either 0 or whatever was last.
+        if len(qref.oldannotations) == 0:
+            ed = 0
+        else:
+            ed = qref.oldannotations[-1].edition
+
         for aref in qref.annotations:
             if aref.edition == 0:  # leave 0th annotation alone.
                 continue
-            # delete the apages and then the annotation itself
+            ed += 1
+            # make new oldannot using data from aref
+            oaref = OldAnnotation.create(
+                qgroup=aref.qgroup,
+                user=aref.user,
+                image=aref.image,
+                edition=ed,
+                plom_file=aref.plom_file,
+                comment_file=aref.comment_file,
+                mark=aref.mark,
+                marking_time=aref.marking_time,
+                time=aref.time,
+                tags=aref.tags,
+            )
+            # make oapges
+            for pref in aref.apages:
+                OAPage.create(old_annotation=oaref, order=pref.order, image=pref.image)
+            # now delete the apages and then the annotation-image and finally the annotation.
             for pref in aref.apages:
                 pref.delete_instance()
-            rval.append(aref.plom_file)
-            rval.append(aref.comment_file)
-            rval.append(aref.image.file_name)
             # delete the annotated image from table.
             aref.image.delete_instance()
             # finally delete the annotation itself.
             aref.delete_instance()
     log.info("Reverting tq {}.{}".format(test_number, question))
-    return rval
+    return [True]

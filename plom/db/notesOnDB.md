@@ -94,6 +94,10 @@ One thing we'd like to support in the future is having multiple people mark the 
 * time = when was the question marked.
 * tags = a free-form text field for user-created tagging. This is mostly for future work.
 
+#### OldAnnotations
+Effectively a copy of Annotations - we use this to store old annotations - ones that are no longer valid because a new page was added to that question or the manager reverted the task
+
+
 
 ### Where are the pages?
 Notice that the above structure does not explain how images are connected to groups. This actually gets a little complicated due to the all the possibilities. Ideally, if everyone follows instructions, a single page will contain answers to only a single question (though, of course a single question might be over several pages). However, we need to allow for the possibility that a page (esp a student uploaded page) might contain answers for multiple questions.
@@ -105,6 +109,8 @@ Types of pages:
 * TPage - this corresponds to a test-page. To be more precise, a page we'd get when giving physical test-papers to students which we then scan. Very structured. As opposed to homework. It points to an image and knows its test-number, page-number and some other stuff.
 
 * HWPage - this corresponds to a page of student-uploaded homework (when each question is uploaded separately). It knows which student it belongs to (and so via some look-ups) it knows which test-number, which question, but it doesn't actually have a well-defined page-number, rather it only knows its "order" within the submission. This is because one student's HW response to a given question might be 2 pages, and anothers might be 7. So it no longer makes sense to talk about page numbers like we do for "test pages".
+
+* EXPage - an extra page - primarily for tests. Functionally similar to HWPages - they have an "order" but not a page number.
 
 * LPage - these are "loose pages" - these correspond to (say) student uploaded homework when all questions are lumped together into a single file. It knows know which student they belong to and (via some look-ups) they know which test-number. They do not know which question, nor do they know a page. Instead they know their order within the submission. **note** these were previously "XPage"
 
@@ -128,4 +134,4 @@ The IDPage needs to connect an image to an IDGroup, but it also needs to know in
 
 Notice the IPage has two "parents" - I hope I've handled this structure correctly.
 
-The DNMPage and APage are very similar except that instead of pointing to an IDGroup, they point to a DNMGroup and Annotation respectively.
+The DNMPage and APage are very similar except that instead of pointing to an IDGroup, they point to a DNMGroup and Annotation respectively. Finally OAPage = functionally similar to APage except pointing to an OldAnnotation rather than an Annotation.

@@ -66,10 +66,10 @@ def uploadTestPage(
             tref.used = True
             tref.save()
             # also link the image to an QPage, DNMPage, or IDPage
-            gref = pref.group
-            gref.save()
             # set the group as recently uploaded - use to trigger a "clean" later.
-            tref.recent_upload = True
+            gref = pref.group
+            gref.recent_upload = True
+            gref.save()
             if gref.group_type == "i":
                 iref = gref.idgroups[0]
                 idp = IDPage.create(idgroup=iref, image=pref.image, order=page_number)
@@ -136,7 +136,7 @@ def updateDNMGroup(self, dref):
     with plomdb.atomic():
         gref.scanned = True
         gref.save()
-        log.info("DNMGroup of test {} is all scanned.".format(tref.test_number))
+        log.info("DNMGroup of test {} is all scanned.".format(gref.test.test_number))
     return True
 
 
@@ -199,26 +199,68 @@ def updateIDGroup(self, iref):
     return True
 
 
-def cleanQGroup(self, tref, qref):
-    # TODO
-
+def cleanQGroup(self, qref):
+    tref = qref.test
     with plomdb.atomic():
-        # do not delete old annotations, instead make new annotation that belongs to HAL
-        # now delete old annotations
+        # update 0th annotation but move other annotations to oldannotations
+        # set starting edition for oldannot to either 0 or whatever was last.
+        if qref.oldannotations.count() == 0:
+            ed = 0
+        else:
+            ed = qref.oldannotations[-1].edition
+
         for aref in qref.annotations:
-            # skip the 0th edition - it belongs to HAL.
-            if aref.edition > 0:
-                # discard the annotated images
-                DiscardedPage.create(
-                    image=aref.image,
-                    reason="cleaningQGroup",
-                    plom_file=plom_file,
-                    comment_file=comment_file,
-                )
-                # discard the APages
+            if aref.edition == 0:  # update 0th edition.
+                # delete old apages
                 for p in aref.apages:
                     p.delete_instance()
+                # now create new ones - tpages, then hwpage, then expages, finally any lpages
+                ord = 0
+                for p in qref.group.tpages.order_by(TPage.page_number):
+                    if p.scanned:  # make sure the tpage is actually scanned.
+                        ord += 1
+                        print("Trying to add tpage {}".format(p))
+                        APage.create(annotation=aref, image=p.image, order=ord)
+                for p in qref.group.hwpages.order_by(HWPage.order):
+                    ord += 1
+                    print("Trying to add hwpage {}".format(p))
+                    APage.create(annotation=aref, image=p.image, order=ord)
+                for p in qref.group.expages.order_by(EXPage.order):
+                    ord += 1
+                    print("Trying to add expage {}".format(p))
+                    APage.create(annotation=aref, image=p.image, order=ord)
+                for p in tref.lpages.order_by(LPage.order):
+                    ord += 1
+                    print("Trying to add lpage {}".format(p))
+                    APage.create(annotation=aref, image=p.image, order=ord)
+            else:
+                ed += 1
+                # make new oldannot using data from aref
+                oaref = OldAnnotation.create(
+                    qgroup=aref.qgroup,
+                    user=aref.user,
+                    image=aref.image,
+                    edition=ed,
+                    plom_file=aref.plom_file,
+                    comment_file=aref.comment_file,
+                    mark=aref.mark,
+                    marking_time=aref.marking_time,
+                    time=aref.time,
+                    tags=aref.tags,
+                )
+                # make oapges
+                for pref in aref.apages:
+                    OAPage.create(
+                        old_annotation=oaref, order=pref.order, image=pref.image
+                    )
+                # now delete the apages and then the annotation-image and finally the annotation.
+                for pref in aref.apages:
+                    pref.delete_instance()
+                # delete the annotated image from table.
+                aref.image.delete_instance()
+                # finally delete the annotation itself.
                 aref.delete_instance()
+
         qref.user = None
         qref.status = ""
         qref.marked = False
@@ -230,27 +272,36 @@ def cleanQGroup(self, tref, qref):
 
 
 def updateQGroup(self, qref):
-    TODO
+    # TODO = if loose / extra pages present in test, then test is not ready.
 
     # clean up the QGroup and its annotations
-    self.cleanQGroup(tref, qref)
-    # now some logic.
-    # if homework pages present - ready to go.
-    # elif all testpages present - ready to go.
-    # else - not ready.
-    # BUT if there are lpages then we are ready to go.
+    self.cleanQGroup(qref)
+    # note - the sumdata will be updated elsewhere.
 
     gref = qref.group
 
-    if tref.lpages.count() == 0:
-        # check if HW pages = 0
-        if qref.group.hwpages.count() == 0:
-            # then check for testpages
-            for p in gref.tpages:  # there is always at least one.
-                if p.scanned is False:  # missing a test-page - not ready.
-                    return False
+    # when some but not all TPages present - not ready
+    # when 0 pages present - not ready
+    # otherwise ready.
+    scan_list = [p.scanned for p in gref.tpages]  # list never zero length.
+    if True in scan_list:  # some tpages scanned.
+        if False in scan_list:  # some tpages unscanned - definitely not ready to go.
+            log.info("Group {} is only half-scanned - not ready".format(gref.gid))
+            return False
+        else:
+            pass  # all tpages scanned - so ready to go.
+    else:  # all tpages unscanned - check hw pages
+        if gref.hwpages.count() == 0:  # no  hw pages present - not ready
+            log.info(
+                "Group {} has no scanned tpages and no hwpages - not ready".format(
+                    gref.gid
+                )
+            )
+            return False
+        else:
+            pass  # no unscanned tpages, but not hw pages - so ready to go.
 
-    # otherwise we are ready to go.
+    # If we get here - we are ready to go.
     with plomdb.atomic():
         gref.scanned = True
         qref.status = "todo"
@@ -258,10 +309,27 @@ def updateQGroup(self, qref):
         gref.save()
         log.info(
             "QGroup {} of test {} is ready to be marked.".format(
-                qref.question, tref.testNumber
+                qref.question, qref.test.test_number
             )
         )
     return True
+
+
+def cleanSDataNotReady(self, tref):
+    sref = tref.sumdata[0]
+    with plomdb.atomic():
+        sref.sum_mark = None
+        sref.user = None
+        sref.time = datetime.now()
+        tref.totalled = False
+        sref.status = "todo"
+        sref.save()
+        tref.save()
+        log.info(
+            "SumData of test {} cleaned and ready for totalling.".format(
+                tref.test_number
+            )
+        )
 
 
 def updateGroupAfterUpload(self, gref):
@@ -273,9 +341,63 @@ def updateGroupAfterUpload(self, gref):
     elif gref.group_type == "d":
         return self.updateDNMGroup(gref.dnmgroups[0])
     elif gref.group_type == "q":
-        return self.updateQGroup(gref.qgroups[0])
+        # if the group is ready - all good.
+        if self.updateQGroup(gref.qgroups[0]):
+            return True
+        else:
+            # since qgroup not ready, we cannnot total yet.
+            self.cleanSDataNotReady(gref.test)
+            return False
     else:
         raise ValueError("Tertium non datur: should never happen")
+
+
+def cleanAndReadySData(self, tref):
+    sref = tref.sumdata[0]
+    with plomdb.atomic():
+        sref.sum_mark = None
+        sref.user = None
+        sref.time = datetime.now()
+        tref.totalled = False
+        sref.status = "todo"
+        sref.save()
+        tref.save()
+        log.info(
+            "SumData of test {} cleaned and ready for totalling.".format(
+                tref.test_number
+            )
+        )
+
+
+def checkTestScanned(self, tref):
+    for gref in tref.groups:
+        if gref.scanned is False:
+            log.info(
+                "Group {} of test {} is not scanned".format(gref.gid, tref.test_number)
+            )
+            return False
+    else:
+        return True
+
+
+def updateTestAfterUpload(self, tref):
+    update_count = 0
+    # check each group in the test
+    for gref in tref.groups:
+        if self.updateGroupAfterUpload(gref):
+            update_count += 1
+
+    # now make sure the whole thing is scanned and update the sumdata if ready to go.
+    if self.checkTestScanned(tref):
+        # set the sdata ready to go
+        self.updateSData(tref)
+        # set the test as scanned
+        with plomdb.atomic():
+            tref.scanned = True
+            log.info("Test {} is scanned".format(tref.test_number))
+            tref.save()
+
+    return update_count
 
 
 def processUpdatedTests(self):
@@ -286,47 +408,30 @@ def processUpdatedTests(self):
     """
     update_count = 0  # how many groups updated
     # process whole tests first
-    for tref in Test.select.where(Test.recent_upload == True):
+    for tref in Test.select().where(Test.recent_upload == True):
         update_count += self.updateTestAfterUpload(tref)
+
+    # make a dict of tests that need checking for ready-status
+    tests_to_update = {}
     # then process groups
     for gref in Group.select().where(Group.recent_upload == True):
-        update_count += self.updateGroupAfterUpload(gref)
+        if self.updateGroupAfterUpload(gref):
+            update_count += 1
+            tests_to_update[gref.test] = 1
+    for tref in tests_to_update:
+        if self.checkTestScanned(tref):
+            # set the sdata ready to go
+            self.cleanAndReadySData(tref)
+            # set the test as scanned
+            with plomdb.atomic():
+                tref.scanned = True
+                log.info("Test {} is scanned".format(tref.test_number))
+                tref.save()
 
     return [True, update_count]
 
 
 # still todo below
-
-
-def checkTestAllUploaded(self, gref):
-    """Group gref is all scanned, so now check if testpages for whole test are scanned.
-    """
-    # grab ref to the test.
-    tref = gref.test
-    scan_flag = True  # whether or not whole test scanned.
-    for gref in tref.groups:
-        if gref.scanned == False:
-            # TODO - deal with empty DO NOT MARK groups correctly
-            scan_flag = False
-            log.debug(
-                "Check: Test {} not yet fully scanned: (at least) {} not present".format(
-                    tref.test_number, gref.gid
-                )
-            )
-            break
-    with plomdb.atomic():
-        if scan_flag:
-            tref.scanned = True
-            log.info(
-                "Check uploaded - Test {} is now fully scanned".format(tref.test_number)
-            )
-            # set the status of the sumdata - it is ready to go.
-            sref = tref.sumdata[0]
-            sref.status = "todo"
-            sref.save()
-        else:
-            tref.scanned = False
-        tref.save()
 
 
 def setGroupReady(self, gref):
@@ -596,17 +701,6 @@ def uploadLPage(self, sid, order, oname, nname, md5):
     return [True]
 
 
-def cleanSData(self, tref, sref):
-    with plomdb.atomic():
-        sref.sum_mark = None
-        sref.user = None
-        sref.time = datetime.now()
-        tref.totalled = False
-        sref.save()
-        tref.save()
-        log.info("SumData of test {} cleaned.".format(tref.test_number))
-
-
 def processUpdatedQGroup(self, tref, qref):
     # clean up the QGroup and its annotations
     self.cleanQGroup(tref, qref)
@@ -638,27 +732,6 @@ def processUpdatedQGroup(self, tref, qref):
             )
         )
     return True
-
-
-def processUpdatedSData(self, tref, sref):
-    with plomdb.atomic():
-        sref.status = "todo"
-        sref.save()
-        log.info("SumData of test {} ready for totalling.".format(tref.test_number))
-
-
-def cleanIDGroup(self, tref, iref):
-    # if IDGroup belongs to HAL then don't touch it - was auto IDd.
-    if iref.user == User.get(name="HAL"):
-        return
-    with plomdb.atomic():
-        iref.status = ""
-        iref.user = None
-        iref.time = datetime.now()
-        iref.student_id = None
-        iref.student_name = None
-        iref.save()
-        log.info("IDGroup of test {} cleaned.".format(tref.test_number))
 
 
 def processSpecificUpdatedTest(self, tref):

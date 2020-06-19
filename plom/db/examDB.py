@@ -14,30 +14,7 @@ import logging
 
 log = logging.getLogger("DB")
 
-from plom.db.tables import (
-    plomdb,
-    User,
-    Bundle,
-    Image,
-    Test,
-    SumData,
-    Group,
-    IDGroup,
-    DNMGroup,
-    QGroup,
-    TPage,
-    HWPage,
-    LPage,
-    UnknownPage,
-    CollidingPage,
-    DiscardedPage,
-    ##
-    Annotation,
-    ##
-    APage,
-    IDPage,
-    DNMPage,
-)
+from plom.db.tables import *
 
 ######################################################################
 
@@ -64,14 +41,17 @@ class PlomDB:
                     ##
                     TPage,
                     HWPage,
+                    EXPage,
                     LPage,
                     UnknownPage,
                     CollidingPage,
                     DiscardedPage,
                     ##
                     Annotation,
+                    OldAnnotation,
                     ##
                     APage,
+                    OAPage,
                     IDPage,
                     DNMPage,
                 ]
@@ -129,7 +109,11 @@ class PlomDB:
         cleanIDGroup,
         updateQGroup,
         cleanQGroup,
-        cleanSData,
+        cleanSDataNotReady,
+        updateGroupAfterUpload,
+        cleanAndReadySData,
+        checkTestScanned,
+        updateTestAfterUpload,
         processUpdatedTests,
         # uploadLPage,
         # checkTestAllUploaded,
@@ -151,9 +135,9 @@ class PlomDB:
         # processSpecificUpdatedTest,
         # replaceMissingHWQuestion,
         # uploadCollidingPage,
-        # getUnknownPageNames,
-        # getDiscardNames,
-        # getCollidingPageNames,
+        getUnknownPageNames,
+        getDiscardNames,
+        getCollidingPageNames,
         # getTPageImage,
         # getHWPageImage,
         # getLPageImage,

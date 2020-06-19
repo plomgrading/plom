@@ -25,8 +25,13 @@ def RgetScannedTests(self):
         for qref in tref.qgroups:
             gref = qref.group
             for p in gref.hwpages:
-                pScanned.append(["hw.{}.{}".format(qref.question, p.order), p.version])
-        # then append x-pages in order
+                pScanned.append(["h.{}.{}".format(qref.question, p.order), p.version])
+        # then append extra-pages in question-order
+        for qref in tref.qgroups:
+            gref = qref.group
+            for p in gref.expages:
+                pScanned.append(["e.{}.{}".format(qref.question, p.order), p.version])
+        # then append loose-pages in order
         for p in tref.lpages:
             pScanned.append(["l.{}".format(p.order), 0])  # we don't know the version
         scan_dict[tref.test_number] = pScanned

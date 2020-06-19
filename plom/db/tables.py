@@ -106,6 +106,15 @@ class HWPage(BaseModel):  # a hw page that knows its tgv, but not p.
     image = pw.ForeignKeyField(Image, backref="hwpages")
 
 
+# an extra page that knows its tgv, but not p. - essentially same as hwpages.
+class EXPage(BaseModel):
+    test = pw.ForeignKeyField(Test, backref="expages")
+    group = pw.ForeignKeyField(Group, backref="expages")
+    order = pw.IntegerField(null=False)
+    version = pw.IntegerField(default=1)  # infer from group
+    image = pw.ForeignKeyField(Image, backref="expages")
+
+
 class LPage(BaseModel):  # a page that just knows its t. - a loose page
     test = pw.ForeignKeyField(Test, backref="lpages")
     order = pw.IntegerField(null=False)
@@ -157,4 +166,24 @@ class Annotation(BaseModel):
 class APage(BaseModel):
     annotation = pw.ForeignKeyField(Annotation, backref="apages")
     image = pw.ForeignKeyField(Image, backref="apages")
+    order = pw.IntegerField(null=False)
+
+
+class OldAnnotation(BaseModel):
+    qgroup = pw.ForeignKeyField(QGroup, backref="oldannotations")
+    user = pw.ForeignKeyField(User, backref="oldannotations", null=True)
+    image = pw.ForeignKeyField(Image, backref="oldannotations", null=True)
+    edition = pw.IntegerField(null=True)
+    # we need to order the annotations - want the latest.
+    plom_file = pw.CharField(null=True)
+    comment_file = pw.CharField(null=True)
+    mark = pw.IntegerField(null=True)
+    marking_time = pw.IntegerField(null=True)
+    time = pw.DateTimeField(null=True)
+    tags = pw.CharField(default="")
+
+
+class OAPage(BaseModel):
+    old_annotation = pw.ForeignKeyField(OldAnnotation, backref="oapages")
+    image = pw.ForeignKeyField(Image, backref="oapages")
     order = pw.IntegerField(null=False)

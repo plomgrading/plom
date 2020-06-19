@@ -563,6 +563,10 @@ class Manager(QWidget):
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
             vp = managerMessenger.getHWPageImage(t, q, o)
+        elif pdetails[0] == "e":  # is a extra-page = e.q.o
+            q = pdetails.split(".")[1]
+            o = pdetails.split(".")[2]
+            vp = managerMessenger.getHWPageImage(t, q, o)
         elif pdetails[0] == "l":  # is an l-page = l.o
             o = pdetails.split(".")[1]
             vp = managerMessenger.getLPageImage(t, o)
