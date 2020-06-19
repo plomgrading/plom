@@ -39,7 +39,7 @@ class IDHandler:
             with open(Path(specdir) / "classlist.csv") as csvfile:
                 reader = csv.reader(csvfile)
                 next(reader)  # skip header row
-                cl = dict(reader)
+                cl = list(reader)
         except FileNotFoundError:
             raise web.HTTPNotFound(reason="classlist not found")
         return web.json_response(cl)
@@ -63,7 +63,7 @@ class IDHandler:
         with open(Path(specdir) / "classlist.csv", "w") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["id", "studentName"])
-            writer.writerows(cl.items())
+            writer.writerows(cl)
         return web.Response()
 
     # @routes.get("/ID/predictions")

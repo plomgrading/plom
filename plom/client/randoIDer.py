@@ -29,8 +29,7 @@ from plom.messenger import Messenger
 
 
 def startIdentifying():
-    d = messenger.IDrequestClasslist()
-    idList = [[k, v] for k, v in d.items()]
+    idList = messenger.IDrequestClasslist()
 
     while True:
         task = messenger.IDaskNextTask()
