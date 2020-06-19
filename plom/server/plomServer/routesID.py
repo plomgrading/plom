@@ -363,10 +363,9 @@ class IDHandler:
         )
 
         timestamp_found = prediction_results[0]
-
+        is_running = prediction_results[1]
+        
         if timestamp_found:  # set running or is running
-            is_running = prediction_results[1]
-            
             if is_running:
                 return web.Response(status=200)
             else:
