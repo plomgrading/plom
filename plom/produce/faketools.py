@@ -219,8 +219,6 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
                 color=blue,
             )
 
-        pdf_document.close()
-
     # need to use `str(out_file_path)` for pumypdf < 1.16.14
     # https://github.com/pymupdf/PyMuPDF/issues/466
     # Here we only need to save the generated pdf files with random test answers
