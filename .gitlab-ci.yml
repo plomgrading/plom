@@ -172,7 +172,7 @@ job fullWorkFlow:
     - bash -c "[[ $A -lt 40 ]]"          # not more than 10 MB
     - plom-finish webpage
     - A=`ls codedReturn/ | wc -l`    # How many files?
-    - bash -c "[[ $A == 21 ]]"       # 20 pdf + 1 html
+    - bash -c "[[ $A == 20 ]]"       # 20-1 pdf + 1 html
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
