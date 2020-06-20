@@ -163,7 +163,7 @@ job fullWorkFlow:
     - plom-finish status -w 1234
     - plom-finish csv -w 1234
     - A=`cat marks.csv  | wc -l`      # How many lines?
-    - bash -c "[[ $A == 21 ]]"        # should be 20 + 1 
+    - bash -c "[[ $A == 20 ]]"        # should be 19 + 1 - since 1 page from 1 test is deleted
     - file -b marks.csv  | grep ASCII   # should be ascii test
     - plom-finish reassemble -w 1234
     - A=`ls reassembled/ | wc -l`    # How many files?
