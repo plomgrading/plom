@@ -69,6 +69,8 @@ def make_required_directories():
 
 def processScans(server, password, file_name, student_id, question, loose=False):
     make_required_directories()
+    from plom.scan import scansToImages
+
     if question is None:
         if loose is False:  # this should not happen
             print("Need question number unless you set the loose flag.")
@@ -85,11 +87,11 @@ def processScans(server, password, file_name, student_id, question, loose=False)
                 file_name, question[0], student_id
             )
         )
+        # scansToImages.processScans(file_name, hwByQ=True)
         print("Do stuff.")
 
     #
     # from plom.scan.hwSubmissionsCheck import verifiedComplete
-    # from plom.scan import scansToImages
     #
     # # process HWByQ first
     # if incomplete:
