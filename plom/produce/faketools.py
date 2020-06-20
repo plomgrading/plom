@@ -130,7 +130,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
     all_pdf_documents = fitz.open()
 
     clean_count = 0
-    for file_name in papers_paths:
+    for index, file_name in enumerate(papers_paths):
         if file_name in named_papers_paths:
             print("{} - prenamed paper - scribbled".format(os.path.basename(file_name)))
         else:
