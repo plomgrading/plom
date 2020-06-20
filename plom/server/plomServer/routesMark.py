@@ -202,20 +202,20 @@ class MarkHandler:
         Logs activity.
 
         Args:
-            request (aiohttp.web_request.Request): Request of type PUT /MK/tasks/`question code`.
+            request (aiohttp.web_request.Request): Request of type PUT /MK/tasks/`question code` which 
+                includes a multipart object indication the marked test data.
 
         Returns:
             aiohttp.web_response.Response: 
         """
 
-        print("###########################")
-        print("MreturnMarkedTask")
-
         log_request("MreturnMarkedTask", request)
         # the put will be in 3 parts - use multipart reader
         # in order we expect those 3 parts - [metadata, image, plom-file]
         reader = MultipartReader.from_response(request)
-        
+
+
+        # Dealing with the metadata.
         task_metadata_object = await reader.next()
 
         if task_metadata_object is None:  # weird error
@@ -251,27 +251,24 @@ class MarkHandler:
         # Note: if user isn't validated, we don't parse their binary junk
         # TODO: is it safe to abort during a multi-part thing?
 
-        # task_image file
+        # Dealing with the image.
         task_image_object = await reader.next()
 
-
+        # TODO: Probably should do a length check here and not do this 406 check 3 times.
+        # However I still haven't found the code for checking the length.
         if task_image_object is None:  # weird error
             return web.Response(status=406)  # should have sent 3 parts
         task_image = await task_image_object.read()
 
-        # plom file
-        part2 = await reader.next()
+        # TODO: I really don't know what plomdat is
+        # Seems like some random metadata
 
-        print(type(part2))
-        print(part2)
+        # Dealing with the plom_file.
+        plom_file_object = await reader.next()
 
-        if part2 is None:  # weird error
+        if plom_file_object is None:  # weird error
             return web.Response(status=406)  # should have sent 3 parts
-        plomdat = await part2.read()
-
-        print("HERE")
-        print(type(plomdat))
-        print(plomdat)
+        plomdat = await plom_file_object.read()
 
         marked_task_status = self.server.MreturnMarkedTask(
             task_metadata_dict["user"],
@@ -294,34 +291,49 @@ class MarkHandler:
             total_num_tasks = marked_task_status[2]
             return web.json_response([num_done_tasks, total_num_tasks], status=200)
         else:
-            log.warning("Returning with error 400 = {}".format(rmsg))
+            log.warning("Returning with error 400 = {}".format(marked_task_status))
             return web.Response(status=400)  # some sort of error with task_image file
 
     # @routes.get("/MK/images/{task}")
     @authenticate_by_token_required_fields(["user"])
     def MgetImages(self, data, request):
-        print("###########################")
-        print("MgetImages")
-        print(type(data))
-        print(data)
-        print(type(request))
-        print(request)
+        """Returns the image of a question/task to the client.
+        TODO: is this correct ? 
 
-        task = request.match_info["task"]
-        rmsg = self.server.MgetImages(data["user"], task)
+        For example : show on the front grading page. TODO: this is the only time I cn actually call this function.
+                                                            only for the front page.
 
-        print(type(task))
-        print(task)
-        print(type(rmsg))
-        print(rmsg)
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): Request of type GET /MK/images/"task code"
+                which the task code is extracted from.
 
-        # returns either [True,n, fname1,fname2,..,fname.n] or [True, n, fname1,..,fname.n, aname, plomdat] or [False, error]
-        if rmsg[0]:
-            with MultipartWriter("imageAnImageAndPlom") as mpwriter:
-                mpwriter.append("{}".format(rmsg[1]))  # send 'n' as string
-                for fn in rmsg[2:]:
-                    mpwriter.append(open(fn, "rb"))
-            return web.Response(body=mpwriter, status=200)
+        Returns:
+            aiohttp.web_response.Response: A response which includes the multipart writer object
+                wrapping the task images.
+        """
+
+        task_code = request.match_info["task"]
+        task_image_results = self.server.MgetImages(data["user"], task_code)
+        # A list which includes:
+        # 1. True/False process status.
+        # 2. Number of pages for task.
+        # 3. Original Page image path.
+        # 3. Marked Page image path.
+        # 4. Marked question plom data path, ie .plom type files.
+
+        # TODO: What is aname ?
+        # Format is either:
+        # [True, num_pages, original_fname1, original_name2, ... original_name#num_pages, ] or 
+        # [True, num_pages, fname1,..,fname#n, aname1, aname2 , plomdat] or 
+        # [False, error]
+
+        if task_image_results[0]:
+            with MultipartWriter("imageAnImageAndPlom") as multipart_writer:
+                multipart_writer.append("{}".format(task_image_results[1]))  # send 'n' as string
+                for file_name in task_image_results[2:]:
+                    multipart_writer.append(open(file_name, "rb"))
+            return web.Response(body=multipart_writer, status=200)
         else:
             return web.Response(status=409)  # someone else has that task_image
 
@@ -330,10 +342,12 @@ class MarkHandler:
     def MgetOriginalImages(self, data, request):
         """Return the non-graded original image for a task/question.
 
+        Responds with status 200/204.
+
         Args:
             data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): Request of type GET /MK/originalImages/`task code`.
-                Request object also incudes the task code.
+            request (aiohttp.web_request.Request): Request of type GET /MK/originalImages/`task code` 
+                which the task code is extracted from.
 
         Returns:
             aiohttp.web_response.Response: A response object with includes the multipart objects
@@ -360,6 +374,8 @@ class MarkHandler:
     def MsetTag(self, data, request):
         """Set tag for a task.
 
+        Responds with status 200/409.
+
         Args:
             data (dict): A dictionary having the user/token in addition to the tag string.
                 Request object also incudes the task code.
@@ -382,31 +398,39 @@ class MarkHandler:
     # @routes.get("/MK/whole/{number}")
     @authenticate_by_token_required_fields([])
     def MgetWholePaper(self, data, request):
-        print("###########################")
-        print("MgetWholePaper")
-        print(type(data))
-        print(data)
-        print(type(request))
-        print(request)
+        """Return the entire paper which includes the given question.
 
-        number = request.match_info["number"]
-        question = request.match_info["question"]
-        rmesg = self.server.MgetWholePaper(number, question)
-        
-        print(type(number))
-        print(number)
-        print(type(question))
-        print(question)
-        print(type(rmesg))
-        print(rmesg)
+        Responds with status 200/404.
 
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): GET /MK/whole/`test number`/`question number`.
 
-        if rmesg[0]:  # return [True, pageData,f1,f2,f3,...] or [False]
-            with MultipartWriter("images") as mpwriter:
-                mpwriter.append_json(rmesg[1])  # append the pageData
-                for fn in rmesg[2:]:
-                    mpwriter.append(open(fn, "rb"))
-            return web.Response(body=mpwriter, status=200)
+        Returns:
+            aiohttp.web_response.Response: Responds with a multipart writer which includes all 
+                the images for the exam which includes this question.
+        """
+
+        test_number = request.match_info["number"]
+        question_number = request.match_info["question"]
+        # This response is a list which includes the following:
+        # 1. True/False for operation status.
+        # 2. A list of lists where each inner list includes: TODO: Is this a correct interpretation? 
+        #   [test_number, task_number, True/False for wether the task/page is graded or not]
+        # 3. From the 3rd element onward, we have the string paths for each page of the paper in server.
+        whole_paper_response = self.server.MgetWholePaper(test_number, question_number)
+
+        paper_retrieval_success = whole_paper_response[0]
+
+        if paper_retrieval_success:  # return [True, pageData,f1,f2,f3,...] or [False]
+            with MultipartWriter("images") as multipart_writer:
+                pages_data = whole_paper_response[1]
+                all_pages_paths = whole_paper_response[2:]
+
+                multipart_writer.append_json(pages_data)  # append the pageData
+                for file_name in all_pages_paths:
+                    multipart_writer.append(open(file_name, "rb"))
+            return web.Response(body=multipart_writer, status=200)
         else:
             return web.Response(status=404)  # not found
 
@@ -423,12 +447,19 @@ class MarkHandler:
     # @routes.patch("/MK/review")
     @authenticate_by_token_required_fields(["testNumber", "questionNumber", "version"])
     def MreviewQuestion(self, data, request):
-        print("###########################")
-        print("MreviewQuestion")
-        print(type(data))
-        print(data)
-        print(type(request))
-        print(request)
+        """Confirm the question review done on plom-manager.
+
+        Responds with status 200/404.
+
+        Args:
+            data (dict): Dictionary including user data in addition to question number
+                and test version.
+            request (aiohttp.web_request.Request): Request of type PATCH /MK/review .
+
+        Returns:
+            aiohttp.web_response.Response: Empty status response indication if the question
+                review was successful.
+        """
 
         if self.server.MreviewQuestion(
             data["testNumber"], data["questionNumber"], data["version"]
@@ -438,26 +469,17 @@ class MarkHandler:
             return web.Response(status=404)
 
     # @routes.patch("/MK/revert/{task}")
+    # TODO: Deprecated Language.
+    # TODO: Should be removed.
     @authenticate_by_token_required_fields(["user"])
     def MrevertTask(self, data, request):
-        print("###########################")
-        print("MrevertTask")
-        print(type(data))
-        print(data)
-        print(type(request))
-        print(request)
 
         # only manager can do this
         task = request.match_info["task"]
 
-        print(type(task))
-        print(task)
-
         if not data["user"] == "manager":
             return web.Response(status=401)  # malformed request.
         rval = self.server.MrevertTask(task)
-        print(type(rval))
-        print(rval)
 
         if rval[0]:
             return web.Response(status=200)
@@ -469,22 +491,26 @@ class MarkHandler:
     # @routes.patch("/MK/shuffle/{task}")
     @authenticate_by_token_required_fields(["user", "imageRefs"])
     def MshuffleImages(self, data, request):
-        print("###########################")
-        print("MshuffleImages")
-        print(type(data))
-        print(data)
-        print(type(request))
-        print(request)
+        """Shuffle images for a task and pass the shuffle data to the database.
 
-        task = request.match_info["task"]
-        rval = self.server.MshuffleImages(data["user"], task, data["imageRefs"])
+        Responds with status 200/401.
 
-        print(type(task))
-        print(task)
-        print(type(rval))
-        print(rval)
+        Args:
+            data (dict): Dictionary including user data in addition to the rearranged image 
+                references.
+            request (aiohttp.web_request.Request): Request of type PATCH /MK/shuffle/`task code`.
 
-        if rval[0]:
+        Returns:
+            aiohttp.web_response.Response: Empty status response indication if the question
+                images shuffling was successful.
+        """
+
+        task_code = request.match_info["task"]
+        # A list with a single boolean indicating if the operation was successful
+        shuffle_images_response = self.server.MshuffleImages(data["user"], task_code, data["imageRefs"])
+        shuffle_images_status = shuffle_images_response[0]
+
+        if shuffle_images_status:
             return web.Response(status=200)
         else:  # not your task
             return web.Response(status=401)
