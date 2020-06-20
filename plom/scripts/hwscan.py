@@ -45,10 +45,10 @@ def IDQorIDorBad(fullfname):
         return ["BAD"]  # Bad format
 
 
-def whoDidWhat(hw_dir):
+def whoDidWhat():
     from plom.scan.hwSubmissionsCheck import whoSubmittedWhat
 
-    whoSubmittedWhat(hw_dir)
+    whoSubmittedWhat()
 
 
 def make_required_directories():
@@ -67,37 +67,52 @@ def make_required_directories():
         os.makedirs(dir, exist_ok=True)
 
 
-def processScans(hw_dir, server, password, incomplete=False, loose=False):
-    if not os.path.isdir(hw_dir):
-        print("Cannot find hw directory {} - skipping".format(hw_dir))
-
+def processScans(server, password, file_name, student_id, question, loose=False):
     make_required_directories()
-
-    from plom.scan.hwSubmissionsCheck import verifiedComplete
-    from plom.scan import scansToImages
-
-    # process HWByQ first
-    if incomplete:
-        fileList = sorted(glob.glob("submittedHWByQ/*.pdf"))
+    if question is None:
+        if loose is False:  # this should not happen
+            print("Need question number unless you set the loose flag.")
+            return
+        print(
+            "Process and upload file {} as loose pages for sid {}".format(
+                file_name, student_id
+            )
+        )
+        print("Do stuff.")
     else:
-        fileList = verifiedComplete(server, password)
+        print(
+            "Process and upload file {} as answer to question {} for sid {}".format(
+                file_name, question[0], student_id
+            )
+        )
+        print("Do stuff.")
 
-    for fn in fileList:
-        IDQ = IDQorIDorBad(fn)
-        if len(IDQ) != 3:
-            print("Skipping file {} - wrong format".format(fn))
-            continue  # this is not the right file format
-        print("Processing PDF {} to images".format(fn))
-        scansToImages.processScans(fn, hwByQ=True)
-    # then process HWLoose (if flagged)
-    if loose:
-        for fn in sorted(glob.glob("submittedHWLoose/*.pdf")):
-            IDQ = IDQorIDorBad(fn)
-            if len(IDQ) != 2:
-                print("Skipping file {} - wrong format".format(fn))
-                continue  # this is not the right file format
-            print("Processing PDF {} to images".format(fn))
-            scansToImages.processScans(fn, hwLoose=True)
+    #
+    # from plom.scan.hwSubmissionsCheck import verifiedComplete
+    # from plom.scan import scansToImages
+    #
+    # # process HWByQ first
+    # if incomplete:
+    #     fileList = sorted(glob.glob("submittedHWByQ/*.pdf"))
+    # else:
+    #     fileList = verifiedComplete(server, password)
+    #
+    # for fn in fileList:
+    #     IDQ = IDQorIDorBad(fn)
+    #     if len(IDQ) != 3:
+    #         print("Skipping file {} - wrong format".format(fn))
+    #         continue  # this is not the right file format
+    #     print("Processing PDF {} to images".format(fn))
+    #     scansToImages.processScans(fn, hwByQ=True)
+    # # then process HWLoose (if flagged)
+    # if loose:
+    #     for fn in sorted(glob.glob("submittedHWLoose/*.pdf")):
+    #         IDQ = IDQorIDorBad(fn)
+    #         if len(IDQ) != 2:
+    #             print("Skipping file {} - wrong format".format(fn))
+    #             continue  # this is not the right file format
+    #         print("Processing PDF {} to images".format(fn))
+    #         scansToImages.processScans(fn, hwLoose=True)
 
 
 def uploadHWImages(server, password, unknowns=False, collisions=False):
@@ -138,23 +153,23 @@ spC = sub.add_parser(
     description="Clear 'scanner' login after a crash or other expected event.",
 )
 #
-spW.add_argument("hwDir", help="The directory containing homeworks.")
-spP.add_argument("hwDir", help="The directory containing homeworks.")
 
 
-spP.add_argument(
-    "-i",
-    "--incomplete",
-    action="store_true",
-    default=False,
-    help="Process incomplete homeworks (ie not all questions present)",
-)
-spP.add_argument(
+spP.add_argument("hwPDF", action="store", help="PDF containing homework")
+spP.add_argument("studentid", action="store", help="Student ID")
+spPql = spP.add_mutually_exclusive_group(required=True)
+spPql.add_argument(
     "-l",
     "--loose",
     action="store_true",
-    default=False,
-    help="Process loose pages for homeworks (ie one-file)",
+    help="Whether or not to upload file as loose pages.",
+)
+spPql.add_argument(
+    "-q",
+    "--question",
+    nargs=1,
+    action="store",
+    help="Which question is answered in file.",
 )
 
 
@@ -167,13 +182,18 @@ def main():
     args = parser.parse_args()
 
     if args.command == "submitted":
-        whoDidWhat(args.hwDir)
+        whoDidWhat()
     elif args.command == "process":
         processScans(
-            args.hwDir, args.server, args.password, args.incomplete, args.loose
+            args.server,
+            args.password,
+            args.hwPDF,
+            args.studentid,
+            args.question,
+            args.loose,
         )
-    elif args.command == "upload":
-        uploadHWImages(args.server, args.password)
+    # elif args.command == "upload":
+    #     uploadHWImages(args.server, args.password)
     elif args.command == "status":
         scanStatus(args.server, args.password)
     elif args.command == "clear":

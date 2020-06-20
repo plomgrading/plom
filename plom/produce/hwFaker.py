@@ -53,7 +53,7 @@ possibleAns = [
 ]
 
 
-def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName):
+def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
     # pick one or two questions to "do" with one or 2 pages.
     didA = random.randint(1, 1 + numberOfQuestions)
     didB = random.randint(1, 1 + numberOfQuestions)
@@ -62,7 +62,7 @@ def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName):
     else:
         doneQ = [didA, didB]
 
-    fname = Path("submittedHWLoose") / "hwl.{}.pdf".format(studentID)
+    fname = Path("submittedHWLoose") / "{}.{}.pdf".format(prefix, studentID)
     doc = fitz.open()
 
     for q in doneQ:
@@ -100,13 +100,13 @@ def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName):
     doc.save(fname)
 
 
-def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName):
+def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName, prefix):
     did = random.randint(
         numberOfQuestions - 1, numberOfQuestions
     )  # some subset of questions.
     doneQ = sorted(random.sample(list(range(1, 1 + numberOfQuestions)), did))
     for q in doneQ:
-        fname = Path("submittedHWByQ") / "hwByQ.{}.{}.pdf".format(studentID, q)
+        fname = Path("submittedHWByQ") / "{}.{}.{}.pdf".format(prefix, studentID, q)
         doc = fitz.open()
         # construct pages
         for pn in range(random.randint(1, 3)):
@@ -169,24 +169,23 @@ def main():
             if k >= numberNamed:
                 break
 
-    hw_batches = ["hw1", "hw2"]
-    for hw_path in hw_batches:
-        os.makedirs(hw_path, exist_ok=True)
-        os.chdir(hw_path)
-        os.makedirs("submittedHWByQ", exist_ok=True)
-        os.makedirs("submittedHWLoose", exist_ok=True)
+    os.makedirs("submittedHWByQ", exist_ok=True)
+    os.makedirs("submittedHWLoose", exist_ok=True)
 
-        if hw_path == "hw1":
+    print("NumberNamed = {}".format(numberNamed))
+
+    prefixes = ["hwA", "hwB"]  # we'll make two batches one bigger than other.
+    for prefix in prefixes:
+        if prefix == "hwA":
             for k in range(numberNamed):
-                makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1])
+                makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], prefix)
         else:
             for k in range(numberNamed // 2):  # fewer in second batch
-                makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1])
+                makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], prefix)
 
         # give a few loose pages to the first two students in both batches
         for k in range(2):
-            makeHWLoose(numberOfQuestions, k, sid[k][0], sid[k][1])
-        os.chdir("..")
+            makeHWLoose(numberOfQuestions, k, sid[k][0], sid[k][1], prefix)
 
 
 if __name__ == "__main__":

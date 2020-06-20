@@ -77,6 +77,8 @@ def main():
     # this creates two batches of fake hw - one in 'hw1' another in 'hw2'
     subprocess.check_call(split("plom-fake-hwscribbles"))
 
+    exit(0)
+
     subprocess.check_call(split("plom-hwscan submitted hw1"))
     print("Processing complete hw only")
     subprocess.check_call(split("plom-hwscan process hw1 -w 4567"))

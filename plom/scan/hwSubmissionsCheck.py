@@ -29,14 +29,14 @@ def IDQorIDorBad(fullfname):
         return ["BAD"]  # Bad format
 
 
-def whoSubmittedWhat(hw_dir):
+def whoSubmittedWhat():
 
     hwByQ = defaultdict(list)
     hwOne = defaultdict(list)
     problemFQ = []
     problemOF = []
 
-    for fn in glob.glob(os.path.join(hw_dir, "submittedHWByQ", "*.pdf")):
+    for fn in glob.glob(os.path.join("submittedHWByQ", "*.pdf")):
         IDQ = IDQorIDorBad(fn)
         if len(IDQ) == 3:
             sid, q = IDQ[1:]
@@ -45,7 +45,7 @@ def whoSubmittedWhat(hw_dir):
             # print("File {} has incorrect format for homework-by-question".format(fn))
             problemFQ.append(os.path.basename(fn))
 
-    for fn in glob.glob(os.path.join(hw_dir, "submittedHWExtra", "*.pdf")):
+    for fn in glob.glob(os.path.join("submittedHWLoose", "*.pdf")):
         IDQ = IDQorIDorBad(fn)
         if len(IDQ) == 2:
             sid = IDQ[1]
