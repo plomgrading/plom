@@ -1059,8 +1059,10 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MrequestWholePaper(self, code, questionNumber):
+    def MrequestWholePaper(self, code, questionNumber=0):
         self.SRmutex.acquire()
+        # note - added default value for questionNumber so that this works correctly
+        # when called from identifier. - Fixes #921
         try:
             response = self.session.get(
                 "https://{}/MK/whole/{}/{}".format(self.server, code, questionNumber),
