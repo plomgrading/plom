@@ -188,8 +188,8 @@ class ManagerMessenger(BaseMessenger):
         """Give the server a classlist.
 
         Args:
-            classdict (dict): keys are student IDs (str), values are
-                student names.
+            classdict (list): list of (str, str) pairs of the form
+                (student ID, student name).
 
         Exceptions:
             PlomConflict: server already has one.

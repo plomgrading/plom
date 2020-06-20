@@ -42,6 +42,9 @@ class IDHandler:
 
         Responds with status success or HTTPNotFound.
 
+        The classlist is a ordered list of (student ID, student name)
+        pairs.
+
         Returns:
             class 'aiohttp.web_fileresponse.FileResponse: A file response that includes the classlist.
         """
@@ -49,10 +52,10 @@ class IDHandler:
             with open(Path(specdir) / "classlist.csv") as csvfile:
                 reader = csv.reader(csvfile)
                 next(reader)  # skip header row
-                class_list = dict(reader)
+                classlist = list(reader)
         except FileNotFoundError:
             raise web.HTTPNotFound(reason="classlist not found")
-        return web.json_response(class_list)
+        return web.json_response(classlist)
 
     # @routes.put("/ID/classlist")
     @authenticate_by_token_required_fields(["user", "classlist"])
@@ -62,18 +65,21 @@ class IDHandler:
         Only "manager" can perform this action.
         Responds with status success, HTTPBadRequest or HTTPConflict.
 
+        The classlist should be provided as a ordered list of (str, str)
+        pairs where each pair is (student ID, student name).
+
         Returns:
             aiohttp.web_response.Response: A response indicating whether the operation was a failure or a success.
         """
         if not data["user"] == "manager":
             raise web.HTTPBadRequest(reason="Not manager")
-        class_list = data["classlist"]
+        classlist = data["classlist"]
         if os.path.isfile(Path(specdir) / "classlist.csv"):
             raise web.HTTPConflict(reason="we already have a classlist")
         with open(Path(specdir) / "classlist.csv", "w") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["id", "studentName"])
-            writer.writerows(class_list.items())
+            writer.writerows(classlist)
         return web.Response()
 
     # @routes.get("/ID/predictions")

@@ -29,8 +29,7 @@ from plom.messenger import Messenger
 
 
 def startIdentifying():
-    d = messenger.IDrequestClasslist()
-    idList = [[k, v] for k, v in d.items()]
+    idList = messenger.IDrequestClasslist()
 
     while True:
         task = messenger.IDaskNextTask()
@@ -46,12 +45,12 @@ def startIdentifying():
 
         while True:
             try:
-                c = random.choice(idList)
-                c[1] += " [randomly chosen]"
-                messenger.IDreturnIDdTask(task, c[0], c[1])
+                sid, sname = random.choice(idList)
+                sname += " [randomly chosen]"
+                messenger.IDreturnIDdTask(task, sid, sname)
                 break
             except PlomConflict:
-                print("SID/SN {}/{} already used".format(c[0], c[1]))
+                print("SID/SN {}/{} already used".format(sid, sname))
 
 
 # -------------------------------------------
@@ -107,8 +106,6 @@ if __name__ == "__main__":
 
     spec = messenger.getInfoGeneral()
 
-    print(spec)
-
     try:
         startIdentifying()
     except Exception as e:
@@ -117,5 +114,3 @@ if __name__ == "__main__":
 
     messenger.closeUser()
     messenger.stop()
-
-    exit(0)
