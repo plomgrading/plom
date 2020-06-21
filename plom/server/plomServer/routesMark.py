@@ -206,7 +206,8 @@ class MarkHandler:
                 includes a multipart object indication the marked test data.
 
         Returns:
-            aiohttp.web_response.Response: 
+            aiohttp.web_response.Response: Responses with a list including the number of
+                graded tasks and the overall number of tasks.
         """
 
         log_request("MreturnMarkedTask", request)
@@ -283,7 +284,7 @@ class MarkHandler:
             task_metadata_dict["tags"],
             task_metadata_dict["md5sum"],
         )
-        # marked_task_status = either [True, numDone, numTotal] or [False] if error.
+        # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
 
         marking_success = marked_task_status[0]
         if marking_success:
@@ -437,11 +438,15 @@ class MarkHandler:
     # @routes.get("/MK/allMax")
     @authenticate_by_token
     def MgetAllMax(self):
-        print("###########################")
-        print("MgetAllMax")
-        print(type(self.server.MgetAllMax()))
-        print(self.server.MgetAllMax())
+        """Respond with information on max mark possible for each question in the exam.
 
+        Responds with status 200/404.
+
+        Returns:
+            aiohttp.web_response.Response: A response which includes a dictionary
+                for the highest mark posssible for each question of the exam.
+        """
+        
         return web.json_response(self.server.MgetAllMax(), status=200)
 
     # @routes.patch("/MK/review")
