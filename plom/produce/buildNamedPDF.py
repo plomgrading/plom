@@ -56,7 +56,17 @@ def build_all_papers(spec, global_page_version_map, classlist):
         global_page_version_map (dict): dict of dicts mapping first by
             paper number (int) then by page number (int) to version (int).
         classlist (list, None): ordered list of (sid, sname) pairs.
+
+    Raises:
+        ValueError: classlist is invalid in some way.
     """
+    if spec["numberToName"] > 0:
+        if not classlist:
+            raise ValueError("You must provide a classlist to prename papers")
+        if len(classlist) < spec["numberToName"]:
+            raise ValueError(
+                "Classlist is too short for {} pre-named papers".format(spec["numberToName"])
+            )
     make_PDF_args = []
     for paper_index in range(1, spec["numberToProduce"] + 1):
         page_version = global_page_version_map[paper_index]
@@ -97,7 +107,15 @@ def confirm_processed(spec, msgr, classlist):
 
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
+        ValueError: classlist is invalid in some way.
     """
+    if spec["numberToName"] > 0:
+        if not classlist:
+            raise ValueError("You must provide a classlist for pre-named papers")
+        if len(classlist) < spec["numberToName"]:
+            raise ValueError(
+                "Classlist is too short for {} pre-named papers".format(spec["numberToName"])
+            )
     for paper_index in range(1, spec["numberToProduce"] + 1):
         if paper_index <= spec["numberToName"]:
             PDF_file_name = Path(paperdir) / "exam_{}_{}.pdf".format(
@@ -125,7 +143,15 @@ def identify_prenamed(spec, msgr, classlist):
 
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
+        ValueError: classlist is invalid in some way.
     """
+    if spec["numberToName"] > 0:
+        if not classlist:
+            raise ValueError("You must provide a classlist to prename papers")
+        if len(classlist) < spec["numberToName"]:
+            raise ValueError(
+                "Classlist is too short for {} pre-named papers".format(spec["numberToName"])
+            )
     for paper_index in range(1, spec["numberToProduce"] + 1):
         if paper_index <= spec["numberToName"]:
             sid, sname = classlist[paper_index - 1]
