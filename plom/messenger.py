@@ -225,6 +225,10 @@ class BaseMessenger(object):
     def IDrequestClasslist(self):
         """Ask server for the classlist.
 
+        Returns:
+            list: ordered list of (student id, student name) pairs.
+                Both are strings.
+
         Raises:
             PlomAuthenticationException: login troubles.
             PlomBenignException: server has no classlist.

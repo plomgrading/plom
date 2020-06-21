@@ -72,7 +72,7 @@ def buildDatabaseAndPapers(server=None, password=None):
 
         print("Checking papers produced and updating databases")
         confirm_processed(spec, msgr, classlist)
-        print("Identifying pre-named papers in database")
+        print("Identifying any pre-named papers into the database")
         identify_prenamed(spec, msgr, classlist)
     finally:
         msgr.closeUser()
