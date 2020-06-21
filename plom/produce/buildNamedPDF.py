@@ -1,51 +1,14 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2020 Colin B. Macdonald
 
-import csv
 import os
 from pathlib import Path
 from multiprocessing import Pool
 from tqdm import tqdm
 
-from plom import specdir
 from .mergeAndCodePages import make_PDF
 from . import paperdir
-
-
-# TODO: maybe functions in this module should expect classlist as an input?
-# TODO: its a bit strange to be reading the class list here.
-#
-# TODO: even worse, the row indices are mapped to test numbers in a way that
-# TODO: may not be obvious (the `confirmedNamed` fcn).  Needs some re-org.
-
-
-def read_class_list():
-    """Creates a dictionary of the students name and ids and returns it
-
-    TODO: Perhaps this function should be reformatted
-
-    Returns:
-        dict -- A dictionary of the form {int: list[Str, Str]} with:
-                - Index integer is the key
-                - List of student id and student name is the value
-    """
-    students = {}
-    # read in the classlist
-    with open(Path(specdir) / "classlist.csv", newline="") as csvfile:
-        red = csv.reader(csvfile, delimiter=",")
-        next(red, None)
-        k = 0
-        for row in red:
-            k += 1
-            students[k] = [row[0], row[1]]
-
-    return students
 
 
 def _make_PDF(x):
@@ -60,11 +23,14 @@ def _make_PDF(x):
     make_PDF(*x)
 
 
-def build_all_papers(spec, global_page_version_map, named=False):
+def build_all_papers(spec, global_page_version_map, classlist):
     """Builds the papers using _make_PDF.
 
     Based on `numberToName` this uses `_make_PDF` to create some
     papers with names stamped on the front as well as some papers without.
+
+    For the prenamed papers, names and IDs are taken in order from the
+    classlist.
 
     Arguments:
         spec {dict} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
@@ -89,22 +55,25 @@ def build_all_papers(spec, global_page_version_map, named=False):
                        }
         global_page_version_map (dict): dict of dicts mapping first by
             paper number (int) then by page number (int) to version (int).
+        classlist (list, None): ordered list of (sid, sname) pairs.
 
-    Keyword Arguments:
-        named {boolean} -- Whether the document is named or not. (default: {False})
+    Raises:
+        ValueError: classlist is invalid in some way.
     """
-
-    if named and spec["numberToName"] > 0:
-        # TODO: get from server
-        students = read_class_list()
-
+    if spec["numberToName"] > 0:
+        if not classlist:
+            raise ValueError("You must provide a classlist to prename papers")
+        if len(classlist) < spec["numberToName"]:
+            raise ValueError(
+                "Classlist is too short for {} pre-named papers".format(spec["numberToName"])
+            )
     make_PDF_args = []
     for paper_index in range(1, spec["numberToProduce"] + 1):
         page_version = global_page_version_map[paper_index]
-        if named and paper_index <= spec["numberToName"]:
+        if paper_index <= spec["numberToName"]:
             student_info = {
-                "id": students[paper_index][0],
-                "name": students[paper_index][1],
+                "id": classlist[paper_index - 1][0],
+                "name": classlist[paper_index - 1][1],
             }
         else:
             student_info = None
@@ -128,24 +97,29 @@ def build_all_papers(spec, global_page_version_map, named=False):
         r = list(tqdm(pool.imap_unordered(_make_PDF, make_PDF_args), total=num_PDFs))
 
 
-def confirm_processed(spec, msgr):
+def confirm_processed(spec, msgr, classlist):
     """Checks that each PDF file was created and notify server.
 
     Arguments:
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         msgr (Messenger): an open active connection to the server.
+        classlist (list, None): ordered list of (sid, sname) pairs.
 
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
+        ValueError: classlist is invalid in some way.
     """
-
     if spec["numberToName"] > 0:
-        students = read_class_list()
+        if not classlist:
+            raise ValueError("You must provide a classlist for pre-named papers")
+        if len(classlist) < spec["numberToName"]:
+            raise ValueError(
+                "Classlist is too short for {} pre-named papers".format(spec["numberToName"])
+            )
     for paper_index in range(1, spec["numberToProduce"] + 1):
-        # TODO: explain this better, we need to consider the nameless papers
         if paper_index <= spec["numberToName"]:
             PDF_file_name = Path(paperdir) / "exam_{}_{}.pdf".format(
-                str(paper_index).zfill(4), students[paper_index][0]
+                str(paper_index).zfill(4), classlist[paper_index - 1][0]
             )
         else:
             PDF_file_name = Path(paperdir) / "exam_{}.pdf".format(
@@ -159,27 +133,33 @@ def confirm_processed(spec, msgr):
             raise RuntimeError('Cannot find pdf for paper "{}"'.format(PDF_file_name))
 
 
-def identify_prenamed(spec, msgr):
+def identify_prenamed(spec, msgr, classlist):
     """Identify papers that pre-printed names on the server.
 
     Arguments:
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         msgr (Messenger): an open active connection to the server.
+        classlist (list, None): ordered list of (sid, sname) pairs.
 
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
+        ValueError: classlist is invalid in some way.
     """
     if spec["numberToName"] > 0:
-        students = read_class_list()
+        if not classlist:
+            raise ValueError("You must provide a classlist to prename papers")
+        if len(classlist) < spec["numberToName"]:
+            raise ValueError(
+                "Classlist is too short for {} pre-named papers".format(spec["numberToName"])
+            )
     for paper_index in range(1, spec["numberToProduce"] + 1):
         if paper_index <= spec["numberToName"]:
+            sid, sname = classlist[paper_index - 1]
             PDF_file_name = Path(paperdir) / "exam_{}_{}.pdf".format(
-                str(paper_index).zfill(4), students[paper_index][0]
+                str(paper_index).zfill(4), sid
             )
             if os.path.isfile(PDF_file_name):
-                msgr.id_paper(
-                    paper_index, students[paper_index][0], students[paper_index][1]
-                )
+                msgr.id_paper(paper_index, sid, sname)
             else:
                 raise RuntimeError(
                     'Cannot find pdf for paper "{}"'.format(PDF_file_name)

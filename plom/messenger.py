@@ -222,6 +222,49 @@ class BaseMessenger(object):
 
         return response.json()
 
+    def IDrequestClasslist(self):
+        """Ask server for the classlist.
+
+        Returns:
+            list: ordered list of (student id, student name) pairs.
+                Both are strings.
+
+        Raises:
+            PlomAuthenticationException: login troubles.
+            PlomBenignException: server has no classlist.
+            PlomSeriousException: all other failures.
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/ID/classlist".format(self.server),
+                json={"user": self.user, "token": self.token},
+                verify=False,
+            )
+            # throw errors when response code != 200.
+            response.raise_for_status()
+            # you can assign to the encoding to override the autodetection
+            # TODO: define API such that classlist must be utf-8?
+            # print(response.encoding)
+            # response.encoding = 'utf-8'
+            # classlist = StringIO(response.text)
+            classlist = response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomBenignException(
+                    "Server cannot find the class list"
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return classlist
+
 
 class Messenger(BaseMessenger):
     """Handle communication with a Plom Server."""
@@ -289,38 +332,6 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
 
         return tgv
-
-    def IDrequestClasslist(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/ID/classlist".format(self.server),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            # throw errors when response code != 200.
-            response.raise_for_status()
-            # you can assign to the encoding to override the autodetection
-            # TODO: define API such that classlist must be utf-8?
-            # print(response.encoding)
-            # response.encoding = 'utf-8'
-            # classlist = StringIO(response.text)
-            classlist = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server cannot find the class list"
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return classlist
 
     def IDrequestPredictions(self):
         self.SRmutex.acquire()
