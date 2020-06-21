@@ -324,8 +324,8 @@ class MarkHandler:
 
         # TODO: What is aname ?
         # Format is either:
-        # [True, num_pages, original_fname1, original_name2, ... original_name#num_pages, ] or 
-        # [True, num_pages, fname1,..,fname#n, aname1, aname2 , plomdat] or 
+        # [True, num_pages, original_fname1, original_fname2, ... original_fname#num_pages, ] or 
+        # [True, num_pages, original_fname1,..,original_fname#num_pages, annotated_fname#1, ... annotated_fname#num_pages , plomdat] or 
         # [False, error]
 
         if task_image_results[0]:
@@ -360,7 +360,7 @@ class MarkHandler:
 
         # returns either [True, fname1, fname2,... ] or [False]
         if image_return_success:
-            original_image_paths = image_return_success[1:]
+            original_image_paths = get_image_results[1:]
             
             with MultipartWriter("images") as multipart_writer:
                 for file_nam in original_image_paths:
