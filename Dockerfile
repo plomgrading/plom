@@ -31,7 +31,7 @@ RUN pip3 install --upgrade pip
 RUN pip3 install \
     pymupdf weasyprint imutils lapsolver peewee toml \
     requests requests-toolbelt aiohttp pyzbar jpegtran-cffi \
-    imutils tensorflow lapsolver opencv_python \
+    imutils tensorflow lapsolver opencv-python \
     packaging pyinstaller
 
 
