@@ -14,7 +14,7 @@ from multiprocessing import Pool
 from tqdm import tqdm
 
 from .coverPageBuilder import makeCover
-from .testReassembler import reassemble
+from .examReassembler import reassemble
 
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import *
