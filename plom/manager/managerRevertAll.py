@@ -93,7 +93,7 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        spec = messenger.getInfoGeneral()
+        spec = messenger.get_spec()
     except Exception as e:
         print("Error getting general info from server = ", e)
         exit(1)

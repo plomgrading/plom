@@ -117,7 +117,7 @@ def verifiedComplete(server=None, password=None):
         exit(10)
 
     # grab number of questions - so we can work out what is missing
-    spec = msgr.getInfoGeneral()
+    spec = msgr.get_spec()
     numberOfQuestions = spec["numberOfQuestions"]
 
     msgr.closeUser()

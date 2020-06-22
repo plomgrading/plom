@@ -203,33 +203,105 @@ class BaseMessenger(object):
 
         return shortName
 
+    def get_spec(self):
+        """Get the specification of the exam from the server.
+
+        Returns:
+            dict: the server's spec file, as in :func:`plom.SpecVerifier`.
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/info/spec".format(self.server), verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 404:
+                raise PlomSeriousException("Server could not find the spec") from None
+            else:
+                raise PlomSeriousException("Some other sort of error {}".format(e))
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+
     def getInfoGeneral(self):
+        """Get some info from pre-0.5.0 server which don't expose the spec.
+
+        Probably we can deprecate or remove this.  Old clients trying to
+        talk to newer servers will just get a 404.
+
+        Returns:
+            dict: some of the fields of the server's spec file.
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.get(
                 "https://{}/info/general".format(self.server), verify=False,
             )
             response.raise_for_status()
-            pv = response.json()
         except requests.HTTPError as e:
             if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server could not find the spec - this should not happen!"
-                )
+                raise PlomSeriousException("Server could not find the spec") from None
             else:
                 raise PlomSeriousException("Some other sort of error {}".format(e))
         finally:
             self.SRmutex.release()
 
+        pv = response.json()
         fields = (
-            "testName",
-            "numberOfTests",
+            "name",
+            "numberToProduce",
             "numberOfPages",
             "numberOfQuestions",
             "numberOfVersions",
             "publicCode",
         )
         return dict(zip(fields, pv))
+
+    def IDrequestClasslist(self):
+        """Ask server for the classlist.
+
+        Returns:
+            list: ordered list of (student id, student name) pairs.
+                Both are strings.
+
+        Raises:
+            PlomAuthenticationException: login troubles.
+            PlomBenignException: server has no classlist.
+            PlomSeriousException: all other failures.
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/ID/classlist".format(self.server),
+                json={"user": self.user, "token": self.token},
+                verify=False,
+            )
+            # throw errors when response code != 200.
+            response.raise_for_status()
+            # you can assign to the encoding to override the autodetection
+            # TODO: define API such that classlist must be utf-8?
+            # print(response.encoding)
+            # response.encoding = 'utf-8'
+            # classlist = StringIO(response.text)
+            classlist = response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomBenignException(
+                    "Server cannot find the class list"
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return classlist
 
 
 class Messenger(BaseMessenger):
@@ -298,37 +370,6 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
 
         return tgv
-
-    def IDrequestClasslist(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/ID/classlist".format(self.server),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            # throw errors when response code != 200.
-            response.raise_for_status()
-            # you can assign to the encoding to override the autodetection
-            # TODO: define API such that classlist must be utf-8?
-            # print(response.encoding)
-            # response.encoding = 'utf-8'
-            classlist = StringIO(response.text)
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server cannot find the class list"
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return classlist
 
     def IDrequestPredictions(self):
         self.SRmutex.acquire()
@@ -449,6 +490,13 @@ class Messenger(BaseMessenger):
         return imageList
 
     def IDreturnIDdTask(self, code, studentID, studentName):
+        """Return a completed IDing task: identify a paper.
+
+        Exceptions:
+            PlomConflict: `studentID` already used on a different paper.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.put(
@@ -464,17 +512,11 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 409:
-                raise PlomBenignException(
-                    "Student number {} already in use".format(e)
-                ) from None
+                raise PlomConflict(e) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
+                raise PlomSeriousException(e) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -1066,8 +1108,10 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MrequestWholePaper(self, code, questionNumber):
+    def MrequestWholePaper(self, code, questionNumber=0):
         self.SRmutex.acquire()
+        # note - added default value for questionNumber so that this works correctly
+        # when called from identifier. - Fixes #921
         try:
             response = self.session.get(
                 "https://{}/MK/whole/{}/{}".format(self.server, code, questionNumber),

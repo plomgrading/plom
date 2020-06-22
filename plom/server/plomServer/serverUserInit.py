@@ -23,19 +23,22 @@ def InfoShortName(self):
         return [True, self.testSpec["name"]]
 
 
-def InfoGeneral(self):
-    if self.testSpec is not None:
-        return [
-            True,
-            self.testSpec["name"],
-            self.testSpec["numberToProduce"],
-            self.testSpec["numberOfPages"],
-            self.testSpec["numberOfQuestions"],
-            self.testSpec["numberOfVersions"],
-            self.testSpec["publicCode"],
-        ]
-    else:  # this should not happen
-        return [False]
+def info_spec(self):
+    """Return the exam specification.
+
+    TODO: why not return None if no spec (yet)?
+
+    Returns:
+        tuple: first item flags success, second is the spec dict,
+            see :func:`plom.specarser`.  Can fail when the server
+            does not yet have a spec.  This function is not
+            authenticated so strip the `privateSeed`.
+    """
+    if not self.testSpec:
+        return False, None
+    d = self.testSpec.copy()
+    d.pop('privateSeed')
+    return True, d
 
 
 def reloadUsers(self, password):

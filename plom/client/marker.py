@@ -166,21 +166,13 @@ class BackgroundUploader(QThread):
             thread: it depends on where that code is called!
 
         Args:
-            *args:
-                task (str): the Task ID for the page being uploaded. Takes the form
-                    "q1234g9" = test 1234 question 9.
-                grade (int): grade given to question.
-                filenames (list[str]): a list containing the annotated file's name,
-                the .plom file's name and the comment file's name, in that order.
-                mtime (int): the marking time for this specific question
-                    (in seconds).
-                question (int or str): the question number
-                ver (int or str): the version number
-                tags (str): any tags associated with this exam.
+            *args: all input arguments are cached and will eventually be
+                passed untouched to the `upload` function.  There is one
+                exception: `args[0]` is assumed to contain the task str
+                of the form `"q1234g9"` for printing debugging messages.
 
         Returns:
             None
-
         """
         log.debug("upQ enqueing item from main thread " + str(threading.get_ident()))
         self.q.put(args)
@@ -868,7 +860,7 @@ class MarkerClient(QWidget):
         # instance vars that get initialized later
         self.question = None
         self.version = None
-        self.testInfo = None
+        self.exam_spec = None
         self.ui = None
         self.canViewAll = None
 
@@ -915,7 +907,7 @@ class MarkerClient(QWidget):
 
         # Get the number of Tests, Pages, Questions and Versions
         try:
-            self.testInfo = messenger.getInfoGeneral()
+            self.exam_spec = messenger.get_spec()
         except PlomSeriousException as err:
             self.throwSeriousError(err, rethrow=False)
             return
@@ -999,12 +991,12 @@ class MarkerClient(QWidget):
         # Fire up the user interface
         self.ui = Ui_MarkerWindow()
         self.ui.setupUi(self)
-        self.setWindowTitle('Plom Marker: "{}"'.format(self.testInfo["testName"]))
+        self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         # Paste the username, question and version into GUI.
         self.ui.userLabel.setText(messenger.whoami())
         self.ui.infoBox.setTitle(
             "Marking Q{} (ver. {}) of “{}”".format(
-                self.question, self.version, self.testInfo["testName"]
+                self.question, self.version, self.exam_spec["name"]
             )
         )
 
@@ -1146,7 +1138,7 @@ class MarkerClient(QWidget):
             # TODO: might not the "markedList" have some other statuses?
             self.examModel.addPaper(
                 ExamQuestion(
-                    x[0], fnames=[], stat="marked", mrk=x[2], mtime=x[3], tags=x[4]
+                    x[0], fnames=[], stat="marked", mrk=x[1], mtime=x[2], tags=x[3]
                 )
             )
 
@@ -1473,7 +1465,7 @@ class MarkerClient(QWidget):
                 tgvID (Str): Test-Group-Version ID.
                      For Example: for Test # 0027, group # 13, Version #2
                      tgvID = t0027g13v2
-                testname (str): test name
+                exam_name (str): exam name
                 paperdir (dir): Working directory for the current task
                 fnames (str): original file name (unannotated)
                 aname (str):  annotated file name
@@ -1610,10 +1602,10 @@ class MarkerClient(QWidget):
         else:
             pdict = None
 
-        testname = self.testInfo["testName"]
+        exam_name = self.exam_spec["name"]
         markStyle = self.ui.markStyleGroup.checkedId()
         tgv = task[1:]
-        return tgv, testname, paperdir, fnames, aname, self.maxMark, markStyle, pdict
+        return tgv, exam_name, paperdir, fnames, aname, self.maxMark, markStyle, pdict
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
@@ -1747,12 +1739,12 @@ class MarkerClient(QWidget):
             return False
         tgvID = self.prxM.getPrefix(row)
 
-        data = self.getDataForAnnotator(tgv)
+        data = self.getDataForAnnotator(tgvID)
         # make sure getDataForAnnotator did not fail
         if data is None:
             return
 
-        assert tgv[1:] == data[0]
+        assert tgvID[1:] == data[0]
         pdict = data[-1]
         assert pdict is None, "Annotator should not pull a regrade"
 
@@ -1762,7 +1754,7 @@ class MarkerClient(QWidget):
             if self.examModel.countReadyToMark() == 0:
                 self.requestNextInBackgroundStart()
 
-        return initialData
+        return data
 
     def PermuteAndGetSamePaper(self, task, imageList):
         """
@@ -1975,10 +1967,10 @@ class MarkerClient(QWidget):
         # Start caching.
         c = 0
         n = int(self.question)
-        testname = self.testInfo["testName"]
+        exam_name = self.exam_spec["name"]
 
         for X in clist:
-            if commentIsVisible(X, n, testname) and X["text"][:4].upper() == "TEX:":
+            if commentIsVisible(X, n, exam_name) and X["text"][:4].upper() == "TEX:":
                 txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version
@@ -2069,14 +2061,14 @@ class MarkerClient(QWidget):
     def viewSpecificImage(self):
         """ shows the image.  """
         if self.canViewAll:
-            tgs = SelectTestQuestion(self.testInfo, self.question)
+            tgs = SelectTestQuestion(self.exam_spec, self.question)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
                 gn = tgs.gsb.value()
             else:
                 return
         else:
-            tgs = SelectTestQuestion(self.testInfo)
+            tgs = SelectTestQuestion(self.exam_spec)
             if tgs.exec_() == QDialog.Accepted:
                 tn = tgs.tsb.value()
                 gn = self.question

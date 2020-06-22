@@ -367,6 +367,9 @@ class Annotator(QWidget):
         else:
             self.markHandler.resetAndMaybeChange(self.maxMark, self.markStyle)
 
+        # update the displayed score - fixes #843
+        self.changeMark(self.score)
+
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
             self.unpickleIt(plomDict)
@@ -851,6 +854,7 @@ class Annotator(QWidget):
         else:
             # this should also not happen - except by strange async race issues. So we don't change anything.
             pass
+
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
             self.scene.setMode(newMode)
@@ -1087,6 +1091,7 @@ class Annotator(QWidget):
             self.ui.commentButton.animateClick()
         else:
             self.loadModes.get(mode, lambda *args: None)()
+
 
     def setButtons(self):
         """ Connects buttons to their corresponding functions. """

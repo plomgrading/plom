@@ -18,9 +18,8 @@ If Homebrew is not installed, install Homebrew (not tested):
 A few installations using `brew` from Homebrew:
 
 ```
-$ brew install libjpeg \
-               libjpeg-turbo imagemagick zbar libffi \
-               jpeg-turbo jsmin python3
+$ brew install libjpeg libjpeg-turbo jpeg-turbo imagemagick zbar \
+               libffi jsmin python3 openssl
 ```
 
 Other stuff we install locally with `pip`:
@@ -34,5 +33,5 @@ $ pip3 install passlib \
 More dependencies for the tensorflow-based ID reader:
 ```
   # pip3 install termcolor wheel grpcio markdown h5py
-  # pip3 install --user imutils lapsolver tensorflow
+  # pip3 install --user imutils lapsolver opencv-python tensorflow
 ```

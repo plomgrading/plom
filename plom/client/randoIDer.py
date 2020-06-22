@@ -17,7 +17,11 @@ import sys
 import tempfile
 import toml
 
-from plom.plom_exceptions import *
+from plom.plom_exceptions import (
+    PlomConflict,
+    PlomExistingLoginException,
+    PlomTakenException,
+)
 from plom import __version__, Plom_API_Version
 from plom.messenger import Messenger
 
@@ -25,11 +29,7 @@ from plom.messenger import Messenger
 
 
 def startIdentifying():
-    csvfile = messenger.IDrequestClasslist()
-    idList = []
-    reader = csv.DictReader(csvfile, skipinitialspace=True)
-    for row in reader:
-        idList.append([row["id"], row["studentName"]])
+    idList = messenger.IDrequestClasslist()
 
     while True:
         task = messenger.IDaskNextTask()
@@ -39,17 +39,18 @@ def startIdentifying():
         try:
             print("Identifying task ", task)
             imageList = messenger.IDclaimThisTask(task)
-        except PlomBenignException as err:
+        except PlomTakenException:
             # task already taken.
             continue
 
         while True:
             try:
-                c = random.choice(idList)
-                messenger.IDreturnIDdTask(task, c[0], c[1])
+                sid, sname = random.choice(idList)
+                sname += " [randomly chosen]"
+                messenger.IDreturnIDdTask(task, sid, sname)
                 break
-            except PlomBenignException as e:
-                print("SID/SN {}/{} already used".format(c[0], c[1]))
+            except PlomConflict:
+                print("SID/SN {}/{} already used".format(sid, sname))
 
 
 # -------------------------------------------
@@ -103,9 +104,7 @@ if __name__ == "__main__":
         messenger.clearAuthorisation(user, pwd)
         exit(1)
 
-    spec = messenger.getInfoGeneral()
-
-    print(spec)
+    spec = messenger.get_spec()
 
     try:
         startIdentifying()
@@ -115,5 +114,3 @@ if __name__ == "__main__":
 
     messenger.closeUser()
     messenger.stop()
-
-    exit(0)

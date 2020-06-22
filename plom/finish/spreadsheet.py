@@ -107,7 +107,7 @@ def main(server=None, password=None):
         )
         exit(0)
 
-    spec = msgr.getInfoGeneral()
+    spec = msgr.get_spec()
     numberOfQuestions = spec["numberOfQuestions"]
     spreadSheetDict = msgr.RgetSpreadsheet()
 

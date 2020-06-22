@@ -49,9 +49,6 @@ def main():
             raise RuntimeError('Directory "{}" must not exist for this demo.'.format(f))
 
     subprocess.check_call(split("plom-build new --demo"))
-    subprocess.check_call(split("plom-build class --demo"))
-    subprocess.check_call(split("plom-build make"))
-    subprocess.check_call(split("plom-fake-scribbles"))
     subprocess.check_call(split("plom-server init"))
     subprocess.check_call(split("plom-server users --demo"))
 
@@ -73,7 +70,11 @@ def main():
 
     assert serverproc.returncode is None, "has the server died?"
 
-    print("Server seems to be running, so we move on to uploading")
+    print("Server seems to be running, so we move on to building tests and uploading")
+
+    subprocess.check_call(split("plom-build class --demo -w 1234"))
+    subprocess.check_call(split("plom-build make -w 1234"))
+    subprocess.check_call(split("plom-fake-scribbles"))
 
     subprocess.check_call(split("plom-scan process fake_scribbled_exams.pdf"))
     subprocess.check_call(split("plom-scan read -w 4567"))

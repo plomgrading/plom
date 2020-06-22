@@ -371,8 +371,7 @@ class Manager(QWidget):
         self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
         self.ui.refreshIDPredictionsB.clicked.connect(self.getPredictions)
 
-        self.ui.refreshIDRevB.clicked.connect(self.refreshIDRev)
-        self.ui.refreshTOTB.clicked.connect(self.refreshTOTRev)
+        self.ui.refreshRevB.clicked.connect(self.refreshRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
 
@@ -480,8 +479,8 @@ class Manager(QWidget):
 
     # -------------------
     def getTPQV(self):
-        info = managerMessenger.getInfoGeneral()
-        self.numberOfTests = info["numberOfTests"]
+        info = managerMessenger.get_spec()
+        self.max_papers = info["numberToProduce"]
         self.numberOfPages = info["numberOfPages"]
         self.numberOfQuestions = info["numberOfQuestions"]
         self.numberOfVersions = info["numberOfVersions"]
@@ -563,9 +562,9 @@ class Manager(QWidget):
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
             vp = managerMessenger.getHWPageImage(t, q, o)
-        elif pdetails[0] == "x":  # is a hw-page = hw.o
+        elif pdetails[0] == "l":  # is an l-page = l.o
             o = pdetails.split(".")[1]
-            vp = managerMessenger.getXPageImage(t, o)
+            vp = managerMessenger.getLPageImage(t, o)
         else:  # future = extra-page
             return
 
@@ -709,7 +708,7 @@ class Manager(QWidget):
             uvw = UnknownViewWindow(
                 self,
                 [fh.name],
-                [self.numberOfTests, self.numberOfPages, self.numberOfQuestions],
+                [self.max_papers, self.numberOfPages, self.numberOfQuestions],
             )
             if uvw.exec_() == QDialog.Accepted:
                 self.unknownModel.item(r, 2).setText(uvw.action)
@@ -990,7 +989,7 @@ class Manager(QWidget):
         self.ui.overallTW.clearContents()
         self.ui.overallTW.setRowCount(0)
 
-        opDict = managerMessenger.RgetCompletions()
+        opDict = managerMessenger.RgetCompletionStatus()
         tk = list(opDict.keys())
         tk.sort(key=int)  # sort in numeric order
         r = 0
@@ -1039,7 +1038,7 @@ class Manager(QWidget):
 
     def selectRectangle(self):
         try:
-            imageList = managerMessenger.IDgetRandomImage()
+            imageList = managerMessenger.IDgetImageFromATest()
         except PlomNoMoreException as err:
             ErrorMessage("No unIDd images to show.").exec_()
             return
@@ -1055,7 +1054,12 @@ class Manager(QWidget):
             if srw.exec_() == QDialog.Accepted:
                 self.IDrectangle = srw.rectangle
                 self.IDwhichFile = srw.whichFile
-                self.ui.predictButton.setEnabled(True)
+                if (
+                    self.IDrectangle is None
+                ):  # We do not allow the IDReader to run if no rectangle is selected (this would cause a crash)
+                    self.ui.predictButton.setEnabled(False)
+                else:
+                    self.ui.predictButton.setEnabled(True)
 
     def viewIDPage(self):
         idi = self.ui.predictionTW.selectedIndexes()
@@ -1137,8 +1141,12 @@ class Manager(QWidget):
         )
         if msg.exec_() == QMessageBox.No:
             return
-        managerMessenger.IDdeletePredictions()
-        self.getPredictions()
+        # returns [True] or [False, message]
+        rval = managerMessenger.IDdeletePredictions()
+        if rval[0] is False:  # some sort of problem, show returned message
+            ErrorMessage(rval[1]).exec_()
+        else:
+            self.getPredictions()
 
     def initMarkTab(self):
         grid = QGridLayout()
@@ -1194,6 +1202,11 @@ class Manager(QWidget):
         self.initRevIDTab()
         self.initRevTOTTab()
 
+    def refreshRev(self):
+        self.refreshIDRev()
+        self.refreshTOTRev()
+        self.refreshMRev()
+
     def initRevMTab(self):
         self.ui.reviewTW.setColumnCount(7)
         self.ui.reviewTW.setHorizontalHeaderLabels(
@@ -1215,6 +1228,16 @@ class Manager(QWidget):
         for u in ulist:
             self.ui.userCB.addItem(u)
         self.ui.filterB.clicked.connect(self.filterReview)
+
+    def refreshMRev(self):
+        """Refresh the user list in the marking review tab.
+        """
+        # clean out the combox box and then rebuild it.
+        self.ui.userCB.clear()
+        ulist = managerMessenger.getUserList()
+        self.ui.userCB.addItem("*")
+        for u in ulist:
+            self.ui.userCB.addItem(u)
 
     def filterReview(self):
         if (

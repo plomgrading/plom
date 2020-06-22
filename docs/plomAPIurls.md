@@ -1,4 +1,4 @@
-# URLs used for the PLOM API
+# URLs used for the Plom API
 
 ## TODOs
 * build a proper API document which shows inputs and return values etc.
@@ -6,7 +6,8 @@
 ## Misc information
 * get "/Version" - return server+API versions as test string
 * get "/info/shortName" - return the shortname of the test (from spec)
-* get "/info/general" - return a list (name, #tests, #pages, #groups, #versions)
+* get "/info/spec" - return a dict of the exam spec
+* get "/info/general" - an older API from pre-0.5.0 servers, return a list (name, #tests, #pages, #groups, #versions)
 
 ## Authentication + misc Admin tasks
 * put "/users/{user}" - verify user/password + return auth-token
@@ -18,7 +19,8 @@
 ## Identifier
 * get "/ID/progress" - return [#done, #total]
 * get "/ID/tasks/available" - return [next available task] or 204-code (if none)
-* get "/ID/classlist" - return classlist file
+* get "/ID/classlist" - return classlist data
+* put "/ID/classlist" - upload classlist data
 * get "/ID/predictions" - return prediction-list file
 * get "/ID/tasks/complete" - return list of tasks completed by that user
 * get "/ID/images/{tgv}" - return the image-file for that TGV

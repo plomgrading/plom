@@ -26,25 +26,11 @@ from plom.client.pagescene import PageScene
 from plom import AnnFontSizePts
 
 from plom.client.tools import (
-    CommandArrow,
-    CommandArrowDouble,
-    CommandBox,
-    CommandCross,
-    CommandDelete,
-    CommandDelta,
-    CommandEllipse,
-    CommandHighlight,
-    CommandLine,
-    CommandPen,
-    CommandPenArrow,
-    CommandQMark,
-    CommandText,
-    CommandTick,
-    CommandGDT,
     DeltaItem,
-    TextItem,
     GroupDTItem,
 )
+from plom.client.tools.delete import CommandDelete
+from plom.client.tools import *
 
 from plom import __version__, Plom_API_Version
 from plom.messenger import Messenger
@@ -164,6 +150,11 @@ class SceneParent(QWidget):
             random.choice([self.TQX, self.BE, self.LA, self.PTH])()
         for k in range(5):
             self.GDT()
+        # add comment about radom annotations
+        blurb = TextItem(self, AnnFontSizePts)
+        blurb.setPlainText("Random annotations for testing only.")
+        blurb.setPos(QPointF(200, 100))
+        self.scene.undoStack.push(CommandText(self.scene, blurb, self.ink))
 
     def doneAnnotating(self):
         plomFile = self.saveName[:-3] + "plom"
@@ -179,7 +170,7 @@ class SceneParent(QWidget):
         self.score += delta
 
 
-def annotatePaper(task, imageList, aname, tags):
+def annotatePaper(maxMark, task, imageList, aname, tags):
     print("Do stuff to task ", task)
     print("Tags are ", tags)
     # Image names = "<task>.<imagenumber>.<ext>"
@@ -192,7 +183,7 @@ def annotatePaper(task, imageList, aname, tags):
                 with open(tmp, "wb+") as fh:
                     fh.write(imageList[i])
             annot = SceneParent()
-            annot.doStuff(inames, aname, 10, random.choice([2, 3]))
+            annot.doStuff(inames, aname, maxMark, random.choice([2, 3]))
             annot.doRandomAnnotations()
             return annot.doneAnnotating()
     except Exception as e:
@@ -202,8 +193,8 @@ def annotatePaper(task, imageList, aname, tags):
 
 def startMarking(question, version):
     print("Start work on question {} version {}".format(question, version))
-    mx = messenger.MgetMaxMark(question, version)
-    print("Maximum mark = ", mx)
+    maxMark = messenger.MgetMaxMark(question, version)
+    print("Maximum mark = ", maxMark)
     k = 0
     while True:
         task = messenger.MaskNextTask(question, version)
@@ -214,32 +205,28 @@ def startMarking(question, version):
         try:
             print("Marking task ", task)
             imageList, tags = messenger.MclaimThisTask(task)
-            with tempfile.TemporaryDirectory() as td:
-                aFile = os.path.join(td, "argh.png")
-                plomFile = aFile[:-3] + "plom"
-                commentFile = aFile[:-3] + "json"
-                score = annotatePaper(task, imageList, aFile, tags)
-                messenger.MreturnMarkedTask(
-                    task,
-                    question,
-                    version,
-                    score,
-                    random.randint(1, 20),
-                    "",
-                    aFile,
-                    plomFile,
-                    commentFile,
-                )
-
-        except PlomBenignException as e:
+        except PlomTakenException as e:
             print("Another user got that task. Trying again.")
-        except PlomSeriousException as e:
-            print("EEK, some error: {}".format(e))
-        except Exception as e:
-            print("Nasty error trying to return task {} = {}".format(task, e))
+            continue
 
+        with tempfile.TemporaryDirectory() as td:
+            aFile = os.path.join(td, "argh.png")
+            plomFile = aFile[:-3] + "plom"
+            commentFile = aFile[:-3] + "json"
+            score = annotatePaper(maxMark, task, imageList, aFile, tags)
+            print("Score of {} out of {}".format(score, maxMark))
+            messenger.MreturnMarkedTask(
+                task,
+                question,
+                version,
+                score,
+                random.randint(1, 20),
+                "",
+                aFile,
+                plomFile,
+                commentFile,
+            )
 
-# -------------------------------------------
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -290,11 +277,11 @@ if __name__ == "__main__":
         messenger.clearAuthorisation(user, pwd)
         exit(1)
 
-    spec = messenger.getInfoGeneral()
+    spec = messenger.get_spec()
 
     # Headless QT: https://stackoverflow.com/a/35355906
     L = sys.argv
-    L.extend(['-platform', 'offscreen'])
+    L.extend(["-platform", "offscreen"])
     app = QApplication(L)
 
     for q in range(1, spec["numberOfQuestions"] + 1):
