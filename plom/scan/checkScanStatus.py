@@ -45,7 +45,7 @@ def checkStatus(server=None, password=None):
         )
         exit(10)
 
-    spec = scanMessenger.getInfoGeneral()
+    spec = scanMessenger.get_spec()
 
     ST = (
         scanMessenger.getScannedTests()

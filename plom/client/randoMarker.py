@@ -277,7 +277,7 @@ if __name__ == "__main__":
         messenger.clearAuthorisation(user, pwd)
         exit(1)
 
-    spec = messenger.getInfoGeneral()
+    spec = messenger.get_spec()
 
     # Headless QT: https://stackoverflow.com/a/35355906
     L = sys.argv

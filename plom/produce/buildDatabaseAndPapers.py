@@ -38,7 +38,7 @@ def buildDatabaseAndPapers(server=None, password=None):
         )
         exit(10)
     try:
-        spec = msgr.getInfoGeneral()
+        spec = msgr.get_spec()
         try:
             status = msgr.TriggerPopulateDB()
         except PlomBenignException:

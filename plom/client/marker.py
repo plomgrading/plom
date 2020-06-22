@@ -907,7 +907,7 @@ class MarkerClient(QWidget):
 
         # Get the number of Tests, Pages, Questions and Versions
         try:
-            self.exam_spec = messenger.getInfoGeneral()
+            self.exam_spec = messenger.get_spec()
         except PlomSeriousException as err:
             self.throwSeriousError(err, rethrow=False)
             return

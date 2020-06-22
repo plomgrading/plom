@@ -62,7 +62,7 @@ def main(server=None, pwd=None):
         exit(1)
 
     shortName = msgr.getInfoShortName()
-    spec = msgr.getInfoGeneral()
+    spec = msgr.get_spec()
 
     if not locationAndSpecCheck(spec):
         print("Problems confirming location and specification. Exiting.")
