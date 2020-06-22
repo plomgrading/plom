@@ -35,8 +35,8 @@ def RgetIdentified(self):
     return self.DB.RgetIdentified()
 
 
-def RgetCompletions(self):
-    return self.DB.RgetCompletions()
+def RgetCompletionStatus(self):
+    return self.DB.RgetCompletionStatus()
 
 
 def RgetOutToDo(self):

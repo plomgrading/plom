@@ -50,11 +50,182 @@ class ManagerMessenger(BaseMessenger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def RgetCompletions(self):
+    def TriggerPopulateDB(self):
+        """Instruct the server to generate paper data in the database.
+
+        Returns:
+            str: a big block of largely useless status or summary info
+                from the database commands.
+
+        Raises:
+            PlomBenignException: already has a populated database.
+            PlomAuthenticationException: cannot login.
+            PlomSeriousException: unexpected errors.
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/admin/populateDB".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 409:
+                raise PlomBenignException(e) from None
+            else:
+                raise PlomSeriousException("Unexpected {}".format(e)) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.text
+
+    def notify_pdf_of_paper_produced(self, test_num):
+        """Notify the server that we have produced the PDF for a paper.
+
+        Args:
+            test_num (int): the test number.
+
+        Returns:
+            None
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/admin/pdf_produced/{}".format(self.server, test_num),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 400:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomRangeException(
+                    "Paper number {} is outside valid range".format(test_num)
+                ) from None
+            elif response.status_code == 409:
+                raise PlomSeriousException(
+                    "Paper number {} has already been produced".format(test_num)
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+    def getGlobalPageVersionMap(self):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/REP/completions".format(self.server),
+                "https://{}/admin/pageVersionMap".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        # JSON casts dict keys to str, force back to ints
+        d = {}
+        for k, v in response.json().items():
+            d[int(k)] = {int(kk): vv for kk, vv in v.items()}
+        return d
+
+    # TODO: copy pasted from Messenger.IDreturnIDdTask: can we dedupe?
+    def id_paper(self, code, studentID, studentName):
+        """Identify a paper directly, not as part of a IDing task.
+
+        Exceptions:
+            PlomConflict: `studentID` already used on a different paper.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/ID/{}".format(self.server, code),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "sid": studentID,
+                    "sname": studentName,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 409:
+                raise PlomConflict(e) from None
+            elif response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomSeriousException(e) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        # TODO - do we need this return value?
+        return True
+
+
+    def upload_classlist(self, classdict):
+        """Give the server a classlist.
+
+        Args:
+            classdict (list): list of (str, str) pairs of the form
+                (student ID, student name).
+
+        Exceptions:
+            PlomConflict: server already has one.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/ID/classlist".format(self.server),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "classlist": classdict,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 409:
+                raise PlomConflict(e) from None
+            elif response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+
+    def RgetCompletionStatus(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/REP/completionStatus".format(self.server),
                 verify=False,
                 json={"user": self.user, "token": self.token},
             )
@@ -223,7 +394,7 @@ class ManagerMessenger(BaseMessenger):
 
         return predictions
 
-    def IDgetRandomImage(self):
+    def IDgetImageFromATest(self):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
@@ -561,11 +732,11 @@ class ManagerMessenger(BaseMessenger):
 
         return image
 
-    def getXPageImage(self, t, o):
+    def getLPageImage(self, t, o):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/admin/scannedXPage".format(self.server),
+                "https://{}/admin/scannedLPage".format(self.server),
                 verify=False,
                 json={"user": self.user, "token": self.token, "test": t, "order": o,},
             )

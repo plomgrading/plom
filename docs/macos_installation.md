@@ -18,9 +18,8 @@ If Homebrew is not installed, install Homebrew (not tested):
 A few installations using `brew` from Homebrew:
 
 ```
-$ brew install libjpeg \
-               libjpeg-turbo imagemagick zbar libffi \
-               jpeg-turbo jsmin python3
+$ brew install libjpeg libjpeg-turbo jpeg-turbo imagemagick zbar \
+               libffi jsmin python3 openssl
 ```
 
 Other stuff we install locally with `pip`:

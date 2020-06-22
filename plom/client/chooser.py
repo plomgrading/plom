@@ -47,7 +47,7 @@ def readLastTime():
     # set some reasonable defaults.
     lastTime["user"] = ""
     lastTime["server"] = "localhost"
-    lastTime["pg"] = 1
+    lastTime["question"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
     lastTime["upDown"] = "up"
@@ -128,7 +128,7 @@ class Chooser(QDialog):
         # set login etc from last time client ran.
         self.ui.userLE.setText(lastTime["user"])
         self.setServer(lastTime["server"])
-        self.ui.pgSB.setValue(int(lastTime["pg"]))
+        self.ui.pgSB.setValue(int(lastTime["question"]))
         self.ui.vSB.setValue(int(lastTime["v"]))
         self.ui.fontSB.setValue(int(lastTime["fontSize"]))
         self.setFont()
@@ -223,14 +223,14 @@ class Chooser(QDialog):
         # Now run the appropriate client sub-application
         if self.runIt == "Marker":
             # Run the marker client.
-            pg = self.getpg()
+            question = self.getQuestion()
             v = self.getv()
             self.setEnabled(False)
             self.hide()
             markerwin = marker.MarkerClient(self.parent)
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
-            markerwin.getToWork(messenger, pg, v, lastTime)
+            markerwin.setup(messenger, question, v, lastTime)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
@@ -268,7 +268,7 @@ class Chooser(QDialog):
         lastTime["server"] = "{}:{}".format(
             self.ui.serverLE.text(), self.ui.mportSB.value()
         )
-        lastTime["pg"] = self.getpg()
+        lastTime["question"] = self.getQuestion()
         lastTime["v"] = self.getv()
         lastTime["fontSize"] = self.ui.fontSB.value()
         writeLastTime()
@@ -285,14 +285,14 @@ class Chooser(QDialog):
         fnt.setPointSize(v)
         self.parent.setFont(fnt)
 
-    def getpg(self):
+    def getQuestion(self):
         """Return the integer question or None"""
         if self.ui.pgDrop.isVisible():
-            pg = self.ui.pgDrop.currentText().lstrip("Q")
+            question = self.ui.pgDrop.currentText().lstrip("Q")
         else:
-            pg = self.ui.pgSB.value()
+            question = self.ui.pgSB.value()
         try:
-            return int(pg)
+            return int(question)
         except:
             return None
 
@@ -309,12 +309,12 @@ class Chooser(QDialog):
 
     def ungetInfo(self):
         self.ui.markGBox.setTitle("Marking information")
-        pg = self.getpg()
+        question = self.getQuestion()
         v = self.getv()
         self.ui.pgSB.setVisible(True)
         self.ui.vSB.setVisible(True)
-        if pg:
-            self.ui.pgSB.setValue(pg)
+        if question:
+            self.ui.pgSB.setValue(question)
         if v:
             self.ui.vSB.setValue(v)
         self.ui.vDrop.clear()
@@ -349,29 +349,29 @@ class Chooser(QDialog):
             return
         self.ui.infoLabel.setText(r)
 
-        info = messenger.getInfoGeneral()
+        spec = messenger.getInfoGeneral()
         self.ui.markGBox.setTitle(
-            "Marking information for “{}”".format(info["testName"])
+            "Marking information for “{}”".format(spec["name"])
         )
-        pg = self.getpg()
+        question = self.getQuestion()
         v = self.getv()
         self.ui.pgSB.setVisible(False)
         self.ui.vSB.setVisible(False)
 
         self.ui.vDrop.clear()
-        self.ui.vDrop.addItems([str(x + 1) for x in range(0, info["numberOfVersions"])])
+        self.ui.vDrop.addItems([str(x + 1) for x in range(0, spec["numberOfVersions"])])
         if v:
-            if v >= 1 and v <= info["numberOfVersions"]:
+            if v >= 1 and v <= spec["numberOfVersions"]:
                 self.ui.vDrop.setCurrentIndex(v - 1)
         self.ui.vDrop.setVisible(True)
 
         self.ui.pgDrop.clear()
         self.ui.pgDrop.addItems(
-            ["Q{}".format(x + 1) for x in range(0, info["numberOfQuestions"])]
+            ["Q{}".format(x + 1) for x in range(0, spec["numberOfQuestions"])]
         )
-        if pg:
-            if pg >= 1 and pg <= info["numberOfQuestions"]:
-                self.ui.pgDrop.setCurrentIndex(pg - 1)
+        if question:
+            if question >= 1 and question <= spec["numberOfQuestions"]:
+                self.ui.pgDrop.setCurrentIndex(question - 1)
         self.ui.pgDrop.setVisible(True)
         # TODO should we also let people type in?
         self.ui.pgDrop.setEditable(False)

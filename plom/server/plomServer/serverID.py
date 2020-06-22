@@ -44,17 +44,20 @@ def IDclaimThisTask(self, user, testNumber):
     # or return [false]
 
 
-def IDreturnIDdTask(self, user, ret, sid, sname):
-    """Client has ID'd the pageimage with code=ret, student-number=sid,
-    and student-name=sname. Send the information to the database (which
-    checks if that number has been used previously). If okay then send
-    and ACK, else send an error that the number has been used.
+def id_paper(self, *args, **kwargs):
+    """Some glue between service routes and the database.
+
+    See :func:`plom.db.db_create.id_paper` for details.
     """
-    # TODO - improve this
-    # returns [True] if all good
-    # [False, True] - if student number already in use
-    # [False, False] - if bigger error
-    return self.DB.IDtakeTaskFromClient(ret, user, sid, sname)
+    return self.DB.id_paper(*args, **kwargs)
+
+
+def ID_id_paper(self, *args, **kwargs):
+    """Some glue between service routes and the database.
+
+    See :func:`plom.db.db_identify.ID_id_paper` for details.
+    """
+    return self.DB.ID_id_paper(*args, **kwargs)
 
 
 def IDdidNotFinish(self, user, testNumber):
@@ -65,14 +68,20 @@ def IDdidNotFinish(self, user, testNumber):
     return
 
 
-def IDgetRandomImage(self):
-    return self.DB.IDgetRandomImage()
+def IDgetImageFromATest(self):
+    return self.DB.IDgetImageFromATest()
 
 
 def IDdeletePredictions(self):
+    # check to see if predictor is running
+    lockFile = os.path.join(specdir, "IDReader.lock")
+    if os.path.isfile(lockFile):
+        log.info("ID reader currently running.")
+        return [False, "ID reader is currently running"]
+
     # move old file out of way
     if not os.path.isfile(Path(specdir) / "predictionlist.csv"):
-        return False
+        return [False, "No prediction file present."]
     shutil.move(
         Path(specdir) / "predictionlist.csv", Path(specdir) / "predictionlist.bak"
     )
@@ -80,7 +89,7 @@ def IDdeletePredictions(self):
         fh.write("test, id\n")
     log.info("ID prediction list deleted")
 
-    return True
+    return [True]
 
 
 def IDreviewID(self, testNumber):
@@ -111,7 +120,7 @@ def IDrunPredictions(self, rectangle, fileNumber, ignoreStamp):
 
     # get list of [testNumber, image]
     log.info("ID get images for ID reader")
-    testImageDict = self.DB.IDgetImageList(fileNumber)
+    testImageDict = self.DB.IDgetImageByNumber(fileNumber)
     # dump this as json / lockfile for subprocess to use in background.
     with open(lockFile, "w") as fh:
         json.dump([testImageDict, rectangle], fh)

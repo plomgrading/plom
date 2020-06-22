@@ -28,16 +28,16 @@ def checkSpec(spec):
         print("Problem finding local spec file. Aborting.")
         return False
 
-    # note - small and annoying difference between keys in local spec file and spec grabbed through messenger
     if (
-        localSpec["name"] == spec["testName"]
+        localSpec["name"] == spec["name"]
         and localSpec["publicCode"] == spec["publicCode"]
     ):
         return True
     else:
         print(
-            "Checking name and public-code in local-spec and sever-spec. They disagree. Aborting."
+            "Checking name and public-code in local-spec and server-spec. They disagree. Aborting."
         )
+        return False
 
 
 def locationAndSpecCheck(spec):

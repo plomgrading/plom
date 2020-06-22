@@ -1,49 +1,63 @@
-class SeriousException(Exception):
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+
+
+"""Exceptions for the Plom software.
+
+Serious exceptions are for unexpected things that we probably cannot
+sanely or safely recover from.  Benign are for signaling expected (or
+at least not unexpected) situations.
+"""
+
+
+class PlomSeriousException(Exception):
     def __init__(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
 
 
-class PlomSeriousException(SeriousException):
-    def __init__(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
-
-
-class BenignException(Exception):
-    def __init__(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
-
-
-class PlomAPIException(BenignException):
+class PlomBenignException(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
 
-class PlomBenignException(BenignException):
+class PlomAPIException(PlomBenignException):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
 
-class PlomNoMoreException(BenignException):
+class PlomConflict(PlomBenignException):
+    """The action was contradictory to info already in the system."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
-class PlomRangeException(BenignException):
+
+class PlomNoMoreException(PlomBenignException):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
-class PlomAuthenticationException(BenignException):
+
+class PlomRangeException(PlomBenignException):
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+
+
+class PlomAuthenticationException(PlomBenignException):
     def __init__(self, *args, **kwargs):
         super().__init__(self, "You are not authenticated.", *args, **kwargs)
 
-class PlomTakenException(BenignException):
+
+class PlomTakenException(PlomBenignException):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
-class PlomLatexException(BenignException):
+
+class PlomLatexException(PlomBenignException):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
 
-class PlomExistingLoginException(BenignException):
+class PlomExistingLoginException(PlomBenignException):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)

@@ -12,7 +12,7 @@ Fedora
 
 Tested on Fedora 32.  Some stuff from the package manager:
 ```
-  # sudo dnf install ImageMagick \
+  # sudo dnf install ImageMagick openssl zbar \
                      turbojpeg-devel libjpeg-turbo-devel python3-cffi \
                      python3-passlib python3-pypng python3-qt5 \
                      python3-jsmin python3-defusedxml python3-yaml \
@@ -45,8 +45,8 @@ Ubuntu
 Some stuff from the package manager:
 ```
   # sudo apt install \
-        cmake make imagemagick dvipng g++ \
-        libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi \
+        cmake make imagemagick dvipng g++ openssl \
+        libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi \
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
         python3-pyqrcode python3-png python3-dev \
         python3-pip python3-setuptools python3-wheel \

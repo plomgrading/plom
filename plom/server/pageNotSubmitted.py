@@ -18,18 +18,57 @@ from plom import specdir
 from plom.textools import buildLaTeX
 
 
-# If all is good then build a substitute page and save it in the correct place
-def buildTestPageSubstitute(test, page, ver):
-    tpImage = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+question_not_submitted_text = r"""
+    \documentclass[12pt,letterpaper]{article}
+    \usepackage[]{fullpage}
+    \usepackage{xcolor}
+    \usepackage[printwatermark]{xwatermark}
+    \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Question not submitted}
+    \pagestyle{empty}
+    \begin{document}
+    \emph{This question was not submitted.}
+    \vfill
+    \emph{This question was not submitted.}
+    \end{document}
+    """
 
-    DNS = fitz.open(Path(specdir) / "pageNotSubmitted.pdf")
+page_not_submitted_text = r"""
+    \documentclass[12pt,letterpaper]{article}
+    \usepackage[]{fullpage}
+    \usepackage{xcolor}
+    \usepackage[printwatermark]{xwatermark}
+    \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
+    \pagestyle{empty}
+    \begin{document}
+    \emph{This page of the test was not submitted.}
+    \vfill
+    \emph{This page of the test was not submitted.}
+    \end{document}
+    """
+
+
+image_scale = 200 / 72
+
+def build_test_page_substitute(test_number, page_number, version_number):
+    """Builds the substitue empty page for test.
+
+    Arguments:
+        test_number {int} -- Test number.
+        page_number {int} -- Page number.
+        version_number {int} -- Version number
+
+    Returns:
+        bool -- True/False
+    """
+
+    page_not_submitted_pdf = fitz.open(Path(specdir) / "pageNotSubmitted.pdf")
 
     # create a box for the test number near top-centre
-    # Get page width
-    pW = DNS[0].bound().width
-    rect = fitz.Rect(pW // 2 - 40, 20, pW // 2 + 40, 44)
-    text = "{}.{}".format(str(test).zfill(4), str(page).zfill(2))
-    rc = DNS[0].insertTextbox(
+    # Get page width and use it to inset this text into the page
+    page_width = page_not_submitted_pdf[0].bound().width
+    rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
+    text = "{}.{}".format(str(test_number).zfill(4), str(page_number).zfill(2))
+    insertion_confirmed = page_not_submitted_pdf[0].insertTextbox(
         rect,
         text,
         fontsize=18,
@@ -38,27 +77,39 @@ def buildTestPageSubstitute(test, page, ver):
         fontfile=None,
         align=1,
     )
-    DNS[0].drawRect(rect, color=[0, 0, 0])
+    assert (
+        insertion_confirmed > 0
+    ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
-    scale = 200 / 72
-    img = DNS[0].getPixmap(alpha=False, matrix=fitz.Matrix(scale, scale))
-    img.writePNG("pns.{}.{}.{}.png".format(test, page, ver))
-    DNS.close()
+    page_not_submitted_pdf[0].drawRect(rect, color=[0, 0, 0])
+
+    page_not_submitted_image = page_not_submitted_pdf[0].getPixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
+    page_not_submitted_image.writePNG("pns.{}.{}.{}.png".format(test_number, page_number, version_number))
+    page_not_submitted_pdf.close()
+
     return True
 
 
-# If all is good then build a substitute question and save it in the correct place
-def buildHWQuestionSubstitute(sid, question):
-    hwqImage = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
 
-    DNS = fitz.open(Path(specdir) / "questionNotSubmitted.pdf")
+def build_homework_question_substitute(student_id, question_number):
+    """Builds the substitue empty page for homeork.
+
+    Arguments:
+        student_id {int} -- Student number ID.
+        question_number {int} -- Question number ID,
+
+    Returns:
+        bool -- True/False
+    """
+
+    question_not_submitted_pdf = fitz.open(Path(specdir) / "questionNotSubmitted.pdf")
 
     # create a box for the test number near top-centre
-    # Get page width
-    pW = DNS[0].bound().width
-    rect = fitz.Rect(pW // 2 - 40, 20, pW // 2 + 40, 44)
-    text = "{}.{}".format(sid, question)
-    rc = DNS[0].insertTextbox(
+    # Get page width and use it to inset this text into the page
+    page_width = question_not_submitted_pdf[0].bound().width
+    rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
+    text = "{}.{}".format(student_id, question_number)
+    insertion_confirmed = question_not_submitted_pdf[0].insertTextbox(
         rect,
         text,
         fontsize=18,
@@ -67,58 +118,56 @@ def buildHWQuestionSubstitute(sid, question):
         fontfile=None,
         align=1,
     )
-    DNS[0].drawRect(rect, color=[0, 0, 0])
+    assert (
+        insertion_confirmed > 0
+    ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
-    scale = 200 / 72
-    img = DNS[0].getPixmap(alpha=False, matrix=fitz.Matrix(scale, scale))
-    img.writePNG("qns.{}.{}.png".format(sid, question))
-    DNS.close()
+    question_not_submitted_pdf[0].drawRect(rect, color=[0, 0, 0])
+
+    question_not_submitted_image = question_not_submitted_pdf[0].getPixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
+    question_not_submitted_image.writePNG("qns.{}.{}.png".format(student_id, question_number))
+    question_not_submitted_pdf.close()
+
     return True
 
 
-def buildPNSPage(outName):
-    PNStex = r"""
-\documentclass[12pt,letterpaper]{article}
-\usepackage[]{fullpage}
-\usepackage{xcolor}
-\usepackage[printwatermark]{xwatermark}
-\newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
-\pagestyle{empty}
-\begin{document}
-\emph{This page of the test was not submitted.}
-\vfill
-\emph{This page of the test was not submitted.}
-\end{document}
-"""
-    with open(outName, "wb") as f:
-        returncode, out = buildLaTeX(PNStex, f)
-    if returncode != 0:
+def build_not_submitted_page(output_file_name):
+    """Creates the page not submitted document.
+
+    Arguments:
+        output_file_name {String} -- Name of the output files for page_not_submitted document.
+
+    Returns:
+        bool -- True/False
+    """
+
+    with open(output_file_name, "wb") as file:
+        return_code, output = buildLaTeX(page_not_submitted_text, file)
+    if return_code != 0:
         print(">>> Latex problems - see below <<<\n")
-        print(out)
+        print(output)
         print(">>> Latex problems - see above <<<")
         return False
+
     return True
 
 
-def buildQNSPage(outName):
-    PNStex = r"""
-\documentclass[12pt,letterpaper]{article}
-\usepackage[]{fullpage}
-\usepackage{xcolor}
-\usepackage[printwatermark]{xwatermark}
-\newwatermark[allpages,color=red!30,angle=-45,scale=2]{Question not submitted}
-\pagestyle{empty}
-\begin{document}
-\emph{This question was not submitted.}
-\vfill
-\emph{This question was not submitted.}
-\end{document}
-"""
-    with open(outName, "wb") as f:
-        returncode, out = buildLaTeX(PNStex, f)
-    if returncode != 0:
+def build_not_submitted_question(output_file_name):
+    """Creates the page not submitted document.
+
+    Arguments:
+        output_file_name {String} -- Name of the out-put files for question_not_submitted document.
+
+    Returns:
+        bool -- True/False
+    """
+
+    with open(output_file_name, "wb") as file:
+        return_code, output = buildLaTeX(question_not_submitted_text, file)
+    if return_code != 0:
         print(">>> Latex problems - see below <<<\n")
-        print(out)
+        print(output)
         print(">>> Latex problems - see above <<<")
         return False
+
     return True

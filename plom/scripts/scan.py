@@ -4,7 +4,48 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Plom tools for scanning tests and pushing to servers."""
+"""Plom tools for scanning tests and pushing to servers.
+
+## Overview of the scanning process
+
+  1. Decide on a working directory for your scans, copy your PDFs into
+     that directory and then cd into it.
+
+  2. Use the `process` command to split your PDF into bitmaps of each page.
+
+  3. Ensure the Plom server is running and a password for the "scanner"
+     user has been set.
+
+  4. Use the `read` command to read QR codes from the pages and match
+     these against expectations from the server.
+
+  5. Use the `upload` command to send pages to the server.  There are
+     additional flags for dealing with special cases:
+
+       a. Pages that could not be identified are called "Unknowns".
+          They can include "Extra Pages" without QR codes, poor-quality
+          scans where the QR reader failed, folded papers, etc.  A small
+          number is normal but large numbers are cause for concern and
+          sanity checking.  A human will (eventually) have to identify
+          these manually.
+
+       b. If the system detects you trying to upload a test page
+          corresponding to one already in the system (but not identical)
+          then those pages are filed as "Collisions". If you have good
+          paper-handling protocols then this should not happen, except
+          in exceptional circumstances (such as rescanning an illegible
+          page).  Force the upload these if you really need to; the
+          manager will then have to look at them.
+
+  6. Run "plom-scan status" to get a brief summary of scanning to date.
+
+  7. If something goes wrong such as crashes or interruptions, you may
+     need to clear the "scanner" login with the `clear` command.
+
+  These steps may be repeated as new PDF files come in: it is not
+  necessary to wait until scanning is complete to start processing and
+  uploading.
+"""
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
 __credits__ = "The Plom Project Developers"
@@ -93,18 +134,38 @@ def uploadImages(server, password, unknowns=False, collisions=False):
         # sendCollisionsToServer.uploadCollisions(server, password)
 
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(
+    description=__doc__.split("\n")[0],
+    epilog="\n".join(__doc__.split("\n")[1:]),
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
-sub = parser.add_subparsers(dest="command", description="Tools for dealing with scans.")
-#
-spP = sub.add_parser("process", help="Process scanned PDFs to images.")
-spR = sub.add_parser("read", help="Read QR-codes from images and collate.")
-spU = sub.add_parser("upload", help="Upload page images to scanner")
-spS = sub.add_parser("status", help="Get scanning status report from server")
+sub = parser.add_subparsers(dest="command")
+
+spP = sub.add_parser(
+    "process",
+    help="Process scanned PDFs to images",
+    description="Process one or more scanned PDFs into page images.",
+)
+spR = sub.add_parser(
+    "read",
+    help="Read QR-codes from images and collate",
+    description="Read QR-codes from page images and check unfo  with server (e.g., versions match).",
+)
+spU = sub.add_parser(
+    "upload",
+    help="Upload page images to scanner",
+    description="Upload page images to scanner.",
+)
+spS = sub.add_parser(
+    "status",
+    help="Get scanning status report from server",
+    description="Get scanning status report from server.",
+)
 spC = sub.add_parser(
     "clear",
-    help="Clear 'scanner' login",
-    description="Clear 'scanner' login after a crash or other expected event.",
+    help='Clear "scanner" login',
+    description='Clear "scanner" login after a crash or other expected event.',
 )
 #
 spP.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
@@ -112,13 +173,14 @@ spU.add_argument(
     "-u",
     "--unknowns",
     action="store_true",
-    help="Upload 'unknowns'. Unknowns are pages from which the QR-codes could not be read.",
+    help='Upload "unknowns", pages from which the QR-codes could not be read.',
 )
 spU.add_argument(
     "-c",
     "--collisions",
     action="store_true",
-    help="Upload 'collisions'. Collisions are pages which appear to be already on the server. You should not need this option except under exceptional circumstances.",
+    help='Upload "collisions", pages which appear to already be on the server. '
+    + "You should not need this option except under exceptional circumstances.",
 )
 for x in (spR, spU, spS, spC):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
@@ -140,36 +202,6 @@ def main():
         clearLogin(args.server, args.password)
     else:
         parser.print_help()
-        print("\n>> Processing and uploading scans <<")
-        print(
-            "0. Decide on a working directory for your scans, copy your PDFs into that directory and then cd into it."
-        )
-        print(
-            "1. Run 'plom-scan process <filename>' - this processes your PDF <filename> into bitmaps of each page."
-        )
-        print(
-            """2. NOT IMPLEMENTED YET, BUT COMING SOON - Optionally create a \"server.toml\" text file containing a single line with the server name and port such as:
-    server = "localhost:1234"
-    server = "plom.foo.bar:41982" """
-        )
-        print(
-            "3. Make sure the newserver is running and that the password for the 'scanner' user has been set."
-        )
-        print(
-            "4. Run 'plom-scan read' - this reads barcodes from the pages and files them away accordingly"
-        )
-        print('5. Run "plom-scan upload" to send identified pages to the server.')
-        print(
-            '6. Pages that could not be identified are called "Unknowns". In that case run "plom-scan upload -u" to send those unknowns to the server. The manager can then identify them manually.'
-        )
-        print(
-            '7. If the system detects you trying to upload a test page corresponding to one already in the system (but not identical) then those pages are filed as "Collisions". If you have good paper-handling protocols then this should not happen. If you really do need to upload them to the system (the manager can look at them and decide) then run "plom-scan upload -c"'
-        )
-        print('8. Run "plom-scan status" to get a brief summary of scanning to date.')
-        print(
-            '9. If anything goes wrong and plom-scan crashes or is interupted, you might need to clear the "scanner" login from the server. To do this run "plom-scan clear"'
-        )
-
     exit(0)
 
 

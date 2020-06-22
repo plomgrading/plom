@@ -35,7 +35,7 @@ from textwrap import dedent
 from plom import __version__
 
 # TODO: be more decisive about how this should be
-from plom.finish.clearLogin import clearLogin
+from plom.finish import clear_manager_login
 import plom.finish.check_completed
 import plom.finish.spreadsheet
 from plom.finish.spreadsheet import CSVFilename
@@ -129,7 +129,7 @@ def main():
     elif args.command == "webpage":
         plom.finish.coded_return.main()
     elif args.command == "clear":
-        clearLogin(args.server, args.password)
+        clear_manager_login(args.server, args.password)
     else:
         parser.print_help()
     exit(0)

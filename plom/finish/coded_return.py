@@ -15,8 +15,9 @@ import argparse
 
 from plom import SpecParser
 from plom.rules import isValidStudentNumber
-from .utils import myhash
+from .utils import my_hash
 from .return_tools import csv_add_return_codes
+from plom.finish import CSVFilename
 
 
 def do_renaming(fromdir, todir, sns):
@@ -69,7 +70,7 @@ def main():
     os.makedirs("codedReturn")
 
     print("Generating return codes spreadsheet...")
-    sns = csv_add_return_codes("testMarks.csv", "return_codes.csv", "StudentID")
+    sns = csv_add_return_codes(CSVFilename, "return_codes.csv", "StudentID")
     print('The return codes are in "return_codes.csv"')
 
     numfiles = do_renaming(fromdir, "codedReturn", sns)

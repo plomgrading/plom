@@ -3,63 +3,24 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
-import json
-import logging
-
-from PyQt5.QtCore import Qt, QElapsedTimer, QEvent, QLineF, QPointF, QRectF
+from PyQt5.QtCore import QEvent, QRectF
 from PyQt5.QtGui import (
-    QBrush,
-    QColor,
     QCursor,
     QGuiApplication,
     QPainter,
-    QPainterPath,
-    QPen,
     QPixmap,
     QTransform,
-    QFont,
 )
 from PyQt5.QtWidgets import (
-    QGraphicsEllipseItem,
-    QGraphicsItemGroup,
-    QGraphicsLineItem,
-    QGraphicsPathItem,
     QGraphicsPixmapItem,
-    QGraphicsRectItem,
     QGraphicsScene,
     QUndoStack,
-    QGraphicsTextItem,
 )
 
-from plom import ScenePixelHeight
-from plom import AnnFontSizePts
+from plom import AnnFontSizePts, ScenePixelHeight
 
 # Import all the tool commands for undo/redo stack.
-from .tools import (
-    CommandArrow,
-    CommandArrowDouble,
-    CommandBox,
-    CommandCross,
-    CommandDelete,
-    CommandDelta,
-    CommandEllipse,
-    CommandHighlight,
-    CommandLine,
-    CommandPen,
-    CommandPenArrow,
-    CommandQMark,
-    CommandText,
-    CommandTick,
-    CommandGDT,
-    CrossItem,
-    DeltaItem,
-    TextItem,
-    TickItem,
-    GroupDTItem,
-    GhostComment,
-    GhostDelta,
-    GhostText,
-)
+from .tools import *
 
 log = logging.getLogger("pagescene")
 
@@ -82,7 +43,7 @@ class ScoreBox(QGraphicsTextItem):
         # Not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setPos(4, 4)
-        self.changeScore(0)
+        self.changeScore(self.score)
 
     def changeScore(self, x):
         # set the current mark.
@@ -538,7 +499,7 @@ class PageScene(QGraphicsScene):
         """Change cursor back to open-hand, and update the current stored view rectangle."""
         self.views()[0].setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
-        self.views()[0].zoomNull()
+        self.views()[0].setZoomSelector()
 
     # Handle drag / drop events
     def dragEnterEvent(self, e):
@@ -977,7 +938,7 @@ class PageScene(QGraphicsScene):
             # sets the view rectangle and updates zoom-dropdown.
             self.views()[0].scale(0.8, 0.8)
             self.views()[0].centerOn(event.scenePos())
-            self.views()[0].zoomNull(True)
+            self.views()[0].setZoomSelector(True)
             self.zoomFlag = 0
             return
         else:
@@ -1029,7 +990,7 @@ class PageScene(QGraphicsScene):
             self.views()[0].fitInView(self.zoomBoxItem, Qt.KeepAspectRatio)
 
         # sets the view rectangle and updates zoom-dropdown.
-        self.views()[0].zoomNull(True)
+        self.views()[0].setZoomSelector(True)
         # remove the box and put flag back.
         self.removeItem(self.zoomBoxItem)
         self.zoomFlag = 0

@@ -24,6 +24,7 @@ __license__ = "AGPL-3.0-or-later"
 import os, sys, shutil
 
 from plom import SpecParser
+from plom.finish import CSVFilename
 
 archivename = "{COURSE}_{YEAR}{TERM}_{SHORTNAME}"
 
@@ -125,7 +126,7 @@ entire directory structure.
         all_ok = False
 
     print("Archiving metadata and miscellanea")
-    shutil.copy2("testMarks.csv", archivename)
+    shutil.copy2(CSVFilename, archivename)
     shutil.copy2(os.path.join("..", "resources", "testSpec.json"), archivename)
     # which version was used for each exam number
     shutil.copy2(os.path.join("..", "resources", "examsProduced.json"), archivename)

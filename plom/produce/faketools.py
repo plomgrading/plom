@@ -67,7 +67,7 @@ possible_answers = [
 
 
 def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, which=None):
-    """A fcuntion that fills in the exams with fake data for the demo test.
+    """Fill-in exams with fake data for demo or testing.
 
     Arguments:
         paper_dir_path {Str or convertable to pathlib obj} -- Directory containing the blank exams.

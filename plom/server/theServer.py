@@ -24,7 +24,7 @@ from plom import Plom_API_Version as serverAPI
 from plom import Default_Port
 from plom import SpecParser
 from plom import specdir
-from plom.db.examDB import PlomDB
+from plom.db import PlomDB
 
 from .authenticate import Authority
 
@@ -55,8 +55,9 @@ logging.getLogger().setLevel("Debug".upper())
 
 
 # ----------------------
-def buildDirectories():
+def build_directories():
     """Build the directories that this script needs"""
+
     # the list of directories. Might need updating.
     lst = [
         "pages",
@@ -89,17 +90,21 @@ class Server(object):
         self.Version = __version__
         print(
             "Server launching with masterToken = '{}' {}".format(
-                self.authority.getMasterToken(), type(self.authority.getMasterToken())
+                self.authority.get_master_token(),
+                type(self.authority.get_master_token()),
             )
         )
         self.tempDirectory = tempfile.TemporaryDirectory()
         # Give directory correct permissions.
         subprocess.check_call(["chmod", "o-r", self.tempDirectory.name])
-        self.loadUsers()
+        self.load_users()
 
-    def loadUsers(self):
-        """Load the users from json file, add them to the database. Do some simple sanity checks of pwd hashes to see if they have changed.
+    def load_users(self):
+        """Load the users from json file, add them to the database and checks pwd hashes.
+
+        It does simple sanity checks of pwd hashes to see if they have changed.
         """
+
         if os.path.exists("serverConfiguration/userList.json"):
             with open("serverConfiguration/userList.json") as data_file:
                 # load list of users + pwd hashes
@@ -134,7 +139,7 @@ class Server(object):
     from .plomServer.serverUpload import (
         addTestPage,
         addHWPage,
-        addXPage,
+        addLPage,
         processHWUploads,
         processTUploads,
         addUnknownPage,
@@ -150,7 +155,7 @@ class Server(object):
         getDiscardImage,
         getTPageImage,
         getHWPageImage,
-        getXPageImage,
+        getLPageImage,
         getQuestionImages,
         getTestImages,
         checkPage,
@@ -166,10 +171,11 @@ class Server(object):
         IDgetNextTask,
         IDgetDoneTasks,
         IDgetImage,
-        IDgetRandomImage,
+        IDgetImageFromATest,
         IDclaimThisTask,
         IDdidNotFinish,
-        IDreturnIDdTask,
+        id_paper,
+        ID_id_paper,
         IDdeletePredictions,
         IDrunPredictions,
         IDreviewID,
@@ -213,7 +219,7 @@ class Server(object):
         RgetMarkHistogram,
         RgetMarked,
         RgetIdentified,
-        RgetCompletions,
+        RgetCompletionStatus,
         RgetOutToDo,
         RgetStatus,
         RgetSpreadsheet,
@@ -229,8 +235,9 @@ class Server(object):
     )
 
 
-def getServerInfo():
+def get_server_info():
     """Read the server info from config file."""
+
     global serverInfo
     try:
         with open("serverConfiguration/serverDetails.toml") as data_file:
@@ -246,11 +253,17 @@ def getServerInfo():
 
 
 def launch(masterToken=None):
+    """Launches the Plom server.
+
+    Keyword Arguments:
+        masterToken {str} -- Token that is authenticated by the authority, if None, one is created in authenticate.py. default: {None}
+    """
+
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
-    getServerInfo()
+    get_server_info()
     examDB = PlomDB(Path(specdir) / "plom.db")
     spec = SpecParser(Path(specdir) / "verifiedSpec.toml").spec
-    buildDirectories()
+    build_directories()
     peon = Server(spec, examDB, masterToken)
     userIniter = UserInitHandler(peon)
     uploader = UploadHandler(peon)
