@@ -130,7 +130,7 @@ class Server(object):
         checkUserEnabled,
         createModifyUser,
         InfoShortName,
-        InfoGeneral,
+        info_spec,
         reloadUsers,
         giveUserToken,
         setUserEnable,

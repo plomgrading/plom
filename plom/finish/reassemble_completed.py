@@ -14,7 +14,7 @@ from multiprocessing import Pool
 from tqdm import tqdm
 
 from .coverPageBuilder import makeCover
-from .testReassembler import reassemble
+from .examReassembler import reassemble
 
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import *
@@ -81,7 +81,7 @@ def main(server=None, pwd=None):
         exit(1)
 
     shortName = msgr.getInfoShortName()
-    spec = msgr.getInfoGeneral()
+    spec = msgr.get_spec()
     numberOfQuestions = spec["numberOfQuestions"]
     if not locationAndSpecCheck(spec):
         print("Problems confirming location and specification. Exiting.")

@@ -479,7 +479,7 @@ class Manager(QWidget):
 
     # -------------------
     def getTPQV(self):
-        info = managerMessenger.getInfoGeneral()
+        info = managerMessenger.get_spec()
         self.max_papers = info["numberToProduce"]
         self.numberOfPages = info["numberOfPages"]
         self.numberOfQuestions = info["numberOfQuestions"]

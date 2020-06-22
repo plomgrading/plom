@@ -199,7 +199,7 @@ def uploadPages(server=None, password=None):
         )
         exit(10)
 
-    spec = msgr.getInfoGeneral()
+    spec = msgr.get_spec()
     numberOfPages = spec["numberOfPages"]
 
     fileDict = {}  # list of files by bundle
@@ -264,7 +264,7 @@ def uploadHWPages(server=None, password=None):
         exit(10)
 
     # grab number of questions - so we can work out what is missing
-    spec = msgr.getInfoGeneral()
+    spec = msgr.get_spec()
     numberOfQuestions = spec["numberOfQuestions"]
 
     # Look for HWbyQ pages in decodedPages

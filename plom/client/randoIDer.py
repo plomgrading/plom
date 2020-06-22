@@ -104,7 +104,7 @@ if __name__ == "__main__":
         messenger.clearAuthorisation(user, pwd)
         exit(1)
 
-    spec = messenger.getInfoGeneral()
+    spec = messenger.get_spec()
 
     try:
         startIdentifying()
