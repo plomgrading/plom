@@ -183,7 +183,6 @@ class ManagerMessenger(BaseMessenger):
         # TODO - do we need this return value?
         return True
 
-
     def upload_classlist(self, classdict):
         """Give the server a classlist.
 
@@ -200,11 +199,7 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.put(
                 "https://{}/ID/classlist".format(self.server),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "classlist": classdict,
-                },
+                json={"user": self.user, "token": self.token, "classlist": classdict,},
                 verify=False,
             )
             response.raise_for_status()
@@ -219,7 +214,6 @@ class ManagerMessenger(BaseMessenger):
                 ) from None
         finally:
             self.SRmutex.release()
-
 
     def RgetCompletionStatus(self):
         self.SRmutex.acquire()
@@ -1469,6 +1463,33 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.patch(
                 "https://{}/ID/review".format(self.server),
+                verify=False,
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "testNumber": testNumber,
+                },
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomSeriousException(
+                    "Could not find test = {}.".format(testNumber)
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+    def TreviewTOT(self, testNumber):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.patch(
+                "https://{}/TOT/review".format(self.server),
                 verify=False,
                 json={
                     "user": self.user,
