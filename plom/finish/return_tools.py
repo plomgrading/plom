@@ -251,7 +251,7 @@ def canvas_csv_add_return_codes(csvin, csvout, saltstr):
         [c in df.columns for c in cols]
     ), "CSV file missing columns?  We need:\n  " + str(cols)
 
-    rcode = find_partial_column_name(df, "Return Code (", atStart=False)
+    rcode = find_partial_column_name(df, "Return Code (", at_start=False)
     cols.append(rcode)
 
     df = df[cols]
