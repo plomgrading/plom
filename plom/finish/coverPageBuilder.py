@@ -29,11 +29,11 @@ table, th, td {
 
 
 
-def makeCover(testnum, sname, sid, tab):
+def makeCover(test_num, sname, sid, tab):
     """Create html page of name ID etc and table of marks.
 
     Args:
-        testnum (int): the test number for the test wea re making the cover for. 
+        test_num (int): the test number for the test wea re making the cover for. 
         sname (str): student name.
         sid (str): student id.
         tab (list): information about the test that should be put on the coverpage.
@@ -48,7 +48,7 @@ def makeCover(testnum, sname, sid, tab):
   <li>Test number = {}</li>
 </ul>
 <table>""".format(
-        sname, sid, testnum
+        sname, sid, test_num
     )
     htmlText += (
         "<tr><th>question</th><th>version</th><th>mark</th><th>out of</th></tr>\n"
@@ -73,7 +73,7 @@ def makeCover(testnum, sname, sid, tab):
     cover = HTML(string=htmlText)
     # Write out the coverpage to PDF call it cover_X.pdf where X=StudentID.
     cover.write_pdf(
-        "coverPages/cover_{}.pdf".format(str(testnum).zfill(4)), stylesheets=[css]
+        "coverPages/cover_{}.pdf".format(str(test_num).zfill(4)), stylesheets=[css]
     )
 
 

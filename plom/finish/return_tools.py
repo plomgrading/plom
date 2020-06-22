@@ -58,13 +58,13 @@ def import_canvas_csv(canvas_fromfile):
     return df
 
 
-def find_partial_column_name(df, parthead, atStart=True):
-    """Finds columns in a dataframe that includes a specific string.
+def find_partial_column_name(df, parthead, at_start=True):
+    """Finds columns in a DataFrame that includes a specific string.
 
     Args:
         df (pandas.DataFrame): the dataframe that we get the column from.
         parthead (str): the first part of the column name(s) we are interested.
-        atStart (bool, optional): if True we search for parthead from the begining of the column name, if False then parthead can be anywhere in the column name. Defaults to True.
+        at_start (bool, optional): if True we search for parthead from the begining of the column name, if False then parthead can be anywhere in the column name. Defaults to True.
 
     Raises:
         ValueError: If there are no possible matches (or no unique matches).
@@ -73,7 +73,7 @@ def find_partial_column_name(df, parthead, atStart=True):
         pandas.DataFrame: the column(s) we are interested in.
     """
     parthead = parthead.lower()
-    if atStart:
+    if at_start:
         print('Searching for column starting with "{0}":'.format(parthead))
         possible_matches = [s for s in df.columns if s.lower().startswith(parthead)]
     else:

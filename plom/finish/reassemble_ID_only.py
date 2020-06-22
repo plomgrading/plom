@@ -22,7 +22,7 @@ numberOfTests = 0
 numberOfQuestions = 0
 
 
-def parfcn(y):
+def _parfcn(y):
     """Parallel function used below, must be defined in root of module. Reassemble a pdf from the cover and question images.
 
     Leave coverfname as None to omit it (e.g., when totalling).
@@ -33,20 +33,20 @@ def parfcn(y):
     reassemble(*y)
 
 
-def reassemble_test_CMD(msgr, shortName, outDir, t, sid):
+def reassemble_test_CMD(msgr, short_name, outDir, t, sid):
     """Reassembles a test with a filename that includes the directory and student id.
 
     Args:
         msgr (FinishMessenger): the messenger to the plom server. 
-        shortName (str): the name of the test.
+        short_name (str): the name of the test.
         outDir (str): the directory the reassembled test will exist in.
         t (int): test number.
         sid (str): student id.
 
     Returns:
-        tuple (outname, shortName, sid, None, rnames): descriptions below.
+        tuple (outname, short_name, sid, None, rnames): descriptions below.
         outname (str): the full name of the file.
-        shortName (str): same as argument.
+        short_name (str): same as argument.
         sid (str): sane as argument.
         rnames (str): the real file name.
     """
@@ -55,9 +55,9 @@ def reassemble_test_CMD(msgr, shortName, outDir, t, sid):
         # TODO: what is supposed to happen here?
         return
     rnames = fnames
-    outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
-    # reassemble(outname, shortName, sid, None, rnames)
-    return (outname, shortName, sid, None, rnames)
+    outname = os.path.join(outDir, "{}_{}.pdf".format(short_name, sid))
+    # reassemble(outname, short_name, sid, None, rnames)
+    return (outname, short_name, sid, None, rnames)
 
 
 def main(server=None, pwd=None):
@@ -112,7 +112,7 @@ def main(server=None, pwd=None):
     N = len(pagelists)
     print("Reassembling {} papers...".format(N))
     with Pool() as p:
-        r = list(tqdm(p.imap_unordered(parfcn, pagelists), total=N))
+        r = list(tqdm(p.imap_unordered(_parfcn, pagelists), total=N))
 
     print(">>> Warning <<<")
     print(

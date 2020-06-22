@@ -23,8 +23,8 @@ from plom.finish.locationSpecCheck import locationAndSpecCheck
 numberOfQuestions = 0
 
 
-def parfcn(z):
-    """Parallel function used below, must be defined in root of module
+def _parfcn(z):
+    """Parallel function used below, must be defined in root of module.
 
     Args:
         z (tuple): Arguments to reassemble and makeCover.
@@ -59,18 +59,18 @@ def build_cover_page(msgr, outDir, t, maxMarks):
     return (int(t), sname, sid, arg)
 
 
-def reassemble_test_CMD(msgr, shortName, outDir, t, sid):
+def reassemble_test_CMD(msgr, short_name, out_dir, t, sid):
     """Builds the information for reassembling the entire test.
 
     Args:
         msgr (FinishMessenger): Messenger object that talks to the server.
-        shortName (str): name of the test without the student id.
-        outDir (str): The directory we are putting the cover page in.
+        short_name (str): name of the test without the student id.
+        out_dir (str): The directory we are putting the cover page in.
         t (int): Test number.
         sid (str): student number.
 
     Returns:
-       tuple : (outname, shortName, sid, covername, rnames)
+       tuple : (outname, short_name, sid, covername, rnames)
     """
     fnames = msgr.RgetAnnotatedFiles(t)
     if len(fnames) == 0:
@@ -78,8 +78,8 @@ def reassemble_test_CMD(msgr, shortName, outDir, t, sid):
         return
     covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
     rnames = fnames
-    outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
-    return (outname, shortName, sid, covername, rnames)
+    outname = os.path.join(out_dir, "{}_{}.pdf".format(short_name, sid))
+    return (outname, short_name, sid, covername, rnames)
 
 
 def main(server=None, pwd=None):
@@ -150,11 +150,11 @@ def main(server=None, pwd=None):
     print("Reassembling {} papers...".format(N))
     with Pool() as p:
         r = list(
-            tqdm(p.imap_unordered(parfcn, list(zip(coverpagelist, pagelists))), total=N)
+            tqdm(p.imap_unordered(_parfcn, list(zip(coverpagelist, pagelists))), total=N)
         )
     # Serial
     # for z in zip(coverpagelist, pagelists):
-    #    parfcn(z)
+    #    _parfcn(z)
 
     print(">>> Warning <<<")
     print(
