@@ -82,7 +82,6 @@ def main():
 
     print("Adding codedReturn/index.html file")
     from .html_view_test_template import html
-
     html = html.replace("__COURSENAME__", longname)
     html = html.replace("__TESTNAME__", shortname)
 

@@ -31,7 +31,7 @@ archivename = "{COURSE}_{YEAR}{TERM}_{SHORTNAME}"
 
 if __name__ == "__main__":
     spec = SpecParser().spec
-    basename = spec["name"]
+    basename = spec['name']
     archivename = archivename.replace("{SHORTNAME}", basename)
 
     print("\n\nTODO: THIS SCRIPT NEEDS RETHINKING FOR 0.4!\n\n")

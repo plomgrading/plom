@@ -24,25 +24,11 @@ numberOfTests = 0
 numberOfQuestions = 0
 
 
-def _parfcn(z):
+def parfcn(z):
     """Parallel function used below, must be defined in root of module
 
     Args:
-        z (tuple): Arguments to reassemble and makeCover, of the form (x, y).
-    
-    x:
-        test_num (int): the test number for the test wea re making the cover for. 
-        sname (str): student name.
-        sid (str): student id.
-        tab (list): information about the test that should be put on the coverpage.
-
-    y:
-        out_name (str): name of the file we are assembling.
-        short_name (str): name of the file without the whole directory. 
-        sid (str): the student id.
-        cover_fname (str): the name of the file of the coverpage of this test.
-        img_list (str): the groupimage files  
-
+        z (tuple): Arguments to reassemble and makeCover.
     """
     x, y = z
     if x and y:
@@ -60,11 +46,7 @@ def build_cover_page(msgr, outDir, t, maxMarks):
         maxMarks (dict): Maxmarks per question str -> int.
 
     Returns:
-        tuple : (testnumber, sname, sid, arg).
-        testnumber (int): testnumber of the coverpage that has been built.
-        sname (str): student name.
-        sid (str): student id.
-        arg (tuple): quads of the form [q, v, mark, maxPossibleMark]
+        tuple : (testnumber, sname, sid, arg)
     """
     # should be [ [sid, sname], [q,v,m], [q,v,m] etc]
     cpi = msgr.RgetCoverPageInfo(t)
@@ -78,27 +60,27 @@ def build_cover_page(msgr, outDir, t, maxMarks):
     return (int(t), sname, sid, arg)
 
 
-def reassemble_test_CMD(msgr, short_name, out_dir, test_num, student_id):
+def reassemble_test_CMD(msgr, shortName, outDir, t, sid):
     """Builds the information for reassembling the entire test.
 
     Args:
         msgr (FinishMessenger): Messenger object that talks to the server.
-        short_name (str): name of the test without the student id.
-        out_dir (str): The directory we are putting the cover page in.
-        test_num (int): Test number.
-        student_id (str): student number.
+        shortName (str): name of the test without the student id.
+        outDir (str): The directory we are putting the cover page in.
+        t (int): Test number.
+        sid (str): student number.
 
     Returns:
-       tuple : (outname, short_name, sid, covername, rnames)
+       tuple : (outname, shortName, sid, covername, rnames)
     """
-    fnames = msgr.RgetAnnotatedFiles(test_num)
+    fnames = msgr.RgetAnnotatedFiles(t)
     if len(fnames) == 0:
         # TODO: what is supposed to happen here?
         return
-    covername = "coverPages/cover_{}.pdf".format(str(test_num).zfill(4))
+    covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
     rnames = fnames
-    outname = os.path.join(out_dir, "{}_{}.pdf".format(short_name, student_id))
-    return (outname, short_name, student_id, covername, rnames)
+    outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
+    return (outname, shortName, sid, covername, rnames)
 
 
 def main(server=None, pwd=None):
@@ -170,10 +152,11 @@ def main(server=None, pwd=None):
     print("Reassembling {} papers...".format(N))
     with Pool() as p:
         r = list(
-            tqdm(
-                p.imap_unordered(_parfcn, list(zip(coverpagelist, pagelists))), total=N
-            )
+            tqdm(p.imap_unordered(parfcn, list(zip(coverpagelist, pagelists))), total=N)
         )
+    # Serial
+    # for z in zip(coverpagelist, pagelists):
+    #    parfcn(z)
 
     print(">>> Warning <<<")
     print(

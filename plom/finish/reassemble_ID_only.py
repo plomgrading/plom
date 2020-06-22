@@ -22,18 +22,13 @@ numberOfTests = 0
 numberOfQuestions = 0
 
 
-def _parfcn(y):
+def parfcn(y):
     """Parallel function used below, must be defined in root of module. Reassemble a pdf from the cover and question images.
 
     Leave coverfname as None to omit it (e.g., when totalling).
 
     Args:
-        y : arguments to testReassembler.reassemble, looks like
-        out_name (str): name of the file we are assembling.
-        short_name (str): name of the file without the whole directory. 
-        sid (str): the student id.
-        cover_fname (str): the name of the file of the coverpage of this test.
-        img_list (str): the groupimage files
+        y : arguments to testReassembler.reassemble
     """
     reassemble(*y)
 
@@ -117,7 +112,7 @@ def main(server=None, pwd=None):
     N = len(pagelists)
     print("Reassembling {} papers...".format(N))
     with Pool() as p:
-        r = list(tqdm(p.imap_unordered(_parfcn, pagelists), total=N))
+        r = list(tqdm(p.imap_unordered(parfcn, pagelists), total=N))
 
     print(">>> Warning <<<")
     print(
