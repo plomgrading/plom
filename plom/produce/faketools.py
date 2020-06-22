@@ -16,10 +16,11 @@ from pathlib import Path
 from glob import glob
 import argparse
 
+import csv
+import random
 import json
 import base64
 import fitz
-import pandas
 
 # import tools for dealing with resource files
 import pkg_resources
@@ -107,29 +108,40 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
             ]
         )
 
-    # A pandas DataFrame object including the student id and student_name
-    students_list = pandas.read_csv(students_list_path, dtype="object")
+    used_id_list = []
+    # need to avoid any student numbers already used to name papers - look at file names
+    for index, file_name in enumerate(named_papers_paths):
+        used_id_list.append(os.path.split(file_name)[1].split(".")[0].split("_")[-1])
+    # now load in the student names and numbers -only those not used to prename
+    clean_id_dict = {}  # not used
 
-    # sample from the students_list
-    students_list = students_list.sample(len(papers_paths))
+    with open(students_list_path) as csvfile:
+        for row in csv.DictReader(csvfile):
+            if row["id"] not in used_id_list:  # add to the student_dict
+                clean_id_dict[row["id"]] = row["studentName"]
+
+    # now grab a random selection of IDs from the dict.
+    # we need len(papers_paths) - len(named_papers_paths) of them
+    id_sample = random.sample(
+        list(clean_id_dict.keys()), len(papers_paths) - len(named_papers_paths)
+    )
 
     # A complete collection of the pdfs created
     all_pdf_documents = fitz.open()
 
+    clean_count = 0
     for index, file_name in enumerate(papers_paths):
-
-        student_pandas_object = students_list.iloc[index]
-
-        print(
-            "  {}: {}, {}, scribbled".format(
-                os.path.basename(file_name),
-                student_pandas_object.id,
-                student_pandas_object.studentName,
+        if file_name in named_papers_paths:
+            print("{} - prenamed paper - scribbled".format(os.path.basename(file_name)))
+        else:
+            student_number = id_sample[clean_count]
+            student_name = clean_id_dict[student_number]
+            clean_count += 1
+            print(
+                "{} - scribbled using {} {}".format(
+                    os.path.basename(file_name), student_number, student_name
+                )
             )
-        )
-
-        student_name = student_pandas_object.studentName
-        student_number = str(student_pandas_object.id)
 
         pdf_document = fitz.open(file_name)
         front_page = pdf_document[0]
