@@ -99,8 +99,6 @@ def main(server=None, pwd=None):
     pagelists = []
     for t in identifiedTests:
         if identifiedTests[t][0] is not None:
-            print(identifiedTests[t][0])
-            print(type(identifiedTests[t][0]))
             dat = reassemble_test_CMD(msgr, shortName, outDir, t, identifiedTests[t][0])
             pagelists.append(dat)
         else:
