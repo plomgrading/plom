@@ -264,6 +264,7 @@ def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
 
 
 def download_classlist(server=None, password=None):
+    """Download list of student IDs/names from server."""
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
