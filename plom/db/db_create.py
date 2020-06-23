@@ -34,7 +34,7 @@ def declareBundle(self, file_name, md5):
         return [False, "md5sum"]
     else:
         Bundle.create(name=file_name, md5sum=md5)
-        return [True]
+        return [True, file_name]
 
 
 ########## Test creation stuff ##############

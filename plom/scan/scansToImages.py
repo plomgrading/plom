@@ -30,40 +30,55 @@ from plom import ScenePixelHeight
 archivedir = "archivedPDFs"
 
 
-def archivePDF(fname, hwByQ, hwExtra):
-    print("Archiving {}".format(fname))
-    md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+def archivePDF(file_name, hwByQ, hwLoose):
+    print("Archiving {}".format(file_name))
+
+    if hwByQ:
+        long_name = os.path.join("submittedHWByQ", file_name)
+    elif hwLoose:
+        long_name = os.path.join("submittedHWLoose", file_name)
+    else:
+        long_name = file_name
+
+    md5 = hashlib.md5(open(long_name, "rb").read()).hexdigest()
     # TODO: is ".." portable?  maybe we should keep some absolute paths handy
     if hwByQ:
-        shutil.move(fname, Path(archivedir) / "submittedHWByQ")
-    elif hwExtra:
-        shutil.move(fname, Path(archivedir) / "submittedHWExtra")
+        shutil.move(long_name, Path(archivedir) / "submittedHWByQ")
+    elif hwLoose:
+        shutil.move(long_name, Path(archivedir) / "submittedHWLoose")
     else:
-        shutil.move(fname, archivedir)
+        shutil.move(long_name, archivedir)
     # open the existing archive if it is there
     arcName = os.path.join(archivedir, "archive.toml")
     if os.path.isfile(arcName):
         arch = toml.load(arcName)
     else:
         arch = {}
-    arch[md5] = fname
+    arch[md5] = long_name
     # now save it
     with open(arcName, "w+") as fh:
         toml.dump(arch, fh)
 
 
-def isInArchive(fname):
+def isInArchive(file_name, hwByQ=False, hwLoose=False):
+    if hwByQ:
+        long_name = Path("submittedHWByQ") / file_name
+    elif hwLoose:
+        long_name = Path("submittedHWLoose") / file_name
+    else:
+        long_name = file_name
+
     arcName = os.path.join(archivedir, "archive.toml")
     if not os.path.isfile(arcName):
         return [False]
     arch = toml.load(arcName)
-    md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+    md5 = hashlib.md5(open(long_name, "rb").read()).hexdigest()
     if md5 in arch:
         return [True, arch[md5]]
     return [False]
 
 
-def processFileToBitmaps(bundleDir, fname):
+def processFileToBitmaps(bundleDir, file_name, hwByQ=False, hwLoose=False):
     """Extract/convert each page of pdf into bitmap.
 
     We have various ways to do this, in rough order of preference:
@@ -82,14 +97,20 @@ def processFileToBitmaps(bundleDir, fname):
 
     NOT IMPLEMENTED YET: You can force one of these...
     """
-
     destDir = os.path.join(bundleDir, "scanPNGs")
 
-    scan, fext = os.path.splitext(fname)
+    scan, fext = os.path.splitext(file_name)
     # issue #126 - replace spaces in names with underscores for output names.
     safeScan = scan.replace(" ", "_")
 
-    doc = fitz.open(fname)
+    if hwByQ:
+        long_name = Path("submittedHWByQ") / file_name
+    elif hwLoose:
+        long_name = Path("submittedHWLoose") / file_name
+    else:
+        long_name = file_name
+
+    doc = fitz.open(long_name)
 
     # 0:9 -> 10 pages -> 2 digits
     zpad = math.floor(math.log10(len(doc))) + 1
@@ -296,24 +317,32 @@ def normalizeJPEGOrientation(f):
         im2.save(f)
 
 
-def makeBundleDirectories(fname):
+def makeBundleDirectories(fname, hwByQ=False, hwLoose=False):
     """Each bundle needs its own subdirectory of pageImages and scanPNGs, so we have to make them.
+    Note that if hwByQ flag is set then we put things inside bundles/submittedHWByQ,
+    and similarly if hwLoose is set then we put things inside bundles/submittedHWLoose
     """
 
     scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
     safeScan = scan.replace(" ", "_")
     # make directory for that bundle inside scanPNGs
-    bundleDir = os.path.join("bundles", safeScan)
+    if hwByQ:
+        bundleDir = os.path.join("bundles", "submittedHWByQ", safeScan)
+    elif hwLoose:
+        bundleDir = os.path.join("bundles", "submittedHWLoose", safeScan)
+    else:
+        bundleDir = os.path.join("bundles", safeScan)
     os.makedirs(bundleDir, exist_ok=True)
     # now inside that we need other subdir [pageImages, scanPNGs, decodedPages, unknownPages]
+    # note that hwbyq and hwloose do not need decoded pages since we know them already.
     for dir in ["pageImages", "scanPNGs", "decodedPages", "unknownPages"]:
         os.makedirs(os.path.join(bundleDir, dir), exist_ok=True)
 
     return bundleDir
 
 
-def postProcessing(bundleDir):
+def postProcessing(bundleDir, hwByQ=False, hwLoose=False):
     """Do the post processing on the files inside bundleDir
     """
     # get current directory, we need to go back there at the end.
@@ -364,10 +393,9 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
     everything else darker.  Improves images when students write in very
     light pencil.
     """
-
     for fname in PDFs:
         # check if fname is in archive (by checking md5sum)
-        tf = isInArchive(fname)
+        tf = isInArchive(fname, hwByQ, hwLoose)
         if tf[0]:
             print(
                 "WARNING - {} is in the PDF archive - we checked md5sum - it the same as file {}. It will not be processed.".format(
@@ -377,29 +405,12 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
             continue
         else:
             # PDF is not in archive, so is new bundle.
-            # make a directory for it # is of form "bundle/fname/"
-            bundleDir = makeBundleDirectories(fname)
-            processFileToBitmaps(bundleDir, fname)
-            postProcessing(bundleDir)
+            # make a directory for it
+            # is of form "bundle/fname/" or
+            # "bundle/submittedHWByQ/fname" or "bundle/submittedHWLoose/fname"
+            bundleDir = makeBundleDirectories(fname, hwByQ, hwLoose)
+
+            processFileToBitmaps(bundleDir, fname, hwByQ, hwLoose)
+            postProcessing(bundleDir, hwByQ, hwLoose)
             # finally archive the PDF
             archivePDF(fname, hwByQ, hwLoose)
-
-    # TODO - sort out homeworks
-    # if hwExtra:
-    # os.chdir("submittedHWExtra")
-    # elif hwByQ:
-    # os.chdir("submittedHWByQ")
-    # TODO - sort out homework again.
-    # # move directly to decodedPages/submittedHWByQ or  Extra - there is no "read" step
-    # if hwByQ:
-    #     for file in fileList:
-    #         shutil.move(
-    #             file, os.path.join("..", "..", "decodedPages", "submittedHWByQ")
-    #         )
-    #     os.chdir(os.path.join("..", ".."))
-    # elif hwExtra:
-    #     for file in fileList:
-    #         shutil.move(
-    #             file, os.path.join("..", "..", "decodedPages", "submittedHWExtra")
-    #         )
-    #     os.chdir(os.path.join("..", ".."))

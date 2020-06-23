@@ -138,7 +138,7 @@ def uploadImages(server, password, unknowns=False, collisions=False):
     from plom.scan import sendPagesToServer
 
     print("Upload images to server")
-    [TPN, updates] = sendPagesToServer.uploadPages(server, password)
+    [TPN, updates] = sendPagesToServer.uploadTPages(server, password)
     print("Tests were uploaded to the following studentIDs: {}".format(TPN.keys()))
     print("Server reports {} papers updated.".format(updates))
 

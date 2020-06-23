@@ -53,6 +53,7 @@ def main():
     subprocess.check_call(split("plom-server users --demo"))
 
     # Start server into background
+    print("Running server I hope")
     serverproc = subprocess.Popen(split("plom-server launch"))
     time.sleep(1.0)
     try:
@@ -74,7 +75,7 @@ def main():
 
     subprocess.check_call(split("plom-build class --demo -w 1234"))
     subprocess.check_call(split("plom-build make -w 1234"))
-    # this creates two batches of fake hw - one in 'hw1' another in 'hw2'
+    # this creates two batches of fake hw - prefixes = hwA and hwB
     subprocess.check_call(split("plom-fake-hwscribbles"))
 
     exit(0)

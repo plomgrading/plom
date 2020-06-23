@@ -75,7 +75,17 @@ class UploadHandler:
         param = await part0.json()
 
         if not validate_required_fields(
-            param, ["user", "token", "sid", "question", "order", "fileName", "md5sum"]
+            param,
+            [
+                "user",
+                "token",
+                "sid",
+                "question",
+                "order",
+                "fileName",
+                "md5sum",
+                "bundle",
+            ],
         ):
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
@@ -95,6 +105,7 @@ class UploadHandler:
             param["fileName"],
             image,
             param["md5sum"],
+            param["bundle"],
         )
         return web.json_response(rmsg, status=200)  # all good
 

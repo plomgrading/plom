@@ -38,7 +38,7 @@ def addTestPage(self, t, p, v, fname, image, md5o, bundle):
     return val
 
 
-def addHWPage(self, sid, q, o, fname, image, md5o):
+def addHWPage(self, sid, q, o, fname, image, md5o, bundle):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -48,7 +48,7 @@ def addHWPage(self, sid, q, o, fname, image, md5o):
         newName = "pages/originalPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadHWPage(sid, q, o, fname, newName, md5o)
+    val = self.DB.uploadHWPage(sid, q, o, fname, newName, md5o, bundle)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)

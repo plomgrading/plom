@@ -58,7 +58,7 @@ def whoSubmittedWhat():
         print("#{} submitted q's {}".format(sid, sorted([x[1] for x in hwByQ[sid]])))
 
     for sid in sorted(hwOne.keys()):
-        print("#{} submitted one file".format(sid))
+        print("#{} submitted loose pages".format(sid))
 
     warn = []
     for sid in sorted(hwOne.keys()):
@@ -67,7 +67,9 @@ def whoSubmittedWhat():
     if len(warn) > 0:
         print(">>> Warning <<<")
         print(
-            "These students submitted both HW by Q, and HW in one file: {}".format(warn)
+            "These students submitted both HW by Q, and HW in loose pages: {}".format(
+                warn
+            )
         )
     if len(problemFQ) > 0:
         print(">>> Warning <<<")

@@ -129,23 +129,29 @@ def extractJIDO(fileName):  # get just ID, Order
 
 
 def doHWFiling(shortName, fname):
-    shutil.move(fname, os.path.join("sentPages", "submittedHWByQ", shortName))
+    print("DO SOMETHING WITH {} {} {}".format(shortName, fname, os.getcwd()))
+    # shutil.move(fname, os.path.join("sentPages", "submittedHWByQ", shortName))
 
 
 def doXFiling(shortName, fname):
     shutil.move(fname, os.path.join("sentPages", "submittedHWExtra", shortName))
 
 
-def sendHWFiles(msgr, fileList):
+def sendHWFiles(msgr, file_list, student_id, question, bundle_name):
     # keep track of which SID uploaded which Q.
     SIDQ = defaultdict(list)
-    for fname in fileList:
+    for fname in file_list:
         print("Upload hw page image {}".format(fname))
         shortName = os.path.split(fname)[1]
         sid, q, n = extractIDQO(shortName)
+        if sid != student_id or q != question:
+            print("Problem with file {} - skipping".format(fname))
+            print(type(sid), type(student_id), type(q), type(question))
+            continue
+
         print("Upload HW {},{},{} = {} to server".format(sid, q, n, shortName))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        rmsg = msgr.uploadHWPage(sid, q, n, shortName, fname, md5)
+        rmsg = msgr.uploadHWPage(sid, q, n, shortName, fname, md5, bundle_name)
         if rmsg[0]:  # was successful upload
             doHWFiling(shortName, fname)
             SIDQ[sid].append(q)
@@ -169,7 +175,7 @@ def sendXFiles(msgr, fileList):
     return JSID
 
 
-def uploadPages(server=None, password=None):
+def uploadTPages(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -233,7 +239,7 @@ def uploadPages(server=None, password=None):
     return [TUP, updates]
 
 
-def uploadHWPages(server=None, password=None):
+def uploadHWPages(bundle_name, student_id, question, server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -263,34 +269,30 @@ def uploadHWPages(server=None, password=None):
         )
         exit(10)
 
-    # grab number of questions - so we can work out what is missing
     spec = msgr.get_spec()
-    numberOfQuestions = spec["numberOfQuestions"]
+    numberOfPages = spec["numberOfPages"]
 
-    # Look for HWbyQ pages in decodedPages
-    fileList = []
+    file_list = []
+    # files are sitting in "bundles/submittedHWByQ/<bundle_name>"
+    os.chdir(os.path.join("bundles", "submittedHWByQ", bundle_name))
+    # Look for pages in pageImages
     for ext in PlomImageExtWhitelist:
-        fileList.extend(sorted(glob("decodedPages/submittedHWByQ/*.{}".format(ext))))
-    SIDQ = sendHWFiles(msgr, fileList)  # returns list of which SID did whic q.
-    for sid in SIDQ:
-        for q in range(1, numberOfQuestions + 1):
-            if q not in SIDQ[sid]:
-                print("SID {} missing question {}".format(sid, q))
-                try:
-                    msgr.replaceMissingHWQuestion(sid, q)
-                except PlomTakenException:
-                    print("That question already has pages. Skipping.")
+        file_list.extend(sorted(glob(os.path.join("pageImages", "*.{}".format(ext)))))
 
-    # now look for HW Extra in decodedPages
-    fileList = []
-    for ext in PlomImageExtWhitelist:
-        fileList.extend(sorted(glob("decodedPages/submittedHWExtra/*.{}".format(ext))))
-    SIDO = sendXFiles(msgr, fileList)  # returns list of which SID uploaded
+    HWUP = sendHWFiles(msgr, file_list, student_id, question, bundle_name)
+
     updates = msgr.sendHWUploadDone()
 
+    # go back to original dir
+    os.chdir("..")
+    os.chdir("..")
+    os.chdir("..")
+
+    # close down messenger
     msgr.closeUser()
     msgr.stop()
-    return [SIDQ, SIDO]
+
+    return [HWUP, updates]
 
 
 def declareBundle(bundle_file, server=None, password=None):
@@ -331,4 +333,7 @@ def declareBundle(bundle_file, server=None, password=None):
 
     msgr.closeUser()
     msgr.stop()
-    return bundle_success
+    if bundle_success[0]:  # should be pair [true, bundle_name] or [false, reason]
+        return bundle_success[1]
+    else:
+        return None

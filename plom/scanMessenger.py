@@ -105,7 +105,7 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadHWPage(self, sid, question, order, sname, fname, md5sum):
+    def uploadHWPage(self, sid, question, order, sname, fname, md5sum, bundle):
         self.SRmutex.acquire()
         try:
             param = {
@@ -116,6 +116,7 @@ class ScanMessenger(BaseMessenger):
                 "question": question,
                 "order": order,
                 "md5sum": md5sum,
+                "bundle": bundle,
             }
             mime_type = mimetypes.guess_type(sname)[0]
             dat = MultipartEncoder(

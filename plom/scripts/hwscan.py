@@ -67,54 +67,76 @@ def make_required_directories():
         os.makedirs(dir, exist_ok=True)
 
 
-def processScans(server, password, file_name, student_id, question, loose=False):
+def processLooseScans(server, password, file_name, student_id):
     make_required_directories()
+    from plom.scan.hwSubmissionsCheck import IDQorIDorBad
     from plom.scan import scansToImages
+    from plom.scan import sendPagesToServer
 
-    if question is None:
-        if loose is False:  # this should not happen
-            print("Need question number unless you set the loose flag.")
-            return
+    # trim down file_name - replace "submittedHWLoose/fname" with "fname", but pass appropriate flag
+    short_name = os.path.split(file_name)[1]
+    IDQ = IDQorIDorBad(short_name)
+    if len(IDQ) != 2:  # should return [JID, sid]
+        print("File name has wrong format. Should be 'blah.sid.pdf'. Stopping.")
+        return
+    sid = IDQ[1]
+    if sid != student_id:
         print(
-            "Process and upload file {} as loose pages for sid {}".format(
-                file_name, student_id
+            "Student ID supplied {} does not match that in filename {}. Stopping.".format(
+                student_id, sid
             )
         )
-        print("Do stuff.")
-    else:
+        return
+    print(
+        "Process and upload file {} as loose pages for sid {}".format(
+            short_name, student_id
+        )
+    )
+    bundle_name = sendPagesToServer.declareBundle(file_name, server, password)
+    # pass as list since processScans expects a list.
+    scansToImages.processScans([short_name], hwLoose=True)
+
+
+def processHWScans(server, password, file_name, student_id, question_list):
+    make_required_directories()
+    from plom.scan.hwSubmissionsCheck import IDQorIDorBad
+    from plom.scan import scansToImages
+    from plom.scan import sendPagesToServer
+
+    question = int(question_list[0])  # args passes '[q]' rather than just 'q'
+
+    # do sanity checks on file_name
+    # trim down file_name - replace "submittedHWByQ/fname" with "fname", but pass appropriate flag
+    short_name = os.path.split(file_name)[1]
+    IDQ = IDQorIDorBad(short_name)
+    if len(IDQ) != 3:  # should return [IDQ, sid, q]
+        print("File name has wrong format - should be 'blah.sid.q.pdf'. Stopping.")
+        return
+    sid, q = IDQ[1:]
+    if sid != student_id:
         print(
-            "Process and upload file {} as answer to question {} for sid {}".format(
-                file_name, question[0], student_id
+            "Student ID supplied {} does not match that in filename {}. Stopping.".format(
+                student_id, sid
             )
         )
-        # scansToImages.processScans(file_name, hwByQ=True)
-        print("Do stuff.")
-
-    #
-    # from plom.scan.hwSubmissionsCheck import verifiedComplete
-    #
-    # # process HWByQ first
-    # if incomplete:
-    #     fileList = sorted(glob.glob("submittedHWByQ/*.pdf"))
-    # else:
-    #     fileList = verifiedComplete(server, password)
-    #
-    # for fn in fileList:
-    #     IDQ = IDQorIDorBad(fn)
-    #     if len(IDQ) != 3:
-    #         print("Skipping file {} - wrong format".format(fn))
-    #         continue  # this is not the right file format
-    #     print("Processing PDF {} to images".format(fn))
-    #     scansToImages.processScans(fn, hwByQ=True)
-    # # then process HWLoose (if flagged)
-    # if loose:
-    #     for fn in sorted(glob.glob("submittedHWLoose/*.pdf")):
-    #         IDQ = IDQorIDorBad(fn)
-    #         if len(IDQ) != 2:
-    #             print("Skipping file {} - wrong format".format(fn))
-    #             continue  # this is not the right file format
-    #         print("Processing PDF {} to images".format(fn))
-    #         scansToImages.processScans(fn, hwLoose=True)
+        return
+    if int(q) != question:
+        print(
+            "Question supplied {} does not match that in filename {}. Stopping.".format(
+                question, q
+            )
+        )
+        return
+    print(
+        "Process and upload file {} as answer to question {} for sid {}".format(
+            short_name, question, student_id
+        )
+    )
+    bundle_name = sendPagesToServer.declareBundle(file_name, server, password)
+    # pass as list since processScans expects a list.
+    scansToImages.processScans([short_name], hwByQ=True)
+    # send the images to the server
+    sendPagesToServer.uploadHWPages(bundle_name, student_id, question, server, password)
 
 
 def uploadHWImages(server, password, unknowns=False, collisions=False):
@@ -186,14 +208,15 @@ def main():
     if args.command == "submitted":
         whoDidWhat()
     elif args.command == "process":
-        processScans(
-            args.server,
-            args.password,
-            args.hwPDF,
-            args.studentid,
-            args.question,
-            args.loose,
-        )
+        if args.loose:
+            processLooseScans(
+                args.server, args.password, args.hwPDF, args.studentid,
+            )
+        else:
+            processHWScans(
+                args.server, args.password, args.hwPDF, args.studentid, args.question,
+            )
+            # argparse makes args.question a list.
     # elif args.command == "upload":
     #     uploadHWImages(args.server, args.password)
     elif args.command == "status":
