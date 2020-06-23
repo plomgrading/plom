@@ -28,7 +28,8 @@ class CommandImage(QUndoCommand):
 
     def __init__(self, scene, pt, image, scale=1, border=True, data=None):
         """
-        Initializes a new Image command.
+        Initialize a new Image command.
+
         Args:
             scene (PageScene): the scene the image is being inserted into.
             pt (QPoint): the point of the top left corner of the image.
@@ -63,10 +64,15 @@ class CommandImage(QUndoCommand):
 
 
 class ImageItemObject(QGraphicsObject):
-    """Similar to the ArrowItemObject."""
+    """A class which encapsulates the QImage.
+
+    Used primarily for animation when undo or redo is performed.
+    """
 
     def __init__(self, midPt, image, scale, border, data):
         """
+        Initializes an new ImageItemObject.
+
         Args:
             midPt (QPoint): the point middle of the image.
             image (QImage): the image being added to the scene.
@@ -103,7 +109,7 @@ class ImageItem(QGraphicsPixmapItem):
 
     def __init__(self, midPt, qImage, parent, scale, border, data):
         """
-        Initializes a new ImageItem.
+        Initialize a new ImageItem.
 
         Args:
             pt (QPoint): the point of the top left corner of the image.
@@ -143,7 +149,7 @@ class ImageItem(QGraphicsPixmapItem):
 
     def pickle(self):
         """
-        Pickles the image into a list containing important information.
+        Pickle the image into a list containing important information.
 
         Returns:
             (list): containing
@@ -174,8 +180,7 @@ class ImageItem(QGraphicsPixmapItem):
 
     def mouseDoubleClickEvent(self, event: "QGraphicsSceneMouseEvent"):
         """
-        When the user double clicks, shows a menu and modifies the image
-        according to the user's inputs.
+        On double-click, show menu and modify image according to user inputs.
 
         Args:
             event (QEvent): the double mouse click.
@@ -190,7 +195,6 @@ class ImageItem(QGraphicsPixmapItem):
             if border is not self.border:
                 self.border = border
 
-
 class ImageSettingsDialog(QDialog):
     """ Menu dialog for Image Settings. """
 
@@ -199,7 +203,7 @@ class ImageSettingsDialog(QDialog):
 
     def __init__(self, scalePercent, checked):
         """
-        Initializes a new image settings dialog object.
+        Initialize a new image settings dialog object.
 
         Args:
             scalePercent (int): Scale of the image (as a percentage)
@@ -219,7 +223,7 @@ class ImageSettingsDialog(QDialog):
 
     def createFormGroupBox(self, scalePercent, checked):
         """
-        Builds the form Box.
+        Build the form Box.
 
         Args:
             scalePercent (int): Scale of the image (as a percentage)
@@ -242,7 +246,7 @@ class ImageSettingsDialog(QDialog):
 
     def getSettings(self):
         """
-        Returns the settings held in the dialog box.
+        Return the settings held in the dialog box.
 
         Notes:
             Even if the user presses Cancel, the values will still be held

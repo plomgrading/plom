@@ -514,7 +514,7 @@ class PageScene(QGraphicsScene):
             msg.setIcon(QMessageBox.Information)
             msg.setWindowTitle("Image Information")
             msg.setText(
-                "You can double-click on an Image to modify its " "scale and border."
+                "You can double-click on an Image to modify its scale and border."
             )
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
