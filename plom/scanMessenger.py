@@ -361,6 +361,27 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
+    def sendLUploadDone(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/admin/loosePagesUploaded".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
     def replaceMissingHWQuestion(self, sid, q):
         self.SRmutex.acquire()
         try:

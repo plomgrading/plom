@@ -55,7 +55,7 @@ def make_required_directories():
     # we need
     directory_list = [
         "archivedPDFs/submittedHWByQ",
-        "archivedPDFs/submittedHWLoose",
+        "archivedPDFs/submittedLoose",
         "bundles",
         "uploads/sentPages",
         "uploads/discardedPages",
@@ -73,7 +73,7 @@ def processLooseScans(server, password, file_name, student_id):
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
-    # trim down file_name - replace "submittedHWLoose/fname" with "fname", but pass appropriate flag
+    # trim down file_name - replace "submittedLoose/fname" with "fname", but pass appropriate flag
     short_name = os.path.split(file_name)[1]
     IDQ = IDQorIDorBad(short_name)
     if len(IDQ) != 2:  # should return [JID, sid]
@@ -95,6 +95,8 @@ def processLooseScans(server, password, file_name, student_id):
     bundle_name = sendPagesToServer.declareBundle(file_name, server, password)
     # pass as list since processScans expects a list.
     scansToImages.processScans([short_name], hwLoose=True)
+    # send the images to the server
+    sendPagesToServer.uploadLPages(bundle_name, student_id, server, password)
 
 
 def processHWScans(server, password, file_name, student_id, question_list):
@@ -139,25 +141,36 @@ def processHWScans(server, password, file_name, student_id, question_list):
     sendPagesToServer.uploadHWPages(bundle_name, student_id, question, server, password)
 
 
-def uploadHWImages(server, password, unknowns=False, collisions=False):
-    from plom.scan import sendPagesToServer
+def processAllHWByQ(server, password):
+    from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 
-    # make directories for upload
-    os.makedirs("sentPages/submittedHWByQ", exist_ok=True)
-    os.makedirs("sentPages/submittedHWExtra", exist_ok=True)
+    submissions = defaultdict(list)
+    for file_name in sorted(glob.glob(os.path.join("submittedHWByQ", "*.pdf"))):
+        IDQ = IDQorIDorBad(file_name)
+        if len(IDQ) == 3:
+            sid, q = IDQ[1:]
+            submissions[sid].append([q, file_name])
 
-    print("Upload hw images to server")
-    [SIDQ, SIDO] = sendPagesToServer.uploadHWPages(server, password)
-    print(
-        "Homework (by Q) was uploaded to the following studentIDs: {}".format(
-            SIDQ.keys()
-        )
-    )
-    print(
-        "Homework (extra) was uploaded to the following studentIDs: {}".format(
-            SIDO.keys()
-        )
-    )
+    print("Submission summary: ")
+    for sid in submissions:
+        sub_list = sorted([int(x[0]) for x in submissions[sid]])
+        print_list = []
+        for q in range(sub_list[0], sub_list[-1] + 1):
+            n = sub_list.count(q)
+            if n == 0:
+                continue
+            elif n == 1:
+                print_list.append("{}".format(q))
+            else:
+                print_list.append("{}(x{})".format(q, n))
+        print("# {}: {}".format(sid, print_list))
+    if input("Process and upload all of the above submissions? [y/n]") != "y":
+        print("Stopping.")
+        return
+    for sid in submissions:
+        print("Processing id {}:".format(sid))
+        for question, file_name in submissions[sid]:
+            processHWScans(server, password, file_name, sid, question)
 
 
 parser = argparse.ArgumentParser()
@@ -168,8 +181,13 @@ spW = sub.add_parser(
     "submitted",
     help="Get a list of SID and questions submitted in the submittedHomework directory.",
 )
-spP = sub.add_parser("process", help="Process scanned PDFs to images.")
-spU = sub.add_parser("upload", help="Upload page images to scanner")
+spP = sub.add_parser(
+    "process", help="Process indicated PDFs for one student and upload to server."
+)
+spA = sub.add_parser(
+    "allbyq",
+    help="Process and upload all PDFs in 'submittedHWByQ' directory and upload to server",
+)
 spS = sub.add_parser("status", help="Get scanning status report from server")
 spC = sub.add_parser(
     "clear",
@@ -196,8 +214,7 @@ spPql.add_argument(
     help="Which question is answered in file.",
 )
 
-
-for x in (spP, spU, spS, spC):
+for x in (spP, spA, spS, spC):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
@@ -217,8 +234,8 @@ def main():
                 args.server, args.password, args.hwPDF, args.studentid, args.question,
             )
             # argparse makes args.question a list.
-    # elif args.command == "upload":
-    #     uploadHWImages(args.server, args.password)
+    elif args.command == "allbyq":
+        processAllHWByQ(args.server, args.password)
     elif args.command == "status":
         scanStatus(args.server, args.password)
     elif args.command == "clear":

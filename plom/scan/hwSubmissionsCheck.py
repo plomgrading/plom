@@ -45,7 +45,7 @@ def whoSubmittedWhat():
             # print("File {} has incorrect format for homework-by-question".format(fn))
             problemFQ.append(os.path.basename(fn))
 
-    for fn in glob.glob(os.path.join("submittedHWLoose", "*.pdf")):
+    for fn in glob.glob(os.path.join("submittedLoose", "*.pdf")):
         IDQ = IDQorIDorBad(fn)
         if len(IDQ) == 2:
             sid = IDQ[1]

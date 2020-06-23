@@ -52,11 +52,10 @@ def RgetIncompleteTests(self):
             page_state.append(["t.{}".format(p.page_number), p.version, p.scanned])
         # then append hw-pages in question-order
         for qref in tref.qgroups.order_by(QGroup.question):
-            for p in qref.group.hwpages:
-                for p in gref.hwpages:  # hw pages are always scanned
-                    page_state.append(
-                        ["hw.{}.{}".format(qref.question, p.order), p.version, True]
-                    )
+            for p in qref.group.hwpages:  # hw pages are always scanned
+                page_state.append(
+                    ["hw.{}.{}".format(qref.question, p.order), p.version, True]
+                )
         # then append l-pages in order
         for p in tref.lpages:
             page_state.append(["l.{}".format(p.order), 0, True])

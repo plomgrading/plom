@@ -62,7 +62,7 @@ def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
     else:
         doneQ = [didA, didB]
 
-    fname = Path("submittedHWLoose") / "{}.{}.pdf".format(prefix, studentID)
+    fname = Path("submittedLoose") / "{}.{}.pdf".format(prefix, studentID)
     doc = fitz.open()
 
     for q in doneQ:
@@ -170,7 +170,7 @@ def main():
                 break
 
     os.makedirs("submittedHWByQ", exist_ok=True)
-    os.makedirs("submittedHWLoose", exist_ok=True)
+    os.makedirs("submittedLoose", exist_ok=True)
 
     print("NumberNamed = {}".format(numberNamed))
 

@@ -133,8 +133,9 @@ def doHWFiling(shortName, fname):
     # shutil.move(fname, os.path.join("sentPages", "submittedHWByQ", shortName))
 
 
-def doXFiling(shortName, fname):
-    shutil.move(fname, os.path.join("sentPages", "submittedHWExtra", shortName))
+def doLFiling(shortName, fname):
+    print("DO SOMETHING WITH {} {} {}".format(shortName, fname, os.getcwd()))
+    # shutil.move(fname, os.path.join("sentPages", "submittedHWExtra", shortName))
 
 
 def sendHWFiles(msgr, file_list, student_id, question, bundle_name):
@@ -146,7 +147,6 @@ def sendHWFiles(msgr, file_list, student_id, question, bundle_name):
         sid, q, n = extractIDQO(shortName)
         if sid != student_id or q != question:
             print("Problem with file {} - skipping".format(fname))
-            print(type(sid), type(student_id), type(q), type(question))
             continue
 
         print("Upload HW {},{},{} = {} to server".format(sid, q, n, shortName))
@@ -158,19 +158,22 @@ def sendHWFiles(msgr, file_list, student_id, question, bundle_name):
     return SIDQ
 
 
-def sendXFiles(msgr, fileList):
+def sendLFiles(msgr, fileList, student_id, bundle_name):
     # keep track of which SID uploaded.
     JSID = {}
     for fname in fileList:
         print("Upload hw page image {}".format(fname))
         shortName = os.path.split(fname)[1]
         sid, n = extractJIDO(shortName)
+        if sid != student_id:
+            print("Problem with file {} - skipping".format(fname))
+            continue
 
-        print("Upload X {},{} = {} to server".format(sid, n, shortName))
+        print("Upload L {},{} = {} to server".format(sid, n, shortName))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        rmsg = msgr.uploadXPage(sid, n, shortName, fname, md5)
+        rmsg = msgr.uploadXPage(sid, n, shortName, fname, md5, bundle_name)
         if rmsg[0]:  # was successful upload
-            doXFiling(shortName, fname)
+            doLFiling(shortName, fname)
             JSID[sid] = True
     return JSID
 
@@ -293,6 +296,62 @@ def uploadHWPages(bundle_name, student_id, question, server=None, password=None)
     msgr.stop()
 
     return [HWUP, updates]
+
+
+def uploadLPages(bundle_name, student_id, server=None, password=None):
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ScanMessenger(s, port=p)
+    else:
+        msgr = ScanMessenger(server)
+    msgr.start()
+
+    # get the password if not specified
+    if password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'scanner' password:")
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = password
+
+    # get started
+    try:
+        msgr.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-hwscan clear"'
+        )
+        exit(10)
+
+    spec = msgr.get_spec()
+    numberOfPages = spec["numberOfPages"]
+
+    file_list = []
+    # files are sitting in "bundles/submittedLoose/<bundle_name>"
+    os.chdir(os.path.join("bundles", "submittedLoose", bundle_name))
+    # Look for pages in pageImages
+    for ext in PlomImageExtWhitelist:
+        file_list.extend(sorted(glob(os.path.join("pageImages", "*.{}".format(ext)))))
+
+    LUP = sendLFiles(msgr, file_list, student_id, bundle_name)
+
+    updates = msgr.sendLUploadDone()
+
+    # go back to original dir
+    os.chdir("..")
+    os.chdir("..")
+    os.chdir("..")
+
+    # close down messenger
+    msgr.closeUser()
+    msgr.stop()
+
+    return [LUP, updates]
 
 
 def declareBundle(bundle_file, server=None, password=None):

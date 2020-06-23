@@ -36,7 +36,7 @@ def archivePDF(file_name, hwByQ, hwLoose):
     if hwByQ:
         long_name = os.path.join("submittedHWByQ", file_name)
     elif hwLoose:
-        long_name = os.path.join("submittedHWLoose", file_name)
+        long_name = os.path.join("submittedLoose", file_name)
     else:
         long_name = file_name
 
@@ -45,7 +45,7 @@ def archivePDF(file_name, hwByQ, hwLoose):
     if hwByQ:
         shutil.move(long_name, Path(archivedir) / "submittedHWByQ")
     elif hwLoose:
-        shutil.move(long_name, Path(archivedir) / "submittedHWLoose")
+        shutil.move(long_name, Path(archivedir) / "submittedLoose")
     else:
         shutil.move(long_name, archivedir)
     # open the existing archive if it is there
@@ -64,7 +64,7 @@ def isInArchive(file_name, hwByQ=False, hwLoose=False):
     if hwByQ:
         long_name = Path("submittedHWByQ") / file_name
     elif hwLoose:
-        long_name = Path("submittedHWLoose") / file_name
+        long_name = Path("submittedLoose") / file_name
     else:
         long_name = file_name
 
@@ -106,7 +106,7 @@ def processFileToBitmaps(bundleDir, file_name, hwByQ=False, hwLoose=False):
     if hwByQ:
         long_name = Path("submittedHWByQ") / file_name
     elif hwLoose:
-        long_name = Path("submittedHWLoose") / file_name
+        long_name = Path("submittedLoose") / file_name
     else:
         long_name = file_name
 
@@ -320,7 +320,7 @@ def normalizeJPEGOrientation(f):
 def makeBundleDirectories(fname, hwByQ=False, hwLoose=False):
     """Each bundle needs its own subdirectory of pageImages and scanPNGs, so we have to make them.
     Note that if hwByQ flag is set then we put things inside bundles/submittedHWByQ,
-    and similarly if hwLoose is set then we put things inside bundles/submittedHWLoose
+    and similarly if hwLoose is set then we put things inside bundles/submittedLoose
     """
 
     scan, fext = os.path.splitext(fname)
@@ -330,7 +330,7 @@ def makeBundleDirectories(fname, hwByQ=False, hwLoose=False):
     if hwByQ:
         bundleDir = os.path.join("bundles", "submittedHWByQ", safeScan)
     elif hwLoose:
-        bundleDir = os.path.join("bundles", "submittedHWLoose", safeScan)
+        bundleDir = os.path.join("bundles", "submittedLoose", safeScan)
     else:
         bundleDir = os.path.join("bundles", safeScan)
     os.makedirs(bundleDir, exist_ok=True)
@@ -407,7 +407,7 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
             # PDF is not in archive, so is new bundle.
             # make a directory for it
             # is of form "bundle/fname/" or
-            # "bundle/submittedHWByQ/fname" or "bundle/submittedHWLoose/fname"
+            # "bundle/submittedHWByQ/fname" or "bundle/submittedLoose/fname"
             bundleDir = makeBundleDirectories(fname, hwByQ, hwLoose)
 
             processFileToBitmaps(bundleDir, fname, hwByQ, hwLoose)

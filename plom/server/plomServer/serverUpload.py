@@ -335,5 +335,9 @@ def processHWUploads(self):
     return self.DB.processUpdatedTests()
 
 
+def processLUploads(self):
+    return self.DB.processUpdatedTests()
+
+
 def processTUploads(self):
     return self.DB.processUpdatedTests()
