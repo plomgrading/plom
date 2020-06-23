@@ -6,7 +6,8 @@
 ## Misc information
 * get "/Version" - return server+API versions as test string
 * get "/info/shortName" - return the shortname of the test (from spec)
-* get "/info/general" - return a list (name, #tests, #pages, #groups, #versions)
+* get "/info/spec" - return a dict of the exam spec
+* get "/info/general" - an older API from pre-0.5.0 servers, return a list (name, #tests, #pages, #groups, #versions)
 
 ## Authentication + misc Admin tasks
 * put "/users/{user}" - verify user/password + return auth-token

@@ -23,7 +23,7 @@ def InfoShortName(self):
         return [True, self.testSpec["name"]]
 
 
-def InfoGeneral(self):
+def info_spec(self):
     """Return the exam specification.
 
     TODO: why not return None if no spec (yet)?
