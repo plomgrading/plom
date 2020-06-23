@@ -31,7 +31,8 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QShortcut,
     QToolButton,
-    QFileDialog)
+    QFileDialog,
+)
 
 from .comment_list import CommentWidget
 
@@ -856,7 +857,7 @@ class Annotator(QWidget):
             pass
 
         if imagePath is not None:
-            self.scene.tempImage = imagePath
+            self.scene.tempImagePath = imagePath
 
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
@@ -1100,26 +1101,30 @@ class Annotator(QWidget):
         Opens a file dialog for images, shows a message box if the image is
         too large, otherwise continues to image mode.
 
+        Notes:
+            If the Image is greater than 200kb, will return an error.
+
         Returns:
             None
         """
-        fileName, _ = QFileDialog.getOpenFileName(self, 'Open file',
-                                                      'c:\\',
-                                                  "Image files (*.jpg *.gif "
-                                                  "*.png *.xpm" 
-                                                  ")")
+        fileName, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Image",
+            "/home",
+            "Image files (*.jpg *.gif " "*.png " "*.xpm" ")",
+        )
         if os.path.getsize(fileName) > 200000:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Critical)
             msg.setWindowTitle("Image Too large.")
-            msg.setText("Max image size (200kB) reached. Please try again "
-                        "with a smaller image.")
+            msg.setText(
+                "Max image size (200kB) reached. Please try again "
+                "with a smaller image."
+            )
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
         else:
             self.setToolMode("image", Qt.ClosedHandCursor, fileName)
-
-
 
     def setButtons(self):
         """ Connects buttons to their corresponding functions. """
@@ -1149,7 +1154,6 @@ class Annotator(QWidget):
         # The view button connects to the viewWholePaper
         # self.ui.viewButton.clicked.connect(self.viewWholePaper)
         self.ui.viewButton.setVisible(False)
-
 
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
         self.ui.cancelButton.clicked.connect(self.close)

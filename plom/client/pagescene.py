@@ -11,11 +11,7 @@ from PyQt5.QtGui import (
     QPixmap,
     QTransform,
 )
-from PyQt5.QtWidgets import (
-    QGraphicsPixmapItem,
-    QGraphicsScene,
-    QUndoStack,
-    QMessageBox)
+from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, QUndoStack, QMessageBox
 
 from plom import AnnFontSizePts, ScenePixelHeight
 
@@ -202,7 +198,8 @@ class PageScene(QGraphicsScene):
         self.addItem(self.scoreBox)
         # make a box around the scorebox where mouse-press-event won't work.
         self.avoidBox = self.scoreBox.boundingRect().adjusted(0, 0, 24, 24)
-        self.tempImage = None
+        # holds the path images uploaded from annotator
+        self.tempImagePath = None
 
     # def patchImagesTogether(self, imageList):
     #     x = 0
@@ -506,18 +503,19 @@ class PageScene(QGraphicsScene):
 
     def mousePressImage(self, event):
         """Adds the selected image at the location the mouse is pressed."""
-        if self.tempImage is not None:
-            imageFilePath = self.tempImage
+        if self.tempImagePath is not None:
+            imageFilePath = self.tempImagePath
             command = CommandImage(self, event.scenePos(), QImage(imageFilePath))
             self.undoStack.push(command)
             self.mode = "move"
-            self.tempImage = None
+            self.tempImagePath = None
 
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Information)
             msg.setWindowTitle("Image Information")
-            msg.setText("You can double-click on an Image to modify its "
-                        "scale and border.")
+            msg.setText(
+                "You can double-click on an Image to modify its " "scale and border."
+            )
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
 
@@ -600,6 +598,8 @@ class PageScene(QGraphicsScene):
                     GhostText,
                 ]
             ) and X is not isinstance(X, ImageItem):
+                # as ImageItem is a subclass of QGraphicsPixmapItem, we have
+                # to make sure ImageItems aren't skipped!
                 continue
             else:
                 command = CommandDelete(self, X)
@@ -720,15 +720,17 @@ class PageScene(QGraphicsScene):
     def unpickleImage(self, X):
         print(X[2])
         if len(X) == 5:
-            data = QByteArray().fromBase64(bytes(X[2][2:len(X[2])-2],
-                                                 encoding='utf-8'))
+            data = QByteArray().fromBase64(
+                bytes(X[2][2 : len(X[2]) - 2], encoding="utf-8")
+            )
             img = QImage()
             if img.loadFromData(data):
                 img.loadFromData(data)
             else:
                 print("Encountered a problem loading image.")
-            self.undoStack.push(CommandImage(self, QPointF(X[0], X[1]), img,
-                                             X[3], X[4], X[2]))
+            self.undoStack.push(
+                CommandImage(self, QPointF(X[0], X[1]), img, X[3], X[4], X[2])
+            )
 
     # Mouse press tool functions
     def mousePressBox(self, event):
@@ -1300,5 +1302,3 @@ class PageScene(QGraphicsScene):
             self, br.center() + br.topRight() / 8, delta, self.blurb, self.fontSize
         )
         self.undoStack.push(command)
-
-
