@@ -31,6 +31,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QShortcut,
     QToolButton,
+    QFileDialog,
 )
 
 from .comment_list import CommentWidget
@@ -817,7 +818,7 @@ class Annotator(QWidget):
             self.key_codes.get(event.key(), lambda *args: None)()
         super(Annotator, self).keyPressEvent(event)
 
-    def setToolMode(self, newMode, newCursor):
+    def setToolMode(self, newMode, newCursor, imagePath=None):
         """
         Changes the current tool mode and cursor.
 
@@ -854,6 +855,9 @@ class Annotator(QWidget):
         else:
             # this should also not happen - except by strange async race issues. So we don't change anything.
             pass
+
+        if imagePath is not None:
+            self.scene.tempImagePath = imagePath
 
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
@@ -1092,6 +1096,35 @@ class Annotator(QWidget):
         else:
             self.loadModes.get(mode, lambda *args: None)()
 
+    def addImageMode(self):
+        """
+        Opens a file dialog for images, shows a message box if the image is
+        too large, otherwise continues to image mode.
+
+        Notes:
+            If the Image is greater than 200kb, will return an error.
+
+        Returns:
+            None
+        """
+        fileName, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Image",
+            "/home",
+            "Image files (*.jpg *.gif " "*.png " "*.xpm" ")",
+        )
+        if os.path.getsize(fileName) > 200000:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setWindowTitle("Image Too large.")
+            msg.setText(
+                "Max image size (200kB) reached. Please try again "
+                "with a smaller image."
+            )
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
+        else:
+            self.setToolMode("image", Qt.ClosedHandCursor, fileName)
 
     def setButtons(self):
         """ Connects buttons to their corresponding functions. """
@@ -1108,6 +1141,7 @@ class Annotator(QWidget):
         self.ui.zoomButton.clicked.connect(self.zoomMode)
         # Also the "hidden" delta-button
         self.ui.deltaButton.clicked.connect(self.deltaButtonMode)
+        self.ui.uploadImage.clicked.connect(self.addImageMode)
 
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.undo)

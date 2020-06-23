@@ -179,6 +179,9 @@ class Ui_annotator_rhm(object):
         self.modeLabel.setObjectName("modeLabel")
         self.ebLayout.addWidget(self.modeLabel)
         self.verticalLayout.addWidget(self.frame_4)
+        self.uploadImage = QtWidgets.QPushButton(self.hideableBox)
+        self.uploadImage.setObjectName("uploadImage")
+        self.verticalLayout.addWidget(self.uploadImage)
         self.markBox = QtWidgets.QFrame(self.hideableBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -328,5 +331,16 @@ class Ui_annotator_rhm(object):
         self.boxButton.setToolTip(_translate("annotator_rhm", "press c"))
         self.boxButton.setText(_translate("annotator_rhm", "..."))
         self.modeLabel.setText(_translate("annotator_rhm", "mode: comment"))
+        self.uploadImage.setText(_translate("annotator_rhm", "Upload Image"))
         self.noAnswerButton.setText(_translate("annotator_rhm", "No answer given"))
         self.deltaButton.setText(_translate("annotator_rhm", "..."))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    annotator_rhm = QtWidgets.QWidget()
+    ui = Ui_annotator_rhm()
+    ui.setupUi(annotator_rhm)
+    annotator_rhm.show()
+    sys.exit(app.exec_())
