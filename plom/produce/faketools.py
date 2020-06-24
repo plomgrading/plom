@@ -143,6 +143,8 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
                 )
             )
 
+        # TODO: bump pymupdf minimum version to 1.17.2 and do:
+        # with fitz.open(file_name) as pdf_document:
         pdf_document = fitz.open(file_name)
         front_page = pdf_document[0]
 
