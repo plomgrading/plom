@@ -11,11 +11,7 @@ from PyQt5.QtGui import (
     QPixmap,
     QTransform,
 )
-from PyQt5.QtWidgets import (
-    QGraphicsPixmapItem,
-    QGraphicsScene,
-    QUndoStack,
-)
+from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, QUndoStack, QMessageBox
 
 from plom import AnnFontSizePts, ScenePixelHeight
 
@@ -104,6 +100,7 @@ mousePress = {
     "text": "mousePressText",
     "tick": "mousePressTick",
     "zoom": "mousePressZoom",
+    "image": "mousePressImage",
 }
 mouseMove = {
     "box": "mouseMoveBox",
@@ -182,6 +179,7 @@ class PageScene(QGraphicsScene):
         self.zoomBoxItem = QGraphicsRectItem()
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
+        self.imageItem = QGraphicsPixmapItem
         self.blurb = TextItem(self, self.fontSize)
         self.deleteItem = None
         # Add a ghost comment to scene, but make it invisible
@@ -200,6 +198,8 @@ class PageScene(QGraphicsScene):
         self.addItem(self.scoreBox)
         # make a box around the scorebox where mouse-press-event won't work.
         self.avoidBox = self.scoreBox.boundingRect().adjusted(0, 0, 24, 24)
+        # holds the path images uploaded from annotator
+        self.tempImagePath = None
 
     # def patchImagesTogether(self, imageList):
     #     x = 0
@@ -501,6 +501,24 @@ class PageScene(QGraphicsScene):
         super(PageScene, self).mouseReleaseEvent(event)
         self.views()[0].setZoomSelector()
 
+    def mousePressImage(self, event):
+        """Adds the selected image at the location the mouse is pressed."""
+        if self.tempImagePath is not None:
+            imageFilePath = self.tempImagePath
+            command = CommandImage(self, event.scenePos(), QImage(imageFilePath))
+            self.undoStack.push(command)
+            self.mode = "move"
+            self.tempImagePath = None
+
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setWindowTitle("Image Information")
+            msg.setText(
+                "You can double-click on an Image to modify its scale and border."
+            )
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
+
     # Handle drag / drop events
     def dragEnterEvent(self, e):
         if e.mimeData().hasFormat("text/plain"):
@@ -579,7 +597,9 @@ class PageScene(QGraphicsScene):
                     GhostDelta,
                     GhostText,
                 ]
-            ):
+            ) and X is not isinstance(X, ImageItem):
+                # as ImageItem is a subclass of QGraphicsPixmapItem, we have
+                # to make sure ImageItems aren't skipped!
                 continue
             else:
                 command = CommandDelete(self, X)
@@ -696,6 +716,21 @@ class PageScene(QGraphicsScene):
                 # ['l',x,y]
                 pth.lineTo(QPointF(Y[1], Y[2]))
             self.undoStack.push(CommandHighlight(self, pth))
+
+    def unpickleImage(self, X):
+        print(X[2])
+        if len(X) == 5:
+            data = QByteArray().fromBase64(
+                bytes(X[2][2 : len(X[2]) - 2], encoding="utf-8")
+            )
+            img = QImage()
+            if img.loadFromData(data):
+                img.loadFromData(data)
+            else:
+                print("Encountered a problem loading image.")
+            self.undoStack.push(
+                CommandImage(self, QPointF(X[0], X[1]), img, X[3], X[4], X[2])
+            )
 
     # Mouse press tool functions
     def mousePressBox(self, event):

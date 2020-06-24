@@ -541,7 +541,8 @@ class IDClient(QWidget):
         sname = self.ui.pNameLabel.text()
         sid = self.ui.pSIDLabel.text()
 
-        self.identifyStudent(index, sid, sname)
+        if not self.identifyStudent(index, sid, sname):
+            return
 
         if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
             self.requestNext()  # updates progressbars.
@@ -722,7 +723,8 @@ class IDClient(QWidget):
                         self.ui.nameEdit.text()
                     )
                     + "Corresponding students IDs include:\n"
-                    + ", ".join(sidlist) + ".\n\n"
+                    + ", ".join(sidlist)
+                    + ".\n\n"
                     + "Try entering the student ID instead."
                 ).exec_()
                 return

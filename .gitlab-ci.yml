@@ -99,7 +99,7 @@ job demoServer:
     - curl -k https://localhost:41984/Version
     - plom-build class --demo -w 1234
     - plom-build make -w 1234
-    - python3 -m plom.produce.faketools
+    - python3 -m plom.produce.faketools -w 1234
     - plom-scan process fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf -w 4567
     - plom-scan read   -w 4567
     - plom-scan upload -w 4567
@@ -155,7 +155,7 @@ job fullWorkFlow:
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
     # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/695
-    - python3 -m plom.produce.faketools
+    - python3 -m plom.produce.faketools -w 1234
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi

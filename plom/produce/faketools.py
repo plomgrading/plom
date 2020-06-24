@@ -9,23 +9,23 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import os
-import sys
-import subprocess
 import random
 from pathlib import Path
 from glob import glob
 import argparse
-
+import csv
+import random
 import json
 import base64
-import fitz
-import pandas
+from getpass import getpass
 
-# import tools for dealing with resource files
 import pkg_resources
+import fitz
+
 from . import paperdir as _paperdir
-from plom import specdir as _specdir
 from plom import __version__
+from plom.messenger import ManagerMessenger
+from plom.plom_exceptions import PlomExistingLoginException
 
 
 # load the digit images
@@ -66,12 +66,12 @@ possible_answers = [
 ]
 
 
-def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, which=None):
+def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     """Fill-in exams with fake data for demo or testing.
 
     Arguments:
         paper_dir_path {Str or convertable to pathlib obj} -- Directory containing the blank exams.
-        students_list_path {Str} -- Path and filename of the students in the class (as csv file).
+        classlist (list): ordered list of (sid, sname) pairs.
         outfile {Str} -- Path to write results into this concatenated PDF file.
 
     Keyword Arguments:
@@ -90,7 +90,6 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
 
     # We create the path objects
     paper_dir_path = Path(paper_dir_path)
-    students_list_path = Path(students_list_path)
     out_file_path = Path(outfile)
 
     print("Annotating papers with fake student data and scribbling on pages...")
@@ -107,30 +106,41 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
             ]
         )
 
-    # A pandas DataFrame object including the student id and student_name
-    students_list = pandas.read_csv(students_list_path, dtype="object")
+    used_id_list = []
+    # need to avoid any student numbers already used to name papers - look at file names
+    for index, file_name in enumerate(named_papers_paths):
+        used_id_list.append(os.path.split(file_name)[1].split(".")[0].split("_")[-1])
+    # now load in the student names and numbers -only those not used to prename
+    clean_id_dict = {}  # not used
+    for sid, sname in classlist:
+        if sid not in used_id_list:
+            clean_id_dict[sid] = sname
 
-    # sample from the students_list
-    students_list = students_list.sample(len(papers_paths))
+    # now grab a random selection of IDs from the dict.
+    # we need len(papers_paths) - len(named_papers_paths) of them
+    id_sample = random.sample(
+        list(clean_id_dict.keys()), len(papers_paths) - len(named_papers_paths)
+    )
 
     # A complete collection of the pdfs created
     all_pdf_documents = fitz.open()
 
+    clean_count = 0
     for index, file_name in enumerate(papers_paths):
-
-        student_pandas_object = students_list.iloc[index]
-
-        print(
-            "  {}: {}, {}, scribbled".format(
-                os.path.basename(file_name),
-                student_pandas_object.id,
-                student_pandas_object.studentName,
+        if file_name in named_papers_paths:
+            print("{} - prenamed paper - scribbled".format(os.path.basename(file_name)))
+        else:
+            student_number = id_sample[clean_count]
+            student_name = clean_id_dict[student_number]
+            clean_count += 1
+            print(
+                "{} - scribbled using {} {}".format(
+                    os.path.basename(file_name), student_number, student_name
+                )
             )
-        )
 
-        student_name = student_pandas_object.studentName
-        student_number = str(student_pandas_object.id)
-
+        # TODO: bump pymupdf minimum version to 1.17.2 and do:
+        # with fitz.open(file_name) as pdf_document:
         pdf_document = fitz.open(file_name)
         front_page = pdf_document[0]
 
@@ -219,8 +229,6 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
                 color=blue,
             )
 
-        pdf_document.close()
-
     # need to use `str(out_file_path)` for pumypdf < 1.16.14
     # https://github.com/pymupdf/PyMuPDF/issues/466
     # Here we only need to save the generated pdf files with random test answers
@@ -279,6 +287,40 @@ def splitFakeFile(out_file_path):
     os.unlink(out_file_path)
 
 
+def download_classlist(server=None, password=None):
+    """Download list of student IDs/names from server."""
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ManagerMessenger(s, port=p)
+    else:
+        msgr = ManagerMessenger(server)
+    msgr.start()
+
+    if not password:
+        password = getpass('Please enter the "manager" password: ')
+
+    try:
+        msgr.requestAndSaveToken("manager", password)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another management tool running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-build clear"'
+        )
+        exit(10)
+    try:
+        classlist = msgr.IDrequestClasslist()
+    except PlomBenignException as e:
+        print("Failed to download classlist: {}".format(e))
+        exit(4)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
+    return classlist
+
+
 def main():
     """Main function used for running.
 
@@ -291,12 +333,14 @@ def main():
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
     )
+    parser.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
     args = parser.parse_args()
-    spec_dir = Path(_specdir)
-    students_list_path = spec_dir / "classlist.csv"
-    out_file_path = "fake_scribbled_exams.pdf"
 
-    fill_in_fake_data_on_exams(_paperdir, students_list_path, out_file_path)
+    out_file_path = "fake_scribbled_exams.pdf"
+    classlist = download_classlist(args.server, args.password)
+
+    fill_in_fake_data_on_exams(_paperdir, classlist, out_file_path)
     make_garbage_page(out_file_path, number_of_grarbage_pages=2)
     splitFakeFile(out_file_path)
 

@@ -210,6 +210,7 @@ class Server(object):
         TgetImage,
         TreturnTotalledTask,
         TdidNotFinish,
+        TreviewTotal,
     )
 
     from .plomServer.serverReport import (
