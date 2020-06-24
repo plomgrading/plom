@@ -114,6 +114,24 @@ def getAllTestImages(self, test_number):
     return rval
 
 
+def getQuestionImages(self, test_number, question):
+    tref = Test.get_or_none(Test.test_number == test_number)
+    if tref is None:
+        return [False]
+    qref = QGroup.get_or_none(QGroup.test == tref, QGroup.question == question)
+    if qref is None:
+        return [False]
+    rval = [True]
+    # append tpages, hwpages and expages
+    for p in qref.group.tpages.order_by(TPage.page_number):
+        rval.append(p.image.file_name)
+    for p in qref.group.hwpages.order_by(HWPage.order):
+        rval.append(p.image.file_name)
+    for p in qref.group.expages.order_by(EXPage.order):
+        rval.append(p.image.file_name)
+    return rval
+
+
 # still need fixing up.
 def getUnknownImage(self, fname):
     uref = UnknownPage.get_or_none(UnknownPage.file_name == fname)
@@ -137,19 +155,6 @@ def getCollidingImage(self, fname):
         return [False]
     else:
         return [True, cref.file_name]
-
-
-def getQuestionImages(self, test_number, question):
-    tref = Test.get_or_none(Test.test_number == test_number)
-    if tref is None:
-        return [False]
-    qref = QGroup.get_or_none(QGroup.test == tref, QGroup.question == question)
-    if qref is None:
-        return [False]
-    rval = [True]
-    for p in qref.group.pages.order_by(Page.page_number):
-        rval.append(p.file_name)
-    return rval
 
 
 def checkPage(self, test_number, page_number):
