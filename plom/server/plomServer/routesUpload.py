@@ -407,11 +407,11 @@ class UploadHandler:
 
     # @routes.get("/admin/testImages")
     @authenticate_by_token_required_fields(["user", "test"])
-    def getTestImages(self, data, request):
+    def getAllTestImages(self, data, request):
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rmsg = self.server.getTestImages(data["test"])
+        rmsg = self.server.getAllTestImages(data["test"])
         # returns either [True, fname1,fname2,..,fname.n] or [False, error]
         if rmsg[0]:
             with MultipartWriter("images") as mpwriter:
@@ -717,7 +717,7 @@ class UploadHandler:
         router.add_get("/admin/discardImage", self.getDiscardImage)
         router.add_get("/admin/collidingImage", self.getCollidingImage)
         router.add_get("/admin/questionImages", self.getQuestionImages)
-        router.add_get("/admin/testImages", self.getTestImages)
+        router.add_get("/admin/testImages", self.getAllTestImages)
         router.add_get("/admin/checkPage", self.checkPage)
         router.add_delete("/admin/unknownImage", self.removeUnknownImage)
         router.add_delete("/admin/collidingImage", self.removeCollidingImage)

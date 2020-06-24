@@ -195,8 +195,8 @@ def getQuestionImages(self, testNumber, questionNumber):
     return self.DB.getQuestionImages(testNumber, questionNumber)
 
 
-def getTestImages(self, testNumber):
-    return self.DB.getTestImages(testNumber)
+def getAllTestImages(self, testNumber):
+    return self.DB.getAllTestImages(testNumber)
 
 
 def checkPage(self, testNumber, pageNumber):
