@@ -55,11 +55,11 @@ class MarkHandler:
         Args:
             data (dict): Dictionary including user data in addition to question number
                 and test version.
-            request (aiohttp.web_request.Request): Requset of type GET /MK/progress.
+            request (aiohttp.web_request.Request): Request of type GET /MK/progress.
 
         Returns:
             aiohttp.web_response.Response: Includes the number of marked tasks and the total 
-                number of mrked/unmarked tasks. 
+                number of marked/unmarked tasks. 
         """
         return web.json_response(
             self.server.MprogressCount(data["q"], data["v"]), status=200
@@ -180,7 +180,7 @@ class MarkHandler:
         Respond with status 200.
 
         Args:
-            data (dict): Includes the user/token and latex string fragment.
+            data (dict): Includes the user/token and task code.
             request (aiohttp.web_request.Request): Request of type DELETE /MK/tasks/`question code`.
 
         Returns:
@@ -251,7 +251,6 @@ class MarkHandler:
 
         # Dealing with the image.
         task_image_object = await reader.next()
-
 
         if task_image_object is None:  # weird error
             return web.Response(status=406)  # should have sent 3 parts
@@ -377,7 +376,7 @@ class MarkHandler:
         Args:
             data (dict): A dictionary having the user/token in addition to the tag string.
                 Request object also incudes the task code.
-            request (aiohttp.web_request.Request): PATCH /MK/tags/`task code` type request.
+            request (aiohttp.web_request.Request): PATCH /MK/tags/`task_code` type request.
 
         Returns:
             aiohttp.web_response.Response: Empty status response indication is adding
@@ -402,7 +401,7 @@ class MarkHandler:
 
         Args:
             data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): GET /MK/whole/`test number`/`question number`.
+            request (aiohttp.web_request.Request): GET /MK/whole/`test_number`/`question_number`.
 
         Returns:
             aiohttp.web_response.Response: Responds with a multipart writer which includes all 
@@ -441,7 +440,7 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: A response which includes a dictionary
-                for the highest mark posssible for each question of the exam.
+                for the highest mark possible for each question of the exam.
         """
         
         return web.json_response(self.server.MgetAllMax(), status=200)
@@ -475,14 +474,11 @@ class MarkHandler:
     # TODO: Should be removed.
     @authenticate_by_token_required_fields(["user"])
     def MrevertTask(self, data, request):
-
         # only manager can do this
         task = request.match_info["task"]
-
         if not data["user"] == "manager":
             return web.Response(status=401)  # malformed request.
         rval = self.server.MrevertTask(task)
-
         if rval[0]:
             return web.Response(status=200)
         elif rval[1] == "NAC":  # nothing to be done here.
