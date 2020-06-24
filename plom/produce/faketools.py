@@ -9,24 +9,23 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import os
-import sys
-import subprocess
 import random
 from pathlib import Path
 from glob import glob
 import argparse
-
 import csv
 import random
 import json
 import base64
+from getpass import getpass
+
+import pkg_resources
 import fitz
 
-# import tools for dealing with resource files
-import pkg_resources
 from . import paperdir as _paperdir
-from plom import specdir as _specdir
 from plom import __version__
+from plom.messenger import ManagerMessenger
+from plom.plom_exceptions import PlomExistingLoginException
 
 
 # load the digit images
@@ -67,12 +66,12 @@ possible_answers = [
 ]
 
 
-def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, which=None):
+def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     """Fill-in exams with fake data for demo or testing.
 
     Arguments:
         paper_dir_path {Str or convertable to pathlib obj} -- Directory containing the blank exams.
-        students_list_path {Str} -- Path and filename of the students in the class (as csv file).
+        classlist (list): ordered list of (sid, sname) pairs.
         outfile {Str} -- Path to write results into this concatenated PDF file.
 
     Keyword Arguments:
@@ -91,7 +90,6 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
 
     # We create the path objects
     paper_dir_path = Path(paper_dir_path)
-    students_list_path = Path(students_list_path)
     out_file_path = Path(outfile)
 
     print("Annotating papers with fake student data and scribbling on pages...")
@@ -114,11 +112,9 @@ def fill_in_fake_data_on_exams(paper_dir_path, students_list_path, outfile, whic
         used_id_list.append(os.path.split(file_name)[1].split(".")[0].split("_")[-1])
     # now load in the student names and numbers -only those not used to prename
     clean_id_dict = {}  # not used
-
-    with open(students_list_path) as csvfile:
-        for row in csv.DictReader(csvfile):
-            if row["id"] not in used_id_list:  # add to the student_dict
-                clean_id_dict[row["id"]] = row["studentName"]
+    for sid, sname in classlist:
+        if sid not in used_id_list:
+            clean_id_dict[sid] = sname
 
     # now grab a random selection of IDs from the dict.
     # we need len(papers_paths) - len(named_papers_paths) of them
@@ -267,6 +263,40 @@ def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
     all_pdf_documents.saveIncr()
 
 
+def download_classlist(server=None, password=None):
+    """Download list of student IDs/names from server."""
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ManagerMessenger(s, port=p)
+    else:
+        msgr = ManagerMessenger(server)
+    msgr.start()
+
+    if not password:
+        password = getpass('Please enter the "manager" password: ')
+
+    try:
+        msgr.requestAndSaveToken("manager", password)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another management tool running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-build clear"'
+        )
+        exit(10)
+    try:
+        classlist = msgr.IDrequestClasslist()
+    except PlomBenignException as e:
+        print("Failed to download classlist: {}".format(e))
+        exit(4)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
+    return classlist
+
+
 def main():
     """Main function used for running.
 
@@ -279,12 +309,14 @@ def main():
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
     )
+    parser.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
     args = parser.parse_args()
-    spec_dir = Path(_specdir)
-    students_list_path = spec_dir / "classlist.csv"
-    out_file_path = "fake_scribbled_exams.pdf"
 
-    fill_in_fake_data_on_exams(_paperdir, students_list_path, out_file_path)
+    out_file_path = "fake_scribbled_exams.pdf"
+    classlist = download_classlist(args.server, args.password)
+
+    fill_in_fake_data_on_exams(_paperdir, classlist, out_file_path)
     make_garbage_page(out_file_path, number_of_grarbage_pages=2)
 
 
