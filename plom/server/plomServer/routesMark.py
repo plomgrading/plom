@@ -15,7 +15,7 @@ class MarkHandler:
     def MgetQuestionMark(self, data, request):
         """Retreive the maximum mark for a question.
 
-        Responds with status 200/416.
+        Respond with status 200/416.
 
         Args:
             data (dict): Dictionary including user data in addition to question number
@@ -28,9 +28,7 @@ class MarkHandler:
         """
         question_number = data["q"]
         test_version = data["v"]
-        maximum_mark_response = self.server.MgetQuestionMax(question_number, test_version)
-        valid_question = maximum_mark_response[0]
-        maximum_mark_response = maximum_mark_response[1]
+        valid_question, maximum_mark_response = self.server.MgetQuestionMax(question_number, test_version)
 
         if valid_question:
             return web.json_response(maximum_mark_response, status=200)
@@ -52,7 +50,7 @@ class MarkHandler:
     def MprogressCount(self, data, request):
         """Respond with the number of marked questions and the total questions tasks for user.
 
-        Responds with status 200.
+        Respond with status 200.
 
         Args:
             data (dict): Dictionary including user data in addition to question number
@@ -72,7 +70,7 @@ class MarkHandler:
     def MgetDoneTasks(self, data, request):
         """Retrieve data for questions which have already been graded by the user. 
 
-        Responds with status 200.
+        Respond with status 200.
 
         Args:
             data (dict): Dictionary including user data in addition to question number and 
@@ -81,8 +79,8 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: A response object including a list of lists with the already 
-                processes questions. The list invloves the question string, question mark and time spent grading. 
-                TODO: There is also an empty string here for a lot of the question. I am assuming its the tag.
+                processed questions. The list invloves the question string, question mark, time spent 
+                grading and tag string. 
         """
         # return the completed list
         return web.json_response(
@@ -94,7 +92,7 @@ class MarkHandler:
     def MgetNextTask(self, data, request):
         """Respond with the next task/question's string.
 
-        Responds with status 200/204.
+        Respond with status 200/204.
 
         Args:
             data (dict): Dictionary including user data in addition to question number and 
@@ -121,7 +119,7 @@ class MarkHandler:
     def MlatexFragment(self, data, request):
         """Return the latex image for the string included in the request.
 
-        Responds with status 200/406.
+        Respond with status 200/406.
 
         Args:
             data (dict): Includes the user/token and latex string fragment.
@@ -146,7 +144,7 @@ class MarkHandler:
     def MclaimThisTask(self, data, request):
         """Take task number in request and return the task/question's images as a response.
 
-        Responds with status 200/204.
+        Respond with status 200/204.
 
         Args:
             data (dict): A dictionary having the user/token.
@@ -178,6 +176,8 @@ class MarkHandler:
     @authenticate_by_token_required_fields(["user"])
     def MdidNotFinishTask(self, data, request):
         """Assign tasks that are not graded (untouched) as unfinished in the database.
+        
+        Respond with status 200.
 
         Args:
             data (dict): Includes the user/token and latex string fragment.
@@ -198,12 +198,13 @@ class MarkHandler:
 
         This function also responds with the number of done tasks and the total number of tasks.
         The returned statement is similar to MprogressCount.
-        Responds with status 200/400/401/406/409.
-        Logs activity.
+        Respond with status 200/400/401/406/409.
+        Log activity.
 
         Args:
             request (aiohttp.web_request.Request): Request of type PUT /MK/tasks/`question code` which 
-                includes a multipart object indication the marked test data.
+                includes a multipart object indication the marked test data. This request will include 
+                3 parts including [metadata, image, plom-file].
 
         Returns:
             aiohttp.web_response.Response: Responses with a list including the number of
@@ -211,8 +212,7 @@ class MarkHandler:
         """
 
         log_request("MreturnMarkedTask", request)
-        # the put will be in 3 parts - use multipart reader
-        # in order we expect those 3 parts - [metadata, image, plom-file]
+
         reader = MultipartReader.from_response(request)
 
 
@@ -221,11 +221,11 @@ class MarkHandler:
 
         if task_metadata_object is None:  # weird error
             return web.Response(status=406)  # should have sent 3 parts
-        task_metadata_dict = await task_metadata_object.json()
+        task_metadata = await task_metadata_object.json()
 
         # Validate that the dictionary has these fields.
         if not validate_required_fields(
-            task_metadata_dict,
+            task_metadata,
             [
                 "user",
                 "token",
@@ -240,14 +240,11 @@ class MarkHandler:
         ):
             return web.Response(status=400)
         # Validate username and token.
-        if not self.server.validate(task_metadata_dict["user"], task_metadata_dict["token"]):
+        if not self.server.validate(task_metadata["user"], task_metadata["token"]):
             return web.Response(status=401)
 
-        comments = task_metadata_dict["comments"]       # List of comments.
+        comments = task_metadata["comments"]       # List of comments.
         task_code = request.match_info["task"]      # Task code.
-
-        # TODO For Vala. DO THESE !!!!!!!
-        # TODO: put task inside task_metadata_dict as well for sanity check?
 
         # Note: if user isn't validated, we don't parse their binary junk
         # TODO: is it safe to abort during a multi-part thing?
@@ -255,14 +252,10 @@ class MarkHandler:
         # Dealing with the image.
         task_image_object = await reader.next()
 
-        # TODO: Probably should do a length check here and not do this 406 check 3 times.
-        # However I still haven't found the code for checking the length.
+
         if task_image_object is None:  # weird error
             return web.Response(status=406)  # should have sent 3 parts
         task_image = await task_image_object.read()
-
-        # TODO: I really don't know what plomdat is
-        # Seems like some random metadata
 
         # Dealing with the plom_file.
         plom_file_object = await reader.next()
@@ -272,17 +265,17 @@ class MarkHandler:
         plomdat = await plom_file_object.read()
 
         marked_task_status = self.server.MreturnMarkedTask(
-            task_metadata_dict["user"],
+            task_metadata["user"],
             task_code,
-            int(task_metadata_dict["pg"]),
-            int(task_metadata_dict["ver"]),
-            int(task_metadata_dict["score"]),
+            int(task_metadata["pg"]),
+            int(task_metadata["ver"]),
+            int(task_metadata["score"]),
             task_image,
             plomdat,
             comments,
-            int(task_metadata_dict["mtime"]),
-            task_metadata_dict["tags"],
-            task_metadata_dict["md5sum"],
+            int(task_metadata["mtime"]),
+            task_metadata["tags"],
+            task_metadata["md5sum"],
         )
         # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
 
@@ -298,11 +291,10 @@ class MarkHandler:
     # @routes.get("/MK/images/{task}")
     @authenticate_by_token_required_fields(["user"])
     def MgetImages(self, data, request):
-        """Returns the image of a question/task to the client.
-        TODO: is this correct ? 
+        """Return the image of a question/task to the client.
 
-        For example : show on the front grading page. TODO: this is the only time I cn actually call this function.
-                                                            only for the front page.
+        Main API call for the client to get the image data (original and annotated).
+        Respond with status 200/409.
 
         Args:
             data (dict): A dictionary having the user/token.
@@ -323,16 +315,21 @@ class MarkHandler:
         # 3. Marked Page image path.
         # 4. Marked question plom data path, ie .plom type files.
 
-        # TODO: What is aname ?
         # Format is either:
         # [True, num_pages, original_fname1, original_fname2, ... original_fname#num_pages, ] or 
         # [True, num_pages, original_fname1,..,original_fname#num_pages, annotated_fname#1, ... annotated_fname#num_pages , plomdat] or 
         # [False, error]
 
-        if task_image_results[0]:
+        task_image_success = task_image_results[0]
+
+        if task_image_success:
             with MultipartWriter("imageAnImageAndPlom") as multipart_writer:
-                multipart_writer.append("{}".format(task_image_results[1]))  # send 'n' as string
-                for file_name in task_image_results[2:]:
+                task_num_images = task_image_results[1]
+                task_images_list = task_image_results[2:]
+
+                multipart_writer.append("{}".format(task_num_images))  # send 'n' as string
+
+                for file_name in task_images_list:
                     multipart_writer.append(open(file_name, "rb"))
             return web.Response(body=multipart_writer, status=200)
         else:
@@ -341,9 +338,9 @@ class MarkHandler:
     # @routes.get("/MK/originalImage/{task}")
     @authenticate_by_token_required_fields([])
     def MgetOriginalImages(self, data, request):
-        """Return the non-graded original image for a task/question.
+        """Return the non-graded original images for a task/question.
 
-        Responds with status 200/204.
+        Respond with status 200/204.
 
         Args:
             data (dict): A dictionary having the user/token.
@@ -375,7 +372,7 @@ class MarkHandler:
     def MsetTag(self, data, request):
         """Set tag for a task.
 
-        Responds with status 200/409.
+        Respond with status 200/409.
 
         Args:
             data (dict): A dictionary having the user/token in addition to the tag string.
@@ -401,7 +398,7 @@ class MarkHandler:
     def MgetWholePaper(self, data, request):
         """Return the entire paper which includes the given question.
 
-        Responds with status 200/404.
+        Respond with status 200/404.
 
         Args:
             data (dict): A dictionary having the user/token.
@@ -416,7 +413,7 @@ class MarkHandler:
         question_number = request.match_info["question"]
         # This response is a list which includes the following:
         # 1. True/False for operation status.
-        # 2. A list of lists where each inner list includes: TODO: Is this a correct interpretation? 
+        # 2. A list of lists where each inner list includes: 
         #   [test_number, task_number, True/False for wether the task/page is graded or not]
         # 3. From the 3rd element onward, we have the string paths for each page of the paper in server.
         whole_paper_response = self.server.MgetWholePaper(test_number, question_number)
@@ -440,7 +437,7 @@ class MarkHandler:
     def MgetAllMax(self):
         """Respond with information on max mark possible for each question in the exam.
 
-        Responds with status 200/404.
+        Respond with status 200/404.
 
         Returns:
             aiohttp.web_response.Response: A response which includes a dictionary
@@ -454,7 +451,7 @@ class MarkHandler:
     def MreviewQuestion(self, data, request):
         """Confirm the question review done on plom-manager.
 
-        Responds with status 200/404.
+        Respond with status 200/404.
 
         Args:
             data (dict): Dictionary including user data in addition to question number
@@ -474,7 +471,7 @@ class MarkHandler:
             return web.Response(status=404)
 
     # @routes.patch("/MK/revert/{task}")
-    # TODO: Deprecated Language.
+    # TODO: Deprecated.
     # TODO: Should be removed.
     @authenticate_by_token_required_fields(["user"])
     def MrevertTask(self, data, request):
@@ -498,7 +495,7 @@ class MarkHandler:
     def MshuffleImages(self, data, request):
         """Shuffle images for a task and pass the shuffle data to the database.
 
-        Responds with status 200/401.
+        Respond with status 200/401.
 
         Args:
             data (dict): Dictionary including user data in addition to the rearranged image 
