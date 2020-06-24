@@ -164,5 +164,4 @@ def run_id_reader(file_dict, rectangle):
             testNumber = testList[r]
             # print("{}, {}".format(testNumber, studentNumbers[c]))
             fh.write("{}, {}\n".format(testNumber, studentNumbers[c]))
-        fh.close()
     print("Results saved in predictionlist.csv")

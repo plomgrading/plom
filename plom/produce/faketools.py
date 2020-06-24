@@ -139,6 +139,8 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                 )
             )
 
+        # TODO: bump pymupdf minimum version to 1.17.2 and do:
+        # with fitz.open(file_name) as pdf_document:
         pdf_document = fitz.open(file_name)
         front_page = pdf_document[0]
 
@@ -226,8 +228,6 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                 fontsize=extra_page_font_size,
                 color=blue,
             )
-
-        pdf_document.close()
 
     # need to use `str(out_file_path)` for pumypdf < 1.16.14
     # https://github.com/pymupdf/PyMuPDF/issues/466
