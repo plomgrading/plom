@@ -551,6 +551,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="uploadImage">
+        <property name="text">
+         <string>Upload Image</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QFrame" name="markBox">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
