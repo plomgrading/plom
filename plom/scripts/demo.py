@@ -74,7 +74,7 @@ def main():
 
     subprocess.check_call(split("plom-build class --demo -w 1234"))
     subprocess.check_call(split("plom-build make -w 1234"))
-    subprocess.check_call(split("plom-fake-scribbles"))
+    subprocess.check_call(split("plom-fake-scribbles -w 1234"))
 
     subprocess.check_call(split("plom-scan process fake_scribbled_exams.pdf"))
     subprocess.check_call(split("plom-scan read -w 4567"))
