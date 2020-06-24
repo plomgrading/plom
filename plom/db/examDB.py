@@ -89,6 +89,7 @@ class PlomDB:
     from plom.db.db_create import (
         declareBundle,
         createAnnotationBundle,
+        createReplacementBundle,
         areAnyPapersProduced,
         nextqueue_position,
         createTest,
@@ -116,6 +117,8 @@ class PlomDB:
         checkTestScanned,
         updateTestAfterUpload,
         processUpdatedTests,
+        replaceMissingHWQuestion,
+        replaceMissingTestPage,
     )
 
     from plom.db.db_manage import (
@@ -145,6 +148,7 @@ class PlomDB:
     from plom.db.db_report import (
         RgetScannedTests,
         RgetIncompleteTests,
+        RgetMissingHWQ,
         RgetUnusedTests,
         RgetIdentified,
         RgetProgress,

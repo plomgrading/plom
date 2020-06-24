@@ -164,6 +164,7 @@ def processAllHWByQ(server, password):
             else:
                 print_list.append("{}(x{})".format(q, n))
         print("# {}: {}".format(sid, print_list))
+
     if input("Process and upload all of the above submissions? [y/n]") != "y":
         print("Stopping.")
         return
@@ -171,6 +172,27 @@ def processAllHWByQ(server, password):
         print("Processing id {}:".format(sid))
         for question, file_name in submissions[sid]:
             processHWScans(server, password, file_name, sid, question)
+
+
+def processMissing(server, password):
+    from plom.scan import checkScanStatus
+
+    missingHWQ = checkScanStatus.checkMissingHWQ(server, password)
+    for t in missingHWQ:
+        print(
+            "Student {} is missing questions {}".format(
+                missingHWQ[t][0], missingHWQ[t][1:]
+            )
+        )
+    if input("Replace all missing with 'did not submit' pages? [y/n]") != "y":
+        print("Stopping.")
+        return
+
+    for t in missingHWQ:
+        sid = missingHWQ[t][0]
+        for q in missingHWQ[t][1:]:
+            print("Replacing q{} of sid {}".format(q, sid))
+            checkScanStatus.replaceMissingHWQ(server, password, sid, q)
 
 
 parser = argparse.ArgumentParser()
@@ -187,6 +209,9 @@ spP = sub.add_parser(
 spA = sub.add_parser(
     "allbyq",
     help="Process and upload all PDFs in 'submittedHWByQ' directory and upload to server",
+)
+spM = sub.add_parser(
+    "missing", help="Replace missing answers with 'not submitted' pages.",
 )
 spS = sub.add_parser("status", help="Get scanning status report from server")
 spC = sub.add_parser(
@@ -214,7 +239,7 @@ spPql.add_argument(
     help="Which question is answered in file.",
 )
 
-for x in (spP, spA, spS, spC):
+for x in (spP, spA, spS, spC, spM):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
@@ -236,6 +261,8 @@ def main():
             # argparse makes args.question a list.
     elif args.command == "allbyq":
         processAllHWByQ(args.server, args.password)
+    elif args.command == "missing":
+        processMissing(args.server, args.password)
     elif args.command == "status":
         scanStatus(args.server, args.password)
     elif args.command == "clear":

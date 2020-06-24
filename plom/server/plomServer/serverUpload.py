@@ -144,7 +144,7 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
     # compute md5sum and put into database
     md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
     # now try to put it into place
-    rval = self.DB.replaceMissingPage(
+    rval = self.DB.replaceMissingTestPage(
         testNumber, pageNumber, version, originalName, newName, md5
     )
     # if move successful then actually move file into place, else delete it

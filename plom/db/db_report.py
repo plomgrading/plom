@@ -52,16 +52,42 @@ def RgetIncompleteTests(self):
             page_state.append(["t.{}".format(p.page_number), p.version, p.scanned])
         # then append hw-pages in question-order
         for qref in tref.qgroups.order_by(QGroup.question):
-            for p in qref.group.hwpages:  # hw pages are always scanned
+            # if no HW pages scanned then display a hwpage 1 as unscanned.
+            if qref.group.hwpages.count() == 0:
                 page_state.append(
-                    ["hw.{}.{}".format(qref.question, p.order), p.version, True]
+                    ["hw.{}.{}".format(qref.question, 1), p.version, False]
                 )
+            else:
+                for p in qref.group.hwpages:  # hw pages are always scanned
+                    page_state.append(
+                        ["hw.{}.{}".format(qref.question, p.order), p.version, True]
+                    )
         # then append l-pages in order
         for p in tref.lpages:
             page_state.append(["l.{}".format(p.order), 0, True])
             # we don't know the version
         incomp_dict[tref.test_number] = page_state
     log.debug("Sending list of incomplete tests")
+    return incomp_dict
+
+
+def RgetMissingHWQ(self):
+    """Get dict of tests with missing HW Pages - ie some test pages scanned but not all.
+    Indexed by test_number
+    Each test lists triples [sid, missing-question-numbers].
+    """
+    incomp_dict = {}
+    for tref in Test.select().where(
+        Test.scanned == False, Test.used == True, Test.identified == True
+    ):
+        question_list = [tref.idgroups[0].student_id]
+        for qref in tref.qgroups.order_by(QGroup.question):
+            # if no HW pages scanned then display a hwpage 1 as unscanned.
+            if qref.group.hwpages.count() == 0:
+                question_list.append(qref.question)
+        if len(question_list) > 1:
+            incomp_dict[tref.test_number] = question_list
+    log.debug("Sending list of missing hw questions")
     return incomp_dict
 
 

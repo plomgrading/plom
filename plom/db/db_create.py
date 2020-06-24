@@ -27,6 +27,15 @@ def createAnnotationBundle(self, question, version):
     return True
 
 
+def createReplacementBundle(self):
+    try:
+        bref = Bundle.create(name="replacements")
+    except IntegrityError as e:
+        log.error("Create replacement page bundle = {}.{} error - {}".format(e))
+        return False
+    return True
+
+
 def declareBundle(self, file_name, md5):
     if Bundle.get_or_none(name=file_name) is not None:
         return [False, "name"]

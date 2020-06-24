@@ -562,6 +562,20 @@ class UploadHandler:
             rval[1], status=200
         )  # all fine - report number of tests updated
 
+    async def processLUploads(self, request):
+        data = await request.json()
+        if not validate_required_fields(data, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if data["user"] != "manager" and data["user"] != "scanner":
+            return web.Response(status=401)
+
+        rval = self.server.processLUploads()
+        return web.json_response(
+            rval[1], status=200
+        )  # all fine - report number of tests updated
+
     async def processTUploads(self, request):
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):

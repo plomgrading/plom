@@ -21,6 +21,13 @@ class ReportHandler:
             return web.Response(status=401)
         return web.json_response(self.server.RgetIncompleteTests(), status=200)
 
+    # @routes.get("/REP/missingHW")
+    @authenticate_by_token_required_fields(["user"])
+    def RgetMissingHWQ(self, d, request):
+        if not d["user"] in ("manager", "scanner"):
+            return web.Response(status=401)
+        return web.json_response(self.server.RgetMissingHWQ(), status=200)
+
     # @routes.get("/REP/unused")
     @authenticate_by_token_required_fields(["user"])
     def RgetUnusedTests(self, d, request):
@@ -190,6 +197,7 @@ class ReportHandler:
     def setUpRoutes(self, router):
         router.add_get("/REP/scanned", self.RgetScannedTests)
         router.add_get("/REP/incomplete", self.RgetIncompleteTests)
+        router.add_get("/REP/missingHW", self.RgetMissingHWQ)
         router.add_get("/REP/unused", self.RgetUnusedTests)
         router.add_get("/REP/progress", self.RgetProgress)
         router.add_get("/REP/questionUserProgress", self.RgetQuestionUserProgress)

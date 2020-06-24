@@ -90,7 +90,7 @@ def checkStatus(server=None, password=None):
             elif x[0][0] == "h":  # is a w page
                 q = int(x[0].split(".")[1])
                 if x[2] is False:
-                    missingPagesT.append(q)
+                    missingPagesH.append(q)
         print(
             "\t{}: t[{}] h[{}]".format(
                 t,
@@ -98,3 +98,83 @@ def checkStatus(server=None, password=None):
                 format_int_list_with_runs(missingPagesH),
             )
         )
+
+
+def checkMissingHWQ(server=None, password=None):
+    if server and ":" in server:
+        s, p = server.split(":")
+        scanMessenger = ScanMessenger(s, port=p)
+    else:
+        scanMessenger = ScanMessenger(server)
+    scanMessenger.start()
+
+    # get the password if not specified
+    if password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'scanner' password:")
+        except Exception as error:
+            print("ERROR", error)
+            exit(1)
+    else:
+        pwd = password
+
+    # get started
+    try:
+        scanMessenger.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException as e:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-scan clear"'
+        )
+        exit(10)
+
+    spec = scanMessenger.get_spec()
+
+    missingHWQ = scanMessenger.getMissingHW()
+    scanMessenger.closeUser()
+    scanMessenger.stop()
+
+    return missingHWQ
+
+
+def replaceMissingHWQ(server, password, student_id, question):
+    if server and ":" in server:
+        s, p = server.split(":")
+        scanMessenger = ScanMessenger(s, port=p)
+    else:
+        scanMessenger = ScanMessenger(server)
+    scanMessenger.start()
+
+    # get the password if not specified
+    if password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'scanner' password:")
+        except Exception as error:
+            print("ERROR", error)
+            exit(1)
+    else:
+        pwd = password
+
+    # get started
+    try:
+        scanMessenger.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException as e:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-scan clear"'
+        )
+        exit(10)
+
+    rval = scanMessenger.replaceMissingHWQuestion(student_id, question)
+    scanMessenger.sendHWUploadDone()
+
+    scanMessenger.closeUser()
+    scanMessenger.stop()
+
+    return rval

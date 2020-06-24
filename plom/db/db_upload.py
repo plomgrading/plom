@@ -95,6 +95,23 @@ def uploadTestPage(
         ]
 
 
+def replaceMissingTestPage(
+    self, test_number, page_number, version, original_name, file_name, md5
+):
+    # we can actually just call uploadTPage - we just need to set the bundle_name.
+    # hw is different because we need to verify no hw pages present already.
+    return self.uploadTPage(
+        self,
+        test_number,
+        page_number,
+        version,
+        original_name,
+        file_name,
+        md5,
+        "replacements",
+    )
+
+
 def uploadHWPage(
     self, sid, question, order, original_name, file_name, md5, bundle_name
 ):
@@ -119,6 +136,50 @@ def uploadHWPage(
         )
         order = lastOrder + 1
     # we need the bundle.
+    bref = Bundle.get_or_none(name=bundle_name)
+    if bref is None:
+        return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+    # create a HW page
+    with plomdb.atomic():
+        aref = qref.annotations[0]
+        # create image, hwpage, annotationpage and link.
+        hw_image = Image.create(
+            original_name=original_name, file_name=file_name, md5sum=md5, bundle=bref
+        )
+        href = HWPage.create(
+            test=tref, group=gref, order=order, image=hw_image, version=qref.version
+        )
+        ap = APage.create(annotation=aref, image=hw_image, order=order)
+        # set the recent_upload flag for the group and the used flag for the test
+        gref.recent_upload = True
+        gref.save()
+        tref.used = True
+        tref.save()
+    return [True]
+
+
+def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5):
+    # this is basically same as uploadHWPage, excepting bundle+order are known.
+    # and have to check if any HWPages present.
+    # todo = merge this somehow with uploadHWPage? - most of function is sanity checks.
+
+    order = 1
+    bundle_name = "replacements"
+
+    iref = IDGroup.get_or_none(student_id=sid)
+    if iref is None:
+        return [False, "SID does not correspond to any test on file."]
+    tref = iref.test
+    qref = QGroup.get_or_none(test=tref, question=question)
+    if qref is None:  # should not happen.
+        return [False, "Test/Question does not correspond to anything on file."]
+
+    gref = qref.group
+    href = HWPage.get_or_none(test=tref, group=gref)
+    # the href should be none - but could exist if uploading HW in two bundles
+    if href is not None:
+        return [False, "HW pages already present."]
+
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
         return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
@@ -180,6 +241,7 @@ def updateDNMGroup(self, dref):
     # all test pages scanned (or all unscanned), so set things ready to go.
     with plomdb.atomic():
         gref.scanned = True
+        gref.recent_upload = False
         gref.save()
         log.info("DNMGroup of test {} is all scanned.".format(gref.test.test_number))
     return True
@@ -226,6 +288,7 @@ def updateIDGroup(self, iref):
     # all test ID pages present, and group cleaned, so set things ready to go.
     with plomdb.atomic():
         gref.scanned = True
+        gref.recent_upload = False
         gref.save()
         if auto_id is False:
             iref.status = "todo"
@@ -349,6 +412,7 @@ def updateQGroup(self, qref):
     # If we get here - we are ready to go.
     with plomdb.atomic():
         gref.scanned = True
+        gref.recent_upload = False
         qref.status = "todo"
         qref.save()
         gref.save()
@@ -415,14 +479,37 @@ def cleanAndReadySData(self, tref):
 
 
 def checkTestScanned(self, tref):
+    """Check if all groups scanned."""
     for gref in tref.groups:
-        if gref.scanned is False:
+        if gref.group_type == "q":
+            if gref.scanned is False:
+                log.info(
+                    "Group {} of test {} is not scanned - test not ready.".format(
+                        gref.gid, tref.test_number
+                    )
+                )
+                return False
+        elif gref.group_type == "d":
             log.info(
-                "Group {} of test {} is not scanned".format(gref.gid, tref.test_number)
+                "DNM Group {} of test {} is not scanned - ignored.".format(
+                    gref.gid, tref.test_number
+                )
             )
-            return False
-    else:
-        return True
+        elif gref.group_type == "i":
+            if gref.idgroups[0].identified:
+                log.info(
+                    "ID Group {} of test {} is identified".format(
+                        gref.gid, tref.test_number
+                    )
+                )
+            elif not gref.scanned:
+                log.info(
+                    "ID Group {} of test {} is not scanned - test not ready.".format(
+                        gref.gid, tref.test_number
+                    )
+                )
+
+    return True
 
 
 def updateTestAfterUpload(self, tref):
@@ -477,37 +564,6 @@ def processUpdatedTests(self):
 
 
 # still todo below
-
-
-def replaceMissingPage(self, t, p, v, oname, nname, md5):
-    tref = Test.get_or_none(test_number=t)
-    if tref is None:
-        return [False, "testError", "Cannot find test {}".format(t)]
-    pref = TPage.get_or_none(test=tref, page_number=p, version=v)
-    if pref is None:
-        return [
-            False,
-            "pageError",
-            "Cannot find tpage {} for test {}".format(p, t),
-        ]
-    if pref.scanned:
-        return [
-            False,
-            "pageScanned",
-            "Page is already scanned",
-        ]
-    else:  # this is a new page.
-        with plomdb.atomic():
-            pref.image = Image.create(original_name=oname, file_name=nname, md5sum=md5)
-            pref.scanned = True
-            pref.save()
-            tref.used = True
-            tref.save()
-        log.info(
-            "Replacing missing page tpv = {}.{}.{} with {}".format(t, p, v, oname),
-        )
-        self.checkGroupAllUploaded(pref)
-        return [True, "success", "Page tpv = {}.{}.{} saved".format(t, p, v)]
 
 
 def fileOfScannedPage(self, t, p, v):
@@ -720,32 +776,6 @@ def processSpecificUpdatedTest(self, tref):
         else:
             log.info("Test {} still missing pages - {}.".format(tref.test_number, rval))
         tref.save()
-
-
-def replaceMissingHWQuestion(self, sid, question, oname, nname, md5):
-    iref = IDGroup.get_or_none(student_id=sid)
-    if iref is None:
-        return [False, False, "SID does not correspond to any test on file."]
-    tref = iref.test
-    qref = QGroup.get_or_none(test=tref, question=question)
-    gref = qref.group
-    href = HWPage.get_or_none(test=tref, group=gref)  # this should be none.
-    if href is not None:
-        return [False, True, "Question already has pages."]
-    # no HW page present, so create things as per a HWPage upload
-    with plomdb.atomic():
-        aref = qref.annotations[0]
-        # create image, hwpage, annotationpage and link.
-        img = Image.create(original_name=oname, file_name=nname, md5sum=md5)
-        href = HWPage.create(
-            test=tref, group=gref, order=1, image=img, version=qref.version
-        )
-        ap = APage.create(annotation=aref, image=img, order=1)
-        # set the recent_upload flag for the test
-        tref.used = True
-        tref.recent_upload = True
-        tref.save()
-    return [True]
 
 
 def uploadCollidingPage(self, t, p, v, oname, nname, md5):
