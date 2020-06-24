@@ -56,3 +56,7 @@ def TdidNotFinish(self, user, testNumber):
     """
     self.DB.TdidNotFinish(user, testNumber)
     return
+
+
+def TreviewTotal(self, testNumber):
+    return self.DB.TreviewTotal(testNumber)

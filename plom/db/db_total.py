@@ -188,3 +188,23 @@ def TtakeTaskFromClient(self, test_number, user_name, totalMark):
             )
         )
         return [True]
+
+
+def TreviewTotal(self, test_number):
+    """Replace the owner of the Totalling task for test test_number, with the reviewer.
+    """
+    # shift ownership to "reviewer"
+    revref = User.get(name="reviewer")  # should always be there
+
+    tref = Test.get_or_none(Test.test_number == test_number)
+    if tref is None:
+        return [False]
+    sref = tref.sumdata[0]  # grab the sumdata object
+    if sref.summed is False:  # check it has actually been summed.
+        return [False]
+    with plomdb.atomic():
+        sref.user = revref
+        sref.time = datetime.now()
+        sref.save()
+    log.info("Totalling task {} set for review".format(test_number))
+    return [True]

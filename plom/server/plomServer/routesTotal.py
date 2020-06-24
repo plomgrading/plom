@@ -70,6 +70,27 @@ class TotalHandler:
         self.server.TdidNotFinish(data["user"], testNumber)
         return web.json_response(status=200)
 
+    # @routes.patch("/TOT/review")
+    @authenticate_by_token_required_fields(["testNumber"])
+    def TreviewTotal(self, data, request):
+        """Responds with an empty response object indicating if the review Total is possible and the document exists.
+
+        Responds with status 200/404.
+
+        Args:
+            data (dict): A dictionary having the user/token in addition to the `testNumber`.
+            request (aiohttp.web_request.Request): Request of type PATCH /TOT/review.
+
+        Returns:
+            aiohttp.web_fileresponse.FileResponse: An empty response indicating the availability status of
+                the review document.
+        """
+
+        if self.server.TreviewTotal(data["testNumber"]):
+            return web.Response(status=200)
+        else:
+            return web.Response(status=404)
+
     def setUpRoutes(self, router):
         router.add_get("/TOT/maxMark", self.TgetMarkMark)
         router.add_get("/TOT/progress", self.TprogressCount)
@@ -79,3 +100,4 @@ class TotalHandler:
         router.add_patch("/TOT/tasks/{task}", self.TclaimThisTask)
         router.add_put("/TOT/tasks/{task}", self.TreturnTotalledTask)
         router.add_delete("/TOT/tasks/{task}", self.TdidNotFinish)
+        router.add_patch("/TOT/review", self.TreviewTotal)
