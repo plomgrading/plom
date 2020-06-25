@@ -49,6 +49,7 @@ page_not_submitted_text = r"""
 
 image_scale = 200 / 72
 
+
 def build_test_page_substitute(test_number, page_number, version_number):
     """Builds the substitue empty page for test.
 
@@ -83,11 +84,14 @@ def build_test_page_substitute(test_number, page_number, version_number):
 
     page_not_submitted_pdf[0].drawRect(rect, color=[0, 0, 0])
 
-    page_not_submitted_image = page_not_submitted_pdf[0].getPixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
-    page_not_submitted_image.writePNG("pns.{}.{}.{}.png".format(test_number, page_number, version_number))
+    page_not_submitted_image = page_not_submitted_pdf[0].getPixmap(
+        alpha=False, matrix=fitz.Matrix(image_scale, image_scale)
+    )
+    page_not_submitted_image.writePNG(
+        "pns.{}.{}.{}.png".format(test_number, page_number, version_number)
+    )
 
     return True
-
 
 
 def build_homework_question_substitute(student_id, question_number):
@@ -123,8 +127,12 @@ def build_homework_question_substitute(student_id, question_number):
 
     question_not_submitted_pdf[0].drawRect(rect, color=[0, 0, 0])
 
-    question_not_submitted_image = question_not_submitted_pdf[0].getPixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
-    question_not_submitted_image.writePNG("qns.{}.{}.png".format(student_id, question_number))
+    question_not_submitted_image = question_not_submitted_pdf[0].getPixmap(
+        alpha=False, matrix=fitz.Matrix(image_scale, image_scale)
+    )
+    question_not_submitted_image.writePNG(
+        "qns.{}.{}.png".format(student_id, question_number)
+    )
 
     return True
 

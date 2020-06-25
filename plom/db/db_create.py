@@ -74,7 +74,9 @@ def createIDGroup(self, t, pages):
             )  # must be unique
         except pw.IntegrityError as e:
             log.error(
-                "Create ID - cannot create Group {} of test {} error - {}".format(gid, t, e)
+                "Create ID - cannot create Group {} of test {} error - {}".format(
+                    gid, t, e
+                )
             )
             return False
         # make the IDGroup
@@ -111,7 +113,9 @@ def createDNMGroup(self, t, pages):
             )
         except pw.IntegrityError as e:
             log.error(
-                "Create DNM - cannot make Group {} of Test {} error - {}".format(gid, t, e)
+                "Create DNM - cannot make Group {} of Test {} error - {}".format(
+                    gid, t, e
+                )
             )
             return False
         try:
@@ -145,14 +149,18 @@ def createQGroup(self, t, g, v, pages):
             )
         except pw.IntegrityError as e:
             log.error(
-                "Create Q - cannot create group {} of Test {} error - {}".format(gid, t, e)
+                "Create Q - cannot create group {} of Test {} error - {}".format(
+                    gid, t, e
+                )
             )
             return False
         try:
             qref = QGroup.create(test=tref, group=gref, question=g, version=v)
         except pw.IntegrityError as e:
             log.error(
-                "Create Q - cannot create QGroup of question {} error - {}.".format(gid, e)
+                "Create Q - cannot create QGroup of question {} error - {}.".format(
+                    gid, e
+                )
             )
             return False
         ## create annotation 0 owned by HAL

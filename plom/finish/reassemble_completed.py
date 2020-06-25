@@ -150,7 +150,9 @@ def main(server=None, pwd=None):
     print("Reassembling {} papers...".format(N))
     with Pool() as p:
         r = list(
-            tqdm(p.imap_unordered(_parfcn, list(zip(coverpagelist, pagelists))), total=N)
+            tqdm(
+                p.imap_unordered(_parfcn, list(zip(coverpagelist, pagelists))), total=N
+            )
         )
     # Serial
     # for z in zip(coverpagelist, pagelists):

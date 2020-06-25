@@ -115,7 +115,9 @@ def authenticate_by_token_required_fields(fields):
                 return web.Response(status=400)
             if not zelf.server.validate(data["user"], data["token"]):
                 return web.Response(status=401)
-            log.debug('{} authenticated "{}" via token'.format(f.__name__, data["user"]))
+            log.debug(
+                '{} authenticated "{}" via token'.format(f.__name__, data["user"])
+            )
             return f(zelf, data, request)
 
         return wrapped

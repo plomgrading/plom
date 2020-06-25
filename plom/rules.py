@@ -7,6 +7,7 @@ __copyright__ = "Copyright (C) 2020 Colin B. Macdonald"
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+
 def isValidUBCStudentNumber(n):
     """Is this a valid student number for UBC?
 
@@ -22,6 +23,7 @@ def isValidUBCStudentNumber(n):
         return False
     return True
 
+
 def censorStudentNumber(n):
     """Replace some parts of student number with astericks."""
     n = str(n)
@@ -29,12 +31,14 @@ def censorStudentNumber(n):
     assert len(n) == len(r)
     return r
 
+
 def censorStudentName(s):
     """Replace most of a student student name with astericks."""
     if len(s) <= 3:
-        r = s[0] + "*"*7
+        r = s[0] + "*" * 7
     else:
-        r = s[:3] + "*"*5
+        r = s[:3] + "*" * 5
     return r
+
 
 isValidStudentNumber = isValidUBCStudentNumber

@@ -1,4 +1,4 @@
-html="""
+html = """
 <!DOCTYPE html>
 <!-- Copyright (C) 2018-2019 Colin B. Macdonald <cbm@m.fsf.org>-->
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->

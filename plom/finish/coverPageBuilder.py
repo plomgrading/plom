@@ -28,7 +28,6 @@ table, th, td {
 )
 
 
-
 def makeCover(test_num, sname, sid, tab):
     """Create html page of name ID etc and table of marks.
 

@@ -4,7 +4,8 @@ from PyQt5.QtCore import (
     QByteArray,
     QBuffer,
     QIODevice,
-    QPoint)
+    QPoint,
+)
 from PyQt5.QtGui import QImage, QPixmap, QPen, QColor
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -43,13 +44,12 @@ class CommandImage(QUndoCommand):
         self.scene = scene
         self.width = image.width()
         if data is None:
-            toMidpoint = QPoint(-image.width()/2, -image.height()/2)
+            toMidpoint = QPoint(-image.width() / 2, -image.height() / 2)
             self.midPt = pt + toMidpoint
         else:
             self.midPt = pt
         self.image = image
-        self.imageItem = ImageItemObject(self.midPt, self.image, scale, border,
-                                         data)
+        self.imageItem = ImageItemObject(self.midPt, self.image, scale, border, data)
         self.setText("Image")
 
     def redo(self):
@@ -194,6 +194,7 @@ class ImageItem(QGraphicsPixmapItem):
             self.setScale(scale / 100)
             if border is not self.border:
                 self.border = border
+
 
 class ImageSettingsDialog(QDialog):
     """ Menu dialog for Image Settings. """

@@ -59,7 +59,9 @@ class PageView(QGraphicsView):
         self.setScene(scene)
         self.fitInView(self.scene().underImage, Qt.KeepAspectRatio)
         # the current view
-        self.paperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
+        self.paperWindow = self.mapToScene(
+            self.viewport().contentsRect()
+        ).boundingRect()
 
     def resizeEvent(self, event):
         """
@@ -108,7 +110,9 @@ class PageView(QGraphicsView):
 
         """
         # sets the current view rect
-        self.paperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
+        self.paperWindow = self.mapToScene(
+            self.viewport().contentsRect()
+        ).boundingRect()
         if update:
             self.parent.changeCBZoom(0)
 
@@ -285,7 +289,6 @@ class PageView(QGraphicsView):
                 self.horizontalScrollBar().setValue(0)
 
         self.setZoomSelector()
-
 
     def depanThrough(self, dy=0.8):
         """

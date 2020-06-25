@@ -187,12 +187,14 @@ class IDHandler:
             aiohttp.web_response.Response: A response including a aiohttp object which 
                 includes a multipart object with the images.
         """
-        
+
         testNumber = request.match_info["task"]
-        image_path = self.server.IDclaimThisTask(data["user"], testNumber) # returns [True, IMG_path] or [False]
+        image_path = self.server.IDclaimThisTask(
+            data["user"], testNumber
+        )  # returns [True, IMG_path] or [False]
 
         allow_access = image_path[0]
-        
+
         if allow_access:  # user allowed access - returns [true, fname0, fname1,...]
             with MultipartWriter("images") as writer:
                 image_paths = image_path[1:]
@@ -301,7 +303,7 @@ class IDHandler:
         if data["user"] != "manager":
             return web.Response(status=401)  # only manager
 
-        # A list with a boolean (indicating wether the objects exist) and a list of the exam images. 
+        # A list with a boolean (indicating wether the objects exist) and a list of the exam images.
         random_image_paths = self.server.IDgetImageFromATest()
 
         allow_access = random_image_paths[0]
@@ -370,7 +372,7 @@ class IDHandler:
 
         timestamp_found = prediction_results[0]
         is_running = prediction_results[1]
-        
+
         if timestamp_found:  # set running or is running
             if is_running:
                 return web.Response(status=200)
