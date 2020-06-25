@@ -13,16 +13,32 @@ class MarkHandler:
     # @routes.get("/MK/maxMark")
     @authenticate_by_token_required_fields(["q", "v"])
     def MgetQuestionMark(self, data, request):
-        rmsg = self.server.MgetQuestionMax(data["q"], data["v"])
-        if rmsg[0]:
-            return web.json_response(rmsg[1], status=200)
-        elif rmsg[1] == "QE":
+        """Retreive the maximum mark for a question.
+
+        Respond with status 200/416.
+
+        Args:
+            data (dict): Dictionary including user data in addition to question number
+                and test version.
+            request (aiohttp.web_response.Response): GET /MK/maxMark request object.
+
+        Returns:
+            aiohttp.web_response.Response: Response object which has the maximum mark for 
+                the question.
+        """
+        question_number = data["q"]
+        test_version = data["v"]
+        valid_question, maximum_mark_response = self.server.MgetQuestionMax(question_number, test_version)
+
+        if valid_question:
+            return web.json_response(maximum_mark_response, status=200)
+        elif maximum_mark_response == "QE":         # Check if the question was out of range
             # pg out of range
             return web.Response(
                 text="Question out of range - please check before trying again.",
                 status=416,
             )
-        elif rmsg[1] == "VE":
+        elif maximum_mark_response == "VE":         # Check if the version was out of range
             # version our of range
             return web.Response(
                 text="Version out of range - please check before trying again.",
@@ -32,6 +48,19 @@ class MarkHandler:
     # @routes.get("/MK/progress")
     @authenticate_by_token_required_fields(["q", "v"])
     def MprogressCount(self, data, request):
+        """Respond with the number of marked questions and the total questions tasks for user.
+
+        Respond with status 200.
+
+        Args:
+            data (dict): Dictionary including user data in addition to question number
+                and test version.
+            request (aiohttp.web_request.Request): Request of type GET /MK/progress.
+
+        Returns:
+            aiohttp.web_response.Response: Includes the number of marked tasks and the total 
+                number of marked/unmarked tasks. 
+        """
         return web.json_response(
             self.server.MprogressCount(data["q"], data["v"]), status=200
         )
@@ -39,6 +68,20 @@ class MarkHandler:
     # @routes.get("/MK/tasks/complete")
     @authenticate_by_token_required_fields(["user", "q", "v"])
     def MgetDoneTasks(self, data, request):
+        """Retrieve data for questions which have already been graded by the user. 
+
+        Respond with status 200.
+
+        Args:
+            data (dict): Dictionary including user data in addition to question number and 
+                test version.
+            request (aiohttp.web_response.Response): GET /MK/tasks/complete request object.
+
+        Returns:
+            aiohttp.web_response.Response: A response object including a list of lists with the already 
+                processed questions. The list invloves the question string, question mark, time spent 
+                grading and tag string. 
+        """
         # return the completed list
         return web.json_response(
             self.server.MgetDoneTasks(data["user"], data["q"], data["v"]), status=200,
@@ -47,55 +90,142 @@ class MarkHandler:
     # @routes.get("/MK/tasks/available")
     @authenticate_by_token_required_fields(["q", "v"])
     def MgetNextTask(self, data, request):
-        rmsg = self.server.MgetNextTask(data["q"], data["v"])
+        """Respond with the next task/question's string.
+
+        Respond with status 200/204.
+
+        Args:
+            data (dict): Dictionary including user data in addition to question number and 
+                test version.
+            request (aiohttp.web_request.Request): Request of type GET /MK/tasks/available.
+
+        Returns:
+            aiohttp.web_response.Response: A response which includes the next question's string.
+                For example: q0013g1
+        """
+        next_task_response = self.server.MgetNextTask(data["q"], data["v"])
+
+        next_task_available = next_task_response[0]
+
         # returns [True, task] or [False]
-        if rmsg[0]:
-            return web.json_response(rmsg[1], status=200)
+        if next_task_available:
+            next_task_code = next_task_response[1]
+            return web.json_response(next_task_code, status=200)
         else:
             return web.Response(status=204)  # no papers left
 
     # @routes.get("/MK/latex")
     @authenticate_by_token_required_fields(["user", "fragment"])
     def MlatexFragment(self, data, request):
-        rmsg = self.server.MlatexFragment(data["user"], data["fragment"])
-        if rmsg[0]:
-            return web.FileResponse(rmsg[1], status=200)
+        """Return the latex image for the string included in the request.
+
+        Respond with status 200/406.
+
+        Args:
+            data (dict): Includes the user/token and latex string fragment.
+            request (aiohttp.web_request.Request): Request of type GET /MK/latex.
+
+        Returns:
+            aiohttp.web_fileresponse.FileResponse: A response which includes the image for
+                the latex string.
+        """
+        
+        latex_response = self.server.MlatexFragment(data["user"], data["fragment"])
+        latex_valid = latex_response[0]
+        
+        if latex_valid:
+            latex_image_path = latex_response[1]
+            return web.FileResponse(latex_image_path, status=200)
         else:
             return web.Response(status=406)  # a latex error
 
     # @routes.patch("/MK/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
     def MclaimThisTask(self, data, request):
-        task = request.match_info["task"]
-        rmesg = self.server.MclaimThisTask(data["user"], task)
-        if rmesg[0]:  # return [True, tag, filename1, filename2,...]
-            with MultipartWriter("imageAndTags") as mpwriter:
-                mpwriter.append(rmesg[1])  # append tags as raw text.
-                for fn in rmesg[2:]:
-                    mpwriter.append(open(fn, "rb"))
-            return web.Response(body=mpwriter, status=200)
+        """Take task number in request and return the task/question's images as a response.
+
+        Respond with status 200/204.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): PATCH /MK/tasks/`question code` request object.
+                This request object will include the task code.
+
+        Returns:
+            aiohttp.web_response.Response: A response object with includes the multipart objects
+                which wrap this task/question's images. 
+        """
+
+        task_code = request.match_info["task"]           # Task/question code string.
+        claimed_task = self.server.MclaimThisTask(data["user"], task_code)
+        task_available = claimed_task[0]
+
+        if task_available:  # return [True, tag, filename1, filename2,...]
+            task_tags = claimed_task[1]
+            task_page_paths = claimed_task[2:]
+            
+            with MultipartWriter("imageAndTags") as multipart_writer:
+                multipart_writer.append(task_tags)  # append tags as raw text.
+                for file_name in task_page_paths:
+                    multipart_writer.append(open(file_name, "rb"))
+            return web.Response(body=multipart_writer, status=200)
         else:
             return web.Response(status=204)  # that task already taken.
 
     # @routes.delete("/MK/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
     def MdidNotFinishTask(self, data, request):
-        task = request.match_info["task"]
-        self.server.MdidNotFinish(data["user"], task)
+        """Assign tasks that are not graded (untouched) as unfinished in the database.
+        
+        Respond with status 200.
+
+        Args:
+            data (dict): Includes the user/token and task code.
+            request (aiohttp.web_request.Request): Request of type DELETE /MK/tasks/`question code`.
+
+        Returns:
+            aiohttp.web_response.Response: Returns a success status indicating the task is unfinished.
+        """
+
+        task_code = request.match_info["task"]
+        self.server.MdidNotFinish(data["user"], task_code)
+
         return web.json_response(status=200)
 
     # @routes.put("/MK/tasks/{task}")
     async def MreturnMarkedTask(self, request):
+        """Save the graded/processes task, extract data and save to database.
+
+        This function also responds with the number of done tasks and the total number of tasks.
+        The returned statement is similar to MprogressCount.
+        Respond with status 200/400/401/406/409.
+        Log activity.
+
+        Args:
+            request (aiohttp.web_request.Request): Request of type PUT /MK/tasks/`question code` which 
+                includes a multipart object indication the marked test data. This request will include 
+                3 parts including [metadata, image, plom-file].
+
+        Returns:
+            aiohttp.web_response.Response: Responses with a list including the number of
+                graded tasks and the overall number of tasks.
+        """
+
         log_request("MreturnMarkedTask", request)
-        # the put will be in 3 parts - use multipart reader
-        # in order we expect those 3 parts - [parameters (inc comments), image, plom-file]
+
         reader = MultipartReader.from_response(request)
-        part0 = await reader.next()
-        if part0 is None:  # weird error
+
+
+        # Dealing with the metadata.
+        task_metadata_object = await reader.next()
+
+        if task_metadata_object is None:  # weird error
             return web.Response(status=406)  # should have sent 3 parts
-        param = await part0.json()
+        task_metadata = await task_metadata_object.json()
+
+        # Validate that the dictionary has these fields.
         if not validate_required_fields(
-            param,
+            task_metadata,
             [
                 "user",
                 "token",
@@ -109,112 +239,229 @@ class MarkHandler:
             ],
         ):
             return web.Response(status=400)
-        if not self.server.validate(param["user"], param["token"]):
+        # Validate username and token.
+        if not self.server.validate(task_metadata["user"], task_metadata["token"]):
             return web.Response(status=401)
 
-        comments = param["comments"]
-        task = request.match_info["task"]
-        # TODO: put task inside param as well for sanity check?
+        comments = task_metadata["comments"]       # List of comments.
+        task_code = request.match_info["task"]      # Task code.
 
         # Note: if user isn't validated, we don't parse their binary junk
         # TODO: is it safe to abort during a multi-part thing?
 
-        # image file
-        part1 = await reader.next()
-        if part1 is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        image = await part1.read()
+        # Dealing with the image.
+        task_image_object = await reader.next()
 
-        # plom file
-        part2 = await reader.next()
-        if part2 is None:  # weird error
+        if task_image_object is None:  # weird error
             return web.Response(status=406)  # should have sent 3 parts
-        plomdat = await part2.read()
+        task_image = await task_image_object.read()
 
-        rmsg = self.server.MreturnMarkedTask(
-            param["user"],
-            task,
-            int(param["pg"]),
-            int(param["ver"]),
-            int(param["score"]),
-            image,
+        # Dealing with the plom_file.
+        plom_file_object = await reader.next()
+
+        if plom_file_object is None:  # weird error
+            return web.Response(status=406)  # should have sent 3 parts
+        plomdat = await plom_file_object.read()
+
+        marked_task_status = self.server.MreturnMarkedTask(
+            task_metadata["user"],
+            task_code,
+            int(task_metadata["pg"]),
+            int(task_metadata["ver"]),
+            int(task_metadata["score"]),
+            task_image,
             plomdat,
             comments,
-            int(param["mtime"]),
-            param["tags"],
-            param["md5sum"],
+            int(task_metadata["mtime"]),
+            task_metadata["tags"],
+            task_metadata["md5sum"],
         )
-        # rmsg = either [True, numDone, numTotal] or [False] if error.
-        if rmsg[0]:
-            return web.json_response([rmsg[1], rmsg[2]], status=200)
+        # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
+
+        marking_success = marked_task_status[0]
+        if marking_success:
+            num_done_tasks = marked_task_status[1]
+            total_num_tasks = marked_task_status[2]
+            return web.json_response([num_done_tasks, total_num_tasks], status=200)
         else:
-            log.warning("Returning with error 400 = {}".format(rmsg))
-            return web.Response(status=400)  # some sort of error with image file
+            log.warning("Returning with error 400 = {}".format(marked_task_status))
+            return web.Response(status=400)  # some sort of error with task_image file
 
     # @routes.get("/MK/images/{task}")
     @authenticate_by_token_required_fields(["user"])
     def MgetImages(self, data, request):
-        task = request.match_info["task"]
-        rmsg = self.server.MgetImages(data["user"], task)
-        # returns either [True,n, fname1,fname2,..,fname.n] or [True, n, fname1,..,fname.n, aname, plomdat] or [False, error]
-        if rmsg[0]:
-            with MultipartWriter("imageAnImageAndPlom") as mpwriter:
-                mpwriter.append("{}".format(rmsg[1]))  # send 'n' as string
-                for fn in rmsg[2:]:
-                    mpwriter.append(open(fn, "rb"))
-            return web.Response(body=mpwriter, status=200)
+        """Return the image of a question/task to the client.
+
+        Main API call for the client to get the image data (original and annotated).
+        Respond with status 200/409.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): Request of type GET /MK/images/"task code"
+                which the task code is extracted from.
+
+        Returns:
+            aiohttp.web_response.Response: A response which includes the multipart writer object
+                wrapping the task images.
+        """
+
+        task_code = request.match_info["task"]
+        task_image_results = self.server.MgetImages(data["user"], task_code)
+        # A list which includes:
+        # 1. True/False process status.
+        # 2. Number of pages for task.
+        # 3. Original Page image path.
+        # 3. Marked Page image path.
+        # 4. Marked question plom data path, ie .plom type files.
+
+        # Format is either:
+        # [True, num_pages, original_fname1, original_fname2, ... original_fname#num_pages, ] or 
+        # [True, num_pages, original_fname1,..,original_fname#num_pages, annotated_fname#1, ... annotated_fname#num_pages , plomdat] or 
+        # [False, error]
+
+        task_image_success = task_image_results[0]
+
+        if task_image_success:
+            with MultipartWriter("imageAnImageAndPlom") as multipart_writer:
+                task_num_images = task_image_results[1]
+                task_images_list = task_image_results[2:]
+
+                multipart_writer.append("{}".format(task_num_images))  # send 'n' as string
+
+                for file_name in task_images_list:
+                    multipart_writer.append(open(file_name, "rb"))
+            return web.Response(body=multipart_writer, status=200)
         else:
-            return web.Response(status=409)  # someone else has that image
+            return web.Response(status=409)  # someone else has that task_image
 
     # @routes.get("/MK/originalImage/{task}")
     @authenticate_by_token_required_fields([])
     def MgetOriginalImages(self, data, request):
+        """Return the non-graded original images for a task/question.
+
+        Respond with status 200/204.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): Request of type GET /MK/originalImages/`task code` 
+                which the task code is extracted from.
+
+        Returns:
+            aiohttp.web_response.Response: A response object with includes the multipart objects
+                which wrap this task/question's original (ungraded) images.
+        """
+
         task = request.match_info["task"]
-        rmsg = self.server.MgetOriginalImages(task)
+        get_image_results = self.server.MgetOriginalImages(task)
+        image_return_success = get_image_results[0]
+
         # returns either [True, fname1, fname2,... ] or [False]
-        if rmsg[0]:
-            with MultipartWriter("images") as mpwriter:
-                for fn in rmsg[1:]:
-                    mpwriter.append(open(fn, "rb"))
-            return web.Response(body=mpwriter, status=200)
+        if image_return_success:
+            original_image_paths = get_image_results[1:]
+            
+            with MultipartWriter("images") as multipart_writer:
+                for file_nam in original_image_paths:
+                    multipart_writer.append(open(file_nam, "rb"))
+            return web.Response(body=multipart_writer, status=200)
         else:
             return web.Response(status=204)  # no content there
 
     # @routes.patch("/MK/tags/{task}")
     @authenticate_by_token_required_fields(["user", "tags"])
     def MsetTag(self, data, request):
-        task = request.match_info["task"]
-        rmsg = self.server.MsetTag(data["user"], task, data["tags"])
-        if rmsg:
+        """Set tag for a task.
+
+        Respond with status 200/409.
+
+        Args:
+            data (dict): A dictionary having the user/token in addition to the tag string.
+                Request object also incudes the task code.
+            request (aiohttp.web_request.Request): PATCH /MK/tags/`task_code` type request.
+
+        Returns:
+            aiohttp.web_response.Response: Empty status response indication is adding
+                the tag was successful.
+        """
+
+        task_code = request.match_info["task"]
+        set_tag_success = self.server.MsetTag(data["user"], task_code, data["tags"])
+
+        if set_tag_success:
             return web.Response(status=200)
         else:
-            return web.Response(status=409)  # this is not your task
+            return web.Response(status=409)  # Task does not belong to this user.
 
 
     # @routes.get("/MK/whole/{number}")
     @authenticate_by_token_required_fields([])
     def MgetWholePaper(self, data, request):
-        number = request.match_info["number"]
-        question = request.match_info["question"]
-        rmesg = self.server.MgetWholePaper(number, question)
-        print(rmesg)
-        if rmesg[0]:  # return [True, pageData,f1,f2,f3,...] or [False]
-            with MultipartWriter("images") as mpwriter:
-                mpwriter.append_json(rmesg[1])  # append the pageData
-                for fn in rmesg[2:]:
-                    mpwriter.append(open(fn, "rb"))
-            return web.Response(body=mpwriter, status=200)
+        """Return the entire paper which includes the given question.
+
+        Respond with status 200/404.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): GET /MK/whole/`test_number`/`question_number`.
+
+        Returns:
+            aiohttp.web_response.Response: Responds with a multipart writer which includes all 
+                the images for the exam which includes this question.
+        """
+
+        test_number = request.match_info["number"]
+        question_number = request.match_info["question"]
+        # This response is a list which includes the following:
+        # 1. True/False for operation status.
+        # 2. A list of lists where each inner list includes: 
+        #   [test_number, task_number, True/False for wether the task/page is graded or not]
+        # 3. From the 3rd element onward, we have the string paths for each page of the paper in server.
+        whole_paper_response = self.server.MgetWholePaper(test_number, question_number)
+
+        paper_retrieval_success = whole_paper_response[0]
+
+        if paper_retrieval_success:  # return [True, pageData,f1,f2,f3,...] or [False]
+            with MultipartWriter("images") as multipart_writer:
+                pages_data = whole_paper_response[1]
+                all_pages_paths = whole_paper_response[2:]
+
+                multipart_writer.append_json(pages_data)  # append the pageData
+                for file_name in all_pages_paths:
+                    multipart_writer.append(open(file_name, "rb"))
+            return web.Response(body=multipart_writer, status=200)
         else:
             return web.Response(status=404)  # not found
 
     # @routes.get("/MK/allMax")
     @authenticate_by_token
     def MgetAllMax(self):
+        """Respond with information on max mark possible for each question in the exam.
+
+        Respond with status 200/404.
+
+        Returns:
+            aiohttp.web_response.Response: A response which includes a dictionary
+                for the highest mark possible for each question of the exam.
+        """
+        
         return web.json_response(self.server.MgetAllMax(), status=200)
 
     # @routes.patch("/MK/review")
     @authenticate_by_token_required_fields(["testNumber", "questionNumber", "version"])
     def MreviewQuestion(self, data, request):
+        """Confirm the question review done on plom-manager.
+
+        Respond with status 200/404.
+
+        Args:
+            data (dict): Dictionary including user data in addition to question number
+                and test version.
+            request (aiohttp.web_request.Request): Request of type PATCH /MK/review .
+
+        Returns:
+            aiohttp.web_response.Response: Empty status response indication if the question
+                review was successful.
+        """
+
         if self.server.MreviewQuestion(
             data["testNumber"], data["questionNumber"], data["version"]
         ):
@@ -223,6 +470,8 @@ class MarkHandler:
             return web.Response(status=404)
 
     # @routes.patch("/MK/revert/{task}")
+    # TODO: Deprecated.
+    # TODO: Should be removed.
     @authenticate_by_token_required_fields(["user"])
     def MrevertTask(self, data, request):
         # only manager can do this
@@ -240,14 +489,36 @@ class MarkHandler:
     # @routes.patch("/MK/shuffle/{task}")
     @authenticate_by_token_required_fields(["user", "imageRefs"])
     def MshuffleImages(self, data, request):
-        task = request.match_info["task"]
-        rval = self.server.MshuffleImages(data["user"], task, data["imageRefs"])
-        if rval[0]:
+        """Shuffle images for a task and pass the shuffle data to the database.
+
+        Respond with status 200/401.
+
+        Args:
+            data (dict): Dictionary including user data in addition to the rearranged image 
+                references.
+            request (aiohttp.web_request.Request): Request of type PATCH /MK/shuffle/`task code`.
+
+        Returns:
+            aiohttp.web_response.Response: Empty status response indication if the question
+                images shuffling was successful.
+        """
+
+        task_code = request.match_info["task"]
+        # A list with a single boolean indicating if the operation was successful
+        shuffle_images_response = self.server.MshuffleImages(data["user"], task_code, data["imageRefs"])
+        shuffle_images_status = shuffle_images_response[0]
+
+        if shuffle_images_status:
             return web.Response(status=200)
         else:  # not your task
             return web.Response(status=401)
 
     def setUpRoutes(self, router):
+        """Adds the response functions to the router object.
+
+        Args:
+            router (aiohttp.web_urldispatcher.UrlDispatcher): Router object which we will add the response functions to.
+        """
         router.add_get("/MK/allMax", self.MgetAllMax)
         router.add_get("/MK/maxMark", self.MgetQuestionMark)
         router.add_get("/MK/progress", self.MprogressCount)
