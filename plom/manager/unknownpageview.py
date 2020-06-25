@@ -151,7 +151,7 @@ class TestTab(QWidget):
         vb.addWidget(self.ob)
         self.setLayout(vb)
         self.show()
-        self.cpb.clicked.connect(self.checkPage)
+        self.cpb.clicked.connect(self.checkTPage)
         self.vwb.clicked.connect(self.viewWholeTest)
         self.cb.clicked.connect(self.confirm)
         self.ob.clicked.connect(self.other)
@@ -162,8 +162,8 @@ class TestTab(QWidget):
         self.parent.pq = self.psb.value()
         self.parent.accept()
 
-    def checkPage(self):
-        self.parent.checkPage(self.tsb.value(), self.psb.value())
+    def checkTPage(self):
+        self.parent.checkTPage(self.tsb.value(), self.psb.value())
 
     def viewWholeTest(self):
         self.parent.viewWholeTest(self.tsb.value())
@@ -284,8 +284,8 @@ class UnknownViewWindow(QDialog):
     def viewWholeTest(self, testNumber):
         self.parent.viewWholeTest(testNumber)
 
-    def checkPage(self, testNumber, pageNumber):
-        self.parent.checkPage(testNumber, pageNumber)
+    def checkTPage(self, testNumber, pageNumber):
+        self.parent.checkTPage(testNumber, pageNumber)
 
 
 class UnknownView(QGraphicsView):
@@ -464,5 +464,5 @@ class UnknownViewWindow(QDialog):
     def viewWholeTest(self, testNumber):
         self.parent.viewWholeTest(testNumber)
 
-    def checkPage(self, testNumber, pageNumber):
-        self.parent.checkPage(testNumber, pageNumber)
+    def checkTPage(self, testNumber, pageNumber):
+        self.parent.checkTPage(testNumber, pageNumber)

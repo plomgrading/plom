@@ -44,23 +44,38 @@ def RgetIncompleteTests(self):
     Indexed by test_number
     Each test lists triples [page-code, page-version, scanned_or_not].
     page-code is t{page}, hw{question}{order}, or l{order}.
+    Note - if no tpages scanned, then it will not return tpages.
+    Similalry, if no hwpages/expages scanned, then it will not return hwpages/expages.
     """
     incomp_dict = {}
     for tref in Test.select().where(Test.scanned == False, Test.used == True):
         page_state = []
-        for p in tref.tpages:
-            page_state.append(["t.{}".format(p.page_number), p.version, p.scanned])
-        # then append hw-pages in question-order
-        for qref in tref.qgroups.order_by(QGroup.question):
-            # if no HW pages scanned then display a hwpage 1 as unscanned.
-            if qref.group.hwpages.count() == 0:
-                page_state.append(
-                    ["hw.{}.{}".format(qref.question, 1), p.version, False]
-                )
-            else:
-                for p in qref.group.hwpages:  # hw pages are always scanned
+        # if no tpages scanned then don't display
+        if TPage.select().where(TPage.test == tref, TPage.scanned == True).count() > 0:
+            for p in tref.tpages:
+                page_state.append(["t.{}".format(p.page_number), p.version, p.scanned])
+
+        # if no HW pages at all - then don't display.
+        if tref.hwpages.count() > 0:
+            # then append hw-pages in question-order
+            for qref in tref.qgroups.order_by(QGroup.question):
+                # if no HW pages scanned then display a hwpage 1 as unscanned.
+                if qref.group.hwpages.count() == 0:
                     page_state.append(
-                        ["hw.{}.{}".format(qref.question, p.order), p.version, True]
+                        ["hw.{}.{}".format(qref.question, 1), p.version, False]
+                    )
+                else:
+                    for p in qref.group.hwpages:  # hw pages are always scanned
+                        page_state.append(
+                            ["hw.{}.{}".format(qref.question, p.order), p.version, True]
+                        )
+        # if no ex pages at all - then don't display.
+        if tref.expages.count() > 0:
+            # then append ex-pages in question-order
+            for qref in tref.qgroups.order_by(QGroup.question):
+                for p in qref.group.expages:  # ex pages are always scanned
+                    page_state.append(
+                        ["ex.{}.{}".format(qref.question, p.order), p.version, True]
                     )
         # then append l-pages in order
         for p in tref.lpages:

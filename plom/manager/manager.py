@@ -793,8 +793,8 @@ class Manager(QWidget):
             qv = GroupView(inames)
             qv.exec_()
 
-    def checkPage(self, testNumber, pageNumber):
-        cp = managerMessenger.checkPage(testNumber, pageNumber)
+    def checkTPage(self, testNumber, pageNumber):
+        cp = managerMessenger.checkTPage(testNumber, pageNumber)
         # returns [v, image] or [v, imageBytes]
         if cp[1] == None:
             ErrorMessage(

@@ -160,7 +160,7 @@ class Server(object):
         getLPageImage,
         getQuestionImages,
         getAllTestImages,
-        checkPage,
+        checkTPage,
         removeUnknownImage,
         removeCollidingImage,
         unknownToTestPage,

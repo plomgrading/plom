@@ -95,16 +95,31 @@ def getAllTestImages(self, test_number):
         return [False]
     rval = [True]
 
-    # give all the tpages in page-number order
-    for p in tref.tpages.order_by(TPage.page_number):
-        if p.scanned == True:
+    # give the pages as IDPages, DNMPages and then for each question
+
+    # grab the id group - only has tpages
+    gref = tref.idgroups[0].group
+    # give tpages if scanned.
+    for p in gref.tpages.order_by(TPage.page_number):
+        if p.scanned:
             rval.append(p.image.file_name)
 
-    # for each question give HWPages and EXPages
-    for qref in tref.qgroups.order_by(QGroup.question):
-        for p in qref.group.hwpages.order_by(HWPage.order):
+    # grab the dnm group - only has tpages
+    gref = tref.dnmgroups[0].group
+    # give tpages if scanned.
+    for p in gref.tpages.order_by(TPage.page_number):
+        if p.scanned:
             rval.append(p.image.file_name)
-        for p in qref.group.expages.order_by(EXPage.order):
+
+    # for each question give TPages, HWPages and EXPages
+    for qref in tref.qgroups.order_by(QGroup.question):
+        gref = qref.group
+        for p in gref.tpages.order_by(TPage.page_number):
+            if p.scanned:
+                rval.append(p.image.file_name)
+        for p in gref.hwpages.order_by(HWPage.order):
+            rval.append(p.image.file_name)
+        for p in gref.expages.order_by(EXPage.order):
             rval.append(p.image.file_name)
 
     # finally give any loosepages
@@ -132,13 +147,124 @@ def getQuestionImages(self, test_number, question):
     return rval
 
 
-# still need fixing up.
-def getUnknownImage(self, fname):
-    uref = UnknownPage.get_or_none(UnknownPage.file_name == fname)
+def getUnknownImage(self, file_name):
+    # this really just confirms that the file_name belongs to an unknmown
+    iref = Image.get_or_none(file_name=file_name)
+    if iref is None:
+        return [False]
+    uref = iref.upages[0]
     if uref is None:
         return [False]
     else:
-        return [True, uref.file_name]
+        return [True, uref.image.file_name]
+
+
+def moveUnknownToExtraPage(self, file_name, test_number, question):
+    iref = Image.get_or_none(file_name=file_name)
+    if iref is None:  # should not happen
+        return [False, "Cannot find image"]
+    uref = iref.upages[0]
+    if uref is None:  # should not happen
+        return [False, "Cannot find unknown page for that image."]
+
+    tref = Test.get_or_none(Test.test_number == test_number)
+    if tref is None:
+        return [False, "Cannot find that test"]
+
+    # find the qgroup to which the new page should belong
+    qref = QGroup.get_or_none(test=tref, question=question)
+    if qref is None:  # should not happen
+        return [False, "Cannot find that question"]
+    version = qref.version  # we'll need the version
+    gref = qref.group  # and the parent group
+    # find the last expage in that group - if there are expages
+    if gref.expages.count() == 0:
+        order = 1
+    else:
+        pref = (
+            EXPage.select()
+            .where(EXPage.group == gref)
+            .order_by(EXPage.order.desc())
+            .get_or_none()
+        )
+        order = pref.order + 1
+
+    # now create the expage, delete upage
+
+    with plomdb.atomic():
+        xref = EXPage.create(
+            test=tref, group=qref.group, version=version, order=order, image=iref
+        )
+        uref.delete_instance()
+        gref.recent_upload = True
+        gref.save()
+        log.info(
+            "Moving unknown page {} to extra page {} of question {} of test {}".format(
+                file_name, order, question, test_number
+            )
+        )
+    self.updateTestAfterUpload(tref)
+    return [True]
+
+
+def moveUnknownToTPage(self, file_name, test_number, page_number):
+    iref = Image.get_or_none(file_name=file_name)
+    if iref is None:  # should not happen
+        return [False, "Cannot find image"]
+    uref = iref.upages[0]
+    if uref is None:  # should not happen
+        return [False, "Cannot find unknown page for that image."]
+
+    tref = Test.get_or_none(Test.test_number == test_number)
+    if tref is None:  # should not happen
+        return [False, "Cannot find that test"]
+
+    pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
+    if pref is None:  # should not happen
+        return [False, "Cannot find that page."]
+
+    if pref.scanned:
+        return [
+            False,
+            "Page {} of test {} is already scanned.".format(page_number, test_number),
+        ]
+    # get the group associated with that page
+    gref = pref.group
+    with plomdb.atomic():
+        pref.image = iref
+        pref.scanned = True
+        pref.save()
+        uref.delete_instance()
+        gref.recent_upload = True
+        gref.save()
+        log.info(
+            "Moving unknown page {} to page {} of test {}".format(
+                file_name, page_number, test_number
+            )
+        )
+    self.updateTestAfterUpload(tref)
+
+    return [True]
+
+
+def checkTPage(self, test_number, page_number):
+    """Check whether or not the test/page has been scanned.
+    If so then return [collision message, version, image filename]
+    Else return [unscanned message, version]
+    """
+    tref = Test.get_or_none(Test.test_number == test_number)
+    if tref is None:
+        return [False]
+    pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
+    if pref is None:
+        return [False]
+    if pref.scanned:  # we have a collision
+        return [True, "collision", pref.version, pref.image.file_name]
+    else:  # no collision since the page hasn't been scanned yet
+        return [True, "unscanned", pref.version]
+
+
+# still need fixing up.
 
 
 def getDiscardImage(self, fname):
@@ -155,19 +281,6 @@ def getCollidingImage(self, fname):
         return [False]
     else:
         return [True, cref.file_name]
-
-
-def checkPage(self, test_number, page_number):
-    tref = Test.get_or_none(Test.test_number == test_number)
-    if tref is None:
-        return [False]
-    pref = Page.get_or_none(Page.test == tref, Page.page_number == page_number)
-    if pref is None:
-        return [False]
-    if pref.scanned:  # we have a collision
-        return [True, pref.version, pref.file_name]
-    else:  # no collision since the page hasn't been scanned yet
-        return [True, pref.version]
 
 
 def checkUnknownImage(self, fname):
@@ -208,32 +321,6 @@ def removeCollidingImage(self, fname, nname):
         cref.delete_instance()
     log.info("Removing collision {} to discard {}".format(fname, nname))
     return True
-
-
-def moveUnknownToPage(self, fname, nname, test_number, page_number):
-    uref = UnknownPage.get_or_none(UnknownPage.file_name == fname)
-    if uref is None:
-        return [False]
-    tref = Test.get_or_none(Test.test_number == test_number)
-    if tref is None:
-        return [False]
-    pref = Page.get_or_none(Page.test == tref, Page.page_number == page_number)
-    if pref is None:
-        return [False]
-    with plomdb.atomic():
-        pref.file_name = nname
-        pref.md5sum = uref.md5sum
-        pref.original_name = uref.original_name
-        pref.scanned = True
-        pref.save()
-        uref.delete_instance()
-    log.info(
-        "Moving unknown {} to image {} of tp {}.{}".format(
-            fname, nname, test_number, page_number
-        )
-    )
-    self.checkGroupAllUploaded(pref)
-    return [True]
 
 
 def moveUnknownToCollision(self, fname, nname, test_number, page_number):
@@ -288,47 +375,6 @@ def moveCollidingToPage(self, fname, nname, test_number, page_number, version):
     )
     self.checkGroupAllUploaded(pref)
     return [True]
-
-
-def moveExtraToPage(self, fname, nname, test_number, question):
-    uref = UnknownPage.get_or_none(UnknownPage.file_name == fname)
-    if uref is None:
-        return [False]
-    tref = Test.get_or_none(Test.test_number == test_number)
-    if tref is None:
-        return [False]
-    # find the group to which the new page should belong
-    qref = QGroup.get_or_none(test=tref, question=question)
-    if qref is None:
-        return [False]
-    version = qref.version
-    # get the last page in the test.
-    pref = (
-        Page.select().where(Page.test == tref).order_by(Page.page_number.desc()).get()
-    )
-    # extra pages start with page-number 1001
-    nextpage_number = max(pref.page_number + 1, 1001)
-    with plomdb.atomic():
-        npref = Page.create(
-            test=tref,
-            group=qref.group,
-            gid=qref.group.gid,
-            page_number=nextpage_number,
-            version=version,
-            original_name=uref.original_name,
-            file_name=nname,  # since the file is moved
-            md5sum=uref.md5sum,
-            scanned=True,
-        )
-        uref.delete_instance()
-    log.info(
-        "Saving extra {} as {} tp {}.{} of question {}".format(
-            fname, nname, test_number, nextpage_number, questionNumber
-        )
-    )
-    ## Now invalidate any work on the associated group
-    # now update the group and keep list of files to delete potentially
-    return [True, self.invalidateQGroup(tref, qref.group, delPage=False)]
 
 
 def moveDiscardToUnknown(self, fname, nname):

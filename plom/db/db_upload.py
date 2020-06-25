@@ -100,8 +100,7 @@ def replaceMissingTestPage(
 ):
     # we can actually just call uploadTPage - we just need to set the bundle_name.
     # hw is different because we need to verify no hw pages present already.
-    return self.uploadTPage(
-        self,
+    rval = self.uploadTestPage(
         test_number,
         page_number,
         version,
@@ -110,6 +109,10 @@ def replaceMissingTestPage(
         md5,
         "replacements",
     )
+    if rval[0]:  # success - so trigger an update.
+        tref = Test.get(test_number=test_number)
+        self.updateTestAfterUpload(tref)
+    return rval
 
 
 def uploadHWPage(

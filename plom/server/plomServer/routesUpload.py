@@ -424,24 +424,23 @@ class UploadHandler:
         else:
             return web.Response(status=404)  # couldnt find that test/question
 
-    async def checkPage(self, request):
+    async def checkTPage(self, request):
         data = await request.json()
-        if not validate_required_fields(
-            data, ["user", "token", "test", "page", "images"]
-        ):
+        if not validate_required_fields(data, ["user", "token", "test", "page"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rmsg = self.server.checkPage(data["test"], data["page"])
-        # returns either [True, version, fname], [True, version] or [False]
+        rmsg = self.server.checkTPage(data["test"], data["page"])
+        # returns either [True, "collision", version, fname], [True, "scanned", version] or [False]
         if rmsg[0]:
             with MultipartWriter("images") as mpwriter:
-                mpwriter.append("{}".format(rmsg[1]))
-                if len(rmsg) == 3:
-                    mpwriter.append(open(rmsg[2], "rb"))
+                mpwriter.append("{}".format(rmsg[1]))  # append "collision" or "scanned"
+                mpwriter.append("{}".format(rmsg[2]))  # append "version"
+                if len(rmsg) == 4:  # append the image.
+                    mpwriter.append(open(rmsg[3], "rb"))
             return web.Response(body=mpwriter, status=200)
         else:
             return web.Response(status=404)  # couldnt find that test/question
@@ -718,7 +717,7 @@ class UploadHandler:
         router.add_get("/admin/collidingImage", self.getCollidingImage)
         router.add_get("/admin/questionImages", self.getQuestionImages)
         router.add_get("/admin/testImages", self.getAllTestImages)
-        router.add_get("/admin/checkPage", self.checkPage)
+        router.add_get("/admin/checkTPage", self.checkTPage)
         router.add_delete("/admin/unknownImage", self.removeUnknownImage)
         router.add_delete("/admin/collidingImage", self.removeCollidingImage)
         router.add_put("/admin/unknownToTestPage", self.unknownToTestPage)

@@ -930,11 +930,11 @@ class ManagerMessenger(BaseMessenger):
 
         return imageList
 
-    def checkPage(self, testNumber, pageNumber):
+    def checkTPage(self, testNumber, pageNumber):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/admin/checkPage".format(self.server),
+                "https://{}/admin/checkTPage".format(self.server),
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -944,11 +944,11 @@ class ManagerMessenger(BaseMessenger):
                 verify=False,
             )
             response.raise_for_status()
-            # either [version] or [version, image]
+            # either ["scanned", version] or ["collision", version, image]
             vimg = MultipartDecoder.from_response(response).parts
-            ver = int(vimg[0].content)
-            if len(vimg) == 2:
-                rval = [ver, BytesIO(vimg[1].content).getvalue()]
+            ver = int(vimg[1].content)
+            if len(vimg) == 3:  # just look at length - sufficient for now?
+                rval = [ver, BytesIO(vimg[2].content).getvalue()]
             else:
                 rval = [ver, None]
             # response is [v, None] or [v, image1]

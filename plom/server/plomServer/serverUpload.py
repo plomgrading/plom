@@ -199,8 +199,8 @@ def getAllTestImages(self, testNumber):
     return self.DB.getAllTestImages(testNumber)
 
 
-def checkPage(self, testNumber, pageNumber):
-    return self.DB.checkPage(testNumber, pageNumber)
+def checkTPage(self, testNumber, pageNumber):
+    return self.DB.checkTPage(testNumber, pageNumber)
 
 
 def removeUnknownImage(self, fname):
