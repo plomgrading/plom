@@ -1141,6 +1141,8 @@ class Annotator(QWidget):
             "/home",
             "Image files (*.jpg *.gif " "*.png " "*.xpm" ")",
         )
+        if not os.path.isfile(fileName):
+            return
         if os.path.getsize(fileName) > 200000:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Critical)
