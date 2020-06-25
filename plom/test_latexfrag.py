@@ -9,8 +9,10 @@ from .textools import texFragmentToPNG as processFragment
 
 # TODO: this too: pageNotSubmitted
 
+
 def relativeErr(x, y):
     return float(abs(x - y)) / float(abs(x))
+
 
 f = tempfile.NamedTemporaryFile(delete=False, suffix=".png").name
 
@@ -26,7 +28,9 @@ def test_frag_broken_tex():
 
 
 def test_frag_image_size():
-    imgt = Image.open(BytesIO(pkg_resources.resource_string("plom.server", "target_Q_latex_plom.png")))
+    imgt = Image.open(
+        BytesIO(pkg_resources.resource_string("plom.server", "target_Q_latex_plom.png"))
+    )
 
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
     assert processFragment(frag, f)
@@ -38,13 +42,15 @@ def test_frag_image_size():
     frag = r"$z = \frac{x + 3}{y}$ and lots and lots more, so its much longer."
     assert processFragment(frag, f)
     img = Image.open(f)
-    assert img.width > 2*imgt.width
+    assert img.width > 2 * imgt.width
 
 
 def test_frag_image():
     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
         with open(target.name, "wb") as fh:
-            fh.write(pkg_resources.resource_string("plom.server", "target_Q_latex_plom.png"))
+            fh.write(
+                pkg_resources.resource_string("plom.server", "target_Q_latex_plom.png")
+            )
 
         frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
         assert processFragment(frag, f)

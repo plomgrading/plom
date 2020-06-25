@@ -203,7 +203,8 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
     Args:
         paper_num (int)
         user_name (str): User who did the IDing.
-        sid (str): student id.
+        sid (str, None): student ID.  `None` if the ID page was blank:
+            typically `sname` will then contain some short explanation.
         sname (str): student name.
         checks (bool): by default (True), the paper must be scanned
             and the `username` must match the current owner of the
@@ -259,11 +260,18 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
         uref.last_action = "Returned ID task {}".format(paper_num)
         uref.last_activity = datetime.now()
         uref.save()
-        log.info(
-            'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
-                paper_num, user_name, censorID(sid), censorName(sname)
+        if sid:
+            log.info(
+                'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
+                    paper_num, user_name, censorID(sid), censorName(sname)
+                )
             )
-        )
+        else:
+            log.info(
+                'Paper {} ID\'d by "{}" as "{}" "{}"'.format(
+                    paper_num, user_name, sid, sname
+                )
+            )
     return True, None, None
 
 

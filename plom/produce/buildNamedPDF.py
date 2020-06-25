@@ -65,7 +65,9 @@ def build_all_papers(spec, global_page_version_map, classlist):
             raise ValueError("You must provide a classlist to prename papers")
         if len(classlist) < spec["numberToName"]:
             raise ValueError(
-                "Classlist is too short for {} pre-named papers".format(spec["numberToName"])
+                "Classlist is too short for {} pre-named papers".format(
+                    spec["numberToName"]
+                )
             )
     make_PDF_args = []
     for paper_index in range(1, spec["numberToProduce"] + 1):
@@ -114,7 +116,9 @@ def confirm_processed(spec, msgr, classlist):
             raise ValueError("You must provide a classlist for pre-named papers")
         if len(classlist) < spec["numberToName"]:
             raise ValueError(
-                "Classlist is too short for {} pre-named papers".format(spec["numberToName"])
+                "Classlist is too short for {} pre-named papers".format(
+                    spec["numberToName"]
+                )
             )
     for paper_index in range(1, spec["numberToProduce"] + 1):
         if paper_index <= spec["numberToName"]:
@@ -150,7 +154,9 @@ def identify_prenamed(spec, msgr, classlist):
             raise ValueError("You must provide a classlist to prename papers")
         if len(classlist) < spec["numberToName"]:
             raise ValueError(
-                "Classlist is too short for {} pre-named papers".format(spec["numberToName"])
+                "Classlist is too short for {} pre-named papers".format(
+                    spec["numberToName"]
+                )
             )
     for paper_index in range(1, spec["numberToProduce"] + 1):
         if paper_index <= spec["numberToName"]:

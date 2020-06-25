@@ -63,7 +63,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="Run the Plom client. No arguments = run as normal."
     )
-    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
     parser.add_argument("user", type=str, nargs="?")
     parser.add_argument("password", type=str, nargs="?")
     parser.add_argument(

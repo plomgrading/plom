@@ -358,9 +358,7 @@ class Chooser(QDialog):
                 ErrorMessage("Could not connect to server.").exec_()
                 return
 
-        self.ui.markGBox.setTitle(
-            "Marking information for “{}”".format(spec["name"])
-        )
+        self.ui.markGBox.setTitle("Marking information for “{}”".format(spec["name"]))
         question = self.getQuestion()
         v = self.getv()
         self.ui.pgSB.setVisible(False)
