@@ -49,9 +49,20 @@ before_script:
   # not needed until prediction
   # python3 -m pip install imutils lapsolver opencv-python tensorflow
 
+# for now, static and build are unused, we run all in parallel
 stages:
+  - static_analysis
   - build
   - test
+
+
+job black:
+  stage: test
+  image: "python:3.8"
+  before_script:
+    - pip3 install black
+  script:
+    - black --check --diff plom
 
 
 #job unitTests:

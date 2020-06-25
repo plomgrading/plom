@@ -225,7 +225,6 @@ class BaseMessenger(object):
 
         return response.json()
 
-
     def getInfoGeneral(self):
         """Get some info from pre-0.5.0 server which don't expose the spec.
 
@@ -291,9 +290,7 @@ class BaseMessenger(object):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
-                raise PlomBenignException(
-                    "Server cannot find the class list"
-                ) from None
+                raise PlomBenignException("Server cannot find the class list") from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)

@@ -37,7 +37,7 @@ def info_spec(self):
     if not self.testSpec:
         return False, None
     d = self.testSpec.copy()
-    d.pop('privateSeed')
+    d.pop("privateSeed")
     return True, d
 
 

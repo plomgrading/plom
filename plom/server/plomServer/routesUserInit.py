@@ -3,7 +3,11 @@ import json
 
 from aiohttp import web, MultipartWriter, MultipartReader
 
-from .routeutils import authenticate_by_token, authenticate_by_token_required_fields, no_authentication_only_log_request
+from .routeutils import (
+    authenticate_by_token,
+    authenticate_by_token_required_fields,
+    no_authentication_only_log_request,
+)
 from .routeutils import validate_required_fields, log_request
 from .routeutils import log
 

@@ -25,24 +25,30 @@ import argparse
 from .return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
 from .return_tools import make_canvas_gradefile
 
-canvas_fromfile = 'canvas_from_export.csv'
-canvas_return_tofile = 'canvas_return_codes_for_import.csv'
-canvas_grades_tofile = 'canvas_grades_for_import.csv'
+canvas_fromfile = "canvas_from_export.csv"
+canvas_return_tofile = "canvas_return_codes_for_import.csv"
+canvas_grades_tofile = "canvas_grades_for_import.csv"
 
 # TODO: should get this from project?!
-Default_canvas_test_name = 'Midterm ('  # almost certainly wrong
+Default_canvas_test_name = "Midterm ("  # almost certainly wrong
 
 # TODO: check if former exists and latter does not, and give some
 # basic instructions
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # get commandline args if needed
-    parser = argparse.ArgumentParser(
-        description="Make csv file for upload to Canvas."
+    parser = argparse.ArgumentParser(description="Make csv file for upload to Canvas.")
+    parser.add_argument(
+        "--saltstr", type=str, help="Per-course secret salt string (see docs)"
     )
-    parser.add_argument("--saltstr", type=str, help="Per-course secret salt string (see docs)")
-    parser.add_argument("--findcol", type=str, help='Partial Canvas column name, as detailed as possible (defaults to "{}", see docs)'.format(Default_canvas_test_name))
+    parser.add_argument(
+        "--findcol",
+        type=str,
+        help='Partial Canvas column name, as detailed as possible (defaults to "{}", see docs)'.format(
+            Default_canvas_test_name
+        ),
+    )
 
     args = parser.parse_args()
     if not args.saltstr:
@@ -56,7 +62,8 @@ if __name__ == '__main__':
     else:
         canvas_test_name = args.findcol
 
-    print("""
+    print(
+        """
     *** Warning: this script is "pre-alpha" software ***
 
     You basically shouldn't be running it at all.
@@ -74,16 +81,24 @@ if __name__ == '__main__':
         test.  EDIT THIS SCRIPT TO USE A DIFFERENT COLUMN.
 
     Read "docs/returning_papers.md" before using this.
-    """.format(canvas_fromfile, canvas_return_tofile, canvas_grades_tofile,
-               canvas_test_name))
-    input('Press Enter to continue...')
+    """.format(
+            canvas_fromfile,
+            canvas_return_tofile,
+            canvas_grades_tofile,
+            canvas_test_name,
+        )
+    )
+    input("Press Enter to continue...")
 
     print()
-    sns = canvas_csv_add_return_codes(canvas_fromfile, canvas_return_tofile, saltstr=saltstr)
+    sns = canvas_csv_add_return_codes(
+        canvas_fromfile, canvas_return_tofile, saltstr=saltstr
+    )
 
     print()
     canvas_csv_check_pdf(sns)
 
     print()
-    make_canvas_gradefile(canvas_fromfile, canvas_grades_tofile,
-                          test_parthead=canvas_test_name)
+    make_canvas_gradefile(
+        canvas_fromfile, canvas_grades_tofile, test_parthead=canvas_test_name
+    )

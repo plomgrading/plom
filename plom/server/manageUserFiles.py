@@ -57,7 +57,6 @@ def build_canned_users(number_of_users):
     return user_list
 
 
-
 def save_users(username_hash_dict, user_hash_login_json_path):
     """Saves the user hash login info to the file at user_hash_login_json_path.
 
@@ -108,12 +107,20 @@ def check_username_password_format(username_password_dict):
 
         # basic sanity check of username
         if not (len(username) >= 4 and username.isalnum()):
-            print("Usernames must be at least 4 alphanumeric characters. Username '{}' is problematic.".format(username))
+            print(
+                "Usernames must be at least 4 alphanumeric characters. Username '{}' is problematic.".format(
+                    username
+                )
+            )
             return False
 
         # basic password checks
         if len(password) < 4 or username in password:
-            print("Passwords must be at least 4 characters and cannot contain the username. Password of '{}' is problematic.".format(username))
+            print(
+                "Passwords must be at least 4 characters and cannot contain the username. Password of '{}' is problematic.".format(
+                    username
+                )
+            )
             return False
 
     return True
@@ -150,7 +157,9 @@ def check_usernames_requirements(username_password_dict):
     """
 
     # check we have manager, scanner and reviewer + at least 1 regular user.
-    if (len(username_password_dict) < minimum_number_of_required_users or not all(user in username_password_dict for user in list_of_required_users)):
+    if len(username_password_dict) < minimum_number_of_required_users or not all(
+        user in username_password_dict for user in list_of_required_users
+    ):
         return False
 
     return True
@@ -197,10 +206,14 @@ def parse_user_list(user_file_path):
     csv_headers, username_password_dict = return_csv_info(user_file_path)
 
     if not check_user_file_header(csv_headers):
-        print('Malformed header in user_file_path - should have 2 columns with headers "user" and "password". Aborting.')
+        print(
+            'Malformed header in user_file_path - should have 2 columns with headers "user" and "password". Aborting.'
+        )
         exit(1)
     elif not check_usernames_requirements(username_password_dict):
-        print("Userlist must contain 'manager', 'scanner', 'reviewer' and at least 1 regular user.")
+        print(
+            "Userlist must contain 'manager', 'scanner', 'reviewer' and at least 1 regular user."
+        )
         exit(1)
     elif not check_username_password_format(username_password_dict):
         print("Username and passwords are not in the required format.")
@@ -209,5 +222,3 @@ def parse_user_list(user_file_path):
         username_hash_dict = return_user_hash(username_password_dict)
 
     save_users(username_hash_dict, user_hash_login_json_path)
-
-

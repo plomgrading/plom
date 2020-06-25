@@ -84,7 +84,9 @@ def buildExamDatabaseFromSpec(spec, db):
             else:
                 # TODO: or RuntimeError?
                 raise ValueError(
-                    'problem with spec: expected "fix" or "shuffle" but got "{}".'.format(spec["question"][gs]["select"])
+                    'problem with spec: expected "fix" or "shuffle" but got "{}".'.format(
+                        spec["question"][gs]["select"]
+                    )
                 )
             if db.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
                 status += " Q{}{}".format(gs, vstr)
