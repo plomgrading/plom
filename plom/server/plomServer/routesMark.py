@@ -1,4 +1,3 @@
-import os
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
@@ -23,8 +22,8 @@ class MarkHandler:
             request (aiohttp.web_response.Response): GET /MK/maxMark request object.
 
         Returns:
-            aiohttp.web_response.Response: Response object which has the maximum mark for 
-                the question.
+            aiohttp.web_response.Response: Response object which has the
+                maximum mark for the question.
         """
         question_number = data["q"]
         test_version = data["v"]
@@ -58,8 +57,8 @@ class MarkHandler:
             request (aiohttp.web_request.Request): Request of type GET /MK/progress.
 
         Returns:
-            aiohttp.web_response.Response: Includes the number of marked tasks and the total 
-                number of marked/unmarked tasks. 
+            aiohttp.web_response.Response: Includes the number of marked
+                tasks and the total number of marked/unmarked tasks.
         """
         return web.json_response(
             self.server.MprogressCount(data["q"], data["v"]), status=200
@@ -68,19 +67,20 @@ class MarkHandler:
     # @routes.get("/MK/tasks/complete")
     @authenticate_by_token_required_fields(["user", "q", "v"])
     def MgetDoneTasks(self, data, request):
-        """Retrieve data for questions which have already been graded by the user. 
+        """Retrieve data for questions which have already been graded by the user.
 
         Respond with status 200.
 
         Args:
-            data (dict): Dictionary including user data in addition to question number and 
-                test version.
+            data (dict): Dictionary including user data in addition to
+                question number and test version.
             request (aiohttp.web_response.Response): GET /MK/tasks/complete request object.
 
         Returns:
-            aiohttp.web_response.Response: A response object including a list of lists with the already 
-                processed questions. The list invloves the question string, question mark, time spent 
-                grading and tag string. 
+            aiohttp.web_response.Response: A response object including a
+                list of lists with the already processed questions. The
+                list involves the question string, question mark, time
+                spent grading and tag string.
         """
         # return the completed list
         return web.json_response(
@@ -95,8 +95,8 @@ class MarkHandler:
         Respond with status 200/204.
 
         Args:
-            data (dict): Dictionary including user data in addition to question number and 
-                test version.
+            data (dict): Dictionary including user data in addition to
+                question number and test version.
             request (aiohttp.web_request.Request): Request of type GET /MK/tasks/available.
 
         Returns:
@@ -129,10 +129,9 @@ class MarkHandler:
             aiohttp.web_fileresponse.FileResponse: A response which includes the image for
                 the latex string.
         """
-        
         latex_response = self.server.MlatexFragment(data["user"], data["fragment"])
         latex_valid = latex_response[0]
-        
+
         if latex_valid:
             latex_image_path = latex_response[1]
             return web.FileResponse(latex_image_path, status=200)
@@ -153,7 +152,7 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: A response object with includes the multipart objects
-                which wrap this task/question's images. 
+                which wrap this task/question's images.
         """
 
         task_code = request.match_info["task"]           # Task/question code string.
@@ -163,7 +162,7 @@ class MarkHandler:
         if task_available:  # return [True, tag, filename1, filename2,...]
             task_tags = claimed_task[1]
             task_page_paths = claimed_task[2:]
-            
+
             with MultipartWriter("imageAndTags") as multipart_writer:
                 multipart_writer.append(task_tags)  # append tags as raw text.
                 for file_name in task_page_paths:
@@ -176,7 +175,7 @@ class MarkHandler:
     @authenticate_by_token_required_fields(["user"])
     def MdidNotFinishTask(self, data, request):
         """Assign tasks that are not graded (untouched) as unfinished in the database.
-        
+
         Respond with status 200.
 
         Args:
@@ -202,9 +201,10 @@ class MarkHandler:
         Log activity.
 
         Args:
-            request (aiohttp.web_request.Request): Request of type PUT /MK/tasks/`question code` which 
-                includes a multipart object indication the marked test data. This request will include 
-                3 parts including [metadata, image, plom-file].
+            request (aiohttp.web_request.Request): Request of type
+                PUT /MK/tasks/`question code` which includes a multipart
+                object indication the marked test data. This request will
+                include 3 parts including [metadata, image, plom-file].
 
         Returns:
             aiohttp.web_response.Response: Responses with a list including the number of
@@ -315,8 +315,8 @@ class MarkHandler:
         # 4. Marked question plom data path, ie .plom type files.
 
         # Format is either:
-        # [True, num_pages, original_fname1, original_fname2, ... original_fname#num_pages, ] or 
-        # [True, num_pages, original_fname1,..,original_fname#num_pages, annotated_fname#1, ... annotated_fname#num_pages , plomdat] or 
+        # [True, num_pages, original_fname1, original_fname2, ... original_fname#num_pages, ] or
+        # [True, num_pages, original_fname1,..,original_fname#num_pages, annotated_fname#1, ... annotated_fname#num_pages , plomdat] or
         # [False, error]
 
         task_image_success = task_image_results[0]
@@ -343,8 +343,9 @@ class MarkHandler:
 
         Args:
             data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): Request of type GET /MK/originalImages/`task code` 
-                which the task code is extracted from.
+            request (aiohttp.web_request.Request): Request of type
+                GET /MK/originalImages/`task code` which the task code
+                is extracted from.
 
         Returns:
             aiohttp.web_response.Response: A response object with includes the multipart objects
@@ -358,7 +359,7 @@ class MarkHandler:
         # returns either [True, fname1, fname2,... ] or [False]
         if image_return_success:
             original_image_paths = get_image_results[1:]
-            
+
             with MultipartWriter("images") as multipart_writer:
                 for file_nam in original_image_paths:
                     multipart_writer.append(open(file_nam, "rb"))
@@ -404,15 +405,15 @@ class MarkHandler:
             request (aiohttp.web_request.Request): GET /MK/whole/`test_number`/`question_number`.
 
         Returns:
-            aiohttp.web_response.Response: Responds with a multipart writer which includes all 
-                the images for the exam which includes this question.
+            aiohttp.web_response.Response: Responds with a multipart
+                writer which includes all the images for the exam which
+                includes this question.
         """
-
         test_number = request.match_info["number"]
         question_number = request.match_info["question"]
         # This response is a list which includes the following:
         # 1. True/False for operation status.
-        # 2. A list of lists where each inner list includes: 
+        # 2. A list of lists where each inner list includes:
         #   [test_number, task_number, True/False for wether the task/page is graded or not]
         # 3. From the 3rd element onward, we have the string paths for each page of the paper in server.
         whole_paper_response = self.server.MgetWholePaper(test_number, question_number)
@@ -442,7 +443,6 @@ class MarkHandler:
             aiohttp.web_response.Response: A response which includes a dictionary
                 for the highest mark possible for each question of the exam.
         """
-        
         return web.json_response(self.server.MgetAllMax(), status=200)
 
     # @routes.patch("/MK/review")
@@ -494,8 +494,8 @@ class MarkHandler:
         Respond with status 200/401.
 
         Args:
-            data (dict): Dictionary including user data in addition to the rearranged image 
-                references.
+            data (dict): Dictionary including user data in addition to
+                the rearranged image references.
             request (aiohttp.web_request.Request): Request of type PATCH /MK/shuffle/`task code`.
 
         Returns:
