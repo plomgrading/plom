@@ -482,7 +482,7 @@ class Annotator(QWidget):
                 Qt.Key_F1: lambda: self.viewWholePaper(),
                 Qt.Key_F10: lambda: self.ui.hamMenuButton.animateClick(),
             }
-        else :
+        else:
             return {
                 # home-row
                 Qt.Key_H: lambda: self.ui.textButton.animateClick(),
