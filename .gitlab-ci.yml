@@ -57,6 +57,10 @@ stages:
 
 job black:
   stage: static_analysis
+  image: "python:3.8"
+  before_script:
+    - echo "Overriding before_script"
+    - pip3 install black
   script:
     - black --check plom
 
