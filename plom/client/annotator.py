@@ -1141,19 +1141,20 @@ class Annotator(QWidget):
             "/home",
             "Image files (*.jpg *.gif " "*.png " "*.xpm" ")",
         )
-        if os.path.isfile(fileName):
-            if os.path.getsize(fileName) > 200000:
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Critical)
-                msg.setWindowTitle("Image Too large.")
-                msg.setText(
-                    "Max image size (200kB) reached. Please try again "
-                    "with a smaller image."
-                )
-                msg.setStandardButtons(QMessageBox.Ok)
-                msg.exec()
-            else:
-                self.setToolMode("image", Qt.ClosedHandCursor, fileName)
+        if not os.path.isfile(fileName):
+            return
+        if os.path.getsize(fileName) > 200000:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setWindowTitle("Image Too large.")
+            msg.setText(
+                "Max image size (200kB) reached. Please try again "
+                "with a smaller image."
+            )
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
+        else:
+            self.setToolMode("image", Qt.ClosedHandCursor, fileName)
 
     def setButtons(self):
         """ Connects buttons to their corresponding functions. """
