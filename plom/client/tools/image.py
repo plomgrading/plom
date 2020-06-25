@@ -5,6 +5,7 @@ from PyQt5.QtCore import (
     QBuffer,
     QIODevice,
     QPoint,
+    pyqtProperty,
 )
 from PyQt5.QtGui import QImage, QPixmap, QPen, QColor
 from PyQt5.QtWidgets import (
@@ -83,23 +84,40 @@ class ImageItemObject(QGraphicsObject):
         """
         super(ImageItemObject, self).__init__()
         self.ci = ImageItem(midPt, image, self, scale, border, data)
-        self.anim = QPropertyAnimation(self, b"scale")
+        self.anim = QPropertyAnimation(self, b"thickness")
+        self.border = border
 
     def flash_undo(self):
         """Animates the object in an undo sequence."""
         self.anim.setDuration(200)
-        self.anim.setStartValue(1)
-        self.anim.setKeyValueAt(2, 8)
+        if self.border:
+            self.anim.setStartValue(4)
+        else:
+            self.anim.setStartValue(0)
+        self.anim.setKeyValueAt(0.5, 8)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
         """Animates the object in a redo sequence. """
         self.anim.setDuration(200)
-        self.anim.setStartValue(3)
-        self.anim.setKeyValueAt(2, 8)
-        self.anim.setEndValue(3)
+        self.anim.setStartValue(0)
+        self.anim.setKeyValueAt(0.5, 8)
+        if self.border:
+            self.anim.setEndValue(4)
+        else:
+            self.anim.setEndValue(0)
         self.anim.start()
+
+    @pyqtProperty(int)
+    def thickness(self):
+        return self.ci.thick
+
+    @thickness.setter
+    def thickness(self, value):
+        print("Ping ", value)
+        self.ci.thick = value
+        self.ci.update()
 
 
 class ImageItem(QGraphicsPixmapItem):
@@ -133,6 +151,7 @@ class ImageItem(QGraphicsPixmapItem):
         self.setScale(scale)
         self.border = border
         self.data = data
+        self.thick = 0
 
     def paint(self, painter, option, widget=None):
         """
@@ -141,9 +160,7 @@ class ImageItem(QGraphicsPixmapItem):
         super().paint(painter, option, widget)
         if self.border:
             painter.save()
-            pen = QPen(QColor("red"))
-            pen.setWidth(4)
-            painter.setPen(pen)
+            painter.setPen(QPen(QColor("red"), self.thick))
             painter.drawRect(self.boundingRect())
             painter.restore()
 
