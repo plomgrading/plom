@@ -27,17 +27,19 @@ class MarkHandler:
         """
         question_number = data["q"]
         test_version = data["v"]
-        valid_question, maximum_mark_response = self.server.MgetQuestionMax(question_number, test_version)
+        valid_question, maximum_mark_response = self.server.MgetQuestionMax(
+            question_number, test_version
+        )
 
         if valid_question:
             return web.json_response(maximum_mark_response, status=200)
-        elif maximum_mark_response == "QE":         # Check if the question was out of range
+        elif maximum_mark_response == "QE":  # Check if the question was out of range
             # pg out of range
             return web.Response(
                 text="Question out of range - please check before trying again.",
                 status=416,
             )
-        elif maximum_mark_response == "VE":         # Check if the version was out of range
+        elif maximum_mark_response == "VE":  # Check if the version was out of range
             # version our of range
             return web.Response(
                 text="Version out of range - please check before trying again.",
@@ -155,7 +157,7 @@ class MarkHandler:
                 which wrap this task/question's images.
         """
 
-        task_code = request.match_info["task"]           # Task/question code string.
+        task_code = request.match_info["task"]  # Task/question code string.
         claimed_task = self.server.MclaimThisTask(data["user"], task_code)
         task_available = claimed_task[0]
 
@@ -215,7 +217,6 @@ class MarkHandler:
 
         reader = MultipartReader.from_response(request)
 
-
         # Dealing with the metadata.
         task_metadata_object = await reader.next()
 
@@ -243,8 +244,8 @@ class MarkHandler:
         if not self.server.validate(task_metadata["user"], task_metadata["token"]):
             return web.Response(status=401)
 
-        comments = task_metadata["comments"]       # List of comments.
-        task_code = request.match_info["task"]      # Task code.
+        comments = task_metadata["comments"]  # List of comments.
+        task_code = request.match_info["task"]  # Task code.
 
         # Note: if user isn't validated, we don't parse their binary junk
         # TODO: is it safe to abort during a multi-part thing?
@@ -326,7 +327,9 @@ class MarkHandler:
                 task_num_images = task_image_results[1]
                 task_images_list = task_image_results[2:]
 
-                multipart_writer.append("{}".format(task_num_images))  # send 'n' as string
+                multipart_writer.append(
+                    "{}".format(task_num_images)
+                )  # send 'n' as string
 
                 for file_name in task_images_list:
                     multipart_writer.append(open(file_name, "rb"))
@@ -391,7 +394,6 @@ class MarkHandler:
             return web.Response(status=200)
         else:
             return web.Response(status=409)  # Task does not belong to this user.
-
 
     # @routes.get("/MK/whole/{number}")
     @authenticate_by_token_required_fields([])
@@ -505,7 +507,9 @@ class MarkHandler:
 
         task_code = request.match_info["task"]
         # A list with a single boolean indicating if the operation was successful
-        shuffle_images_response = self.server.MshuffleImages(data["user"], task_code, data["imageRefs"])
+        shuffle_images_response = self.server.MshuffleImages(
+            data["user"], task_code, data["imageRefs"]
+        )
         shuffle_images_status = shuffle_images_response[0]
 
         if shuffle_images_status:
