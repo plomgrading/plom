@@ -90,7 +90,7 @@ class ImageItemObject(QGraphicsObject):
     def flash_undo(self):
         """Animates the object in an undo sequence."""
         self.anim.setDuration(200)
-        if self.border:
+        if self.ci.border:
             self.anim.setStartValue(4)
         else:
             self.anim.setStartValue(0)
@@ -103,7 +103,7 @@ class ImageItemObject(QGraphicsObject):
         self.anim.setDuration(200)
         self.anim.setStartValue(0)
         self.anim.setKeyValueAt(0.5, 8)
-        if self.border:
+        if self.ci.border:
             self.anim.setEndValue(4)
         else:
             self.anim.setEndValue(0)
@@ -149,7 +149,6 @@ class ImageItem(QGraphicsPixmapItem):
         self.animateFlag = False
         self.parent = parent
         self.setScale(scale)
-        self.border = border
         self.data = data
         self.thick = 0
 
@@ -158,7 +157,7 @@ class ImageItem(QGraphicsPixmapItem):
         Paints the scene by adding a red border around the image if applicable.
         """
         super().paint(painter, option, widget)
-        if self.border:
+        if self.thick > 0:
             painter.save()
             painter.setPen(QPen(QColor("red"), self.thick))
             painter.drawRect(self.boundingRect())
@@ -211,6 +210,11 @@ class ImageItem(QGraphicsPixmapItem):
             self.setScale(scale / 100)
             if border is not self.border:
                 self.border = border
+                if self.border:  # update border thickness
+                    self.thick = 4
+                else:
+                    self.thick = 0
+                self.update()  # trigger update
 
 
 class ImageSettingsDialog(QDialog):
