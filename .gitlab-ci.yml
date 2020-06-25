@@ -50,8 +50,15 @@ before_script:
   # python3 -m pip install imutils lapsolver opencv-python tensorflow
 
 stages:
+  - static_analysis
   - build
   - test
+
+
+job black:
+  stage: static_analysis
+  script:
+    - black --check plom
 
 
 #job unitTests:
