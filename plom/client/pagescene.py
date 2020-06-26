@@ -14,7 +14,6 @@ from PyQt5.QtGui import (
 from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, QUndoStack, QMessageBox
 
 from plom import AnnFontSizePts, ScenePixelHeight
-
 # Import all the tool commands for undo/redo stack.
 from .tools import *
 
@@ -103,6 +102,7 @@ class UnderlyingImage(QGraphicsItemGroup):
     """
     A class for the image of the underlying page being marked.
     """
+
     def __init__(self, imageNames):
         """
         Initialize a new underlying image.
@@ -474,7 +474,7 @@ class PageScene(QGraphicsScene):
 
         pt = event.scenePos()  # grab the location of the mouse-click
 
-        self.blurb = TextItem(self, self.fontSize) # build the textitem
+        self.blurb = TextItem(self, self.fontSize)  # build the textitem
         self.blurb.setPlainText(self.commentText)
         self.blurb.contents = self.commentText  # for pickling
         # move to correct point - update if only text no delta
@@ -494,9 +494,8 @@ class PageScene(QGraphicsScene):
             # return blurb to previous state
             self.blurb.setTextInteractionFlags(prevState)
         else:
-            command = CommandGDT(self, pt, self.commentDelta, self.blurb,
-                                 self.fontSize)
-            self.undoStack.push(command) # push the delta onto the undo stack.
+            command = CommandGDT(self, pt, self.commentDelta, self.blurb, self.fontSize)
+            self.undoStack.push(command)  # push the delta onto the undo stack.
 
     def mousePressCross(self, event):
         """
@@ -521,7 +520,7 @@ class PageScene(QGraphicsScene):
             command = CommandQMark(self, pt)
         else:
             command = CommandCross(self, pt)
-        self.undoStack.push(command) # push onto the stack.
+        self.undoStack.push(command)  # push onto the stack.
 
     def mousePressDelta(self, event):
         """
@@ -716,8 +715,7 @@ class PageScene(QGraphicsScene):
             msg.setIcon(QMessageBox.Information)
             msg.setWindowTitle("Image Information")
             msg.setText(
-                "You can double-click on an Image to modify its scale and "
-                "border."
+                "You can double-click on an Image to modify its scale and " "border."
             )
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
@@ -990,7 +988,7 @@ class PageScene(QGraphicsScene):
     def unpickleImage(self, X):
         """ Unpickle an ImageItemObject and add it to scene. """
         if len(X) == 5:
-            #extract data from encoding
+            # extract data from encoding
             data = QByteArray().fromBase64(
                 bytes(X[2][2 : len(X[2]) - 2], encoding="utf-8")
             )
