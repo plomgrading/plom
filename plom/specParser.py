@@ -11,38 +11,6 @@ class SpecParser:
         # read the whole spec toml file into a dict
         self.spec = toml.load(specFileName)
 
-    def printSpec(self):
-        """Print out the specification provided it is valid"""
-        print("Verified test specification:")
-        print("\tName of test = ", self.spec["name"])
-        print("\tLong name of test = ", self.spec["longName"])
-        print("\tNumber of source versions = ", self.spec["numberOfVersions"])
-        print(
-            "\tPublic code (to prevent project collisions) = ", self.spec["publicCode"]
-        )
-        print("\tPrivate random seed (for randomisation) = ", self.spec["privateSeed"])
-        print("\tNumber of tests to produce = ", self.spec["numberToProduce"])
-        print(
-            "\tNumber of those to be printed with names = ", self.spec["numberToName"]
-        )
-        print("\tNumber of pages = ", self.spec["numberOfPages"])
-        print("\tIDpages = ", self.spec["idPages"]["pages"])
-        print("\tDo not mark pages = ", self.spec["doNotMark"]["pages"])
-        print("\tNumber of questions to mark = ", self.spec["numberOfQuestions"])
-        tot = 0
-        for g in range(self.spec["numberOfQuestions"]):
-            gs = str(g + 1)
-            tot += self.spec["question"][gs]["mark"]
-            print(
-                "\tQuestion.{} = pages {} = selected as {} = worth {} marks".format(
-                    gs,
-                    self.spec["question"][gs]["pages"],
-                    self.spec["question"][gs]["select"],
-                    self.spec["question"][gs]["mark"],
-                )
-            )
-        print("\tTest total = {} marks".format(tot))
-
 
 class SpecVerifier:
     """Verify Plom exam specifications.
@@ -67,6 +35,27 @@ class SpecVerifier:
     ...    }
     ... }
     >>> sv = SpecVerifier(spec)
+
+    Here `sv` is an object representing a Plom exam specification:
+    >>> sv   # doctest: +ELLIPSIS
+    <specParser.SpecVerifier object at 0x...>
+
+    >>> print(sv)
+    Plom exam specification:
+      Name of test = plomdemo
+      Long name of test = Midterm Demo using Plom
+      Number of source versions = 2
+      Number of tests to produce = 20
+      Number of those to be printed with names = 10
+      Number of pages = 6
+      IDpages = [1]
+      Do not mark pages = [2]
+      Number of questions to mark = 3
+        Question.1: pages [3], selected as shuffle, worth 5 marks
+        Question.2: pages [4], selected as fix, worth 10 marks
+        Question.3: pages [5, 6], selected as shuffle, worth 10 marks
+      Test total = 25 marks
+
 
     We can verify that this input is valid:
     >>> sv.verifySpec()     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -99,6 +88,41 @@ class SpecVerifier:
     def from_toml_file(cls, fname="testSpec.toml"):
         """Initialize a SpecVerifier from a toml file."""
         return cls(toml.load(fname))
+
+    def __str__(self):
+        s = "Plom exam specification:\n  "
+        s += "\n  ".join(
+            (
+                "Name of test = {}".format(self.spec["name"]),
+                "Long name of test = {}".format(self.spec["longName"]),
+                "Number of source versions = {}".format(self.spec["numberOfVersions"]),
+                # "Public code (to prevent project collisions) = {}".format(self.spec["publicCode"]),
+                # "Private random seed (for randomisation) = {}".format(self.spec["privateSeed"]),
+                "Number of tests to produce = {}".format(self.spec["numberToProduce"]),
+                "Number of those to be printed with names = {}".format(
+                    self.spec["numberToName"]
+                ),
+                "Number of pages = {}".format(self.spec["numberOfPages"]),
+                "IDpages = {}".format(self.spec["idPages"]["pages"]),
+                "Do not mark pages = {}".format(self.spec["doNotMark"]["pages"]),
+                "Number of questions to mark = {}".format(
+                    self.spec["numberOfQuestions"]
+                ),
+            )
+        )
+        s += "\n"
+        tot = 0
+        for g in range(self.spec["numberOfQuestions"]):
+            gs = str(g + 1)
+            tot += self.spec["question"][gs]["mark"]
+            s += "    Question.{}: pages {}, selected as {}, worth {} marks\n".format(
+                gs,
+                self.spec["question"][gs]["pages"],
+                self.spec["question"][gs]["select"],
+                self.spec["question"][gs]["mark"],
+            )
+        s += "  Test total = {} marks".format(tot)
+        return s
 
     def verifySpec(self):
         """Check that spec contains required attributes.
