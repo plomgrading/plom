@@ -82,7 +82,11 @@ class SpecVerifier:
     >>> sv.checkCodes()
     WARNING - privateSeed is already set. Not replacing this.
     WARNING - publicCode is already set. Not replacing this.
+
+    Write the result for the server to find on disk:
+    >>> sv.saveVerifiedSpec()     # doctest: +SKIP
     """
+
     def __init__(self, d):
         """Initialize a SpecVerifier from a dict.
 
