@@ -67,9 +67,18 @@ class SpecVerifier:
            }
         }
     """
-    def __init__(self, fname="testSpec.toml"):
-        # read the whole spec toml file into a dict - it will have single key = "plom" with value being a dict
-        self.spec = toml.load(fname)
+    def __init__(self, d):
+        """Initialize a SpecVerifier from a dict.
+
+        Args:
+            d (dict): an exam specification.
+        """
+        self.spec = d
+
+    @classmethod
+    def from_toml_file(cls, fname="testSpec.toml"):
+        """Initialize a SpecVerifier from a toml file."""
+        return cls(toml.load(fname))
 
     def verifySpec(self):
         # check that spec contains required attributes
