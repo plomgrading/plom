@@ -264,128 +264,155 @@ def checkTPage(self, test_number, page_number):
         return [True, "unscanned", pref.version]
 
 
-# still need fixing up.
+def removeUnknownImage(self, file_name):
+    iref = Image.get_or_none(file_name=file_name)
+    if iref is None:  # should not happen
+        return [False, "Cannot find image"]
+    uref = iref.upages[0]
+    if uref is None:  # should not happen
+        return [False, "Cannot find unknown page for that image."]
 
-
-def getDiscardImage(self, fname):
-    dref = DiscardedPage.get_or_none(DiscardedPage.file_name == fname)
-    if dref is None:
-        return [False]
-    else:
-        return [True, dref.file_name]
-
-
-def getCollidingImage(self, fname):
-    cref = CollidingPage.get_or_none(CollidingPage.file_name == fname)
-    if cref is None:
-        return [False]
-    else:
-        return [True, cref.file_name]
-
-
-def checkUnknownImage(self, fname):
-    uref = UnknownPage.get_or_none(UnknownPage.file_name == fname)
-    if uref is None:
-        return None
-    return [uref.file_name, uref.original_name, uref.md5sum]
-
-
-def checkCollidingImage(self, fname):
-    cref = CollidingPage.get_or_none(CollidingPage.file_name == fname)
-    if cref is None:
-        return None
-    return [cref.file_name, cref.original_name, cref.md5sum]
-
-
-def removeUnknownImage(self, fname, nname):
-    uref = UnknownPage.get_or_none(UnknownPage.file_name == fname)
-    if uref is None:
-        return False
     with plomdb.atomic():
-        DiscardedPage.create(
-            file_name=nname, original_name=uref.original_name, md5sum=uref.md5sum
-        )
+        DiscardedPage.create(image=iref, reason="User discarded unknown page")
         uref.delete_instance()
-    log.info("Removing unknown {} to discard {}".format(fname, nname))
-    return True
-
-
-def removeCollidingImage(self, fname, nname):
-    cref = CollidingPage.get_or_none(file_name=fname)
-    if cref is None:
-        return False
-    with plomdb.atomic():
-        DiscardedPage.create(
-            file_name=nname, original_name=cref.original_name, md5sum=cref.md5sum
-        )
-        cref.delete_instance()
-    log.info("Removing collision {} to discard {}".format(fname, nname))
-    return True
-
-
-def moveUnknownToCollision(self, fname, nname, test_number, page_number):
-    uref = UnknownPage.get_or_none(UnknownPage.file_name == fname)
-    if uref is None:
-        return [False]
-    tref = Test.get_or_none(Test.test_number == test_number)
-    if tref is None:
-        return [False]
-    pref = Page.get_or_none(Page.test == tref, Page.page_number == page_number)
-    if pref is None:
-        return [False]
-    with plomdb.atomic():
-        CollidingPage.create(
-            page=pref,
-            original_name=uref.original_name,
-            file_name=nname,
-            md5sum=uref.md5sum,
-        )
-        uref.delete_instance()
-    log.info(
-        "Moving unknown {} to collision {} of tp {}.{}".format(
-            fname, nname, test_number, page_number
-        )
-    )
+    log.info("Discarding unknown image {}".format(file_name))
     return [True]
 
 
-def moveCollidingToPage(self, fname, nname, test_number, page_number, version):
-    cref = CollidingPage.get_or_none(CollidingPage.file_name == fname)
-    if cref is None:
+def getDiscardImage(self, file_name):
+    # this really just confirms that the file_name belongs to an discard
+    iref = Image.get_or_none(file_name=file_name)
+    if iref is None:
         return [False]
-    tref = Test.get_or_none(Test.test_number == test_number)
-    if tref is None:
-        return [False]
-    pref = Page.get_or_none(
-        Page.test == tref, Page.page_number == page_number, Page.version == version
-    )
-    if pref is None:
-        return [False]
-    with plomdb.atomic():
-        pref.file_name = nname
-        pref.md5sum = cref.md5sum
-        pref.original_name = cref.original_name
-        pref.scanned = True
-        pref.save()
-        cref.delete_instance()
-    log.info(
-        "Collision {} replacing tpv {}.{}.{} as {}".format(
-            fname, test_number, page_number, version, nname
-        )
-    )
-    self.checkGroupAllUploaded(pref)
-    return [True]
-
-
-def moveDiscardToUnknown(self, fname, nname):
-    dref = DiscardedPage.get_or_none(file_name=fname)
+    dref = iref.discards[0]
     if dref is None:
         return [False]
+    else:
+        return [True, dref.image.file_name]
+
+
+def moveDiscardToUnknown(self, file_name):
+    iref = Image.get_or_none(file_name=file_name)
+    if iref is None:  # should not happen
+        return [False, "Cannot find image"]
+    dref = iref.discards[0]
+    if dref is None:  # should not happen
+        return [False, "Cannot find discard page for that image."]
+
     with plomdb.atomic():
-        uref = UnknownPage.create(
-            original_name=dref.original_name, file_name=nname, md5sum=dref.md5sum
-        )
-        uref.save()
+        UnknownPage.create(image=iref, order=1)  # we have lost order information.
         dref.delete_instance()
-    log.info("Moving discard {} back to unknown {}".format(fname, nname))
+    log.info("Moving discarded image {} to unknown image".format(file_name))
+    return [True]
+
+
+def moveUnknownToCollision(self, file_name, test_number, page_number):
+    iref = Image.get_or_none(file_name=file_name)
+    if iref is None:  # should not happen
+        return [False, "Cannot find image"]
+    uref = iref.upages[0]
+    if uref is None:  # should not happen
+        return [False, "Cannot find unknown page for that image."]
+
+    # find the test and the tpage
+    tref = Test.get_or_none(Test.test_number == test_number)
+    if tref is None:
+        return [False]
+    pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
+    if pref is None:
+        return [False, "Cannot find that page"]
+    with plomdb.atomic():
+        CollidingPage.create(image=iref, tpage=pref)
+        uref.delete_instance()
+    log.info(
+        "Moving unknown {} to collision of tp {}.{}".format(
+            file_name, test_number, page_number
+        )
+    )
+    return [True]
+
+
+def getCollidingImage(self, file_name):
+    # this really just confirms that the file_name belongs to an collidingpage
+    iref = Image.get_or_none(file_name=file_name)
+    if iref is None:
+        return [False]
+    cref = iref.collisions[0]
+    if cref is None:
+        return [False]
+    else:
+        return [True, cref.image.file_name]
+
+
+def removeCollidingImage(self, file_name):
+    # this really just confirms that the file_name belongs to an collidingpage
+    iref = Image.get_or_none(file_name=file_name)
+    if iref is None:
+        return [False]
+    cref = iref.collisions[0]
+    if cref is None:
+        return [False]
+
+    pref = cref.tpage
+
+    with plomdb.atomic():
+        DiscardedPage.create(
+            image=iref,
+            reason="Removed collision with {}.{}".format(
+                pref.test.test_number, pref.page_number
+            ),
+        )
+        cref.delete_instance()
+    log.info(
+        "Removing collision {} with {}.{}".format(
+            file_name, pref.test.test_number, pref.page_number
+        )
+    )
+    return [True]
+
+
+def moveCollidingToTPage(self, file_name, test_number, page_number, version):
+    # this really just confirms that the file_name belongs to an collidingpage
+    iref = Image.get_or_none(file_name=file_name)
+    if iref is None:
+        return [False, "Cannot find image with name {}".format(file_name)]
+    cref = iref.collisions[0]
+    if cref is None:
+        return [False, "Cannot find collision with name {}".format(file_name)]
+
+    tref = Test.get_or_none(Test.test_number == test_number)
+    if tref is None:
+        return [False, "Cannot find test number {}".format(test_number)]
+    pref = TPage.get_or_none(
+        TPage.test == tref, TPage.page_number == page_number, TPage.version == version
+    )
+    if pref is None:
+        return [
+            False,
+            "Cannot find page {} of test {}".format(page_number, test_number),
+        ]
+    oref = pref.image  # the original page image for this tpage.
+    # get the group of that tpage - so we can trigger an update.
+    gref = pref.group
+
+    # now create a discardpage with oref, and put iref into the tpage, delete the collision.
+    with plomdb.atomic():
+        DiscardedPage.create(
+            image=oref,
+            reason="Replaced original image {} of {}.{} with new {}".format(
+                file_name, pref.test.test_number, pref.page_number, oref.file_name
+            ),
+        )
+        pref.image = iref
+        pref.save()
+        gref.recent_upload = True
+        gref.save()
+        cref.delete_instance()
+    log.info(
+        "Collision {} replacing tpv {}.{}.{}".format(
+            file_name, test_number, page_number, version
+        )
+    )
+    # trigger an update since underlying image changed.
+    self.updateTestAfterUpload(tref)
     return [True]

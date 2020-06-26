@@ -856,7 +856,7 @@ class Manager(QWidget):
         page = int(self.collideModel.item(r, 4).text())
         version = int(self.collideModel.item(r, 5).text())
 
-        vop = managerMessenger.getPageImage(test, page, version)
+        vop = managerMessenger.getTPageImage(test, page, version)
         vcp = managerMessenger.getCollidingImage(fname)
         if vop is None or vcp is None:
             return

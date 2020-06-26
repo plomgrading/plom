@@ -203,47 +203,38 @@ def checkTPage(self, testNumber, pageNumber):
     return self.DB.checkTPage(testNumber, pageNumber)
 
 
-def removeUnknownImage(self, fname):
-    newFilename = "pages/discardedPages/" + os.path.split(fname)[1]
-    if self.DB.removeUnknownImage(fname, newFilename):
-        shutil.move(fname, newFilename)
-        return [True]
-    else:
-        return [False]
+def removeUnknownImage(self, file_name):
+    return self.DB.removeUnknownImage(file_name)
 
 
-def removeCollidingImage(self, fname):
-    newFilename = "pages/discardedPages/" + os.path.split(fname)[1]
-    if self.DB.removeCollidingImage(fname, newFilename):
-        shutil.move(fname, newFilename)
-        return [True]
-    else:
-        return [False]
+def discardToUnknown(self, file_name):
+    return self.DB.moveDiscardToUnknown(file_name)
 
 
-def unknownToTestPage(self, fname, test, page, rotation):
+def removeCollidingImage(self, file_name):
+    return self.DB.removeCollidingImage(file_name)
+
+
+def unknownToTestPage(self, file_name, test, page, rotation):
     # first rotate the page
     subprocess.run(
-        ["mogrify", "-quiet", "-rotate", rotation, fname],
+        ["mogrify", "-quiet", "-rotate", rotation, file_name],
         stderr=subprocess.STDOUT,
         shell=False,
         check=True,
     )
     # checkpage returns
     # -- [False] no such page exists
-    # -- [True, version] page exists but hasnt been scanned
-    # -- or [True, version, image] page exists and has been scanned
-    val = self.DB.checkPage(test, page)
+    # -- [True, 'unscanned', version] page exists but hasnt been scanned
+    # -- or [True, 'collision', version, image] page exists and has been scanned
+    val = self.DB.checkTPage(test, page)
     if val[0]:
-        if len(val) == 3:
+        if len(val) == 4:
             # existing page in place - create a colliding page
-            newFilename = "pages/collidingPages/" + os.path.split(fname)[1]
-            log.debug("Collide = {}".format(newFilename))
-            if self.DB.moveUnknownToCollision(fname, newFilename, test, page)[0]:
-                shutil.move(fname, newFilename)
+            if self.DB.moveUnknownToCollision(file_name, test, page)[0]:
                 return [True, "collision"]
         else:
-            if self.DB.moveUnknownToTPage(fname, test, page)[0]:
+            if self.DB.moveUnknownToTPage(file_name, test, page)[0]:
                 return [True, "testPage"]
     else:  # some sort of problem occurred
         return [False]
@@ -284,26 +275,8 @@ def removeScannedPage(self, testNumber, pageNumber, version):
         return [False]
 
 
-def collidingToTestPage(self, fname, test, page, version):
-    # first remove the current scanned page
-    if not self.removeScannedPage(test, page, version)[0]:
-        return [False]
-    # now move the collision into place
-    newFilename = "pages/originalPages/" + os.path.split(fname)[1]
-    if self.DB.moveCollidingToPage(fname, newFilename, test, page, version)[0]:
-        shutil.move(fname, newFilename)
-        return [True]
-    # some sort of problem occurred
-    return [False]
-
-
-def discardToUnknown(self, fname):
-    newFilename = "pages/unknownPages/" + os.path.split(fname)[1]
-    if self.DB.moveDiscardToUnknown(fname, newFilename):
-        shutil.move(fname, newFilename)
-        return [True]
-    else:
-        return [False]
+def collidingToTestPage(self, file_name, test, page, version):
+    return self.DB.moveCollidingToTPage(file_name, test, page, version)
 
 
 def replaceMissingHWQuestion(self, sid, question):
