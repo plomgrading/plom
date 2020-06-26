@@ -101,7 +101,11 @@ class SpecVerifier:
         return cls(toml.load(fname))
 
     def verifySpec(self):
-        # check that spec contains required attributes
+        """Check that spec contains required attributes.
+
+        TODO: need a less verbose version that raises exceptions
+        and doesn't print, more appropriate for library calls.
+        """
         self.check_keys()
         self.check_name_and_production_numbers()
         lastPage = self.spec["numberOfPages"]
@@ -115,7 +119,7 @@ class SpecVerifier:
         self.check_pages()
 
     def checkCodes(self):
-        # now check and set public and private codes
+        """Add public and private codes if the spec doesn't already have them."""
         if "privateSeed" in self.spec:
             print("WARNING - privateSeed is already set. Not replacing this.")
         else:
