@@ -45,6 +45,28 @@ class SpecParser:
 
 
 class SpecVerifier:
+    """Verify Plom exam specifications.
+
+    Example specification:
+        {
+        'name': 'plomdemo',
+        'longName': 'Midterm Demo using Plom',
+        'numberOfVersions': 2,
+        'numberOfPages': 6,
+        'numberToProduce': 20,
+        'numberToName': 10,
+        'numberOfQuestions': 3,
+        'privateSeed': '1001378822317872',
+        'publicCode': '270385',
+        'idPages': {'pages': [1]},
+        'doNotMark': {'pages': [2]},
+        'question': {
+            '1': {'pages': [3], 'mark': 5, 'select': 'shuffle'},
+            '2': {'pages': [4], 'mark': 10, 'select': 'fix'},
+            '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
+           }
+        }
+    """
     def __init__(self, fname="testSpec.toml"):
         # read the whole spec toml file into a dict - it will have single key = "plom" with value being a dict
         self.spec = toml.load(fname)
