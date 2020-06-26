@@ -79,7 +79,7 @@ class SpecVerifier:
         self.check_IDPages(lastPage)
         self.check_doNotMark(lastPage)
 
-        print("Checking question group")
+        print("Checking question groups")
         for g in range(self.spec["numberOfQuestions"]):
             self.check_group(str(g + 1), lastPage)
 
