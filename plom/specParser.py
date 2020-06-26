@@ -112,7 +112,7 @@ class SpecVerifier:
 
     def checkCodes(self):
         # now check and set public and private codes
-        if "privateCode" in self.spec:
+        if "privateSeed" in self.spec:
             print("WARNING - privateSeed is already set. Not replacing this.")
         else:
             print("Assigning a privateSeed to the spec - check")
