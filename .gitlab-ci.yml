@@ -16,13 +16,8 @@
 
 image: ubuntu:18.04
 
-variables:
-  KUBERNETES_VERSION: 1.11.7
-  HELM_VERSION: 2.12.3
-
-  DOCKER_DRIVER: overlay2
-
-  ROLLOUT_RESOURCE_TYPE: deployment
+#variables:
+#  DOCKER_DRIVER: overlay2
 
 # Need pip >= 19, which turns out to be nontrivial: cannot just call
 # pip/pip3 after upgrading, hence `python3 -m pip` stuff below
