@@ -7,11 +7,10 @@ from .routeutils import authenticate_by_token, authenticate_by_token_required_fi
 class TotalHandler:
     def __init__(self, plomServer):
         self.server = plomServer
-    
-    # TODO: I Think this one is supposed to me MaxMark not MarkMark
+
     # @routes.get("/TOT/maxMark")
     @authenticate_by_token
-    def TgetMarkMark(self):
+    def TgetMaxMark(self):
         """Respond with the maximum total possible score for the exam.
 
         Respond with status 200.
@@ -58,7 +57,7 @@ class TotalHandler:
     def TgetImage(self, data, request):
         """Respond with the image of the totalled task.
 
-        For example, used by the manager to retreive the totalled page's image.
+        For example, used by the manager to retrieve the totalled page's image.
         Respond with status 200/409.
 
         Args:
@@ -67,8 +66,8 @@ class TotalHandler:
                 GET /TOT/image/'test_number'
 
         Returns:
-            aiohttp.web_fileresponse.FileResponse: Respond with path 
-                of the tasks images.
+            aiohttp.web_fileresponse.FileResponse: Respond with images
+                of the totalling tasks.
         """
         test = request.match_info["test"]
         get_image_response = self.server.TgetImage(data["user"], test)
@@ -143,13 +142,14 @@ class TotalHandler:
                 task number.
 
         Returns:
-            aiohttp.web_response.Response: Empty response to indicate 
-                total grade saving success or failure. 
+            aiohttp.web_response.Response: Empty response which a response
+                status of success or failure.
         """
         test_number = request.match_info["task"]
 
-
-        totalled_task_response = self.server.TreturnTotalledTask(data["user"], test_number, data["mark"])
+        totalled_task_response = self.server.TreturnTotalledTask(
+            data["user"], test_number, data["mark"]
+        )
         total_saved_success = totalled_task_response[0]
 
         if total_saved_success:  # all good
@@ -205,8 +205,8 @@ class TotalHandler:
         Args:
             router (aiohttp.web_urldispatcher.UrlDispatcher): Router object which we will add the response functions to.
         """
-        
-        router.add_get("/TOT/maxMark", self.TgetMarkMark)
+
+        router.add_get("/TOT/maxMark", self.TgetMaxMark)
         router.add_get("/TOT/progress", self.TprogressCount)
         router.add_get("/TOT/tasks/complete", self.TgetDoneTasks)
         router.add_get("/TOT/image/{test}", self.TgetImage)
