@@ -62,7 +62,7 @@ def IDgetImage(self, username, test_number):
     Returns:
         list: True/False plus a list of the image paths for ID'd task.
     """
-    
+
     return self.DB.IDgetImage(username, test_number)
 
 
@@ -79,6 +79,7 @@ def IDclaimThisTask(self, username, test_number):
     # return [true, image-filename1, name2,...]
     # or return [false]
     return self.DB.IDgiveTaskToClient(username, test_number)
+
 
 # TODO: These two functions seem the same.
 def id_paper(self, *args, **kwargs):
@@ -112,7 +113,7 @@ def id_paper(self, *args, **kwargs):
 
 
 def ID_id_paper(self, *args, **kwargs):
-    
+
     print("##############################")
     print("ID_id_paper")
     print(type(kwargs))
