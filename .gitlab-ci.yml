@@ -50,6 +50,21 @@ stages:
   - test
 
 
+job docker-image:
+  image: docker:19.03.11
+  stage: test
+  before_script:
+    - echo "Overriding before_script"
+  services:
+    - docker:19.03.11-dind
+  variables:
+    IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IM .
+    - docker push $IM
+
+
 job black:
   stage: test
   image: "python:3.8"
