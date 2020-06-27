@@ -48,7 +48,7 @@ stages:
   - static_analysis
   - build
   - test
-  - stage2
+  - final
 
 
 job docker-image:
@@ -71,7 +71,7 @@ job docker-image:
 # If we are on the master branch, we tag the above as "latest"
 job docker-image-master:
   image: docker:19.03.11
-  stage: stage2
+  stage: final
   before_script:
     - echo "Overriding before_script"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
