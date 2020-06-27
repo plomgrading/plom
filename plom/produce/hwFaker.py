@@ -100,7 +100,9 @@ def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
     doc.save(fname)
 
 
-def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName, prefix):
+def makeFakeHW(
+    numberOfQuestions, paperNumber, studentID, studentName, prefix, maximum_pages
+):
     did = random.randint(
         numberOfQuestions - 1, numberOfQuestions
     )  # some subset of questions.
@@ -109,7 +111,7 @@ def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName, prefix):
         fname = Path("submittedHWByQ") / "{}.{}.{}.pdf".format(prefix, studentID, q)
         doc = fitz.open()
         # construct pages
-        for pn in range(random.randint(1, 3)):
+        for pn in range(random.randint(1, maximum_pages)):
             page = doc.newPage(-1, 612, 792)  # page at end
             if pn == 0:
                 # put name and student number on p1 of the Question
@@ -178,10 +180,10 @@ def main():
     for prefix in prefixes:
         if prefix == "hwA":
             for k in range(numberNamed):
-                makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], prefix)
+                makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], prefix, 3)
         else:
             for k in range(numberNamed // 2):  # fewer in second batch
-                makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], prefix)
+                makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], prefix, 1)
 
         # give a few loose pages to the first two students in both batches
         for k in range(2):

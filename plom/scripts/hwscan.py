@@ -141,7 +141,7 @@ def processHWScans(server, password, file_name, student_id, question_list):
     sendPagesToServer.uploadHWPages(bundle_name, student_id, question, server, password)
 
 
-def processAllHWByQ(server, password):
+def processAllHWByQ(server, password, yes_flag):
     from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 
     submissions = defaultdict(list)
@@ -165,7 +165,9 @@ def processAllHWByQ(server, password):
                 print_list.append("{}(x{})".format(q, n))
         print("# {}: {}".format(sid, print_list))
 
-    if input("Process and upload all of the above submissions? [y/n]") != "y":
+    if yes_flag:
+        print("Processing and uploading all of the above submissions.")
+    elif input("Process and upload all of the above submissions? [y/n]") != "y":
         print("Stopping.")
         return
     for sid in submissions:
@@ -174,7 +176,7 @@ def processAllHWByQ(server, password):
             processHWScans(server, password, file_name, sid, question)
 
 
-def processMissing(server, password):
+def processMissing(server, password, yes_flag):
     from plom.scan import checkScanStatus
 
     missingHWQ = checkScanStatus.checkMissingHWQ(server, password)
@@ -184,7 +186,9 @@ def processMissing(server, password):
                 missingHWQ[t][0], missingHWQ[t][1:]
             )
         )
-    if input("Replace all missing with 'did not submit' pages? [y/n]") != "y":
+    if yes_flag:
+        print("Replacing all missing questions with 'did not submit' pages.")
+    elif input("Replace all missing with 'did not submit' pages? [y/n]") != "y":
         print("Stopping.")
         return
 
@@ -239,6 +243,14 @@ spPql.add_argument(
     help="Which question is answered in file.",
 )
 
+spA.add_argument(
+    "-y", "--yes", action="store_true", help="Answer yes to prompts.",
+)
+spM.add_argument(
+    "-y", "--yes", action="store_true", help="Answer yes to prompts.",
+)
+
+
 for x in (spP, spA, spS, spC, spM):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
@@ -260,9 +272,9 @@ def main():
             )
             # argparse makes args.question a list.
     elif args.command == "allbyq":
-        processAllHWByQ(args.server, args.password)
+        processAllHWByQ(args.server, args.password, args.yes)
     elif args.command == "missing":
-        processMissing(args.server, args.password)
+        processMissing(args.server, args.password, args.yes)
     elif args.command == "status":
         scanStatus(args.server, args.password)
     elif args.command == "clear":
