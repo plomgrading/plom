@@ -91,7 +91,7 @@ job docker-image-master:
 
 
 job black:
-  stage: test
+  stage: static_analysis
   image: "python:3.8"
   before_script:
     - pip3 install black
@@ -266,7 +266,7 @@ job backgroundTest:
     - jobs -p
 
 job appstreamValid:
-  stage: test
+  stage: static_analysis
   image: alpine
   before_script:
     - apk add appstream-glib
