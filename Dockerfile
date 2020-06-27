@@ -22,9 +22,9 @@ RUN apt-get --no-install-recommends --yes install  \
     mupdf libmupdf-dev \
     python3-tqdm libpango-1.0 libpangocairo-1.0 \
     libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi \
-    appstream-util curl
+    curl
 RUN pip3 install --upgrade pip
-# TODO: bit odd to CI-only deps here?  (appstream-util, curl)
+# TODO: bit odd to CI-only deps here? (curl)
 
 # TODO: advantages/disadvanages of using requirements.txt here?
 
