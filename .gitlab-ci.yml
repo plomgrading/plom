@@ -16,8 +16,10 @@
 
 image: ubuntu:18.04
 
-#variables:
-#  DOCKER_DRIVER: overlay2
+variables:
+  DOCKER_DRIVER: overlay2
+  IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  IM_LATEST: $CI_REGISTRY_IMAGE:latest
 
 # Need pip >= 19, which turns out to be nontrivial: cannot just call
 # pip/pip3 after upgrading, hence `python3 -m pip` stuff below
@@ -60,9 +62,6 @@ docker-image:
   needs: []
   before_script:
     - echo "Overriding before_script"
-  variables:
-    IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    IM_LATEST: $CI_REGISTRY_IMAGE:latest
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $IM_LATEST || true
@@ -80,13 +79,10 @@ docker-image-master:
   before_script:
     - echo "Overriding before_script"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  variables:
-    IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    RELEASE_IM: $CI_REGISTRY_IMAGE:latest
   script:
     - docker pull $IM
-    - docker tag $IM $RELEASE_IM
-    - docker push $RELEASE_IM
+    - docker tag $IM $IM_LATEST
+    - docker push $IM_LATEST
   only:
     # should be "master", temporarily set to this while debugging
     - CIwork2
