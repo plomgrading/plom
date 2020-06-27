@@ -54,11 +54,11 @@ stages:
 
 job docker-image:
   image: docker:19.03.11
+  services:
+    - docker:19.03.11-dind
   stage: build
   before_script:
     - echo "Overriding before_script"
-  services:
-    - docker:19.03.11-dind
   variables:
     IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     IM_LATEST: $CI_REGISTRY_IMAGE:latest
@@ -72,12 +72,12 @@ job docker-image:
 # If we are on the master branch, we tag the above as "latest"
 job docker-image-master:
   image: docker:19.03.11
+  services:
+    - docker:19.03.11-dind
   stage: final
   before_script:
     - echo "Overriding before_script"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  services:
-    - docker:19.03.11-dind
   variables:
     IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     RELEASE_IM: $CI_REGISTRY_IMAGE:latest
@@ -107,6 +107,9 @@ job black:
 
 
 job basic:
+  image: docker:19.03.11
+  services:
+    - docker:19.03.11-dind
   stage: test
   before_script:
     - echo "Overriding before_script"
@@ -117,6 +120,9 @@ job basic:
 
 
 job unittests:
+  image: docker:19.03.11
+  services:
+    - docker:19.03.11-dind
   stage: test
   before_script:
     - echo "Overriding before_script"
