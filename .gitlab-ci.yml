@@ -53,7 +53,7 @@ stages:
 
 job docker-image:
   image: docker:19.03.11
-  stage: test
+  stage: build
   before_script:
     - echo "Overriding before_script"
   services:
@@ -105,8 +105,29 @@ job black:
 #    - python3 -m pytest -l
 
 
-job unitTestsInstalledPkg:
+job basic:
   stage: test
+  before_script:
+    - echo "Overriding before_script"
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $IM
+    - docker run $IM plom-init
+
+
+job unittests:
+  stage: test
+  before_script:
+    - echo "Overriding before_script"
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $IM
+    # TODO: mount some space?  tmp?
+    - docker run $IM pytest-3 -l --pyargs plom
+
+
+job unitTestsNoDock:
+  stage: build
   script:
     - python3 -m pip install packaging
     - python3 ./setup.py build bdist_wheel
@@ -120,8 +141,8 @@ job unitTestsInstalledPkg:
     - popd
 
 
-job demoServer:
-  stage: test
+job demoServerNoDock:
+  stage: build
   script:
     - python3 ./setup.py build bdist_wheel
     - pushd dist
@@ -158,8 +179,8 @@ job demoServer:
     - popd
 
 
-job fullWorkFlow:
-  stage: test
+job fullWorkFlowNoDock:
+  stage: build
   script:
     - python3 ./setup.py build bdist_wheel
     - pushd dist
