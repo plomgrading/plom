@@ -43,8 +43,8 @@ server_install_requires = [
     "opencv-python",
     "tensorflow>=2",
     "lapsolver",  # ID reading
-    "PyQt5",
-    "requests",  # b/c of deprecated userManager
+    "requests",
+    "requests-toolbelt",
 ]
 
 # Non-Python deps for server
