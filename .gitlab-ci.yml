@@ -16,8 +16,8 @@
 
 image: ubuntu:18.04
 
-#variables:
-#  DOCKER_DRIVER: overlay2
+variables:
+  DOCKER_DRIVER: overlay2
 
 # Need pip >= 19, which turns out to be nontrivial: cannot just call
 # pip/pip3 after upgrading, hence `python3 -m pip` stuff below
