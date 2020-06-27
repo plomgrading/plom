@@ -23,12 +23,12 @@ RUN apt-get --no-install-recommends --yes install  \
     python3-tqdm libpango-1.0 libpangocairo-1.0 \
     libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi \
     curl
-RUN pip3 install --upgrade pip
+RUN pip3 install --no-cache-dir --upgrade pip
 # TODO: bit odd to CI-only deps here? (curl)
 
 # TODO: advantages/disadvanages of using requirements.txt here?
 
-RUN pip3 install \
+RUN pip3 install --no-cache-dir \
     pymupdf weasyprint imutils lapsolver peewee toml \
     requests requests-toolbelt aiohttp pyzbar jpegtran-cffi \
     imutils tensorflow lapsolver opencv-python \
