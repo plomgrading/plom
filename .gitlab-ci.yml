@@ -52,11 +52,12 @@ stages:
   - final
 
 
-job docker-image:
+docker-image:
   image: docker:19.03.11
   services:
     - docker:19.03.11-dind
   stage: build
+  needs: []
   before_script:
     - echo "Overriding before_script"
   variables:
@@ -70,11 +71,12 @@ job docker-image:
 
 
 # If we are on the master branch, we tag the above as "latest"
-job docker-image-master:
+docker-image-master:
   image: docker:19.03.11
   services:
     - docker:19.03.11-dind
   stage: final
+  needs: ["docker-image"]
   before_script:
     - echo "Overriding before_script"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -90,8 +92,9 @@ job docker-image-master:
     - CIwork2
 
 
-job black:
+black:
   stage: static_analysis
+  needs: []
   image: "python:3.8"
   before_script:
     - pip3 install black
@@ -106,11 +109,12 @@ job black:
 #    - python3 -m pytest -l
 
 
-job basic:
+basic:
   image: docker:19.03.11
   services:
     - docker:19.03.11-dind
   stage: test
+  needs: ["docker-image"]
   before_script:
     - echo "Overriding before_script"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -119,11 +123,12 @@ job basic:
     - docker run $IM plom-init
 
 
-job unittests:
+unittests:
   image: docker:19.03.11
   services:
     - docker:19.03.11-dind
   stage: test
+  needs: ["docker-image"]
   before_script:
     - echo "Overriding before_script"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -133,8 +138,9 @@ job unittests:
     - docker run $IM pytest-3 -l --pyargs plom
 
 
-job unitTestsNoDock:
+unitTestsNoDock:
   stage: test_nodock
+  needs: []
   script:
     - python3 -m pip install packaging
     - python3 ./setup.py build bdist_wheel
@@ -148,8 +154,9 @@ job unitTestsNoDock:
     - popd
 
 
-job demoServerNoDock:
+demoServerNoDock:
   stage: test_nodock
+  needs: []
   script:
     - python3 ./setup.py build bdist_wheel
     - pushd dist
@@ -186,8 +193,9 @@ job demoServerNoDock:
     - popd
 
 
-job fullWorkFlowNoDock:
+fullWorkFlowNoDock:
   stage: test_nodock
+  needs: []
   script:
     - python3 ./setup.py build bdist_wheel
     - pushd dist
@@ -254,10 +262,12 @@ job fullWorkFlowNoDock:
     - jobs -l
     - popd
 
-job backgroundTest:
+backgroundTest:
+  image: alpine
   before_script:
     - echo "Overriding before_script"
-  stage: test
+  stage: static_analysis
+  needs: []
   script:
     - sleep 60 &
     - jobs -l
@@ -271,8 +281,9 @@ job backgroundTest:
     - echo "Should be no jobs and this should succeed"
     - jobs -p
 
-job appstreamValid:
+appstreamValid:
   stage: static_analysis
+  needs: []
   image: alpine
   before_script:
     - apk add appstream-glib
