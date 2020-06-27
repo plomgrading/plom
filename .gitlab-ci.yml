@@ -48,6 +48,7 @@ stages:
   - static_analysis
   - build
   - test
+  - stage2
 
 
 job docker-image:
@@ -63,6 +64,27 @@ job docker-image:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -t $IM .
     - docker push $IM
+
+
+# If we are on the master branch, we tag the above as "latest"
+job docker-image-master:
+  image: docker:19.03.11
+  stage: stage2
+  before_script:
+    - echo "Overriding before_script"
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  services:
+    - docker:19.03.11-dind
+  variables:
+    IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    RELEASE_IM: $CI_REGISTRY_IMAGE:latest
+  script:
+    - docker pull $IM
+    - docker tag $IM $RELEASE_IM
+    - docker push $RELEASE_IM
+  only:
+    # should be "master", temporarily set to this while debugging
+    - CIwork2
 
 
 job black:
