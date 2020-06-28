@@ -49,7 +49,9 @@ def MgetAllMax(self):
 
     question_max_grades = {}
     for question_number in range(1, self.testSpec["numberOfQuestions"] + 1):
-        question_max_grades[question_number] = self.testSpec["question"][str(question_number)]["mark"]
+        question_max_grades[question_number] = self.testSpec["question"][
+            str(question_number)
+        ]["mark"]
     return question_max_grades
 
 
@@ -68,7 +70,10 @@ def MprogressCount(self, question_number, version_number):
 
     version_number = int(version_number)
     question_number = int(question_number)
-    return [self.DB.McountMarked(question_number, version_number), self.DB.McountAll(question_number, version_number)]
+    return [
+        self.DB.McountMarked(question_number, version_number),
+        self.DB.McountAll(question_number, version_number),
+    ]
 
 
 def MgetDoneTasks(self, username, question_number, version_number):
@@ -83,7 +88,7 @@ def MgetDoneTasks(self, username, question_number, version_number):
         list: Respond with a list of done tasks, each list includes
             [question_code string, maximum_mark, question_grade, question_tag string].
     """
-    
+
     version_number = int(version_number)
     question_number = int(question_number)
     return self.DB.MgetDoneTasks(username, question_number, version_number)
@@ -156,7 +161,20 @@ def MdidNotFinish(self, username, task_code):
     return
 
 
-def MreturnMarkedTask( self, username, task_code, question_number, version_number, mark, image, plomdat, comments, time_spent_marking, tags, md5_code):
+def MreturnMarkedTask(
+    self,
+    username,
+    task_code,
+    question_number,
+    version_number,
+    mark,
+    image,
+    plomdat,
+    comments,
+    time_spent_marking,
+    tags,
+    md5_code,
+):
     """Save the marked paper's information to database and respond with grading progress.
 
     Args:
@@ -191,7 +209,7 @@ def MreturnMarkedTask( self, username, task_code, question_number, version_numbe
             os.rename(
                 filename, filename + ".rgd" + datetime.now().strftime("%d_%H-%M-%S"),
             )
-    
+
     # now write in the files
     with open(annotated_filename, "wb") as file_header:
         file_header.write(image)
@@ -204,7 +222,7 @@ def MreturnMarkedTask( self, username, task_code, question_number, version_numbe
     if imghdr.what(annotated_filename) != "png":
         log.error("EEK = {}".format(imghdr.what(annotated_filename)))
         return [False, "Misformed image file. Try again."]
-   
+
     # Also check the md5sum matches
     md5n = hashlib.md5(open(annotated_filename, "rb").read()).hexdigest()
     if md5_code != md5n:
@@ -217,15 +235,30 @@ def MreturnMarkedTask( self, username, task_code, question_number, version_numbe
 
     # now update the database
     database_task_response = self.DB.MtakeTaskFromClient(
-        task_code, username, mark, annotated_filename, plom_filename, comments_filename, time_spent_marking, tags, md5n
+        task_code,
+        username,
+        mark,
+        annotated_filename,
+        plom_filename,
+        comments_filename,
+        time_spent_marking,
+        tags,
+        md5n,
     )
 
     if database_task_response:
         self.MrecordMark(username, mark, annotated_filename, time_spent_marking, tags)
         # return ack with current counts.
-        return [True, self.DB.McountMarked(question_number, version_number), self.DB.McountAll(question_number, version_number)]
+        return [
+            True,
+            self.DB.McountMarked(question_number, version_number),
+            self.DB.McountAll(question_number, version_number),
+        ]
     else:
-        return [False, "Database problem - does {} own task {}?".format(username, task_code)]
+        return [
+            False,
+            "Database problem - does {} own task {}?".format(username, task_code),
+        ]
 
 
 def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, tags):
@@ -267,6 +300,7 @@ def MgetImages(self, username, task_code):
     """
 
     return self.DB.MgetImages(username, task_code)
+
 
 # TODO: Have to figure this out.
 def MgetOriginalImages(self, task):
@@ -325,6 +359,7 @@ def MreviewQuestion(self, test_number, question_number, version_number):
     """
 
     return self.DB.MreviewQuestion(test_number, question_number, version_number)
+
 
 # TODO: Deprecated.
 # TODO: Should be removed.
