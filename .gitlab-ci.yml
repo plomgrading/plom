@@ -69,6 +69,22 @@ docker-image:
     - docker push $IM
 
 
+# Get fast results by running tests in a copy-pasta of the docker-image job
+quick-pytests:
+  image: docker:19.03.11
+  services:
+    - docker:19.03.11-dind
+  stage: build
+  needs: []
+  before_script:
+    - echo "Overriding before_script"
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $IM_LATEST || true
+    - docker build --cache-from $IM_LATEST --tag $IM .
+    - docker run $IM pytest-3 -l --pyargs plom
+
+
 # If we are on the master branch, we tag the above as "latest"
 docker-image-master:
   image: docker:19.03.11
@@ -98,13 +114,6 @@ black:
     - black --check --diff plom
 
 
-#job unitTests:
-#  stage: test
-#  script:
-#    # or pytest-3 -l
-#    - python3 -m pytest -l
-
-
 basic:
   image: docker:19.03.11
   services:
@@ -120,21 +129,6 @@ basic:
 
 
 unittests:
-  image: docker:19.03.11
-  services:
-    - docker:19.03.11-dind
-  stage: test
-  needs: ["docker-image"]
-  before_script:
-    - echo "Overriding before_script"
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - docker pull $IM
-    # TODO: mount some space?  tmp?
-    - docker run $IM pytest-3 -l --pyargs plom
-
-
-unittests2:
   stage: test
   needs: ["docker-image"]
   image: $IM
@@ -144,22 +138,6 @@ unittests2:
     - echo "Overriding before_script"
   script:
     - pytest-3 -l --pyargs plom
-
-
-unitTestsNoDock:
-  stage: test_nodock
-  needs: []
-  script:
-    - python3 -m pip install packaging
-    - python3 ./setup.py build bdist_wheel
-    - pushd dist
-    - python3 -m pip install plom-*.whl
-    - popd
-    # no go to some other dir and run tests on installed pkg
-    - mkdir tmp
-    - pushd tmp
-    - pytest-3 -l --pyargs plom
-    - popd
 
 
 demoserver:
