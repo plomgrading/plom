@@ -14,166 +14,328 @@ from plom.textools import texFragmentToPNG
 log = logging.getLogger("server")
 
 
-def MgetQuestionMax(self, q, v):
-    iv = int(v)
-    iq = int(q)
+def MgetQuestionMax(self, question_number, version_number):
+    """Return the maximum score for the question.
+
+    Args:
+        question_number (int): Question number.
+        version_number (int): Version number.
+
+    Returns:
+        list: A list where the first element is a boolean operation
+            status response. The second element is either a string 
+            indicating if question fo version number is incorrect, or,
+            the maximum score for this question as an integer. 
+    """
+
+    version_number = int(version_number)
+    question_number = int(question_number)
     # check question /version in range.
-    if iq < 1 or iq > self.testSpec["numberOfQuestions"]:
+    if question_number < 1 or question_number > self.testSpec["numberOfQuestions"]:
         return [False, "QE"]
-    if iv < 1 or iv > self.testSpec["numberOfVersions"]:
+    if version_number < 1 or version_number > self.testSpec["numberOfVersions"]:
         return [False, "VE"]
-    # Send back the max-mark for that q/v
-    return [True, self.testSpec["question"][str(iq)]["mark"]]
+    # Send back the max-mark for that question_number/version_number
+    return [True, self.testSpec["question"][str(question_number)]["mark"]]
 
 
 def MgetAllMax(self):
-    rval = {}
-    for q in range(1, self.testSpec["numberOfQuestions"] + 1):
-        rval[q] = self.testSpec["question"][str(q)]["mark"]
-    return rval
+    """Get the maximum mark for each question in the exam.
 
-
-def MprogressCount(self, q, v):
-    """Send back current ID progress counts to the client"""
-    iv = int(v)
-    iq = int(q)
-    return [self.DB.McountMarked(iq, iv), self.DB.McountAll(iq, iv)]
-
-
-def MgetDoneTasks(self, user, q, v):
-    """When a marked-client logs on they request a list of papers they have already marked.
-    Check the (group/version) is valid and then send back a textfile with list of TGVs.
+    Returns:
+        dict: A dictionary of the form {key: question_number, value: question_max_grade}
+            for the exam questions. 
     """
-    iv = int(v)
-    iq = int(q)
-    return self.DB.MgetDoneTasks(user, iq, iv)
+
+    question_max_grades = {}
+    for question_number in range(1, self.testSpec["numberOfQuestions"] + 1):
+        question_max_grades[question_number] = self.testSpec["question"][str(question_number)]["mark"]
+    return question_max_grades
 
 
-def MgetNextTask(self, q, v):
-    """The client has asked for the next unmarked paper, so
-    ask the database for its task and send back to the
-    client.
+def MprogressCount(self, question_number, version_number):
+    """Send back the markind progress count for question.
+
+    Args:
+        question_number (int): Question number.
+        version_number (int): Version number.
+
+    Returns:
+        list: A list of two integers indicating the number of questions graded 
+            and the total number of assigned question to be graded of this question number
+            and question version.
     """
-    give = self.DB.MgetNextTask(q, v)
+
+    version_number = int(version_number)
+    question_number = int(question_number)
+    return [self.DB.McountMarked(question_number, version_number), self.DB.McountAll(question_number, version_number)]
+
+
+def MgetDoneTasks(self, username, question_number, version_number):
+    """Respond with a list of the graded tasks.
+
+    Args:
+        username (Str): Username string.
+        question_number (int): Question number.
+        version_number (int): Version number.
+
+    Returns:
+        list: Respond with a list of done tasks, each list includes
+            [question_code string, maximum_mark, question_grade, question_tag string].
+    """
+    
+    version_number = int(version_number)
+    question_number = int(question_number)
+    return self.DB.MgetDoneTasks(username, question_number, version_number)
+
+
+def MgetNextTask(self, question_number, version_number):
+    """Retrieve the next unmarked paper from the database and give to client.
+
+    Args:
+        question_number (int): Next question's question number.
+        version_number (int): Next question's version number.
+
+    Returns:
+        list: Respond with a list with either value False or the value
+            of True with the question code string for next task. 
+    """
+
+    give = self.DB.MgetNextTask(question_number, version_number)
     if give is None:
         return [False]
     else:
         return [True, give]
 
 
-def MlatexFragment(self, user, fragment):
+def MlatexFragment(self, username, latex_fragment):
+    """Respond with a path to the latex fragment image. 
+
+    Args:
+        username (Str): Username string.
+        latex_fragment (Str): The latex string for the latex image requested.
+
+    Returns:
+        list: A list with either False or True with the latex image's
+            file name.
+    """
+
     # TODO - only one frag file per user - is this okay?
-    fname = os.path.join(self.tempDirectory.name, "{}_frag.png".format(user))
-    if texFragmentToPNG(fragment, fname):
-        return [True, fname]
+    filename = os.path.join(self.tempDirectory.name, "{}_frag.png".format(username))
+
+    if texFragmentToPNG(latex_fragment, filename):
+        return [True, filename]
     else:
         return [False]
 
 
-def MclaimThisTask(self, user, task):
-    return self.DB.MgiveTaskToClient(user, task)
+def MclaimThisTask(self, username, task_code):
+    """Respond with the path to the requested task.
 
+    Args:
+        username (Str): User who requests the paper.
+        task_code (Str): Code string for the claimed task.
 
-def MdidNotFinish(self, user, task):
-    """User didn't finish marking the given task. Tell the
-    database to put this back on the todo-pile.
+    Returns:
+        list: A list which either only has a False value included or
+            [True, `question_tag`, `question_image_path`]
     """
-    self.DB.MdidNotFinish(user, task)
+
+    return self.DB.MgiveTaskToClient(username, task_code)
+
+
+def MdidNotFinish(self, username, task_code):
+    """Inform database that a user did not finish a task.
+
+    Args:
+        username (Str): Owner of the unfinished task.
+        task_code (Str): Code string for the unfinished task.
+    """
+
+    self.DB.MdidNotFinish(username, task_code)
     return
 
 
-def MreturnMarkedTask(
-    self, user, task, qu, v, mark, image, plomdat, comments, mtime, tags, md5
-):
-    """Client has marked the pageimage with task, mark, annotated-file-name
-    and spent mtime marking it.
-    Send the information to the database and send an ack.
-    """
-    # score + file sanity checks were done at client. Do we need to redo here?
-    # image, plomdat are bytearrays, comments = list
-    aname = "markedQuestions/G{}.png".format(task[1:])
-    pname = "markedQuestions/plomFiles/G{}.plom".format(task[1:])
-    cname = "markedQuestions/commentFiles/G{}.json".format(task[1:])
-    #  check if those files exist already - back up if so
-    for fn in [aname, pname, cname]:
-        if os.path.isfile(fn):
-            os.rename(
-                fn, fn + ".rgd" + datetime.now().strftime("%d_%H-%M-%S"),
-            )
-    # now write in the files
-    with open(aname, "wb") as fh:
-        fh.write(image)
-    with open(pname, "wb") as fh:
-        fh.write(plomdat)
-    with open(cname, "w") as fh:
-        json.dump(comments, fh)
+def MreturnMarkedTask( self, username, task_code, question_number, version_number, mark, image, plomdat, comments, time_spent_marking, tags, md5_code):
+    """Save the marked paper's information to database and respond with grading progress.
 
-    # Should check the aname is valid png - just check header presently
-    if imghdr.what(aname) != "png":
-        log.error("EEK = {}".format(imghdr.what(aname)))
+    Args:
+        username (Str): User who marked the paper.
+        task_code (Str): Code string for the task.
+        question_number (int): Marked queston number.
+        version_number (int): Marked question version number.
+        mark (int): Question mark.
+        image (bytearray): Marked image of question.
+        plomdat (bytearray): Plom data file used for saving file information.
+        comments (str): Return the String or the comments (why is this a String when I print the type TODO):
+            TODO: The comments string is in a list ie `["comment 1", "comment 2", "comment 3"]`
+        time_spent_marking (int): Seconds spent marking the paper.
+        tags (Str): Tag assigned to the paper.
+        md5_code (Str): MD5 hash key for this task.
+
+    Returns:
+        list: Respond with a list which includes:
+            [False, Error message of either mismatching codes or database owning the task.]
+            [True, number of raded taskss, total number of tasks.]
+    """
+
+    # TODO: score + file sanity checks were done at client. Do we need to redo here?
+    # image, plomdat are bytearrays, comments = list
+    annotated_filename = "markedQuestions/G{}.png".format(task_code[1:])
+    plom_filename = "markedQuestions/plomFiles/G{}.plom".format(task_code[1:])
+    comments_filename = "markedQuestions/commentFiles/G{}.json".format(task_code[1:])
+
+    #  check if those files exist already - back up if so
+    for filename in [annotated_filename, plom_filename, comments_filename]:
+        if os.path.isfile(filename):
+            os.rename(
+                filename, filename + ".rgd" + datetime.now().strftime("%d_%H-%M-%S"),
+            )
+    
+    # now write in the files
+    with open(annotated_filename, "wb") as file_header:
+        file_header.write(image)
+    with open(plom_filename, "wb") as file_header:
+        file_header.write(plomdat)
+    with open(comments_filename, "w") as file_header:
+        json.dump(comments, file_header)
+
+    # Should check the annotated_filename is valid png - just check header presently
+    if imghdr.what(annotated_filename) != "png":
+        log.error("EEK = {}".format(imghdr.what(annotated_filename)))
         return [False, "Misformed image file. Try again."]
+   
     # Also check the md5sum matches
-    md5n = hashlib.md5(open(aname, "rb").read()).hexdigest()
-    if md5 != md5n:
+    md5n = hashlib.md5(open(annotated_filename, "rb").read()).hexdigest()
+    if md5_code != md5n:
         return [
             False,
             "Misformed image file - md5sum doesn't match serverside={} vs clientside={}. Try again.".format(
-                md5n, md5
+                md5n, md5_code
             ),
         ]
 
     # now update the database
-    rval = self.DB.MtakeTaskFromClient(
-        task, user, mark, aname, pname, cname, mtime, tags, md5n
+    database_task_response = self.DB.MtakeTaskFromClient(
+        task_code, username, mark, annotated_filename, plom_filename, comments_filename, time_spent_marking, tags, md5n
     )
-    if rval:
-        self.MrecordMark(user, mark, aname, mtime, tags)
+
+    if database_task_response:
+        self.MrecordMark(username, mark, annotated_filename, time_spent_marking, tags)
         # return ack with current counts.
-        return [True, self.DB.McountMarked(qu, v), self.DB.McountAll(qu, v)]
+        return [True, self.DB.McountMarked(question_number, version_number), self.DB.McountAll(question_number, version_number)]
     else:
-        return [False, "Database problem - does {} own task {}?".format(user, task)]
+        return [False, "Database problem - does {} own task {}?".format(username, task_code)]
 
 
-def MrecordMark(self, user, mark, aname, mtime, tags):
-    """For test blah.png, we record, in blah.png.txt, as a backup
-    the filename, mark, user, time, marking time and any tags.
-    This is not used.
+def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, tags):
+    """Saves the marked paper information as a backup, independent of the server
+
+    Args:
+        username (Str): User who marked the paper.
+        mark (int): Question mark.
+        annotated_filename (Str): Name of the annotated image file.
+        time_spent_marking (int): Seconds spent marking the paper.
+        tags (Str): Tag assigned to the paper.
     """
-    with open("{}.txt".format(aname), "w") as fh:
-        fh.write(
+
+    with open("{}.txt".format(annotated_filename), "w") as file_header:
+        file_header.write(
             "{}\t{}\t{}\t{}\t{}\t{}".format(
-                aname,
+                annotated_filename,
                 mark,
-                user,
+                username,
                 datetime.now().strftime("%Y-%m-%d,%H:%M"),
-                mtime,
+                time_spent_marking,
                 tags,
             )
         )
 
 
-def MgetImages(self, user, task):
-    return self.DB.MgetImages(user, task)
+def MgetImages(self, username, task_code):
+    """Respond with paths to the marked and original images of a marked question. 
 
+    Args:
+        username (Str): User who marked the paper.
+        task_code (Str): Code string for the task.
 
+    Returns:
+        list: A list of the format:
+            [False, Error message string.]
+            [True, Number of papers in the question, Original image path, 
+            Annotated image path, Plom data file for this page]
+    """
+
+    return self.DB.MgetImages(username, task_code)
+
+# TODO: Have to figure this out.
 def MgetOriginalImages(self, task):
+    print("#########################")
+    print("MlatexFragment")
+    print(type(task))
+    print(task)
+    print(type(self.DB.MgetOriginalImages(task)))
+    print(self.DB.MgetOriginalImages(task))
     return self.DB.MgetOriginalImages(task)
 
 
-def MsetTag(self, user, task, tag):
-    return self.DB.MsetTag(user, task, tag)
+def MsetTag(self, username, task_code, tag):
+    """Assign a tag string to a paper
+
+    Args:
+        username (Str): User who assigned tag to the paper.
+        task_code (Str): Code string for the task.
+        tags (Str): Tag assigned to the paper.
+
+    Returns:
+        bool: True or False indicating if tag was set in database successfully.
+    """
+
+    return self.DB.MsetTag(username, task_code, tag)
 
 
-def MgetWholePaper(self, testNumber, questionNumber):
-    return self.DB.MgetWholePaper(testNumber, questionNumber)
+def MgetWholePaper(self, test_number, question_number):
+    """Respond with all the images of the paper including the given question. 
+
+    Args:
+        test_number (Str): A string which has the test number in the format `0011`
+            for example.
+        question_number (Str): Question number.
+
+    Returns:
+        list: A list including the following information:
+            Boolean of wether we got the paper images.
+            A list of lists inlcuding [`test_version`, `image_id_reference_number`, `does_page_belong_to_question`].
+            Followed by a series of image paths for the pages of the paper.
+    """
+
+    return self.DB.MgetWholePaper(test_number, question_number)
 
 
-def MreviewQuestion(self, testNumber, questionNumber, version):
-    return self.DB.MreviewQuestion(testNumber, questionNumber, version)
+def MreviewQuestion(self, test_number, question_number, version_number):
+    """Save question results in database.
 
+    Args:
+        test_number (int): Reviewed test number.
+        question_number (int): Review queston number.
+        version_number (int): Marked question version number.
 
+    Returns:
+        list: Respond with a list with value of either True or False.
+    """
+
+    return self.DB.MreviewQuestion(test_number, question_number, version_number)
+
+# TODO: Deprecated.
+# TODO: Should be removed.
 def MrevertTask(self, code):
+    print("#########################")
+    print("MrevertTask")
+    print(type(code))
+    print(code)
     rval = self.DB.MrevertTask(code)
+    print(type(rval))
+    print(rval)
     # response is [False, "NST"] or [False, "NAC"] or [True, f1,f2,f3]
     if rval[0]:
         for fn in rval[1:]:  # clean up any annotation files
@@ -183,5 +345,17 @@ def MrevertTask(self, code):
         return rval
 
 
-def MshuffleImages(self, username, code, imageRefs):
-    return self.DB.MshuffleImages(username, code, imageRefs)
+def MshuffleImages(self, username, task_code, image_reference):
+    """Respond with the shuffled images.
+
+    Args:
+        username (Str): User who assigned tag to the paper.
+        task_code (Str): Code string for the task.
+        image_reference ([type]): A list of the `image_id_reference_number` for this 
+            reshuffled question images.
+
+    Returns:
+        list: A list with a single value of either True or False.
+    """
+
+    return self.DB.MshuffleImages(username, task_code, image_reference)
