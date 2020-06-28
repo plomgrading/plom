@@ -16,8 +16,10 @@
 
 image: ubuntu:18.04
 
-#variables:
-#  DOCKER_DRIVER: overlay2
+variables:
+  DOCKER_DRIVER: overlay2
+  IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  IM_LATEST: $CI_REGISTRY_IMAGE:latest
 
 # Need pip >= 19, which turns out to be nontrivial: cannot just call
 # pip/pip3 after upgrading, hence `python3 -m pip` stuff below
@@ -46,21 +48,20 @@ before_script:
 # for now, static and build are unused, we run all in parallel
 stages:
   - static_analysis
+  - test_nodock
   - build
   - test
-  - stage2
+  - final
 
 
-job docker-image:
+docker-image:
   image: docker:19.03.11
-  stage: test
-  before_script:
-    - echo "Overriding before_script"
   services:
     - docker:19.03.11-dind
-  variables:
-    IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    IM_LATEST: $CI_REGISTRY_IMAGE:latest
+  stage: build
+  needs: []
+  before_script:
+    - echo "Overriding before_script"
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $IM_LATEST || true
@@ -69,28 +70,27 @@ job docker-image:
 
 
 # If we are on the master branch, we tag the above as "latest"
-job docker-image-master:
+docker-image-master:
   image: docker:19.03.11
-  stage: stage2
+  services:
+    - docker:19.03.11-dind
+  stage: final
+  needs: ["docker-image"]
   before_script:
     - echo "Overriding before_script"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  services:
-    - docker:19.03.11-dind
-  variables:
-    IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    RELEASE_IM: $CI_REGISTRY_IMAGE:latest
   script:
     - docker pull $IM
-    - docker tag $IM $RELEASE_IM
-    - docker push $RELEASE_IM
+    - docker tag $IM $IM_LATEST
+    - docker push $IM_LATEST
   only:
     # should be "master", temporarily set to this while debugging
     - CIwork2
 
 
-job black:
-  stage: test
+black:
+  stage: static_analysis
+  needs: []
   image: "python:3.8"
   before_script:
     - pip3 install black
@@ -105,8 +105,38 @@ job black:
 #    - python3 -m pytest -l
 
 
-job unitTestsInstalledPkg:
+basic:
+  image: docker:19.03.11
+  services:
+    - docker:19.03.11-dind
   stage: test
+  needs: ["docker-image"]
+  before_script:
+    - echo "Overriding before_script"
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $IM
+    - docker run $IM plom-init
+
+
+unittests:
+  image: docker:19.03.11
+  services:
+    - docker:19.03.11-dind
+  stage: test
+  needs: ["docker-image"]
+  before_script:
+    - echo "Overriding before_script"
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $IM
+    # TODO: mount some space?  tmp?
+    - docker run $IM pytest-3 -l --pyargs plom
+
+
+unitTestsNoDock:
+  stage: test_nodock
+  needs: []
   script:
     - python3 -m pip install packaging
     - python3 ./setup.py build bdist_wheel
@@ -120,8 +150,9 @@ job unitTestsInstalledPkg:
     - popd
 
 
-job demoServer:
-  stage: test
+demoServerNoDock:
+  stage: test_nodock
+  needs: []
   script:
     - python3 ./setup.py build bdist_wheel
     - pushd dist
@@ -158,8 +189,9 @@ job demoServer:
     - popd
 
 
-job fullWorkFlow:
-  stage: test
+fullWorkFlowNoDock:
+  stage: test_nodock
+  needs: []
   script:
     - python3 ./setup.py build bdist_wheel
     - pushd dist
@@ -226,10 +258,12 @@ job fullWorkFlow:
     - jobs -l
     - popd
 
-job backgroundTest:
+backgroundTest:
+  image: alpine
   before_script:
     - echo "Overriding before_script"
-  stage: test
+  stage: static_analysis
+  needs: []
   script:
     - sleep 60 &
     - jobs -l
@@ -243,8 +277,9 @@ job backgroundTest:
     - echo "Should be no jobs and this should succeed"
     - jobs -p
 
-job appstreamValid:
-  stage: test
+appstreamValid:
+  stage: static_analysis
+  needs: []
   image: alpine
   before_script:
     - apk add appstream-glib
