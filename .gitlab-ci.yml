@@ -13,6 +13,7 @@
 # ---------
 #   * use our Dockerfile instead of apt-get
 #       - I think this is "dind"
+#   * test on latest versions of deps with Docker pinned on req.txt
 
 image: ubuntu:18.04
 
@@ -69,6 +70,22 @@ docker-image:
     - docker push $IM
 
 
+# Get fast results by running tests in a copy-pasta of the docker-image job
+quick-pytests:
+  image: docker:19.03.11
+  services:
+    - docker:19.03.11-dind
+  stage: build
+  needs: []
+  before_script:
+    - echo "Overriding before_script"
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $IM_LATEST || true
+    - docker build --cache-from $IM_LATEST --tag $IM .
+    - docker run $IM pytest-3 -l --pyargs plom
+
+
 # If we are on the master branch, we tag the above as "latest"
 docker-image-master:
   image: docker:19.03.11
@@ -98,66 +115,40 @@ black:
     - black --check --diff plom
 
 
-#job unitTests:
-#  stage: test
-#  script:
-#    # or pytest-3 -l
-#    - python3 -m pytest -l
-
-
 basic:
-  image: docker:19.03.11
-  services:
-    - docker:19.03.11-dind
   stage: test
   needs: ["docker-image"]
+  image: $IM
+  services:
+    - docker:19.03.11-dind
   before_script:
     - echo "Overriding before_script"
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - docker pull $IM
-    - docker run $IM plom-init
+    - plom-init
 
 
 unittests:
-  image: docker:19.03.11
-  services:
-    - docker:19.03.11-dind
   stage: test
   needs: ["docker-image"]
+  image: $IM
+  services:
+    - docker:19.03.11-dind
   before_script:
     - echo "Overriding before_script"
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - docker pull $IM
-    # TODO: mount some space?  tmp?
-    - docker run $IM pytest-3 -l --pyargs plom
-
-
-unitTestsNoDock:
-  stage: test_nodock
-  needs: []
-  script:
-    - python3 -m pip install packaging
-    - python3 ./setup.py build bdist_wheel
-    - pushd dist
-    - python3 -m pip install plom-*.whl
-    - popd
-    # no go to some other dir and run tests on installed pkg
-    - mkdir tmp
-    - pushd tmp
     - pytest-3 -l --pyargs plom
-    - popd
 
 
-demoServerNoDock:
-  stage: test_nodock
-  needs: []
+demoserver:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  services:
+    - docker:19.03.11-dind
+  before_script:
+    - echo "Overriding before_script"
+    - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
-    - python3 ./setup.py build bdist_wheel
-    - pushd dist
-    - python3 -m pip install plom-*.whl
-    - popd
     - mkdir demo
     - pushd demo
     - plom-build new --demo
@@ -189,14 +180,16 @@ demoServerNoDock:
     - popd
 
 
-fullWorkFlowNoDock:
-  stage: test_nodock
-  needs: []
+fullworkflow:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  services:
+    - docker:19.03.11-dind
+  before_script:
+    - echo "Overriding before_script"
+    - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
-    - python3 ./setup.py build bdist_wheel
-    - pushd dist
-    - python3 -m pip install plom-*.whl
-    - popd
     # Build tests
     - mkdir play
     - pushd play
