@@ -115,17 +115,15 @@ black:
 
 
 basic:
-  image: docker:19.03.11
-  services:
-    - docker:19.03.11-dind
   stage: test
   needs: ["docker-image"]
+  image: $IM
+  services:
+    - docker:19.03.11-dind
   before_script:
     - echo "Overriding before_script"
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - docker pull $IM
-    - docker run $IM plom-init
+    - plom-init
 
 
 unittests:
