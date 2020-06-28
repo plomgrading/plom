@@ -13,6 +13,7 @@
 # ---------
 #   * use our Dockerfile instead of apt-get
 #       - I think this is "dind"
+#   * test on latest versions of deps with Docker pinned on req.txt
 
 image: ubuntu:18.04
 
