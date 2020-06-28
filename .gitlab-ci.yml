@@ -134,6 +134,18 @@ unittests:
     - docker run $IM pytest-3 -l --pyargs plom
 
 
+unittests2:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  services:
+    - docker:19.03.11-dind
+  before_script:
+    - echo "Overriding before_script"
+  script:
+    - pytest-3 -l --pyargs plom
+
+
 unitTestsNoDock:
   stage: test_nodock
   needs: []
@@ -150,14 +162,16 @@ unitTestsNoDock:
     - popd
 
 
-demoServerNoDock:
-  stage: test_nodock
-  needs: []
+demoserver:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  services:
+    - docker:19.03.11-dind
+  before_script:
+    - echo "Overriding before_script"
+    - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
-    - python3 ./setup.py build bdist_wheel
-    - pushd dist
-    - python3 -m pip install plom-*.whl
-    - popd
     - mkdir demo
     - pushd demo
     - plom-build new --demo
@@ -189,14 +203,16 @@ demoServerNoDock:
     - popd
 
 
-fullWorkFlowNoDock:
-  stage: test_nodock
-  needs: []
+fullworkflow:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  services:
+    - docker:19.03.11-dind
+  before_script:
+    - echo "Overriding before_script"
+    - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
-    - python3 ./setup.py build bdist_wheel
-    - pushd dist
-    - python3 -m pip install plom-*.whl
-    - popd
     # Build tests
     - mkdir play
     - pushd play
