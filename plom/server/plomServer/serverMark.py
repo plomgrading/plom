@@ -47,16 +47,14 @@ def MgetAllMax(self):
             for the exam questions. 
     """
 
-    question_max_grades = {}
-    for question_number in range(1, self.testSpec["numberOfQuestions"] + 1):
-        question_max_grades[question_number] = self.testSpec["question"][
-            str(question_number)
-        ]["mark"]
-    return question_max_grades
+    max_grades = {}
+    for q_number in range(1, self.testSpec["numberOfQuestions"] + 1):
+        max_grades[q_number] = self.testSpec["question"][str(q_number)]["mark"]
+    return max_grades
 
 
 def MprogressCount(self, question_number, version_number):
-    """Send back the markind progress count for question.
+    """Send back the marking progress count for question.
 
     Args:
         question_number (int): Question number.
@@ -95,7 +93,7 @@ def MgetDoneTasks(self, username, question_number, version_number):
 
 
 def MgetNextTask(self, question_number, version_number):
-    """Retrieve the next unmarked paper from the database and give to client.
+    """Retrieve the next unmarked paper from the database.
 
     Args:
         question_number (int): Next question's question number.
@@ -161,6 +159,9 @@ def MdidNotFinish(self, username, task_code):
     return
 
 
+# TODO: As input to MreturnMarkedTask, the comments string is in a
+# list ie `["comment 1", "comment 2", "comment 3"]`
+# Maybe this should be changed.
 def MreturnMarkedTask(
     self,
     username,
@@ -185,8 +186,7 @@ def MreturnMarkedTask(
         mark (int): Question mark.
         image (bytearray): Marked image of question.
         plomdat (bytearray): Plom data file used for saving file information.
-        comments (str): Return the String or the comments (why is this a String when I print the type TODO):
-            TODO: The comments string is in a list ie `["comment 1", "comment 2", "comment 3"]`
+        comments (str): Return the String of the comments list.
         time_spent_marking (int): Seconds spent marking the paper.
         tags (Str): Tag assigned to the paper.
         md5_code (Str): MD5 hash key for this task.
