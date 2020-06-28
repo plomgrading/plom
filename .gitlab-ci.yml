@@ -6,16 +6,19 @@
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
-#
-# This the CI configuration for Plom
 
+# This the CI configuration for Plom
+#
 # TODO list
 # ---------
 #   * use our Dockerfile instead of apt-get
 #       - I think this is "dind"
 #   * test on latest versions of deps with Docker pinned on req.txt
 
-image: ubuntu:18.04
+image: docker:19.03.11
+
+services:
+  - docker:19.03.11-dind
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -31,13 +34,8 @@ stages:
 
 
 docker-image:
-  image: docker:19.03.11
-  services:
-    - docker:19.03.11-dind
   stage: build
   needs: []
-  before_script:
-    - echo "Overriding before_script"
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $IM_LATEST || true
@@ -47,13 +45,8 @@ docker-image:
 
 # Get fast results by running tests in a copy-pasta of the docker-image job
 quick-pytests:
-  image: docker:19.03.11
-  services:
-    - docker:19.03.11-dind
   stage: build
   needs: []
-  before_script:
-    - echo "Overriding before_script"
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $IM_LATEST || true
@@ -63,13 +56,9 @@ quick-pytests:
 
 # If we are on the master branch, we tag the above as "latest"
 docker-image-master:
-  image: docker:19.03.11
-  services:
-    - docker:19.03.11-dind
   stage: final
   needs: ["docker-image"]
   before_script:
-    - echo "Overriding before_script"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - docker pull $IM
@@ -94,10 +83,6 @@ basic:
   stage: test
   needs: ["docker-image"]
   image: $IM
-  services:
-    - docker:19.03.11-dind
-  before_script:
-    - echo "Overriding before_script"
   script:
     - plom-init
 
@@ -106,10 +91,6 @@ unittests:
   stage: test
   needs: ["docker-image"]
   image: $IM
-  services:
-    - docker:19.03.11-dind
-  before_script:
-    - echo "Overriding before_script"
   script:
     - pytest-3 -l --pyargs plom
 
@@ -118,10 +99,7 @@ demoserver:
   stage: test
   needs: ["docker-image"]
   image: $IM
-  services:
-    - docker:19.03.11-dind
   before_script:
-    - echo "Overriding before_script"
     - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
     - mkdir demo
@@ -159,10 +137,7 @@ fullworkflow:
   stage: test
   needs: ["docker-image"]
   image: $IM
-  services:
-    - docker:19.03.11-dind
   before_script:
-    - echo "Overriding before_script"
     - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
     # Build tests
@@ -228,8 +203,6 @@ fullworkflow:
 
 backgroundTest:
   image: alpine
-  before_script:
-    - echo "Overriding before_script"
   stage: static_analysis
   needs: []
   script:
