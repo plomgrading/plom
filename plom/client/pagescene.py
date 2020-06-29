@@ -89,6 +89,9 @@ class ScoreBox(QGraphicsTextItem):
             option (QStyleOptionGraphicsItem): Style options.
             widget (QWidget): Associated widgets.
 
+        Notes:
+            Overrides parent method.
+
         Returns:
             None
         """
@@ -98,14 +101,14 @@ class ScoreBox(QGraphicsTextItem):
         super(ScoreBox, self).paint(painter, option, widget)
 
 
-class UnderlyingImage(QGraphicsItemGroup):
+class UnderlyingImages(QGraphicsItemGroup):
     """
-    A class for the image of the underlying page being marked.
+    A class for the image of the underlying pages being marked.
     """
 
     def __init__(self, imageNames):
         """
-        Initialize a new underlying image.
+        Initialize a new series of underlying images.
 
         Args:
             imageNames(list[str]): List containing the names of the images.
@@ -170,7 +173,7 @@ mouseRelease = {
 class PageScene(QGraphicsScene):
     """Extend the graphics scene so that it knows how to translate
     mouse-press/move/release into operations on QGraphicsItems and
-    QTextUtems.
+    QTextItems.
     """
 
     def __init__(self, parent, imgNames, saveName, maxMark, score, markStyle):
@@ -186,7 +189,7 @@ class PageScene(QGraphicsScene):
             score (int): current score
             markStyle (int): marking style.
                     1 = mark total = user clicks the total-mark (will be
-                    deprecated in future.
+                    deprecated in future.)
                     2 = mark-up = mark starts at 0 and user increments it
                     3 = mark-down = mark starts at max and user decrements it
         """
@@ -201,7 +204,7 @@ class PageScene(QGraphicsScene):
         # Tool mode - initially set it to "move"
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
-        self.underImage = UnderlyingImage(self.imageNames)
+        self.underImage = UnderlyingImages(self.imageNames)
         self.addItem(self.underImage)
 
         # Build scene rectangle to fit the image, and place image into it.
@@ -309,7 +312,7 @@ class PageScene(QGraphicsScene):
 
     def getComments(self):
         """
-        Get the current comments associated with this paper.
+        Get the current text items and comments associated with this paper.
 
         Returns:
             (list): a list containing all comments.
@@ -323,7 +326,7 @@ class PageScene(QGraphicsScene):
 
     def countComments(self):
         """
-        Counts current comments associated with the paper.
+        Counts current text items and comments associated with the paper.
 
         Returns:
             (int): total number of comments associated with this paper.
@@ -499,8 +502,13 @@ class PageScene(QGraphicsScene):
 
     def mousePressCross(self, event):
         """
-        Selects the proper cross/mark/tick based on which mouse button (
-            left/middle/right) was pressed.
+        Selects the proper cross/?-mark/tick based on which mouse button or
+        mouse/key combination was pressed.
+
+        Notes:
+            tick = right-click or shift+click.
+            question mark = middle-click or control+click.
+            cross = left-click or any combination other than the above.
 
         Args:
             event (QMouseEvent): the mouse press.
@@ -524,12 +532,16 @@ class PageScene(QGraphicsScene):
 
     def mousePressDelta(self, event):
         """
-        Creates the mark-delta, ?-mark or tick/cross based on which mouse
-            button (left/middle/right) was pressed.
+        Creates the mark-delta, ?-mark/tick/cross based on which mouse
+        button or mouse/key combination was pressed.
 
         Notes:
-        If mark-delta is positive then right-mouse makes a cross.
-        If mark-delta is negative then right-mouse makes a tick.
+            cross = right-click or shift+click if current mark-delta > 0.
+            tick = right-click or shift+click if current mark-delta <= 0.
+            question mark = middle-click or control+click.
+            mark-delta = left-click or any other combination, assigns with
+                the selected mark-delta value.
+
 
         Args:
             event (QMouseEvent): Mouse press.
@@ -715,7 +727,7 @@ class PageScene(QGraphicsScene):
             msg.setIcon(QMessageBox.Information)
             msg.setWindowTitle("Image Information")
             msg.setText(
-                "You can double-click on an Image to modify its scale and " "border."
+                "You can double-click on an Image to modify its scale and border."
             )
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
@@ -837,7 +849,7 @@ class PageScene(QGraphicsScene):
                 for Y in [
                     ScoreBox,
                     QGraphicsPixmapItem,
-                    UnderlyingImage,
+                    UnderlyingImages,
                     GhostComment,
                     GhostDelta,
                     GhostText,
@@ -1009,7 +1021,7 @@ class PageScene(QGraphicsScene):
             Creates a temp box which is updated as the mouse moves
             and replaced with a boxitem when the drawing is finished.
             If left-click then a highlight box will be drawn at finish,
-            else an ellipse is drawn
+            else if right-click or click+shift, an ellipse is drawn.
 
         Args:
             event (QMouseEvent): the mouse press event.
@@ -1126,8 +1138,9 @@ class PageScene(QGraphicsScene):
         Notes:
             Creates a temp line which is updated as the mouse moves
             and replaced with a line or arrow when the drawing is finished.
-            If left-click then a line will be drawn at finish,
-            else an arrow is drawn at finish.
+            Single arrowhead = right click or click+shift
+            Double arrowhead = middle click or click+control
+            No Arrows = left click or any other combination.
 
         Args:
             event (QMouseEvent): the given mouse press.
@@ -1180,7 +1193,7 @@ class PageScene(QGraphicsScene):
 
         Notes:
             Remove the temp lineitem (which was needed for animation)
-            and create a command for either a line or an arrow
+            and create a command for either a line, arrow or double arrow
             depending on whether or not the arrow flag was set.
             Push the resulting command onto the undo stack.
 
@@ -1209,9 +1222,9 @@ class PageScene(QGraphicsScene):
         Handle the mouse press when using the pen tool to draw.
 
         Notes:
-            Start drawing either a pen-path (left-click) or
-            highlight path (right-click).
-            Set the path-pen accordingly.
+            normal pen = left click.
+            highlight pen = right click or click+shift.
+            pen with double-arrowhead = middle click or click+control.
 
         Args:
             event (QMouseEvent): the associated mouse press.
@@ -1321,7 +1334,8 @@ class PageScene(QGraphicsScene):
         Handle the mouse press when drawing a zoom box.
 
         Notes:
-            Nothing happens until button is released.
+            If right-click (or shift) then zoom-out, else - don't do much
+            until release.
 
         Args:
             event (QMouseEvent): given mouse press.
@@ -1564,7 +1578,10 @@ class PageScene(QGraphicsScene):
         return True
 
     def hasAnyComments(self):
-        """ Returns True if scene has any comments, False otherwise. """
+        """
+        Returns True if scene has any comments or text items,
+        False otherwise.
+        """
         for X in self.items():
             if isinstance(X, (TextItem, GroupDTItem)):
                 return True
