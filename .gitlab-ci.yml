@@ -329,6 +329,7 @@ legacy_full:
   - windows-1809
 
 winbuild:
+  image: winamd64/python
   extends:
   - .shared_windows_runners
   stage: build
@@ -339,6 +340,9 @@ winbuild:
   - echo "started by ${GITLAB_USER_NAME}"
   script:
   - echo "running scripts in the build job"
+  - python --version
+  - python3 --version
+  - echo "ran scripts in the build job"
 
 wintest:
   extends:
