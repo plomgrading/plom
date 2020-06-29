@@ -321,3 +321,29 @@ legacy_full:
     - echo "Should be no jobs and this should succeed"
     - jobs -l
     - popd
+
+.shared_windows_runners:
+  tags:
+  - shared-windows
+  - windows
+  - windows-1809
+
+winbuild:
+  extends:
+  - .shared_windows_runners
+  stage: build
+  needs: []
+  before_script:
+  - Set-Variable -Name "time" -Value (date -Format "%H:%m")
+  - echo ${time}
+  - echo "started by ${GITLAB_USER_NAME}"
+  script:
+  - echo "running scripts in the build job"
+
+wintest:
+  extends:
+  - .shared_windows_runners
+  stage: test
+  needs: ["winbuild"]
+  script:
+  - echo "running scripts in the test job"
