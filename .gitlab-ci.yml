@@ -329,7 +329,6 @@ legacy_full:
   - windows-1809
 
 winbuild:
-  image: winamd64/python
   extends:
   - .shared_windows_runners
   stage: build
@@ -338,6 +337,7 @@ winbuild:
   - Set-Variable -Name "time" -Value (date -Format "%H:%m")
   - echo ${time}
   - echo "started by ${GITLAB_USER_NAME}"
+  - choco install -y python3
   script:
   - echo "running scripts in the build job"
   - python --version
@@ -347,7 +347,22 @@ winbuild:
 wintest:
   extends:
   - .shared_windows_runners
-  stage: test
-  needs: ["winbuild"]
+  stage: build
+  needs: []
   script:
+  - choco install -y python3
+  - choco install -y pip
+  - choco install -y pyqt5
+  - echo "running scripts in the test job"
+
+wintest2:
+  extends:
+  - .shared_windows_runners
+  stage: build
+  needs: []
+  script:
+  - choco install -y python3
+  - choco install -y pip
+  - pip install toml
+  - choco install -y pyqt5
   - echo "running scripts in the test job"
