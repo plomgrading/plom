@@ -385,3 +385,7 @@ winpyinst:
   - c:\Python37\Scripts\pyinstaller client.windows.spec
   - ls dist
   - popd
+  artifacts:
+    paths:
+    - plom/dist/PlomClientWindows.exe
+    expire_in: 1 week
