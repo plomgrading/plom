@@ -361,6 +361,7 @@ wintest:
   - choco install -y pyqt5
   - refreshenv
   - echo "running scripts in the test job"
+  - c:\Python38\python -m plom.scripts.client -h
 
 wintest2:
   extends:
@@ -370,9 +371,10 @@ wintest2:
   script:
   - choco install -y python3
   - refreshenv
-  - c:\Python38\pip install toml
-  - c:\Python38\pip install requests-toolbelt
+  - c:\Python38\Scripts\pip install toml
+  - c:\Python38\Scripts\pip install requests-toolbelt
   - refreshenv
   - choco install -y pyqt5
   - refreshenv
   - echo "running scripts in the test job"
+  - c:\Python38\python -m plom.scripts.client -h
