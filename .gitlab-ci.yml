@@ -380,4 +380,8 @@ winpyinst:
   - c:\Python37\python -m plom.scripts.client -h
   - echo "probably not in the path in my experience"
   - echo $Env:Path
-  - pyinstaller -h
+  - c:\Python37\Scripts\pyinstaller -h
+  - pushd plom
+  - c:\Python37\Scripts\pyinstaller client.windows.spec
+  - ls dist
+  - popd
