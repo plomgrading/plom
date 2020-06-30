@@ -358,8 +358,6 @@ wintest:
   script:
   - choco install -y python3
   - refreshenv
-  - choco install -y pip
-  - refreshenv
   - choco install -y pyqt5
   - refreshenv
   - echo "running scripts in the test job"
@@ -372,8 +370,9 @@ wintest2:
   script:
   - choco install -y python3
   - refreshenv
-  - choco install -y pip
+  - c:\Python38\pip install toml
+  - c:\Python38\pip install requests-toolbelt
   - refreshenv
-  - pip install toml
   - choco install -y pyqt5
+  - refreshenv
   - echo "running scripts in the test job"
