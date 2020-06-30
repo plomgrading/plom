@@ -341,6 +341,11 @@ winbuild:
   - refreshenv
   script:
   - echo "running scripts in the build job"
+  - dir C:\Python38
+  - dir C:\Python38\Scripts
+  - echo %Path%
+  - echo $Env:Path
+  - C:\Python38\Scripts\python --version
   - python --version
   - python3 --version
   - echo "ran scripts in the build job"
