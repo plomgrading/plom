@@ -368,16 +368,19 @@ winpyinst:
   - .shared_windows_runners
   stage: build
   needs: []
+  variables:
+    PIP: C:\Python37\Scripts\pip
   script:
-  - choco install -y python3
+  - choco install -y python3 --version 3.7.8
   - refreshenv
-  - c:\Python38\Scripts\pip install toml
-  - c:\Python38\Scripts\pip install requests-toolbelt
-  - c:\Python38\Scripts\pip install pyqt5
-  - c:\Python38\Scripts\pip install pyinstaller
+  - $PIP install toml
+  - $PIP install requests-toolbelt
+  - $PIP install pyqt5
+  - $PIP install pyinstaller
   - refreshenv
   - echo "running scripts in the test job"
-  - c:\Python38\python -m plom.scripts.client -h
+  - c:\Python37\python -m plom.scripts.client -h
   - echo "probably not in the path in my experience"
   - echo $Env:Path
+  - c:\Python37\python -m pyinstaller -h
   - pyinstaller -h
