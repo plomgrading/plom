@@ -333,7 +333,7 @@ linuxbinary:
     - pip install pyinstaller
   script:
     - pyinstaller -h
-    - pyinstaller client-linux.spec
+    - pyinstaller client.linux.spec
   artifacts:
     paths:
     - PlomClientLinux
