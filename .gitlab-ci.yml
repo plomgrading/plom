@@ -24,7 +24,6 @@ variables:
   DOCKER_DRIVER: overlay2
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
-  WINPIP: C:\Python37\Scripts\pip
 
 stages:
   - static_analysis
@@ -372,14 +371,13 @@ winpyinst:
   script:
   - choco install -y python3 --version 3.7.8
   - refreshenv
-  - $WINPIP install toml
-  - $WINPIP install requests-toolbelt
-  - $WINPIP install pyqt5
-  - $WINPIP install pyinstaller
+  - C:\Python37\Scripts\pip install toml
+  - C:\Python37\Scripts\pip install requests-toolbelt
+  - C:\Python37\Scripts\pip install pyqt5
+  - C:\Python37\Scripts\pip install pyinstaller
   - refreshenv
   - echo "running scripts in the test job"
   - c:\Python37\python -m plom.scripts.client -h
   - echo "probably not in the path in my experience"
   - echo $Env:Path
-  - c:\Python37\python -m pyinstaller -h
   - pyinstaller -h
