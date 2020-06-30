@@ -345,9 +345,9 @@ winbuild:
   - dir C:\Python38\Scripts
   - echo %Path%
   - echo $Env:Path
-  - C:\Python38\Scripts\python --version
-  - python --version
-  - python3 --version
+  - C:\Python38\python --version
+  #python --version
+  #python3 --version
   - echo "ran scripts in the build job"
 
 wintest:
