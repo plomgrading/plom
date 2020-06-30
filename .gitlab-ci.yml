@@ -24,6 +24,7 @@ variables:
   DOCKER_DRIVER: overlay2
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
+  WINPIP: C:\Python37\Scripts\pip
 
 stages:
   - static_analysis
@@ -337,15 +338,15 @@ winbuild:
   - Set-Variable -Name "time" -Value (date -Format "%H:%m")
   - echo ${time}
   - echo "started by ${GITLAB_USER_NAME}"
-  - choco install -y python3
+  - choco install -y python3 --version 3.7.8
   - refreshenv
   script:
   - echo "running scripts in the build job"
-  - dir C:\Python38
-  - dir C:\Python38\Scripts
+  - dir C:\Python37
+  - dir C:\Python37\Scripts
   - echo %Path%
   - echo $Env:Path
-  - C:\Python38\python --version
+  - C:\Python37\python --version
   - echo "ran scripts in the build job"
 
 wintest:
@@ -368,15 +369,13 @@ winpyinst:
   - .shared_windows_runners
   stage: build
   needs: []
-  variables:
-    PIP: C:\Python37\Scripts\pip
   script:
   - choco install -y python3 --version 3.7.8
   - refreshenv
-  - $PIP install toml
-  - $PIP install requests-toolbelt
-  - $PIP install pyqt5
-  - $PIP install pyinstaller
+  - $WINPIP install toml
+  - $WINPIP install requests-toolbelt
+  - $WINPIP install pyqt5
+  - $WINPIP install pyinstaller
   - refreshenv
   - echo "running scripts in the test job"
   - c:\Python37\python -m plom.scripts.client -h
