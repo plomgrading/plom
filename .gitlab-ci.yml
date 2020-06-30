@@ -346,8 +346,6 @@ winbuild:
   - echo %Path%
   - echo $Env:Path
   - C:\Python38\python --version
-  #python --version
-  #python3 --version
   - echo "ran scripts in the build job"
 
 wintest:
@@ -358,12 +356,14 @@ wintest:
   script:
   - choco install -y python3
   - refreshenv
-  - choco install -y pyqt5
+  - c:\Python38\Scripts\pip install toml
+  - c:\Python38\Scripts\pip install requests-toolbelt
+  - c:\Python38\Scripts\pip install pyqt5
   - refreshenv
   - echo "running scripts in the test job"
   - c:\Python38\python -m plom.scripts.client -h
 
-wintest2:
+winpyinst:
   extends:
   - .shared_windows_runners
   stage: build
@@ -373,8 +373,11 @@ wintest2:
   - refreshenv
   - c:\Python38\Scripts\pip install toml
   - c:\Python38\Scripts\pip install requests-toolbelt
-  - refreshenv
-  - choco install -y pyqt5
+  - c:\Python38\Scripts\pip install pyqt5
+  - c:\Python38\Scripts\pip install pyinstaller
   - refreshenv
   - echo "running scripts in the test job"
   - c:\Python38\python -m plom.scripts.client -h
+  - echo "probably not in the path in my experience"
+  - echo $Env:Path
+  - pyinstaller -h
