@@ -321,3 +321,20 @@ legacy_full:
     - echo "Should be no jobs and this should succeed"
     - jobs -l
     - popd
+
+
+# TODO: may want to use an older image rather than Ubuntu 19.10
+linuxbinary:
+  stage: final
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
+    - pip install pyinstaller
+  script:
+    - pyinstaller -h
+    - pyinstaller client-linux.spec
+  artifacts:
+    paths:
+    - PlomClientLinux
+    expire_in: 1 week
