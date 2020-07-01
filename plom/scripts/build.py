@@ -63,7 +63,7 @@ def parseAndVerifySpecification(fname):
         print('Cannot find "{}" - have you run "plom-build create" yet?'.format(fname))
         exit(1)
 
-    sv = SpecVerifier(fname)
+    sv = SpecVerifier.from_toml_file(fname)
     sv.verifySpec()
     sv.checkCodes()
     sv.saveVerifiedSpec()
