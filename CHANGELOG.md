@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Fix left-hand mouse mode.
 * Other bug fixes.
+* Our Continuous Integration now builds client binaries for development testing and eventual release.
 
 
 ## [0.4.2] - 2020-04-21
