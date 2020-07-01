@@ -322,6 +322,24 @@ legacy_full:
     - jobs -l
     - popd
 
+
+# TODO: may want to use an older image rather than Ubuntu 19.10
+linuxbinary:
+  stage: final
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
+    - pip install pyinstaller
+  script:
+    - pyinstaller -h
+    - pyinstaller client.linux.spec
+  artifacts:
+    paths:
+    - dist/PlomClientLinux
+    expire_in: 2 weeks
+
+
 .shared_windows_runners:
   tags:
   - shared-windows
@@ -388,4 +406,4 @@ winpyinst:
   artifacts:
     paths:
     - plom/dist/PlomClientWindows.exe
-    expire_in: 1 week
+    expire_in: 2 weeks
