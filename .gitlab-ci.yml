@@ -377,11 +377,9 @@ winpyinst:
   - C:\Python37\Scripts\pip install pyinstaller
   - refreshenv
   - c:\Python37\python -m plom.scripts.client -h
-  - pushd plom
   - c:\Python37\Scripts\pyinstaller client.windows.spec
   - ls dist
-  - popd
   artifacts:
     paths:
-    - plom/dist/PlomClientWindows.exe
+    - dist/PlomClient*.exe
     expire_in: 2 weeks
