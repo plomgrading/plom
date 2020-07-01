@@ -17,12 +17,7 @@
 image: ubuntu:18.04
 
 variables:
-  KUBERNETES_VERSION: 1.11.7
-  HELM_VERSION: 2.12.3
-
   DOCKER_DRIVER: overlay2
-
-  ROLLOUT_RESOURCE_TYPE: deployment
 
 # Need pip >= 19, which turns out to be nontrivial: cannot just call
 # pip/pip3 after upgrading, hence `python3 -m pip` stuff below
@@ -38,7 +33,6 @@ before_script:
     python3-requests-toolbelt python3-tqdm
     libpango-1.0 libpangocairo-1.0 libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi
     iproute2 psmisc file
-    appstream-util
   # apt-get --no-install-recommends --yes install libimage-exiftool-perl
   - pip3 install --upgrade pip
   - which pip3
@@ -54,6 +48,21 @@ stages:
   - static_analysis
   - build
   - test
+
+
+job docker-image:
+  image: docker:19.03.11
+  stage: test
+  before_script:
+    - echo "Overriding before_script"
+  services:
+    - docker:19.03.11-dind
+  variables:
+    IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IM .
+    - docker push $IM
 
 
 job black:
@@ -212,5 +221,8 @@ job backgroundTest:
 
 job appstreamValid:
   stage: test
+  image: alpine
+  before_script:
+    - apk add appstream-glib
   script:
     - appstream-util validate-relax org.plomgrading.PlomClient.metainfo.xml
