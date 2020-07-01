@@ -65,8 +65,7 @@ docker-image-master:
     - docker tag $IM $IM_LATEST
     - docker push $IM_LATEST
   only:
-    # should be "master", temporarily set to this while debugging
-    - CIwork2
+    - master
 
 
 black:
@@ -324,6 +323,7 @@ legacy_full:
 
 
 # TODO: may want to use an older image rather than Ubuntu 19.10
+# TODO: consider doing this only on the master branch
 linuxbinary:
   stage: final
   needs: ["docker-image"]
@@ -363,6 +363,7 @@ winmintest:
   - c:\Python38\python -m plom.scripts.client -h
 
 
+# TODO: consider doing this only on the master branch
 winpyinst:
   extends:
   - .shared_windows_runners
