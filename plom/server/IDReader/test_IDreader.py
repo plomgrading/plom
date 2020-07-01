@@ -7,6 +7,7 @@ def test_is_model_absent():
 
 def test_log_likelihood():
     import numpy as np
+
     student_ids = [i for i in range(0, 8)]
     probabilities = [
         [0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
