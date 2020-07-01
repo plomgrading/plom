@@ -346,30 +346,11 @@ linuxbinary:
   - windows
   - windows-1809
 
-winbuild:
-  extends:
-  - .shared_windows_runners
-  stage: build
-  needs: []
-  before_script:
-  - Set-Variable -Name "time" -Value (date -Format "%H:%m")
-  - echo ${time}
-  - echo "started by ${GITLAB_USER_NAME}"
-  - choco install -y python3 --version 3.7.8
-  - refreshenv
-  script:
-  - echo "running scripts in the build job"
-  - dir C:\Python37
-  - dir C:\Python37\Scripts
-  - echo %Path%
-  - echo $Env:Path
-  - C:\Python37\python --version
-  - echo "ran scripts in the build job"
 
-wintest:
+winmintest:
   extends:
   - .shared_windows_runners
-  stage: build
+  stage: test
   needs: []
   script:
   - choco install -y python3
@@ -378,13 +359,14 @@ wintest:
   - c:\Python38\Scripts\pip install requests-toolbelt
   - c:\Python38\Scripts\pip install pyqt5
   - refreshenv
-  - echo "running scripts in the test job"
+  - echo $Env:Path
   - c:\Python38\python -m plom.scripts.client -h
+
 
 winpyinst:
   extends:
   - .shared_windows_runners
-  stage: build
+  stage: final
   needs: []
   script:
   - choco install -y python3 --version 3.7.8
@@ -394,11 +376,7 @@ winpyinst:
   - C:\Python37\Scripts\pip install pyqt5
   - C:\Python37\Scripts\pip install pyinstaller
   - refreshenv
-  - echo "running scripts in the test job"
   - c:\Python37\python -m plom.scripts.client -h
-  - echo "probably not in the path in my experience"
-  - echo $Env:Path
-  - c:\Python37\Scripts\pyinstaller -h
   - pushd plom
   - c:\Python37\Scripts\pyinstaller client.windows.spec
   - ls dist
