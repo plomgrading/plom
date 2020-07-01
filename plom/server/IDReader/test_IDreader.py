@@ -17,7 +17,9 @@ def test_log_likelihood():
         [0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0],
     ]
-    assert log_likelihood(student_ids, probabilities) == 5.545177444479562
+    assert bool(
+        np.isclose(log_likelihood(student_ids, probabilities), 5.545177444479562, 1e-7)
+    )
 
 
 def test_download_or_train_model():
