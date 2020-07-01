@@ -36,6 +36,7 @@ client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQ
 server_install_requires = [
     "toml>=0.10.0",
     "tqdm",
+    "numpy",
     "pandas",
     "passlib",
     "pymupdf>=1.16.14",
@@ -51,8 +52,8 @@ server_install_requires = [
     "opencv-python",
     "tensorflow>=2",
     "lapsolver",  # ID reading
-    "PyQt5",
-    "requests",  # b/c of deprecated userManager
+    "requests",
+    "requests-toolbelt",
 ]
 
 # Non-Python deps for server
