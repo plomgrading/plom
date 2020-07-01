@@ -336,7 +336,7 @@ linuxbinary:
     - pyinstaller client.linux.spec
   artifacts:
     paths:
-    - dist/PlomClientLinux
+    - dist/PlomClient*
     expire_in: 2 weeks
 
 
