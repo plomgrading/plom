@@ -25,6 +25,8 @@ cffi==1.14.0
 jpegtran-cffi==0.5.2
 weasyprint==51
 aiohttp==3.6.2
+# unlisted dep of pyqrcode
+pypng==0.0.20
 pyqrcode==1.2.1
 pyzbar==0.1.8
 peewee==3.13.3
@@ -35,3 +37,4 @@ lapsolver==1.1.0
 requests==2.23.0
 requests-toolbelt==0.9.1
 urllib3==1.25.8
+packaging==20.1
