@@ -7,7 +7,7 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-FROM ubuntu:19.10
+FROM ubuntu:18.04
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 
@@ -20,12 +20,13 @@ RUN apt-get --no-install-recommends --yes install  \
     python3-pytest
 
 RUN pip3 install --no-cache-dir --upgrade pip
+# Note: `python3 -m pip` used below on old Ubuntu 18.04
 
 # install cffi first: https://github.com/jbaiter/jpegtran-cffi/issues/27
-RUN pip3 install --no-cache-dir cffi==1.14.0 pycparser==2.20
+RUN python3 -m pip install --no-cache-dir cffi==1.14.0 pycparser==2.20
 COPY requirements.txt /src/
 WORKDIR /src
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 # client dependency: keep in image for now after others so easy to discard
 RUN apt-get --no-install-recommends --yes install python3-pyqt5
@@ -35,4 +36,4 @@ RUN apt-get --no-install-recommends --yes install python3-pyqt5
 COPY setup.py README.md org.plomgrading.PlomClient.* /src/
 COPY plom/ /src/plom/
 WORKDIR /src
-RUN pip3 install .
+RUN python3 -m pip install .
