@@ -21,6 +21,7 @@ tqdm==4.45.0
 passlib==1.7.2
 pymupdf==1.16.18
 Pillow==7.0.0
+pycparser==2.20
 cffi==1.14.0
 jpegtran-cffi==0.5.2
 weasyprint==51

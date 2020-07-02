@@ -15,13 +15,14 @@ RUN apt-get --no-install-recommends --yes install  \
     cmake make imagemagick g++ openssl \
     texlive-latex-extra dvipng latexmk texlive-fonts-recommended \
     libpango-1.0 libpangocairo-1.0 \
-    libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev \
+    libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev libjpeg-dev \
     python3 python3-pip python3-dev python3-setuptools python3-wheel \
-    python3-cffi python3-pytest
-# TODO: not sure why we need cffi here, probably for dep: fix that
+    python3-pytest
 
 RUN pip3 install --no-cache-dir --upgrade pip
 
+# install cffi first: https://github.com/jbaiter/jpegtran-cffi/issues/27
+RUN pip3 install --no-cache-dir cffi==1.14.0 pycparser==2.20
 COPY requirements.txt /src/
 WORKDIR /src
 RUN pip3 install --no-cache-dir -r requirements.txt
