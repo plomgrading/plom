@@ -1,5 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
+# trickery from setup.py to define __version__ without import
+with open(os.path.join("plom", "version.py")) as f:
+    exec(f.read())
+
 block_cipher = None
 
 
@@ -30,7 +35,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='PlomClientWindows',
+          name='PlomClient-{}.exe'.format(__version__),
           debug=False,
           strip=False,
           onefile=True,

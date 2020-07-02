@@ -1,3 +1,12 @@
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+
 import os
 from setuptools import setup, find_packages
 from glob import glob
