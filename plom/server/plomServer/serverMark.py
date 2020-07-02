@@ -78,7 +78,7 @@ def MgetDoneTasks(self, username, question_number, version_number):
     """Respond with a list of the graded tasks.
 
     Args:
-        username (Str): Username string.
+        username (str): Username string.
         question_number (int): Question number.
         version_number (int): Version number.
 
@@ -115,8 +115,8 @@ def MlatexFragment(self, username, latex_fragment):
     """Respond with a path to the latex fragment image. 
 
     Args:
-        username (Str): Username string.
-        latex_fragment (Str): The latex string for the latex image requested.
+        username (str): Username string.
+        latex_fragment (str): The latex string for the latex image requested.
 
     Returns:
         list: A list with either False or True with the latex image's
@@ -133,11 +133,11 @@ def MlatexFragment(self, username, latex_fragment):
 
 
 def MclaimThisTask(self, username, task_code):
-    """Respond with the path to the requested task.
+    """Assign the specified paper to this user and return the task information.
 
     Args:
-        username (Str): User who requests the paper.
-        task_code (Str): Code string for the claimed task.
+        username (str): User who requests the paper.
+        task_code (str): Code string for the claimed task.
 
     Returns:
         list: A list which either only has a False value included or
@@ -151,8 +151,8 @@ def MdidNotFinish(self, username, task_code):
     """Inform database that a user did not finish a task.
 
     Args:
-        username (Str): Owner of the unfinished task.
-        task_code (Str): Code string for the unfinished task.
+        username (str): Owner of the unfinished task.
+        task_code (str): Code string for the unfinished task.
     """
 
     self.DB.MdidNotFinish(username, task_code)
@@ -179,22 +179,23 @@ def MreturnMarkedTask(
     """Save the marked paper's information to database and respond with grading progress.
 
     Args:
-        username (Str): User who marked the paper.
-        task_code (Str): Code string for the task.
+        username (str): User who marked the paper.
+        task_code (str): Code string for the task.
         question_number (int): Marked queston number.
         version_number (int): Marked question version number.
         mark (int): Question mark.
         image (bytearray): Marked image of question.
-        plomdat (bytearray): Plom data file used for saving file information.
+        plomdat (bytearray): Plom data file used for saving marking information in 
+            editable format.
         comments (str): Return the String of the comments list.
         time_spent_marking (int): Seconds spent marking the paper.
-        tags (Str): Tag assigned to the paper.
-        md5_code (Str): MD5 hash key for this task.
+        tags (str): Tag assigned to the paper.
+        md5_code (str): MD5 hash key for this task.
 
     Returns:
         list: Respond with a list which includes:
             [False, Error message of either mismatching codes or database owning the task.]
-            [True, number of raded taskss, total number of tasks.]
+            [True, number of graded tasks, total number of tasks.]
     """
 
     # TODO: score + file sanity checks were done at client. Do we need to redo here?
@@ -265,11 +266,11 @@ def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, ta
     """Saves the marked paper information as a backup, independent of the server
 
     Args:
-        username (Str): User who marked the paper.
+        username (str): User who marked the paper.
         mark (int): Question mark.
-        annotated_filename (Str): Name of the annotated image file.
+        annotated_filename (str): Name of the annotated image file.
         time_spent_marking (int): Seconds spent marking the paper.
-        tags (Str): Tag assigned to the paper.
+        tags (str): Tag assigned to the paper.
     """
 
     with open("{}.txt".format(annotated_filename), "w") as file_header:
@@ -289,8 +290,8 @@ def MgetImages(self, username, task_code):
     """Respond with paths to the marked and original images of a marked question. 
 
     Args:
-        username (Str): User who marked the paper.
-        task_code (Str): Code string for the task.
+        username (str): User who marked the paper.
+        task_code (str): Code string for the task.
 
     Returns:
         list: A list of the format:
@@ -302,14 +303,8 @@ def MgetImages(self, username, task_code):
     return self.DB.MgetImages(username, task_code)
 
 
-# TODO: Have to figure this out.
+# TODO: Have to figure this out.  Please needs documentation.
 def MgetOriginalImages(self, task):
-    print("#########################")
-    print("MlatexFragment")
-    print(type(task))
-    print(task)
-    print(type(self.DB.MgetOriginalImages(task)))
-    print(self.DB.MgetOriginalImages(task))
     return self.DB.MgetOriginalImages(task)
 
 
@@ -317,9 +312,9 @@ def MsetTag(self, username, task_code, tag):
     """Assign a tag string to a paper
 
     Args:
-        username (Str): User who assigned tag to the paper.
-        task_code (Str): Code string for the task.
-        tags (Str): Tag assigned to the paper.
+        username (str): User who assigned tag to the paper.
+        task_code (str): Code string for the task.
+        tags (str): Tag assigned to the paper.
 
     Returns:
         bool: True or False indicating if tag was set in database successfully.
@@ -332,9 +327,9 @@ def MgetWholePaper(self, test_number, question_number):
     """Respond with all the images of the paper including the given question. 
 
     Args:
-        test_number (Str): A string which has the test number in the format `0011`
+        test_number (str): A string which has the test number in the format `0011`
             for example.
-        question_number (Str): Question number.
+        question_number (str): Question number.
 
     Returns:
         list: A list including the following information:
@@ -364,13 +359,6 @@ def MreviewQuestion(self, test_number, question_number, version_number):
 # TODO: Deprecated.
 # TODO: Should be removed.
 def MrevertTask(self, code):
-    print("#########################")
-    print("MrevertTask")
-    print(type(code))
-    print(code)
-    rval = self.DB.MrevertTask(code)
-    print(type(rval))
-    print(rval)
     # response is [False, "NST"] or [False, "NAC"] or [True, f1,f2,f3]
     if rval[0]:
         for fn in rval[1:]:  # clean up any annotation files
@@ -381,16 +369,16 @@ def MrevertTask(self, code):
 
 
 def MshuffleImages(self, username, task_code, image_reference):
-    """Respond with the shuffled images.
+    """Saves the rearranged pages for this task/question in the database.
 
     Args:
-        username (Str): User who assigned tag to the paper.
-        task_code (Str): Code string for the task.
-        image_reference ([type]): A list of the `image_id_reference_number` for this 
-            reshuffled question images.
+        username (str): User who assigned tag to the paper.
+        task_code (str): Code string for the task.
+        image_reference (int): A permutation of the images within this exam that have 
+            information for ths question. Each image is given by its 
+            `image_id_reference_number`.
 
     Returns:
         list: A list with a single value of either True or False.
     """
-
     return self.DB.MshuffleImages(username, task_code, image_reference)
