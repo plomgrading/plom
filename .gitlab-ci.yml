@@ -260,6 +260,8 @@ legacy_full:
     - pushd dist
     - python3 -m pip install plom-*.whl
     - popd
+    # First, run the unit tests
+    - pytest-3 -l --pyargs plom
     # Build tests
     - mkdir play
     - pushd play
