@@ -33,26 +33,7 @@ def build_all_papers(spec, global_page_version_map, classlist):
     classlist.
 
     Arguments:
-        spec {dict} -- A dictionary embedding the exam info. This dictionary does not have a normal format.
-                       Example below:
-                       {
-                       'name': 'plomdemo',
-                       'longName': 'Midterm Demo using Plom',
-                       'numberOfVersions': 2,
-                       'numberOfPages': 6,
-                       'numberToProduce': 20,
-                       'numberToName': 10,
-                       'numberOfQuestions': 3,
-                       'privateSeed': '1001378822317872',
-                       'publicCode': '270385',
-                       'idPages': {'pages': [1]},
-                       'doNotMark': {'pages': [2]},
-                       'question': {
-                           '1': {'pages': [3], 'mark': 5, 'select': 'shuffle'},
-                           '2': {'pages': [4], 'mark': 10, 'select': 'fix'},
-                           '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
-                          }
-                       }
+        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         global_page_version_map (dict): dict of dicts mapping first by
             paper number (int) then by page number (int) to version (int).
         classlist (list, None): ordered list of (sid, sname) pairs.

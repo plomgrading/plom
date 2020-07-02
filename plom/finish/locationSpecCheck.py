@@ -7,7 +7,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import os
 
-from plom import SpecVerifier, SpecParser
+from plom import SpecParser
 
 
 def checkDirectories():

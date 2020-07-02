@@ -10,55 +10,149 @@ class TotalHandler:
 
     # @routes.get("/TOT/maxMark")
     @authenticate_by_token
-    def TgetMarkMark(self):
+    def TgetMaxMark(self):
+        """Respond with the maximum total possible score for the exam.
+
+        Respond with status 200.
+
+        Returns:
+            aiohttp.web_response.Response: Response object which has the
+                maximum mark for the question.
+        """
         return web.json_response(self.server.TgetMaxMark(), status=200)
 
     # @routes.get("/TOT/progress")
     @authenticate_by_token
     def TprogressCount(self):
+        """Respond with the number of done tasks and total number of tasks.
+
+        Respond with status 200.
+
+        Returns:
+            aiohttp.web_response.Response: Response object which has a list 
+                of number of done tasks and total number of tasks.
+        """
         return web.json_response(self.server.TprogressCount(), status=200)
 
     # @routes.get("/TOT/tasks/complete")
     @authenticate_by_token_required_fields(["user"])
     def TgetDoneTasks(self, data, request):
+        """Respond with a list of totalled exam names and total scores.
+
+        Respond with status 200.
+
+        Args:
+            data (dict): Includes the user/token for authentication.
+            request (aiohttp.web_request.Request): A request of type PATCH /TOT/tasks/`task number`.
+
+        Returns:
+            aiohttp.web_response.Response: A response object which includes the lists 
+                of lists including the [test_number, total_score].
+        """
         # return the completed list
         return web.json_response(self.server.TgetDoneTasks(data["user"]), status=200)
 
     # @routes.get("/TOT/image/{test}")
     @authenticate_by_token_required_fields(["user"])
     def TgetImage(self, data, request):
+        """Respond with the image of the totalled task.
+
+        For example, used by the manager to retrieve the totalled page's image.
+        Respond with status 200/409.
+
+        Args:
+            data (dict): Includes the user/token for authentication.
+            request (aiohttp.web_request.Request): Request of type 
+                GET /TOT/image/'test_number'
+
+        Returns:
+            aiohttp.web_fileresponse.FileResponse: Respond with images
+                of the totalling tasks.
+        """
         test = request.match_info["test"]
-        rmsg = self.server.TgetImage(data["user"], test)
-        if rmsg[0]:  # user allowed access - returns [true, fname0]
-            return web.FileResponse(rmsg[1], status=200)
+        get_image_response = self.server.TgetImage(data["user"], test)
+        get_image_status = get_image_response[0]
+
+        if get_image_status:  # user allowed access - returns [true, fname0]
+            task_image_path = get_image_response[1]
+            return web.FileResponse(task_image_path, status=200)
         else:
             return web.Response(status=409)  # someone else has that image
 
     # @routes.get("/TOT/tasks/available")
     @authenticate_by_token
     def TgetNextTask(self):
-        rmsg = self.server.TgetNextTask()  # returns [True, code] or [False]
-        if rmsg[0]:
-            return web.json_response(rmsg[1], status=200)
+        """Respond with the next exam/task number.
+
+        Respond with status 200/204.
+
+        Returns:
+            aiohttp.web_response.Response: A response object with the
+                paper number for the next task.
+        """
+
+        next_task_data = self.server.TgetNextTask()  # returns [True, code] or [False]
+        next_task_available = next_task_data[0]
+
+        if next_task_available:
+            next_task_number = next_task_data[1]
+            return web.json_response(next_task_number, status=200)
         else:
             return web.Response(status=204)  # no papers left
 
     # @routes.patch("/TOT/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
     def TclaimThisTask(self, data, request):
-        testNumber = request.match_info["task"]
-        rmsg = self.server.TclaimThisTask(data["user"], testNumber)
-        if rmsg[0]:  # user allowed access - returns [true, fname0]
-            return web.FileResponse(rmsg[1], status=200)
+        """Respond with the path image for a paper for totalling.
+
+        Respond with status 200/204.
+
+        Args:
+            data (dict): Includes the user/token for authentication.
+            request (aiohttp.web_request.Request): Request of type 
+                PATCH /TOT/tasks/`task_number` which also includes 
+                the task numbers.
+
+        Returns:
+            aiohttp.web_fileresponse.FileResponse: A request object that 
+                includes the path to the claimed task image.
+        """
+        test_number = request.match_info["task"]
+        task_claim_status = self.server.TclaimThisTask(data["user"], test_number)
+        task_claim_success = task_claim_status[0]
+
+        if task_claim_success:  # user allowed access - returns [true, fname0]
+            task_image_path = task_claim_status[1]
+            return web.FileResponse(task_image_path, status=200)
         else:
             return web.Response(status=204)  # that task already taken.
 
     # @routes.put("/TOT/tasks/{task}")
     @authenticate_by_token_required_fields(["user", "mark"])
     def TreturnTotalledTask(self, data, request):
-        testNumber = request.match_info["task"]
-        rmsg = self.server.TreturnTotalledTask(data["user"], testNumber, data["mark"])
-        if rmsg[0]:  # all good
+        """Saves the mark of the totalled task to the database.
+
+        Respond with status 200/404.
+
+        Args:
+            data (dict): Includes the user/token for authentication in 
+                addition to the total task mark.
+            request (aiohttp.web_request.Request): Request of type 
+                PUT /TOT/tasks/`task_number` which includes the
+                task number.
+
+        Returns:
+            aiohttp.web_response.Response: Empty response which a response
+                status of success or failure.
+        """
+        test_number = request.match_info["task"]
+
+        totalled_task_response = self.server.TreturnTotalledTask(
+            data["user"], test_number, data["mark"]
+        )
+        total_saved_success = totalled_task_response[0]
+
+        if total_saved_success:  # all good
             return web.Response(status=200)
         else:  # a more serious error - can't find this in database
             return web.Response(status=404)
@@ -66,8 +160,22 @@ class TotalHandler:
     # @routes.delete("/TOT/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
     def TdidNotFinish(self, data, request):
-        testNumber = request.match_info["task"]
-        self.server.TdidNotFinish(data["user"], testNumber)
+        """Respond with the unfinished totalling task exam number.
+
+        This could occur for example when the client closes with unfinished totalling tasks.
+        Respond with status 200.
+
+        Args:
+            data (dict): Includes the user/token for authentication.
+            request (aiohttp.web_request.Request): Request DELETE /TOT/tasks/`task_number`
+                which includes the unfinished task number.
+
+        Returns:
+            aiohttp.web_response.Response: An empty response object to
+                indicate success.
+        """
+        test_number = request.match_info["task"]
+        self.server.TdidNotFinish(data["user"], test_number)
         return web.json_response(status=200)
 
     # @routes.patch("/TOT/review")
@@ -92,7 +200,13 @@ class TotalHandler:
             return web.Response(status=404)
 
     def setUpRoutes(self, router):
-        router.add_get("/TOT/maxMark", self.TgetMarkMark)
+        """Adds the response functions to the router object.
+
+        Args:
+            router (aiohttp.web_urldispatcher.UrlDispatcher): Router object which we will add the response functions to.
+        """
+
+        router.add_get("/TOT/maxMark", self.TgetMaxMark)
         router.add_get("/TOT/progress", self.TprogressCount)
         router.add_get("/TOT/tasks/complete", self.TgetDoneTasks)
         router.add_get("/TOT/image/{test}", self.TgetImage)

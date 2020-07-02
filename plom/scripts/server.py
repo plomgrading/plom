@@ -21,7 +21,6 @@ from textwrap import fill, dedent
 import pkg_resources
 
 from plom import __version__
-from plom import SpecVerifier, SpecParser
 from plom import specdir
 
 #################
