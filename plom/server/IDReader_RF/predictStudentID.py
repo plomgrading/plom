@@ -22,7 +22,7 @@ def bounding_rect_area(bounding_rectangle):
     """Return the area of the rectangle.
 
     Args:
-        bounding_rectangle ([type]): Target rectangle object.
+        bounding_rectangle (list): Target rectangle object.
 
     Returns:
         int: Area of the rectangle.
@@ -99,7 +99,7 @@ def get_digit_images(ID_box, num_digits):
     """Find the digit images and return them in a list.
 
     Args:
-        ID_box (class 'numpy.ndarray): Image containing the student ID.
+        ID_box (numpy.ndarray): Image containing the student ID.
         num_digits (int): Number of digits in the student ID.
 
     Returns:
@@ -181,7 +181,7 @@ def get_digit_prob(prediction_model, image_box_fname, top, bottom, num_digits):
     """Return a list of probability predictions for the student ID digits on the cropped image. 
 
     Args:
-        prediction_model (class 'sklearn.ensemble._forest.RandomForestClassifier'): Prediction model.
+        prediction_model (sklearn.ensemble._forest.RandomForestClassifier): Prediction model.
         image_box_fname (Str): File path for the cropped image which includes the ID box.
         top (int): Top boundary of image.
         bottom (int): Bottom boundary of image.

@@ -18,22 +18,29 @@ import requests
 from lapsolver import solve_dense
 import numpy as np
 
+from plom import specdir
 from .predictStudentID import compute_probabilities
-from .trainRandomForestModel import train_model
+from .trainTensorFlowModel import train_model
 
 
 def is_model_absent():
     """Checks if the ML model is available.
 
     Returns:
-        boolean: True/False, indicatin if the model is present.
+        boolean: True/False, indicating if the model is present.
     """
 
-    basePath = Path("plom_model")
-    files = ["ML_model.sav"]
-
-    for filename in files:
-        if not os.path.isfile(basePath / filename):
+    # this directory is created with downloadModel is called
+    base_path = Path("plom_model")
+    files = [
+        "saved_model.pb",
+        "variables/variables.index",
+        "variables/variables.data-00000-of-00001",
+    ]
+    for file_name in files:
+        if os.path.isfile(base_path / file_name):
+            continue
+        else:
             return True
     return False
 
@@ -47,28 +54,45 @@ def download_model():
         boolean: True/False about if the model was successful.
     """
 
-    return False
+    # make a directory into which to save things
+    base_path = Path("plom_model")
+    # make both the base_path and its variables subdir
+    os.makedirs(base_path / "variables", exist_ok=True)
+    base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/master/plomBuzzword/"
+    files = [
+        "saved_model.pb",
+        "variables/variables.index",
+        "variables/variables.data-00000-of-00001",
+    ]
+    for file_name in files:
+        url = base_url + file_name
+        print("Getting {} - ".format(file_name))
+        response = requests.get(url)
+        if response.status_code != 200:
+            print("\tError getting file {}.".format(file_name))
+            return False
+        else:
+            print("\tDone.")
+        with open(base_path / file_name, "wb+") as file_header:
+            file_header.write(response.content)
+    return True
 
 
 def download_or_train_model():
     """Dowload the ID detection model if possible, if not, train it.
     """
 
-    # make a directory into which to save things
-    basePath = Path("plom_model")
-    # make both the basepath and its variables subdir
-    os.makedirs(basePath, exist_ok=True)
-
     print(
-        "Will try to download model and if that fails, then train it locally (which is time-consuming)"
+        "Will try to download model and if that fails, then build it locally (which is time-consuming)"
     )
     if download_model():
-        print("Successfully downloaded tensorflow model. Good to go.")
+        print("Successfully downloaded tensorflow model.")
     else:
         print("Could not download the model, need to train model instead.")
         print(
-            "This will take some time -- on the order of 2-3 minutes depending on your computer."
+            "This will take some time -- on the order of 10-20 minutes depending on your computer."
         )
+
         train_model()
 
 
@@ -136,7 +160,7 @@ def run_id_reader(files_dict, rectangle):
     # Put student numbers in list
     student_IDs = []
     with open(
-        "./specAndDatabase/classlist.csv", newline=""
+        Path(specdir) / "classlist.csv", newline=""
     ) as csvfile:  # todo update file paths
         csv_reader = csv.reader(csvfile, delimiter=",")
         next(csv_reader, None)  # skip the header
@@ -160,7 +184,7 @@ def run_id_reader(files_dict, rectangle):
     row_IDs, column_IDs = solve_dense(costs)
 
     # now save the result
-    with open("./specAndDatabase/predictionlist.csv", "w") as file_header:
+    with open(Path(specdir) / "predictionlist.csv", "w") as file_header:
         file_header.write("test, id\n")
         for r, c in zip(row_IDs, column_IDs):
             # the get test-number of r-th from the test_numbers
