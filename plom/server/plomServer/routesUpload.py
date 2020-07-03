@@ -329,6 +329,23 @@ class UploadHandler:
         else:
             return web.Response(status=404)
 
+    async def getEXPageImage(self, request):
+        data = await request.json()
+        if not validate_required_fields(
+            data, ["user", "token", "test", "question", "order"]
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.getEXPageImage(data["test"], data["question"], data["order"])
+        if rval[0]:
+            return web.FileResponse(rval[1], status=200)  # all fine
+        else:
+            return web.Response(status=404)
+
     async def getLPageImage(self, request):
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "test", "order"]):
@@ -708,6 +725,7 @@ class UploadHandler:
         router.add_delete("/admin/scannedPage/{tpv}", self.removeScannedPage)
         router.add_get("/admin/scannedTPage", self.getTPageImage)
         router.add_get("/admin/scannedHWPage", self.getHWPageImage)
+        router.add_get("/admin/scannedEXPage", self.getEXPageImage)
         router.add_get("/admin/scannedLPage", self.getLPageImage)
         router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)
         router.add_get("/admin/discardNames", self.getDiscardNames)

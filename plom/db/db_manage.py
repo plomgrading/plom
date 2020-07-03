@@ -64,7 +64,7 @@ def getHWPageImage(self, test_number, question, order):
         return [True, pref.image.file_name]
 
 
-def getExPageImage(self, test_number, question, order):
+def getEXPageImage(self, test_number, question, order):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return [False]
