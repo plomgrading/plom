@@ -289,7 +289,7 @@ legacy_full:
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
-    - plom-scan process fake_scribbled_exams.pdf
+    - plom-scan process fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf -w 4567
     - plom-scan read -s localhost -w 4567
     - plom-scan upload -s localhost -w 4567
     - plom-scan upload -u -s localhost -w 4567
