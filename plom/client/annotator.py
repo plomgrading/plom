@@ -377,7 +377,7 @@ class Annotator(QWidget):
 
         # TODO: Make handling of comment less hack.
         log.debug("Restore mode info = {}".format(self.modeInformation))
-        self.scene.setMode(self.modeInformation[0])
+        self.scene.setToolMode(self.modeInformation[0])
         if self.modeInformation[0] == "delta":
             self.markHandler.clickDelta(self.modeInformation[1])
         if self.modeInformation[0] == "comment":
@@ -889,7 +889,7 @@ class Annotator(QWidget):
 
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
-            self.scene.setMode(newMode)
+            self.scene.setToolMode(newMode)
             self.view.setCursor(newCursor)
             # set the modelabel
             self.ui.modeLabel.setText(" {} ".format(self.scene.mode))

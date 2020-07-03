@@ -227,7 +227,7 @@ def doLatexChecks():
 
 
 def initialiseServer():
-    print("Do simple existance checks on required files.")
+    print("Do simple existence checks on required files.")
     checkSpecAndDatabase()
     print("Build required directories")
     buildRequiredDirectories()
