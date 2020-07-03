@@ -14,6 +14,7 @@ from PyQt5.QtGui import (
 from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, QUndoStack, QMessageBox
 
 from plom import AnnFontSizePts, ScenePixelHeight
+
 # Import all the tool commands for undo/redo stack.
 from .tools import *
 
