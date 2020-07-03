@@ -120,7 +120,7 @@ class IDHandler:
     def IDgetImage(self, data, request):
         """Return the images for a specified paper number.
 
-        Responds with status 200/404/409.
+        Responds with status 200/404/409/410.
 
         Args:
             data (dict): A (str:str) dictionary having keys `user` and `token`.
