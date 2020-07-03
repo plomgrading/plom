@@ -96,7 +96,9 @@ def IDreviewID(self, testNumber):
     return self.DB.IDreviewID(testNumber)
 
 
-def IDrunPredictions(self, rectangle, fileNumber, ignoreStamp, use_tensorflow_model = False):
+def IDrunPredictions(
+    self, rectangle, fileNumber, ignoreStamp, use_tensorflow_model=False
+):
     # from plom.server.IDReader.idReader import runIDReader
 
     lockFile = os.path.join(specdir, "IDReader.lock")
@@ -132,7 +134,11 @@ def IDrunPredictions(self, rectangle, fileNumber, ignoreStamp, use_tensorflow_mo
     # run the reader
     log.info("ID launch ID reader in background")
     if use_tensorflow_model:
-        subprocess.Popen(["python3", "-m", "plom.server.IDReader_TF.runTheReader", lockFile])
+        subprocess.Popen(
+            ["python3", "-m", "plom.server.IDReader_TF.runTheReader", lockFile]
+        )
     else:
-        subprocess.Popen(["python3", "-m", "plom.server.IDReader_RF.runTheReader", lockFile])
+        subprocess.Popen(
+            ["python3", "-m", "plom.server.IDReader_RF.runTheReader", lockFile]
+        )
     return [True, True]
