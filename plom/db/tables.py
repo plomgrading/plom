@@ -96,6 +96,7 @@ class TPage(BaseModel):  # a test page that knows its tpgv
     group = pw.ForeignKeyField(Group, backref="tpages")
     image = pw.ForeignKeyField(Image, backref="tpages", null=True)
     scanned = pw.BooleanField(default=False)  # we should get all of them
+    # note - Do not delete - rather set scanned=False
 
 
 class HWPage(BaseModel):  # a hw page that knows its tgv, but not p.

@@ -569,7 +569,7 @@ class Manager(QWidget):
         elif pdetails[0] == "l":  # is an l-page = l.o
             o = pdetails.split(".")[1]
             vp = managerMessenger.getLPageImage(t, o)
-        else:  # future = extra-page
+        else:
             return
 
         if vp is None:
@@ -614,21 +614,65 @@ class Manager(QWidget):
         # if selected a top-level item (ie a test) - return
         if pvi[0].childCount() > 0:
             return
-        pp = int(pvi[0].text(1))
-        pv = int(pvi[0].text(2))
-        pt = int(pvi[0].parent().text(0))  # grab test number from parent
-        msg = SimpleMessage(
-            "Are you sure you want to remove (p/v) = ({}/{}) of test {}?".format(
-                pp, pv, pt
+
+        pdetails = pvi[0].text(1)
+        version = int(pvi[0].text(2))
+        test_number = int(pvi[0].parent().text(0))  # grab test number from parent
+
+        if pdetails[0] == "t":  # is a test-page t.PPP
+            p = pdetails.split(".")[1]
+            msg = SimpleMessage(
+                "Are you sure you want to remove test page {} of test {}?".format(
+                    p, test_number
+                )
             )
-        )
-        if msg.exec_() == QMessageBox.No:
-            return
-        else:
-            code = "t{}p{}v{}".format(str(pt).zfill(4), str(pp).zfill(2), pv)
-            rval = managerMessenger.removeScannedPage(code, pt, pp, pv)
-            ErrorMessage("{}".format(rval)).exec_()
-            self.refreshSList()
+            if msg.exec_() == QMessageBox.No:
+                return
+            else:
+                rval = managerMessenger.removeScannedPage(
+                    "t", test_number=test_number, page_number=p, version=version
+                )
+        elif pdetails[0] == "h":  # is a hw-page = hw.q.o
+            q = pdetails.split(".")[1]
+            o = pdetails.split(".")[2]
+            msg = SimpleMessage(
+                "Are you sure you want to remove hwpage {}.{} of test {}?".format(
+                    q, o, test_number
+                )
+            )
+            if msg.exec_() == QMessageBox.No:
+                return
+                rval = managerMessenger.removeScannedPage(
+                    "h", test_number=test_number, question=q, order=o, version=version
+                )
+        elif pdetails[0] == "e":  # is a extra-page = e.q.o
+            q = pdetails.split(".")[1]
+            o = pdetails.split(".")[2]
+            msg = SimpleMessage(
+                "Are you sure you want to remove expage {}.{} of test {}?".format(
+                    q, o, test_number
+                )
+            )
+            if msg.exec_() == QMessageBox.No:
+                return
+            rval = managerMessenger.removeScannedPage(
+                "e", test_number=test_number, question=q, order=o, version=version
+            )
+        elif pdetails[0] == "l":  # is an l-page = l.o
+            o = pdetails.split(".")[1]
+            msg = SimpleMessage(
+                "Are you sure you want to remove lpage {} of test {}?".format(
+                    o, test_number
+                )
+            )
+            if msg.exec_() == QMessageBox.No:
+                return
+            rval = managerMessenger.removeScannedPage(
+                "l", test_number=test_number, order=o
+            )
+
+        ErrorMessage("{}".format(rval)).exec_()
+        self.refreshSList()
 
     def subsTestPage(self):
         # THIS SHOULD KEEP VERSION INFORMATION

@@ -256,23 +256,18 @@ def unknownToExtraPage(self, fname, test, question, rotation):
     return [True]
 
 
-def removeScannedPage(self, testNumber, pageNumber, version):
-    # the scanned page moves to a discardedPage
-    # any annotations are deleted.
-    fname = self.DB.fileOfScannedPage(testNumber, pageNumber, version)
-    # returns either None or [filename, originalName, md5sum]
-    if fname is None:
-        return [False, "Cannot find page"]
-    # need to create a discardedPage object and move files
-    newFilename = "pages/discardedPages/" + os.path.split(fname)[1]
-    rval = self.DB.removeScannedPage(fname, newFilename)
-    if rval[0]:
-        shutil.move(fname, newFilename)
-        for fn in rval[1]:
-            os.unlink(fn)
-        return [True]
-    else:
-        return [False]
+def removeScannedPage(self, page_type, test_number, question, page, order, version):
+    # action at DB depends on the type of the page.
+    if page_type == "t":  # test-page
+        return self.DB.removeScannedTPage(test_number, page, version)
+    elif page_type == "h":  # hw-page
+        return self.DB.removeScannedHWPage(test_number, question, order, version)
+    elif page_type == "e":  # ex-page
+        return self.DB.removeScannedEXPage(test_number, question, order, version)
+    elif page_type == "l":  # l-page
+        return self.DB.removeScannedLPage(test_number, order)
+    else:  # this should not happen
+        return [False, "Unknown page type"]
 
 
 def collidingToTestPage(self, file_name, test, page, version):

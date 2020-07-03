@@ -568,18 +568,23 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def removeScannedPage(self, code, t, p, v):
+    def removeScannedPage(
+        self, page_type, test_number, question=0, page_number=0, order=0, version=0
+    ):
         self.SRmutex.acquire()
         try:
             response = self.session.delete(
-                "https://{}/admin/scannedPage/{}".format(self.server, code),
+                "https://{}/admin/scannedPage".format(self.server),
                 verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
-                    "test": t,
-                    "page": p,
-                    "version": v,
+                    "page_type": page_type,
+                    "test": test_number,
+                    "question": question,
+                    "page": page_number,
+                    "order": order,
+                    "version": version,
                 },
             )
             response.raise_for_status()
@@ -587,7 +592,7 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 404:
                 raise PlomSeriousException(
-                    "Server could not find the TPV - this should not happen!"
+                    "Server could not find the page - this should not happen!"
                 ) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
