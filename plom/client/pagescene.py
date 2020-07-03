@@ -14,7 +14,6 @@ from PyQt5.QtGui import (
 from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, QUndoStack, QMessageBox
 
 from plom import AnnFontSizePts, ScenePixelHeight
-
 # Import all the tool commands for undo/redo stack.
 from .tools import *
 
@@ -28,6 +27,14 @@ class ScoreBox(QGraphicsTextItem):
     """
 
     def __init__(self, fontsize=10, maxScore=1, score=0):
+        """
+        Initialize a new ScoreBox.
+
+        Args:
+            fontsize (int): A non-zero, positive font value.
+            maxScore (int) : A non-zero, positive maximum score.
+            score (int): A non-zero, positive current score for the paper.
+        """
         super(ScoreBox, self).__init__()
         self.score = score
         self.maxScore = maxScore
@@ -42,13 +49,31 @@ class ScoreBox(QGraphicsTextItem):
         self.changeScore(self.score)
 
     def changeScore(self, x):
-        # set the current mark.
+        """
+        Set the score to x.
+
+        Args:
+            x (int): A non-zero, positive new score.
+
+        Returns:
+            None
+        """
         self.score = x
         self.setPlainText(
             "{} out of {}".format(str(x).zfill(2), str(self.maxScore).zfill(2))
         )
 
     def changeMax(self, x):
+        """
+        Set the max possible mark to x.
+
+        Args:
+            x (int): A non-zero, positive new maximum mark.
+
+        Returns:
+            None
+
+        """
         # set the max-mark.
         self.maxScore = x
         self.setPlainText(
@@ -56,15 +81,38 @@ class ScoreBox(QGraphicsTextItem):
         )
 
     def paint(self, painter, option, widget):
-        # paint the text with a simple rounded rectangle border.
+        """
+        Paint a rounded rectangle border around the scorebox text.
+
+        Args:
+            painter (QPainter): Current painter object.
+            option (QStyleOptionGraphicsItem): Style options.
+            widget (QWidget): Associated widgets.
+
+        Notes:
+            Overrides parent method.
+
+        Returns:
+            None
+        """
         painter.setPen(QPen(Qt.red, 2))
         painter.setBrush(QBrush(Qt.white))
         painter.drawRoundedRect(option.rect, 10, 10)
         super(ScoreBox, self).paint(painter, option, widget)
 
 
-class UnderlyingImage(QGraphicsItemGroup):
+class UnderlyingImages(QGraphicsItemGroup):
+    """
+    A class for the image of the underlying pages being marked.
+    """
+
     def __init__(self, imageNames):
+        """
+        Initialize a new series of underlying images.
+
+        Args:
+            imageNames(list[str]): List containing the names of the images.
+        """
         super(QGraphicsItemGroup, self).__init__()
         self.imageNames = imageNames
         self.images = {}
@@ -123,12 +171,28 @@ mouseRelease = {
 
 
 class PageScene(QGraphicsScene):
-    """Extend the graphicsscene so that it knows how to translate
-    mouse-press/move/release into operations on graphicsitems and
-    textitems.
+    """Extend the graphics scene so that it knows how to translate
+    mouse-press/move/release into operations on QGraphicsItems and
+    QTextItems.
     """
 
     def __init__(self, parent, imgNames, saveName, maxMark, score, markStyle):
+        """
+        Initialize a new PageScene.
+
+        Args:
+            parent (SceneParent): the parent of the scene.
+            imgNames (list[str]): list containing the names of the paper
+                images.
+            saveName (str): Name of the annotated image files.
+            maxMark(int): maximum possible mark.
+            score (int): current score
+            markStyle (int): marking style.
+                    1 = mark total = user clicks the total-mark (will be
+                    deprecated in future.)
+                    2 = mark-up = mark starts at 0 and user increments it
+                    3 = mark-down = mark starts at max and user decrements it
+        """
         super(PageScene, self).__init__(parent)
         self.parent = parent
         # Grab filename of groupimage
@@ -140,18 +204,18 @@ class PageScene(QGraphicsScene):
         # Tool mode - initially set it to "move"
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
-        self.underImage = UnderlyingImage(self.imageNames)
+        self.underImage = UnderlyingImages(self.imageNames)
         self.addItem(self.underImage)
 
         # Build scene rectangle to fit the image, and place image into it.
         self.setSceneRect(self.underImage.boundingRect())
-        # self.addItem(self.underImage)
         # initialise the undo-stack
         self.undoStack = QUndoStack()
 
         # we don't want current font size from UI; use fixed physical size
         # self.fontSize = self.font().pointSizeF()
         self.fontSize = AnnFontSizePts
+
         # Define standard pen, highlight, fill, light-fill
         self.ink = QPen(Qt.red, 2)
         self.highlight = QPen(QColor(255, 255, 0, 64), 50)
@@ -159,19 +223,20 @@ class PageScene(QGraphicsScene):
         self.lightBrush = QBrush(QColor(255, 255, 0, 16))
         self.deleteBrush = QBrush(QColor(255, 0, 0, 16))
         self.zoomBrush = QBrush(QColor(0, 0, 255, 16))
-        # Flags to indicate if drawing an arrow (vs line),
-        # highlight (vs regular pen),
-        # box (vs ellipse), area-delete vs point.
+        # Flags to indicate if drawing an arrow (vs line), highlight (vs
+        # regular pen), box (vs ellipse), area-delete vs point.
         self.arrowFlag = 0
         self.penFlag = 0
         self.boxFlag = 0
         self.deleteFlag = 0
         self.zoomFlag = 0
+
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
         self.currentPos = QPointF(0, 0)
         self.lastPos = QPointF(0, 0)
-        # Need a path, pathitem, boxitem, lineitem, textitem, deleteitem
+
+        # Builds path for different tool items.
         self.path = QPainterPath()
         self.pathItem = QGraphicsPathItem()
         self.boxItem = QGraphicsRectItem()
@@ -182,20 +247,24 @@ class PageScene(QGraphicsScene):
         self.imageItem = QGraphicsPixmapItem
         self.blurb = TextItem(self, self.fontSize)
         self.deleteItem = None
+
         # Add a ghost comment to scene, but make it invisible
         self.ghostItem = GhostComment("1", "blah", self.fontSize)
         self.ghostItem.setVisible(False)
         self.addItem(self.ghostItem)
+
         # Set a mark-delta, comment-text and comment-delta.
         self.markDelta = "0"
         self.commentText = ""
         self.commentDelta = "0"
+
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
         # set up "k out of n" where k=current score, n = max score.
         self.scoreBox = ScoreBox(self.fontSize, self.maxMark, self.score)
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
+
         # make a box around the scorebox where mouse-press-event won't work.
         self.avoidBox = self.scoreBox.boundingRect().adjusted(0, 0, 24, 24)
         # holds the path images uploaded from annotator
@@ -215,9 +284,19 @@ class PageScene(QGraphicsScene):
     #
     #     self.addItem(self.underImage)
 
-    def setMode(self, mode):
+    def setToolMode(self, mode):
+        """
+        Sets the current toolMode.
+
+        Args:
+            mode (str): One of "comment", "delta", "pan", "move" etc..
+
+        Returns:
+            None
+        """
         self.mode = mode
-        # if current mode is not comment or delta, make sure the ghostcomment is hidden
+        # if current mode is not comment or delta, make sure the
+        # ghostcomment is hidden
         if self.mode == "delta":
             # make sure the ghost is updated - fixes #307
             self.updateGhost(self.markDelta, "")
@@ -225,13 +304,20 @@ class PageScene(QGraphicsScene):
             pass
         else:
             self.hideGhost()
-        # if mode is "pan", set the view to be able to drag about, else turn that off
+        # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
             self.views()[0].setDragMode(1)
         else:
             self.views()[0].setDragMode(0)
 
     def getComments(self):
+        """
+        Get the current text items and comments associated with this paper.
+
+        Returns:
+            (list): a list containing all comments.
+
+        """
         comments = []
         for X in self.items():
             if isinstance(X, TextItem):
@@ -239,6 +325,12 @@ class PageScene(QGraphicsScene):
         return comments
 
     def countComments(self):
+        """
+        Counts current text items and comments associated with the paper.
+
+        Returns:
+            (int): total number of comments associated with this paper.
+        """
         count = 0
         for X in self.items():
             if type(X) is TextItem:
@@ -246,7 +338,13 @@ class PageScene(QGraphicsScene):
         return count
 
     def areThereAnnotations(self):
-        # look through items in scene for anything pickle-able - this will catch any annotations.
+        """
+        Checks for pickleable annotations.
+
+        Returns
+            (bool): True if page scene has any pickle-able annotations,
+                False otherwise.
+        """
         for X in self.items():
             if hasattr(X, "saveable"):
                 return True
@@ -254,8 +352,11 @@ class PageScene(QGraphicsScene):
         return False
 
     def save(self):
-        """ Save the annotated group-image.
-        That is, overwrite the imagefile with a dump of the current
+        """
+        Save the annotated group-image.
+
+        Notes:
+        This overwrites the imagefile with a dump of the current
         scene and all its graphics items.
         """
         # Make sure the ghostComment is hidden
@@ -274,17 +375,32 @@ class PageScene(QGraphicsScene):
         oimg.save(self.saveName)
 
     def keyPressEvent(self, event):
-        # The escape key removes focus from the graphicsscene.
-        # Other key press events are passed on.
+        """
+        Escape key removes focus from the scene, other events are passed on.
+
+        Args:
+            event (QKeyEvent): The Key press event.
+
+        Returns:
+            None
+
+        """
         if event.key() == Qt.Key_Escape:
             self.clearFocus()
         else:
             super(PageScene, self).keyPressEvent(event)
 
-    # Mouse events call various tool functions
-    # These events use the dictionaries defined above to
-    # translate the current tool-mode into function calls
     def mousePressEvent(self, event):
+        """
+        Call various tool functions depending on the mouse press' location.
+
+        Args:
+            event (QMouseEvent): The mouse press event.
+
+        Returns:
+            None
+
+        """
         # check if mouseclick inside the avoidBox
         if self.avoidBox.contains(event.scenePos()):
             return
@@ -299,7 +415,16 @@ class PageScene(QGraphicsScene):
             return super(PageScene, self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        # Similar to mouse-press but for mouse-move.
+        """
+        Call various tool functions depending on the mouse's location.
+
+        Args:
+            event (QMouseEvent): The mouse move event.
+
+        Returns:
+            None
+
+        """
         functionName = mouseMove.get(self.mode, None)
         if functionName:
             return getattr(self, functionName, None)(event)
@@ -324,10 +449,21 @@ class PageScene(QGraphicsScene):
     ###########
 
     def mousePressComment(self, event):
-        """Create a marked-comment-item from whatever is the currently
-        selected comment. This creates a Delta-object and then also
-        a text-object. They should be side-by-side with the delta
-        appearing roughly at the mouse-click.
+        """
+        Handle when mouse is pressed on a given comment.
+
+        Notes:
+            Create a marked-comment-item from whatever is the currently
+            selected comment. This creates a Delta-object and then also
+            a text-object. They should be side-by-side with the delta
+            appearing roughly at the mouse-click.
+
+        Args:
+            event (QMouseEvent): the given mouse click.
+
+        Returns:
+            None, adds clicked comment to the page.
+
         """
         # Find the object under the mouseclick.
         under = self.itemAt(event.scenePos(), QTransform())
@@ -338,18 +474,17 @@ class PageScene(QGraphicsScene):
             or isinstance(under, GroupDTItem)
         ):
             return
-        # grab the location of the mouse-click
-        pt = event.scenePos()
 
-        # build the textitem
-        self.blurb = TextItem(self, self.fontSize)
+        pt = event.scenePos()  # grab the location of the mouse-click
+
+        self.blurb = TextItem(self, self.fontSize)  # build the textitem
         self.blurb.setPlainText(self.commentText)
         self.blurb.contents = self.commentText  # for pickling
         # move to correct point - update if only text no delta
+
         self.blurb.setPos(pt)
-        # If the mark-delta of the comment is non-zero then
-        # create a delta-object with a different offset.
-        # else just place the comment.
+        # If the mark-delta of comment is non-zero then create a
+        # delta-object with a different offset, else just place the comment.
 
         if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
             # make sure blurb has text interaction turned off
@@ -363,15 +498,26 @@ class PageScene(QGraphicsScene):
             self.blurb.setTextInteractionFlags(prevState)
         else:
             command = CommandGDT(self, pt, self.commentDelta, self.blurb, self.fontSize)
-            # push the delta onto the undo stack.
-            self.undoStack.push(command)
+            self.undoStack.push(command)  # push the delta onto the undo stack.
 
     def mousePressCross(self, event):
-        """Create a cross/?-mark/tick object under the mouse click
-        if left/middle/right mouse button.
         """
-        # Grab the mouseclick location and create command.
-        pt = event.scenePos()
+        Selects the proper cross/?-mark/tick based on which mouse button or
+        mouse/key combination was pressed.
+
+        Notes:
+            tick = right-click or shift+click.
+            question mark = middle-click or control+click.
+            cross = left-click or any combination other than the above.
+
+        Args:
+            event (QMouseEvent): the mouse press.
+
+        Returns:
+            None.
+
+        """
+        pt = event.scenePos()  # Grab the click's location and create command.
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
@@ -382,17 +528,29 @@ class PageScene(QGraphicsScene):
             command = CommandQMark(self, pt)
         else:
             command = CommandCross(self, pt)
-        # push onto the stack.
-        self.undoStack.push(command)
+        self.undoStack.push(command)  # push onto the stack.
 
     def mousePressDelta(self, event):
-        """Create the mark-delta object or ?-mark or cross/tick object
-        under the mouse click if left/middle/right mouse button.
-        If mark-delta is positive then right-mouse makes a cross.
-        If mark-delta is negative then right-mouse makes a tick.
         """
-        # Grab mouse click location and create command.
-        pt = event.scenePos()
+        Creates the mark-delta, ?-mark/tick/cross based on which mouse
+        button or mouse/key combination was pressed.
+
+        Notes:
+            cross = right-click or shift+click if current mark-delta > 0.
+            tick = right-click or shift+click if current mark-delta <= 0.
+            question mark = middle-click or control+click.
+            mark-delta = left-click or any other combination, assigns with
+                the selected mark-delta value.
+
+
+        Args:
+            event (QMouseEvent): Mouse press.
+
+        Returns:
+            None
+
+        """
+        pt = event.scenePos()  # Grab click's location and create command.
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
@@ -408,34 +566,59 @@ class PageScene(QGraphicsScene):
             if self.isLegalDelta(self.markDelta):
                 command = CommandDelta(self, pt, self.markDelta, self.fontSize)
             else:
-                # don't do anything
                 return
-        # push command onto undoStack.
-        self.undoStack.push(command)
+        self.undoStack.push(command)  # push command onto undoStack.
 
     def mousePressMove(self, event):
-        """The mouse press while move-tool selected changes the cursor to
-        a closed hand, but otherwise does not do much.
-        The actual moving of objects is handled by themselves since they
-        know how to handle the ItemPositionChange signal as a move-command.
+        """
+        Create closed hand cursor when move-tool is selected, otherwise does
+            nothing.
+        Notes:
+            The actual moving of objects is handled by themselves since they
+            know how to handle the ItemPositionChange signal as a move-command.
+
+        Args:
+            event (QMouseEvent): the mouse press.
+
+        Returns:
+            None
+
         """
         self.views()[0].setCursor(Qt.ClosedHandCursor)
         super(PageScene, self).mousePressEvent(event)
 
     def mousePressPan(self, event):
-        """The mouse press while pan-tool selected changes the cursor to
-        a closed hand, but otherwise does not do much. Do not pass on event to superclass
-        since we want to avoid selecting an object and moving that (fixes #834)
+        """
+        While pan-tool selected changes the cursor to a closed hand,
+        otherwise does not do much.
+
+        Notes:
+            Do not pass on event to superclass since we want to avoid
+            selecting an object and moving that (fixes #834)
+
+        Args:
+            event (QMouseEvent): the mouse press.
+
+        Returns:
+            None
+
         """
         self.views()[0].setCursor(Qt.ClosedHandCursor)
         return
 
     def mousePressText(self, event):
-        """Create a textobject under the mouse click, unless there
-        is already a textobject under the click.
+        """
+        Create a textObject at the click's location, unless there is already a
+            textobject there.
+
+        Args:
+            event (QMouseEvent): the given mouse click.
+
+        Returns:
+            None
 
         """
-        # Find the object under the mouseclick.
+        # Find the object under the click.
         under = self.itemAt(event.scenePos(), QTransform())
         # If something is there... (fixes bug reported by MattC)
         if under is not None:
@@ -453,10 +636,8 @@ class PageScene(QGraphicsScene):
             if isinstance(under, TextItem):
                 under.clearFocus()
 
-        # Now we construct a text object, give it focus
-        # (which fires up the editor on that object), and
-        # then push it onto the undo-stack.
-
+        # Now we construct a text object, give it focus (which fires up the
+        # editor on that object), and then push it onto the undo-stack.
         self.originPos = event.scenePos()
         self.blurb = TextItem(self, self.fontSize)
         # move so centred under cursor
@@ -467,8 +648,16 @@ class PageScene(QGraphicsScene):
         self.undoStack.push(command)
 
     def mousePressTick(self, event):
-        """Create a tick/?-mark/cross object under the mouse click
-        if left/middle/right mouse button.
+        """
+        Create a tick/?-mark/cross object under the click based on which
+            mouse button (left/middle/right) was pressed.
+
+        Args:
+            event (QMouseEvent): Given mouse press.
+
+        Returns:
+            None
+
         """
         # See mouse press cross function.
         pt = event.scenePos()
@@ -484,25 +673,49 @@ class PageScene(QGraphicsScene):
             command = CommandTick(self, pt)
         self.undoStack.push(command)
 
-    # Mouse release tool functions.
-    # Most of these delete the temp-object (eg box / line)
-    # and replaces it with the (more) permanent graphics object.
-
     def mouseReleaseMove(self, event):
-        """Sets the cursor back to an open hand."""
+        """
+        Handles mouse releases for move tool by setting cursor to an open hand.
+
+        Args:
+            event (QMouseEvent): given mouse release.
+
+        Returns:
+            None.
+
+        """
         self.views()[0].setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
         # refresh view after moving objects
         self.update()
 
     def mouseReleasePan(self, event):
-        """Change cursor back to open-hand, and update the current stored view rectangle."""
+        """
+        Handles mouse releases for pan tool by setting cursor to an open hand.
+
+        Args:
+            event (QMouseEvent): given mouse release.
+
+        Returns:
+            None.
+
+        """
         self.views()[0].setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
         self.views()[0].setZoomSelector()
 
     def mousePressImage(self, event):
-        """Adds the selected image at the location the mouse is pressed."""
+        """
+        Adds the selected image at the location the mouse is pressed and
+        shows a message box with instructions.
+
+        Args:
+            event (QMouseEvent): given mouse click.
+
+        Returns:
+            None
+
+        """
         if self.tempImagePath is not None:
             imageFilePath = self.tempImagePath
             command = CommandImage(self, event.scenePos(), QImage(imageFilePath))
@@ -519,8 +732,8 @@ class PageScene(QGraphicsScene):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
 
-    # Handle drag / drop events
     def dragEnterEvent(self, e):
+        """ Handles drag/drop events. """
         if e.mimeData().hasFormat("text/plain"):
             # User has dragged in plain text from somewhere
             e.acceptProposedAction()
@@ -533,9 +746,11 @@ class PageScene(QGraphicsScene):
             e.ignore()
 
     def dragMoveEvent(self, e):
+        """ Handles drag and move events."""
         e.acceptProposedAction()
 
     def dropEvent(self, e):
+        """ Handles drop events."""
         if e.mimeData().hasFormat("text/plain"):
             # Simulate a comment click.
             self.commentText = e.mimeData().text()
@@ -555,10 +770,29 @@ class PageScene(QGraphicsScene):
         self.views()[0].setFocus(Qt.TabFocusReason)
 
     def latexAFragment(self, txt):
+        """
+        Latex a fragment of text.
+
+        Args:
+            txt (str): text to be latexed.
+
+        Returns:
+            (png): a file containing the Latexed text.
+
+        """
         return self.parent.latexAFragment(txt.strip())
 
-    # A fix (hopefully) for misread touchpad events on mac
     def event(self, event):
+        """
+        A fix for misread touchpad events on mac.
+
+        Args:
+            event (QEvent): A mouse event.
+
+        Returns:
+            (bool) True if the event is accepted, False otherwise.
+
+        """
         if event.type() in [
             QEvent.TouchBegin,
             QEvent.TouchEnd,
@@ -572,11 +806,19 @@ class PageScene(QGraphicsScene):
             return super(PageScene, self).event(event)
 
     def _debug_printUndoStack(self):
+        """ A helper method for debugging the undoStack."""
         c = self.undoStack.count()
         for k in range(c):
             print(k, self.undoStack.text(k))
 
     def pickleSceneItems(self):
+        """
+        Pickles the saveable annotation items in the scene.
+
+        Returns:
+            (list[str]): a list containing all pickled elements.
+
+        """
         lst = []
         for X in self.items():
             # check if object has "saveable" attribute and it is set to true.
@@ -585,6 +827,21 @@ class PageScene(QGraphicsScene):
         return lst
 
     def unpickleSceneItems(self, lst):
+        """
+        Unpickles all items from the scene.
+
+        Args:
+            lst (list[list[str]]): a list containing lists of scene items'
+                pickled information.
+
+        Notes:
+            Each pickled item type in lst is in a different format. Look in
+            tools for more information.
+
+        Returns:
+            None, adds pickled items to the scene.
+
+        """
         # clear all items from scene.
         for X in self.items():
             if any(
@@ -592,7 +849,7 @@ class PageScene(QGraphicsScene):
                 for Y in [
                     ScoreBox,
                     QGraphicsPixmapItem,
-                    UnderlyingImage,
+                    UnderlyingImages,
                     GhostComment,
                     GhostDelta,
                     GhostText,
@@ -613,48 +870,66 @@ class PageScene(QGraphicsScene):
             X.setFocus(False)
 
     def unpickleError(self, X):
-        # Shouldn't this just throw an exception?
+        """
+        Log an error if an item of unknown format is attempted to be unpickled.
+
+        Args:
+            X: the unknown item.
+
+        Returns:
+            None, logs the error.
+
+        """
         log.error("Unpickle error - What is {}".format(X))
 
     def unpickleCross(self, X):
+        """ Unpickle a CrossItemObject and add it to scene. """
         if len(X) == 2:
             self.undoStack.push(CommandCross(self, QPointF(X[0], X[1])))
 
     def unpickleQMark(self, X):
+        """ Unpickle a QMarkItemObject(question mark) and add it to scene. """
         if len(X) == 2:
             self.undoStack.push(CommandQMark(self, QPointF(X[0], X[1])))
 
     def unpickleTick(self, X):
+        """ Unpickle a TickItemObject and add it to scene. """
         if len(X) == 2:
             self.undoStack.push(CommandTick(self, QPointF(X[0], X[1])))
 
     def unpickleArrow(self, X):
+        """ Unpickle an ArrowItemObject and add it to scene. """
         if len(X) == 4:
             self.undoStack.push(
                 CommandArrow(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
             )
 
     def unpickleArrowDouble(self, X):
+        """ Unpickle an ArrowDoubleItemObject and add it to scene. """
         if len(X) == 4:
             self.undoStack.push(
                 CommandArrowDouble(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
             )
 
     def unpickleLine(self, X):
+        """ Unpickle a LineItemObject and add it to scene. """
         if len(X) == 4:
             self.undoStack.push(
                 CommandLine(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
             )
 
     def unpickleBox(self, X):
+        """ Unpickle a BoxItemObject and add it to scene. """
         if len(X) == 4:
             self.undoStack.push(CommandBox(self, QRectF(X[0], X[1], X[2], X[3])))
 
     def unpickleEllipse(self, X):
+        """ Unpickle a EllipseItemObject and add it to scene. """
         if len(X) == 4:
             self.undoStack.push(CommandEllipse(self, QRectF(X[0], X[1], X[2], X[3])))
 
     def unpickleText(self, X):
+        """ Unpickle a TextItemObject and add it to scene. """
         if len(X) == 3:
             self.blurb = TextItem(self, self.fontSize)
             self.blurb.setPlainText(X[0])
@@ -665,12 +940,14 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(CommandText(self, self.blurb, self.ink))
 
     def unpickleDelta(self, X):
+        """ Unpickle a DeltaItemObject and add it to scene. """
         if len(X) == 3:
             self.undoStack.push(
                 CommandDelta(self, QPointF(X[1], X[2]), X[0], self.fontSize)
             )
 
     def unpickleGroupDeltaText(self, X):
+        """ Unpickle an GroupDTItemObject and add it to scene. """
         if len(X) == 4:
             self.blurb = TextItem(self, self.fontSize)
             self.blurb.setPlainText(X[3])
@@ -682,6 +959,7 @@ class PageScene(QGraphicsScene):
             )
 
     def unpicklePen(self, X):
+        """ Unpickle a PenItemObject and add it to scene. """
         if len(X) == 1:
             # Format is X = [ [['m',x,y], ['l',x,y], ['l',x,y],....] ]
             # Just assume (for moment) the above format - ie no format checks.
@@ -694,6 +972,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(CommandPen(self, pth))
 
     def unpicklePenArrow(self, X):
+        """ Unpickle an PenArrowItemObject and add it to scene. """
         if len(X) == 1:
             # Format is X = [ [['m',x,y], ['l',x,y], ['l',x,y],....] ]
             # Just assume (for moment) the above format - ie no format checks.
@@ -706,6 +985,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(CommandPenArrow(self, pth))
 
     def unpickleHighlight(self, X):
+        """ Unpickle a HighlightObjectItem and add it to scene. """
         if len(X) == 1:
             # Format is X = [ [['m',x,y], ['l',x,y], ['l',x,y],....] ]
             # Just assume (for moment) the above format.
@@ -718,8 +998,9 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(CommandHighlight(self, pth))
 
     def unpickleImage(self, X):
-        print(X[2])
+        """ Unpickle an ImageItemObject and add it to scene. """
         if len(X) == 5:
+            # extract data from encoding
             data = QByteArray().fromBase64(
                 bytes(X[2][2 : len(X[2]) - 2], encoding="utf-8")
             )
@@ -727,17 +1008,26 @@ class PageScene(QGraphicsScene):
             if img.loadFromData(data):
                 img.loadFromData(data)
             else:
-                print("Encountered a problem loading image.")
+                log.error("Encountered a problem loading image.")
             self.undoStack.push(
                 CommandImage(self, QPointF(X[0], X[1]), img, X[3], X[4], X[2])
             )
 
-    # Mouse press tool functions
     def mousePressBox(self, event):
-        """Creates a temp box which is updated as the mouse moves
-        and replaced with a boxitem when the drawing is finished.
-        If left-click then a highlight box will be drawn at finish,
-        else an ellipse is drawn
+        """
+        Handle mouse presses when box tool is selected.
+
+        Notes:
+            Creates a temp box which is updated as the mouse moves
+            and replaced with a boxitem when the drawing is finished.
+            If left-click then a highlight box will be drawn at finish,
+            else if right-click or click+shift, an ellipse is drawn.
+
+        Args:
+            event (QMouseEvent): the mouse press event.
+
+        Returns:
+            None
         """
         if self.boxFlag != 0:
             # in middle of drawing a box, so ignore the new press
@@ -768,8 +1058,16 @@ class PageScene(QGraphicsScene):
             self.addItem(self.boxItem)
 
     def mouseMoveBox(self, event):
-        """Update the box as the mouse is moved. This
-        animates the drawing of the box for the user.
+        """
+        Update the size of the box as the mouse is moved.
+
+        Notes:
+            This animates the drawing of the box for the user.
+
+        Args (QMouseEvent): the event of the mouse moving.
+
+        Returns:
+            None
         """
         self.currentPos = event.scenePos()
         if self.boxFlag == 2:
@@ -797,10 +1095,21 @@ class PageScene(QGraphicsScene):
             return
 
     def mouseReleaseBox(self, event):
-        """Remove the temp boxitem (which was needed for animation)
-        and create a command for either a highlighted box or opaque box
-        depending on whether or not the boxflag was set.
-        Push the resulting command onto the undo stack
+        """
+        Handle when the mouse is released after drawing a new box.
+
+        Notes:
+            Remove the temp boxitem (which was needed for animation)
+            and create a command for either a highlighted box or opaque box
+            depending on whether or not the boxflag was set.
+            Push the resulting command onto the undo stack.
+
+        Args:
+            event (QMouseEvent): the given mouse release.
+
+        Returns:
+            None
+
         """
         if self.boxFlag == 0:
             return
@@ -823,10 +1132,21 @@ class PageScene(QGraphicsScene):
         self.boxFlag = 0
 
     def mousePressLine(self, event):
-        """Creates a temp line which is updated as the mouse moves
-        and replaced with a line or arrow when the drawing is finished.
-        If left-click then a line will be drawn at finish,
-        else an arrow is drawn at finish.
+        """
+        Handle the mouse press when using the line tool to draw a line.
+
+        Notes:
+            Creates a temp line which is updated as the mouse moves
+            and replaced with a line or arrow when the drawing is finished.
+            Single arrowhead = right click or click+shift
+            Double arrowhead = middle click or click+control
+            No Arrows = left click or any other combination.
+
+        Args:
+            event (QMouseEvent): the given mouse press.
+
+        Returns:
+            None
         """
         # Set arrow flag to tell mouseReleaseLine to draw line or arrow
         if self.arrowFlag != 0:
@@ -851,18 +1171,37 @@ class PageScene(QGraphicsScene):
         self.addItem(self.lineItem)
 
     def mouseMoveLine(self, event):
-        """Update the line as the mouse is moved. This
-        animates the drawing of the line for the user.
+        """
+        Update the length of the box as the mouse is moved.
+
+        Notes:
+            This animates the drawing of the line for the user.
+
+        Args:
+            event (QMouseEvent): the event of the mouse moving.
+
+        Returns:
+            None
         """
         if self.arrowFlag is not 0:
             self.currentPos = event.scenePos()
             self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
 
     def mouseReleaseLine(self, event):
-        """Remove the temp lineitem (which was needed for animation)
-        and create a command for either a line or an arrow
-        depending on whether or not the arrow flag was set.
-        Push the resulting command onto the undo stack
+        """
+        Handle when the mouse is released after drawing a new line.
+
+        Notes:
+            Remove the temp lineitem (which was needed for animation)
+            and create a command for either a line, arrow or double arrow
+            depending on whether or not the arrow flag was set.
+            Push the resulting command onto the undo stack.
+
+        Args:
+            event (QMouseEvent): the given mouse release.
+
+        Returns:
+            None
         """
         if self.arrowFlag == 0:
             return
@@ -879,9 +1218,20 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(command)
 
     def mousePressPen(self, event):
-        """Start drawing either a pen-path (left-click) or
-        highlight path (right-click).
-        Set the path-pen accordingly.
+        """
+        Handle the mouse press when using the pen tool to draw.
+
+        Notes:
+            normal pen = left click.
+            highlight pen = right click or click+shift.
+            pen with double-arrowhead = middle click or click+control.
+
+        Args:
+            event (QMouseEvent): the associated mouse press.
+
+        Returns:
+            None
+
         """
         if self.penFlag != 0:
             # in middle of drawing a path, so ignore
@@ -917,8 +1267,16 @@ class PageScene(QGraphicsScene):
         self.addItem(self.pathItem)
 
     def mouseMovePen(self, event):
-        """Update the pen-path as the mouse is moved. This
-        animates the drawing for the user.
+        """
+        Update the pen-path as the mouse is moved.
+
+        Notes:
+            This animates the drawing for the user.
+
+        Args (QMouseEvent): the event of the mouse moving.
+
+        Returns:
+            None
         """
         if self.penFlag is not 0:
             self.currentPos = event.scenePos()
@@ -927,10 +1285,20 @@ class PageScene(QGraphicsScene):
         # do not add to path when flag is zero.
 
     def mouseReleasePen(self, event):
-        """Remove the temp pen-path (which was needed for animation)
-        and create a command for either the pen-path or highlight
-        path depending on whether or not the highlight flag was set.
-        Push the resulting command onto the undo stack
+        """
+        Handle when the mouse is released after drawing.
+
+        Notes:
+            Remove the temp pen-path (which was needed for animation)
+            and create a command for either the pen-path or highlight
+            path depending on whether or not the highlight flag was set.
+            Push the resulting command onto the undo stack
+
+        Args:
+            event (QMouseEvent): the given mouse release.
+
+        Returns:
+            None
         """
         if self.penFlag == 0:
             return
@@ -962,7 +1330,19 @@ class PageScene(QGraphicsScene):
         #     self.undoStack.push(command)
 
     def mousePressZoom(self, event):
-        """Start drawing a zoom-box. Nothing happens until button is released.
+        """
+        Handle the mouse press when drawing a zoom box.
+
+        Notes:
+            If right-click (or shift) then zoom-out, else - don't do much
+            until release.
+
+        Args:
+            event (QMouseEvent): given mouse press.
+
+        Returns:
+            None
+
         """
         if self.zoomFlag is not 0:
             return
@@ -987,8 +1367,16 @@ class PageScene(QGraphicsScene):
         self.addItem(self.zoomBoxItem)
 
     def mouseMoveZoom(self, event):
-        """Update the box as the mouse is moved. This
-        animates the drawing of the box for the user.
+        """
+        Update the size of the zoom box as the mouse is moved.
+
+        Notes:
+            This animates the drawing of the box for the user.
+
+        Args (QMouseEvent): the event of the mouse moving.
+
+        Returns:
+            None
         """
         if self.zoomFlag is not 0:
             self.zoomFlag = 2  # drag started.
@@ -1006,8 +1394,19 @@ class PageScene(QGraphicsScene):
                 self.zoomBoxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def mouseReleaseZoom(self, event):
-        """Either zoom-in a little (if zoombox small), else fit the zoombox in view.
-        Delete the zoombox afterwards and set the zoomflag back to 0.
+        """
+        Handle when the mouse is released after drawing a new zoom box.
+
+        Notes: Either zoom-in a little (if zoombox small), else fit the
+            zoombox in view. Delete the zoombox afterwards and set the zoomflag
+            back to 0.
+
+        Args:
+            event (QMouseEvent): the given mouse release.
+
+        Returns:
+            None
+
         """
         if self.zoomFlag == 0:
             return
@@ -1031,7 +1430,18 @@ class PageScene(QGraphicsScene):
         self.zoomFlag = 0
 
     def mousePressDelete(self, event):
-        """Start drawing a delete-box. Nothing happens until button is released.
+        """
+        Handle the mouse press when drawing a delete box.
+
+        Notes:
+            Nothing happens until button is released.
+
+        Args:
+            event (QMouseEvent): given mouse press.
+
+        Returns:
+            None
+
         """
         if self.deleteFlag is not 0:
             return
@@ -1045,8 +1455,16 @@ class PageScene(QGraphicsScene):
         self.addItem(self.delBoxItem)
 
     def mouseMoveDelete(self, event):
-        """Update the box as the mouse is moved. This
-        animates the drawing of the box for the user.
+        """
+        Update the size of the delete box as the mouse is moved.
+
+        Notes:
+            This animates the drawing of the box for the user.
+
+        Args (QMouseEvent): the event of the mouse moving.
+
+        Returns:
+            None
         """
         if self.deleteFlag is not 0:
             self.deleteFlag = 2  # drag started.
@@ -1064,7 +1482,20 @@ class PageScene(QGraphicsScene):
                 self.delBoxItem.setRect(QRectF(self.originPos, self.currentPos))
 
     def deleteIfLegal(self, item):
-        # can't delete the pageimage, scorebox, delete-box, ghostitem and its constituents
+        """
+        Deletes the item if it is a legal action.
+
+        Notes:
+            Can't delete the pageimage, scorebox, delete-box, ghostitem and
+                its constituents.
+
+        Args:
+            item (QGraphicsItem): the item to be deleted.
+
+        Returns:
+            None
+
+        """
         if item in [
             self.underImage,
             self.scoreBox,
@@ -1079,9 +1510,20 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(command)
 
     def mouseReleaseDelete(self, event):
-        """Remove the temp boxitem (which was needed for animation)
-        and then delete all objects that lie within the box.
-        Push the resulting commands onto the undo stack
+        """
+        Handle when the mouse is released after drawing a new delete box.
+
+        Notes:
+             Remove the temp boxitem (which was needed for animation)
+            and then delete all objects that lie within the box.
+            Push the resulting commands onto the undo stack
+
+        Args:
+            event (QMouseEvent): the given mouse release.
+
+        Returns:
+            None
+
         """
         if self.deleteFlag == 0:
             return
@@ -1121,12 +1563,14 @@ class PageScene(QGraphicsScene):
         self.deleteFlag = 0  # put flag back.
 
     def hasAnyCrosses(self):
+        """ Returns True if scene has any crosses, False otherwise. """
         for X in self.items():
             if isinstance(X, CrossItem):
                 return True
         return False
 
     def hasOnlyCrosses(self):
+        """ Returns True if scene has only crosses, False otherwise. """
         for X in self.items():
             if getattr(X, "saveable", None):
                 if not isinstance(X, CrossItem):
@@ -1134,18 +1578,24 @@ class PageScene(QGraphicsScene):
         return True
 
     def hasAnyComments(self):
+        """
+        Returns True if scene has any comments or text items,
+        False otherwise.
+        """
         for X in self.items():
             if isinstance(X, (TextItem, GroupDTItem)):
                 return True
         return False
 
     def hasAnyTicks(self):
+        """ Returns True if scene has any ticks. False otherwise. """
         for X in self.items():
             if isinstance(X, TickItem):
                 return True
         return False
 
     def hasOnlyTicks(self):
+        """ Returns True if scene has only ticks, False otherwise. """
         for X in self.items():
             if getattr(X, "saveable", None):
                 if not isinstance(X, TickItem):
@@ -1153,6 +1603,12 @@ class PageScene(QGraphicsScene):
         return True
 
     def hasOnlyTicksCrossesDeltas(self):
+        """
+        Checks if the image only has crosses, ticks or deltas.
+
+        Returns:
+             True if scene only has ticks/crosses/deltas, False otherwise.
+        """
         for x in self.items():
             if getattr(x, "saveable", None):
                 if not isinstance(x, (TickItem, CrossItem, DeltaItem)):
@@ -1160,6 +1616,12 @@ class PageScene(QGraphicsScene):
         return True
 
     def checkAllObjectsInside(self):
+        """
+        Checks that all objects are within the boundary of the page.
+
+        Returns:
+            True if all objects are within the page's bounds, false otherwise.
+        """
         for X in self.items():
             # check all items that are not the image or scorebox
             if (X is self.underImage) or (X is self.scoreBox):
@@ -1180,29 +1642,81 @@ class PageScene(QGraphicsScene):
         return True
 
     def updateGhost(self, dlt, txt):
+        """
+        Updates the ghost object based on the delta and text.
+
+        Args:
+            dlt (int): given mark-delta.
+            txt (str): the given text.
+
+        Returns:
+            None
+
+        """
         self.ghostItem.changeComment(dlt, txt)
 
     def exposeGhost(self):
+        """ Exposes the ghost object."""
         self.ghostItem.setVisible(True)
 
     def hideGhost(self):
+        """ Hides the ghost object."""
         self.ghostItem.setVisible(False)
 
     def mouseMoveComment(self, event):
+        """
+        Handles mouse moving with a comment.
+
+        Args:
+            event (QMouseEvent): the event of the mouse moving.
+
+        Returns:
+            None
+        """
         if not self.ghostItem.isVisible():
             self.ghostItem.setVisible(True)
         self.ghostItem.setPos(event.scenePos())
 
     def mouseMoveDelta(self, event):
+        """
+        Handles mouse moving with a delta.
+
+        Args:
+            event (QMouseEvent): the event of the mouse moving.
+
+        Returns:
+            None
+        """
         if not self.ghostItem.isVisible():
             self.ghostItem.setVisible(True)
         self.ghostItem.setPos(event.scenePos())
 
     def setTheMark(self, newMark):
+        """
+        Sets the new mark/score for the paper.
+
+        Args:
+            newMark(int): the new mark/score for the paper.
+
+        Returns:
+            None
+        """
         self.score = newMark
         self.scoreBox.changeScore(self.score)
 
     def changeTheMark(self, deltaMarkString, undo=False):
+        """
+        Changes the new mark/score for the paper based on the delta.
+
+        Args:
+            deltaMarkString(str): a string containing the delta integer.
+            undo (bool): True if delta is being undone or removed,
+                False otherwise.
+
+        Returns:
+            None
+
+        """
         # if is an undo then we need a minus-sign here
         # because we are undoing the delta.
         # note that this command is passed a string
@@ -1220,6 +1734,18 @@ class PageScene(QGraphicsScene):
             )
 
     def changeTheDelta(self, newDelta, annotatorUpdate=False):
+        """
+        Changes the new mark/score for the paper based on the delta.
+
+        Args:
+            newDelta (str): a string containing the delta integer.
+            annotatorUpdate (bool): true if annotator should be updated,
+                false otherwise.
+
+        Returns:
+            None
+
+        """
         legalDelta = self.isLegalDelta(newDelta)
         self.markDelta = newDelta
 
@@ -1237,13 +1763,28 @@ class PageScene(QGraphicsScene):
         return legalDelta
 
     def undo(self):
+        """ Undoes a given action."""
         self.undoStack.undo()
 
     def redo(self):
+        """ Redoes a given action."""
         self.undoStack.redo()
 
     def isLegalDelta(self, n):
-        """Would this (signed) delta push us below 0 or above maxMark?"""
+        """
+        Verifies if a delta is legal.
+
+        Notes:
+            A legal delta is one that would not push the paper's score below 0
+                or above maxMark.
+
+        Args:
+            n (str): a string containing the delta integer.
+
+        Returns:
+            True if the delta is legal, false otherwise.
+
+        """
         # TODO: try, return True if not int?
         n = int(n)
         lookingAhead = self.score + n
@@ -1252,25 +1793,38 @@ class PageScene(QGraphicsScene):
         return True
 
     def changeTheComment(self, delta, text, annotatorUpdate=True):
-        # if this update comes from the annotator, then
-        # we need to store a copy of the mark-delta for future
-        # and also set the mode.
+        """
+        Changes the new comment for the paper based on the delta and text.
+
+        Args:
+            delta (str): a string containing the delta integer.
+            text (str): the text in the comment.
+            annotatorUpdate (bool): true if annotator should be updated,
+                false otherwise.
+
+        Returns:
+            None
+
+        """
+        # if this update comes from the annotator, then we need to store a
+        # copy of the mark-delta for future and also set the mode.
         if annotatorUpdate:
             gpt = QCursor.pos()  # global mouse pos
             vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
             spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
             self.ghostItem.setPos(spt)
             self.markDelta = delta
-            self.setMode("comment")
+            self.setToolMode("comment")
             self.exposeGhost()  # unhide the ghostitem
         # if we have passed ".", then we don't need to do any
         # delta calcs, the ghost item knows how to handle it.
         if delta != ".":
             id = int(delta)
 
-            # we pass the actual comment-delta to this (though it might be suppressed in the commentlistwidget).. so we have to
-            # check the the delta is legal for the marking style.
-            # if delta<0 when mark up OR delta>0 when mark down OR mark-total then pass delta="."
+            # we pass the actual comment-delta to this (though it might be
+            # suppressed in the commentlistwidget).. so we have to check the
+            # the delta is legal for the marking style. if delta<0 when mark
+            # up OR delta>0 when mark down OR mark-total then pass delta="."
             if (
                 (id < 0 and self.markStyle == 2)
                 or (id > 0 and self.markStyle == 3)
@@ -1282,6 +1836,16 @@ class PageScene(QGraphicsScene):
         self.updateGhost(delta, text)
 
     def noAnswer(self, delta):
+        """
+        Handles annotating the page if there is little or no answer written.
+
+        Args:
+            delta (int): the mark to be assigned to the page.
+
+        Returns:
+            None
+
+        """
         br = self.sceneRect()
         # put lines through the page
         w = br.right()

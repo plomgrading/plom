@@ -199,7 +199,7 @@ class ImageItem(QGraphicsPixmapItem):
         On double-click, show menu and modify image according to user inputs.
 
         Args:
-            event (QEvent): the double mouse click.
+            event (QMouseEvent): the double mouse click.
 
         Returns:
             None
