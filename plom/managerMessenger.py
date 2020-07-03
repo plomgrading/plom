@@ -187,8 +187,8 @@ class ManagerMessenger(BaseMessenger):
         """Give the server a classlist.
 
         Args:
-            classdict (dict): keys are student IDs (str), values are
-                student names.
+            classdict (list): list of (str, str) pairs of the form
+                (student ID, student name).
 
         Exceptions:
             PlomConflict: server already has one.
@@ -1467,6 +1467,33 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.patch(
                 "https://{}/ID/review".format(self.server),
+                verify=False,
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "testNumber": testNumber,
+                },
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomSeriousException(
+                    "Could not find test = {}.".format(testNumber)
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+    def TreviewTOT(self, testNumber):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.patch(
+                "https://{}/TOT/review".format(self.server),
                 verify=False,
                 json={
                     "user": self.user,

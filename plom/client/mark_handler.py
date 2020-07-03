@@ -45,7 +45,6 @@ class MarkHandler(QWidget):
         self._setStyle(markStyle)
         self.setDeltaButtonMenu()
 
-
     def _setStyle(self, markStyle):
         """Sets the mark entry style - either total, up or down
         Total - user just clicks the total mark.
@@ -64,7 +63,6 @@ class MarkHandler(QWidget):
         self.ve.setExclusive(True)
         for s, x in self.markButtons.items():
             self.ve.addButton(x)
-
 
     def resetAndMaybeChange(self, maxScore, markStyle):
         """Reset score, replace max/style with new values, regen buttons.
@@ -92,7 +90,6 @@ class MarkHandler(QWidget):
         self.markButtons = {}
         self._setStyle(markStyle)
         self.setDeltaButtonMenu()
-
 
     def setMarkingUp(self):
         self.setMark(0)
@@ -233,7 +230,6 @@ class MarkHandler(QWidget):
                 delta = 0
             self.markButtons[-delta].animateClick()
 
-
     def setDeltaButtonMenu(self):
         if self.style == "Total":
             # mark total - don't set anything
@@ -244,19 +240,14 @@ class MarkHandler(QWidget):
             # set to mark up
             for k in range(0, self.maxScore + 1):
                 self.deltaActions[k] = deltaMenu.addAction("+{}".format(k))
-                self.deltaActions[k].triggered.connect(
-                    self.markButtons[k].animateClick
-                )
+                self.deltaActions[k].triggered.connect(self.markButtons[k].animateClick)
         elif self.style == "Down":
             # set to mark down
             for k in range(0, self.maxScore + 1):
                 self.deltaActions[k] = deltaMenu.addAction("-{}".format(k))
-                self.deltaActions[k].triggered.connect(
-                    self.markButtons[k].animateClick
-                )
+                self.deltaActions[k].triggered.connect(self.markButtons[k].animateClick)
         self.parent.ui.deltaButton.setMenu(deltaMenu)
         self.updateRelevantDeltaActions()
-
 
     def updateRelevantDeltaActions(self):
         if self.style == "Total":

@@ -31,6 +31,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QShortcut,
     QToolButton,
+    QFileDialog,
 )
 
 from .comment_list import CommentWidget
@@ -376,7 +377,7 @@ class Annotator(QWidget):
 
         # TODO: Make handling of comment less hack.
         log.debug("Restore mode info = {}".format(self.modeInformation))
-        self.scene.setMode(self.modeInformation[0])
+        self.scene.setToolMode(self.modeInformation[0])
         if self.modeInformation[0] == "delta":
             self.markHandler.clickDelta(self.modeInformation[1])
         if self.modeInformation[0] == "comment":
@@ -435,70 +436,98 @@ class Annotator(QWidget):
         Returns:
             (Dict): a dictionary containing hot keys for annotator.
         """
-        return {
-            # home-row
-            Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
-            Qt.Key_S: lambda: self.ui.undoButton.animateClick(),
-            Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
-            Qt.Key_F: lambda: self.commentMode(),
-            Qt.Key_G: lambda: self.ui.textButton.animateClick(),
-            # lower-row
-            Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
-            Qt.Key_X: lambda: self.ui.deleteButton.animateClick(),
-            Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
-            Qt.Key_V: lambda: self.ui.commentDownButton.animateClick(),
-            Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
-            # upper-row
-            Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
-            Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
-            Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
-            Qt.Key_R: lambda: self.ui.commentUpButton.animateClick(),
-            Qt.Key_T: lambda: self.ui.penButton.animateClick(),
-            # and then the same but for the left-handed
-            # home-row
-            Qt.Key_H: lambda: self.ui.textButton.animateClick(),
-            Qt.Key_J: lambda: self.commentMode(),
-            Qt.Key_K: lambda: self.ui.tickButton.animateClick(),
-            Qt.Key_L: lambda: self.ui.undoButton.animateClick(),
-            Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
-            # lower-row
-            Qt.Key_N: lambda: self.ui.lineButton.animateClick(),
-            Qt.Key_M: lambda: self.ui.commentDownButton.animateClick(),
-            Qt.Key_Comma: lambda: self.ui.boxButton.animateClick(),
-            Qt.Key_Period: lambda: self.ui.deleteButton.animateClick(),
-            Qt.Key_Slash: lambda: self.ui.moveButton.animateClick(),
-            # top-row
-            Qt.Key_Y: lambda: self.ui.penButton.animateClick(),
-            Qt.Key_U: lambda: self.ui.commentUpButton.animateClick(),
-            Qt.Key_I: lambda: self.ui.crossButton.animateClick(),
-            Qt.Key_O: lambda: self.ui.redoButton.animateClick(),
-            Qt.Key_P: lambda: self.ui.panButton.animateClick(),
-            # Then maximize and mark buttons
-            Qt.Key_Backslash: lambda: self.swapMaxNorm(),
-            Qt.Key_Plus: lambda: self.view.zoomIn(),
-            Qt.Key_Equal: lambda: self.view.zoomIn(),
-            Qt.Key_Minus: lambda: self.view.zoomOut(),
-            Qt.Key_Underscore: lambda: self.view.zoomOut(),
-            # Change-mark shortcuts
-            Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
-            Qt.Key_1: lambda: self.keyToChangeMark(1),
-            Qt.Key_2: lambda: self.keyToChangeMark(2),
-            Qt.Key_3: lambda: self.keyToChangeMark(3),
-            Qt.Key_4: lambda: self.keyToChangeMark(4),
-            Qt.Key_5: lambda: self.keyToChangeMark(5),
-            Qt.Key_6: lambda: self.keyToChangeMark(6),
-            Qt.Key_7: lambda: self.keyToChangeMark(7),
-            Qt.Key_8: lambda: self.keyToChangeMark(8),
-            Qt.Key_9: lambda: self.keyToChangeMark(9),
-            Qt.Key_0: lambda: self.keyToChangeMark(10),
-            # ?-mark pop up a key-list
-            Qt.Key_Question: lambda: self.keyPopUp(),
-            # Toggle hide/unhide tools so as to maximise space for annotation
-            Qt.Key_Home: lambda: self.toggleTools(),
-            # view whole paper
-            Qt.Key_F1: lambda: self.viewWholePaper(),
-            Qt.Key_F10: lambda: self.ui.hamMenuButton.animateClick(),
-        }
+        if self.mouseHand is 0:
+            return {
+                # home-row
+                Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
+                Qt.Key_S: lambda: self.ui.undoButton.animateClick(),
+                Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
+                Qt.Key_F: lambda: self.commentMode(),
+                Qt.Key_G: lambda: self.ui.textButton.animateClick(),
+                # lower-row
+                Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
+                Qt.Key_X: lambda: self.ui.deleteButton.animateClick(),
+                Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
+                Qt.Key_V: lambda: self.ui.commentDownButton.animateClick(),
+                Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
+                # upper-row
+                Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
+                Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
+                Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
+                Qt.Key_R: lambda: self.ui.commentUpButton.animateClick(),
+                Qt.Key_T: lambda: self.ui.penButton.animateClick(),
+                # Then maximize and mark buttons
+                Qt.Key_Backslash: lambda: self.swapMaxNorm(),
+                Qt.Key_Plus: lambda: self.view.zoomIn(),
+                Qt.Key_Equal: lambda: self.view.zoomIn(),
+                Qt.Key_Minus: lambda: self.view.zoomOut(),
+                Qt.Key_Underscore: lambda: self.view.zoomOut(),
+                # Change-mark shortcuts
+                Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
+                Qt.Key_1: lambda: self.keyToChangeMark(1),
+                Qt.Key_2: lambda: self.keyToChangeMark(2),
+                Qt.Key_3: lambda: self.keyToChangeMark(3),
+                Qt.Key_4: lambda: self.keyToChangeMark(4),
+                Qt.Key_5: lambda: self.keyToChangeMark(5),
+                Qt.Key_6: lambda: self.keyToChangeMark(6),
+                Qt.Key_7: lambda: self.keyToChangeMark(7),
+                Qt.Key_8: lambda: self.keyToChangeMark(8),
+                Qt.Key_9: lambda: self.keyToChangeMark(9),
+                Qt.Key_0: lambda: self.keyToChangeMark(10),
+                # ?-mark pop up a key-list
+                Qt.Key_Question: lambda: self.keyPopUp(),
+                # Toggle hide/unhide tools so as to maximise space for annotation
+                Qt.Key_Home: lambda: self.toggleTools(),
+                # view whole paper
+                Qt.Key_F1: lambda: self.viewWholePaper(),
+                Qt.Key_F10: lambda: self.ui.hamMenuButton.animateClick(),
+            }
+        else:
+            return {
+                # home-row
+                Qt.Key_H: lambda: self.ui.textButton.animateClick(),
+                Qt.Key_J: lambda: self.commentMode(),
+                Qt.Key_K: lambda: self.ui.tickButton.animateClick(),
+                Qt.Key_L: lambda: self.ui.undoButton.animateClick(),
+                Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
+                # lower-row
+                Qt.Key_N: lambda: self.ui.lineButton.animateClick(),
+                Qt.Key_M: lambda: self.ui.commentDownButton.animateClick(),
+                Qt.Key_Comma: lambda: self.ui.boxButton.animateClick(),
+                Qt.Key_Period: lambda: self.ui.deleteButton.animateClick(),
+                Qt.Key_Slash: lambda: self.ui.moveButton.animateClick(),
+                # top-row
+                Qt.Key_Y: lambda: self.ui.penButton.animateClick(),
+                Qt.Key_U: lambda: self.ui.commentUpButton.animateClick(),
+                Qt.Key_I: lambda: self.ui.crossButton.animateClick(),
+                Qt.Key_O: lambda: self.ui.redoButton.animateClick(),
+                Qt.Key_P: lambda: self.ui.panButton.animateClick(),
+                # Then maximize and mark buttons
+                Qt.Key_Backslash: lambda: self.swapMaxNorm(),
+                Qt.Key_Plus: lambda: self.view.zoomIn(),
+                Qt.Key_Equal: lambda: self.view.zoomIn(),
+                Qt.Key_Minus: lambda: self.view.zoomOut(),
+                Qt.Key_Underscore: lambda: self.view.zoomOut(),
+                # Change-mark shortcuts
+                Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
+                Qt.Key_1: lambda: self.keyToChangeMark(1),
+                Qt.Key_2: lambda: self.keyToChangeMark(2),
+                Qt.Key_3: lambda: self.keyToChangeMark(3),
+                Qt.Key_4: lambda: self.keyToChangeMark(4),
+                Qt.Key_5: lambda: self.keyToChangeMark(5),
+                Qt.Key_6: lambda: self.keyToChangeMark(6),
+                Qt.Key_7: lambda: self.keyToChangeMark(7),
+                Qt.Key_8: lambda: self.keyToChangeMark(8),
+                Qt.Key_9: lambda: self.keyToChangeMark(9),
+                Qt.Key_0: lambda: self.keyToChangeMark(10),
+                # ?-mark pop up a key-list
+                Qt.Key_Question: lambda: self.keyPopUp(),
+                # Toggle hide/unhide tools so as to maximise space for annotation
+                Qt.Key_Home: lambda: self.toggleTools(),
+                # view whole paper
+                Qt.Key_F1: lambda: self.viewWholePaper(),
+                Qt.Key_F10: lambda: self.ui.hamMenuButton.animateClick(),
+            }
 
     def toggleTools(self):
         """
@@ -817,7 +846,7 @@ class Annotator(QWidget):
             self.key_codes.get(event.key(), lambda *args: None)()
         super(Annotator, self).keyPressEvent(event)
 
-    def setToolMode(self, newMode, newCursor):
+    def setToolMode(self, newMode, newCursor, imagePath=None):
         """
         Changes the current tool mode and cursor.
 
@@ -855,9 +884,12 @@ class Annotator(QWidget):
             # this should also not happen - except by strange async race issues. So we don't change anything.
             pass
 
+        if imagePath is not None:
+            self.scene.tempImagePath = imagePath
+
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
-            self.scene.setMode(newMode)
+            self.scene.setToolMode(newMode)
             self.view.setCursor(newCursor)
             # set the modelabel
             self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
@@ -1092,6 +1124,37 @@ class Annotator(QWidget):
         else:
             self.loadModes.get(mode, lambda *args: None)()
 
+    def addImageMode(self):
+        """
+        Opens a file dialog for images, shows a message box if the image is
+        too large, otherwise continues to image mode.
+
+        Notes:
+            If the Image is greater than 200kb, will return an error.
+
+        Returns:
+            None
+        """
+        fileName, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Image",
+            "/home",
+            "Image files (*.jpg *.gif " "*.png " "*.xpm" ")",
+        )
+        if not os.path.isfile(fileName):
+            return
+        if os.path.getsize(fileName) > 200000:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setWindowTitle("Image Too large.")
+            msg.setText(
+                "Max image size (200kB) reached. Please try again "
+                "with a smaller image."
+            )
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
+        else:
+            self.setToolMode("image", Qt.ClosedHandCursor, fileName)
 
     def setButtons(self):
         """ Connects buttons to their corresponding functions. """
@@ -1108,6 +1171,7 @@ class Annotator(QWidget):
         self.ui.zoomButton.clicked.connect(self.zoomMode)
         # Also the "hidden" delta-button
         self.ui.deltaButton.clicked.connect(self.deltaButtonMode)
+        self.ui.uploadImage.clicked.connect(self.addImageMode)
 
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.undo)

@@ -21,7 +21,6 @@ from textwrap import fill, dedent
 import pkg_resources
 
 from plom import __version__
-from plom import SpecVerifier, SpecParser
 from plom import specdir
 
 #################
@@ -228,7 +227,7 @@ def doLatexChecks():
 
 
 def initialiseServer():
-    print("Do simple existance checks on required files.")
+    print("Do simple existence checks on required files.")
     checkSpecAndDatabase()
     print("Build required directories")
     buildRequiredDirectories()

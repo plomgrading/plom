@@ -14,7 +14,7 @@ from multiprocessing import Pool
 from tqdm import tqdm
 
 from .coverPageBuilder import makeCover
-from .testReassembler import reassemble
+from .examReassembler import reassemble
 
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import *
@@ -23,15 +23,30 @@ from plom.finish.locationSpecCheck import locationAndSpecCheck
 numberOfQuestions = 0
 
 
-# parallel function used below, must be defined in root of module
-def parfcn(z):
+def _parfcn(z):
+    """Parallel function used below, must be defined in root of module.
+
+    Args:
+        z (tuple): Arguments to reassemble and makeCover.
+    """
     x, y = z
     if x and y:
         makeCover(*x)
         reassemble(*y)
 
 
-def buildCoverPage(msgr, shortName, outDir, t, maxMarks):
+def build_cover_page(msgr, outDir, t, maxMarks):
+    """Builds the information used to create cover pages.
+
+    Args:
+        msgr (FinishMessenger): Messenger object that talks to the server.
+        outDir (str): The directory we are putting the cover page in.
+        t (int): Test number.
+        maxMarks (dict): Maxmarks per question str -> int.
+
+    Returns:
+        tuple : (testnumber, sname, sid, arg)
+    """
     # should be [ [sid, sname], [q,v,m], [q,v,m] etc]
     cpi = msgr.RgetCoverPageInfo(t)
     sid = cpi[0][0]
@@ -42,19 +57,29 @@ def buildCoverPage(msgr, shortName, outDir, t, maxMarks):
         # append quads of [q,v,m,Max]
         arg.append([qvm[0], qvm[1], qvm[2], maxMarks[str(qvm[0])]])
     return (int(t), sname, sid, arg)
-    # makeCover(int(t), sname, sid, arg)
 
 
-def reassembleTestCMD(msgr, shortName, outDir, t, sid):
+def reassemble_test_CMD(msgr, short_name, out_dir, t, sid):
+    """Builds the information for reassembling the entire test.
+
+    Args:
+        msgr (FinishMessenger): Messenger object that talks to the server.
+        short_name (str): name of the test without the student id.
+        out_dir (str): The directory we are putting the cover page in.
+        t (int): Test number.
+        sid (str): student number.
+
+    Returns:
+       tuple : (outname, short_name, sid, covername, rnames)
+    """
     fnames = msgr.RgetAnnotatedFiles(t)
     if len(fnames) == 0:
         # TODO: what is supposed to happen here?
         return
     covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
     rnames = fnames
-    outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
-    return (outname, shortName, sid, covername, rnames)
-    # reassemble(outname, shortName, sid, covername, rnames)
+    outname = os.path.join(out_dir, "{}_{}.pdf".format(short_name, sid))
+    return (outname, short_name, sid, covername, rnames)
 
 
 def main(server=None, pwd=None):
@@ -81,7 +106,7 @@ def main(server=None, pwd=None):
         exit(1)
 
     shortName = msgr.getInfoShortName()
-    spec = msgr.getInfoGeneral()
+    spec = msgr.get_spec()
     numberOfQuestions = spec["numberOfQuestions"]
     if not locationAndSpecCheck(spec):
         print("Problems confirming location and specification. Exiting.")
@@ -109,8 +134,8 @@ def main(server=None, pwd=None):
                 and completedTests[t][2] == numberOfQuestions
             ):
                 if identifiedTests[t][0] is not None:
-                    dat1 = buildCoverPage(msgr, shortName, outDir, t, maxMarks)
-                    dat2 = reassembleTestCMD(
+                    dat1 = build_cover_page(msgr, outDir, t, maxMarks)
+                    dat2 = reassemble_test_CMD(
                         msgr, shortName, outDir, t, identifiedTests[t][0]
                     )
                     coverpagelist.append(dat1)
@@ -125,11 +150,13 @@ def main(server=None, pwd=None):
     print("Reassembling {} papers...".format(N))
     with Pool() as p:
         r = list(
-            tqdm(p.imap_unordered(parfcn, list(zip(coverpagelist, pagelists))), total=N)
+            tqdm(
+                p.imap_unordered(_parfcn, list(zip(coverpagelist, pagelists))), total=N
+            )
         )
     # Serial
     # for z in zip(coverpagelist, pagelists):
-    #    parfcn(z)
+    #    _parfcn(z)
 
     print(">>> Warning <<<")
     print(

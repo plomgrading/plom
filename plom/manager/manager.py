@@ -371,8 +371,7 @@ class Manager(QWidget):
         self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
         self.ui.refreshIDPredictionsB.clicked.connect(self.getPredictions)
 
-        self.ui.refreshIDRevB.clicked.connect(self.refreshIDRev)
-        self.ui.refreshTOTB.clicked.connect(self.refreshTOTRev)
+        self.ui.refreshRevB.clicked.connect(self.refreshRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
 
@@ -480,7 +479,7 @@ class Manager(QWidget):
 
     # -------------------
     def getTPQV(self):
-        info = managerMessenger.getInfoGeneral()
+        info = managerMessenger.get_spec()
         self.max_papers = info["numberToProduce"]
         self.numberOfPages = info["numberOfPages"]
         self.numberOfQuestions = info["numberOfQuestions"]
@@ -1208,6 +1207,11 @@ class Manager(QWidget):
         self.initRevIDTab()
         self.initRevTOTTab()
 
+    def refreshRev(self):
+        self.refreshIDRev()
+        self.refreshTOTRev()
+        self.refreshMRev()
+
     def initRevMTab(self):
         self.ui.reviewTW.setColumnCount(7)
         self.ui.reviewTW.setHorizontalHeaderLabels(
@@ -1229,6 +1233,16 @@ class Manager(QWidget):
         for u in ulist:
             self.ui.userCB.addItem(u)
         self.ui.filterB.clicked.connect(self.filterReview)
+
+    def refreshMRev(self):
+        """Refresh the user list in the marking review tab.
+        """
+        # clean out the combox box and then rebuild it.
+        self.ui.userCB.clear()
+        ulist = managerMessenger.getUserList()
+        self.ui.userCB.addItem("*")
+        for u in ulist:
+            self.ui.userCB.addItem(u)
 
     def filterReview(self):
         if (

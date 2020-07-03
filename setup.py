@@ -1,3 +1,12 @@
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+
 import os
 from setuptools import setup, find_packages
 from glob import glob
@@ -27,6 +36,7 @@ client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQ
 server_install_requires = [
     "toml>=0.10.0",
     "tqdm",
+    "numpy",
     "pandas",
     "passlib",
     "pymupdf>=1.16.14",
@@ -34,7 +44,7 @@ server_install_requires = [
     "cffi",  # not ours, why doesn't jpegtran-cffi pull this?
     "jpegtran-cffi",
     "weasyprint",
-    "aiohttp",
+    "aiohttp~=3.6.2",
     "pyqrcode",
     "pyzbar",
     "peewee",
@@ -42,8 +52,8 @@ server_install_requires = [
     "opencv-python",
     "tensorflow>=2",
     "lapsolver",  # ID reading
-    "PyQt5",
-    "requests",  # b/c of deprecated userManager
+    "requests",
+    "requests-toolbelt",
 ]
 
 # Non-Python deps for server

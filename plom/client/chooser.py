@@ -349,10 +349,16 @@ class Chooser(QDialog):
             return
         self.ui.infoLabel.setText(r)
 
-        spec = messenger.getInfoGeneral()
-        self.ui.markGBox.setTitle(
-            "Marking information for “{}”".format(spec["name"])
-        )
+        try:
+            spec = messenger.get_spec()
+        except PlomSeriousException:
+            try:
+                spec = messenger.getInfoGeneral()
+            except:
+                ErrorMessage("Could not connect to server.").exec_()
+                return
+
+        self.ui.markGBox.setTitle("Marking information for “{}”".format(spec["name"]))
         question = self.getQuestion()
         v = self.getv()
         self.ui.pgSB.setVisible(False)

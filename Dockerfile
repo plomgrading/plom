@@ -7,38 +7,33 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-FROM ubuntu:19.10
+FROM ubuntu:18.04
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 
-# Note: Ubuntu ships "python3-opencv" but pip will later grab "opencv_python" anyway
-
 RUN apt-get --no-install-recommends --yes install  \
     cmake make imagemagick g++ openssl \
-    python3-passlib python3-pandas python3-pyqt5 python3-pytest \
-    python3-pyqrcode python3-png python3-dev \
-    python3-pip python3-setuptools python3-wheel python3-pil \
     texlive-latex-extra dvipng latexmk texlive-fonts-recommended \
-    mupdf libmupdf-dev \
-    python3-tqdm libpango-1.0 libpangocairo-1.0 \
-    libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi \
-    appstream-util curl
-RUN pip3 install --upgrade pip
-# TODO: bit odd to CI-only deps here?  (appstream-util, curl)
+    libpango-1.0 libpangocairo-1.0 \
+    libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev libjpeg-dev \
+    python3 python3-pip python3-dev python3-setuptools python3-wheel \
+    python3-pytest
 
-# TODO: advantages/disadvanages of using requirements.txt here?
+RUN pip3 install --no-cache-dir --upgrade pip
+# Note: `python3 -m pip` used below on old Ubuntu 18.04
 
-RUN pip3 install \
-    pymupdf weasyprint imutils lapsolver peewee toml \
-    requests requests-toolbelt aiohttp pyzbar jpegtran-cffi \
-    imutils tensorflow lapsolver opencv_python \
-    packaging pyinstaller
+# install cffi first: https://github.com/jbaiter/jpegtran-cffi/issues/27
+RUN python3 -m pip install --no-cache-dir cffi==1.14.0 pycparser==2.20
+COPY requirements.txt /src/
+WORKDIR /src
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
+# client dependency: keep in image for now after others so easy to discard
+RUN apt-get --no-install-recommends --yes install python3-pyqt5
 
-# TODO: so much stuff listed explicitly: help me!
 # TODO: I want to install Plom (from current dir) into the Docker image...
 # TODO: don't need/want /src in the docker image
 COPY setup.py README.md org.plomgrading.PlomClient.* /src/
 COPY plom/ /src/plom/
 WORKDIR /src
-RUN pip3 install .
+RUN python3 -m pip install .

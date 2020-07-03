@@ -13,7 +13,7 @@ import subprocess
 from multiprocessing import Pool
 from tqdm import tqdm
 
-from .testReassembler import reassemble
+from .examReassembler import reassemble
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import *
 from plom.finish.locationSpecCheck import locationAndSpecCheck
@@ -22,20 +22,42 @@ numberOfTests = 0
 numberOfQuestions = 0
 
 
-# Parallel function used below, must be defined in root of module
-def parfcn(y):
+def _parfcn(y):
+    """Parallel function used below, must be defined in root of module. Reassemble a pdf from the cover and question images.
+
+    Leave coverfname as None to omit it (e.g., when totalling).
+
+    Args:
+        y : arguments to testReassembler.reassemble
+    """
     reassemble(*y)
 
 
-def reassembleTestCMD(msgr, shortName, outDir, t, sid):
+def reassemble_test_CMD(msgr, short_name, outDir, t, sid):
+    """Reassembles a test with a filename that includes the directory and student id.
+
+    Args:
+        msgr (FinishMessenger): the messenger to the plom server. 
+        short_name (str): the name of the test.
+        outDir (str): the directory the reassembled test will exist in.
+        t (int): test number.
+        sid (str): student id.
+
+    Returns:
+        tuple (outname, short_name, sid, None, rnames): descriptions below.
+        outname (str): the full name of the file.
+        short_name (str): same as argument.
+        sid (str): sane as argument.
+        rnames (str): the real file name.
+    """
     fnames = msgr.RgetOriginalFiles(t)
     if len(fnames) == 0:
         # TODO: what is supposed to happen here?
         return
     rnames = fnames
-    outname = os.path.join(outDir, "{}_{}.pdf".format(shortName, sid))
-    # reassemble(outname, shortName, sid, None, rnames)
-    return (outname, shortName, sid, None, rnames)
+    outname = os.path.join(outDir, "{}_{}.pdf".format(short_name, sid))
+    # reassemble(outname, short_name, sid, None, rnames)
+    return (outname, short_name, sid, None, rnames)
 
 
 def main(server=None, pwd=None):
@@ -57,12 +79,12 @@ def main(server=None, pwd=None):
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another finishing-script or manager-client running,\n"
             "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run `plom-finish clear`."
+            "In order to force-logout the existing authorization run `plom-finish clear`."
         )
         exit(1)
 
     shortName = msgr.getInfoShortName()
-    spec = msgr.getInfoGeneral()
+    spec = msgr.get_spec()
 
     if not locationAndSpecCheck(spec):
         print("Problems confirming location and specification. Exiting.")
@@ -77,7 +99,7 @@ def main(server=None, pwd=None):
     pagelists = []
     for t in identifiedTests:
         if identifiedTests[t][0] is not None:
-            dat = reassembleTestCMD(msgr, shortName, outDir, t, identifiedTests[t][0])
+            dat = reassemble_test_CMD(msgr, shortName, outDir, t, identifiedTests[t][0])
             pagelists.append(dat)
         else:
             print(">>WARNING<< Test {} has no ID".format(t))
@@ -88,7 +110,7 @@ def main(server=None, pwd=None):
     N = len(pagelists)
     print("Reassembling {} papers...".format(N))
     with Pool() as p:
-        r = list(tqdm(p.imap_unordered(parfcn, pagelists), total=N))
+        r = list(tqdm(p.imap_unordered(_parfcn, pagelists), total=N))
 
     print(">>> Warning <<<")
     print(

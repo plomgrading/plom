@@ -231,4 +231,5 @@ class PlomDB:
         TdidNotFinish,
         TgetImage,
         TtakeTaskFromClient,
+        TreviewTotal,
     )

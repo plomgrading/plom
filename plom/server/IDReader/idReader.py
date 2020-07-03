@@ -10,18 +10,15 @@ __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
-import os, sys, shutil
-import requests
+import os
 from pathlib import Path
-
 import csv
-import glob
+
+import requests
 from lapsolver import solve_dense
 import numpy as np
-import json
-import os
-import sys
 
+from plom import specdir
 from .predictStudentID import compute_probabilities
 
 
@@ -114,7 +111,7 @@ def log_likelihood(student_ids, probabilities):
 
 
 def run_id_reader(file_dict, rectangle):
-    """Reads the ids for given test numbers in a directory (and test page configuration). 
+    """Reads the ids for given test numbers in a directory (and test page configuration).
 
     Arguments:
         file_dict {dict} -- test number -> filename.
@@ -139,9 +136,7 @@ def run_id_reader(file_dict, rectangle):
     probabilities = compute_probabilities(file_dict, top, bottom)
     # put studentNumbers in list
     studentNumbers = []
-    with open(
-        "./specAndDatabase/classlist.csv", newline=""
-    ) as csvfile:  # todo update file paths
+    with open(Path(specdir) / "classlist.csv", newline="") as csvfile:
         red = csv.reader(csvfile, delimiter=",")
         next(red, None)  # skip the header
         for row in red:
@@ -162,12 +157,11 @@ def run_id_reader(file_dict, rectangle):
     rowIDs, columnIDs = solve_dense(costs)
 
     # now save the result
-    with open("./specAndDatabase/predictionlist.csv", "w") as fh:
+    with open(Path(specdir) / "predictionlist.csv", "w") as fh:
         fh.write("test, id\n")
         for r, c in zip(rowIDs, columnIDs):
             # the get test-number of r-th from the testList
             testNumber = testList[r]
             # print("{}, {}".format(testNumber, studentNumbers[c]))
             fh.write("{}, {}\n".format(testNumber, studentNumbers[c]))
-        fh.close()
     print("Results saved in predictionlist.csv")

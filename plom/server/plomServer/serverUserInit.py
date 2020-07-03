@@ -23,7 +23,7 @@ def InfoShortName(self):
         return [True, self.testSpec["name"]]
 
 
-def InfoGeneral(self):
+def info_spec(self):
     """Return the exam specification.
 
     TODO: why not return None if no spec (yet)?
@@ -37,7 +37,7 @@ def InfoGeneral(self):
     if not self.testSpec:
         return False, None
     d = self.testSpec.copy()
-    d.pop('privateSeed')
+    d.pop("privateSeed")
     return True, d
 
 

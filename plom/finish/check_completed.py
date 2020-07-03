@@ -96,7 +96,7 @@ def main(server=None, password=None):
         )
         exit(-1)
 
-    spec = msgr.getInfoGeneral()
+    spec = msgr.get_spec()
     max_papers = spec["numberToProduce"]
     numberOfQuestions = spec["numberOfQuestions"]
     completions = msgr.RgetCompletionStatus()

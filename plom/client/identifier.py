@@ -280,7 +280,7 @@ class IDClient(QWidget):
         `student_name_to_idlist`
             Names are not unique so we map each name to a list of IDs.
         """
-        self.student_id_to_name_map = messenger.IDrequestClasslist()
+        self.student_id_to_name_map = dict(messenger.IDrequestClasslist())
         self.student_name_to_idlist = {}
         for sid, sname in self.student_id_to_name_map.items():
             if not self.student_name_to_idlist.get(sname):
@@ -541,7 +541,8 @@ class IDClient(QWidget):
         sname = self.ui.pNameLabel.text()
         sid = self.ui.pSIDLabel.text()
 
-        self.identifyStudent(index, sid, sname)
+        if not self.identifyStudent(index, sid, sname):
+            return
 
         if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
             self.requestNext()  # updates progressbars.
@@ -722,7 +723,8 @@ class IDClient(QWidget):
                         self.ui.nameEdit.text()
                     )
                     + "Corresponding students IDs include:\n"
-                    + ", ".join(sidlist) + ".\n\n"
+                    + ", ".join(sidlist)
+                    + ".\n\n"
                     + "Try entering the student ID instead."
                 ).exec_()
                 return

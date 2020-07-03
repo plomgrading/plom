@@ -139,13 +139,17 @@ def MrecordMark(self, user, mark, aname, mtime, tags):
     the filename, mark, user, time, marking time and any tags.
     This is not used.
     """
-    fh = open("{}.txt".format(aname), "w")
-    fh.write(
-        "{}\t{}\t{}\t{}\t{}\t{}".format(
-            aname, mark, user, datetime.now().strftime("%Y-%m-%d,%H:%M"), mtime, tags,
+    with open("{}.txt".format(aname), "w") as fh:
+        fh.write(
+            "{}\t{}\t{}\t{}\t{}\t{}".format(
+                aname,
+                mark,
+                user,
+                datetime.now().strftime("%Y-%m-%d,%H:%M"),
+                mtime,
+                tags,
+            )
         )
-    )
-    fh.close()
 
 
 def MgetImages(self, user, task):

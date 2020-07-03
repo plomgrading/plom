@@ -6,83 +6,101 @@
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
-#
-# This the CI configuration for Plom
 
+# This the CI configuration for Plom
+#
 # TODO list
 # ---------
 #   * use our Dockerfile instead of apt-get
 #       - I think this is "dind"
+#   * test on latest versions of deps with Docker pinned on req.txt
 
-image: ubuntu:18.04
+image: docker:19.03.11
+
+services:
+  - docker:19.03.11-dind
 
 variables:
-  KUBERNETES_VERSION: 1.11.7
-  HELM_VERSION: 2.12.3
-
   DOCKER_DRIVER: overlay2
-
-  ROLLOUT_RESOURCE_TYPE: deployment
-
-# Need pip >= 19, which turns out to be nontrivial: cannot just call
-# pip/pip3 after upgrading, hence `python3 -m pip` stuff below
-before_script:
-  - apt-get update
-  - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
-  - apt-get --no-install-recommends --yes install
-    zbar-tools cmake make imagemagick g++ openssl
-    python3-passlib python3-pandas python3-pyqt5 python3-pytest
-    python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev
-    python3-pip python3-setuptools python3-wheel python3-opencv
-    texlive-latex-extra dvipng latexmk texlive-fonts-recommended
-    python3-requests-toolbelt python3-tqdm
-    libpango-1.0 libpangocairo-1.0 libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi
-    iproute2 psmisc file
-    appstream-util
-  # apt-get --no-install-recommends --yes install libimage-exiftool-perl
-  - pip3 install --upgrade pip
-  - which pip3
-  - python3 -m pip -V
-  - python3 -m pip install --upgrade setuptools
-  # let setup.py deps do their thing
-  # python3 -m pip install pymupdf weasyprint peewee toml aiohttp pyzbar
-  # not needed until prediction
-  # python3 -m pip install imutils lapsolver opencv-python tensorflow
+  IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  IM_LATEST: $CI_REGISTRY_IMAGE:latest
 
 stages:
+  - static_analysis
+  - nodocker
   - build
   - test
+  - final
 
 
-#job unitTests:
-#  stage: test
-#  script:
-#    # or pytest-3 -l
-#    - python3 -m pytest -l
-
-
-job unitTestsInstalledPkg:
-  stage: test
+docker-image:
+  stage: build
+  needs: []
   script:
-    - python3 -m pip install packaging
-    - python3 ./setup.py build bdist_wheel
-    - pushd dist
-    - python3 -m pip install plom-*.whl
-    - popd
-    # no go to some other dir and run tests on installed pkg
-    - mkdir tmp
-    - pushd tmp
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $IM_LATEST || true
+    - docker build --cache-from $IM_LATEST --tag $IM .
+    - docker push $IM
+
+
+# Get fast results by running tests in a copy-pasta of the docker-image job
+quick-pytests:
+  stage: build
+  needs: []
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $IM_LATEST || true
+    - docker build --cache-from $IM_LATEST --tag $IM .
+    - docker run $IM pytest-3 -l --pyargs plom
+
+
+# If we are on the master branch, we tag the above as "latest"
+docker-image-master:
+  stage: final
+  needs: ["docker-image"]
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $IM
+    - docker tag $IM $IM_LATEST
+    - docker push $IM_LATEST
+  only:
+    - master
+
+
+black:
+  stage: static_analysis
+  needs: []
+  image: "python:3.8"
+  before_script:
+    - pip3 install black
+  script:
+    - black --check --diff plom
+
+
+basic:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    - plom-init
+
+
+unittests:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
     - pytest-3 -l --pyargs plom
-    - popd
 
 
-job demoServer:
+demoserver:
   stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
-    - python3 ./setup.py build bdist_wheel
-    - pushd dist
-    - python3 -m pip install plom-*.whl
-    - popd
     - mkdir demo
     - pushd demo
     - plom-build new --demo
@@ -99,7 +117,7 @@ job demoServer:
     - curl -k https://localhost:41984/Version
     - plom-build class --demo -w 1234
     - plom-build make -w 1234
-    - python3 -m plom.produce.faketools
+    - python3 -m plom.produce.faketools -w 1234
     - plom-scan process fake_scribbled_exams.pdf
     - plom-scan read   -w 4567
     - plom-scan upload -w 4567
@@ -114,13 +132,13 @@ job demoServer:
     - popd
 
 
-job fullWorkFlow:
+fullworkflow:
   stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
   script:
-    - python3 ./setup.py build bdist_wheel
-    - pushd dist
-    - python3 -m pip install plom-*.whl
-    - popd
     # Build tests
     - mkdir play
     - pushd play
@@ -146,7 +164,7 @@ job fullWorkFlow:
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
     # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/695
-    - python3 -m plom.produce.faketools
+    - python3 -m plom.produce.faketools -w 1234
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
@@ -182,10 +200,10 @@ job fullWorkFlow:
     - jobs -l
     - popd
 
-job backgroundTest:
-  before_script:
-    - echo "Overriding before_script"
-  stage: test
+backgroundTest:
+  image: alpine
+  stage: static_analysis
+  needs: []
   script:
     - sleep 60 &
     - jobs -l
@@ -199,7 +217,170 @@ job backgroundTest:
     - echo "Should be no jobs and this should succeed"
     - jobs -p
 
-job appstreamValid:
-  stage: test
+appstreamValid:
+  stage: static_analysis
+  needs: []
+  image: alpine
+  before_script:
+    - apk add appstream-glib
   script:
     - appstream-util validate-relax org.plomgrading.PlomClient.metainfo.xml
+
+
+legacy_full:
+  stage: nodocker
+  needs: []
+  image: ubuntu:18.04
+  # Need pip >= 19, which turns out to be nontrivial: cannot just call
+  # pip/pip3 after upgrading, hence `python3 -m pip` stuff below
+  before_script:
+    - apt-get update
+    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
+    - apt-get --no-install-recommends --yes install
+      zbar-tools cmake make imagemagick g++ openssl
+      python3-passlib python3-pandas python3-pyqt5 python3-pytest
+      python3-pyqt5.qtsql python3-pyqrcode python3-png python3-dev
+      python3-pip python3-setuptools python3-wheel
+      texlive-latex-extra dvipng latexmk texlive-fonts-recommended
+      python3-requests-toolbelt python3-tqdm
+      libpango-1.0 libpangocairo-1.0 libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi
+      iproute2 psmisc file
+    # apt-get --no-install-recommends --yes install libimage-exiftool-perl
+    - pip3 install --upgrade pip
+    - which pip3
+    - python3 -m pip -V
+    - python3 -m pip install --upgrade setuptools
+    - python3 -m pip install packaging
+    # let setup.py deps do their thing
+    # python3 -m pip install pymupdf weasyprint peewee toml aiohttp pyzbar
+    # not needed until prediction
+    # python3 -m pip install imutils lapsolver opencv-python tensorflow
+  script:
+    - python3 ./setup.py build bdist_wheel
+    - pushd dist
+    - python3 -m pip install plom-*.whl
+    - popd
+    # Build tests
+    - mkdir play
+    - pushd play
+    - plom-build new
+    - plom-build parse
+    - python3 -m plom.produce.demotools
+    # TODO: override the private seed
+    # sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
+    # diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
+    # Start server
+    - ip addr
+    - plom-server init
+    - plom-server users --demo
+    - plom-server launch &
+    - sleep 2
+    - sleep 2
+    - echo "Server should be in background"
+    - jobs -l
+    - echo "We should be able to connect to it"
+    - curl -k https://localhost:41984/Version
+    - plom-build class --demo -w 1234
+    - plom-build make -w 1234
+    - A=`ls papersToPrint/ | wc -l`  # How many files?
+    - bash -c "[[ $A == 20 ]]"       # should be 20
+    # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/695
+    - python3 -m plom.produce.faketools -w 1234
+    # Scan and upload
+    # supposed to fail:
+    - if (plom-scan process); then false; else true; fi
+    - plom-scan process fake_scribbled_exams.pdf
+    - plom-scan read -s localhost -w 4567
+    - plom-scan upload -s localhost -w 4567
+    - plom-scan upload -u -s localhost -w 4567
+    - plom-scan upload -c -s localhost -w 4567
+    - plom-scan status -s localhost -w 4567
+    ## not supposed to be done yet:
+    - if (plom-finish status -w 1234); then false; else true; fi
+    - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123
+    - python3 -m plom.client.randoMarker -s localhost -u user0 -w 0123
+    - plom-finish status -w 1234
+    - plom-finish csv -w 1234
+    - A=`cat marks.csv  | wc -l`      # How many lines?
+    - bash -c "[[ $A == 20 ]]"        # should be 19 + 1 - since 1 page from 1 test is deleted
+    - file -b marks.csv  | grep ASCII   # should be ascii test
+    - plom-finish reassemble -w 1234
+    - A=`ls reassembled/ | wc -l`    # How many files?
+    - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
+    - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
+    - bash -c "[[ $A -lt 40 ]]"          # not more than 10 MB
+    - plom-finish webpage
+    - A=`ls codedReturn/ | wc -l`    # How many files?
+    - bash -c "[[ $A == 20 ]]"       # 20-1 pdf + 1 html
+    - echo "Now take down the server"
+    # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
+    - jobs -l
+    - kill %1
+    - sleep 2
+    - echo "Should be no jobs and this should succeed"
+    - jobs -l
+    - popd
+
+
+# TODO: may want to use an older image rather than Ubuntu 19.10
+# TODO: consider doing this only on the master branch
+linuxbinary:
+  stage: final
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
+    - pip install pyinstaller
+  script:
+    - pyinstaller -h
+    - pyinstaller client.linux.spec
+  artifacts:
+    paths:
+    - dist/PlomClient*
+    expire_in: 2 weeks
+
+
+.shared_windows_runners:
+  tags:
+  - shared-windows
+  - windows
+  - windows-1809
+
+
+winmintest:
+  extends:
+  - .shared_windows_runners
+  stage: test
+  needs: []
+  script:
+  - choco install -y python3
+  - refreshenv
+  - c:\Python38\Scripts\pip install toml
+  - c:\Python38\Scripts\pip install requests-toolbelt
+  - c:\Python38\Scripts\pip install pyqt5
+  - refreshenv
+  - echo $Env:Path
+  - c:\Python38\python -m plom.scripts.client -h
+
+
+# TODO: consider doing this only on the master branch
+winpyinst:
+  extends:
+  - .shared_windows_runners
+  stage: final
+  needs: []
+  script:
+  - choco install -y python3 --version 3.7.8
+  - refreshenv
+  - C:\Python37\Scripts\pip install toml
+  - C:\Python37\Scripts\pip install requests-toolbelt
+  - C:\Python37\Scripts\pip install pyqt5
+  - C:\Python37\Scripts\pip install pyinstaller
+  - refreshenv
+  - c:\Python37\python -m plom.scripts.client -h
+  - c:\Python37\Scripts\pyinstaller client.windows.spec
+  - ls dist
+  artifacts:
+    paths:
+    - dist/PlomClient*.exe
+    expire_in: 2 weeks

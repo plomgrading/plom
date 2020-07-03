@@ -15,6 +15,7 @@ from plom.client.tools.delete import *
 from plom.client.tools.delta import *
 from plom.client.tools.ellipse import *
 from plom.client.tools.highlight import *
+from plom.client.tools.image import *
 from plom.client.tools.line import *
 from plom.client.tools.move import *
 from plom.client.tools.pen import *

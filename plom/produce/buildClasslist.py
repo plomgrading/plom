@@ -301,8 +301,8 @@ def process_classlist_backend(student_csv_file_name):
             "Apologies for the eurocentricity.",
         )
 
-    #print("Saving to {}".format(outputfile))
-    #df.to_csv(outputfile, index=False)
+    # print("Saving to {}".format(outputfile))
+    # df.to_csv(outputfile, index=False)
     return student_info_df
 
 
@@ -349,4 +349,5 @@ def process_class_list(student_csv_file_name, demo=False):
         print('Cannot find file "{}"'.format(student_csv_file_name))
         exit(1)
     df = process_classlist_backend(student_csv_file_name)
-    return dict(zip(df.id, df.studentName))
+    # order is important, leave it as a list
+    return list(zip(df.id, df.studentName))
