@@ -83,13 +83,16 @@ def IDclaimThisTask(self, username, test_number):
 
 # TODO: These two functions seem the same.
 def id_paper(self, *args, **kwargs):
-    """Some glue between service routes and the database.
+    """Assign a student name/id combination to a paper in the database.
 
-    TODO: according to documentation args and kwargs aren't supposed to have docs.
+    Used by the HAL user for papers that are preidentified by the system. 
+        TODO: Correct ? 
+
     Args:
-        args (tuple): A tuple including test_number, TODO: upload_user, stuednt ID
-            and student name.
-        kwargs (dict): TODO ?
+        args (tuple): A tuple including (test_number, user_identifying_paper, 
+            matched_student_id, matched_student_name).
+        kwargs (dict): Empty dict, not sure why TODO: Assuming this is 
+            here only to match ID_id_paper. 
 
     Returns:
         list: A list including the results of the identification of 
@@ -97,27 +100,32 @@ def id_paper(self, *args, **kwargs):
             (True, None, None) for success. 
             (False, 409, msg) for failure.
     """
-    print("##############################")
-    print("id_paper")
-    print(type(args))
-    print(args)
-    print(type(kwargs))
-    print(kwargs)
-    print(type(self.DB.id_paper(*args, **kwargs)))
-    print(self.DB.id_paper(*args, **kwargs))
-    """Some glue between service routes and the database.
 
-    See :func:`plom.db.db_create.id_paper` for details.
-    """
     return self.DB.id_paper(*args, **kwargs)
 
 
 def ID_id_paper(self, *args, **kwargs):
+    """Assign a student name/id combination to a paper in the database.
 
-    print("##############################")
-    print("ID_id_paper")
-    print(type(kwargs))
-    print(kwargs)
+    Used by the normal users for identifying papers. Call ID_id_paper which
+        does additional checks.
+
+    Args:
+        args (tuple): A tuple including (test_number, user_identifying_paper, 
+            matched_student_id, matched_student_name).
+        kwargs (dict): Empty dict, not sure why TODO: Assuming this is a 
+            True/False parameter (defaults to True if empty dict) which
+            indicates wether checks need to be applied ie the additional
+            404,403 error on top of what id_paper would return.
+
+    Returns:
+        list: A list including the results of the identification of 
+            the paper on database. Examples are:
+            (True, None, None) for success. 
+            (False, 403, msg) for belong to different user failure.
+            (False, 404, msg) for paper not found or not scanned yet.
+            (False, 409, msg) for already entered failure.
+    """
 
     return self.DB.ID_id_paper(*args, **kwargs)
 
@@ -135,8 +143,7 @@ def IDdidNotFinish(self, username, test_number):
 
 
 def IDgetImageFromATest(self):
-    """Return all the images from an ID'ing task. TODO: How is this different
-    why used with the prediction run. 
+    """Return a random front page exam image for ID box selection by the client. 
 
     Returns:
         list: True/False plus a list of the images' paths.
@@ -188,7 +195,7 @@ def IDreviewID(self, test_number):
     return self.DB.IDreviewID(test_number)
 
 
-def IDrunPredictions(self, rectangle, file_number, ignore_stamp):
+def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
     """Run the ML prediction model on the papers and saves the information.
 
     Log activity.
@@ -196,15 +203,17 @@ def IDrunPredictions(self, rectangle, file_number, ignore_stamp):
     Args:
         rectangle (list): A list of coordinates if the format of:
             [top_left_x, top_left_y, bottom_right_x, bottom_right_y]
-        file_number (int): Number of the file which the cropped rectangle was 
-            extracted from. TODO: is this correct ?
-        ignore_stamp (bool): To ignore or not to ignore the timestamp. TODO: is this correct ?
+        database_reference_number (int): Number of the files which the cropped 
+            rectangle was extracted from.
+        ignore_stamp (bool): To ignore or not to ignore the timestamp when deciding
+            whether to skip the run.
 
     Returns:
         list: A list with first value boolean and second value boolean or a 
             message string of the format:
             [True, False] for already running.
-            [False, TODO: ?] for ?
+            [False, str] for prediction already exists, so return the timestamp
+                for last time prediction were run. TODO: I'm pretty sure this is correct ?
             [True, True] for started running.
     """
 
@@ -226,7 +235,7 @@ def IDrunPredictions(self, rectangle, file_number, ignore_stamp):
 
     # get list of [test_number, image]
     log.info("ID get images for ID reader")
-    test_image_dict = self.DB.IDgetImageByNumber(file_number)
+    test_image_dict = self.DB.IDgetImageByNumber(database_reference_number)
 
     # dump this as json / lock_file for subprocess to use in background.
     with open(lock_file, "w") as fh:
@@ -238,7 +247,6 @@ def IDrunPredictions(self, rectangle, file_number, ignore_stamp):
         json.dump(last_run_timestamp, fh)
 
     # run the reader
-
     log.info("ID launch ID reader in background")
     subprocess.Popen(["python3", "-m", "plom.server.IDReader.runTheReader", lock_file])
     return [True, True]
