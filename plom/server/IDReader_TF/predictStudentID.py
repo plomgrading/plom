@@ -257,7 +257,7 @@ def compute_probabilities(
 
     # load the model
     # fire up the model
-    model = tf.keras.models.load_model("plom_model")
+    model = tf.keras.models.load_model("model_cache")
     model.compile(
         optimizer="adam",
         loss="sparse_categorical_crossentropy",  # we are using integer classes

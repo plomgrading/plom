@@ -31,7 +31,7 @@ def is_model_absent():
     """
 
     # this directory is created with downloadModel is called
-    base_path = Path("plom_model")
+    base_path = Path("model_cache")
     files = [
         "saved_model.pb",
         "variables/variables.index",
@@ -55,7 +55,7 @@ def download_model():
     """
 
     # make a directory into which to save things
-    base_path = Path("plom_model")
+    base_path = Path("model_cache")
     # make both the base_path and its variables subdir
     os.makedirs(base_path / "variables", exist_ok=True)
     base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/master/plomBuzzword/"

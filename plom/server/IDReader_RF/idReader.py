@@ -30,7 +30,7 @@ def is_model_absent():
         boolean: True/False, indicating if the model is present.
     """
 
-    base_path = Path("plom_model")
+    base_path = Path("model_cache")
     files = ["ML_model.sav"]
 
     for filename in files:
@@ -56,7 +56,7 @@ def download_or_train_model():
     """
 
     # make a directory into which to save things
-    base_path = Path("plom_model")
+    base_path = Path("model_cache")
     # make both the basepath and its variables subdir
     os.makedirs(base_path, exist_ok=True)
 

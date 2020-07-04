@@ -97,7 +97,7 @@ def IDreviewID(self, testNumber):
 
 
 def IDrunPredictions(
-    self, rectangle, fileNumber, ignoreStamp, use_tensorflow_model=False
+    self, rectangle, fileNumber, ignoreStamp, use_tensorflow_model=True
 ):
     # from plom.server.IDReader.idReader import runIDReader
 

@@ -57,7 +57,7 @@ def train_model():
     print("Accuracy of model on mnist test-set:", test_acc)
 
     print("Save the model")
-    model.save("plomBuzzword")
+    model.save("model_cache")
 
 
 if __name__ == "__main__":

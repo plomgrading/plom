@@ -224,7 +224,7 @@ def compute_probabilities(
     """
 
     # load the model
-    model_fname = "plom_model/ML_model.sav"
+    model_fname = "model_cache/ML_model.sav"
     prediction_model = pickle.load(open(model_fname, "rb"))
 
     # Dictionary of test numbers their digit-probabilities
