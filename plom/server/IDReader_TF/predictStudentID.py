@@ -234,7 +234,9 @@ def get_digit_prob(prediction_model, image_box_fname, top, bottom, num_digits):
 
     # and append that prediction to list
     for processed_digit_image in processed_digits_images_list:
-        number_pred_prob = prediction_model.predict_with_dropout(processed_digit_image).mean(axis=1)
+        number_pred_prob = prediction_model.predict_with_dropout(
+            processed_digit_image
+        ).mean(axis=1)
         prob_lists.append(number_pred_prob)
 
     return prob_lists
