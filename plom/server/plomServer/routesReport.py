@@ -24,7 +24,7 @@ class ReportHandler:
 
         if not data["user"] in ("manager", "scanner"):
             return web.Response(status=401)
-        # A dictionary that involves the complete tests : key:exam_number, value: list of lists 
+        # A dictionary that involves the complete tests : key:exam_number, value: list of lists
         #   involving the page and the page version.
         # Ex: {2: [['t.1', 1], ['t.2', 1], ['t.3', 1], ['t.4', 1], ['t.5', 1], ['t.6', 1]], ... }
         return web.json_response(self.server.RgetScannedTests(), status=200)
@@ -47,7 +47,7 @@ class ReportHandler:
 
         if not data["user"] in ("manager", "scanner"):
             return web.Response(status=401)
-        # The response is a dictionary of the form: 
+        # The response is a dictionary of the form:
         # {test_number: [[test string, TODO: Version number ?, True/False for page incomplete or not], ...], ...}
         # Ex: {1: [['t.1', 1, True], ['t.2', 1, True], ['t.3', 2, True], ['t.4', 1, True], ['t.5', 2, True], ['t.6', 2, False]]}
         return web.json_response(self.server.RgetIncompleteTests(), status=200)
@@ -55,14 +55,7 @@ class ReportHandler:
     # @routes.get("/REP/unused")
     @authenticate_by_token_required_fields(["user"])
     def RgetUnusedTests(self, d, request):
-        print("#####################################")
-        print("RgetUnusedTests")
-        print(type(d))
-        print(d)
-        print(type(request))
-        print(request)
-        print(type(self.server.RgetUnusedTests()))
-        print(self.server.RgetUnusedTests())
+        # TODO: Requires documentation.
         if not d["user"] in ("manager", "scanner"):
             return web.Response(status=401)
         return web.json_response(self.server.RgetUnusedTests(), status=200)
@@ -83,11 +76,13 @@ class ReportHandler:
                 incomplete exams.
         """
 
-        # An example of the report sent as a response:  TODO: Should I explain this better. 
+        # An example of the report sent as a response:  TODO: Should I explain this better.
         # {'NScanned': 10, 'NMarked': 7, 'NRecent': 7, 'avgMark': 4.428571428571429, 'avgMTime': 153.57142857142858}
         if not data["user"] == "manager":
             return web.Response(status=401)
-        return web.json_response(self.server.RgetProgress(data["q"], data["v"]), status=200)
+        return web.json_response(
+            self.server.RgetProgress(data["q"], data["v"]), status=200
+        )
 
     # @routes.get("/REP/questionUserProgress")
     @authenticate_by_token_required_fields(["user", "q", "v"])
@@ -104,11 +99,11 @@ class ReportHandler:
             aiohttp.web_response.Response: A response with information on the progress of each
                 use on each question.
         """
-        
+
         if not data["user"] == "manager":
             return web.Response(status=401)
-        
-        # A list of list with the following response: 
+
+        # A list of list with the following response:
         # [ Number of scanned papers, [Username, Number of marked], [Username, Number of marked], etc]
         return web.json_response(
             self.server.RgetQuestionUserProgress(data["q"], data["v"]), status=200
@@ -134,7 +129,7 @@ class ReportHandler:
             return web.Response(status=401)
         # Respond with the corresponding values for non-zero bars in the histogram.
         # A dictionary with usernames as keys and the bar values for non zero bars as dictionaries.
-        # TODO: What did the columns represent ? 
+        # TODO: What did the columns represent ?
         # Example: {'user0': {5: 3, 4: 1}}
         return web.json_response(
             self.server.RgetMarkHistogram(data["q"], data["v"]), status=200
@@ -208,14 +203,7 @@ class ReportHandler:
     # @routes.get("/REP/marked")
     @authenticate_by_token_required_fields(["user", "q", "v"])
     def RgetMarked(self, d, request):
-        print("#####################################")
-        print("RgetMarked")
-        print(type(d))
-        print(d)
-        print(type(request))
-        print(request)
-        print(type(self.server.RgetMarked(d["q"], d["v"])))
-        print(self.server.RgetMarked(d["q"], d["v"]))
+        # TODO: Requires documentation.
         if not d["user"] == "manager":
             return web.Response(status=401)
         return web.json_response(self.server.RgetMarked(d["q"], d["v"]), status=200)
@@ -244,7 +232,7 @@ class ReportHandler:
         status_response_success = marking_status_response[0]
 
         # An example of gradding status summary can be seen below:
-        #  {'number': 2, 'identified': True, 'marked': False, 'totalled': False, 'sid': '10130103', 'sname': 'Vandeventer, Irene', 
+        #  {'number': 2, 'identified': True, 'marked': False, 'totalled': False, 'sid': '10130103', 'sname': 'Vandeventer, Irene',
         # 'iwho': 'HAL', 1: {'marked': False, 'version': 2}, 2: {'marked': False, 'version': 1}, 3: {'marked': False, 'version': 2}}
         # TODO: Whats is iwho ?
         if status_response_success:
@@ -275,51 +263,28 @@ class ReportHandler:
 
         # TODO: Understand this better.
         # For each paper, the response includes the following information:
-        # {1: {'identified': True, 'marked': False, 'totalled': False, 'sid': '10050380', 
+        # {1: {'identified': True, 'marked': False, 'totalled': False, 'sid': '10050380',
         # 'sname': 'Fink, Iris', 'q1v': 2, 'q1m': '', 'q2v': 1, 'q2m': '', 'q3v': 2, 'q3m': ''}
         return web.json_response(rmsg, status=200)
 
     # @routes.get("/REP/coverPageInfo/{test}")
     @authenticate_by_token_required_fields(["user"])
     def RgetCoverPageInfo(self, d, request):
-        print("#####################################")
-        print("RgetCoverPageInfo")
-        print(type(d))
-        print(d)
-        print(type(request))
-        print(request)
-
+        # TODO: Requires documentation.
         if not d["user"] == "manager":
             return web.Response(status=401)
         testNumber = request.match_info["test"]
         rmsg = self.server.RgetCoverPageInfo(testNumber)
-
-        print(type(testNumber))
-        print(testNumber)
-        print(type(rmsg))
-        print(rmsg)
-
         return web.json_response(rmsg, status=200)
 
     # @routes.get("/REP/originalFiles/{test}")
     @authenticate_by_token_required_fields(["user"])
     def RgetOriginalFiles(self, d, request):
-        print("#####################################")
-        print("RgetOriginalFiles")
-        print(type(d))
-        print(d)
-        print(type(request))
-        print(request)
-
+        # TODO: Requires documentation.
         if not d["user"] == "manager":
             return web.Response(status=401)
         testNumber = request.match_info["test"]
         rmsg = self.server.RgetOriginalFiles(testNumber)
-
-        print(type(testNumber))
-        print(testNumber)
-        print(type(rmsg))
-        print(rmsg)
 
         if len(rmsg) > 0:
             return web.json_response(rmsg, status=200)
@@ -329,31 +294,11 @@ class ReportHandler:
     # @routes.get("/REP/annotatedFiles/{test}")
     @authenticate_by_token_required_fields(["user"])
     def RgetAnnotatedFiles(self, d, request):
-        """[summary]
-
-        Args:
-            d ([type]): [description]
-            request ([type]): [description]
-
-        Returns:
-            [type]: [description]
-        """
-        print("#####################################")
-        print("RgetAnnotatedFiles")
-        print(type(d))
-        print(d)
-        print(type(request))
-        print(request)
-
+        # TODO: Requires documentation.
         if not d["user"] == "manager":
             return web.Response(status=401)
         testNumber = request.match_info["test"]
         rmsg = self.server.RgetAnnotatedFiles(testNumber)
-
-        print(type(testNumber))
-        print(testNumber)
-        print(type(rmsg))
-        print(rmsg)
 
         if len(rmsg) > 0:
             return web.json_response(rmsg, status=200)
@@ -363,7 +308,7 @@ class ReportHandler:
     # @routes.get("/REP/userList")
     @authenticate_by_token_required_fields(["user"])
     def RgetUserList(self, data, request):
-        """Return a list of plom users.
+        """Return a list of Plom users.
 
         Responds with status 200/401.
 
@@ -372,7 +317,7 @@ class ReportHandler:
             request (aiohttp.web_request.Request): Request of type GET /REP/userList.
 
         Returns:
-            aiohttp.web_response.Response: A response object entailing a list of plom users.
+            aiohttp.web_response.Response: A response object entailing a list of Plom users.
         """
 
         if not data["user"] == "manager":
@@ -422,7 +367,9 @@ class ReportHandler:
 
         if not data["user"] == "manager":
             return web.Response(status=401)
-        rmsg = self.server.RgetMarkReview(data["filterQ"], data["filterV"], data["filterU"])
+        rmsg = self.server.RgetMarkReview(
+            data["filterQ"], data["filterV"], data["filterU"]
+        )
 
         # A list of lists including metadata information for the graded exams mathing the filter with the format of:
         # [Test number, Question number, Version number, Mark, Username, # TODO: Explain Marking Time, date/time of marking ]
