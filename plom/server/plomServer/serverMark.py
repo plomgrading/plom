@@ -334,7 +334,7 @@ def MgetWholePaper(self, test_number, question_number):
     Returns:
         list: A list including the following information:
             Boolean of wether we got the paper images.
-            A list of lists inlcuding [`test_version`, `image_id_reference_number`, `does_page_belong_to_question`].
+            A list of lists including [`test_version`, `image_id_reference_number`, `does_page_belong_to_question`].
             Followed by a series of image paths for the pages of the paper.
     """
 
@@ -359,6 +359,7 @@ def MreviewQuestion(self, test_number, question_number, version_number):
 # TODO: Deprecated.
 # TODO: Should be removed.
 def MrevertTask(self, code):
+    rval = self.DB.MrevertTask(code)
     # response is [False, "NST"] or [False, "NAC"] or [True, f1,f2,f3]
     if rval[0]:
         for fn in rval[1:]:  # clean up any annotation files
@@ -368,17 +369,17 @@ def MrevertTask(self, code):
         return rval
 
 
-def MshuffleImages(self, username, task_code, image_reference):
+def MshuffleImages(self, username, task_code, image_references_permutation):
     """Saves the rearranged pages for this task/question in the database.
 
     Args:
         username (str): User who assigned tag to the paper.
         task_code (str): Code string for the task.
-        image_reference (int): A permutation of the images within this exam that have 
-            information for ths question. Each image is given by its 
+        image_references_permutation (int): A permutation of the images within this exam that are 
+            related for the question. Each image is given by its 
             `image_id_reference_number`.
 
     Returns:
         list: A list with a single value of either True or False.
     """
-    return self.DB.MshuffleImages(username, task_code, image_reference)
+    return self.DB.MshuffleImages(username, task_code, image_references_permutation)
