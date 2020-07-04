@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Use sklearn random forest model to read student IDs from ID-pages.
+Use Tensorflow Neural Network model to read student IDs from ID-pages.
 Relies on use of standard ID template.
 """
 
@@ -45,8 +45,6 @@ def is_model_absent():
     return False
 
 
-# TODO: At the moment this function returns false since training a random
-# forest model takes about 2-3 minutes only, so we will do it on the fly.
 def download_model():
     """Try to download the model, respond with False if unsuccessful.
 
