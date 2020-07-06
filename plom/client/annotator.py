@@ -431,12 +431,13 @@ class Annotator(QWidget):
         self.cursorLine = QCursor(QPixmap("{}/line.png".format(base_path)), 4, 4)
         self.cursorPen = QCursor(QPixmap("{}/pen.png".format(base_path)), 4, 4)
         self.cursorTick = QCursor(QPixmap("{}/tick.png".format(base_path)), 4, 4)
-        self.cursorQMark = QCursor(QPixmap("{}/question_mark.png".format(
-            base_path)), 4, 4)
-        self.cursorArrow = QCursor(QPixmap("{}/arrow.png".format(
-            base_path)), 4, 4)
-        self.cursorDoubleArrow = QCursor(QPixmap("{}/double_arrow.png".format(
-            base_path)), 4, 4)
+        self.cursorQMark = QCursor(
+            QPixmap("{}/question_mark.png".format(base_path)), 4, 4
+        )
+        self.cursorArrow = QCursor(QPixmap("{}/arrow.png".format(base_path)), 4, 4)
+        self.cursorDoubleArrow = QCursor(
+            QPixmap("{}/double_arrow.png".format(base_path)), 4, 4
+        )
 
     def getKeyShortcuts(self):
         """
