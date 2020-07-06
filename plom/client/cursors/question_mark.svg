@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?> <!-- Created with Vectornator for iOS (http://vectornator.io/) --><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;" xmlns:vectornator="http://vectornator.io" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" version="1.1" viewBox="0 0 32 32">
+<metadata>
+<vectornator:setting key="DynamicGuides" value="1"/>
+<vectornator:setting key="CMYKEnabledKey" value="0"/>
+<vectornator:setting key="Units" value="Points"/>
+<vectornator:setting key="RulersVisible" value="1"/>
+<vectornator:setting key="SnapToGuides" value="1"/>
+<vectornator:setting key="GridSpacing" value="36"/>
+</metadata>
+<defs/>
+<g id="layer1" vectornator:layerName="layer1">
+<g opacity="1">
+<path d="M3.74349+3.70871C3.27654+3.76381+2.92049+4.20661+2.93099+4.80246L2.93099+20.8025C2.93104+21.326+3.40741+21.8024+3.93099+21.8025L7.52474+21.8025L10.2122+24.49C10.5069+24.7852+10.9956+24.8645+11.3685+24.6775L12.3685+24.1775C12.6964+24.018+12.9221+23.667+12.931+23.3025L12.931+19.7087L15.6497+16.99C16.0152+16.6203+16.0152+15.9534+15.6497+15.5837L4.64974+4.08371C4.34224+3.77621+4.02366+3.67565+3.74349+3.70871Z" opacity="0.2" fill="#000000"/>
+<g opacity="1">
+<path d="M2.93099+3.80246L2.93099+19.8025C2.93104+20.326+3.40741+20.8024+3.93099+20.8025C3.93099+20.8025+7.81358+19.543+7.65733+19.5871L10.2122+23.49C10.5069+23.7852+10.9956+23.8645+11.3685+23.6775L12.3769+23.1979C12.7049+23.0384+12.9305+22.6874+12.9394+22.3229L12.0646+17.6665L15.6497+15.99C16.0152+15.6203+16.0152+14.9534+15.6497+14.5837L4.64974+3.08371C3.82975+2.26372+2.91419+2.8491+2.93099+3.80246Z" opacity="1" fill="#ffffff"/>
+<path d="M3.93099+19.7896L3.93099+3.78964L14.931+15.2896L11.0646+17.2475L11.9768+22.3424L10.931+22.7896L8.06358+18.5743L3.93099+19.7896Z" opacity="1" fill="#1a1a1a"/>
+</g>
+</g>
+<text stroke="#ffffff" vectornator:shadowColor="#ffffff" stroke-width="0.15" vectornator:shadowOffset="10" x="0" fill="#0000ff" stroke-linecap="butt" vectornator:shadowAngle="1.5708" transform="matrix(1 0 0 1 13.1404 12.972)" opacity="1" stroke-linejoin="round" vectornator:shadowRadius="10" font-family="ArialRoundedMTBold" font-size="16" text-anchor="start" y="0" vectornator:shadowOpacity="0" vectornator:width="20" vectornator:text="?"/>
+</g>
+</svg>
