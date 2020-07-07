@@ -99,7 +99,7 @@ def IDreviewID(self, testNumber):
 # TODO: The use tensorflow model is the keyword to use for choosing the model.
 # BIG BIG TODO, ADD KEYWORDS TO SPECS AS SOON AS THE MODEL IS CONFIRMED.
 def IDrunPredictions(
-    self, rectangle, fileNumber, ignoreStamp, use_tensorflow_model = False
+    self, rectangle, fileNumber, ignoreStamp, use_tensorflow_model=False
 ):
     # from plom.server.IDReader.idReader import runIDReader
 
