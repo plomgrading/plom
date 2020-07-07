@@ -123,10 +123,7 @@ class PlomDB:
         # processUpdatedQGroup,
         replaceMissingHWQuestion,
         replaceMissingTestPage,
-        removeScannedTPage,
-        removeScannedHWPage,
-        removeScannedEXPage,
-        removeScannedLPage,
+        removeAllScannedPages,
     )
 
     from plom.db.db_manage import (

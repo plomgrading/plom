@@ -148,7 +148,7 @@ class Server(object):
         addCollidingPage,
         replaceMissingTestPage,
         replaceMissingHWQuestion,
-        removeScannedPage,
+        removeAllScannedPages,
         getUnknownPageNames,
         getDiscardNames,
         getCollidingPageNames,

@@ -568,24 +568,13 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def removeScannedPage(
-        self, page_type, test_number, question=0, page_number=0, order=0, version=0
-    ):
+    def removeAllScannedPages(self, test_number):
         self.SRmutex.acquire()
         try:
             response = self.session.delete(
-                "https://{}/admin/scannedPage".format(self.server),
+                "https://{}/admin/scannedPages".format(self.server),
                 verify=False,
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "page_type": page_type,
-                    "test": test_number,
-                    "question": question,
-                    "page": page_number,
-                    "order": order,
-                    "version": version,
-                },
+                json={"user": self.user, "token": self.token, "test": test_number,},
             )
             response.raise_for_status()
             rval = response.json()

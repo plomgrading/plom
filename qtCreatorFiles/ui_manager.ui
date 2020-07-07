@@ -301,9 +301,9 @@
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="removePageB">
+                 <widget class="QPushButton" name="removePagesB">
                   <property name="text">
-                   <string>Remove page from server</string>
+                   <string>Remove All Scanned Pages from Test</string>
                   </property>
                  </widget>
                 </item>
@@ -1368,7 +1368,7 @@
   <tabstop>tabWidget</tabstop>
   <tabstop>userLE</tabstop>
   <tabstop>scanTW</tabstop>
-  <tabstop>removePageB</tabstop>
+  <tabstop>removePagesB</tabstop>
   <tabstop>incompTW</tabstop>
   <tabstop>subsPageB</tabstop>
   <tabstop>overallTW</tabstop>

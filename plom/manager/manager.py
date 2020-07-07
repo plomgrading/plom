@@ -375,7 +375,7 @@ class Manager(QWidget):
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
         self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
 
-        self.ui.removePageB.clicked.connect(self.removePage)
+        self.ui.removePagesB.clicked.connect(self.removePages)
         self.ui.subsPageB.clicked.connect(self.subsTestPage)
         self.ui.actionUButton.clicked.connect(self.doUActions)
         self.ui.actionCButton.clicked.connect(self.doCActions)
@@ -606,71 +606,28 @@ class Manager(QWidget):
         # else fire up the whole test.
         self.viewWholeTest(int(pvi[0].text(0)))
 
-    def removePage(self):
+    def removePages(self):
         pvi = self.ui.scanTW.selectedItems()
         # if nothing selected - return
         if len(pvi) == 0:
             return
-        # if selected a top-level item (ie a test) - return
-        if pvi[0].childCount() > 0:
+        # if selected not a top-level item (ie a test) - return
+        if pvi[0].childCount() == 0:
+            ErrorMessage(
+                "Select the test from the left-most column. Cannot remove individual pages."
+            ).exec_()
             return
+        test_number = int(pvi[0].text(0))  # grab test number
 
-        pdetails = pvi[0].text(1)
-        version = int(pvi[0].text(2))
-        test_number = int(pvi[0].parent().text(0))  # grab test number from parent
-
-        if pdetails[0] == "t":  # is a test-page t.PPP
-            p = pdetails.split(".")[1]
-            msg = SimpleMessage(
-                "Are you sure you want to remove test page {} of test {}?".format(
-                    p, test_number
-                )
+        msg = SimpleMessage(
+            "Will remove all scanned pages from the selected test - test number {}. Are you sure you wish to do this? (not reversible)".format(
+                test_number
             )
-            if msg.exec_() == QMessageBox.No:
-                return
-            else:
-                rval = managerMessenger.removeScannedPage(
-                    "t", test_number=test_number, page_number=p, version=version
-                )
-        elif pdetails[0] == "h":  # is a hw-page = hw.q.o
-            q = pdetails.split(".")[1]
-            o = pdetails.split(".")[2]
-            msg = SimpleMessage(
-                "Are you sure you want to remove hwpage {}.{} of test {}?".format(
-                    q, o, test_number
-                )
-            )
-            if msg.exec_() == QMessageBox.No:
-                return
-                rval = managerMessenger.removeScannedPage(
-                    "h", test_number=test_number, question=q, order=o, version=version
-                )
-        elif pdetails[0] == "e":  # is a extra-page = e.q.o
-            q = pdetails.split(".")[1]
-            o = pdetails.split(".")[2]
-            msg = SimpleMessage(
-                "Are you sure you want to remove expage {}.{} of test {}?".format(
-                    q, o, test_number
-                )
-            )
-            if msg.exec_() == QMessageBox.No:
-                return
-            rval = managerMessenger.removeScannedPage(
-                "e", test_number=test_number, question=q, order=o, version=version
-            )
-        elif pdetails[0] == "l":  # is an l-page = l.o
-            o = pdetails.split(".")[1]
-            msg = SimpleMessage(
-                "Are you sure you want to remove lpage {} of test {}?".format(
-                    o, test_number
-                )
-            )
-            if msg.exec_() == QMessageBox.No:
-                return
-            rval = managerMessenger.removeScannedPage(
-                "l", test_number=test_number, order=o
-            )
-
+        )
+        if msg.exec_() == QMessageBox.No:
+            return
+        else:
+            rval = managerMessenger.removeAllScannedPages(test_number)
         ErrorMessage("{}".format(rval)).exec_()
         self.refreshSList()
 
@@ -941,12 +898,12 @@ class Manager(QWidget):
         self.refreshCList()
 
     def initDiscardTab(self):
-        self.discardModel = QStandardItemModel(0, 3)
+        self.discardModel = QStandardItemModel(0, 4)
         self.ui.discardTV.setModel(self.discardModel)
         self.ui.discardTV.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.discardTV.setSelectionMode(QAbstractItemView.SingleSelection)
         self.discardModel.setHorizontalHeaderLabels(
-            ["FullFile", "File", "Action to be taken",]
+            ["FullFile", "File", "Reason discarded", "Action to be taken",]
         )
         self.ui.discardTV.setIconSize(QSize(96, 96))
         self.ui.discardTV.activated.connect(self.viewDPage)
@@ -955,15 +912,16 @@ class Manager(QWidget):
 
     def refreshDList(self):
         self.discardModel.removeRows(0, self.discardModel.rowCount())
-        disList = managerMessenger.getDiscardNames()  # list
+        disList = managerMessenger.getDiscardNames()  # list of pairs [filename, reason]
         r = 0
-        for u in disList:
-            it0 = QStandardItem(u)
-            it1 = QStandardItem(os.path.split(u)[1])
+        for fname, reason in disList:
+            it0 = QStandardItem(fname)
+            it1 = QStandardItem(os.path.split(fname)[1])
             it1.setIcon(QIcon(QPixmap("./icons/manager_none.svg")))
-            it2 = QStandardItem("none")
-            it2.setTextAlignment(Qt.AlignCenter)
-            self.discardModel.insertRow(r, [it0, it1, it2])
+            it2 = QStandardItem(reason)
+            it3 = QStandardItem("none")
+            it3.setTextAlignment(Qt.AlignCenter)
+            self.discardModel.insertRow(r, [it0, it1, it2, it3])
             r += 1
         self.ui.discardTV.resizeRowsToContents()
         self.ui.discardTV.resizeColumnsToContents()
@@ -985,16 +943,16 @@ class Manager(QWidget):
                     self.discardModel.item(r, 1).setIcon(
                         QIcon(QPixmap("./icons/manager_move.svg"))
                     )
-                    self.discardModel.item(r, 2).setText("move")
+                    self.discardModel.item(r, 3).setText("move")
                 elif dvw.action == "none":
                     self.discardModel.item(r, 1).setIcon(
                         QIcon(QPixmap("./icons/manager_none.svg"))
                     )
-                    self.discardModel.item(r, 2).setText("none")
+                    self.discardModel.item(r, 3).setText("none")
 
     def doDActions(self):
         for r in range(self.discardModel.rowCount()):
-            if self.discardModel.item(r, 2).text() == "move":
+            if self.discardModel.item(r, 3).text() == "move":
                 managerMessenger.discardToUnknown(self.discardModel.item(r, 0).text())
             else:
                 print(

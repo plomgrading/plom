@@ -256,18 +256,8 @@ def unknownToExtraPage(self, fname, test, question, rotation):
     return [True]
 
 
-def removeScannedPage(self, page_type, test_number, question, page, order, version):
-    # action at DB depends on the type of the page.
-    if page_type == "t":  # test-page
-        return self.DB.removeScannedTPage(test_number, page, version)
-    elif page_type == "h":  # hw-page
-        return self.DB.removeScannedHWPage(test_number, question, order, version)
-    elif page_type == "e":  # ex-page
-        return self.DB.removeScannedEXPage(test_number, question, order, version)
-    elif page_type == "l":  # l-page
-        return self.DB.removeScannedLPage(test_number, order)
-    else:  # this should not happen
-        return [False, "Unknown page type"]
+def removeAllScannedPages(self, test_number):
+    return self.DB.removeAllScannedPages(test_number)
 
 
 def collidingToTestPage(self, file_name, test, page, version):

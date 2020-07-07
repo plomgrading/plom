@@ -237,36 +237,17 @@ class UploadHandler:
         else:
             return web.Response(status=404)  # page not found at all
 
-    async def removeScannedPage(self, request):
+    async def removeAllScannedPages(self, request):
         data = await request.json()
         print("Got data {}".format(data))
-        if not validate_required_fields(
-            data,
-            [
-                "user",
-                "token",
-                "page_type",
-                "test",
-                "question",
-                "page",
-                "order",
-                "version",
-            ],
-        ):
+        if not validate_required_fields(data, ["user", "token", "test",],):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rval = self.server.removeScannedPage(
-            data["page_type"],
-            data["test"],
-            data["question"],
-            data["page"],
-            data["order"],
-            data["version"],
-        )
+        rval = self.server.removeAllScannedPages(data["test"],)
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
@@ -718,7 +699,7 @@ class UploadHandler:
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
         router.add_put("/admin/missingTestPage/{tpv}", self.replaceMissingTestPage)
         router.add_put("/admin/missingHWQuestion", self.replaceMissingHWQuestion)
-        router.add_delete("/admin/scannedPage", self.removeScannedPage)
+        router.add_delete("/admin/scannedPages", self.removeAllScannedPages)
         router.add_get("/admin/scannedTPage", self.getTPageImage)
         router.add_get("/admin/scannedHWPage", self.getHWPageImage)
         router.add_get("/admin/scannedLPage", self.getLPageImage)

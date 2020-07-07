@@ -567,137 +567,64 @@ def processUpdatedTests(self):
     return [True, update_count]
 
 
-def removeScannedTPage(self, test_number, page, version):
-    # first do simple sanity checks
+def removeAllScannedPages(self, test_number):
+    # return the give test to the pre-upload state.
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
-        return [False, "No such test"]
-    pref = TPage.get_or_none(test=tref, page_number=page, version=version)
-    if pref is None:
-        return [False, "Cannot find page"]
-    # grab the group of the page
-    gref = pref.group
+        return [False, "testError", "Cannot find test {}".format(t)]
     with plomdb.atomic():
-        DiscardedPage.create(
-            image=pref.image,
-            reason="Removed scan from TPage {}.{}.{}".format(
-                test_number, page, version
-            ),
-        )
-        gref.recent_upload = True
-        gref.save()
-        tref.scanned = False  # now missing a page
-        tref.save()
-        # do not delete the TPage, but instead remove the image and set scanned=False
-        pref.image = None
-        pref.scanned = False
-        pref.save()
-        log.info("Removed scan from TPage {}.{}.{}".format(test_number, page, version))
-    # force an update of that group
-    self.updateGroupAfterUpload(gref)
-    return [True, "TPage {}.{}.{} removed".format(test_number, page, version)]
-
-
-def removeScannedHWPage(self, test_number, question, order, version):
-    # first do simple sanity checks
-    tref = Test.get_or_none(test_number=test_number)
-    if tref is None:
-        return [False, "No such test"]
-    # grab the qgroup and  group of the page
-    qref = QGroup.get_or_none(test=tref, question=question, version=version)
-    if qref is None:
-        return [False, "No such question"]
-    gref = qref.group
-    pref = HWPage.get_or_none(test=tref, group=gref, order=order, version=version)
-    if pref is None:
-        return [False, "Cannot find page"]
-    with plomdb.atomic():
-        DiscardedPage.create(
-            image=pref.image,
-            reason="Removed scanned HWPage {}.{}.{}.{}".format(
-                test_number, question, order, version
-            ),
-        )
-        gref.recent_upload = True
-        gref.save()
-        # do not set tref.scanned=False since is still valid after removing a hwpage.
-        pref.delete_instance()
-        log.info(
-            "Removed scanned HWPage {}.{}.{}.{}".format(
-                test_number, question, order, version
+        # move all tpages to discards
+        for pref in tref.tpages:
+            if pref.scanned:  # move the tpage to a discard
+                iref = pref.image
+                DiscardedPage.create(
+                    image=iref,
+                    reason="Discarded scan of t{}.{}".format(
+                        test_number, pref.page_number
+                    ),
+                )
+                pref.image = None
+                pref.scanned = False
+                pref.save()
+        # remove all hwpages
+        for pref in tref.hwpages:
+            iref = pref.image
+            DiscardedPage.create(
+                image=iref,
+                reason="Discarded scan of hw.{}.{}.{}".format(
+                    test_number, pref.group.qgroups[0].question, pref.order
+                ),
             )
-        )
-    # force an update of that group
-    self.updateGroupAfterUpload(gref)
-    return [
-        True,
-        "HWPage {}.{}.{}.{} removed".format(test_number, question, order, version),
-    ]
-
-
-def removeScannedEXPage(self, test_number, question, order, version):
-    # first do simple sanity checks
-    tref = Test.get_or_none(test_number=test_number)
-    if tref is None:
-        return [False, "No such test"]
-    # grab the qgroup and  group of the page
-    qref = QGroup.get_or_none(test=tref, question=question, version=version)
-    if qref is None:
-        return [False, "No such question"]
-    gref = qref.group
-    pref = EXPage.get_or_none(test=tref, group=gref, order=order, version=version)
-    if pref is None:
-        return [False, "Cannot find page"]
-    gref = pref.group
-    with plomdb.atomic():
-        DiscardedPage.create(
-            image=pref.image,
-            reason="Removed scanned EXPage {}.{}.{}.{}".format(
-                test_number, question, order, version
-            ),
-        )
-        gref.recent_upload = True
-        gref.save()
-        # do not set tref.scanned=False since test is still valid after removing a expage.
-        pref.delete_instance()
-        log.info(
-            "Removed scanned EXPage {}.{}.{}.{}".format(
-                test_number, question, order, version
+            pref.delete_instance()
+        # remove all expages
+        for pref in tref.expages:
+            iref = pref.image
+            DiscardedPage.create(
+                image=iref,
+                reason="Discarded scan of ex{}.{}.{}".format(
+                    test_number, pref.group.qgroups[0].question, pref.order
+                ),
             )
-        )
-    # force an update of that group
-    self.updateGroupAfterUpload(gref)
-    return [
-        True,
-        "EXPage {}.{}.{}.{} removed".format(test_number, question, order, version),
-    ]
-
-
-def removeScannedLPage(self, test_number, order):
-    # first do simple sanity checks
-    tref = Test.get_or_none(test_number=test_number)
-    if tref is None:
-        return [False, "No such test"]
-    pref = LPage.get_or_none(test=tref, order=order)
-    if pref is None:
-        return [False, "Cannot find page"]
-    # grab the group of the page
-    gref = pref.group
-    with plomdb.atomic():
-        DiscardedPage.create(
-            image=pref.image,
-            reason="Removed scanned LPage {}.{}".format(test_number, order),
-        )
+            pref.delete_instance()
+        # remove all lpages
+        for pref in tref.lpages:
+            iref = pref.image
+            DiscardedPage.create(
+                image=iref,
+                reason="Discarded scan of l.{}.{}".format(test_number, pref.order,),
+            )
+            pref.delete_instance()
+        # set all the groups as unscanned
+        for gref in tref.groups:
+            gref.scanned = False
+            gref.save()
+        # finally - set this flag to trigger an update.
         tref.recent_upload = True
+        tref.scanned = False
+        tref.used = False
         tref.save()
-        pref.delete_instance()
-        log.info("Removed scanned LPage {}.{}".format(test_number, order))
-    # force an update of the whole test - TODO = make more granular?
     self.updateTestAfterUpload(tref)
-    return [
-        True,
-        "LPage {}.{} removed".format(test_number, order),
-    ]
+    return [True, "Test {} wiped clean".format(test_number)]
 
 
 # still todo below
