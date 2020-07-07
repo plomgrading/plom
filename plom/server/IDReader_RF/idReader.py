@@ -3,6 +3,9 @@
 """
 Use sklearn random forest model to read student IDs from ID-pages.
 Relies on use of standard ID template.
+
+Note: Code in this file is very similar to idReader code for the Tensorflow 
+    model.
 """
 
 __author__ = "Andrew Rechnitzer"
@@ -31,7 +34,7 @@ def is_model_absent():
     """
 
     base_path = Path("model_cache")
-    files = ["ML_model.sav"]
+    files = ["RF_ML_model.sav"]
 
     for filename in files:
         if not os.path.isfile(base_path / filename):
@@ -39,8 +42,6 @@ def is_model_absent():
     return False
 
 
-# TODO: At the moment this function returns false since training a random
-# forest model takes about 2-3 minutes only, so we will do it on the fly.
 def download_model():
     """Try to download the model, respond with False if unsuccessful.
 
@@ -48,7 +49,24 @@ def download_model():
         boolean: True/False about if the model was successful.
     """
 
-    return False
+    # make a directory into which to save things
+    base_path = Path("model_cache")
+    base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/adding_random_forest_sklearn_model/plomBuzzword/"
+    files = [
+        "RF_ML_model.sav",
+    ]
+    for file_name in files:
+        url = base_url + file_name
+        print("Getting {} - ".format(file_name))
+        response = requests.get(url)
+        if response.status_code != 200:
+            print("\tError getting file {}.".format(file_name))
+            return False
+        else:
+            print("\tDone.")
+        with open(base_path / file_name, "wb+") as file_header:
+            file_header.write(response.content)
+    return True
 
 
 def download_or_train_model():
@@ -64,7 +82,7 @@ def download_or_train_model():
         "Will try to download model and if that fails, then train it locally (which is time-consuming)"
     )
     if download_model():
-        print("Successfully downloaded tensorflow model. Good to go.")
+        print("Successfully downloaded sklearn (Random-Forest) model. Good to go.")
     else:
         print("Could not download the model, need to train model instead.")
         print(

@@ -1,3 +1,8 @@
+"""
+Note: Code in this file is very similar to test_IDreader code for the 
+    Sklearn model.
+"""
+
 from .idReader import is_model_absent, calc_log_likelihood, download_or_train_model
 
 

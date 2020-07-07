@@ -3,6 +3,11 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
+"""
+Note: Code in this file is very similar to predictStudentID code for the Tensorflow 
+    model.
+"""
+
 import cv2
 import imutils
 from imutils.perspective import four_point_transform
@@ -224,7 +229,7 @@ def compute_probabilities(
     """
 
     # load the model
-    model_fname = "model_cache/ML_model.sav"
+    model_fname = "model_cache/RF_ML_model.sav"
     prediction_model = pickle.load(open(model_fname, "rb"))
 
     # Dictionary of test numbers their digit-probabilities

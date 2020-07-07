@@ -3,6 +3,9 @@
 """
 Use Tensorflow Neural Network model to read student IDs from ID-pages.
 Relies on use of standard ID template.
+
+Note: Code in this file is very similar to idReader code for the Sklearn 
+    model.
 """
 
 __author__ = "Andrew Rechnitzer"

@@ -32,7 +32,7 @@ def train_model():
     model.fit(X_train, y_train)
 
     # Saving the model
-    saved_model_fname = "model_cache/ML_model.sav"
+    saved_model_fname = "model_cache/RF_ML_model.sav"
 
     pickle.dump(model, open(saved_model_fname, "wb"))
 

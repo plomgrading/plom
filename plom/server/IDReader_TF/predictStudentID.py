@@ -3,6 +3,11 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPLv3"
 
+"""
+Note: Code in this file is very similar to predictStudentID code for the Sklearn 
+    model.
+"""
+
 ## https://www.pyimagesearch.com/2017/02/13/recognizing-digits-with-opencv-and-python/
 import cv2
 import imutils
