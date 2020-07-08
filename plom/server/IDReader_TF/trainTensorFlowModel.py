@@ -13,7 +13,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 
-def train_and_save_model():
+def train_model():
     """Grab the mnist data to train against."""
 
     print("Getting mnist handwritten digit data set.")
@@ -57,8 +57,8 @@ def train_and_save_model():
     print("Accuracy of model on mnist test-set:", test_acc)
 
     print("Save the model")
-    model.save("plomBuzzword")
+    model.save("model_cache")
 
 
 if __name__ == "__main__":
-    train_and_save_model()
+    train_model()
