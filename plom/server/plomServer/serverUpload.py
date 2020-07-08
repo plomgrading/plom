@@ -163,6 +163,10 @@ def getHWPageImage(self, testNumber, question, order):
     return self.DB.getHWPageImage(testNumber, question, order)
 
 
+def getEXPageImage(self, testNumber, question, order):
+    return self.DB.getEXPageImage(testNumber, question, order)
+
+
 def getLPageImage(self, testNumber, order):
     return self.DB.getLPageImage(testNumber, order)
 
