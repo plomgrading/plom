@@ -51,7 +51,7 @@ def download_model():
 
     # make a directory into which to save things
     base_path = Path("model_cache")
-    base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/master/plomBuzzword/"
+    base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/master/plomBuzzword/sdsdsdsds"
     files = [
         "RF_ML_model.sav",
     ]
