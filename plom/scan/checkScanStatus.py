@@ -131,8 +131,6 @@ def checkMissingHWQ(server=None, password=None):
         )
         exit(10)
 
-    spec = scanMessenger.get_spec()
-
     missingHWQ = scanMessenger.getMissingHW()
     scanMessenger.closeUser()
     scanMessenger.stop()

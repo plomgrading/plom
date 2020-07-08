@@ -503,11 +503,12 @@ def checkTestScanned(self, tref):
                 )
                 return False
         elif gref.group_type == "d":
-            log.info(
-                "DNM Group {} of test {} is not scanned - ignored.".format(
-                    gref.gid, tref.test_number
+            if gref.scanned is False:
+                log.info(
+                    "DNM Group {} of test {} is not scanned - ignored.".format(
+                        gref.gid, tref.test_number
+                    )
                 )
-            )
         elif gref.group_type == "i":
             if gref.idgroups[0].identified:
                 log.info(
@@ -521,6 +522,7 @@ def checkTestScanned(self, tref):
                         gref.gid, tref.test_number
                     )
                 )
+                return False
 
     return True
 
@@ -639,124 +641,6 @@ def removeAllScannedPages(self, test_number):
 # still todo below
 
 
-def fileOfScannedPage(self, t, p, v):
-    tref = Test.get_or_none(test_number=t)
-    if tref is None:
-        return None
-    pref = Page.get_or_none(test=tref, page_number=p, version=v)
-    if pref is None:
-        return None
-    return pref.file_name
-
-
-def createDiscardedPage(self, oname, fname, md5, r, tpv):
-    DiscardedPage.create(
-        original_name=oname, file_name=fname, md5sum=md5, reason=r, tpv=tpv
-    )
-
-
-def removeScannedPage(self, fname, nname):
-    pref = Page.get_or_none(file_name=fname)
-    if pref is None:
-        return False
-    with plomdb.atomic():
-        DiscardedPage.create(
-            file_name=nname, original_name=pref.original_name, md5sum=pref.md5sum
-        )
-        pref.scanned = False
-        pref.original_name = None
-        pref.file_name = None
-        pref.md5sum = None
-        pref.scanned = False
-        pref.save()
-    log.info("Removing scanned page with fname = {}".format(fname))
-
-    tref = pref.test
-    gref = pref.group
-    # now update the group
-    if gref.group_type == "d":
-        rlist = self.invalidateDNMGroup(tref, gref)
-    elif gref.group_type == "i":
-        rlist = self.invalidateIDGroup(tref, gref)
-    elif gref.group_type == "m":
-        rlist = self.invalidateQGroup(tref, gref)
-    return [True, rlist]
-
-
-def invalidateDNMGroup(self, gref):
-    with plomdb.atomic():
-        tref.scanned = False
-        tref.save()
-        gref.scanned = False
-        gref.save()
-    log.info("Invalidated dnm {}".format(gref.gid))
-    return []
-
-
-def invalidateIDGroup(self, tref, gref):
-    iref = gref.idgroups[0]
-    with plomdb.atomic():
-        tref.scanned = False
-        tref.identified = False
-        tref.save()
-        gref.scanned = False
-        gref.save()
-        iref.status = ""
-        iref.user = None
-        iref.time = datetime.now()
-        iref.student_id = None
-        iref.student_name = None
-        iref.save()
-    log.info("Invalidated IDGroup {}".format(gref.gid))
-    return []
-
-
-def invalidateQGroup(self, tref, gref, delPage=True):
-    # When we delete a page, set "scanned" to false for group+test
-    # If we are adding a page then we don't have to do that.
-    qref = gref.qgroups[0]
-    sref = tref.sumdata[0]
-    rval = []
-    with plomdb.atomic():
-        # update the test
-        if delPage:
-            tref.scanned = False
-        tref.marked = False
-        tref.totalled = False
-        tref.save()
-        # update the group
-        if delPage:
-            gref.scanned = False
-            gref.save()
-        # update the sumdata
-        sref.status = ""
-        sref.sum_mark = None
-        sref.user = None
-        sref.time = datetime.now()
-        sref.summed = False
-        sref.save()
-        # update the qgroups - first get file_names if they exist
-        if qref.marked:
-            rval = [
-                qref.annotatedFile,
-                qref.plom_file,
-                qref.comment_file,
-            ]
-        qref.marked = False
-        qref.status = ""
-        qref.annotatedFile = None
-        qref.plom_file = None
-        qref.comment_file = None
-        qref.mark = None
-        qref.markingTime = None
-        qref.tags = ""
-        qref.user = None
-        qref.time = datetime.now()
-        qref.save
-    log.info("Invalidated question {}".format(gref.gid))
-    return rval
-
-
 def uploadLPage(self, sid, order, oname, nname, md5):
     # first of all find the test corresponding to that sid.
     iref = IDGroup.get_or_none(student_id=sid)
@@ -795,60 +679,6 @@ def uploadLPage(self, sid, order, oname, nname, md5):
         tref.recent_upload = True
         tref.save()
     return [True]
-
-
-def processUpdatedQGroup(self, tref, qref):
-    # clean up the QGroup and its annotations
-    self.cleanQGroup(tref, qref)
-    # now some logic.
-    # if homework pages present - ready to go.
-    # elif all testpages present - ready to go.
-    # else - not ready.
-    # BUT if there are LPages then we are ready to go.
-
-    gref = qref.group
-
-    if tref.lpages.count() == 0:
-        # check if HW pages = 0
-        if qref.group.hwpages.count() == 0:
-            # then check for testpages
-            for p in gref.tpages:  # there is always at least one.
-                if p.scanned is False:  # missing a test-page - not ready.
-                    return False
-
-    # otherwise we are ready to go.
-    with plomdb.atomic():
-        gref.scanned = True
-        qref.status = "todo"
-        qref.save()
-        gref.save()
-        log.info(
-            "QGroup {} of test {} is ready to be marked.".format(
-                qref.question, tref.test_number
-            )
-        )
-    return True
-
-
-def processSpecificUpdatedTest(self, tref):
-    log.info("Updating test {}.".format(tref.test_number))
-    rval = []
-    rval.append(self.processUpdatedIDGroup(tref, tref.idgroups[0]))
-    rval.append(self.processUpdatedDNMGroup(tref, tref.dnmgroups[0]))
-    for qref in tref.qgroups:
-        rval.append(self.processUpdatedQGroup(tref, qref))
-    # clean out the sumdata and set ready status.
-    self.cleanSData(tref, tref.sumdata[0])
-    self.processUpdatedSData(tref, tref.sumdata[0])
-    # now clear the update flag.
-    with plomdb.atomic():
-        tref.recent_upload = False
-        if all(rv for rv in rval):
-            log.info("Test {} ready to go.".format(tref.test_number))
-            tref.scanned = True
-        else:
-            log.info("Test {} still missing pages - {}.".format(tref.test_number, rval))
-        tref.save()
 
 
 def uploadCollidingPage(self, t, p, v, oname, nname, md5):

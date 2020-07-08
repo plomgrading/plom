@@ -89,13 +89,18 @@ def RgetIncompleteTests(self):
 def RgetMissingHWQ(self):
     """Get dict of tests with missing HW Pages - ie some test pages scanned but not all.
     Indexed by test_number
-    Each test lists triples [sid, missing-question-numbers].
+    Each test gives [scanned-tpages-present boolean, sid, missing-question-numbers].
     """
     incomp_dict = {}
+    # look at tests that are not completely scanned
     for tref in Test.select().where(
         Test.scanned == False, Test.used == True, Test.identified == True
     ):
-        question_list = [tref.idgroups[0].student_id]
+        # check if that test has any scanned tpages
+        if TPage.get_or_none(test=tref, scanned=True) is None:
+            question_list = [False, tref.idgroups[0].student_id]
+        else:
+            question_list = [True, tref.idgroups[0].student_id]
         for qref in tref.qgroups.order_by(QGroup.question):
             # if no HW pages scanned then display a hwpage 1 as unscanned.
             if qref.group.hwpages.count() == 0:

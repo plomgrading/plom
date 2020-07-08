@@ -180,21 +180,36 @@ def processMissing(server, password, yes_flag):
     from plom.scan import checkScanStatus
 
     missingHWQ = checkScanStatus.checkMissingHWQ(server, password)
+    # returns list for each test [scanned-tpages-present boolean, sid, missing-question-numbers]
+    reallyMissing = {}  # new list of those without tpages present
     for t in missingHWQ:
-        print(
-            "Student {} is missing questions {}".format(
-                missingHWQ[t][0], missingHWQ[t][1:]
+        if missingHWQ[t][0]:  # scanned test-pages present, so no replacing.
+            print(
+                "Student {}'s paper has tpages present, so skipping".format(
+                    missingHWQ[t][1]
+                )
             )
-        )
+        else:
+            print(
+                "Student {} is missing questions {}".format(
+                    missingHWQ[t][1], missingHWQ[t][2:]
+                )
+            )
+            reallyMissing[t] = missingHWQ[t]
+
+    if len(reallyMissing) == 0:
+        print("All papers either complete or have scanned test-pages present.")
+        return
+
     if yes_flag:
         print("Replacing all missing questions with 'did not submit' pages.")
     elif input("Replace all missing with 'did not submit' pages? [y/n]") != "y":
         print("Stopping.")
         return
 
-    for t in missingHWQ:
-        sid = missingHWQ[t][0]
-        for q in missingHWQ[t][1:]:
+    for t in reallyMissing:
+        sid = reallyMissing[t][1]
+        for q in reallyMissing[t][2:]:
             print("Replacing q{} of sid {}".format(q, sid))
             checkScanStatus.replaceMissingHWQ(server, password, sid, q)
 
