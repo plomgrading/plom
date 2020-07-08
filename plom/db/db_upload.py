@@ -12,9 +12,47 @@ log = logging.getLogger("DB")
 from peewee import fn
 
 
-# clean commands here.
+## - create an image and return the reference
+def createNewImage(self, original_name, file_name, md5, bundle_ref):
+    return Image.create(
+        original_name=original_name, file_name=file_name, md5sum=md5, bundle=bundle_ref,
+    )
+
 
 ## - upload functions
+
+
+def attachImageToTPage(self, test_ref, page_ref, image_ref):
+    # can be called by an upload, but also by move-misc-to-tpage
+    with plomdb.atomic():
+        page_ref.image = image_ref
+        page_ref.scanned = True
+        page_ref.save()
+        test_ref.used = True
+        test_ref.save()
+        # also link the image to an QPage, DNMPage, or IDPage
+        # set the group as recently uploaded - use to trigger a "clean" later.
+        gref = page_ref.group
+        gref.recent_upload = True
+        gref.save()
+        if gref.group_type == "i":
+            iref = gref.idgroups[0]
+            idp = IDPage.create(
+                idgroup=iref, image=image_ref, order=page_ref.page_number
+            )
+        elif gref.group_type == "d":
+            dref = gref.dnmgroups[0]
+            dnmp = DNMPage.create(
+                dnmgroup=dref, image=image_ref, order=page_ref.page_number
+            )
+        else:  # is a question page - always add to annotation 0.
+            qref = gref.qgroups[0]
+            aref = qref.annotations[0]
+            ap = APage.create(
+                annotation=aref, image=image_ref, order=page_ref.page_number
+            )
+
+
 def uploadTestPage(
     self, test_number, page_number, version, original_name, file_name, md5, bundle_name
 ):
@@ -54,34 +92,8 @@ def uploadTestPage(
         if bref is None:
             return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
 
-        with plomdb.atomic():
-            pref.image = Image.create(
-                original_name=original_name,
-                file_name=file_name,
-                md5sum=md5,
-                bundle=bref,
-            )
-            pref.scanned = True
-            pref.save()
-            tref.used = True
-            tref.save()
-            # also link the image to an QPage, DNMPage, or IDPage
-            # set the group as recently uploaded - use to trigger a "clean" later.
-            gref = pref.group
-            gref.recent_upload = True
-            gref.save()
-            if gref.group_type == "i":
-                iref = gref.idgroups[0]
-                idp = IDPage.create(idgroup=iref, image=pref.image, order=page_number)
-            elif gref.group_type == "d":
-                dref = gref.dnmgroups[0]
-                dnmp = DNMPage.create(
-                    dnmgroup=dref, image=pref.image, order=page_number
-                )
-            else:  # is a question page - always add to annotation 0.
-                qref = gref.qgroups[0]
-                aref = qref.annotations[0]
-                ap = APage.create(annotation=aref, image=pref.image, order=page_number)
+        image_ref = self.createNewImage(original_name, file_name, md5, bref)
+        self.attachImageToTPage(tref, pref, image_ref)
 
         log.info(
             "Uploaded image {} to tpv = {}.{}.{}".format(
@@ -115,6 +127,28 @@ def replaceMissingTestPage(
     return rval
 
 
+def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
+    # can be called by an upload, but also by move-misc-to-tpage
+    # create a HW page
+    gref = qdata_ref.group
+    with plomdb.atomic():
+        aref = qdata_ref.annotations[0]
+        # create image, hwpage, annotationpage and link.
+        href = HWPage.create(
+            test=test_ref,
+            group=gref,
+            order=order,
+            image=image_ref,
+            version=qdata_ref.version,
+        )
+        ap = APage.create(annotation=aref, image=image_ref, order=order)
+        # set the recent_upload flag for the group and the used flag for the test
+        gref.recent_upload = True
+        gref.save()
+        test_ref.used = True
+        test_ref.save()
+
+
 def uploadHWPage(
     self, sid, question, order, original_name, file_name, md5, bundle_name
 ):
@@ -142,22 +176,8 @@ def uploadHWPage(
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
         return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
-    # create a HW page
-    with plomdb.atomic():
-        aref = qref.annotations[0]
-        # create image, hwpage, annotationpage and link.
-        hw_image = Image.create(
-            original_name=original_name, file_name=file_name, md5sum=md5, bundle=bref
-        )
-        href = HWPage.create(
-            test=tref, group=gref, order=order, image=hw_image, version=qref.version
-        )
-        ap = APage.create(annotation=aref, image=hw_image, order=order)
-        # set the recent_upload flag for the group and the used flag for the test
-        gref.recent_upload = True
-        gref.save()
-        tref.used = True
-        tref.save()
+    image_ref = self.createNewImage(original_name, file_name, md5, bref)
+    self.createNewHWPage(tref, qref, order, image_ref)
     return [True]
 
 
@@ -186,22 +206,11 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
         return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
-    # create a HW page
-    with plomdb.atomic():
-        aref = qref.annotations[0]
-        # create image, hwpage, annotationpage and link.
-        hw_image = Image.create(
-            original_name=original_name, file_name=file_name, md5sum=md5, bundle=bref
-        )
-        href = HWPage.create(
-            test=tref, group=gref, order=order, image=hw_image, version=qref.version
-        )
-        ap = APage.create(annotation=aref, image=hw_image, order=order)
-        # set the recent_upload flag for the group, and set test.used
-        gref.recent_upload = True
-        gref.save()
-        tref.used = True
-        tref.save()
+    # create an image for the image-file
+    image_ref = self.createNewImage(original_name, file_name, md5, bref)
+    # create the associated HW page
+    self.createNewHWPage(tref, qref, order, image_ref)
+
     return [True]
 
 

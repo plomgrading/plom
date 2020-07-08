@@ -103,6 +103,9 @@ class PlomDB:
     )
 
     from plom.db.db_upload import (
+        createNewImage,
+        attachImageToTPage,
+        createNewHWPage,
         uploadTestPage,
         uploadHWPage,
         uploadUnknownPage,

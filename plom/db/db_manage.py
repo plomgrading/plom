@@ -228,20 +228,23 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
             False,
             "Page {} of test {} is already scanned.".format(page_number, test_number),
         ]
-    # get the group associated with that page
-    gref = pref.group
-    with plomdb.atomic():
-        pref.image = iref
-        pref.scanned = True
-        pref.save()
-        uref.delete_instance()
-        gref.recent_upload = True
-        gref.save()
-        log.info(
-            "Moving unknown page {} to page {} of test {}".format(
-                file_name, page_number, test_number
-            )
+
+    self.attachImageToTPage(tref, pref, iref)
+    log.info(
+        "Moving unknown page {} to page {} of test {}".format(
+            file_name, page_number, test_number
         )
+    )
+    # get the group associated with that page
+    # gref = pref.group
+    # with plomdb.atomic():
+    #     pref.image = iref
+    #     pref.scanned = True
+    #     pref.save()
+    #     uref.delete_instance()
+    #     gref.recent_upload = True
+    #     gref.save()
+    # IF MOVE UNKNOWN TO EMPTY TEST NEEDS TO WORK
     self.updateTestAfterUpload(tref)
 
     return [True]
