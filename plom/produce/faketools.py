@@ -324,7 +324,7 @@ def download_classlist(server=None, password=None):
 def main():
     """Main function used for running.
 
-    1. Generates teh files.
+    1. Generates the files.
     2. Creates the fake data filled pdfs using fill_in_fake_data_on_exams.
     3. Deletes from the pdf file using delete_one_page.
     4. We also add some garbage pages using delete_one_page.

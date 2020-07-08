@@ -19,9 +19,9 @@ import base64
 import fitz
 
 from . import paperdir as _paperdir
-from plom import specdir as _specdir
-from plom import specParser
 from plom import __version__
+from plom.messenger import ManagerMessenger
+from plom.plom_exceptions import PlomExistingLoginException
 
 
 possibleAns = [
@@ -144,32 +144,75 @@ def makeFakeHW(
         doc.save(fname)
 
 
+def download_classlist_and_spec(server=None, password=None):
+    """Download list of student IDs/names and test specification from server."""
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ManagerMessenger(s, port=p)
+    else:
+        msgr = ManagerMessenger(server)
+    msgr.start()
+
+    if not password:
+        password = getpass('Please enter the "manager" password: ')
+
+    try:
+        msgr.requestAndSaveToken("manager", password)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another management tool running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-build clear"'
+        )
+        exit(10)
+    try:
+        classlist = msgr.IDrequestClasslist()
+    except PlomBenignException as e:
+        print("Failed to download classlist: {}".format(e))
+        exit(4)
+    try:
+        spec = msgr.get_spec()
+    except PlomBenignException as e:
+        print("Failed to get specification: {}".format(e))
+        exit(4)
+
+    msgr.closeUser()
+    msgr.stop()
+    return classlist, spec
+
+
 def main():
+    """Main function used for running.
+
+    1. Generates the files.
+    2. Creates the fake data filled pdfs using fill_in_fake_data_on_exams.
+    3. Generates second batch for first half of papers.
+    4. Generates loose pages for two students - currently unused.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
     )
+    parser.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
     args = parser.parse_args()
 
     # grab classlist
-    specdir = Path(_specdir)
-    classlist = specdir / "classlist.csv"
-    # read in the spec
-    spec = specParser.SpecParser()
+    classlist, spec = download_classlist_and_spec(args.server, args.password)
+
     # get number named
-    numberNamed = spec.spec["numberToName"]
-    numberOfQuestions = spec.spec["numberOfQuestions"]
+    numberNamed = spec["numberToName"]
+    numberOfQuestions = spec["numberOfQuestions"]
     # the named papers come from the first few lines of classlist
     sid = {}
-    with open(classlist, "r") as fh:
-        clr = csv.reader(fh)
-        next(clr)  # skip the header
-        k = 0
-        for row in clr:
-            sid[k] = [row[0], row[1]]
-            k += 1
-            if k >= numberNamed:
-                break
+    k = 0
+    for row in classlist:
+        sid[k] = [row[0], row[1]]
+        k += 1
+        if k >= numberNamed:
+            break
 
     os.makedirs("submittedHWByQ", exist_ok=True)
     os.makedirs("submittedLoose", exist_ok=True)

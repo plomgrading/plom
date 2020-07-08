@@ -76,7 +76,7 @@ def main():
     subprocess.check_call(split("plom-build class --demo -w 1234"))
     subprocess.check_call(split("plom-build make -w 1234"))
     # this creates two batches of fake hw - prefixes = hwA and hwB
-    subprocess.check_call(split("plom-fake-hwscribbles"))
+    subprocess.check_call(split("plom-fake-hwscribbles -w 1234"))
 
     print("Processing all hw by question submissions.")
     subprocess.check_call(split("plom-hwscan allbyq -w 4567 -y"))
