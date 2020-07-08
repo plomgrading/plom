@@ -135,6 +135,7 @@ class PlomDB:
         getCollidingPageNames,
         getTPageImage,
         getHWPageImage,
+        getEXPageImage,
         getLPageImage,
         getAllTestImages,
         getQuestionImages,

@@ -157,6 +157,7 @@ class Server(object):
         getDiscardImage,
         getTPageImage,
         getHWPageImage,
+        getEXPageImage,
         getLPageImage,
         getQuestionImages,
         getAllTestImages,
