@@ -230,6 +230,7 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
         ]
 
     self.attachImageToTPage(tref, pref, iref)
+    uref.delete_instance()
     log.info(
         "Moving unknown page {} to page {} of test {}".format(
             file_name, page_number, test_number

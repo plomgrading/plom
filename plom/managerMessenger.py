@@ -903,10 +903,13 @@ class ManagerMessenger(BaseMessenger):
                 verify=False,
             )
             response.raise_for_status()
-            # response is [image1, image2,... image.n]
+            # response is [n, image1, image2,... image.n]
             imageList = []
+            i = 0  # we skip the first part
             for img in MultipartDecoder.from_response(response).parts:
-                imageList.append(BytesIO(img.content).getvalue())
+                if i > 0:
+                    imageList.append(BytesIO(img.content).getvalue())
+                i += 1
 
         except requests.HTTPError as e:
             if response.status_code == 401:

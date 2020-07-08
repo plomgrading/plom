@@ -408,7 +408,9 @@ class UploadHandler:
         rmsg = self.server.getAllTestImages(data["test"])
         # returns either [True, fname1,fname2,..,fname.n] or [False, error]
         if rmsg[0]:
+            # insert number of parts [n, fn.1,fn.2,...fn.n]
             with MultipartWriter("images") as mpwriter:
+                mpwriter.append(str(len(rmsg) - 1))
                 for fn in rmsg[1:]:
                     if fn == "":
                         mpwriter.append("")
