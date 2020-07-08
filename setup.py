@@ -51,6 +51,7 @@ server_install_requires = [
     "imutils",
     "opencv-python",
     "tensorflow>=2",
+    "scikit-learn>=0.23.1",
     "lapsolver",  # ID reading
     "requests",
     "requests-toolbelt",

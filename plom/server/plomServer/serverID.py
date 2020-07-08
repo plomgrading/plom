@@ -194,8 +194,11 @@ def IDreviewID(self, test_number):
 
     return self.DB.IDreviewID(test_number)
 
-
-def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
+# TODO: The use tensorflow model is the keyword to use for choosing the model.
+# BIG BIG TODO, ADD KEYWORDS TO SPECS AS SOON AS THE MODEL IS CONFIRMED.
+def IDrunPredictions(
+    self, rectangle, fileNumber, ignoreStamp, use_tensorflow_model=False
+):
     """Run the ML prediction model on the papers and saves the information.
 
     Log activity.
@@ -248,5 +251,12 @@ def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
 
     # run the reader
     log.info("ID launch ID reader in background")
-    subprocess.Popen(["python3", "-m", "plom.server.IDReader.runTheReader", lock_file])
+    if use_tensorflow_model:
+        subprocess.Popen(
+            ["python3", "-m", "plom.server.IDReader_TF.runTheReader", lockFile]
+        )
+    else:
+        subprocess.Popen(
+            ["python3", "-m", "plom.server.IDReader_RF.runTheReader", lockFile]
+        )
     return [True, True]
