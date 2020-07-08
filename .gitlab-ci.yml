@@ -799,6 +799,85 @@ linuxbin_centos:
     - md5sum
 
 
+# just testing
+macostest:
+  tags:
+  - osx
+  stage: test
+  needs: []
+  script:
+  - echo "hello from the mac"
+  - pwd
+  - ls
+  - echo $SHELL
+  - python --version
+  - python3 --version
+  - brew --help
+  # pip --version
+  # pip3 --version
+  - echo $USER
+  - set
+  - whoami
+
+
+# just testing
+macos_install:
+  tags:
+  - osx
+  stage: test
+  needs: []
+  script:
+  - echo "hello from the mac"
+  - pwd
+  - ls
+  - echo $SHELL
+  - python --version
+  - python3 --version
+  # brew --help
+  # brew install libjpeg libjpeg-turbo jpeg-turbo imagemagick zbar libffi jsmin python3 openssl
+  # brew install python3-pip
+  # python3.7 -m pip --version
+  # python3.7 -m pip install toml requests requests-toolbelt PyQt5
+  # python3.7 -m pip install pyinstaller
+  - pip3 --version
+  - pip3 install toml requests requests-toolbelt PyQt5
+  - pip3 install pyinstaller
+  - ls
+  - /nfs/andrewr/Library/Python/3.7/bin/pyinstaller client.macos.spec
+  - pyinstaller client.macos.spec
+  artifacts:
+    paths:
+    - dist/PlomClient*
+    expire_in: 2 weeks
+
+# just testing
+macos_inst_helloworld:
+  tags:
+  - macos
+  stage: test
+  needs: []
+  script:
+  - echo "hello from the mac"
+  - pwd
+  - ls
+  - echo $SHELL
+  - python --version
+  - python3 --version
+  - python3 -m pip --version
+  - python3 -m pip install pyinstaller
+  - ls
+  - /nfs/andrewr/Library/Python/3.7/bin/pyinstaller -h
+  - /nfs/andrewr/Library/Python/3.7/bin/pyinstaller hello_world.py --onefile --windowed --clean
+  - ls dist
+  - dist/hello_world
+  - echo "done done done"
+  artifacts:
+    paths:
+    - dist/hello_world
+    expire_in: 2 weeks
+
+
+
 .shared_windows_runners:
   tags:
   - shared-windows
