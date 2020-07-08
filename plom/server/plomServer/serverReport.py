@@ -15,6 +15,10 @@ def RgetMissingHWQ(self):
     return self.DB.RgetMissingHWQ()
 
 
+def RgetCompleteHW(self):
+    return self.DB.RgetCompleteHW()
+
+
 def RgetUnusedTests(self):
     return self.DB.RgetUnusedTests()
 

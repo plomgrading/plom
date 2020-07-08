@@ -62,7 +62,7 @@ def RgetIncompleteTests(self):
                 # if no HW pages scanned then display a hwpage 1 as unscanned.
                 if qref.group.hwpages.count() == 0:
                     page_state.append(
-                        ["hw.{}.{}".format(qref.question, 1), p.version, False]
+                        ["hw.{}.{}".format(qref.question, 1), qref.version, False]
                     )
                 else:
                     for p in qref.group.hwpages:  # hw pages are always scanned
@@ -84,6 +84,17 @@ def RgetIncompleteTests(self):
         incomp_dict[tref.test_number] = page_state
     log.debug("Sending list of incomplete tests")
     return incomp_dict
+
+
+def RgetCompleteHW(self):
+    """Get a list of [test_number, sid] that have complete hw-uploads - ie all questions present."""
+    hw_complete = []
+    # look at all the scanned tests - they will either be hwpages or tpages
+    for tref in Test.select().where(Test.scanned == True):
+        # note - skip those with scanned TPages present.
+        if TPage.get_or_none(test=tref, scanned=True) is None:
+            hw_complete.append([tref.test_number, tref.idgroups[0].student_id])
+    return hw_complete
 
 
 def RgetMissingHWQ(self):

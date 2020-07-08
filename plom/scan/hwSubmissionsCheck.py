@@ -9,6 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 
 from collections import defaultdict
 import glob
+import getpass
 import os
 
 from plom.rules import isValidStudentNumber
@@ -29,8 +30,8 @@ def IDQorIDorBad(fullfname):
         return ["BAD"]  # Bad format
 
 
-def whoSubmittedWhat():
-
+def whoSubmittedWhatOnDisc():
+    print(">> Checking submissions in local 'submittedHWByQ' subdirectory <<")
     hwByQ = defaultdict(list)
     hwOne = defaultdict(list)
     problemFQ = []
@@ -87,6 +88,59 @@ def whoSubmittedWhat():
             )
         )
         print("Please check them before proceeding. They will not be processed.")
+
+
+def whoSubmittedWhatOnServer(server, password):
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ScanMessenger(s, port=p)
+    else:
+        msgr = ScanMessenger(server)
+    msgr.start()
+
+    # get the password if not specified
+    if password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'scanner' password:")
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = password
+
+    # get started
+    try:
+        msgr.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-hwscan clear"'
+        )
+        exit(10)
+
+    missingHWQ = msgr.getMissingHW()  # passes back dict
+    completeHW = msgr.getCompleteHW()  # passes back list [test_number, sid]
+
+    msgr.closeUser()
+    msgr.stop()
+
+    print(">> Checking incomplete submissions on server <<")
+    print("The following students have complete submissions (each question present)")
+    print(sorted([x[1] for x in completeHW]))
+    print(
+        "The following students have incomplete submissions (missing questions indicated)"
+    )
+    for t in missingHWQ:
+        print("{} missing {}".format(missingHWQ[t][1], missingHWQ[t][2:]))
+
+
+def whoSubmittedWhat(server=None, password=None, directory_check=False):
+    if directory_check:
+        whoSubmittedWhatOnDisc()
+    else:
+        whoSubmittedWhatOnServer(server, password)
 
 
 def verifiedComplete(server=None, password=None):

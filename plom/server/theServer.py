@@ -218,6 +218,7 @@ class Server(object):
         RgetUnusedTests,
         RgetScannedTests,
         RgetIncompleteTests,
+        RgetCompleteHW,
         RgetMissingHWQ,
         RgetProgress,
         RgetQuestionUserProgress,

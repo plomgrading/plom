@@ -151,6 +151,7 @@ class PlomDB:
     from plom.db.db_report import (
         RgetScannedTests,
         RgetIncompleteTests,
+        RgetCompleteHW,
         RgetMissingHWQ,
         RgetUnusedTests,
         RgetIdentified,

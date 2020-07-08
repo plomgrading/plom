@@ -45,10 +45,10 @@ def IDQorIDorBad(fullfname):
         return ["BAD"]  # Bad format
 
 
-def whoDidWhat():
+def whoDidWhat(server, password, directory_check):
     from plom.scan.hwSubmissionsCheck import whoSubmittedWhat
 
-    whoSubmittedWhat()
+    whoSubmittedWhat(server, password, directory_check)
 
 
 def make_required_directories():
@@ -220,7 +220,7 @@ sub = parser.add_subparsers(dest="command", description="Tools for dealing with 
 #
 spW = sub.add_parser(
     "submitted",
-    help="Get a list of SID and questions submitted in the submittedHomework directory.",
+    help="Get a list of SID and their submitted questions in the submittedHomework directory or their work already uploaded to the server.",
 )
 spP = sub.add_parser(
     "process", help="Process indicated PDFs for one student and upload to server."
@@ -240,6 +240,12 @@ spC = sub.add_parser(
 )
 #
 
+spW.add_argument(
+    "-d",
+    "--directory",
+    action="store_true",
+    help="Check submissions in local directory and not on server.",
+)
 
 spP.add_argument("hwPDF", action="store", help="PDF containing homework")
 spP.add_argument("studentid", action="store", help="Student ID")
@@ -266,7 +272,7 @@ spM.add_argument(
 )
 
 
-for x in (spP, spA, spS, spC, spM):
+for x in (spW, spP, spA, spS, spC, spM):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
@@ -275,7 +281,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "submitted":
-        whoDidWhat()
+        whoDidWhat(args.server, args.password, args.directory)
     elif args.command == "process":
         if args.loose:
             processLooseScans(

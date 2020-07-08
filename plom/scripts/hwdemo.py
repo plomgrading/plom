@@ -81,7 +81,7 @@ def main():
     print("Processing all hw by question submissions.")
     subprocess.check_call(split("plom-hwscan allbyq -w 4567 -y"))
     print("Replacing all missing questions.")
-    subprocess.check_call(split("plom-hwscan missing -w 4567 -y"))
+    # subprocess.check_call(split("plom-hwscan missing -w 4567 -y"))
     print(">> TODO << process loose pages")
 
     time.sleep(0.5)
