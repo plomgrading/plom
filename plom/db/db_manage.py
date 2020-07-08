@@ -236,16 +236,6 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
             file_name, page_number, test_number
         )
     )
-    # get the group associated with that page
-    # gref = pref.group
-    # with plomdb.atomic():
-    #     pref.image = iref
-    #     pref.scanned = True
-    #     pref.save()
-    #     uref.delete_instance()
-    #     gref.recent_upload = True
-    #     gref.save()
-    # IF MOVE UNKNOWN TO EMPTY TEST NEEDS TO WORK
     self.updateTestAfterUpload(tref)
 
     return [True]
