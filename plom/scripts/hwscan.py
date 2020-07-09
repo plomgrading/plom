@@ -220,7 +220,9 @@ sub = parser.add_subparsers(dest="command", description="Tools for dealing with 
 #
 spW = sub.add_parser(
     "submitted",
-    help="Get a list of SID and their submitted questions in the submittedHomework directory or their work already uploaded to the server.",
+    help="status of student-submitted work, either local or on server",
+    description="List student IDs and their submitted questions in the local"
+    + " 'submittedHWByQ' directory or their work already uploaded the server.",
 )
 spP = sub.add_parser(
     "process", help="Process indicated PDFs for one student and upload to server."
