@@ -165,6 +165,7 @@ class Server(object):
         removeUnknownImage,
         removeCollidingImage,
         unknownToTestPage,
+        unknownToHWPage,
         unknownToExtraPage,
         collidingToTestPage,
         discardToUnknown,

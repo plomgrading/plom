@@ -414,7 +414,9 @@ class UploadHandler:
         rmsg = self.server.getQuestionImages(data["test"], data["question"])
         # returns either [True, fname1,fname2,..,fname.n] or [False, error]
         if rmsg[0]:
+            # insert number of parts [n, fn.1,fn.2,...fn.n]
             with MultipartWriter("images") as mpwriter:
+                mpwriter.append(str(len(rmsg) - 1))
                 for fn in rmsg[1:]:
                     mpwriter.append(open(fn, "rb"))
             return web.Response(body=mpwriter, status=200)
@@ -509,6 +511,25 @@ class UploadHandler:
         )
         if rval[0]:
             return web.json_response(rval[1], status=200)  # all fine
+        else:
+            return web.Response(status=404)
+
+    async def unknownToHWPage(self, request):
+        data = await request.json()
+        if not validate_required_fields(
+            data, ["user", "token", "fileName", "test", "question", "rotation"]
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.unknownToHWPage(
+            data["fileName"], data["test"], data["question"], data["rotation"]
+        )
+        if rval[0]:
+            return web.Response(status=200)  # all fine
         else:
             return web.Response(status=404)
 
@@ -740,6 +761,7 @@ class UploadHandler:
         router.add_delete("/admin/unknownImage", self.removeUnknownImage)
         router.add_delete("/admin/collidingImage", self.removeCollidingImage)
         router.add_put("/admin/unknownToTestPage", self.unknownToTestPage)
+        router.add_put("/admin/unknownToHWPage", self.unknownToHWPage)
         router.add_put("/admin/unknownToExtraPage", self.unknownToExtraPage)
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)

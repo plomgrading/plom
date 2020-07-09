@@ -139,7 +139,8 @@ def getQuestionImages(self, test_number, question):
     rval = [True]
     # append tpages, hwpages and expages
     for p in qref.group.tpages.order_by(TPage.page_number):
-        rval.append(p.image.file_name)
+        if p.scanned:
+            rval.append(p.image.file_name)
     for p in qref.group.hwpages.order_by(HWPage.order):
         rval.append(p.image.file_name)
     for p in qref.group.expages.order_by(EXPage.order):
@@ -203,6 +204,48 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
                 file_name, order, question, test_number
             )
         )
+    self.updateTestAfterUpload(tref)
+    return [True]
+
+
+def moveUnknownToHWPage(self, file_name, test_number, question):
+    iref = Image.get_or_none(file_name=file_name)
+    if iref is None:  # should not happen
+        return [False, "Cannot find image"]
+    uref = iref.upages[0]
+    if uref is None:  # should not happen
+        return [False, "Cannot find unknown page for that image."]
+
+    tref = Test.get_or_none(Test.test_number == test_number)
+    if tref is None:
+        return [False, "Cannot find that test"]
+
+    # find the qgroup to which the new page should belong
+    qref = QGroup.get_or_none(test=tref, question=question)
+    if qref is None:  # should not happen
+        return [False, "Cannot find that question"]
+    version = qref.version  # we'll need the version
+    gref = qref.group  # and the parent group
+    # find the last expage in that group - if there are expages
+    if gref.hwpages.count() == 0:
+        order = 1
+    else:
+        pref = (
+            HWPage.select()
+            .where(HWPage.group == gref)
+            .order_by(HWPage.order.desc())
+            .get()  # there will be at least one
+        )
+        order = pref.order + 1
+
+    # now create the hwpage, delete upage
+    self.createNewHWPage(tref, qref, order, iref)
+    uref.delete_instance()
+    log.info(
+        "Moving unknown page {} to hw page {} of question {} of test {}".format(
+            file_name, order, question, test_number
+        )
+    )
     self.updateTestAfterUpload(tref)
     return [True]
 

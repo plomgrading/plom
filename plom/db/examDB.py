@@ -139,6 +139,7 @@ class PlomDB:
         getQuestionImages,
         getUnknownImage,
         moveUnknownToExtraPage,
+        moveUnknownToHWPage,
         moveUnknownToTPage,
         checkTPage,
         removeUnknownImage,

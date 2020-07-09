@@ -260,6 +260,22 @@ def unknownToExtraPage(self, fname, test, question, rotation):
     return [True]
 
 
+def unknownToHWPage(self, fname, test, question, rotation):
+    rval = self.DB.moveUnknownToHWPage(fname, test, question)
+    # returns [True] or [False]
+    if rval[0]:
+        # moved successfully. now rotate the page
+        subprocess.run(
+            ["mogrify", "-quiet", "-rotate", rotation, fname],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
+    else:
+        return [False]
+    return [True]
+
+
 def removeAllScannedPages(self, test_number):
     return self.DB.removeAllScannedPages(test_number)
 

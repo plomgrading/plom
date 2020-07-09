@@ -708,12 +708,15 @@ class Manager(QWidget):
         vp = managerMessenger.getUnknownImage(fname)
         if vp is None:
             return
+        # get the list of ID'd papers
+        iDict = managerMessenger.getIdentified()
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(vp)
             uvw = UnknownViewWindow(
                 self,
                 [fh.name],
                 [self.max_papers, self.numberOfPages, self.numberOfQuestions],
+                iDict,
             )
             if uvw.exec_() == QDialog.Accepted:
                 self.unknownModel.item(r, 2).setText(uvw.action)
@@ -731,6 +734,10 @@ class Manager(QWidget):
                 elif uvw.action == "test":
                     self.unknownModel.item(r, 1).setIcon(
                         QIcon(QPixmap("./icons/manager_test.svg"))
+                    )
+                elif uvw.action == "homework":
+                    self.unknownModel.item(r, 1).setIcon(
+                        QIcon(QPixmap("./icons/manager_hw.svg"))
                     )
 
     def doUActions(self):
@@ -759,6 +766,13 @@ class Manager(QWidget):
                             self.unknownModel.item(r, 4).text()
                         )
                     )
+            elif self.unknownModel.item(r, 2).text() == "homework":
+                managerMessenger.unknownToHWPage(
+                    self.unknownModel.item(r, 0).text(),
+                    self.unknownModel.item(r, 4).text(),
+                    self.unknownModel.item(r, 5).text(),
+                    self.unknownModel.item(r, 3).text(),
+                )
 
             else:
                 print(

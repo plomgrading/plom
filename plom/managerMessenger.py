@@ -901,10 +901,13 @@ class ManagerMessenger(BaseMessenger):
                 verify=False,
             )
             response.raise_for_status()
-            # response is [image1, image2,... image.n]
+            # response is [n, image1, image2,... image.n]
             imageList = []
+            i = 0  # we skip the first part
             for img in MultipartDecoder.from_response(response).parts:
-                imageList.append(BytesIO(img.content).getvalue())
+                if i > 0:
+                    imageList.append(BytesIO(img.content).getvalue())
+                i += 1
 
         except requests.HTTPError as e:
             if response.status_code == 401:
@@ -1032,6 +1035,36 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.put(
                 "https://{}/admin/unknownToExtraPage".format(self.server),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "fileName": fname,
+                    "test": test,
+                    "question": question,
+                    "rotation": theta,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomSeriousException(
+                    "Cannot find test/question {}/{}.".format(test, question)
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+    def unknownToHWPage(self, fname, test, question, theta):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/admin/unknownToHWPage".format(self.server),
                 json={
                     "user": self.user,
                     "token": self.token,
