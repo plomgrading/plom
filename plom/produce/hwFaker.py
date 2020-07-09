@@ -70,11 +70,22 @@ def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
         for pn in range(random.randint(1, 2)):
             page = doc.newPage(-1, 612, 792)  # put page at end
             if pn == 0:  # put name and student number on start of Q
-                page = doc[0]
-                rect1 = fitz.Rect(20, 24, 300, 44)
+                rect1 = fitz.Rect(20, 24, 400, 54)
                 rc = page.insertTextbox(
                     rect1,
-                    "Page for Q.{} -".format(q) + studentName + ":" + studentID,
+                    "LPage for Q.{} -".format(q) + studentName + ":" + studentID,
+                    fontsize=14,
+                    color=[0.1, 0.1, 0.1],
+                    fontname="helv",
+                    fontfile=None,
+                    align=0,
+                )
+                assert rc > 0
+            else:  # just put Question
+                rect1 = fitz.Rect(20, 24, 400, 54)
+                rc = page.insertTextbox(
+                    rect1,
+                    "LPage for Q.{} -".format(q),
                     fontsize=14,
                     color=[0.1, 0.1, 0.1],
                     fontname="helv",
@@ -229,7 +240,7 @@ def main():
                 makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], prefix, 1)
 
         # give a few loose pages to the first two students in both batches
-        for k in range(2):
+        for k in range(5):
             makeHWLoose(numberOfQuestions, k, sid[k][0], sid[k][1], prefix)
 
 

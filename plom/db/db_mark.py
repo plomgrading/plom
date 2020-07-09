@@ -371,13 +371,13 @@ def MgetWholePaper(self, test_number, question):
     # give HW and EX pages by question
     for qref in tref.qgroups.order_by(QGroup.question):
         for p in qref.group.hwpages:
-            val = ["h{}.{}".format(q, p.order), p.image.id, False]
+            val = ["h{}.{}".format(qref.question, p.order), p.image.id, False]
             if qref.question == question:  # check if page belongs to our question
                 val[2] = True
             pageData.append(val)
             pageFiles.append(p.image.file_name)
         for p in qref.group.expages:
-            val = ["e{}.{}".format(q, p.order), p.image.id, False]
+            val = ["e{}.{}".format(qref.question, p.order), p.image.id, False]
             if qref.question == question:  # check if page belongs to our question
                 val[2] = True
             pageData.append(val)

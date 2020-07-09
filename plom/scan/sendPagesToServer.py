@@ -165,13 +165,12 @@ def sendLFiles(msgr, fileList, student_id, bundle_name):
         print("Upload hw page image {}".format(fname))
         shortName = os.path.split(fname)[1]
         sid, n = extractJIDO(shortName)
-        if sid != student_id:
+        if str(sid) != str(student_id):  # careful with type casting
             print("Problem with file {} - skipping".format(fname))
             continue
 
-        print("Upload L {},{} = {} to server".format(sid, n, shortName))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        rmsg = msgr.uploadXPage(sid, n, shortName, fname, md5, bundle_name)
+        rmsg = msgr.uploadLPage(sid, n, shortName, fname, md5, bundle_name)
         if rmsg[0]:  # was successful upload
             doLFiling(shortName, fname)
             JSID[sid] = True
