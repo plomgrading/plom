@@ -128,7 +128,7 @@ def whoSubmittedWhatOnServer(server, password):
 
     print(">> Checking incomplete submissions on server <<")
     print("The following students have complete submissions (each question present)")
-    print(sorted([x[1] for x in completeHW]))
+    print(", ".join(sorted([x[1] for x in completeHW])))
     print(
         "The following students have incomplete submissions (missing questions indicated)"
     )
