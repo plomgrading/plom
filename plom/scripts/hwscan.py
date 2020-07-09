@@ -214,9 +214,16 @@ def processMissing(server, password, yes_flag):
             checkScanStatus.replaceMissingHWQ(server, password, sid, q)
 
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(
+    description="Tools for dealing with student self-submitted scans.",
+    epilog="""## Processing and uploading homework
+
+    TODO: WRITE DOCS
+    """,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
-sub = parser.add_subparsers(dest="command", description="Tools for dealing with scans.")
+sub = parser.add_subparsers(dest="command")
 #
 spW = sub.add_parser(
     "submitted",
@@ -304,9 +311,6 @@ def main():
         clearLogin(args.server, args.password)
     else:
         parser.print_help()
-        print("\n>> Processing and uploading homework <<")
-        print(">>>> WRITE DOCS <<<<")
-
     exit(0)
 
 
