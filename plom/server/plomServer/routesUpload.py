@@ -214,9 +214,6 @@ class UploadHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        # TODO: unused, we should ensure this matches the data
-        code = request.match_info["tpv"]
-
         rval = self.server.replaceMissingTestPage(
             data["test"], data["page"], data["version"]
         )
@@ -226,15 +223,20 @@ class UploadHandler:
             return web.Response(status=404)  # page not found at all
 
     async def replaceMissingHWQuestion(self, request):
+        # can replace either by SID-lookup or test-number
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "sid", "question"]):
+        if not validate_required_fields(
+            data, ["user", "token", "sid", "test", "question"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if data["user"] != "manager" and data["user"] != "scanner":
             return web.Response(status=401)
 
-        rval = self.server.replaceMissingHWQuestion(data["sid"], data["question"])
+        rval = self.server.replaceMissingHWQuestion(
+            data["sid"], data["test"], data["question"]
+        )
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         elif rval[1]:
@@ -742,7 +744,7 @@ class UploadHandler:
         router.add_put("/admin/lPages", self.uploadLPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
-        router.add_put("/admin/missingTestPage/{tpv}", self.replaceMissingTestPage)
+        router.add_put("/admin/missingTestPage", self.replaceMissingTestPage)
         router.add_put("/admin/missingHWQuestion", self.replaceMissingHWQuestion)
         router.add_delete("/admin/scannedPages", self.removeAllScannedPages)
         router.add_get("/admin/scannedTPage", self.getTPageImage)

@@ -364,7 +364,7 @@
                 <item>
                  <widget class="QPushButton" name="subsPageB">
                   <property name="text">
-                   <string>Substitute missing page with blank</string>
+                   <string>Substitute missing page / question with blank</string>
                   </property>
                  </widget>
                 </item>

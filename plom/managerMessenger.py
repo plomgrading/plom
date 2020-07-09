@@ -536,11 +536,11 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def replaceMissingTestPage(self, code, t, p, v):
+    def replaceMissingTestPage(self, t, p, v):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
-                "https://{}/admin/missingTestPage/{}".format(self.server, code),
+                "https://{}/admin/missingTestPage".format(self.server),
                 verify=False,
                 json={
                     "user": self.user,
@@ -555,10 +555,45 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 404:
                 raise PlomSeriousException(
+                    "Server could not find the page - this should not happen!"
+                ) from None
+            elif response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return rval
+
+    def replaceMissingHWQuestion(self, student_id=None, test=None, question=None):
+        # can replace by SID or by test-number
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/admin/missingHWQuestion".format(self.server),
+                verify=False,
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "question": question,
+                    "sid": student_id,
+                    "test": test,
+                },
+            )
+            response.raise_for_status()
+            rval = response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 404:
+                raise PlomSeriousException(
                     "Server could not find the TPV - this should not happen!"
                 ) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            elif response.status_code == 409:  # that question already has pages
+                raise PlomTakenException() from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)

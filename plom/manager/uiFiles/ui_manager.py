@@ -662,7 +662,7 @@ class Ui_Manager(object):
         self.groupBox.setTitle(_translate("Manager", "Completely scanned papers"))
         self.removePagesB.setText(_translate("Manager", "Remove All Scanned Pages from Test"))
         self.groupBox_3.setTitle(_translate("Manager", "Incomplete papers"))
-        self.subsPageB.setText(_translate("Manager", "Substitute missing page with blank"))
+        self.subsPageB.setText(_translate("Manager", "Substitute missing page / question with blank"))
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.scanTab), _translate("Manager", "&Scan Status"))
         self.actionUButton.setText(_translate("Manager", "Perform actions"))
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.unknownTab), _translate("Manager", "&Unknown Pages"))

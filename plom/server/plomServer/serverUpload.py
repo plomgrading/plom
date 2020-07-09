@@ -284,10 +284,20 @@ def collidingToTestPage(self, file_name, test, page, version):
     return self.DB.moveCollidingToTPage(file_name, test, page, version)
 
 
-def replaceMissingHWQuestion(self, sid, question):
+def replaceMissingHWQuestion(self, sid, test, question):
+    if sid is None:
+        # compute sid from test-number
+        if test is None:
+            return [False, "Need at least one of sid or test"]
+        rval = self.DB.getSIDFromTest(test)
+        if rval[0]:
+            sid = rval[1]
+        else:
+            return rval
+
     # TODO - we should probably have some sort of try/except around this.
     pageNotSubmitted.build_homework_question_substitute(sid, question)
-    # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
+    # produces a file "pns.<sid>.<pageNumber>.<ver>.png"
     originalName = "qns.{}.{}.png".format(sid, question)
     prefix = "pages/originalPages/pns.{}q{}".format(sid, question)
     # make a non-colliding name

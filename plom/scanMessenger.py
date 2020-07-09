@@ -425,7 +425,8 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def replaceMissingHWQuestion(self, sid, q):
+    def replaceMissingHWQuestion(self, student_id=None, test=None, question=None):
+        # can replace by SID or by test-number
         self.SRmutex.acquire()
         try:
             response = self.session.put(
@@ -434,8 +435,9 @@ class ScanMessenger(BaseMessenger):
                 json={
                     "user": self.user,
                     "token": self.token,
-                    "question": q,
-                    "sid": sid,
+                    "question": question,
+                    "sid": student_id,
+                    "test": test,
                 },
             )
             response.raise_for_status()

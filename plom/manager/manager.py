@@ -376,7 +376,7 @@ class Manager(QWidget):
         self.ui.refreshProgressQUB.clicked.connect(self.refreshProgressQU)
 
         self.ui.removePagesB.clicked.connect(self.removePages)
-        self.ui.subsPageB.clicked.connect(self.subsTestPage)
+        self.ui.subsPageB.clicked.connect(self.substitutePage)
         self.ui.actionUButton.clicked.connect(self.doUActions)
         self.ui.actionCButton.clicked.connect(self.doCActions)
         self.ui.actionDButton.clicked.connect(self.doDActions)
@@ -631,7 +631,37 @@ class Manager(QWidget):
         ErrorMessage("{}".format(rval)).exec_()
         self.refreshSList()
 
-    def subsTestPage(self):
+    def substituteTestPage(self, test_number, page_number, version):
+        msg = SimpleMessage(
+            'Are you sure you want to substitute a "Missing Page" blank for tpage {} of test {}?'.format(
+                page_number, test_number
+            )
+        )
+        if msg.exec_() == QMessageBox.No:
+            return
+        else:
+            rval = managerMessenger.replaceMissingTestPage(
+                test_number, page_number, version
+            )
+            ErrorMessage("{}".format(rval)).exec_()
+        self.refreshIList()
+
+    def substituteHWQuestion(self, test_number, question):
+        msg = SimpleMessage(
+            'Are you sure you want to substitute a "Missing Page" blank for question {} of test {}?'.format(
+                question, test_number
+            )
+        )
+        if msg.exec_() == QMessageBox.No:
+            return
+        else:
+            rval = managerMessenger.replaceMissingHWQuestion(
+                student_id=None, test=test_number, question=question
+            )
+            ErrorMessage("{}".format(rval)).exec_()
+        self.refreshIList()
+
+    def substitutePage(self):
         # THIS SHOULD KEEP VERSION INFORMATION
         pvi = self.ui.incompTW.selectedItems()
         # if nothing selected - return
@@ -640,24 +670,22 @@ class Manager(QWidget):
         # if selected a top-level item (ie a test) - return
         if pvi[0].childCount() > 0:
             return
-        # text should be t.n - else is homework page - cannot subs those.
-        if pvi[0].text(1)[0] != "t":
+        # text should be t.n - else is homework page
+        if pvi[0].text(1)[0] == "t":
+            # format = t.n where n = pagenumber
+            page = int(pvi[0].text(1)[2:])  # drop the "t."
+            version = int(pvi[0].text(2))
+            test = int(pvi[0].parent().text(0))  # grab test number from parent
+            self.substituteTestPage(test, page, version)
             return
-        pp = int(pvi[0].text(1)[2:])  # drop the "t."
-        pv = int(pvi[0].text(2))
-        pt = int(pvi[0].parent().text(0))  # grab test number from parent
-        msg = SimpleMessage(
-            'Are you sure you want to substitute a "Missing Page" blank for (p/v) = ({}/{}) of test {}?'.format(
-                pp, pv, pt
-            )
-        )
-        if msg.exec_() == QMessageBox.No:
+        elif pvi[0].text(1)[0] == "h":
+            # format is hw.n.k where n= question, k = order
+            test = int(pvi[0].parent().text(0))  # grab test number from parent
+            question, order = pvi[0].text(1)[3:].split(".")
+            # drop the "hw.", then split on "." - don't need 'order'
+            self.substituteHWQuestion(test, int(question))
+        else:  # can't subtitute other sorts of pages
             return
-        else:
-            code = "t{}p{}v{}".format(str(pt).zfill(4), str(pp).zfill(2), pv)
-            rval = managerMessenger.replaceMissingTestPage(code, pt, pp, pv)
-            ErrorMessage("{}".format(rval)).exec_()
-            self.refreshIList()
 
     def initUnknownTab(self):
         self.unknownModel = QStandardItemModel(0, 6)

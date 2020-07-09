@@ -122,6 +122,7 @@ class PlomDB:
         checkTestScanned,
         updateTestAfterUpload,
         processUpdatedTests,
+        getSIDFromTest,
         replaceMissingHWQuestion,
         replaceMissingTestPage,
         removeAllScannedPages,

@@ -221,6 +221,17 @@ def uploadLPage(self, sid, order, original_name, file_name, md5, bundle_name):
     return [True]
 
 
+def getSIDFromTest(self, test_number):
+    tref = Test.get_or_none(test_number=test_number)
+    if tref is None:
+        return [False, "Cannot find test"]
+    iref = tref.idgroups[0]
+    if iref.identified:
+        return [True, iref.student_id]
+    else:
+        return [False, "Test not yet identified"]
+
+
 def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5):
     # this is basically same as uploadHWPage, excepting bundle+order are known.
     # and have to check if any HWPages present.
@@ -250,6 +261,8 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
     image_ref = self.createNewImage(original_name, file_name, md5, bref)
     # create the associated HW page
     self.createNewHWPage(tref, qref, order, image_ref)
+    # and do an update.
+    self.updateTestAfterUpload(tref)
 
     return [True]
 
