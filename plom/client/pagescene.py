@@ -295,6 +295,9 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
+        # set focus so that shift/control change cursor
+        self.views()[0].setFocus(Qt.TabFocusReason)
+
         self.mode = mode
         # if current mode is not comment or delta, make sure the
         # ghostcomment is hidden
@@ -393,11 +396,10 @@ class PageScene(QGraphicsScene):
 
         """
 
-        deltaShift = None
-        if int(self.markDelta) > 0:
-            deltaShift = self.parent.cursorCross
-        else:
-            deltaShift = self.parent.cursorTick
+        deltaShift = self.parent.cursorCross
+        if self.mode is "delta":
+            if not int(self.markDelta) > 0:
+                deltaShift = self.parent.cursorTick
 
         variableCursors = {
             "cross": [self.parent.cursorTick, self.parent.cursorQMark],
