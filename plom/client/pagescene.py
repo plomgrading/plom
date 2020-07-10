@@ -1116,8 +1116,11 @@ class PageScene(QGraphicsScene):
             return
         elif self.boxFlag == 1:
             self.removeItem(self.boxItem)
-            # check if rect has some perimeter (allow long/thin)
-            if self.boxItem.rect().width() + self.boxItem.rect().height() > 24:
+            # check if rect has some perimeter (allow long/thin) - need abs - see #977
+            if (
+                abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
+                > 24
+            ):
                 command = CommandBox(self, self.boxItem.rect())
                 self.undoStack.push(command)
         else:
