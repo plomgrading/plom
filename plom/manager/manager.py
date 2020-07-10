@@ -1067,7 +1067,12 @@ class Manager(QWidget):
             return
         test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
         sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
-        imageList = managerMessenger.IDrequestImage(test)
+        try:
+            imageList = managerMessenger.IDrequestImage(test)
+        except Exception as err:
+            ErrorMessage(err).exec_()
+            return
+
         inames = []
         with tempfile.TemporaryDirectory() as td:
             for i in range(len(imageList)):

@@ -107,8 +107,8 @@ class IDHandler:
             request (aiohttp.web_request.Request): GET /ID/tasks/complete  request type.
 
         Returns:
-            aiohttp.web_request.Request: A response including a list of lists indicating information about 
-                the users who already have confirmed predictions. 
+            aiohttp.web_request.Request: A response including a list of lists indicating information about
+                the users who already have confirmed predictions.
                 Each list in the response is of the format: [task_number, task_status, student_id, student_name]
         """
 
@@ -120,14 +120,14 @@ class IDHandler:
     def IDgetImage(self, data, request):
         """Return the images for a specified paper number.
 
-        Responds with status 200/404/409.
+        Responds with status 200/404/409/410.
 
         Args:
             data (dict): A (str:str) dictionary having keys `user` and `token`.
             request (aiohttp.web_request.Request): DELETE /ID/predictedID type request object.
 
         Returns:
-            aiohttp.web_fileresponse.FileResponse: A response including a aiohttp object which 
+            aiohttp.web_fileresponse.FileResponse: A response including a aiohttp object which
                 includes a multipart object with the images.
         """
 
@@ -135,10 +135,20 @@ class IDHandler:
         test_number = request.match_info["test"]
 
         image_path = self.server.IDgetImage(data["user"], test_number)
-        allow_access = image_path[0]
+        # is either user allowed access - returns [true, fname0, fname1,...]
+        # or fails - return [false, message]
 
-        if not allow_access:  # user allowed access - returns [true, fname0, fname1,...]
-            return web.Response(status=409)  # someone else has that image
+        allow_access = image_path[0]
+        if not allow_access:
+            # can fail for 3 reasons - "not owner", "no such scan", "no such test"
+            fail_message = image_path[1]
+            if fail_message == "NotOwner":
+                return web.Response(status=409)  # someone else has that image
+            elif fail_message == "NoScan":
+                return web.Response(status=410)
+            else:  # fail_message == "NoTest":
+                return web.Response(status=404)
+
         with MultipartWriter("images") as writer:
             image_paths = image_path[1:]
 
@@ -154,7 +164,7 @@ class IDHandler:
     def IDgetNextTask(self):
         """Responds with a code for the the next available identify task.
 
-        Note: There is no guarantee that task will still be available later but at this moment in time, 
+        Note: There is no guarantee that task will still be available later but at this moment in time,
         no one else has claimed it
 
         Responds with status 200/204.
@@ -184,7 +194,7 @@ class IDHandler:
             request (aiohttp.web_request.Request): PATCH /ID/tasks request object.
 
         Returns:
-            aiohttp.web_response.Response: A response including a aiohttp object which 
+            aiohttp.web_response.Response: A response including a aiohttp object which
                 includes a multipart object with the images.
         """
 
@@ -286,16 +296,16 @@ class IDHandler:
     def IDgetImageFromATest(self, data, request):
         """Gets a random image to extract the bounding box corresponding to the student name and id.
 
-        The bounding box indicated on this image will be later used to extract the 
-        student ids from the other papers. 
+        The bounding box indicated on this image will be later used to extract the
+        student ids from the other papers.
         Responds with status 200/404/410.
         Logs activity.
 
         Args:
-            data (dict): A (str:str) dictionary having keys `user` and `token`. 
+            data (dict): A (str:str) dictionary having keys `user` and `token`.
             request (aiohttp.web_request.Request): request of type GET /ID/randomImage.
         Returns:
-            aiohttp.web_fileresponse.FileResponse: A response including a aiohttp object which 
+            aiohttp.web_fileresponse.FileResponse: A response including a aiohttp object which
                 includes a multipart object with the images.
         """
 
@@ -353,12 +363,12 @@ class IDHandler:
         Responds with status 200/202/205/401.
 
         Args:
-            data (dict): A dictionary having the user/token in addition to information from the rectangle 
+            data (dict): A dictionary having the user/token in addition to information from the rectangle
                 bounding box coordinates and file information.
             request (aiohttp.web_request.Request): Request of type POST /ID/predictedID.
 
         Returns:
-            aiohttp.web_response.Response: Returns a response with the date and time of the prediction run. 
+            aiohttp.web_response.Response: Returns a response with the date and time of the prediction run.
                 Or responds with saying the prediction is already running.
         """
 
@@ -393,7 +403,7 @@ class IDHandler:
             request (aiohttp.web_request.Request): Request of type PATCH /ID/review.
 
         Returns:
-            aiohttp.web_fileresponse.FileResponse: An empty response indicating the availability status of 
+            aiohttp.web_fileresponse.FileResponse: An empty response indicating the availability status of
                 the review document.
         """
 
