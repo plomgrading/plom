@@ -1069,7 +1069,7 @@ class Manager(QWidget):
         sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
         try:
             imageList = managerMessenger.IDrequestImage(test)
-        except Exception as err:
+        except PlomException as err:
             ErrorMessage(err).exec_()
             return
 
