@@ -145,9 +145,9 @@ class IDHandler:
             if fail_message == "NotOwner":
                 return web.Response(status=409)  # someone else has that image
             elif fail_message == "NoScan":
-                return web.Response(status=410)  # no such test.
+                return web.Response(status=410)
             else:  # fail_message == "NoTest":
-                return web.Response(status=404)  # no such test.
+                return web.Response(status=404)
 
         with MultipartWriter("images") as writer:
             image_paths = image_path[1:]
