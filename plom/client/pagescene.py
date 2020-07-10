@@ -295,6 +295,9 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
+        # set focus so that shift/control change cursor
+        self.views()[0].setFocus(Qt.TabFocusReason)
+
         self.mode = mode
         # if current mode is not comment or delta, make sure the
         # ghostcomment is hidden
@@ -377,7 +380,13 @@ class PageScene(QGraphicsScene):
 
     def keyPressEvent(self, event):
         """
-        Escape key removes focus from the scene, other events are passed on.
+        Changes the focus or cursor based on key presses.
+
+        Notes:
+            Overrides parent method.
+            Escape key removes focus from the scene.
+            if toolMode is cross, line, delta or tick, changes the cursor in
+                accordance with each tool's mousePress documentation.
 
         Args:
             event (QKeyEvent): The Key press event.
@@ -386,10 +395,56 @@ class PageScene(QGraphicsScene):
             None
 
         """
+
+        deltaShift = self.parent.cursorCross
+        if self.mode is "delta":
+            if not int(self.markDelta) > 0:
+                deltaShift = self.parent.cursorTick
+
+        variableCursors = {
+            "cross": [self.parent.cursorTick, self.parent.cursorQMark],
+            "line": [self.parent.cursorArrow, self.parent.cursorDoubleArrow],
+            "delta": [deltaShift, self.parent.cursorQMark],
+            "tick": [self.parent.cursorCross, self.parent.cursorQMark],
+        }
+
+        if self.mode in variableCursors:
+            if event.key() == Qt.Key_Shift:
+                self.views()[0].setCursor(variableCursors.get(self.mode)[0])
+            elif event.key() == Qt.Key_Control:
+                self.views()[0].setCursor(variableCursors.get(self.mode)[1])
+            else:
+                pass
+
         if event.key() == Qt.Key_Escape:
             self.clearFocus()
         else:
             super(PageScene, self).keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        """
+        Changes cursors back to their standard cursor when keys are released.
+
+        Args:
+            event (QKeyEvent): the key release.
+
+        Returns:
+            None
+
+        """
+        variableCursorRelease = {
+            "cross": self.parent.cursorCross,
+            "line": self.parent.cursorLine,
+            "delta": Qt.ArrowCursor,
+            "tick": self.parent.cursorTick,
+        }
+        if self.mode in variableCursorRelease:
+            if self.views()[0].cursor() == variableCursorRelease.get(self.mode):
+                pass
+            else:
+                self.views()[0].setCursor(variableCursorRelease.get(self.mode))
+        else:
+            pass
 
     def mousePressEvent(self, event):
         """
@@ -1747,7 +1802,7 @@ class PageScene(QGraphicsScene):
                 false otherwise.
 
         Returns:
-            None
+            True if the delta is legal, false otherwise.
 
         """
         legalDelta = self.isLegalDelta(newDelta)

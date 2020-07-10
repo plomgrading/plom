@@ -136,6 +136,9 @@ class Annotator(QWidget):
         self.cursorLine = None
         self.cursorPen = None
         self.cursorTick = None
+        self.cursorQMark = None
+        self.cursorArrow = None
+        self.cursorDoubleArrow = None
         self.testName = None
         self.paperDir = None
         self.imageFiles = None
@@ -428,6 +431,13 @@ class Annotator(QWidget):
         self.cursorLine = QCursor(QPixmap("{}/line.png".format(base_path)), 4, 4)
         self.cursorPen = QCursor(QPixmap("{}/pen.png".format(base_path)), 4, 4)
         self.cursorTick = QCursor(QPixmap("{}/tick.png".format(base_path)), 4, 4)
+        self.cursorQMark = QCursor(
+            QPixmap("{}/question_mark.png".format(base_path)), 4, 4
+        )
+        self.cursorArrow = QCursor(QPixmap("{}/arrow.png".format(base_path)), 4, 4)
+        self.cursorDoubleArrow = QCursor(
+            QPixmap("{}/double_arrow.png".format(base_path)), 4, 4
+        )
 
     def getKeyShortcuts(self):
         """
@@ -851,7 +861,7 @@ class Annotator(QWidget):
         Changes the current tool mode and cursor.
 
         Notes:
-            TODO: this does various other mucking around for legacy
+            TODO: this does various other p around for legacy
             reasons: could probably still use some refactoring.
 
         Returns:
@@ -1063,7 +1073,7 @@ class Annotator(QWidget):
         if QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier:
             self.ui.deltaButton.showMenu()
         else:
-            self.setToolMode("delta", Qt.IBeamCursor)
+            self.setToolMode("delta", Qt.ArrowCursor)
 
     def lineMode(self):
         """ Changes the tool to the line button.  """
