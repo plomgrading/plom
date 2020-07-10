@@ -286,7 +286,7 @@ class TotalClient(QWidget):
     def checkFiles(self, r):
         task = self.exM.paperList[r].test
         # check if we have the image file
-        if self.exM.paperList[r].originalFile is not "":
+        if self.exM.paperList[r].originalFile != "":
             return
         # else try to grab it from server
         try:

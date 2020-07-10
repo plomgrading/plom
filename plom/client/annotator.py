@@ -436,7 +436,7 @@ class Annotator(QWidget):
         Returns:
             (Dict): a dictionary containing hot keys for annotator.
         """
-        if self.mouseHand is 0:
+        if self.mouseHand == 0:
             return {
                 # home-row
                 Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
