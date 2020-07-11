@@ -443,6 +443,10 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomSeriousException(
                     "Cannot find image file for {}.".format(code)
                 ) from None
+            elif response.status_code == 410:
+                raise PlomBenignException(
+                    "That ID group of {} has not been scanned.".format(code)
+                ) from None
             elif response.status_code == 409:
                 raise PlomSeriousException(
                     "Another user has the image for {}. This should not happen".format(

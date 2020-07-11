@@ -1116,8 +1116,11 @@ class PageScene(QGraphicsScene):
             return
         elif self.boxFlag == 1:
             self.removeItem(self.boxItem)
-            # check if rect has some perimeter (allow long/thin)
-            if self.boxItem.rect().width() + self.boxItem.rect().height() > 24:
+            # check if rect has some perimeter (allow long/thin) - need abs - see #977
+            if (
+                abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
+                > 24
+            ):
                 command = CommandBox(self, self.boxItem.rect())
                 self.undoStack.push(command)
         else:
@@ -1184,7 +1187,7 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        if self.arrowFlag is not 0:
+        if self.arrowFlag:
             self.currentPos = event.scenePos()
             self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
 
@@ -1279,7 +1282,7 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        if self.penFlag is not 0:
+        if self.penFlag:
             self.currentPos = event.scenePos()
             self.path.lineTo(self.currentPos)
             self.pathItem.setPath(self.path)
@@ -1345,7 +1348,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
-        if self.zoomFlag is not 0:
+        if self.zoomFlag:
             return
 
         if (event.button() == Qt.RightButton) or (
@@ -1379,7 +1382,7 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        if self.zoomFlag is not 0:
+        if self.zoomFlag:
             self.zoomFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.zoomBoxItem is None:
@@ -1444,7 +1447,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
-        if self.deleteFlag is not 0:
+        if self.deleteFlag:
             return
 
         self.deleteFlag = 1
@@ -1467,7 +1470,7 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        if self.deleteFlag is not 0:
+        if self.deleteFlag:
             self.deleteFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.delBoxItem is None:

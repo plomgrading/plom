@@ -11,12 +11,23 @@ at least not unexpected) situations.
 """
 
 
-class PlomSeriousException(Exception):
+class PlomException(Exception):
+    """Catch-all parent of all Plom-related exceptions."""
+
     def __init__(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
 
 
-class PlomBenignException(Exception):
+class PlomSeriousException(PlomException):
+    """Serious or unexpected problems that are generally not recoverable."""
+
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
+
+
+class PlomBenignException(PlomException):
+    """A not-unexpected situation, often signallying an error condition."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 

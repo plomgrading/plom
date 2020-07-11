@@ -136,6 +136,7 @@ def RgetIdentified(self):
     """
     Return dict of identified tests - ie ones for which student ID/name are known.
     Indexed by test-number, lists pairs (student_id/student_name).
+    Note that this includes papers which are not completely scanned.
     """
     idd_dict = {}
     for iref in IDGroup.select().where(IDGroup.identified == True):
