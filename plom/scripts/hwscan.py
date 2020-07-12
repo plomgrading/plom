@@ -57,7 +57,6 @@ def make_required_directories():
 
 def processLooseScans(server, password, file_name, student_id):
     make_required_directories()
-    from plom.scan.hwSubmissionsCheck import IDQorIDorBad
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
@@ -89,7 +88,6 @@ def processLooseScans(server, password, file_name, student_id):
 
 def processHWScans(server, password, file_name, student_id, question_list):
     make_required_directories()
-    from plom.scan.hwSubmissionsCheck import IDQorIDorBad
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
@@ -131,8 +129,6 @@ def processHWScans(server, password, file_name, student_id, question_list):
 
 
 def processAllHWByQ(server, password, yes_flag):
-    from plom.scan.hwSubmissionsCheck import IDQorIDorBad
-
     submissions = defaultdict(list)
     for file_name in sorted(glob.glob(os.path.join("submittedHWByQ", "*.pdf"))):
         IDQ = IDQorIDorBad(file_name)
