@@ -110,6 +110,7 @@ def processHWScans(server, password, file_name, student_id, question_list):
     # do sanity checks on file_name
     # trim down file_name - replace "submittedHWByQ/fname" with "fname", but pass appropriate flag
     short_name = os.path.split(file_name)[1]
+    assert os.path.split(file_name)[0] == "submittedHWByQ", 'At least for now, you must your file into a directory named "submittedHWByQ"'
     IDQ = IDQorIDorBad(short_name)
     if len(IDQ) != 3:  # should return [IDQ, sid, q]
         print("File name has wrong format - should be 'blah.sid.q.pdf'. Stopping.")
