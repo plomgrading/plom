@@ -18,6 +18,7 @@ import shutil
 
 from plom import __version__
 from plom.rules import isValidStudentNumber
+from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 
 
 def clearLogin(server, password):
@@ -30,19 +31,6 @@ def scanStatus(server, password):
     from plom.scan import checkScanStatus
 
     checkScanStatus.checkStatus(server, password)
-
-
-def IDQorIDorBad(fullfname):
-    fname = os.path.basename(fullfname)
-    splut = fname.split(".")
-    QFlag = splut[-2].isnumeric()
-    IDFlag = isValidStudentNumber(splut[-3])
-    if QFlag and IDFlag:  # [-3] is ID and [-2] is Q.
-        return ["IDQ", splut[-3], splut[-2]]  # ID and Q
-    elif isValidStudentNumber(splut[-2]):  # [-2] is ID
-        return ["JID", splut[-2]]  # Just ID
-    else:
-        return ["BAD"]  # Bad format
 
 
 def whoDidWhat(server, password, directory_check):
