@@ -18,10 +18,23 @@ from plom.plom_exceptions import *
 
 
 def IDQorIDorBad(fullfname):
+    """Factor filename into one of two forms or answer name is bad.
+
+    Args:
+        fullfname (str, Pathlib): a filename that is supposed to have
+            a particular form.
+
+    Returns:
+        list: first entry is either "IDQ" or "JID" or "BAD", with other
+            entries following in the "IDQ" and "JID" cases.
+    """
     fname = os.path.basename(fullfname)
     splut = fname.split(".")
-    QFlag = splut[-2].isnumeric()
-    IDFlag = isValidStudentNumber(splut[-3])
+    try:
+        QFlag = splut[-2].isnumeric()
+        IDFlag = isValidStudentNumber(splut[-3])
+    except IndexError:
+        return ["BAD"]
     if QFlag and IDFlag:  # [-3] is ID and [-2] is Q.
         return ["IDQ", splut[-3], splut[-2]]  # ID and Q
     elif isValidStudentNumber(splut[-2]):  # [-2] is ID
