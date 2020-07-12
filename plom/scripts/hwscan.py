@@ -62,6 +62,7 @@ def processLooseScans(server, password, file_name, student_id):
 
     # trim down file_name - replace "submittedLoose/fname" with "fname", but pass appropriate flag
     short_name = os.path.split(file_name)[1]
+    assert os.path.split(file_name)[0] == "submittedLoose", 'At least for now, you must your file into a directory named "submittedLoose"'
     IDQ = IDQorIDorBad(short_name)
     if len(IDQ) != 2:  # should return [JID, sid]
         print("File name has wrong format. Should be 'blah.sid.pdf'. Stopping.")
