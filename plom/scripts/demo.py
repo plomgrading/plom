@@ -78,11 +78,11 @@ def main():
 
     subprocess.check_call(
         split(
-            "plom-scan process -w 4567 fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf"
+            "plom-scan all -w 4567 fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf"
         )
     )
-    subprocess.check_call(split("plom-scan read -w 4567"))
-    subprocess.check_call(split("plom-scan upload -u -w 4567"))
+    # subprocess.check_call(split("plom-scan read -w 4567"))
+    # subprocess.check_call(split("plom-scan upload -u -w 4567"))
 
     time.sleep(0.5)
     try:

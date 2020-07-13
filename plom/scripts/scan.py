@@ -154,6 +154,45 @@ def uploadImages(server, password, unknowns=False, collisions=False):
         # sendCollisionsToServer.uploadCollisions(server, password)
 
 
+def doAllToScans(server, password, scanPDFs):
+    from plom.scan import scansToImages, sendPagesToServer, readQRCodes
+
+    make_required_directories()
+
+    # do all steps for one PDF at a time.
+    for fname in scanPDFs:
+        if not os.path.isfile(fname):
+            print("Cannot find file {} - skipping".format(fname))
+            continue
+        print("Declaring bundle PDF {} to server".format(fname))
+        rval = sendPagesToServer.declareBundle(fname, server, password)
+        if rval[0] is False:
+            if rval[1] == "name":
+                print(
+                    "The bundle name {} has been used previously. Stopping".format(
+                        fname
+                    )
+                )
+            elif rval[1] == "md5sum":
+                print(
+                    "A bundle with matching md5sum is already in system. Stopping".format(
+                        fname
+                    )
+                )
+            else:
+                print("Should not be here!")
+            exit(1)
+
+        print("Processing PDF {} to images".format(fname))
+        scansToImages.processScans([fname])
+        readQRCodes.processBitmaps(server, password)
+        [TPN, updates] = sendPagesToServer.uploadTPages(server, password)
+        print("Tests were uploaded to the following studentIDs: {}".format(TPN.keys()))
+        print("Server reports {} papers updated.".format(updates))
+        # now archive that pdf.
+        scansToImages.archiveTBundle(fname)
+
+
 parser = argparse.ArgumentParser(
     description=__doc__.split("\n")[0],
     epilog="\n".join(__doc__.split("\n")[1:]),
@@ -188,6 +227,12 @@ spC = sub.add_parser(
     description='Clear "scanner" login after a crash or other expected event.',
 )
 #
+spA = sub.add_parser(
+    "all",
+    help="Process, read and upload page images to scanner",
+    description="Process, read and upload page images to scanner.",
+)
+#
 spP.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
 spU.add_argument(
     "-u",
@@ -202,7 +247,9 @@ spU.add_argument(
     help='Upload "collisions", pages which appear to already be on the server. '
     + "You should not need this option except under exceptional circumstances.",
 )
-for x in (spR, spU, spS, spC, spP):
+spA.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
+#
+for x in (spR, spU, spS, spC, spP, spA):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
@@ -220,6 +267,8 @@ def main():
         scanStatus(args.server, args.password)
     elif args.command == "clear":
         clearLogin(args.server, args.password)
+    elif args.command == "all":
+        doAllToScans(args.server, args.password, args.scanPDF)
     else:
         parser.print_help()
 

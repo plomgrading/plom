@@ -60,31 +60,18 @@ def archiveLBundle(file_name):
         toml.dump(arch, fh)
 
 
-def archivePDF(file_name, hwByQ, hwLoose):
-    print("Archiving {}".format(file_name))
+def archiveTBundle(file_name):
+    print("Archiving test-page bundle {}".format(file_name))
 
-    if hwByQ:
-        long_name = os.path.join("submittedHWByQ", file_name)
-    elif hwLoose:
-        long_name = os.path.join("submittedLoose", file_name)
-    else:
-        long_name = file_name
+    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
 
-    md5 = hashlib.md5(open(long_name, "rb").read()).hexdigest()
-    # TODO: is ".." portable?  maybe we should keep some absolute paths handy
-    if hwByQ:
-        shutil.move(long_name, Path(archivedir) / "submittedHWByQ")
-    elif hwLoose:
-        shutil.move(long_name, Path(archivedir) / "submittedLoose")
-    else:
-        shutil.move(long_name, archivedir)
     # open the existing archive if it is there
     arcName = os.path.join(archivedir, "archive.toml")
     if os.path.isfile(arcName):
         arch = toml.load(arcName)
     else:
         arch = {}
-    arch[md5] = long_name
+    arch[md5] = file_name
     # now save it
     with open(arcName, "w+") as fh:
         toml.dump(arch, fh)
@@ -442,5 +429,3 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
 
             processFileToBitmaps(bundleDir, fname, hwByQ, hwLoose)
             postProcessing(bundleDir, hwByQ, hwLoose)
-            # # finally archive the PDF
-            # archivePDF(fname, hwByQ, hwLoose)
