@@ -133,11 +133,13 @@ class Annotator(QWidget):
         self.cursorBox = None
         self.cursorCross = None
         self.cursorDelete = None
+        self.cursorEllipse = None
         self.cursorLine = None
         self.cursorPen = None
         self.cursorTick = None
         self.cursorQMark = None
         self.cursorArrow = None
+        self.cursorHighlight = None
         self.cursorDoubleArrow = None
         self.testName = None
         self.paperDir = None
@@ -426,6 +428,8 @@ class Annotator(QWidget):
 
         # load pixmaps for cursors and set the hotspots
         self.cursorBox = QCursor(QPixmap("{}/box.png".format(base_path)), 4, 4)
+        self.cursorEllipse = QCursor(QPixmap("{}/ellipse.png".format(
+            base_path)), 4, 4)
         self.cursorCross = QCursor(QPixmap("{}/cross.png".format(base_path)), 4, 4)
         self.cursorDelete = QCursor(QPixmap("{}/delete.png".format(base_path)), 4, 4)
         self.cursorLine = QCursor(QPixmap("{}/line.png".format(base_path)), 4, 4)
@@ -433,6 +437,9 @@ class Annotator(QWidget):
         self.cursorTick = QCursor(QPixmap("{}/tick.png".format(base_path)), 4, 4)
         self.cursorQMark = QCursor(
             QPixmap("{}/question_mark.png".format(base_path)), 4, 4
+        )
+        self.cursorHighlight = QCursor(
+            QPixmap("{}/highlighter.png".format(base_path)), 4, 4
         )
         self.cursorArrow = QCursor(QPixmap("{}/arrow.png".format(base_path)), 4, 4)
         self.cursorDoubleArrow = QCursor(
