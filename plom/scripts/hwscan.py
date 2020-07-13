@@ -87,6 +87,8 @@ def processLooseScans(server, password, file_name, student_id):
     scansToImages.processScans([short_name], hwLoose=True)
     # send the images to the server
     sendPagesToServer.uploadLPages(bundle_name, student_id, server, password)
+    # now archive the PDF
+    scansToImages.archiveLBundle(file_name)
 
 
 def processHWScans(server, password, file_name, student_id, question_list):
@@ -126,11 +128,20 @@ def processHWScans(server, password, file_name, student_id, question_list):
             short_name, question, student_id
         )
     )
+    test_number = sendPagesToServer.checkTestHasThatSID(student_id, server, password)
+    if test_number is None:
+        print("No test has student ID = {}. Skipping.".format(student_id))
+        return
+    else:
+        print("Student ID {} is test_number {}".format(student_id, test_number))
+
     bundle_name = sendPagesToServer.declareBundle(file_name, server, password)
     # pass as list since processScans expects a list.
     scansToImages.processScans([short_name], hwByQ=True)
     # send the images to the server
     sendPagesToServer.uploadHWPages(bundle_name, student_id, question, server, password)
+    # now archive the PDF
+    scansToImages.archiveHWBundle(file_name)
 
 
 def processAllHWByQ(server, password, yes_flag):

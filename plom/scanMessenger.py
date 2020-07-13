@@ -65,6 +65,27 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
+    def sidToTest(self, student_id):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/admin/sidToTest".format(self.server),
+                json={"user": self.user, "token": self.token, "sid": student_id,},
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
     def uploadTestPage(self, code, test, page, version, sname, fname, md5sum, bundle):
         self.SRmutex.acquire()
         try:

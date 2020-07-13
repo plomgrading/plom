@@ -353,6 +353,49 @@ def uploadLPages(bundle_name, student_id, server=None, password=None):
     return [LUP, updates]
 
 
+def checkTestHasThatSID(student_id, server=None, password=None):
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ScanMessenger(s, port=p)
+    else:
+        msgr = ScanMessenger(server)
+    msgr.start()
+
+    # get the password if not specified
+    if password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'scanner' password:")
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = password
+
+    # get started
+    try:
+        msgr.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-scan clear"'
+        )
+        exit(10)
+
+    # get test_number from SID.
+    # response is [true, test_number] or [false, reason]
+    test_success = msgr.sidToTest(student_id)
+
+    msgr.closeUser()
+    msgr.stop()
+
+    if test_success[0]:  # found it
+        return test_success[1]  # return the number
+    else:  # couldn't find it
+        return None
+
+
 def declareBundle(bundle_file, server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")

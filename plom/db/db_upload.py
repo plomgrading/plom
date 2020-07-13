@@ -232,6 +232,14 @@ def getSIDFromTest(self, test_number):
         return [False, "Test not yet identified"]
 
 
+def sidToTest(self, student_id):
+    iref = IDGroup.get_or_none(student_id=student_id)
+    if iref is None:
+        return [False, "Cannot find test with sid {}".format(student_id)]
+    else:
+        return [True, iref.test.test_number]
+
+
 def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5):
     # this is basically same as uploadHWPage, excepting bundle+order are known.
     # and have to check if any HWPages present.

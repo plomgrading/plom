@@ -135,7 +135,7 @@ def readImages(server, password):
 
 
 def uploadImages(server, password, unknowns=False, collisions=False):
-    from plom.scan import sendPagesToServer
+    from plom.scan import sendPagesToServer, scansToImages
 
     print("Upload images to server")
     [TPN, updates] = sendPagesToServer.uploadTPages(server, password)

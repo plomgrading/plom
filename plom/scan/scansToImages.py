@@ -30,6 +30,36 @@ from plom import ScenePixelHeight
 archivedir = "archivedPDFs"
 
 
+def archiveHWBundle(file_name):
+    print("Archiving homework bundle {}".format(file_name))
+    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
+    shutil.move(file_name, Path(archivedir) / "submittedHWByQ")
+    arcName = os.path.join(archivedir, "archive.toml")
+    if os.path.isfile(arcName):
+        arch = toml.load(arcName)
+    else:
+        arch = {}
+    arch[md5] = file_name
+    # now save it
+    with open(arcName, "w+") as fh:
+        toml.dump(arch, fh)
+
+
+def archiveLBundle(file_name):
+    print("Archiving loose-page bundle {}".format(file_name))
+    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
+    shutil.move(file_name, Path(archivedir) / "submittedLoose")
+    arcName = os.path.join(archivedir, "archive.toml")
+    if os.path.isfile(arcName):
+        arch = toml.load(arcName)
+    else:
+        arch = {}
+    arch[md5] = file_name
+    # now save it
+    with open(arcName, "w+") as fh:
+        toml.dump(arch, fh)
+
+
 def archivePDF(file_name, hwByQ, hwLoose):
     print("Archiving {}".format(file_name))
 
@@ -412,5 +442,5 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
 
             processFileToBitmaps(bundleDir, fname, hwByQ, hwLoose)
             postProcessing(bundleDir, hwByQ, hwLoose)
-            # finally archive the PDF
-            archivePDF(fname, hwByQ, hwLoose)
+            # # finally archive the PDF
+            # archivePDF(fname, hwByQ, hwLoose)

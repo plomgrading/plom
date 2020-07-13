@@ -16,6 +16,10 @@ def declareBundle(self, bundle_file, md5):
     return self.DB.declareBundle(bundle_file, md5)
 
 
+def sidToTest(self, student_id):
+    return self.DB.sidToTest(student_id)
+
+
 def addTestPage(self, t, p, v, fname, image, md5o, bundle):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)

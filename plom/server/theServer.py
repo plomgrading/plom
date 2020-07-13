@@ -138,6 +138,7 @@ class Server(object):
     )
     from .plomServer.serverUpload import (
         declareBundle,
+        sidToTest,
         addTestPage,
         addHWPage,
         addLPage,

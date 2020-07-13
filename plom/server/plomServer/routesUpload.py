@@ -19,6 +19,17 @@ class UploadHandler:
         rval = self.server.declareBundle(data["bundle"], data["md5sum"])
         return web.json_response(rval, status=200)  # all fine
 
+    async def sidToTest(self, request):
+        data = await request.json()
+        if not validate_required_fields(data, ["user", "token", "sid"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] in ["scanner", "manager"]:
+            return web.Response(status=401)
+        rval = self.server.sidToTest(data["sid"])
+        return web.json_response(rval, status=200)
+
     async def uploadTestPage(self, request):
         reader = MultipartReader.from_response(request)
 
@@ -246,7 +257,6 @@ class UploadHandler:
 
     async def removeAllScannedPages(self, request):
         data = await request.json()
-        print("Got data {}".format(data))
         if not validate_required_fields(data, ["user", "token", "test",],):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
@@ -739,6 +749,7 @@ class UploadHandler:
 
     def setUpRoutes(self, router):
         router.add_put("/admin/bundle", self.declareBundle)
+        router.add_get("/admin/sidToTest", self.sidToTest)
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/hwPages", self.uploadHWPage)
         router.add_put("/admin/lPages", self.uploadLPage)
