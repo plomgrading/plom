@@ -803,9 +803,10 @@ class Manager(QWidget):
                 )
 
             else:
-                print(
-                    "No action for file {}.".format(self.unknownModel.item(r, 0).text())
-                )
+                pass
+                # print(
+                #     "No action for file {}.".format(self.unknownModel.item(r, 0).text())
+                # )
         self.refreshUList()
 
     def viewWholeTest(self, testNumber):
@@ -934,9 +935,10 @@ class Manager(QWidget):
                     self.collideModel.item(r, 5).text(),
                 )
             else:
-                print(
-                    "No action for file {}.".format(self.collideModel.item(r, 0).text())
-                )
+                pass
+                # print(
+                #     "No action for file {}.".format(self.collideModel.item(r, 0).text())
+                # )
         self.refreshCList()
 
     def initDiscardTab(self):
@@ -997,9 +999,10 @@ class Manager(QWidget):
             if self.discardModel.item(r, 3).text() == "move":
                 managerMessenger.discardToUnknown(self.discardModel.item(r, 0).text())
             else:
-                print(
-                    "No action for file {}.".format(self.discardModel.item(r, 0).text())
-                )
+                pass
+                # print(
+                #     "No action for file {}.".format(self.discardModel.item(r, 0).text())
+                # )
         self.refreshDList()
 
     ####################
@@ -1220,7 +1223,6 @@ class Manager(QWidget):
     def viewMarkHistogram(self, question, version):
         mhist = managerMessenger.getMarkHistogram(question, version)
         QVHistogram(question, version, mhist).exec_()
-        # print(mhist)
 
     def initOutTab(self):
         self.ui.tasksOutTW.setColumnCount(3)
