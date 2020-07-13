@@ -655,7 +655,7 @@ def removeAllScannedPages(self, test_number):
             iref = pref.image
             DiscardedPage.create(
                 image=iref,
-                reason="Discarded scan of hw.{}.{}.{}".format(
+                reason="Discarded scan of h.{}.{}.{}".format(
                     test_number, pref.group.qgroups[0].question, pref.order
                 ),
             )

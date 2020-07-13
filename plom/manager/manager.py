@@ -558,7 +558,7 @@ class Manager(QWidget):
         if pdetails[0] == "t":  # is a test-page t.PPP
             p = pdetails.split(".")[1]
             vp = managerMessenger.getTPageImage(t, p, v)
-        elif pdetails[0] == "h":  # is a hw-page = hw.q.o
+        elif pdetails[0] == "h":  # is a hw-page = h.q.o
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
             vp = managerMessenger.getHWPageImage(t, q, o)
@@ -679,10 +679,10 @@ class Manager(QWidget):
             self.substituteTestPage(test, page, version)
             return
         elif pvi[0].text(1)[0] == "h":
-            # format is hw.n.k where n= question, k = order
+            # format is h.n.k where n= question, k = order
             test = int(pvi[0].parent().text(0))  # grab test number from parent
-            question, order = pvi[0].text(1)[3:].split(".")
-            # drop the "hw.", then split on "." - don't need 'order'
+            question, order = pvi[0].text(1)[2:].split(".")
+            # drop the "h.", then split on "." - don't need 'order'
             self.substituteHWQuestion(test, int(question))
         else:  # can't subtitute other sorts of pages
             return

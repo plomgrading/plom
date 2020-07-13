@@ -351,7 +351,7 @@ def MgetWholePaper(self, test_number, question):
     if tref is None:  # don't know that test - this shouldn't happen
         return [False]
     pageData = []  # for each page append a triple [
-    # page-code = t.pageNumber, hw.questionNumber.order or l.order
+    # page-code = t.pageNumber, h.questionNumber.order or l.order
     # image-id-reference number,
     # true/false - if belongs to the given question or not.
     pageFiles = []  # the corresponding filenames.

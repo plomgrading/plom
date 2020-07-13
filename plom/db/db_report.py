@@ -12,7 +12,7 @@ log = logging.getLogger("DB")
 def RgetScannedTests(self):
     """Get a dict of all scanned tests indexed by test_number.
     Each test lists pairs [page-code, page-version].
-    page-code is t{page}, hw{question}{order}, or l{order}.
+    page-code is t{page}, h{question}{order}, or l{order}.
     """
     scan_dict = {}
     for tref in Test.select().where(Test.scanned == True):
@@ -43,7 +43,7 @@ def RgetIncompleteTests(self):
     """Get dict of incomplete tests - ie some test pages scanned but not all.
     Indexed by test_number
     Each test lists triples [page-code, page-version, scanned_or_not].
-    page-code is t{page}, hw{question}{order}, or l{order}.
+    page-code is t{page}, h{question}{order}, or l{order}.
     Note - if no tpages scanned, then it will not return tpages.
     Similalry, if no hwpages/expages scanned, then it will not return hwpages/expages.
     """
@@ -62,12 +62,12 @@ def RgetIncompleteTests(self):
                 # if no HW pages scanned then display a hwpage 1 as unscanned.
                 if qref.group.hwpages.count() == 0:
                     page_state.append(
-                        ["hw.{}.{}".format(qref.question, 1), qref.version, False]
+                        ["h.{}.{}".format(qref.question, 1), qref.version, False]
                     )
                 else:
                     for p in qref.group.hwpages:  # hw pages are always scanned
                         page_state.append(
-                            ["hw.{}.{}".format(qref.question, p.order), p.version, True]
+                            ["h.{}.{}".format(qref.question, p.order), p.version, True]
                         )
         # if no ex pages at all - then don't display.
         if tref.expages.count() > 0:
