@@ -428,8 +428,7 @@ class Annotator(QWidget):
 
         # load pixmaps for cursors and set the hotspots
         self.cursorBox = QCursor(QPixmap("{}/box.png".format(base_path)), 4, 4)
-        self.cursorEllipse = QCursor(QPixmap("{}/ellipse.png".format(
-            base_path)), 4, 4)
+        self.cursorEllipse = QCursor(QPixmap("{}/ellipse.png".format(base_path)), 4, 4)
         self.cursorCross = QCursor(QPixmap("{}/cross.png".format(base_path)), 4, 4)
         self.cursorDelete = QCursor(QPixmap("{}/delete.png".format(base_path)), 4, 4)
         self.cursorLine = QCursor(QPixmap("{}/line.png".format(base_path)), 4, 4)

@@ -407,8 +407,7 @@ class PageScene(QGraphicsScene):
             "delta": [deltaShift, self.parent.cursorQMark],
             "tick": [self.parent.cursorCross, self.parent.cursorQMark],
             "box": [self.parent.cursorEllipse, self.parent.cursorBox],
-            "pen": [self.parent.cursorHighlight,
-                    self.parent.cursorDoubleArrow],
+            "pen": [self.parent.cursorHighlight, self.parent.cursorDoubleArrow],
         }
 
         if self.mode in variableCursors:
@@ -441,7 +440,7 @@ class PageScene(QGraphicsScene):
             "delta": Qt.ArrowCursor,
             "tick": self.parent.cursorTick,
             "box": self.parent.cursorBox,
-            "pen": self.parent.cursorPen
+            "pen": self.parent.cursorPen,
         }
         if self.mode in variableCursorRelease:
             if self.views()[0].cursor() == variableCursorRelease.get(self.mode):
