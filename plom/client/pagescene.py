@@ -385,8 +385,8 @@ class PageScene(QGraphicsScene):
         Notes:
             Overrides parent method.
             Escape key removes focus from the scene.
-            if toolMode is cross, line, delta or tick, changes the cursor in
-                accordance with each tool's mousePress documentation.
+            Changes the cursor in accordance with each tool's mousePress
+            documentation.
 
         Args:
             event (QKeyEvent): The Key press event.
