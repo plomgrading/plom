@@ -14,6 +14,7 @@ import random
 from pathlib import Path
 from glob import glob
 
+from getpass import getpass
 import json
 import base64
 import fitz
