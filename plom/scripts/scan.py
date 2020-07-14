@@ -107,7 +107,6 @@ def processScans(server, password, PDFs):
             continue
         print("Declaring bundle PDF {} to server".format(fname))
         rval = sendPagesToServer.declareBundle(fname, server, password)
-    rval = sendPagesToServer.declareBundle(file_name, server, password)
     # should be [True, name] or [False, name] [False,md5sum]
     # or [False, both, name, [all the files already uploaded]]
     if rval[0] is True:
