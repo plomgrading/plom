@@ -12,15 +12,31 @@ log = logging.getLogger("DB")
 from peewee import fn
 
 
+class PlomBundleImageDuplicationException(Exception):
+    """An exception triggered when trying to upload the same image from the same bundle twice."""
+
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
+
+
 ## - create an image and return the reference
 def createNewImage(self, original_name, file_name, md5, bundle_ref, bundle_order):
-    return Image.create(
-        original_name=original_name,
-        file_name=file_name,
-        md5sum=md5,
-        bundle=bundle_ref,
-        bundle_order=bundle_order,
-    )
+    # todo = this should check for existence of (bundle_ref, bundle_order) before building.
+    # if exists then send fail message.
+    if Image.get_or_none(bundle=bundle_ref, bundle_order=bundle_order):
+        raise PlomBundleImageDuplicationException(
+            "Image number {} from bundle {} uploaded previously.".format(
+                bundle_order, bundle_ref.name
+            )
+        )
+    else:
+        return Image.create(
+            original_name=original_name,
+            file_name=file_name,
+            md5sum=md5,
+            bundle=bundle_ref,
+            bundle_order=bundle_order,
+        )
 
 
 ## - upload functions
@@ -104,9 +120,19 @@ def uploadTestPage(
         if bref is None:
             return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
 
-        image_ref = self.createNewImage(
-            original_name, file_name, md5, bref, bundle_order
-        )
+        try:
+            image_ref = self.createNewImage(
+                original_name, file_name, md5, bref, bundle_order
+            )
+        except PlomBundleImageDuplicationException:
+            return [
+                False,
+                "bundle image duplication error",
+                "Image number {} from bundle {} uploaded previously".format(
+                    bundle_order, bundle_name,
+                ),
+            ]
+
         self.attachImageToTPage(tref, pref, image_ref)
 
         log.info(
@@ -203,7 +229,20 @@ def uploadHWPage(
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
         return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
-    image_ref = self.createNewImage(original_name, file_name, md5, bref, bundle_order)
+
+    try:
+        image_ref = self.createNewImage(
+            original_name, file_name, md5, bref, bundle_order
+        )
+    except PlomBundleImageDuplicationException:
+        return [
+            False,
+            "bundle image duplication error",
+            "Image number {} from bundle {} uploaded previously".format(
+                bundle_order, bundle_name,
+            ),
+        ]
+
     self.createNewHWPage(tref, qref, order, image_ref)
     return [True]
 
@@ -245,7 +284,20 @@ def uploadLPage(
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
         return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
-    image_ref = self.createNewImage(original_name, file_name, md5, bref, bundle_order)
+
+    try:
+        image_ref = self.createNewImage(
+            original_name, file_name, md5, bref, bundle_order
+        )
+    except PlomBundleImageDuplicationException:
+        return [
+            False,
+            "bundle image duplication error",
+            "Image number {} from bundle {} uploaded previously".format(
+                bundle_order, bundle_name,
+            ),
+        ]
+
     self.createNewLPage(tref, order, image_ref)
     return [True]
 
@@ -302,7 +354,20 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
     bundle_order += 1
 
     # create an image for the image-file
-    image_ref = self.createNewImage(original_name, file_name, md5, bref, bundle_order)
+
+    try:
+        image_ref = self.createNewImage(
+            original_name, file_name, md5, bref, bundle_order
+        )
+    except PlomBundleImageDuplicationException:
+        return [
+            False,
+            "bundle image duplication error",
+            "Image number {} from bundle {} uploaded previously".format(
+                bundle_order, bundle_name,
+            ),
+        ]
+
     # create the associated HW page
     self.createNewHWPage(tref, qref, order, image_ref)
     # and do an update.
@@ -328,13 +393,23 @@ def uploadUnknownPage(
     if bref is None:
         return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
     with plomdb.atomic():
-        iref = Image.create(
-            original_name=original_name,
-            file_name=file_name,
-            md5sum=md5,
-            bundle=bref,
-            bundle_order=bundle_order,
-        )
+
+        try:
+            iref = Image.create(
+                original_name=original_name,
+                file_name=file_name,
+                md5sum=md5,
+                bundle=bref,
+                bundle_order=bundle_order,
+            )
+        except PlomBundleImageDuplicationException:
+            return [
+                False,
+                "bundle image duplication error",
+                "Image number {} from bundle {} uploaded previously".format(
+                    bundle_order, bundle_name,
+                ),
+            ]
         uref = UnknownPage.create(image=iref, order=order)
 
     log.info("Uploaded image {} as unknown".format(original_name))
