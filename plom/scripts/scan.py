@@ -107,21 +107,37 @@ def processScans(server, password, PDFs):
             continue
         print("Declaring bundle PDF {} to server".format(fname))
         rval = sendPagesToServer.declareBundle(fname, server, password)
-        if rval[0] is False:
-            if rval[1] == "name":
-                print(
-                    "The bundle name {} has been used previously. Stopping".format(
-                        fname
-                    )
+    rval = sendPagesToServer.declareBundle(file_name, server, password)
+    # should be [True, name] or [False, name] [False,md5sum]
+    # or [False, both, name, [all the files already uploaded]]
+    if rval[0] is True:
+        bundle_name = rval[1]
+        skip_list = []
+    else:
+        if rval[1] == "name":
+            print(
+                "The bundle name {} has been used previously for a different bundle. Stopping".format(
+                    fname
                 )
-            elif rval[1] == "md5sum":
-                print(
-                    "A bundle with matching md5sum is already in system. Stopping".format(
-                        fname
-                    )
+            )
+            return
+        elif rval[1] == "md5sum":
+            print(
+                "A bundle with matching md5sum is already in system with a different name. Stopping".format(
+                    fname
                 )
-            else:
-                print("Should not be here!")
+            )
+            return
+        elif rval[1] == "both":
+            print(
+                "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
+                    fname
+                )
+            )
+            bundle_name = rval[2]
+            skip_list = rval[3]
+        else:
+            print("Should not be here!")
             exit(1)
 
         print("Processing PDF {} to images".format(fname))

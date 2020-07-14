@@ -82,11 +82,45 @@ def processLooseScans(server, password, file_name, student_id):
             short_name, student_id
         )
     )
-    bundle_name = sendPagesToServer.declareBundle(file_name, server, password)
     # pass as list since processScans expects a list.
     scansToImages.processScans([short_name], hwLoose=True)
+
+    # now declare the bundle to the server
+    rval = sendPagesToServer.declareBundle(file_name, server, password)
+    # should be [True, name] or [False, name] [False,md5sum]
+    # or [False, both, name, [all the files already uploaded]]
+    if rval[0] is True:
+        bundle_name = rval[1]
+        skip_list = []
+    else:
+        if rval[1] == "name":
+            print(
+                "The bundle name {} has been used previously for a different bundle. Stopping".format(
+                    file_name
+                )
+            )
+            return
+        elif rval[1] == "md5sum":
+            print(
+                "A bundle with matching md5sum is already in system with a different name. Stopping".format(
+                    file_name
+                )
+            )
+            return
+        elif rval[1] == "both":
+            print(
+                "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
+                    file_name
+                )
+            )
+            bundle_name = rval[2]
+            skip_list = rval[3]
+        else:
+            print("Should not be here!")
+            exit(1)
+
     # send the images to the server
-    sendPagesToServer.uploadLPages(bundle_name, student_id, server, password)
+    sendPagesToServer.uploadLPages(bundle_name, skip_list, student_id, server, password)
     # now archive the PDF
     scansToImages.archiveLBundle(file_name)
 
@@ -135,11 +169,46 @@ def processHWScans(server, password, file_name, student_id, question_list):
     else:
         print("Student ID {} is test_number {}".format(student_id, test_number))
 
-    bundle_name = sendPagesToServer.declareBundle(file_name, server, password)
     # pass as list since processScans expects a list.
     scansToImages.processScans([short_name], hwByQ=True)
+
+    rval = sendPagesToServer.declareBundle(file_name, server, password)
+    # should be [True, name] or [False, name] [False,md5sum]
+    # or [False, both, name, [all the files already uploaded]]
+    if rval[0] is True:
+        bundle_name = rval[1]
+        skip_list = []
+    else:
+        if rval[1] == "name":
+            print(
+                "The bundle name {} has been used previously for a different bundle. Stopping".format(
+                    file_name
+                )
+            )
+            return
+        elif rval[1] == "md5sum":
+            print(
+                "A bundle with matching md5sum is already in system with a different name. Stopping".format(
+                    file_name
+                )
+            )
+            return
+        elif rval[1] == "both":
+            print(
+                "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
+                    file_name
+                )
+            )
+            bundle_name = rval[2]
+            skip_list = rval[3]
+        else:
+            print("Should not be here!")
+            exit(1)
+
     # send the images to the server
-    sendPagesToServer.uploadHWPages(bundle_name, student_id, question, server, password)
+    sendPagesToServer.uploadHWPages(
+        bundle_name, skip_list, student_id, question, server, password
+    )
     # now archive the PDF
     scansToImages.archiveHWBundle(file_name)
 

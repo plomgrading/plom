@@ -37,10 +37,23 @@ def createReplacementBundle(self):
 
 
 def declareBundle(self, file_name, md5):
-    if Bundle.get_or_none(name=file_name) is not None:
-        return [False, "name"]
+    # check if that bundle-name is on file, and if the md5sum is known.
+    bref = Bundle.get_or_none(name=file_name)
+    if bref is not None:
+        if bref.md5sum == md5:
+            # name and md5sum match one in system
+            # probably a crash occurred, so also return all the images known in this bundle
+            skip_list = []
+            for iref in bref.images:
+                skip_list.append(iref.original_name)
+            return [False, "both", file_name, skip_list]
+
+        else:
+            return [False, "name"]
+    # name not known, so just check md5sum
     if Bundle.get_or_none(md5sum=md5) is not None:
         return [False, "md5sum"]
+
     else:
         Bundle.create(name=file_name, md5sum=md5)
         return [True, file_name]

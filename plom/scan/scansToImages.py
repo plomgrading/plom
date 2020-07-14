@@ -393,7 +393,7 @@ def postProcessing(bundleDir, hwByQ=False, hwLoose=False):
         fileList.extend(glob.glob("*.{}".format(ext)))
     # move them to pageimages for barcode reading
     for file in fileList:
-        shutil.move(file, dest)
+        shutil.move(file, os.path.join(dest, file))
 
     # now cd back to the starting directory
     os.chdir(startDir)

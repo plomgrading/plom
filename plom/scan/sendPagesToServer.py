@@ -138,10 +138,13 @@ def doLFiling(shortName, fname):
     # shutil.move(fname, os.path.join("sentPages", "submittedHWExtra", shortName))
 
 
-def sendHWFiles(msgr, file_list, student_id, question, bundle_name):
+def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
     # keep track of which SID uploaded which Q.
     SIDQ = defaultdict(list)
     for fname in file_list:
+        if fname in skip_list:
+            print("File {} already uploaded. Skipping.".format(fname))
+            continue
         print("Upload hw page image {}".format(fname))
         shortName = os.path.split(fname)[1]
         sid, q, n = extractIDQO(shortName)
@@ -158,10 +161,13 @@ def sendHWFiles(msgr, file_list, student_id, question, bundle_name):
     return SIDQ
 
 
-def sendLFiles(msgr, fileList, student_id, bundle_name):
+def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
     # keep track of which SID uploaded.
     JSID = {}
     for fname in fileList:
+        if fname in skip_list:
+            print("File {} already uploaded. Skipping.".format(fname))
+            continue
         print("Upload hw page image {}".format(fname))
         shortName = os.path.split(fname)[1]
         sid, n = extractJIDO(shortName)
@@ -241,7 +247,9 @@ def uploadTPages(server=None, password=None):
     return [TUP, updates]
 
 
-def uploadHWPages(bundle_name, student_id, question, server=None, password=None):
+def uploadHWPages(
+    bundle_name, skip_list, student_id, question, server=None, password=None
+):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -281,7 +289,7 @@ def uploadHWPages(bundle_name, student_id, question, server=None, password=None)
     for ext in PlomImageExtWhitelist:
         file_list.extend(sorted(glob(os.path.join("pageImages", "*.{}".format(ext)))))
 
-    HWUP = sendHWFiles(msgr, file_list, student_id, question, bundle_name)
+    HWUP = sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name)
 
     updates = msgr.sendHWUploadDone()
 
@@ -297,7 +305,7 @@ def uploadHWPages(bundle_name, student_id, question, server=None, password=None)
     return [HWUP, updates]
 
 
-def uploadLPages(bundle_name, student_id, server=None, password=None):
+def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -337,7 +345,7 @@ def uploadLPages(bundle_name, student_id, server=None, password=None):
     for ext in PlomImageExtWhitelist:
         file_list.extend(sorted(glob(os.path.join("pageImages", "*.{}".format(ext)))))
 
-    LUP = sendLFiles(msgr, file_list, student_id, bundle_name)
+    LUP = sendLFiles(msgr, file_list, skip_list, student_id, bundle_name)
 
     updates = msgr.sendLUploadDone()
 
@@ -434,7 +442,5 @@ def declareBundle(bundle_file, server=None, password=None):
 
     msgr.closeUser()
     msgr.stop()
-    if bundle_success[0]:  # should be pair [true, bundle_name] or [false, reason]
-        return bundle_success[1]
-    else:
-        return None
+
+    return bundle_success  # should be pair [true, bundle_name] or [false, reason]
