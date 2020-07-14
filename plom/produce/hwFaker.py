@@ -24,34 +24,7 @@ from plom import __version__
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 
-
-possibleAns = [
-    "I am so sorry, I really did study this... :(",
-    "I know this, I just can't explain it",
-    "Hey, at least its not in Comic Sans",
-    "Life moves pretty fast. If you don't stop and look around once in a while, "
-    "you could miss it.  -- Ferris Bueler",
-    "Stupid is as stupid does.  -- Forrest Gump",
-    "Of course, it is very important to be sober when you take an exam.  "
-    "Many worthwhile careers in the street-cleansing, fruit-picking and "
-    "subway-guitar-playing industries have been founded on a lack of "
-    "understanding of this simple fact.  -- Terry Pratchett",
-    "The fundamental cause of the trouble in the modern world today is that "
-    "the stupid are cocksure while the intelligent are full of doubt.  "
-    "-- Bertrand Russell",
-    "Numbers is hardly real and they never have feelings\n"
-    "But you push too hard, even numbers got limits.  -- Mos Def",
-    "I was doin' 150 miles an hour sideways\n"
-    "And 500 feet down at the same time\n"
-    "I was lookin' for the cops, 'cuz you know\n"
-    "I knew that it, it was illegal  -- Arlo Guthrie",
-    "But there will always be science, engineering, and technology.  "
-    "And there will always, always be mathematics.  -- Katherine Johnson",
-    "Is 5 = 1?  Let's see... multiply both sides by 0.  "
-    "Now 0 = 0 so therefore 5 = 1.",
-    "I mean, you could claim that anything's real if the only basis for "
-    "believing in it is that nobody's proved it doesn't exist!  -- Hermione Granger",
-]
+from .faketools import possible_answers as possibleAns
 
 
 def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
