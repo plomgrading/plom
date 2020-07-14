@@ -47,12 +47,14 @@ def buildExamDatabaseFromSpec(spec, db):
     ok = True
     status = ""
     # build bundles for annotation images
-    for q in range(1, 1 + spec["numberOfQuestions"]):
-        for v in range(1, 1 + spec["numberOfVersions"]):
-            if not db.createAnnotationBundle(q, v):
-                ok = False
-                status += "Error making bundle for q.v={}.{}".format(q, v)
+    # for q in range(1, 1 + spec["numberOfQuestions"]):
+    # for v in range(1, 1 + spec["numberOfVersions"]):
+    # pass
+    # if not db.createAnnotationBundle(q, v):
+    #     ok = False
+    #     status += "Error making bundle for q.v={}.{}".format(q, v)
     # build bundle for replacement pages (for page-not-submitted images)
+
     if not db.createReplacementBundle():
         ok = False
         status += "Error making bundle for replacement pages"
@@ -103,4 +105,6 @@ def buildExamDatabaseFromSpec(spec, db):
                 status += "Error creating Question {} ver {}".format(gs, vstr)
                 ok = False
         status += "\n"
+
+    print("ok, status = ", ok, status)
     return ok, status

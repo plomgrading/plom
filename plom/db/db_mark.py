@@ -216,7 +216,7 @@ def MtakeTaskFromClient(
         qref.marked = True
         aref = qref.annotations[-1]
         # the bundle for this image is given by the (fixed) bundle for the parent qgroup.
-        aref.image = Image.create(file_name=annot_fname, md5sum=md5, bundle=qref.bundle)
+        aref.aimage = AImage.create(file_name=annot_fname, md5sum=md5)
         aref.mark = mark
         aref.plom_file = plom_fname
         aref.comment_file = comment_fname
@@ -292,8 +292,8 @@ def MgetImages(self, user_name, task):
         aref = qref.annotations[-1]
         for p in aref.apages.order_by(APage.order):
             pp.append(p.image.file_name)
-        if aref.image is not None:
-            return [True, len(pp)] + pp + [aref.image.file_name, aref.plom_file]
+        if aref.aimage is not None:
+            return [True, len(pp)] + pp + [aref.aimage.file_name, aref.plom_file]
         else:
             return [True, len(pp)] + pp
 
@@ -493,7 +493,7 @@ def MrevertTask(self, task):
             oaref = OldAnnotation.create(
                 qgroup=aref.qgroup,
                 user=aref.user,
-                image=aref.image,
+                aimage=aref.aimage,
                 edition=ed,
                 plom_file=aref.plom_file,
                 comment_file=aref.comment_file,
@@ -509,7 +509,7 @@ def MrevertTask(self, task):
             for pref in aref.apages:
                 pref.delete_instance()
             # delete the annotated image from table.
-            aref.image.delete_instance()
+            aref.aimage.delete_instance()
             # finally delete the annotation itself.
             aref.delete_instance()
     log.info("Reverting tq {}.{}".format(test_number, question))

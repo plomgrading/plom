@@ -47,6 +47,7 @@ class PlomDB:
                     CollidingPage,
                     DiscardedPage,
                     ##
+                    AImage,
                     Annotation,
                     OldAnnotation,
                     ##
@@ -88,7 +89,6 @@ class PlomDB:
 
     from plom.db.db_create import (
         declareBundle,
-        createAnnotationBundle,
         createReplacementBundle,
         areAnyPapersProduced,
         nextqueue_position,

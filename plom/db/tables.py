@@ -86,7 +86,6 @@ class QGroup(BaseModel):
     user = pw.ForeignKeyField(User, backref="qgroups", null=True)
     status = pw.CharField(default="")
     marked = pw.BooleanField(default=False)
-    bundle = pw.ForeignKeyField(Bundle, backref="bundle")
 
 
 class TPage(BaseModel):  # a test page that knows its tpgv
@@ -150,10 +149,15 @@ class DNMPage(BaseModel):
     order = pw.IntegerField(null=False)
 
 
+class AImage(BaseModel):  # a class for containing annotation-images
+    file_name = pw.CharField(null=True)
+    md5sum = pw.CharField(null=True)  # to check for duplications
+
+
 class Annotation(BaseModel):
     qgroup = pw.ForeignKeyField(QGroup, backref="annotations")
     user = pw.ForeignKeyField(User, backref="annotations", null=True)
-    image = pw.ForeignKeyField(Image, backref="annotations", null=True)
+    aimage = pw.ForeignKeyField(AImage, backref="annotations", null=True)
     edition = pw.IntegerField(null=True)
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
@@ -173,7 +177,7 @@ class APage(BaseModel):
 class OldAnnotation(BaseModel):
     qgroup = pw.ForeignKeyField(QGroup, backref="oldannotations")
     user = pw.ForeignKeyField(User, backref="oldannotations", null=True)
-    image = pw.ForeignKeyField(Image, backref="oldannotations", null=True)
+    aimage = pw.ForeignKeyField(AImage, backref="oldannotations", null=True)
     edition = pw.IntegerField(null=True)
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)

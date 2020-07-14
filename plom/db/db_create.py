@@ -16,15 +16,6 @@ log = logging.getLogger("DB")
 
 
 ########## Bundle creation ##########
-def createAnnotationBundle(self, question, version):
-    try:
-        bref = Bundle.create(name="annotations.{}.{}".format(question, version))
-    except IntegrityError as e:
-        log.error(
-            "Create bundle for q.v = {}.{} error - {}".format(question, version, e)
-        )
-        return False
-    return True
 
 
 def createReplacementBundle(self):
@@ -181,10 +172,7 @@ def createQGroup(self, t, q, v, pages):
         return False
 
     gid = "q{}g{}".format(str(t).zfill(4), q)
-    # grab the associated bundle for annotation images for this qgroup
-    bref = Bundle.get_or_none(name="annotations.{}.{}".format(q, v))
-    if bref is None:  # this should not happen
-        return False
+
     with plomdb.atomic():
         # make the qgroup
         try:
@@ -203,9 +191,7 @@ def createQGroup(self, t, q, v, pages):
             )
             return False
         try:
-            qref = QGroup.create(
-                test=tref, group=gref, question=q, version=v, bundle=bref
-            )
+            qref = QGroup.create(test=tref, group=gref, question=q, version=v)
         except pw.IntegrityError as e:
             log.error(
                 "Create Q - cannot create QGroup of question {} error - {}.".format(

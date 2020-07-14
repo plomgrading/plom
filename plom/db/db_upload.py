@@ -421,7 +421,7 @@ def cleanQGroup(self, qref):
                 oaref = OldAnnotation.create(
                     qgroup=aref.qgroup,
                     user=aref.user,
-                    image=aref.image,
+                    aimage=aref.aimage,
                     edition=ed,
                     plom_file=aref.plom_file,
                     comment_file=aref.comment_file,
@@ -439,7 +439,7 @@ def cleanQGroup(self, qref):
                 for pref in aref.apages:
                     pref.delete_instance()
                 # delete the annotated image from table.
-                aref.image.delete_instance()
+                aref.aimage.delete_instance()
                 # finally delete the annotation itself.
                 aref.delete_instance()
 

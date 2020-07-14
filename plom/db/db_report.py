@@ -463,7 +463,7 @@ def RgetAnnotatedFiles(self, test_number):
         image_list.append(p.image.file_name)
     # append last annotation from each qgroup
     for g in tref.qgroups.order_by(QGroup.question):
-        image_list.append(g.annotations[-1].image.file_name)
+        image_list.append(g.annotations[-1].aimage.file_name)
     log.debug("Sending annotated images for test {}".format(test_number))
     return image_list
 
@@ -520,7 +520,7 @@ def RgetAnnotatedImage(self, test_number, question, version):
     log.debug(
         "Sending annotated image of tqv {}.{}.{}".format(test_number, question, version)
     )
-    return [True, qref.annotations[-1].image.file_name]
+    return [True, qref.annotations[-1].aimage.file_name]
 
 
 def RgetIDReview(self):
