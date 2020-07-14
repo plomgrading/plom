@@ -126,7 +126,9 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadHWPage(self, sid, question, order, sname, fname, md5sum, bundle):
+    def uploadHWPage(
+        self, sid, question, order, sname, fname, md5sum, bundle, bundle_order
+    ):
         self.SRmutex.acquire()
         try:
             param = {
@@ -138,6 +140,7 @@ class ScanMessenger(BaseMessenger):
                 "order": order,
                 "md5sum": md5sum,
                 "bundle": bundle,
+                "bundle_order": bundle_order,
             }
             mime_type = mimetypes.guess_type(sname)[0]
             dat = MultipartEncoder(
@@ -166,7 +169,7 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadLPage(self, sid, order, sname, fname, md5sum, bundle):
+    def uploadLPage(self, sid, order, sname, fname, md5sum, bundle, bundle_order):
         self.SRmutex.acquire()
         try:
             param = {
@@ -177,6 +180,7 @@ class ScanMessenger(BaseMessenger):
                 "order": order,
                 "md5sum": md5sum,
                 "bundle": bundle,
+                "bundle_order": bundle_order,
             }
             mime_type = mimetypes.guess_type(sname)[0]
             dat = MultipartEncoder(

@@ -13,9 +13,13 @@ from peewee import fn
 
 
 ## - create an image and return the reference
-def createNewImage(self, original_name, file_name, md5, bundle_ref):
+def createNewImage(self, original_name, file_name, md5, bundle_ref, bundle_order):
     return Image.create(
-        original_name=original_name, file_name=file_name, md5sum=md5, bundle=bundle_ref,
+        original_name=original_name,
+        file_name=file_name,
+        md5sum=md5,
+        bundle=bundle_ref,
+        bundle_order=bundle_order,
     )
 
 
@@ -54,7 +58,15 @@ def attachImageToTPage(self, test_ref, page_ref, image_ref):
 
 
 def uploadTestPage(
-    self, test_number, page_number, version, original_name, file_name, md5, bundle_name
+    self,
+    test_number,
+    page_number,
+    version,
+    original_name,
+    file_name,
+    md5,
+    bundle_name,
+    bundle_order=None,
 ):
     # return value is either [True, <success message>] or
     # [False, stuff] - but need to distinguish between "discard this image" and "you should perhaps keep this image"
@@ -92,7 +104,9 @@ def uploadTestPage(
         if bref is None:
             return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
 
-        image_ref = self.createNewImage(original_name, file_name, md5, bref)
+        image_ref = self.createNewImage(
+            original_name, file_name, md5, bref, bundle_order
+        )
         self.attachImageToTPage(tref, pref, image_ref)
 
         log.info(
@@ -110,8 +124,20 @@ def uploadTestPage(
 def replaceMissingTestPage(
     self, test_number, page_number, version, original_name, file_name, md5
 ):
-    # we can actually just call uploadTPage - we just need to set the bundle_name.
+    # we can actually just call uploadTPage - we just need to set the bundle_name and bundle_order.
     # hw is different because we need to verify no hw pages present already.
+
+    bref = Bundle.get_or_none(name="replacements")
+    if bref is None:
+        return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+
+    # find max bundle_order within that bundle
+    bundle_order = 0
+    for iref in bref.images:
+        bundle_order = max(bundle_order, iref.order)
+    bundle_order += 1
+
+    #
     rval = self.uploadTestPage(
         test_number,
         page_number,
@@ -120,6 +146,7 @@ def replaceMissingTestPage(
         file_name,
         md5,
         "replacements",
+        bundle_order,
     )
     if rval[0]:  # success - so trigger an update.
         tref = Test.get(test_number=test_number)
@@ -150,7 +177,7 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
 
 
 def uploadHWPage(
-    self, sid, question, order, original_name, file_name, md5, bundle_name
+    self, sid, question, order, original_name, file_name, md5, bundle_name, bundle_order
 ):
     # first of all find the test corresponding to that sid.
     iref = IDGroup.get_or_none(student_id=sid)
@@ -176,7 +203,7 @@ def uploadHWPage(
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
         return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
-    image_ref = self.createNewImage(original_name, file_name, md5, bref)
+    image_ref = self.createNewImage(original_name, file_name, md5, bref, bundle_order)
     self.createNewHWPage(tref, qref, order, image_ref)
     return [True]
 
@@ -199,7 +226,9 @@ def createNewLPage(self, test_ref, order, image_ref):
         test_ref.save()
 
 
-def uploadLPage(self, sid, order, original_name, file_name, md5, bundle_name):
+def uploadLPage(
+    self, sid, order, original_name, file_name, md5, bundle_name, bundle_order
+):
     # first of all find the test corresponding to that sid.
     iref = IDGroup.get_or_none(student_id=sid)
     if iref is None:
@@ -216,7 +245,7 @@ def uploadLPage(self, sid, order, original_name, file_name, md5, bundle_name):
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
         return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
-    image_ref = self.createNewImage(original_name, file_name, md5, bref)
+    image_ref = self.createNewImage(original_name, file_name, md5, bref, bundle_order)
     self.createNewLPage(tref, order, image_ref)
     return [True]
 
@@ -265,8 +294,15 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
         return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+
+    # find max bundle_order within that bundle
+    bundle_order = 0
+    for iref in bref.images:
+        bundle_order = max(bundle_order, iref.order)
+    bundle_order += 1
+
     # create an image for the image-file
-    image_ref = self.createNewImage(original_name, file_name, md5, bref)
+    image_ref = self.createNewImage(original_name, file_name, md5, bref, bundle_order)
     # create the associated HW page
     self.createNewHWPage(tref, qref, order, image_ref)
     # and do an update.
@@ -275,7 +311,9 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
     return [True]
 
 
-def uploadUnknownPage(self, original_name, file_name, order, md5, bundle_name):
+def uploadUnknownPage(
+    self, original_name, file_name, order, md5, bundle_name, bundle_order
+):
     iref = Image.get_or_none(md5sum=md5)
     if iref is not None:
         return [
@@ -289,7 +327,11 @@ def uploadUnknownPage(self, original_name, file_name, order, md5, bundle_name):
         return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
     with plomdb.atomic():
         iref = Image.create(
-            original_name=original_name, file_name=file_name, md5sum=md5, bundle=bref
+            original_name=original_name,
+            file_name=file_name,
+            md5sum=md5,
+            bundle=bref,
+            bundle_order=bundle_order,
         )
         uref = UnknownPage.create(image=iref, order=order)
 

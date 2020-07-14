@@ -142,19 +142,27 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
     # keep track of which SID uploaded which Q.
     SIDQ = defaultdict(list)
     for fname in file_list:
-        if fname in skip_list:
-            print("File {} already uploaded. Skipping.".format(fname))
-            continue
         print("Upload hw page image {}".format(fname))
         shortName = os.path.split(fname)[1]
         sid, q, n = extractIDQO(shortName)
+        bundle_order = n
+        if bundle_order in skip_list:
+            print(
+                "Image {} with bundle_order {} already uploaded. Skipping.".format(
+                    fname, bundle_order
+                )
+            )
+            continue
+
         if sid != student_id or q != question:
             print("Problem with file {} - skipping".format(fname))
             continue
 
         print("Upload HW {},{},{} = {} to server".format(sid, q, n, shortName))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        rmsg = msgr.uploadHWPage(sid, q, n, shortName, fname, md5, bundle_name)
+        rmsg = msgr.uploadHWPage(
+            sid, q, n, shortName, fname, md5, bundle_name, bundle_order
+        )
         if rmsg[0]:  # was successful upload
             doHWFiling(shortName, fname)
             SIDQ[sid].append(q)
@@ -165,18 +173,25 @@ def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
     # keep track of which SID uploaded.
     JSID = {}
     for fname in fileList:
-        if fname in skip_list:
-            print("File {} already uploaded. Skipping.".format(fname))
-            continue
         print("Upload hw page image {}".format(fname))
         shortName = os.path.split(fname)[1]
         sid, n = extractJIDO(shortName)
+        bundle_order = n
+        if bundle_order in skip_list:
+            print(
+                "Image {} with bundle_order {} already uploaded. Skipping.".format(
+                    fname, bundle_order
+                )
+            )
+            continue
         if str(sid) != str(student_id):  # careful with type casting
             print("Problem with file {} - skipping".format(fname))
             continue
 
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        rmsg = msgr.uploadLPage(sid, n, shortName, fname, md5, bundle_name)
+        rmsg = msgr.uploadLPage(
+            sid, n, shortName, fname, md5, bundle_name, bundle_order
+        )
         if rmsg[0]:  # was successful upload
             doLFiling(shortName, fname)
             JSID[sid] = True

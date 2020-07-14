@@ -25,6 +25,8 @@ class Bundle(BaseModel):
 class Image(BaseModel):
     bundle = pw.ForeignKeyField(Bundle, backref="images")
     original_name = pw.CharField(null=True)  # can be empty.
+    # the order of the image within its bundle
+    bundle_order = pw.IntegerField(null=True)
     file_name = pw.CharField(null=True)
     md5sum = pw.CharField(null=True)  # to check for duplications
 

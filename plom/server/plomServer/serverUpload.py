@@ -42,7 +42,7 @@ def addTestPage(self, t, p, v, fname, image, md5o, bundle):
     return val
 
 
-def addHWPage(self, sid, q, o, fname, image, md5o, bundle):
+def addHWPage(self, sid, q, o, fname, image, md5o, bundle, bundle_order):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -52,7 +52,7 @@ def addHWPage(self, sid, q, o, fname, image, md5o, bundle):
         newName = "pages/originalPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadHWPage(sid, q, o, fname, newName, md5o, bundle)
+    val = self.DB.uploadHWPage(sid, q, o, fname, newName, md5o, bundle, bundle_order)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -64,7 +64,7 @@ def addHWPage(self, sid, q, o, fname, image, md5o, bundle):
     return val
 
 
-def addLPage(self, sid, o, fname, image, md5o, bundle):
+def addLPage(self, sid, o, fname, image, md5o, bundle, bundle_order):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -74,7 +74,7 @@ def addLPage(self, sid, o, fname, image, md5o, bundle):
         newName = "pages/originalPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadLPage(sid, o, fname, newName, md5o, bundle)
+    val = self.DB.uploadLPage(sid, o, fname, newName, md5o, bundle, bundle_order)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -86,7 +86,7 @@ def addLPage(self, sid, o, fname, image, md5o, bundle):
     return val
 
 
-def addUnknownPage(self, fname, image, order, md5o, bundle):
+def addUnknownPage(self, fname, image, order, md5o, bundle, bundle_order):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -96,7 +96,7 @@ def addUnknownPage(self, fname, image, order, md5o, bundle):
         newName = "pages/unknownPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadUnknownPage(fname, newName, order, md5o, bundle)
+    val = self.DB.uploadUnknownPage(fname, newName, order, md5o, bundle, bundle_order)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)

@@ -33,10 +33,10 @@ def declareBundle(self, file_name, md5):
     if bref is not None:
         if bref.md5sum == md5:
             # name and md5sum match one in system
-            # probably a crash occurred, so also return all the images known in this bundle
+            # probably a crash occurred, so also return all the bundle_orders known in this bundle
             skip_list = []
             for iref in bref.images:
-                skip_list.append(iref.original_name)
+                skip_list.append(iref.bundle_order)
             return [False, "both", file_name, skip_list]
 
         else:

@@ -96,6 +96,7 @@ class UploadHandler:
                 "fileName",
                 "md5sum",
                 "bundle",
+                "bundle_order",
             ],
         ):
             return web.Response(status=400)
@@ -117,6 +118,7 @@ class UploadHandler:
             image,
             param["md5sum"],
             param["bundle"],
+            param["bundle_order"],
         )
         return web.json_response(rmsg, status=200)  # all good
 
@@ -129,7 +131,17 @@ class UploadHandler:
         param = await part0.json()
 
         if not validate_required_fields(
-            param, ["user", "token", "sid", "order", "fileName", "md5sum", "bundle"]
+            param,
+            [
+                "user",
+                "token",
+                "sid",
+                "order",
+                "fileName",
+                "md5sum",
+                "bundle",
+                "bundle_order",
+            ],
         ):
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
@@ -149,6 +161,7 @@ class UploadHandler:
             image,
             param["md5sum"],
             param["bundle"],
+            param["bundle_order"],
         )
         return web.json_response(rmsg, status=200)  # all good
 
@@ -161,7 +174,8 @@ class UploadHandler:
         param = await part0.json()
 
         if not validate_required_fields(
-            param, ["user", "token", "fileName", "order", "md5sum", "bundle"]
+            param,
+            ["user", "token", "fileName", "order", "md5sum", "bundle", "bundle_order"],
         ):
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
@@ -175,7 +189,12 @@ class UploadHandler:
         image = await part1.read()
         # file it away.
         rmsg = self.server.addUnknownPage(
-            param["fileName"], image, param["order"], param["md5sum"], param["bundle"]
+            param["fileName"],
+            image,
+            param["order"],
+            param["md5sum"],
+            param["bundle"],
+            param["bundle_order"],
         )
         return web.json_response(rmsg, status=200)  # all good
 
