@@ -242,11 +242,10 @@ spC = sub.add_parser(
     help='Clear "scanner" login',
     description='Clear "scanner" login after a crash or other expected event.',
 )
-#
 spA = sub.add_parser(
     "all",
-    help="Process, read and upload page images to scanner",
-    description="Process, read and upload page images to scanner.",
+    help="Process, read and upload page images to scanner (WIP!)",
+    description="Process, read and upload page images to scanner. CAUTION: Work in Progress!",
 )
 #
 spP.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
