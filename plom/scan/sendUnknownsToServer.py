@@ -59,7 +59,10 @@ def sendUnknownFiles(scanMessenger, fileDict):
             md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
             shortName = os.path.split(fname)[1]
             order = extractOrder(shortName)
-            rmsg = scanMessenger.uploadUnknownPage(shortName, fname, order, md5, bundle)
+            bundle_order = order
+            rmsg = scanMessenger.uploadUnknownPage(
+                shortName, fname, order, md5, bundle, bundle_order
+            )
             doFiling(rmsg, shortName, fname)
 
 

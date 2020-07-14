@@ -314,6 +314,8 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
 def uploadUnknownPage(
     self, original_name, file_name, order, md5, bundle_name, bundle_order
 ):
+    # TODO - remove 'order' here - it is superceded by 'bundle_order'
+
     iref = Image.get_or_none(md5sum=md5)
     if iref is not None:
         return [
@@ -742,46 +744,6 @@ def removeAllScannedPages(self, test_number):
 
 
 # still todo below
-
-#
-# def uploadLPage(self, sid, order, oname, nname, md5):
-#     # first of all find the test corresponding to that sid.
-#     iref = IDGroup.get_or_none(student_id=sid)
-#     if iref is None:
-#         return [False, "SID does not correspond to any test on file."]
-#     tref = iref.test
-#     xref = LPage.get_or_none(test=tref, order=order)  # this should be none.
-#     if xref is not None:
-#         # we found a page with that order, so we need to put the uploaded page at the end.
-#         lastOrder = LPage.select(fn.MAX(LPage.order)).where(LPage.test == tref).scalar()
-#         if lastOrder is None:
-#             order = 1
-#         else:
-#             order = lastOrder + 1
-#     # create one.
-#     with plomdb.atomic():
-#         # create image, LPage, and link.
-#         img = Image.create(original_name=oname, file_name=nname, md5sum=md5)
-#         xref = LPage.create(test=tref, order=order, image=img)
-#         # now we have to append this page to every annotation.
-#         # BIG TODO - improve this so human decides what goes where.
-#         for qref in QGroup.select().where(QGroup.test == tref):
-#             aref = qref.annotations[0]
-#             lastOrder = (
-#                 APage.select(fn.MAX(APage.order))
-#                 .where(APage.annotation == aref)
-#                 .scalar()
-#             )
-#             if lastOrder is None:
-#                 order = 0
-#             else:
-#                 order = lastOrder + 1
-#             ap = APage.create(annotation=aref, image=img, order=order)
-#         # set the recent_upload flag for the test
-#         tref.used = True
-#         tref.recent_upload = True
-#         tref.save()
-#     return [True]
 
 
 def uploadCollidingPage(self, t, p, v, oname, nname, md5):

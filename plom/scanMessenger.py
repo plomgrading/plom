@@ -209,7 +209,7 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadUnknownPage(self, sname, fname, order, md5sum, bundle):
+    def uploadUnknownPage(self, sname, fname, order, md5sum, bundle, bundle_order):
         self.SRmutex.acquire()
         try:
             param = {
@@ -219,6 +219,7 @@ class ScanMessenger(BaseMessenger):
                 "order": order,
                 "md5sum": md5sum,
                 "bundle": bundle,
+                "bundle_order": bundle_order,
             }
             mime_type = mimetypes.guess_type(sname)[0]
             dat = MultipartEncoder(
