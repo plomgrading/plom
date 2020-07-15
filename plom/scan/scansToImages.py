@@ -328,27 +328,39 @@ def normalizeJPEGOrientation(f):
 
 
 def makeBundleDirectories(fname, hwByQ=False, hwLoose=False):
-    """Each bundle needs its own subdirectory of pageImages and scanPNGs, so we have to make them.
-    Note that if hwByQ flag is set then we put things inside bundles/submittedHWByQ,
-    and similarly if hwLoose is set then we put things inside bundles/submittedLoose
-    """
+    """Each bundle needs its own subdirectories of pageImages and scanPNGs, make them.
 
-    scan, fext = os.path.splitext(fname)
+    Args:
+        fname (str, Path): the name of a pdf-file, zip-file or whatever
+            from which we create the bundle name.
+        hwByQ (bool): this is a Homework-by-Question bundle.
+        hwLoose (bool): this is Homework-as-a-oose-bundle (we don't know
+            which pages correspond to which questions).
+
+    Returns:
+        pathlib.Path: the filesystem path to the bundle.  TODO: not sure
+            if this is FQN or not or unspecified.
+
+    Note that if hwByQ flag is set then we put things inside bundles/submittedHWByQ,
+    and similarly if hwLoose is set then we put things inside bundles/submittedLoose.
+
+    TODO: hwByQ and hwLoose are mutually exclusive: set both and you'll
+    break something---you get to keep all the pieces!
+    """
     # issue #126 - replace spaces in names with underscores for output names.
-    safeScan = scan.replace(" ", "_")
+    safeScan = Path(fname).stem.replace(" ", "_")
     # make directory for that bundle inside scanPNGs
     if hwByQ:
-        bundleDir = os.path.join("bundles", "submittedHWByQ", safeScan)
+        bundleDir = Path("bundles") / "submittedHWByQ" / safeScan
     elif hwLoose:
-        bundleDir = os.path.join("bundles", "submittedLoose", safeScan)
+        bundleDir = Path("bundles") / "submittedLoose" / safeScan
     else:
-        bundleDir = os.path.join("bundles", safeScan)
+        bundleDir = Path("bundles") / safeScan
     os.makedirs(bundleDir, exist_ok=True)
-    # now inside that we need other subdir [pageImages, scanPNGs, decodedPages, unknownPages]
+    # now inside that we need other subdirs
     # note that hwbyq and hwloose do not need decoded pages since we know them already.
     for dir in ["pageImages", "scanPNGs", "decodedPages", "unknownPages"]:
-        os.makedirs(os.path.join(bundleDir, dir), exist_ok=True)
-
+        os.makedirs(bundleDir / dir, exist_ok=True)
     return bundleDir
 
 
@@ -422,6 +434,6 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
             fname = Path("submittedHWByQ") / fname
         elif hwLoose:
             fname = Path("submittedLoose") / fname
-        bitmaps_dir = os.path.join(bundleDir, "scanPNGs")
+        bitmaps_dir = bundleDir / "scanPNGs"
         processFileToBitmaps(fname, bitmaps_dir)
         postProcessing(bitmaps_dir)
