@@ -198,7 +198,7 @@ def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
     return JSID
 
 
-def uploadTPages(server=None, password=None):
+def uploadTPages(bundleDir, server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -233,27 +233,23 @@ def uploadTPages(server=None, password=None):
 
     fileDict = {}  # list of files by bundle
 
-    # go into bundles directory
-    os.chdir("bundles")
-    for bundleDir in os.scandir():
-        # make sure is directory
-        if not bundleDir.is_dir():
-            continue
-        fileDict[bundleDir.name] = []
-        # Look for pages in decodedPages
-        for ext in PlomImageExtWhitelist:
-            fileDict[bundleDir.name].extend(
-                sorted(
-                    glob(os.path.join(bundleDir, "decodedPages", "t*.{}".format(ext)))
-                )
+    # make sure is directory
+    if not bundleDir.is_dir():
+        raise ValueError("should've been a directory!")
+
+    # TODO: only one thing in the dict, refactor to plain list?
+    fileDict[bundleDir.name] = []
+    # Look for pages in decodedPages
+    for ext in PlomImageExtWhitelist:
+        fileDict[bundleDir.name].extend(
+            sorted(
+                (bundleDir / "decodedPages").glob("t*.{}".format(ext))
             )
+        )
     TUP = sendTestFiles(msgr, fileDict)
     # we do not update any missing pages, since that is a serious issue for tests, and should not be done automagically
 
     updates = msgr.sendTUploadDone()
-
-    # go back to original dir
-    os.chdir("..")
 
     # close down messenger
     msgr.closeUser()
