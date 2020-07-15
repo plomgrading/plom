@@ -100,41 +100,41 @@ def processScans(server, password, pdf_fname):
     if not os.path.isfile(pdf_fname):
         print("Cannot find file {} - skipping".format(pdf_fname))
         return
-    print("Declaring bundle PDF {} to server".format(pdf_fname))
-    rval = sendPagesToServer.declareBundle(pdf_fname, server, password)
-    # should be [True, name] or [False, name] [False,md5sum]
-    # or [False, both, name, [all the files already uploaded]]
-    if rval[0] is True:
-        bundle_name = rval[1]
+    print("Checking if bundle PDF {} already exists on server".format(pdf_fname))
+    bundleExists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
+    # should be [False, name] or [True, name] [True,md5sum]
+    # or [True, both, name, [all the files already uploaded]]
+    if bundleExists[0] is False:
+        bundle_name = pdf_fname
         skip_list = []
     else:
-        if rval[1] == "name":
+        if bundleExists[1] == "name":
             print(
                 "The bundle name {} has been used previously for a different bundle. Stopping".format(
                     pdf_fname
                 )
             )
             return
-        elif rval[1] == "md5sum":
+        elif bundleExists[1] == "md5sum":
             print(
                 "A bundle with matching md5sum is already in system with a different name. Stopping".format(
                     pdf_fname
                 )
             )
             return
-        elif rval[1] == "both":
+        elif bundleExists[1] == "both":
             print(
                 "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
                     pdf_fname
                 )
             )
-            bundle_name = rval[2]
-            skip_list = rval[3]
+            bundle_name = pdf_fname
+            skip_list = bundleExists[3]
         else:
             print("Should not be here!")
             exit(1)
 
-        print("Processing PDF {} to images".format(pdf_fname))
+    print("Processing PDF {} to images".format(pdf_fname))
     scansToImages.processScans([pdf_fname])
 
 
