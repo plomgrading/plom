@@ -4,7 +4,6 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import glob
 import hashlib
 import os
 from pathlib import Path
@@ -95,13 +94,17 @@ def isInArchive(file_name, hwByQ=False, hwLoose=False):
     return [False]
 
 
-def processFileToBitmaps(bundleDir, file_name, hwByQ=False, hwLoose=False):
+def processFileToBitmaps(file_name, dest):
     """Extract/convert each page of pdf into bitmap.
 
     We have various ways to do this, in rough order of preference:
       1. Extract a scanned bitmap "as-is"
       2. Render the page with PyMuPDF
       3. Render the page with Ghostscript
+
+    Args:
+        dest (str, Path): where to save the resulting bitmap files.
+        file_name (str, Path): PDF file from which to extract bitmaps.
 
     For extracting the scanned data as is, we must be careful not to
     just grab any image off the page (for example, it must be the only
@@ -114,20 +117,10 @@ def processFileToBitmaps(bundleDir, file_name, hwByQ=False, hwLoose=False):
 
     NOT IMPLEMENTED YET: You can force one of these...
     """
-    destDir = os.path.join(bundleDir, "scanPNGs")
-
-    scan, fext = os.path.splitext(file_name)
     # issue #126 - replace spaces in names with underscores for output names.
-    safeScan = scan.replace(" ", "_")
+    safeScan = Path(file_name).stem.replace(" ", "_")
 
-    if hwByQ:
-        long_name = Path("submittedHWByQ") / file_name
-    elif hwLoose:
-        long_name = Path("submittedLoose") / file_name
-    else:
-        long_name = file_name
-
-    doc = fitz.open(long_name)
+    doc = fitz.open(file_name)
 
     # 0:9 -> 10 pages -> 2 digits
     zpad = math.floor(math.log10(len(doc))) + 1
@@ -184,11 +177,11 @@ def processFileToBitmaps(bundleDir, file_name, hwByQ=False, hwLoose=False):
                     )
 
                 if not converttopng:
-                    outname = os.path.join(destDir, basename + "." + d["ext"])
+                    outname = os.path.join(dest, basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
                 else:
-                    outname = os.path.join(destDir, basename + ".png")
+                    outname = os.path.join(dest, basename + ".png")
                     with tempfile.NamedTemporaryFile() as g:
                         with open(g.name, "wb") as f:
                             f.write(d["image"])
@@ -223,7 +216,7 @@ def processFileToBitmaps(bundleDir, file_name, hwByQ=False, hwLoose=False):
 
         # TODO: experiment with jpg: generate both and see which is smaller?
         # (But be careful about "dim mult of 16" thing above.)
-        outname = os.path.join(destDir, basename + ".png")
+        outname = os.path.join(dest, basename + ".png")
         pix.writeImage(outname)
 
 
@@ -264,11 +257,10 @@ def extractImageFromFitzPage(page, doc):
     return True, d
 
 
-def processFileToPng_w_ghostscript(fname):
+def processFileToPng_w_ghostscript(fname, dest):
     """Convert each page of pdf into png using ghostscript"""
-    scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
-    safeScan = scan.replace(" ", "_")
+    safeScan = Path(fname).stem.replace(" ", "_")
     try:
         subprocess.run(
             [
@@ -277,7 +269,7 @@ def processFileToPng_w_ghostscript(fname):
                 "-dNOPAUSE",
                 "-sDEVICE=png256",
                 "-o",
-                os.path.join("scanPNGs", safeScan + "-%d.png"),
+                os.path.join(dest, safeScan + "-%d.png"),
                 "-r200",
                 fname,
             ],
@@ -335,42 +327,55 @@ def normalizeJPEGOrientation(f):
 
 
 def makeBundleDirectories(fname, hwByQ=False, hwLoose=False):
-    """Each bundle needs its own subdirectory of pageImages and scanPNGs, so we have to make them.
-    Note that if hwByQ flag is set then we put things inside bundles/submittedHWByQ,
-    and similarly if hwLoose is set then we put things inside bundles/submittedLoose
-    """
+    """Each bundle needs its own subdirectories: make pageImages, scanPNGs, etc.
 
-    scan, fext = os.path.splitext(fname)
+    Args:
+        fname (str, Path): the name of a pdf-file, zip-file or whatever
+            from which we create the bundle name.
+        hwByQ (bool): this is a Homework-by-Question bundle.
+        hwLoose (bool): this is Homework-as-a-loose-bundle (we don't
+            know which pages correspond to which questions).
+
+    Returns:
+        pathlib.Path: the filesystem path to the bundle.  TODO: not sure
+            if this is FQN or not: for now its unspecified.
+
+    Note that if hwByQ flag is set then we put things inside bundles/submittedHWByQ,
+    and similarly if hwLoose is set then we put things inside bundles/submittedLoose.
+
+    TODO: hwByQ and hwLoose are mutually exclusive: set both and you'll
+    break something---you get to keep all the pieces!
+    """
     # issue #126 - replace spaces in names with underscores for output names.
-    safeScan = scan.replace(" ", "_")
+    safeScan = Path(fname).stem.replace(" ", "_")
     # make directory for that bundle inside scanPNGs
     if hwByQ:
-        bundleDir = os.path.join("bundles", "submittedHWByQ", safeScan)
+        bundleDir = Path("bundles") / "submittedHWByQ" / safeScan
     elif hwLoose:
-        bundleDir = os.path.join("bundles", "submittedLoose", safeScan)
+        bundleDir = Path("bundles") / "submittedLoose" / safeScan
     else:
-        bundleDir = os.path.join("bundles", safeScan)
+        bundleDir = Path("bundles") / safeScan
     os.makedirs(bundleDir, exist_ok=True)
-    # now inside that we need other subdir [pageImages, scanPNGs, decodedPages, unknownPages]
+    # now inside that we need other subdirs
     # note that hwbyq and hwloose do not need decoded pages since we know them already.
     for dir in ["pageImages", "scanPNGs", "decodedPages", "unknownPages"]:
-        os.makedirs(os.path.join(bundleDir, dir), exist_ok=True)
-
+        os.makedirs(bundleDir / dir, exist_ok=True)
     return bundleDir
 
 
-def postProcessing(bundleDir, hwByQ=False, hwLoose=False):
-    """Do the post processing on the files inside bundleDir
-    """
-    # get current directory, we need to go back there at the end.
-    startDir = os.getcwd()
-    # now cd into the scanPNGs directory of the current bundle.
+def postProcessing(thedir, dest):
+    """Do post processing on a directory of scanned bitmaps.
 
-    os.chdir(os.path.join(bundleDir, "scanPNGs"))
+    Args:
+        thedir (str, Path): a directory full of bitmaps.
+        dest (str, Path): move images here (???).
+    """
+    thedir = Path(thedir)
+    dest = Path(dest)
 
     print("Normalizing jpeg orientation from Exif metadata")
-    stuff = list(glob.glob("*.jpg"))
-    stuff.extend(glob.glob("*.jpeg"))
+    stuff = list(thedir.glob("*.jpg"))
+    stuff.extend(thedir.glob("*.jpeg"))
     N = len(stuff)
     with Pool() as p:
         r = list(tqdm(p.imap_unordered(normalizeJPEGOrientation, stuff), total=N))
@@ -378,7 +383,7 @@ def postProcessing(bundleDir, hwByQ=False, hwLoose=False):
     # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
     print("Gamma shift the PNG images")
     # list and len bit crude here: more pythonic to leave as iterator?
-    stuff = list(glob.glob("*.png"))
+    stuff = list(thedir.glob("*.png"))
     N = len(stuff)
     with Pool() as p:
         r = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
@@ -386,17 +391,12 @@ def postProcessing(bundleDir, hwByQ=False, hwLoose=False):
     # for x in glob.glob("..."):
     #     gamma_adjust(x)
 
-    # move all the images into pageimages directory of this bundle
-    dest = os.path.join("../pageImages")
     fileList = []
     for ext in PlomImageExtWhitelist:
-        fileList.extend(glob.glob("*.{}".format(ext)))
+        fileList.extend(thedir.glob("*.{}".format(ext)))
     # move them to pageimages for barcode reading
     for file in fileList:
-        shutil.move(file, os.path.join(dest, file))
-
-    # now cd back to the starting directory
-    os.chdir(startDir)
+        shutil.move(file, dest / file.stem)
 
 
 def processScans(PDFs, hwByQ=False, hwLoose=False):
@@ -420,12 +420,15 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
                 )
             )
             continue
-        else:
-            # PDF is not in archive, so is new bundle.
-            # make a directory for it
-            # is of form "bundle/fname/" or
-            # "bundle/submittedHWByQ/fname" or "bundle/submittedLoose/fname"
-            bundleDir = makeBundleDirectories(fname, hwByQ, hwLoose)
-
-            processFileToBitmaps(bundleDir, fname, hwByQ, hwLoose)
-            postProcessing(bundleDir, hwByQ, hwLoose)
+        # PDF is not in archive, so is new bundle.
+        # make a directory for it
+        # is of form "bundle/fname/" or
+        # "bundle/submittedHWByQ/fname" or "bundle/submittedLoose/fname"
+        bundleDir = makeBundleDirectories(fname, hwByQ, hwLoose)
+        if hwByQ:
+            fname = Path("submittedHWByQ") / fname
+        elif hwLoose:
+            fname = Path("submittedLoose") / fname
+        bitmaps_dir = bundleDir / "scanPNGs"
+        processFileToBitmaps(fname, bitmaps_dir)
+        postProcessing(bitmaps_dir, bundleDir / "pageImages")

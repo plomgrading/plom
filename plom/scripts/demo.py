@@ -76,13 +76,19 @@ def main():
     subprocess.check_call(split("plom-build make -w 1234"))
     subprocess.check_call(split("plom-fake-scribbles -w 1234"))
 
-    subprocess.check_call(
-        split(
-            "plom-scan all -w 4567 fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf"
-        )
-    )
-    # subprocess.check_call(split("plom-scan read -w 4567"))
-    # subprocess.check_call(split("plom-scan upload -u -w 4567"))
+    # TODO:
+    # subprocess.check_call(
+    #     split(
+    #         "plom-scan all -w 4567 fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf"
+    #     )
+    # )
+    for f in (
+        "fake_scribbled_exams1.pdf",
+        "fake_scribbled_exams2.pdf",
+        "fake_scribbled_exams3.pdf",
+    ):
+        subprocess.check_call(split("plom-scan process -w 4567 {}".format(f)))
+        subprocess.check_call(split("plom-scan upload -u -w 4567"))
 
     time.sleep(0.5)
     try:

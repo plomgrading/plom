@@ -11,15 +11,11 @@
   1. Decide on a working directory for your scans, copy your PDFs into
      that directory and then cd into it.
 
-  2. Use the `process` command to split your PDF into bitmaps of each page.
+  2. Use the `process` command to split your first PDF into bitmaps of
+     each page.  This will also read any QR codes from the pages and
+     match these against expectations from the server.
 
-  3. Ensure the Plom server is running and a password for the "scanner"
-     user has been set.
-
-  4. Use the `read` command to read QR codes from the pages and match
-     these against expectations from the server.
-
-  5. Use the `upload` command to send pages to the server.  There are
+  3. Use the `upload` command to send pages to the server.  There are
      additional flags for dealing with special cases:
 
        a. Pages that could not be identified are called "Unknowns".
@@ -37,9 +33,9 @@
           page).  Force the upload these if you really need to; the
           manager will then have to look at them.
 
-  6. Run "plom-scan status" to get a brief summary of scanning to date.
+  4. Run "plom-scan status" to get a brief summary of scanning to date.
 
-  7. If something goes wrong such as crashes or interruptions, you may
+  5. If something goes wrong such as crashes or interruptions, you may
      need to clear the "scanner" login with the `clear` command.
 
   These steps may be repeated as new PDF files come in: it is not
@@ -94,20 +90,18 @@ def make_required_directories():
         os.makedirs(dir, exist_ok=True)
 
 
-def processScans(server, password, PDFs):
+def processScans(server, password, pdf_fname):
+    """Process PDF file into images."""
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
     make_required_directories()
 
-    # first check that we can find all the files
-    for fname in PDFs:
-        if not os.path.isfile(fname):
-            print("Cannot find file {} - skipping".format(fname))
-            continue
-        print("Declaring bundle PDF {} to server".format(fname))
-        rval = sendPagesToServer.declareBundle(fname, server, password)
-    rval = sendPagesToServer.declareBundle(file_name, server, password)
+    if not os.path.isfile(pdf_fname):
+        print("Cannot find file {} - skipping".format(pdf_fname))
+        return
+    print("Declaring bundle PDF {} to server".format(pdf_fname))
+    rval = sendPagesToServer.declareBundle(pdf_fname, server, password)
     # should be [True, name] or [False, name] [False,md5sum]
     # or [False, both, name, [all the files already uploaded]]
     if rval[0] is True:
@@ -117,21 +111,21 @@ def processScans(server, password, PDFs):
         if rval[1] == "name":
             print(
                 "The bundle name {} has been used previously for a different bundle. Stopping".format(
-                    fname
+                    pdf_fname
                 )
             )
             return
         elif rval[1] == "md5sum":
             print(
                 "A bundle with matching md5sum is already in system with a different name. Stopping".format(
-                    fname
+                    pdf_fname
                 )
             )
             return
         elif rval[1] == "both":
             print(
                 "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
-                    fname
+                    pdf_fname
                 )
             )
             bundle_name = rval[2]
@@ -140,8 +134,8 @@ def processScans(server, password, PDFs):
             print("Should not be here!")
             exit(1)
 
-        print("Processing PDF {} to images".format(fname))
-    scansToImages.processScans(PDFs)
+        print("Processing PDF {} to images".format(pdf_fname))
+    scansToImages.processScans([pdf_fname])
 
 
 def readImages(server, password):
@@ -219,13 +213,8 @@ sub = parser.add_subparsers(dest="command")
 
 spP = sub.add_parser(
     "process",
-    help="Process scanned PDFs to images",
-    description="Process one or more scanned PDFs into page images.",
-)
-spR = sub.add_parser(
-    "read",
-    help="Read QR-codes from images and collate",
-    description="Read QR-codes from page images and check unfo  with server (e.g., versions match).",
+    help="Process scanned PDF to images and read QRs",
+    description="Process one scanned PDF into page images, read QR codes and check info with server (e.g., versions match).",
 )
 spU = sub.add_parser(
     "upload",
@@ -242,14 +231,12 @@ spC = sub.add_parser(
     help='Clear "scanner" login',
     description='Clear "scanner" login after a crash or other expected event.',
 )
-#
 spA = sub.add_parser(
     "all",
-    help="Process, read and upload page images to scanner",
-    description="Process, read and upload page images to scanner.",
+    help="Process, read and upload page images to scanner (WIP!)",
+    description="Process, read and upload page images to scanner. CAUTION: Work in Progress!",
 )
-#
-spP.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
+spP.add_argument("scanPDF", help="The PDF file of scanned pages.")
 spU.add_argument(
     "-u",
     "--unknowns",
@@ -265,7 +252,7 @@ spU.add_argument(
 )
 spA.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
 #
-for x in (spR, spU, spS, spC, spP, spA):
+for x in (spU, spS, spC, spP, spA):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
@@ -275,7 +262,6 @@ def main():
 
     if args.command == "process":
         processScans(args.server, args.password, args.scanPDF)
-    elif args.command == "read":
         readImages(args.server, args.password)
     elif args.command == "upload":
         uploadImages(args.server, args.password, args.unknowns, args.collisions)
