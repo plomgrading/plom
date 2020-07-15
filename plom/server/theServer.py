@@ -41,7 +41,6 @@ from .plomServer.routesUserInit import UserInitHandler
 from .plomServer.routesUpload import UploadHandler
 from .plomServer.routesID import IDHandler
 from .plomServer.routesMark import MarkHandler
-from .plomServer.routesTotal import TotalHandler
 from .plomServer.routesReport import ReportHandler
 
 
@@ -204,17 +203,6 @@ class Server(object):
         MrevertTask,
         MshuffleImages,
     )
-    from .plomServer.serverTotal import (
-        TgetMaxMark,
-        TprogressCount,
-        TgetDoneTasks,
-        TgetNextTask,
-        TclaimThisTask,
-        TgetImage,
-        TreturnTotalledTask,
-        TdidNotFinish,
-        TreviewTotal,
-    )
 
     from .plomServer.serverReport import (
         RgetUnusedTests,
@@ -236,7 +224,6 @@ class Server(object):
         RgetAnnotatedFiles,
         RgetMarkReview,
         RgetIDReview,
-        RgetTotReview,
         RgetAnnotatedImage,
         RgetUserList,
         RgetUserDetails,
@@ -277,7 +264,6 @@ def launch(masterToken=None):
     uploader = UploadHandler(peon)
     ider = IDHandler(peon)
     marker = MarkHandler(peon)
-    totaller = TotalHandler(peon)
     reporter = ReportHandler(peon)
 
     try:
@@ -289,7 +275,6 @@ def launch(masterToken=None):
         uploader.setUpRoutes(app.router)
         ider.setUpRoutes(app.router)
         marker.setUpRoutes(app.router)
-        totaller.setUpRoutes(app.router)
         reporter.setUpRoutes(app.router)
         # run the web server
         log.info("Start the server!")

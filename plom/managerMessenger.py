@@ -337,30 +337,6 @@ class ManagerMessenger(BaseMessenger):
 
         return progress
 
-    def TprogressCount(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/TOT/progress".format(self.server),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            # throw errors when response code != 200.
-            response.raise_for_status()
-            # convert the content of the response to a textfile for identifier
-            progress = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return progress
-
     def IDrequestPredictions(self):
         self.SRmutex.acquire()
         try:
@@ -1351,28 +1327,6 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def getTOTReview(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/REP/totReview".format(self.server),
-                verify=False,
-                json={"user": self.user, "token": self.token,},
-            )
-            response.raise_for_status()
-            rval = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return rval
-
     def RgetAnnotatedImage(self, testNumber, questionNumber, version):
         self.SRmutex.acquire()
         try:
@@ -1407,38 +1361,6 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return img
-
-    def TrequestImage(self, testNumber):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/TOT/image/{}".format(self.server, testNumber),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.".format(code)
-                ) from None
-            elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return image
 
     def clearAuthorisationUser(self, someuser):
         self.SRmutex.acquire()
@@ -1562,33 +1484,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.patch(
                 "https://{}/ID/review".format(self.server),
-                verify=False,
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "testNumber": testNumber,
-                },
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Could not find test = {}.".format(testNumber)
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-    def TreviewTOT(self, testNumber):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.patch(
-                "https://{}/TOT/review".format(self.server),
                 verify=False,
                 json={
                     "user": self.user,
