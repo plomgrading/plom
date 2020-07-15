@@ -82,42 +82,47 @@ def processLooseScans(server, password, file_name, student_id):
             short_name, student_id
         )
     )
-    # pass as list since processScans expects a list.
-    scansToImages.processScans([short_name], hwLoose=True)
 
-    # now declare the bundle to the server
-    rval = sendPagesToServer.declareBundle(file_name, server, password)
-    # should be [True, name] or [False, name] [False,md5sum]
-    # or [False, both, name, [all the files already uploaded]]
-    if rval[0] is True:
-        bundle_name = rval[1]
+    # check for bundle on the server
+    bundleExists = sendPagesToServer.doesBundleExist(file_name, server, password)
+    # should be [False] or [True, name] [True,md5sum]
+    # or [True, both, name, [all the files already uploaded]]
+    if bundleExists[0] is False:
+        bundle_name = file_name
         skip_list = []
     else:
-        if rval[1] == "name":
+        if bundleExists[1] == "name":
             print(
                 "The bundle name {} has been used previously for a different bundle. Stopping".format(
                     file_name
                 )
             )
             return
-        elif rval[1] == "md5sum":
+        elif bundleExists[1] == "md5sum":
             print(
                 "A bundle with matching md5sum is already in system with a different name. Stopping".format(
                     file_name
                 )
             )
             return
-        elif rval[1] == "both":
+        elif bundleExists[1] == "both":
             print(
                 "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
                     file_name
                 )
             )
-            bundle_name = rval[2]
-            skip_list = rval[3]
+            bundle_name = file_name
+            skip_list = bundleExists[3]
         else:
             print("Should not be here!")
             exit(1)
+
+    # pass as list since processScans expects a list.
+    scansToImages.processScans([short_name], hwLoose=True)
+
+    # create the bundle (if needed) before uploading
+    if bundleExists[0] is False:
+        sendPagesToServer.createNewBundle(file_name, server, password)
 
     # send the images to the server
     sendPagesToServer.uploadLPages(bundle_name, skip_list, student_id, server, password)
@@ -172,38 +177,42 @@ def processHWScans(server, password, file_name, student_id, question_list):
     # pass as list since processScans expects a list.
     scansToImages.processScans([short_name], hwByQ=True)
 
-    rval = sendPagesToServer.declareBundle(file_name, server, password)
-    # should be [True, name] or [False, name] [False,md5sum]
-    # or [False, both, name, [all the files already uploaded]]
-    if rval[0] is True:
-        bundle_name = rval[1]
+    bundleExists = sendPagesToServer.doesBundleExist(file_name, server, password)
+    # should be [False] or [True, name] [True,md5sum]
+    # or [True, both, name, [all the files already uploaded]]
+    if bundleExists[0] is False:
+        bundle_name = file_name
         skip_list = []
     else:
-        if rval[1] == "name":
+        if bundleExists[1] == "name":
             print(
                 "The bundle name {} has been used previously for a different bundle. Stopping".format(
                     file_name
                 )
             )
             return
-        elif rval[1] == "md5sum":
+        elif bundleExists[1] == "md5sum":
             print(
                 "A bundle with matching md5sum is already in system with a different name. Stopping".format(
                     file_name
                 )
             )
             return
-        elif rval[1] == "both":
+        elif bundleExists[1] == "both":
             print(
                 "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
                     file_name
                 )
             )
-            bundle_name = rval[2]
-            skip_list = rval[3]
+            bundle_name = file_name
+            skip_list = bundleExists[3]
         else:
             print("Should not be here!")
             exit(1)
+
+    # create the bundle (if needed) before uploading
+    if bundleExists[0] is False:
+        sendPagesToServer.createNewBundle(file_name, server, password)
 
     # send the images to the server
     sendPagesToServer.uploadHWPages(

@@ -8,7 +8,18 @@ class UploadHandler:
     def __init__(self, plomServer):
         self.server = plomServer
 
-    async def declareBundle(self, request):
+    async def doesBundleExist(self, request):
+        data = await request.json()
+        if not validate_required_fields(data, ["user", "token", "bundle", "md5sum"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] in ["scanner", "manager"]:
+            return web.Response(status=401)
+        rval = self.server.declareBundle(data["bundle"], data["md5sum"])
+        return web.json_response(rval, status=200)  # all fine
+
+    async def createNewBundle(self, request):
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "bundle", "md5sum"]):
             return web.Response(status=400)
@@ -767,7 +778,8 @@ class UploadHandler:
         return web.Response(status=200)
 
     def setUpRoutes(self, router):
-        router.add_put("/admin/bundle", self.declareBundle)
+        router.add_get("/admin/bundle", self.doesBundleExist)
+        router.add_put("/admin/bundle", self.createNewBundle)
         router.add_get("/admin/sidToTest", self.sidToTest)
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/hwPages", self.uploadHWPage)

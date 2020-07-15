@@ -88,7 +88,8 @@ class PlomDB:
     )
 
     from plom.db.db_create import (
-        declareBundle,
+        doesBundleExist,
+        createNewBundle,
         createReplacementBundle,
         areAnyPapersProduced,
         nextqueue_position,

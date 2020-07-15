@@ -419,7 +419,7 @@ def checkTestHasThatSID(student_id, server=None, password=None):
         return None
 
 
-def declareBundle(bundle_file, server=None, password=None):
+def doesBundleExist(bundle_file, server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -453,9 +453,51 @@ def declareBundle(bundle_file, server=None, password=None):
     # make name safeer by replacing space by underscore
     bundle_name = os.path.splitext(os.path.basename(bundle_file))[0].replace(" ", "_")
     md5 = hashlib.md5(open(bundle_file, "rb").read()).hexdigest()
-    bundle_success = msgr.declareBundle(bundle_name, md5)
+    bundle_success = msgr.doesBundleExist(bundle_name, md5)
 
     msgr.closeUser()
     msgr.stop()
 
     return bundle_success  # should be pair [true, bundle_name] or [false, reason]
+
+
+def createNewBundle(bundle_file, server=None, password=None):
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ScanMessenger(s, port=p)
+    else:
+        msgr = ScanMessenger(server)
+    msgr.start()
+
+    # get the password if not specified
+    if password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'scanner' password:")
+        except Exception as error:
+            print("ERROR", error)
+    else:
+        pwd = password
+
+    # get started
+    try:
+        msgr.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-scan clear"'
+        )
+        exit(10)
+
+    # get bundle's name without path or extension.
+    # make name safeer by replacing space by underscore
+    bundle_name = os.path.splitext(os.path.basename(bundle_file))[0].replace(" ", "_")
+    md5 = hashlib.md5(open(bundle_file, "rb").read()).hexdigest()
+    bundle_success = msgr.createNewBundle(bundle_name, md5)
+
+    msgr.closeUser()
+    msgr.stop()
+
+    return bundle_success  # should be pair [true, bundle_name] or [false]

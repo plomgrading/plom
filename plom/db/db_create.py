@@ -27,7 +27,7 @@ def createReplacementBundle(self):
     return True
 
 
-def declareBundle(self, file_name, md5):
+def doesBundleExist(self, file_name, md5):
     # check if that bundle-name is on file, and if the md5sum is known.
     bref = Bundle.get_or_none(name=file_name)
     if bref is not None:
@@ -37,14 +37,20 @@ def declareBundle(self, file_name, md5):
             skip_list = []
             for iref in bref.images:
                 skip_list.append(iref.bundle_order)
-            return [False, "both", file_name, skip_list]
+            return [True, "both", file_name, skip_list]
 
         else:
-            return [False, "name"]
+            return [True, "name"]
     # name not known, so just check md5sum
     if Bundle.get_or_none(md5sum=md5) is not None:
-        return [False, "md5sum"]
+        return [True, "md5sum"]
+    return [False, "no such bundle"]
 
+
+def createNewBundle(self, file_name, md5):
+    # use the doesBundleExist command logic to sanity check
+    if self.doesBundleExist(file_name, md5)[0]:
+        return [False, "exists"]
     else:
         Bundle.create(name=file_name, md5sum=md5)
         return [True, file_name]

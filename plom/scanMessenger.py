@@ -39,7 +39,33 @@ class ScanMessenger(BaseMessenger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def declareBundle(self, bundle_name, md5sum):
+    def doesBundleExist(self, bundle_name, md5sum):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/admin/bundle".format(self.server),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "bundle": bundle_name,
+                    "md5sum": md5sum,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def createNewBundle(self, bundle_name, md5sum):
         self.SRmutex.acquire()
         try:
             response = self.session.put(

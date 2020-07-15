@@ -137,7 +137,8 @@ class Server(object):
         closeUser,
     )
     from .plomServer.serverUpload import (
-        declareBundle,
+        doesBundleExist,
+        createNewBundle,
         sidToTest,
         addTestPage,
         addHWPage,
