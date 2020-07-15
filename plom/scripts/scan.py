@@ -50,6 +50,7 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import os
 import shutil
+from pathlib import Path
 
 from plom import __version__
 
@@ -135,9 +136,11 @@ def processScans(server, password, pdf_fname):
             print("Should not be here!")
             exit(1)
 
-        print("Processing PDF {} to images".format(pdf_fname))
+    print("Processing PDF {} to images".format(pdf_fname))
     scansToImages.processScans([pdf_fname])
-    readQRCodes.processBitmaps(server, password)
+    print("Read QR codes")
+    bundledir = Path("bundles") / bundle_name
+    readQRCodes.processBitmaps(bundledir, server, password)
 
 
 def uploadImages(server, password, unknowns=False, collisions=False):
