@@ -617,23 +617,6 @@ def updateQGroup(self, qref):
     return True
 
 
-def cleanSDataNotReady(self, tref):
-    sref = tref.sumdata[0]
-    with plomdb.atomic():
-        sref.sum_mark = None
-        sref.user = None
-        sref.time = datetime.now()
-        sref.status = ""
-        sref.save()
-        tref.totalled = False
-        tref.save()
-        log.info(
-            "SumData of test {} cleaned but not yet ready for totalling.".format(
-                tref.test_number
-            )
-        )
-
-
 def updateGroupAfterUpload(self, gref):
     """Check the type of the group and update accordingly.
     return success/failure of that update.
@@ -644,31 +627,9 @@ def updateGroupAfterUpload(self, gref):
         return self.updateDNMGroup(gref.dnmgroups[0])
     elif gref.group_type == "q":
         # if the group is ready - all good.
-        if self.updateQGroup(gref.qgroups[0]):
-            return True
-        else:
-            # since qgroup not ready, we cannnot total yet.
-            self.cleanSDataNotReady(gref.test)
-            return False
+        return self.updateQGroup(gref.qgroups[0])
     else:
         raise ValueError("Tertium non datur: should never happen")
-
-
-def cleanAndReadySData(self, tref):
-    sref = tref.sumdata[0]
-    with plomdb.atomic():
-        sref.sum_mark = None
-        sref.user = None
-        sref.time = datetime.now()
-        tref.totalled = False
-        sref.status = "todo"
-        sref.save()
-        tref.save()
-        log.info(
-            "SumData of test {} cleaned and ready for totalling.".format(
-                tref.test_number
-            )
-        )
 
 
 def checkTestScanned(self, tref):

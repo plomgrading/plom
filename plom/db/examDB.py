@@ -116,9 +116,7 @@ class PlomDB:
         cleanIDGroup,
         updateQGroup,
         cleanQGroup,
-        cleanSDataNotReady,
         updateGroupAfterUpload,
-        cleanAndReadySData,
         checkTestScanned,
         updateTestAfterUpload,
         processUpdatedTests,
@@ -174,7 +172,6 @@ class PlomDB:
         RgetMarkReview,
         RgetAnnotatedImage,
         RgetIDReview,
-        RgetTotReview,
         RgetUserFullProgress,
     )
 
@@ -207,17 +204,4 @@ class PlomDB:
         MshuffleImages,
         MreviewQuestion,
         MrevertTask,
-    )
-
-    # ----- totaller stuff
-    from plom.db.db_total import (
-        TcountTotalled,
-        TcountAll,
-        TgetNextTask,
-        TgetDoneTasks,
-        TgiveTaskToClient,
-        TdidNotFinish,
-        TgetImage,
-        TtakeTaskFromClient,
-        TreviewTotal,
     )

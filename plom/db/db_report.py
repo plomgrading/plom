@@ -261,14 +261,14 @@ def RgetQuestionUserProgress(self, q, v):
 
 
 def RgetCompletionStatus(self):
-    """Return a dict of every scanned test (ie all test pages present). Each dict entry is of the form dict[test_number] = [identified_or_not, totalled_or_not, number_of_questions_marked]
+    """Return a dict of every scanned test (ie all test pages present). Each dict entry is of the form dict[test_number] = [identified_or_not, number_of_questions_marked]
     """
     progress = {}
     for tref in Test.select().where(Test.scanned == True):
         number_marked = (
             QGroup.select().where(QGroup.test == tref, QGroup.marked == True).count()
         )
-        progress[tref.test_number] = [tref.identified, tref.totalled, number_marked]
+        progress[tref.test_number] = [tref.identified, number_marked]
     log.debug("Sending list of completed tests")
     return progress
 
@@ -276,7 +276,7 @@ def RgetCompletionStatus(self):
 def RgetOutToDo(self):
     """Return a list of tasks that are currently out with clients. These have status "todo".
     For each task we return a triple of [code, user, time]
-    code = id-t{testnumber} or mrk-t{testnumber}-q{question}-v{version} or tot-t{testnumber}
+    code = id-t{testnumber} or mrk-t{testnumber}-q{question}-v{version}
     note that the datetime object is not jsonable, so we format it using strftime.
     """
     # note - have to format the time as string since not jsonable.
@@ -301,14 +301,6 @@ def RgetOutToDo(self):
                 qref.annotations[-1].time.strftime("%y:%m:%d-%H:%M:%S"),
             ]
         )
-    for sref in SumData.select().where(SumData.status == "out"):
-        out_tasks.append(
-            [
-                "tot-t{}".format(sref.test.test_number),
-                sref.user.name,
-                sref.time.strftime("%y:%m:%d-%H:%M:%S"),
-            ]
-        )
     log.debug("Sending list of tasks that are still out")
     return out_tasks
 
@@ -319,14 +311,10 @@ def RgetStatus(self, test_number):
     * number = test_number
     * identified = id'd or not (boolean)
     * marked = marked or not (boolean)
-    * totalled = totalled or not (boolean)
     Then if id'd we also add keys/values
     * sid = student id
     * sname = student name
     * iwho = who did the id-ing.
-    If totalled then add keys/values
-    * total = the total mark
-    * twho = who did the totalling.
     For each question then add a sub-dict with key = that question number, and key/values
     * marked = marked or not
     * version = the version of that question
@@ -341,17 +329,12 @@ def RgetStatus(self, test_number):
         "number": tref.test_number,
         "identified": tref.identified,
         "marked": tref.marked,
-        "totalled": tref.totalled,
     }
     if tref.identified:
         iref = tref.idgroups[0]
         state["sid"] = iref.student_id
         state["sname"] = iref.student_name
         state["iwho"] = iref.user.name
-    if tref.totalled:
-        sref = tref.sumdata[0]
-        state["total"] = sref.sum_mark
-        state["twho"] = sref.user.name
     for qref in tref.qgroups:
         if qref.marked:
             state[qref.question] = {
@@ -382,7 +365,6 @@ def RgetSpreadsheet(self):
         this_test = {
             "identified": tref.identified,  # id'd or not
             "marked": tref.marked,  # completely marked or not
-            "totalled": tref.totalled,  # totalled or not.
             "sid": "",  # blank entry for student id - replaced if id'd
             "sname": "",  # blank entry for student name - replaced if id'd
         }
@@ -543,39 +525,19 @@ def RgetIDReview(self):
     return id_paper_list
 
 
-def RgetTotReview(self):
-    """Return information about every totalled paper.
-    For each paper return a tuple of [test_number, who did the totalling, the time, and the total mark]
-    """
-    tot_paper_list = []
-    query = SumData.select().where(SumData.summed == True)
-    for sref in query:
-        tot_paper_list.append(
-            [
-                sref.test.test_number,
-                sref.user.name,
-                sref.time.strftime("%y:%m:%d-%H:%M:%S"),
-                sref.sum_mark,
-            ]
-        )
-    log.debug("Sending totalling review data")
-    return tot_paper_list
-
-
 def RgetUserFullProgress(self, user_name):
     """Return the number of completed tasks of teach type for the given user.
-    Return [ number_id'd, number_totalled, number_marked]
+    Return [ number_id'd, number_marked]
     number_marked = number marked for all questions.
     """
     uref = User.get_or_none(name=user_name)
     if uref is None:
         return []
-    # return [#IDd, #tot, #marked]
+    # return [#IDd, #marked]
     log.debug("Sending user {} progress data".format(user_name))
     return [
         IDGroup.select()
         .where(IDGroup.user == uref, IDGroup.identified == True)
         .count(),
-        SumData.select().where(SumData.user == uref, SumData.summed == True).count(),
         QGroup.select().where(QGroup.user == uref, QGroup.marked == True).count(),
     ]
