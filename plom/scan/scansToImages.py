@@ -95,13 +95,17 @@ def isInArchive(file_name, hwByQ=False, hwLoose=False):
     return [False]
 
 
-def processFileToBitmaps(bundleDir, file_name, hwByQ=False, hwLoose=False):
+def processFileToBitmaps(file_name, dest):
     """Extract/convert each page of pdf into bitmap.
 
     We have various ways to do this, in rough order of preference:
       1. Extract a scanned bitmap "as-is"
       2. Render the page with PyMuPDF
       3. Render the page with Ghostscript
+
+    Args:
+        dest (str, Path): where to save the resulting bitmap files.
+        file_name (str, Path): PDF file from which to extract bitmaps.
 
     For extracting the scanned data as is, we must be careful not to
     just grab any image off the page (for example, it must be the only
@@ -114,20 +118,10 @@ def processFileToBitmaps(bundleDir, file_name, hwByQ=False, hwLoose=False):
 
     NOT IMPLEMENTED YET: You can force one of these...
     """
-    destDir = os.path.join(bundleDir, "scanPNGs")
-
-    scan, fext = os.path.splitext(file_name)
     # issue #126 - replace spaces in names with underscores for output names.
-    safeScan = scan.replace(" ", "_")
+    safeScan = Path(file_name).stem.replace(" ", "_")
 
-    if hwByQ:
-        long_name = Path("submittedHWByQ") / file_name
-    elif hwLoose:
-        long_name = Path("submittedLoose") / file_name
-    else:
-        long_name = file_name
-
-    doc = fitz.open(long_name)
+    doc = fitz.open(file_name)
 
     # 0:9 -> 10 pages -> 2 digits
     zpad = math.floor(math.log10(len(doc))) + 1
@@ -184,11 +178,11 @@ def processFileToBitmaps(bundleDir, file_name, hwByQ=False, hwLoose=False):
                     )
 
                 if not converttopng:
-                    outname = os.path.join(destDir, basename + "." + d["ext"])
+                    outname = os.path.join(dest, basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
                 else:
-                    outname = os.path.join(destDir, basename + ".png")
+                    outname = os.path.join(dest, basename + ".png")
                     with tempfile.NamedTemporaryFile() as g:
                         with open(g.name, "wb") as f:
                             f.write(d["image"])
@@ -223,7 +217,7 @@ def processFileToBitmaps(bundleDir, file_name, hwByQ=False, hwLoose=False):
 
         # TODO: experiment with jpg: generate both and see which is smaller?
         # (But be careful about "dim mult of 16" thing above.)
-        outname = os.path.join(destDir, basename + ".png")
+        outname = os.path.join(dest, basename + ".png")
         pix.writeImage(outname)
 
 
@@ -264,11 +258,10 @@ def extractImageFromFitzPage(page, doc):
     return True, d
 
 
-def processFileToPng_w_ghostscript(fname):
+def processFileToPng_w_ghostscript(fname, dest):
     """Convert each page of pdf into png using ghostscript"""
-    scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
-    safeScan = scan.replace(" ", "_")
+    safeScan = Path(fname).stem.replace(" ", "_")
     try:
         subprocess.run(
             [
@@ -277,7 +270,7 @@ def processFileToPng_w_ghostscript(fname):
                 "-dNOPAUSE",
                 "-sDEVICE=png256",
                 "-o",
-                os.path.join("scanPNGs", safeScan + "-%d.png"),
+                os.path.join(dest, safeScan + "-%d.png"),
                 "-r200",
                 fname,
             ],
@@ -426,6 +419,11 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
             # is of form "bundle/fname/" or
             # "bundle/submittedHWByQ/fname" or "bundle/submittedLoose/fname"
             bundleDir = makeBundleDirectories(fname, hwByQ, hwLoose)
-
-            processFileToBitmaps(bundleDir, fname, hwByQ, hwLoose)
+            if hwByQ:
+                long_name = Path("submittedHWByQ") / fname
+            elif hwLoose:
+                long_name = Path("submittedLoose") / fname
+            else:
+                long_name = fname
+            processFileToBitmaps(long_name, os.path.join(bundleDir, "scanPNGs"))
             postProcessing(bundleDir, hwByQ, hwLoose)
