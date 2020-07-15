@@ -413,16 +413,15 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
                 )
             )
             continue
-        else:
-            # PDF is not in archive, so is new bundle.
-            # make a directory for it
-            # is of form "bundle/fname/" or
-            # "bundle/submittedHWByQ/fname" or "bundle/submittedLoose/fname"
-            bundleDir = makeBundleDirectories(fname, hwByQ, hwLoose)
-            if hwByQ:
-                fname = Path("submittedHWByQ") / fname
-            elif hwLoose:
-                fname = Path("submittedLoose") / fname
-            bitmaps_dir = os.path.join(bundleDir, "scanPNGs")
-            processFileToBitmaps(fname, bitmaps_dir)
-            postProcessing(bitmaps_dir)
+        # PDF is not in archive, so is new bundle.
+        # make a directory for it
+        # is of form "bundle/fname/" or
+        # "bundle/submittedHWByQ/fname" or "bundle/submittedLoose/fname"
+        bundleDir = makeBundleDirectories(fname, hwByQ, hwLoose)
+        if hwByQ:
+            fname = Path("submittedHWByQ") / fname
+        elif hwLoose:
+            fname = Path("submittedLoose") / fname
+        bitmaps_dir = os.path.join(bundleDir, "scanPNGs")
+        processFileToBitmaps(fname, bitmaps_dir)
+        postProcessing(bitmaps_dir)
