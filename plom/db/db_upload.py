@@ -675,10 +675,8 @@ def updateTestAfterUpload(self, tref):
         if self.updateGroupAfterUpload(gref):
             update_count += 1
 
-    # now make sure the whole thing is scanned and update the sumdata if ready to go.
+    # now make sure the whole thing is scanned.
     if self.checkTestScanned(tref):
-        # set the sdata ready to go
-        self.cleanAndReadySData(tref)
         # set the test as scanned
         with plomdb.atomic():
             tref.scanned = True
@@ -708,8 +706,6 @@ def processUpdatedTests(self):
             tests_to_update[gref.test] = 1
     for tref in tests_to_update:
         if self.checkTestScanned(tref):
-            # set the sdata ready to go
-            self.cleanAndReadySData(tref)
             # set the test as scanned
             with plomdb.atomic():
                 tref.scanned = True

@@ -191,7 +191,7 @@ def MtakeTaskFromClient(
     """Get marked image back from client and update the record
     in the database.
     Update the annotation.
-    Check to see if all questions for that test are marked and if so update the sum-mark data.
+    Check to see if all questions for that test are marked and if so update the test's 'marked' flag.
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
 
