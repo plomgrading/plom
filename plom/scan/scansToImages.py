@@ -352,14 +352,14 @@ def makeBundleDirectories(fname, hwByQ=False, hwLoose=False):
     return bundleDir
 
 
-def postProcessing(bundleDir, hwByQ=False, hwLoose=False):
-    """Do the post processing on the files inside bundleDir
-    """
+def postProcessing(thedir):
+    """Do post processing on a directory of scanned bitmaps."""
+    # TODO: changing cwd is poor practice
     # get current directory, we need to go back there at the end.
     startDir = os.getcwd()
     # now cd into the scanPNGs directory of the current bundle.
 
-    os.chdir(os.path.join(bundleDir, "scanPNGs"))
+    os.chdir(thedir)
 
     print("Normalizing jpeg orientation from Exif metadata")
     stuff = list(glob.glob("*.jpg"))
@@ -420,10 +420,9 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
             # "bundle/submittedHWByQ/fname" or "bundle/submittedLoose/fname"
             bundleDir = makeBundleDirectories(fname, hwByQ, hwLoose)
             if hwByQ:
-                long_name = Path("submittedHWByQ") / fname
+                fname = Path("submittedHWByQ") / fname
             elif hwLoose:
-                long_name = Path("submittedLoose") / fname
-            else:
-                long_name = fname
-            processFileToBitmaps(long_name, os.path.join(bundleDir, "scanPNGs"))
-            postProcessing(bundleDir, hwByQ, hwLoose)
+                fname = Path("submittedLoose") / fname
+            bitmaps_dir = os.path.join(bundleDir, "scanPNGs")
+            processFileToBitmaps(fname, bitmaps_dir)
+            postProcessing(bitmaps_dir)
