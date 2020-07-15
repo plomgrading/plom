@@ -4,7 +4,6 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import glob
 import hashlib
 import os
 from pathlib import Path
@@ -328,18 +327,18 @@ def normalizeJPEGOrientation(f):
 
 
 def makeBundleDirectories(fname, hwByQ=False, hwLoose=False):
-    """Each bundle needs its own subdirectories of pageImages and scanPNGs, make them.
+    """Each bundle needs its own subdirectories: make pageImages, scanPNGs, etc.
 
     Args:
         fname (str, Path): the name of a pdf-file, zip-file or whatever
             from which we create the bundle name.
         hwByQ (bool): this is a Homework-by-Question bundle.
-        hwLoose (bool): this is Homework-as-a-oose-bundle (we don't know
-            which pages correspond to which questions).
+        hwLoose (bool): this is Homework-as-a-loose-bundle (we don't
+            know which pages correspond to which questions).
 
     Returns:
         pathlib.Path: the filesystem path to the bundle.  TODO: not sure
-            if this is FQN or not or unspecified.
+            if this is FQN or not: for now its unspecified.
 
     Note that if hwByQ flag is set then we put things inside bundles/submittedHWByQ,
     and similarly if hwLoose is set then we put things inside bundles/submittedLoose.
@@ -364,18 +363,19 @@ def makeBundleDirectories(fname, hwByQ=False, hwLoose=False):
     return bundleDir
 
 
-def postProcessing(thedir):
-    """Do post processing on a directory of scanned bitmaps."""
-    # TODO: changing cwd is poor practice
-    # get current directory, we need to go back there at the end.
-    startDir = os.getcwd()
-    # now cd into the scanPNGs directory of the current bundle.
+def postProcessing(thedir, dest):
+    """Do post processing on a directory of scanned bitmaps.
 
-    os.chdir(thedir)
+    Args:
+        thedir (str, Path): a directory full of bitmaps.
+        dest (str, Path): move images here (???).
+    """
+    thedir = Path(thedir)
+    dest = Path(dest)
 
     print("Normalizing jpeg orientation from Exif metadata")
-    stuff = list(glob.glob("*.jpg"))
-    stuff.extend(glob.glob("*.jpeg"))
+    stuff = list(thedir.glob("*.jpg"))
+    stuff.extend(thedir.glob("*.jpeg"))
     N = len(stuff)
     with Pool() as p:
         r = list(tqdm(p.imap_unordered(normalizeJPEGOrientation, stuff), total=N))
@@ -383,7 +383,7 @@ def postProcessing(thedir):
     # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
     print("Gamma shift the PNG images")
     # list and len bit crude here: more pythonic to leave as iterator?
-    stuff = list(glob.glob("*.png"))
+    stuff = list(thedir.glob("*.png"))
     N = len(stuff)
     with Pool() as p:
         r = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
@@ -391,17 +391,12 @@ def postProcessing(thedir):
     # for x in glob.glob("..."):
     #     gamma_adjust(x)
 
-    # move all the images into pageimages directory of this bundle
-    dest = os.path.join("../pageImages")
     fileList = []
     for ext in PlomImageExtWhitelist:
-        fileList.extend(glob.glob("*.{}".format(ext)))
+        fileList.extend(thedir.glob("*.{}".format(ext)))
     # move them to pageimages for barcode reading
     for file in fileList:
-        shutil.move(file, os.path.join(dest, file))
-
-    # now cd back to the starting directory
-    os.chdir(startDir)
+        shutil.move(file, dest / file.stem)
 
 
 def processScans(PDFs, hwByQ=False, hwLoose=False):
@@ -436,4 +431,4 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
             fname = Path("submittedLoose") / fname
         bitmaps_dir = bundleDir / "scanPNGs"
         processFileToBitmaps(fname, bitmaps_dir)
-        postProcessing(bitmaps_dir)
+        postProcessing(bitmaps_dir, bundleDir / "pageImages")
