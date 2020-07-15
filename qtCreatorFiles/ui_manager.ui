@@ -565,7 +565,7 @@
               <enum>QAbstractItemView::SelectRows</enum>
              </property>
              <property name="columnCount">
-              <number>4</number>
+              <number>3</number>
              </property>
              <attribute name="horizontalHeaderStretchLastSection">
               <bool>true</bool>
@@ -573,7 +573,6 @@
              <attribute name="verticalHeaderVisible">
               <bool>false</bool>
              </attribute>
-             <column/>
              <column/>
              <column/>
              <column/>
@@ -599,8 +598,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>968</width>
-                <height>466</height>
+                <width>64</width>
+                <height>16</height>
                </rect>
               </property>
              </widget>
