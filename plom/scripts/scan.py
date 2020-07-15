@@ -94,6 +94,7 @@ def processScans(server, password, pdf_fname):
     """Process PDF file into images."""
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
+    from plom.scan import readQRCodes
 
     make_required_directories()
 
@@ -136,11 +137,6 @@ def processScans(server, password, pdf_fname):
 
         print("Processing PDF {} to images".format(pdf_fname))
     scansToImages.processScans([pdf_fname])
-
-
-def readImages(server, password):
-    from plom.scan import readQRCodes
-
     readQRCodes.processBitmaps(server, password)
 
 
@@ -262,7 +258,6 @@ def main():
 
     if args.command == "process":
         processScans(args.server, args.password, args.scanPDF)
-        readImages(args.server, args.password)
     elif args.command == "upload":
         uploadImages(args.server, args.password, args.unknowns, args.collisions)
     elif args.command == "status":
