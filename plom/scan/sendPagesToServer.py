@@ -99,14 +99,14 @@ def sendTestFiles(msgr, bundle_name, filelist):
     TUP = defaultdict(list)
     for fname in filelist:
         shortName = os.path.split(fname)[1]
+        # TODO: very fragile order extraction, check how Andrew does it...
+        order = Path(shortName).stem.split('-')[-1]
         ts, ps, vs = extractTPV(shortName)
         print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
-        print((code, int(ts), int(ps), int(vs), shortName, fname, md5, bundle_name))
-        print([type(x) for x in (code, int(ts), int(ps), int(vs), shortName, fname, md5, bundle_name)])
         rmsg = msgr.uploadTestPage(
-            code, int(ts), int(ps), int(vs), shortName, fname, md5, bundle_name
+            code, int(ts), int(ps), int(vs), shortName, fname, md5, bundle_name, order
         )
         doFiling(rmsg, ts, ps, vs, Path("bundles") / bundle_name, shortName, fname)
         if rmsg[0]:  # was successful upload
