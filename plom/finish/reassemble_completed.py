@@ -131,7 +131,7 @@ def main(server=None, pwd=None):
         for t in completedTests:
             if (
                 completedTests[t][0] == True
-                and completedTests[t][2] == numberOfQuestions
+                and completedTests[t][1] == numberOfQuestions
             ):
                 if identifiedTests[t][0] is not None:
                     dat1 = build_cover_page(msgr, outDir, t, maxMarks)

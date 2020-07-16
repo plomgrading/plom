@@ -191,7 +191,7 @@ def MtakeTaskFromClient(
     """Get marked image back from client and update the record
     in the database.
     Update the annotation.
-    Check to see if all questions for that test are marked and if so update the sum-mark data.
+    Check to see if all questions for that test are marked and if so update the test's 'marked' flag.
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
 
@@ -240,26 +240,8 @@ def MtakeTaskFromClient(
         if QGroup.get_or_none(QGroup.test == tref, QGroup.marked == False) is not None:
             log.info("Still unmarked questions in test {}".format(tref.test_number))
             return True
-        # update the sum-mark
-        tot = 0
-        for qd in QGroup.select().where(QGroup.test == tref):
-            tot += qd.annotations[-1].mark
-        sref = tref.sumdata[0]
-        # since the total is computed automatically, we assign the sumdata to HAL
-        auto_uref = User.get(name="HAL")
-        sref.user = auto_uref  # auto-totalled by HAL.
-        sref.time = datetime.now()
-        sref.sum_mark = tot
-        sref.summed = True
-        sref.status = "done"
-        sref.save()
-        log.info(
-            "All of test {} is marked - total updated = {}".format(
-                tref.test_number, tot
-            )
-        )
+
         tref.marked = True
-        tref.totalled = True
         tref.save()
         return True
 
@@ -450,10 +432,9 @@ def MrevertTask(self, task):
     gref = Group.get_or_none(Group.gid == task)
     if gref is None:
         return [False, "NST"]  # no such task
-    # from the group get the test, question and sumdata - all need cleaning.
+    # from the group get the test and question - all need cleaning.
     qref = gref.qgroups[0]
     tref = gref.test
-    sref = tref.sumdata[0]
     # check task is "done"
     if qref.status != "done" or qref.marked is False:
         return [False, "NAC"]  # nothing to do here
@@ -462,16 +443,7 @@ def MrevertTask(self, task):
     with plomdb.atomic():
         # clean up test
         tref.marked = False
-        tref.totalled = False
         tref.save()
-        # clean up sum-data - no one should be totalling and marking at same time.
-        # TODO = sort out the possible idiocy caused by simultaneous marking+totalling by client.
-        sref.status = "todo"
-        sref.sum_mark = None
-        sref.user = None
-        sref.time = datetime.now()
-        sref.summed = False
-        sref.save()
         # clean up the qgroup
         qref.marked = False
         qref.status = "todo"
