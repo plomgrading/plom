@@ -160,7 +160,7 @@ def uploadImages(pdf_fname, server, password, unknowns=False, collisions=False):
         from plom.scan import sendUnknownsToServer
 
         print("Also upload unknowns")
-        sendUnknownsToServer.uploadUnknowns(server, password)
+        sendUnknownsToServer.uploadUnknowns(bundledir, server, password)
     if collisions:
         print(">> TO DO FIX <<")
         # from plom.scan import sendCollisionsToServer

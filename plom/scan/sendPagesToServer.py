@@ -83,13 +83,13 @@ def doFiling(rmsg, ts, ps, vs, bundle, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendTestFiles(msgr, bundle_name, filelist):
+def sendTestFiles(msgr, bundle_name, files):
     """Send the page images of one bundle to the server.
 
     Args:
         msgr (Messenger): an open authenticated communication mechanism.
         bundle_name (str): the name of the bundle we are sending.
-        filelist (list of pathlib.Path): the page images to upload.
+        files (list of pathlib.Path): the page images to upload.
 
     Returns:
         defaultdict: TODO document this.
@@ -98,7 +98,7 @@ def sendTestFiles(msgr, bundle_name, filelist):
     bundle's "uploads" subdirectory.
     """
     TUP = defaultdict(list)
-    for fname in filelist:
+    for fname in files:
         shortName = os.path.split(fname)[1]
         # TODO: very fragile order extraction, check how Andrew does it...
         order = Path(shortName).stem.split("-")[-1]
@@ -248,7 +248,6 @@ def uploadTPages(bundleDir, server=None, password=None):
     spec = msgr.get_spec()
     numberOfPages = spec["numberOfPages"]
 
-    # make sure is directory
     if not bundleDir.is_dir():
         raise ValueError("should've been a directory!")
 
