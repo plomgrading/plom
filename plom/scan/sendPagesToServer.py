@@ -15,6 +15,8 @@ import json
 import os
 import shutil
 import sys
+from pathlib import Path
+
 import toml
 
 from plom.messenger import ScanMessenger
@@ -49,31 +51,27 @@ def extractTPV(name):
     return (ts, ps, vs)
 
 
-def doFiling(rmsg, ts, ps, vs, shortName, fname):
-    # current directory is "bundle", but we need to put files in "../upload/blah"
-
+def doFiling(rmsg, ts, ps, vs, bundle, shortName, fname):
+    """Move file around within bundle depending on some stuff."""
     if rmsg[0]:  # msg should be [True, "success", success message]
-        shutil.move(fname, os.path.join("..", "uploads", "sentPages", shortName))
+        shutil.move(fname, bundle / Path("uploads/sentPages") / shortName)
         shutil.move(
-            fname + ".qr", os.path.join("..", "uploads", "sentPages", shortName + ".qr")
+            Path(str(fname) + ".qr"), bundle / Path("uploads/sentPages") / (str(shortName) + ".qr")
         )
     else:  # msg = [False, reason, message]
         print(rmsg[1], rmsg[2])
         if rmsg[1] == "duplicate":
+            shutil.move(fname, bundle / Path("uploads/discardedPages") / shortName)
             shutil.move(
-                fname, os.path.join("..", "uploads", "discardedPages", shortName)
+                Path(str(fname) + ".qr"),
+                bundle / Path("uploads/discardedPages") / (str(shortName) + ".qr"),
             )
-            shutil.move(
-                fname + ".qr",
-                os.path.join("..", "uploads", "discardedPages", shortName + ".qr"),
-            )
-
         elif rmsg[1] == "collision":
-            nname = os.path.join("..", "uploads", "collidingPages", shortName)
+            nname = bundle / Path("uploads/collidingPages") / shortName
             shutil.move(fname, nname)
-            shutil.move(fname + ".qr", nname + ".qr")
+            shutil.move(str(fname) + ".qr", str(nname) + ".qr")
             # and write the name of the colliding file
-            with open(nname + ".collide", "w+") as fh:
+            with open(str(nname) + ".collide", "w+") as fh:
                 json.dump(rmsg[2], fh)  # this is [collidingFile, test, page, version]
         # now bad errors
         elif rmsg[1] == "testError":
@@ -97,7 +95,8 @@ def sendTestFiles(msgr, fileDict):
             rmsg = msgr.uploadTestPage(
                 code, int(ts), int(ps), int(vs), shortName, fname, md5, bundle
             )
-            doFiling(rmsg, ts, ps, vs, shortName, fname)
+            # TODO: see earlier comment about stripping path... refactor to take bundle name and flat list
+            doFiling(rmsg, ts, ps, vs, Path("bundles") / bundle, shortName, fname)
             if rmsg[0]:  # was successful upload
                 TUP[ts].append(ps)
     return TUP
@@ -238,6 +237,7 @@ def uploadTPages(bundleDir, server=None, password=None):
         raise ValueError("should've been a directory!")
 
     # TODO: only one thing in the dict, refactor to plain list?
+    # TODO: strip path and keep name?  But we just need to add it on later
     fileDict[bundleDir.name] = []
     # Look for pages in decodedPages
     for ext in PlomImageExtWhitelist:

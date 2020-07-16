@@ -76,19 +76,20 @@ def scanStatus(server, password):
     checkScanStatus.checkStatus(server, password)
 
 
-def make_required_directories():
-    # we need
-    directory_list = [
-        "archivedPDFs",
-        "bundles",
-        "uploads/sentPages",
-        "uploads/discardedPages",
-        "uploads/collidingPages",
-        "uploads/sentPages/unknowns",
-        "uploads/sentPages/collisions",
-    ]
-    for dir in directory_list:
-        os.makedirs(dir, exist_ok=True)
+def make_required_directories(bundle=None):
+    os.makedirs("archivedPDFs", exist_ok=True)
+    os.makedirs("bundles", exist_ok=True)
+    # TODO: split up a bit, above are global, below per bundle
+    if bundle:
+        directory_list = [
+            "uploads/sentPages",
+            "uploads/discardedPages",
+            "uploads/collidingPages",
+            "uploads/sentPages/unknowns",
+            "uploads/sentPages/collisions",
+        ]
+        for dir in directory_list:
+            os.makedirs(bundle / Path(dir), exist_ok=True)
 
 
 def processScans(server, password, pdf_fname):
@@ -96,9 +97,6 @@ def processScans(server, password, pdf_fname):
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
     from plom.scan import readQRCodes
-
-    # TODO: maybe somethings here are not needed?
-    make_required_directories()
 
     if not os.path.isfile(pdf_fname):
         print("Cannot find file {} - skipping".format(pdf_fname))
@@ -112,10 +110,12 @@ def processScans(server, password, pdf_fname):
 
     # TODO: future checkBundlesWithServer command goes here?
     bundle_name = Path(pdf_fname).stem
+    bundledir = Path("bundles") / bundle_name
+    make_required_directories(bundledir)
+
     print("Processing PDF {} to images".format(pdf_fname))
     scansToImages.processScans([pdf_fname])
     print("Read QR codes")
-    bundledir = Path("bundles") / bundle_name
     readQRCodes.processBitmaps(bundledir, server, password)
 
 
