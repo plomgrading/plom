@@ -102,12 +102,6 @@ def processScans(server, password, pdf_fname):
         print("Cannot find file {} - skipping".format(pdf_fname))
         return
 
-    # TODO: scansToImages.processScans([pdf_fname])
-    #staging_dir = Path("staging")
-    #processFileToBitmaps(pdf_fname, staging_dir)
-    #postProcessing(staging_dir)
-    #readQRCodes.processBitmaps(server, password)
-
     # TODO: future checkBundlesWithServer command goes here?
     bundle_name = Path(pdf_fname).stem
     bundledir = Path("bundles") / bundle_name
@@ -277,7 +271,9 @@ def main():
         processScans(args.server, args.password, args.scanPDF)
     elif args.command == "upload":
         # TODO: bundleName with/without PDF: WIP!
-        uploadImages(args.bundleName, args.server, args.password, args.unknowns, args.collisions)
+        uploadImages(
+            args.bundleName, args.server, args.password, args.unknowns, args.collisions
+        )
     elif args.command == "status":
         scanStatus(args.server, args.password)
     elif args.command == "clear":

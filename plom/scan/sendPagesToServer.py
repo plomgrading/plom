@@ -56,7 +56,8 @@ def doFiling(rmsg, ts, ps, vs, bundle, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
         shutil.move(fname, bundle / Path("uploads/sentPages") / shortName)
         shutil.move(
-            Path(str(fname) + ".qr"), bundle / Path("uploads/sentPages") / (str(shortName) + ".qr")
+            Path(str(fname) + ".qr"),
+            bundle / Path("uploads/sentPages") / (str(shortName) + ".qr"),
         )
     else:  # msg = [False, reason, message]
         print(rmsg[1], rmsg[2])
@@ -100,7 +101,7 @@ def sendTestFiles(msgr, bundle_name, filelist):
     for fname in filelist:
         shortName = os.path.split(fname)[1]
         # TODO: very fragile order extraction, check how Andrew does it...
-        order = Path(shortName).stem.split('-')[-1]
+        order = Path(shortName).stem.split("-")[-1]
         ts, ps, vs = extractTPV(shortName)
         print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
@@ -256,11 +257,7 @@ def uploadTPages(bundleDir, server=None, password=None):
     files = []
     # Look for pages in decodedPages
     for ext in PlomImageExtWhitelist:
-        files.extend(
-            sorted(
-                (bundleDir / "decodedPages").glob("t*.{}".format(ext))
-            )
-        )
+        files.extend(sorted((bundleDir / "decodedPages").glob("t*.{}".format(ext))))
     TUP = sendTestFiles(msgr, bundleDir.name, files)
     # we do not update any missing pages, since that is a serious issue for tests, and should not be done automagically
 

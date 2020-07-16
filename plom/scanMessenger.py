@@ -86,7 +86,9 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadTestPage(self, code, test, page, version, sname, fname, md5sum, bundle, bundle_order):
+    def uploadTestPage(
+        self, code, test, page, version, sname, fname, md5sum, bundle, bundle_order
+    ):
         self.SRmutex.acquire()
         try:
             param = {
