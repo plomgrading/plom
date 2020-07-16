@@ -88,7 +88,7 @@ def main():
         "fake_scribbled_exams3.pdf",
     ):
         subprocess.check_call(split("plom-scan process -w 4567 {}".format(f)))
-        subprocess.check_call(split("plom-scan upload -u -w 4567"))
+        subprocess.check_call(split("plom-scan upload -w 4567 -u {}".format(f)))
 
     time.sleep(0.5)
     try:

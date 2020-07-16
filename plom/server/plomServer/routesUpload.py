@@ -49,6 +49,7 @@ class UploadHandler:
                 "fileName",
                 "md5sum",
                 "bundle",
+                "bundle_order",
             ],
         ):
             return web.Response(status=400)
@@ -74,6 +75,7 @@ class UploadHandler:
             image,
             param["md5sum"],
             param["bundle"],
+            param["bundle_order"],
         )
         return web.json_response(rmsg, status=200)  # all good
 
