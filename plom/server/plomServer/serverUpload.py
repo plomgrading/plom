@@ -20,7 +20,7 @@ def sidToTest(self, student_id):
     return self.DB.sidToTest(student_id)
 
 
-def addTestPage(self, t, p, v, fname, image, md5o, bundle):
+def addTestPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -30,7 +30,7 @@ def addTestPage(self, t, p, v, fname, image, md5o, bundle):
         newName = "pages/originalPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadTestPage(t, p, v, fname, newName, md5o, bundle)
+    val = self.DB.uploadTestPage(t, p, v, fname, newName, md5o, bundle, bundle_order)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)

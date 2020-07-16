@@ -50,6 +50,7 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import os
 import shutil
+from pathlib import Path
 
 from plom import __version__
 
@@ -75,31 +76,46 @@ def scanStatus(server, password):
     checkScanStatus.checkStatus(server, password)
 
 
-def make_required_directories():
-    # we need
-    directory_list = [
-        "archivedPDFs",
-        "bundles",
-        "uploads/sentPages",
-        "uploads/discardedPages",
-        "uploads/collidingPages",
-        "uploads/sentPages/unknowns",
-        "uploads/sentPages/collisions",
-    ]
-    for dir in directory_list:
-        os.makedirs(dir, exist_ok=True)
+def make_required_directories(bundle=None):
+    os.makedirs("archivedPDFs", exist_ok=True)
+    os.makedirs("bundles", exist_ok=True)
+    # TODO: split up a bit, above are global, below per bundle
+    if bundle:
+        directory_list = [
+            "uploads/sentPages",
+            "uploads/discardedPages",
+            "uploads/collidingPages",
+            "uploads/sentPages/unknowns",
+            "uploads/sentPages/collisions",
+        ]
+        for dir in directory_list:
+            os.makedirs(bundle / Path(dir), exist_ok=True)
 
 
 def processScans(server, password, pdf_fname):
     """Process PDF file into images."""
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
-
-    make_required_directories()
+    from plom.scan import readQRCodes
 
     if not os.path.isfile(pdf_fname):
         print("Cannot find file {} - skipping".format(pdf_fname))
         return
+
+    # TODO: future checkBundlesWithServer command goes here?
+    bundle_name = Path(pdf_fname).stem.replace(" ", "_")
+    bundledir = Path("bundles") / bundle_name
+    make_required_directories(bundledir)
+
+    print("Processing PDF {} to images".format(pdf_fname))
+    scansToImages.processScans([pdf_fname])
+    print("Read QR codes")
+    readQRCodes.processBitmaps(bundledir, server, password)
+
+
+def uploadImages(pdf_fname, server, password, unknowns=False, collisions=False):
+    from plom.scan import sendPagesToServer, scansToImages
+
     print("Declaring bundle PDF {} to server".format(pdf_fname))
     rval = sendPagesToServer.declareBundle(pdf_fname, server, password)
     # should be [True, name] or [False, name] [False,md5sum]
@@ -134,21 +150,9 @@ def processScans(server, password, pdf_fname):
             print("Should not be here!")
             exit(1)
 
-        print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans([pdf_fname])
-
-
-def readImages(server, password):
-    from plom.scan import readQRCodes
-
-    readQRCodes.processBitmaps(server, password)
-
-
-def uploadImages(server, password, unknowns=False, collisions=False):
-    from plom.scan import sendPagesToServer, scansToImages
-
     print("Upload images to server")
-    [TPN, updates] = sendPagesToServer.uploadTPages(server, password)
+    bundledir = Path("bundles") / bundle_name
+    [TPN, updates] = sendPagesToServer.uploadTPages(bundledir, server, password)
     print("Tests were uploaded to the following studentIDs: {}".format(TPN.keys()))
     print("Server reports {} papers updated.".format(updates))
 
@@ -156,12 +160,14 @@ def uploadImages(server, password, unknowns=False, collisions=False):
         from plom.scan import sendUnknownsToServer
 
         print("Also upload unknowns")
-        sendUnknownsToServer.uploadUnknowns(server, password)
+        sendUnknownsToServer.uploadUnknowns(bundledir, server, password)
     if collisions:
         print(">> TO DO FIX <<")
         # from plom.scan import sendCollisionsToServer
         # print("Also collisions unknowns")
         # sendCollisionsToServer.uploadCollisions(server, password)
+
+    # TODO: when do we finalize the bundle?
 
 
 def doAllToScans(server, password, scanPDFs):
@@ -237,6 +243,7 @@ spA = sub.add_parser(
     description="Process, read and upload page images to scanner. CAUTION: Work in Progress!",
 )
 spP.add_argument("scanPDF", help="The PDF file of scanned pages.")
+spU.add_argument("bundleName", help="The name of the PDF file again (WIP!!).")
 spU.add_argument(
     "-u",
     "--unknowns",
@@ -262,9 +269,11 @@ def main():
 
     if args.command == "process":
         processScans(args.server, args.password, args.scanPDF)
-        readImages(args.server, args.password)
     elif args.command == "upload":
-        uploadImages(args.server, args.password, args.unknowns, args.collisions)
+        # TODO: bundleName with/without PDF: WIP!
+        uploadImages(
+            args.bundleName, args.server, args.password, args.unknowns, args.collisions
+        )
     elif args.command == "status":
         scanStatus(args.server, args.password)
     elif args.command == "clear":

@@ -396,7 +396,7 @@ def postProcessing(thedir, dest):
         fileList.extend(thedir.glob("*.{}".format(ext)))
     # move them to pageimages for barcode reading
     for file in fileList:
-        shutil.move(file, dest / file.stem)
+        shutil.move(file, dest / file.name)
 
 
 def processScans(PDFs, hwByQ=False, hwLoose=False):
