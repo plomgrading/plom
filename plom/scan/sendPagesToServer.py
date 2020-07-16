@@ -82,23 +82,35 @@ def doFiling(rmsg, ts, ps, vs, bundle, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendTestFiles(msgr, fileDict):
+def sendTestFiles(msgr, bundle_name, filelist):
+    """Send the page images of one bundle to the server.
 
+    Args:
+        msgr (Messenger): an open authenticated communication mechanism.
+        bundle_name (str): the name of the bundle we are sending.
+        filelist (list of pathlib.Path): the page images to upload.
+
+    Returns:
+        defaultdict: TODO document this.
+
+    After each image is uploaded we move it to various places in the
+    bundle's "uploads" subdirectory.
+    """
     TUP = defaultdict(list)
-    for bundle in fileDict:
-        for fname in fileDict[bundle]:
-            shortName = os.path.split(fname)[1]
-            ts, ps, vs = extractTPV(shortName)
-            print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
-            md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-            code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
-            rmsg = msgr.uploadTestPage(
-                code, int(ts), int(ps), int(vs), shortName, fname, md5, bundle
-            )
-            # TODO: see earlier comment about stripping path... refactor to take bundle name and flat list
-            doFiling(rmsg, ts, ps, vs, Path("bundles") / bundle, shortName, fname)
-            if rmsg[0]:  # was successful upload
-                TUP[ts].append(ps)
+    for fname in filelist:
+        shortName = os.path.split(fname)[1]
+        ts, ps, vs = extractTPV(shortName)
+        print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
+        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+        code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
+        print((code, int(ts), int(ps), int(vs), shortName, fname, md5, bundle_name))
+        print([type(x) for x in (code, int(ts), int(ps), int(vs), shortName, fname, md5, bundle_name)])
+        rmsg = msgr.uploadTestPage(
+            code, int(ts), int(ps), int(vs), shortName, fname, md5, bundle_name
+        )
+        doFiling(rmsg, ts, ps, vs, Path("bundles") / bundle_name, shortName, fname)
+        if rmsg[0]:  # was successful upload
+            TUP[ts].append(ps)
     return TUP
 
 
@@ -198,6 +210,11 @@ def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
 
 
 def uploadTPages(bundleDir, server=None, password=None):
+    """Upload the test pages to the server.
+
+    Bundle must already be declared and started.  We will upload the
+    files and then finish (complete, close) the bundle.
+    """
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -230,23 +247,21 @@ def uploadTPages(bundleDir, server=None, password=None):
     spec = msgr.get_spec()
     numberOfPages = spec["numberOfPages"]
 
-    fileDict = {}  # list of files by bundle
-
     # make sure is directory
     if not bundleDir.is_dir():
         raise ValueError("should've been a directory!")
 
     # TODO: only one thing in the dict, refactor to plain list?
     # TODO: strip path and keep name?  But we just need to add it on later
-    fileDict[bundleDir.name] = []
+    files = []
     # Look for pages in decodedPages
     for ext in PlomImageExtWhitelist:
-        fileDict[bundleDir.name].extend(
+        files.extend(
             sorted(
                 (bundleDir / "decodedPages").glob("t*.{}".format(ext))
             )
         )
-    TUP = sendTestFiles(msgr, fileDict)
+    TUP = sendTestFiles(msgr, bundleDir.name, files)
     # we do not update any missing pages, since that is a serious issue for tests, and should not be done automagically
 
     updates = msgr.sendTUploadDone()
