@@ -1500,7 +1500,7 @@ class Manager(QWidget):
             self.ui.userListTW.insertRow(r)
             # rjust(4) entries so that they can sort like integers... without actually being integers
             self.ui.userListTW.setItem(r, 0, QTableWidgetItem("{}".format(u)))
-            for k in range(7):
+            for k in range(6):
                 self.ui.userListTW.setItem(
                     r, k + 1, QTableWidgetItem("{}".format(dat[k]))
                 )
