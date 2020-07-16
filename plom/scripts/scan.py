@@ -166,7 +166,9 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
     print("Upload images to server")
     bundle_name = Path(pdf_fname).stem.replace(" ", "_")
     bundledir = Path("bundles") / bundle_name
-    [TPN, updates] = sendPagesToServer.uploadTPages(bundledir, server, password)
+    [TPN, updates] = sendPagesToServer.uploadTPages(
+        bundledir, skip_list, server, password
+    )
     print("Tests were uploaded to the following studentIDs: {}".format(TPN.keys()))
     print("Server reports {} papers updated.".format(updates))
 

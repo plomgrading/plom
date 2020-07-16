@@ -83,7 +83,7 @@ def doFiling(rmsg, ts, ps, vs, bundle, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendTestFiles(msgr, bundle_name, files):
+def sendTestFiles(msgr, bundle_name, files, skip_list):
     """Send the page images of one bundle to the server.
 
     Args:
@@ -101,13 +101,29 @@ def sendTestFiles(msgr, bundle_name, files):
     for fname in files:
         shortName = os.path.split(fname)[1]
         # TODO: very fragile order extraction, check how Andrew does it...
-        order = Path(shortName).stem.split("-")[-1]
+        bundle_order = int(Path(shortName).stem.split("-")[-1])
+        if bundle_order in skip_list:
+            print(
+                "Image {} with bundle_order {} already uploaded. Skipping.".format(
+                    fname, bundle_order
+                )
+            )
+            continue
+
         ts, ps, vs = extractTPV(shortName)
         print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
         rmsg = msgr.uploadTestPage(
-            code, int(ts), int(ps), int(vs), shortName, fname, md5, bundle_name, order
+            code,
+            int(ts),
+            int(ps),
+            int(vs),
+            shortName,
+            fname,
+            md5,
+            bundle_name,
+            bundle_order,
         )
         doFiling(rmsg, ts, ps, vs, Path("bundles") / bundle_name, shortName, fname)
         if rmsg[0]:  # was successful upload
@@ -210,8 +226,10 @@ def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
     return JSID
 
 
-def uploadTPages(bundleDir, server=None, password=None):
+def uploadTPages(bundleDir, skip_list, server=None, password=None):
     """Upload the test pages to the server.
+
+    Skips pages-image with orders in the skip-list
 
     Bundle must already be declared and started.  We will upload the
     files and then finish (complete, close) the bundle.
@@ -255,7 +273,7 @@ def uploadTPages(bundleDir, server=None, password=None):
     # Look for pages in decodedPages
     for ext in PlomImageExtWhitelist:
         files.extend(sorted((bundleDir / "decodedPages").glob("t*.{}".format(ext))))
-    TUP = sendTestFiles(msgr, bundleDir.name, files)
+    TUP = sendTestFiles(msgr, bundleDir.name, files, skip_list)
     # we do not update any missing pages, since that is a serious issue for tests, and should not be done automagically
 
     updates = msgr.sendTUploadDone()
