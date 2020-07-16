@@ -456,8 +456,8 @@ def declareBundle(bundle_file, server=None, password=None):
         exit(10)
 
     # get bundle's name without path or extension.
-    # make name safeer by replacing space by underscore
-    bundle_name = os.path.splitext(os.path.basename(bundle_file))[0].replace(" ", "_")
+    # make name safer by replacing space by underscore
+    bundle_name = Path(bundle_file).stem.replace(" ", "_")
     md5 = hashlib.md5(open(bundle_file, "rb").read()).hexdigest()
     bundle_success = msgr.declareBundle(bundle_name, md5)
 

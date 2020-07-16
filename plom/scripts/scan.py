@@ -103,7 +103,7 @@ def processScans(server, password, pdf_fname):
         return
 
     # TODO: future checkBundlesWithServer command goes here?
-    bundle_name = Path(pdf_fname).stem
+    bundle_name = Path(pdf_fname).stem.replace(" ", "_")
     bundledir = Path("bundles") / bundle_name
     make_required_directories(bundledir)
 
