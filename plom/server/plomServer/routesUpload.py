@@ -16,7 +16,7 @@ class UploadHandler:
             return web.Response(status=401)
         if not data["user"] in ["scanner", "manager"]:
             return web.Response(status=401)
-        rval = self.server.declareBundle(data["bundle"], data["md5sum"])
+        rval = self.server.doesBundleExist(data["bundle"], data["md5sum"])
         return web.json_response(rval, status=200)  # all fine
 
     async def createNewBundle(self, request):
@@ -27,7 +27,7 @@ class UploadHandler:
             return web.Response(status=401)
         if not data["user"] in ["scanner", "manager"]:
             return web.Response(status=401)
-        rval = self.server.declareBundle(data["bundle"], data["md5sum"])
+        rval = self.server.createNewBundle(data["bundle"], data["md5sum"])
         return web.json_response(rval, status=200)  # all fine
 
     async def sidToTest(self, request):
@@ -60,6 +60,7 @@ class UploadHandler:
                 "fileName",
                 "md5sum",
                 "bundle",
+                "bundle_order",
             ],
         ):
             return web.Response(status=400)
@@ -85,6 +86,7 @@ class UploadHandler:
             image,
             param["md5sum"],
             param["bundle"],
+            param["bundle_order"],
         )
         return web.json_response(rmsg, status=200)  # all good
 

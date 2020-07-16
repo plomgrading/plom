@@ -82,7 +82,7 @@ def uploadTestPage(
     file_name,
     md5,
     bundle_name,
-    bundle_order=None,
+    bundle_order,
 ):
     # return value is either [True, <success message>] or
     # [False, stuff] - but need to distinguish between "discard this image" and "you should perhaps keep this image"

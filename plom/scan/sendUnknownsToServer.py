@@ -7,38 +7,34 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import getpass
-from glob import glob
 import hashlib
 import os
 import shutil
+from pathlib import Path
+
+import getpass
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 from plom import PlomImageExtWhitelist
 
 
-def doFiling(rmsg, shortName, fname):
-    # current directory is "bundle", but we need to put files in "../upload/blah"
+def doFiling(rmsg, bundle, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
         # print(rmsg[2])
         print("{} uploaded as unknown page.".format(fname))
+        shutil.move(fname, bundle / Path("uploads/sentPages/unknowns") / shortName)
         shutil.move(
-            fname, os.path.join("..", "uploads", "sentPages", "unknowns", shortName)
-        )
-        shutil.move(
-            fname + ".qr",
-            os.path.join("..", "uploads", "sentPages", "unknowns", shortName + "qr"),
+            Path(str(fname) + ".qr"),
+            bundle / Path("uploads/sentPages/unknowns") / (str(shortName) + ".qr"),
         )
     else:  # msg = [False, reason, message]
         if rmsg[1] == "duplicate":
             print(rmsg[2])
+            shutil.move(fname, bundle / Path("uploads/discardedPages") / shortName)
             shutil.move(
-                fname, os.path.join("..", "uploads", "discardedPages", shortName)
-            )
-            shutil.move(
-                fname + ".qr",
-                os.path.join("..", "uploads", "discardedPages", shortName + ".qr"),
+                Path(str(fname) + ".qr"),
+                bundle / Path("uploads/discardedPages") / (str(shortName) + ".qr"),
             )
         else:
             print(rmsg[2])
@@ -53,20 +49,19 @@ def extractOrder(fname):
     return int(n)
 
 
-def sendUnknownFiles(scanMessenger, fileDict):
-    for bundle in fileDict:
-        for fname in fileDict[bundle]:
-            md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-            shortName = os.path.split(fname)[1]
-            order = extractOrder(shortName)
-            bundle_order = order
-            rmsg = scanMessenger.uploadUnknownPage(
-                shortName, fname, order, md5, bundle, bundle_order
-            )
-            doFiling(rmsg, shortName, fname)
+def sendUnknownFiles(msgr, bundle_name, files):
+    for fname in files:
+        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+        shortName = os.path.split(fname)[1]
+        order = extractOrder(shortName)
+        bundle_order = order
+        rmsg = msgr.uploadUnknownPage(
+            shortName, fname, order, md5, bundle_name, bundle_order
+        )
+        doFiling(rmsg, Path("bundles") / bundle_name, shortName, fname)
 
 
-def uploadUnknowns(server=None, password=None):
+def uploadUnknowns(bundleDir, server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         scanMessenger = ScanMessenger(s, port=p)
@@ -96,20 +91,13 @@ def uploadUnknowns(server=None, password=None):
         )
         exit(10)
 
-    fileDict = {}  # list of files by bundle
+    if not bundleDir.is_dir():
+        raise ValueError("should've been a directory!")
 
-    # go into bundles directory
-    os.chdir("bundles")
-    for bundleDir in os.scandir():
-        # make sure is directory
-        if not bundleDir.is_dir():
-            continue
-        fileDict[bundleDir.name] = []
-        # Look for pages in unknowns
-        for ext in PlomImageExtWhitelist:
-            fileDict[bundleDir.name].extend(
-                glob(os.path.join(bundleDir, "unknownPages", "*.{}".format(ext)))
-            )
-    sendUnknownFiles(scanMessenger, fileDict)
+    files = []
+    # Look for pages in unknowns
+    for ext in PlomImageExtWhitelist:
+        files.extend((bundleDir / "unknownPages").glob("*.{}".format(ext)))
+    sendUnknownFiles(scanMessenger, bundleDir.name, files)
     scanMessenger.closeUser()
     scanMessenger.stop()

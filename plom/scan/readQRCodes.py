@@ -8,12 +8,12 @@ __license__ = "AGPL-3.0-or-later"
 
 from collections import defaultdict
 import getpass
-import glob
 import json
 import os
 import shutil
 import subprocess
 from multiprocessing import Pool
+from pathlib import Path
 
 import toml
 from tqdm import tqdm
@@ -32,18 +32,18 @@ from plom.scan import rotateBitmap
 from plom import PlomImageExtWhitelist
 
 
-def decodeQRs():
+def decodeQRs(where):
     """Find all bitmaps in pageImages dir and decode their QR codes.
 
     If their QRcodes have not been successfully decoded previously
     then decode them.  The results are stored in blah.<ext>.qr files.
-    """
-    # look at files in the pageImages directory of every bundle
-    # the .qr files will have same path, so do not need to do bundles separately
 
+    Args:
+        where (str, Path): where to search, e.g., "bundledir/pageImages"
+    """
     stuff = []
     for ext in PlomImageExtWhitelist:
-        stuff.extend(glob.glob("*/pageImages/*.{}".format(ext)))
+        stuff.extend(where.glob("*.{}".format(ext)))
     N = len(stuff)
     # TODO: processes=8?  Seems its chosen automatically (?)
     with Pool() as p:
@@ -110,7 +110,7 @@ def reOrientPage(fname, qrs):
         return False
 
 
-def checkQRsValid(spec, examsScannedNow):
+def checkQRsValid(bundledir, spec, examsScannedNow):
     """Check that the QRcodes in each pageimage are valid.
 
     When each bitmap is scanned a .qr is produced.  Load the dict of
@@ -118,11 +118,18 @@ def checkQRsValid(spec, examsScannedNow):
 
     Rotate any images that we can.
 
+    Args:
+        bundledir (str, Path): look for images in the subdir
+            `bundledir/pageImages` and other subdirs.
+        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
+        examsScannedNow: TODO?
+
     TODO: maybe we should split this function up a bit!
     """
     # go into page image directory of each bundle and look at each .qr file.
-    for fnqr in glob.glob("*/pageImages/*.qr"):
-        fname = fnqr[:-3]  # blah.<ext>.qr -> blah.<ext>
+    for fnqr in (bundledir / "pageImages").glob("*.qr"):
+        # fname = fnqr.stem  # strip .qr from blah.<ext>.qr
+        fname = Path(str(fnqr)[0:-3])  # Yuck, TODO
         with open(fnqr, "r") as qrfile:
             qrs = json.load(qrfile)
 
@@ -228,7 +235,9 @@ def checkQRsValid(spec, examsScannedNow):
             print("[F] {0}: {1} - moving to unknownPages".format(fname, msg))
             # move blah.<ext> and blah.<ext>.qr
             shutil.move(fname, dst)
-            shutil.move(fname + ".qr", dst + ".qr")
+            # TODO: better with some `.with_suffix()` juggling
+            # TODO: there are at least two other places
+            shutil.move(Path(str(fname) + ".qr"), Path(str(dst) + ".qr"))
 
 
 def validateQRsAgainstSpec(spec, examsScannedNow):
@@ -271,7 +280,9 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
             # this means that they won't be added to the
             # list of correctly scanned page images
             shutil.move(fname, dst)
-            shutil.move(fname + ".qr", dst + ".qr")
+            # TODO: better with some `.with_suffix()` juggling
+            # TODO: there are at least two other places
+            shutil.move(Path(str(fname) + ".qr"), Path(str(dst) + ".qr"))
 
 
 def moveScansIntoPlace(examsScannedNow):
@@ -289,10 +300,14 @@ def moveScansIntoPlace(examsScannedNow):
         # move blah-n.png to txxxxpyyvz.blah-n.png
         dname = "t{}p{}v{}.{}".format(str(t).zfill(4), str(p).zfill(2), str(v), suffix)
         shutil.move(fname, os.path.join(dpath, dname))
-        shutil.move(fname + ".qr", os.path.join(dpath, dname + ".qr"))
+        # TODO: better with some `.with_suffix()` juggling
+        # TODO: there are at least two other places
+        shutil.move(
+            Path(str(fname) + ".qr"), os.path.join(dpath, Path(str(dname) + ".qr"))
+        )
 
 
-def processBitmaps(server=None, password=None):
+def processBitmaps(bundle, server=None, password=None):
     examsScannedNow = defaultdict(list)
 
     if server and ":" in server:
@@ -329,11 +344,7 @@ def processBitmaps(server=None, password=None):
     scanMessenger.closeUser()
     scanMessenger.stop()
 
-    # go into the bundle directory
-    os.chdir("bundles")
-    decodeQRs()
-    checkQRsValid(spec, examsScannedNow)
+    decodeQRs(bundle / "pageImages")
+    checkQRsValid(bundle, spec, examsScannedNow)
     validateQRsAgainstSpec(spec, examsScannedNow)
     moveScansIntoPlace(examsScannedNow)
-
-    os.chdir("..")
