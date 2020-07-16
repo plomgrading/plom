@@ -252,8 +252,6 @@ def uploadTPages(bundleDir, server=None, password=None):
     if not bundleDir.is_dir():
         raise ValueError("should've been a directory!")
 
-    # TODO: only one thing in the dict, refactor to plain list?
-    # TODO: strip path and keep name?  But we just need to add it on later
     files = []
     # Look for pages in decodedPages
     for ext in PlomImageExtWhitelist:
