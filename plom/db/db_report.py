@@ -394,7 +394,7 @@ def RgetOriginalFiles(self, test_number):
     if tref is None:
         return []
     # append tpages, hwpages and then lpages.
-    for pref in tref.pages.order_by(TPage.page_number):
+    for pref in tref.tpages.order_by(TPage.page_number):
         page_files.append(pref.image.file_name)
     for qref in tref.qgroups.order_by(QGroup.question):
         for pref in qref.group.hwpages:

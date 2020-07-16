@@ -82,9 +82,9 @@ spAssemble = sub.add_parser(
     """,
 )
 spAssemble.add_argument(
-    "--totalled_only",
+    "--ided_only",
     action="store_true",
-    help="Reassemble PDF files for ID and totalled (but offline-graded) papers.",
+    help="Reassemble PDF files for ID'ed (but offline-graded) papers.",
 )
 spCodedReturn = sub.add_parser(
     "webpage",
@@ -122,7 +122,7 @@ def main():
     elif args.command == "csv":
         plom.finish.spreadsheet.main(args.server, args.password)
     elif args.command == "reassemble":
-        if args.totalled_only:
+        if args.ided_only:
             plom.finish.reassemble_ID_only.main(args.server, args.password)
         else:
             plom.finish.reassemble_completed.main(args.server, args.password)
