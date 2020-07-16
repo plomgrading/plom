@@ -577,7 +577,6 @@ def updateQGroup(self, qref):
 
     # clean up the QGroup and its annotations
     self.cleanQGroup(qref)
-    # note - the sumdata will be updated elsewhere.
 
     gref = qref.group
 

@@ -32,8 +32,6 @@ class PlomDB:
                     Bundle,
                     Test,
                     ##
-                    SumData,
-                    ##
                     Group,
                     IDGroup,
                     DNMGroup,

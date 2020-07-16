@@ -1040,7 +1040,7 @@ class Manager(QWidget):
             self.ui.overallTW.setItem(r, 1, it)
 
             it = QTableWidgetItem(str(opDict[t][1]).rjust(2))
-            if opDict[t][2] == self.numberOfQuestions:
+            if opDict[t][1] == self.numberOfQuestions:
                 it.setBackground(QBrush(Qt.green))
                 it.setToolTip("Has been marked")
             self.ui.overallTW.setItem(r, 2, it)

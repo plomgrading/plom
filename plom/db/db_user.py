@@ -186,15 +186,3 @@ def resetUsersToDo(self, uname):
             log.info(
                 "Reset user {} question-annotation task {}".format(uname, x.group.gid)
             )
-    with plomdb.atomic():
-        query = SumData.select().where(SumData.user == uref, SumData.status == "out")
-        for x in query:
-            x.status = "todo"
-            x.user = None
-            x.time = datetime.now()
-            x.save()
-            log.info(
-                "Reset user {} totalling test_number {}".format(
-                    uname, x.test.test_number
-                )
-            )
