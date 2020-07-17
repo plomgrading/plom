@@ -143,7 +143,7 @@ def processScans(server, password, pdf_fname):
 def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
     from plom.scan import sendPagesToServer, scansToImages
 
-    print("Creating bundle PDF {} ton server".format(pdf_fname))
+    print("Creating bundle PDF {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
     # should be [True, skip_list] or [False, reason]
     if rval[0]:

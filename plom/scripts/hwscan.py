@@ -15,6 +15,7 @@ from collections import defaultdict
 import glob
 import os
 import shutil
+from pathlib import Path
 
 from plom import __version__
 from plom.rules import isValidStudentNumber
@@ -39,20 +40,20 @@ def whoDidWhat(server, password, directory_check):
     whoSubmittedWhat(server, password, directory_check)
 
 
-def make_required_directories():
-    # we need
-    directory_list = [
-        "archivedPDFs/submittedHWByQ",
-        "archivedPDFs/submittedLoose",
-        "bundles",
-        "uploads/sentPages",
-        "uploads/discardedPages",
-        "uploads/collidingPages",
-        "uploads/sentPages/unknowns",
-        "uploads/sentPages/collisions",
-    ]
-    for dir in directory_list:
-        os.makedirs(dir, exist_ok=True)
+def make_required_directories(bundle=None):
+    os.makedirs("archivedPDFs", exist_ok=True)
+    os.makedirs("bundles", exist_ok=True)
+    # TODO: split up a bit, above are global, below per bundle
+    if bundle:
+        directory_list = [
+            "uploads/sentPages",
+            "uploads/discardedPages",
+            "uploads/collidingPages",
+            "uploads/sentPages/unknowns",
+            "uploads/sentPages/collisions",
+        ]
+        for dir in directory_list:
+            os.makedirs(bundle / Path(dir), exist_ok=True)
 
 
 def processLooseScans(server, password, file_name, student_id):
@@ -84,35 +85,36 @@ def processLooseScans(server, password, file_name, student_id):
     )
 
     # check for bundle on the server
-    bundleExists = sendPagesToServer.doesBundleExist(file_name, server, password)
+    print("Checking if bundle PDF {} already exists on server".format(pdf_fname))
+    bundle_exists = sendPagesToServer.doesBundleExist(file_name, server, password)
     # should be [False] or [True, name] [True,md5sum]
     # or [True, both, name, [all the files already uploaded]]
-    if bundleExists[0] is False:
+    if bundle_exists[0] is False:
         bundle_name = file_name
         skip_list = []
     else:
-        if bundleExists[1] == "name":
+        if bundle_exists[1] == "name":
             print(
                 "The bundle name {} has been used previously for a different bundle. Stopping".format(
                     file_name
                 )
             )
             return
-        elif bundleExists[1] == "md5sum":
+        elif bundle_exists[1] == "md5sum":
             print(
                 "A bundle with matching md5sum is already in system with a different name. Stopping".format(
                     file_name
                 )
             )
             return
-        elif bundleExists[1] == "both":
+        elif bundle_exists[1] == "both":
             print(
                 "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
                     file_name
                 )
             )
             bundle_name = file_name
-            skip_list = bundleExists[3]
+            skip_list = bundle_exists[3]
         else:
             print("Should not be here!")
             exit(1)
@@ -121,7 +123,7 @@ def processLooseScans(server, password, file_name, student_id):
     scansToImages.processScans([short_name], hwLoose=True)
 
     # create the bundle (if needed) before uploading
-    if bundleExists[0] is False:
+    if bundle_exists[0] is False:
         sendPagesToServer.createNewBundle(file_name, server, password)
 
     # send the images to the server
@@ -130,19 +132,23 @@ def processLooseScans(server, password, file_name, student_id):
     scansToImages.archiveLBundle(file_name)
 
 
-def processHWScans(server, password, file_name, student_id, question_list):
+def processHWScans(server, password, pdf_fname, student_id, question_list):
     make_required_directories()
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
+    if not os.path.isfile(pdf_fname):
+        print("Cannot find file {} - skipping".format(pdf_fname))
+        return
+
     question = int(question_list[0])  # args passes '[q]' rather than just 'q'
 
-    # do sanity checks on file_name
-    # trim down file_name - replace "submittedHWByQ/fname" with "fname", but pass appropriate flag
-    short_name = os.path.split(file_name)[1]
+    # do sanity checks on pdf_fname
+    # trim down pdf_fname - replace "submittedHWByQ/fname" with "fname"
+    short_name = os.path.split(pdf_fname)[1]
     assert (
-        os.path.split(file_name)[0] == "submittedHWByQ"
-    ), 'At least for now, you must your file into a directory named "submittedHWByQ"'
+        os.path.split(pdf_fname)[0] == "submittedHWByQ"
+    ), 'At least for now, you must put your file into a directory named "submittedHWByQ"'
     IDQ = IDQorIDorBad(short_name)
     if len(IDQ) != 3:  # should return [IDQ, sid, q]
         print("File name has wrong format - should be 'blah.sid.q.pdf'. Stopping.")
@@ -174,52 +180,66 @@ def processHWScans(server, password, file_name, student_id, question_list):
     else:
         print("Student ID {} is test_number {}".format(student_id, test_number))
 
-    # pass as list since processScans expects a list.
-    scansToImages.processScans([short_name], hwByQ=True)
-
-    bundleExists = sendPagesToServer.doesBundleExist(file_name, server, password)
-    # should be [False] or [True, name] [True,md5sum]
-    # or [True, both, name, [all the files already uploaded]]
-    if bundleExists[0] is False:
-        bundle_name = file_name
-        skip_list = []
-    else:
-        if bundleExists[1] == "name":
+    bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
+    # should be [False] [True, name] [True,md5sum], [True, both]
+    if bundle_exists[0]:
+        if bundle_exists[1] == "name":
             print(
                 "The bundle name {} has been used previously for a different bundle. Stopping".format(
-                    file_name
+                    pdf_fname
                 )
             )
             return
-        elif bundleExists[1] == "md5sum":
+        elif bundle_exists[1] == "md5sum":
             print(
                 "A bundle with matching md5sum is already in system with a different name. Stopping".format(
-                    file_name
+                    pdf_fname
                 )
             )
             return
-        elif bundleExists[1] == "both":
+        elif bundle_exists[1] == "both":
             print(
                 "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
-                    file_name
+                    pdf_fname
                 )
             )
-            bundle_name = file_name
-            skip_list = bundleExists[3]
         else:
             print("Should not be here!")
             exit(1)
 
-    # create the bundle (if needed) before uploading
-    if bundleExists[0] is False:
-        sendPagesToServer.createNewBundle(file_name, server, password)
+    bundle_name = Path(pdf_fname).stem.replace(" ", "_")
+    bundledir = Path("bundles") / "submittedHWByQ" / bundle_name
+    make_required_directories(bundledir)
+
+    print("Processing PDF {} to images".format(pdf_fname))
+    scansToImages.processScans([pdf_fname])
+
+    print("Creating bundle PDF {} on server".format(pdf_fname))
+    rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
+    # should be [True, skip_list] or [False, reason]
+    if rval[0]:
+        skip_list = rval[1]
+        if len(skip_list) > 0:
+            print("Some images from that bundle were uploaded previously:")
+            print("Pages {}".format(skip_list))
+            print("Skipping those images.")
+    else:
+        print("There was a problem with this bundle.")
+        if rval[1] == "name":
+            print("A different bundle with the same name was uploaded previously.")
+        else:
+            print(
+                "A bundle with matching md5sum but different name was uploaded previously."
+            )
+        print("Stopping.")
+        return
 
     # send the images to the server
     sendPagesToServer.uploadHWPages(
         bundle_name, skip_list, student_id, question, server, password
     )
     # now archive the PDF
-    scansToImages.archiveHWBundle(file_name)
+    scansToImages.archiveHWBundle(pdf_fname)
 
 
 def processAllHWByQ(server, password, yes_flag):
