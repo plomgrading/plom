@@ -93,68 +93,108 @@ def make_required_directories(bundle=None):
 
 
 def processScans(server, password, pdf_fname):
-    """Process PDF file into images."""
+    """Process PDF file into images and read QRcodes
+
+    Convert file into a bundle-name
+    Check with server if bundle/md5 already on server
+    - abort if name xor md5sum known.
+    - continue if neither known or both known
+    Make required directories for processing bundle,
+    convert PDF to images and read QR codes from those.
+    """
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
     from plom.scan import readQRCodes
 
-    if not os.path.isfile(pdf_fname):
+    pdf_fname = Path(pdf_fname)
+    if not pdf_fname.is_file():
         print("Cannot find file {} - skipping".format(pdf_fname))
         return
-
-    # TODO: future checkBundlesWithServer command goes here?
     bundle_name = Path(pdf_fname).stem.replace(" ", "_")
-    bundledir = Path("bundles") / bundle_name
-    make_required_directories(bundledir)
 
-    print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans([pdf_fname])
-    print("Read QR codes")
-    readQRCodes.processBitmaps(bundledir, server, password)
-
-
-def uploadImages(pdf_fname, server, password, unknowns=False, collisions=False):
-    from plom.scan import sendPagesToServer, scansToImages
-
-    print("Declaring bundle PDF {} to server".format(pdf_fname))
-    rval = sendPagesToServer.declareBundle(pdf_fname, server, password)
-    # should be [True, name] or [False, name] [False,md5sum]
-    # or [False, both, name, [all the files already uploaded]]
-    if rval[0] is True:
-        bundle_name = rval[1]
-        skip_list = []
-    else:
-        if rval[1] == "name":
+    print("Checking if bundle {} already exists on server".format(bundle_name))
+    bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
+    # return [False, name], [True, name], [True,md5sum] or [True, both]
+    if bundle_exists[0]:
+        if bundle_exists[1] == "name":
             print(
                 "The bundle name {} has been used previously for a different bundle. Stopping".format(
                     pdf_fname
                 )
             )
             return
-        elif rval[1] == "md5sum":
+        elif bundle_exists[1] == "md5sum":
             print(
-                "A bundle with matching md5sum is already in system with a different name. Stopping".format(
-                    pdf_fname
-                )
+                "A bundle with matching md5sum is already in system with a different name. Stopping"
             )
             return
-        elif rval[1] == "both":
+        elif bundle_exists[1] == "both":
             print(
                 "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
-                    pdf_fname
+                    bundle_name
                 )
             )
-            bundle_name = rval[2]
-            skip_list = rval[3]
         else:
-            print("Should not be here!")
-            exit(1)
+            raise RuntimeError("Should not be here: unexpected code path!")
+
+    bundledir = Path("bundles") / bundle_name
+    make_required_directories(bundledir)
+
+    print("Processing PDF {} to images".format(pdf_fname))
+    scansToImages.processScans(pdf_fname, bundledir)
+    print("Read QR codes")
+    readQRCodes.processBitmaps(bundledir, server, password)
+
+
+def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
+    """Upload processed images from bundle given by pdf_fname.
+
+    Try to create a bundle on server from pdf_fname.
+    - abort if name xor md5sum of bundle known.
+    - continue otherwise (server will give skip-list)
+    Skip images whose page within the bundle is in the skip-list since
+    those are already uploaded.
+    Once uploaded archive the bundle pdf.
+
+    As part of the upload 'unknown' pages and 'collisions' may be detected.
+    These will not be uploaded unless the appropriate flags are set.
+
+    Collisions are still 'todo'.
+    """
+
+    from plom.scan import sendPagesToServer, scansToImages
+
+    print("Creating bundle for PDF {} on server".format(pdf_fname))
+    rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
+    # should be [True, skip_list] or [False, reason]
+    if rval[0]:
+        skip_list = rval[1]
+        if len(skip_list) > 0:
+            print("Some images from that bundle were uploaded previously:")
+            print("Pages {}".format(skip_list))
+            print("Skipping those images.")
+    else:
+        print("There was a problem with this bundle.")
+        if rval[1] == "name":
+            print("A different bundle with the same name was uploaded previously.")
+        else:
+            print(
+                "A bundle with matching md5sum but different name was uploaded previously."
+            )
+        print("Stopping.")
+        return
 
     print("Upload images to server")
+    bundle_name = Path(pdf_fname).stem.replace(" ", "_")
     bundledir = Path("bundles") / bundle_name
-    [TPN, updates] = sendPagesToServer.uploadTPages(bundledir, server, password)
+    [TPN, updates] = sendPagesToServer.uploadTPages(
+        bundledir, skip_list, server, password
+    )
     print("Tests were uploaded to the following studentIDs: {}".format(TPN.keys()))
     print("Server reports {} papers updated.".format(updates))
+
+    print("Archiving the bundle PDF {}".format(pdf_fname))
+    scansToImages.archiveTBundle(pdf_fname)
 
     if unknowns:
         from plom.scan import sendUnknownsToServer
@@ -171,42 +211,16 @@ def uploadImages(pdf_fname, server, password, unknowns=False, collisions=False):
 
 
 def doAllToScans(server, password, scanPDFs):
+    """Process and upload all give PDFs"""
     from plom.scan import scansToImages, sendPagesToServer, readQRCodes
 
     make_required_directories()
 
+    print("Processing and uploading the following files: {}".format(scanPDFs))
     # do all steps for one PDF at a time.
     for fname in scanPDFs:
-        if not os.path.isfile(fname):
-            print("Cannot find file {} - skipping".format(fname))
-            continue
-        print("Declaring bundle PDF {} to server".format(fname))
-        rval = sendPagesToServer.declareBundle(fname, server, password)
-        if rval[0] is False:
-            if rval[1] == "name":
-                print(
-                    "The bundle name {} has been used previously. Stopping".format(
-                        fname
-                    )
-                )
-            elif rval[1] == "md5sum":
-                print(
-                    "A bundle with matching md5sum is already in system. Stopping".format(
-                        fname
-                    )
-                )
-            else:
-                print("Should not be here!")
-            exit(1)
-
-        print("Processing PDF {} to images".format(fname))
-        scansToImages.processScans([fname])
-        readQRCodes.processBitmaps(server, password)
-        [TPN, updates] = sendPagesToServer.uploadTPages(server, password)
-        print("Tests were uploaded to the following studentIDs: {}".format(TPN.keys()))
-        print("Server reports {} papers updated.".format(updates))
-        # now archive that pdf.
-        scansToImages.archiveTBundle(fname)
+        self.processScans(server, password, fname)
+        self.uploadImages(server, password, fname)
 
 
 parser = argparse.ArgumentParser(
@@ -272,7 +286,7 @@ def main():
     elif args.command == "upload":
         # TODO: bundleName with/without PDF: WIP!
         uploadImages(
-            args.bundleName, args.server, args.password, args.unknowns, args.collisions
+            args.server, args.password, args.bundleName, args.unknowns, args.collisions
         )
     elif args.command == "status":
         scanStatus(args.server, args.password)

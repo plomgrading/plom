@@ -12,8 +12,12 @@ from plom.server import pageNotSubmitted
 log = logging.getLogger("server")
 
 
-def declareBundle(self, bundle_file, md5):
-    return self.DB.declareBundle(bundle_file, md5)
+def doesBundleExist(self, bundle_file, md5):
+    return self.DB.doesBundleExist(bundle_file, md5)
+
+
+def createNewBundle(self, bundle_file, md5):
+    return self.DB.createNewBundle(bundle_file, md5)
 
 
 def sidToTest(self, student_id):

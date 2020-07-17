@@ -15,6 +15,7 @@ from collections import defaultdict
 import glob
 import os
 import shutil
+from pathlib import Path
 
 from plom import __version__
 from plom.rules import isValidStudentNumber
@@ -28,44 +29,81 @@ def clearLogin(server, password):
 
 
 def scanStatus(server, password):
+    """Prints summary of test/hw uploads.
+
+    More precisely. Prints lists
+    * which tests have been used (ie at least one uploaded page)
+    * which tests completely scanned (both tpages and hwpage)
+    * incomplete tests (missing one tpage or one hw-question)
+    """
+
     from plom.scan import checkScanStatus
 
     checkScanStatus.checkStatus(server, password)
 
 
 def whoDidWhat(server, password, directory_check):
+    """Prints lists of hw/loose submissions on server / local
+
+    * Prints list of hw-submissions already uploaded to server
+    * Prints list of what hw-submissions are in the current submittedHWByQ directory
+    * Prints list of what loose-submissions are in the current submittedLoose directory
+    """
     from plom.scan.hwSubmissionsCheck import whoSubmittedWhat
 
     whoSubmittedWhat(server, password, directory_check)
 
 
-def make_required_directories():
-    # we need
-    directory_list = [
-        "archivedPDFs/submittedHWByQ",
-        "archivedPDFs/submittedLoose",
-        "bundles",
-        "uploads/sentPages",
-        "uploads/discardedPages",
-        "uploads/collidingPages",
-        "uploads/sentPages/unknowns",
-        "uploads/sentPages/collisions",
-    ]
-    for dir in directory_list:
-        os.makedirs(dir, exist_ok=True)
+def make_required_directories(bundle=None):
+    os.makedirs("archivedPDFs", exist_ok=True)
+    os.makedirs("archivedPDFs" / Path("submittedHWByQ"), exist_ok=True)
+    os.makedirs("archivedPDFs" / Path("submittedLoose"), exist_ok=True)
+    os.makedirs("bundles", exist_ok=True)
+    # TODO: split up a bit, above are global, below per bundle
+    if bundle:
+        directory_list = [
+            "uploads/sentPages",
+            "uploads/discardedPages",
+            "uploads/collidingPages",
+            "uploads/sentPages/unknowns",
+            "uploads/sentPages/collisions",
+        ]
+        for dir in directory_list:
+            os.makedirs(bundle / Path(dir), exist_ok=True)
 
 
-def processLooseScans(server, password, file_name, student_id):
-    make_required_directories()
+def processLooseScans(server, password, pdf_fname, student_id):
+    """Process the given Loose-pages PDF into images, upload then archive the pdf.
+
+    pdf_fname should be for form 'submittedLoose/blah.XXXX.pdf'
+    where XXXX should be student_id. Do basic sanity check to confirm.
+
+    Ask server to map student_id to a test-number; these should have been
+    pre-populated on test-generation and if id not known there is an error.
+
+    Turn pdf_fname in to a bundle_name and check with server if that bundle_name / md5sum known.
+     - abort if name xor md5sum known,
+     - continue otherwise (when both name / md5sum known we assume this is resuming after a crash).
+
+    Process PDF into images.
+
+    Ask server to create the bundle - it will return an error or [True, skip_list]. The skip_list is a list of bundle-orders (ie page number within the PDF) that have already been uploaded. In typical use this will be empty.
+
+    Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
+    """
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
-    # trim down file_name - replace "submittedLoose/fname" with "fname", but pass appropriate flag
-    short_name = os.path.split(file_name)[1]
-    assert (
-        os.path.split(file_name)[0] == "submittedLoose"
-    ), 'At least for now, you must your file into a directory named "submittedLoose"'
-    IDQ = IDQorIDorBad(short_name)
+    pdf_fname = Path(pdf_fname)
+    if not pdf_fname.is_file():
+        print("Cannot find file {} - skipping".format(pdf_fname))
+        return
+
+    assert os.path.split(pdf_fname)[0] in [
+        "submittedLoose",
+        "./submittedLoose",
+    ], 'At least for now, you must your file into a directory named "submittedLoose"'
+    IDQ = IDQorIDorBad(pdf_fname.name)
     if len(IDQ) != 2:  # should return [JID, sid]
         print("File name has wrong format. Should be 'blah.sid.pdf'. Stopping.")
         return
@@ -79,66 +117,104 @@ def processLooseScans(server, password, file_name, student_id):
         return
     print(
         "Process and upload file {} as loose pages for sid {}".format(
-            short_name, student_id
+            pdf_fname.name, student_id
         )
     )
-    # pass as list since processScans expects a list.
-    scansToImages.processScans([short_name], hwLoose=True)
 
-    # now declare the bundle to the server
-    rval = sendPagesToServer.declareBundle(file_name, server, password)
-    # should be [True, name] or [False, name] [False,md5sum]
-    # or [False, both, name, [all the files already uploaded]]
-    if rval[0] is True:
-        bundle_name = rval[1]
-        skip_list = []
-    else:
-        if rval[1] == "name":
+    bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
+    # should be [False] [True, name] [True,md5sum], [True, both]
+    if bundle_exists[0]:
+        if bundle_exists[1] == "name":
             print(
                 "The bundle name {} has been used previously for a different bundle. Stopping".format(
-                    file_name
+                    pdf_fname
                 )
             )
             return
-        elif rval[1] == "md5sum":
+        elif bundle_exists[1] == "md5sum":
             print(
                 "A bundle with matching md5sum is already in system with a different name. Stopping".format(
-                    file_name
+                    pdf_fname
                 )
             )
             return
-        elif rval[1] == "both":
+        elif bundle_exists[1] == "both":
             print(
                 "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
-                    file_name
+                    pdf_fname
                 )
             )
-            bundle_name = rval[2]
-            skip_list = rval[3]
         else:
-            print("Should not be here!")
-            exit(1)
+            raise RuntimeError("Should not be here: unexpected code path!")
+
+    bundle_name = Path(pdf_fname).stem.replace(" ", "_")
+    bundledir = Path("bundles") / "submittedLoose" / bundle_name
+    make_required_directories(bundledir)
+
+    print("Processing PDF {} to images".format(pdf_fname))
+    scansToImages.processScans(pdf_fname, bundledir)
+
+    print("Creating bundle for {} on server".format(pdf_fname))
+    rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
+    # should be [True, skip_list] or [False, reason]
+    if rval[0]:
+        skip_list = rval[1]
+        if len(skip_list) > 0:
+            print("Some images from that bundle were uploaded previously:")
+            print("Pages {}".format(skip_list))
+            print("Skipping those images.")
+    else:
+        print("There was a problem with this bundle.")
+        if rval[1] == "name":
+            print("A different bundle with the same name was uploaded previously.")
+        else:
+            print(
+                "A bundle with matching md5sum but different name was uploaded previously."
+            )
+        print("Stopping.")
+        return
 
     # send the images to the server
     sendPagesToServer.uploadLPages(bundle_name, skip_list, student_id, server, password)
     # now archive the PDF
-    scansToImages.archiveLBundle(file_name)
+    scansToImages.archiveLBundle(pdf_fname)
 
 
-def processHWScans(server, password, file_name, student_id, question_list):
-    make_required_directories()
+def processHWScans(server, password, pdf_fname, student_id, question_list):
+    """Process the given HW PDF into images, upload then archive the pdf.
+
+    pdf_fname should be for form 'submittedHWByQ/blah.XXXX.YY.pdf'
+    where XXXX should be student_id and YY should be question_number.
+    Do basic sanity checks to confirm.
+
+    Ask server to map student_id to a test-number; these should have been
+    pre-populated on test-generation and if id not known there is an error.
+
+    Turn pdf_fname in to a bundle_name and check with server if that bundle_name / md5sum known.
+     - abort if name xor md5sum known,
+     - continue otherwise (when both name / md5sum known we assume this is resuming after a crash).
+
+    Process PDF into images.
+
+    Ask server to create the bundle - it will return an error or [True, skip_list]. The skip_list is a list of bundle-orders (ie page number within the PDF) that have already been uploaded. In typical use this will be empty.
+
+    Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
+    """
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
+    pdf_fname = Path(pdf_fname)
+    if not pdf_fname.is_file():
+        print("Cannot find file {} - skipping".format(pdf_fname))
+        return
+
     question = int(question_list[0])  # args passes '[q]' rather than just 'q'
 
-    # do sanity checks on file_name
-    # trim down file_name - replace "submittedHWByQ/fname" with "fname", but pass appropriate flag
-    short_name = os.path.split(file_name)[1]
-    assert (
-        os.path.split(file_name)[0] == "submittedHWByQ"
-    ), 'At least for now, you must your file into a directory named "submittedHWByQ"'
-    IDQ = IDQorIDorBad(short_name)
+    assert os.path.split(pdf_fname)[0] in [
+        "submittedHWByQ",
+        "./submittedHWByQ",
+    ], 'At least for now, you must put your file into a directory named "submittedHWByQ"'
+    IDQ = IDQorIDorBad(pdf_fname.name)
     if len(IDQ) != 3:  # should return [IDQ, sid, q]
         print("File name has wrong format - should be 'blah.sid.q.pdf'. Stopping.")
         return
@@ -159,7 +235,7 @@ def processHWScans(server, password, file_name, student_id, question_list):
         return
     print(
         "Process and upload file {} as answer to question {} for sid {}".format(
-            short_name, question, student_id
+            pdf_fname.name, question, student_id
         )
     )
     test_number = sendPagesToServer.checkTestHasThatSID(student_id, server, password)
@@ -169,51 +245,73 @@ def processHWScans(server, password, file_name, student_id, question_list):
     else:
         print("Student ID {} is test_number {}".format(student_id, test_number))
 
-    # pass as list since processScans expects a list.
-    scansToImages.processScans([short_name], hwByQ=True)
-
-    rval = sendPagesToServer.declareBundle(file_name, server, password)
-    # should be [True, name] or [False, name] [False,md5sum]
-    # or [False, both, name, [all the files already uploaded]]
-    if rval[0] is True:
-        bundle_name = rval[1]
-        skip_list = []
-    else:
-        if rval[1] == "name":
+    bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
+    # should be [False] [True, name] [True,md5sum], [True, both]
+    if bundle_exists[0]:
+        if bundle_exists[1] == "name":
             print(
                 "The bundle name {} has been used previously for a different bundle. Stopping".format(
-                    file_name
+                    pdf_fname
                 )
             )
             return
-        elif rval[1] == "md5sum":
+        elif bundle_exists[1] == "md5sum":
             print(
-                "A bundle with matching md5sum is already in system with a different name. Stopping".format(
-                    file_name
-                )
+                "A bundle with matching md5sum is already in system with a different name. Stopping"
             )
             return
-        elif rval[1] == "both":
+        elif bundle_exists[1] == "both":
             print(
                 "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
-                    file_name
+                    pdf_fname
                 )
             )
-            bundle_name = rval[2]
-            skip_list = rval[3]
         else:
-            print("Should not be here!")
-            exit(1)
+            raise RuntimeError("Should not be here: unexpected code path!")
+
+    bundle_name = Path(pdf_fname).stem.replace(" ", "_")
+    bundledir = Path("bundles") / "submittedHWByQ" / bundle_name
+    make_required_directories(bundledir)
+
+    print("Processing PDF {} to images".format(pdf_fname))
+    scansToImages.processScans(pdf_fname, bundledir)
+
+    print("Creating bundle for {} on server".format(pdf_fname))
+    rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
+    # should be [True, skip_list] or [False, reason]
+    if rval[0]:
+        skip_list = rval[1]
+        if len(skip_list) > 0:
+            print("Some images from that bundle were uploaded previously:")
+            print("Pages {}".format(skip_list))
+            print("Skipping those images.")
+    else:
+        print("There was a problem with this bundle.")
+        if rval[1] == "name":
+            print("A different bundle with the same name was uploaded previously.")
+        else:
+            print(
+                "A bundle with matching md5sum but different name was uploaded previously."
+            )
+        print("Stopping.")
+        return
 
     # send the images to the server
     sendPagesToServer.uploadHWPages(
         bundle_name, skip_list, student_id, question, server, password
     )
     # now archive the PDF
-    scansToImages.archiveHWBundle(file_name)
+    scansToImages.archiveHWBundle(pdf_fname)
 
 
 def processAllHWByQ(server, password, yes_flag):
+    """Procees and upload all HW by Q bundles in submission directory.
+
+    Scan through the submittedHWByQ directory and process/upload
+    each PDF in turn. User will be prompted for each unless the
+    'yes_flag' is set.
+    """
+
     submissions = defaultdict(list)
     for file_name in sorted(glob.glob(os.path.join("submittedHWByQ", "*.pdf"))):
         IDQ = IDQorIDorBad(file_name)
@@ -247,6 +345,16 @@ def processAllHWByQ(server, password, yes_flag):
 
 
 def processMissing(server, password, yes_flag):
+    """Replace missing questions with 'not submitted' pages
+
+    Student may not upload pages for questions they don't answer. This function
+    asks server for list of all missing hw-questions from all tests that have
+    been used (but are not complete).
+
+    For each test we check if any test-pages are present and skip if they are.
+
+    For each remaining test we replace each missing question with a 'question not submitted' page. The user will be prompted in each case unless the 'yes_flag' is set.
+    """
     from plom.scan import checkScanStatus
 
     missingHWQ = checkScanStatus.checkMissingHWQ(server, password)

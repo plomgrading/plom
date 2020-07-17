@@ -39,7 +39,50 @@ class ScanMessenger(BaseMessenger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def declareBundle(self, bundle_name, md5sum):
+    def doesBundleExist(self, bundle_name, md5sum):
+        """Ask server if given bundle exists
+
+        Checks bundle's md5sum and name:
+        * neither = no matching bundle, return [False]
+        * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
+        * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
+        * both match = return [True, 'both'] - user is trying to upload a bundle again - likely due to crash.
+
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/admin/bundle".format(self.server),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "bundle": bundle_name,
+                    "md5sum": md5sum,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def createNewBundle(self, bundle_name, md5sum):
+        """Ask server to create bundle with given name/md5sum.
+
+        Server will check name / md5sum of bundle.
+        * If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldnt happen if scanner working correctly.
+        * If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
+        * If no such bundle return [True, []] - create the bundle and return an empty skip-list.
+        """
+
         self.SRmutex.acquire()
         try:
             response = self.session.put(
@@ -66,6 +109,12 @@ class ScanMessenger(BaseMessenger):
         return response.json()
 
     def sidToTest(self, student_id):
+        """Ask server to match given student_id to a test-number.
+
+        Returns
+        * [True, test_number]
+        * [False, 'Cannot find test with that student id']
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.get(
@@ -391,7 +440,7 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def sendTUploadDone(self):
+    def triggerUpdateAfterTUpload(self):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
@@ -412,7 +461,7 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def sendHWUploadDone(self):
+    def triggerUpdateAfterHWUpload(self):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
@@ -433,7 +482,7 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def sendLUploadDone(self):
+    def triggerUpdateAfterLUpload(self):
         self.SRmutex.acquire()
         try:
             response = self.session.put(

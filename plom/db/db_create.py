@@ -27,9 +27,17 @@ def createReplacementBundle(self):
     return True
 
 
-def declareBundle(self, file_name, md5):
+def doesBundleExist(self, bundle_name, md5):
+    """
+    Checks if bundle with name=bundle_name or md5sum=md5 exists.
+    4 possibilities
+    * neither = no matching bundle, return [False]
+    * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
+    * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
+    * both match = return [True, 'both'] - user is trying to upload a bundle again - likely due to crash.
+    """
     # check if that bundle-name is on file, and if the md5sum is known.
-    bref = Bundle.get_or_none(name=file_name)
+    bref = Bundle.get_or_none(name=bundle_name)
     if bref is not None:
         if bref.md5sum == md5:
             # name and md5sum match one in system
@@ -37,17 +45,36 @@ def declareBundle(self, file_name, md5):
             skip_list = []
             for iref in bref.images:
                 skip_list.append(iref.bundle_order)
-            return [False, "both", file_name, skip_list]
+            return [True, "both", skip_list]
 
         else:
-            return [False, "name"]
+            return [True, "name"]
     # name not known, so just check md5sum
     if Bundle.get_or_none(md5sum=md5) is not None:
-        return [False, "md5sum"]
+        return [True, "md5sum"]
+    return [False, "no such bundle"]
 
+
+def createNewBundle(self, bundle_name, md5):
+    """
+    Checks to see if bundle exists using 'doesBundleExist'.
+    If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldnt happen if scanner working correctly.
+    If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
+    If no such bundle return [True, []] - create the bundle and return an empty skip-list.
+    """
+    # use the doesBundleExist command logic to sanity check
+    bundle_check = self.doesBundleExist(bundle_name, md5)
+    if bundle_check[0] is False:
+        Bundle.create(name=bundle_name, md5sum=md5)
+        return [True, []]
+    elif bundle_check[1] == "both":  # return [True, skip-list]
+        bref = Bundle.get_or_none(name=bundle_name, md5sum=md5)
+        skip_list = []
+        for iref in bref.images:
+            skip_list.append(iref.bundle_order)
+        return [True, skip_list]
     else:
-        Bundle.create(name=file_name, md5sum=md5)
-        return [True, file_name]
+        return [False, bundle_check[1]]
 
 
 ########## Test creation stuff ##############
