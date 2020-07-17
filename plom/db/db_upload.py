@@ -520,19 +520,15 @@ def cleanQGroup(self, qref):
                 for p in qref.group.tpages.order_by(TPage.page_number):
                     if p.scanned:  # make sure the tpage is actually scanned.
                         ord += 1
-                        print("Trying to add tpage {}".format(p))
                         APage.create(annotation=aref, image=p.image, order=ord)
                 for p in qref.group.hwpages.order_by(HWPage.order):
                     ord += 1
-                    print("Trying to add hwpage {}".format(p))
                     APage.create(annotation=aref, image=p.image, order=ord)
                 for p in qref.group.expages.order_by(EXPage.order):
                     ord += 1
-                    print("Trying to add expage {}".format(p))
                     APage.create(annotation=aref, image=p.image, order=ord)
                 for p in tref.lpages.order_by(LPage.order):
                     ord += 1
-                    print("Trying to add lpage {}".format(p))
                     APage.create(annotation=aref, image=p.image, order=ord)
             else:
                 ed += 1
