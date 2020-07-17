@@ -395,10 +395,9 @@ def postProcessing(thedir, dest):
 
 
 def processScans(PDFs, hwByQ=False, hwLoose=False):
-    """Process files into bitmap pageimages and archive the pdf.
+    """Process files into bitmap pageimages.
 
-    Process each page of a pdf file into bitmaps.  Then move the processed
-    pdf into "alreadyProcessed" so as to avoid duplications.
+    Process each page of a pdf file into bitmaps.
 
     Do a small amount of post-processing when possible to do losslessly
     (e.g., png).  A simple gamma shift to leave white-white but make
