@@ -29,12 +29,26 @@ def clearLogin(server, password):
 
 
 def scanStatus(server, password):
+    """Prints summary of test/hw uploads.
+
+    More precisely. Prints lists
+    * which tests have been used (ie at least one uploaded page)
+    * which tests completely scanned (both tpages and hwpage)
+    * incomplete tests (missing one tpage or one hw-question)
+    """
+
     from plom.scan import checkScanStatus
 
     checkScanStatus.checkStatus(server, password)
 
 
 def whoDidWhat(server, password, directory_check):
+    """Prints lists of hw/loose submissions on server / local
+
+    * Prints list of hw-submissions already uploaded to server
+    * Prints list of what hw-submissions are in the current submittedHWByQ directory
+    * Prints list of what loose-submissions are in the current submittedLoose directory
+    """
     from plom.scan.hwSubmissionsCheck import whoSubmittedWhat
 
     whoSubmittedWhat(server, password, directory_check)
@@ -59,6 +73,24 @@ def make_required_directories(bundle=None):
 
 
 def processLooseScans(server, password, pdf_fname, student_id):
+    """Process the given Loose-pages PDF into images, upload then archive the pdf.
+
+    pdf_fname should be for form 'submittedLoose/blah.XXXX.pdf'
+    where XXXX should be student_id. Do basic sanity check to confirm.
+
+    Ask server to map student_id to a test-number; these should have been
+    pre-populated on test-generation and if id not known there is an error.
+
+    Turn pdf_fname in to a bundle_name and check with server if that bundle_name / md5sum known.
+     - abort if name xor md5sum known,
+     - continue otherwise (when both name / md5sum known we assume this is resuming after a crash).
+
+    Process PDF into images.
+
+    Ask server to create the bundle - it will return an error or [True, skip_list]. The skip_list is a list of bundle-orders (ie page number within the PDF) that have already been uploaded. In typical use this will be empty.
+
+    Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
+    """
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
@@ -149,6 +181,25 @@ def processLooseScans(server, password, pdf_fname, student_id):
 
 
 def processHWScans(server, password, pdf_fname, student_id, question_list):
+    """Process the given HW PDF into images, upload then archive the pdf.
+
+    pdf_fname should be for form 'submittedHWByQ/blah.XXXX.YY.pdf'
+    where XXXX should be student_id and YY should be question_number.
+    Do basic sanity checks to confirm.
+
+    Ask server to map student_id to a test-number; these should have been
+    pre-populated on test-generation and if id not known there is an error.
+
+    Turn pdf_fname in to a bundle_name and check with server if that bundle_name / md5sum known.
+     - abort if name xor md5sum known,
+     - continue otherwise (when both name / md5sum known we assume this is resuming after a crash).
+
+    Process PDF into images.
+
+    Ask server to create the bundle - it will return an error or [True, skip_list]. The skip_list is a list of bundle-orders (ie page number within the PDF) that have already been uploaded. In typical use this will be empty.
+
+    Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
+    """
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
@@ -254,6 +305,13 @@ def processHWScans(server, password, pdf_fname, student_id, question_list):
 
 
 def processAllHWByQ(server, password, yes_flag):
+    """Procees and upload all HW by Q bundles in submission directory.
+
+    Scan through the submittedHWByQ directory and process/upload
+    each PDF in turn. User will be prompted for each unless the
+    'yes_flag' is set.
+    """
+
     submissions = defaultdict(list)
     for file_name in sorted(glob.glob(os.path.join("submittedHWByQ", "*.pdf"))):
         IDQ = IDQorIDorBad(file_name)
@@ -287,6 +345,16 @@ def processAllHWByQ(server, password, yes_flag):
 
 
 def processMissing(server, password, yes_flag):
+    """Replace missing questions with 'not submitted' pages
+
+    Student may not upload pages for questions they don't answer. This function
+    asks server for list of all missing hw-questions from all tests that have
+    been used (but are not complete).
+
+    For each test we check if any test-pages are present and skip if they are.
+
+    For each remaining test we replace each missing question with a 'question not submitted' page. The user will be prompted in each case unless the 'yes_flag' is set.
+    """
     from plom.scan import checkScanStatus
 
     missingHWQ = checkScanStatus.checkMissingHWQ(server, password)
