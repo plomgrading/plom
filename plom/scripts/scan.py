@@ -135,7 +135,7 @@ def processScans(server, password, pdf_fname):
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname)
+    scansToImages.processScans(pdf_fname, bundledir)
     print("Read QR codes")
     readQRCodes.processBitmaps(bundledir, server, password)
 

@@ -321,41 +321,21 @@ def normalizeJPEGOrientation(f):
         im2.save(f)
 
 
-def makeBundleDirectories(fname, hwByQ=False, hwLoose=False):
+def makeBundleDirectories(fname, bundle_dir):
     """Each bundle needs its own subdirectories: make pageImages, scanPNGs, etc.
 
     Args:
         fname (str, Path): the name of a pdf-file, zip-file or whatever
             from which we create the bundle name.
-        hwByQ (bool): this is a Homework-by-Question bundle.
-        hwLoose (bool): this is Homework-as-a-loose-bundle (we don't
-            know which pages correspond to which questions).
+        bundle_dir (Path): A directory to contain the various
+            extracted files, QR codes, uploaded stuff etc.
 
     Returns:
-        pathlib.Path: the filesystem path to the bundle.  TODO: not sure
-            if this is FQN or not: for now its unspecified.
-
-    Note that if hwByQ flag is set then we put things inside bundles/submittedHWByQ,
-    and similarly if hwLoose is set then we put things inside bundles/submittedLoose.
-
-    TODO: hwByQ and hwLoose are mutually exclusive: set both and you'll
-    break something---you get to keep all the pieces!
+        None
     """
-    # issue #126 - replace spaces in names with underscores for output names.
-    safeScan = Path(fname).stem.replace(" ", "_")
-    # make directory for that bundle inside scanPNGs
-    if hwByQ:
-        bundleDir = Path("bundles") / "submittedHWByQ" / safeScan
-    elif hwLoose:
-        bundleDir = Path("bundles") / "submittedLoose" / safeScan
-    else:
-        bundleDir = Path("bundles") / safeScan
-    os.makedirs(bundleDir, exist_ok=True)
-    # now inside that we need other subdirs
-    # note that hwbyq and hwloose do not need decoded pages since we know them already.
+    # TODO: consider refactor viz scripts/scan and scripts/hwscan which has similar
     for dir in ["pageImages", "scanPNGs", "decodedPages", "unknownPages"]:
-        os.makedirs(bundleDir / dir, exist_ok=True)
-    return bundleDir
+        os.makedirs(bundle_dir / dir, exist_ok=True)
 
 
 def postProcessing(thedir, dest):
@@ -394,7 +374,7 @@ def postProcessing(thedir, dest):
         shutil.move(file, dest / file.name)
 
 
-def processScans(pdf_fname, hwByQ=False, hwLoose=False):
+def processScans(pdf_fname, bundle_dir):
     """Process files into bitmap pageimages.
 
     Process each page of a pdf file into bitmaps.
@@ -407,8 +387,9 @@ def processScans(pdf_fname, hwByQ=False, hwLoose=False):
     Args:
         pdf_fname (str, pathlib.Path): the path to a PDF file.  Used to
             access the file itself.  TODO: is the filename also used for
-            anything or can we pass in bundle_dir for that?
-        other junk (bool): to be removed.
+            anything else by code called by this function?
+        bundle_dir (pathlib.Path): the filesystem path to the bundle,
+            either as an absolute path or relative the CWD.
 
     Returns:
         None
@@ -426,10 +407,7 @@ def processScans(pdf_fname, hwByQ=False, hwLoose=False):
         )
         return
     # PDF is not in archive, so is new bundle.
-    # make a directory for it
-    # is of form "bundle/fname/" or
-    # "bundle/submittedHWByQ/fname" or "bundle/submittedLoose/fname"
-    bundleDir = makeBundleDirectories(pdf_fname, hwByQ, hwLoose)
-    bitmaps_dir = bundleDir / "scanPNGs"
+    makeBundleDirectories(pdf_fname, bundle_dir)
+    bitmaps_dir = bundle_dir / "scanPNGs"
     processFileToBitmaps(pdf_fname, bitmaps_dir)
-    postProcessing(bitmaps_dir, bundleDir / "pageImages")
+    postProcessing(bitmaps_dir, bundle_dir / "pageImages")
