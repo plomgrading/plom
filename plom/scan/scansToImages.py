@@ -403,7 +403,19 @@ def processScans(pdf_fname, hwByQ=False, hwLoose=False):
     (e.g., png).  A simple gamma shift to leave white-white but make
     everything else darker.  Improves images when students write in very
     light pencil.
+
+    Args:
+        pdf_fname (str, pathlib.Path): the path to a PDF file.  Used to
+            access the file itself.  TODO: is the filename also used for
+            anything or can we pass in bundle_dir for that?
+        other junk (bool): to be removed.
+
+    Returns:
+        None
     """
+    # TODO: potential confusion local archive versus on server: in theory
+    # annot get to local archive unless its uploaded, but what about unknowns, etc?
+
     # check if fname is in local archive (by checking md5sum)
     tf = isInArchive(pdf_fname)
     if tf[0]:
