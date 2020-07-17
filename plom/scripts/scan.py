@@ -98,7 +98,8 @@ def processScans(server, password, pdf_fname):
     from plom.scan import sendPagesToServer
     from plom.scan import readQRCodes
 
-    if not os.path.isfile(pdf_fname):
+    pdf_fname = Path(pdf_fname)
+    if not pdf_fname.is_file():
         print("Cannot find file {} - skipping".format(pdf_fname))
         return
 
@@ -115,9 +116,7 @@ def processScans(server, password, pdf_fname):
             return
         elif bundle_exists[1] == "md5sum":
             print(
-                "A bundle with matching md5sum is already in system with a different name. Stopping".format(
-                    pdf_fname
-                )
+                "A bundle with matching md5sum is already in system with a different name. Stopping"
             )
             return
         elif bundle_exists[1] == "both":
