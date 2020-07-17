@@ -98,11 +98,13 @@ def processScans(server, password, pdf_fname):
     from plom.scan import sendPagesToServer
     from plom.scan import readQRCodes
 
-    if not os.path.isfile(pdf_fname):
+    pdf_fname = Path(pdf_fname)
+    if not pdf_fname.is_file():
         print("Cannot find file {} - skipping".format(pdf_fname))
         return
+    bundle_name = Path(pdf_fname).stem.replace(" ", "_")
 
-    print("Checking if bundle PDF {} already exists on server".format(pdf_fname))
+    print("Checking if bundle {} already exists on server".format(bundle_name))
     bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
     # return [False, name], [True, name], [True,md5sum] or [True, both]
     if bundle_exists[0]:
@@ -115,27 +117,23 @@ def processScans(server, password, pdf_fname):
             return
         elif bundle_exists[1] == "md5sum":
             print(
-                "A bundle with matching md5sum is already in system with a different name. Stopping".format(
-                    pdf_fname
-                )
+                "A bundle with matching md5sum is already in system with a different name. Stopping"
             )
             return
         elif bundle_exists[1] == "both":
             print(
                 "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
-                    pdf_fname
+                    bundle_name
                 )
             )
         else:
-            print("Should not be here!")
-            exit(1)
+            raise RuntimeError("Should not be here: unexpected code path!")
 
-    bundle_name = Path(pdf_fname).stem.replace(" ", "_")
     bundledir = Path("bundles") / bundle_name
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans([pdf_fname])
+    scansToImages.processScans(pdf_fname, bundledir)
     print("Read QR codes")
     readQRCodes.processBitmaps(bundledir, server, password)
 
@@ -143,7 +141,7 @@ def processScans(server, password, pdf_fname):
 def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
     from plom.scan import sendPagesToServer, scansToImages
 
-    print("Creating bundle PDF {} on server".format(pdf_fname))
+    print("Creating bundle for PDF {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
     # should be [True, skip_list] or [False, reason]
     if rval[0]:

@@ -62,18 +62,16 @@ def processLooseScans(server, password, pdf_fname, student_id):
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
-    if not os.path.isfile(pdf_fname):
+    pdf_fname = Path(pdf_fname)
+    if not pdf_fname.is_file():
         print("Cannot find file {} - skipping".format(pdf_fname))
         return
 
-    # trim down pdf_fname - replace "submittedLoose/fname" with "fname", but pass appropriate flag
-    short_name = os.path.split(pdf_fname)[1]
-    print("ARGH - {}".format(os.path.split(pdf_fname)))
     assert os.path.split(pdf_fname)[0] in [
         "submittedLoose",
         "./submittedLoose",
     ], 'At least for now, you must your file into a directory named "submittedLoose"'
-    IDQ = IDQorIDorBad(short_name)
+    IDQ = IDQorIDorBad(pdf_fname.name)
     if len(IDQ) != 2:  # should return [JID, sid]
         print("File name has wrong format. Should be 'blah.sid.pdf'. Stopping.")
         return
@@ -87,7 +85,7 @@ def processLooseScans(server, password, pdf_fname, student_id):
         return
     print(
         "Process and upload file {} as loose pages for sid {}".format(
-            short_name, student_id
+            pdf_fname.name, student_id
         )
     )
 
@@ -115,17 +113,16 @@ def processLooseScans(server, password, pdf_fname, student_id):
                 )
             )
         else:
-            print("Should not be here!")
-            exit(1)
+            raise RuntimeError("Should not be here: unexpected code path!")
 
     bundle_name = Path(pdf_fname).stem.replace(" ", "_")
     bundledir = Path("bundles") / "submittedLoose" / bundle_name
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans([pdf_fname], hwLoose=True)
+    scansToImages.processScans(pdf_fname, bundledir)
 
-    print("Creating bundle PDF {} on server".format(pdf_fname))
+    print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
     # should be [True, skip_list] or [False, reason]
     if rval[0]:
@@ -155,20 +152,18 @@ def processHWScans(server, password, pdf_fname, student_id, question_list):
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
-    if not os.path.isfile(pdf_fname):
+    pdf_fname = Path(pdf_fname)
+    if not pdf_fname.is_file():
         print("Cannot find file {} - skipping".format(pdf_fname))
         return
 
     question = int(question_list[0])  # args passes '[q]' rather than just 'q'
 
-    # do sanity checks on pdf_fname
-    # trim down pdf_fname - replace "submittedHWByQ/fname" with "fname"
-    short_name = os.path.split(pdf_fname)[1]
     assert os.path.split(pdf_fname)[0] in [
         "submittedHWByQ",
         "./submittedHWByQ",
     ], 'At least for now, you must put your file into a directory named "submittedHWByQ"'
-    IDQ = IDQorIDorBad(short_name)
+    IDQ = IDQorIDorBad(pdf_fname.name)
     if len(IDQ) != 3:  # should return [IDQ, sid, q]
         print("File name has wrong format - should be 'blah.sid.q.pdf'. Stopping.")
         return
@@ -189,7 +184,7 @@ def processHWScans(server, password, pdf_fname, student_id, question_list):
         return
     print(
         "Process and upload file {} as answer to question {} for sid {}".format(
-            short_name, question, student_id
+            pdf_fname.name, question, student_id
         )
     )
     test_number = sendPagesToServer.checkTestHasThatSID(student_id, server, password)
@@ -211,9 +206,7 @@ def processHWScans(server, password, pdf_fname, student_id, question_list):
             return
         elif bundle_exists[1] == "md5sum":
             print(
-                "A bundle with matching md5sum is already in system with a different name. Stopping".format(
-                    pdf_fname
-                )
+                "A bundle with matching md5sum is already in system with a different name. Stopping"
             )
             return
         elif bundle_exists[1] == "both":
@@ -223,17 +216,16 @@ def processHWScans(server, password, pdf_fname, student_id, question_list):
                 )
             )
         else:
-            print("Should not be here!")
-            exit(1)
+            raise RuntimeError("Should not be here: unexpected code path!")
 
     bundle_name = Path(pdf_fname).stem.replace(" ", "_")
     bundledir = Path("bundles") / "submittedHWByQ" / bundle_name
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans([pdf_fname], hwByQ=True)
+    scansToImages.processScans(pdf_fname, bundledir)
 
-    print("Creating bundle PDF {} on server".format(pdf_fname))
+    print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
     # should be [True, skip_list] or [False, reason]
     if rval[0]:

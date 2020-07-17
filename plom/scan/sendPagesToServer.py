@@ -443,6 +443,12 @@ def checkTestHasThatSID(student_id, server=None, password=None):
 
 
 def doesBundleExist(bundle_file, server=None, password=None):
+    """Check if bundle exists and is so does its md5sum match a given file.
+
+    Args:
+        bundle_file (str, Path): needs to be the actual file not the
+            bundle name because we need to compute the md5sum.
+    """
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -485,6 +491,12 @@ def doesBundleExist(bundle_file, server=None, password=None):
 
 
 def createNewBundle(bundle_file, server=None, password=None):
+    """Create a new bundle for a given file.
+
+    Args:
+        bundle_file (str, Path): needs to be the actual file not the
+            bundle name because we need to compute the md5sum.
+    """
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
