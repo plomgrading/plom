@@ -22,7 +22,7 @@ from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
 from plom.plom_exceptions import *
 from . import marker
 from . import identifier
-from . import totaler
+
 from plom import __version__
 from plom import Plom_API_Version
 from plom import Default_Port
@@ -114,7 +114,7 @@ class Chooser(QDialog):
         # connect buttons to functions.
         self.ui.markButton.clicked.connect(self.runMarker)
         self.ui.identifyButton.clicked.connect(self.runIDer)
-        self.ui.totalButton.clicked.connect(self.runTotaler)
+
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontButton.clicked.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
@@ -242,14 +242,8 @@ class Chooser(QDialog):
             idwin.getToWork(messenger)
             self.parent.identifier = idwin
         else:
-            # Run the Total client.
-            self.setEnabled(False)
-            self.hide()
-            totalerwin = totaler.TotalClient()
-            totalerwin.my_shutdown_signal.connect(self.on_other_window_close)
-            totalerwin.show()
-            totalerwin.getToWork(messenger)
-            self.parent.totaler = totalerwin
+            # reserved for future use
+            pass
 
     def runMarker(self):
         self.runIt = "Marker"

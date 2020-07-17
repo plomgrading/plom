@@ -312,8 +312,11 @@
       </item>
       <item>
        <widget class="QPushButton" name="totalButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
-         <string>&amp;Total</string>
+         <string>Future use</string>
         </property>
        </widget>
       </item>

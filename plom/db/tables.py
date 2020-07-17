@@ -39,19 +39,8 @@ class Test(BaseModel):
     scanned = pw.BooleanField(default=False)
     identified = pw.BooleanField(default=False)
     marked = pw.BooleanField(default=False)
-    totalled = pw.BooleanField(default=False)
     # a recentUpload flag to see which tests to check after uploads
     recent_upload = pw.BooleanField(default=False)
-
-
-# Data for totalling the marks
-class SumData(BaseModel):
-    test = pw.ForeignKeyField(Test, backref="sumdata")
-    sum_mark = pw.IntegerField(null=True)
-    status = pw.CharField(default="")
-    user = pw.ForeignKeyField(User, backref="sumdata", null=True)
-    time = pw.DateTimeField(null=True)
-    summed = pw.BooleanField(default=False)
 
 
 class Group(BaseModel):

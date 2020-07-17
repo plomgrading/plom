@@ -95,7 +95,6 @@ def createTest(self, t):
     with plomdb.atomic():
         try:
             tref = Test.create(test_number=t)  # must be unique
-            sref = SumData.create(test=tref)  # also create the sum-data
         except pw.IntegrityError as e:
             log.error("Create test {} error - {}".format(t, e))
             return False

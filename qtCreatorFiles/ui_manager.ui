@@ -565,7 +565,7 @@
               <enum>QAbstractItemView::SelectRows</enum>
              </property>
              <property name="columnCount">
-              <number>4</number>
+              <number>3</number>
              </property>
              <attribute name="horizontalHeaderStretchLastSection">
               <bool>true</bool>
@@ -573,7 +573,6 @@
              <attribute name="verticalHeaderVisible">
               <bool>false</bool>
              </attribute>
-             <column/>
              <column/>
              <column/>
              <column/>
@@ -613,7 +612,7 @@
            <bool>true</bool>
           </property>
           <attribute name="title">
-           <string>&amp;ID &amp;&amp; Totalling Progress</string>
+           <string>&amp;ID Progress</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_10">
            <item>
@@ -626,13 +625,6 @@
                <layout class="QVBoxLayout" name="verticalLayout_11">
                 <item>
                  <layout class="QGridLayout" name="gridLayout">
-                  <item row="0" column="0" colspan="2">
-                   <widget class="QLabel" name="label_3">
-                    <property name="text">
-                     <string>Number of papers:</string>
-                    </property>
-                   </widget>
-                  </item>
                   <item row="0" column="2">
                    <widget class="QLineEdit" name="papersLE">
                     <property name="readOnly">
@@ -640,17 +632,17 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="2" column="0" colspan="2">
-                   <widget class="QLabel" name="label_5">
+                  <item row="1" column="0" colspan="2">
+                   <widget class="QLabel" name="label_4">
                     <property name="text">
-                     <string>Totalling progress</string>
+                     <string>ID progress</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="2" column="2">
-                   <widget class="QProgressBar" name="totPB">
-                    <property name="value">
-                     <number>0</number>
+                  <item row="0" column="0" colspan="2">
+                   <widget class="QLabel" name="label_3">
+                    <property name="text">
+                     <string>Number of papers:</string>
                     </property>
                    </widget>
                   </item>
@@ -658,13 +650,6 @@
                    <widget class="QProgressBar" name="idPB">
                     <property name="value">
                      <number>0</number>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="0" colspan="2">
-                   <widget class="QLabel" name="label_4">
-                    <property name="text">
-                     <string>ID progress</string>
                     </property>
                    </widget>
                   </item>
@@ -1010,32 +995,6 @@
               <bool>true</bool>
              </property>
              <attribute name="horizontalHeaderStretchLastSection">
-              <bool>true</bool>
-             </attribute>
-             <attribute name="verticalHeaderVisible">
-              <bool>false</bool>
-             </attribute>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QWidget" name="reviewTTab">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <attribute name="title">
-           <string>Review &amp;Totalling</string>
-          </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_20">
-           <item>
-            <widget class="QTableWidget" name="reviewTOTTW">
-             <property name="editTriggers">
-              <set>QAbstractItemView::NoEditTriggers</set>
-             </property>
-             <property name="alternatingRowColors">
-              <bool>true</bool>
-             </property>
-             <attribute name="horizontalHeaderCascadingSectionResizes">
               <bool>true</bool>
              </attribute>
              <attribute name="verticalHeaderVisible">

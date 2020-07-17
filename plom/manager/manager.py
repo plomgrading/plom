@@ -229,11 +229,6 @@ class TestStatus(QDialog):
         self.idCB.setFocusPolicy(Qt.NoFocus)
         if status["identified"]:
             self.idCB.setCheckState(Qt.Checked)
-        self.totCB = QCheckBox("Totalled: ")
-        self.totCB.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.totCB.setFocusPolicy(Qt.NoFocus)
-        if status["totalled"]:
-            self.totCB.setCheckState(Qt.Checked)
         self.mkCB = QCheckBox("Marked: ")
         self.mkCB.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.mkCB.setFocusPolicy(Qt.NoFocus)
@@ -244,7 +239,6 @@ class TestStatus(QDialog):
         self.clB.clicked.connect(self.accept)
 
         grid.addWidget(self.idCB, 1, 1)
-        grid.addWidget(self.totCB, 1, 2)
         grid.addWidget(self.mkCB, 1, 3)
 
         if status["identified"]:
@@ -255,14 +249,6 @@ class TestStatus(QDialog):
             gg.addWidget(QLabel("Username: {}".format(status["iwho"])))
             self.iG.setLayout(gg)
             grid.addWidget(self.iG, 2, 1, 3, 3)
-
-        if status["totalled"]:
-            self.tG = QGroupBox("Totalling")
-            gg = QVBoxLayout()
-            gg.addWidget(QLabel("Total: {}".format(status["total"])))
-            gg.addWidget(QLabel("Username: {}".format(status["twho"])))
-            self.tG.setLayout(gg)
-            grid.addWidget(self.tG, 5, 1, 3, 3)
 
         self.qG = {}
         for q in range(1, nq + 1):
@@ -1021,7 +1007,7 @@ class Manager(QWidget):
 
     def initOverallTab(self):
         self.ui.overallTW.setHorizontalHeaderLabels(
-            ["Test number", "Identified", "Totalled", "Questions Marked"]
+            ["Test number", "Identified", "Questions Marked"]
         )
         self.ui.overallTW.activated.connect(self.viewTestStatus)
         self.ui.overallTW.setSortingEnabled(True)
@@ -1053,23 +1039,16 @@ class Manager(QWidget):
                 it.setToolTip("Has been identified")
             self.ui.overallTW.setItem(r, 1, it)
 
-            it = QTableWidgetItem("{}".format(opDict[t][1]))
-            if opDict[t][1]:
-                it.setBackground(QBrush(Qt.green))
-                it.setToolTip("Has been totalled")
-            self.ui.overallTW.setItem(r, 2, it)
-
-            it = QTableWidgetItem(str(opDict[t][2]).rjust(2))
-            if opDict[t][2] == self.numberOfQuestions:
+            it = QTableWidgetItem(str(opDict[t][1]).rjust(2))
+            if opDict[t][1] == self.numberOfQuestions:
                 it.setBackground(QBrush(Qt.green))
                 it.setToolTip("Has been marked")
-            self.ui.overallTW.setItem(r, 3, it)
+            self.ui.overallTW.setItem(r, 2, it)
             r += 1
 
     def initIDTab(self):
         self.refreshIDTab()
         self.ui.idPB.setFormat("%v / %m")
-        self.ui.totPB.setFormat("%v / %m")
         self.ui.predictionTW.setColumnCount(3)
         self.ui.predictionTW.setHorizontalHeaderLabels(["Test", "Student ID", "Name"])
         self.ui.predictionTW.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -1079,12 +1058,9 @@ class Manager(QWidget):
 
     def refreshIDTab(self):
         ti = managerMessenger.IDprogressCount()
-        tt = managerMessenger.TprogressCount()
         self.ui.papersLE.setText(str(ti[1]))
         self.ui.idPB.setValue(ti[0])
         self.ui.idPB.setMaximum(ti[1])
-        self.ui.totPB.setMaximum(tt[1])
-        self.ui.totPB.setValue(tt[0])
         self.getPredictions()
 
     def selectRectangle(self):
@@ -1255,11 +1231,9 @@ class Manager(QWidget):
     def initReviewTab(self):
         self.initRevMTab()
         self.initRevIDTab()
-        self.initRevTOTTab()
 
     def refreshRev(self):
         self.refreshIDRev()
-        self.refreshTOTRev()
         self.refreshMRev()
 
     def initRevMTab(self):
@@ -1414,67 +1388,6 @@ class Manager(QWidget):
                     self.ui.reviewIDTW.item(r, 1).setText("reviewer")
                     managerMessenger.IDreviewID(test)
 
-    def initRevTOTTab(self):
-        self.ui.reviewTOTTW.setColumnCount(4)
-        self.ui.reviewTOTTW.setHorizontalHeaderLabels(
-            ["Test", "Username", "When", "Total Mark"]
-        )
-        self.ui.reviewTOTTW.setSortingEnabled(True)
-        self.ui.reviewTOTTW.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ui.reviewTOTTW.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.ui.reviewTOTTW.activated.connect(self.reviewTotalled)
-
-    def refreshTOTRev(self):
-        irList = managerMessenger.getTOTReview()
-        self.ui.reviewTOTTW.clearContents()
-        self.ui.reviewTOTTW.setRowCount(0)
-        r = 0
-        for dat in irList:
-            self.ui.reviewTOTTW.insertRow(r)
-            # rjust(4) entries so that they can sort like integers... without actually being integers
-            for k in range(4):
-                self.ui.reviewTOTTW.setItem(
-                    r, k, QTableWidgetItem("{}".format(dat[k]).rjust(4))
-                )
-            if dat[1] == "reviewer":
-                for k in range(4):
-                    self.ui.reviewTOTTW.item(r, k).setBackground(QBrush(Qt.green))
-            elif dat[1] == "automatic":
-                for k in range(4):
-                    self.ui.reviewTOTTW.item(r, k).setBackground(QBrush(Qt.cyan))
-            r += 1
-
-    def reviewTotalled(self):
-        rvi = self.ui.reviewTOTTW.selectedIndexes()
-        if len(rvi) == 0:
-            return
-        r = rvi[0].row()
-        # check if total was computed automatically
-        if self.ui.reviewTOTTW.item(r, 1).text() == "automatic":
-            if (
-                SimpleMessage(
-                    "The total was computed automatically, are you sure you wish to review it?"
-                ).exec_()
-                != QMessageBox.Yes
-            ):
-                return
-
-        test = int(self.ui.reviewTOTTW.item(r, 0).text())
-        image = managerMessenger.TrequestImage(test)
-        with tempfile.NamedTemporaryFile() as fh:
-            fh.write(image)
-            rvw = ReviewViewWindow(self, [fh.name], "Total page")
-            if rvw.exec() == QDialog.Accepted:
-                if rvw.action == "review":
-                    # first remove auth from that user - safer.
-                    if self.ui.reviewTOTTW.item(r, 1).text() != "reviwer":
-                        managerMessenger.clearAuthorisationUser(
-                            self.ui.reviewTOTTW.item(r, 1).text()
-                        )
-                    # then map that question's owner "reviewer"
-                    self.ui.reviewTOTTW.item(r, 1).setText("reviewer")
-                    managerMessenger.TreviewTOT(test)
-
     ##################
     # User tab stuff
 
@@ -1483,7 +1396,7 @@ class Manager(QWidget):
         self.initProgressQUTabs()
 
     def initUserListTab(self):
-        self.ui.userListTW.setColumnCount(8)
+        self.ui.userListTW.setColumnCount(7)
         self.ui.userListTW.setHorizontalHeaderLabels(
             [
                 "Username",
@@ -1492,7 +1405,6 @@ class Manager(QWidget):
                 "Last activity",
                 "Last action",
                 "Papers IDd",
-                "Papers Totalled",
                 "Questions Marked",
             ]
         )
@@ -1588,7 +1500,7 @@ class Manager(QWidget):
             self.ui.userListTW.insertRow(r)
             # rjust(4) entries so that they can sort like integers... without actually being integers
             self.ui.userListTW.setItem(r, 0, QTableWidgetItem("{}".format(u)))
-            for k in range(7):
+            for k in range(6):
                 self.ui.userListTW.setItem(
                     r, k + 1, QTableWidgetItem("{}".format(dat[k]))
                 )
@@ -1630,9 +1542,7 @@ class Manager(QWidget):
                 qpu = managerMessenger.getQuestionUserProgress(q, v)
                 l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
                 for (u, n) in qpu[1:]:
-                    uprog[u].append(
-                        [q, v, n, qpu[0]]
-                    )  # question, version, no marked, no total
+                    uprog[u].append([q, v, n, qpu[0]])  # question, version, no marked
                     pb = QProgressBar()
                     pb.setMaximum(qpu[0])
                     pb.setValue(n)
