@@ -406,7 +406,6 @@ def processScans(pdf_fname, bundle_dir):
             )
         )
         return
-    # PDF is not in archive, so is new bundle.
     makeBundleDirectories(pdf_fname, bundle_dir)
     bitmaps_dir = bundle_dir / "scanPNGs"
     processFileToBitmaps(pdf_fname, bitmaps_dir)
