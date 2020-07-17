@@ -210,8 +210,11 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
     # TODO: when do we finalize the bundle?
 
 
-def doAllToScans(server, password, scanPDFs):
-    """Process and upload all give PDFs"""
+def _doAllToScans(server, password, scanPDFs):
+    """Process and upload all give PDFs
+
+    Currently disabled.
+    """
     from plom.scan import scansToImages, sendPagesToServer, readQRCodes
 
     make_required_directories()
@@ -251,11 +254,13 @@ spC = sub.add_parser(
     help='Clear "scanner" login',
     description='Clear "scanner" login after a crash or other expected event.',
 )
-spA = sub.add_parser(
-    "all",
-    help="Process, read and upload page images to scanner (WIP!)",
-    description="Process, read and upload page images to scanner. CAUTION: Work in Progress!",
-)
+# TODO: maybe in the future?
+# spA = sub.add_parser(
+#     "all",
+#     help="Process, read and upload page images to scanner (WIP!)",
+#     description="Process, read and upload page images to scanner. CAUTION: Work in Progress!",
+# )
+# spA.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
 spP.add_argument("scanPDF", help="The PDF file of scanned pages.")
 spU.add_argument("bundleName", help="The name of the PDF file again (WIP!!).")
 spU.add_argument(
@@ -271,9 +276,7 @@ spU.add_argument(
     help='Upload "collisions", pages which appear to already be on the server. '
     + "You should not need this option except under exceptional circumstances.",
 )
-spA.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
-#
-for x in (spU, spS, spC, spP, spA):
+for x in (spU, spS, spC, spP):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
@@ -292,8 +295,6 @@ def main():
         scanStatus(args.server, args.password)
     elif args.command == "clear":
         clearLogin(args.server, args.password)
-    elif args.command == "all":
-        doAllToScans(args.server, args.password, args.scanPDF)
     else:
         parser.print_help()
 
