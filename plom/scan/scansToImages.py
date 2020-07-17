@@ -394,7 +394,7 @@ def postProcessing(thedir, dest):
         shutil.move(file, dest / file.name)
 
 
-def processScans(PDFs, hwByQ=False, hwLoose=False):
+def processScans(pdf_fname, hwByQ=False, hwLoose=False):
     """Process files into bitmap pageimages.
 
     Process each page of a pdf file into bitmaps.
@@ -404,21 +404,20 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
     everything else darker.  Improves images when students write in very
     light pencil.
     """
-    for fname in PDFs:
-        # check if fname is in archive (by checking md5sum)
-        tf = isInArchive(fname)
-        if tf[0]:
-            print(
-                "WARNING - {} is in the PDF archive - we checked md5sum - it the same as file {}. It will not be processed.".format(
-                    fname, tf[1]
-                )
+    # check if fname is in local archive (by checking md5sum)
+    tf = isInArchive(pdf_fname)
+    if tf[0]:
+        print(
+            "WARNING - {} is in the PDF archive - we checked md5sum - it the same as file {}. It will not be processed.".format(
+                pdf_fname, tf[1]
             )
-            continue
-        # PDF is not in archive, so is new bundle.
-        # make a directory for it
-        # is of form "bundle/fname/" or
-        # "bundle/submittedHWByQ/fname" or "bundle/submittedLoose/fname"
-        bundleDir = makeBundleDirectories(fname, hwByQ, hwLoose)
-        bitmaps_dir = bundleDir / "scanPNGs"
-        processFileToBitmaps(fname, bitmaps_dir)
-        postProcessing(bitmaps_dir, bundleDir / "pageImages")
+        )
+        return
+    # PDF is not in archive, so is new bundle.
+    # make a directory for it
+    # is of form "bundle/fname/" or
+    # "bundle/submittedHWByQ/fname" or "bundle/submittedLoose/fname"
+    bundleDir = makeBundleDirectories(pdf_fname, hwByQ, hwLoose)
+    bitmaps_dir = bundleDir / "scanPNGs"
+    processFileToBitmaps(pdf_fname, bitmaps_dir)
+    postProcessing(bitmaps_dir, bundleDir / "pageImages")
