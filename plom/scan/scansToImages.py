@@ -30,6 +30,13 @@ archivedir = Path("archivedPDFs")
 
 
 def _archiveBundle(file_name, this_archive_dir):
+    """Archive the bundle pdf
+
+    The bundle.pdf is moved into the appropriate archive directory
+    as given by this_archive_dir. The archive.toml file is updated
+    with the name and md5sum of that bundle.pdf.
+    """
+
     md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
     shutil.move(file_name, this_archive_dir / Path(file_name).name)
     try:
@@ -43,28 +50,36 @@ def _archiveBundle(file_name, this_archive_dir):
 
 
 def archiveHWBundle(file_name):
+    """Archive a hw-pages bundle pdf"""
     print("Archiving homework bundle {}".format(file_name))
     _archiveBundle(file_name, archivedir / "submittedHWByQ")
 
 
 def archiveLBundle(file_name):
+    """Archive a loose-pages bundle pdf"""
     print("Archiving loose-page bundle {}".format(file_name))
     _archiveBundle(file_name, archivedir / "submittedLoose")
 
 
 def archiveTBundle(file_name):
+    """Archive a test-pages bundle pdf"""
     print("Archiving test-page bundle {}".format(file_name))
     _archiveBundle(file_name, archivedir)
 
 
 def isInArchive(file_name):
-    long_name = file_name
+    """
+    Check given file (and its md5sum) against archived bundles.
+
+    Returns True when the filename and md5sum both match
+    a single entry in the archive.toml. Else return False.
+    """
 
     arcName = os.path.join(archivedir, "archive.toml")
     if not os.path.isfile(arcName):
         return [False]
     arch = toml.load(arcName)
-    md5 = hashlib.md5(open(long_name, "rb").read()).hexdigest()
+    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
     if md5 in arch:
         return [True, arch[md5]]
     return [False]
