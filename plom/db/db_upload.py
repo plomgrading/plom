@@ -484,7 +484,7 @@ def uploadCollidingPage(
                     bundle_order, bundle_name,
                 ),
             ]
-        cref = CollidingPage.create(test=tref, image=iref)
+        cref = CollidingPage.create(tpage=pref, image=iref)
         cref.save()
     log.info(
         "Uploaded image {} as collision of tpv={}.{}.{}".format(
