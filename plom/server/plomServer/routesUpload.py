@@ -257,6 +257,7 @@ class UploadHandler:
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
             return web.Response(status=401)
+        # TODO - restrict to manager only.
         if not param["user"] in ("manager", "scanner"):
             return web.Response(status=401)
 
