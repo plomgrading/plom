@@ -417,7 +417,7 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def sendTUploadDone(self):
+    def triggerUpdateAfterTUpload(self):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
@@ -438,7 +438,7 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def sendHWUploadDone(self):
+    def triggerUpdateAfterHWUpload(self):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
@@ -459,7 +459,7 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def sendLUploadDone(self):
+    def triggerUpdateAfterLUpload(self):
         self.SRmutex.acquire()
         try:
             response = self.session.put(

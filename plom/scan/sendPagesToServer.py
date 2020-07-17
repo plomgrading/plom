@@ -274,9 +274,9 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
     for ext in PlomImageExtWhitelist:
         files.extend(sorted((bundleDir / "decodedPages").glob("t*.{}".format(ext))))
     TUP = sendTestFiles(msgr, bundleDir.name, files, skip_list)
-    # we do not update any missing pages, since that is a serious issue for tests, and should not be done automagically
+    # we do not automatically replace any missing test-pages, since that is a serious issue for tests, and should be done only by manager.
 
-    updates = msgr.sendTUploadDone()
+    updates = msgr.triggerUpdateAfterTUpload()
 
     # close down messenger
     msgr.closeUser()
@@ -329,7 +329,7 @@ def uploadHWPages(
 
     HWUP = sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name)
 
-    updates = msgr.sendHWUploadDone()
+    updates = msgr.triggerUpdateAfterHWpload()
 
     # go back to original dir
     os.chdir("..")
@@ -385,7 +385,7 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
 
     LUP = sendLFiles(msgr, file_list, skip_list, student_id, bundle_name)
 
-    updates = msgr.sendLUploadDone()
+    updates = msgr.triggerUpdateAfterLUpload()
 
     # go back to original dir
     os.chdir("..")
