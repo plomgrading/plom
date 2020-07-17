@@ -93,7 +93,15 @@ def make_required_directories(bundle=None):
 
 
 def processScans(server, password, pdf_fname):
-    """Process PDF file into images."""
+    """Process PDF file into images and read QRcodes
+
+    Convert file into a bundle-name
+    Check with server if bundle/md5 already on server
+    - abort if name xor md5sum known.
+    - continue if neither known or both known
+    Make required directories for processing bundle,
+    convert PDF to images and read QR codes from those.
+    """
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
     from plom.scan import readQRCodes
@@ -139,6 +147,21 @@ def processScans(server, password, pdf_fname):
 
 
 def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
+    """Upload processed images from bundle given by pdf_fname.
+
+    Try to create a bundle on server from pdf_fname.
+    - abort if name xor md5sum of bundle known.
+    - continue otherwise (server will give skip-list)
+    Skip images whose page within the bundle is in the skip-list since
+    those are already uploaded.
+    Once uploaded archive the bundle pdf.
+
+    As part of the upload 'unknown' pages and 'collisions' may be detected.
+    These will not be uploaded unless the appropriate flags are set.
+
+    Collisions are still 'todo'.
+    """
+
     from plom.scan import sendPagesToServer, scansToImages
 
     print("Creating bundle for PDF {} on server".format(pdf_fname))
@@ -188,6 +211,7 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
 
 
 def doAllToScans(server, password, scanPDFs):
+    """Process and upload all give PDFs"""
     from plom.scan import scansToImages, sendPagesToServer, readQRCodes
 
     make_required_directories()
