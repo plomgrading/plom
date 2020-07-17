@@ -40,6 +40,15 @@ class ScanMessenger(BaseMessenger):
         super().__init__(*args, **kwargs)
 
     def doesBundleExist(self, bundle_name, md5sum):
+        """Ask server if given bundle exists
+
+        Checks bundle's md5sum and name:
+        * neither = no matching bundle, return [False]
+        * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
+        * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
+        * both match = return [True, 'both'] - user is trying to upload a bundle again - likely due to crash.
+
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.get(
@@ -66,6 +75,14 @@ class ScanMessenger(BaseMessenger):
         return response.json()
 
     def createNewBundle(self, bundle_name, md5sum):
+        """Ask server to create bundle with given name/md5sum.
+
+        Server will check name / md5sum of bundle.
+        * If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldnt happen if scanner working correctly.
+        * If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
+        * If no such bundle return [True, []] - create the bundle and return an empty skip-list.
+        """
+
         self.SRmutex.acquire()
         try:
             response = self.session.put(
@@ -92,6 +109,12 @@ class ScanMessenger(BaseMessenger):
         return response.json()
 
     def sidToTest(self, student_id):
+        """Ask server to match given student_id to a test-number.
+
+        Returns
+        * [True, test_number]
+        * [False, 'Cannot find test with that student id']
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.get(

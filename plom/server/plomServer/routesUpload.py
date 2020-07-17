@@ -9,6 +9,14 @@ class UploadHandler:
         self.server = plomServer
 
     async def doesBundleExist(self, request):
+        """Returns whether given bundle/md5sum known to database
+
+        Checks both bundle's name and md5sum
+        * neither = no matching bundle, return [False]
+        * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
+        * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
+        * both match = return [True, 'both'] - user is trying to upload a bundle again - likely due to crash.
+        """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "bundle", "md5sum"]):
             return web.Response(status=400)
@@ -20,6 +28,13 @@ class UploadHandler:
         return web.json_response(rval, status=200)  # all fine
 
     async def createNewBundle(self, request):
+        """Try to create bundle with given name/md5sum.
+
+        First check name / md5sum of bundle.
+        * If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldnt happen if scanner working correctly.
+        * If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
+        * If no such bundle return [True, []] - create the bundle and return an empty skip-list.
+        """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "bundle", "md5sum"]):
             return web.Response(status=400)
@@ -31,6 +46,12 @@ class UploadHandler:
         return web.json_response(rval, status=200)  # all fine
 
     async def sidToTest(self, request):
+        """Match given student_id to a test-number.
+
+        Returns
+        * [True, test_number]
+        * [False, 'Cannot find test with that student id']
+        """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "sid"]):
             return web.Response(status=400)
