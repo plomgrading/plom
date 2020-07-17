@@ -126,8 +126,7 @@ def processScans(server, password, pdf_fname):
                 )
             )
         else:
-            print("Should not be here!")
-            exit(1)
+            raise RuntimeError("Should not be here: unexpected code path!")
 
     bundle_name = Path(pdf_fname).stem.replace(" ", "_")
     bundledir = Path("bundles") / bundle_name

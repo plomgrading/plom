@@ -113,8 +113,7 @@ def processLooseScans(server, password, pdf_fname, student_id):
                 )
             )
         else:
-            print("Should not be here!")
-            exit(1)
+            raise RuntimeError("Should not be here: unexpected code path!")
 
     bundle_name = Path(pdf_fname).stem.replace(" ", "_")
     bundledir = Path("bundles") / "submittedLoose" / bundle_name
@@ -217,8 +216,7 @@ def processHWScans(server, password, pdf_fname, student_id, question_list):
                 )
             )
         else:
-            print("Should not be here!")
-            exit(1)
+            raise RuntimeError("Should not be here: unexpected code path!")
 
     bundle_name = Path(pdf_fname).stem.replace(" ", "_")
     bundledir = Path("bundles") / "submittedHWByQ" / bundle_name
