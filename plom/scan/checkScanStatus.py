@@ -172,7 +172,7 @@ def replaceMissingHWQ(server, password, student_id, question):
     rval = scanMessenger.replaceMissingHWQuestion(
         student_id=student_id, test=None, question=question
     )  # can replace by SID or by test-number
-    scanMessenger.sendHWUploadDone()
+    scanMessenger.triggerUpdateAfterHWUpload()
 
     scanMessenger.closeUser()
     scanMessenger.stop()

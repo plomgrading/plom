@@ -26,6 +26,15 @@ from plom.rules import isValidStudentNumber
 
 
 def extractTPV(name):
+    """Get test, page, version from name.
+
+    A name in 'standard form' for a test-page should be
+    of the form 'tXXXXpYYvZ.blah'. Asserts will fail
+    if name is not of this form.
+
+    Return a triple of str (XXXX, YY, Z) .
+    """
+
     # TODO - replace this with something less cludgy.
     # should be tXXXXpYYvZ.blah
     assert name[0] == "t"
@@ -51,45 +60,66 @@ def extractTPV(name):
     return (ts, ps, vs)
 
 
-def doFiling(rmsg, ts, ps, vs, bundle, shortName, fname):
-    """Move file around within bundle depending on some stuff."""
-    if rmsg[0]:  # msg should be [True, "success", success message]
-        shutil.move(fname, bundle / Path("uploads/sentPages") / shortName)
+def fileSuccessfulUpload(bundle, shortName, fname, qr=True):
+    """After successful upload move file within bundle.
+
+    The image file is moved to 'uploads/sentpages' within the bundle.
+    If the qr-flag is set then also move the corresponding .qr file
+    Note - tpages will have a qr file, while hwpages and lpages
+    do not.
+    """
+    shutil.move(fname, bundle / Path("uploads/sentPages") / shortName)
+    # tpages have a .qr while hwpages and lpages do not.
+    if qr:
         shutil.move(
             Path(str(fname) + ".qr"),
             bundle / Path("uploads/sentPages") / (str(shortName) + ".qr"),
         )
-    else:  # msg = [False, reason, message]
-        print(rmsg[1], rmsg[2])
-        if rmsg[1] == "duplicate":
-            shutil.move(fname, bundle / Path("uploads/discardedPages") / shortName)
-            shutil.move(
-                Path(str(fname) + ".qr"),
-                bundle / Path("uploads/discardedPages") / (str(shortName) + ".qr"),
-            )
-        elif rmsg[1] == "collision":
-            nname = bundle / Path("uploads/collidingPages") / shortName
-            shutil.move(fname, nname)
-            shutil.move(str(fname) + ".qr", str(nname) + ".qr")
-            # and write the name of the colliding file
-            with open(str(nname) + ".collide", "w+") as fh:
-                json.dump(rmsg[2], fh)  # this is [collidingFile, test, page, version]
-        # now bad errors
-        elif rmsg[1] == "testError":
-            print("This should not happen - todo = log error in sensible way")
-        elif rmsg[1] == "pageError":
-            print("This should not happen - todo = log error in sensible way")
-        elif rmsg[1] == "bundleError":
-            print("This should not happen - todo = log error in sensible way")
+
+
+def fileFailedUpload(reason, message, bundle, shortName, fname):
+    """Move image after failed upload.
+
+    Upload can fail for 'good' and 'bad' reasons. The image is moved
+    accordingly.
+    Good reasons - you are trying to upload to a page that already exists in the system.
+     * 'duplicate' - the image is duplicate of image in system (by md5sum)
+     so move into 'uploads/discardedPages'
+     * 'collision' - the image collides with another test-page already uploaded (eg - there is already a scan of test 7 page 2 in the database). Move the image to 'uploads/collidingPages'
+
+    Bad reasons - these should not happen - means you are trying to upload to tests/pages which the system does not know about.
+     * testError - the database has no record of the test which you were trying to upload to.
+     * pageError - the database has no record of the tpage (of that test) which you were trying to upload to.
+    """
+    print("Failed upload = {}, {}".format(reason, message))
+    if reason == "duplicate":
+        shutil.move(fname, bundle / Path("uploads/discardedPages") / shortName)
+        shutil.move(
+            Path(str(fname) + ".qr"),
+            bundle / Path("uploads/discardedPages") / (str(shortName) + ".qr"),
+        )
+    elif reason == "collision":
+        nname = bundle / Path("uploads/collidingPages") / shortName
+        shutil.move(fname, nname)
+        shutil.move(str(fname) + ".qr", str(nname) + ".qr")
+        # and write the name of the colliding file
+        with open(str(nname) + ".collide", "w+") as fh:
+            json.dump(message, fh)  # this is [collidingFile, test, page, version]
+    else:  # now bad errors
+        print("Image upload failed for *bad* reason - this should not happen.")
+        print("Reason = {}".format(reason))
+        print("Message = {}".format(message))
 
 
 def sendTestFiles(msgr, bundle_name, files, skip_list):
-    """Send the page images of one bundle to the server.
+    """Send the test-page images of one bundle to the server.
 
     Args:
         msgr (Messenger): an open authenticated communication mechanism.
         bundle_name (str): the name of the bundle we are sending.
         files (list of pathlib.Path): the page images to upload.
+        skip_list (list of int): the bundle-orders of pages already in the system
+            and so can be skipped.
 
     Returns:
         defaultdict: TODO document this.
@@ -125,9 +155,14 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
             bundle_name,
             bundle_order,
         )
-        doFiling(rmsg, ts, ps, vs, Path("bundles") / bundle_name, shortName, fname)
+        # rmsg = [True] or [False, reason, message]
         if rmsg[0]:  # was successful upload
+            fileSuccessfulUpload(Path("bundles") / bundle_name, shortName, fname)
             TUP[ts].append(ps)
+        else:  # was failed upload - reason, message in rmsg[1], rmsg[2]
+            fileFailedUpload(
+                rsmg[1], rmsg[2], Path("bundles") / bundle_name, shortName, fname
+            )
     return TUP
 
 
@@ -156,17 +191,24 @@ def extractJIDO(fileName):  # get just ID, Order
     return (id, n)
 
 
-def doHWFiling(shortName, fname):
-    print("DO SOMETHING WITH {} {} {}".format(shortName, fname, os.getcwd()))
-    # shutil.move(fname, os.path.join("sentPages", "submittedHWByQ", shortName))
-
-
-def doLFiling(shortName, fname):
-    print("DO SOMETHING WITH {} {} {}".format(shortName, fname, os.getcwd()))
-    # shutil.move(fname, os.path.join("sentPages", "submittedHWExtra", shortName))
-
-
 def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
+    """Send the hw-page images of one bundle to the server.
+
+    Args:
+        msgr (Messenger): an open authenticated communication mechanism.
+        files (list of pathlib.Path): the page images to upload.
+        bundle_name (str): the name of the bundle we are sending.
+        student_id (int): the id of the student whose hw is being uploaded
+        question (int): the question being uploaded
+        skip_list (list of int): the bundle-orders of pages already in the system
+            and so can be skipped.
+
+    Returns:
+        defaultdict: TODO document this.
+
+    After each image is uploaded we move it to various places in the
+    bundle's "uploads" subdirectory.
+    """
     # keep track of which SID uploaded which Q.
     SIDQ = defaultdict(list)
     for fname in file_list:
@@ -192,12 +234,32 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
             sid, q, n, shortName, fname, md5, bundle_name, bundle_order
         )
         if rmsg[0]:  # was successful upload
-            doHWFiling(shortName, fname)
+            fileSuccessfulUpload(Path("./"), shortName, fname, qr=False)
+            # be careful of workingdir.
             SIDQ[sid].append(q)
+        else:
+            print("TODO - file unsuccesful hw upload.")
     return SIDQ
 
 
 def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
+    """Send the hw-page images of one bundle to the server.
+
+    Args:
+        msgr (Messenger): an open authenticated communication mechanism.
+        files (list of pathlib.Path): the page images to upload.
+        bundle_name (str): the name of the bundle we are sending.
+        student_id (int): the id of the student whose hw is being uploaded
+        question (int): the question being uploaded
+        skip_list (list of int): the bundle-orders of pages already in the system
+            and so can be skipped.
+
+    Returns:
+        defaultdict: TODO document this.
+
+    After each image is uploaded we move it to various places in the
+    bundle's "uploads" subdirectory.
+    """
     # keep track of which SID uploaded.
     JSID = {}
     for fname in fileList:
@@ -221,18 +283,21 @@ def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
             sid, n, shortName, fname, md5, bundle_name, bundle_order
         )
         if rmsg[0]:  # was successful upload
-            doLFiling(shortName, fname)
+            fileSuccessfulUpload(Path("./"), shortName, fname, qr=False)
+            # be careful of workingdir.
             JSID[sid] = True
+        else:
+            print("TODO - file unsuccesful l upload.")
     return JSID
 
 
 def uploadTPages(bundleDir, skip_list, server=None, password=None):
     """Upload the test pages to the server.
 
-    Skips pages-image with orders in the skip-list
+    Skips pages-image with orders in the skip-list (ie the page number within the bundle.pdf)
 
-    Bundle must already be declared and started.  We will upload the
-    files and then finish (complete, close) the bundle.
+    Bundle must already be created.  We will upload the
+    files and then send a 'please trigger an update' message to the server.
     """
     if server and ":" in server:
         s, p = server.split(":")
@@ -288,6 +353,15 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
 def uploadHWPages(
     bundle_name, skip_list, student_id, question, server=None, password=None
 ):
+    """Upload the hw pages to the server.
+
+    hwpages uploaded to given student_id and question.
+    Skips pages-image with orders in the skip-list (ie the page number within the bundle.pdf)
+
+    Bundle must already be created.  We will upload the
+    files and then send a 'please trigger an update' message to the server.
+    """
+
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -329,7 +403,7 @@ def uploadHWPages(
 
     HWUP = sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name)
 
-    updates = msgr.triggerUpdateAfterHWpload()
+    updates = msgr.triggerUpdateAfterHWUpload()
 
     # go back to original dir
     os.chdir("..")
@@ -344,6 +418,14 @@ def uploadHWPages(
 
 
 def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None):
+    """Upload the hw pages to the server.
+
+    lpages uploaded to given student_id.
+    Skips pages-image with orders in the skip-list (ie the page number within the bundle.pdf)
+
+    Bundle must already be created.  We will upload the
+    files and then send a 'please trigger an update' message to the server.
+    """
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -400,6 +482,15 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
 
 
 def checkTestHasThatSID(student_id, server=None, password=None):
+    """Get test-number corresponding to given student id
+
+    For HW tests should be pre-IDd, so this function is used
+    to map a student-id to the underlying test. This means that
+    and uploaded HW page can be matched to the test in the database.
+
+    Returns the test-number if the SID is matched to a test in the database
+    else returns None.
+    """
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
