@@ -63,7 +63,7 @@ def archiveTBundle(file_name):
     print("Archiving test-page bundle {}".format(file_name))
 
     md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
-
+    shutil.move(file_name, Path(archivedir))
     # open the existing archive if it is there
     arcName = os.path.join(archivedir, "archive.toml")
     if os.path.isfile(arcName):
@@ -76,13 +76,8 @@ def archiveTBundle(file_name):
         toml.dump(arch, fh)
 
 
-def isInArchive(file_name, hwByQ=False, hwLoose=False):
-    if hwByQ:
-        long_name = Path("submittedHWByQ") / file_name
-    elif hwLoose:
-        long_name = Path("submittedLoose") / file_name
-    else:
-        long_name = file_name
+def isInArchive(file_name):
+    long_name = file_name
 
     arcName = os.path.join(archivedir, "archive.toml")
     if not os.path.isfile(arcName):
@@ -412,7 +407,7 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
     """
     for fname in PDFs:
         # check if fname is in archive (by checking md5sum)
-        tf = isInArchive(fname, hwByQ, hwLoose)
+        tf = isInArchive(fname)
         if tf[0]:
             print(
                 "WARNING - {} is in the PDF archive - we checked md5sum - it the same as file {}. It will not be processed.".format(
@@ -425,10 +420,6 @@ def processScans(PDFs, hwByQ=False, hwLoose=False):
         # is of form "bundle/fname/" or
         # "bundle/submittedHWByQ/fname" or "bundle/submittedLoose/fname"
         bundleDir = makeBundleDirectories(fname, hwByQ, hwLoose)
-        if hwByQ:
-            fname = Path("submittedHWByQ") / fname
-        elif hwLoose:
-            fname = Path("submittedLoose") / fname
         bitmaps_dir = bundleDir / "scanPNGs"
         processFileToBitmaps(fname, bitmaps_dir)
         postProcessing(bitmaps_dir, bundleDir / "pageImages")

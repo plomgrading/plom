@@ -160,7 +160,7 @@ def replaceMissingTestPage(
     # find max bundle_order within that bundle
     bundle_order = 0
     for iref in bref.images:
-        bundle_order = max(bundle_order, iref.order)
+        bundle_order = max(bundle_order, iref.bundle_order)
     bundle_order += 1
 
     #
@@ -350,7 +350,7 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
     # find max bundle_order within that bundle
     bundle_order = 0
     for iref in bref.images:
-        bundle_order = max(bundle_order, iref.order)
+        bundle_order = max(bundle_order, iref.bundle_order)
     bundle_order += 1
 
     # create an image for the image-file
