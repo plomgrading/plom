@@ -26,54 +26,35 @@ from plom import ScenePixelHeight
 
 
 # TODO: make some common util file to store all these names?
-archivedir = "archivedPDFs"
+archivedir = Path("archivedPDFs")
+
+
+def _archiveBundle(file_name, this_archive_dir):
+    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
+    shutil.move(file_name, this_archive_dir / Path(file_name).name)
+    try:
+        arch = toml.load(archivedir / "archive.toml")
+    except FileNotFoundError:
+        arch = {}
+    arch[md5] = str(file_name)
+    # now save it
+    with open(archivedir / "archive.toml", "w+") as fh:
+        toml.dump(arch, fh)
 
 
 def archiveHWBundle(file_name):
     print("Archiving homework bundle {}".format(file_name))
-    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
-    shutil.move(file_name, Path(archivedir) / "submittedHWByQ")
-    arcName = os.path.join(archivedir, "archive.toml")
-    if os.path.isfile(arcName):
-        arch = toml.load(arcName)
-    else:
-        arch = {}
-    arch[md5] = file_name
-    # now save it
-    with open(arcName, "w+") as fh:
-        toml.dump(arch, fh)
+    _archiveBundle(file_name, archivedir / "submittedHWByQ")
 
 
 def archiveLBundle(file_name):
     print("Archiving loose-page bundle {}".format(file_name))
-    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
-    shutil.move(file_name, Path(archivedir) / "submittedLoose")
-    arcName = os.path.join(archivedir, "archive.toml")
-    if os.path.isfile(arcName):
-        arch = toml.load(arcName)
-    else:
-        arch = {}
-    arch[md5] = file_name
-    # now save it
-    with open(arcName, "w+") as fh:
-        toml.dump(arch, fh)
+    _archiveBundle(file_name, archivedir / "submittedLoose")
 
 
 def archiveTBundle(file_name):
     print("Archiving test-page bundle {}".format(file_name))
-
-    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
-    shutil.move(file_name, Path(archivedir))
-    # open the existing archive if it is there
-    arcName = os.path.join(archivedir, "archive.toml")
-    if os.path.isfile(arcName):
-        arch = toml.load(arcName)
-    else:
-        arch = {}
-    arch[md5] = file_name
-    # now save it
-    with open(arcName, "w+") as fh:
-        toml.dump(arch, fh)
+    _archiveBundle(file_name, archivedir)
 
 
 def isInArchive(file_name):
