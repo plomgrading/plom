@@ -421,7 +421,7 @@ def uploadCollidingPage(
     test_number,
     page_number,
     version,
-    origin_name,
+    original_name,
     file_name,
     md5,
     bundle_name,
@@ -488,7 +488,7 @@ def uploadCollidingPage(
         cref.save()
     log.info(
         "Uploaded image {} as collision of tpv={}.{}.{}".format(
-            origianl_name, test_number, page_number, version
+            original_name, test_number, page_number, version
         )
     )
     return [
