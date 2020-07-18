@@ -161,7 +161,7 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
             TUP[ts].append(ps)
         else:  # was failed upload - reason, message in rmsg[1], rmsg[2]
             fileFailedUpload(
-                rsmg[1], rmsg[2], Path("bundles") / bundle_name, shortName, fname
+                rmsg[1], rmsg[2], Path("bundles") / bundle_name, shortName, fname
             )
     return TUP
 

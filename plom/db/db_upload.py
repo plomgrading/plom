@@ -112,7 +112,7 @@ def uploadTestPage(
         return [
             False,
             "collision",
-            ["{}".format(pref.original_name), test_number, page_number, version],
+            ["{}".format(pref.image.original_name), test_number, page_number, version],
         ]
     else:  # this is a new testpage. create an image and link it to the testpage
         # we need the bundle-ref now.
@@ -414,6 +414,90 @@ def uploadUnknownPage(
 
     log.info("Uploaded image {} as unknown".format(original_name))
     return [True, "success", "Page saved in UnknownPage list"]
+
+
+def uploadCollidingPage(
+    self,
+    test_number,
+    page_number,
+    version,
+    original_name,
+    file_name,
+    md5,
+    bundle_name,
+    bundle_order,
+):
+    """Upload given file as a collision of tpage given by tpv.
+
+    Check test and tpage exist - fail if they don't.
+    Check against other collisions of that tpage - fail if already exists.
+    Create image (careful check against bundle)
+    Create collision linked to the tpage.
+    """
+
+    # simple sanity tests against test and tpages
+    tref = Test.get_or_none(test_number=test_number)
+    if tref is None:
+        return [False, "testError", "Cannot find test {}".format(t)]
+    pref = TPage.get_or_none(test=tref, page_number=page_number, version=version)
+    if pref is None:
+        return [
+            False,
+            "pageError",
+            "Cannot find page,version {} for test {}".format(
+                [page_number, version], test_number
+            ),
+        ]
+    if not pref.scanned:
+        return [
+            False,
+            "original",
+            "This is not a collision - this page was not scanned previously",
+        ]
+    # check this against other collisions for that page
+    for cp in pref.collisions:
+        if md5 == cp.image.md5sum:
+            # Exact duplicate - md5sum of this image is sames as the one already in database
+            return [
+                False,
+                "duplicate",
+                "Exact duplicate of page already in database",
+            ]
+    # make sure we know the bundle
+    bref = Bundle.get_or_none(name=bundle_name)
+    if bref is None:
+        return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+    with plomdb.atomic():
+        try:
+            iref = Image.create(
+                original_name=original_name,
+                file_name=file_name,
+                md5sum=md5,
+                bundle=bref,
+                bundle_order=bundle_order,
+            )
+        except PlomBundleImageDuplicationException:
+            return [
+                False,
+                "bundle image duplication error",
+                "Image number {} from bundle {} uploaded previously".format(
+                    bundle_order, bundle_name,
+                ),
+            ]
+        cref = CollidingPage.create(tpage=pref, image=iref)
+        cref.save()
+    log.info(
+        "Uploaded image {} as collision of tpv={}.{}.{}".format(
+            original_name, test_number, page_number, version
+        )
+    )
+    return [
+        True,
+        "success",
+        "Colliding page saved, attached to {}.{}.{}".format(
+            test_number, page_number, version
+        ),
+    ]
 
 
 ## clean up after uploads
@@ -768,45 +852,3 @@ def removeAllScannedPages(self, test_number):
         tref.save()
     self.updateTestAfterUpload(tref)
     return [True, "Test {} wiped clean".format(test_number)]
-
-
-# still todo below
-
-
-def uploadCollidingPage(self, t, p, v, oname, nname, md5):
-    tref = Test.get_or_none(test_number=t)
-    if tref is None:
-        return [False, "testError", "Cannot find test {}".format(t)]
-    pref = TPage.get_or_none(test=tref, page_number=p, version=v)
-    if pref is None:
-        return [
-            False,
-            "pageError",
-            "Cannot find page,version {} for test {}".format([p, v], t),
-        ]
-    if not pref.scanned:
-        return [
-            False,
-            "original",
-            "This is not a collision - this page was not scanned previously",
-        ]
-    # check this against other collisions
-    for cp in pref.collisions:
-        if md5 == cp.md5sum:
-            # Exact duplicate - md5sum of this image is sames as the one already in database
-            return [
-                False,
-                "duplicate",
-                "Exact duplicate of page already in database",
-            ]
-    with plomdb.atomic():
-        cref = CollidingPage.create(
-            original_name=oname, file_name=nname, md5sum=md5, page=pref
-        )
-        cref.save()
-    log.info("Uploaded image {} as collision of tpv={}.{}.{}".format(oname, t, p, v))
-    return [
-        True,
-        "success",
-        "Colliding page saved, attached to {}.{}.{}".format(t, p, v),
-    ]

@@ -112,7 +112,7 @@ def addUnknownPage(self, fname, image, order, md5o, bundle, bundle_order):
     return val
 
 
-def addCollidingPage(self, t, p, v, fname, image, md5o):
+def addCollidingPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -122,7 +122,9 @@ def addCollidingPage(self, t, p, v, fname, image, md5o):
         newName = "pages/collidingPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadCollidingPage(t, p, v, fname, newName, md5o)
+    val = self.DB.uploadCollidingPage(
+        t, p, v, fname, newName, md5o, bundle, bundle_order
+    )
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)

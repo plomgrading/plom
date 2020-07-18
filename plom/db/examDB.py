@@ -110,6 +110,7 @@ class PlomDB:
         uploadHWPage,
         uploadLPage,
         uploadUnknownPage,
+        uploadCollidingPage,
         updateDNMGroup,
         updateIDGroup,
         cleanIDGroup,

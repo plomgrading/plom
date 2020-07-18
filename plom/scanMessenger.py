@@ -299,7 +299,9 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadCollidingPage(self, code, test, page, version, sname, fname, md5sum):
+    def uploadCollidingPage(
+        self, code, test, page, version, sname, fname, md5sum, bundle, bundle_order
+    ):
         self.SRmutex.acquire()
         try:
             param = {
@@ -310,6 +312,8 @@ class ScanMessenger(BaseMessenger):
                 "page": page,
                 "version": version,
                 "md5sum": md5sum,
+                "bundle": bundle,
+                "bundle_order": bundle_order,
             }
             mime_type = mimetypes.guess_type(sname)[0]
             dat = MultipartEncoder(

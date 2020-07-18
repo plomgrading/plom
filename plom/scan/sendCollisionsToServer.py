@@ -8,30 +8,33 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import getpass
-from glob import glob
 import hashlib
 import json
 import os
 import shutil
+from pathlib import Path
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 from plom import PlomImageExtWhitelist
+from .sendUnknownsToServer import extractOrder
 
 
-def doFiling(rmsg, shortName, fname):
+def doFiling(rmsg, bundle, shortName, fname):
     if rmsg[0]:  # msg should be [True, "success", success message]
         # print(rmsg[2])
         for suf in ["", ".qr", ".collide"]:
             shutil.move(
-                fname + suf, os.path.join("sentPages", "collisions", shortName + suf)
+                Path(str(fname) + suf),
+                bundle / Path("uploads/sentPages/collisions") / Path(shortName + suf),
             )
     else:  # msg = [False, reason, message]
         if rmsg[1] == "duplicate":
             print(rmsg[2])
             for suf in ["", ".qr", ".collide"]:
                 shutil.move(
-                    fname + suf, os.path.join("discardedPages", shortName + suf)
+                    Path(str(fname) + suf),
+                    bundle / Path("uploads/discardedPages") / Path(shortName + suf),
                 )
         elif rmsg[1] == "original":
             print(rmsg[2])
@@ -41,10 +44,9 @@ def doFiling(rmsg, shortName, fname):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendCollidingFiles(scanMessenger, fileList):
+def sendCollidingFiles(scanMessenger, bundle_name, fileList):
     for fname in fileList:
-        cname = fname + ".collide"
-        with open(cname, "r") as fh:
+        with open(Path(str(fname) + ".collide"), "r") as fh:
             cdat = json.load(fh)
         print(
             "File {} collides with {} - has tpv = {} {} {}".format(
@@ -57,13 +59,22 @@ def sendCollidingFiles(scanMessenger, fileList):
         code = "t{}p{}v{}".format(ts, ps, vs)
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         shortName = os.path.split(fname)[1]
+        bundle_order = extractOrder(shortName)
         rmsg = scanMessenger.uploadCollidingPage(
-            code, int(ts), int(ps), int(vs), shortName, fname, md5
+            code,
+            int(ts),
+            int(ps),
+            int(vs),
+            shortName,
+            fname,
+            md5,
+            bundle_name,
+            bundle_order,
         )
-        doFiling(rmsg, shortName, fname)
+        doFiling(rmsg, Path("bundles") / bundle_name, shortName, fname)
 
 
-def warnAndAskUser(fileList):
+def warnAndAskUser(fileList, bundle_dir):
     """Confirm collisions by asking user.
 
     Returns False if we should stop (user says no).  Returns True if
@@ -76,9 +87,8 @@ def warnAndAskUser(fileList):
     print(">>>>>>>>>> WARNING <<<<<<<<<<")
     print("In most use cases you should have no colliding pages.")
     print("Detected the following colliding files:\n\t", fileList)
-    print(
-        'We strongly recommend that you review the images in the "collidingPages" directory before proceeding.'
-    )
+    print("Before proceeding, We strongly recommend that you review the images in:")
+    print("  {}".format(bundle_dir / "uploads/collidingPages"))
     yn = input("********** Are you sure you want to proceed [y/N] **********  ")
     if yn == "y":
         print("Proceeding.")
@@ -88,7 +98,7 @@ def warnAndAskUser(fileList):
         return False
 
 
-def uploadCollisions(server=None, password=None):
+def uploadCollisions(bundleDir, server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         scanMessenger = ScanMessenger(s, port=p)
@@ -118,14 +128,18 @@ def uploadCollisions(server=None, password=None):
         )
         exit(10)
 
-    fileList = []
-    for ext in PlomImageExtWhitelist:
-        fileList.extend(glob("collidingPages/*.{}".format(ext)))
-    if warnAndAskUser(fileList) == False:
+    try:
+        if not bundleDir.is_dir():
+            raise ValueError("should've been a directory!")
+
+        files = []
+        for ext in PlomImageExtWhitelist:
+            files.extend(
+                (bundleDir / "uploads/collidingPages").glob("*.{}".format(ext))
+            )
+        if warnAndAskUser(files, bundleDir) == False:
+            exit(2)
+        sendCollidingFiles(scanMessenger, bundleDir.name, files)
+    finally:
         scanMessenger.closeUser()
         scanMessenger.stop()
-        exit(2)
-
-    sendCollidingFiles(scanMessenger, fileList)
-    scanMessenger.closeUser()
-    scanMessenger.stop()
