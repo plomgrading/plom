@@ -88,7 +88,7 @@ def warnAndAskUser(fileList):
         return False
 
 
-def uploadCollisions(server=None, password=None):
+def uploadCollisions(bundleDir, server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         scanMessenger = ScanMessenger(s, port=p)
@@ -118,14 +118,16 @@ def uploadCollisions(server=None, password=None):
         )
         exit(10)
 
-    fileList = []
-    for ext in PlomImageExtWhitelist:
-        fileList.extend(glob("collidingPages/*.{}".format(ext)))
-    if warnAndAskUser(fileList) == False:
+    try:
+        if not bundleDir.is_dir():
+            raise ValueError("should've been a directory!")
+
+        files = []
+        for ext in PlomImageExtWhitelist:
+            files.extend((bundleDir / "collidingPages").glob("*.{}".format(ext)))
+        if warnAndAskUser(files) == False:
+            exit(2)
+        sendCollidingFiles(scanMessenger, files)
+    finally:
         scanMessenger.closeUser()
         scanMessenger.stop()
-        exit(2)
-
-    sendCollidingFiles(scanMessenger, fileList)
-    scanMessenger.closeUser()
-    scanMessenger.stop()

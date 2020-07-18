@@ -202,10 +202,10 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
         print("Also upload unknowns")
         sendUnknownsToServer.uploadUnknowns(bundledir, server, password)
     if collisions:
-        print(">> TO DO FIX <<")
-        # from plom.scan import sendCollisionsToServer
-        # print("Also collisions unknowns")
-        # sendCollisionsToServer.uploadCollisions(server, password)
+        from plom.scan import sendCollisionsToServer
+
+        print("Also upload collisions")
+        sendCollisionsToServer.uploadCollisions(bundledir, server, password)
 
     # TODO: when do we finalize the bundle?
 
