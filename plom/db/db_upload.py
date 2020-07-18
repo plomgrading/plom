@@ -112,7 +112,7 @@ def uploadTestPage(
         return [
             False,
             "collision",
-            ["{}".format(pref.original_name), test_number, page_number, version],
+            ["{}".format(pref.image.original_name), test_number, page_number, version],
         ]
     else:  # this is a new testpage. create an image and link it to the testpage
         # we need the bundle-ref now.

@@ -237,7 +237,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
 
 def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
-    """Randomly genertes garbage pages.
+    """Randomly generates garbage pages.
 
     Purely used for testing.
 
@@ -260,6 +260,53 @@ def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
         all_pdf_documents.insertPage(
             garbage_page_index, text="This is a garbage page", fontsize=18, color=green
         )
+    all_pdf_documents.saveIncr()
+
+
+def make_colliding_pages(paper_dir_path, outfile):
+    """Build two colliding pages - last pages of papers 2 and 3.
+
+    Arguments:
+        paper_dir_path {Str or convertable to pathlib obj} -- Directory containing the blank exams.
+        out_file_path {Str} -- Path to write results into this concatenated PDF file.
+
+    Purely used for testing.
+    """
+    paper_dir_path = Path(paper_dir_path)
+    out_file_path = Path(outfile)
+
+    all_pdf_documents = fitz.open(out_file_path)
+    # Customizable data
+    blue = [0, 0, 0.75]
+    colliding_page_font_size = 18
+
+    papers_paths = sorted(glob(str(paper_dir_path / "exam_*.pdf")))
+    for file_name in papers_paths[1:3]:  # just grab papers 2 and 3.
+        pdf_document = fitz.open(file_name)
+        test_length = len(pdf_document)
+        colliding_page_index = random.randint(-1, len(all_pdf_documents))
+        print(
+            "Insert colliding page at colliding_page_index={}".format(
+                colliding_page_index
+            )
+        )
+        all_pdf_documents.insertPDF(
+            pdf_document,
+            from_page=test_length - 1,
+            to_page=test_length - 1,
+            start_at=colliding_page_index,
+        )
+        insertion_confirmed = all_pdf_documents[colliding_page_index].insertTextbox(
+            fitz.Rect(100, 100, 500, 500),
+            "I was dropped on the floor and rescanned.",
+            fontsize=colliding_page_font_size,
+            color=blue,
+            fontname="helv",
+            fontfile=None,
+            align=0,
+        )
+        assert insertion_confirmed > 0
+
     all_pdf_documents.saveIncr()
 
 
@@ -342,6 +389,7 @@ def main():
 
     fill_in_fake_data_on_exams(_paperdir, classlist, out_file_path)
     make_garbage_page(out_file_path, number_of_grarbage_pages=2)
+    make_colliding_pages(_paperdir, out_file_path)
     splitFakeFile(out_file_path)
 
 
