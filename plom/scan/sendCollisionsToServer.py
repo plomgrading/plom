@@ -74,7 +74,7 @@ def sendCollidingFiles(scanMessenger, bundle_name, fileList):
         doFiling(rmsg, Path("bundles") / bundle_name, shortName, fname)
 
 
-def warnAndAskUser(fileList):
+def warnAndAskUser(fileList, bundle_dir):
     """Confirm collisions by asking user.
 
     Returns False if we should stop (user says no).  Returns True if
@@ -87,9 +87,8 @@ def warnAndAskUser(fileList):
     print(">>>>>>>>>> WARNING <<<<<<<<<<")
     print("In most use cases you should have no colliding pages.")
     print("Detected the following colliding files:\n\t", fileList)
-    print(
-        'We strongly recommend that you review the images in the "collidingPages" directory before proceeding.'
-    )
+    print("Before proceeding, We strongly recommend that you review the images in:")
+    print("  {}".format(bundle_dir / "uploads/collidingPages"))
     yn = input("********** Are you sure you want to proceed [y/N] **********  ")
     if yn == "y":
         print("Proceeding.")
@@ -138,7 +137,7 @@ def uploadCollisions(bundleDir, server=None, password=None):
             files.extend(
                 (bundleDir / "uploads/collidingPages").glob("*.{}".format(ext))
             )
-        if warnAndAskUser(files) == False:
+        if warnAndAskUser(files, bundleDir) == False:
             exit(2)
         sendCollidingFiles(scanMessenger, bundleDir.name, files)
     finally:
