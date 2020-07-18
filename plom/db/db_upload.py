@@ -456,7 +456,7 @@ def uploadCollidingPage(
         ]
     # check this against other collisions for that page
     for cp in pref.collisions:
-        if md5 == cp.md5sum:
+        if md5 == cp.image.md5sum:
             # Exact duplicate - md5sum of this image is sames as the one already in database
             return [
                 False,
