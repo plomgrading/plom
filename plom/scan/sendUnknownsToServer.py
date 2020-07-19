@@ -69,16 +69,11 @@ def uploadUnknowns(bundleDir, server=None, password=None):
         scanMessenger = ScanMessenger(server)
     scanMessenger.start()
 
-    # get the password if not specified
     if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
-        except Exception as error:
-            print("ERROR", error)
+        pwd = getpass.getpass("Please enter the 'scanner' password: ")
     else:
         pwd = password
 
-    # get started
     try:
         scanMessenger.requestAndSaveToken("scanner", pwd)
     except PlomExistingLoginException:

@@ -595,16 +595,11 @@ def createNewBundle(bundle_file, server=None, password=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    # get the password if not specified
     if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
-        except Exception as error:
-            print("ERROR", error)
+        pwd = getpass.getpass("Please enter the 'scanner' password: ")
     else:
         pwd = password
 
-    # get started
     try:
         msgr.requestAndSaveToken("scanner", pwd)
     except PlomExistingLoginException:
