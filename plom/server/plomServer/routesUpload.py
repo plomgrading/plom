@@ -36,6 +36,10 @@ class UploadHandler:
         * If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldnt happen if scanner working correctly.
         * If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
         * If no such bundle return [True, []] - create the bundle and return an empty skip-list.
+
+        Notes:
+        * after declaring a bundle you may upload images to it.
+        * uploading pages to an undeclared bundle is not allowed.
         """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "bundle", "md5sum"]):
@@ -696,6 +700,30 @@ class UploadHandler:
         )  # all fine - report number of tests updated
 
     async def processTUploads(self, request):
+        """Trigger any updates that are appropriate after some uploads.
+
+        If we upload a bunch of pages to the server, the server will
+        typically keep those in some sort of "staging" state where, for
+        example, they are not given to marking clients.  This is b/c it
+        will be distruptive to clients to have pages added to questions.
+        To "release" a these recent uploads, we make this API call.
+
+        Notes:
+          * its ok to upload to a bundle after calling this (worse case,
+            some client work will be invalidated or tagged to check).
+          * its ok to call this repeatedly.
+          * its not necessarily or useful to call this after uploading
+            Unknown Pages or Colliding Pages: those will need to be
+            dealt with in the Manager tool (e.g., added them to a
+            Paper) at which time similar triggers will occur.
+
+        Returns:
+            aiohttp.web.Response: with status code as below.
+
+        Status codes:
+            200 OK: action was taken, report numer of Papers updated.
+            401 Unauthorized: invalid credientials.
+        """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
@@ -705,9 +733,7 @@ class UploadHandler:
             return web.Response(status=401)
 
         rval = self.server.processTUploads()
-        return web.json_response(
-            rval[1], status=200
-        )  # all fine - report number of tests updated
+        return web.json_response(rval[1], status=200)
 
     @authenticate_by_token_required_fields(["user"])
     def populateExamDatabase(self, data, request):
