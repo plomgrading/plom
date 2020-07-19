@@ -86,7 +86,8 @@ def warnAndAskUser(fileList, bundle_dir):
 
     print(">>>>>>>>>> WARNING <<<<<<<<<<")
     print("In most use cases you should have no colliding pages.")
-    print("Detected the following colliding files:\n\t", fileList)
+    print("Detected the following colliding files:")
+    print("  {}".format("\n  ".join([str(x) for x in fileList])))
     print("Before proceeding, We strongly recommend that you review the images in:")
     print("  {}".format(bundle_dir / "uploads/collidingPages"))
     yn = input("********** Are you sure you want to proceed [y/N] **********  ")

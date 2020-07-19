@@ -190,7 +190,11 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
     [TPN, updates] = sendPagesToServer.uploadTPages(
         bundledir, skip_list, server, password
     )
-    print("Tests were uploaded to the following studentIDs: {}".format(TPN.keys()))
+    print(
+        "Tests were uploaded to the following studentIDs: {}".format(
+            ", ".join(TPN.keys())
+        )
+    )
     print("Server reports {} papers updated.".format(updates))
 
     print("Archiving the bundle PDF {}".format(pdf_fname))
