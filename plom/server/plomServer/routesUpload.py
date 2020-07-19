@@ -723,6 +723,7 @@ class UploadHandler:
         Status codes:
             200 OK: action was taken, report numer of Papers updated.
             401 Unauthorized: invalid credientials.
+            403 Forbidden: only "manager"/"scanner" allowed to do this.
         """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
@@ -730,7 +731,7 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if data["user"] != "manager" and data["user"] != "scanner":
-            return web.Response(status=401)
+            return web.Response(status=403)
 
         rval = self.server.processTUploads()
         return web.json_response(rval[1], status=200)
