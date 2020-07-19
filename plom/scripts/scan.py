@@ -158,8 +158,6 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
 
     As part of the upload 'unknown' pages and 'collisions' may be detected.
     These will not be uploaded unless the appropriate flags are set.
-
-    Collisions are still 'todo'.
     """
 
     from plom.scan import sendPagesToServer, scansToImages

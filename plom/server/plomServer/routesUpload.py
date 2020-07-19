@@ -40,6 +40,10 @@ class UploadHandler:
         Notes:
         * after declaring a bundle you may upload images to it.
         * uploading pages to an undeclared bundle is not allowed.
+        * bundles traditionally correspond to one "pile" of physical
+          papers scanned together.
+        * there does not need to be one-to-one relationship betewen
+          bundles and Exam Papers or Homework Papers.
         """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "bundle", "md5sum"]):
