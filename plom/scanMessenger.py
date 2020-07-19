@@ -40,14 +40,15 @@ class ScanMessenger(BaseMessenger):
         super().__init__(*args, **kwargs)
 
     def doesBundleExist(self, bundle_name, md5sum):
-        """Ask server if given bundle exists
+        """Ask server if given bundle exists.
 
         Checks bundle's md5sum and name:
         * neither = no matching bundle, return [False]
         * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
         * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
-        * both match = return [True, 'both'] - user is trying to upload a bundle again - likely due to crash.
-
+        * both match = return [True, 'both'] - user could be retrying
+          after network failure (for example) or uploading unknown or
+          colliding pages.
         """
         self.SRmutex.acquire()
         try:

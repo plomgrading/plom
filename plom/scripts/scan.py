@@ -158,8 +158,6 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
 
     As part of the upload 'unknown' pages and 'collisions' may be detected.
     These will not be uploaded unless the appropriate flags are set.
-
-    Collisions are still 'todo'.
     """
 
     from plom.scan import sendPagesToServer, scansToImages
@@ -200,6 +198,8 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
     print("Archiving the bundle PDF {}".format(pdf_fname))
     scansToImages.archiveTBundle(pdf_fname)
 
+    # Note: no need to "finalize" a bundle, its ok to send unknown/collisions
+    # after the above call to sendPagesToServer.
     if unknowns:
         from plom.scan import sendUnknownsToServer
 
@@ -210,8 +210,6 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
 
         print("Also upload collisions")
         sendCollisionsToServer.uploadCollisions(bundledir, server, password)
-
-    # TODO: when do we finalize the bundle?
 
 
 def _doAllToScans(server, password, scanPDFs):

@@ -34,7 +34,9 @@ def doesBundleExist(self, bundle_name, md5):
     * neither = no matching bundle, return [False]
     * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
     * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
-    * both match = return [True, 'both'] - user is trying to upload a bundle again - likely due to crash.
+    * both match = return [True, 'both'] - user could be retrying after
+      network failure (for example) or uploading unknown or colliding
+      pages.
     """
     # check if that bundle-name is on file, and if the md5sum is known.
     bref = Bundle.get_or_none(name=bundle_name)
