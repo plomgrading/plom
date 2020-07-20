@@ -146,7 +146,7 @@ def processScans(server, password, pdf_fname):
     readQRCodes.processBitmaps(bundledir, server, password)
 
 
-def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
+def uploadImages(server, password, pdf_fname, unknowns=False, collisions_flag=False):
     """Upload processed images from bundle given by pdf_fname.
 
     Try to create a bundle on server from pdf_fname.
@@ -161,6 +161,12 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
     """
 
     from plom.scan import sendPagesToServer, scansToImages
+    from plom.scan import sendUnknownsToServer
+    # TODO: import these directly from plom.scan using the __init__
+    from plom.scan.sendUnknownsToServer import upload_unknowns
+    from plom.scan.sendCollisionsToServer import bundle_has_nonuploaded_collisions
+    from plom.scan.sendCollisionsToServer import print_collision_warning
+    from plom.scan.sendCollisionsToServer import upload_collisions
 
     print("Creating bundle for PDF {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
@@ -201,15 +207,23 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
     # Note: no need to "finalize" a bundle, its ok to send unknown/collisions
     # after the above call to sendPagesToServer.
     if unknowns:
-        from plom.scan import sendUnknownsToServer
-
         print("Also upload unknowns")
-        sendUnknownsToServer.uploadUnknowns(bundledir, server, password)
-    if collisions:
-        from plom.scan import sendCollisionsToServer
+        upload_unknowns(bundledir, server, password)
 
-        print("Also upload collisions")
-        sendCollisionsToServer.uploadCollisions(bundledir, server, password)
+    if bundle_has_nonuploaded_collisions(bundledir):
+        print_collision_warning(bundledir)
+        if not collisions_flag:
+            print('If you want to upload these collisions, rerun with "--collisions".')
+    if collisions_flag:
+        if not bundle_has_nonuploaded_collisions(bundledir):
+            print("Collisions upload flag present: but no collisions")
+        else:
+            print("Collisions upload flag present.")
+            # TODO:add a --yes flag?
+            yn = input("Are you sure you want to upload these colliding pages? [y/N] ")
+            if yn.lower() == "y":
+                print("Proceeding.")
+                upload_collisions(bundledir, server, password)
 
 
 def _doAllToScans(server, password, scanPDFs):

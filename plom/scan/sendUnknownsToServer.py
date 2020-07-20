@@ -61,7 +61,7 @@ def sendUnknownFiles(msgr, bundle_name, files):
         doFiling(rmsg, Path("bundles") / bundle_name, shortName, fname)
 
 
-def uploadUnknowns(bundleDir, server=None, password=None):
+def upload_unknowns(bundle_dir, server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         scanMessenger = ScanMessenger(s, port=p)
@@ -86,13 +86,14 @@ def uploadUnknowns(bundleDir, server=None, password=None):
         )
         exit(10)
 
-    if not bundleDir.is_dir():
-        raise ValueError("should've been a directory!")
-
-    files = []
-    # Look for pages in unknowns
-    for ext in PlomImageExtWhitelist:
-        files.extend((bundleDir / "unknownPages").glob("*.{}".format(ext)))
-    sendUnknownFiles(scanMessenger, bundleDir.name, files)
-    scanMessenger.closeUser()
-    scanMessenger.stop()
+    try:
+        if not bundle_dir.is_dir():
+            raise ValueError("should've been a directory!")
+        files = []
+        # Look for pages in unknowns
+        for ext in PlomImageExtWhitelist:
+            files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
+        sendUnknownFiles(scanMessenger, bundle_dir.name, files)
+    finally:
+        scanMessenger.closeUser()
+        scanMessenger.stop()
