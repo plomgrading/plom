@@ -53,6 +53,14 @@ import shutil
 from pathlib import Path
 
 from plom import __version__
+from plom.scan import (
+    upload_unknowns,
+    print_unknowns_warning,
+    bundle_has_nonuploaded_unknowns,
+    upload_collisions,
+    print_collision_warning,
+    bundle_has_nonuploaded_collisions,
+)
 
 
 # TODO: this bit of code from messenger could be useful here
@@ -144,9 +152,15 @@ def processScans(server, password, pdf_fname):
     scansToImages.processScans(pdf_fname, bundledir)
     print("Read QR codes")
     readQRCodes.processBitmaps(bundledir, server, password)
+    # TODO: can collisions warning be written here too?
+    if bundle_has_nonuploaded_unknowns(bundledir):
+        print_unknowns_warning(bundledir)
+        print('You can upload these by passing "--unknowns" to the upload command')
 
 
-def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
+def uploadImages(
+    server, password, pdf_fname, unknowns_flag=False, collisions_flag=False
+):
     """Upload processed images from bundle given by pdf_fname.
 
     Try to create a bundle on server from pdf_fname.
@@ -162,6 +176,7 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
 
     from plom.scan import sendPagesToServer, scansToImages
 
+    # TODO: check first to avoid misleading msg?
     print("Creating bundle for PDF {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
     # should be [True, skip_list] or [False, reason]
@@ -200,16 +215,38 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions=False):
 
     # Note: no need to "finalize" a bundle, its ok to send unknown/collisions
     # after the above call to sendPagesToServer.
-    if unknowns:
-        from plom.scan import sendUnknownsToServer
 
-        print("Also upload unknowns")
-        sendUnknownsToServer.uploadUnknowns(bundledir, server, password)
-    if collisions:
-        from plom.scan import sendCollisionsToServer
+    if unknowns_flag:
+        if bundle_has_nonuploaded_unknowns(bundledir):
+            print_unknowns_warning(bundledir)
+            print("Unknowns upload flag present: uploading...")
+            upload_unknowns(bundledir, server, password)
+        else:
+            print(
+                "Unknowns upload flag present: but no unknowns - so no actions required."
+            )
+    else:
+        if bundle_has_nonuploaded_unknowns(bundledir):
+            print_unknowns_warning(bundledir)
+            print('If you want to upload these unknowns, rerun with "--unknowns".')
 
-        print("Also upload collisions")
-        sendCollisionsToServer.uploadCollisions(bundledir, server, password)
+    if collisions_flag:
+        if bundle_has_nonuploaded_collisions(bundledir):
+            print_collision_warning(bundledir)
+            print("Collisions upload flag present.")
+            # TODO:add a --yes flag?
+            yn = input("Are you sure you want to upload these colliding pages? [y/N] ")
+            if yn.lower() == "y":
+                print("Proceeding.")
+                upload_collisions(bundledir, server, password)
+        else:
+            print(
+                "Collisions upload flag present: but no collisions - so no actions required."
+            )
+    else:
+        if bundle_has_nonuploaded_collisions(bundledir):
+            print_collision_warning(bundledir)
+            print('If you want to upload these collisions, rerun with "--collisions".')
 
 
 def _doAllToScans(server, password, scanPDFs):

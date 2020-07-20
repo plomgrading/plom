@@ -13,6 +13,7 @@ import json
 import os
 import shutil
 from pathlib import Path
+from textwrap import dedent
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
@@ -49,7 +50,7 @@ def sendCollidingFiles(scanMessenger, bundle_name, fileList):
         with open(Path(str(fname) + ".collide"), "r") as fh:
             cdat = json.load(fh)
         print(
-            "File {} collides with {} - has tpv = {} {} {}".format(
+            "Uploading {} which collides with {}, tpv = {} {} {}".format(
                 fname, cdat[0], cdat[1], cdat[2], cdat[3]
             )
         )
@@ -74,32 +75,50 @@ def sendCollidingFiles(scanMessenger, bundle_name, fileList):
         doFiling(rmsg, Path("bundles") / bundle_name, shortName, fname)
 
 
-def warnAndAskUser(fileList, bundle_dir):
-    """Confirm collisions by asking user.
+def bundle_has_nonuploaded_collisions(bundle_dir):
+    """Uploading a bundle sometimes results in collisions: does this one have any?
 
-    Returns False if we should stop (user says no).  Returns True if
-    there were no colliding pages or if user says yes.
+    Args:
+        bundle_dir (str, Path): path to a bundle.
+
+    Return:
+        bool
     """
-    if len(fileList) == 0:
-        print("No colliding pages. Nothing to do.")
+    if (bundle_dir / "uploads/collidingPages").glob("*"):
         return True
+    return False
 
-    print(">>>>>>>>>> WARNING <<<<<<<<<<")
-    print("In most use cases you should have no colliding pages.")
-    print("Detected the following colliding files:")
-    print("  {}".format("\n  ".join([str(x) for x in fileList])))
-    print("Before proceeding, We strongly recommend that you review the images in:")
+
+def print_collision_warning(bundle_dir):
+    """Print info about collisions and list of collisions in this bundle.
+
+    Args:
+        bundle_dir (str, Path): path to a bundle.
+    """
+    files = []
+    for ext in PlomImageExtWhitelist:
+        files.extend((bundle_dir / "uploads/collidingPages").glob("*.{}".format(ext)))
+    if not files:
+        return
+    print("\n>>>>>>>>>> WARNING <<<<<<<<<<")
+    print("Detected the following {} colliding files:".format(len(files)))
+    print("  {}".format("\n  ".join([x.name for x in files])))
+    print("Before proceeding, we strongly recommend that you review these images in:")
     print("  {}".format(bundle_dir / "uploads/collidingPages"))
-    yn = input("********** Are you sure you want to proceed [y/N] **********  ")
-    if yn == "y":
-        print("Proceeding.")
-        return True
-    else:
-        print("Terminating.")
-        return False
+
+    print(
+        dedent(
+            """
+            Uploading collisions will not cause an error but will require human
+            intervention later using the Manager tool.  You should consider why this is
+            happening: e.g., are you accidentally scanning papers twice?  Legitimate
+            collisions can occur when re-scanning a folded or illegible page.
+            """
+        )
+    )
 
 
-def uploadCollisions(bundleDir, server=None, password=None):
+def upload_collisions(bundleDir, server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         scanMessenger = ScanMessenger(s, port=p)
@@ -133,8 +152,6 @@ def uploadCollisions(bundleDir, server=None, password=None):
             files.extend(
                 (bundleDir / "uploads/collidingPages").glob("*.{}".format(ext))
             )
-        if warnAndAskUser(files, bundleDir) == False:
-            exit(2)
         sendCollidingFiles(scanMessenger, bundleDir.name, files)
     finally:
         scanMessenger.closeUser()

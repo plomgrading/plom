@@ -61,7 +61,45 @@ def sendUnknownFiles(msgr, bundle_name, files):
         doFiling(rmsg, Path("bundles") / bundle_name, shortName, fname)
 
 
-def uploadUnknowns(bundleDir, server=None, password=None):
+def bundle_has_nonuploaded_unknowns(bundle_dir):
+    """Does this bundle have unknown pages that are not uploaded.
+
+    Args:
+        bundle_dir (str, Path): path to a bundle.
+
+    Return:
+        bool
+    """
+    files = []
+    if (bundle_dir / "unknownPages").glob("*"):
+        return True
+    return False
+
+
+def print_unknowns_warning(bundle_dir):
+    """Print info about unknowns and list of unknowns in this bundle.
+
+    Args:
+        bundle_dir (str, Path): path to a bundle.
+    """
+    files = []
+    for ext in PlomImageExtWhitelist:
+        files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
+    if not files:
+        return
+    print("\n>>>>>>>>>> NOTE <<<<<<<<<<")
+    print("Processing resulted in these {} unknown files:".format(len(files)))
+    print("  {}".format("\n  ".join([x.name for x in files])))
+    # TODO: this is XX out of YY pages in the bundle
+    print("UnknownPages can result from poor-quality scans or damaged pages where")
+    print("QR codes cannot be read properly.  They also result from any scanned pages")
+    print("without QR codes, such as any Extra Pages.  Uploading small numbers of")
+    print("unknown pages is common but will require human intervention later with the")
+    print("Manager tool.  If the number of such pages seems high, you may want to")
+    print("look in {}\n".format(bundle_dir / "unknownPages"))
+
+
+def upload_unknowns(bundle_dir, server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         scanMessenger = ScanMessenger(s, port=p)
@@ -86,13 +124,14 @@ def uploadUnknowns(bundleDir, server=None, password=None):
         )
         exit(10)
 
-    if not bundleDir.is_dir():
-        raise ValueError("should've been a directory!")
-
-    files = []
-    # Look for pages in unknowns
-    for ext in PlomImageExtWhitelist:
-        files.extend((bundleDir / "unknownPages").glob("*.{}".format(ext)))
-    sendUnknownFiles(scanMessenger, bundleDir.name, files)
-    scanMessenger.closeUser()
-    scanMessenger.stop()
+    try:
+        if not bundle_dir.is_dir():
+            raise ValueError("should've been a directory!")
+        files = []
+        # Look for pages in unknowns
+        for ext in PlomImageExtWhitelist:
+            files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
+        sendUnknownFiles(scanMessenger, bundle_dir.name, files)
+    finally:
+        scanMessenger.closeUser()
+        scanMessenger.stop()
