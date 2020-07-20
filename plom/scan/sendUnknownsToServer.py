@@ -62,15 +62,13 @@ def sendUnknownFiles(msgr, bundle_name, files):
 
 
 def bundle_has_nonuploaded_unknowns(bundle_dir):
-    """Does this bundle have unknowns TODO
+    """Does this bundle have unknown pages that are not uploaded.
 
     Args:
         bundle_dir (str, Path): path to a bundle.
 
     Return:
         bool
-
-    TODO: just check non-empty versus the "for ext in ..." bit
     """
     files = []
     if (bundle_dir / "unknownPages").glob("*"):
