@@ -533,12 +533,60 @@ def checkTestHasThatSID(student_id, server=None, password=None):
         return None
 
 
+def bundle_name_from_filename(filename):
+    """Return the bundle name for a file.
+
+    Args:
+        filename (str, Path): name of file, currently this must be a
+            PDF file.
+
+    Returns
+        str: Currently bundle name is the stem of the file name with any
+            spaces replaced with underscores.
+
+    Exceptions:
+        ValueError: file is not a PDF file.
+    """
+    filename = Path(filename)
+    if filename.suffix.lower() != ".pdf":
+        raise ValueError("currently only PDF files are supported")
+    return filename.stem.replace(" ", "_")
+
+
+def bundle_name_and_md5(filename):
+    """Return the bundle name and md5sum checksum for a file.
+
+    Args:
+        filename (str, Path): name of file.
+
+    Returns
+        tuple: (str, str) for bundle_name and md5sum.
+
+    Exceptions:
+        FileNotFoundError: file does not exist.
+        ValueError: file is not a PDF file.
+    """
+    filename = Path(filename)
+    print(filename)
+    if not filename.is_file():
+        raise FileNotFoundError("not found or not a file/symlink")
+    if filename.suffix.lower() != ".pdf":
+        raise ValueError("currently only PDF files are supported")
+    bundle_name = filename.stem.replace(" ", "_")
+    md5 = hashlib.md5(open(filename, "rb").read()).hexdigest()
+    return (bundle_name, md5)
+
+
 def doesBundleExist(bundle_file, server=None, password=None):
     """Check if bundle exists and is so does its md5sum match a given file.
 
     Args:
         bundle_file (str, Path): needs to be the actual file not the
             bundle name because we need to compute the md5sum.
+
+    Returns:
+        list: the pair `[True, bundle_name]` where `bundle_name` is a
+            `str` or `[False, reason]` where `reason` is a `str`.
     """
     if server and ":" in server:
         s, p = server.split(":")
@@ -549,10 +597,7 @@ def doesBundleExist(bundle_file, server=None, password=None):
 
     # get the password if not specified
     if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
-        except Exception as error:
-            print("ERROR", error)
+        pwd = getpass.getpass("Please enter the 'scanner' password:")
     else:
         pwd = password
 
@@ -569,25 +614,38 @@ def doesBundleExist(bundle_file, server=None, password=None):
         )
         exit(10)
 
-    # get bundle's name without path or extension.
-    # make name safer by replacing space by underscore
-    bundle_name = Path(bundle_file).stem.replace(" ", "_")
-    md5 = hashlib.md5(open(bundle_file, "rb").read()).hexdigest()
+    bundle_name, md5 = bundle_name_and_md5(bundle_file)
     bundle_success = msgr.doesBundleExist(bundle_name, md5)
 
     msgr.closeUser()
     msgr.stop()
 
-    return bundle_success  # should be pair [true, bundle_name] or [false, reason]
+    return bundle_success
 
 
-def createNewBundle(bundle_file, server=None, password=None):
-    """Create a new bundle for a given file.
+def createNewBundle(bundle_name, md5=None, server=None, password=None):
+    """Create a new bundle with a given name.
 
     Args:
-        bundle_file (str, Path): needs to be the actual file not the
-            bundle name because we need to compute the md5sum.
+        bundle_name (str): a bundle name, typically extracted from the
+            name of a PDF file.
+        md5 (str): the md5sum of the file from which this bundle is
+            extracted.  In future, could be extended to a list/dict for
+            more than one file.
+        server: information to contact a server.
+        password: information to contact a server.
+
+    Returns:
+        list: either the pair `[True, bundle_name]` or `[False]`.
+
+    Deprecated: for temporary backwards compatibility, if the `file_md5`
+    kwarg is omitted, the first argument is assumed to be a file name:
+    the bundle name and the md5sum are then extracted from that.
     """
+    # Deprecated: remove later
+    if not md5:
+        bundle_name, md5 = bundle_name_and_md5(bundle_name)
+
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -612,13 +670,10 @@ def createNewBundle(bundle_file, server=None, password=None):
         )
         exit(10)
 
-    # get bundle's name without path or extension.
-    # make name safeer by replacing space by underscore
-    bundle_name = os.path.splitext(os.path.basename(bundle_file))[0].replace(" ", "_")
-    md5 = hashlib.md5(open(bundle_file, "rb").read()).hexdigest()
-    bundle_success = msgr.createNewBundle(bundle_name, md5)
+    try:
+        bundle_success = msgr.createNewBundle(bundle_name, md5)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
-    msgr.closeUser()
-    msgr.stop()
-
-    return bundle_success  # should be pair [true, bundle_name] or [false]
+    return bundle_success

@@ -30,13 +30,12 @@ archivedir = Path("archivedPDFs")
 
 
 def _archiveBundle(file_name, this_archive_dir):
-    """Archive the bundle pdf
+    """Archive the bundle pdf.
 
     The bundle.pdf is moved into the appropriate archive directory
     as given by this_archive_dir. The archive.toml file is updated
     with the name and md5sum of that bundle.pdf.
     """
-
     md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
     shutil.move(file_name, this_archive_dir / Path(file_name).name)
     try:
@@ -67,22 +66,42 @@ def archiveTBundle(file_name):
     _archiveBundle(file_name, archivedir)
 
 
+def _md5sum_in_archive(filename):
+    """Check for a file in the list of archived PDF files.
+
+    Args:
+        filename (str): the basename (not path) of a file to search for
+            in the archive of PDF files that have been processed.
+
+    Returns:
+        None/str: None if not found, else the md5sum.
+
+    Note: Current unused?
+    """
+    try:
+        archive = toml.load(archivedir / "archive.toml")
+    except FileNotFoundError:
+        return ""
+    for md5, name in archive.items():
+        if filename == name:
+            # if not unique too bad you get 1st one
+            return md5
+
+
 def isInArchive(file_name):
     """
-    Check given file (and its md5sum) against archived bundles.
+    Check given file by md5sum against archived bundles.
 
-    Returns True when the filename and md5sum both match
-    a single entry in the archive.toml. Else return False.
+    Returns:
+        None/str: None if not found, otherwise filename of archived file
+            with the same md5sum.
     """
-
-    arcName = os.path.join(archivedir, "archive.toml")
-    if not os.path.isfile(arcName):
-        return [False]
-    arch = toml.load(arcName)
+    try:
+        archive = toml.load(archivedir / "archive.toml")
+    except FileNotFoundError:
+        return None
     md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
-    if md5 in arch:
-        return [True, arch[md5]]
-    return [False]
+    return archive.get(md5, None)
 
 
 def processFileToBitmaps(file_name, dest):
@@ -394,11 +413,11 @@ def processScans(pdf_fname, bundle_dir):
     # annot get to local archive unless its uploaded, but what about unknowns, etc?
 
     # check if fname is in local archive (by checking md5sum)
-    tf = isInArchive(pdf_fname)
-    if tf[0]:
+    prevname = isInArchive(pdf_fname)
+    if prevname:
         print(
             "WARNING - {} is in the PDF archive - we checked md5sum - it the same as file {}. It will not be processed.".format(
-                pdf_fname, tf[1]
+                pdf_fname, prevname
             )
         )
         return
