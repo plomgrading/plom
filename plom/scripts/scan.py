@@ -52,6 +52,8 @@ import os
 import shutil
 from pathlib import Path
 
+import toml
+
 from plom import __version__
 from plom.scan import (
     upload_unknowns,
@@ -72,6 +74,10 @@ from plom.scan import (
 #            server, message_port = server.split(":")
 
 
+# TODO: make some common util file to store all these names?
+archivedir = Path("archivedPDFs")
+
+
 def clearLogin(server, password):
     from plom.scan import clearScannerLogin
 
@@ -85,7 +91,7 @@ def scanStatus(server, password):
 
 
 def make_required_directories(bundle=None):
-    os.makedirs("archivedPDFs", exist_ok=True)
+    os.makedirs(archivedir, exist_ok=True)
     os.makedirs("bundles", exist_ok=True)
     # TODO: split up a bit, above are global, below per bundle
     if bundle:
@@ -113,12 +119,15 @@ def processScans(server, password, pdf_fname):
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
     from plom.scan import readQRCodes
+    from plom.scan.sendPagesToServer import bundle_name_and_md5
 
     pdf_fname = Path(pdf_fname)
     if not pdf_fname.is_file():
         print("Cannot find file {} - skipping".format(pdf_fname))
         return
-    bundle_name = Path(pdf_fname).stem.replace(" ", "_")
+    # TODO: replace above with letting exception rise from next:
+    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
+    # TODO: doesBundleExist(bundle_name, md5)
 
     print("Checking if bundle {} already exists on server".format(bundle_name))
     bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
@@ -148,6 +157,9 @@ def processScans(server, password, pdf_fname):
     bundledir = Path("bundles") / bundle_name
     make_required_directories(bundledir)
 
+    with open(bundledir / "source.toml", "w+") as f:
+        toml.dump({"file": str(pdf_fname), "md5": md5}, f)
+
     print("Processing PDF {} to images".format(pdf_fname))
     scansToImages.processScans(pdf_fname, bundledir)
     print("Read QR codes")
@@ -159,11 +171,11 @@ def processScans(server, password, pdf_fname):
 
 
 def uploadImages(
-    server, password, pdf_fname, unknowns_flag=False, collisions_flag=False
+    server, password, bundle_name, unknowns_flag=False, collisions_flag=False
 ):
-    """Upload processed images from bundle given by pdf_fname.
+    """Upload processed images from bundle.
 
-    Try to create a bundle on server from pdf_fname.
+    Try to create a bundle on server.
     - abort if name xor md5sum of bundle known.
     - continue otherwise (server will give skip-list)
     Skip images whose page within the bundle is in the skip-list since
@@ -173,12 +185,19 @@ def uploadImages(
     As part of the upload 'unknown' pages and 'collisions' may be detected.
     These will not be uploaded unless the appropriate flags are set.
     """
-
+    from warnings import warn
     from plom.scan import sendPagesToServer, scansToImages
 
+    if bundle_name.lower().endswith(".pdf"):
+        warn('Careful, the bundle name should not include ".pdf"')
+
+    bundledir = Path("bundles") / bundle_name
+    info = toml.load(bundledir / "source.toml")
+    md5 = info["md5"]
+
     # TODO: check first to avoid misleading msg?
-    print("Creating bundle for PDF {} on server".format(pdf_fname))
-    rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
+    print('Creating bundle "{}" on server'.format(bundle_name))
+    rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
     # should be [True, skip_list] or [False, reason]
     if rval[0]:
         skip_list = rval[1]
@@ -198,8 +217,6 @@ def uploadImages(
         return
 
     print("Upload images to server")
-    bundle_name = Path(pdf_fname).stem.replace(" ", "_")
-    bundledir = Path("bundles") / bundle_name
     [TPN, updates] = sendPagesToServer.uploadTPages(
         bundledir, skip_list, server, password
     )
@@ -210,8 +227,22 @@ def uploadImages(
     )
     print("Server reports {} papers updated.".format(updates))
 
-    print("Archiving the bundle PDF {}".format(pdf_fname))
-    scansToImages.archiveTBundle(pdf_fname)
+    pdf_fname = Path(info["file"])
+    if pdf_fname.exists():
+        print(
+            'Original PDF "{}" still in place: archiving to "{}"...'.format(
+                pdf_fname, str(archivedir)
+            )
+        )
+        scansToImages.archiveTBundle(pdf_fname)
+    elif (archivedir / pdf_fname).exists():
+        print(
+            'Original PDF "{}" is already archived in "{}".'.format(
+                pdf_fname, str(archivedir)
+            )
+        )
+    else:
+        raise RuntimeError("Did you move the archived PDF?  Please don't do that!")
 
     # Note: no need to "finalize" a bundle, its ok to send unknown/collisions
     # after the above call to sendPagesToServer.
@@ -301,7 +332,7 @@ spC = sub.add_parser(
 # )
 # spA.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
 spP.add_argument("scanPDF", help="The PDF file of scanned pages.")
-spU.add_argument("bundleName", help="The name of the PDF file again (WIP!!).")
+spU.add_argument("bundleName", help="The name of the PDF file, without extension.")
 spU.add_argument(
     "-u",
     "--unknowns",
@@ -326,7 +357,6 @@ def main():
     if args.command == "process":
         processScans(args.server, args.password, args.scanPDF)
     elif args.command == "upload":
-        # TODO: bundleName with/without PDF: WIP!
         uploadImages(
             args.server, args.password, args.bundleName, args.unknowns, args.collisions
         )
