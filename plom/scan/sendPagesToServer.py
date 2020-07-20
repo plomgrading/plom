@@ -567,7 +567,6 @@ def bundle_name_and_md5(filename):
         ValueError: file is not a PDF file.
     """
     filename = Path(filename)
-    print(filename)
     if not filename.is_file():
         raise FileNotFoundError("not found or not a file/symlink")
     if filename.suffix.lower() != ".pdf":
@@ -623,7 +622,7 @@ def doesBundleExist(bundle_file, server=None, password=None):
     return bundle_success
 
 
-def createNewBundle(bundle_name, md5=None, server=None, password=None):
+def createNewBundle(bundle_name, md5, server=None, password=None):
     """Create a new bundle with a given name.
 
     Args:
@@ -637,15 +636,7 @@ def createNewBundle(bundle_name, md5=None, server=None, password=None):
 
     Returns:
         list: either the pair `[True, bundle_name]` or `[False]`.
-
-    Deprecated: for temporary backwards compatibility, if the `file_md5`
-    kwarg is omitted, the first argument is assumed to be a file name:
-    the bundle name and the md5sum are then extracted from that.
     """
-    # Deprecated: remove later
-    if not md5:
-        bundle_name, md5 = bundle_name_and_md5(bundle_name)
-
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)

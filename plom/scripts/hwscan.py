@@ -147,7 +147,7 @@ def processLooseScans(server, password, pdf_fname, student_id):
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
-    bundle_name = Path(pdf_fname).stem.replace(" ", "_")
+    bundle_name, md5 = sendPagesToServer.bundle_name_and_md5(pdf_fname)
     bundledir = Path("bundles") / "submittedLoose" / bundle_name
     make_required_directories(bundledir)
 
@@ -155,7 +155,7 @@ def processLooseScans(server, password, pdf_fname, student_id):
     scansToImages.processScans(pdf_fname, bundledir)
 
     print("Creating bundle for {} on server".format(pdf_fname))
-    rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
+    rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
     # should be [True, skip_list] or [False, reason]
     if rval[0]:
         skip_list = rval[1]
@@ -269,7 +269,7 @@ def processHWScans(server, password, pdf_fname, student_id, question_list):
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
-    bundle_name = Path(pdf_fname).stem.replace(" ", "_")
+    bundle_name, md5 = sendPagesToServer.bundle_name_and_md5(pdf_fname)
     bundledir = Path("bundles") / "submittedHWByQ" / bundle_name
     make_required_directories(bundledir)
 
@@ -277,7 +277,7 @@ def processHWScans(server, password, pdf_fname, student_id, question_list):
     scansToImages.processScans(pdf_fname, bundledir)
 
     print("Creating bundle for {} on server".format(pdf_fname))
-    rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
+    rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
     # should be [True, skip_list] or [False, reason]
     if rval[0]:
         skip_list = rval[1]
