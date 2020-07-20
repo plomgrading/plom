@@ -867,7 +867,7 @@ class Annotator(QWidget):
         Changes the current tool mode and cursor.
 
         Notes:
-            TODO: this does various other p around for legacy
+            TODO: this does various other mucking around for legacy
             reasons: could probably still use some refactoring.
 
         Returns:
