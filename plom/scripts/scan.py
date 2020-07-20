@@ -216,6 +216,9 @@ def uploadImages(
 
     # Note: no need to "finalize" a bundle, its ok to send unknown/collisions
     # after the above call to sendPagesToServer.
+
+    # TODO: for unknowns it should be easy to put this much of this at end `process`.
+    # TODO: can same be done for collisions?
     if bundle_has_nonuploaded_unknowns(bundledir):
         print_unknowns_warning(bundledir)
         if not unknowns_flag:
