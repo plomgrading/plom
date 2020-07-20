@@ -53,6 +53,14 @@ import shutil
 from pathlib import Path
 
 from plom import __version__
+from plom.scan import (
+    upload_unknowns,
+    print_unknowns_warning,
+    bundle_has_nonuploaded_unknowns,
+    upload_collisions,
+    print_collision_warning,
+    bundle_has_nonuploaded_collisions,
+)
 
 
 # TODO: this bit of code from messenger could be useful here
@@ -144,6 +152,10 @@ def processScans(server, password, pdf_fname):
     scansToImages.processScans(pdf_fname, bundledir)
     print("Read QR codes")
     readQRCodes.processBitmaps(bundledir, server, password)
+    # TODO: can collisions warning be written here too?
+    if bundle_has_nonuploaded_unknowns(bundledir):
+        print_unknowns_warning(bundledir)
+        print('You can upload these by passing "--unknowns" to the upload command')
 
 
 def uploadImages(
@@ -163,19 +175,6 @@ def uploadImages(
     """
 
     from plom.scan import sendPagesToServer, scansToImages
-    from plom.scan import sendUnknownsToServer
-    from plom.scan.sendUnknownsToServer import (
-        upload_unknowns,
-        print_unknowns_warning,
-        bundle_has_nonuploaded_unknowns,
-    )
-    from plom.scan.sendCollisionsToServer import (
-        upload_collisions,
-        print_collision_warning,
-        bundle_has_nonuploaded_collisions,
-    )
-
-    # TODO: import above directly from plom.scan using the __init__
 
     # TODO: check first to avoid misleading msg?
     print("Creating bundle for PDF {} on server".format(pdf_fname))
@@ -217,8 +216,6 @@ def uploadImages(
     # Note: no need to "finalize" a bundle, its ok to send unknown/collisions
     # after the above call to sendPagesToServer.
 
-    # TODO: for unknowns it should be easy to put this much of this at end `process`.
-    # TODO: can same be done for collisions?
     if bundle_has_nonuploaded_unknowns(bundledir):
         print_unknowns_warning(bundledir)
         if not unknowns_flag:

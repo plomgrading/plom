@@ -97,11 +97,10 @@ def print_unknowns_warning(bundle_dir):
     # TODO: this is XX out of YY pages in the bundle
     print("UnknownPages can result from poor-quality scans or damaged pages where")
     print("QR codes cannot be read properly.  They also result from any scanned pages")
-    print("without QR codes, such as any Extra Pages.  Uploading unknown pages is")
-    print("fairly commonplace but will require human intervention with the Manager")
-    print("tool later, so if the number of such pages seems high, you may want to")
-    print("take a closer look in:")
-    print("  {}\n".format(bundle_dir / "unknownPages"))
+    print("without QR codes, such as any Extra Pages.  Uploading small numbers of")
+    print("unknown pages is common but will require human intervention later with the")
+    print("Manager tool.  If the number of such pages seems high, you may want to")
+    print("look in {}\n".format(bundle_dir / "unknownPages"))
 
 
 def upload_unknowns(bundle_dir, server=None, password=None):
