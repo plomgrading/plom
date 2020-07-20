@@ -73,9 +73,7 @@ def bundle_has_nonuploaded_unknowns(bundle_dir):
     TODO: just check non-empty versus the "for ext in ..." bit
     """
     files = []
-    for ext in PlomImageExtWhitelist:
-        files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
-    if files:
+    if (bundle_dir / "unknownPages").glob("*"):
         return True
     return False
 
@@ -92,7 +90,7 @@ def print_unknowns_warning(bundle_dir):
     if not files:
         return
     print("\n>>>>>>>>>> NOTE <<<<<<<<<<")
-    print("Processing resulted in these unknown files:")
+    print("Processing resulted in these {} unknown files:".format(len(files)))
     print("  {}".format("\n  ".join([x.name for x in files])))
     # TODO: this is XX out of YY pages in the bundle
     print("UnknownPages can result from poor-quality scans or damaged pages where")
