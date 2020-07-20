@@ -146,7 +146,9 @@ def processScans(server, password, pdf_fname):
     readQRCodes.processBitmaps(bundledir, server, password)
 
 
-def uploadImages(server, password, pdf_fname, unknowns=False, collisions_flag=False):
+def uploadImages(
+    server, password, pdf_fname, unknowns_flag=False, collisions_flag=False
+):
     """Upload processed images from bundle given by pdf_fname.
 
     Try to create a bundle on server from pdf_fname.
@@ -162,12 +164,20 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions_flag=Fa
 
     from plom.scan import sendPagesToServer, scansToImages
     from plom.scan import sendUnknownsToServer
-    # TODO: import these directly from plom.scan using the __init__
-    from plom.scan.sendUnknownsToServer import upload_unknowns
-    from plom.scan.sendCollisionsToServer import bundle_has_nonuploaded_collisions
-    from plom.scan.sendCollisionsToServer import print_collision_warning
-    from plom.scan.sendCollisionsToServer import upload_collisions
+    from plom.scan.sendUnknownsToServer import (
+        upload_unknowns,
+        print_unknowns_warning,
+        bundle_has_nonuploaded_unknowns,
+    )
+    from plom.scan.sendCollisionsToServer import (
+        upload_collisions,
+        print_collision_warning,
+        bundle_has_nonuploaded_collisions,
+    )
 
+    # TODO: import above directly from plom.scan using the __init__
+
+    # TODO: check first to avoid misleading msg?
     print("Creating bundle for PDF {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(pdf_fname, server, password)
     # should be [True, skip_list] or [False, reason]
@@ -206,9 +216,16 @@ def uploadImages(server, password, pdf_fname, unknowns=False, collisions_flag=Fa
 
     # Note: no need to "finalize" a bundle, its ok to send unknown/collisions
     # after the above call to sendPagesToServer.
-    if unknowns:
-        print("Also upload unknowns")
-        upload_unknowns(bundledir, server, password)
+    if bundle_has_nonuploaded_unknowns(bundledir):
+        print_unknowns_warning(bundledir)
+        if not unknowns_flag:
+            print('If you want to upload these unknowns, rerun with "--unknowns".')
+    if unknowns_flag:
+        if not bundle_has_nonuploaded_unknowns(bundledir):
+            print("Unknowns upload flag present: but no unknowns")
+        else:
+            print("Unknowns upload flag present: uploading...")
+            upload_unknowns(bundledir, server, password)
 
     if bundle_has_nonuploaded_collisions(bundledir):
         print_collision_warning(bundledir)

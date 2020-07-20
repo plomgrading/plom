@@ -61,6 +61,49 @@ def sendUnknownFiles(msgr, bundle_name, files):
         doFiling(rmsg, Path("bundles") / bundle_name, shortName, fname)
 
 
+def bundle_has_nonuploaded_unknowns(bundle_dir):
+    """Does this bundle have unknowns TODO
+
+    Args:
+        bundle_dir (str, Path): path to a bundle.
+
+    Return:
+        bool
+
+    TODO: just check non-empty versus the "for ext in ..." bit
+    """
+    files = []
+    for ext in PlomImageExtWhitelist:
+        files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
+    if files:
+        return True
+    return False
+
+
+def print_unknowns_warning(bundle_dir):
+    """Print info about unknowns and list of unknowns in this bundle.
+
+    Args:
+        bundle_dir (str, Path): path to a bundle.
+    """
+    files = []
+    for ext in PlomImageExtWhitelist:
+        files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
+    if not files:
+        return
+    print("\n>>>>>>>>>> NOTE <<<<<<<<<<")
+    print("Processing resulted in these unknown files:")
+    print("  {}".format("\n  ".join([x.name for x in files])))
+    # TODO: this is XX out of YY pages in the bundle
+    print("UnknownPages can result from poor-quality scans or damaged pages where")
+    print("QR codes cannot be read properly.  They also result from any scanned pages")
+    print("without QR codes, such as any Extra Pages.  Uploading unknown pages is")
+    print("fairly commonplace but will require human intervention with the Manager")
+    print("tool later, so if the number of such pages seems high, you may want to")
+    print("take a closer look in:")
+    print("  {}\n".format(bundle_dir / "unknownPages"))
+
+
 def upload_unknowns(bundle_dir, server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
