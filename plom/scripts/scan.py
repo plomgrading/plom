@@ -216,31 +216,37 @@ def uploadImages(
     # Note: no need to "finalize" a bundle, its ok to send unknown/collisions
     # after the above call to sendPagesToServer.
 
-    if bundle_has_nonuploaded_unknowns(bundledir):
-        print_unknowns_warning(bundledir)
-        if not unknowns_flag:
-            print('If you want to upload these unknowns, rerun with "--unknowns".')
     if unknowns_flag:
-        if not bundle_has_nonuploaded_unknowns(bundledir):
-            print("Unknowns upload flag present: but no unknowns")
-        else:
+        if bundle_has_nonuploaded_unknowns(bundledir):
+            print_unknowns_warning(bundledir)
             print("Unknowns upload flag present: uploading...")
             upload_unknowns(bundledir, server, password)
-
-    if bundle_has_nonuploaded_collisions(bundledir):
-        print_collision_warning(bundledir)
-        if not collisions_flag:
-            print('If you want to upload these collisions, rerun with "--collisions".')
-    if collisions_flag:
-        if not bundle_has_nonuploaded_collisions(bundledir):
-            print("Collisions upload flag present: but no collisions")
         else:
+            print(
+                "Unknowns upload flag present: but no unknowns - so no actions required."
+            )
+    else:
+        if bundle_has_nonuploaded_unknowns(bundledir):
+            print_unknowns_warning(bundledir)
+            print('If you want to upload these unknowns, rerun with "--unknowns".')
+
+    if collisions_flag:
+        if bundle_has_nonuploaded_collisions(bundledir):
+            print_collision_warning(bundledir)
             print("Collisions upload flag present.")
             # TODO:add a --yes flag?
             yn = input("Are you sure you want to upload these colliding pages? [y/N] ")
             if yn.lower() == "y":
                 print("Proceeding.")
                 upload_collisions(bundledir, server, password)
+        else:
+            print(
+                "Collisions upload flag present: but no collisions - so no actions required."
+            )
+    else:
+        if bundle_has_nonuploaded_collisions(bundledir):
+            print_collision_warning(bundledir)
+            print('If you want to upload these collisions, rerun with "--collisions".')
 
 
 def _doAllToScans(server, password, scanPDFs):
