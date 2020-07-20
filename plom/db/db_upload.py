@@ -637,8 +637,9 @@ def cleanQGroup(self, qref):
                 # now delete the apages and then the annotation-image and finally the annotation.
                 for pref in aref.apages:
                     pref.delete_instance()
-                # delete the annotated image from table.
-                aref.aimage.delete_instance()
+                # delete the annotated image from table (if it exists).
+                if aref.aimage is not None:
+                    aref.aimage.delete_instance()
                 # finally delete the annotation itself.
                 aref.delete_instance()
 

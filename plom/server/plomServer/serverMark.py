@@ -23,9 +23,9 @@ def MgetQuestionMax(self, question_number, version_number):
 
     Returns:
         list: A list where the first element is a boolean operation
-            status response. The second element is either a string 
+            status response. The second element is either a string
             indicating if question fo version number is incorrect, or,
-            the maximum score for this question as an integer. 
+            the maximum score for this question as an integer.
     """
 
     version_number = int(version_number)
@@ -44,7 +44,7 @@ def MgetAllMax(self):
 
     Returns:
         dict: A dictionary of the form {key: question_number, value: question_max_grade}
-            for the exam questions. 
+            for the exam questions.
     """
 
     max_grades = {}
@@ -61,7 +61,7 @@ def MprogressCount(self, question_number, version_number):
         version_number (int): Version number.
 
     Returns:
-        list: A list of two integers indicating the number of questions graded 
+        list: A list of two integers indicating the number of questions graded
             and the total number of assigned question to be graded of this question number
             and question version.
     """
@@ -101,7 +101,7 @@ def MgetNextTask(self, question_number, version_number):
 
     Returns:
         list: Respond with a list with either value False or the value
-            of True with the question code string for next task. 
+            of True with the question code string for next task.
     """
 
     give = self.DB.MgetNextTask(question_number, version_number)
@@ -112,7 +112,7 @@ def MgetNextTask(self, question_number, version_number):
 
 
 def MlatexFragment(self, username, latex_fragment):
-    """Respond with a path to the latex fragment image. 
+    """Respond with a path to the latex fragment image.
 
     Args:
         username (str): Username string.
@@ -141,7 +141,7 @@ def MclaimThisTask(self, username, task_code):
 
     Returns:
         list: A list which either only has a False value included or
-            [True, `question_tag`, `question_image_path`]
+            [True, `question_tag`, `integrity_check`, `question_image_path`]
     """
 
     return self.DB.MgiveTaskToClient(username, task_code)
@@ -175,6 +175,7 @@ def MreturnMarkedTask(
     time_spent_marking,
     tags,
     md5_code,
+    integrity_check,
 ):
     """Save the marked paper's information to database and respond with grading progress.
 
@@ -185,12 +186,13 @@ def MreturnMarkedTask(
         version_number (int): Marked question version number.
         mark (int): Question mark.
         image (bytearray): Marked image of question.
-        plomdat (bytearray): Plom data file used for saving marking information in 
+        plomdat (bytearray): Plom data file used for saving marking information in
             editable format.
         comments (str): Return the String of the comments list.
         time_spent_marking (int): Seconds spent marking the paper.
         tags (str): Tag assigned to the paper.
         md5_code (str): MD5 hash key for this task.
+        integrity_check (str): the integrity_check string for this task (concat of md5sums of underlying images)
 
     Returns:
         list: Respond with a list which includes:
@@ -245,6 +247,7 @@ def MreturnMarkedTask(
         time_spent_marking,
         tags,
         md5n,
+        integrity_check,
     )
 
     if database_task_response:
@@ -287,7 +290,7 @@ def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, ta
 
 
 def MgetImages(self, username, task_code):
-    """Respond with paths to the marked and original images of a marked question. 
+    """Respond with paths to the marked and original images of a marked question.
 
     Args:
         username (str): User who marked the paper.
@@ -296,7 +299,7 @@ def MgetImages(self, username, task_code):
     Returns:
         list: A list of the format:
             [False, Error message string.]
-            [True, Number of papers in the question, Original image path, 
+            [True, Number of papers in the question, Original image path,
             Annotated image path, Plom data file for this page]
     """
 
@@ -324,7 +327,7 @@ def MsetTag(self, username, task_code, tag):
 
 
 def MgetWholePaper(self, test_number, question_number):
-    """Respond with all the images of the paper including the given question. 
+    """Respond with all the images of the paper including the given question.
 
     Args:
         test_number (str): A string which has the test number in the format `0011`
@@ -370,8 +373,8 @@ def MshuffleImages(self, username, task_code, image_references_permutation):
     Args:
         username (str): User who assigned tag to the paper.
         task_code (str): Code string for the task.
-        image_references_permutation (int): A permutation of the images within this exam that are 
-            related for the question. Each image is given by its 
+        image_references_permutation (int): A permutation of the images within this exam that are
+            related for the question. Each image is given by its
             `image_id_reference_number`.
 
     Returns:

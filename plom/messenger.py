@@ -702,19 +702,21 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        # should be multipart = [tags, image1, image2, ....]
+        # should be multipart = [tags, integrity_check, image1, image2, ....]
         tags = "tagsAndImages[0].text  # this is raw text"
         imageList = []
         i = 0
         for img in MultipartDecoder.from_response(response).parts:
             if i == 0:
                 tags = img.text
+            elif i == 1:
+                integrity_check = img.text
             else:
                 imageList.append(
                     BytesIO(img.content).getvalue()
                 )  # pass back image as bytes
             i += 1
-        return imageList, tags
+        return imageList, tags, integrity_check
 
     def MlatexFragment(self, latex):
         self.SRmutex.acquire()
@@ -831,7 +833,9 @@ class Messenger(BaseMessenger):
 
         return imageList
 
-    def MreturnMarkedTask(self, code, pg, ver, score, mtime, tags, aname, pname, cname):
+    def MreturnMarkedTask(
+        self, code, pg, ver, score, mtime, tags, aname, pname, cname, integrity_check
+    ):
         self.SRmutex.acquire()
         try:
             # doesn't like ints, so covert ints to strings
@@ -845,6 +849,7 @@ class Messenger(BaseMessenger):
                 "tags": tags,
                 "comments": open(cname, "r").read(),
                 "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
+                "integrity_check": integrity_check,
             }
 
             dat = MultipartEncoder(

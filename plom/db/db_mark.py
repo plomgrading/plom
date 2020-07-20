@@ -123,21 +123,26 @@ def MgiveTaskToClient(self, user_name, group_id):
             tags=aref.tags,
             time=datetime.now(),
         )
-        # create its pages
+        # create its pages and compute its integrity_check from md5sums
+        md5_concat = ""
         for p in aref.apages.order_by(APage.order):
             APage.create(annotation=new_aref, order=p.order, image=p.image)
+            md5_concat += p.image.md5sum
+        new_aref.integrity_check = md5_concat
+        new_aref.save()
         # update user activity
         uref.last_action = "Took M task {}".format(group_id)
         uref.last_activity = datetime.now()
         uref.save()
-        # return [true, tags, page1, page2, etc]
-        rval = [
-            True,
-            new_aref.tags,
-        ]
+        # return [true, tags, integrity_check, page1, page2, etc]
+        rval = [True, new_aref.tags, new_aref.integrity_check]
         for p in new_aref.apages.order_by(APage.order):
             rval.append(p.image.file_name)
-        log.debug('Giving marking task {} to user "{}"'.format(group_id, user_name))
+        log.debug(
+            'Giving marking task {} to user "{}" with integrity_check {}'.format(
+                group_id, user_name, new_aref.integrity_check
+            )
+        )
         return rval
 
 
@@ -187,6 +192,7 @@ def MtakeTaskFromClient(
     marking_time,
     tags,
     md5,
+    integrity_check,
 ):
     """Get marked image back from client and update the record
     in the database.
@@ -209,12 +215,15 @@ def MtakeTaskFromClient(
         qref = gref.qgroups[0]
         if qref.user != uref:  # this should not happen
             return False  # has been claimed by someone else.
+        # check the integrity_check code against the db
+        aref = qref.annotations[-1]
+        if aref.integrity_check != integrity_check:
+            return False
 
         # update status, mark, annotate-file-name, time, and
         # time spent marking the image
         qref.status = "done"
         qref.marked = True
-        aref = qref.annotations[-1]
         # the bundle for this image is given by the (fixed) bundle for the parent qgroup.
         aref.aimage = AImage.create(file_name=annot_fname, md5sum=md5)
         aref.mark = mark
