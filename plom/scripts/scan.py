@@ -74,6 +74,10 @@ from plom.scan import (
 #            server, message_port = server.split(":")
 
 
+# TODO: make some common util file to store all these names?
+archivedir = Path("archivedPDFs")
+
+
 def clearLogin(server, password):
     from plom.scan import clearScannerLogin
 
@@ -87,7 +91,7 @@ def scanStatus(server, password):
 
 
 def make_required_directories(bundle=None):
-    os.makedirs("archivedPDFs", exist_ok=True)
+    os.makedirs(archivedir, exist_ok=True)
     os.makedirs("bundles", exist_ok=True)
     # TODO: split up a bit, above are global, below per bundle
     if bundle:
@@ -220,10 +224,22 @@ def uploadImages(
     )
     print("Server reports {} papers updated.".format(updates))
 
-    # TODO: check if its there already?
-    pdf_fname = info["file"]
-    print("Archiving the bundle PDF {}".format(pdf_fname))
-    scansToImages.archiveTBundle(pdf_fname)
+    pdf_fname = Path(info["file"])
+    if pdf_fname.exists():
+        print(
+            'Original PDF "{}" still in place: archiving to "{}"...'.format(
+                pdf_fname, str(archivedir)
+            )
+        )
+        scansToImages.archiveTBundle(pdf_fname)
+    elif (archivedir / pdf_fname).exists():
+        print(
+            'Original PDF "{}" is already archived in "{}".'.format(
+                pdf_fname, str(archivedir)
+            )
+        )
+    else:
+        raise RuntimeError("Did you move the archived PDF?  Please don't do that!")
 
     # Note: no need to "finalize" a bundle, its ok to send unknown/collisions
     # after the above call to sendPagesToServer.
