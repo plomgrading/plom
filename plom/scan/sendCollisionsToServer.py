@@ -83,13 +83,8 @@ def bundle_has_nonuploaded_collisions(bundle_dir):
 
     Return:
         bool
-
-    TODO: just check non-empty versus the "for ext in ..." bit
     """
-    files = []
-    for ext in PlomImageExtWhitelist:
-        files.extend((bundle_dir / "uploads/collidingPages").glob("*.{}".format(ext)))
-    if files:
+    if (bundle_dir / "uploads/collidingPages").glob("*"):
         return True
     return False
 
@@ -106,9 +101,8 @@ def print_collision_warning(bundle_dir):
     if not files:
         return
     print("\n>>>>>>>>>> WARNING <<<<<<<<<<")
-    print("Detected the following colliding files:")
+    print("Detected the following {} colliding files:".format(len(files)))
     print("  {}".format("\n  ".join([x.name for x in files])))
-    # TODO: this is XX out of YY pages in the bundle
     print("Before proceeding, we strongly recommend that you review these images in:")
     print("  {}".format(bundle_dir / "uploads/collidingPages"))
 
