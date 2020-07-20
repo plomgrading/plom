@@ -119,13 +119,13 @@ demoserver:
     - plom-build make -w 1234
     - python3 -m plom.produce.faketools -w 1234
     - plom-scan process -w 4567 fake_scribbled_exams1.pdf
-    - plom-scan upload -w 4567 fake_scribbled_exams1.pdf
+    - plom-scan upload -w 4567 fake_scribbled_exams1
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams2.pdf
-    - plom-scan upload -w 4567 fake_scribbled_exams2.pdf
+    - plom-scan upload -w 4567 fake_scribbled_exams2
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams3.pdf
-    - plom-scan upload -w 4567 fake_scribbled_exams3.pdf
+    - plom-scan upload -w 4567 fake_scribbled_exams3
     - plom-scan status -w 4567
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
@@ -213,14 +213,14 @@ fullworkflow:
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
     - plom-scan process -w 4567 fake_scribbled_exams1.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams1.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams1
     # TODO: I removed some -c lines here...
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams2.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams2.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams2
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams3.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams3.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams3
     - plom-scan status -w 4567
     ## not supposed to be done yet:
     - if (plom-finish status -w 1234); then false; else true; fi
@@ -338,14 +338,14 @@ legacy_full:
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
     - plom-scan process -w 4567 fake_scribbled_exams1.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams1.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams1
     # TODO: I removed some -c lines here...
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams2.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams2.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams2
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams3.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams3.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams3
     - plom-scan status -w 4567
     ## not supposed to be done yet:
     - if (plom-finish status -w 1234); then false; else true; fi
