@@ -84,7 +84,7 @@ def bundle_has_nonuploaded_collisions(bundle_dir):
     Return:
         bool
     """
-    if (bundle_dir / "uploads/collidingPages").glob("*"):
+    if any((bundle_dir / "uploads/collidingPages").iterdir()):
         return True
     return False
 

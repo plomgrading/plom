@@ -71,7 +71,7 @@ def bundle_has_nonuploaded_unknowns(bundle_dir):
         bool
     """
     files = []
-    if (bundle_dir / "unknownPages").glob("*"):
+    if any((bundle_dir / "unknownPages").iterdir()):
         return True
     return False
 
