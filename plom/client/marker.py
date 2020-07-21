@@ -295,10 +295,11 @@ def upload(
             cname,
             integrity_check,
         )
-    except PlomBenignException as ex:
-        template = "An exception of type {0} occurred. Arguments:\n{1!r}."
-        errMsg = template.format(type(ex).__name__, ex.args)
-        benignFailCallback(task, errMsg)
+    except PlomTaskChangedException as ex:
+        benignFailCallback(task, "task_changed")
+        return
+    except PlomTaskDeletedException as ex:
+        benignFailCallback(task, "task_deleted")
         return
     except Exception as ex:
         # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
@@ -1152,20 +1153,28 @@ class MarkerClient(QWidget):
             self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(event)
 
-    def throwBenignError(self, error):
+    def throwBenignError(self, task, error_message):
         """
         Logs an exception, pops up a dialog and recommends a shut down.
 
         Args:
-            error: the exception to be reraised
+            task (str): the task causing the error
+            error_message (str): brief description of the error to throw.
 
         Returns:
             None
 
         """
-        log.warning("An error has been detected")
-        msg = 'An error has been thrown:\n"{}"'.format(error.args[-1])
-        msg += "\nSorry - shutting down Marker. Please log in again."
+        log.warning("An error has been detected - {}".format(error_message))
+        if error_message == "task_changed":
+            msg = "The task {} has been changed by the manager; it needs to be remarked.".format(
+                task
+            )
+        elif error_message == "task_deleted":
+            msg = "The task {} has been deleted by the manager."
+        else:
+            msg = "There is a problem with task {}."
+        msg += "\nShutting down Marker. Please log in again."
         ErrorMessage(msg).exec_()
         self.shutDownBenignError()
 
@@ -1234,8 +1243,14 @@ class MarkerClient(QWidget):
 
         try:
             [imageList, anImage, plImage] = messenger.MrequestImages(task)
+        except PlomTaskChangedException as ex:
+            self.throwBenignError(task, "task_changed")
+            return False
+        except PlomTaskDeletedException as ex:
+            self.throwBenignError(task, "task_deleted")
+            return False
         except PlomBenignException as e:
-            self.throwBenignError(e)
+            self.throwBenignError(task, "other")
             return False
         except PlomSeriousException as e:
             self.throwSeriousError(e)
@@ -1914,20 +1929,20 @@ class MarkerClient(QWidget):
             self.examModel.setStatusByTask(task, "marked")
         self.updateProgress(numDone, numtotal)
 
-    def backgroundUploadBenignFailed(self, task, errmsg):
+    def backgroundUploadBenignFailed(self, task, error_message):
         """
         An upload has failed, not sure what to do but do to it LOADLY.
 
         Args:
             task (str): the task ID of the current test.
-            errmsg (str): the error message.
+            error_message (str): a brief description of the error.
 
         Returns:
             None
 
         """
         self.examModel.setStatusByTask(task, "???")
-        self.throwBenignError(PlomBenignException(errmsg))
+        self.throwBenignError(task, error_message)
         return
 
     def backgroundUploadFailed(self, task, errmsg):
