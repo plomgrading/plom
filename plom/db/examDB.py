@@ -138,6 +138,7 @@ class PlomDB:
         getAllTestImages,
         getQuestionImages,
         getUnknownImage,
+        testOwnersLoggedIn,
         moveUnknownToExtraPage,
         moveUnknownToHWPage,
         moveUnknownToTPage,

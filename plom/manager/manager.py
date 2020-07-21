@@ -759,12 +759,19 @@ class Manager(QWidget):
             if self.unknownModel.item(r, 2).text() == "discard":
                 managerMessenger.removeUnknownImage(self.unknownModel.item(r, 0).text())
             elif self.unknownModel.item(r, 2).text() == "extra":
-                managerMessenger.unknownToExtraPage(
-                    self.unknownModel.item(r, 0).text(),
-                    self.unknownModel.item(r, 4).text(),
-                    self.unknownModel.item(r, 5).text(),
-                    self.unknownModel.item(r, 3).text(),
-                )
+                try:
+                    managerMessenger.unknownToExtraPage(
+                        self.unknownModel.item(r, 0).text(),
+                        self.unknownModel.item(r, 4).text(),
+                        self.unknownModel.item(r, 5).text(),
+                        self.unknownModel.item(r, 3).text(),
+                    )
+                except PlomOwnersLoggedInException as err:
+                    ErrorMessage(
+                        "Cannot move unknown {} to extra page - owners of tasks in that test are logged in: {}".format(
+                            self.unknownModel.item(r, 0).text(), err.args[-1]
+                        )
+                    ).exec_()
             elif self.unknownModel.item(r, 2).text() == "test":
                 if (
                     managerMessenger.unknownToTestPage(
@@ -779,7 +786,7 @@ class Manager(QWidget):
                         "Collision created in test {}".format(
                             self.unknownModel.item(r, 4).text()
                         )
-                    )
+                    ).exec_()
             elif self.unknownModel.item(r, 2).text() == "homework":
                 managerMessenger.unknownToHWPage(
                     self.unknownModel.item(r, 0).text(),

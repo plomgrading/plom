@@ -601,7 +601,10 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval[1], status=200)  # all fine
         else:
-            return web.Response(status=404)
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            else:
+                return web.Response(status=404)
 
     async def unknownToHWPage(self, request):
         data = await request.json()
@@ -619,6 +622,8 @@ class UploadHandler:
         )
         if rval[0]:
             return web.Response(status=200)  # all fine
+        if rval[1] == "owners":  # [False, "owners", owner_list]
+            return web.json_response(rval[2], status=409)
         else:
             return web.Response(status=404)
 
@@ -635,11 +640,14 @@ class UploadHandler:
 
         rval = self.server.unknownToExtraPage(
             data["fileName"], data["test"], data["question"], data["rotation"]
-        )
+        )  # returns [True], or [False, reason]
         if rval[0]:
             return web.Response(status=200)  # all fine
         else:
-            return web.Response(status=404)
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            else:
+                return web.Response(status=404)
 
     async def collidingToTestPage(self, request):
         data = await request.json()
@@ -658,7 +666,10 @@ class UploadHandler:
         if rval[0]:
             return web.Response(status=200)  # all fine
         else:
-            return web.Response(status=404)
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            else:
+                return web.Response(status=404)
 
     async def discardToUnknown(self, request):
         data = await request.json()

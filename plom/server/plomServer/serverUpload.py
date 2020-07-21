@@ -230,33 +230,38 @@ def removeCollidingImage(self, file_name):
 
 
 def unknownToTestPage(self, file_name, test, page, rotation):
-    # first rotate the page
-    subprocess.run(
-        ["mogrify", "-quiet", "-rotate", rotation, file_name],
-        stderr=subprocess.STDOUT,
-        shell=False,
-        check=True,
-    )
     # checkpage returns
-    # -- [False] no such page exists
+    # -- [False, reason] no such page exists, or owners logged in
     # -- [True, 'unscanned', version] page exists but hasnt been scanned
     # -- or [True, 'collision', version, image] page exists and has been scanned
     val = self.DB.checkTPage(test, page)
     if val[0]:
+        # rotate the page
+        subprocess.run(
+            ["mogrify", "-quiet", "-rotate", rotation, file_name],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
         if len(val) == 4:
             # existing page in place - create a colliding page
             if self.DB.moveUnknownToCollision(file_name, test, page)[0]:
                 return [True, "collision"]
         else:
-            if self.DB.moveUnknownToTPage(file_name, test, page)[0]:
+            msg = self.DB.moveUnknownToTPage(file_name, test, page)[0]
+            # returns [True] or [False, reason] or [False, "owners", owner_list]
+            if msg[0]:
                 return [True, "testPage"]
+            else:
+                return msg
+
     else:  # some sort of problem occurred
-        return [False]
+        return val
 
 
 def unknownToExtraPage(self, fname, test, question, rotation):
     rval = self.DB.moveUnknownToExtraPage(fname, test, question)
-    # returns [True] or [False]
+    # returns [True] or [False, reason]
     if rval[0]:
         # moved successfully. now rotate the page
         subprocess.run(
@@ -266,13 +271,13 @@ def unknownToExtraPage(self, fname, test, question, rotation):
             check=True,
         )
     else:
-        return [False]
+        return rval
     return [True]
 
 
 def unknownToHWPage(self, fname, test, question, rotation):
     rval = self.DB.moveUnknownToHWPage(fname, test, question)
-    # returns [True] or [False]
+    # returns [True] or [False, reason]
     if rval[0]:
         # moved successfully. now rotate the page
         subprocess.run(
@@ -282,7 +287,7 @@ def unknownToHWPage(self, fname, test, question, rotation):
             check=True,
         )
     else:
-        return [False]
+        return rval
     return [True]
 
 

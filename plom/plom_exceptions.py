@@ -72,3 +72,8 @@ class PlomLatexException(PlomBenignException):
 class PlomExistingLoginException(PlomBenignException):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
+
+
+class PlomOwnersLoggedInException(PlomBenignException):
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
