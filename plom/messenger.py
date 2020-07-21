@@ -787,8 +787,8 @@ class Messenger(BaseMessenger):
                     "Cannot find image file for {}.".format(code)
                 ) from None
             elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
+                raise PlomBenignException(
+                    "Ownership of task {} has changed. This can happen if manager has altered the task while you are annotating it".format(
                         code
                     )
                 ) from None
@@ -870,6 +870,18 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            elif response.status_code == 406:
+                raise PlomBenignException(
+                    "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
+                ) from None
+            elif response.status_code == 409:
+                raise PlomBenignException(
+                    "Task ownership has changed. This can happen if manager has altered the task while you are annotating it."
+                ) from None
+            elif response.status_code == 410:
+                raise PlomBenignException(
+                    "No such task. This can happen if manager has deleted the task while you are annotating it."
+                ) from None
             elif response.status_code == 400:
                 raise PlomSeriousException(
                     "Image file is corrupted. This should not happen".format(code)

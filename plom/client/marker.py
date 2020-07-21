@@ -292,6 +292,11 @@ def upload(
             cname,
             integrity_check,
         )
+    except PlomBenignException as ex:
+        template = "An exception of type {0} occurred. Arguments:\n{1!r}."
+        errMsg = template.format(type(ex).__name__, ex.args)
+        failCallback(task, errMsg)
+        return
     except Exception as ex:
         # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -1141,6 +1146,23 @@ class MarkerClient(QWidget):
             self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(event)
 
+    def throwBenignError(self, error):
+        """
+        Logs an exception, pops up a dialog and recommends a shut down.
+
+        Args:
+            error: the exception to be reraised
+
+        Returns:
+            None
+
+        """
+        log.warning("An error has been detected")
+        msg = 'An error has been thrown:\n"{}"'.format(error)
+        msg += "\nShutting down Marker."
+        ErrorMessage(msg).exec_()
+        self.shutDownError()
+
     def throwSeriousError(self, error, rethrow=True):
         """
         Logs an exception, pops up a dialog and shuts down.
@@ -1195,20 +1217,23 @@ class MarkerClient(QWidget):
                 Takes the form "q1234g9" = test 1234 question 9
 
         Returns:
-            None
+            True/False
 
         Raises:
             SeriousError if requesting images throws a PlomSeriousException
 
         """
         if len(self.examModel.getOriginalFiles(task)) > 0:
-            return
+            return True
 
         try:
             [imageList, anImage, plImage] = messenger.MrequestImages(task)
+        except PlomBenignException as e:
+            self.throwBenignError(e)
+            return False
         except PlomSeriousException as e:
             self.throwSeriousError(e)
-            return
+            return False
 
         # TODO: there were no benign exceptions except authentication
         # except PlomBenignException as e:
@@ -1229,7 +1254,7 @@ class MarkerClient(QWidget):
         self.examModel.setOriginalFiles(task, inames)
 
         if anImage is None:
-            return
+            return True
 
         self.examModel.setPaperDirByTask(task, paperDir)
         aname = os.path.join(paperDir, "G{}.png".format(task[1:]))
@@ -1239,6 +1264,7 @@ class MarkerClient(QWidget):
         with open(pname, "wb+") as fh:
             fh.write(plImage)
         self.examModel.setAnnotatedFile(task, aname, pname)
+        return True
 
     def _updateImage(self, pr=0):
         """
@@ -1251,7 +1277,8 @@ class MarkerClient(QWidget):
             None
 
         """
-        self.loadOriginalFiles(self.prxM.getPrefix(pr))
+        if not self.loadOriginalFiles(self.prxM.getPrefix(pr)):
+            return
 
         if self.prxM.getStatus(pr) in ("marked", "uploading...", "???"):
             self.testImg.updateImage(self.prxM.getAnnotatedFile(pr))
@@ -1893,12 +1920,14 @@ class MarkerClient(QWidget):
 
         """
         self.examModel.setStatusByTask(task, "???")
-        ErrorMessage(
-            "Unfortunately, there was an unexpected error; server did "
-            "not accept our marked paper {}.\n\n{}\n\n"
-            "Please consider filing an issue?  Perhaps you could try "
-            "annotating that paper again?".format(task, errmsg)
-        ).exec_()
+        self.throwBenignError(errmsg)
+        # ErrorMessage(
+        #     "Unfortunately, there was an unexpected error; the server did "
+        #     "not accept our marked paper {}.\n\n{}\n\n"
+        #     "If the problem persists consider filing an issue."
+        #     "Please close this window and log in again.".format(task, errmsg)
+        # ).exec_()
+        return
 
     def updateImg(self, newImg, oldImg):
         """
@@ -1918,6 +1947,8 @@ class MarkerClient(QWidget):
 
     def shutDownError(self):
         """ Shuts down self due to error. """
+        if self._annotator is not None:  # try to shut down annotator too.
+            self._annotator.close()
         log.error("shutting down")
         self.my_shutdown_signal.emit(2, [])
         self.close()

@@ -250,7 +250,7 @@ def MreturnMarkedTask(
         integrity_check,
     )
 
-    if database_task_response:
+    if database_task_response[0]:
         self.MrecordMark(username, mark, annotated_filename, time_spent_marking, tags)
         # return ack with current counts.
         return [
@@ -259,10 +259,7 @@ def MreturnMarkedTask(
             self.DB.McountAll(question_number, version_number),
         ]
     else:
-        return [
-            False,
-            "Database problem - does {} own task {}?".format(username, task_code),
-        ]
+        return database_task_response
 
 
 def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, tags):

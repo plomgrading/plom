@@ -210,15 +210,15 @@ def MtakeTaskFromClient(
                     task, user_name
                 )
             )
-            return False
+            return [False, "no_such_task"]
         # and grab the qdata of that group
         qref = gref.qgroups[0]
         if qref.user != uref:  # this should not happen
-            return False  # has been claimed by someone else.
+            return [False, "not_owner"]  # has been claimed by someone else.
         # check the integrity_check code against the db
         aref = qref.annotations[-1]
         if aref.integrity_check != integrity_check:
-            return False
+            return [False, "integrity_fail"]
 
         # update status, mark, annotate-file-name, time, and
         # time spent marking the image
@@ -248,11 +248,11 @@ def MtakeTaskFromClient(
         tref = qref.test
         if QGroup.get_or_none(QGroup.test == tref, QGroup.marked == False) is not None:
             log.info("Still unmarked questions in test {}".format(tref.test_number))
-            return True
+            return [True, "more"]
 
         tref.marked = True
         tref.save()
-        return True
+        return [True, "test_done"]
 
 
 def MgetImages(self, user_name, task):

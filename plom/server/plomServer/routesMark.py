@@ -205,7 +205,7 @@ class MarkHandler:
 
         This function also responds with the number of done tasks and the total number of tasks.
         The returned statement is similar to MprogressCount.
-        Respond with status 200/400/401/406/409.
+        Respond with status 200/400/401/406/409/410.
         Log activity.
 
         Args:
@@ -287,14 +287,23 @@ class MarkHandler:
         )
         # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
 
-        marking_success = marked_task_status[0]
-        if marking_success:
+        if marked_task_status[0]:
             num_done_tasks = marked_task_status[1]
             total_num_tasks = marked_task_status[2]
             return web.json_response([num_done_tasks, total_num_tasks], status=200)
         else:
-            log.warning("Returning with error 400 = {}".format(marked_task_status))
-            return web.Response(status=400)  # some sort of error with task_image file
+            if marked_task_status[1] == "no_such_task":
+                log.warning("Returning with error 410 = {}".format(marked_task_status))
+                return web.Response(status=410)
+            elif marked_task_status[1] == "not_owner":
+                log.warning("Returning with error 409 = {}".format(marked_task_status))
+                return web.Response(status=409)
+            elif marked_task_status[1] == "integrity_fail":
+                log.warning("Returning with error 406 = {}".format(marked_task_status))
+                return web.Response(status=406)
+            else:
+                log.warning("Returning with error 400 = {}".format(marked_task_status))
+                return web.Response(status=400)
 
     # @routes.get("/MK/images/{task}")
     @authenticate_by_token_required_fields(["user"])
