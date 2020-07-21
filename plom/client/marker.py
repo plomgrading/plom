@@ -156,6 +156,7 @@ class BackgroundUploader(QThread):
 
     uploadSuccess = pyqtSignal(str, int, int)
     uploadFail = pyqtSignal(str, str)
+    uploadBenignFail = pyqtSignal(str, str)
 
     def enqueueNewUpload(self, *args):
         """
@@ -215,6 +216,7 @@ class BackgroundUploader(QThread):
             upload(
                 *data,
                 failCallback=self.uploadFail.emit,
+                benignFailCallback=self.uploadBenignFail.emit,
                 successCallback=self.uploadSuccess.emit,
             )
 
@@ -238,6 +240,7 @@ def upload(
     tags,
     integrity_check,
     failCallback=None,
+    benignFailCallback=None,
     successCallback=None,
 ):
     """
@@ -295,7 +298,7 @@ def upload(
     except PlomBenignException as ex:
         template = "An exception of type {0} occurred. Arguments:\n{1!r}."
         errMsg = template.format(type(ex).__name__, ex.args)
-        failCallback(task, errMsg)
+        benignFailCallback(task, errMsg)
         return
     except Exception as ex:
         # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
@@ -994,6 +997,9 @@ class MarkerClient(QWidget):
             self.backgroundUploader = BackgroundUploader()
             self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
             self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
+            self.backgroundUploader.uploadBenignFail.connect(
+                self.backgroundUploadBenignFailed
+            )
             self.backgroundUploader.start()
         self.cacheLatexComments()  # Now cache latex for comments:
 
@@ -1158,10 +1164,10 @@ class MarkerClient(QWidget):
 
         """
         log.warning("An error has been detected")
-        msg = 'An error has been thrown:\n"{}"'.format(error)
-        msg += "\nShutting down Marker."
+        msg = 'An error has been thrown:\n"{}"'.format(error.args[-1])
+        msg += "\nSorry - shutting down Marker. Please log in again."
         ErrorMessage(msg).exec_()
-        self.shutDownError()
+        self.shutDownBenignError()
 
     def throwSeriousError(self, error, rethrow=True):
         """
@@ -1812,6 +1818,7 @@ class MarkerClient(QWidget):
             upload(
                 *_data,
                 failCallback=self.backgroundUploadFailed,
+                benignFailCallback=self.backgroundUploadBenignFailed,
                 successCallback=self.backgroundUploadFinished,
             )
 
@@ -1907,6 +1914,22 @@ class MarkerClient(QWidget):
             self.examModel.setStatusByTask(task, "marked")
         self.updateProgress(numDone, numtotal)
 
+    def backgroundUploadBenignFailed(self, task, errmsg):
+        """
+        An upload has failed, not sure what to do but do to it LOADLY.
+
+        Args:
+            task (str): the task ID of the current test.
+            errmsg (str): the error message.
+
+        Returns:
+            None
+
+        """
+        self.examModel.setStatusByTask(task, "???")
+        self.throwBenignError(PlomBenignException(errmsg))
+        return
+
     def backgroundUploadFailed(self, task, errmsg):
         """
         An upload has failed, not sure what to do but do to it LOADLY.
@@ -1920,13 +1943,12 @@ class MarkerClient(QWidget):
 
         """
         self.examModel.setStatusByTask(task, "???")
-        self.throwBenignError(errmsg)
-        # ErrorMessage(
-        #     "Unfortunately, there was an unexpected error; the server did "
-        #     "not accept our marked paper {}.\n\n{}\n\n"
-        #     "If the problem persists consider filing an issue."
-        #     "Please close this window and log in again.".format(task, errmsg)
-        # ).exec_()
+        ErrorMessage(
+            "Unfortunately, there was an unexpected error; the server did "
+            "not accept our marked paper {}.\n\n{}\n\n"
+            "If the problem persists consider filing an issue."
+            "Please close this window and log in again.".format(task, errmsg)
+        ).exec_()
         return
 
     def updateImg(self, newImg, oldImg):
@@ -1947,9 +1969,28 @@ class MarkerClient(QWidget):
 
     def shutDownError(self):
         """ Shuts down self due to error. """
-        if self._annotator is not None:  # try to shut down annotator too.
+        if (
+            getattr(self, "_annotator", None) is not None
+        ):  # try to shut down annotator too.
             self._annotator.close()
         log.error("shutting down")
+        self.my_shutdown_signal.emit(2, [])
+        self.close()
+
+    def shutDownBenignError(self):
+        """ Shuts down self due to benign error. """
+        if (
+            getattr(self, "_annotator", None) is not None
+        ):  # try to shut down annotator too.
+            self._annotator.close()
+        log.error("shutting down because of benign error")
+
+        # Try to send a 'user closing' message
+        try:
+            messenger.closeUser()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+
         self.my_shutdown_signal.emit(2, [])
         self.close()
 
