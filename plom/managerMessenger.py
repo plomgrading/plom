@@ -598,6 +598,8 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomSeriousException(
                     "Server could not find the page - this should not happen!"
                 ) from None
+            elif response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             else:

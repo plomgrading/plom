@@ -613,8 +613,15 @@ class Manager(QWidget):
         if msg.exec_() == QMessageBox.No:
             return
         else:
-            rval = managerMessenger.removeAllScannedPages(test_number)
-        ErrorMessage("{}".format(rval)).exec_()
+            try:
+                rval = managerMessenger.removeAllScannedPages(test_number)
+                ErrorMessage("{}".format(rval)).exec_()
+            except PlomOwnersLoggedInException as err:
+                ErrorMessage(
+                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
+                        err.args[-1]
+                    )
+                ).exec_()
         self.refreshSList()
 
     def substituteTestPage(self, test_number, page_number, version):

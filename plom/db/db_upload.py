@@ -799,6 +799,11 @@ def removeAllScannedPages(self, test_number):
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
         return [False, "testError", "Cannot find test {}".format(t)]
+    # check if all owners of tasks in that test are logged out.
+    owners = self.testOwnersLoggedIn(tref)
+    if owners:
+        return [False, "owners", owners]
+
     with plomdb.atomic():
         # move all tpages to discards
         for pref in tref.tpages:

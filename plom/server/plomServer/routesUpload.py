@@ -345,7 +345,10 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            return web.Response(status=404)  # page not found at all
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            else:
+                return web.Response(status=404)  # page not found at all
 
     async def getUnknownPageNames(self, request):
         data = await request.json()
