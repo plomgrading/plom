@@ -539,6 +539,8 @@ class ManagerMessenger(BaseMessenger):
                 ) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            elif response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -572,8 +574,10 @@ class ManagerMessenger(BaseMessenger):
                 ) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 409:  # that question already has pages
+            elif response.status_code == 405:  # that question already has pages
                 raise PlomTakenException() from None
+            elif response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)

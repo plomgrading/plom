@@ -308,7 +308,10 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            return web.Response(status=404)  # page not found at all
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            else:
+                return web.Response(status=404)  # page not found at all
 
     async def replaceMissingHWQuestion(self, request):
         # can replace either by SID-lookup or test-number
@@ -327,10 +330,13 @@ class UploadHandler:
         )
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
-        elif rval[1]:
-            return web.Response(status=409)  # that question already has pages
         else:
-            return web.Response(status=404)  # page not found at all
+            if rval[1] == "owners":
+                return web.json_response(rval[2], status=409)
+            elif rval[1] == "present":
+                return web.Response(status=405)  # that question already has pages
+            else:
+                return web.Response(status=404)  # page not found at all
 
     async def removeAllScannedPages(self, request):
         data = await request.json()

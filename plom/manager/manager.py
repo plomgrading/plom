@@ -633,10 +633,17 @@ class Manager(QWidget):
         if msg.exec_() == QMessageBox.No:
             return
         else:
-            rval = managerMessenger.replaceMissingTestPage(
-                test_number, page_number, version
-            )
-            ErrorMessage("{}".format(rval)).exec_()
+            try:
+                rval = managerMessenger.replaceMissingTestPage(
+                    test_number, page_number, version
+                )
+                ErrorMessage("{}".format(rval)).exec_()
+            except PlomOwnersLoggedInException as err:
+                ErrorMessage(
+                    "Cannot substitute that page - owners of tasks in that test are logged in: {}".format(
+                        err.args[-1]
+                    )
+                ).exec_()
         self.refreshIList()
 
     def substituteHWQuestion(self, test_number, question):
@@ -648,10 +655,20 @@ class Manager(QWidget):
         if msg.exec_() == QMessageBox.No:
             return
         else:
-            rval = managerMessenger.replaceMissingHWQuestion(
-                student_id=None, test=test_number, question=question
-            )
-            ErrorMessage("{}".format(rval)).exec_()
+            try:
+                rval = managerMessenger.replaceMissingHWQuestion(
+                    student_id=None, test=test_number, question=question
+                )
+                ErrorMessage("{}".format(rval)).exec_()
+            except PlomTakenException:
+                ErrorMessage("That question already has hw pages present.").exec_()
+            except PlomOwnersLoggedInException as err:
+                ErrorMessage(
+                    "Cannot substitute that question - owners of tasks in that test are logged in: {}".format(
+                        err.args[-1]
+                    )
+                ).exec_()
+
         self.refreshIList()
 
     def substitutePage(self):
