@@ -162,6 +162,8 @@ def getUnknownImage(self, file_name):
 
 def testOwnersLoggedIn(self, tref):
     """Returns list of logged in users who own tasks in given test.
+
+    Note - 'manager' and 'HAL' are not included in this list - else manager could block manager.
     """
     # make list of users who own tasks in the test (might have dupes and 'None')
     user_list = [qref.user for qref in tref.qgroups]
@@ -170,9 +172,11 @@ def testOwnersLoggedIn(self, tref):
     logged_in_list = []
     for uref in user_list:
         if uref:  # make sure uref is not none.
+            # avoid adding HAL or manager or duplicates
+            if uref.name in ["HAL", "manager"] or uref.name in logged_in_list:
+                continue
             if uref.token:
-                if uref.name not in logged_in_list:
-                    logged_in_list.append(uref.name)
+                logged_in_list.append(uref.name)
     return logged_in_list
 
 
