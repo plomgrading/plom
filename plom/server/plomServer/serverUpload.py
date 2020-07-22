@@ -250,7 +250,7 @@ def unknownToTestPage(self, file_name, test, page, rotation):
             else:
                 return [False, "HUH?"]  # this should not happen
         else:
-            msg = self.DB.moveUnknownToTPage(file_name, test, page)[0]
+            msg = self.DB.moveUnknownToTPage(file_name, test, page)
             # returns [True] or [False, reason] or [False, "owners", owner_list]
             if msg[0]:
                 return [True, "testPage"]

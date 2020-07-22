@@ -1034,9 +1034,9 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomSeriousException(
-                    "Cannot find test/page {}.".format(tp)
+                    "Cannot find test/page {}/{}.".format(test, page)
                 ) from None
-            if response.status_code == 409:
+            elif response.status_code == 409:
                 raise PlomOwnersLoggedInException(response.json()) from None
             else:
                 raise PlomSeriousException(
