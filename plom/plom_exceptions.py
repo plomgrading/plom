@@ -26,7 +26,7 @@ class PlomSeriousException(PlomException):
 
 
 class PlomBenignException(PlomException):
-    """A not-unexpected situation, often signallying an error condition."""
+    """A not-unexpected situation, often signaling an error condition."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
