@@ -384,10 +384,6 @@ def moveUnknownToCollision(self, file_name, test_number, page_number):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return [False]
-    # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        return [False, "owners", owners]
 
     pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
     if pref is None:
@@ -454,6 +450,7 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return [False, "Cannot find test number {}".format(test_number)]
+
     pref = TPage.get_or_none(
         TPage.test == tref, TPage.page_number == page_number, TPage.version == version
     )
@@ -465,6 +462,11 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
     oref = pref.image  # the original page image for this tpage.
     # get the group of that tpage - so we can trigger an update.
     gref = pref.group
+
+    # check if all owners of tasks in that test are logged out.
+    owners = self.testOwnersLoggedIn(tref)
+    if owners:
+        return [False, "owners", owners]
 
     # now create a discardpage with oref, and put iref into the tpage, delete the collision.
     with plomdb.atomic():

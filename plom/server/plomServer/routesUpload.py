@@ -601,10 +601,7 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval[1], status=200)  # all fine
         else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            else:
-                return web.Response(status=404)
+            return web.Response(status=404)
 
     async def unknownToHWPage(self, request):
         data = await request.json()

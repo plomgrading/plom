@@ -773,27 +773,41 @@ class Manager(QWidget):
                         )
                     ).exec_()
             elif self.unknownModel.item(r, 2).text() == "test":
-                if (
-                    managerMessenger.unknownToTestPage(
+                try:
+                    if (
+                        managerMessenger.unknownToTestPage(
+                            self.unknownModel.item(r, 0).text(),
+                            self.unknownModel.item(r, 4).text(),
+                            self.unknownModel.item(r, 5).text(),
+                            self.unknownModel.item(r, 3).text(),
+                        )
+                        == "collision"
+                    ):
+                        ErrorMessage(
+                            "Collision created in test {}".format(
+                                self.unknownModel.item(r, 4).text()
+                            )
+                        ).exec_()
+                except PlomOwnersLoggedInException as err:
+                    ErrorMessage(
+                        "Cannot move unknown {} to test page - owners of tasks in that test are logged in: {}".format(
+                            self.unknownModel.item(r, 0).text(), err.args[-1]
+                        )
+                    ).exec_()
+            elif self.unknownModel.item(r, 2).text() == "homework":
+                try:
+                    managerMessenger.unknownToHWPage(
                         self.unknownModel.item(r, 0).text(),
                         self.unknownModel.item(r, 4).text(),
                         self.unknownModel.item(r, 5).text(),
                         self.unknownModel.item(r, 3).text(),
                     )
-                    == "collision"
-                ):
+                except PlomOwnersLoggedInException as err:
                     ErrorMessage(
-                        "Collision created in test {}".format(
-                            self.unknownModel.item(r, 4).text()
+                        "Cannot move unknown {} to hw page - owners of tasks in that test are logged in: {}".format(
+                            self.unknownModel.item(r, 0).text(), err.args[-1]
                         )
                     ).exec_()
-            elif self.unknownModel.item(r, 2).text() == "homework":
-                managerMessenger.unknownToHWPage(
-                    self.unknownModel.item(r, 0).text(),
-                    self.unknownModel.item(r, 4).text(),
-                    self.unknownModel.item(r, 5).text(),
-                    self.unknownModel.item(r, 3).text(),
-                )
 
             else:
                 pass
@@ -921,12 +935,19 @@ class Manager(QWidget):
                     self.collideModel.item(r, 0).text()
                 )
             elif self.collideModel.item(r, 2).text() == "replace":
-                managerMessenger.collidingToTestPage(
-                    self.collideModel.item(r, 0).text(),
-                    self.collideModel.item(r, 3).text(),
-                    self.collideModel.item(r, 4).text(),
-                    self.collideModel.item(r, 5).text(),
-                )
+                try:
+                    managerMessenger.collidingToTestPage(
+                        self.collideModel.item(r, 0).text(),
+                        self.collideModel.item(r, 3).text(),
+                        self.collideModel.item(r, 4).text(),
+                        self.collideModel.item(r, 5).text(),
+                    )
+                except PlomOwnersLoggedInException as err:
+                    ErrorMessage(
+                        "Cannot move collision {} to test page - owners of tasks in that test are logged in: {}".format(
+                            self.collideModel.item(r, 0).text(), err.args[-1]
+                        )
+                    ).exec_()
             else:
                 pass
                 # print(
