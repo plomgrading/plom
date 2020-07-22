@@ -15,7 +15,7 @@ class PlomException(Exception):
     """Catch-all parent of all Plom-related exceptions."""
 
     def __init__(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
+        super(PlomException, self).__init__(*args, **kwargs)
 
 
 class PlomSeriousException(PlomException):
@@ -34,7 +34,7 @@ class PlomBenignException(PlomException):
 
 class PlomAPIException(PlomBenignException):
     def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class PlomConflict(PlomBenignException):
