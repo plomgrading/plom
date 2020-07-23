@@ -853,7 +853,7 @@ class Messenger(BaseMessenger):
     ):
         self.SRmutex.acquire()
         try:
-            # doesn't like ints, so covert ints to strings
+            # doesn't like ints, so convert ints to strings
             param = {
                 "user": self.user,
                 "token": self.token,
