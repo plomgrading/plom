@@ -287,8 +287,6 @@ class MarkHandler:
         )
         # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
 
-        print("EEK - {}".format(marked_task_status))
-
         if marked_task_status[0]:
             num_done_tasks = marked_task_status[1]
             total_num_tasks = marked_task_status[2]
@@ -359,7 +357,9 @@ class MarkHandler:
             if task_image_results[1] == "owner":
                 return web.Response(status=409)  # someone else has that task_image
             elif task_image_results[1] == "integrity_fail":
-                return web.Response(status=406)  # someone else has that task_image
+                return web.Response(status=406)  # task changed
+            elif task_image_results[1] == "no_such_task":
+                return web.Response(status=410)  # task deleted
             else:
                 return web.Response(status=400)  # some other error
 

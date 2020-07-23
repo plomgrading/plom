@@ -274,9 +274,9 @@ def MgetImages(self, user_name, task, integrity_check):
         # some sanity checks
         if gref is None:
             log.info("Mgetimage - task {} not known".format(task))
-            return [False]
+            return [False, "no_such_task"]
         if gref.scanned == False:  # this should not happen either
-            return [False, "Task {} is not completely scanned".format(task)]
+            return [False, "no_such_task"]
         # grab associated qdata
         qref = gref.qgroups[0]
         if qref.user != uref:

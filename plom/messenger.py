@@ -813,7 +813,11 @@ class Messenger(BaseMessenger):
                 ) from None
             elif response.status_code == 406:
                 raise PlomTaskChangedException(
-                    "Ownership of task {} has changed.".format(code)
+                    "Task {} has been changed by manager.".format(code)
+                ) from None
+            elif response.status_code == 410:
+                raise PlomTaskChangedException(
+                    "Task {} has been deleted by manager.".format(code)
                 ) from None
             else:
                 raise PlomSeriousException(
