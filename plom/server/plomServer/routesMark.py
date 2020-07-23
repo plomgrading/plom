@@ -306,7 +306,7 @@ class MarkHandler:
                 return web.Response(status=400)
 
     # @routes.get("/MK/images/{task}")
-    @authenticate_by_token_required_fields(["user"])
+    @authenticate_by_token_required_fields(["user", "integrity_check"])
     def MgetImages(self, data, request):
         """Return the image of a question/task to the client.
 
@@ -324,7 +324,9 @@ class MarkHandler:
         """
 
         task_code = request.match_info["task"]
-        task_image_results = self.server.MgetImages(data["user"], task_code)
+        task_image_results = self.server.MgetImages(
+            data["user"], task_code, data["integrity_check"]
+        )
         # A list which includes:
         # 1. True/False process status.
         # 2. Number of pages for task.
@@ -352,7 +354,12 @@ class MarkHandler:
                     multipart_writer.append(open(file_name, "rb"))
             return web.Response(body=multipart_writer, status=200)
         else:
-            return web.Response(status=409)  # someone else has that task_image
+            if task_image_results[1] == "owner":
+                return web.Response(status=409)  # someone else has that task_image
+            elif task_image_results[1] == "integrity_fail":
+                return web.Response(status=406)  # someone else has that task_image
+            else:
+                return web.Response(status=400)  # some other error
 
     # @routes.get("/MK/originalImage/{task}")
     @authenticate_by_token_required_fields([])

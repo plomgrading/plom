@@ -744,7 +744,7 @@ class Messenger(BaseMessenger):
 
         return image
 
-    def MrequestImages(self, code):
+    def MrequestImages(self, code, integrity_check):
         """Download images relevant to a question, both original and annotated.
 
         Args:
@@ -766,7 +766,11 @@ class Messenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/MK/images/{}".format(self.server, code),
-                json={"user": self.user, "token": self.token},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "integrity_check": integrity_check,
+                },
                 verify=False,
             )
             response.raise_for_status()
@@ -804,6 +808,10 @@ class Messenger(BaseMessenger):
                     "Cannot find image file for {}.".format(code)
                 ) from None
             elif response.status_code == 409:
+                raise PlomTaskChangedException(
+                    "Ownership of task {} has changed.".format(code)
+                ) from None
+            elif response.status_code == 406:
                 raise PlomTaskChangedException(
                     "Ownership of task {} has changed.".format(code)
                 ) from None

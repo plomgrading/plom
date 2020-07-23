@@ -300,12 +300,13 @@ def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, ta
         )
 
 
-def MgetImages(self, username, task_code):
+def MgetImages(self, username, task_code, integrity_check):
     """Respond with paths to the marked and original images of a marked question.
 
     Args:
         username (str): User who marked the paper.
         task_code (str): Code string for the task.
+        integrity_check (str): Integrity check string for the task.
 
     Returns:
         list: A list of the format:
@@ -314,7 +315,7 @@ def MgetImages(self, username, task_code):
             Annotated image path, Plom data file for this page]
     """
 
-    return self.DB.MgetImages(username, task_code)
+    return self.DB.MgetImages(username, task_code, integrity_check)
 
 
 # TODO: Have to figure this out.  Please needs documentation.

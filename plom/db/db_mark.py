@@ -57,7 +57,15 @@ def MgetDoneTasks(self, user_name, q, v):
     mark_list = []
     for qref in query:  # grab that questionData object
         aref = qref.annotations[-1]  # grab the last annotation
-        mark_list.append([qref.group.gid, aref.mark, aref.marking_time, aref.tags])
+        mark_list.append(
+            [
+                qref.group.gid,
+                aref.mark,
+                aref.marking_time,
+                aref.tags,
+                aref.integrity_check,
+            ]
+        )
         # note - used to return qref.status, but is redundant since these all "done"
     log.debug('Sending completed Q{}v{} tasks to user "{}"'.format(q, v, user_name))
     return mark_list
@@ -255,9 +263,10 @@ def MtakeTaskFromClient(
         return [True, "test_done"]
 
 
-def MgetImages(self, user_name, task):
+def MgetImages(self, user_name, task, integrity_check):
     """Send image list back to user for the given marking task.
     If question has been annotated then send back the annotated image and the plom file as well.
+    Use integrity_check to make sure client is not asking for something outdated.
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
     with plomdb.atomic():
@@ -274,13 +283,17 @@ def MgetImages(self, user_name, task):
             # belongs to another user - should not happen
             return [
                 False,
+                "owner",
                 "Task {} does not belong to user {}".format(task, user_name),
             ]
+        # check the integrity_check code against the db
+        aref = qref.annotations[-1]
+        if aref.integrity_check != integrity_check:
+            return [False, "integrity_fail"]
         # return [true, n, page1,..,page.n]
         # or (if annotated already)
         # return [true, n, page1,..,page.n, annotatedFile, plom_file]
         pp = []
-        aref = qref.annotations[-1]
         for p in aref.apages.order_by(APage.order):
             pp.append(p.image.file_name)
         if aref.aimage is not None:

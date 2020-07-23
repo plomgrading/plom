@@ -1193,7 +1193,13 @@ class MarkerClient(QWidget):
             # TODO: might not the "markedList" have some other statuses?
             self.examModel.addPaper(
                 ExamQuestion(
-                    x[0], fnames=[], stat="marked", mrk=x[1], mtime=x[2], tags=x[3]
+                    x[0],
+                    fnames=[],
+                    stat="marked",
+                    mrk=x[1],
+                    mtime=x[2],
+                    tags=x[3],
+                    integrity_check=x[4],
                 )
             )
 
@@ -1216,7 +1222,9 @@ class MarkerClient(QWidget):
             return True
 
         try:
-            [imageList, anImage, plImage] = messenger.MrequestImages(task)
+            [imageList, anImage, plImage] = messenger.MrequestImages(
+                task, self.examModel.getIntegrityCheck(task)
+            )
         except PlomTaskChangedException as ex:
             # TODO: better action we can take here?
             # TODO: can "ex" have more information from the server?
