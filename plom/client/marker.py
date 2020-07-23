@@ -422,6 +422,7 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(repr(paper.originalFiles)),
                 QStandardItem(paper.annotatedFile),
                 QStandardItem(paper.plomFile),
+                QStandardItem("wtf"),  # TODO: is this a proper fix?
                 # todo - reorder these?
                 QStandardItem(paper.integrity_check),
             ]
@@ -649,7 +650,7 @@ class MarkerExamModel(QStandardItemModel):
     def getIntegrityCheck(self, task):
         """
         Return integrity_check for task as string. """
-        return self._getDataByTask(task, 8)
+        return self._getDataByTask(task, 9)
 
     def markPaperByTask(self, task, mrk, aname, pname, mtime, tdir):
         """
