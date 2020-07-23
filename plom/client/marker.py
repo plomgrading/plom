@@ -1245,21 +1245,9 @@ class MarkerClient(QWidget):
         except PlomTaskChangedException as ex:
             self.throwBenignError(task, "task_changed")
             return False
-        except PlomTaskDeletedException as ex:
-            self.throwBenignError(task, "task_deleted")
-            return False
-        except PlomBenignException as e:
-            self.throwBenignError(task, "other")
-            return False
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return False
-
-        # TODO: there were no benign exceptions except authentication
-        # except PlomBenignException as e:
-        #     ErrorMessage("{}".format(e)).exec_()
-        #     self.exM.removePaper(task)
-        #     return
 
         paperDir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
         log.debug("create paperDir {} for already-graded download".format(paperDir))

@@ -745,6 +745,23 @@ class Messenger(BaseMessenger):
         return image
 
     def MrequestImages(self, code):
+        """Download images relevant to a question, both original and annotated.
+
+        Args:
+            code (str): the task code such as "q1234g9".
+
+        Returns:
+            3-tuple: `(image_list, annotated_image, plom_file)`
+                `image_list` is a list of images (e.g., png files to be
+                written to disc).
+                `annotated_image` and `plom_file` are the png file and
+                and data associated with a previous annotations, or None.
+
+        Raises:
+            PlomAuthenticationException
+            PlomTaskChangedException: you no longer own this task.
+            PlomSeriousException
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.get(
