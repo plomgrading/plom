@@ -295,11 +295,8 @@ def upload(
             cname,
             integrity_check,
         )
-    except PlomTaskChangedException as ex:
-        benignFailCallback(task, "task_changed")
-        return
-    except PlomTaskDeletedException as ex:
-        benignFailCallback(task, "task_deleted")
+    except (PlomTaskChangedException, PlomTaskDeletedException) as ex:
+        benignFailCallback(task, str(ex))
         return
     except Exception as ex:
         # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
@@ -1000,7 +997,7 @@ class MarkerClient(QWidget):
             self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
             self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
             self.backgroundUploader.uploadBenignFail.connect(
-                self.backgroundUploadBenignFailed
+                self.backgroundUploadFailedServerChanged
             )
             self.backgroundUploader.start()
         self.cacheLatexComments()  # Now cache latex for comments:
@@ -1834,7 +1831,7 @@ class MarkerClient(QWidget):
             upload(
                 *_data,
                 failCallback=self.backgroundUploadFailed,
-                benignFailCallback=self.backgroundUploadBenignFailed,
+                benignFailCallback=self.backgroundUploadFailedServerChanged,
                 successCallback=self.backgroundUploadFinished,
             )
 
@@ -1930,9 +1927,8 @@ class MarkerClient(QWidget):
             self.examModel.setStatusByTask(task, "marked")
         self.updateProgress(numDone, numtotal)
 
-    def backgroundUploadBenignFailed(self, task, error_message):
-        """
-        An upload has failed, not sure what to do but do to it LOADLY.
+    def backgroundUploadFailedServerChanged(self, task, error_message):
+        """An upload has failed because server changed something, safest to quit.
 
         Args:
             task (str): the task ID of the current test.
@@ -1940,15 +1936,28 @@ class MarkerClient(QWidget):
 
         Returns:
             None
-
         """
         self.examModel.setStatusByTask(task, "???")
-        self.throwBenignError(task, error_message)
-        return
+        # TODO: @arechnitzer to confirm we've been logged out...
+        ErrorMessage(
+            "<p>A background upload has failed because the server changed "
+            "something underneath us.</p>\n\n"
+            '<p>Specifically, the server says: "{}"</p>\n\n'
+            "<p>This is a rare situation; no data corruption has occured but "
+            "your annotations have been discarded just in case.  You will be "
+            'asked to redo the task "{}" later.</p>\n\n'
+            "<p>For now you've been logged out and we'll now force a crash of "
+            "your client.  Sorry.".format(error_message, task)
+        ).exec_()
+        # This would avoid seeing the crash dialog...
+        # import sys
+        # sys.exit(57)
+        raise PlomSeriousException(
+            "Server changed under us: {}".format(error_message)
+        ) from None
 
     def backgroundUploadFailed(self, task, errmsg):
-        """
-        An upload has failed, not sure what to do but do to it LOADLY.
+        """An upload has failed, we don't know why, do something LOADLY.
 
         Args:
             task (str): the task ID of the current test.
