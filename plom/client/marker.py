@@ -296,6 +296,7 @@ def upload(
             integrity_check,
         )
     except (PlomTaskChangedException, PlomTaskDeletedException) as ex:
+        # TODO: integrity failure is another benign, should we add to this list or leave it for the one below?
         benignFailCallback(task, str(ex))
         return
     except Exception as ex:
