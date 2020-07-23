@@ -403,14 +403,15 @@ class MarkerExamModel(QStandardItemModel):
         # **but** be careful - if annotation in progress then ??
         try:
             r = self._findTask(paper.prefix)
+        except ValueError as err:
+            pass
+        else:
             ErrorMessage(
                 "Task {} has been modified by server - you will need to annotate it again.".format(
                     paper.prefix
                 )
             ).exec_()
             self.removeRow(r)
-        except ValueError as err:
-            pass
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
         self.appendRow(
