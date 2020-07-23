@@ -206,35 +206,33 @@ def MreturnMarkedTask(
     plom_filename = "markedQuestions/plomFiles/G{}.plom".format(task_code[1:])
     comments_filename = "markedQuestions/commentFiles/G{}.json".format(task_code[1:])
 
-    #  check if those files exist already - back up if so
-    for filename in [annotated_filename, plom_filename, comments_filename]:
-        if os.path.isfile(filename):
-            os.rename(
-                filename, filename + ".rgd" + datetime.now().strftime("%d_%H-%M-%S"),
+    # do sanity checks on incoming annotation image file
+    # save as tempfile
+    with tempfile.NamedTemporaryFile() as tfile:
+        tfile.write(image)
+        # Should check the annotated_filename is valid png - just check header presently
+        if imghdr.what(tfile.name) != "png":
+            log.error(
+                "Uploaded annotation file is not a PNG. Instead is = {}".format(
+                    imghdr.what(tfile.name)
+                )
             )
+            return [False, "Misformed image file. Try again."]
 
-    # now write in the files
-    with open(annotated_filename, "wb") as file_header:
-        file_header.write(image)
-    with open(plom_filename, "wb") as file_header:
-        file_header.write(plomdat)
-    with open(comments_filename, "w") as file_header:
-        json.dump(comments, file_header)
-
-    # Should check the annotated_filename is valid png - just check header presently
-    if imghdr.what(annotated_filename) != "png":
-        log.error("EEK = {}".format(imghdr.what(annotated_filename)))
-        return [False, "Misformed image file. Try again."]
-
-    # Also check the md5sum matches
-    md5n = hashlib.md5(open(annotated_filename, "rb").read()).hexdigest()
-    if md5_code != md5n:
-        return [
-            False,
-            "Misformed image file - md5sum doesn't match serverside={} vs clientside={}. Try again.".format(
-                md5n, md5_code
-            ),
-        ]
+        # Also check the md5sum matches
+        md5n = hashlib.md5(image).hexdigest()
+        if md5_code != md5n:
+            log.error(
+                "Mismatched between client ({}) and server ({}) md5sums of annotated image.".format(
+                    md5_code, md5n
+                )
+            )
+            return [
+                False,
+                "Misformed image file - md5sum doesn't match serverside={} vs clientside={}. Try again.".format(
+                    md5n, md5_code
+                ),
+            ]
 
     # now update the database
     database_task_response = self.DB.MtakeTaskFromClient(
@@ -250,16 +248,32 @@ def MreturnMarkedTask(
         integrity_check,
     )
 
-    if database_task_response[0]:
-        self.MrecordMark(username, mark, annotated_filename, time_spent_marking, tags)
-        # return ack with current counts.
-        return [
-            True,
-            self.DB.McountMarked(question_number, version_number),
-            self.DB.McountAll(question_number, version_number),
-        ]
-    else:
+    if database_task_response is False:
         return database_task_response
+
+    # db successfully updated
+    #  check if those files exist already - back up if so
+    for filename in [annotated_filename, plom_filename, comments_filename]:
+        if os.path.isfile(filename):
+            os.rename(
+                filename, filename + ".rgd" + datetime.now().strftime("%d_%H-%M-%S"),
+            )
+
+    # now write in the files
+    with open(annotated_filename, "wb") as file_header:
+        file_header.write(image)
+    with open(plom_filename, "wb") as file_header:
+        file_header.write(plomdat)
+    with open(comments_filename, "w") as file_header:
+        json.dump(comments, file_header)
+
+    self.MrecordMark(username, mark, annotated_filename, time_spent_marking, tags)
+    # return ack with current counts.
+    return [
+        True,
+        self.DB.McountMarked(question_number, version_number),
+        self.DB.McountAll(question_number, version_number),
+    ]
 
 
 def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, tags):
