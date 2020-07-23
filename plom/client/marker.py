@@ -1152,31 +1152,6 @@ class MarkerClient(QWidget):
             self.ui.tableView.resizeRowsToContents()
         super(MarkerClient, self).resizeEvent(event)
 
-    def throwBenignError(self, task, error_message):
-        """
-        Logs an exception, pops up a dialog and recommends a shut down.
-
-        Args:
-            task (str): the task causing the error
-            error_message (str): brief description of the error to throw.
-
-        Returns:
-            None
-
-        """
-        log.warning("An error has been detected - {}".format(error_message))
-        if error_message == "task_changed":
-            msg = "The task {} has been changed by the manager; it needs to be remarked.".format(
-                task
-            )
-        elif error_message == "task_deleted":
-            msg = "The task {} has been deleted by the manager."
-        else:
-            msg = "There is a problem with task {}."
-        msg += "\nShutting down Marker. Please log in again."
-        ErrorMessage(msg).exec_()
-        self.shutDownBenignError()
-
     def throwSeriousError(self, error, rethrow=True):
         """
         Logs an exception, pops up a dialog and shuts down.
@@ -1243,7 +1218,20 @@ class MarkerClient(QWidget):
         try:
             [imageList, anImage, plImage] = messenger.MrequestImages(task)
         except PlomTaskChangedException as ex:
-            self.throwBenignError(task, "task_changed")
+            # TODO: better action we can take here?
+            # TODO: can "ex" have more information from the server?
+            ErrorMessage(
+                "<p>The task {} has changed ownership: most likely the paper "
+                "was changed in some way by the manager; it needs to be "
+                "remarked.</p>\n\n"
+                "<p>This is a rare situation; just in case, we'll now force a "
+                "shutdown of your client.  Sorry.".format(task)
+            ).exec_()
+            self.throwSeriousError(ex)
+            # This would avoid seeing the crash dialog...
+            # import sys
+            # sys.exit(58)
+            # TODO: will we ever see this return?
             return False
         except PlomSeriousException as e:
             self.throwSeriousError(e)
@@ -1988,23 +1976,6 @@ class MarkerClient(QWidget):
         ):  # try to shut down annotator too.
             self._annotator.close()
         log.error("shutting down")
-        self.my_shutdown_signal.emit(2, [])
-        self.close()
-
-    def shutDownBenignError(self):
-        """ Shuts down self due to benign error. """
-        if (
-            getattr(self, "_annotator", None) is not None
-        ):  # try to shut down annotator too.
-            self._annotator.close()
-        log.error("shutting down because of benign error")
-
-        # Try to send a 'user closing' message
-        try:
-            messenger.closeUser()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-
         self.my_shutdown_signal.emit(2, [])
         self.close()
 
