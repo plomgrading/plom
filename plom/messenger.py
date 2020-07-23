@@ -900,7 +900,9 @@ class Messenger(BaseMessenger):
             elif response.status_code == 409:
                 raise PlomTaskChangedException("Task ownership has changed.") from None
             elif response.status_code == 410:
-                raise PlomTaskDeletedException("No such task.") from None
+                raise PlomTaskDeletedException(
+                    "No such task - it has been deleted from server."
+                ) from None
             elif response.status_code == 400:
                 raise PlomSeriousException(
                     "Image file is corrupted. This should not happen".format(code)

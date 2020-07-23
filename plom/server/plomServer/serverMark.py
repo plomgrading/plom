@@ -246,7 +246,7 @@ def MreturnMarkedTask(
         integrity_check,
     )
 
-    if database_task_response is False:
+    if database_task_response[0] is False:
         return database_task_response
 
     # db successfully updated

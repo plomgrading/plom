@@ -212,8 +212,8 @@ def MtakeTaskFromClient(
     with plomdb.atomic():
         # grab the group corresponding to that task
         gref = Group.get_or_none(Group.gid == task)
-        if gref is None:  # this should not happen
-            log.error(
+        if gref is None or gref.scanned is False:  # this should not happen
+            log.warning(
                 "That returning marking task number {} / user {} pair not known".format(
                     task, user_name
                 )

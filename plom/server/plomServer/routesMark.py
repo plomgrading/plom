@@ -287,6 +287,8 @@ class MarkHandler:
         )
         # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
 
+        print("EEK - {}".format(marked_task_status))
+
         if marked_task_status[0]:
             num_done_tasks = marked_task_status[1]
             total_num_tasks = marked_task_status[2]
