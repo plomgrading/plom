@@ -207,32 +207,30 @@ def MreturnMarkedTask(
     comments_filename = "markedQuestions/commentFiles/G{}.json".format(task_code[1:])
 
     # do sanity checks on incoming annotation image file
-    # save as tempfile
-    with tempfile.NamedTemporaryFile() as tfile:
-        tfile.write(image)
-        # Should check the annotated_filename is valid png - just check header presently
-        if imghdr.what(tfile.name) != "png":
-            log.error(
-                "Uploaded annotation file is not a PNG. Instead is = {}".format(
-                    imghdr.what(tfile.name)
-                )
+    # Check the annotated_filename is valid png - just check header presently
+    # notice that 'imghdr.what(name, h=blah)' ignores the name, instead checks stream blah.
+    if imghdr.what(annotated_filename, h=image) != "png":
+        log.error(
+            "Uploaded annotation file is not a PNG. Instead is = {}".format(
+                imghdr.what(annotated_filename, h=image)
             )
-            return [False, "Misformed image file. Try again."]
+        )
+        return [False, "Misformed image file. Try again."]
 
-        # Also check the md5sum matches
-        md5n = hashlib.md5(image).hexdigest()
-        if md5_code != md5n:
-            log.error(
-                "Mismatched between client ({}) and server ({}) md5sums of annotated image.".format(
-                    md5_code, md5n
-                )
+    # Also check the md5sum matches
+    md5n = hashlib.md5(image).hexdigest()
+    if md5_code != md5n:
+        log.error(
+            "Mismatched between client ({}) and server ({}) md5sums of annotated image.".format(
+                md5_code, md5n
             )
-            return [
-                False,
-                "Misformed image file - md5sum doesn't match serverside={} vs clientside={}. Try again.".format(
-                    md5n, md5_code
-                ),
-            ]
+        )
+        return [
+            False,
+            "Misformed image file - md5sum doesn't match serverside={} vs clientside={}. Try again.".format(
+                md5n, md5_code
+            ),
+        ]
 
     # now update the database
     database_task_response = self.DB.MtakeTaskFromClient(
