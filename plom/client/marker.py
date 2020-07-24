@@ -423,7 +423,7 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(repr(paper.originalFiles)),
                 QStandardItem(paper.annotatedFile),
                 QStandardItem(paper.plomFile),
-                QStandardItem("wtf"),  # TODO: is this a proper fix?
+                QStandardItem("placeholder"),
                 # todo - reorder these?
                 QStandardItem(paper.integrity_check),
             ]
