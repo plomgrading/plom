@@ -14,7 +14,7 @@ __license__ = "AGPL-3.0-or-later"
 import json
 import logging
 import os
-from math import ceil, remainder
+from math import ceil
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -1874,7 +1874,7 @@ class MarkerClient(QWidget):
                         )
                     )
                     return False
-                if remainder(count, M) == 0.0:
+                if count % M == 0:
                     log.warning("Still waiting for uploader to finish...")
             self.backgroundUploader.wait()
         return True
