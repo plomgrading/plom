@@ -150,6 +150,15 @@ def uploadTestPage(
 def replaceMissingTestPage(
     self, test_number, page_number, version, original_name, file_name, md5
 ):
+    # make sure owners of tasks in that test not logged in
+    tref = Test.get_or_none(Test.test_number == test_number)
+    if tref is None:
+        return [False, "Cannot find that test"]
+    # check if all owners of tasks in that test are logged out.
+    owners = self.testOwnersLoggedIn(tref)
+    if owners:
+        return [False, "owners", owners]
+
     # we can actually just call uploadTPage - we just need to set the bundle_name and bundle_order.
     # hw is different because we need to verify no hw pages present already.
 
@@ -333,6 +342,11 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
     if iref is None:
         return [False, "SID does not correspond to any test on file."]
     tref = iref.test
+    # check if all owners of tasks in that test are logged out.
+    owners = self.testOwnersLoggedIn(tref)
+    if owners:
+        return [False, "owners", owners]
+
     qref = QGroup.get_or_none(test=tref, question=question)
     if qref is None:  # should not happen.
         return [False, "Test/Question does not correspond to anything on file."]
@@ -341,7 +355,7 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
     href = HWPage.get_or_none(test=tref, group=gref)
     # the href should be none - but could exist if uploading HW in two bundles
     if href is not None:
-        return [False, "HW pages already present."]
+        return [False, "present", "HW pages already present."]
 
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
@@ -809,6 +823,11 @@ def removeAllScannedPages(self, test_number):
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
         return [False, "testError", "Cannot find test {}".format(t)]
+    # check if all owners of tasks in that test are logged out.
+    owners = self.testOwnersLoggedIn(tref)
+    if owners:
+        return [False, "owners", owners]
+
     with plomdb.atomic():
         # move all tpages to discards
         for pref in tref.tpages:

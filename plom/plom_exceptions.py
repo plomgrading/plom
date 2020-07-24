@@ -68,6 +68,10 @@ class PlomExistingLoginException(PlomBenignException):
     pass
 
 
+class PlomOwnersLoggedInException(PlomBenignException):
+    pass
+
+
 class PlomTaskChangedError(PlomBenignException):
     pass
 

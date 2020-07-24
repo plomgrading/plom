@@ -160,6 +160,26 @@ def getUnknownImage(self, file_name):
         return [True, uref.image.file_name]
 
 
+def testOwnersLoggedIn(self, tref):
+    """Returns list of logged in users who own tasks in given test.
+
+    Note - 'manager' and 'HAL' are not included in this list - else manager could block manager.
+    """
+    # make list of users who own tasks in the test (might have dupes and 'None')
+    user_list = [qref.user for qref in tref.qgroups]
+    user_list.append(tref.idgroups[0].user)
+
+    logged_in_list = []
+    for uref in user_list:
+        if uref:  # make sure uref is not none.
+            # avoid adding HAL or manager or duplicates
+            if uref.name in ["HAL", "manager"] or uref.name in logged_in_list:
+                continue
+            if uref.token:
+                logged_in_list.append(uref.name)
+    return logged_in_list
+
+
 def moveUnknownToExtraPage(self, file_name, test_number, question):
     iref = Image.get_or_none(file_name=file_name)
     if iref is None:  # should not happen
@@ -171,6 +191,10 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return [False, "Cannot find that test"]
+    # check if all owners of tasks in that test are logged out.
+    owners = self.testOwnersLoggedIn(tref)
+    if owners:
+        return [False, "owners", owners]
 
     # find the qgroup to which the new page should belong
     qref = QGroup.get_or_none(test=tref, question=question)
@@ -219,6 +243,10 @@ def moveUnknownToHWPage(self, file_name, test_number, question):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return [False, "Cannot find that test"]
+    # check if all owners of tasks in that test are logged out.
+    owners = self.testOwnersLoggedIn(tref)
+    if owners:
+        return [False, "owners", owners]
 
     # find the qgroup to which the new page should belong
     qref = QGroup.get_or_none(test=tref, question=question)
@@ -261,6 +289,10 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:  # should not happen
         return [False, "Cannot find that test"]
+    # check if all owners of tasks in that test are logged out.
+    owners = self.testOwnersLoggedIn(tref)
+    if owners:
+        return [False, "owners", owners]
 
     pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
     if pref is None:  # should not happen
@@ -291,10 +323,11 @@ def checkTPage(self, test_number, page_number):
     """
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False]
+        return [False, "no such test"]
+
     pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
     if pref is None:
-        return [False]
+        return [False, "no such page"]
     if pref.scanned:  # we have a collision
         return [True, "collision", pref.version, pref.image.file_name]
     else:  # no collision since the page hasn't been scanned yet
@@ -355,6 +388,7 @@ def moveUnknownToCollision(self, file_name, test_number, page_number):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return [False]
+
     pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
     if pref is None:
         return [False, "Cannot find that page"]
@@ -420,6 +454,7 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return [False, "Cannot find test number {}".format(test_number)]
+
     pref = TPage.get_or_none(
         TPage.test == tref, TPage.page_number == page_number, TPage.version == version
     )
@@ -431,6 +466,11 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
     oref = pref.image  # the original page image for this tpage.
     # get the group of that tpage - so we can trigger an update.
     gref = pref.group
+
+    # check if all owners of tasks in that test are logged out.
+    owners = self.testOwnersLoggedIn(tref)
+    if owners:
+        return [False, "owners", owners]
 
     # now create a discardpage with oref, and put iref into the tpage, delete the collision.
     with plomdb.atomic():
