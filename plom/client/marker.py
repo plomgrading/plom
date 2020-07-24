@@ -1842,6 +1842,31 @@ class MarkerClient(QWidget):
         if len(idx) > 0:
             self._updateImage(idx[0].row())
 
+    def wait_for_bguploader(self, timeout=0):
+        """Wait for the uploader queue to empty.
+
+        Args:
+            timeout (int): return False after `timeout` seconds.  If 0
+                then wait forever.  NOT IMPLEMENTED.
+
+        TODO: improve this enough so shutDown can use it too.
+        """
+        if timeout != 0:
+            raise NotImplementedError("nice to have!")
+        if self.backgroundUploader:
+            count = 42
+            while self.backgroundUploader.isRunning():
+                if self.backgroundUploader.isEmpty():
+                    # don't try to quit until the queue is empty
+                    self.backgroundUploader.quit()
+                time.sleep(0.1)
+                count += 1
+                if count >= 50:
+                    count = 0
+                    # TODO: see shutdown: can have dialog open...
+                    log.warning("Still waiting for uploader to finish...")
+            self.backgroundUploader.wait()
+
     def shutDownError(self):
         """ Shuts down self due to error. """
         log.error("shutting down")
