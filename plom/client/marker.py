@@ -1928,7 +1928,7 @@ class MarkerClient(QWidget):
             '<p>Specifically, the server says: "{}"</p>\n\n'
             "<p>This is a rare situation; no data corruption has occured but "
             "your annotations have been discarded just in case.  You will be "
-            'asked to redo the task later.</p>\n\n'
+            "asked to redo the task later.</p>\n\n"
             "<p>For now you've been logged out and we'll now force a shutdown "
             "of your client.  Sorry.</p>".format(task, error_message)
         ).exec_()
