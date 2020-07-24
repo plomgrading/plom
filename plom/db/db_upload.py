@@ -614,20 +614,28 @@ def cleanQGroup(self, qref):
                 for p in aref.apages:
                     p.delete_instance()
                 # now create new ones - tpages, then hwpage, then expages, finally any lpages
+                # update integrity_check as we go
                 ord = 0
+                integrity_check = ""
                 for p in qref.group.tpages.order_by(TPage.page_number):
                     if p.scanned:  # make sure the tpage is actually scanned.
                         ord += 1
                         APage.create(annotation=aref, image=p.image, order=ord)
+                        integrity_check += p.image.md5sum
                 for p in qref.group.hwpages.order_by(HWPage.order):
                     ord += 1
                     APage.create(annotation=aref, image=p.image, order=ord)
+                    integrity_check += p.image.md5sum
                 for p in qref.group.expages.order_by(EXPage.order):
                     ord += 1
                     APage.create(annotation=aref, image=p.image, order=ord)
+                    integrity_check += p.image.md5sum
                 for p in tref.lpages.order_by(LPage.order):
                     ord += 1
                     APage.create(annotation=aref, image=p.image, order=ord)
+                    integrity_check += p.image.md5sum
+                aref.integrity_check = integrity_check
+                aref.save()
             else:
                 ed += 1
                 # make new oldannot using data from aref
@@ -642,6 +650,7 @@ def cleanQGroup(self, qref):
                     marking_time=aref.marking_time,
                     time=aref.time,
                     tags=aref.tags,
+                    integrity_check=aref.integrity_check,
                 )
                 # make oapges
                 for pref in aref.apages:
@@ -651,8 +660,9 @@ def cleanQGroup(self, qref):
                 # now delete the apages and then the annotation-image and finally the annotation.
                 for pref in aref.apages:
                     pref.delete_instance()
-                # delete the annotated image from table.
-                aref.aimage.delete_instance()
+                # delete the annotated image from table (if it exists).
+                if aref.aimage is not None:
+                    aref.aimage.delete_instance()
                 # finally delete the annotation itself.
                 aref.delete_instance()
 

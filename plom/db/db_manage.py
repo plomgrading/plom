@@ -210,7 +210,7 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
             EXPage.select()
             .where(EXPage.group == gref)
             .order_by(EXPage.order.desc())
-            .get_or_none()
+            .get()
         )
         order = pref.order + 1
 

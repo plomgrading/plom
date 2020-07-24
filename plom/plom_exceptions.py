@@ -14,66 +14,67 @@ at least not unexpected) situations.
 class PlomException(Exception):
     """Catch-all parent of all Plom-related exceptions."""
 
-    def __init__(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
+    pass
 
 
 class PlomSeriousException(PlomException):
     """Serious or unexpected problems that are generally not recoverable."""
 
-    def __init__(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
+    pass
 
 
 class PlomBenignException(PlomException):
-    """A not-unexpected situation, often signallying an error condition."""
+    """A not-unexpected situation, often signaling an error condition."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    pass
 
 
 class PlomAPIException(PlomBenignException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    pass
 
 
 class PlomConflict(PlomBenignException):
     """The action was contradictory to info already in the system."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    pass
 
 
 class PlomNoMoreException(PlomBenignException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    pass
 
 
 class PlomRangeException(PlomBenignException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    pass
 
 
 class PlomAuthenticationException(PlomBenignException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, "You are not authenticated.", *args, **kwargs)
+    """You are not authenticated, with precisely that as the default message."""
+
+    def __init__(self, msg=None):
+        if not msg:
+            msg = "You are not authenticated."
+        super().__init__(msg)
 
 
 class PlomTakenException(PlomBenignException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    pass
 
 
 class PlomLatexException(PlomBenignException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    pass
 
 
 class PlomExistingLoginException(PlomBenignException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    pass
 
 
 class PlomOwnersLoggedInException(PlomBenignException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    pass
+
+
+class PlomTaskChangedError(PlomBenignException):
+    pass
+
+
+class PlomTaskDeletedError(PlomBenignException):
+    pass

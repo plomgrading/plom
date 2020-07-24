@@ -150,6 +150,7 @@ class Annotation(BaseModel):
     user = pw.ForeignKeyField(User, backref="annotations", null=True)
     aimage = pw.ForeignKeyField(AImage, backref="annotations", null=True)
     edition = pw.IntegerField(null=True)
+    integrity_check = pw.CharField(null=True)  # concat of md5sums of underlying apages
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
     comment_file = pw.CharField(null=True)
@@ -170,6 +171,7 @@ class OldAnnotation(BaseModel):
     user = pw.ForeignKeyField(User, backref="oldannotations", null=True)
     aimage = pw.ForeignKeyField(AImage, backref="oldannotations", null=True)
     edition = pw.IntegerField(null=True)
+    integrity_check = pw.CharField(null=True)  # concat of md5sums of underlying apages
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
     comment_file = pw.CharField(null=True)
