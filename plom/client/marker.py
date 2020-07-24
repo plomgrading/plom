@@ -300,12 +300,10 @@ def upload(
         )
     except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
         knownFailCallback(task, str(ex))
+        # probably previous call does not return: it forces a crash
         return
-    except Exception as ex:
-        # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
-        template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-        errMsg = template.format(type(ex).__name__, ex.args)
-        unknownFailCallback(task, errMsg)
+    except PlomException as ex:
+        unknownFailCallback(task, str(ex))
         return
 
     numDone = msg[0]
