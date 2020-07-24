@@ -871,7 +871,7 @@ class Messenger(BaseMessenger):
 
         Raises:
             PlomAuthenticationException
-            PlomBenignException: integrity check failed, perhaps manager
+            PlomConflict: integrity check failed, perhaps manager
                 altered task.
             PlomTaskChangedError
             PlomTaskDeletedError
@@ -912,7 +912,7 @@ class Messenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 406:
-                raise PlomBenignException(
+                raise PlomConflict(
                     "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
                 ) from None
             elif response.status_code == 409:

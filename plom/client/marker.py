@@ -298,7 +298,7 @@ def upload(
             cname,
             integrity_check,
         )
-    except (PlomTaskChangedError, PlomTaskDeletedError, PlomBenignException) as ex:
+    except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
         knownFailCallback(task, str(ex))
         return
     except Exception as ex:
