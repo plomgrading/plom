@@ -68,9 +68,9 @@ class PlomExistingLoginException(PlomBenignException):
     pass
 
 
-class PlomTaskChangedException(PlomBenignException):
+class PlomTaskChangedError(PlomBenignException):
     pass
 
 
-class PlomTaskDeletedException(PlomBenignException):
+class PlomTaskDeletedError(PlomBenignException):
     pass

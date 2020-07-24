@@ -295,7 +295,7 @@ def upload(
             cname,
             integrity_check,
         )
-    except (PlomTaskChangedException, PlomTaskDeletedException) as ex:
+    except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
         # TODO: integrity failure is another benign, should we add to this list or leave it for the one below?
         benignFailCallback(task, str(ex))
         return
@@ -1226,7 +1226,7 @@ class MarkerClient(QWidget):
             [imageList, anImage, plImage] = messenger.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
             )
-        except (PlomTaskChangedException, PlomTaskDeletedException) as ex:
+        except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
             # TODO: better action we can take here?
             ErrorMessage(
                 '<p>The task "{}" has changed in some way by the manager; it '

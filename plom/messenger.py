@@ -759,7 +759,8 @@ class Messenger(BaseMessenger):
 
         Raises:
             PlomAuthenticationException
-            PlomTaskChangedException: you no longer own this task.
+            PlomTaskChangedError: you no longer own this task.
+            PlomTaskDeletedError
             PlomSeriousException
         """
         self.SRmutex.acquire()
@@ -808,15 +809,15 @@ class Messenger(BaseMessenger):
                     "Cannot find image file for {}.".format(code)
                 ) from None
             elif response.status_code == 409:
-                raise PlomTaskChangedException(
+                raise PlomTaskChangedError(
                     "Ownership of task {} has changed.".format(code)
                 ) from None
             elif response.status_code == 406:
-                raise PlomTaskChangedException(
+                raise PlomTaskChangedError(
                     "Task {} has been changed by manager.".format(code)
                 ) from None
             elif response.status_code == 410:
-                raise PlomTaskDeletedException(
+                raise PlomTaskDeletedError(
                     "Task {} has been deleted by manager.".format(code)
                 ) from None
             else:
@@ -902,9 +903,9 @@ class Messenger(BaseMessenger):
                     "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
                 ) from None
             elif response.status_code == 409:
-                raise PlomTaskChangedException("Task ownership has changed.") from None
+                raise PlomTaskChangedError("Task ownership has changed.") from None
             elif response.status_code == 410:
-                raise PlomTaskDeletedException(
+                raise PlomTaskDeletedError(
                     "No such task - it has been deleted from server."
                 ) from None
             elif response.status_code == 400:
