@@ -1230,7 +1230,7 @@ class MarkerClient(QWidget):
             # TODO: better action we can take here?
             ErrorMessage(
                 '<p>The task "{}" has changed in some way by the manager; it '
-                "needs to be remarked.</p>\n\n"
+                "may need to be remarked.</p>\n\n"
                 '<p>Specifically, the server says: "{}"</p>\n\n'
                 "<p>This is a rare situation; just in case, we'll now force a "
                 "shutdown of your client.  Sorry.</p>".format(task, str(ex))
