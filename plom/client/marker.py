@@ -1924,7 +1924,6 @@ class MarkerClient(QWidget):
             None
         """
         self.examModel.setStatusByTask(task, "???")
-        # TODO: @arechnitzer to confirm we've been logged out...
         ErrorMessage(
             '<p>Background upload of "{}" has failed because the server '
             "changed something underneath us.</p>\n\n"
