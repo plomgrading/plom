@@ -864,6 +864,19 @@ class Messenger(BaseMessenger):
     def MreturnMarkedTask(
         self, code, pg, ver, score, mtime, tags, aname, pname, cname, integrity_check
     ):
+        """Upload annotated image and associated data to the server.
+
+        Returns:
+            list: a 2-list of the form `[#done, #total]`.
+
+        Raises:
+            PlomAuthenticationException
+            PlomBenignException: integrity check failed, perhaps manager
+                altered task.
+            PlomTaskChangedError
+            PlomTaskDeletedError
+            PlomSeriousException
+        """
         self.SRmutex.acquire()
         try:
             # doesn't like ints, so convert ints to strings
@@ -894,7 +907,7 @@ class Messenger(BaseMessenger):
                 verify=False,
             )
             response.raise_for_status()
-            ret = response.json()  # this is [#done, #total]
+            ret = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
