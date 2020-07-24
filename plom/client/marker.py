@@ -1235,12 +1235,10 @@ class MarkerClient(QWidget):
                 "<p>This is a rare situation; just in case, we'll now force a "
                 "shutdown of your client.  Sorry.</p>".format(task, str(ex))
             ).exec_()
-            self.throwSeriousError(ex)
             # This would avoid seeing the crash dialog...
             # import sys
             # sys.exit(58)
-            # TODO: will we ever see this return?
-            return False
+            raise PlomSeriousException("Manager changed task") from ex
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return False
