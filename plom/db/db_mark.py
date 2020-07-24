@@ -57,7 +57,15 @@ def MgetDoneTasks(self, user_name, q, v):
     mark_list = []
     for qref in query:  # grab that questionData object
         aref = qref.annotations[-1]  # grab the last annotation
-        mark_list.append([qref.group.gid, aref.mark, aref.marking_time, aref.tags])
+        mark_list.append(
+            [
+                qref.group.gid,
+                aref.mark,
+                aref.marking_time,
+                aref.tags,
+                aref.integrity_check,
+            ]
+        )
         # note - used to return qref.status, but is redundant since these all "done"
     log.debug('Sending completed Q{}v{} tasks to user "{}"'.format(q, v, user_name))
     return mark_list
@@ -123,21 +131,26 @@ def MgiveTaskToClient(self, user_name, group_id):
             tags=aref.tags,
             time=datetime.now(),
         )
-        # create its pages
+        # create its pages and compute its integrity_check from md5sums
+        md5_concat = ""
         for p in aref.apages.order_by(APage.order):
             APage.create(annotation=new_aref, order=p.order, image=p.image)
+            md5_concat += p.image.md5sum
+        new_aref.integrity_check = md5_concat
+        new_aref.save()
         # update user activity
         uref.last_action = "Took M task {}".format(group_id)
         uref.last_activity = datetime.now()
         uref.save()
-        # return [true, tags, page1, page2, etc]
-        rval = [
-            True,
-            new_aref.tags,
-        ]
+        # return [true, tags, integrity_check, page1, page2, etc]
+        rval = [True, new_aref.tags, new_aref.integrity_check]
         for p in new_aref.apages.order_by(APage.order):
             rval.append(p.image.file_name)
-        log.debug('Giving marking task {} to user "{}"'.format(group_id, user_name))
+        log.debug(
+            'Giving marking task {} to user "{}" with integrity_check {}'.format(
+                group_id, user_name, new_aref.integrity_check
+            )
+        )
         return rval
 
 
@@ -187,35 +200,40 @@ def MtakeTaskFromClient(
     marking_time,
     tags,
     md5,
+    integrity_check,
 ):
     """Get marked image back from client and update the record
     in the database.
     Update the annotation.
-    Check to see if all questions for that test are marked and if so update the sum-mark data.
+    Check to see if all questions for that test are marked and if so update the test's 'marked' flag.
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
 
     with plomdb.atomic():
         # grab the group corresponding to that task
         gref = Group.get_or_none(Group.gid == task)
-        if gref is None:  # this should not happen
-            log.error(
+        if gref is None or gref.scanned is False:  # this should not happen
+            log.warning(
                 "That returning marking task number {} / user {} pair not known".format(
                     task, user_name
                 )
             )
-            return False
+            return [False, "no_such_task"]
         # and grab the qdata of that group
         qref = gref.qgroups[0]
         if qref.user != uref:  # this should not happen
-            return False  # has been claimed by someone else.
+            return [False, "not_owner"]  # has been claimed by someone else.
+        # check the integrity_check code against the db
+        aref = qref.annotations[-1]
+        if aref.integrity_check != integrity_check:
+            return [False, "integrity_fail"]
 
         # update status, mark, annotate-file-name, time, and
         # time spent marking the image
         qref.status = "done"
         qref.marked = True
-        aref = qref.annotations[-1]
-        aref.image = Image.create(file_name=annot_fname, md5sum=md5)
+        # the bundle for this image is given by the (fixed) bundle for the parent qgroup.
+        aref.aimage = AImage.create(file_name=annot_fname, md5sum=md5)
         aref.mark = mark
         aref.plom_file = plom_fname
         aref.comment_file = comment_fname
@@ -238,34 +256,17 @@ def MtakeTaskFromClient(
         tref = qref.test
         if QGroup.get_or_none(QGroup.test == tref, QGroup.marked == False) is not None:
             log.info("Still unmarked questions in test {}".format(tref.test_number))
-            return True
-        # update the sum-mark
-        tot = 0
-        for qd in QGroup.select().where(QGroup.test == tref):
-            tot += qd.annotations[-1].mark
-        sref = tref.sumdata[0]
-        # since the total is computed automatically, we assign the sumdata to HAL
-        auto_uref = User.get(name="HAL")
-        sref.user = auto_uref  # auto-totalled by HAL.
-        sref.time = datetime.now()
-        sref.sum_mark = tot
-        sref.summed = True
-        sref.status = "done"
-        sref.save()
-        log.info(
-            "All of test {} is marked - total updated = {}".format(
-                tref.test_number, tot
-            )
-        )
+            return [True, "more"]
+
         tref.marked = True
-        tref.totalled = True
         tref.save()
-        return True
+        return [True, "test_done"]
 
 
-def MgetImages(self, user_name, task):
+def MgetImages(self, user_name, task, integrity_check):
     """Send image list back to user for the given marking task.
     If question has been annotated then send back the annotated image and the plom file as well.
+    Use integrity_check to make sure client is not asking for something outdated.
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
     with plomdb.atomic():
@@ -273,26 +274,30 @@ def MgetImages(self, user_name, task):
         # some sanity checks
         if gref is None:
             log.info("Mgetimage - task {} not known".format(task))
-            return [False]
+            return [False, "no_such_task"]
         if gref.scanned == False:  # this should not happen either
-            return [False, "Task {} is not completely scanned".format(task)]
+            return [False, "no_such_task"]
         # grab associated qdata
         qref = gref.qgroups[0]
         if qref.user != uref:
             # belongs to another user - should not happen
             return [
                 False,
+                "owner",
                 "Task {} does not belong to user {}".format(task, user_name),
             ]
+        # check the integrity_check code against the db
+        aref = qref.annotations[-1]
+        if aref.integrity_check != integrity_check:
+            return [False, "integrity_fail"]
         # return [true, n, page1,..,page.n]
         # or (if annotated already)
         # return [true, n, page1,..,page.n, annotatedFile, plom_file]
         pp = []
-        aref = qref.annotations[-1]
         for p in aref.apages.order_by(APage.order):
             pp.append(p.image.file_name)
-        if aref.image is not None:
-            return [True, len(pp)] + pp + [aref.image.file_name, aref.plom_file]
+        if aref.aimage is not None:
+            return [True, len(pp)] + pp + [aref.aimage.file_name, aref.plom_file]
         else:
             return [True, len(pp)] + pp
 
@@ -350,12 +355,12 @@ def MgetWholePaper(self, test_number, question):
     if tref is None:  # don't know that test - this shouldn't happen
         return [False]
     pageData = []  # for each page append a triple [
-    # page-code = t.pageNumber, hw.questionNumber.order or l.order
+    # page-code = t.pageNumber, h.questionNumber.order or l.order
     # image-id-reference number,
     # true/false - if belongs to the given question or not.
     pageFiles = []  # the corresponding filenames.
     question = int(question)
-    # give TPages (aside from ID pages), then HWPages and then LPages
+    # give TPages (aside from ID pages), then HWPages, then EXPages, and then LPages
     for p in tref.tpages.order_by(TPage.page_number):
         if p.scanned is False:  # skip unscanned testpages
             continue
@@ -367,17 +372,23 @@ def MgetWholePaper(self, test_number, question):
             val[2] = True
         pageData.append(val)
         pageFiles.append(p.image.file_name)
-    # give HW pages by question
+    # give HW and EX pages by question
     for qref in tref.qgroups.order_by(QGroup.question):
         for p in qref.group.hwpages:
-            val = ["h{}.{}".format(q, p.order), p.image.id, False]
+            val = ["h{}.{}".format(qref.question, p.order), p.image.id, False]
+            if qref.question == question:  # check if page belongs to our question
+                val[2] = True
+            pageData.append(val)
+            pageFiles.append(p.image.file_name)
+        for p in qref.group.expages:
+            val = ["e{}.{}".format(qref.question, p.order), p.image.id, False]
             if qref.question == question:  # check if page belongs to our question
                 val[2] = True
             pageData.append(val)
             pageFiles.append(p.image.file_name)
     # then give LPages
     for p in tref.lpages.order_by(LPage.order):
-        pageData.append(["x{}".format(p.order), p.image.id, False])
+        pageData.append(["l{}".format(p.order), p.image.id, False])
         pageFiles.append(p.image.file_name)
     return [True, pageData] + pageFiles
 
@@ -443,10 +454,9 @@ def MrevertTask(self, task):
     gref = Group.get_or_none(Group.gid == task)
     if gref is None:
         return [False, "NST"]  # no such task
-    # from the group get the test, question and sumdata - all need cleaning.
+    # from the group get the test and question - all need cleaning.
     qref = gref.qgroups[0]
     tref = gref.test
-    sref = tref.sumdata[0]
     # check task is "done"
     if qref.status != "done" or qref.marked is False:
         return [False, "NAC"]  # nothing to do here
@@ -455,35 +465,46 @@ def MrevertTask(self, task):
     with plomdb.atomic():
         # clean up test
         tref.marked = False
-        tref.totalled = False
         tref.save()
-        # clean up sum-data - no one should be totalling and marking at same time.
-        # TODO = sort out the possible idiocy caused by simultaneous marking+totalling by client.
-        sref.status = "todo"
-        sref.sum_mark = None
-        sref.user = None
-        sref.time = datetime.now()
-        sref.summed = False
-        sref.save()
         # clean up the qgroup
         qref.marked = False
         qref.status = "todo"
         qref.user = None
         qref.save()
         rval = [True]  # keep list of files to delete.
-        # now clean up annotations
+        # now move existing annotations to oldannotations
+        # set starting edition for oldannot to either 0 or whatever was last.
+        if len(qref.oldannotations) == 0:
+            ed = 0
+        else:
+            ed = qref.oldannotations[-1].edition
+
         for aref in qref.annotations:
             if aref.edition == 0:  # leave 0th annotation alone.
                 continue
-            # delete the apages and then the annotation itself
+            ed += 1
+            # make new oldannot using data from aref
+            oaref = OldAnnotation.create(
+                qgroup=aref.qgroup,
+                user=aref.user,
+                aimage=aref.aimage,
+                edition=ed,
+                plom_file=aref.plom_file,
+                comment_file=aref.comment_file,
+                mark=aref.mark,
+                marking_time=aref.marking_time,
+                time=aref.time,
+                tags=aref.tags,
+            )
+            # make oapges
+            for pref in aref.apages:
+                OAPage.create(old_annotation=oaref, order=pref.order, image=pref.image)
+            # now delete the apages and then the annotation-image and finally the annotation.
             for pref in aref.apages:
                 pref.delete_instance()
-            rval.append(aref.plom_file)
-            rval.append(aref.comment_file)
-            rval.append(aref.image.file_name)
             # delete the annotated image from table.
-            aref.image.delete_instance()
+            aref.aimage.delete_instance()
             # finally delete the annotation itself.
             aref.delete_instance()
     log.info("Reverting tq {}.{}".format(test_number, question))
-    return rval
+    return [True]

@@ -49,13 +49,11 @@ def main():
             raise RuntimeError('Directory "{}" must not exist for this demo.'.format(f))
 
     subprocess.check_call(split("plom-build new --demo"))
-    subprocess.check_call(split("plom-build class --demo"))
-    subprocess.check_call(split("plom-build make"))
-    subprocess.check_call(split("plom-fake-hwscribbles"))
     subprocess.check_call(split("plom-server init"))
     subprocess.check_call(split("plom-server users --demo"))
 
     # Start server into background
+    print("Running server I hope")
     serverproc = subprocess.Popen(split("plom-server launch"))
     time.sleep(1.0)
     try:
@@ -75,15 +73,16 @@ def main():
 
     print("Server seems to be running, so we move on to uploading")
 
-    subprocess.check_call(split("plom-hwscan submitted"))
-    print("Processing complete hw only")
-    subprocess.check_call(split("plom-hwscan process -w 4567"))
-    print("Processing incomplete hw also")
-    subprocess.check_call(split("plom-hwscan process -i -w 4567"))
-    print("Processing hw extra pages")
-    subprocess.check_call(split("plom-hwscan process -x -w 4567"))
-    print("Now upload the images")
-    subprocess.check_call(split("plom-hwscan upload -w 4567"))
+    subprocess.check_call(split("plom-build class --demo -w 1234"))
+    subprocess.check_call(split("plom-build make -w 1234"))
+    # this creates two batches of fake hw - prefixes = hwA and hwB
+    subprocess.check_call(split("plom-fake-hwscribbles -w 1234"))
+
+    print("Processing all hw by question submissions.")
+    subprocess.check_call(split("plom-hwscan allbyq -w 4567 -y"))
+    print("Replacing all missing questions.")
+    subprocess.check_call(split("plom-hwscan missing -w 4567 -y"))
+    # print(">> TODO << process loose pages")
 
     time.sleep(0.5)
     try:

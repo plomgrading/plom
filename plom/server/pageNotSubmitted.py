@@ -110,7 +110,7 @@ def build_homework_question_substitute(student_id, question_number):
     # create a box for the test number near top-centre
     # Get page width and use it to inset this text into the page
     page_width = question_not_submitted_pdf[0].bound().width
-    rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
+    rect = fitz.Rect(page_width // 2 - 50, 20, page_width // 2 + 50, 54)
     text = "{}.{}".format(student_id, question_number)
     insertion_confirmed = question_not_submitted_pdf[0].insertTextbox(
         rect,

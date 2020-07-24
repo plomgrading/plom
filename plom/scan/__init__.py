@@ -11,3 +11,14 @@ __license__ = "AGPL-3.0-or-later"
 
 from .rotate import rotateBitmap
 from .fasterQRExtract import QRextract
+
+from .sendUnknownsToServer import (
+    upload_unknowns,
+    print_unknowns_warning,
+    bundle_has_nonuploaded_unknowns,
+)
+from .sendCollisionsToServer import (
+    upload_collisions,
+    print_collision_warning,
+    bundle_has_nonuploaded_collisions,
+)

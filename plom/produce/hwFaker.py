@@ -14,46 +14,20 @@ import random
 from pathlib import Path
 from glob import glob
 
+from getpass import getpass
 import json
 import base64
 import fitz
 
 from . import paperdir as _paperdir
-from plom import specdir as _specdir
-from plom import specParser
 from plom import __version__
+from plom.messenger import ManagerMessenger
+from plom.plom_exceptions import PlomExistingLoginException
+
+from .faketools import possible_answers as possibleAns
 
 
-possibleAns = [
-    "I am so sorry, I really did study this... :(",
-    "I know this, I just can't explain it",
-    "Hey, at least its not in Comic Sans",
-    "Life moves pretty fast. If you don't stop and look around once in a while, "
-    "you could miss it.  -- Ferris Bueler",
-    "Stupid is as stupid does.  -- Forrest Gump",
-    "Of course, it is very important to be sober when you take an exam.  "
-    "Many worthwhile careers in the street-cleansing, fruit-picking and "
-    "subway-guitar-playing industries have been founded on a lack of "
-    "understanding of this simple fact.  -- Terry Pratchett",
-    "The fundamental cause of the trouble in the modern world today is that "
-    "the stupid are cocksure while the intelligent are full of doubt.  "
-    "-- Bertrand Russell",
-    "Numbers is hardly real and they never have feelings\n"
-    "But you push too hard, even numbers got limits.  -- Mos Def",
-    "I was doin' 150 miles an hour sideways\n"
-    "And 500 feet down at the same time\n"
-    "I was lookin' for the cops, 'cuz you know\n"
-    "I knew that it, it was illegal  -- Arlo Guthrie",
-    "But there will always be science, engineering, and technology.  "
-    "And there will always, always be mathematics.  -- Katherine Johnson",
-    "Is 5 = 1?  Let's see... multiply both sides by 0.  "
-    "Now 0 = 0 so therefore 5 = 1.",
-    "I mean, you could claim that anything's real if the only basis for "
-    "believing in it is that nobody's proved it doesn't exist!  -- Hermione Granger",
-]
-
-
-def makeHWExtra(numberOfQuestions, paperNumber, studentID, studentName):
+def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
     # pick one or two questions to "do" with one or 2 pages.
     didA = random.randint(1, 1 + numberOfQuestions)
     didB = random.randint(1, 1 + numberOfQuestions)
@@ -62,7 +36,7 @@ def makeHWExtra(numberOfQuestions, paperNumber, studentID, studentName):
     else:
         doneQ = [didA, didB]
 
-    fname = Path("submittedHWExtra") / "hwx.{}.pdf".format(studentID)
+    fname = Path("submittedLoose") / "{}.{}.pdf".format(prefix, studentID)
     doc = fitz.open()
 
     for q in doneQ:
@@ -70,11 +44,22 @@ def makeHWExtra(numberOfQuestions, paperNumber, studentID, studentName):
         for pn in range(random.randint(1, 2)):
             page = doc.newPage(-1, 612, 792)  # put page at end
             if pn == 0:  # put name and student number on start of Q
-                page = doc[0]
-                rect1 = fitz.Rect(20, 24, 300, 44)
+                rect1 = fitz.Rect(20, 24, 400, 54)
                 rc = page.insertTextbox(
                     rect1,
-                    "Extra for Q.{} -".format(q) + studentName + ":" + studentID,
+                    "LPage for Q.{} -".format(q) + studentName + ":" + studentID,
+                    fontsize=14,
+                    color=[0.1, 0.1, 0.1],
+                    fontname="helv",
+                    fontfile=None,
+                    align=0,
+                )
+                assert rc > 0
+            else:  # just put Question
+                rect1 = fitz.Rect(20, 24, 400, 54)
+                rc = page.insertTextbox(
+                    rect1,
+                    "LPage for Q.{} -".format(q),
                     fontsize=14,
                     color=[0.1, 0.1, 0.1],
                     fontname="helv",
@@ -100,16 +85,18 @@ def makeHWExtra(numberOfQuestions, paperNumber, studentID, studentName):
     doc.save(fname)
 
 
-def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName):
+def makeFakeHW(
+    numberOfQuestions, paperNumber, studentID, studentName, prefix, maximum_pages
+):
     did = random.randint(
         numberOfQuestions - 1, numberOfQuestions
     )  # some subset of questions.
     doneQ = sorted(random.sample(list(range(1, 1 + numberOfQuestions)), did))
     for q in doneQ:
-        fname = Path("submittedHWByQ") / "hwByQ.{}.{}.pdf".format(studentID, q)
+        fname = Path("submittedHWByQ") / "{}.{}.{}.pdf".format(prefix, studentID, q)
         doc = fitz.open()
         # construct pages
-        for pn in range(random.randint(1, 3)):
+        for pn in range(random.randint(1, maximum_pages)):
             page = doc.newPage(-1, 612, 792)  # page at end
             if pn == 0:
                 # put name and student number on p1 of the Question
@@ -142,43 +129,93 @@ def makeFakeHW(numberOfQuestions, paperNumber, studentID, studentName):
         doc.save(fname)
 
 
+def download_classlist_and_spec(server=None, password=None):
+    """Download list of student IDs/names and test specification from server."""
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ManagerMessenger(s, port=p)
+    else:
+        msgr = ManagerMessenger(server)
+    msgr.start()
+
+    if not password:
+        password = getpass('Please enter the "manager" password: ')
+
+    try:
+        msgr.requestAndSaveToken("manager", password)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another management tool running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-build clear"'
+        )
+        exit(10)
+    try:
+        classlist = msgr.IDrequestClasslist()
+    except PlomBenignException as e:
+        print("Failed to download classlist: {}".format(e))
+        exit(4)
+    try:
+        spec = msgr.get_spec()
+    except PlomBenignException as e:
+        print("Failed to get specification: {}".format(e))
+        exit(4)
+
+    msgr.closeUser()
+    msgr.stop()
+    return classlist, spec
+
+
 def main():
+    """Main function used for running.
+
+    1. Generates the files.
+    2. Creates the fake data filled pdfs using fill_in_fake_data_on_exams.
+    3. Generates second batch for first half of papers.
+    4. Generates loose pages for two students - currently unused.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
     )
+    parser.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
     args = parser.parse_args()
 
-    os.makedirs("submittedHWByQ", exist_ok=True)
-    os.makedirs("submittedHWExtra", exist_ok=True)
-
-    # some cludgery here for the moment
-
     # grab classlist
-    specdir = Path(_specdir)
-    classlist = specdir / "classlist.csv"
-    # read in the spec
-    spec = specParser.SpecParser()
+    classlist, spec = download_classlist_and_spec(args.server, args.password)
+
     # get number named
-    numberNamed = spec.spec["numberToName"]
-    numberOfQuestions = spec.spec["numberOfQuestions"]
+    numberNamed = spec["numberToName"]
+    numberOfQuestions = spec["numberOfQuestions"]
     # the named papers come from the first few lines of classlist
     sid = {}
-    with open(classlist, "r") as fh:
-        clr = csv.reader(fh)
-        next(clr)  # skip the header
-        k = 0
-        for row in clr:
-            sid[k] = [row[0], row[1]]
-            k += 1
-            if k >= numberNamed:
-                break
+    k = 0
+    for row in classlist:
+        sid[k] = [row[0], row[1]]
+        k += 1
+        if k >= numberNamed:
+            break
 
-    for k in range(numberNamed):
-        makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1])
-    # give a few extra pages to the first two students
-    for k in range(2):
-        makeHWExtra(numberOfQuestions, k, sid[k][0], sid[k][1])
+    os.makedirs("submittedHWByQ", exist_ok=True)
+    os.makedirs("submittedLoose", exist_ok=True)
+
+    print("NumberNamed = {}".format(numberNamed))
+
+    prefixes = ["hwA", "hwB"]  # we'll make two batches one bigger than other.
+    for prefix in prefixes:
+        if prefix == "hwA":
+            for k in range(numberNamed):
+                makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], prefix, 3)
+        else:
+            for k in range(numberNamed // 2):  # fewer in second batch
+                makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], prefix, 1)
+
+        # give a few loose pages to the first two students in both batches
+        for k in range(5):
+            makeHWLoose(numberOfQuestions, k, sid[k][0], sid[k][1], prefix)
 
 
 if __name__ == "__main__":

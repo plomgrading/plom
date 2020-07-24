@@ -8,6 +8,70 @@ class UploadHandler:
     def __init__(self, plomServer):
         self.server = plomServer
 
+    async def doesBundleExist(self, request):
+        """Returns whether given bundle/md5sum known to database
+
+        Checks both bundle's name and md5sum
+        * neither = no matching bundle, return [False]
+        * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
+        * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
+        * both match = return [True, 'both'] - user could be retrying
+          after network failure (for example) or uploading unknown or
+          colliding pages.
+        """
+        data = await request.json()
+        if not validate_required_fields(data, ["user", "token", "bundle", "md5sum"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] in ["scanner", "manager"]:
+            return web.Response(status=401)
+        rval = self.server.doesBundleExist(data["bundle"], data["md5sum"])
+        return web.json_response(rval, status=200)  # all fine
+
+    async def createNewBundle(self, request):
+        """Try to create bundle with given name/md5sum.
+
+        First check name / md5sum of bundle.
+        * If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldnt happen if scanner working correctly.
+        * If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
+        * If no such bundle return [True, []] - create the bundle and return an empty skip-list.
+
+        Notes:
+        * after declaring a bundle you may upload images to it.
+        * uploading pages to an undeclared bundle is not allowed.
+        * bundles traditionally correspond to one "pile" of physical
+          papers scanned together.
+        * there does not need to be one-to-one relationship betewen
+          bundles and Exam Papers or Homework Papers.
+        """
+        data = await request.json()
+        if not validate_required_fields(data, ["user", "token", "bundle", "md5sum"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] in ["scanner", "manager"]:
+            return web.Response(status=401)
+        rval = self.server.createNewBundle(data["bundle"], data["md5sum"])
+        return web.json_response(rval, status=200)  # all fine
+
+    async def sidToTest(self, request):
+        """Match given student_id to a test-number.
+
+        Returns
+        * [True, test_number]
+        * [False, 'Cannot find test with that student id']
+        """
+        data = await request.json()
+        if not validate_required_fields(data, ["user", "token", "sid"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] in ["scanner", "manager"]:
+            return web.Response(status=401)
+        rval = self.server.sidToTest(data["sid"])
+        return web.json_response(rval, status=200)
+
     async def uploadTestPage(self, request):
         reader = MultipartReader.from_response(request)
 
@@ -17,7 +81,18 @@ class UploadHandler:
         param = await part0.json()
 
         if not validate_required_fields(
-            param, ["user", "token", "test", "page", "version", "fileName", "md5sum"]
+            param,
+            [
+                "user",
+                "token",
+                "test",
+                "page",
+                "version",
+                "fileName",
+                "md5sum",
+                "bundle",
+                "bundle_order",
+            ],
         ):
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
@@ -41,6 +116,8 @@ class UploadHandler:
             param["fileName"],
             image,
             param["md5sum"],
+            param["bundle"],
+            param["bundle_order"],
         )
         return web.json_response(rmsg, status=200)  # all good
 
@@ -53,7 +130,18 @@ class UploadHandler:
         param = await part0.json()
 
         if not validate_required_fields(
-            param, ["user", "token", "sid", "question", "order", "fileName", "md5sum"]
+            param,
+            [
+                "user",
+                "token",
+                "sid",
+                "question",
+                "order",
+                "fileName",
+                "md5sum",
+                "bundle",
+                "bundle_order",
+            ],
         ):
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
@@ -73,6 +161,8 @@ class UploadHandler:
             param["fileName"],
             image,
             param["md5sum"],
+            param["bundle"],
+            param["bundle_order"],
         )
         return web.json_response(rmsg, status=200)  # all good
 
@@ -85,7 +175,17 @@ class UploadHandler:
         param = await part0.json()
 
         if not validate_required_fields(
-            param, ["user", "token", "sid", "order", "fileName", "md5sum"]
+            param,
+            [
+                "user",
+                "token",
+                "sid",
+                "order",
+                "fileName",
+                "md5sum",
+                "bundle",
+                "bundle_order",
+            ],
         ):
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
@@ -99,7 +199,13 @@ class UploadHandler:
         image = await part1.read()
         # file it away.
         rmsg = self.server.addLPage(
-            param["sid"], param["order"], param["fileName"], image, param["md5sum"],
+            param["sid"],
+            param["order"],
+            param["fileName"],
+            image,
+            param["md5sum"],
+            param["bundle"],
+            param["bundle_order"],
         )
         return web.json_response(rmsg, status=200)  # all good
 
@@ -111,7 +217,10 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         param = await part0.json()
 
-        if not validate_required_fields(param, ["user", "token", "fileName", "md5sum"]):
+        if not validate_required_fields(
+            param,
+            ["user", "token", "fileName", "order", "md5sum", "bundle", "bundle_order"],
+        ):
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
             return web.Response(status=401)
@@ -123,7 +232,14 @@ class UploadHandler:
             return web.Response(status=406)  # should have sent 3 parts
         image = await part1.read()
         # file it away.
-        rmsg = self.server.addUnknownPage(param["fileName"], image, param["md5sum"],)
+        rmsg = self.server.addUnknownPage(
+            param["fileName"],
+            image,
+            param["order"],
+            param["md5sum"],
+            param["bundle"],
+            param["bundle_order"],
+        )
         return web.json_response(rmsg, status=200)  # all good
 
     async def uploadCollidingPage(self, request):
@@ -135,11 +251,23 @@ class UploadHandler:
         param = await part0.json()
 
         if not validate_required_fields(
-            param, ["user", "token", "fileName", "md5sum", "test", "page", "version"]
+            param,
+            [
+                "user",
+                "token",
+                "fileName",
+                "md5sum",
+                "test",
+                "page",
+                "version",
+                "bundle",
+                "bundle_order",
+            ],
         ):
             return web.Response(status=400)
         if not self.server.validate(param["user"], param["token"]):
             return web.Response(status=401)
+        # TODO - restrict to manager only.
         if not param["user"] in ("manager", "scanner"):
             return web.Response(status=401)
 
@@ -158,6 +286,8 @@ class UploadHandler:
             param["fileName"],
             image,
             param["md5sum"],
+            param["bundle"],
+            param["bundle_order"],
         )
         return web.json_response(rmsg, status=200)  # all good
 
@@ -172,55 +302,59 @@ class UploadHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        # TODO: unused, we should ensure this matches the data
-        code = request.match_info["tpv"]
-
         rval = self.server.replaceMissingTestPage(
             data["test"], data["page"], data["version"]
         )
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            return web.Response(status=404)  # page not found at all
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            else:
+                return web.Response(status=404)  # page not found at all
 
     async def replaceMissingHWQuestion(self, request):
+        # can replace either by SID-lookup or test-number
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "sid", "question"]):
+        if not validate_required_fields(
+            data, ["user", "token", "sid", "test", "question"]
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if data["user"] != "manager" and data["user"] != "scanner":
             return web.Response(status=401)
 
-        rval = self.server.replaceMissingHWQuestion(data["sid"], data["question"])
+        rval = self.server.replaceMissingHWQuestion(
+            data["sid"], data["test"], data["question"]
+        )
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
-        elif rval[1]:
-            return web.Response(status=409)  # that question already has pages
         else:
-            return web.Response(status=404)  # page not found at all
+            if rval[1] == "owners":
+                return web.json_response(rval[2], status=409)
+            elif rval[1] == "present":
+                return web.Response(status=405)  # that question already has pages
+            else:
+                return web.Response(status=404)  # page not found at all
 
-    async def removeScannedPage(self, request):
+    async def removeAllScannedPages(self, request):
         data = await request.json()
-        if not validate_required_fields(
-            data, ["user", "token", "test", "page", "version"]
-        ):
+        if not validate_required_fields(data, ["user", "token", "test",],):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        # TODO: unused, we should ensure this matches the data
-        code = request.match_info["tpv"]
-
-        rval = self.server.removeScannedPage(
-            data["test"], data["page"], data["version"]
-        )
+        rval = self.server.removeAllScannedPages(data["test"],)
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
-            return web.Response(status=404)  # page not found at all
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            else:
+                return web.Response(status=404)  # page not found at all
 
     async def getUnknownPageNames(self, request):
         data = await request.json()
@@ -287,6 +421,23 @@ class UploadHandler:
             return web.Response(status=401)
 
         rval = self.server.getHWPageImage(data["test"], data["question"], data["order"])
+        if rval[0]:
+            return web.FileResponse(rval[1], status=200)  # all fine
+        else:
+            return web.Response(status=404)
+
+    async def getEXPageImage(self, request):
+        data = await request.json()
+        if not validate_required_fields(
+            data, ["user", "token", "test", "question", "order"]
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.getEXPageImage(data["test"], data["question"], data["order"])
         if rval[0]:
             return web.FileResponse(rval[1], status=200)  # all fine
         else:
@@ -361,7 +512,9 @@ class UploadHandler:
         rmsg = self.server.getQuestionImages(data["test"], data["question"])
         # returns either [True, fname1,fname2,..,fname.n] or [False, error]
         if rmsg[0]:
+            # insert number of parts [n, fn.1,fn.2,...fn.n]
             with MultipartWriter("images") as mpwriter:
+                mpwriter.append(str(len(rmsg) - 1))
                 for fn in rmsg[1:]:
                     mpwriter.append(open(fn, "rb"))
             return web.Response(body=mpwriter, status=200)
@@ -370,14 +523,16 @@ class UploadHandler:
 
     # @routes.get("/admin/testImages")
     @authenticate_by_token_required_fields(["user", "test"])
-    def getTestImages(self, data, request):
+    def getAllTestImages(self, data, request):
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rmsg = self.server.getTestImages(data["test"])
+        rmsg = self.server.getAllTestImages(data["test"])
         # returns either [True, fname1,fname2,..,fname.n] or [False, error]
         if rmsg[0]:
+            # insert number of parts [n, fn.1,fn.2,...fn.n]
             with MultipartWriter("images") as mpwriter:
+                mpwriter.append(str(len(rmsg) - 1))
                 for fn in rmsg[1:]:
                     if fn == "":
                         mpwriter.append("")
@@ -387,24 +542,23 @@ class UploadHandler:
         else:
             return web.Response(status=404)  # couldnt find that test/question
 
-    async def checkPage(self, request):
+    async def checkTPage(self, request):
         data = await request.json()
-        if not validate_required_fields(
-            data, ["user", "token", "test", "page", "images"]
-        ):
+        if not validate_required_fields(data, ["user", "token", "test", "page"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rmsg = self.server.checkPage(data["test"], data["page"])
-        # returns either [True, version, fname], [True, version] or [False]
+        rmsg = self.server.checkTPage(data["test"], data["page"])
+        # returns either [True, "collision", version, fname], [True, "scanned", version] or [False]
         if rmsg[0]:
             with MultipartWriter("images") as mpwriter:
-                mpwriter.append("{}".format(rmsg[1]))
-                if len(rmsg) == 3:
-                    mpwriter.append(open(rmsg[2], "rb"))
+                mpwriter.append("{}".format(rmsg[1]))  # append "collision" or "scanned"
+                mpwriter.append("{}".format(rmsg[2]))  # append "version"
+                if len(rmsg) == 4:  # append the image.
+                    mpwriter.append(open(rmsg[3], "rb"))
             return web.Response(body=mpwriter, status=200)
         else:
             return web.Response(status=404)  # couldnt find that test/question
@@ -456,7 +610,32 @@ class UploadHandler:
         if rval[0]:
             return web.json_response(rval[1], status=200)  # all fine
         else:
-            return web.Response(status=404)
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            else:
+                return web.Response(status=404)
+
+    async def unknownToHWPage(self, request):
+        data = await request.json()
+        if not validate_required_fields(
+            data, ["user", "token", "fileName", "test", "question", "rotation"]
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.unknownToHWPage(
+            data["fileName"], data["test"], data["question"], data["rotation"]
+        )
+        if rval[0]:
+            return web.Response(status=200)  # all fine
+        else:
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            else:
+                return web.Response(status=404)
 
     async def unknownToExtraPage(self, request):
         data = await request.json()
@@ -471,11 +650,14 @@ class UploadHandler:
 
         rval = self.server.unknownToExtraPage(
             data["fileName"], data["test"], data["question"], data["rotation"]
-        )
+        )  # returns [True], or [False, reason]
         if rval[0]:
             return web.Response(status=200)  # all fine
         else:
-            return web.Response(status=404)
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            else:
+                return web.Response(status=404)
 
     async def collidingToTestPage(self, request):
         data = await request.json()
@@ -494,7 +676,10 @@ class UploadHandler:
         if rval[0]:
             return web.Response(status=200)  # all fine
         else:
-            return web.Response(status=404)
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            else:
+                return web.Response(status=404)
 
     async def discardToUnknown(self, request):
         data = await request.json()
@@ -525,7 +710,7 @@ class UploadHandler:
             rval[1], status=200
         )  # all fine - report number of tests updated
 
-    async def processTUploads(self, request):
+    async def processLUploads(self, request):
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
@@ -534,10 +719,47 @@ class UploadHandler:
         if data["user"] != "manager" and data["user"] != "scanner":
             return web.Response(status=401)
 
-        rval = self.server.processTUploads()
+        rval = self.server.processLUploads()
         return web.json_response(
             rval[1], status=200
         )  # all fine - report number of tests updated
+
+    async def processTUploads(self, request):
+        """Trigger any updates that are appropriate after some uploads.
+
+        If we upload a bunch of pages to the server, the server will
+        typically keep those in some sort of "staging" state where, for
+        example, they are not given to marking clients.  This is b/c it
+        will be distruptive to clients to have pages added to questions.
+        To "release" a these recent uploads, we make this API call.
+
+        Notes:
+          * its ok to upload to a bundle after calling this (worse case,
+            some client work will be invalidated or tagged to check).
+          * its ok to call this repeatedly.
+          * its not necessarily or useful to call this after uploading
+            Unknown Pages or Colliding Pages: those will need to be
+            dealt with in the Manager tool (e.g., added them to a
+            Paper) at which time similar triggers will occur.
+
+        Returns:
+            aiohttp.web.Response: with status code as below.
+
+        Status codes:
+            200 OK: action was taken, report numer of Papers updated.
+            401 Unauthorized: invalid credientials.
+            403 Forbidden: only "manager"/"scanner" allowed to do this.
+        """
+        data = await request.json()
+        if not validate_required_fields(data, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if data["user"] != "manager" and data["user"] != "scanner":
+            return web.Response(status=403)
+
+        rval = self.server.processTUploads()
+        return web.json_response(rval[1], status=200)
 
     @authenticate_by_token_required_fields(["user"])
     def populateExamDatabase(self, data, request):
@@ -647,16 +869,20 @@ class UploadHandler:
         return web.Response(status=200)
 
     def setUpRoutes(self, router):
+        router.add_get("/admin/bundle", self.doesBundleExist)
+        router.add_put("/admin/bundle", self.createNewBundle)
+        router.add_get("/admin/sidToTest", self.sidToTest)
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/hwPages", self.uploadHWPage)
         router.add_put("/admin/lPages", self.uploadLPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
-        router.add_put("/admin/missingTestPage/{tpv}", self.replaceMissingTestPage)
+        router.add_put("/admin/missingTestPage", self.replaceMissingTestPage)
         router.add_put("/admin/missingHWQuestion", self.replaceMissingHWQuestion)
-        router.add_delete("/admin/scannedPage/{tpv}", self.removeScannedPage)
+        router.add_delete("/admin/scannedPages", self.removeAllScannedPages)
         router.add_get("/admin/scannedTPage", self.getTPageImage)
         router.add_get("/admin/scannedHWPage", self.getHWPageImage)
+        router.add_get("/admin/scannedEXPage", self.getEXPageImage)
         router.add_get("/admin/scannedLPage", self.getLPageImage)
         router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)
         router.add_get("/admin/discardNames", self.getDiscardNames)
@@ -665,16 +891,18 @@ class UploadHandler:
         router.add_get("/admin/discardImage", self.getDiscardImage)
         router.add_get("/admin/collidingImage", self.getCollidingImage)
         router.add_get("/admin/questionImages", self.getQuestionImages)
-        router.add_get("/admin/testImages", self.getTestImages)
-        router.add_get("/admin/checkPage", self.checkPage)
+        router.add_get("/admin/testImages", self.getAllTestImages)
+        router.add_get("/admin/checkTPage", self.checkTPage)
         router.add_delete("/admin/unknownImage", self.removeUnknownImage)
         router.add_delete("/admin/collidingImage", self.removeCollidingImage)
         router.add_put("/admin/unknownToTestPage", self.unknownToTestPage)
+        router.add_put("/admin/unknownToHWPage", self.unknownToHWPage)
         router.add_put("/admin/unknownToExtraPage", self.unknownToExtraPage)
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
         router.add_put("/admin/hwPagesUploaded", self.processHWUploads)
-        router.add_put("/admin/testPagesUploaded", self.processHWUploads)
+        router.add_put("/admin/loosePagesUploaded", self.processLUploads)
+        router.add_put("/admin/testPagesUploaded", self.processTUploads)
         router.add_put("/admin/populateDB", self.populateExamDatabase)
         router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)

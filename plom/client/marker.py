@@ -77,7 +77,9 @@ class BackgroundDownloader(QThread):
 
     """
 
-    downloadSuccess = pyqtSignal(str, list, str)  # [task, files, tags]
+    downloadSuccess = pyqtSignal(
+        str, list, str, str
+    )  # [task, files, tags, integrity_check]
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
@@ -129,7 +131,7 @@ class BackgroundDownloader(QThread):
                 return
 
             try:
-                imageList, tags = messenger.MclaimThisTask(task)
+                imageList, tags, integrity_check = messenger.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -145,7 +147,7 @@ class BackgroundDownloader(QThread):
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
-        self.downloadSuccess.emit(task, inames, tags)
+        self.downloadSuccess.emit(task, inames, tags, integrity_check)
         self.quit()
 
 
@@ -153,7 +155,8 @@ class BackgroundUploader(QThread):
     """Uploads exams in Background."""
 
     uploadSuccess = pyqtSignal(str, int, int)
-    uploadFail = pyqtSignal(str, str)
+    uploadKnownFail = pyqtSignal(str, str)
+    uploadUnknownFail = pyqtSignal(str, str)
 
     def enqueueNewUpload(self, *args):
         """
@@ -212,7 +215,8 @@ class BackgroundUploader(QThread):
             log.info("upQ thread: popped code {} from queue, uploading".format(code))
             upload(
                 *data,
-                failCallback=self.uploadFail.emit,
+                knownFailCallback=self.uploadKnownFail.emit,
+                unknownFailCallback=self.uploadUnknownFail.emit,
                 successCallback=self.uploadSuccess.emit,
             )
 
@@ -234,7 +238,9 @@ def upload(
     question,
     ver,
     tags,
-    failCallback=None,
+    integrity_check,
+    knownFailCallback=None,
+    unknownFailCallback=None,
     successCallback=None,
 ):
     """
@@ -250,8 +256,12 @@ def upload(
         question (int or str): the question number
         ver (int or str): the version number
         tags (str): any tags associated with this exam.
-        failCallback: TODO: figure out this
-        successCallback: TODO: figure out this
+        integrity_check (str): the integrity_check string of the task.
+        knownFailCallback: if we fail in a way that is reasonably expected,
+            call this function.
+        unknownFailCallback: if we fail but don't really know why or what
+            do to, call this function.
+        successCallback: a function to call when we succeed.
 
     Returns:
         None
@@ -277,13 +287,23 @@ def upload(
         )
     try:
         msg = messenger.MreturnMarkedTask(
-            task, question, ver, grade, mtime, tags, aname, pname, cname
+            task,
+            question,
+            ver,
+            grade,
+            mtime,
+            tags,
+            aname,
+            pname,
+            cname,
+            integrity_check,
         )
-    except Exception as ex:
-        # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
-        template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-        errMsg = template.format(type(ex).__name__, ex.args)
-        failCallback(task, errMsg)
+    except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
+        knownFailCallback(task, str(ex))
+        # probably previous call does not return: it forces a crash
+        return
+    except PlomException as ex:
+        unknownFailCallback(task, str(ex))
         return
 
     numDone = msg[0]
@@ -301,7 +321,16 @@ class ExamQuestion:
     time spent marking the groupimage.
     """
 
-    def __init__(self, task, fnames=[], stat="untouched", mrk="-1", mtime="0", tags=""):
+    def __init__(
+        self,
+        task,
+        fnames=[],
+        stat="untouched",
+        mrk="-1",
+        mtime="0",
+        tags="",
+        integrity_check="",
+    ):
         """
         Initializes an exam question.
 
@@ -314,6 +343,7 @@ class ExamQuestion:
             mrk (int): the mark of the question.
             mtime (int): marking time spent on that page in seconds.
             tags (str): Tags corresponding to the exam.
+            integrity_check (str): integrity_check = concat of md5sums of underlying images
 
         Notes:
             By default set mark to be negative (since 0 is a possible mark)
@@ -326,6 +356,7 @@ class ExamQuestion:
         self.plomFile = ""  # The filename for the (future) plom file
         self.markingTime = mtime
         self.tags = tags
+        self.integrity_check = integrity_check
 
 
 class MarkerExamModel(QStandardItemModel):
@@ -351,6 +382,7 @@ class MarkerExamModel(QStandardItemModel):
                 "AnnotatedFile",
                 "PlomFile",
                 "PaperDir",
+                "integrity_check",
             ]
         )
 
@@ -365,6 +397,19 @@ class MarkerExamModel(QStandardItemModel):
             r (int): the row identifier of the added paper.
 
         """
+        # check if paper is already in model - if so, delete it and add it back with the new data.
+        # **but** be careful - if annotation in progress then ??
+        try:
+            r = self._findTask(paper.prefix)
+        except ValueError as err:
+            pass
+        else:
+            ErrorMessage(
+                "Task {} has been modified by server - you will need to annotate it again.".format(
+                    paper.prefix
+                )
+            ).exec_()
+            self.removeRow(r)
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
         self.appendRow(
@@ -378,6 +423,9 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(repr(paper.originalFiles)),
                 QStandardItem(paper.annotatedFile),
                 QStandardItem(paper.plomFile),
+                QStandardItem("placeholder"),
+                # todo - reorder these?
+                QStandardItem(paper.integrity_check),
             ]
         )
         return r
@@ -599,6 +647,10 @@ class MarkerExamModel(QStandardItemModel):
         """Set the annotated image and .plom file names."""
         self._setDataByTask(task, 6, aname)
         self._setDataByTask(task, 7, pname)
+
+    def getIntegrityCheck(self, task):
+        """Return integrity_check for task as string."""
+        return self._getDataByTask(task, 9)
 
     def markPaperByTask(self, task, mrk, aname, pname, mtime, tdir):
         """
@@ -944,7 +996,12 @@ class MarkerClient(QWidget):
         if self.allowBackgroundOps:
             self.backgroundUploader = BackgroundUploader()
             self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
-            self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
+            self.backgroundUploader.uploadKnownFail.connect(
+                self.backgroundUploadFailedServerChanged
+            )
+            self.backgroundUploader.uploadUnknownFail.connect(
+                self.backgroundUploadFailed
+            )
             self.backgroundUploader.start()
         self.cacheLatexComments()  # Now cache latex for comments:
 
@@ -1138,7 +1195,13 @@ class MarkerClient(QWidget):
             # TODO: might not the "markedList" have some other statuses?
             self.examModel.addPaper(
                 ExamQuestion(
-                    x[0], fnames=[], stat="marked", mrk=x[1], mtime=x[2], tags=x[3]
+                    x[0],
+                    fnames=[],
+                    stat="marked",
+                    mrk=x[1],
+                    mtime=x[2],
+                    tags=x[3],
+                    integrity_check=x[4],
                 )
             )
 
@@ -1151,26 +1214,35 @@ class MarkerClient(QWidget):
                 Takes the form "q1234g9" = test 1234 question 9
 
         Returns:
-            None
+            True/False
 
         Raises:
             SeriousError if requesting images throws a PlomSeriousException
 
         """
         if len(self.examModel.getOriginalFiles(task)) > 0:
-            return
+            return True
 
         try:
-            [imageList, anImage, plImage] = messenger.MrequestImages(task)
+            [imageList, anImage, plImage] = messenger.MrequestImages(
+                task, self.examModel.getIntegrityCheck(task)
+            )
+        except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
+            # TODO: better action we can take here?
+            ErrorMessage(
+                '<p>The task "{}" has changed in some way by the manager; it '
+                "may need to be remarked.</p>\n\n"
+                '<p>Specifically, the server says: "{}"</p>\n\n'
+                "<p>This is a rare situation; just in case, we'll now force a "
+                "shutdown of your client.  Sorry.</p>".format(task, str(ex))
+            ).exec_()
+            # This would avoid seeing the crash dialog...
+            # import sys
+            # sys.exit(58)
+            raise PlomSeriousException("Manager changed task") from ex
         except PlomSeriousException as e:
             self.throwSeriousError(e)
-            return
-
-        # TODO: there were no benign exceptions except authentication
-        # except PlomBenignException as e:
-        #     ErrorMessage("{}".format(e)).exec_()
-        #     self.exM.removePaper(task)
-        #     return
+            return False
 
         paperDir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
         log.debug("create paperDir {} for already-graded download".format(paperDir))
@@ -1185,7 +1257,7 @@ class MarkerClient(QWidget):
         self.examModel.setOriginalFiles(task, inames)
 
         if anImage is None:
-            return
+            return True
 
         self.examModel.setPaperDirByTask(task, paperDir)
         aname = os.path.join(paperDir, "G{}.png".format(task[1:]))
@@ -1195,6 +1267,7 @@ class MarkerClient(QWidget):
         with open(pname, "wb+") as fh:
             fh.write(plImage)
         self.examModel.setAnnotatedFile(task, aname, pname)
+        return True
 
     def _updateImage(self, pr=0):
         """
@@ -1207,7 +1280,8 @@ class MarkerClient(QWidget):
             None
 
         """
-        self.loadOriginalFiles(self.prxM.getPrefix(pr))
+        if not self.loadOriginalFiles(self.prxM.getPrefix(pr)):
+            return
 
         if self.prxM.getStatus(pr) in ("marked", "uploading...", "???"):
             self.testImg.updateImage(self.prxM.getAnnotatedFile(pr))
@@ -1284,7 +1358,7 @@ class MarkerClient(QWidget):
                 self.throwSeriousError(err)
 
             try:
-                imageList, tags = messenger.MclaimThisTask(task)
+                imageList, tags, integrity_check = messenger.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -1298,7 +1372,9 @@ class MarkerClient(QWidget):
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
 
-        self.examModel.addPaper(ExamQuestion(task, inames, tags=tags))
+        self.examModel.addPaper(
+            ExamQuestion(task, inames, tags=tags, integrity_check=integrity_check)
+        )
         pr = self.prxM.rowFromTask(task)
         if pr is not None:
             # if newly-added row is visible, select it and redraw
@@ -1336,7 +1412,7 @@ class MarkerClient(QWidget):
         )
         self.backgroundDownloader.start()
 
-    def _requestNextInBackgroundFinished(self, task, fnames, tags):
+    def _requestNextInBackgroundFinished(self, task, fnames, tags, integrity_check):
         """
         Adds paper to exam model once it's been requested.
 
@@ -1344,12 +1420,15 @@ class MarkerClient(QWidget):
             task (str): the task name for the next test.
             fnames (str): the file name for next test
             tags (str): tags for the TGV.
+            integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
         Returns:
             None
 
         """
-        self.examModel.addPaper(ExamQuestion(task, fnames, tags=tags))
+        self.examModel.addPaper(
+            ExamQuestion(task, fnames, tags=tags, integrity_check=integrity_check)
+        )
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
         self.ui.tableView.resizeRowsToContents()
@@ -1605,7 +1684,19 @@ class MarkerClient(QWidget):
         exam_name = self.exam_spec["name"]
         markStyle = self.ui.markStyleGroup.checkedId()
         tgv = task[1:]
-        return tgv, exam_name, paperdir, fnames, aname, self.maxMark, markStyle, pdict
+        # get the integrity_check code of the task
+        integrity_check = self.examModel.getIntegrityCheck(task)
+        return (
+            tgv,
+            exam_name,
+            paperdir,
+            fnames,
+            aname,
+            self.maxMark,
+            markStyle,
+            pdict,
+            integrity_check,
+        )
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
@@ -1665,12 +1756,22 @@ class MarkerClient(QWidget):
                 aname(str): annotated file name
                 plomFileName(str): the name of thee .plom file
                 commentFileName(str): the name of the comment file.
+                integrity_check(str): the integrity_check string of the task.
 
         Returns:
             None
 
         """
-        gr, markingTime, paperDir, fnames, aname, plomFileName, commentFileName = stuff
+        (
+            gr,
+            markingTime,
+            paperDir,
+            fnames,
+            aname,
+            plomFileName,
+            commentFileName,
+            integrity_check,
+        ) = stuff
 
         if not (0 <= gr and gr <= self.maxMark):
             msg = ErrorMessage(
@@ -1681,6 +1782,8 @@ class MarkerClient(QWidget):
             msg.exec_()
             # TODO: what do do here?  revert?
             return
+
+        stat = self.examModel.getStatusByTask("q" + task)
 
         # Copy the mark, annotated filename and the markingtime into the table
         # TODO: sort this out whether task is "q00..." or "00..."?!
@@ -1703,6 +1806,7 @@ class MarkerClient(QWidget):
             self.question,
             self.version,
             tags,
+            integrity_check,
         )
         if self.allowBackgroundOps:
             # the actual upload will happen in another thread
@@ -1710,7 +1814,8 @@ class MarkerClient(QWidget):
         else:
             upload(
                 *_data,
-                failCallback=self.backgroundUploadFailed,
+                knownFailCallback=self.backgroundUploadFailedServerChanged,
+                unknownFailCallback=self.backgroundUploadFailed,
                 successCallback=self.backgroundUploadFinished,
             )
 
@@ -1745,7 +1850,7 @@ class MarkerClient(QWidget):
             return
 
         assert tgvID[1:] == data[0]
-        pdict = data[-1]
+        pdict = data[-2]  # the plomdict is second-last object in data
         assert pdict is None, "Annotator should not pull a regrade"
 
         if self.allowBackgroundOps:
@@ -1806,9 +1911,36 @@ class MarkerClient(QWidget):
             self.examModel.setStatusByTask(task, "marked")
         self.updateProgress(numDone, numtotal)
 
-    def backgroundUploadFailed(self, task, errmsg):
+    def backgroundUploadFailedServerChanged(self, task, error_message):
+        """An upload has failed because server changed something, safest to quit.
+
+        Args:
+            task (str): the task ID of the current test.
+            error_message (str): a brief description of the error.
+
+        Returns:
+            None
         """
-        An upload has failed, not sure what to do but do to it LOADLY.
+        self.examModel.setStatusByTask(task, "???")
+        ErrorMessage(
+            '<p>Background upload of "{}" has failed because the server '
+            "changed something underneath us.</p>\n\n"
+            '<p>Specifically, the server says: "{}"</p>\n\n'
+            "<p>This is a rare situation; no data corruption has occured but "
+            "your annotations have been discarded just in case.  You will be "
+            "asked to redo the task later.</p>\n\n"
+            "<p>For now you've been logged out and we'll now force a shutdown "
+            "of your client.  Sorry.</p>".format(task, error_message)
+        ).exec_()
+        # This would avoid seeing the crash dialog...
+        # import sys
+        # sys.exit(57)
+        raise PlomSeriousException(
+            "Server changed under us: {}".format(error_message)
+        ) from None
+
+    def backgroundUploadFailed(self, task, errmsg):
+        """An upload has failed, we don't know why, do something LOADLY.
 
         Args:
             task (str): the task ID of the current test.
@@ -1820,11 +1952,12 @@ class MarkerClient(QWidget):
         """
         self.examModel.setStatusByTask(task, "???")
         ErrorMessage(
-            "Unfortunately, there was an unexpected error; server did "
+            "Unfortunately, there was an unexpected error; the server did "
             "not accept our marked paper {}.\n\n{}\n\n"
-            "Please consider filing an issue?  Perhaps you could try "
-            "annotating that paper again?".format(task, errmsg)
+            "If the problem persists consider filing an issue."
+            "Please close this window and log in again.".format(task, errmsg)
         ).exec_()
+        return
 
     def updateImg(self, newImg, oldImg):
         """
@@ -1843,13 +1976,17 @@ class MarkerClient(QWidget):
             self._updateImage(idx[0].row())
 
     def shutDownError(self):
-        """ Shuts down self due to error. """
+        """Shuts down self due to error."""
+        if (
+            getattr(self, "_annotator", None) is not None
+        ):  # try to shut down annotator too.
+            self._annotator.close()
         log.error("shutting down")
         self.my_shutdown_signal.emit(2, [])
         self.close()
 
     def shutDown(self):
-        """ Shuts down self."""
+        """Shuts down self."""
         log.debug("Marker shutdown from thread " + str(threading.get_ident()))
         if self.backgroundUploader:
             count = 42

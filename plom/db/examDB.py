@@ -14,29 +14,7 @@ import logging
 
 log = logging.getLogger("DB")
 
-from plom.db.tables import (
-    plomdb,
-    User,
-    Image,
-    Test,
-    SumData,
-    Group,
-    IDGroup,
-    DNMGroup,
-    QGroup,
-    TPage,
-    HWPage,
-    LPage,
-    UnknownPage,
-    CollidingPage,
-    DiscardedPage,
-    ##
-    Annotation,
-    ##
-    APage,
-    IDPage,
-    DNMPage,
-)
+from plom.db.tables import *
 
 ######################################################################
 
@@ -51,9 +29,8 @@ class PlomDB:
                 [
                     User,
                     Image,
+                    Bundle,
                     Test,
-                    ##
-                    SumData,
                     ##
                     Group,
                     IDGroup,
@@ -62,14 +39,18 @@ class PlomDB:
                     ##
                     TPage,
                     HWPage,
+                    EXPage,
                     LPage,
                     UnknownPage,
                     CollidingPage,
                     DiscardedPage,
                     ##
+                    AImage,
                     Annotation,
+                    OldAnnotation,
                     ##
                     APage,
+                    OAPage,
                     IDPage,
                     DNMPage,
                 ]
@@ -105,6 +86,9 @@ class PlomDB:
     )
 
     from plom.db.db_create import (
+        doesBundleExist,
+        createNewBundle,
+        createReplacementBundle,
         areAnyPapersProduced,
         nextqueue_position,
         createTest,
@@ -118,58 +102,61 @@ class PlomDB:
     )
 
     from plom.db.db_upload import (
-        checkTestAllUploaded,
-        setGroupReady,
-        checkGroupAllUploaded,
-        replaceMissingPage,
-        fileOfScannedPage,
-        createDiscardedPage,
-        removeScannedPage,
-        invalidateDNMGroup,
-        invalidateIDGroup,
-        invalidateQGroup,
+        createNewImage,
+        attachImageToTPage,
+        createNewHWPage,
+        createNewLPage,
         uploadTestPage,
         uploadHWPage,
         uploadLPage,
-        cleanIDGroup,
-        cleanSData,
-        cleanQGroup,
-        processUpdatedIDGroup,
-        processUpdatedDNMGroup,
-        processUpdatedQGroup,
-        processUpdatedSData,
-        cleanIDGroup,
-        processSpecificUpdatedTest,
-        processUpdatedTests,
-        replaceMissingHWQuestion,
         uploadUnknownPage,
         uploadCollidingPage,
+        updateDNMGroup,
+        updateIDGroup,
+        cleanIDGroup,
+        updateQGroup,
+        cleanQGroup,
+        updateGroupAfterUpload,
+        checkTestScanned,
+        updateTestAfterUpload,
+        processUpdatedTests,
+        getSIDFromTest,
+        sidToTest,
+        replaceMissingHWQuestion,
+        replaceMissingTestPage,
+        removeAllScannedPages,
+    )
+
+    from plom.db.db_manage import (
         getUnknownPageNames,
         getDiscardNames,
         getCollidingPageNames,
         getTPageImage,
         getHWPageImage,
+        getEXPageImage,
         getLPageImage,
-        getUnknownImage,
-        getDiscardImage,
-        getCollidingImage,
+        getAllTestImages,
         getQuestionImages,
-        getTestImages,
-        checkPage,
-        checkUnknownImage,
-        checkCollidingImage,
+        getUnknownImage,
+        testOwnersLoggedIn,
+        moveUnknownToExtraPage,
+        moveUnknownToHWPage,
+        moveUnknownToTPage,
+        checkTPage,
         removeUnknownImage,
-        removeCollidingImage,
-        moveUnknownToPage,
-        moveUnknownToCollision,
-        moveCollidingToPage,
-        moveExtraToPage,
+        getDiscardImage,
         moveDiscardToUnknown,
+        moveUnknownToCollision,
+        getCollidingImage,
+        removeCollidingImage,
+        moveCollidingToTPage,
     )
 
     from plom.db.db_report import (
         RgetScannedTests,
         RgetIncompleteTests,
+        RgetCompleteHW,
+        RgetMissingHWQ,
         RgetUnusedTests,
         RgetIdentified,
         RgetProgress,
@@ -186,7 +173,6 @@ class PlomDB:
         RgetMarkReview,
         RgetAnnotatedImage,
         RgetIDReview,
-        RgetTotReview,
         RgetUserFullProgress,
     )
 
@@ -219,17 +205,4 @@ class PlomDB:
         MshuffleImages,
         MreviewQuestion,
         MrevertTask,
-    )
-
-    # ----- totaller stuff
-    from plom.db.db_total import (
-        TcountTotalled,
-        TcountAll,
-        TgetNextTask,
-        TgetDoneTasks,
-        TgiveTaskToClient,
-        TdidNotFinish,
-        TgetImage,
-        TtakeTaskFromClient,
-        TreviewTotal,
     )

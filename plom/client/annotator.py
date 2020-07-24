@@ -112,6 +112,7 @@ class Annotator(QWidget):
                     annotation objects on the page if you go back to continue annotating a
                     question. ie - is it mark up/down, where are all the objects, how to
                     rebuild those objects, etc.
+                integrity_check (str): integrity_check of the underlying images.
                 }
         """
         super(Annotator, self).__init__()
@@ -285,7 +286,16 @@ class Annotator(QWidget):
         # self.destroyMarkHandler()
 
     def loadNewTGV(
-        self, tgvID, testName, paperdir, fnames, saveName, maxMark, markStyle, plomDict
+        self,
+        tgvID,
+        testName,
+        paperdir,
+        fnames,
+        saveName,
+        maxMark,
+        markStyle,
+        plomDict,
+        integrity_check,
     ):
         """Loads new Data into the Toggle View window for marking.
 
@@ -310,6 +320,7 @@ class Annotator(QWidget):
                                 annotation objects on the page if you go back to continue annotating a
                                 question. ie - is it mark up/down, where are all the objects, how to
                                 rebuild those objects, etc.
+            integrity_check (str): integrity check string of underlying images (concat of their md5sums)
 
         Returns:
             None: Modifies many instance vars.
@@ -322,6 +333,7 @@ class Annotator(QWidget):
         self.paperDir = paperdir
         self.imageFiles = fnames
         self.saveName = saveName
+        self.integrity_check = integrity_check
 
         if getattr(self, "maxMark", None) != maxMark:
             log.warn("Is changing maxMark supported?  we just did it...")
@@ -1476,6 +1488,7 @@ class Annotator(QWidget):
             self.saveName,
             plomFile,
             commentFile,
+            self.integrity_check,
         ]
         self.annotator_upload.emit(self.tgvID, stuff)
         return True

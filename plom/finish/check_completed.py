@@ -16,28 +16,24 @@ from plom.plom_exceptions import *
 
 def proc_everything(comps, numberOfQuestions):
     idList = []
-    tList = []
     mList = [0 for j in range(numberOfQuestions + 1)]
     sList = [[] for j in range(numberOfQuestions + 1)]
     cList = []
     for t, v in comps.items():
         if v[0]:
             idList.append(int(t))
-        if v[1]:
-            tList.append(int(t))
-        mList[v[2]] += 1
-        sList[v[2]].append(t)
-        if v[0] and v[1] and v[2] == numberOfQuestions:
+        mList[v[1]] += 1
+        sList[v[1]].append(t)
+        if v[0] and v[1] == numberOfQuestions:
             cList.append(t)
     idList.sort(key=int)
-    tList.sort(key=int)
     # TODO bit crude, better to get from server
     numScanned = sum(mList)
-    return idList, tList, mList, sList, cList, numScanned
+    return idList, mList, sList, cList, numScanned
 
 
 def print_everything(comps, numPapersProduced, numQ):
-    idList, tList, mList, sList, cList, numScanned = proc_everything(comps, numQ)
+    idList, mList, sList, cList, numScanned = proc_everything(comps, numQ)
     print("*********************")
     print("** Completion data **")
     print("Produced papers: {}".format(numPapersProduced))
@@ -47,7 +43,6 @@ def print_everything(comps, numPapersProduced, numQ):
         print("Scanned papers: {} (currently)".format(numScanned))
     print("Completed papers: {}".format(format_int_list_with_runs(cList)))
     print("Identified papers: {}".format(format_int_list_with_runs(idList)))
-    print("Totalled papers: {}".format(format_int_list_with_runs(tList)))
     for n in range(numQ + 1):
         print(
             "Number of papers with {} questions marked = {}. Tests numbers = {}".format(
@@ -107,7 +102,7 @@ def main(server=None, password=None):
 
     print_everything(completions, max_papers, numberOfQuestions)
 
-    idList, tList, mList, sList, cList, numScanned = proc_everything(
+    idList, mList, sList, cList, numScanned = proc_everything(
         completions, numberOfQuestions
     )
     numberComplete = len(cList)
