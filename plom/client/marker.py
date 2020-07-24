@@ -649,8 +649,7 @@ class MarkerExamModel(QStandardItemModel):
         self._setDataByTask(task, 7, pname)
 
     def getIntegrityCheck(self, task):
-        """
-        Return integrity_check for task as string. """
+        """Return integrity_check for task as string."""
         return self._getDataByTask(task, 9)
 
     def markPaperByTask(self, task, mrk, aname, pname, mtime, tdir):
@@ -1976,7 +1975,7 @@ class MarkerClient(QWidget):
             self._updateImage(idx[0].row())
 
     def shutDownError(self):
-        """ Shuts down self due to error. """
+        """Shuts down self due to error."""
         if (
             getattr(self, "_annotator", None) is not None
         ):  # try to shut down annotator too.
@@ -1986,7 +1985,7 @@ class MarkerClient(QWidget):
         self.close()
 
     def shutDown(self):
-        """ Shuts down self."""
+        """Shuts down self."""
         log.debug("Marker shutdown from thread " + str(threading.get_ident()))
         if self.backgroundUploader:
             count = 42
