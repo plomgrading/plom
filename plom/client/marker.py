@@ -1226,15 +1226,14 @@ class MarkerClient(QWidget):
             [imageList, anImage, plImage] = messenger.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
             )
-        except PlomTaskChangedException as ex:
+        except (PlomTaskChangedException, PlomTaskDeletedException) as ex:
             # TODO: better action we can take here?
-            # TODO: can "ex" have more information from the server?
             ErrorMessage(
-                "<p>The task {} has changed ownership: most likely the paper "
-                "was changed in some way by the manager; it needs to be "
-                "remarked.</p>\n\n"
+                '<p>The task "{}" has changed in some way by the manager; it '
+                "needs to be remarked.</p>\n\n"
+                '<p>Specifically, the server says: "{}"</p>\n\n'
                 "<p>This is a rare situation; just in case, we'll now force a "
-                "shutdown of your client.  Sorry.".format(task)
+                "shutdown of your client.  Sorry.</p>".format(task, str(ex))
             ).exec_()
             self.throwSeriousError(ex)
             # This would avoid seeing the crash dialog...
@@ -1926,14 +1925,14 @@ class MarkerClient(QWidget):
         self.examModel.setStatusByTask(task, "???")
         # TODO: @arechnitzer to confirm we've been logged out...
         ErrorMessage(
-            "<p>A background upload has failed because the server changed "
-            "something underneath us.</p>\n\n"
+            '<p>Background upload of "{}" has failed because the server '
+            "changed something underneath us.</p>\n\n"
             '<p>Specifically, the server says: "{}"</p>\n\n'
             "<p>This is a rare situation; no data corruption has occured but "
             "your annotations have been discarded just in case.  You will be "
-            'asked to redo the task "{}" later.</p>\n\n'
-            "<p>For now you've been logged out and we'll now force a crash of "
-            "your client.  Sorry.".format(error_message, task)
+            'asked to redo the task later.</p>\n\n'
+            "<p>For now you've been logged out and we'll now force a shutdown "
+            "of your client.  Sorry.</p>".format(task, error_message)
         ).exec_()
         # This would avoid seeing the crash dialog...
         # import sys

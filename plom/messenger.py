@@ -816,7 +816,7 @@ class Messenger(BaseMessenger):
                     "Task {} has been changed by manager.".format(code)
                 ) from None
             elif response.status_code == 410:
-                raise PlomTaskChangedException(
+                raise PlomTaskDeletedException(
                     "Task {} has been deleted by manager.".format(code)
                 ) from None
             else:
