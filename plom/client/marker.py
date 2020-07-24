@@ -155,8 +155,8 @@ class BackgroundUploader(QThread):
     """Uploads exams in Background."""
 
     uploadSuccess = pyqtSignal(str, int, int)
-    uploadFail = pyqtSignal(str, str)
-    uploadBenignFail = pyqtSignal(str, str)
+    uploadKnownFail = pyqtSignal(str, str)
+    uploadUnknownFail = pyqtSignal(str, str)
 
     def enqueueNewUpload(self, *args):
         """
@@ -215,8 +215,8 @@ class BackgroundUploader(QThread):
             log.info("upQ thread: popped code {} from queue, uploading".format(code))
             upload(
                 *data,
-                failCallback=self.uploadFail.emit,
-                benignFailCallback=self.uploadBenignFail.emit,
+                knownFailCallback=self.uploadKnownFail.emit,
+                unknownFailCallback=self.uploadUnknownFail.emit,
                 successCallback=self.uploadSuccess.emit,
             )
 
@@ -239,8 +239,8 @@ def upload(
     ver,
     tags,
     integrity_check,
-    failCallback=None,
-    benignFailCallback=None,
+    knownFailCallback=None,
+    unknownFailCallback=None,
     successCallback=None,
 ):
     """
@@ -257,8 +257,11 @@ def upload(
         ver (int or str): the version number
         tags (str): any tags associated with this exam.
         integrity_check (str): the integrity_check string of the task.
-        failCallback: TODO: figure out this
-        successCallback: TODO: figure out this
+        knownFailCallback: if we fail in a way that is reasonably expected,
+            call this function.
+        unknownFailCallback: if we fail but don't really know why or what
+            do to, call this function.
+        successCallback: a function to call when we succeed.
 
     Returns:
         None
@@ -297,13 +300,13 @@ def upload(
         )
     except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
         # TODO: integrity failure is another benign, should we add to this list or leave it for the one below?
-        benignFailCallback(task, str(ex))
+        knownFailCallback(task, str(ex))
         return
     except Exception as ex:
         # TODO: just OperationFailed?  Just WebDavException?  Others pass thru?
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
         errMsg = template.format(type(ex).__name__, ex.args)
-        failCallback(task, errMsg)
+        unknownFailCallback(task, errMsg)
         return
 
     numDone = msg[0]
@@ -996,9 +999,11 @@ class MarkerClient(QWidget):
         if self.allowBackgroundOps:
             self.backgroundUploader = BackgroundUploader()
             self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
-            self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
-            self.backgroundUploader.uploadBenignFail.connect(
+            self.backgroundUploader.uploadKnownFail.connect(
                 self.backgroundUploadFailedServerChanged
+            )
+            self.backgroundUploader.uploadUnknownFail.connect(
+                self.backgroundUploadFailed
             )
             self.backgroundUploader.start()
         self.cacheLatexComments()  # Now cache latex for comments:
@@ -1812,8 +1817,8 @@ class MarkerClient(QWidget):
         else:
             upload(
                 *_data,
-                failCallback=self.backgroundUploadFailed,
-                benignFailCallback=self.backgroundUploadFailedServerChanged,
+                knownFailCallback=self.backgroundUploadFailedServerChanged,
+                unknownFailCallback=self.backgroundUploadFailed,
                 successCallback=self.backgroundUploadFinished,
             )
 
