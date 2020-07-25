@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'qtCreatorFiles/ui_annotator_rhm.ui'
 #
-# Created by: PyQt5 UI code generator 5.14.1
+# Created by: PyQt5 UI code generator 5.14.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -334,13 +334,3 @@ class Ui_annotator_rhm(object):
         self.uploadImage.setText(_translate("annotator_rhm", "Upload Image"))
         self.noAnswerButton.setText(_translate("annotator_rhm", "No answer given"))
         self.deltaButton.setText(_translate("annotator_rhm", "..."))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    annotator_rhm = QtWidgets.QWidget()
-    ui = Ui_annotator_rhm()
-    ui.setupUi(annotator_rhm)
-    annotator_rhm.show()
-    sys.exit(app.exec_())
