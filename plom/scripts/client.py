@@ -79,7 +79,6 @@ def main():
     group.add_argument(
         "-i", "--identifier", action="store_true", help="Run the identifier"
     )
-    group.add_argument("-t", "--totaler", action="store_true", help="Run the totaler")
     group.add_argument(
         "-m",
         "--marker",
@@ -113,8 +112,6 @@ def main():
 
     if args.identifier:
         window.ui.identifyButton.animateClick()
-    if args.totaler:
-        window.ui.totalButton.animateClick()
     if args.marker:
         if args.marker != "json":
             pg, v = args.marker.split(":")
