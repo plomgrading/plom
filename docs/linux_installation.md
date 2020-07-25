@@ -70,7 +70,8 @@ Other stuff we get from pip:
         aiohttp pyzbar jpegtran-cffi
   # python3 -m pip install --upgrade --user imutils lapsolver opencv-python tensorflow
 ```
-(Note `python3 -m pip` to use the newly upgraded pip).
+Note `python3 -m pip` to use the newly upgraded pip.  On Ubuntu 18.04, the
+`--upgrade` is required for tensorflow b/c the system numpy is too old.
 
 It also may be useful to install `x2goserver`.
 

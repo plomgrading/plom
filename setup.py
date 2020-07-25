@@ -36,7 +36,8 @@ client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQ
 server_install_requires = [
     "toml>=0.10.0",
     "tqdm",
-    "numpy",
+    "numpy>=1.16.0",  # for tensorflow
+    "requests>=2.21.0",  # for tensorflow
     "pandas",
     "passlib",
     "pymupdf>=1.16.14",
